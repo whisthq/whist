@@ -1,0 +1,15 @@
+{
+  "name": "figma-linux-rust-binding",
+  "version": "0.1.0",
+  "description": "Figma-linux binding module",
+  "main": "index.mjs",
+  "author": "ChugunovRoman <Zebs-BMK@yandex.ru>",
+  "license": "MIT",
+  "dependencies": {
+    "neon-cli": "^0.2.0"
+  },
+  "scripts": {
+    "start": "node --experimental-modules ./index.mjs",
+    "build": "neon build"
+  }
+}
