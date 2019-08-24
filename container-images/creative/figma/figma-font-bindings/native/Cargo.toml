@@ -1,0 +1,17 @@
+[package]
+name = "figma-linux-rust-binding"
+version = "0.1.0"
+authors = ["ChugunovRoman <Zebs-BMK@yandex.ru>"]
+license = "MIT"
+build = "build.rs"
+exclude = ["artifacts.json", "index.node"]
+
+[lib]
+name = "figma_linux_rust_binding"
+crate-type = ["dylib"]
+
+[build-dependencies]
+neon-build = "0.2.0"
+
+[dependencies]
+neon = "0.3"
