@@ -9,6 +9,7 @@
     "neon-cli": "^0.3.1"
   },
   "scripts": {
+    "install": "neon build --release",
     "start": "node --experimental-modules ./index.mjs",
     "build": "neon build"
   }
