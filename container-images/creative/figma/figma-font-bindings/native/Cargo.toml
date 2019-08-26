@@ -2,16 +2,26 @@
 name = "figma-linux-rust-binding"
 version = "0.1.0"
 authors = ["ChugunovRoman <Zebs-BMK@yandex.ru>"]
-license = "MIT"
+edition = "2018"
+license = "GPL-2.0-only"
 build = "build.rs"
 exclude = ["artifacts.json", "index.node"]
+
+description = "Reads fonts in passed directories and return objects of fonts for Figma Font Helper"
+homepage = "https://github.com/ChugunovRoman/figma-linux-rust-binding"
+repository = "https://github.com/ChugunovRoman/figma-linux-rust-binding"
+documentation = "https://docs.rs/figma-linux-rust-binding/"
+
+keywords = ["System", "Fonts", "Figma"]
+categories = ["filesystem"]
 
 [lib]
 name = "figma_linux_rust_binding"
 crate-type = ["dylib"]
 
 [build-dependencies]
-neon-build = "0.2.0"
+neon-build = "0.3.1"
 
 [dependencies]
-neon = "0.3"
+neon = "0.3.1"
+libfonthelper = "0.1.4"
