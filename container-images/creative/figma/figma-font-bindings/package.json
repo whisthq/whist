@@ -1,13 +1,29 @@
 {
   "name": "figma-linux-rust-binding",
   "version": "0.1.0",
-  "description": "Figma-linux binding module",
+  "description": "Rust module that makes object of meta data of fonts",
   "main": "index.mjs",
   "author": "ChugunovRoman <Zebs-BMK@yandex.ru>",
-  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ChugunovRoman/figma-linux-rust-binding.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ChugunovRoman/figma-linux-rust-binding/issues"
+  },
+  "homepage": "https://github.com/ChugunovRoman/figma-linux-rust-binding",
+  "keywords": [
+    "Rust",
+    "nodejs",
+    "fonts",
+    "Linux"
+  ],
+  "license": "GPL-2.0",
   "dependencies": {
     "neon-cli": "^0.3.1"
   },
+  "types": "index.d.ts",
+  "deprecated": false,
   "scripts": {
     "install": "neon build --release",
     "start": "node --experimental-modules ./index.mjs",
