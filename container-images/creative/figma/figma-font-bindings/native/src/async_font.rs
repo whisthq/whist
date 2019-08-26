@@ -2,7 +2,6 @@ extern crate libfonthelper;
 
 use neon::{prelude::*, task::Task};
 use libfonthelper::{get_fonts, types::FontMap};
-use super::fonts::Fonts;
 
 struct Worker {
     dirs: Vec<String>,
