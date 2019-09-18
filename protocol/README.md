@@ -10,9 +10,8 @@ Repository for Fractal's Real-Time Desktop Streaming Protocol (Server + Client).
 
 
 
-![Screenshot](screenshot.png)
+![img](img/Protocol Infrastructure.png)
 
 
-![alt text](https://drive.google.com/drive/u/0/folders/1VJR1jmkkq0qAR09XbsfCvVoCuXNYO_g3)
 
 
