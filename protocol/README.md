@@ -7,6 +7,7 @@ This repository contains both the source code for the client (running on the Cub
 In order to achieve low latency, a standard Remote Desktop Protocol (RDP) is not a valid protocol for Fractal's needs. Our protocol is based on RSTP/RTP for video transmission, utilizing the H.265 codec for video compression, and HTTPS for send user actions back to the server (virtual machine).
 
 Here is a schematic of the protocol infrastructure, with "Game Server = Virtual Machine" and "Game Client = User Client":
+
 ![img](img/protocol_infrastructure.png)
 
 The protocol is to be implemented in C.
