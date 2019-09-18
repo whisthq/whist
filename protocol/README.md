@@ -9,6 +9,4 @@ In order to achieve low latency, a standard Remote Desktop Protocol (RDP) is not
 Here is a schematic of the protocol infrastructure, with "Game Server = Virtual Machine" and "Game Client = User Client":
 ![img](img/protocol_infrastructure.png)
 
-
-
-
+The protocol is to be implemented in C.
