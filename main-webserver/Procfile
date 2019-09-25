@@ -1,2 +1,2 @@
-﻿web: waitress-serve --port=$PORT setup:app
-worker: celery worker --app=setup.celery
+﻿web: waitress-serve --port=$PORT run:app
+worker: celery worker --app=celery_worker.celery
