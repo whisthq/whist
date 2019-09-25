@@ -1,14 +1,14 @@
 from flask import Blueprint
 import os
-from .tasks import make_file
+from .tasks import *
+
 bp = Blueprint("all", __name__)
 
 @bp.route("/")
 def index():
     return "Hello!"
 
-@bp.route("/<string:fname>/<string:content>")
-def makefile(fname, content):
-    fpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), fname)
-    make_file.delay(fpath, content)
+@bp.route("/test")
+def makefile():
+    make_file.delay()
     return "test"
