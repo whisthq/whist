@@ -1,8 +1,5 @@
-from celery import Celery
-import os
-from dotenv import *
-
-load_dotenv()
+from .imports import *
+from .factory import *
 
 def make_celery(app_name = __name__):
     backend = os.getenv('REDIS_URL')
@@ -10,3 +7,5 @@ def make_celery(app_name = __name__):
     return Celery(app_name, backend=backend, broker=broker)
 
 celery = make_celery()
+celery.conf.update(task_track_started = True)
+app = create_app(celery = celery)

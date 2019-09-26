@@ -1,8 +1,6 @@
-from app import factory
 import app
+from app import factory
 
 if __name__ == "__main__":
-    app = factory.create_app(celery = app.celery)
-    db = factory.create_db(app = app)
-    app.run()
+    app.app.run()
 
