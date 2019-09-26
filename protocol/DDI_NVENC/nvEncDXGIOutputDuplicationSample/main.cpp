@@ -364,7 +364,7 @@ int Grab60FPS() /// removed "int nFrames" from argument
     }
 
     /// MODIFICATION BY PHILIPPE: Initialize ask for new input
-    bool moreInput = true /// if the server receives no more input, this would become false and the app would stop capturing frames
+    bool moreInput = true; /// if the server receives no more input, this would become false and the app would stop capturing frames
 
     /// Run capture loop
     do
@@ -420,7 +420,7 @@ int Grab60FPS() /// removed "int nFrames" from argument
             ///     set moreInput = false to stop streaming
         }
     }
-    while (moreInput) /// replaced line below with this one to make it repeat
+    while (moreInput); /// replaced line below with this one to make it repeat
     /// frame reading and encoding continuously unless the client stops making
     /// requests, in which case the server should stop
     /// currently this will run continously and needs to be stopped manually,
