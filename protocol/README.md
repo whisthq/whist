@@ -10,4 +10,4 @@ Here is a schematic of the protocol infrastructure, with "Game Server = Virtual 
 
 ![img](img/protocol_infrastructure.png)
 
-The protocol is to be implemented in C.
+The protocol is to be implemented in C/C++.
