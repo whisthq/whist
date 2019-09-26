@@ -7,6 +7,6 @@ def create_app(app_name=PKG_NAME, **kwargs):
     app = Flask(app_name)
     if kwargs.get("celery"):
         init_celery(kwargs.get("celery"), app)
-    from app.all import bp
-    app.register_blueprint(bp)
+    from app.vm_blueprint import vm_bp
+    app.register_blueprint(vm_bp)
     return app
