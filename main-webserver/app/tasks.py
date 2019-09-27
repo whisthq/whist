@@ -10,8 +10,7 @@ def createVM(self, vm_size):
     _, compute_client, _ = createClients()
     nic = createNic('', '', '', '', 0)
     if not nic: 
-    	print("No NIC")
-    	return None
+    	return jsonify({})
     vmParameters = createVMParameters(nic.id, vm_size)
     async_vm_creation = compute_client.virtual_machines.create_or_update(
         os.environ.get('VM_GROUP'), vmParameters['vmName'], vmParameters['params'])

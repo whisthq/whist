@@ -177,22 +177,24 @@ def getIP(vm):
 #     params = {'user': username}
 #     conn.execute(command, **params)
 
-def registerUser(username, vm_name):
+def registerUser(username, password, vm_name):
+    pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     command = text("""
-        INSERT INTO users("userName", "currentVM") 
-        VALUES(:userName, :currentVM)
+        INSERT INTO users("userName", "password", "currentVM") 
+        VALUES(:userName, :password, :currentVM)
         """)
-    params = {'userName': username, 'currentVM': vm_name}
+    params = {'userName': username, 'password': pwd_token, 'currentVM': vm_name}
     conn.execute(command, **params)
 
-def loginUser(username):
+def loginUser(username, password):
+    decrypted_pwd = jwt.decode(password, os.getenv('SECRET_KEY'))['pwd']
     command = text("""
         SELECT * FROM users WHERE "userName" = :userName
         """)
     params = {'userName': username}
     user = conn.execute(command, **params).fetchall()
-    if len(user) > 0:
-        return user[0][1]
+    if len(user) > 0 and decrypted_pwd == password:
+        return user[0][2]
     return None
 
 def fetchVMCredentials(vm_name):
