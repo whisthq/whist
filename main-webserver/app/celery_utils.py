@@ -1,4 +1,5 @@
 def init_celery(celery, app):
+    celery.conf.update(task_track_started = True, accept_content = ['pickle'])
     TaskBase = celery.Task
     class ContextTask(TaskBase):
         def __call__(self, *args, **kwargs):

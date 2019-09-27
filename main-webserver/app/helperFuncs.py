@@ -18,78 +18,83 @@ def createClients():
     n = NetworkManagementClient(credentials, subscription_id)
     return r, c, n
 
-def createNic():
+def createNic(vnetName, subnetName, ipName, nicName, tries):
     _, _, network_client = createClients()
-    oldVnets = [cell[0] for cell in list(conn.execute('SELECT "vnetName" FROM v_nets'))]
-    oldSubnets = [cell[0] for cell in list(conn.execute('SELECT "subnetName" FROM v_nets'))]
-    oldIPs = [cell[0] for cell in list(conn.execute('SELECT "ipConfigName" FROM v_nets'))]
-    oldNics = [cell[0] for cell in list(conn.execute('SELECT "nicName" FROM v_nets'))]
-    vnetName, subnetName, ipName, nicName = genHaiku(4)
-    while (vnetName in oldVnets) or (subnetName in oldSubnets) or (ipName in oldIPs) or (nicName in oldNics):
-         vnetName, subnetName, ipName, nicName = genHaiku(4)
-
-    async_vnet_creation = network_client.virtual_networks.create_or_update(
-        os.getenv('VM_GROUP'),
-        vnetName,
-        {
-            'location': os.getenv('LOCATION'),
-            'address_space': {
-                'address_prefixes': ['10.0.0.0/16']
-            }
-        }
-    )
-    async_vnet_creation.wait()
-
-    #Create Subnet
-    async_subnet_creation = network_client.subnets.create_or_update(
-        os.getenv('VM_GROUP'),
-        vnetName,
-        subnetName,
-        {'address_prefix': '10.0.0.0/24'}
-    )
-    subnet_info = async_subnet_creation.result()
-
-    # Create public IP address
-    public_ip_addess_params = {
-        'location': os.getenv('LOCATION'),
-        'public_ip_allocation_method': 'Static'
-    }
-    creation_result = network_client.public_ip_addresses.create_or_update(
-        os.getenv('VM_GROUP'),
-        ipName,
-        public_ip_addess_params
-    )
-
-    public_ip_address = network_client.public_ip_addresses.get(
-        os.getenv('VM_GROUP'),
-        ipName)
-
-    command = text("""
-        INSERT INTO v_nets("vnetName", "subnetName", "ipConfigName", "nicName") 
-        VALUES(:vnetName, :subnetName, :ipConfigName, :nicName)
-        """)
-    params = {'vnetName': vnetName, 'subnetName': subnetName, 'ipConfigName': ipName, 'nicName': nicName}
-    conn.execute(command, **params)
-
-    # Create NIC
-    async_nic_creation = network_client.network_interfaces.create_or_update(
-        os.getenv('VM_GROUP'),
-        nicName,
-        {
-            'location': os.getenv('LOCATION'),
-            'ip_configurations': [{
-                'name': ipName,
-                'public_ip_address': public_ip_address,
-                'subnet': {
-                    'id': subnet_info.id
+    if tries == 0:
+        oldVnets = [cell[0] for cell in list(conn.execute('SELECT "vnetName" FROM v_nets'))]
+        oldSubnets = [cell[0] for cell in list(conn.execute('SELECT "subnetName" FROM v_nets'))]
+        oldIPs = [cell[0] for cell in list(conn.execute('SELECT "ipConfigName" FROM v_nets'))]
+        oldNics = [cell[0] for cell in list(conn.execute('SELECT "nicName" FROM v_nets'))]
+        vnetName, subnetName, ipName, nicName = genHaiku(4)
+        while (vnetName in oldVnets) or (subnetName in oldSubnets) or (ipName in oldIPs) or (nicName in oldNics):
+             vnetName, subnetName, ipName, nicName = genHaiku(4)
+        command = text("""
+            INSERT INTO v_nets("vnetName", "subnetName", "ipConfigName", "nicName") 
+            VALUES(:vnetName, :subnetName, :ipConfigName, :nicName)
+            """)
+        params = {'vnetName': vnetName, 'subnetName': subnetName, 'ipConfigName': ipName, 'nicName': nicName}
+        conn.execute(command, **params)
+    try:
+        async_vnet_creation = network_client.virtual_networks.create_or_update(
+            os.getenv('VM_GROUP'),
+            vnetName,
+            {
+                'location': os.getenv('LOCATION'),
+                'address_space': {
+                    'address_prefixes': ['10.0.0.0/16']
                 }
-            }]
+            }
+        )
+        async_vnet_creation.wait()
+
+        #Create Subnet
+        async_subnet_creation = network_client.subnets.create_or_update(
+            os.getenv('VM_GROUP'),
+            vnetName,
+            subnetName,
+            {'address_prefix': '10.0.0.0/24'}
+        )
+        subnet_info = async_subnet_creation.result()
+
+        # Create public IP address
+        public_ip_addess_params = {
+            'location': os.getenv('LOCATION'),
+            'public_ip_allocation_method': 'Static'
         }
-    )
+        creation_result = network_client.public_ip_addresses.create_or_update(
+            os.getenv('VM_GROUP'),
+            ipName,
+            public_ip_addess_params
+        )
 
-    return async_nic_creation.result()
+        public_ip_address = network_client.public_ip_addresses.get(
+            os.getenv('VM_GROUP'),
+            ipName)
 
-def createVMParameters(nic_id):
+        # Create NIC
+        async_nic_creation = network_client.network_interfaces.create_or_update(
+            os.getenv('VM_GROUP'),
+            nicName,
+            {
+                'location': os.getenv('LOCATION'),
+                'ip_configurations': [{
+                    'name': ipName,
+                    'public_ip_address': public_ip_address,
+                    'subnet': {
+                        'id': subnet_info.id
+                    }
+                }]
+            }
+        )
+
+        return async_nic_creation.result()
+    except Exception as e:
+        if tries < 5:
+            time.sleep(2)
+            createNic(vnetName, subnetName, ipName, nicName, tries + 1)
+        else: return None
+
+def createVMParameters(nic_id, vm_size):
     oldVMs = [cell[0] for cell in list(conn.execute('SELECT "vmName" FROM v_ms'))]
     oldUserNames = [cell[0] for cell in list(conn.execute('SELECT "vmUserName" FROM v_ms'))]
     vmName, userName = genHaiku(2)
@@ -121,7 +126,7 @@ def createVMParameters(nic_id):
             'admin_password': pwd
         },
         'hardware_profile': {
-            'vm_size': 'Standard_DS1_v2'
+            'vm_size': vm_size
         },
         'storage_profile': {
             'image_reference': {
@@ -147,6 +152,7 @@ def getVM(vm_name):
     return virtual_machine
 
 def getIP(vm):
+    _, _, network_client = createClients()
     ni_reference = vm.network_profile.network_interfaces[0]
     ni_reference = ni_reference.id.split('/')
     ni_group = ni_reference[4]
@@ -168,3 +174,37 @@ def getIP(vm):
 #         WHERE "userName" = :user""")
 #     params = {'user': username}
 #     conn.execute(command, **params)
+
+def registerUser(username, vm_name):
+    command = text("""
+        INSERT INTO users("userName", "currentVM") 
+        VALUES(:userName, :currentVM)
+        """)
+    params = {'userName': username, 'currentVM': vm_name}
+    conn.execute(command, **params)
+
+def loginUser(username):
+    command = text("""
+        SELECT * FROM users WHERE "userName" = :userName
+        """)
+    params = {'userName': username}
+    user = conn.execute(command, **params).fetchall()
+    if len(user) > 0:
+        return user[0][1]
+    return None
+
+def fetchVMCredentials(vm_name):
+    command = text("""
+        SELECT * FROM v_ms WHERE "vmName" = :vm_name
+        """)
+    params = {'vm_name': vm_name}
+    vm_info = conn.execute(command, **params).fetchall()[0]
+    vm_name, username, password = vm_info[0], vm_info[2], vm_info[1]
+    # Get public IP address
+    vm = getVM(vm_name)
+    ip = getIP(vm)
+    # Decode password
+    password = jwt.decode(password, os.getenv('SECRET_KEY'))
+    return {'username': username,
+            'password': password['pwd'],
+            'public_ip': ip}
