@@ -5,7 +5,6 @@ engine = db.create_engine(
 conn = engine.connect()
 metadata = db.MetaData()
 
-
 def createClients():
     subscription_id = os.getenv('AZURE_SUBSCRIPTION_ID')
     credentials = ServicePrincipalCredentials(
@@ -28,12 +27,6 @@ def createNic(vnetName, subnetName, ipName, nicName, tries):
         vnetName, subnetName, ipName, nicName = genHaiku(4)
         while (vnetName in oldVnets) or (subnetName in oldSubnets) or (ipName in oldIPs) or (nicName in oldNics):
              vnetName, subnetName, ipName, nicName = genHaiku(4)
-        command = text("""
-            INSERT INTO v_nets("vnetName", "subnetName", "ipConfigName", "nicName") 
-            VALUES(:vnetName, :subnetName, :ipConfigName, :nicName)
-            """)
-        params = {'vnetName': vnetName, 'subnetName': subnetName, 'ipConfigName': ipName, 'nicName': nicName}
-        conn.execute(command, **params)
     try:
         async_vnet_creation = network_client.virtual_networks.create_or_update(
             os.getenv('VM_GROUP'),
@@ -87,11 +80,20 @@ def createNic(vnetName, subnetName, ipName, nicName, tries):
             }
         )
 
+        command = text("""
+            INSERT INTO v_nets("vnetName", "subnetName", "ipConfigName", "nicName") 
+            VALUES(:vnetName, :subnetName, :ipConfigName, :nicName)
+            """)
+        params = {'vnetName': vnetName, 'subnetName': subnetName, 'ipConfigName': ipName, 'nicName': nicName}
+        conn.execute(command, **params)
+
         return async_nic_creation.result()
     except Exception as e:
+        print(tries)
         if tries < 5:
-            time.sleep(2)
-            createNic(vnetName, subnetName, ipName, nicName, tries + 1)
+            print(e)
+            time.sleep(5)
+            return createNic(vnetName, subnetName, ipName, nicName, tries + 1)
         else: return None
 
 def createVMParameters(nic_id, vm_size):
