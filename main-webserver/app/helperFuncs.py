@@ -147,11 +147,21 @@ def createVMParameters(nic_id, vm_size):
 
 def getVM(vm_name):
     _, compute_client, _= createClients()
-    virtual_machine = compute_client.virtual_machines.get(
-        os.environ.get('VM_GROUP'),
-        vm_name
-    )
-    return virtual_machine
+    try:
+        virtual_machine = compute_client.virtual_machines.get(
+            os.environ.get('VM_GROUP'),
+            vm_name
+        )
+        return virtual_machine
+    except: return None
+
+def singleValueQuery(value):
+    command = text("""
+        SELECT * FROM v_ms WHERE "vmName" = :value
+        """)
+    params = {'value': value}
+    exists = conn.execute(command, **params).fetchall()
+    return True if exists else False
 
 def getIP(vm):
     _, _, network_client = createClients()
@@ -187,12 +197,12 @@ def registerUser(username, password, vm_name):
     conn.execute(command, **params)
 
 def loginUser(username, password):
-    decrypted_pwd = jwt.decode(password, os.getenv('SECRET_KEY'))['pwd']
     command = text("""
         SELECT * FROM users WHERE "userName" = :userName
         """)
     params = {'userName': username}
     user = conn.execute(command, **params).fetchall()
+    decrypted_pwd = jwt.decode(user[0][1], os.getenv('SECRET_KEY'))['pwd']
     if len(user) > 0 and decrypted_pwd == password:
         return user[0][2]
     return None

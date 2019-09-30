@@ -1,7 +1,7 @@
 from .imports import *
 from .tasks import *
 
-vm_bp = Blueprint('all', __name__)
+vm_bp = Blueprint('vm_bp', __name__)
 
 @vm_bp.route('/status/<task_id>')
 def status(task_id):

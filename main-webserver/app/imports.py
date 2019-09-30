@@ -8,7 +8,8 @@ from azure.mgmt.compute.models import DiskCreateOption
 from msrestazure.azure_exceptions import CloudError
 from haikunator import Haikunator
 from dotenv import *
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import *
+from flask_migrate import Migrate
 from celery import Celery, uuid
 from flask import *
 import sqlalchemy as db
