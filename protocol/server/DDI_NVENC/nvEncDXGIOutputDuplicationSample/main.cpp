@@ -34,7 +34,7 @@
 #include "Defs.h"
 #include "DDAImpl.h"
 #include "Preproc.h"
-#include "NvEncoder/NvEncoderD3D11.h"
+#include <NvEncoderD3D11.h>
 
 class DemoApplication
 {

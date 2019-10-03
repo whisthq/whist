@@ -32,6 +32,7 @@
 #include <fstream>
 
 #include <dxgi1_2.h>
+#pragma comment(lib, "dxgi.lib")
 #include <d3d11_2.h>
 
 class DDAImpl

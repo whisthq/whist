@@ -5,10 +5,10 @@
 
 #include "FramedSource.hh"
 #endif
-#include "../../../video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoderD3D11.h"
 #include "Defs.h"
 #include "DDAImpl.h"
 #include "Preproc.h"
+#include <NvEncoderD3D11.h>
 
 class StreamSource: public FramedSource {
 public:

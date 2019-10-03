@@ -22,7 +22,6 @@
 
 #include <cassert>
 #include <dxgi.h>
-#pragma comment(lib, "dxgi.lib")
 #include <vector>
 #include <iostream>
 #include <wincodec.h>

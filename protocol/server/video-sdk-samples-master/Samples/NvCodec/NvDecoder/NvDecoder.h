@@ -20,7 +20,7 @@
 #include <sstream>
 #include <string.h>
 #include "nvcuvid.h"
-
+//#pragma comment (lib, "cudart.lib")
 /**
 * @brief Exception class for error reporting from the decode API.
 */

@@ -16,6 +16,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <d3d11.h>
+#pragma comment(lib, "d3d11.lib")
 #include "NvEncoder.h"
 
 class NvEncoderD3D11 : public NvEncoder

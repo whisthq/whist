@@ -4,7 +4,7 @@ project(windows)
 set(CMAKE_CXX_STANDARD 17)
 
 
-find_package(CUDA 9.0 REQUIRED)
+find_package(CUDA REQUIRED)
 include_directories("${CUDA_INCLUDE_DIRS}")
 
 include_directories(live/BasicUsageEnvironment/include)
@@ -15,11 +15,6 @@ include_directories(live/mediaServer)
 include_directories(live/testProgs)
 include_directories(live/UsageEnvironment/include)
 include_directories(live/WindowsAudioInputDevice)
-include_directories(video-sdk-samples-master/nvEncBroadcastSample/common/inc)
-include_directories(video-sdk-samples-master/nvEncBroadcastSample/nvEnc/api)
-include_directories(video-sdk-samples-master/nvEncBroadcastSample/nvEnc/common/inc)
-include_directories(video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec)
-include_directories(video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore)
 include_directories(video-sdk-samples-master/nvEncDXGIOutputDuplicationSample)
 include_directories(video-sdk-samples-master/Samples/AppDecode/AppDecD3D)
 include_directories(video-sdk-samples-master/Samples/AppDecode/AppDecGL)
@@ -435,43 +430,58 @@ add_executable(windows
         live/UsageEnvironment/UsageEnvironment.cpp
         live/WindowsAudioInputDevice/WindowsAudioInputDevice_common.cpp
         live/WindowsAudioInputDevice/WindowsAudioInputDevice_common.hh
-        video-sdk-samples-master/nvEncBroadcastSample/common/inc/nvEncApp.h
-        video-sdk-samples-master/nvEncBroadcastSample/common/inc/nvEncAppUtils.h
-        video-sdk-samples-master/nvEncBroadcastSample/common/inc/nvEncDx11App.h
-        video-sdk-samples-master/nvEncBroadcastSample/common/inc/nvEncDx9App.h
-        video-sdk-samples-master/nvEncBroadcastSample/common/src/nvEncDx11App.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/common/src/nvEncDx9App.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/common/src/nvEncDxInteropFactory.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/api/nvEncBroadcastEncodeApi.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/api/nvEncBroadcastOsDefines.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/common/inc/allocator.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/common/inc/nvEncBroadcastUtils.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/common/inc/ScopeGuard.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/common/src/nvEncBroadcastUtils.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/nvEncodeAPI.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoder.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoder.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoderD3D11.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoderD3D11.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoderD3D9.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoderD3D9.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastApiMain.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/nvEncBroadcastBitstreamBuffer.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastBitstreamBuffer.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastBitstreamBufferInst.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastInterface.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/nvEncBroadcastInterfaceImpl.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastInterfaceImpl.hpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/nvEncBroadcastInterfaceImplD3D11.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastInterfaceImplD3D11.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/nvEncBroadcastInterfaceImplD3D9.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastInterfaceImplD3D9.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/nvEncBroadcastObject.cpp
-        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastObject.h
-        video-sdk-samples-master/nvEncBroadcastSample/nvEncApp/main.cpp
+        video-sdk-samples-master/Samples/AppDecode/AppDecD3D/FramePresenterD3D.h
+        video-sdk-samples-master/Samples/AppDecode/AppDecD3D/FramePresenterD3D11.h
+        video-sdk-samples-master/Samples/AppDecode/AppDecD3D/FramePresenterD3D9.h
+        video-sdk-samples-master/Samples/AppDecode/Common/AppDecUtils.h
+        video-sdk-samples-master/Samples/AppEncode/AppEncD3D11/AppEncD3D11.cpp
+        video-sdk-samples-master/Samples/AppEncode/AppEncQual/PSNR.h
+        video-sdk-samples-master/Samples/AppEncode/Common/AppEncUtils.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavcodec/avcodec.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavcodec/version.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavformat/avformat.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavformat/avio.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavformat/version.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/attributes.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/avconfig.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/avutil.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/buffer.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/channel_layout.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/common.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/cpu.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/dict.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/error.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/frame.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/intfloat.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/log.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/macros.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/mathematics.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/mem.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/opt.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/pixfmt.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/rational.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/samplefmt.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libavutil/version.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libswresample/swresample.h
+        video-sdk-samples-master/Samples/External/FFmpeg/include/libswresample/version.h
+        video-sdk-samples-master/Samples/NvCodec/NvDecoder/cuviddec.h
+        video-sdk-samples-master/Samples/NvCodec/NvDecoder/nvcuvid.h
+        video-sdk-samples-master/Samples/NvCodec/NvDecoder/NvDecoder.cpp
+        video-sdk-samples-master/Samples/NvCodec/NvDecoder/NvDecoder.h
+        video-sdk-samples-master/Samples/NvCodec/NvEncoder/nvEncodeAPI.h
+        video-sdk-samples-master/Samples/NvCodec/NvEncoder/NvEncoderCuda.cpp
+        video-sdk-samples-master/Samples/NvCodec/NvEncoder/NvEncoderCuda.h
+        video-sdk-samples-master/Samples/NvCodec/NvEncoder/NvEncoder.cpp
+        video-sdk-samples-master/Samples/NvCodec/NvEncoder/NvEncoder.h
+        video-sdk-samples-master/Samples/NvCodec/NvEncoder/NvEncoderD3D11.cpp
+        video-sdk-samples-master/Samples/NvCodec/NvEncoder/NvEncoderD3D11.h
+        video-sdk-samples-master/Samples/Utils/FFmpegDemuxer.h
+        video-sdk-samples-master/Samples/Utils/FFmpegStreamer.h
+        video-sdk-samples-master/Samples/Utils/Logger.h
+        video-sdk-samples-master/Samples/Utils/NvCodecUtils.h
+        video-sdk-samples-master/Samples/Utils/NvEncoderCLIOptions.h
         video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/DDAImpl.cpp
         video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/DDAImpl.h
         video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/Defs.h
-        video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/main.cpp
         video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/Preproc.cpp
         video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/Preproc.h)

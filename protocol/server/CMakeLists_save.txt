@@ -652,3 +652,45 @@ add_executable(windows
         video-sdk-samples-master/Samples/Utils/Logger.h
         video-sdk-samples-master/Samples/Utils/NvCodecUtils.h
         video-sdk-samples-master/Samples/Utils/NvEncoderCLIOptions.h
+
+
+        video-sdk-samples-master/nvEncBroadcastSample/common/inc/nvEncApp.h
+        video-sdk-samples-master/nvEncBroadcastSample/common/inc/nvEncAppUtils.h
+        video-sdk-samples-master/nvEncBroadcastSample/common/inc/nvEncDx11App.h
+        video-sdk-samples-master/nvEncBroadcastSample/common/inc/nvEncDx9App.h
+        video-sdk-samples-master/nvEncBroadcastSample/common/src/nvEncDx11App.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/common/src/nvEncDx9App.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/common/src/nvEncDxInteropFactory.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/api/nvEncBroadcastEncodeApi.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/api/nvEncBroadcastOsDefines.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/common/inc/allocator.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/common/inc/nvEncBroadcastUtils.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/common/inc/ScopeGuard.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/common/src/nvEncBroadcastUtils.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/nvEncodeAPI.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoder.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoder.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoderD3D11.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoderD3D11.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoderD3D9.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvCodec/nvEncoder/NvEncoderD3D9.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastApiMain.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/nvEncBroadcastBitstreamBuffer.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastBitstreamBuffer.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastBitstreamBufferInst.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastInterface.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/nvEncBroadcastInterfaceImpl.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastInterfaceImpl.hpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/nvEncBroadcastInterfaceImplD3D11.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastInterfaceImplD3D11.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/nvEncBroadcastInterfaceImplD3D9.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastInterfaceImplD3D9.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/nvEncBroadcastObject.cpp
+        video-sdk-samples-master/nvEncBroadcastSample/nvEnc/nvEncCore/NvEncBroadcastObject.h
+        video-sdk-samples-master/nvEncBroadcastSample/nvEncApp/main.cpp
+        video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/DDAImpl.cpp
+        video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/DDAImpl.h
+        video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/Defs.h
+        video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/main.cpp
+        video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/Preproc.cpp
+        video-sdk-samples-master/nvEncDXGIOutputDuplicationSample/Preproc.h

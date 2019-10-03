@@ -27,7 +27,7 @@
 #include "nvEncBroadcastInterface.h"
 #include "NvEncoder/nvEncodeAPI.h"
 #include "NvEncoder/NvEncoderD3D9.h"
-#include "NvEncoder/NvEncoderD3D11.h"
+#include <NvEncoderD3D11.h>
 #include <d3d11.h>
 #include <d3d11_1.h>
 #include <map>

@@ -11,7 +11,7 @@
 
 #pragma once
 #include <iostream>
-#include "NvEncoder/NvEncoder.h"
+#include <NvEncoder.h>
 #include "../Utils/NvEncoderCLIOptions.h"
 
 inline void ShowHelpAndExit_AppEncD3D(const char *szBadOption = NULL)

@@ -14,7 +14,7 @@
 #include <unordered_map>
 #include <memory>
 #include <wrl.h>
-#include "NvEncoder/NvEncoderD3D11.h"
+#include <NvEncoderD3D11.h>
 #include "../Utils/Logger.h"
 #include "../Utils/NvCodecUtils.h"
 #include "../Common/AppEncUtils.h"
