@@ -19,7 +19,7 @@ def createClients():
 
 def createNic(name, tries):
     _, _, network_client = createClients()
-    vnetName, subnetName, ipName, nicName = name + 'vnet', name + 'subnet', name + 'ip', name + 'nic'
+    vnetName, subnetName, ipName, nicName = name + '_vnet', name + '_subnet', name + '_ip', name + '_nic'
     try:
         async_vnet_creation = network_client.virtual_networks.create_or_update(
             os.getenv('VM_GROUP'),
@@ -90,7 +90,7 @@ def createNic(name, tries):
 
 def createVMParameters(vmName, nic_id, vm_size):
     oldUserNames = [cell[0] for cell in list(conn.execute('SELECT "vmUserName" FROM v_ms'))]
-    userName = genHaiku(1)
+    userName = genHaiku(1)[0]
     while userName in oldUserNames:
         userName = genHaiku(1)
 
@@ -186,9 +186,10 @@ def loginUser(username, password):
         """)
     params = {'userName': username}
     user = conn.execute(command, **params).fetchall()
-    decrypted_pwd = jwt.decode(user[0][1], os.getenv('SECRET_KEY'))['pwd']
-    if len(user) > 0 and decrypted_pwd == password:
-        return user[0][2]
+    if len(user > 0):
+        decrypted_pwd = jwt.decode(user[0][1], os.getenv('SECRET_KEY'))['pwd']
+        if decrypted_pwd == password:
+            return user[0][2]
     return None
 
 def fetchVMCredentials(vm_name):
