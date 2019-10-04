@@ -17,16 +17,9 @@ def createClients():
     n = NetworkManagementClient(credentials, subscription_id)
     return r, c, n
 
-def createNic(vnetName, subnetName, ipName, nicName, tries):
+def createNic(name, tries):
     _, _, network_client = createClients()
-    if tries == 0:
-        oldVnets = [cell[0] for cell in list(conn.execute('SELECT "vnetName" FROM v_nets'))]
-        oldSubnets = [cell[0] for cell in list(conn.execute('SELECT "subnetName" FROM v_nets'))]
-        oldIPs = [cell[0] for cell in list(conn.execute('SELECT "ipConfigName" FROM v_nets'))]
-        oldNics = [cell[0] for cell in list(conn.execute('SELECT "nicName" FROM v_nets'))]
-        vnetName, subnetName, ipName, nicName = genHaiku(4)
-        while (vnetName in oldVnets) or (subnetName in oldSubnets) or (ipName in oldIPs) or (nicName in oldNics):
-             vnetName, subnetName, ipName, nicName = genHaiku(4)
+    vnetName, subnetName, ipName, nicName = name + 'vnet', name + 'subnet', name + 'ip', name + 'nic'
     try:
         async_vnet_creation = network_client.virtual_networks.create_or_update(
             os.getenv('VM_GROUP'),
@@ -89,19 +82,17 @@ def createNic(vnetName, subnetName, ipName, nicName, tries):
 
         return async_nic_creation.result()
     except Exception as e:
-        print(tries)
         if tries < 5:
             print(e)
-            time.sleep(5)
-            return createNic(vnetName, subnetName, ipName, nicName, tries + 1)
+            time.sleep(3)
+            return createNic(name, tries + 1)
         else: return None
 
-def createVMParameters(nic_id, vm_size):
-    oldVMs = [cell[0] for cell in list(conn.execute('SELECT "vmName" FROM v_ms'))]
+def createVMParameters(vmName, nic_id, vm_size):
     oldUserNames = [cell[0] for cell in list(conn.execute('SELECT "vmUserName" FROM v_ms'))]
-    vmName, userName = genHaiku(2)
-    while (vmName in oldVMs) or (userName in oldUserNames):
-         vmName, userName = genHaiku(2)
+    userName = genHaiku(1)
+    while userName in oldUserNames:
+        userName = genHaiku(1)
 
     vm_reference = {
         'publisher': 'MicrosoftWindowsServer',
@@ -179,13 +170,6 @@ def getIP(vm):
     public_ip = network_client.public_ip_addresses.get(ip_group, ip_name)
     return public_ip.ip_address
 
-# def validate(username, password):
-#     command = text("""
-#         SELECT "userName"
-#         FROM users
-#         WHERE "userName" = :user""")
-#     params = {'user': username}
-#     conn.execute(command, **params)
 
 def registerUser(username, password, vm_name):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
@@ -222,3 +206,10 @@ def fetchVMCredentials(vm_name):
     return {'username': username,
             'password': password['pwd'],
             'public_ip': ip}
+
+def genVMName():
+    oldVMs = [cell[0] for cell in list(conn.execute('SELECT "vmName" FROM v_ms'))]
+    vmName = genHaiku(1)
+    while vmName in oldVMs:
+         vmName = genHaiku(1)
+    return vmName
