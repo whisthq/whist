@@ -212,4 +212,4 @@ def genVMName():
     vmName = genHaiku(1)
     while vmName in oldVMs:
          vmName = genHaiku(1)
-    return vmName
+    return vmName[0]
