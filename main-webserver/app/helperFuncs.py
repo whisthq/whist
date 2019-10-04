@@ -186,7 +186,7 @@ def loginUser(username, password):
         """)
     params = {'userName': username}
     user = conn.execute(command, **params).fetchall()
-    if len(user > 0):
+    if len(user) > 0:
         decrypted_pwd = jwt.decode(user[0][1], os.getenv('SECRET_KEY'))['pwd']
         if decrypted_pwd == password:
             return user[0][2]
