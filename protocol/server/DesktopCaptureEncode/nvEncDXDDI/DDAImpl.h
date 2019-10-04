@@ -30,7 +30,6 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-using namespace std;
 #include <dxgi1_2.h>
 #include <d3d11_2.h>
 
@@ -56,7 +55,7 @@ private:
     /// Running count of no. of accumulated desktop updates
     int frameno = 0;
     /// output file stream to dump timestamps
-    ofstream ofs;
+    std::ofstream ofs;
     /// DXGI_OUTDUPL_FRAME_INFO::latPresentTime from the last Acquired frame
     LARGE_INTEGER lastPTS = { 0 };
     /// Clock frequency from QueryPerformaceFrequency()
@@ -85,7 +84,7 @@ public:
     {
         pD3DDev->AddRef();
         pCtx->AddRef();
-        ofs = ofstream("PresentTSLog.txt");
+        ofs = std::ofstream("PresentTSLog.txt");
         QueryPerformanceFrequency(&qpcFreq);
     }
     /// Destructor. Release all resources before destroying the object
