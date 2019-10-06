@@ -98,13 +98,12 @@ int main(int argc, char** argv) {
   *env << "Beginning streaming...\n";
   play();
 
-  env->taskScheduler().doEventLoop(); // does not return
-
-  return 0; // only to prevent compiler warning
+    env->taskScheduler().doEventLoop(); // does not return
+    return 0; // only to prevent compiler warning
 }
 
 void afterPlaying(void* /*clientData*/) {
-  *env << "...done reading from file\n";
+  *env << "...done reading from stream\n";
   videoSink->stopPlaying();
   Medium::close(videoSource);
   // Note that this also closes the input file that this source read from.
@@ -127,9 +126,9 @@ void play() {
   FramedSource* videoES = StreamSource::createNew(*env); // reading from Stream
 
   // Create a framer for the Video Elementary Stream:
-  videoSource = H264VideoStreamFramer::createNew(*env, videoES);
-
+  //videoSource = H264VideoStreamFramer::createNew(*env, videoES);
+  auto _videoSource = H264VideoStreamDiscreteFramer::createNew(*env, videoES);
   // Finally, start playing:
   *env << "Beginning to read from stream...\n";
-  videoSink->startPlaying(*videoSource, afterPlaying, videoSink);
+  videoSink->startPlaying(*_videoSource, afterPlaying, videoSink);
 }

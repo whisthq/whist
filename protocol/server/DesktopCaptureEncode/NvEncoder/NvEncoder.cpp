@@ -443,7 +443,7 @@ void NvEncoder::DoEncode(NV_ENC_INPUT_PTR inputBuffer, std::vector<std::vector<u
     if (nvStatus == NV_ENC_SUCCESS || nvStatus == NV_ENC_ERR_NEED_MORE_INPUT)
     {
         m_iToSend++;
-        GetEncodedPacket(m_vBitstreamOutputBuffer, vPacket, true);
+        GetEncodedPacket(m_vBitstreamOutputBuffer, vPacket, false);
     }
     else
     {
@@ -470,6 +470,9 @@ void NvEncoder::GetEncodedPacket(std::vector<NV_ENC_OUTPUT_PTR> &vOutputBuffer, 
 {
     unsigned i = 0;
     int iEnd = bOutputDelay ? m_iToSend - m_nOutputDelay : m_iToSend;
+
+    //std::cout <<  m_iToSend - m_nOutputDelay << " -- " << m_iToSend << std::endl;
+    //std::cout << m_iGot << " -- " << iEnd << std::endl;
     for (; m_iGot < iEnd; m_iGot++)
     {
         WaitForCompletionEvent(m_iGot % m_nEncoderBuffer);

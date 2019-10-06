@@ -4,10 +4,6 @@ project(protocol-windows)
 set(CMAKE_CXX_STANDARD 17)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}") # append FindDirectX11.cmake to module path
 
-# Cuda
-find_package(CUDA 9.0 REQUIRED)
-include_directories("${CUDA_INCLUDE_DIRS}")
-
 # DirectX11
 find_package(DirectX11 REQUIRED)
 include_directories(${DirectX11_INCLUDE_DIRS})

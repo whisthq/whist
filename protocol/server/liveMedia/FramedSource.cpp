@@ -53,7 +53,7 @@ Boolean FramedSource::lookupByName(UsageEnvironment& env, char const* sourceName
   resultSource = (FramedSource*)source;
   return True;
 }
-
+#include <iostream>
 void FramedSource::getNextFrame(unsigned char* to, unsigned maxSize,
 				afterGettingFunc* afterGettingFunc,
 				void* afterGettingClientData,
@@ -64,7 +64,6 @@ void FramedSource::getNextFrame(unsigned char* to, unsigned maxSize,
     envir() << "FramedSource[" << this << "]::getNextFrame(): attempting to read more than once at the same time!\n";
     envir().internalError();
   }
-
   fTo = to;
   fMaxSize = maxSize;
   fNumTruncatedBytes = 0; // by default; could be changed by doGetNextFrame()
@@ -74,10 +73,10 @@ void FramedSource::getNextFrame(unsigned char* to, unsigned maxSize,
   fOnCloseFunc = onCloseFunc;
   fOnCloseClientData = onCloseClientData;
   fIsCurrentlyAwaitingData = True;
-
   doGetNextFrame();
 }
 
+#include <iostream>
 void FramedSource::afterGetting(FramedSource* source) {
   source->nextTask() = NULL;
   source->fIsCurrentlyAwaitingData = False;

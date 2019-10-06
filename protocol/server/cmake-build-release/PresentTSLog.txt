@@ -1,0 +1,258 @@
+frameNo: 0 | Accumulated: 0MouseOnly?673453134591
+frameNo: 0 | Accumulated: 2 | PTS: 673453471790 | PTSInterval: 67345347179000
+frameNo: 2 | Accumulated: 0MouseOnly?673453850858
+frameNo: 2 | Accumulated: 0MouseOnly?673453943766
+frameNo: 2 | Accumulated: 0MouseOnly?673454093546
+frameNo: 2 | Accumulated: 1 | PTS: 673454101071 | PTSInterval: 62928000
+frameNo: 3 | Accumulated: 0MouseOnly?673454243017
+frameNo: 3 | Accumulated: 0MouseOnly?673454407572
+frameNo: 3 | Accumulated: 0MouseOnly?673454574924
+frameNo: 3 | Accumulated: 0MouseOnly?673454744124
+frameNo: 3 | Accumulated: 0MouseOnly?673454813057
+frameNo: 3 | Accumulated: 0MouseOnly?673454973604
+frameNo: 3 | Accumulated: 1 | PTS: 673455089280 | PTSInterval: 98821000
+frameNo: 4 | Accumulated: 0MouseOnly?673455134132
+frameNo: 4 | Accumulated: 0MouseOnly?673455374463
+frameNo: 4 | Accumulated: 1 | PTS: 673455642540 | PTSInterval: 55326000
+frameNo: 5 | Accumulated: 0MouseOnly?673455924313
+frameNo: 5 | Accumulated: 1 | PTS: 673455950409 | PTSInterval: 30786000
+frameNo: 6 | Accumulated: 0MouseOnly?673456084064
+frameNo: 6 | Accumulated: 0MouseOnly?673456425017
+frameNo: 6 | Accumulated: 0MouseOnly?673456563913
+frameNo: 6 | Accumulated: 1 | PTS: 673456590578 | PTSInterval: 64017000
+frameNo: 7 | Accumulated: 0MouseOnly?673456814009
+frameNo: 7 | Accumulated: 0MouseOnly?673456894375
+frameNo: 7 | Accumulated: 2 | PTS: 673457208280 | PTSInterval: 61771000
+frameNo: 9 | Accumulated: 0MouseOnly?673457595150
+frameNo: 9 | Accumulated: 0MouseOnly?673457693903
+frameNo: 9 | Accumulated: 1 | PTS: 673457808180 | PTSInterval: 59990000
+frameNo: 10 | Accumulated: 0MouseOnly?673457854491
+frameNo: 10 | Accumulated: 0MouseOnly?673458013269
+frameNo: 10 | Accumulated: 1 | PTS: 673458127308 | PTSInterval: 31912000
+frameNo: 11 | Accumulated: 1 | PTS: 673458426493 | PTSInterval: 29919000
+frameNo: 12 | Accumulated: 1 | PTS: 673458736755 | PTSInterval: 31026000
+frameNo: 13 | Accumulated: 1 | PTS: 673459355522 | PTSInterval: 61877000
+frameNo: 14 | Accumulated: 1 | PTS: 673460006812 | PTSInterval: 65129000
+frameNo: 15 | Accumulated: 1 | PTS: 673460308929 | PTSInterval: 30211000
+frameNo: 16 | Accumulated: 1 | PTS: 673460596788 | PTSInterval: 28786000
+frameNo: 17 | Accumulated: 1 | PTS: 673460903524 | PTSInterval: 30674000
+frameNo: 18 | Accumulated: 0MouseOnly?673461284074
+frameNo: 18 | Accumulated: 0MouseOnly?673461452947
+frameNo: 18 | Accumulated: 1 | PTS: 673461503679 | PTSInterval: 60015000
+frameNo: 19 | Accumulated: 0MouseOnly?673461603049
+frameNo: 19 | Accumulated: 0MouseOnly?673461683390
+frameNo: 19 | Accumulated: 1 | PTS: 673461803730 | PTSInterval: 30006000
+frameNo: 20 | Accumulated: 0MouseOnly?673461853276
+frameNo: 20 | Accumulated: 1 | PTS: 673462410487 | PTSInterval: 60675000
+frameNo: 21 | Accumulated: 0MouseOnly?673462644693
+frameNo: 21 | Accumulated: 1 | PTS: 673462717987 | PTSInterval: 30750000
+frameNo: 22 | Accumulated: 1 | PTS: 673463013299 | PTSInterval: 29531000
+frameNo: 23 | Accumulated: 1 | PTS: 673463619043 | PTSInterval: 60575000
+frameNo: 24 | Accumulated: 1 | PTS: 673463925966 | PTSInterval: 30692000
+frameNo: 25 | Accumulated: 0MouseOnly?673464093648
+frameNo: 25 | Accumulated: 0MouseOnly?673464243281
+frameNo: 25 | Accumulated: 0MouseOnly?673464493173
+frameNo: 25 | Accumulated: 1 | PTS: 673464846935 | PTSInterval: 92097000
+frameNo: 26 | Accumulated: 0MouseOnly?673464974000
+frameNo: 26 | Accumulated: 1 | PTS: 673465163805 | PTSInterval: 31687000
+frameNo: 27 | Accumulated: 0MouseOnly?673465214050
+frameNo: 27 | Accumulated: 0MouseOnly?673465293559
+frameNo: 27 | Accumulated: 0MouseOnly?673465693674
+frameNo: 27 | Accumulated: 0MouseOnly?673466253656
+frameNo: 27 | Accumulated: 0MouseOnly?673467053443
+frameNo: 27 | Accumulated: 1 | PTS: 673467275583 | PTSInterval: 211178000
+frameNo: 28 | Accumulated: 0MouseOnly?673468324090
+frameNo: 28 | Accumulated: 0MouseOnly?673468723397
+frameNo: 28 | Accumulated: 0MouseOnly?673468963476
+frameNo: 28 | Accumulated: 0MouseOnly?673469063076
+frameNo: 28 | Accumulated: 0MouseOnly?673469203304
+frameNo: 28 | Accumulated: 0MouseOnly?673469373351
+frameNo: 28 | Accumulated: 1 | PTS: 673469401606 | PTSInterval: 212602000
+frameNo: 29 | Accumulated: 0MouseOnly?673469533266
+frameNo: 29 | Accumulated: 0MouseOnly?673469693674
+frameNo: 29 | Accumulated: 1 | PTS: 673470030340 | PTSInterval: 62874000
+frameNo: 30 | Accumulated: 1 | PTS: 673470327791 | PTSInterval: 29745000
+frameNo: 31 | Accumulated: 0MouseOnly?673470654807
+frameNo: 31 | Accumulated: 0MouseOnly?673471053807
+frameNo: 31 | Accumulated: 0MouseOnly?673471214099
+frameNo: 31 | Accumulated: 0MouseOnly?673471282821
+frameNo: 31 | Accumulated: 1 | PTS: 673471850919 | PTSInterval: 152312000
+frameNo: 32 | Accumulated: 0MouseOnly?673473523819
+frameNo: 32 | Accumulated: 0MouseOnly?673473603271
+frameNo: 32 | Accumulated: 0MouseOnly?673473853467
+frameNo: 32 | Accumulated: 0MouseOnly?673474163085
+frameNo: 32 | Accumulated: 1 | PTS: 673474281048 | PTSInterval: 243013000
+frameNo: 33 | Accumulated: 0MouseOnly?673474403429
+frameNo: 33 | Accumulated: 0MouseOnly?673475204720
+frameNo: 33 | Accumulated: 1 | PTS: 673475205863 | PTSInterval: 92482000
+frameNo: 34 | Accumulated: 0MouseOnly?673475683588
+frameNo: 34 | Accumulated: 0MouseOnly?673475773458
+frameNo: 34 | Accumulated: 0MouseOnly?673475923353
+frameNo: 34 | Accumulated: 0MouseOnly?673476083223
+frameNo: 34 | Accumulated: 0MouseOnly?673476333754
+frameNo: 34 | Accumulated: 1 | PTS: 673476401847 | PTSInterval: 119598000
+frameNo: 35 | Accumulated: 0MouseOnly?673476573944
+frameNo: 35 | Accumulated: 0MouseOnly?673476745764
+frameNo: 35 | Accumulated: 0MouseOnly?673477213745
+frameNo: 35 | Accumulated: 0MouseOnly?673477583594
+frameNo: 35 | Accumulated: 1 | PTS: 673478526232 | PTSInterval: 212439000
+frameNo: 36 | Accumulated: 0MouseOnly?673478894053
+frameNo: 36 | Accumulated: 0MouseOnly?673479053325
+frameNo: 36 | Accumulated: 0MouseOnly?673479293329
+frameNo: 36 | Accumulated: 0MouseOnly?673479374972
+frameNo: 36 | Accumulated: 1 | PTS: 673480049257 | PTSInterval: 152302000
+frameNo: 37 | Accumulated: 0MouseOnly?673480173842
+frameNo: 37 | Accumulated: 1 | PTS: 673480964074 | PTSInterval: 91482000
+frameNo: 38 | Accumulated: 0MouseOnly?673481133845
+frameNo: 38 | Accumulated: 0MouseOnly?673481453610
+frameNo: 38 | Accumulated: 0MouseOnly?673481523358
+frameNo: 38 | Accumulated: 1 | PTS: 673483399619 | PTSInterval: 243554000
+frameNo: 39 | Accumulated: 0MouseOnly?673484494898
+frameNo: 39 | Accumulated: 0MouseOnly?673484643889
+frameNo: 39 | Accumulated: 1 | PTS: 673484922233 | PTSInterval: 152262000
+frameNo: 40 | Accumulated: 0MouseOnly?673485214945
+frameNo: 40 | Accumulated: 1 | PTS: 673485256948 | PTSInterval: 33471000
+frameNo: 41 | Accumulated: 0MouseOnly?673485294076
+frameNo: 41 | Accumulated: 0MouseOnly?673485443489
+frameNo: 41 | Accumulated: 0MouseOnly?673485603735
+frameNo: 41 | Accumulated: 0MouseOnly?673485763514
+frameNo: 41 | Accumulated: 1 | PTS: 673485833967 | PTSInterval: 57702000
+frameNo: 42 | Accumulated: 0MouseOnly?673485923563
+frameNo: 42 | Accumulated: 0MouseOnly?673486093538
+frameNo: 42 | Accumulated: 0MouseOnly?673486243560
+frameNo: 42 | Accumulated: 0MouseOnly?673486413800
+frameNo: 42 | Accumulated: 0MouseOnly?673486644020
+frameNo: 42 | Accumulated: 0MouseOnly?673486813374
+frameNo: 42 | Accumulated: 0MouseOnly?673486883606
+frameNo: 42 | Accumulated: 1 | PTS: 673487961225 | PTSInterval: 212726000
+frameNo: 43 | Accumulated: 0MouseOnly?673488594313
+frameNo: 43 | Accumulated: 1 | PTS: 673490113505 | PTSInterval: 215228000
+frameNo: 44 | Accumulated: 1 | PTS: 673490390920 | PTSInterval: 27742000
+frameNo: 45 | Accumulated: 1 | PTS: 673492819309 | PTSInterval: 242838000
+frameNo: 46 | Accumulated: 1 | PTS: 673495250048 | PTSInterval: 243074000
+frameNo: 47 | Accumulated: 0MouseOnly?673496083506
+frameNo: 47 | Accumulated: 0MouseOnly?673496263290
+frameNo: 47 | Accumulated: 0MouseOnly?673497123131
+frameNo: 47 | Accumulated: 0MouseOnly?673497203504
+frameNo: 47 | Accumulated: 0MouseOnly?673497373244
+frameNo: 47 | Accumulated: 1 | PTS: 673497674913 | PTSInterval: 242487000
+frameNo: 48 | Accumulated: 0MouseOnly?673499124370
+frameNo: 48 | Accumulated: 0MouseOnly?673499443608
+frameNo: 48 | Accumulated: 0MouseOnly?673499603634
+frameNo: 48 | Accumulated: 0MouseOnly?673499683064
+frameNo: 48 | Accumulated: 1 | PTS: 673499815270 | PTSInterval: 214036000
+frameNo: 49 | Accumulated: 1 | PTS: 673500202601 | PTSInterval: 38733000
+frameNo: 50 | Accumulated: 0MouseOnly?673501123866
+frameNo: 50 | Accumulated: 1 | PTS: 673501961625 | PTSInterval: 175902000
+frameNo: 51 | Accumulated: 0MouseOnly?673502576928
+frameNo: 51 | Accumulated: 0MouseOnly?673502724966
+frameNo: 51 | Accumulated: 0MouseOnly?673503053873
+frameNo: 51 | Accumulated: 0MouseOnly?673503213879
+frameNo: 51 | Accumulated: 0MouseOnly?673503363182
+frameNo: 51 | Accumulated: 0MouseOnly?673503453169
+frameNo: 51 | Accumulated: 0MouseOnly?673503763735
+frameNo: 51 | Accumulated: 0MouseOnly?673503923390
+frameNo: 51 | Accumulated: 0MouseOnly?673504253529
+frameNo: 51 | Accumulated: 1 | PTS: 673504703667 | PTSInterval: 274204000
+frameNo: 52 | Accumulated: 1 | PTS: 673505036177 | PTSInterval: 33251000
+frameNo: 53 | Accumulated: 1 | PTS: 673505307064 | PTSInterval: 27089000
+frameNo: 54 | Accumulated: 1 | PTS: 673506838887 | PTSInterval: 153182000
+frameNo: 55 | Accumulated: 0MouseOnly?673508735782
+frameNo: 55 | Accumulated: 0MouseOnly?673508883258
+frameNo: 55 | Accumulated: 1 | PTS: 673509280208 | PTSInterval: 244132000
+frameNo: 56 | Accumulated: 1 | PTS: 673510229127 | PTSInterval: 94892000
+frameNo: 57 | Accumulated: 1 | PTS: 673511407790 | PTSInterval: 117867000
+frameNo: 58 | Accumulated: 1 | PTS: 673513852502 | PTSInterval: 244471000
+frameNo: 59 | Accumulated: 1 | PTS: 673516591377 | PTSInterval: 273887000
+frameNo: 60 | Accumulated: 1 | PTS: 673519345362 | PTSInterval: 275399000
+frameNo: 61 | Accumulated: 1 | PTS: 673521761263 | PTSInterval: 241590000
+frameNo: 62 | Accumulated: 0MouseOnly?673522894316
+frameNo: 62 | Accumulated: 0MouseOnly?673522963183
+frameNo: 62 | Accumulated: 0MouseOnly?673523133541
+frameNo: 62 | Accumulated: 0MouseOnly?673523374161
+frameNo: 62 | Accumulated: 0MouseOnly?673523523581
+frameNo: 62 | Accumulated: 0MouseOnly?673523603227
+frameNo: 62 | Accumulated: 0MouseOnly?673523763254
+frameNo: 62 | Accumulated: 0MouseOnly?673524173490
+frameNo: 62 | Accumulated: 1 | PTS: 673524206582 | PTSInterval: 244532000
+frameNo: 63 | Accumulated: 0MouseOnly?673524734361
+frameNo: 63 | Accumulated: 1 | PTS: 673525149654 | PTSInterval: 94307000
+frameNo: 64 | Accumulated: 0MouseOnly?673525294304
+frameNo: 64 | Accumulated: 1 | PTS: 673526650206 | PTSInterval: 150055000
+frameNo: 65 | Accumulated: 0MouseOnly?673526655670
+frameNo: 65 | Accumulated: 1 | PTS: 673529385774 | PTSInterval: 273557000
+frameNo: 66 | Accumulated: 1 | PTS: 673530324124 | PTSInterval: 93835000
+frameNo: 67 | Accumulated: 1 | PTS: 673531822838 | PTSInterval: 149871000
+frameNo: 68 | Accumulated: 1 | PTS: 673534239435 | PTSInterval: 241660000
+frameNo: 69 | Accumulated: 1 | PTS: 673536682279 | PTSInterval: 244284000
+frameNo: 70 | Accumulated: 1 | PTS: 673539113599 | PTSInterval: 243132000
+frameNo: 71 | Accumulated: 0MouseOnly?673539684198
+frameNo: 71 | Accumulated: 1 | PTS: 673540355845 | PTSInterval: 124225000
+frameNo: 72 | Accumulated: 0MouseOnly?673541135340
+frameNo: 72 | Accumulated: 1 | PTS: 673541548592 | PTSInterval: 119275000
+frameNo: 73 | Accumulated: 0MouseOnly?673543214435
+frameNo: 73 | Accumulated: 0MouseOnly?673543283344
+frameNo: 73 | Accumulated: 1 | PTS: 673543672411 | PTSInterval: 212382000
+frameNo: 74 | Accumulated: 0MouseOnly?673544253898
+frameNo: 74 | Accumulated: 1 | PTS: 673545213661 | PTSInterval: 154125000
+frameNo: 75 | Accumulated: 1 | PTS: 673545800033 | PTSInterval: 58637000
+frameNo: 76 | Accumulated: 0MouseOnly?673547124684
+frameNo: 76 | Accumulated: 0MouseOnly?673547693599
+frameNo: 76 | Accumulated: 0MouseOnly?673547853270
+frameNo: 76 | Accumulated: 1 | PTS: 673548233779 | PTSInterval: 243374000
+frameNo: 77 | Accumulated: 1 | PTS: 673550379266 | PTSInterval: 214549000
+frameNo: 78 | Accumulated: 1 | PTS: 673550955092 | PTSInterval: 57583000
+frameNo: 79 | Accumulated: 1 | PTS: 673553064826 | PTSInterval: 210973000
+frameNo: 80 | Accumulated: 0MouseOnly?673553454390
+frameNo: 80 | Accumulated: 0MouseOnly?673554176114
+frameNo: 80 | Accumulated: 1 | PTS: 673555212161 | PTSInterval: 214734000
+frameNo: 81 | Accumulated: 1 | PTS: 673555512115 | PTSInterval: 29995000
+frameNo: 82 | Accumulated: 1 | PTS: 673557600474 | PTSInterval: 208836000
+frameNo: 83 | Accumulated: 1 | PTS: 673560339963 | PTSInterval: 273949000
+frameNo: 84 | Accumulated: 1 | PTS: 673562748236 | PTSInterval: 240827000
+frameNo: 85 | Accumulated: 1 | PTS: 673565191406 | PTSInterval: 244317000
+frameNo: 86 | Accumulated: 0MouseOnly?673565463946
+frameNo: 86 | Accumulated: 0MouseOnly?673565933543
+frameNo: 86 | Accumulated: 0MouseOnly?673566093812
+frameNo: 86 | Accumulated: 0MouseOnly?673566253708
+frameNo: 86 | Accumulated: 0MouseOnly?673566413533
+frameNo: 86 | Accumulated: 0MouseOnly?673566573785
+frameNo: 86 | Accumulated: 0MouseOnly?673566813876
+frameNo: 86 | Accumulated: 0MouseOnly?673566893714
+frameNo: 86 | Accumulated: 0MouseOnly?673567064704
+frameNo: 86 | Accumulated: 0MouseOnly?673567076516
+frameNo: 86 | Accumulated: 0MouseOnly?673567213656
+frameNo: 86 | Accumulated: 0MouseOnly?673567230766
+frameNo: 86 | Accumulated: 0MouseOnly?673567373910
+frameNo: 86 | Accumulated: 0MouseOnly?673567543264
+frameNo: 86 | Accumulated: 1 | PTS: 673567633329 | PTSInterval: 244192000
+frameNo: 87 | Accumulated: 0MouseOnly?673567694134
+frameNo: 87 | Accumulated: 0MouseOnly?673567853376
+frameNo: 87 | Accumulated: 0MouseOnly?673567864282
+frameNo: 87 | Accumulated: 0MouseOnly?673567954003
+frameNo: 87 | Accumulated: 0MouseOnly?673567964503
+frameNo: 87 | Accumulated: 0MouseOnly?673568093663
+frameNo: 87 | Accumulated: 0MouseOnly?673568094603
+frameNo: 87 | Accumulated: 1 | PTS: 673568316818 | PTSInterval: 68349000
+frameNo: 88 | Accumulated: 2 | PTS: 673568879077 | PTSInterval: 56226000
+frameNo: 90 | Accumulated: 1 | PTS: 673569798370 | PTSInterval: 91930000
+frameNo: 91 | Accumulated: 1 | PTS: 673570094536 | PTSInterval: 29616000
+frameNo: 92 | Accumulated: 1 | PTS: 673570373865 | PTSInterval: 27933000
+frameNo: 93 | Accumulated: 0MouseOnly?673570974387
+frameNo: 93 | Accumulated: 0MouseOnly?673571214352
+frameNo: 93 | Accumulated: 0MouseOnly?673571683598
+frameNo: 93 | Accumulated: 0MouseOnly?673572013975
+frameNo: 93 | Accumulated: 1 | PTS: 673572486395 | PTSInterval: 211253000
+frameNo: 94 | Accumulated: 0MouseOnly?673573694646
+frameNo: 94 | Accumulated: 2 | PTS: 673574028077 | PTSInterval: 154168000
+frameNo: 96 | Accumulated: 0MouseOnly?673574093907
+frameNo: 96 | Accumulated: 0MouseOnly?673574253495
+frameNo: 96 | Accumulated: 1 | PTS: 673574298490 | PTSInterval: 27042000
+frameNo: 97 | Accumulated: 1 | PTS: 673574638181 | PTSInterval: 33969000
+frameNo: 98 | Accumulated: 1 | PTS: 673576740715 | PTSInterval: 210253000
+frameNo: 99 | Accumulated: 1 | PTS: 673579166074 | PTSInterval: 242536000
+frameNo: 100 | Accumulated: 1 | PTS: 673579459219 | PTSInterval: 29314000
+frameNo: 101 | Accumulated: 1 | PTS: 673581596686 | PTSInterval: 213747000
+frameNo: 102 | Accumulated: 1 | PTS: 673584332778 | PTSInterval: 273609000
+frameNo: 103 | Accumulated: 1 | PTS: 673586768409 | PTSInterval: 243563000
+frameNo: 104 | Accumulated: 1 | PTS: 673589211181 | PTSInterval: 244278000

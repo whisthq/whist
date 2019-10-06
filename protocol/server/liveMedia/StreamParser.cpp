@@ -25,6 +25,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 #define BANK_SIZE 150000
 
+#include <iostream>
 void StreamParser::flushInput() {
   fCurParserIndex = fSavedParserIndex = 0;
   fSavedRemainingUnparsedBits = fRemainingUnparsedBits = 0;

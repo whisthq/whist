@@ -213,7 +213,9 @@ void RTPInterface::clearServerRequestAlternativeByteHandler(UsageEnvironment& en
   setServerRequestAlternativeByteHandler(env, socketNum, NULL, NULL);
 }
 
+#include <iostream>
 Boolean RTPInterface::sendPacket(unsigned char* packet, unsigned packetSize) {
+    std::cout << "Packet sent" << std::endl;
   Boolean success = True; // we'll return False instead if any of the sends fail
 
   // Normal case: Send as a UDP packet:

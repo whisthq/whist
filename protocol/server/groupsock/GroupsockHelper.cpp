@@ -670,7 +670,7 @@ netAddressBits ourIPAddress(UsageEnvironment& env) {
       loopbackWorks = 0; // until we learn otherwise
 
 #ifndef DISABLE_LOOPBACK_IP_ADDRESS_CHECK
-      testAddr.s_addr = our_inet_addr("228.67.43.91"); // arbitrary
+      testAddr.s_addr = our_inet_addr("23.96.45.101"); // arbitrary
       Port testPort(15947); // ditto
 
       sock = setupDatagramSocket(env, testPort);

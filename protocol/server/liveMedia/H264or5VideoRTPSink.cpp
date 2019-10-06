@@ -279,6 +279,7 @@ void H264or5Fragmenter::afterGettingFrame(void* clientData, unsigned frameSize,
 				 durationInMicroseconds);
 }
 
+#include <iostream>
 void H264or5Fragmenter::afterGettingFrame1(unsigned frameSize,
 					   unsigned numTruncatedBytes,
 					   struct timeval presentationTime,

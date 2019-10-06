@@ -21,11 +21,11 @@ public:
 private:
   void doGetNextFrame() override;
 public:
-  class DemoApplication
+  class DemoApplication2
 {
       //printf(__FUNCTION__(": Line %d, File %s Returning error 0x%08x\n"), __LINE__, __FILE__, x);
     /// Demo Application Core class
-#define returnIfError(x)\
+#define returnIfError(x) \
     if (FAILED(x))\
     {\
         printf("FAIL");\
@@ -60,8 +60,10 @@ private:
     const static bool bNoVPBlt = false;
     /// Video output file name
     const char fnameBase[64] = "DDATest_%d.h264";
+public:
     /// Encoded video bitstream packet in CPU memory
     std::vector<std::vector<uint8_t>> vPacket;
+private:
     /// NVENCODEAPI session intialization parameters
     NV_ENC_INITIALIZE_PARAMS encInitParams = { 0 };
     /// NVENCODEAPI video encoding configuration parameters
@@ -111,6 +113,7 @@ private:
         HRESULT hr = S_OK;
         if (!pDDAWrapper)
         {
+            std::cout << "INIT THE USELESS" << std::endl;
             pDDAWrapper = new DDAImpl(pD3DDev, pCtx);
             hr = pDDAWrapper->Init();
             returnIfError(hr);
@@ -121,22 +124,17 @@ private:
     /// Initialize NVENCODEAPI wrapper
     HRESULT InitEnc()
     {
-        std::cout << "Enc 1" << std::endl;
         if (!pEnc)
         {
-            std::cout << "Enc 1.1" << std::endl;
             DWORD w = bNoVPBlt ? pDDAWrapper->getWidth() : encWidth; 
             DWORD h = bNoVPBlt ? pDDAWrapper->getHeight() : encHeight;
             NV_ENC_BUFFER_FORMAT fmt = bNoVPBlt ? NV_ENC_BUFFER_FORMAT_ARGB : NV_ENC_BUFFER_FORMAT_NV12;
-            std::cout << "Enc 1.2" << std::endl;
             pEnc = new NvEncoderD3D11(pD3DDev, w, h, fmt);
-            std::cout << "Enc 1.2.1" << std::endl;
             if (!pEnc)
             {
                 returnIfError(E_FAIL);
             }
 
-            std::cout << "Enc 1.3" << std::endl;
             ZeroMemory(&encInitParams, sizeof(encInitParams));
             ZeroMemory(&encConfig, sizeof(encConfig));
             encInitParams.encodeConfig = &encConfig;
@@ -145,22 +143,18 @@ private:
             encInitParams.maxEncodeWidth = pDDAWrapper->getWidth();
             encInitParams.maxEncodeHeight = pDDAWrapper->getHeight();
             encConfig.gopLength = 5;
-            std::cout << "Enc 1.4" << std::endl;
 
             try
             {
-                std::cout << "Enc 1.5" << std::endl;
                 pEnc->CreateDefaultEncoderParams(&encInitParams, NV_ENC_CODEC_H264_GUID, NV_ENC_PRESET_LOW_LATENCY_HP_GUID);
                 pEnc->CreateEncoder(&encInitParams);
 
-                std::cout << "Enc 1.6" << std::endl;
             }
             catch (...)
             {
                 returnIfError(E_FAIL);
             }
         }
-        std::cout << "Enc 2" << std::endl;
         return S_OK;
     }
 
@@ -192,6 +186,11 @@ private:
     /// Write encoded video output to file
     u_int8_t* WriteEncOutput()
     {
+        for (std::vector<uint8_t> &packet : vPacket) {
+            std::cout << "Write" << std::endl;
+            fwrite(packet.data(), packet.size(), 1, fp);
+        }
+        //std::cout << "SIZE_PACKET : " << vPacket[0].size() << std::endl;
 		return vPacket[0].data();
     }
 
@@ -199,28 +198,23 @@ public:
     /// Initialize demo application
     HRESULT Init()
     {
-        std::cout << "DEMO 1" << std::endl;
         HRESULT hr = S_OK;
 
         hr = InitDXGI();
         returnIfError(hr);
 
-        std::cout << "DEMO 2" << std::endl;
         hr = InitDup();
         returnIfError(hr);
-        std::cout << "DEMO 2.1" << std::endl;
 
 
         hr = InitEnc();
         returnIfError(hr);
 
-        std::cout << "DEMO 3" << std::endl;
         hr = InitColorConv();
         returnIfError(hr);
 
         hr = InitOutFile();
         returnIfError(hr);
-        std::cout << "DEMO 4" << std::endl;
         return hr;
     }
 
@@ -263,7 +257,8 @@ public:
         try
         {
             pEnc->EncodeFrame(vPacket);
-            return WriteEncOutput();
+            u_int8_t* result = WriteEncOutput();
+            return result;
         }
         catch (...)
         {
@@ -300,7 +295,8 @@ public:
             {
                 /// Flush the encoder and write all output to file before destroying the encoder
                 pEnc->EndEncode(vPacket);
-                WriteEncOutput();
+                //FIXME
+                //WriteEncOutput();
                 pEnc->DestroyEncoder();
                 if (bDelete)
                 {
@@ -321,8 +317,8 @@ public:
             SAFE_RELEASE(pCtx);
         }
     }
-    DemoApplication() {}
-    ~DemoApplication()
+    DemoApplication2() {}
+    ~DemoApplication2()
     {
         Cleanup(true); 
     }

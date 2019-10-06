@@ -50,6 +50,7 @@ MPEGVideoStreamFramer::~MPEGVideoStreamFramer() {
   delete fParser;
 }
 
+#include <iostream>
 void MPEGVideoStreamFramer::flushInput() {
   reset();
   if (fParser != NULL) fParser->flushInput();
@@ -137,6 +138,7 @@ void MPEGVideoStreamFramer
   }
 }
 
+#include <iostream>
 void MPEGVideoStreamFramer::doGetNextFrame() {
   fParser->registerReadInterest(fTo, fMaxSize);
   continueReadProcessing();

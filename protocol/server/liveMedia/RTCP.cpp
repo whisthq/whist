@@ -933,6 +933,7 @@ void RTCPInstance::sendBYE(char const* reason) {
   sendBuiltPacket();
 }
 
+#include <iostream>
 void RTCPInstance::sendBuiltPacket() {
 #ifdef DEBUG
   fprintf(stderr, "sending RTCP packet\n");
@@ -1286,10 +1287,10 @@ extern "C" void Reschedule(double nextTime, event e) {
   instance->reschedule(nextTime);
 }
 
+
 extern "C" void SendRTCPReport(event e) {
   RTCPInstance* instance = (RTCPInstance*)e;
   if (instance == NULL) return;
-
   instance->sendReport();
 }
 

@@ -96,7 +96,6 @@ HRESULT DDAImpl::GetCapturedFrame(ID3D11Texture2D **ppTex2D, int wait)
     
 
 #define RETURN_ERR(x) {printf(__FUNCTION__": %d : Line %d return 0x%x\n", frameno, __LINE__, x);return x;}
-
     if (pResource)
     {
         pDup->ReleaseFrame();
@@ -104,7 +103,7 @@ HRESULT DDAImpl::GetCapturedFrame(ID3D11Texture2D **ppTex2D, int wait)
         pResource = nullptr;
     }
 
-    hr = pDup->AcquireNextFrame(wait, &frameInfo, &pResource);
+    hr = pDup->AcquireNextFrame(2000, &frameInfo, &pResource);
     if (FAILED(hr))
     {
         if (hr == DXGI_ERROR_WAIT_TIMEOUT)
@@ -142,7 +141,7 @@ HRESULT DDAImpl::GetCapturedFrame(ID3D11Texture2D **ppTex2D, int wait)
     LARGE_INTEGER pts = frameInfo.LastPresentTime;  MICROSEC_TIME(pts, qpcFreq);
     LONGLONG interval = pts.QuadPart - lastPTS.QuadPart;
 
-    printf(__FUNCTION__": %d : Accumulated Frames %u PTS Interval %lld PTS %lld\n", frameno, frameInfo.AccumulatedFrames,  interval * 1000, frameInfo.LastPresentTime.QuadPart);
+    //printf(__FUNCTION__": %d : Accumulated Frames %u PTS Interval %lld PTS %lld\n", frameno, frameInfo.AccumulatedFrames,  interval * 1000, frameInfo.LastPresentTime.QuadPart);
     ofs << "frameNo: " << frameno << " | Accumulated: "<< frameInfo.AccumulatedFrames <<" | PTS: " << frameInfo.LastPresentTime.QuadPart << " | PTSInterval: "<< (interval)*1000<< std::endl;
     lastPTS = pts; // store microsec value
     frameno += frameInfo.AccumulatedFrames;

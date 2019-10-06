@@ -65,9 +65,11 @@ char* RTSPServer
   return resultURL;
 }
 
+#include <iostream>
 char* RTSPServer::rtspURLPrefix(int clientSocket) const {
   struct sockaddr_in ourAddress;
   if (clientSocket < 0) {
+      std::cout << ourIPAddress(envir()) <<std::endl;
     // Use our default IP address in the URL:
     ourAddress.sin_addr.s_addr = ReceivingInterfaceAddr != 0
       ? ReceivingInterfaceAddr
