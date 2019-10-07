@@ -22,3 +22,11 @@ def user(action):
 			payload = fetchVMCredentials(vm_name)
 			return jsonify(payload), 200
 		return jsonify({}), 401
+
+@account_bp.route('/form/<action>', methods = ['POST'])
+def user(action):
+	body = request.get_json()
+	if action == 'store':
+		name, email, cubeType = body['name'], body['email'], body['cubeType']
+		storeForm(name, email, cubeType)
+		return jsonify({}), 200

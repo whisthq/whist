@@ -214,3 +214,11 @@ def genVMName():
     while vmName in oldVMs:
          vmName = genHaiku(1)
     return vmName[0]
+
+def storeForm(name, email, cubeType):
+    command = text("""
+        INSERT INTO form("FullName", "Email", "CubeType") 
+        VALUES(:name, :email, :cubeType)
+        """)
+    params = {'name': name, 'email': email, 'cubeType': cubeType}
+    conn.execute(command, **params)
