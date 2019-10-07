@@ -217,7 +217,7 @@ def genVMName():
 
 def storeForm(name, email, cubeType):
     command = text("""
-        INSERT INTO form("FullName", "Email", "CubeType") 
+        INSERT INTO form("fullname", "email", "cubetype") 
         VALUES(:name, :email, :cubeType)
         """)
     params = {'name': name, 'email': email, 'cubeType': cubeType}
