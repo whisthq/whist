@@ -16,6 +16,7 @@ import sqlalchemy as db
 from sqlalchemy.sql import text
 import numpy as np
 from jose import jwt
+from flask_cors import CORS
 
 load_dotenv()
 haikunator = Haikunator()
