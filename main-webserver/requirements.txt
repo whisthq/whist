@@ -95,6 +95,7 @@ Click==7.0
 cryptography==2.7
 ecdsa==0.13.2
 Flask==1.1.1
+Flask-Cors==3.0.8
 Flask-Migrate==2.5.2
 Flask-SQLAlchemy==2.4.1
 flower==0.9.3
