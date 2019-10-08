@@ -10,6 +10,7 @@ def make_celery(app_name = __name__):
 
 celery = make_celery()
 app = create_app(celery = celery)
+
 CORS(app)
 
 
