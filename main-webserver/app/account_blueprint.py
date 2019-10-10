@@ -29,4 +29,17 @@ def form(action):
 	if action == 'store':
 		name, email, cubeType = body['name'], body['email'], body['cubeType']
 		storeForm(name, email, cubeType)
-		return jsonify({}), 200
+		return jsonify({'status': 200}), 200
+
+@account_bp.route('/order', methods = ['POST'])
+def form():
+	body = request.get_json()
+	address1 = body['address1']
+	address2 = body['address2']
+	zipCode = body['zipcode']
+	name = body['name']
+	email = body['email']
+	password = body['password']
+	order = body['order']
+	storePreOrder(address1, address2, zipCode, email, order)
+	return jsonify({'status': 200}), 200

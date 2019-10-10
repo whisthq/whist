@@ -222,3 +222,12 @@ def storeForm(name, email, cubeType):
         """)
     params = {'name': name, 'email': email, 'cubeType': cubeType}
     conn.execute(command, **params)
+
+def storePreOrder(address1, address2, zipCode, email, order):
+    command = text("""
+        INSERT INTO pre_order("address1", "address2", "zipcode", "email", "base", "enhanced", "power") 
+        VALUES(:address1, :address2, :zipcode, :email, :base, :enhanced, :power)
+        """)
+    params = {'address1': address1, 'address2': address2, 'zipcode': zipCode, 'email': email, 
+              'base': order['base'], 'enhanced': order['enhanced'], 'power': order['power']}
+    conn.execute(command, **params)
