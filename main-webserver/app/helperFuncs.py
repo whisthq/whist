@@ -229,5 +229,5 @@ def storePreOrder(address1, address2, zipCode, email, order):
         VALUES(:address1, :address2, :zipcode, :email, :base, :enhanced, :power)
         """)
     params = {'address1': address1, 'address2': address2, 'zipcode': zipCode, 'email': email, 
-              'base': int(order['base']), int('enhanced'): order['enhanced'], 'power': int(order['power'])}
+              'base': int(order['base']), 'enhanced': int(order['enhanced']), 'power': int(order['power'])}
     conn.execute(command, **params)

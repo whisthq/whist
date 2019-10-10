@@ -34,6 +34,7 @@ def form(action):
 @account_bp.route('/order', methods = ['POST'])
 def order():
 	body = request.get_json()
+	print(body)
 	address1 = body['address1']
 	address2 = body['address2']
 	zipCode = body['zipcode']
