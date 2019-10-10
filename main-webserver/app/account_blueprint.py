@@ -32,7 +32,7 @@ def form(action):
 		return jsonify({'status': 200}), 200
 
 @account_bp.route('/order', methods = ['POST'])
-def form():
+def order():
 	body = request.get_json()
 	address1 = body['address1']
 	address2 = body['address2']
