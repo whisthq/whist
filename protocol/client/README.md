@@ -2,8 +2,8 @@
 
 Contains the code for the Raspbian client side, which receives the encoded RTSP stream, decodes it from H.264 using OpenMaxIL and displays it using DispmanX on the Raspberry Pi 4B.
 
-The following is the README for the Raspberry Pi decode+display code:
-----------------
+### The following is the README for the Raspberry Pi decode+display code:
+
 This repository contains the source code for the ARM side libraries used on Raspberry Pi.
 These typically are installed in /opt/vc/lib and includes source for the ARM side code to interface to:
 EGL, mmal, GLESv2, vcos, openmaxil, vchiq_arm, bcm_host, WFC, OpenVG.
@@ -16,5 +16,3 @@ Whilst 64-bit userspace is not officially supported, some of the libraries will 
 Note that this repository does not contain the source for the edidparser and vcdbg binaries due to licensing restrictions.
 
 You can then run the progam by going to build/bin and running ./hello_video.bin [filename.h264]
-----------------
-
