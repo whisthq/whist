@@ -17,4 +17,4 @@ Note that this repository does not contain the source for the edidparser and vcd
 
 ### Compiling and using the merged project
 
-This repository contains the merge of the Raspberry Pi decode+display code, originally from /hello_video/video.c generatig hello_video.bin. The code has been integrated so that building by executing "buildme" (in top-level folder) will build the integrated protocol under /build/bin with name fprotocol_client. This code can then be executed by running "./fprotocol_client [rtsp_url] in the terminal in build/bin.
+This repository contains the merge of the Raspberry Pi decode+display code, originally from /hello_video/video.c generatig hello_video.bin. The code has been integrated so that building by executing "buildme" (in top-level folder) will build the integrated protocol under /build/bin with name fprotocol_client. This code can then be executed by running "./fprotocol_client [rtsp_url]" in the terminal in build/bin.
