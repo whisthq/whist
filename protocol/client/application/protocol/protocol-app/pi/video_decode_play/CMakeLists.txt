@@ -1,8 +1,11 @@
-set(EXEC hello_video.bin)
-set(SRCS video.c)
+# no need to exec, we exec the openRTSPclient file
 
-add_executable(${EXEC} ${SRCS})
-target_link_libraries(${EXEC} ${HELLO_PI_LIBS})
+#set(EXEC hello_video.bin)
+#set(SRCS video.c)
 
-install(TARGETS ${EXEC}
-        RUNTIME DESTINATION bin)
+#add_executable(${EXEC} ${SRCS})
+#target_link_libraries(${EXEC} ${HELLO_PI_LIBS})
+
+#install(TARGETS video.c
+#        RUNTIME DESTINATION bin)
+

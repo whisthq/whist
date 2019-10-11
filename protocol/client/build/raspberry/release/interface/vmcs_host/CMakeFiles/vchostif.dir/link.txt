@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../../../lib/libvchostif.a  CMakeFiles/vchostif.dir/linux/vcfilesys.c.o CMakeFiles/vchostif.dir/linux/vcmisc.c.o CMakeFiles/vchostif.dir/vc_vchi_gencmd.c.o CMakeFiles/vchostif.dir/vc_vchi_filesys.c.o CMakeFiles/vchostif.dir/vc_vchi_gpuserv.c.o CMakeFiles/vchostif.dir/vc_vchi_tvservice.c.o CMakeFiles/vchostif.dir/vc_vchi_cecservice.c.o CMakeFiles/vchostif.dir/vc_vchi_dispmanx.c.o CMakeFiles/vchostif.dir/vc_service_common.c.o
+/usr/bin/ranlib ../../../../lib/libvchostif.a

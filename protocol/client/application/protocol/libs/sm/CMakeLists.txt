@@ -8,7 +8,7 @@ endif ()
 
 include_directories( ../../../..
                      ../../../../interface/vcos/${VCOS_PLATFORM}
-                     ../../../../host_applications/linux/kernel_headers )
+                     ../../../../application/protocol/kernel_headers )
 
 add_library(vcsm ${SHARED} user-vcsm.c)
 

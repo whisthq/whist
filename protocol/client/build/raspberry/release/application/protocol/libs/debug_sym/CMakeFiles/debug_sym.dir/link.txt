@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC  -Wno-multichar -Wall -Wno-unused-but-set-variable -fPIC -O3 -DNDEBUG  -shared -Wl,-soname,libdebug_sym.so -o ../../../../../../lib/libdebug_sym.so CMakeFiles/debug_sym.dir/debug_sym.c.o 

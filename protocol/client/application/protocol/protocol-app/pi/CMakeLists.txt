@@ -1,18 +1,19 @@
 set(BUILD_FONT FALSE)
 
-include_directories(${PROJECT_SOURCE_DIR})
-include_directories(${PROJECT_SOURCE_DIR}/application/protocol/libs/bcm_host/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/ilclient)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/vgfont)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/revision)
+# moved all of this to the top cmakelist
+#include_directories(${PROJECT_SOURCE_DIR})
+#include_directories(${PROJECT_SOURCE_DIR}/application/protocol/libs/bcm_host/include)
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/ilclient)
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/vgfont)
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/revision)
 
-set(ILCLIENT_SRCS libs/ilclient/ilclient.c libs/ilclient/ilcore.c)
-add_library(ilclient ${ILCLIENT_SRCS})
+#set(ILCLIENT_SRCS libs/ilclient/ilclient.c libs/ilclient/ilcore.c)
+#add_library(ilclient ${ILCLIENT_SRCS})
 
-set(REVISION_SRCS libs/revision/revision.c )
-add_library(revision ${REVISION_SRCS})
+#set(REVISION_SRCS libs/revision/revision.c )
+#add_library(revision ${REVISION_SRCS})
 
-set(HELLO_PI_LIBS ilclient openmaxil bcm_host vcos vchiq_arm revision)
+#set(HELLO_PI_LIBS ilclient openmaxil bcm_host vcos vchiq_arm revision)
 
 #add_subdirectory(hello_world) -- only need hello_video for now
 add_subdirectory(video_decode_play)

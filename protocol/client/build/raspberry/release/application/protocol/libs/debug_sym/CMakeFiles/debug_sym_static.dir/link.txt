@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../../../../../lib/libdebug_sym_static.a  CMakeFiles/debug_sym_static.dir/debug_sym.c.o
+/usr/bin/ranlib ../../../../../../lib/libdebug_sym_static.a

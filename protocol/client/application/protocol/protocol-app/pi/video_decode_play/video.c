@@ -31,10 +31,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <string.h>
 
-#include "bcm_host.h"
-#include "ilclient.h"
+#include "include/bcm_host.h"
+#include "../libs/ilclient/ilclient.h"
+#include "video.h" // header file for importing in other files
 
-static int video_decode_test(unsigned char *stream, long stream_length) // replaced char *filename with const char *stream, already read file
+int video_decode_display(unsigned char *stream, long stream_length) // replaced char *filename with const char *stream, already read file
 {
    OMX_VIDEO_PARAM_PORTFORMATTYPE format;
    OMX_TIME_CONFIG_CLOCKSTATETYPE cstate;
@@ -60,6 +61,10 @@ static int video_decode_test(unsigned char *stream, long stream_length) // repla
 
    if(OMX_Init() != OMX_ErrorNone)
    {
+
+
+	printf("testpizza\n");	
+
       ilclient_destroy(client);
       // fclose(in); removed, no file opened
       return -4;
@@ -222,37 +227,7 @@ static int video_decode_test(unsigned char *stream, long stream_length) // repla
    return status;
 }
 
-int main (int argc, char **argv)
-{
-   if (argc < 2) {
-      printf("Usage: %s <filename>\n", argv[0]);
-      exit(1);
-   }
-
-   // opening and reading file here
-   unsigned char *buffer = 0;
-   long length;
-   FILE *f = fopen(argv[1], "rb");
-
-   if(f) {
-      fseek(f, 0, SEEK_END);
-      length = ftell(f);
-      fseek(f, 0, SEEK_SET);
-      buffer = malloc(length + 1);
-
-      if(buffer) {
-          fread(buffer, 1, length, f);
-	  buffer[length] = '\0';
-      }
-
-      fclose(f);
-   }
-
-   // call the decode + render program
-   bcm_host_init();
-   video_decode_test(buffer, length); // pass the file content insted of filename and it's length
-
-   free(buffer); // free the buffer
-
-   return 0; // return success
-}
+// dummy main so the compiler doesn't bother us
+//int main() {
+//  return 0;
+//}

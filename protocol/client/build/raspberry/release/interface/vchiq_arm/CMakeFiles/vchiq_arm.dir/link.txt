@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC  -Wno-multichar -Wall -Wno-unused-but-set-variable -fPIC -O3 -DNDEBUG  -shared -Wl,-soname,libvchiq_arm.so -o ../../../../lib/libvchiq_arm.so CMakeFiles/vchiq_arm.dir/vchiq_lib.c.o CMakeFiles/vchiq_arm.dir/vchiq_util.c.o -Wl,-rpath,/home/pi/Downloads/protocol/client/build/lib: ../../../../lib/libvcos.so -lpthread -ldl -lrt 

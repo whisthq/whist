@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../../../lib/libkhrn_client.a  CMakeFiles/khrn_client.dir/common/khrn_client_pointermap.c.o CMakeFiles/khrn_client.dir/common/khrn_client_vector.c.o CMakeFiles/khrn_client.dir/common/khrn_int_hash.c.o CMakeFiles/khrn_client.dir/common/khrn_int_hash_asm.s.o CMakeFiles/khrn_client.dir/common/khrn_client_cache.c.o
+/usr/bin/ranlib ../../../../lib/libkhrn_client.a
