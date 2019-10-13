@@ -87,6 +87,7 @@ azure-storage-file==1.4.0
 azure-storage-queue==1.4.0
 Babel==2.7.0
 billiard==3.3.0.23
+blinker==1.4
 celery==3.1.24
 certifi==2019.9.11
 cffi==1.12.3
@@ -96,6 +97,7 @@ cryptography==2.7
 ecdsa==0.13.2
 Flask==1.1.1
 Flask-Cors==3.0.8
+Flask-Mail==0.9.1
 Flask-Migrate==2.5.2
 Flask-SQLAlchemy==2.4.1
 flower==0.9.3

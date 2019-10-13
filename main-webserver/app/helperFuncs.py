@@ -1,9 +1,5 @@
 from .utils import *
-
-engine = db.create_engine(
-    os.getenv('DATABASE_URL'), echo=True)
-conn = engine.connect()
-metadata = db.MetaData()
+from app import conn
 
 def createClients():
     subscription_id = os.getenv('AZURE_SUBSCRIPTION_ID')

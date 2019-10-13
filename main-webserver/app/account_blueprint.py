@@ -44,3 +44,15 @@ def order():
 	order = body['order']
 	storePreOrder(address1, address2, zipCode, email, order)
 	return jsonify({'status': 200}), 200
+
+# @account_bp.route('/mail')
+# def send_mail():
+# 	try:
+# 		msg = Message("Send Mail Tutorial!",
+# 		  sender=os.getenv('EMAIL_ADDRESS'),
+# 		  recipients=['ming_ying@college.harvard.edu'])
+# 		msg.body = "Yo!\nHave you heard the good word of Python???"           
+# 		mail.send(msg)
+# 		return 'Mail sent!'
+# 	except Exception as e:
+# 		return(str(e)) 
