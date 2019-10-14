@@ -33,3 +33,12 @@ def vm(action):
         return jsonify({'ID': task.id}), 202
     return jsonify({}), 400
 
+@vm_bp.route('/tracker/<action>', methods = ['POST'])
+def tracker(action):
+    body = request.get_json()
+    username = body['username']
+    if action == 'logon':
+        addTimeTable(username, 'logon')
+    elif action == 'logoff':
+        addTimeTable(username, 'logoff')
+    return jsonify({}), 200

@@ -236,3 +236,11 @@ def storePreOrder(address1, address2, zipCode, email, order):
     params = {'address1': address1, 'address2': address2, 'zipcode': zipCode, 'email': email, 
               'base': int(order['base']), 'enhanced': int(order['enhanced']), 'power': int(order['power'])}
     conn.execute(command, **params)
+
+def addTimeTable(username, action):
+    command = text("""
+        INSERT INTO login_history("username", "timestamp", "action") 
+        VALUES(:userName, :currentTime, :action)
+        """)
+    params = {'userName': username, 'currentTime': dt.now().strftime('%m-%d-%Y, %H:%M:%S'), 'action': action}
+    conn.execute(command, **params)
