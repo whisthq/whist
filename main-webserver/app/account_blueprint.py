@@ -29,10 +29,7 @@ def account(action):
 	body = request.get_json()
 	if action == 'login':
 		username, password = body['username'], body['password']
-		print(username)
-		print(password)
 		verified = loginUser(username, password)
-		print(verified)
 		return jsonify({'verified': verified}), 200
 	elif action == 'register':
 		username, password = body['username'], body['password']
@@ -50,7 +47,6 @@ def form(action):
 @account_bp.route('/order', methods = ['POST'])
 def order():
 	body = request.get_json()
-	print(body)
 	address1 = body['address1']
 	address2 = body['address2']
 	zipCode = body['zipcode']

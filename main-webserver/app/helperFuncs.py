@@ -195,9 +195,6 @@ def loginUser(username, password):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     params = {'userName': username, 'password': pwd_token}
     user = conn.execute(command, **params).fetchall()
-    print("user")
-    print(user)
-    print(len(user))
     return len(user) > 0
 
 def fetchVMCredentials(vm_name):
