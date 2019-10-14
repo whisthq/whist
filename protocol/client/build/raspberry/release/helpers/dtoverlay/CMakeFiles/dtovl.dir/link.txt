@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC  -Wno-multichar -Wall -Wno-unused-but-set-variable -fPIC -O3 -DNDEBUG  -shared -Wl,-soname,libdtovl.so -o ../../../../lib/libdtovl.so CMakeFiles/dtovl.dir/dtoverlay.c.o ../../../../lib/libfdt.a 

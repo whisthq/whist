@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wno-multichar -Wall -Wno-unused-but-set-variable -fPIC -O3 -DNDEBUG  -rdynamic CMakeFiles/vchiq_test.dir/vchiq_test.c.o  -o ../../../../bin/vchiq_test -Wl,-rpath,/home/pi/Downloads/protocol/client/build/lib: ../../../../lib/libvchiq_arm.so ../../../../lib/libvcos.so -lpthread -ldl -lrt 

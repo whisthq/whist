@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../lib/librevision.a  CMakeFiles/revision.dir/application/protocol/protocol-app/pi/libs/revision/revision.c.o
+/usr/bin/ranlib ../../lib/librevision.a
