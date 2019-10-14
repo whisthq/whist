@@ -29,7 +29,11 @@ def account(action):
 	body = request.get_json()
 	if action == 'login':
 		username, password = body['username'], body['password']
-		return jsonify({'verified': loginUser(username, password)}), 200
+		print(username)
+		print(password)
+		verified = loginUser(username, password)
+		print(verified)
+		return jsonify({'verified': verified}), 200
 	elif action == 'register':
 		username, password = body['username'], body['password']
 		registerUserVM(username, password, None)
