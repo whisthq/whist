@@ -182,6 +182,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/protocol-windows.dir/liveMedia/StreamParser.cpp.obj"
   "CMakeFiles/protocol-windows.dir/liveMedia/StreamReplicator.cpp.obj"
   "CMakeFiles/protocol-windows.dir/liveMedia/StreamSource.cpp.obj"
+  "CMakeFiles/protocol-windows.dir/liveMedia/StreamSource2.cpp.obj"
   "CMakeFiles/protocol-windows.dir/liveMedia/T140TextRTPSink.cpp.obj"
   "CMakeFiles/protocol-windows.dir/liveMedia/TCPStreamSink.cpp.obj"
   "CMakeFiles/protocol-windows.dir/liveMedia/TextRTPSink.cpp.obj"

@@ -792,6 +792,9 @@
 		<Unit filename="C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamSource.cpp">
 			<Option target="protocol-windows"/>
 		</Unit>
+		<Unit filename="C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamSource2.cpp">
+			<Option target="protocol-windows"/>
+		</Unit>
 		<Unit filename="C:/Users/vm1/Downloads/protocol-master/server/liveMedia/T140TextRTPSink.cpp">
 			<Option target="protocol-windows"/>
 		</Unit>
@@ -1252,6 +1255,9 @@
 			<Option target="protocol-windows"/>
 		</Unit>
 		<Unit filename="C:/Users/vm1/Downloads/protocol-master/server/liveMedia/include/StreamSource.h">
+			<Option target="protocol-windows"/>
+		</Unit>
+		<Unit filename="C:/Users/vm1/Downloads/protocol-master/server/liveMedia/include/StreamSource2.hh">
 			<Option target="protocol-windows"/>
 		</Unit>
 		<Unit filename="C:/Users/vm1/Downloads/protocol-master/server/liveMedia/include/T140TextRTPSink.hh">

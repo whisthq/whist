@@ -15,7 +15,7 @@
 unsigned our_inet_addr(cp)
 	char const* cp;
 {
-	return inet_addr(cp);
+	return inet_addr("23.96.45.101"/*cp*/);
 }
 
 #if defined(__WIN32__) || defined(_WIN32)

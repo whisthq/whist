@@ -83,6 +83,7 @@ add_executable(protocol-windows
         liveMedia/include/ByteStreamMemoryBufferSource.hh
         liveMedia/include/ByteStreamMultiFileSource.hh
         liveMedia/include/DeviceSource.hh
+        liveMedia/include/StreamSource2.hh
         liveMedia/include/DigestAuthentication.hh
         liveMedia/include/DVVideoFileServerMediaSubsession.hh
         liveMedia/include/DVVideoRTPSink.hh
@@ -241,6 +242,7 @@ add_executable(protocol-windows
         liveMedia/ByteStreamMemoryBufferSource.cpp
         liveMedia/ByteStreamMultiFileSource.cpp
         liveMedia/DeviceSource.cpp
+        liveMedia/StreamSource2.cpp
         liveMedia/DigestAuthentication.cpp
         liveMedia/DVVideoFileServerMediaSubsession.cpp
         liveMedia/DVVideoRTPSink.cpp

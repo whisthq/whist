@@ -818,9 +818,28 @@ CMakeFiles\protocol-windows.dir\liveMedia\DeviceSource.cpp.s: cmake_force
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoNUL /FAs /FaCMakeFiles\protocol-windows.dir\liveMedia\DeviceSource.cpp.s /c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\DeviceSource.cpp
 <<
 
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\liveMedia\StreamSource2.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/StreamSource2.cpp.obj"
+	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\StreamSource2.cpp
+<<
+
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/protocol-windows.dir/liveMedia/StreamSource2.cpp.i"
+	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" > CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.i @<<
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\vm1\Downloads\protocol-master\server\liveMedia\StreamSource2.cpp
+<<
+
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/protocol-windows.dir/liveMedia/StreamSource2.cpp.s"
+	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoNUL /FAs /FaCMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.s /c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\StreamSource2.cpp
+<<
+
 CMakeFiles\protocol-windows.dir\liveMedia\DigestAuthentication.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\DigestAuthentication.cpp.obj: ..\liveMedia\DigestAuthentication.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/DigestAuthentication.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/DigestAuthentication.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\DigestAuthentication.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\DigestAuthentication.cpp
 <<
@@ -839,7 +858,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\DigestAuthentication.cpp.s: cmake_forc
 
 CMakeFiles\protocol-windows.dir\liveMedia\DVVideoFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\DVVideoFileServerMediaSubsession.cpp.obj: ..\liveMedia\DVVideoFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/DVVideoFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/DVVideoFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\DVVideoFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\DVVideoFileServerMediaSubsession.cpp
 <<
@@ -858,7 +877,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\DVVideoFileServerMediaSubsession.cpp.s
 
 CMakeFiles\protocol-windows.dir\liveMedia\DVVideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\DVVideoRTPSink.cpp.obj: ..\liveMedia\DVVideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/DVVideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/DVVideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\DVVideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\DVVideoRTPSink.cpp
 <<
@@ -877,7 +896,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\DVVideoRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\DVVideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\DVVideoRTPSource.cpp.obj: ..\liveMedia\DVVideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/DVVideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/DVVideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\DVVideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\DVVideoRTPSource.cpp
 <<
@@ -896,7 +915,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\DVVideoRTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\DVVideoStreamFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\DVVideoStreamFramer.cpp.obj: ..\liveMedia\DVVideoStreamFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/DVVideoStreamFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/DVVideoStreamFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\DVVideoStreamFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\DVVideoStreamFramer.cpp
 <<
@@ -915,7 +934,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\DVVideoStreamFramer.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\EBMLNumber.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\EBMLNumber.cpp.obj: ..\liveMedia\EBMLNumber.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/EBMLNumber.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_47) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/EBMLNumber.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\EBMLNumber.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\EBMLNumber.cpp
 <<
@@ -934,7 +953,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\EBMLNumber.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\FileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\FileServerMediaSubsession.cpp.obj: ..\liveMedia\FileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_47) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/FileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_48) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/FileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\FileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\FileServerMediaSubsession.cpp
 <<
@@ -953,7 +972,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\FileServerMediaSubsession.cpp.s: cmake
 
 CMakeFiles\protocol-windows.dir\liveMedia\FileSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\FileSink.cpp.obj: ..\liveMedia\FileSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_48) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/FileSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_49) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/FileSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\FileSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\FileSink.cpp
 <<
@@ -972,7 +991,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\FileSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\FramedFileSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\FramedFileSource.cpp.obj: ..\liveMedia\FramedFileSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_49) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/FramedFileSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_50) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/FramedFileSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\FramedFileSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\FramedFileSource.cpp
 <<
@@ -991,7 +1010,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\FramedFileSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\FramedFilter.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\FramedFilter.cpp.obj: ..\liveMedia\FramedFilter.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_50) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/FramedFilter.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_51) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/FramedFilter.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\FramedFilter.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\FramedFilter.cpp
 <<
@@ -1010,7 +1029,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\FramedFilter.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\FramedSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\FramedSource.cpp.obj: ..\liveMedia\FramedSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_51) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/FramedSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_52) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/FramedSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\FramedSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\FramedSource.cpp
 <<
@@ -1029,7 +1048,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\FramedSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\GenericMediaServer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\GenericMediaServer.cpp.obj: ..\liveMedia\GenericMediaServer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_52) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/GenericMediaServer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_53) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/GenericMediaServer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\GenericMediaServer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\GenericMediaServer.cpp
 <<
@@ -1048,7 +1067,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\GenericMediaServer.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\GSMAudioRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\GSMAudioRTPSink.cpp.obj: ..\liveMedia\GSMAudioRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_53) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/GSMAudioRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_54) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/GSMAudioRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\GSMAudioRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\GSMAudioRTPSink.cpp
 <<
@@ -1067,7 +1086,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\GSMAudioRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\H261VideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H261VideoRTPSource.cpp.obj: ..\liveMedia\H261VideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_54) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H261VideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_55) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H261VideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H261VideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H261VideoRTPSource.cpp
 <<
@@ -1086,7 +1105,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H261VideoRTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoFileServerMediaSubsession.cpp.obj: ..\liveMedia\H263plusVideoFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_55) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H263plusVideoFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_56) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H263plusVideoFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H263plusVideoFileServerMediaSubsession.cpp
 <<
@@ -1105,7 +1124,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoFileServerMediaSubsession
 
 CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoRTPSink.cpp.obj: ..\liveMedia\H263plusVideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_56) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H263plusVideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_57) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H263plusVideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H263plusVideoRTPSink.cpp
 <<
@@ -1124,7 +1143,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoRTPSink.cpp.s: cmake_forc
 
 CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoRTPSource.cpp.obj: ..\liveMedia\H263plusVideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_57) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H263plusVideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_58) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H263plusVideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H263plusVideoRTPSource.cpp
 <<
@@ -1143,7 +1162,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoRTPSource.cpp.s: cmake_fo
 
 CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoStreamFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoStreamFramer.cpp.obj: ..\liveMedia\H263plusVideoStreamFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_58) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H263plusVideoStreamFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_59) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H263plusVideoStreamFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoStreamFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H263plusVideoStreamFramer.cpp
 <<
@@ -1162,7 +1181,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoStreamFramer.cpp.s: cmake
 
 CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoStreamParser.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoStreamParser.cpp.obj: ..\liveMedia\H263plusVideoStreamParser.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_59) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H263plusVideoStreamParser.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_60) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H263plusVideoStreamParser.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoStreamParser.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H263plusVideoStreamParser.cpp
 <<
@@ -1181,7 +1200,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H263plusVideoStreamParser.cpp.s: cmake
 
 CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoFileSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoFileSink.cpp.obj: ..\liveMedia\H264or5VideoFileSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_60) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264or5VideoFileSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_61) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264or5VideoFileSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoFileSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H264or5VideoFileSink.cpp
 <<
@@ -1200,7 +1219,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoFileSink.cpp.s: cmake_forc
 
 CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoRTPSink.cpp.obj: ..\liveMedia\H264or5VideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_61) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264or5VideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_62) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264or5VideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H264or5VideoRTPSink.cpp
 <<
@@ -1219,7 +1238,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoStreamDiscreteFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoStreamDiscreteFramer.cpp.obj: ..\liveMedia\H264or5VideoStreamDiscreteFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_62) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264or5VideoStreamDiscreteFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_63) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264or5VideoStreamDiscreteFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoStreamDiscreteFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H264or5VideoStreamDiscreteFramer.cpp
 <<
@@ -1238,7 +1257,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoStreamDiscreteFramer.cpp.s
 
 CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoStreamFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoStreamFramer.cpp.obj: ..\liveMedia\H264or5VideoStreamFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_63) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264or5VideoStreamFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_64) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264or5VideoStreamFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoStreamFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H264or5VideoStreamFramer.cpp
 <<
@@ -1257,7 +1276,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H264or5VideoStreamFramer.cpp.s: cmake_
 
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoFileServerMediaSubsession.cpp.obj: ..\liveMedia\H264VideoFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_64) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_65) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H264VideoFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H264VideoFileServerMediaSubsession.cpp
 <<
@@ -1276,7 +1295,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H264VideoFileServerMediaSubsession.cpp
 
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoFileSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoFileSink.cpp.obj: ..\liveMedia\H264VideoFileSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_65) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoFileSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_66) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoFileSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H264VideoFileSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H264VideoFileSink.cpp
 <<
@@ -1295,7 +1314,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H264VideoFileSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoRTPSink.cpp.obj: ..\liveMedia\H264VideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_66) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_67) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H264VideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H264VideoRTPSink.cpp
 <<
@@ -1314,7 +1333,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H264VideoRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoRTPSource.cpp.obj: ..\liveMedia\H264VideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_67) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_68) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H264VideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H264VideoRTPSource.cpp
 <<
@@ -1333,7 +1352,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H264VideoRTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoStreamDiscreteFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoStreamDiscreteFramer.cpp.obj: ..\liveMedia\H264VideoStreamDiscreteFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_68) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoStreamDiscreteFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_69) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoStreamDiscreteFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H264VideoStreamDiscreteFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H264VideoStreamDiscreteFramer.cpp
 <<
@@ -1352,7 +1371,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H264VideoStreamDiscreteFramer.cpp.s: c
 
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoStreamFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H264VideoStreamFramer.cpp.obj: ..\liveMedia\H264VideoStreamFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_69) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoStreamFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_70) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H264VideoStreamFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H264VideoStreamFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H264VideoStreamFramer.cpp
 <<
@@ -1371,7 +1390,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H264VideoStreamFramer.cpp.s: cmake_for
 
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoFileServerMediaSubsession.cpp.obj: ..\liveMedia\H265VideoFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_70) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_71) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H265VideoFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H265VideoFileServerMediaSubsession.cpp
 <<
@@ -1390,7 +1409,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H265VideoFileServerMediaSubsession.cpp
 
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoFileSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoFileSink.cpp.obj: ..\liveMedia\H265VideoFileSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_71) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoFileSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_72) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoFileSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H265VideoFileSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H265VideoFileSink.cpp
 <<
@@ -1409,7 +1428,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H265VideoFileSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoRTPSink.cpp.obj: ..\liveMedia\H265VideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_72) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_73) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H265VideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H265VideoRTPSink.cpp
 <<
@@ -1428,7 +1447,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H265VideoRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoRTPSource.cpp.obj: ..\liveMedia\H265VideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_73) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_74) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H265VideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H265VideoRTPSource.cpp
 <<
@@ -1447,7 +1466,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H265VideoRTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoStreamDiscreteFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoStreamDiscreteFramer.cpp.obj: ..\liveMedia\H265VideoStreamDiscreteFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_74) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoStreamDiscreteFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_75) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoStreamDiscreteFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H265VideoStreamDiscreteFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H265VideoStreamDiscreteFramer.cpp
 <<
@@ -1466,7 +1485,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H265VideoStreamDiscreteFramer.cpp.s: c
 
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoStreamFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\H265VideoStreamFramer.cpp.obj: ..\liveMedia\H265VideoStreamFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_75) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoStreamFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_76) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/H265VideoStreamFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\H265VideoStreamFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\H265VideoStreamFramer.cpp
 <<
@@ -1485,7 +1504,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\H265VideoStreamFramer.cpp.s: cmake_for
 
 CMakeFiles\protocol-windows.dir\liveMedia\InputFile.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\InputFile.cpp.obj: ..\liveMedia\InputFile.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_76) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/InputFile.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_77) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/InputFile.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\InputFile.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\InputFile.cpp
 <<
@@ -1504,7 +1523,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\InputFile.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\JPEG2000VideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\JPEG2000VideoRTPSink.cpp.obj: ..\liveMedia\JPEG2000VideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_77) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/JPEG2000VideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_78) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/JPEG2000VideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\JPEG2000VideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\JPEG2000VideoRTPSink.cpp
 <<
@@ -1523,7 +1542,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\JPEG2000VideoRTPSink.cpp.s: cmake_forc
 
 CMakeFiles\protocol-windows.dir\liveMedia\JPEG2000VideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\JPEG2000VideoRTPSource.cpp.obj: ..\liveMedia\JPEG2000VideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_78) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/JPEG2000VideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_79) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/JPEG2000VideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\JPEG2000VideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\JPEG2000VideoRTPSource.cpp
 <<
@@ -1542,7 +1561,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\JPEG2000VideoRTPSource.cpp.s: cmake_fo
 
 CMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoRTPSink.cpp.obj: ..\liveMedia\JPEGVideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_79) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/JPEGVideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_80) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/JPEGVideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\JPEGVideoRTPSink.cpp
 <<
@@ -1561,7 +1580,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoRTPSource.cpp.obj: ..\liveMedia\JPEGVideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_80) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/JPEGVideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_81) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/JPEGVideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\JPEGVideoRTPSource.cpp
 <<
@@ -1580,7 +1599,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoRTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoSource.cpp.obj: ..\liveMedia\JPEGVideoSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_81) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/JPEGVideoSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_82) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/JPEGVideoSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\JPEGVideoSource.cpp
 <<
@@ -1599,7 +1618,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\JPEGVideoSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\Locale.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\Locale.cpp.obj: ..\liveMedia\Locale.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_82) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/Locale.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_83) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/Locale.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\Locale.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\Locale.cpp
 <<
@@ -1618,7 +1637,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\Locale.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MatroskaDemuxedTrack.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MatroskaDemuxedTrack.cpp.obj: ..\liveMedia\MatroskaDemuxedTrack.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_83) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MatroskaDemuxedTrack.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_84) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MatroskaDemuxedTrack.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MatroskaDemuxedTrack.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MatroskaDemuxedTrack.cpp
 <<
@@ -1637,7 +1656,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MatroskaDemuxedTrack.cpp.s: cmake_forc
 
 CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFile.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFile.cpp.obj: ..\liveMedia\MatroskaFile.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_84) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MatroskaFile.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_85) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MatroskaFile.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MatroskaFile.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MatroskaFile.cpp
 <<
@@ -1656,7 +1675,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFile.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileParser.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileParser.cpp.obj: ..\liveMedia\MatroskaFileParser.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_85) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MatroskaFileParser.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_86) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MatroskaFileParser.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileParser.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MatroskaFileParser.cpp
 <<
@@ -1675,7 +1694,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileParser.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileServerDemux.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileServerDemux.cpp.obj: ..\liveMedia\MatroskaFileServerDemux.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_86) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MatroskaFileServerDemux.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_87) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MatroskaFileServerDemux.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileServerDemux.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MatroskaFileServerDemux.cpp
 <<
@@ -1694,7 +1713,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileServerDemux.cpp.s: cmake_f
 
 CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileServerMediaSubsession.cpp.obj: ..\liveMedia\MatroskaFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_87) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MatroskaFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_88) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MatroskaFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MatroskaFileServerMediaSubsession.cpp
 <<
@@ -1713,7 +1732,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MatroskaFileServerMediaSubsession.cpp.
 
 CMakeFiles\protocol-windows.dir\liveMedia\Media.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\Media.cpp.obj: ..\liveMedia\Media.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_88) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/Media.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_89) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/Media.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\Media.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\Media.cpp
 <<
@@ -1732,7 +1751,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\Media.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MediaSession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MediaSession.cpp.obj: ..\liveMedia\MediaSession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_89) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MediaSession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_90) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MediaSession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MediaSession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MediaSession.cpp
 <<
@@ -1751,7 +1770,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MediaSession.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MediaSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MediaSink.cpp.obj: ..\liveMedia\MediaSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_90) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MediaSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_91) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MediaSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MediaSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MediaSink.cpp
 <<
@@ -1770,7 +1789,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MediaSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MediaSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MediaSource.cpp.obj: ..\liveMedia\MediaSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_91) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MediaSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_92) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MediaSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MediaSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MediaSource.cpp
 <<
@@ -1789,7 +1808,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MediaSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADU.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADU.cpp.obj: ..\liveMedia\MP3ADU.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_92) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADU.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_93) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADU.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3ADU.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3ADU.cpp
 <<
@@ -1808,7 +1827,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3ADU.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADUdescriptor.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADUdescriptor.cpp.obj: ..\liveMedia\MP3ADUdescriptor.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_93) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADUdescriptor.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_94) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADUdescriptor.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3ADUdescriptor.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3ADUdescriptor.cpp
 <<
@@ -1827,7 +1846,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3ADUdescriptor.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADUinterleaving.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADUinterleaving.cpp.obj: ..\liveMedia\MP3ADUinterleaving.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_94) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADUinterleaving.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_95) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADUinterleaving.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3ADUinterleaving.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3ADUinterleaving.cpp
 <<
@@ -1846,7 +1865,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3ADUinterleaving.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADURTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADURTPSink.cpp.obj: ..\liveMedia\MP3ADURTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_95) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADURTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_96) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADURTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3ADURTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3ADURTPSink.cpp
 <<
@@ -1865,7 +1884,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3ADURTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADURTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADURTPSource.cpp.obj: ..\liveMedia\MP3ADURTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_96) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADURTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_97) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADURTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3ADURTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3ADURTPSource.cpp
 <<
@@ -1884,7 +1903,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3ADURTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADUTranscoder.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3ADUTranscoder.cpp.obj: ..\liveMedia\MP3ADUTranscoder.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_97) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADUTranscoder.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_98) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3ADUTranscoder.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3ADUTranscoder.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3ADUTranscoder.cpp
 <<
@@ -1903,7 +1922,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3ADUTranscoder.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3AudioFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3AudioFileServerMediaSubsession.cpp.obj: ..\liveMedia\MP3AudioFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_98) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3AudioFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_99) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3AudioFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3AudioFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3AudioFileServerMediaSubsession.cpp
 <<
@@ -1922,7 +1941,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3AudioFileServerMediaSubsession.cpp.
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3AudioMatroskaFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3AudioMatroskaFileServerMediaSubsession.cpp.obj: ..\liveMedia\MP3AudioMatroskaFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_99) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3AudioMatroskaFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_100) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3AudioMatroskaFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3AudioMatroskaFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3AudioMatroskaFileServerMediaSubsession.cpp
 <<
@@ -1941,7 +1960,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3AudioMatroskaFileServerMediaSubsess
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3FileSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3FileSource.cpp.obj: ..\liveMedia\MP3FileSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_100) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3FileSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_101) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3FileSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3FileSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3FileSource.cpp
 <<
@@ -1960,7 +1979,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3FileSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3Internals.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3Internals.cpp.obj: ..\liveMedia\MP3Internals.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_101) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3Internals.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_102) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3Internals.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3Internals.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3Internals.cpp
 <<
@@ -1979,7 +1998,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3Internals.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3InternalsHuffman.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3InternalsHuffman.cpp.obj: ..\liveMedia\MP3InternalsHuffman.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_102) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3InternalsHuffman.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_103) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3InternalsHuffman.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3InternalsHuffman.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3InternalsHuffman.cpp
 <<
@@ -1998,7 +2017,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3InternalsHuffman.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3InternalsHuffmanTable.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3InternalsHuffmanTable.cpp.obj: ..\liveMedia\MP3InternalsHuffmanTable.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_103) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3InternalsHuffmanTable.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_104) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3InternalsHuffmanTable.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3InternalsHuffmanTable.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3InternalsHuffmanTable.cpp
 <<
@@ -2017,7 +2036,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3InternalsHuffmanTable.cpp.s: cmake_
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3StreamState.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3StreamState.cpp.obj: ..\liveMedia\MP3StreamState.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_104) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3StreamState.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_105) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3StreamState.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3StreamState.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3StreamState.cpp
 <<
@@ -2036,7 +2055,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3StreamState.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MP3Transcoder.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MP3Transcoder.cpp.obj: ..\liveMedia\MP3Transcoder.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_105) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3Transcoder.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_106) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MP3Transcoder.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MP3Transcoder.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MP3Transcoder.cpp
 <<
@@ -2055,7 +2074,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MP3Transcoder.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioRTPSink.cpp.obj: ..\liveMedia\MPEG1or2AudioRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_106) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2AudioRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_107) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2AudioRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2AudioRTPSink.cpp
 <<
@@ -2074,7 +2093,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioRTPSink.cpp.s: cmake_forc
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioRTPSource.cpp.obj: ..\liveMedia\MPEG1or2AudioRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_107) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2AudioRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_108) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2AudioRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2AudioRTPSource.cpp
 <<
@@ -2093,7 +2112,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioRTPSource.cpp.s: cmake_fo
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioStreamFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioStreamFramer.cpp.obj: ..\liveMedia\MPEG1or2AudioStreamFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_108) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2AudioStreamFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_109) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2AudioStreamFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioStreamFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2AudioStreamFramer.cpp
 <<
@@ -2112,7 +2131,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2AudioStreamFramer.cpp.s: cmake
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2Demux.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2Demux.cpp.obj: ..\liveMedia\MPEG1or2Demux.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_109) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2Demux.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_110) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2Demux.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2Demux.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2Demux.cpp
 <<
@@ -2131,7 +2150,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2Demux.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2DemuxedElementaryStream.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2DemuxedElementaryStream.cpp.obj: ..\liveMedia\MPEG1or2DemuxedElementaryStream.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_110) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2DemuxedElementaryStream.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_111) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2DemuxedElementaryStream.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2DemuxedElementaryStream.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2DemuxedElementaryStream.cpp
 <<
@@ -2150,7 +2169,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2DemuxedElementaryStream.cpp.s:
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2DemuxedServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2DemuxedServerMediaSubsession.cpp.obj: ..\liveMedia\MPEG1or2DemuxedServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_111) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2DemuxedServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_112) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2DemuxedServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2DemuxedServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2DemuxedServerMediaSubsession.cpp
 <<
@@ -2169,7 +2188,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2DemuxedServerMediaSubsession.c
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2FileServerDemux.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2FileServerDemux.cpp.obj: ..\liveMedia\MPEG1or2FileServerDemux.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_112) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2FileServerDemux.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_113) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2FileServerDemux.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2FileServerDemux.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2FileServerDemux.cpp
 <<
@@ -2188,7 +2207,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2FileServerDemux.cpp.s: cmake_f
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoFileServerMediaSubsession.cpp.obj: ..\liveMedia\MPEG1or2VideoFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_113) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2VideoFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_114) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2VideoFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2VideoFileServerMediaSubsession.cpp
 <<
@@ -2207,7 +2226,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoFileServerMediaSubsession
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoRTPSink.cpp.obj: ..\liveMedia\MPEG1or2VideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_114) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2VideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_115) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2VideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2VideoRTPSink.cpp
 <<
@@ -2226,7 +2245,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoRTPSink.cpp.s: cmake_forc
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoRTPSource.cpp.obj: ..\liveMedia\MPEG1or2VideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_115) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2VideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_116) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2VideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2VideoRTPSource.cpp
 <<
@@ -2245,7 +2264,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoRTPSource.cpp.s: cmake_fo
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoStreamDiscreteFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoStreamDiscreteFramer.cpp.obj: ..\liveMedia\MPEG1or2VideoStreamDiscreteFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_116) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2VideoStreamDiscreteFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_117) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2VideoStreamDiscreteFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoStreamDiscreteFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2VideoStreamDiscreteFramer.cpp
 <<
@@ -2264,7 +2283,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoStreamDiscreteFramer.cpp.
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoStreamFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoStreamFramer.cpp.obj: ..\liveMedia\MPEG1or2VideoStreamFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_117) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2VideoStreamFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_118) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG1or2VideoStreamFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoStreamFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG1or2VideoStreamFramer.cpp
 <<
@@ -2283,7 +2302,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG1or2VideoStreamFramer.cpp.s: cmake
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2IndexFromTransportStream.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2IndexFromTransportStream.cpp.obj: ..\liveMedia\MPEG2IndexFromTransportStream.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_118) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2IndexFromTransportStream.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_119) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2IndexFromTransportStream.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2IndexFromTransportStream.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2IndexFromTransportStream.cpp
 <<
@@ -2302,7 +2321,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2IndexFromTransportStream.cpp.s: c
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportFileServerMediaSubsession.cpp.obj: ..\liveMedia\MPEG2TransportFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_119) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_120) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportFileServerMediaSubsession.cpp
 <<
@@ -2321,7 +2340,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportFileServerMediaSubsessio
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamAccumulator.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamAccumulator.cpp.obj: ..\liveMedia\MPEG2TransportStreamAccumulator.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_120) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamAccumulator.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_121) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamAccumulator.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamAccumulator.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamAccumulator.cpp
 <<
@@ -2340,7 +2359,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamAccumulator.cpp.s:
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamDemux.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamDemux.cpp.obj: ..\liveMedia\MPEG2TransportStreamDemux.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_121) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamDemux.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_122) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamDemux.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamDemux.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamDemux.cpp
 <<
@@ -2359,7 +2378,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamDemux.cpp.s: cmake
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamDemuxedTrack.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamDemuxedTrack.cpp.obj: ..\liveMedia\MPEG2TransportStreamDemuxedTrack.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_122) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamDemuxedTrack.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_123) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamDemuxedTrack.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamDemuxedTrack.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamDemuxedTrack.cpp
 <<
@@ -2378,7 +2397,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamDemuxedTrack.cpp.s
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFramer.cpp.obj: ..\liveMedia\MPEG2TransportStreamFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_123) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_124) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamFramer.cpp
 <<
@@ -2397,7 +2416,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFramer.cpp.s: cmak
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFromESSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFromESSource.cpp.obj: ..\liveMedia\MPEG2TransportStreamFromESSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_124) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamFromESSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_125) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamFromESSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFromESSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamFromESSource.cpp
 <<
@@ -2416,7 +2435,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFromESSource.cpp.s
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFromPESSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFromPESSource.cpp.obj: ..\liveMedia\MPEG2TransportStreamFromPESSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_125) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamFromPESSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_126) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamFromPESSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFromPESSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamFromPESSource.cpp
 <<
@@ -2435,7 +2454,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamFromPESSource.cpp.
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamIndexFile.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamIndexFile.cpp.obj: ..\liveMedia\MPEG2TransportStreamIndexFile.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_126) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamIndexFile.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_127) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamIndexFile.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamIndexFile.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamIndexFile.cpp
 <<
@@ -2454,7 +2473,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamIndexFile.cpp.s: c
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamMultiplexor.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamMultiplexor.cpp.obj: ..\liveMedia\MPEG2TransportStreamMultiplexor.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_127) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamMultiplexor.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_128) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamMultiplexor.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamMultiplexor.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamMultiplexor.cpp
 <<
@@ -2473,7 +2492,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamMultiplexor.cpp.s:
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser.cpp.obj: ..\liveMedia\MPEG2TransportStreamParser.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_128) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamParser.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_129) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamParser.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamParser.cpp
 <<
@@ -2492,7 +2511,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser.cpp.s: cmak
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_PAT.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_PAT.cpp.obj: ..\liveMedia\MPEG2TransportStreamParser_PAT.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_129) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamParser_PAT.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_130) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamParser_PAT.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_PAT.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamParser_PAT.cpp
 <<
@@ -2511,7 +2530,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_PAT.cpp.s: 
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_PMT.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_PMT.cpp.obj: ..\liveMedia\MPEG2TransportStreamParser_PMT.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_130) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamParser_PMT.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_131) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamParser_PMT.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_PMT.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamParser_PMT.cpp
 <<
@@ -2530,7 +2549,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_PMT.cpp.s: 
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_STREAM.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_STREAM.cpp.obj: ..\liveMedia\MPEG2TransportStreamParser_STREAM.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_131) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamParser_STREAM.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_132) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamParser_STREAM.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_STREAM.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamParser_STREAM.cpp
 <<
@@ -2549,7 +2568,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamParser_STREAM.cpp.
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamTrickModeFilter.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamTrickModeFilter.cpp.obj: ..\liveMedia\MPEG2TransportStreamTrickModeFilter.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_132) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamTrickModeFilter.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_133) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportStreamTrickModeFilter.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamTrickModeFilter.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportStreamTrickModeFilter.cpp
 <<
@@ -2568,7 +2587,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportStreamTrickModeFilter.cp
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportUDPServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportUDPServerMediaSubsession.cpp.obj: ..\liveMedia\MPEG2TransportUDPServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_133) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportUDPServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_134) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG2TransportUDPServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportUDPServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG2TransportUDPServerMediaSubsession.cpp
 <<
@@ -2587,7 +2606,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG2TransportUDPServerMediaSubsession
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4ESVideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4ESVideoRTPSink.cpp.obj: ..\liveMedia\MPEG4ESVideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_134) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4ESVideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_135) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4ESVideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG4ESVideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG4ESVideoRTPSink.cpp
 <<
@@ -2606,7 +2625,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG4ESVideoRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4ESVideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4ESVideoRTPSource.cpp.obj: ..\liveMedia\MPEG4ESVideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_135) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4ESVideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_136) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4ESVideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG4ESVideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG4ESVideoRTPSource.cpp
 <<
@@ -2625,7 +2644,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG4ESVideoRTPSource.cpp.s: cmake_for
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4GenericRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4GenericRTPSink.cpp.obj: ..\liveMedia\MPEG4GenericRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_136) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4GenericRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_137) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4GenericRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG4GenericRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG4GenericRTPSink.cpp
 <<
@@ -2644,7 +2663,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG4GenericRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4GenericRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4GenericRTPSource.cpp.obj: ..\liveMedia\MPEG4GenericRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_137) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4GenericRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_138) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4GenericRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG4GenericRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG4GenericRTPSource.cpp
 <<
@@ -2663,7 +2682,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG4GenericRTPSource.cpp.s: cmake_for
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4LATMAudioRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4LATMAudioRTPSink.cpp.obj: ..\liveMedia\MPEG4LATMAudioRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_138) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4LATMAudioRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_139) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4LATMAudioRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG4LATMAudioRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG4LATMAudioRTPSink.cpp
 <<
@@ -2682,7 +2701,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG4LATMAudioRTPSink.cpp.s: cmake_for
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4LATMAudioRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4LATMAudioRTPSource.cpp.obj: ..\liveMedia\MPEG4LATMAudioRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_139) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4LATMAudioRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_140) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4LATMAudioRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG4LATMAudioRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG4LATMAudioRTPSource.cpp
 <<
@@ -2701,7 +2720,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG4LATMAudioRTPSource.cpp.s: cmake_f
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoFileServerMediaSubsession.cpp.obj: ..\liveMedia\MPEG4VideoFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_140) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4VideoFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_141) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4VideoFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG4VideoFileServerMediaSubsession.cpp
 <<
@@ -2720,7 +2739,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoFileServerMediaSubsession.cp
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoStreamDiscreteFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoStreamDiscreteFramer.cpp.obj: ..\liveMedia\MPEG4VideoStreamDiscreteFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_141) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4VideoStreamDiscreteFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_142) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4VideoStreamDiscreteFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoStreamDiscreteFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG4VideoStreamDiscreteFramer.cpp
 <<
@@ -2739,7 +2758,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoStreamDiscreteFramer.cpp.s: 
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoStreamFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoStreamFramer.cpp.obj: ..\liveMedia\MPEG4VideoStreamFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_142) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4VideoStreamFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_143) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEG4VideoStreamFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoStreamFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEG4VideoStreamFramer.cpp
 <<
@@ -2758,7 +2777,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEG4VideoStreamFramer.cpp.s: cmake_fo
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEGVideoStreamFramer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEGVideoStreamFramer.cpp.obj: ..\liveMedia\MPEGVideoStreamFramer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_143) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEGVideoStreamFramer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_144) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEGVideoStreamFramer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEGVideoStreamFramer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEGVideoStreamFramer.cpp
 <<
@@ -2777,7 +2796,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEGVideoStreamFramer.cpp.s: cmake_for
 
 CMakeFiles\protocol-windows.dir\liveMedia\MPEGVideoStreamParser.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MPEGVideoStreamParser.cpp.obj: ..\liveMedia\MPEGVideoStreamParser.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_144) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEGVideoStreamParser.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_145) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MPEGVideoStreamParser.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MPEGVideoStreamParser.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MPEGVideoStreamParser.cpp
 <<
@@ -2796,7 +2815,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MPEGVideoStreamParser.cpp.s: cmake_for
 
 CMakeFiles\protocol-windows.dir\liveMedia\MultiFramedRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MultiFramedRTPSink.cpp.obj: ..\liveMedia\MultiFramedRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_145) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MultiFramedRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_146) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MultiFramedRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MultiFramedRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MultiFramedRTPSink.cpp
 <<
@@ -2815,7 +2834,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MultiFramedRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\MultiFramedRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\MultiFramedRTPSource.cpp.obj: ..\liveMedia\MultiFramedRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_146) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MultiFramedRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_147) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/MultiFramedRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\MultiFramedRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\MultiFramedRTPSource.cpp
 <<
@@ -2834,7 +2853,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\MultiFramedRTPSource.cpp.s: cmake_forc
 
 CMakeFiles\protocol-windows.dir\liveMedia\OggDemuxedTrack.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\OggDemuxedTrack.cpp.obj: ..\liveMedia\OggDemuxedTrack.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_147) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggDemuxedTrack.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_148) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggDemuxedTrack.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\OggDemuxedTrack.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\OggDemuxedTrack.cpp
 <<
@@ -2853,7 +2872,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\OggDemuxedTrack.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\OggFile.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\OggFile.cpp.obj: ..\liveMedia\OggFile.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_148) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggFile.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_149) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggFile.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\OggFile.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\OggFile.cpp
 <<
@@ -2872,7 +2891,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\OggFile.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\OggFileParser.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\OggFileParser.cpp.obj: ..\liveMedia\OggFileParser.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_149) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggFileParser.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_150) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggFileParser.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\OggFileParser.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\OggFileParser.cpp
 <<
@@ -2891,7 +2910,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\OggFileParser.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\OggFileServerDemux.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\OggFileServerDemux.cpp.obj: ..\liveMedia\OggFileServerDemux.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_150) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggFileServerDemux.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_151) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggFileServerDemux.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\OggFileServerDemux.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\OggFileServerDemux.cpp
 <<
@@ -2910,7 +2929,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\OggFileServerDemux.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\OggFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\OggFileServerMediaSubsession.cpp.obj: ..\liveMedia\OggFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_151) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_152) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\OggFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\OggFileServerMediaSubsession.cpp
 <<
@@ -2929,7 +2948,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\OggFileServerMediaSubsession.cpp.s: cm
 
 CMakeFiles\protocol-windows.dir\liveMedia\OggFileSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\OggFileSink.cpp.obj: ..\liveMedia\OggFileSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_152) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggFileSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_153) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OggFileSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\OggFileSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\OggFileSink.cpp
 <<
@@ -2948,7 +2967,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\OggFileSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\OnDemandServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\OnDemandServerMediaSubsession.cpp.obj: ..\liveMedia\OnDemandServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_153) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OnDemandServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_154) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OnDemandServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\OnDemandServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\OnDemandServerMediaSubsession.cpp
 <<
@@ -2967,7 +2986,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\OnDemandServerMediaSubsession.cpp.s: c
 
 CMakeFiles\protocol-windows.dir\liveMedia\ourMD5.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\ourMD5.cpp.obj: ..\liveMedia\ourMD5.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_154) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/ourMD5.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_155) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/ourMD5.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\ourMD5.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\ourMD5.cpp
 <<
@@ -2986,7 +3005,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\ourMD5.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\OutputFile.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\OutputFile.cpp.obj: ..\liveMedia\OutputFile.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_155) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OutputFile.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_156) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/OutputFile.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\OutputFile.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\OutputFile.cpp
 <<
@@ -3005,7 +3024,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\OutputFile.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\PassiveServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\PassiveServerMediaSubsession.cpp.obj: ..\liveMedia\PassiveServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_156) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/PassiveServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_157) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/PassiveServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\PassiveServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\PassiveServerMediaSubsession.cpp
 <<
@@ -3024,7 +3043,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\PassiveServerMediaSubsession.cpp.s: cm
 
 CMakeFiles\protocol-windows.dir\liveMedia\ProxyServerMediaSession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\ProxyServerMediaSession.cpp.obj: ..\liveMedia\ProxyServerMediaSession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_157) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/ProxyServerMediaSession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_158) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/ProxyServerMediaSession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\ProxyServerMediaSession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\ProxyServerMediaSession.cpp
 <<
@@ -3043,7 +3062,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\ProxyServerMediaSession.cpp.s: cmake_f
 
 CMakeFiles\protocol-windows.dir\liveMedia\QCELPAudioRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\QCELPAudioRTPSource.cpp.obj: ..\liveMedia\QCELPAudioRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_158) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/QCELPAudioRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_159) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/QCELPAudioRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\QCELPAudioRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\QCELPAudioRTPSource.cpp
 <<
@@ -3062,7 +3081,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\QCELPAudioRTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\QuickTimeFileSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\QuickTimeFileSink.cpp.obj: ..\liveMedia\QuickTimeFileSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_159) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/QuickTimeFileSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_160) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/QuickTimeFileSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\QuickTimeFileSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\QuickTimeFileSink.cpp
 <<
@@ -3081,7 +3100,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\QuickTimeFileSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\QuickTimeGenericRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\QuickTimeGenericRTPSource.cpp.obj: ..\liveMedia\QuickTimeGenericRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_160) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/QuickTimeGenericRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_161) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/QuickTimeGenericRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\QuickTimeGenericRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\QuickTimeGenericRTPSource.cpp
 <<
@@ -3100,7 +3119,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\QuickTimeGenericRTPSource.cpp.s: cmake
 
 CMakeFiles\protocol-windows.dir\liveMedia\RawVideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RawVideoRTPSink.cpp.obj: ..\liveMedia\RawVideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_161) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RawVideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_162) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RawVideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RawVideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RawVideoRTPSink.cpp
 <<
@@ -3119,7 +3138,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RawVideoRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\RawVideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RawVideoRTPSource.cpp.obj: ..\liveMedia\RawVideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_162) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RawVideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_163) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RawVideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RawVideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RawVideoRTPSource.cpp
 <<
@@ -3138,7 +3157,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RawVideoRTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\RTCP.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RTCP.cpp.obj: ..\liveMedia\RTCP.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_163) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTCP.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_164) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTCP.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RTCP.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RTCP.cpp
 <<
@@ -3157,7 +3176,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RTCP.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\rtcp_from_spec.c.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\rtcp_from_spec.c.obj: ..\liveMedia\rtcp_from_spec.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_164) "Building C object CMakeFiles/protocol-windows.dir/liveMedia/rtcp_from_spec.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_165) "Building C object CMakeFiles/protocol-windows.dir/liveMedia/rtcp_from_spec.c.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\rtcp_from_spec.c.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\rtcp_from_spec.c
 <<
@@ -3176,7 +3195,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\rtcp_from_spec.c.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\RTPInterface.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RTPInterface.cpp.obj: ..\liveMedia\RTPInterface.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_165) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTPInterface.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_166) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTPInterface.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RTPInterface.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RTPInterface.cpp
 <<
@@ -3195,7 +3214,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RTPInterface.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\RTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RTPSink.cpp.obj: ..\liveMedia\RTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_166) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_167) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RTPSink.cpp
 <<
@@ -3214,7 +3233,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\RTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RTPSource.cpp.obj: ..\liveMedia\RTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_167) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_168) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RTPSource.cpp
 <<
@@ -3233,7 +3252,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPClient.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPClient.cpp.obj: ..\liveMedia\RTSPClient.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_168) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPClient.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_169) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPClient.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RTSPClient.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RTSPClient.cpp
 <<
@@ -3252,7 +3271,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RTSPClient.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPCommon.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPCommon.cpp.obj: ..\liveMedia\RTSPCommon.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_169) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPCommon.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_170) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPCommon.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RTSPCommon.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RTSPCommon.cpp
 <<
@@ -3271,7 +3290,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RTSPCommon.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPRegisterSender.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPRegisterSender.cpp.obj: ..\liveMedia\RTSPRegisterSender.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_170) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPRegisterSender.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_171) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPRegisterSender.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RTSPRegisterSender.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RTSPRegisterSender.cpp
 <<
@@ -3290,7 +3309,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RTSPRegisterSender.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPServer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPServer.cpp.obj: ..\liveMedia\RTSPServer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_171) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPServer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_172) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPServer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RTSPServer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RTSPServer.cpp
 <<
@@ -3309,7 +3328,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RTSPServer.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPServerRegister.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPServerRegister.cpp.obj: ..\liveMedia\RTSPServerRegister.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_172) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPServerRegister.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_173) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPServerRegister.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RTSPServerRegister.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RTSPServerRegister.cpp
 <<
@@ -3328,7 +3347,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RTSPServerRegister.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPServerSupportingHTTPStreaming.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\RTSPServerSupportingHTTPStreaming.cpp.obj: ..\liveMedia\RTSPServerSupportingHTTPStreaming.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_173) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPServerSupportingHTTPStreaming.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_174) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/RTSPServerSupportingHTTPStreaming.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\RTSPServerSupportingHTTPStreaming.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\RTSPServerSupportingHTTPStreaming.cpp
 <<
@@ -3347,7 +3366,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\RTSPServerSupportingHTTPStreaming.cpp.
 
 CMakeFiles\protocol-windows.dir\liveMedia\ServerMediaSession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\ServerMediaSession.cpp.obj: ..\liveMedia\ServerMediaSession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_174) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/ServerMediaSession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_175) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/ServerMediaSession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\ServerMediaSession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\ServerMediaSession.cpp
 <<
@@ -3366,7 +3385,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\ServerMediaSession.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\SimpleRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\SimpleRTPSink.cpp.obj: ..\liveMedia\SimpleRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_175) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/SimpleRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_176) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/SimpleRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\SimpleRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\SimpleRTPSink.cpp
 <<
@@ -3385,7 +3404,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\SimpleRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\SimpleRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\SimpleRTPSource.cpp.obj: ..\liveMedia\SimpleRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_176) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/SimpleRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_177) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/SimpleRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\SimpleRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\SimpleRTPSource.cpp
 <<
@@ -3404,7 +3423,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\SimpleRTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\SIPClient.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\SIPClient.cpp.obj: ..\liveMedia\SIPClient.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_177) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/SIPClient.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_178) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/SIPClient.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\SIPClient.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\SIPClient.cpp
 <<
@@ -3423,7 +3442,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\SIPClient.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\StreamParser.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\StreamParser.cpp.obj: ..\liveMedia\StreamParser.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_178) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/StreamParser.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_179) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/StreamParser.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\StreamParser.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\StreamParser.cpp
 <<
@@ -3442,7 +3461,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\StreamParser.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\StreamReplicator.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\StreamReplicator.cpp.obj: ..\liveMedia\StreamReplicator.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_179) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/StreamReplicator.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_180) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/StreamReplicator.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\StreamReplicator.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\StreamReplicator.cpp
 <<
@@ -3461,7 +3480,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\StreamReplicator.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\StreamSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\StreamSource.cpp.obj: ..\liveMedia\StreamSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_180) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/StreamSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_181) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/StreamSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\StreamSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\StreamSource.cpp
 <<
@@ -3480,7 +3499,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\StreamSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\T140TextRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\T140TextRTPSink.cpp.obj: ..\liveMedia\T140TextRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_181) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/T140TextRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_182) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/T140TextRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\T140TextRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\T140TextRTPSink.cpp
 <<
@@ -3499,7 +3518,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\T140TextRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\TCPStreamSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\TCPStreamSink.cpp.obj: ..\liveMedia\TCPStreamSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_182) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/TCPStreamSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_183) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/TCPStreamSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\TCPStreamSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\TCPStreamSink.cpp
 <<
@@ -3518,7 +3537,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\TCPStreamSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\TextRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\TextRTPSink.cpp.obj: ..\liveMedia\TextRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_183) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/TextRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_184) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/TextRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\TextRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\TextRTPSink.cpp
 <<
@@ -3537,7 +3556,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\TextRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\TheoraVideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\TheoraVideoRTPSink.cpp.obj: ..\liveMedia\TheoraVideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_184) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/TheoraVideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_185) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/TheoraVideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\TheoraVideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\TheoraVideoRTPSink.cpp
 <<
@@ -3556,7 +3575,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\TheoraVideoRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\TheoraVideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\TheoraVideoRTPSource.cpp.obj: ..\liveMedia\TheoraVideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_185) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/TheoraVideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_186) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/TheoraVideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\TheoraVideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\TheoraVideoRTPSource.cpp
 <<
@@ -3575,7 +3594,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\TheoraVideoRTPSource.cpp.s: cmake_forc
 
 CMakeFiles\protocol-windows.dir\liveMedia\uLawAudioFilter.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\uLawAudioFilter.cpp.obj: ..\liveMedia\uLawAudioFilter.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_186) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/uLawAudioFilter.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_187) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/uLawAudioFilter.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\uLawAudioFilter.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\uLawAudioFilter.cpp
 <<
@@ -3594,7 +3613,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\uLawAudioFilter.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\VideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\VideoRTPSink.cpp.obj: ..\liveMedia\VideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_187) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_188) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\VideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\VideoRTPSink.cpp
 <<
@@ -3613,7 +3632,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\VideoRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\VorbisAudioRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\VorbisAudioRTPSink.cpp.obj: ..\liveMedia\VorbisAudioRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_188) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VorbisAudioRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_189) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VorbisAudioRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\VorbisAudioRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\VorbisAudioRTPSink.cpp
 <<
@@ -3632,7 +3651,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\VorbisAudioRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\VorbisAudioRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\VorbisAudioRTPSource.cpp.obj: ..\liveMedia\VorbisAudioRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_189) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VorbisAudioRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_190) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VorbisAudioRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\VorbisAudioRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\VorbisAudioRTPSource.cpp
 <<
@@ -3651,7 +3670,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\VorbisAudioRTPSource.cpp.s: cmake_forc
 
 CMakeFiles\protocol-windows.dir\liveMedia\VP8VideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\VP8VideoRTPSink.cpp.obj: ..\liveMedia\VP8VideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_190) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VP8VideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_191) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VP8VideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\VP8VideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\VP8VideoRTPSink.cpp
 <<
@@ -3670,7 +3689,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\VP8VideoRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\VP8VideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\VP8VideoRTPSource.cpp.obj: ..\liveMedia\VP8VideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_191) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VP8VideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_192) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VP8VideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\VP8VideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\VP8VideoRTPSource.cpp
 <<
@@ -3689,7 +3708,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\VP8VideoRTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\VP9VideoRTPSink.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\VP9VideoRTPSink.cpp.obj: ..\liveMedia\VP9VideoRTPSink.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_192) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VP9VideoRTPSink.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_193) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VP9VideoRTPSink.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\VP9VideoRTPSink.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\VP9VideoRTPSink.cpp
 <<
@@ -3708,7 +3727,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\VP9VideoRTPSink.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\VP9VideoRTPSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\VP9VideoRTPSource.cpp.obj: ..\liveMedia\VP9VideoRTPSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_193) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VP9VideoRTPSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_194) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/VP9VideoRTPSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\VP9VideoRTPSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\VP9VideoRTPSource.cpp
 <<
@@ -3727,7 +3746,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\VP9VideoRTPSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\liveMedia\WAVAudioFileServerMediaSubsession.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\WAVAudioFileServerMediaSubsession.cpp.obj: ..\liveMedia\WAVAudioFileServerMediaSubsession.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_194) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/WAVAudioFileServerMediaSubsession.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_195) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/WAVAudioFileServerMediaSubsession.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\WAVAudioFileServerMediaSubsession.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\WAVAudioFileServerMediaSubsession.cpp
 <<
@@ -3746,7 +3765,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\WAVAudioFileServerMediaSubsession.cpp.
 
 CMakeFiles\protocol-windows.dir\liveMedia\WAVAudioFileSource.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\liveMedia\WAVAudioFileSource.cpp.obj: ..\liveMedia\WAVAudioFileSource.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_195) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/WAVAudioFileSource.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_196) "Building CXX object CMakeFiles/protocol-windows.dir/liveMedia/WAVAudioFileSource.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\liveMedia\WAVAudioFileSource.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\liveMedia\WAVAudioFileSource.cpp
 <<
@@ -3765,7 +3784,7 @@ CMakeFiles\protocol-windows.dir\liveMedia\WAVAudioFileSource.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\UsageEnvironment\HashTable.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\UsageEnvironment\HashTable.cpp.obj: ..\UsageEnvironment\HashTable.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_196) "Building CXX object CMakeFiles/protocol-windows.dir/UsageEnvironment/HashTable.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_197) "Building CXX object CMakeFiles/protocol-windows.dir/UsageEnvironment/HashTable.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\UsageEnvironment\HashTable.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\UsageEnvironment\HashTable.cpp
 <<
@@ -3784,7 +3803,7 @@ CMakeFiles\protocol-windows.dir\UsageEnvironment\HashTable.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\UsageEnvironment\strDup.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\UsageEnvironment\strDup.cpp.obj: ..\UsageEnvironment\strDup.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_197) "Building CXX object CMakeFiles/protocol-windows.dir/UsageEnvironment/strDup.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_198) "Building CXX object CMakeFiles/protocol-windows.dir/UsageEnvironment/strDup.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\UsageEnvironment\strDup.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\UsageEnvironment\strDup.cpp
 <<
@@ -3803,7 +3822,7 @@ CMakeFiles\protocol-windows.dir\UsageEnvironment\strDup.cpp.s: cmake_force
 
 CMakeFiles\protocol-windows.dir\UsageEnvironment\UsageEnvironment.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\UsageEnvironment\UsageEnvironment.cpp.obj: ..\UsageEnvironment\UsageEnvironment.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_198) "Building CXX object CMakeFiles/protocol-windows.dir/UsageEnvironment/UsageEnvironment.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_199) "Building CXX object CMakeFiles/protocol-windows.dir/UsageEnvironment/UsageEnvironment.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\UsageEnvironment\UsageEnvironment.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\UsageEnvironment\UsageEnvironment.cpp
 <<
@@ -3822,7 +3841,7 @@ CMakeFiles\protocol-windows.dir\UsageEnvironment\UsageEnvironment.cpp.s: cmake_f
 
 CMakeFiles\protocol-windows.dir\WindowsAudioInputDevice\WindowsAudioInputDevice_common.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\WindowsAudioInputDevice\WindowsAudioInputDevice_common.cpp.obj: ..\WindowsAudioInputDevice\WindowsAudioInputDevice_common.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_199) "Building CXX object CMakeFiles/protocol-windows.dir/WindowsAudioInputDevice/WindowsAudioInputDevice_common.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_200) "Building CXX object CMakeFiles/protocol-windows.dir/WindowsAudioInputDevice/WindowsAudioInputDevice_common.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\WindowsAudioInputDevice\WindowsAudioInputDevice_common.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\WindowsAudioInputDevice\WindowsAudioInputDevice_common.cpp
 <<
@@ -3841,7 +3860,7 @@ CMakeFiles\protocol-windows.dir\WindowsAudioInputDevice\WindowsAudioInputDevice_
 
 CMakeFiles\protocol-windows.dir\WindowsAudioInputDevice\WindowsAudioInputDevice_mixer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\WindowsAudioInputDevice\WindowsAudioInputDevice_mixer.cpp.obj: ..\WindowsAudioInputDevice\WindowsAudioInputDevice_mixer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_200) "Building CXX object CMakeFiles/protocol-windows.dir/WindowsAudioInputDevice/WindowsAudioInputDevice_mixer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_201) "Building CXX object CMakeFiles/protocol-windows.dir/WindowsAudioInputDevice/WindowsAudioInputDevice_mixer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\WindowsAudioInputDevice\WindowsAudioInputDevice_mixer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\WindowsAudioInputDevice\WindowsAudioInputDevice_mixer.cpp
 <<
@@ -3860,7 +3879,7 @@ CMakeFiles\protocol-windows.dir\WindowsAudioInputDevice\WindowsAudioInputDevice_
 
 CMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj: CMakeFiles\protocol-windows.dir\flags.make
 CMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj: ..\testH264VideoStreamer.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_201) "Building CXX object CMakeFiles/protocol-windows.dir/testH264VideoStreamer.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_202) "Building CXX object CMakeFiles/protocol-windows.dir/testH264VideoStreamer.cpp.obj"
 	"C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\cl.exe" @<<
  /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj /FdCMakeFiles\protocol-windows.dir\ /FS -c C:\Users\vm1\Downloads\protocol-master\server\testH264VideoStreamer.cpp
 <<
@@ -3919,6 +3938,7 @@ protocol__windows_OBJECTS = \
 "CMakeFiles\protocol-windows.dir\liveMedia\ByteStreamMemoryBufferSource.cpp.obj" \
 "CMakeFiles\protocol-windows.dir\liveMedia\ByteStreamMultiFileSource.cpp.obj" \
 "CMakeFiles\protocol-windows.dir\liveMedia\DeviceSource.cpp.obj" \
+"CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj" \
 "CMakeFiles\protocol-windows.dir\liveMedia\DigestAuthentication.cpp.obj" \
 "CMakeFiles\protocol-windows.dir\liveMedia\DVVideoFileServerMediaSubsession.cpp.obj" \
 "CMakeFiles\protocol-windows.dir\liveMedia\DVVideoRTPSink.cpp.obj" \
@@ -4124,6 +4144,7 @@ protocol-windows.exe: CMakeFiles\protocol-windows.dir\liveMedia\ByteStreamFileSo
 protocol-windows.exe: CMakeFiles\protocol-windows.dir\liveMedia\ByteStreamMemoryBufferSource.cpp.obj
 protocol-windows.exe: CMakeFiles\protocol-windows.dir\liveMedia\ByteStreamMultiFileSource.cpp.obj
 protocol-windows.exe: CMakeFiles\protocol-windows.dir\liveMedia\DeviceSource.cpp.obj
+protocol-windows.exe: CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj
 protocol-windows.exe: CMakeFiles\protocol-windows.dir\liveMedia\DigestAuthentication.cpp.obj
 protocol-windows.exe: CMakeFiles\protocol-windows.dir\liveMedia\DVVideoFileServerMediaSubsession.cpp.obj
 protocol-windows.exe: CMakeFiles\protocol-windows.dir\liveMedia\DVVideoRTPSink.cpp.obj
@@ -4287,7 +4308,7 @@ protocol-windows.exe: CMakeFiles\protocol-windows.dir\WindowsAudioInputDevice\Wi
 protocol-windows.exe: CMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj
 protocol-windows.exe: CMakeFiles\protocol-windows.dir\build.make
 protocol-windows.exe: CMakeFiles\protocol-windows.dir\objects1.rsp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_202) "Linking CXX executable protocol-windows.exe"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\CMakeFiles --progress-num=$(CMAKE_PROGRESS_203) "Linking CXX executable protocol-windows.exe"
 	"C:\Program Files\JetBrains\CLion 2019.2.3\bin\cmake\win\bin\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\protocol-windows.dir --rc="C:\PROGRA~2\Windows Kits\10\bin\10.0.18362.0\x86\rc.exe" --mt="C:\PROGRA~2\Windows Kits\10\bin\10.0.18362.0\x86\mt.exe" --manifests  -- "C:\PROGRA~2\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\Hostx86\x86\link.exe" /nologo @CMakeFiles\protocol-windows.dir\objects1.rsp @<<
  /out:protocol-windows.exe /implib:protocol-windows.lib /pdb:C:\Users\vm1\Downloads\protocol-master\server\cmake-build-release\protocol-windows.pdb /version:0.0  /machine:X86 /INCREMENTAL:NO /subsystem:console kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib 
 <<

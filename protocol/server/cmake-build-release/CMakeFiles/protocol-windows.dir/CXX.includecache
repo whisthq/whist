@@ -90,6 +90,20 @@ strDup.hh
 string.h
 -
 
+../groupsock/include/GroupsockHelper.hh
+NetAddress.hh
+../groupsock/include/NetAddress.hh
+sys/time.h
+-
+
+../groupsock/include/NetAddress.hh
+HashTable.hh
+../groupsock/include/HashTable.hh
+NetCommon.h
+../groupsock/include/NetCommon.h
+UsageEnvironment.hh
+../groupsock/include/UsageEnvironment.hh
+
 ../groupsock/include/NetCommon.h
 winsock2.h
 -
@@ -168,7 +182,7 @@ stdio.h
 Media.hh
 ../liveMedia/include/Media.hh
 
-../liveMedia/include/StreamSource.h
+../liveMedia/include/StreamSource2.hh
 FramedSource.hh
 ../liveMedia/include/FramedSource.hh
 Defs.h
@@ -1642,7 +1656,11 @@ ws2tcpip.h
 wspiapi.h
 -
 
-C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamSource.cpp
-StreamSource.h
-C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamSource.h
+C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamSource2.cpp
+StreamSource2.hh
+C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamSource2.hh
+GroupsockHelper.hh
+-
+iostream
+-
 

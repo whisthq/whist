@@ -5065,6 +5065,33 @@ liveMedia\StreamSource.cpp.s:
 	$(MAKE) -f CMakeFiles\protocol-windows.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\protocol-windows.dir\liveMedia\StreamSource.cpp.s
 .PHONY : liveMedia\StreamSource.cpp.s
 
+liveMedia\StreamSource2.obj: liveMedia\StreamSource2.cpp.obj
+
+.PHONY : liveMedia\StreamSource2.obj
+
+# target to build an object file
+liveMedia\StreamSource2.cpp.obj:
+	$(MAKE) -f CMakeFiles\protocol-windows.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj
+.PHONY : liveMedia\StreamSource2.cpp.obj
+
+liveMedia\StreamSource2.i: liveMedia\StreamSource2.cpp.i
+
+.PHONY : liveMedia\StreamSource2.i
+
+# target to preprocess a source file
+liveMedia\StreamSource2.cpp.i:
+	$(MAKE) -f CMakeFiles\protocol-windows.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.i
+.PHONY : liveMedia\StreamSource2.cpp.i
+
+liveMedia\StreamSource2.s: liveMedia\StreamSource2.cpp.s
+
+.PHONY : liveMedia\StreamSource2.s
+
+# target to generate assembly for a file
+liveMedia\StreamSource2.cpp.s:
+	$(MAKE) -f CMakeFiles\protocol-windows.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.s
+.PHONY : liveMedia\StreamSource2.cpp.s
+
 liveMedia\T140TextRTPSink.obj: liveMedia\T140TextRTPSink.cpp.obj
 
 .PHONY : liveMedia\T140TextRTPSink.obj
@@ -6109,6 +6136,9 @@ help:
 	@echo ... liveMedia/StreamSource.obj
 	@echo ... liveMedia/StreamSource.i
 	@echo ... liveMedia/StreamSource.s
+	@echo ... liveMedia/StreamSource2.obj
+	@echo ... liveMedia/StreamSource2.i
+	@echo ... liveMedia/StreamSource2.s
 	@echo ... liveMedia/T140TextRTPSink.obj
 	@echo ... liveMedia/T140TextRTPSink.i
 	@echo ... liveMedia/T140TextRTPSink.s

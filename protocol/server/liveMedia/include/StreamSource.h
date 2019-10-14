@@ -187,7 +187,7 @@ private:
     u_int8_t* WriteEncOutput()
     {
         for (std::vector<uint8_t> &packet : vPacket) {
-            std::cout << "Write" << std::endl;
+            //std::cout << "Write" << std::endl;
             fwrite(packet.data(), packet.size(), 1, fp);
         }
         //std::cout << "SIZE_PACKET : " << vPacket[0].size() << std::endl;

@@ -29,6 +29,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include <GroupsockHelper.hh>
 
 #include <StreamSource.h> // streaming from windows DXD11
+#include <include/StreamSource2.hh>
 
 UsageEnvironment* env;
 // char const* inputFileName = "test.264"; no file anymore
@@ -62,7 +63,7 @@ int main(int argc, char** argv) {
   rtcpGroupsock.multicastSendOnly(); // we're a SSM source
 
   // Create a 'H264 Video RTP' sink from the RTP 'groupsock':
-  OutPacketBuffer::maxSize = 100000;
+  OutPacketBuffer::maxSize = 150000;
   videoSink = H264VideoRTPSink::createNew(*env, &rtpGroupsock, 96);
 
   // Create (and start) a 'RTCP instance' for this RTP sink:
@@ -77,7 +78,6 @@ int main(int argc, char** argv) {
 			    videoSink, NULL /* we're a server */,
 			    True /* we're a SSM source */);
   // Note: This starts RTCP running automatically
-
   RTSPServer* rtspServer = RTSPServer::createNew(*env, 8554);
   if (rtspServer == NULL) {
     *env << "Failed to create RTSP server: " << env->getResultMsg() << "\n";
@@ -90,9 +90,12 @@ int main(int argc, char** argv) {
   sms->addSubsession(PassiveServerMediaSubsession::createNew(*videoSink, rtcp));
   rtspServer->addServerMediaSession(sms);
 
+
   char* url = rtspServer->rtspURL(sms);
   *env << "Play this stream using the URL \"" << url << "\"\n";
   delete[] url;
+    //int _;
+    //std::cin >> _;
 
   // Start the streaming:
   *env << "Beginning streaming...\n";
@@ -123,7 +126,7 @@ void play() {
   //}
 
   //FramedSource* videoES = fileSource;
-  FramedSource* videoES = StreamSource::createNew(*env); // reading from Stream
+  FramedSource* videoES = StreamSource2::createNew(*env); // reading from Stream
 
   // Create a framer for the Video Elementary Stream:
   //videoSource = H264VideoStreamFramer::createNew(*env, videoES);

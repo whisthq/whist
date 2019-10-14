@@ -23406,6 +23406,152 @@ CMakeFiles/protocol-windows.dir/liveMedia/StreamSource.cpp.obj
  C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wow64apiset.h
  C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wsipv6ok.h
  C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamSource.cpp
+CMakeFiles/protocol-windows.dir/liveMedia/StreamSource2.cpp.obj
+ ../DesktopCaptureEncode/NvEncoder/NvEncoder.h
+ ../DesktopCaptureEncode/NvEncoder/NvEncoderD3D11.h
+ ../DesktopCaptureEncode/NvEncoder/nvEncodeAPI.h
+ ../DesktopCaptureEncode/nvEncDXDDI/DDAImpl.h
+ ../DesktopCaptureEncode/nvEncDXDDI/Defs.h
+ ../DesktopCaptureEncode/nvEncDXDDI/Preproc.h
+ ../UsageEnvironment/include/Boolean.hh
+ ../UsageEnvironment/include/HashTable.hh
+ ../UsageEnvironment/include/UsageEnvironment.hh
+ ../UsageEnvironment/include/UsageEnvironment_version.hh
+ ../UsageEnvironment/include/strDup.hh
+ ../groupsock/include/GroupsockHelper.hh
+ ../groupsock/include/NetAddress.hh
+ ../groupsock/include/NetCommon.h
+ ../liveMedia/include/FramedSource.hh
+ ../liveMedia/include/Media.hh
+ ../liveMedia/include/MediaSource.hh
+ ../liveMedia/include/StreamSource2.hh
+ ../liveMedia/include/liveMedia_version.hh
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OCIdl.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ObjIdl.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ObjIdlbase.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OleAuto.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/PropIdl.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/PropIdlBase.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/SCardErr.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Unknwn.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Unknwnbase.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WS2tcpip.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WSPiApi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WinBase.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WinNls.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WinSock2.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WinUser.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/apiquery2.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/cguid.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/combaseapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/coml2api.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/commctrl.rh
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/commdlg.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/commdlg.inl
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/consoleapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/consoleapi2.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/consoleapi3.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10_1.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10_1shader.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10effect.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10misc.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10sdklayers.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10shader.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11_1.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11_2.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11sdklayers.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3dcommon.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/datetimeapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dde.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dde.rh
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ddeml.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/debugapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dlgs.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dpapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/enclaveapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/errhandlingapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/fibersapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/fileapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/fileapifromapp.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/handleapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/heapapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ime_cmodes.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/imm.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/interlockedapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ioapiset.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/jobapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/jobapi2.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/joystickapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/libloaderapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/lzexpand.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mciapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mcx.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/memoryapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/minwinbase.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mmeapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mmiscapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mmiscapi2.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mmsyscom.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mmsystem.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/msxml.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/namedpipeapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/namespaceapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/nb30.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ncrypt.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/objbase.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ole.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/oleidl.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/playsoundapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/processenv.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/processthreadsapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/processtopologyapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/profileapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/prsht.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/prsht.inl
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/realtimeapiset.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/reason.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/securityappcontainer.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/securitybaseapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/servprov.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/shellapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/stringapiset.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/synchapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/sysinfoapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/systemtopologyapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/threadpoolapiset.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/threadpoollegacyapiset.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/timeapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/timezoneapi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/urlmon.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/utilapiset.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/verrsrc.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winbase.inl
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wincon.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wincontypes.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wincrypt.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winefs.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wingdi.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winioctl.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winnetwk.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winnt.rh
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winperf.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winreg.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winresrc.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winscard.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winsock.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winspool.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winsvc.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winuser.inl
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winuser.rh
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winver.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wow64apiset.h
+ C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wsipv6ok.h
+ C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamSource2.cpp
 CMakeFiles/protocol-windows.dir/liveMedia/T140TextRTPSink.cpp.obj
  ../UsageEnvironment/include/Boolean.hh
  ../UsageEnvironment/include/HashTable.hh
@@ -25693,6 +25839,7 @@ CMakeFiles/protocol-windows.dir/testH264VideoStreamer.cpp.obj
  ../liveMedia/include/SimpleRTPSource.hh
  ../liveMedia/include/StreamReplicator.hh
  ../liveMedia/include/StreamSource.h
+ ../liveMedia/include/StreamSource2.hh
  ../liveMedia/include/T140TextRTPSink.hh
  ../liveMedia/include/TCPStreamSink.hh
  ../liveMedia/include/TextRTPSink.hh

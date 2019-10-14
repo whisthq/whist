@@ -69,11 +69,11 @@ char* RTSPServer
 char* RTSPServer::rtspURLPrefix(int clientSocket) const {
   struct sockaddr_in ourAddress;
   if (clientSocket < 0) {
-      std::cout << ourIPAddress(envir()) <<std::endl;
     // Use our default IP address in the URL:
     ourAddress.sin_addr.s_addr = ReceivingInterfaceAddr != 0
       ? ReceivingInterfaceAddr
       : ourIPAddress(envir()); // hack
+      std::cout << AddressString(ourAddress).val() << std::endl;
   } else {
     SOCKLEN_T namelen = sizeof ourAddress;
     getsockname(clientSocket, (struct sockaddr*)&ourAddress, &namelen);

@@ -23406,6 +23406,152 @@ CMakeFiles\protocol-windows.dir\liveMedia\StreamSource.cpp.obj: "C:\Program File
 CMakeFiles\protocol-windows.dir\liveMedia\StreamSource.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\wsipv6ok.h"
 CMakeFiles\protocol-windows.dir\liveMedia\StreamSource.cpp.obj: ..\liveMedia\StreamSource.cpp
 
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\DesktopCaptureEncode\NvEncoder\NvEncoder.h
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\DesktopCaptureEncode\NvEncoder\NvEncoderD3D11.h
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\DesktopCaptureEncode\NvEncoder\nvEncodeAPI.h
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\DesktopCaptureEncode\nvEncDXDDI\DDAImpl.h
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\DesktopCaptureEncode\nvEncDXDDI\Defs.h
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\DesktopCaptureEncode\nvEncDXDDI\Preproc.h
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\UsageEnvironment\include\Boolean.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\UsageEnvironment\include\HashTable.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\UsageEnvironment\include\UsageEnvironment.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\UsageEnvironment\include\UsageEnvironment_version.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\UsageEnvironment\include\strDup.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\groupsock\include\GroupsockHelper.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\groupsock\include\NetAddress.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\groupsock\include\NetCommon.h
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\liveMedia\include\FramedSource.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\liveMedia\include\Media.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\liveMedia\include\MediaSource.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\liveMedia\include\StreamSource2.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\liveMedia\include\liveMedia_version.hh
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\OAIdl.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\OCIdl.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\ObjIdl.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\ObjIdlbase.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\Ole2.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\OleAuto.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\PropIdl.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\PropIdlBase.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\SCardErr.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\Unknwn.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\Unknwnbase.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\WS2tcpip.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\WSPiApi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\WinBase.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\WinNls.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\WinSock2.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\WinUser.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\Windows.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\apiquery2.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\cguid.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\combaseapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\coml2api.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\commctrl.rh"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\commdlg.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\commdlg.inl"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\consoleapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\consoleapi2.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\consoleapi3.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3d10.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3d10_1.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3d10_1shader.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3d10effect.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3d10misc.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3d10sdklayers.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3d10shader.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3d11.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3d11_1.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3d11_2.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3d11sdklayers.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\d3dcommon.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\datetimeapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\dde.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\dde.rh"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\ddeml.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\debugapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\dlgs.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\dpapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\enclaveapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\errhandlingapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\fibersapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\fileapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\fileapifromapp.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\handleapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\heapapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\ime_cmodes.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\imm.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\interlockedapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\ioapiset.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\jobapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\jobapi2.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\joystickapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\libloaderapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\lzexpand.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\mciapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\mcx.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\memoryapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\minwinbase.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\mmeapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\mmiscapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\mmiscapi2.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\mmsyscom.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\mmsystem.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\msxml.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\namedpipeapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\namespaceapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\nb30.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\ncrypt.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\objbase.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\ole.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\oleidl.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\playsoundapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\processenv.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\processthreadsapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\processtopologyapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\profileapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\prsht.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\prsht.inl"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\realtimeapiset.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\reason.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\securityappcontainer.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\securitybaseapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\servprov.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\shellapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\stringapiset.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\synchapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\sysinfoapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\systemtopologyapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\threadpoolapiset.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\threadpoollegacyapiset.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\timeapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\timezoneapi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\urlmon.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\utilapiset.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\verrsrc.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winbase.inl"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\wincon.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\wincontypes.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\wincrypt.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winefs.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\wingdi.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winioctl.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winnetwk.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winnt.rh"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winperf.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winreg.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winresrc.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winscard.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winsock.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winspool.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winsvc.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winuser.inl"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winuser.rh"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\winver.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\wow64apiset.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: "C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\wsipv6ok.h"
+CMakeFiles\protocol-windows.dir\liveMedia\StreamSource2.cpp.obj: ..\liveMedia\StreamSource2.cpp
+
 CMakeFiles\protocol-windows.dir\liveMedia\T140TextRTPSink.cpp.obj: ..\UsageEnvironment\include\Boolean.hh
 CMakeFiles\protocol-windows.dir\liveMedia\T140TextRTPSink.cpp.obj: ..\UsageEnvironment\include\HashTable.hh
 CMakeFiles\protocol-windows.dir\liveMedia\T140TextRTPSink.cpp.obj: ..\UsageEnvironment\include\UsageEnvironment.hh
@@ -25692,6 +25838,7 @@ CMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj: ..\liveMedia\incl
 CMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj: ..\liveMedia\include\SimpleRTPSource.hh
 CMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj: ..\liveMedia\include\StreamReplicator.hh
 CMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj: ..\liveMedia\include\StreamSource.h
+CMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj: ..\liveMedia\include\StreamSource2.hh
 CMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj: ..\liveMedia\include\T140TextRTPSink.hh
 CMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj: ..\liveMedia\include\TCPStreamSink.hh
 CMakeFiles\protocol-windows.dir\testH264VideoStreamer.cpp.obj: ..\liveMedia\include\TextRTPSink.hh

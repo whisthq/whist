@@ -209,6 +209,7 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamParser.cpp" "C:/Users/vm1/Downloads/protocol-master/server/cmake-build-release/CMakeFiles/protocol-windows.dir/liveMedia/StreamParser.cpp.obj"
   "C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamReplicator.cpp" "C:/Users/vm1/Downloads/protocol-master/server/cmake-build-release/CMakeFiles/protocol-windows.dir/liveMedia/StreamReplicator.cpp.obj"
   "C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamSource.cpp" "C:/Users/vm1/Downloads/protocol-master/server/cmake-build-release/CMakeFiles/protocol-windows.dir/liveMedia/StreamSource.cpp.obj"
+  "C:/Users/vm1/Downloads/protocol-master/server/liveMedia/StreamSource2.cpp" "C:/Users/vm1/Downloads/protocol-master/server/cmake-build-release/CMakeFiles/protocol-windows.dir/liveMedia/StreamSource2.cpp.obj"
   "C:/Users/vm1/Downloads/protocol-master/server/liveMedia/T140TextRTPSink.cpp" "C:/Users/vm1/Downloads/protocol-master/server/cmake-build-release/CMakeFiles/protocol-windows.dir/liveMedia/T140TextRTPSink.cpp.obj"
   "C:/Users/vm1/Downloads/protocol-master/server/liveMedia/TCPStreamSink.cpp" "C:/Users/vm1/Downloads/protocol-master/server/cmake-build-release/CMakeFiles/protocol-windows.dir/liveMedia/TCPStreamSink.cpp.obj"
   "C:/Users/vm1/Downloads/protocol-master/server/liveMedia/TextRTPSink.cpp" "C:/Users/vm1/Downloads/protocol-master/server/cmake-build-release/CMakeFiles/protocol-windows.dir/liveMedia/TextRTPSink.cpp.obj"
