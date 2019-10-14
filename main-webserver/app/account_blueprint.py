@@ -1,5 +1,6 @@
 from .imports import *
 from .helperFuncs import *
+from app import conn
 
 account_bp = Blueprint('account_bp', __name__)
 
@@ -11,17 +12,28 @@ def user(action):
 		vmExists = getVM(vm_name)
 		vmInDatabase = singleValueQuery(vm_name)
 		if vmExists and vmInDatabase:
-			registerUser(username, password, vm_name)
+			registerUserVM(username, password, vm_name)
 			return jsonify({}), 200
 		else:
 			return jsonify({}), 403
 	elif action == 'login':
 		username, password = body['username'], body['password']
-		vm_name = loginUser(username, password)
+		vm_name = loginUserVM(username, password)
 		if vm_name: 
 			payload = fetchVMCredentials(vm_name)
 			return jsonify(payload), 200
 		return jsonify({}), 401
+
+@account_bp.route('/account/<action>', methods = ['POST'])
+def account(action):
+	body = request.get_json()
+	if action == 'login':
+		username, password = body['username'], body['password']
+		return jsonify({'verified': loginUser(username, password)}), 200
+	elif action == 'register':
+		username, password = body['username'], body['password']
+		registerUserVM(username, password, None)
+		return jsonify({'status': 200}), 200
 
 @account_bp.route('/form/<action>', methods = ['POST'])
 def form(action):
