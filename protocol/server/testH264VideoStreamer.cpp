@@ -126,7 +126,7 @@ void play() {
   //}
 
   //FramedSource* videoES = fileSource;
-  FramedSource* videoES = StreamSource2::createNew(*env); // reading from Stream
+  FramedSource* videoES = StreamSource::createNew(*env); // reading from Stream
 
   // Create a framer for the Video Elementary Stream:
   //videoSource = H264VideoStreamFramer::createNew(*env, videoES);

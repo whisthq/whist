@@ -50,7 +50,7 @@ u_int8_t* Grab60FPS2()
 		if (FAILED(hr))
 		{
 			/// Re-try with a new DDA object
-			printf("Captrue failed with error 0x%08x. Re-create DDA and try again.\n", hr);
+			printf("Capture failed with error 0x%08x. Re-create DDA and try again.\n", hr);
 			Demo.Cleanup();
 			hr = Demo.Init();
 			if (FAILED(hr))
@@ -105,9 +105,9 @@ void StreamSource::doGetNextFrame() {
         memmove(fTo, Demo.vPacket[0].data() + 4, fFrameSize);
     }
 	else {
-	    fFrameSize = 0;
+        fFrameSize = 0;
         handleClosure();
         return;
 	}
-	FramedSource::afterGetting(this);
+    FramedSource::afterGetting(this);
 }
