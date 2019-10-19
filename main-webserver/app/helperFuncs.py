@@ -210,6 +210,7 @@ def fetchVMCredentials(vm_name):
     # Decode password
     password = jwt.decode(password, os.getenv('SECRET_KEY'))
     return {'username': username,
+            'vm_name': vm_name,
             'password': password['pwd'],
             'public_ip': ip}
 

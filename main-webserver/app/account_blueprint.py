@@ -22,6 +22,7 @@ def user(action):
 		if vm_name: 
 			payload = fetchVMCredentials(vm_name)
 			return jsonify(payload), 200
+		addTimeTable(username, 'logon')
 		return jsonify({}), 401
 
 @account_bp.route('/account/<action>', methods = ['POST'])
