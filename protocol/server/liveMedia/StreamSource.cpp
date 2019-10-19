@@ -40,9 +40,10 @@ u_int8_t* Grab60FPS2()
 	if (hr == DXGI_ERROR_WAIT_TIMEOUT)
 	{
         std::cout << "Capture timeout" << std::endl;
+        return nullptr;
 		/// retry if there was no new update to the screen during our specific timeout interval
 		/// reset our waiting time
-		RESET_WAIT_TIME(start, end, interval, freq);
+		//RESET_WAIT_TIME(start, end, interval, freq);
 
 	}
 	else

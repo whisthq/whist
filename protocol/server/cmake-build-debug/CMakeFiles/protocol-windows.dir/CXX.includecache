@@ -1,0 +1,1676 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../DesktopCaptureEncode/NvEncoder/NvEncoder.h
+vector
+-
+nvEncodeAPI.h
+../DesktopCaptureEncode/NvEncoder/nvEncodeAPI.h
+stdint.h
+-
+mutex
+-
+string
+-
+iostream
+-
+sstream
+-
+string.h
+-
+
+../DesktopCaptureEncode/NvEncoder/NvEncoderD3D11.h
+vector
+-
+stdint.h
+-
+mutex
+-
+unordered_map
+-
+d3d11.h
+-
+NvEncoder.h
+../DesktopCaptureEncode/NvEncoder/NvEncoder.h
+
+../DesktopCaptureEncode/NvEncoder/nvEncodeAPI.h
+stdlib.h
+-
+windows.h
+-
+stdint.h
+-
+
+../DesktopCaptureEncode/nvEncDXDDI/DDAImpl.h
+iostream
+-
+vector
+-
+fstream
+-
+dxgi1_2.h
+-
+d3d11_2.h
+-
+
+../DesktopCaptureEncode/nvEncDXDDI/Defs.h
+
+../DesktopCaptureEncode/nvEncDXDDI/Preproc.h
+dxgi1_2.h
+-
+d3d11_2.h
+-
+unordered_map
+-
+
+../UsageEnvironment/include/Boolean.hh
+
+../UsageEnvironment/include/HashTable.hh
+Boolean.hh
+../UsageEnvironment/include/Boolean.hh
+
+../UsageEnvironment/include/UsageEnvironment.hh
+UsageEnvironment_version.hh
+../UsageEnvironment/include/UsageEnvironment_version.hh
+NetCommon.h
+../UsageEnvironment/include/NetCommon.h
+Boolean.hh
+../UsageEnvironment/include/Boolean.hh
+strDup.hh
+../UsageEnvironment/include/strDup.hh
+
+../UsageEnvironment/include/UsageEnvironment_version.hh
+
+../UsageEnvironment/include/strDup.hh
+string.h
+-
+
+../groupsock/include/GroupsockHelper.hh
+NetAddress.hh
+../groupsock/include/NetAddress.hh
+sys/time.h
+-
+
+../groupsock/include/NetAddress.hh
+HashTable.hh
+../groupsock/include/HashTable.hh
+NetCommon.h
+../groupsock/include/NetCommon.h
+UsageEnvironment.hh
+../groupsock/include/UsageEnvironment.hh
+
+../groupsock/include/NetCommon.h
+winsock2.h
+-
+ws2tcpip.h
+-
+windows.h
+-
+errno.h
+-
+string.h
+-
+time.h
+-
+timers.h
+-
+sys/times.h
+-
+sockLib.h
+-
+hostLib.h
+-
+resolvLib.h
+-
+ioLib.h
+-
+sys/types.h
+-
+sys/socket.h
+-
+sys/time.h
+-
+netinet/in.h
+-
+arpa/inet.h
+-
+netdb.h
+-
+unistd.h
+-
+string.h
+-
+stdlib.h
+-
+errno.h
+-
+strings.h
+-
+ctype.h
+-
+stdint.h
+-
+sys/select.h
+-
+unix.h
+-
+
+../liveMedia/include/DeviceSource.hh
+FramedSource.hh
+../liveMedia/include/FramedSource.hh
+Defs.h
+../liveMedia/include/Defs.h
+DDAImpl.h
+../liveMedia/include/DDAImpl.h
+Preproc.h
+../liveMedia/include/Preproc.h
+NvEncoderD3D11.h
+-
+
+../liveMedia/include/FramedSource.hh
+NetCommon.h
+../liveMedia/include/NetCommon.h
+MediaSource.hh
+../liveMedia/include/MediaSource.hh
+
+../liveMedia/include/Media.hh
+liveMedia_version.hh
+../liveMedia/include/liveMedia_version.hh
+HashTable.hh
+../liveMedia/include/HashTable.hh
+UsageEnvironment.hh
+../liveMedia/include/UsageEnvironment.hh
+NetCommon.h
+../liveMedia/include/NetCommon.h
+stdio.h
+-
+
+../liveMedia/include/MediaSource.hh
+Media.hh
+../liveMedia/include/Media.hh
+
+../liveMedia/include/liveMedia_version.hh
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+objidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ObjIdl.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OCIdl.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+oleidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/oleidl.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+servprov.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/servprov.h
+urlmon.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/urlmon.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ObjIdl.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+unknwn.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Unknwn.h
+winapifamily.h
+-
+winapifamily.h
+-
+limits.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ObjIdlbase.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+unknwnbase.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Unknwnbase.h
+winapifamily.h
+-
+limits.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+winapifamily.h
+-
+pshpack8.h
+-
+winerror.h
+-
+objbase.h
+-
+oleauto.h
+-
+coml2api.h
+-
+oleidl.h
+-
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OleAuto.h
+winapifamily.h
+-
+pshpack8.h
+-
+oaidl.h
+-
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/PropIdl.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+objidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ObjIdl.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+winapifamily.h
+-
+coml2api.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/PropIdlBase.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+objidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ObjIdl.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/SCardErr.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Unknwn.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+wtypes.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wtypes.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Unknwnbase.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+wtypesbase.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wtypesbase.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WS2tcpip.h
+winapifamily.h
+-
+winsock2.h
+-
+ws2ipdef.h
+-
+limits.h
+-
+wspiapi.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WSPiApi.h
+winapifamily.h
+-
+stdio.h
+-
+stdlib.h
+-
+malloc.h
+-
+string.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WinBase.h
+winapifamily.h
+-
+macwin32.h
+-
+apisetcconv.h
+-
+minwinbase.h
+-
+apiquery2.h
+-
+processenv.h
+-
+fileapifromapp.h
+-
+debugapi.h
+-
+utilapiset.h
+-
+handleapi.h
+-
+errhandlingapi.h
+-
+fibersapi.h
+-
+namedpipeapi.h
+-
+profileapi.h
+-
+heapapi.h
+-
+ioapiset.h
+-
+synchapi.h
+-
+interlockedapi.h
+-
+processthreadsapi.h
+-
+sysinfoapi.h
+-
+memoryapi.h
+-
+enclaveapi.h
+-
+threadpoollegacyapiset.h
+-
+threadpoolapiset.h
+-
+jobapi.h
+-
+jobapi2.h
+-
+wow64apiset.h
+-
+libloaderapi.h
+-
+securitybaseapi.h
+-
+namespaceapi.h
+-
+systemtopologyapi.h
+-
+processtopologyapi.h
+-
+securityappcontainer.h
+-
+realtimeapiset.h
+-
+winerror.h
+-
+timezoneapi.h
+-
+winbase.inl
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winbase.inl
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WinNls.h
+winapifamily.h
+-
+datetimeapi.h
+-
+libloaderapi.h
+-
+macwin32.h
+-
+stringapiset.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WinSock2.h
+winapifamily.h
+-
+windows.h
+-
+pshpack4.h
+-
+ws2def.h
+-
+qos.h
+-
+guiddef.h
+-
+poppack.h
+-
+wsipv6ok.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/WinUser.h
+winapifamily.h
+-
+macwin32.h
+-
+stdarg.h
+-
+libloaderapi.h
+-
+pshpack2.h
+-
+poppack.h
+-
+tvout.h
+-
+winuser.inl
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winuser.inl
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+winapifamily.h
+-
+sdkddkver.h
+-
+winresrc.h
+-
+excpt.h
+-
+stdarg.h
+-
+windef.h
+-
+winbase.h
+-
+wingdi.h
+-
+winuser.h
+-
+winnls.h
+-
+wincon.h
+-
+winver.h
+-
+winreg.h
+-
+winnetwk.h
+-
+cderr.h
+-
+dde.h
+-
+ddeml.h
+-
+dlgs.h
+-
+lzexpand.h
+-
+mmsystem.h
+-
+nb30.h
+-
+rpc.h
+-
+shellapi.h
+-
+winperf.h
+-
+winsock.h
+-
+wincrypt.h
+-
+winefs.h
+-
+winscard.h
+-
+winspool.h
+-
+ole.h
+-
+ole2.h
+-
+commdlg.h
+-
+stralign.h
+-
+winwlm.h
+-
+ole2.h
+-
+winsvc.h
+-
+mcx.h
+-
+imm.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/apiquery2.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/cguid.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/combaseapi.h
+apiset.h
+-
+apisetcconv.h
+-
+rpc.h
+-
+rpcndr.h
+-
+pshpack8.h
+-
+stdlib.h
+-
+wtypesbase.h
+-
+unknwnbase.h
+-
+objidlbase.h
+-
+guiddef.h
+-
+cguid.h
+-
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/coml2api.h
+apiset.h
+-
+apisetcconv.h
+-
+combaseapi.h
+-
+objidl.h
+-
+propidlbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/commctrl.rh
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/commdlg.h
+winapifamily.h
+-
+prsht.h
+-
+pshpack1.h
+-
+commdlg.inl
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/commdlg.inl
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/commdlg.inl
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/consoleapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+wincontypes.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/consoleapi2.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+wincontypes.h
+-
+windef.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/consoleapi3.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+wincontypes.h
+-
+windef.h
+-
+wingdi.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+ocidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OCIdl.h
+dxgi.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dxgi.h
+d3dcommon.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3dcommon.h
+winapifamily.h
+-
+d3d10sdklayers.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10sdklayers.h
+d3d10misc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10misc.h
+d3d10shader.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10shader.h
+d3d10effect.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10effect.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10_1.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+ocidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OCIdl.h
+winapifamily.h
+-
+d3d10.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10.h
+d3d10_1shader.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10_1shader.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10_1shader.h
+d3d10shader.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10shader.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10effect.h
+winapifamily.h
+-
+d3d10.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10misc.h
+d3d10.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10sdklayers.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+ocidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OCIdl.h
+dxgi.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dxgi.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10shader.h
+d3d10.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+ocidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OCIdl.h
+dxgi.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dxgi.h
+d3dcommon.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3dcommon.h
+winapifamily.h
+-
+d3d11sdklayers.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11sdklayers.h
+d3d10_1.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10_1.h
+d3d10shader.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10shader.h
+d3d10_1shader.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10_1shader.h
+d3d10misc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10misc.h
+d3d10effect.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d10effect.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11_1.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+ocidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OCIdl.h
+dxgi1_2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dxgi1_2.h
+d3dcommon.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3dcommon.h
+d3d11.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11_2.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+ocidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OCIdl.h
+dxgi1_3.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dxgi1_3.h
+d3dcommon.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3dcommon.h
+d3d11_1.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11_1.h
+d3d11_1.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11_1.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11sdklayers.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+ocidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OCIdl.h
+d3d11.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3d11.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/d3dcommon.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+ocidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OCIdl.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/datetimeapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dde.h
+windef.h
+-
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dde.rh
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ddeml.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/debugapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dlgs.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/dpapi.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/enclaveapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/errhandlingapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/fibersapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/fileapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/fileapifromapp.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+fileapi.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/handleapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/heapapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ime_cmodes.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/imm.h
+winapifamily.h
+-
+ime_cmodes.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/interlockedapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ioapiset.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/jobapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/jobapi2.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/joystickapi.h
+apiset.h
+-
+apisetcconv.h
+-
+mmsyscom.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/libloaderapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/lzexpand.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mciapi.h
+apiset.h
+-
+apisetcconv.h
+-
+mmsyscom.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mcx.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/memoryapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/minwinbase.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mmeapi.h
+apiset.h
+-
+apisetcconv.h
+-
+mmsyscom.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mmiscapi.h
+apiset.h
+-
+apisetcconv.h
+-
+mmsyscom.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mmiscapi2.h
+apiset.h
+-
+apisetcconv.h
+-
+mmsyscom.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mmsyscom.h
+winapifamily.h
+-
+pshpack1.h
+-
+macwin32.h
+-
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/mmsystem.h
+winapifamily.h
+-
+mmsyscom.h
+-
+pshpack1.h
+-
+mciapi.h
+-
+mmiscapi.h
+-
+mmiscapi2.h
+-
+playsoundapi.h
+-
+mmeapi.h
+-
+timeapi.h
+-
+joystickapi.h
+-
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/msxml.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+unknwn.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Unknwn.h
+objidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ObjIdl.h
+oaidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/OAIdl.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/namedpipeapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/namespaceapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/nb30.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ncrypt.h
+winapifamily.h
+-
+bcrypt.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/objbase.h
+winapifamily.h
+-
+rpc.h
+-
+rpcndr.h
+-
+pshpack8.h
+-
+combaseapi.h
+-
+coml2api.h
+-
+objidl.h
+-
+urlmon.h
+-
+propidl.h
+-
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ole.h
+winapifamily.h
+-
+pshpack1.h
+-
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/oleidl.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+objidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ObjIdl.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/playsoundapi.h
+apiset.h
+-
+apisetcconv.h
+-
+mmsyscom.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/processenv.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/processthreadsapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/processtopologyapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/profileapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/prsht.h
+winapifamily.h
+-
+pshpack8.h
+-
+pshpack4.h
+-
+prsht.inl
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/prsht.inl
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/prsht.inl
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/realtimeapiset.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/reason.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/securityappcontainer.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/securitybaseapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/servprov.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+objidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ObjIdl.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/shellapi.h
+winapifamily.h
+-
+SpecStrings.h
+-
+pshpack1.h
+-
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/stringapiset.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+winnls.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/synchapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/sysinfoapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/systemtopologyapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/threadpoolapiset.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/threadpoollegacyapiset.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/timeapi.h
+apiset.h
+-
+apisetcconv.h
+-
+mmsyscom.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/timezoneapi.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/urlmon.h
+rpc.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpc.h
+rpcndr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/rpcndr.h
+windows.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Windows.h
+ole2.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/Ole2.h
+objidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/ObjIdl.h
+oleidl.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/oleidl.h
+servprov.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/servprov.h
+msxml.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/msxml.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/utilapiset.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/verrsrc.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winbase.inl
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wincon.h
+winapifamily.h
+-
+wincontypes.h
+-
+wingdi.h
+-
+consoleapi.h
+-
+consoleapi2.h
+-
+consoleapi3.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wincontypes.h
+minwindef.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wincrypt.h
+specstrings.h
+-
+winapifamily.h
+-
+bcrypt.h
+-
+ncrypt.h
+-
+dpapi.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winefs.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wingdi.h
+winapifamily.h
+-
+macwin32.h
+-
+pshpack1.h
+-
+poppack.h
+-
+pshpack2.h
+-
+poppack.h
+-
+pshpack2.h
+-
+poppack.h
+-
+pshpack4.h
+-
+poppack.h
+-
+pshpack4.h
+-
+poppack.h
+-
+pshpack4.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/pshpack4.h
+poppack.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/poppack.h
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winioctl.h
+pshpack1.h
+-
+poppack.h
+-
+winapifamily.h
+-
+pshpack1.h
+-
+poppack.h
+-
+pshpack1.h
+-
+poppack.h
+-
+pshpack1.h
+-
+poppack.h
+-
+pshpack1.h
+-
+poppack.h
+-
+pshpack1.h
+-
+poppack.h
+-
+pshpack1.h
+-
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winnetwk.h
+winapifamily.h
+-
+wnnc.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winnt.rh
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winperf.h
+winapifamily.h
+-
+pshpack8.h
+-
+poppack.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winreg.h
+winapifamily.h
+-
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+macwin32.h
+-
+reason.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winresrc.h
+winuser.rh
+-
+commctrl.rh
+-
+dde.rh
+-
+winnt.rh
+-
+dlgs.h
+-
+winver.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winscard.h
+wtypes.h
+-
+winioctl.h
+-
+winsmcrd.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winsmcrd.h
+SCardErr.h
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/SCardErr.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winsock.h
+winapifamily.h
+-
+windows.h
+-
+inaddr.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winspool.h
+winapifamily.h
+-
+prsht.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winsvc.h
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winuser.inl
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winuser.rh
+winapifamily.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/winver.h
+winapifamily.h
+-
+SpecStrings.h
+-
+verrsrc.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wow64apiset.h
+apiset.h
+-
+apisetcconv.h
+-
+minwindef.h
+-
+minwinbase.h
+-
+
+C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/um/wsipv6ok.h
+winapifamily.h
+-
+ws2tcpip.h
+-
+wspiapi.h
+-
+
+C:/Users/vm1/Downloads/protocol/server/liveMedia/DeviceSource.cpp
+DeviceSource.hh
+C:/Users/vm1/Downloads/protocol/server/liveMedia/DeviceSource.hh
+GroupsockHelper.hh
+-
+fcntl.h
+-
+cstdio
+-
+cstdlib
+-
+cerrno
+-
+cstring
+-
+iostream
+-
+

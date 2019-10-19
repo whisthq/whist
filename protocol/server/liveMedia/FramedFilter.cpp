@@ -37,7 +37,7 @@ FramedFilter::FramedFilter(UsageEnvironment& env,
 }
 
 FramedFilter::~FramedFilter() {
-  Medium::close(fInputSource);
+  //Medium::close(fInputSource);
 }
 
 // Default implementations of needed virtual functions.  These merely

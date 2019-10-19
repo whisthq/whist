@@ -19,6 +19,8 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 // on demand, from a H264 video file.
 // Implementation
 
+#include <include/DeviceSource.hh>
+#include <include/H264VideoStreamDiscreteFramer.hh>
 #include "H264VideoFileServerMediaSubsession.hh"
 #include "H264VideoRTPSink.hh"
 #include "ByteStreamFileSource.hh"
@@ -100,16 +102,19 @@ char const* H264VideoFileServerMediaSubsession::getAuxSDPLine(RTPSink* rtpSink, 
   return fAuxSDPLine;
 }
 
+
 FramedSource* H264VideoFileServerMediaSubsession::createNewStreamSource(unsigned /*clientSessionId*/, unsigned& estBitrate) {
   estBitrate = 500; // kbps, estimate
 
   // Create the video source:
+  /*
   ByteStreamFileSource* fileSource = ByteStreamFileSource::createNew(envir(), fFileName);
   if (fileSource == NULL) return NULL;
-  fFileSize = fileSource->fileSize();
-
-  // Create a framer for the Video Elementary Stream:
-  return H264VideoStreamFramer::createNew(envir(), fileSource);
+  fFileSize = fileSource->fileSize();*/
+  fFileSize = 0;
+    static DeviceSource* source = DeviceSource::createNew(envir()); // Create a framer for the Video Elementary Stream:
+    //return H264VideoStreamFramer::createNew(envir(), source);
+    return H264VideoStreamDiscreteFramer::createNew(envir(), source);
 }
 
 RTPSink* H264VideoFileServerMediaSubsession

@@ -23,7 +23,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "GroupsockHelper.hh"
 
 ////////// ByteStreamFileSource //////////
-
+#include <iostream>
 ByteStreamFileSource*
 ByteStreamFileSource::createNew(UsageEnvironment& env, char const* fileName,
 				unsigned preferredFrameSize,
@@ -144,6 +144,7 @@ void ByteStreamFileSource::doReadFromFile() {
     fFrameSize = read(fileno(fFid), fTo, fMaxSize);
   }
 #endif
+    std::cout << fFrameSize << std::endl;
   if (fFrameSize == 0) {
     handleClosure();
     return;

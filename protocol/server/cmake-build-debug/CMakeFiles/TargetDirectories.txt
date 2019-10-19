@@ -1,0 +1,3 @@
+C:/Users/vm1/Downloads/protocol/server/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+C:/Users/vm1/Downloads/protocol/server/cmake-build-debug/CMakeFiles/protocol-windows.dir
+C:/Users/vm1/Downloads/protocol/server/cmake-build-debug/CMakeFiles/edit_cache.dir

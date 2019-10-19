@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
+    <generated>
+      <config projectName="protocol-windows" targetName="protocol-windows" />
+    </generated>
+  </component>
+  <component name="CMakeSettings" AUTO_RELOAD="true">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="bc5e7dc6-4356-4a16-ad6c-1ce7d281ba49" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/liveMedia/StreamSourceMediaSubsession.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/liveMedia/StreamSourceMediaSubsession.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vs/protocol-windows/v16/.suo" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vs/protocol-windows/v16/Browse.VC.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vs/protocol-windows/v16/Solution.VC.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vs/protocol-windows/v16/Solution.VC.db-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vs/protocol-windows/v16/Solution.VC.db-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/groupsock/GroupsockHelper.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/groupsock/GroupsockHelper.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/groupsock/inet.c" beforeDir="false" afterPath="$PROJECT_DIR$/groupsock/inet.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liveMedia/ByteStreamFileSource.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/liveMedia/ByteStreamFileSource.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liveMedia/DeviceSource.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/liveMedia/DeviceSource.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liveMedia/FramedFilter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/liveMedia/FramedFilter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liveMedia/H264VideoFileServerMediaSubsession.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/liveMedia/H264VideoFileServerMediaSubsession.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liveMedia/MediaSink.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/liveMedia/MediaSink.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liveMedia/StreamSource.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/liveMedia/StreamSource.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liveMedia/StreamSource2.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/liveMedia/StreamSource2.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liveMedia/include/DeviceSource.hh" beforeDir="false" afterPath="$PROJECT_DIR$/liveMedia/include/DeviceSource.hh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liveMedia/include/StreamSource2.hh" beforeDir="false" afterPath="$PROJECT_DIR$/liveMedia/include/StreamSource2.hh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testH264VideoStreamer.cpp" beforeDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="OCFindUsagesOptions" text="true" ivars="false" properties="true" derivedClasses="false" />
+  <component name="ProjectId" id="1SQoQi4HMfc7XHCB6j6BWCbShzc" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration name="protocol-windows" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="protocol-windows" TARGET_NAME="protocol-windows" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="protocol-windows" RUN_TARGET_NAME="protocol-windows">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="bc5e7dc6-4356-4a16-ad6c-1ce7d281ba49" name="Default Changelist" comment="" />
+      <created>1571505165933</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1571505165933</updated>
+      <workItem from="1571505167452" duration="15066000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

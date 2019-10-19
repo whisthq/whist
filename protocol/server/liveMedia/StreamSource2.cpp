@@ -24,87 +24,13 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "StreamSource2.hh"
 #include <GroupsockHelper.hh> // for "gettimeofday()"
 #include <iostream>
-
-StreamSource2::DemoApplication Demo;
+#define returnIfError(x) \
+    if (FAILED(x))\
+    {\
+        printf("FAIL");\
+        exit(1);\
+    }
 /// Demo 60 FPS (approx.) capture
-u_int8_t* Grab60FPS()
-{
-    std::cout << " ---- DO GET NEXT ---- 1.1" << std::endl;
-    Demo.vPacket.clear();
-    static const int WAIT_BASE = 20;
-    HRESULT hr = S_OK;
-    LARGE_INTEGER start = { 0 };
-    LARGE_INTEGER end = { 0 };
-    LARGE_INTEGER interval = { 0 };
-    LARGE_INTEGER freq = { 0 };
-    int wait = WAIT_BASE;
-
-    QueryPerformanceFrequency(&freq);
-    std::cout << " ---- DO GET NEXT ---- 1.2" << std::endl;
-
-    /// Reset waiting time for the next screen capture attempt
-#define RESET_WAIT_TIME(start, end, interval, freq)         \
-    QueryPerformanceCounter(&end);                          \
-    interval.QuadPart = end.QuadPart - start.QuadPart;      \
-    MICROSEC_TIME(interval, freq);                          \
-    wait = (int)(WAIT_BASE - (interval.QuadPart * 1000));
-    /// Initialize Demo app
-    /*
-    hr = Demo.Init();
-    if (FAILED(hr))
-    {
-        printf("Initialization failed with error 0x%08x\n", hr);
-        return nullptr;
-    }*/
-    /// get start timestamp.
-    /// use this to adjust the waiting period in each capture attempt to approximately attempt 60 captures in a second
-    QueryPerformanceCounter(&start);
-    std::cout << " ---- DO GET NEXT ---- 1.3" << std::endl;
-    /// Get a frame from DDA
-    hr = Demo.Capture(wait);
-    if (hr == DXGI_ERROR_WAIT_TIMEOUT)
-    {
-        std::cout << "Capture timeout" << std::endl;
-        /// retry if there was no new update to the screen during our specific timeout interval
-        /// reset our waiting time
-        RESET_WAIT_TIME(start, end, interval, freq);
-
-    }
-    else
-    {
-        if (FAILED(hr))
-        {
-            /// Re-try with a new DDA object
-            printf("Captrue failed with error 0x%08x. Re-create DDA and try again.\n", hr);
-            Demo.Cleanup();
-            hr = Demo.Init();
-            if (FAILED(hr))
-            {
-                /// Could not initialize DDA, bail out/
-                printf("Failed to Init DDDemo. return error 0x%08x\n", hr);
-                return nullptr;
-            }
-            RESET_WAIT_TIME(start, end, interval, freq);
-            QueryPerformanceCounter(&start);
-            /// Get a frame from DDA
-            Demo.Capture(wait);
-        }
-        std::cout << " ---- DO GET NEXT ---- 1.4" << std::endl;
-        RESET_WAIT_TIME(start, end, interval, freq);
-        std::cout << " ---- DO GET NEXT ---- 1.5" << std::endl;
-        /// Preprocess for encoding
-        hr = Demo.Preproc();
-        std::cout << " ---- DO GET NEXT ---- 1.6" << std::endl;
-        if (FAILED(hr))
-        {
-            printf("Preproc failed with error 0x%08x\n", hr);
-            return nullptr;
-        }
-        std::cout << " ---- DO GET NEXT ---- 1.7" << std::endl;
-        return Demo.Encode();
-    }
-    return nullptr;
-}
 
 StreamSource2*
 StreamSource2::createNew(UsageEnvironment& env,
@@ -148,9 +74,47 @@ StreamSource2::StreamSource2(UsageEnvironment& env,
 }
 
 StreamSource2::~StreamSource2() {
-  // Any instance-specific 'destruction' (i.e., resetting) of the device would be done here:
+    if (pDDAWrapper)
+    {
+        pDDAWrapper->Cleanup();
+        delete pDDAWrapper;
+        pDDAWrapper = nullptr;
+    }
+
+    if (pColorConv)
+    {
+        pColorConv->Cleanup();
+    }
+
+    if (pEnc)
+    {
+        ZeroMemory(&encInitParams, sizeof(NV_ENC_INITIALIZE_PARAMS));
+        ZeroMemory(&encConfig, sizeof(NV_ENC_CONFIG));
+    }
+
+    SAFE_RELEASE(pDupTex2D);
+        if (pEnc)
+        {
+            /// Flush the encoder and write all output to file before destroying the encoder
+            pEnc->EndEncode(vPacket);
+            //FIXME
+            //WriteEncOutput();
+            pEnc->DestroyEncoder();
+                delete pEnc;
+                pEnc = nullptr;
+            ZeroMemory(&encInitParams, sizeof(NV_ENC_INITIALIZE_PARAMS));
+            ZeroMemory(&encConfig, sizeof(NV_ENC_CONFIG));
+        }
+
+        if (pColorConv)
+        {
+            delete pColorConv;
+            pColorConv = nullptr;
+        }
+        SAFE_RELEASE(pD3DDev);
+        SAFE_RELEASE(pCtx);
+    // Any instance-specific 'destruction' (i.e., resetting) of the device would be done here:
   //%%% TO BE WRITTEN %%%
-    Demo.Cleanup();
 
   --referenceCount;
   if (referenceCount == 0) {
@@ -207,21 +171,108 @@ void StreamSource2::deliverFrame() {
   //         If, however, the device is a 'live source' (e.g., encoded from a camera or microphone), then we probably don't need
   //         to set this variable, because - in this case - data will never arrive 'early'.
   // Note the code below.
-    u_int8_t* newFrameDataStart = Grab60FPS();
-    unsigned newFrameSize = Demo.vPacket[0].size() - 4; //%%% TO BE WRITTEN %%%
-    std::cout << "Test 2" << std::endl;
 
 
+    u_int8_t* newFrameDataStart;
+    vPacket.clear();
+    static const int WAIT_BASE = 20;
+    HRESULT hr = S_OK;
+    LARGE_INTEGER start = { 0 };
+    LARGE_INTEGER end = { 0 };
+    LARGE_INTEGER interval = { 0 };
+    LARGE_INTEGER freq = { 0 };
+    int wait = WAIT_BASE;
 
-    if(!Demo.vPacket.empty()) {
-        //fFrameSize = Demo.vPacket[0].size() - 4;
-        //fDurationInMicroseconds = 100;
-        //memmove(fTo, Demo.vPacket[0].data() + 4, fFrameSize);
+    QueryPerformanceFrequency(&freq);
+
+    /// Reset waiting time for the next screen capture attempt
+#define RESET_WAIT_TIME(start, end, interval, freq)         \
+    QueryPerformanceCounter(&end);                          \
+    interval.QuadPart = end.QuadPart - start.QuadPart;      \
+    MICROSEC_TIME(interval, freq);                          \
+    wait = (int)(WAIT_BASE - (interval.QuadPart * 1000));
+    /// Initialize Demo app
+    /*
+    hr = Demo.Init();
+    if (FAILED(hr))
+    {
+        printf("Initialization failed with error 0x%08x\n", hr);
+        return nullptr;
+    }*/
+    /// get start timestamp.
+    /// use this to adjust the waiting period in each capture attempt to approximately attempt 60 captures in a second
+    QueryPerformanceCounter(&start);
+    /// Get a frame from DDA
+    hr = pDDAWrapper->GetCapturedFrame(&pDupTex2D, wait); // Release after preproc
+    if (FAILED(hr))
+    {
+        failCount++;
     }
-    else { /*Demo.Cleanup(); Demo.Init();*/ handleClosure(); return;}
-//  if (!isCurrentlyAwaitingData()) return; // we're not ready for the data yet
+    if (hr == DXGI_ERROR_WAIT_TIMEOUT)
+    {
+        std::cout << "Capture timeout" << std::endl;
+        /// retry if there was no new update to the screen during our specific timeout interval
+        /// reset our waiting time
+        //RESET_WAIT_TIME(start, end, interval, freq);
+        handleClosure();
+        return;
 
-  //u_int8_t* newFrameDataStart = (u_int8_t*)0xDEADBEEF; //%%% TO BE WRITTEN %%%
+    }
+    else
+    {
+        if (FAILED(hr))
+        {
+            handleClosure();
+            return;
+        }
+        RESET_WAIT_TIME(start, end, interval, freq);
+        /// Preprocess for encoding
+
+        const NvEncInputFrame *pEncInput = pEnc->GetNextInputFrame();
+        pEncBuf = (ID3D11Texture2D *)pEncInput->inputPtr;
+        if (bNoVPBlt)
+        {
+            pCtx->CopySubresourceRegion(pEncBuf, D3D11CalcSubresource(0, 0, 1), 0, 0, 0, pDupTex2D, 0, NULL);
+        }
+        else
+        {
+            hr = pColorConv->Convert(pDupTex2D, pEncBuf);
+        }
+        SAFE_RELEASE(pDupTex2D);
+        returnIfError(hr);
+
+        pEncBuf->AddRef();  // Release after encode
+
+        if (FAILED(hr))
+        {
+            printf("Preproc failed with error 0x%08x\n", hr);
+            newFrameDataStart = nullptr;
+            handleClosure();
+            return;
+        }
+        try
+        {
+            pEnc->EncodeFrame(vPacket);
+            /*
+            for (std::vector<uint8_t> &packet : vPacket) {
+                //std::cout << "Write" << std::endl;
+                fwrite(packet.data(), packet.size(), 1, fp);
+            }*/
+            std::cout << "Size of capture: " << (vPacket.empty() ? 0 : vPacket[0].size()) << std::endl;
+            //std::cout << "SIZE_PACKET : " << vPacket[0].size() << std::endl;
+            newFrameDataStart = vPacket.empty() ? nullptr : vPacket[0].data();
+        }
+        catch (...)
+        {
+            handleClosure();
+            return;
+        }
+    }
+    if(newFrameDataStart == nullptr) {
+        handleClosure();
+        return;
+    }
+    unsigned newFrameSize = vPacket[0].size() - 4; //%%% TO BE WRITTEN %%%
 
   // Deliver the data here:
   if (newFrameSize > fMaxSize) {
@@ -239,7 +290,100 @@ void StreamSource2::deliverFrame() {
 }
 
 StreamSource2::StreamSource2(UsageEnvironment &env) : FramedSource(env) {
-    Demo.Init();
+    HRESULT hr = S_OK;
+
+    /// Driver types supported
+    D3D_DRIVER_TYPE DriverTypes[] =
+            {
+                    D3D_DRIVER_TYPE_HARDWARE,
+                    D3D_DRIVER_TYPE_WARP,
+                    D3D_DRIVER_TYPE_REFERENCE,
+            };
+    UINT NumDriverTypes = ARRAYSIZE(DriverTypes);
+
+    /// Feature levels supported
+    D3D_FEATURE_LEVEL FeatureLevels[] =
+            {
+                    D3D_FEATURE_LEVEL_11_0,
+                    D3D_FEATURE_LEVEL_10_1,
+                    D3D_FEATURE_LEVEL_10_0,
+                    D3D_FEATURE_LEVEL_9_1
+            };
+    UINT NumFeatureLevels = ARRAYSIZE(FeatureLevels);
+    D3D_FEATURE_LEVEL FeatureLevel = D3D_FEATURE_LEVEL_11_0;
+
+    /// Create device
+    for (UINT DriverTypeIndex = 0; DriverTypeIndex < NumDriverTypes; ++DriverTypeIndex)
+    {
+        hr = D3D11CreateDevice(nullptr, DriverTypes[DriverTypeIndex], nullptr, /*D3D11_CREATE_DEVICE_DEBUG*/0, FeatureLevels, NumFeatureLevels,
+                               D3D11_SDK_VERSION, &pD3DDev, &FeatureLevel, &pCtx);
+        if (SUCCEEDED(hr))
+        {
+            // Device creation succeeded, no need to loop anymore
+            break;
+        }
+    }
+    returnIfError(hr);
+
+    if (!pDDAWrapper)
+    {
+        std::cout << "INIT THE USELESS" << std::endl;
+        pDDAWrapper = new DDAImpl(pD3DDev, pCtx);
+        hr = pDDAWrapper->Init();
+        returnIfError(hr);
+    }
+    returnIfError(hr);
+
+
+    if (!pEnc)
+    {
+        DWORD w = bNoVPBlt ? pDDAWrapper->getWidth() : encWidth;
+        DWORD h = bNoVPBlt ? pDDAWrapper->getHeight() : encHeight;
+        NV_ENC_BUFFER_FORMAT fmt = bNoVPBlt ? NV_ENC_BUFFER_FORMAT_ARGB : NV_ENC_BUFFER_FORMAT_NV12;
+        pEnc = new NvEncoderD3D11(pD3DDev, w, h, fmt);
+        if (!pEnc)
+        {
+            returnIfError(E_FAIL);
+        }
+
+        ZeroMemory(&encInitParams, sizeof(encInitParams));
+        ZeroMemory(&encConfig, sizeof(encConfig));
+        encInitParams.encodeConfig = &encConfig;
+        encInitParams.encodeWidth = w;
+        encInitParams.encodeHeight = h;
+        encInitParams.maxEncodeWidth = pDDAWrapper->getWidth();
+        encInitParams.maxEncodeHeight = pDDAWrapper->getHeight();
+        encConfig.gopLength = 5;
+
+        try
+        {
+            pEnc->CreateDefaultEncoderParams(&encInitParams, NV_ENC_CODEC_H264_GUID, NV_ENC_PRESET_LOW_LATENCY_HP_GUID);
+            pEnc->CreateEncoder(&encInitParams);
+
+        }
+        catch (...)
+        {
+            returnIfError(E_FAIL);
+        }
+    }
+    returnIfError(hr);
+
+    if (!pColorConv)
+    {
+        pColorConv = new RGBToNV12(pD3DDev, pCtx);
+        HRESULT hr = pColorConv->Init();
+        returnIfError(hr);
+    }
+    returnIfError(hr);
+
+    if (!fp)
+    {
+        char fname[64] = { 0 };
+        sprintf_s(fname, (const char *)fnameBase, failCount);
+        errno_t err = fopen_s(&fp, fname, "wb");
+        returnIfError(err);
+    }
+    returnIfError(hr);
 }
 
 

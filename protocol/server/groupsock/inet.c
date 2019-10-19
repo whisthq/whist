@@ -15,7 +15,7 @@
 unsigned our_inet_addr(cp)
 	char const* cp;
 {
-	return inet_addr("192.168.191.63"/*cp*/);
+	return inet_addr(""); // leave empty, VPN IP kicks in automatically
 }
 
 #if defined(__WIN32__) || defined(_WIN32)
