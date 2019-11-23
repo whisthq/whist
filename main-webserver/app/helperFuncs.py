@@ -244,6 +244,6 @@ def addTimeTable(username, action, time):
         VALUES(:userName, :currentTime, :action)
         """)
     if time:
-    params = {'userName': username, 'currentTime': dt.now().strftime('%m-%d-%Y, %H:%M:%S'), 'action': action}
+        params = {'userName': username, 'currentTime': dt.now().strftime('%m-%d-%Y, %H:%M:%S'), 'action': action}
 
     conn.execute(command, **params)
