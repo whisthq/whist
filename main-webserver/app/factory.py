@@ -9,6 +9,8 @@ def create_app(app_name=PKG_NAME, **kwargs):
         init_celery(kwargs.get("celery"), app)
     from app.vm_blueprint import vm_bp
     from app.account_blueprint import account_bp
+    from app.stripe_blueprint import stripe_bp
     app.register_blueprint(vm_bp)
     app.register_blueprint(account_bp)
+    app.register_blueprint(stripe_bp)
     return app

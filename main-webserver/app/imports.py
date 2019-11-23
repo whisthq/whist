@@ -19,6 +19,7 @@ from jose import jwt
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from datetime import datetime as dt
+import stripe
 
 load_dotenv()
 haikunator = Haikunator()
