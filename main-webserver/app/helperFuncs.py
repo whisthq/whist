@@ -91,9 +91,9 @@ def createVMParameters(vmName, nic_id, vm_size):
         userName = genHaiku(1)
 
     vm_reference = {
-        'publisher': 'MicrosoftWindowsServer',
-        'offer': 'WindowsServer',
-        'sku': '2016-Datacenter',
+        'publisher': 'MicrosoftWindowsDesktop',
+        'offer': 'Windows-10',
+        'sku': 'RS2-Pro',
         'version': 'latest'
     }
 
@@ -238,10 +238,12 @@ def storePreOrder(address1, address2, zipCode, email, order):
               'base': int(order['base']), 'enhanced': int(order['enhanced']), 'power': int(order['power'])}
     conn.execute(command, **params)
 
-def addTimeTable(username, action):
+def addTimeTable(username, action, time):
     command = text("""
         INSERT INTO login_history("username", "timestamp", "action") 
         VALUES(:userName, :currentTime, :action)
         """)
+    if time:
     params = {'userName': username, 'currentTime': dt.now().strftime('%m-%d-%Y, %H:%M:%S'), 'action': action}
+
     conn.execute(command, **params)

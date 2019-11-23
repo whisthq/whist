@@ -37,8 +37,12 @@ def vm(action):
 def tracker(action):
     body = request.get_json()
     username = body['username']
+    try:
+        time = body['time']
+    except: 
+        time = None
     if action == 'logon':
-        addTimeTable(username, 'logon')
+        addTimeTable(username, 'logon', time)
     elif action == 'logoff':
-        addTimeTable(username, 'logoff')
+        addTimeTable(username, 'logoff', time)
     return jsonify({}), 200
