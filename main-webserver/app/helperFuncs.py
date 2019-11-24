@@ -176,7 +176,7 @@ def registerUserVM(username, password, vm_name):
         """)
     params = {'userName': username, 'password': pwd_token, 'currentVM': vm_name}
     conn.execute(command, **params)
-    engine.dispose()
+    # engine.dispose()
 
 def loginUserVM(username, password):
     command = text("""
