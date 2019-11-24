@@ -8,17 +8,7 @@ def make_celery(app_name = __name__):
 
 celery = make_celery()
 engine = db.create_engine(
-    os.getenv('DATABASE_URL'), echo=True)
+    os.getenv('DATABASE_URL'), echo=True, pool_pre_ping = True)
 conn = engine.connect()
 app = create_app(celery = celery)
 CORS(app)
-
-# app.config.update(
-# 	DEBUG=True,
-# 	#EMAIL SETTINGS
-# 	MAIL_SERVER='smtp.gmail.com',
-# 	MAIL_PORT=465,
-# 	MAIL_USE_SSL=True,
-# 	MAIL_USERNAME = os.getenv('EMAIL_ADDRESS'),
-# 	MAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
-# 	)
