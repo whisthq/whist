@@ -16,4 +16,4 @@ def charge():
 		description = 'Fractal Instance',
 		source = token
 	)
-	return jsonify({}), 200
+	return jsonify({'status': 200}), 200
