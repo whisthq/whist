@@ -1,8 +1,0 @@
-*.obj
-*.iml
-*.pyc
-.vs/
-*.pdb
-*.ilk
-*.o
-.DS_Stores

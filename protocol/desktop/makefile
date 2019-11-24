@@ -3,7 +3,7 @@ OBJS = main.obj
 
 STATIC_LIBS = \
 	lib/windows/SDL2.lib \
-	include/curl/lib/libcurl_a.lib
+	include/curl/lib/libcurl_a.lib \
 
 CFLAGS = \
 	/nologo \
@@ -34,14 +34,15 @@ SHARED_LIBS = \
 	version.lib \
 	ws2_32.lib \
 	crypt32.lib \
-	wldap32.lib
+	wldap32.lib \
+	normaliz.lib
 
 LD_FLAGS = \
 	/nodefaultlib \
 	/nologo \
 
 all: clean clear $(OBJS)
-	link /LTCG $(LD_FLAGS) $(STATIC_LIBS) $(SHARED_LIBS) /out:$(BIN_NAME) *.obj
+	link $(LD_FLAGS) $(STATIC_LIBS) $(SHARED_LIBS) /out:$(BIN_NAME) *.obj
 
 clean:
 	-@del $(BIN_NAME)

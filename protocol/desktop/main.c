@@ -50,12 +50,13 @@
 extern "C" {
 #endif
 
-static bool loggedIn = false; // user login variable
-const char* vm_ip = ""; // server VM IP address
+static bool loggedIn = true; // user login variable hardcoded too
+const char* vm_ip = "40.117.226.121"; // server VM IP address -- hardcoded for now
+
 
 /*** LOGIN FUNCTIONS START ***/
 // authenticate use and get data size for curl
-static size_t function_pt(void *ptr, size_t size, size_t nmemb, void *stream)
+/*static size_t function_pt(void *ptr, size_t size, size_t nmemb, void *stream)
 {
   // unused stream
   (void) stream;
@@ -89,10 +90,10 @@ static size_t function_pt(void *ptr, size_t size, size_t nmemb, void *stream)
     }
     // return size for curl
     return size * nmemb;
-}
+}*/
 
 // send JSON post to query the database
-static int sendJSONPost(char *url, char *jsonObj, bool callback)
+/*static int sendJSONPost(char *url, char *jsonObj, bool callback)
 {
   // curl vars
   CURL *curl;
@@ -127,10 +128,10 @@ static int sendJSONPost(char *url, char *jsonObj, bool callback)
   }
   curl_global_cleanup();
   return 0;
-}
+}*/
 
 // log the user in and log its connection time
-bool login(const char *username, const char *password)
+/*bool login(const char *username, const char *password)
 {
   // generate JSON logout format
   char  *jsonFrame = "{\"username\" : \"%s\", \"password\" : \"%s\"}";
@@ -171,7 +172,7 @@ bool logout(const char *username)
     free(jsonObj);
   }
   return true;
-}
+}*/
 /*** LOGIN FUNCTIONS END ***/
 
 // main client function
@@ -188,11 +189,11 @@ int32_t main(int32_t argc, char **argv)
   char *password = argv[2];
 
   // query Fractal web servers to authenticate the user
-  bool authenticated = login(username, password);
-  if (!authenticated) {
-    printf("Could not authenticate user, invalid username or password\n");
-    return 2;
-  }
+  //bool authenticated = login(username, password);
+  //if (!authenticated) {
+  //  printf("Could not authenticate user, invalid username or password\n");
+  //  return 2;
+  //}
 
   // all good, we have a user and the VM IP written, time to set up the sockets
   // socket environment variables
@@ -282,8 +283,8 @@ int32_t main(int32_t argc, char **argv)
   #endif
 
   // write close time to server, set loggedin to false and return
-  logout(username);
-  loggedIn = false;
+  //logout(username); hardcoded
+  //loggedIn = false;
 
   return 0;
 }
