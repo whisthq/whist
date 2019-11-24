@@ -1,5 +1,5 @@
 from .utils import *
-from app import conn, engine
+from app import conn
 
 def createClients():
     subscription_id = os.getenv('AZURE_SUBSCRIPTION_ID')
@@ -75,7 +75,7 @@ def createNic(name, tries):
             """)
         params = {'vnetName': vnetName, 'subnetName': subnetName, 'ipConfigName': ipName, 'nicName': nicName}
         conn.execute(command, **params)
-        engine.dispose()
+        conn
         return async_nic_creation.result()
     except Exception as e:
         if tries < 5:
@@ -106,7 +106,7 @@ def createVMParameters(vmName, nic_id, vm_size):
         """)
     params = {'vmName': vmName, 'vmPassword': pwd_token, 'vmUserName': userName, 'osDisk': None, 'running': False}
     conn.execute(command, **params)
-    engine.dispose()
+    conn
     return {'params': {
         'location': 'eastus',
         'os_profile': {
@@ -148,7 +148,7 @@ def singleValueQuery(value):
         """)
     params = {'value': value}
     exists = conn.execute(command, **params).fetchall()
-    engine.dispose()
+    conn
     return True if exists else False
 
 def getIP(vm):
@@ -176,7 +176,7 @@ def registerUserVM(username, password, vm_name):
         """)
     params = {'userName': username, 'password': pwd_token, 'currentVM': vm_name}
     conn.execute(command, **params)
-    # engine.dispose()
+    # conn
 
 def loginUserVM(username, password):
     command = text("""
@@ -188,7 +188,7 @@ def loginUserVM(username, password):
         decrypted_pwd = jwt.decode(user[0][1], os.getenv('SECRET_KEY'))['pwd']
         if decrypted_pwd == password:
             return user[0][2]
-    engine.dispose()
+    conn
     return None
 
 def loginUser(username, password):
@@ -198,7 +198,7 @@ def loginUser(username, password):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     params = {'userName': username, 'password': pwd_token}
     user = conn.execute(command, **params).fetchall()
-    engine.dispose()
+    conn
     return len(user) > 0
 
 def fetchVMCredentials(vm_name):
@@ -213,7 +213,7 @@ def fetchVMCredentials(vm_name):
     ip = getIP(vm)
     # Decode password
     password = jwt.decode(password, os.getenv('SECRET_KEY'))
-    engine.dispose()
+    conn
     return {'username': username,
             'vm_name': vm_name,
             'password': password['pwd'],
@@ -224,7 +224,7 @@ def genVMName():
     vmName = genHaiku(1)
     while vmName in oldVMs:
          vmName = genHaiku(1)
-    engine.dispose()
+    conn
     return vmName[0]
 
 def storeForm(name, email, cubeType):
@@ -234,7 +234,7 @@ def storeForm(name, email, cubeType):
         """)
     params = {'name': name, 'email': email, 'cubeType': cubeType}
     conn.execute(command, **params)
-    engine.dispose()
+    conn
 
 def storePreOrder(address1, address2, zipCode, email, order):
     command = text("""
@@ -244,7 +244,7 @@ def storePreOrder(address1, address2, zipCode, email, order):
     params = {'address1': address1, 'address2': address2, 'zipcode': zipCode, 'email': email, 
               'base': int(order['base']), 'enhanced': int(order['enhanced']), 'power': int(order['power'])}
     conn.execute(command, **params)
-    engine.dispose()
+    conn
 
 def addTimeTable(username, action, time):
     command = text("""
@@ -255,4 +255,4 @@ def addTimeTable(username, action, time):
         params = {'userName': username, 'currentTime': dt.now().strftime('%m-%d-%Y, %H:%M:%S'), 'action': action}
 
     conn.execute(command, **params)
-    engine.dispose()
+    conn
