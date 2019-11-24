@@ -5,7 +5,7 @@ from app import conn
 stripe_bp = Blueprint('stripe_bp', __name__)
 
 @stripe_bp.route('/stripe', methods = ['POST'])
-def stripe(action):
+def stripe():
 	stripe.api_key = os.getenv('STRIPE_SECRET') 
 	body = request.get_json()
 	token = body['token']
