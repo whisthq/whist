@@ -21,7 +21,7 @@ def status(task_id):
             'state': result.status,
             'output': None
         }
-    return jsonify(response)
+    return make_response(jsonify(response), 200)
 
 @vm_bp.route('/vm/<action>', methods = ['POST'])
 def vm(action):
