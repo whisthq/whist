@@ -1,13 +1,16 @@
 BIN_NAME = client.exe
 OBJS = main.obj
-STATIC_LIBS = lib/windows/SDL2.lib
+
+STATIC_LIBS = \
+	lib/windows/SDL2.lib \
+	include/curl/lib/libcurl_a.lib
 
 CFLAGS = \
 	/nologo \
 	/W4 \
 	/O2 \
-	/MT \
 	/MP \
+	/MT \
 	-Iinclude \
 	-DWIN32_LEAN_AND_MEAN \
 	-DUNICODE \
@@ -28,14 +31,17 @@ SHARED_LIBS = \
 	opengl32.lib \
 	user32.lib \
 	uuid.lib \
-	version.lib
+	version.lib \
+	ws2_32.lib \
+	crypt32.lib \
+	wldap32.lib
 
 LD_FLAGS = \
 	/nodefaultlib \
-	/nologo
+	/nologo \
 
 all: clean clear $(OBJS)
-	link $(LD_FLAGS) /out:$(BIN_NAME) *.obj $(STATIC_LIBS) $(SHARED_LIBS)
+	link /LTCG $(LD_FLAGS) $(STATIC_LIBS) $(SHARED_LIBS) /out:$(BIN_NAME) *.obj
 
 clean:
 	-@del $(BIN_NAME)

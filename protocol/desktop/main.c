@@ -11,13 +11,15 @@
 
  Copyright Fractal Computers, Inc. 2019
 */
+#define _WINSOCK_DEPRECATED_NO_WARNINGS // silence the deprecated warnings
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <curl/curl.h>
-#include <json-c/json.h>
 #include <string.h>
+#include <stdbool.h>
 
+#include "include/json-c/json.h" // for parsing the web server query
 #include "../include/fractal.h" // header file for protocol functions
 
 #define SDL_MAIN_HANDLED
@@ -31,8 +33,17 @@
 // include Winsock library & disable warning if on Windows client
 #if defined(_WIN32)
   #include <winsock2.h> // lib for socket programming on windows
+  #pragma comment(lib, "wldap32.lib" )
+  #pragma comment(lib, "crypt32.lib" )
   #pragma comment(lib, "ws2_32.lib")
+  #pragma comment(lib, "libcurl.lib")
+
+  #define CURL_STATICLIB 
+  #include "include/curl/curl.h" // for querying the web server
+
   #pragma warning(disable: 4201)
+  #pragma warning(disable: 4244) // disable u_int to u_short conversion warning
+  #pragma warning(disable: 4047) // disable char * indirection levels warning
 #endif
 
 #ifdef __cplusplus
@@ -40,12 +51,15 @@ extern "C" {
 #endif
 
 static bool loggedIn = false; // user login variable
-const char *vm_ip = "" // server VM IP address
+const char* vm_ip = ""; // server VM IP address
 
 /*** LOGIN FUNCTIONS START ***/
 // authenticate use and get data size for curl
 static size_t function_pt(void *ptr, size_t size, size_t nmemb, void *stream)
 {
+  // unused stream
+  (void) stream;
+
   // JSON parameters
   struct json_object *parsed_json;
   struct json_object *username;
@@ -63,9 +77,7 @@ static size_t function_pt(void *ptr, size_t size, size_t nmemb, void *stream)
   {
     // confirm authentication and get inputs
     loggedIn = true;
-    const char *usernameChar = json_object_to_json_string(username);
-    const char *passwordChar = json_object_to_json_string(password);
-    const char *public_ipChar = json_object_to_json_string(public_ip);
+    const char *public_ipChar = json_object_to_json_string(public_ip); // only need the IP
 
     // write VM IP
     vm_ip = public_ipChar;
@@ -172,12 +184,12 @@ int32_t main(int32_t argc, char **argv)
   }
 
   // user inputs for username and password
-  char *username = str(argv[1]);
-  char *password = str(argv[2]);
+  char *username = argv[1];
+  char *password = argv[2];
 
   // query Fractal web servers to authenticate the user
   bool authenticated = login(username, password);
-  if (!bool) {
+  if (!authenticated) {
     printf("Could not authenticate user, invalid username or password\n");
     return 2;
   }
@@ -185,7 +197,7 @@ int32_t main(int32_t argc, char **argv)
   // all good, we have a user and the VM IP written, time to set up the sockets
   // socket environment variables
   SOCKET RECVsocket, SENDsocket; // socket file descriptors
-  struct sockaddr_in clientRECV, clientSEND; // this client two ports
+  struct sockaddr_in clientRECV, clientSEND, server; // this client two ports
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
 
   // initialize Winsock if this is a Windows client
@@ -262,7 +274,7 @@ int32_t main(int32_t argc, char **argv)
   // Windows case, closing sockets
   #if defined(_WIN32)
     closesocket(RECVsocket);
-    cosesocket(SENDsocket);
+    closesocket(SENDsocket);
     WSACleanup(); // close Windows socket library
   #else
     close(RECVsocket);

@@ -15,7 +15,8 @@ SHARED_LIBS = \
 	libvcruntime.lib \
 	libucrt.lib \
 	libcmt.lib \
-	kernel32.lib
+	kernel32.lib \
+	ws2_32.lib
 
 LD_FLAGS = \
 	/nodefaultlib \

@@ -10,9 +10,13 @@
 
  Copyright Fractal Computers, Inc. 2019
 */
+#define _WINSOCK_DEPRECATED_NO_WARNINGS // silence the deprecated warnings
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <windows.h>
+#include <Ws2tcpip.h> // other Windows socket library (of course, thanks #Microsoft)
 #include <winsock2.h> // lib for socket programming on windows
 
 #include "../include/fractal.h" // header file for protocol functions
@@ -22,6 +26,8 @@
 
 #if defined(_WIN32)
 	#pragma warning(disable: 4201)
+	#pragma warning(disable: 4244) // disable u_int to u_short conversion warning
+	#pragma warning(disable: 4047) // disable char * indirection levels warning
 #endif
 
 #ifdef __cplusplus
@@ -31,6 +37,9 @@ extern "C" {
 // main server function
 int32_t main(int32_t argc, char **argv)
 {
+   // unused argv
+   (void) argv;
+
   // usage check
   if (argc > 1) {
     printf("Usage: server\n"); // no argument needed, server listens
@@ -38,20 +47,20 @@ int32_t main(int32_t argc, char **argv)
   }
 
   // socket environment variables
-	WSADATA wsa;
+  WSADATA wsa;
   SOCKET listensocket, RECVsocket, SENDsocket; // socket file descriptors
   struct sockaddr_in serverRECV, serverSEND, client; // this server and the client that connects
   int client_addr_len, bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
 
   // initialize Winsock (sockets library)
-	printf("Initialising Winsock...\n");
-	if (WSAStartup(MAKEWORD(2,2), &wsa) != 0)
-	{
-		printf("Failed. Error Code : %d\n", WSAGetLastError());
-		return 2;
-	}
-	printf("Winsock Initialised.\n");
+  printf("Initialising Winsock...\n");
+  if (WSAStartup(MAKEWORD(2,2), &wsa) != 0)
+  {
+	  printf("Failed. Error Code : %d\n", WSAGetLastError());
+	  return 2;
+  }
+  printf("Winsock Initialised.\n");
 
   // Creating our TCP (receiving) socket (need it first to initiate connection)
   // AF_INET = IPv4
@@ -76,7 +85,7 @@ int32_t main(int32_t argc, char **argv)
       return 3;
     }
     // display failed attempt
-    printf("Bind attempt #%i failed with error code : %d\n"; , bind_attempts, WSAGetLastError());
+    printf("Bind attempt #%i failed with error code : %d\n", bind_attempts, WSAGetLastError());
 
     // increment port number and retry
     bind_attempts += 1;
@@ -97,7 +106,7 @@ int32_t main(int32_t argc, char **argv)
   	RECVsocket = accept(listensocket, (struct sockaddr *) &client, &client_addr_len);
   	if (RECVsocket == INVALID_SOCKET)
   	{
-  		printf("Accept failed with error code: %\n", WSAGetLastError());
+  		printf("Accept failed with error code: %d\n", WSAGetLastError());
   	}
     else {
       // now that we got our receive socket ready to receive client input, we

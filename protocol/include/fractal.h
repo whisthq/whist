@@ -491,20 +491,6 @@ typedef struct FractalMouseMotionMessage {
 	uint8_t __pad[3];
 } FractalMouseMotionMessage;
 
-/// @brief Generic input message that can represent any message type.
-/// @details Passed to FractalClientSendMessage or returned by FractalHostPollInput while
-/// in HOST_GAME. The application can switch on the `type` member to see which `Message`
-/// struct should be evaluated. The `Message` structs are unioned.
-typedef struct FractalMessage {
-	FractalMessageType type;                     ///< Input message type.
-	union {
-		FractalKeyboardMessage keyboard;           ///< Keyboard message.
-		FractalMouseButtonMessage mouseButton;     ///< Mouse button message.
-		FractalMouseWheelMessage mouseWheel;       ///< Mouse wheel message.
-		FractalMouseMotionMessage mouseMotion;     ///< Mouse motion message.
-	};
-} FractalMessage;
-
 /// @brief Client configuration.
 /// @details Passed to FractalClientConnect. Regarding `resolutionX`, `resolutionY`, and `refreshRate`:
 /// These settings apply only in HOST_DESKTOP if the client is the first client to connect, and that client is
@@ -522,16 +508,6 @@ typedef struct FractalClientConfig {
 	uint8_t __pad[3];
 } FractalClientConfig;
 
-/// @brief Client connection health and status information.
-/// @details Returned by FractalClientGetStatus.
-typedef struct FractalClientStatus {
-	FractalMetrics metrics;          ///< Latency performance metrics.
-	char attemptID[ATTEMPT_ID_LEN];  ///< Most recent connection `attemptID`. Valid even if FractalClientConnect does not return Fractal_OK.
-	bool networkFailure;             ///< Client is currently experiencing network failure.
-	bool decoderFallback;            ///< `true` if the client had to fallback to software decoding after being unable to internally initialize a hardware accelerated decoder.
-	uint8_t __pad[1];
-} FractalClientStatus;
-
 /// @brief Cursor mode/image update event.
 /// @details Member of FractalClientEvent.
 typedef struct FractalClientCursorEvent {
@@ -539,16 +515,6 @@ typedef struct FractalClientCursorEvent {
 	uint32_t key;         ///< Buffer lookup key passed to FractalGetBuffer to retrieve the cursor image, if available.
 } FractalClientCursorEvent;
 
-/// @brief Generic client event that can represent any event type.
-/// @details Returned by FractalClientPollEvents. The application can switch on the `type` member to see
-/// which `Event` struct should be evaluated. The `Event` structs are unioned.
-typedef struct FractalClientEvent {
-	FractalClientEventType type;           ///< Client event type.
-	union {
-		FractalClientCursorEvent cursor;     ///< Cursor mode/image update event.
-		FractalClientUserDataEvent userData; ///< User-defined host message event.
-	};
-} FractalClientEvent;
 /*** STRUCTS END ***/
 
 /*** TYPEDEFS START ***/
