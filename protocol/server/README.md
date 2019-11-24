@@ -1,3 +1,9 @@
-# Server-Side Protocol
+## Windows Desktop Server
 
-Contains the code for the Windows 10 server side, which captures the Windows 10 desktop screen, encodes it to H.264 using Nvidia's NVENC and then streams it using RTSP.
+This code turns a Windows computer into a server listening to receive a client connection to stream its desktop to at ultra-low latency.
+
+It should be easily built via `nmake`. Tested with `Visual Studio Community Edition 2019`.
+
+## Running
+
+```server```

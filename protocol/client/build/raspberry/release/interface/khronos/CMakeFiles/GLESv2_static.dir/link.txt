@@ -1,2 +1,0 @@
-/usr/bin/ar qc ../../../../lib/libGLESv2_static.a  CMakeFiles/GLESv2_static.dir/glxx/glxx_client.c.o
-/usr/bin/ranlib ../../../../lib/libGLESv2_static.a

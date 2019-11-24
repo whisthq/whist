@@ -1,2 +1,0 @@
-/usr/bin/ar qc ../../../../lib/libvcilcs.a  CMakeFiles/vcilcs.dir/vcilcs.c.o CMakeFiles/vcilcs.dir/vcilcs_in.c.o CMakeFiles/vcilcs.dir/vcilcs_out.c.o CMakeFiles/vcilcs.dir/vcilcs_common.c.o
-/usr/bin/ranlib ../../../../lib/libvcilcs.a
