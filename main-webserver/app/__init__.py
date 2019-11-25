@@ -12,7 +12,7 @@ def dispose_engine(engine):
 celery = make_celery()
 engine = db.create_engine(
 	os.getenv('DATABASE_URL'), echo=True, pool_pre_ping = True)
-register_after_fork(engine, dispose_engine)
 conn = engine.connect()
+register_after_fork(engine, dispose_engine)
 app = create_app(celery = celery)
 CORS(app)
