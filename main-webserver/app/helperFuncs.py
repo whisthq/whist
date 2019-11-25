@@ -224,14 +224,14 @@ def genVMName():
     with engine.connect() as conn:
         oldVMs = [cell[0] for cell in list(conn.execute('SELECT "vmName" FROM v_ms'))]
         vmName = genHaiku(1)[0]
-        console.log("new VM NAME")
-        console.log(vmName)
-        console.log("LIST OF OLD VMS")
-        console.log(oldVMs)
+        print("new VM NAME")
+        print(vmName)
+        print("LIST OF OLD VMS")
+        print(oldVMs)
         while vmName in oldVMs:
              vmName = genHaiku(1)[0]
-             console.log("NEW VM NAME TRY")
-             console.log(vmName)
+             print("NEW VM NAME TRY")
+             print(vmName)
         return vmName
 
 def storeForm(name, email, cubeType):
