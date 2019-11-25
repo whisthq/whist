@@ -11,17 +11,19 @@ def status(task_id):
             'state': result.status,
             'output': result.result
         }
+        return make_response(jsonify(response), 200)
     elif result.status == 'FAILURE':
         response = {
             'state': result.status,
             'output': str(result.info) 
         }
+        return make_response(jsonify(response), 200)
     else:
         response = {
             'state': result.status,
             'output': None
         }
-    return make_response(jsonify(response), 200)
+        return make_response(jsonify(response), 200)
 
 @vm_bp.route('/vm/<action>', methods = ['POST'])
 def vm(action):
