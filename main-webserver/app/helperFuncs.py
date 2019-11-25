@@ -223,10 +223,16 @@ def fetchVMCredentials(vm_name):
 def genVMName():
     with engine.connect() as conn:
         oldVMs = [cell[0] for cell in list(conn.execute('SELECT "vmName" FROM v_ms'))]
-        vmName = genHaiku(1)
+        vmName = genHaiku(1)[0]
+        console.log("new VM NAME")
+        console.log(vmName)
+        console.log("LIST OF OLD VMS")
+        console.log(oldVMs)
         while vmName in oldVMs:
-             vmName = genHaiku(1)
-        return vmName[0]
+             vmName = genHaiku(1)[0]
+             console.log("NEW VM NAME TRY")
+             console.log(vmName)
+        return vmName
 
 def storeForm(name, email, cubeType):
     command = text("""
