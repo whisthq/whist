@@ -7,7 +7,6 @@ def make_celery(app_name = __name__):
     return Celery(app_name, backend=backend, broker=broker)
 
 def dispose_engine(engine):
-	print("Test")
     engine.dispose()
 
 celery = make_celery()
