@@ -23,4 +23,3 @@ import stripe
 from multiprocessing.util import register_after_fork
 
 load_dotenv()
-haikunator = Haikunator()

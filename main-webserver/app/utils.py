@@ -1,6 +1,7 @@
 from .imports import *
 
 def genHaiku(n):
+    haikunator = Haikunator()
     haikus = [haikunator.haikunate(delimiter='') + str(np.random.randint(0, 10000)) for _ in range(0, n)]
     haikus = [haiku[0: np.min([15, len(haiku)])] for haiku in haikus]
     return haikus
