@@ -1,5 +1,5 @@
 from .utils import *
-from app import conn, engine
+from app import engine
 
 def createClients():
     subscription_id = os.getenv('AZURE_SUBSCRIPTION_ID')
@@ -74,8 +74,8 @@ def createNic(name, tries):
             VALUES(:vnetName, :subnetName, :ipConfigName, :nicName)
             """)
         params = {'vnetName': vnetName, 'subnetName': subnetName, 'ipConfigName': ipName, 'nicName': nicName}
-        conn.execute(command, **params)
-        conn.close()
+        with engine.connect() as conn:
+            conn.execute(command, **params)
         return async_nic_creation.result()
     except Exception as e:
         if tries < 5:
@@ -85,52 +85,53 @@ def createNic(name, tries):
         else: return None
 
 def createVMParameters(vmName, nic_id, vm_size):
-    oldUserNames = [cell[0] for cell in list(conn.execute('SELECT "vmUserName" FROM v_ms'))]
-    userName = genHaiku(1)[0]
-    while userName in oldUserNames:
-        userName = genHaiku(1)
+    with engine.connect() as conn:
+        oldUserNames = [cell[0] for cell in list(conn.execute('SELECT "vmUserName" FROM v_ms'))]
+        userName = genHaiku(1)[0]
+        while userName in oldUserNames:
+            userName = genHaiku(1)
 
-    vm_reference = {
-        'publisher': 'MicrosoftWindowsDesktop',
-        'offer': 'Windows-10',
-        'sku': 'RS3-ProN',
-        'version': 'latest'
-    }
+        vm_reference = {
+            'publisher': 'MicrosoftWindowsDesktop',
+            'offer': 'Windows-10',
+            'sku': 'RS3-ProN',
+            'version': 'latest'
+        }
 
-    pwd = generatePassword()
-    pwd_token = jwt.encode({'pwd': pwd}, os.getenv('SECRET_KEY'))
+        pwd = generatePassword()
+        pwd_token = jwt.encode({'pwd': pwd}, os.getenv('SECRET_KEY'))
 
-    command = text("""
-        INSERT INTO v_ms("vmName", "vmPassword", "vmUserName", "osDisk", "running") 
-        VALUES(:vmName, :vmPassword, :vmUserName, :osDisk, :running)
-        """)
-    params = {'vmName': vmName, 'vmPassword': pwd_token, 'vmUserName': userName, 'osDisk': None, 'running': False}
-    conn.execute(command, **params)
-    conn.close()
-    return {'params': {
-        'location': 'eastus',
-        'os_profile': {
-            'computer_name': vmName,
-            'admin_username': userName,
-            'admin_password': pwd
-        },
-        'hardware_profile': {
-            'vm_size': vm_size
-        },
-        'storage_profile': {
-            'image_reference': {
-                'publisher': vm_reference['publisher'],
-                'offer': vm_reference['offer'],
-                'sku': vm_reference['sku'],
-                'version': vm_reference['version']
-            },
-        },
-        'network_profile': {
-            'network_interfaces': [{
-                'id': nic_id,
-            }]
-        },
-    }, 'vmName': vmName}
+        command = text("""
+            INSERT INTO v_ms("vmName", "vmPassword", "vmUserName", "osDisk", "running") 
+            VALUES(:vmName, :vmPassword, :vmUserName, :osDisk, :running)
+            """)
+        params = {'vmName': vmName, 'vmPassword': pwd_token, 'vmUserName': userName, 'osDisk': None, 'running': False}
+        with engine.connect() as conn:
+            conn.execute(command, **params)
+            return {'params': {
+                'location': 'eastus',
+                'os_profile': {
+                    'computer_name': vmName,
+                    'admin_username': userName,
+                    'admin_password': pwd
+                },
+                'hardware_profile': {
+                    'vm_size': vm_size
+                },
+                'storage_profile': {
+                    'image_reference': {
+                        'publisher': vm_reference['publisher'],
+                        'offer': vm_reference['offer'],
+                        'sku': vm_reference['sku'],
+                        'version': vm_reference['version']
+                    },
+                },
+                'network_profile': {
+                    'network_interfaces': [{
+                        'id': nic_id,
+                    }]
+                },
+            }, 'vmName': vmName}
 
 def getVM(vm_name):
     _, compute_client, _= createClients()
@@ -147,9 +148,9 @@ def singleValueQuery(value):
         SELECT * FROM v_ms WHERE "vmName" = :value
         """)
     params = {'value': value}
-    exists = conn.execute(command, **params).fetchall()
-    conn.close()
-    return True if exists else False
+    with engine.connect() as conn:
+        exists = conn.execute(command, **params).fetchall()
+        return True if exists else False
 
 def getIP(vm):
     _, _, network_client = createClients()
@@ -175,20 +176,20 @@ def registerUserVM(username, password, vm_name):
         VALUES(:userName, :password, :currentVM)
         """)
     params = {'userName': username, 'password': pwd_token, 'currentVM': vm_name}
-    conn.execute(command, **params)
-    conn.close()
+    with engine.connect() as conn:
+        conn.execute(command, **params)
 
 def loginUserVM(username, password):
     command = text("""
         SELECT * FROM users WHERE "userName" = :userName
         """)
     params = {'userName': username}
-    user = conn.execute(command, **params).fetchall()
-    if len(user) > 0:
-        decrypted_pwd = jwt.decode(user[0][1], os.getenv('SECRET_KEY'))['pwd']
-        if decrypted_pwd == password:
-            return user[0][2]
-    conn.close()
+    with engine.conect() as conn:
+        user = conn.execute(command, **params).fetchall()
+        if len(user) > 0:
+            decrypted_pwd = jwt.decode(user[0][1], os.getenv('SECRET_KEY'))['pwd']
+            if decrypted_pwd == password:
+                return user[0][2]
     return None
 
 def loginUser(username, password):
@@ -197,35 +198,35 @@ def loginUser(username, password):
         """)
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     params = {'userName': username, 'password': pwd_token}
-    user = conn.execute(command, **params).fetchall()
-    conn.close()
-    return len(user) > 0
+    with engine.connect() as conn:
+        user = conn.execute(command, **params).fetchall()
+        return len(user) > 0
 
 def fetchVMCredentials(vm_name):
     command = text("""
         SELECT * FROM v_ms WHERE "vmName" = :vm_name
         """)
     params = {'vm_name': vm_name}
-    vm_info = conn.execute(command, **params).fetchall()[0]
-    vm_name, username, password = vm_info[0], vm_info[2], vm_info[1]
-    # Get public IP address
-    vm = getVM(vm_name)
-    ip = getIP(vm)
-    # Decode password
-    password = jwt.decode(password, os.getenv('SECRET_KEY'))
-    conn.close()
-    return {'username': username,
-            'vm_name': vm_name,
-            'password': password['pwd'],
-            'public_ip': ip}
+    with engine.connect() as conn:
+        vm_info = conn.execute(command, **params).fetchall()[0]
+        vm_name, username, password = vm_info[0], vm_info[2], vm_info[1]
+        # Get public IP address
+        vm = getVM(vm_name)
+        ip = getIP(vm)
+        # Decode password
+        password = jwt.decode(password, os.getenv('SECRET_KEY'))
+        return {'username': username,
+                'vm_name': vm_name,
+                'password': password['pwd'],
+                'public_ip': ip}
 
 def genVMName():
-    oldVMs = [cell[0] for cell in list(conn.execute('SELECT "vmName" FROM v_ms'))]
-    vmName = genHaiku(1)
-    while vmName in oldVMs:
-         vmName = genHaiku(1)
-    conn.close()
-    return vmName[0]
+    with engine.connect() as conn:
+        oldVMs = [cell[0] for cell in list(conn.execute('SELECT "vmName" FROM v_ms'))]
+        vmName = genHaiku(1)
+        while vmName in oldVMs:
+             vmName = genHaiku(1)
+        return vmName[0]
 
 def storeForm(name, email, cubeType):
     command = text("""
@@ -233,8 +234,8 @@ def storeForm(name, email, cubeType):
         VALUES(:name, :email, :cubeType)
         """)
     params = {'name': name, 'email': email, 'cubeType': cubeType}
-    conn.execute(command, **params)
-    conn.close()
+    with engine.connect() as conn:
+        conn.execute(command, **params)
 
 def storePreOrder(address1, address2, zipCode, email, order):
     command = text("""
@@ -243,8 +244,8 @@ def storePreOrder(address1, address2, zipCode, email, order):
         """)
     params = {'address1': address1, 'address2': address2, 'zipcode': zipCode, 'email': email, 
               'base': int(order['base']), 'enhanced': int(order['enhanced']), 'power': int(order['power'])}
-    conn.execute(command, **params)
-    conn.close()
+    with engine.connect() as conn:
+        conn.execute(command, **params)
 
 def addTimeTable(username, action, time):
     command = text("""
@@ -254,5 +255,5 @@ def addTimeTable(username, action, time):
     if time:
         params = {'userName': username, 'currentTime': dt.now().strftime('%m-%d-%Y, %H:%M:%S'), 'action': action}
 
-    conn.execute(command, **params)
-    conn.close()
+    with engine.connect() as conn:
+        conn.execute(command, **params)
