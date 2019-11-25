@@ -8,8 +8,8 @@ account_bp = Blueprint('account_bp', __name__)
 def user(action):
 	body = request.get_json()
 	if action == 'register':
-	    print("BODY")
-	    print(body)
+		print("BODY")
+		print(body)
 		username, password, vm_name = body['username'], body['password'], body['vm_name']
 		vmExists = getVM(vm_name)
 		vmInDatabase = singleValueQuery(vm_name)
