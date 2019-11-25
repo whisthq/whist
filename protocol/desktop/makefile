@@ -1,9 +1,7 @@
 BIN_NAME = client.exe
 OBJS = main.obj
 
-STATIC_LIBS = \
-	lib/windows/SDL2.lib \
-	include/curl/lib/libcurl_a.lib \
+STATIC_LIBS = lib/windows/SDL2.lib
 
 CFLAGS = \
 	/nologo \
@@ -35,11 +33,12 @@ SHARED_LIBS = \
 	ws2_32.lib \
 	crypt32.lib \
 	wldap32.lib \
-	normaliz.lib
+	normaliz.lib \
+	advapi32.lib
 
 LD_FLAGS = \
 	/nodefaultlib \
-	/nologo \
+	/nologo
 
 all: clean clear $(OBJS)
 	link $(LD_FLAGS) $(STATIC_LIBS) $(SHARED_LIBS) /out:$(BIN_NAME) *.obj

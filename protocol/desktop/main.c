@@ -19,7 +19,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "include/json-c/json.h" // for parsing the web server query
 #include "../include/fractal.h" // header file for protocol functions
 
 #define SDL_MAIN_HANDLED
@@ -33,13 +32,6 @@
 // include Winsock library & disable warning if on Windows client
 #if defined(_WIN32)
   #include <winsock2.h> // lib for socket programming on windows
-  #pragma comment(lib, "wldap32.lib" )
-  #pragma comment(lib, "crypt32.lib" )
-  #pragma comment(lib, "ws2_32.lib")
-  #pragma comment(lib, "libcurl.lib")
-
-  #define CURL_STATICLIB 
-  #include "include/curl/curl.h" // for querying the web server
 
   #pragma warning(disable: 4201)
   #pragma warning(disable: 4244) // disable u_int to u_short conversion warning
@@ -50,51 +42,23 @@
 extern "C" {
 #endif
 
-static bool loggedIn = true; // user login variable hardcoded too
-const char* vm_ip = "40.117.226.121"; // server VM IP address -- hardcoded for now
-
+static bool loggedIn = false; // user login variable
 
 /*** LOGIN FUNCTIONS START ***/
-// authenticate use and get data size for curl
-/*static size_t function_pt(void *ptr, size_t size, size_t nmemb, void *stream)
+// send JSON post to query the database, authenticate the user and return the VM IP
+static int sendJSONPost(char *url, char *jsonObj)
 {
-  // unused stream
-  (void) stream;
 
-  // JSON parameters
-  struct json_object *parsed_json;
-  struct json_object *username;
-  struct json_object *password;
-  struct json_object *public_ip;
 
-  // parse JSON
-  parsed_json = json_tokener_parse(ptr);
-  json_object_object_get_ex(parsed_json, "username", &username);
-  json_object_object_get_ex(parsed_json, "password", &password);
-  json_object_object_get_ex(parsed_json, "public_ip", &public_ip);
 
-  // authenticate the user
-  if (username && password && public_ip)
-  {
-    // confirm authentication and get inputs
-    loggedIn = true;
-    const char *public_ipChar = json_object_to_json_string(public_ip); // only need the IP
 
-    // write VM IP
-    vm_ip = public_ipChar;
-    }
-    else
-    {
-      loggedIn = false;
-      printf("Could not authenticate user\n");
-    }
-    // return size for curl
-    return size * nmemb;
-}*/
 
-// send JSON post to query the database
-/*static int sendJSONPost(char *url, char *jsonObj, bool callback)
-{
+	// send the header and the post
+	// receive back, if status code 200 then set loggedin to true and listen for info, parse them and return ip
+	// else loggedin to false and exit
+
+
+
   // curl vars
   CURL *curl;
   CURLcode res;
@@ -128,11 +92,22 @@ const char* vm_ip = "40.117.226.121"; // server VM IP address -- hardcoded for n
   }
   curl_global_cleanup();
   return 0;
-}*/
+
+
+
+
+
+
+
+
+
+}
 
 // log the user in and log its connection time
-/*bool login(const char *username, const char *password)
+bool login(const char *username, const char *password)
 {
+	const char* vm_ip = ""; // server VM IP address
+
   // generate JSON logout format
   char  *jsonFrame = "{\"username\" : \"%s\", \"password\" : \"%s\"}";
   size_t jsonSize  = strlen(jsonFrame) + strlen(username) + strlen(password) - 1;
@@ -143,13 +118,12 @@ const char* vm_ip = "40.117.226.121"; // server VM IP address -- hardcoded for n
     // write JSON, callback since we start the app
     snprintf(jsonObj, jsonSize, jsonFrame, username, password);
     char *url = "https://cube-celery-vm.herokuapp.com/user/login";
-    bool callback = true;
 
-    // send JSON and free memory
-    sendJSONPost(url, jsonObj, callback);
+    // send JSON to authenticate and free memory
+    vm_ip = sendJSONPost(url, jsonObj);
     free(jsonObj);
   }
-  return loggedIn;
+  return vm_ip;
 }
 
 // log the logout time of a user
@@ -165,14 +139,13 @@ bool logout(const char *username)
     // write JSON, no callback since we terminate the app
     snprintf(jsonObj, jsonSize, jsonFrame, username);
     char *url = "https://cube-celery-vm.herokuapp.com/tracker/logoff";
-    bool callback = false;
 
     // send JSON and free memory
-    sendJSONPost(url, jsonObj, callback);
+    sendJSONPost(url, jsonObj);
     free(jsonObj);
   }
   return true;
-}*/
+}
 /*** LOGIN FUNCTIONS END ***/
 
 // main client function
@@ -189,16 +162,17 @@ int32_t main(int32_t argc, char **argv)
   char *password = argv[2];
 
   // query Fractal web servers to authenticate the user
-  //bool authenticated = login(username, password);
-  //if (!authenticated) {
-  //  printf("Could not authenticate user, invalid username or password\n");
-  //  return 2;
-  //}
+  bool authenticated = login(username, password);
+  if (!authenticated)
+  {
+    printf("Could not authenticate user, invalid username or password\n");
+    return 2;
+  }
 
   // all good, we have a user and the VM IP written, time to set up the sockets
   // socket environment variables
   SOCKET RECVsocket, SENDsocket; // socket file descriptors
-  struct sockaddr_in clientRECV, clientSEND, server; // this client two ports
+  struct sockaddr_in clientRECV, server; // this client two ports
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
 
   // initialize Winsock if this is a Windows client
@@ -208,7 +182,7 @@ int32_t main(int32_t argc, char **argv)
     printf("Initialising Winsock...\n");
     if (WSAStartup(MAKEWORD(2,2), &wsa) != 0)
     {
-      printf("Failed. Error Code : %d\n", WSAGetLastError());
+      printf("Failed. Error Code : %d.\n", WSAGetLastError());
       return 2;
     }
     printf("Winsock Initialised.\n");
@@ -221,22 +195,24 @@ int32_t main(int32_t argc, char **argv)
   SENDsocket = socket(AF_INET, SOCK_STREAM, 0);
   if (SENDsocket == INVALID_SOCKET || SENDsocket < 0) // Windows & Unix cases
   {
-    printf("Could not create send TCP socket\n");
+    printf("Could not create Send TCP socket.\n");
   }
   printf("Send TCP Socket created.\n");
 
   // prepare the sockaddr_in structure for the send socket
-	clientSEND.sin_family = AF_INET; // IPv4
-  clientSEND.sin_addr.s_addr = inet_addr(vm_ip); // VM (server) IP received from authenticating
-	clientSEND.sin_port = htons(config.serverPortRECV); // initial default port 48888
+	server.sin_family = AF_INET; // IPv4
+    server.sin_addr.s_addr = inet_addr(vm_ip); // VM (server) IP received from authenticating
+    server.sin_port = htons(config.serverPortRECV); // initial default port 48888
 
 	// connect to VM (server)
-	if (connect(SENDsocket, (struct sockaddr *) &server, sizeof(server)) < 0)
+	char* connect_status = connect(SENDsocket, (struct sockaddr*) & server, sizeof(server)) < 0;
+
+	if (connect_status == SOCKET_ERROR || connect_status < 0)
 	{
-    printf("Could not connect to the VM (server)\n");
+    printf("Could not connect to the VM (server).\n");
     return 3;
 	}
-  printf("Connected\n");
+  printf("Connected.\n");
 
   // now that we're connected, we need to create our receiving UDP socket
   // Creating our UDP (receiving) socket
@@ -246,7 +222,7 @@ int32_t main(int32_t argc, char **argv)
   RECVsocket = socket(AF_INET, SOCK_DGRAM, 0);
   if (RECVsocket == INVALID_SOCKET || RECVsocket < 0) // Windows & Unix cases
   {
-    printf("Could not create receive UDP socket\n");
+    printf("Could not create Receive UDP socket.\n");
   }
   printf("Receive UDP Socket created.\n");
 
@@ -283,8 +259,8 @@ int32_t main(int32_t argc, char **argv)
   #endif
 
   // write close time to server, set loggedin to false and return
-  //logout(username); hardcoded
-  //loggedIn = false;
+  logout(username);
+  loggedIn = false;
 
   return 0;
 }

@@ -57,7 +57,7 @@ int32_t main(int32_t argc, char **argv)
   printf("Initialising Winsock...\n");
   if (WSAStartup(MAKEWORD(2,2), &wsa) != 0)
   {
-	  printf("Failed. Error Code : %d\n", WSAGetLastError());
+	  printf("Failed. Error Code : %d.\n", WSAGetLastError());
 	  return 2;
   }
   printf("Winsock Initialised.\n");
@@ -68,7 +68,7 @@ int32_t main(int32_t argc, char **argv)
   // 0 = protocol automatically detected
   if ((listensocket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
-		printf("Could not create listen TCP socket : %d\n" , WSAGetLastError());
+		printf("Could not create listen TCP socket : %d.\n" , WSAGetLastError());
 	}
 	printf("Listen TCP Socket created.\n");
 
@@ -85,7 +85,7 @@ int32_t main(int32_t argc, char **argv)
       return 3;
     }
     // display failed attempt
-    printf("Bind attempt #%i failed with error code : %d\n", bind_attempts, WSAGetLastError());
+    printf("Bind attempt #%i failed with error code : %d.\n", bind_attempts, WSAGetLastError());
 
     // increment port number and retry
     bind_attempts += 1;
@@ -106,12 +106,12 @@ int32_t main(int32_t argc, char **argv)
   	RECVsocket = accept(listensocket, (struct sockaddr *) &client, &client_addr_len);
   	if (RECVsocket == INVALID_SOCKET)
   	{
-  		printf("Accept failed with error code: %d\n", WSAGetLastError());
+  		printf("Accept failed with error code: %d.\n", WSAGetLastError());
   	}
     else {
       // now that we got our receive socket ready to receive client input, we
       // need to create our send socket to initiate the stream
-      printf("Connection accepted\n");
+      printf("Connection accepted - Receive TCP Socket created.\n");
 
       // Creating our UDP (sending) socket
       // AF_INET = IPv4
@@ -119,9 +119,9 @@ int32_t main(int32_t argc, char **argv)
       // 0 = protocol automatically detected
       if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
     	{
-    		printf("Could not create UDP socket : %d\n" , WSAGetLastError());
+    		printf("Could not create UDP socket : %d.\n" , WSAGetLastError());
     	}
-    	printf("UDP Socket created.\n");
+    	printf("Send UDP Socket created.\n");
 
       // to bind to the client receiving port, we need its IP and port, which we
       // can get since we have accepted connection on our receiving port

@@ -1,0 +1,10 @@
+*.obj
+*.iml
+*.pyc
+.vs/
+.idea/
+*.exe
+*.pdb
+*.ilk
+*.o
+.DS_Store
