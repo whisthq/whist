@@ -1,6 +1,5 @@
 from .imports import *
 from .helperFuncs import *
-from app import conn
 
 stripe_bp = Blueprint('stripe_bp', __name__)
 

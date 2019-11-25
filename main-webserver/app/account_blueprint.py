@@ -1,6 +1,5 @@
 from .imports import *
 from .helperFuncs import *
-from app import conn
 
 account_bp = Blueprint('account_bp', __name__)
 
