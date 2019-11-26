@@ -18,12 +18,18 @@ def user(action):
 		else:
 			return jsonify({}), 403
 	elif action == 'login':
+		print(body)
 		username, password = body['username'], body['password']
 		vm_name = loginUserVM(username, password)
-		if vm_name: 
-			payload = fetchVMCredentials(vm_name)
-			addTimeTable(username, 'logon')
-			return jsonify(payload), 200
+		print("VM NAME")
+		print(vm_name)
+		try:
+			if vm_name: 
+				payload = fetchVMCredentials(vm_name)
+				addTimeTable(username, 'logon')
+				return jsonify(payload), 200
+		except:
+			pass
 		return jsonify({}), 401
 
 @account_bp.route('/account/<action>', methods = ['POST'])
