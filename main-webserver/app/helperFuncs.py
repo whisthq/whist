@@ -184,7 +184,7 @@ def loginUserVM(username, password):
         SELECT * FROM users WHERE "userName" = :userName
         """)
     params = {'userName': username}
-    with engine.conect() as conn:
+    with engine.connect() as conn:
         user = conn.execute(command, **params).fetchall()
         if len(user) > 0:
             decrypted_pwd = jwt.decode(user[0][1], os.getenv('SECRET_KEY'))['pwd']
@@ -224,14 +224,8 @@ def genVMName():
     with engine.connect() as conn:
         oldVMs = [cell[0] for cell in list(conn.execute('SELECT "vmName" FROM v_ms'))]
         vmName = genHaiku(1)[0]
-        print("new VM NAME")
-        print(vmName)
-        print("LIST OF OLD VMS")
-        print(oldVMs)
         while vmName in oldVMs:
              vmName = genHaiku(1)[0]
-             print("NEW VM NAME TRY")
-             print(vmName)
         return vmName
 
 def storeForm(name, email, cubeType):
