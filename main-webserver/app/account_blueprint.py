@@ -28,8 +28,8 @@ def user(action):
 				payload = fetchVMCredentials(vm_name)
 				addTimeTable(username, 'logon')
 				return jsonify(payload), 200
-		except:
-			pass
+		except Exception as e:
+			print(e)
 		return jsonify({}), 401
 
 @account_bp.route('/account/<action>', methods = ['POST'])
