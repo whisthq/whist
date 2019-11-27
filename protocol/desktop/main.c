@@ -5,13 +5,15 @@
  * starts streaming its user inputs to the server.
 
  Protocol version: 1.0
- Last modification: 11/24/2019
+ Last modification: 11/25/2019
 
  By: Philippe Noël
 
  Copyright Fractal Computers, Inc. 2019
 */
-#define _WINSOCK_DEPRECATED_NO_WARNINGS // silence the deprecated warnings
+#if defined(_WIN32)
+  #define _WINSOCK_DEPRECATED_NO_WARNINGS // silence the deprecated warnings
+#endif
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -30,67 +32,123 @@
 #define WINDOW_H 720
 
 // include Winsock library & disable warning if on Windows client
+// include pthread library for unix threads if on linux/macos
 #if defined(_WIN32)
   #include <winsock2.h> // lib for socket programming on windows
-
+  #include <windows.h> // general windows lib
   #pragma warning(disable: 4201)
+  #pragma warning(disable: 4024) // disable thread warning
+  #pragma warning(disable: 4113) // disable thread warning type
   #pragma warning(disable: 4244) // disable u_int to u_short conversion warning
   #pragma warning(disable: 4047) // disable char * indirection levels warning
+#else
+  #include <pthread.h> // thread library on unix
+  #include <unistd.h>
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-static bool loggedIn = false; // user login variable
-
-/*** LOGIN FUNCTIONS START ***/
-// send JSON post to query the database, authenticate the user and return the VM IP
-static int sendJSONPost(char *url, char *jsonObj)
-{
+static bool loggedIn = true; // global user login variable
+bool repeat = true; // global flag to stream until disconnection
 
 
 
 
 
-	// send the header and the post
-	// receive back, if status code 200 then set loggedin to true and listen for info, parse them and return ip
-	// else loggedin to false and exit
+
+
+/*** LOGIN FUNCTIONS START ***/ /*
+/*** LOGIN FUNCTIONS END ***/
 
 
 
-  // curl vars
-  CURL *curl;
-  CURLcode res;
 
-  // generate curl headers
-  struct curl_slist *headers = NULL;
-  headers = curl_slist_append(headers, "Accept: application/json");
-  headers = curl_slist_append(headers, "Content-Type: application/json");
-  headers = curl_slist_append(headers, "charsets: utf-8");
-  curl_global_init(CURL_GLOBAL_ALL);
-  curl = curl_easy_init();
 
-  // set curl for fetching data
-  if (curl)
-  {
-    // set curl parameters
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    if (callback)
-    {
-      curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, function_pt);
-    }
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonObj);
 
-    // get data using curl
-    res = curl_easy_perform(curl);
-    if (res != CURLE_OK) fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+/*
+// main function to receive server video and audio stream and process it
+int32_t ReceiveStream(SOCKET RECVsocket) {
 
-    // cleanup and terminate
-    curl_easy_cleanup(curl);
+
+
+
+
+  // initiate buffer to store the reply
+  int recv_size;
+  char *server_reply[2000];
+
+  // while stream is on, listen for messages
+  while (repeat) {
+
+    //Receive a reply from the server
+  	//if((recv_size = recv(RECVsocket , server_reply , 2000 , 0)) == SOCKET_ERROR)
+  	//{
+    //  printf("recv failed\n");
+    //  return 1;
+  	//}
+
+    // we poll constantly for a message coming our way
+    recv_size = recv(RECVsocket , server_reply , 2000 , 0);
+    printf("Message received: %s\n", server_reply);
+
   }
-  curl_global_cleanup();
+
+  printf("Connection interrupted\n");
+
+
+
+
+
+
+  // terminate thread as we are done with the stream
+  _endthread();
+  return 0;
+
+
+
+
+
+} */
+
+// main function to send client user inputs
+int32_t SendClientInput(SOCKET SENDsocket) {
+
+
+
+
+
+
+  	// init the decoder here
+  	char *message = "Hey from the client!\n";
+  	// then start looping, we loop while repeat is true, when we receive a disconnect
+  	// request, then it becomes false
+  	while (repeat) {
+
+  		// test data send
+
+
+  		if(send(SENDsocket, message, strlen(message), 0) < 0)
+  		{
+  			printf("Send failed\n");
+  			return 1;
+  		}
+  		//printf("Send succeeded.\n");
+
+      // sleep to be able to see what's happening
+      Sleep(5000L);
+
+
+  	}
+
+  	printf("Repeat is false, exit\n");
+
+
+
+
+  // terminate thread as we are done with the stream
+  _endthread();
   return 0;
 
 
@@ -98,59 +156,26 @@ static int sendJSONPost(char *url, char *jsonObj)
 
 
 
-
-
-
 }
 
-// log the user in and log its connection time
-bool login(const char *username, const char *password)
-{
-	const char* vm_ip = ""; // server VM IP address
 
-  // generate JSON logout format
-  char  *jsonFrame = "{\"username\" : \"%s\", \"password\" : \"%s\"}";
-  size_t jsonSize  = strlen(jsonFrame) + strlen(username) + strlen(password) - 1;
-  char  *jsonObj   = malloc(jsonSize);
 
-  // send the logout JSON to log the user in
-  if(jsonObj != NULL) {
-    // write JSON, callback since we start the app
-    snprintf(jsonObj, jsonSize, jsonFrame, username, password);
-    char *url = "https://cube-celery-vm.herokuapp.com/user/login";
 
-    // send JSON to authenticate and free memory
-    vm_ip = sendJSONPost(url, jsonObj);
-    free(jsonObj);
-  }
-  return vm_ip;
-}
+// add linux thread version/windows fix on both server/client
+// test connection/deconnection
 
-// log the logout time of a user
-bool logout(const char *username)
-{
-  // generate JSON logout format
-  char  *jsonFrame = "{\"username\" : \"%s\"}";
-  size_t jsonSize  = strlen(jsonFrame) + strlen(username) - 1;
-  char  *jsonObj   = malloc(jsonSize);
 
-  // send the logout JSON to log the logout time
-  if (jsonObj != NULL) {
-    // write JSON, no callback since we terminate the app
-    snprintf(jsonObj, jsonSize, jsonFrame, username);
-    char *url = "https://cube-celery-vm.herokuapp.com/tracker/logoff";
 
-    // send JSON and free memory
-    sendJSONPost(url, jsonObj);
-    free(jsonObj);
-  }
-  return true;
-}
-/*** LOGIN FUNCTIONS END ***/
+
 
 // main client function
 int32_t main(int32_t argc, char **argv)
 {
+  // unused argv this is momentary until we have the login
+  (void) argv;
+  // variable for storing server IP address
+  //char *vm_ip = "";
+
   // usage check for authenticating on our web servers
   if (argc != 3) {
     printf("Usage: client fractal-username fractal-password\n");
@@ -158,21 +183,21 @@ int32_t main(int32_t argc, char **argv)
   }
 
   // user inputs for username and password
-  char *username = argv[1];
-  char *password = argv[2];
+  //char *username = argv[1];
+  //char *password = argv[2];
 
-  // query Fractal web servers to authenticate the user
-  bool authenticated = login(username, password);
-  if (!authenticated)
-  {
-    printf("Could not authenticate user, invalid username or password\n");
-    return 2;
-  }
+  // query Fractal web servers to authenticate the user and get the server IP
+  //vm_ip = login(username, password);
+  //if (!loggedIn || vm_ip == "")
+  //{
+  //  printf("Could not authenticate user, invalid username or password\n");
+  //  return 2;
+  // }
 
   // all good, we have a user and the VM IP written, time to set up the sockets
   // socket environment variables
   SOCKET RECVsocket, SENDsocket; // socket file descriptors
-  struct sockaddr_in clientRECV, server; // this client two ports
+  struct sockaddr_in clientRECV, serverRECV; // this client receive port the server streams to, and the server receive port this client streams to
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
 
   // initialize Winsock if this is a Windows client
@@ -191,22 +216,21 @@ int32_t main(int32_t argc, char **argv)
   // Creating our TCP (sending) socket (need it first to initiate connection)
   // AF_INET = IPv4
   // SOCK_STREAM = TCP Socket
-  // 0 = protocol automatically detected
-  SENDsocket = socket(AF_INET, SOCK_STREAM, 0);
+  // IPPROTO_TCP = TCP protocol
+  SENDsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (SENDsocket == INVALID_SOCKET || SENDsocket < 0) // Windows & Unix cases
   {
     printf("Could not create Send TCP socket.\n");
   }
   printf("Send TCP Socket created.\n");
 
-  // prepare the sockaddr_in structure for the send socket
-	server.sin_family = AF_INET; // IPv4
-    server.sin_addr.s_addr = inet_addr(vm_ip); // VM (server) IP received from authenticating
-    server.sin_port = htons(config.serverPortRECV); // initial default port 48888
+  // prepare the sockaddr_in structure for the send socket (server receive port)
+	serverRECV.sin_family = AF_INET; // IPv4
+  serverRECV.sin_addr.s_addr = inet_addr("40.117.226.121"); // VM (server) IP received from authenticating
+  serverRECV.sin_port = htons(config.serverPortRECV); // initial default port 48888
 
-	// connect to VM (server)
-	char* connect_status = connect(SENDsocket, (struct sockaddr*) & server, sizeof(server)) < 0;
-
+	// connect client the send socket to the server receive port
+	char* connect_status = connect(SENDsocket, (struct sockaddr*) &serverRECV, sizeof(serverRECV)) < 0;
 	if (connect_status == SOCKET_ERROR || connect_status < 0)
 	{
     printf("Could not connect to the VM (server).\n");
@@ -214,12 +238,16 @@ int32_t main(int32_t argc, char **argv)
 	}
   printf("Connected.\n");
 
+
+
+
+
   // now that we're connected, we need to create our receiving UDP socket
   // Creating our UDP (receiving) socket
   // AF_INET = IPv4
   // SOCK_DGAM = UDP Socket
-  // 0 = protocol automatically detected
-  RECVsocket = socket(AF_INET, SOCK_DGRAM, 0);
+  // IPROTO_UDP = UDP protocol
+  RECVsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (RECVsocket == INVALID_SOCKET || RECVsocket < 0) // Windows & Unix cases
   {
     printf("Could not create Receive UDP socket.\n");
@@ -229,23 +257,38 @@ int32_t main(int32_t argc, char **argv)
   // prepare the sockaddr_in structure for the receiving socket
   clientRECV.sin_family = AF_INET; // IPv4
   clientRECV.sin_addr.s_addr = INADDR_ANY; // any IP
-  clientRECV.sin_port = htons(config.clientPortSEND); // initial default port 48889
+  clientRECV.sin_port = htons(config.clientPortRECV); // initial default port 48888
+
+
+
+
+
+
+
 
   // since this is a UDP socket, there is no connection necessary
   // time to start receiving the stream and sending user input
-  while (true) {
+  // launch thread #1 to start streaming video & audio from server
+  //_beginthread(ReceiveStream(RECVsocket), 0, NULL);
 
-    // now that our two ports exist and are ready to stream, we need to start strea
-
-
-
-
+  // launch thread #2 to start sending user input
+  _beginthread(SendClientInput(SENDsocket), 0, NULL);
 
 
-
+  // add threads for linux/macos
 
 
 
+  // keep looping until the client sends user input to disconnect, at which
+  // point the server will send a packet/stop stream to say "stop sending user
+  // input" and it will set the repear varto false in ReceiveStream
+  while (repeat) {
+    // wait one second between loops (arbitrary, these loops just wait)
+    #if defined(_WIN32)
+      Sleep(1000L);
+    #else
+      sleep(1000);
+    #endif
   }
   // client or server disconnected, close everything
   // Windows case, closing sockets
@@ -259,8 +302,8 @@ int32_t main(int32_t argc, char **argv)
   #endif
 
   // write close time to server, set loggedin to false and return
-  logout(username);
-  loggedIn = false;
+  //logout(username);
+  //loggedIn = false;
 
   return 0;
 }

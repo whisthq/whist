@@ -4,7 +4,7 @@
  * and audio to the client, and receiving the user input back.
 
  Protocol version: 1.0
- Last modification: 11/24/2019
+ Last modification: 11/27/2019
 
  By: Philippe Noël
 
@@ -15,9 +15,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <windows.h>
 #include <Ws2tcpip.h> // other Windows socket library (of course, thanks #Microsoft)
 #include <winsock2.h> // lib for socket programming on windows
+#include <process.h> // for threads programming
 
 #include "../include/fractal.h" // header file for protocol functions
 
@@ -26,13 +28,121 @@
 
 #if defined(_WIN32)
 	#pragma warning(disable: 4201)
+	#pragma warning(disable: 4024) // disable thread warning
+	#pragma warning(disable: 4113) // disable thread warning type
 	#pragma warning(disable: 4244) // disable u_int to u_short conversion warning
 	#pragma warning(disable: 4047) // disable char * indirection levels warning
+	#pragma warning(disable: 4701) // potentially unitialized var
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+bool repeat = true; // global flag to keep streaming until client disconnects
+
+
+/*
+// main function to stream the video and audio from this server to the client
+int32_t SendStream(SOCKET SENDsocket, struct sockaddr_in clientRECV)
+{
+
+
+
+
+
+
+	#define BUFLEN 512	//Max length of buffer
+
+
+
+	char buf[BUFLEN];
+	char message[BUFLEN] = "Hey from the server!\n";
+	int slen = sizeof(clientRECV);
+
+
+
+
+	// init the decoder here
+	// then start looping, we loop while repeat is true, when we receive a disconnect
+	// request, then it becomes false
+	while (repeat) {
+
+		// test data send
+
+
+		//send the message
+		if (sendto(SENDsocket, message, strlen(message) , 0 , (struct sockaddr *) &clientRECV, slen) == SOCKET_ERROR)
+		{
+			printf("sendto() failed with error code : %d", WSAGetLastError());
+			return 11;
+		}
+
+
+		//printf("Send succeeded.\n");
+
+		// sleep so we can see whats up
+		Sleep(5000L);
+
+	}
+
+	printf("Repeat is false, exit\n");
+
+
+
+
+
+
+
+	// terminate thread as we are done with the stream
+	_endthread();
+	return 0;
+} */
+
+// main function to receive client user inputs and process them
+int32_t ReceiveClientInput(SOCKET RECVsocket)
+{
+
+
+
+
+
+	// initiate buffer to store the reply
+  int recv_size;
+  char *client_reply[2000];
+
+  // while stream is on, listen for messages
+  while (repeat) {
+
+
+		// need recv to run indefinitely until repeat over otherwise it mighttry to
+		// receive before send happened
+
+    //Receive a reply from the server
+  	//if((recv_size = recv(RECVsocket , client_reply , 2000 , 0)) == SOCKET_ERROR)
+  	//{
+    //  printf("recv failed\n");
+    //  return 1;
+  	//}
+
+		// we constantly poll for messages coming our way
+		recv_size = recv(RECVsocket , client_reply , 2000 , 0);
+
+    printf("Message received: %s\n", client_reply);
+
+  }
+
+  printf("Connection interrupted\n");
+
+
+
+
+
+
+	// terminate thread as we are done with the stream
+	_endthread();
+	return 0;
+}
 
 // main server function
 int32_t main(int32_t argc, char **argv)
@@ -49,8 +159,8 @@ int32_t main(int32_t argc, char **argv)
   // socket environment variables
   WSADATA wsa;
   SOCKET listensocket, RECVsocket, SENDsocket; // socket file descriptors
-  struct sockaddr_in serverRECV, serverSEND, client; // this server and the client that connects
-  int client_addr_len, bind_attempts = 0;
+  struct sockaddr_in serverRECV, clientRECV, clientServerRECV; // this server receive port and the client receive port, clientServerRECV is the same sockaddr_in as serverRECV, but sent from the client when it connects
+  int clientServerRECV_addr_len, bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
 
   // initialize Winsock (sockets library)
@@ -69,6 +179,7 @@ int32_t main(int32_t argc, char **argv)
   if ((listensocket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
 		printf("Could not create listen TCP socket : %d.\n" , WSAGetLastError());
+		return 3;
 	}
 	printf("Listen TCP Socket created.\n");
 
@@ -82,7 +193,7 @@ int32_t main(int32_t argc, char **argv)
     // at most 50 attempts, after that we give up
     if (bind_attempts == 50) {
       printf("Cannot find an open port, abort.\n");
-      return 3;
+      return 4;
     }
     // display failed attempt
     printf("Bind attempt #%i failed with error code : %d.\n", bind_attempts, WSAGetLastError());
@@ -95,18 +206,19 @@ int32_t main(int32_t argc, char **argv)
   printf("Bind done.\n");
 
 	// this passive socket is always open to listen for an incoming connection
-	listen(listensocket , 1); // 1 maximum concurrent connection
+	listen(listensocket, 1); // 1 maximum concurrent connection
   printf("Waiting for an incoming connection...\n");
 
   // forever loop to always be listening to pick up a new connection if idle
   while (true) {
     // accept client connection once there's one on the listensocket queue
     // new active socket created on same port as listensocket,
-    client_addr_len = sizeof(struct sockaddr_in);
-  	RECVsocket = accept(listensocket, (struct sockaddr *) &client, &client_addr_len);
+    clientServerRECV_addr_len = sizeof(struct sockaddr_in);
+  	RECVsocket = accept(listensocket, (struct sockaddr *) &clientServerRECV, &clientServerRECV_addr_len);
   	if (RECVsocket == INVALID_SOCKET)
   	{
   		printf("Accept failed with error code: %d.\n", WSAGetLastError());
+			return 5;
   	}
     else {
       // now that we got our receive socket ready to receive client input, we
@@ -116,64 +228,51 @@ int32_t main(int32_t argc, char **argv)
       // Creating our UDP (sending) socket
       // AF_INET = IPv4
       // SOCK_DGRAM = UDP Socket
-      // 0 = protocol automatically detected
-      if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
+      // IPPROTO_UDP = UDP protocol
+			if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR)
     	{
     		printf("Could not create UDP socket : %d.\n" , WSAGetLastError());
+				return 6;
     	}
     	printf("Send UDP Socket created.\n");
 
       // to bind to the client receiving port, we need its IP and port, which we
       // can get since we have accepted connection on our receiving port
-      char *client_ip = inet_ntoa(client.sin_addr);
+      char *client_ip = inet_ntoa(clientServerRECV.sin_addr);
 
       // prepare the sockaddr_in structure for the sending socket
-    	serverSEND.sin_family = AF_INET; // IPv4
-    	serverSEND.sin_addr.s_addr = client_ip; // client IP to send stream to
-    	serverSEND.sin_port = htons(config.clientPortRECV); // client port to send stream to
+			memset((char *) &clientRECV, 0, sizeof(clientRECV));
+    	clientRECV.sin_family = AF_INET; // IPv4
+    	clientRECV.sin_addr.s_addr = client_ip; // client IP to send stream to
+      clientRECV.sin_port = htons(config.clientPortRECV); // client port to send stream to, 48888
+
 
       // since this is a UDP socket, there is no connection necessary
       // time to start streaming and receiving user input
-      while (true) {
+			// launch thread #1 to start streaming video & audio from server
+	    //_beginthread(SendStream(SENDsocket, clientRECV), 0, NULL);
+
+			// launch thread #2 to start receiving and processing client input
+			_beginthread(ReceiveClientInput(RECVsocket), 0, NULL);
 
 
 
-
-
-
-
-
-
-
-            /*
-            this is the loop where the user input reception and stream will
-            take place, using the select() command to select between the two
-            ports
-
-            //Send some data
-          	message = &quot;GET / HTTP/1.1\r\n\r\n&quot;;
-          	if( send(s , message , strlen(message) , 0) &lt; 0)
-          	{
-          		puts(&quot;Send failed&quot;);
-          		return 1;
-          	}
-          	puts(&quot;Data Send\n&quot;);
-
-          	return 0;
-
-            */
-
-
-
-
-
-
+			// keep looping until client disconnects
+			// repeat var modified in ReceiveClientInput when no more input received
+      while (repeat) {
+				// wait one second between loops (arbitrary, these loops just wait)
+				Sleep(1000L);
       }
-      // client disconnected, close the send socket since it's client specific
-      closesocket(SENDsocket);
+			// exited the while loop because repeat set false in ReceiveClientInput
+			// function after we stopped receiving user keepalive, so presumably the
+			// client is disconnected and we stop everything
     }
-    // client disconnected, restart listening for connections
+		// client disconnected, restart listening for connections
     printf("Client disconnected.\n");
+
+		// client disconnected, close the send socket since it's client specific
+		// threads already closed from within their respective function
+		closesocket(SENDsocket);
   }
   // server loop exited, close everything
   closesocket(RECVsocket);
@@ -190,4 +289,9 @@ int32_t main(int32_t argc, char **argv)
 // renable Windows warning
 #if defined(_WIN32)
 	#pragma warning(default: 4201)
+	#pragma warning(default: 4024)
+	#pragma warning(default: 4113)
+	#pragma warning(default: 4244)
+	#pragma warning(default: 4047)
+	#pragma warning(default: 4701)
 #endif
