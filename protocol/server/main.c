@@ -42,7 +42,9 @@ extern "C" {
 bool repeat = true; // global flag to keep streaming until client disconnects
 
 
-/*
+
+
+
 // main function to stream the video and audio from this server to the client
 int32_t SendStream(SOCKET SENDsocket, struct sockaddr_in clientRECV)
 {
@@ -52,15 +54,13 @@ int32_t SendStream(SOCKET SENDsocket, struct sockaddr_in clientRECV)
 
 
 
-	#define BUFLEN 512	//Max length of buffer
 
 
 
-	char buf[BUFLEN];
-	char message[BUFLEN] = "Hey from the server!\n";
+	char message[512] = "Hey from the server!\n";
 	int slen = sizeof(clientRECV);
 
-
+	int sent;
 
 
 	// init the decoder here
@@ -72,11 +72,12 @@ int32_t SendStream(SOCKET SENDsocket, struct sockaddr_in clientRECV)
 
 
 		//send the message
-		if (sendto(SENDsocket, message, strlen(message) , 0 , (struct sockaddr *) &clientRECV, slen) == SOCKET_ERROR)
+		if ((sent = sendto(SENDsocket, message, strlen(message), 0, (struct sockaddr *) &clientRECV, slen)) == SOCKET_ERROR)
 		{
 			printf("sendto() failed with error code : %d", WSAGetLastError());
 			return 11;
 		}
+		printf("Sent! Sending #bytes = %d to port: %d\n", sent, clientRECV.sin_port);
 
 
 		//printf("Send succeeded.\n");
@@ -97,48 +98,32 @@ int32_t SendStream(SOCKET SENDsocket, struct sockaddr_in clientRECV)
 	// terminate thread as we are done with the stream
 	_endthread();
 	return 0;
-} */
+}
+
+
+
 
 // main function to receive client user inputs and process them
 int32_t ReceiveClientInput(SOCKET RECVsocket)
 {
-
-
-
-
-
 	// initiate buffer to store the reply
   int recv_size;
   char *client_reply[2000];
-
   // while stream is on, listen for messages
   while (repeat) {
-
-
 		// need recv to run indefinitely until repeat over otherwise it mighttry to
 		// receive before send happened
-
     //Receive a reply from the server
   	//if((recv_size = recv(RECVsocket , client_reply , 2000 , 0)) == SOCKET_ERROR)
   	//{
     //  printf("recv failed\n");
     //  return 1;
   	//}
-
 		// we constantly poll for messages coming our way
 		recv_size = recv(RECVsocket , client_reply , 2000 , 0);
-
     printf("Message received: %s\n", client_reply);
-
   }
-
   printf("Connection interrupted\n");
-
-
-
-
-
-
 	// terminate thread as we are done with the stream
 	_endthread();
 	return 0;
@@ -241,7 +226,6 @@ int32_t main(int32_t argc, char **argv)
       char *client_ip = inet_ntoa(clientServerRECV.sin_addr);
 
       // prepare the sockaddr_in structure for the sending socket
-			memset((char *) &clientRECV, 0, sizeof(clientRECV));
     	clientRECV.sin_family = AF_INET; // IPv4
     	clientRECV.sin_addr.s_addr = client_ip; // client IP to send stream to
       clientRECV.sin_port = htons(config.clientPortRECV); // client port to send stream to, 48888
@@ -250,10 +234,10 @@ int32_t main(int32_t argc, char **argv)
       // since this is a UDP socket, there is no connection necessary
       // time to start streaming and receiving user input
 			// launch thread #1 to start streaming video & audio from server
-	    //_beginthread(SendStream(SENDsocket, clientRECV), 0, NULL);
+	    _beginthread(SendStream(SENDsocket, clientRECV), 0, NULL);
 
 			// launch thread #2 to start receiving and processing client input
-			_beginthread(ReceiveClientInput(RECVsocket), 0, NULL);
+		//	_beginthread(ReceiveClientInput(RECVsocket), 0, NULL);
 
 
 

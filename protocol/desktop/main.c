@@ -67,20 +67,36 @@ bool repeat = true; // global flag to stream until disconnection
 
 
 
-/*
+
 // main function to receive server video and audio stream and process it
-int32_t ReceiveStream(SOCKET RECVsocket) {
-
-
+int32_t ReceiveStream(SOCKET RECVsocket, struct sockaddr_in clientRECV) {
 
 
 
   // initiate buffer to store the reply
-  int recv_size;
-  char *server_reply[2000];
+  int recv_len;
+  char buf[512];
+  int slen = sizeof(clientRECV);
 
   // while stream is on, listen for messages
   while (repeat) {
+
+    		//clear the buffer by filling null, it might have previously received data
+    		memset(buf, NULL, 512);
+
+        printf("test\n");
+
+    		//try to receive some data, this is a blocking call
+    		recv_len = recvfrom(RECVsocket, buf, 512, 0, (struct sockaddr *) &clientRECV, &slen);
+
+        printf("recvlen %d\n", recv_len);
+        Sleep(5000L);
+
+        if (recv_len != SOCKET_ERROR) {
+          printf("Message received: %s\n", buf);
+        }
+
+
 
     //Receive a reply from the server
   	//if((recv_size = recv(RECVsocket , server_reply , 2000 , 0)) == SOCKET_ERROR)
@@ -89,9 +105,7 @@ int32_t ReceiveStream(SOCKET RECVsocket) {
     //  return 1;
   	//}
 
-    // we poll constantly for a message coming our way
-    recv_size = recv(RECVsocket , server_reply , 2000 , 0);
-    printf("Message received: %s\n", server_reply);
+
 
   }
 
@@ -110,63 +124,38 @@ int32_t ReceiveStream(SOCKET RECVsocket) {
 
 
 
-} */
+}
+
+
+
+
+
+
 
 // main function to send client user inputs
 int32_t SendClientInput(SOCKET SENDsocket) {
-
-
-
-
-
-
   	// init the decoder here
   	char *message = "Hey from the client!\n";
   	// then start looping, we loop while repeat is true, when we receive a disconnect
   	// request, then it becomes false
   	while (repeat) {
-
   		// test data send
-
-
   		if(send(SENDsocket, message, strlen(message), 0) < 0)
   		{
   			printf("Send failed\n");
   			return 1;
   		}
   		//printf("Send succeeded.\n");
-
       // sleep to be able to see what's happening
       Sleep(5000L);
-
-
   	}
-
   	printf("Repeat is false, exit\n");
-
-
-
-
   // terminate thread as we are done with the stream
   _endthread();
   return 0;
-
-
-
-
-
-
 }
-
-
-
-
 // add linux thread version/windows fix on both server/client
 // test connection/deconnection
-
-
-
-
 
 // main client function
 int32_t main(int32_t argc, char **argv)
@@ -198,6 +187,7 @@ int32_t main(int32_t argc, char **argv)
   // socket environment variables
   SOCKET RECVsocket, SENDsocket; // socket file descriptors
   struct sockaddr_in clientRECV, serverRECV; // this client receive port the server streams to, and the server receive port this client streams to
+  int bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
 
   // initialize Winsock if this is a Windows client
@@ -259,20 +249,31 @@ int32_t main(int32_t argc, char **argv)
   clientRECV.sin_addr.s_addr = INADDR_ANY; // any IP
   clientRECV.sin_port = htons(config.clientPortRECV); // initial default port 48888
 
+  // for the recv/recvfrom function to work, we need to bind the socket even if it is UDP
+  // bind our socket to this port. If it fails, increment port by one and retry
+  while (bind(RECVsocket, (struct sockaddr *) &clientRECV, sizeof(clientRECV)) == SOCKET_ERROR) {
+    // at most 50 attempts, after that we give up
+    if (bind_attempts == 50) {
+      printf("Cannot find an open port, abort.\n");
+      return 4;
+    }
+    // display failed attempt
+    printf("Bind attempt #%i failed with error code : %d.\n", bind_attempts, WSAGetLastError());
 
-
-
-
-
-
+    // increment port number and retry
+    bind_attempts += 1;
+    clientRECV.sin_port = htons(config.clientPortRECV + bind_attempts); // initial default port 48888
+  }
+  // successfully binded, we're good to go
+  printf("Bind done on port: %d.\n", clientRECV.sin_port);
 
   // since this is a UDP socket, there is no connection necessary
   // time to start receiving the stream and sending user input
   // launch thread #1 to start streaming video & audio from server
-  //_beginthread(ReceiveStream(RECVsocket), 0, NULL);
+  _beginthread(ReceiveStream(RECVsocket, clientRECV), 0, NULL);
 
   // launch thread #2 to start sending user input
-  _beginthread(SendClientInput(SENDsocket), 0, NULL);
+  //_beginthread(SendClientInput(SENDsocket), 0, NULL);
 
 
   // add threads for linux/macos
