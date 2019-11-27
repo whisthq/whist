@@ -300,7 +300,7 @@ int32_t main(int32_t argc, char **argv)
   _beginthread(ReceiveStream(RECVsocket, clientRECV), 0, NULL);
 
   // launch thread #2 to start sending user input
-  //_beginthread(SendClientInput(SENDsocket), 0, NULL);
+  _beginthread(SendClientInput(SENDsocket), 0, NULL);
 
 
   // add threads for linux/macos

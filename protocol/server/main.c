@@ -33,118 +33,60 @@
 	#pragma warning(disable: 4244) // disable u_int to u_short conversion warning
 	#pragma warning(disable: 4047) // disable char * indirection levels warning
 	#pragma warning(disable: 4701) // potentially unitialized var
+	#pragma warning(disable: 4477) // printf type warning
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+// global vars and definitions
+#define RECV_BUFFER_LEN 512 // max len of buffer
 bool repeat = true; // global flag to keep streaming until client disconnects
 
-
-
-
-
 // main function to stream the video and audio from this server to the client
-int32_t SendStream(SOCKET SENDsocket, struct sockaddr_in clientRECV)
+int32_t SendStream(SOCKET SENDsocket)
 {
-
-
-
-
-
-
-
-
-  /*
-	char message[512] = "Hey from the server!\n";
-	int slen = sizeof(clientRECV);
-
-	int sent;
-
-
-	// init the decoder here
-	// then start looping, we loop while repeat is true, when we receive a disconnect
-	// request, then it becomes false
-	while (repeat) {
-
-		// test data send
-
-
-		//send the message
-		if ((sent = sendto(SENDsocket, message, strlen(message), 0, (struct sockaddr *) &clientRECV, slen)) == SOCKET_ERROR)
-		{
-			printf("sendto() failed with error code : %d", WSAGetLastError());
-			return 11;
-		}
-		printf("Sent! Sending #bytes = %d to port: %d, address: %d\n", sent, clientRECV.sin_port, clientRECV.sin_addr.s_addr);
-
-
-		//printf("Send succeeded.\n");
-
-		// sleep so we can see whats up
-		Sleep(5000L);
-
-	}
-	*/
-
+	// message to send to the client
 	char *message = "Hey from the server!\n";
+	int sent_size; // size of data sent
 
-	int sent;
-	// then start looping, we loop while repeat is true, when we receive a disconnect
-	// request, then it becomes false
+	// loop indefinitely to keep sending to the client until repeat set to fasle
 	while (repeat) {
-		// test data send
-		if((sent = send(SENDsocket, message, strlen(message), 0)) < 0)
+		// send data message to client
+		if ((sent_size = send(SENDsocket, message, strlen(message), 0)) == SOCKET_ERROR)
 		{
-			printf("Send failed\n");
+			// error, terminate thread and exit
+			printf("Send failed, terminate stream.\n");
+			_endthread();
 			return 1;
 		}
-		printf("Sent! Sending #bytes = %d to port: %d, address: %d\n", sent);
-
-		//printf("Send succeeded.\n");
-		// sleep to be able to see what's happening
+		// 5 seconds sleep to see what's happening in the terminal
 		Sleep(5000L);
 	}
-
-
-	printf("Repeat is false, exit\n");
-
-
-
-
-
-
+	// connection interrupted by setting repeat to false, exit protocol
+  printf("Connection interrupted.\n");
 
 	// terminate thread as we are done with the stream
 	_endthread();
 	return 0;
 }
 
-
-
-
 // main function to receive client user inputs and process them
 int32_t ReceiveClientInput(SOCKET RECVsocket)
 {
 	// initiate buffer to store the reply
   int recv_size;
-  char *client_reply[2000];
+  char *client_reply[RECV_BUFFER_LEN];
   // while stream is on, listen for messages
   while (repeat) {
-		// need recv to run indefinitely until repeat over otherwise it mighttry to
-		// receive before send happened
-    //Receive a reply from the server
-  	//if((recv_size = recv(RECVsocket , client_reply , 2000 , 0)) == SOCKET_ERROR)
-  	//{
-    //  printf("recv failed\n");
-    //  return 1;
-  	//}
-		// we constantly poll for messages coming our way
-		recv_size = recv(RECVsocket, client_reply, 2000, 0);
+		// query for packets reception indefinitely via recv until repeat set to false
+		recv_size = recv(RECVsocket, client_reply, RECV_BUFFER_LEN, 0);
     printf("Message received: %s\n", client_reply);
   }
-  printf("Connection interrupted\n");
+	// connection interrupted by setting repeat to false, exit protocol
+  printf("Connection interrupted.\n");
+
 	// terminate thread as we are done with the stream
 	_endthread();
 	return 0;
@@ -165,12 +107,9 @@ int32_t main(int32_t argc, char **argv)
   // socket environment variables
   WSADATA wsa;
   SOCKET listensocket, RECVsocket, SENDsocket; // socket file descriptors
-  struct sockaddr_in serverRECV, clientRECV, clientServerRECV; // this server receive port and the client receive port, clientServerRECV is the same sockaddr_in as serverRECV, but sent from the client when it connects
-  int clientServerRECV_addr_len, bind_attempts = 0;
+  struct sockaddr_in serverRECV, clientRECV, clientServerRECV; // file descriptors for the ports, clientRECV = clientServerRECV
+	int clientServerRECV_addr_len, bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
-
-
-
 
   // initialize Winsock (sockets library)
   printf("Initialising Winsock...\n");
@@ -185,9 +124,10 @@ int32_t main(int32_t argc, char **argv)
   // AF_INET = IPv4
   // SOCK_STREAM = TCP Socket
   // 0 = protocol automatically detected
-  if ((listensocket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+  if ((listensocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
 	{
-		printf("Could not create listen TCP socket : %d.\n" , WSAGetLastError());
+		printf("Could not create listen TCP socket: %d.\n" , WSAGetLastError());
+		WSACleanup(); // close Windows socket library
 		return 3;
 	}
 	printf("Listen TCP Socket created.\n");
@@ -202,10 +142,12 @@ int32_t main(int32_t argc, char **argv)
     // at most 50 attempts, after that we give up
     if (bind_attempts == 50) {
       printf("Cannot find an open port, abort.\n");
+			closesocket(listensocket); // close open socket
+			WSACleanup(); // close Windows socket library
       return 4;
     }
     // display failed attempt
-    printf("Bind attempt #%i failed with error code : %d.\n", bind_attempts, WSAGetLastError());
+    printf("Bind attempt #%i failed with error code: %d.\n", bind_attempts, WSAGetLastError());
 
     // increment port number and retry
     bind_attempts += 1;
@@ -226,8 +168,8 @@ int32_t main(int32_t argc, char **argv)
   	RECVsocket = accept(listensocket, (struct sockaddr *) &clientServerRECV, &clientServerRECV_addr_len);
   	if (RECVsocket == INVALID_SOCKET)
   	{
+			// print error but keep listening to new potential connections
   		printf("Accept failed with error code: %d.\n", WSAGetLastError());
-			return 5;
   	}
     else {
       // now that we got our receive socket ready to receive client input, we
@@ -238,56 +180,47 @@ int32_t main(int32_t argc, char **argv)
       // AF_INET = IPv4
       // SOCK_DGRAM = UDP Socket
       // IPPROTO_UDP = UDP protocol
-
-
-
-			// changed to tcp momentarily
-			if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR)
+			if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
     	{
     		printf("Could not create UDP socket : %d.\n" , WSAGetLastError());
-				return 6;
+				closesocket(listensocket); // close open socket
+				closesocket(RECVsocket); // close open socket
+				WSACleanup(); // close Windows socket library
+				return 5;
     	}
     	printf("Send UDP Socket created.\n");
 
       // to bind to the client receiving port, we need its IP and port, which we
       // can get since we have accepted connection on our receiving port
       char *client_ip = inet_ntoa(clientServerRECV.sin_addr);
-			//int client_port = ntohs(clientServerRECV.sin_port); // ensure we have same port
-
-			//printf("clientport: %d\n", client_port);
-			//printf("len: %d\n", strlen(client_ip));
-			//printf("len: %d\n", strlen("40.117.226.121"));
-			//printf("client IP: %s\n", client_ip);
 
       // prepare the sockaddr_in structure for the sending socket
     	clientRECV.sin_family = AF_INET; // IPv4
     	clientRECV.sin_addr.s_addr = inet_addr(client_ip); // client IP to send stream to
-      clientRECV.sin_port = htons(config.clientPortRECV); // client port to send stream to, 48888
-
-			printf("attempt connection on port: %d\n", config.clientPortRECV);
+      clientRECV.sin_port = htons(config.clientPortRECV); // client port to send stream to
 
 			// since this is a UDP socket, there is no connection necessary
 			// however, we do a connect to force only this specific server IP onto the
 			// client socket to ensure our stream will stay intact
-
 			// connect the server send socket to the client receive port (UDP)
 			char *connect_status = connect(SENDsocket, (struct sockaddr *) &clientRECV, sizeof(clientRECV));
-			if (connect_status == SOCKET_ERROR || connect_status < 0)
+			if (connect_status == SOCKET_ERROR)
 			{
 		    printf("Could not connect to the client w/ error: %d\n", WSAGetLastError());
+			  closesocket(listensocket); // close open socket
+				closesocket(RECVsocket); // close open socket
+				closesocket(SENDsocket); // close open socket
+			  WSACleanup(); // close Windows socket library
 		    return 3;
 			}
-		  printf("Connected.\n");
-
+		  printf("Connected on port: %d.\n", config.clientPortRECV);
 
       // time to start streaming and receiving user input
 			// launch thread #1 to start streaming video & audio from server
-	    _beginthread(SendStream(SENDsocket, clientRECV), 0, NULL);
+	    _beginthread(SendStream(SENDsocket), 0, NULL);
 
 			// launch thread #2 to start receiving and processing client input
-			//_beginthread(ReceiveClientInput(RECVsocket), 0, NULL);
-
-
+			_beginthread(ReceiveClientInput(RECVsocket), 0, NULL);
 
 			// keep looping until client disconnects
 			// repeat var modified in ReceiveClientInput when no more input received
@@ -310,7 +243,6 @@ int32_t main(int32_t argc, char **argv)
   closesocket(RECVsocket);
   closesocket(listensocket);
   WSACleanup(); // close Windows socket library
-
 	return 0;
 }
 
@@ -318,7 +250,7 @@ int32_t main(int32_t argc, char **argv)
 }
 #endif
 
-// renable Windows warning
+// re-enable Windows warnings
 #if defined(_WIN32)
 	#pragma warning(default: 4201)
 	#pragma warning(default: 4024)
@@ -326,4 +258,5 @@ int32_t main(int32_t argc, char **argv)
 	#pragma warning(default: 4244)
 	#pragma warning(default: 4047)
 	#pragma warning(default: 4701)
+	#pragma warning(disable: 4477)
 #endif
