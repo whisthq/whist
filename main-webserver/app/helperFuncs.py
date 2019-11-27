@@ -268,3 +268,13 @@ def addTimeTable(username, action):
 
     with engine.connect() as conn:
         conn.execute(command, **params)
+
+
+def fetchUserVMs(username):
+    command = text("""
+        SELECT * FROM v_ms WHERE "username" = :username
+        """)
+    params = {'username': username}
+    with engine.connect() as conn:
+        vms_info = conn.execute(command, **params).fetchall()
+        return {{'vm_username': vm_info[2], 'vm_password': jwt.decode(vm_info[1], os.getenv('SECRET_KEY'))} for vm_info in vms_info}
