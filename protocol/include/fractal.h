@@ -24,10 +24,10 @@
 /// Increment by one if these are taken, until a port is found available
 #define FRACTAL_DEFAULTS {  							 \
   /* upnp          					 */ 1,         \
-	/* clientPort RECV (UDP)   */ 48888,     \
-  /* clientPort SEND (TCP)   */ 48889,     \
-  /* serverPort RECV (TCP)   */ 48888,     \
-	/* serverPort SEND (UDP)   */ 48889,     \
+	/* clientPort RECV (UDP)   */ 48800,     \
+  /* clientPort SEND (TCP)   */ 48900,     \
+  /* serverPort RECV (TCP)   */ 48900,     \
+	/* serverPort SEND (UDP)   */ 48800,     \
 }
 
 /// @brief Default server settings for streaming

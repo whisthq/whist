@@ -72,7 +72,7 @@ bool repeat = true; // global flag to stream until disconnection
 int32_t ReceiveStream(SOCKET RECVsocket, struct sockaddr_in clientRECV) {
 
 
-
+  /*
   // initiate buffer to store the reply
   int recv_len;
   char buf[512];
@@ -87,6 +87,9 @@ int32_t ReceiveStream(SOCKET RECVsocket, struct sockaddr_in clientRECV) {
         printf("test\n");
 
     		//try to receive some data, this is a blocking call
+
+
+
     		recv_len = recvfrom(RECVsocket, buf, 512, 0, (struct sockaddr *) &clientRECV, &slen);
 
         printf("recvlen %d\n", recv_len);
@@ -95,7 +98,24 @@ int32_t ReceiveStream(SOCKET RECVsocket, struct sockaddr_in clientRECV) {
         if (recv_len != SOCKET_ERROR) {
           printf("Message received: %s\n", buf);
         }
-
+  */
+  int recv_size;
+  char *server_reply[2000];
+  // while stream is on, listen for messages
+  while (repeat) {
+    printf("test\n");
+    // need recv to run indefinitely until repeat over otherwise it mighttry to
+    // receive before send happened
+    //Receive a reply from the server
+    //if((recv_size = recv(RECVsocket , client_reply , 2000 , 0)) == SOCKET_ERROR)
+    //{
+    //  printf("recv failed\n");
+    //  return 1;
+    //}
+    // we constantly poll for messages coming our way
+    recv_size = recv(RECVsocket, server_reply, 2000, MSG_PEEK);
+    printf("Message received: %s\n", server_reply);
+  }
 
 
     //Receive a reply from the server
@@ -106,8 +126,6 @@ int32_t ReceiveStream(SOCKET RECVsocket, struct sockaddr_in clientRECV) {
   	//}
 
 
-
-  }
 
   printf("Connection interrupted\n");
 
@@ -136,16 +154,17 @@ int32_t ReceiveStream(SOCKET RECVsocket, struct sockaddr_in clientRECV) {
 int32_t SendClientInput(SOCKET SENDsocket) {
   	// init the decoder here
   	char *message = "Hey from the client!\n";
+    int sendsize;
   	// then start looping, we loop while repeat is true, when we receive a disconnect
   	// request, then it becomes false
   	while (repeat) {
   		// test data send
-  		if(send(SENDsocket, message, strlen(message), 0) < 0)
+  		if((sendsize = send(SENDsocket, message, strlen(message), 0)) < 0)
   		{
   			printf("Send failed\n");
   			return 1;
   		}
-  		//printf("Send succeeded.\n");
+  		//printf("Sent! #bytes = %d.\n", sendsize);
       // sleep to be able to see what's happening
       Sleep(5000L);
   	}
@@ -214,13 +233,18 @@ int32_t main(int32_t argc, char **argv)
   }
   printf("Send TCP Socket created.\n");
 
+
+
+  printf("default server port recv: %d\n", config.serverPortRECV);
+
+
   // prepare the sockaddr_in structure for the send socket (server receive port)
 	serverRECV.sin_family = AF_INET; // IPv4
   serverRECV.sin_addr.s_addr = inet_addr("40.117.226.121"); // VM (server) IP received from authenticating
   serverRECV.sin_port = htons(config.serverPortRECV); // initial default port 48888
 
-	// connect client the send socket to the server receive port
-	char* connect_status = connect(SENDsocket, (struct sockaddr*) &serverRECV, sizeof(serverRECV)) < 0;
+	// connect the client send socket to the server receive port (TCP)
+	char* connect_status = connect(SENDsocket, (struct sockaddr*) &serverRECV, sizeof(serverRECV));
 	if (connect_status == SOCKET_ERROR || connect_status < 0)
 	{
     printf("Could not connect to the VM (server).\n");
@@ -231,6 +255,9 @@ int32_t main(int32_t argc, char **argv)
 
 
 
+
+
+  // momentarily changed to tcp
 
   // now that we're connected, we need to create our receiving UDP socket
   // Creating our UDP (receiving) socket
@@ -265,7 +292,7 @@ int32_t main(int32_t argc, char **argv)
     clientRECV.sin_port = htons(config.clientPortRECV + bind_attempts); // initial default port 48888
   }
   // successfully binded, we're good to go
-  printf("Bind done on port: %d.\n", clientRECV.sin_port);
+  printf("Bind done on port: %d.\n", ntohs(clientRECV.sin_port));
 
   // since this is a UDP socket, there is no connection necessary
   // time to start receiving the stream and sending user input
