@@ -179,12 +179,12 @@ def registerUserVM(username, password, vm_name):
         UPDATE v_ms
         SET username = :username
         WHERE
-           vmName = :vm_name
+           "v_ms.vmName" = :vm_name
         """)
     params1 = {'userName': username, 'password': pwd_token, 'currentVM': vm_name}
     params2 = {'username': username, 'vm_name': vm_name}
     with engine.connect() as conn:
-        conn.execute(command1, **params1)
+        # conn.execute(command1, **params1)
         conn.execute(command2, **params2)
 
 def loginUserVM(username, password):
