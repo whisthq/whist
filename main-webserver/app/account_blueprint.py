@@ -7,22 +7,17 @@ account_bp = Blueprint('account_bp', __name__)
 def user(action):
 	body = request.get_json()
 	if action == 'register':
-		print("BODY")
-		print(body)
-		username, password, vm_name = body['username'], body['password'], body['vm_name']
+		username, vm_name = body['username'], body['vm_name']
 		vmExists = getVM(vm_name)
 		vmInDatabase = singleValueQuery(vm_name)
 		if vmExists and vmInDatabase:
-			registerUserVM(username, password, vm_name)
+			registerUserVM(username, vm_name)
 			return jsonify({}), 200
 		else:
 			return jsonify({}), 403
 	elif action == 'login':
-		print(body)
 		username, password = body['username'], body['password']
 		vm_name = loginUserVM(username, password)
-		print("VM NAME")
-		print(vm_name)
 		try:
 			if vm_name: 
 				payload = fetchVMCredentials(vm_name)
@@ -41,7 +36,7 @@ def account(action):
 		return jsonify({'verified': verified}), 200
 	elif action == 'register':
 		username, password = body['username'], body['password']
-		registerUserVM(username, password, None)
+		registerUser(username, password)
 		return jsonify({'status': 200}), 200
 
 @account_bp.route('/form/<action>', methods = ['POST'])

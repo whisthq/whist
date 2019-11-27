@@ -169,35 +169,28 @@ def getIP(vm):
     return public_ip.ip_address
 
 
-def registerUserVM(username, password, vm_name):
-    pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
-    command1 = text("""
-        INSERT INTO users("userName", "password", "currentVM") 
-        VALUES(:userName, :password, :currentVM)
-        """)
-    command2 = text("""
+def registerUserVM(username, vm_name):
+    command = text("""
         UPDATE v_ms
         SET username = :username
         WHERE
            "vmName" = :vm_name
         """)
-    params1 = {'userName': username, 'password': pwd_token, 'currentVM': vm_name}
-    params2 = {'username': username, 'vm_name': vm_name}
+    params = {'username': username, 'vm_name': vm_name}
     with engine.connect() as conn:
-        # conn.execute(command1, **params1)
-        conn.execute(command2, **params2)
+        conn.execute(command, **params)
 
 def loginUserVM(username, password):
     command = text("""
-        SELECT * FROM users WHERE "userName" = :userName
+        SELECT * FROM v_ms WHERE "vmUserName" = :username
         """)
-    params = {'userName': username}
+    params = {'username': username}
     with engine.connect() as conn:
         user = conn.execute(command, **params).fetchall()
         if len(user) > 0:
             decrypted_pwd = jwt.decode(user[0][1], os.getenv('SECRET_KEY'))['pwd']
             if decrypted_pwd == password:
-                return user[0][2]
+                return user[0][0]
     return None
 
 def loginUser(username, password):
@@ -209,6 +202,16 @@ def loginUser(username, password):
     with engine.connect() as conn:
         user = conn.execute(command, **params).fetchall()
         return len(user) > 0
+
+def registerUser(username, password):
+    pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
+    command = text("""
+        INSERT INTO users("userName", "password") 
+        VALUES(:userName, :password)
+        """)
+    params = {'userName': username, 'password': pwd_token}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
 
 def fetchVMCredentials(vm_name):
     command = text("""
