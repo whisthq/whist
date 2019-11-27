@@ -179,7 +179,7 @@ def registerUserVM(username, password, vm_name):
         UPDATE v_ms
         SET username = :username
         WHERE
-           "v_ms.vmName" = :vm_name
+           "vmName" = :vm_name
         """)
     params1 = {'userName': username, 'password': pwd_token, 'currentVM': vm_name}
     params2 = {'username': username, 'vm_name': vm_name}
