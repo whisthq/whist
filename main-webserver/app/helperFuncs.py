@@ -171,13 +171,21 @@ def getIP(vm):
 
 def registerUserVM(username, password, vm_name):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
-    command = text("""
+    command1 = text("""
         INSERT INTO users("userName", "password", "currentVM") 
         VALUES(:userName, :password, :currentVM)
         """)
-    params = {'userName': username, 'password': pwd_token, 'currentVM': vm_name}
+    command2 = text("""
+        UPDATE v_ms
+        SET username = :username
+        WHERE
+           vmName = :vm_name
+        """)
+    params1 = {'userName': username, 'password': pwd_token, 'currentVM': vm_name}
+    params2 = {'username': username, 'vm_name': vm_name}
     with engine.connect() as conn:
-        conn.execute(command, **params)
+        conn.execute(command1, **params1)
+        conn.execute(command2, **params2)
 
 def loginUserVM(username, password):
     command = text("""
