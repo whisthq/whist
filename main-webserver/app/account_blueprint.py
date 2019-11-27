@@ -29,8 +29,8 @@ def user(action):
 	elif action == 'fetchvms':
 		username = body['username']
 		try:
-			return jsonify(fetchUserVMs(username)), 200
-		except:
+			return jsonify({'vms': fetchUserVMs(username)}), 200
+		except Exception as e:
 			return jsonify({}), 403
 
 @account_bp.route('/account/<action>', methods = ['POST'])
