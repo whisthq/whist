@@ -4,7 +4,7 @@
  * and audio to the client, and receiving the user input back.
 
  Protocol version: 1.0
- Last modification: 11/27/2019
+ Last modification: 11/28/2019
 
  By: Philippe Noël
 
@@ -41,24 +41,22 @@ extern "C" {
 #endif
 
 // global vars and definitions
-#define RECV_BUFFER_LEN 512 // max len of buffer
+#define RECV_BUFFER_LEN 512 // max len of receive buffer
 bool repeat = true; // global flag to keep streaming until client disconnects
 
 // main function to stream the video and audio from this server to the client
-unsigned __stdcall SendStream(void *SENDsocket_param)
-{
+unsigned __stdcall SendStream(void *SENDsocket_param) {
 	// cast the socket parameter back to socket for use
 	SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
 
 	// message to send to the client
-	char *message = "Hey from the server!\n";
+	char *message = "Hey from the server!";
 	int sent_size; // size of data sent
 
 	// loop indefinitely to keep sending to the client until repeat set to fasle
 	while (repeat) {
 		// send data message to client
-		if ((sent_size = send(SENDsocket, message, strlen(message), 0)) == SOCKET_ERROR)
-		{
+		if ((sent_size = send(SENDsocket, message, strlen(message), 0)) == SOCKET_ERROR) {
 			// error, terminate thread and exit
 			printf("Send failed, terminate stream.\n");
 			_endthreadex(0);
@@ -76,8 +74,7 @@ unsigned __stdcall SendStream(void *SENDsocket_param)
 }
 
 // main function to receive client user inputs and process them
-unsigned __stdcall ReceiveClientInput(void *RECVsocket_param)
-{
+unsigned __stdcall ReceiveClientInput(void *RECVsocket_param) {
 	// cast the socket parameter back to socket for use
 	SOCKET RECVsocket = *(SOCKET *) RECVsocket_param;
 
@@ -99,8 +96,7 @@ unsigned __stdcall ReceiveClientInput(void *RECVsocket_param)
 }
 
 // main server function
-int32_t main(int32_t argc, char **argv)
-{
+int32_t main(int32_t argc, char **argv) {
    // unused argv
    (void) argv;
 
@@ -120,8 +116,7 @@ int32_t main(int32_t argc, char **argv)
 
   // initialize Winsock (sockets library)
   printf("Initialising Winsock...\n");
-  if (WSAStartup(MAKEWORD(2,2), &wsa) != 0)
-  {
+  if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
 	  printf("Failed. Error Code : %d.\n", WSAGetLastError());
 	  return 2;
   }
@@ -131,8 +126,7 @@ int32_t main(int32_t argc, char **argv)
   // AF_INET = IPv4
   // SOCK_STREAM = TCP Socket
   // 0 = protocol automatically detected
-  if ((listensocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
-	{
+  if ((listensocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
 		printf("Could not create listen TCP socket: %d.\n" , WSAGetLastError());
 		WSACleanup(); // close Windows socket library
 		return 3;
@@ -173,8 +167,7 @@ int32_t main(int32_t argc, char **argv)
     // new active socket created on same port as listensocket,
     clientServerRECV_addr_len = sizeof(struct sockaddr_in);
   	RECVsocket = accept(listensocket, (struct sockaddr *) &clientServerRECV, &clientServerRECV_addr_len);
-  	if (RECVsocket == INVALID_SOCKET)
-  	{
+  	if (RECVsocket == INVALID_SOCKET) {
 			// print error but keep listening to new potential connections
   		printf("Accept failed with error code: %d.\n", WSAGetLastError());
   	}
@@ -187,8 +180,7 @@ int32_t main(int32_t argc, char **argv)
       // AF_INET = IPv4
       // SOCK_DGRAM = UDP Socket
       // IPPROTO_UDP = UDP protocol
-			if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
-    	{
+			if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
     		printf("Could not create UDP socket : %d.\n" , WSAGetLastError());
 				closesocket(listensocket); // close open socket
 				closesocket(RECVsocket); // close open socket
@@ -211,8 +203,7 @@ int32_t main(int32_t argc, char **argv)
 			// client socket to ensure our stream will stay intact
 			// connect the server send socket to the client receive port (UDP)
 			char *connect_status = connect(SENDsocket, (struct sockaddr *) &clientRECV, sizeof(clientRECV));
-			if (connect_status == SOCKET_ERROR)
-			{
+			if (connect_status == SOCKET_ERROR) {
 		    printf("Could not connect to the client w/ error: %d\n", WSAGetLastError());
 			  closesocket(listensocket); // close open socket
 				closesocket(RECVsocket); // close open socket

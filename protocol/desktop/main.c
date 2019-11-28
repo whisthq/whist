@@ -5,7 +5,7 @@
  * starts streaming its user inputs to the server.
 
  Protocol version: 1.0
- Last modification: 11/25/2019
+ Last modification: 11/28/2019
 
  By: Philippe Noël
 
@@ -41,6 +41,7 @@
   #pragma warning(disable: 4113) // disable thread warning type
   #pragma warning(disable: 4244) // disable u_int to u_short conversion warning
   #pragma warning(disable: 4047) // disable char * indirection levels warning
+  #pragma warning(disable: 4477) // printf type warning
 #else
   #include <pthread.h> // thread library on unix
   #include <unistd.h>
@@ -50,112 +51,62 @@
 extern "C" {
 #endif
 
+// global vars and definitions
+#define RECV_BUFFER_LEN 512 // max len of receive buffer
 static bool loggedIn = true; // global user login variable
 bool repeat = true; // global flag to stream until disconnection
 
-
-
-
-
-
-
-/*** LOGIN FUNCTIONS START ***/ /*
-/*** LOGIN FUNCTIONS END ***/
-
-
-
-
-
-
-
-// main function to receive server video and audio stream and process it
-unsigned __stdcall ReceiveStream(void *RECVsocket_param) {
-
-  // cast the socket parameter back to socket for use
-	SOCKET RECVsocket = *(SOCKET *) RECVsocket_param;
-
-  int recv_size;
-  char *server_reply[2000];
-  // while stream is on, listen for messages
-  while (repeat) {
-    //printf("test\n");
-    // need recv to run indefinitely until repeat over otherwise it mighttry to
-    // receive before send happened
-    //Receive a reply from the server
-    //if((recv_size = recv(RECVsocket , client_reply , 2000 , 0)) == SOCKET_ERROR)
-    //{
-    //  printf("recv failed\n");
-    //  return 1;
-    //}
-    // we constantly poll for messages coming our way
-    recv_size = recv(RECVsocket, server_reply, 2000, 0);
-    printf("Message received: %s\n", server_reply);
-  }
-
-
-    //Receive a reply from the server
-  	//if((recv_size = recv(RECVsocket , server_reply , 2000 , 0)) == SOCKET_ERROR)
-  	//{
-    //  printf("recv failed\n");
-    //  return 1;
-  	//}
-
-
-
-  printf("Connection interrupted\n");
-
-
-
-
-
-
-  // terminate thread as we are done with the stream
-  _endthreadex(0);
-  return 0;
-
-
-
-
-
-}
-
-
-
-
-
-
-
 // main function to send client user inputs
 unsigned __stdcall SendClientInput(void *SENDsocket_param) {
-
     // cast the socket parameter back to socket for use
   	SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
 
-
-  	// init the decoder here
-  	char *message = "Hey from the client!\n";
+    // message to send to the server
+  	char *message = "Hey from the client!";
     int sendsize;
-  	// then start looping, we loop while repeat is true, when we receive a disconnect
-  	// request, then it becomes false
+
+    // loop indefinitely to keep sending to the server until repeat set to fasl
   	while (repeat) {
-  		// test data send
-  		if((sendsize = send(SENDsocket, message, strlen(message), 0)) < 0)
-  		{
+      // send data message to server
+  		if ((sendsize = send(SENDsocket, message, strlen(message), 0)) < 0) {
+        // error, terminate thread and exit
   			printf("Send failed with error code: %d\n", WSAGetLastError());
         _endthreadex(0);
   			return 1;
   		}
-  		printf("Sent! #bytes = %d.\n", sendsize);
-      // sleep to be able to see what's happening
+      // 5 seconds sleep to see what's happening in the terminal
       Sleep(5000L);
   	}
-  	printf("Repeat is false, exit\n");
-  // terminate thread as we are done with the stream
-  _endthreadex(0);
-  return 0;
+    // connection interrupted by setting repeat to false, exit protocol
+    printf("Connection interrupted.\n");
+
+  	// terminate thread as we are done with the stream
+  	_endthreadex(0);
+  	return 0;
 }
-// add linux thread version/windows fix on both server/client
-// test connection/deconnection
+
+// main function to receive server video and audio stream and process it
+unsigned __stdcall ReceiveStream(void *RECVsocket_param) {
+  // cast the socket parameter back to socket for use
+	SOCKET RECVsocket = *(SOCKET *) RECVsocket_param;
+
+  // initiate buffer to store the reply
+  int recv_size;
+  char *server_reply[RECV_BUFFER_LEN];
+
+  // while stream is on, listen for messages
+  while (repeat) {
+    // query for packets reception indefinitely via recv until repeat set to false
+    recv_size = recv(RECVsocket, server_reply, RECV_BUFFER_LEN, 0);
+    printf("Message received: %s\n", server_reply);
+  }
+  // connection interrupted by setting repeat to false, exit protocol
+  printf("Connection interrupted.\n");
+
+	// terminate thread as we are done with the stream
+	_endthreadex(0);
+	return 0;
+}
 
 // main client function
 int32_t main(int32_t argc, char **argv)
@@ -215,11 +166,6 @@ int32_t main(int32_t argc, char **argv)
   }
   printf("Send TCP Socket created.\n");
 
-
-
-  printf("default server port recv: %d\n", config.serverPortRECV);
-
-
   // prepare the sockaddr_in structure for the send socket (server receive port)
 	serverRECV.sin_family = AF_INET; // IPv4
   serverRECV.sin_addr.s_addr = inet_addr("40.117.226.121"); // VM (server) IP received from authenticating
@@ -233,13 +179,6 @@ int32_t main(int32_t argc, char **argv)
     return 3;
 	}
   printf("Connected.\n");
-
-
-
-
-
-
-  // momentarily changed to tcp
 
   // now that we're connected, we need to create our receiving UDP socket
   // Creating our UDP (receiving) socket
@@ -279,32 +218,22 @@ int32_t main(int32_t argc, char **argv)
   // since this is a UDP socket, there is no connection necessary
   // time to start receiving the stream and sending user input
   // launch thread #1 to start streaming video & audio from server
-
-
-  printf("test1-client\n");
-
-  printf("socket descriptor: %d\n", RECVsocket);
-
-
-
-
-
   ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveStream, &RECVsocket, 0, NULL);
-
-  printf("test2-client\n");
 
   // launch thread #2 to start sending user input
   ThreadHandles[1] = (HANDLE)_beginthreadex(NULL, 0, &SendClientInput, &SENDsocket, 0, NULL);
 
-  printf("test3-client");
+  // TODO LATER: Add a third thread that listens for disconnect and sets repeat=false
 
   // block until our 2 threads terminate, so until the protocol terminates
   WaitForMultipleObjects(2, ThreadHandles, true, INFINITE);
 
-  printf("test4-client");
 
 
   // add threads for linux/macos
+
+
+
 
 
 
@@ -327,7 +256,6 @@ int32_t main(int32_t argc, char **argv)
   // write close time to server, set loggedin to false and return
   //logout(username);
   //loggedIn = false;
-
   return 0;
 }
 
@@ -338,4 +266,9 @@ int32_t main(int32_t argc, char **argv)
 // renable Windows warning, if Windows client
 #if defined(_WIN32)
 	#pragma warning(default: 4201)
+  #pragma warning(disable: 4024)
+  #pragma warning(disable: 4113)
+  #pragma warning(disable: 4244)
+  #pragma warning(disable: 4047)
+  #pragma warning(disable: 4477)
 #endif
