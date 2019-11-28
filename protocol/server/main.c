@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <windows.h>
-#include <Ws2tcpip.h> // other Windows socket library (of course, thanks #Microsoft)
+#include <ws2tcpip.h> // other Windows socket library (of course, thanks #Microsoft)
 #include <winsock2.h> // lib for socket programming on windows
 #include <process.h> // for threads programming
 
@@ -45,8 +45,11 @@ extern "C" {
 bool repeat = true; // global flag to keep streaming until client disconnects
 
 // main function to stream the video and audio from this server to the client
-int32_t SendStream(SOCKET SENDsocket)
+unsigned __stdcall SendStream(void *SENDsocket_param)
 {
+	// cast the socket parameter back to socket for use
+	SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
+
 	// message to send to the client
 	char *message = "Hey from the server!\n";
 	int sent_size; // size of data sent
@@ -58,7 +61,7 @@ int32_t SendStream(SOCKET SENDsocket)
 		{
 			// error, terminate thread and exit
 			printf("Send failed, terminate stream.\n");
-			_endthread();
+			_endthreadex(0);
 			return 1;
 		}
 		// 5 seconds sleep to see what's happening in the terminal
@@ -68,13 +71,16 @@ int32_t SendStream(SOCKET SENDsocket)
   printf("Connection interrupted.\n");
 
 	// terminate thread as we are done with the stream
-	_endthread();
+	_endthreadex(0);
 	return 0;
 }
 
 // main function to receive client user inputs and process them
-int32_t ReceiveClientInput(SOCKET RECVsocket)
+unsigned __stdcall ReceiveClientInput(void *RECVsocket_param)
 {
+	// cast the socket parameter back to socket for use
+	SOCKET RECVsocket = *(SOCKET *) RECVsocket_param;
+
 	// initiate buffer to store the reply
   int recv_size;
   char *client_reply[RECV_BUFFER_LEN];
@@ -88,7 +94,7 @@ int32_t ReceiveClientInput(SOCKET RECVsocket)
   printf("Connection interrupted.\n");
 
 	// terminate thread as we are done with the stream
-	_endthread();
+	_endthreadex(0);
 	return 0;
 }
 
@@ -110,6 +116,7 @@ int32_t main(int32_t argc, char **argv)
   struct sockaddr_in serverRECV, clientRECV, clientServerRECV; // file descriptors for the ports, clientRECV = clientServerRECV
 	int clientServerRECV_addr_len, bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
+	HANDLE ThreadHandles[2]; // array containing our 2 thread handles
 
   // initialize Winsock (sockets library)
   printf("Initialising Winsock...\n");
@@ -217,20 +224,17 @@ int32_t main(int32_t argc, char **argv)
 
       // time to start streaming and receiving user input
 			// launch thread #1 to start streaming video & audio from server
-	    _beginthread(SendStream(SENDsocket), 0, NULL);
+			ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &SendStream, &SENDsocket, 0, NULL);
 
 			// launch thread #2 to start receiving and processing client input
-			_beginthread(ReceiveClientInput(RECVsocket), 0, NULL);
+			ThreadHandles[1] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveClientInput, &RECVsocket, 0, NULL);
 
-			// keep looping until client disconnects
-			// repeat var modified in ReceiveClientInput when no more input received
-      while (repeat) {
-				// wait one second between loops (arbitrary, these loops just wait)
-				Sleep(1000L);
-      }
-			// exited the while loop because repeat set false in ReceiveClientInput
-			// function after we stopped receiving user keepalive, so presumably the
-			// client is disconnected and we stop everything
+			// block until our 2 threads terminate, so until the protocol terminates
+			WaitForMultipleObjects(2, ThreadHandles, true, INFINITE);
+
+			// threads are done, let's close their handles and exit
+			CloseHandle(ThreadHandles[0]);
+			CloseHandle(ThreadHandles[1]);
     }
 		// client disconnected, restart listening for connections
     printf("Client disconnected.\n");

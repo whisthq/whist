@@ -69,41 +69,16 @@ bool repeat = true; // global flag to stream until disconnection
 
 
 // main function to receive server video and audio stream and process it
-int32_t ReceiveStream(SOCKET RECVsocket, struct sockaddr_in clientRECV) {
+unsigned __stdcall ReceiveStream(void *RECVsocket_param) {
 
+  // cast the socket parameter back to socket for use
+	SOCKET RECVsocket = *(SOCKET *) RECVsocket_param;
 
-  /*
-  // initiate buffer to store the reply
-  int recv_len;
-  char buf[512];
-  int slen = sizeof(clientRECV);
-
-  // while stream is on, listen for messages
-  while (repeat) {
-
-    		//clear the buffer by filling null, it might have previously received data
-    		memset(buf, NULL, 512);
-
-        printf("test\n");
-
-    		//try to receive some data, this is a blocking call
-
-
-
-    		recv_len = recvfrom(RECVsocket, buf, 512, 0, (struct sockaddr *) &clientRECV, &slen);
-
-        printf("recvlen %d\n", recv_len);
-        Sleep(5000L);
-
-        if (recv_len != SOCKET_ERROR) {
-          printf("Message received: %s\n", buf);
-        }
-  */
   int recv_size;
   char *server_reply[2000];
   // while stream is on, listen for messages
   while (repeat) {
-    printf("test\n");
+    //printf("test\n");
     // need recv to run indefinitely until repeat over otherwise it mighttry to
     // receive before send happened
     //Receive a reply from the server
@@ -113,7 +88,7 @@ int32_t ReceiveStream(SOCKET RECVsocket, struct sockaddr_in clientRECV) {
     //  return 1;
     //}
     // we constantly poll for messages coming our way
-    recv_size = recv(RECVsocket, server_reply, 2000, MSG_PEEK);
+    recv_size = recv(RECVsocket, server_reply, 2000, 0);
     printf("Message received: %s\n", server_reply);
   }
 
@@ -135,7 +110,7 @@ int32_t ReceiveStream(SOCKET RECVsocket, struct sockaddr_in clientRECV) {
 
 
   // terminate thread as we are done with the stream
-  _endthread();
+  _endthreadex(0);
   return 0;
 
 
@@ -151,7 +126,12 @@ int32_t ReceiveStream(SOCKET RECVsocket, struct sockaddr_in clientRECV) {
 
 
 // main function to send client user inputs
-int32_t SendClientInput(SOCKET SENDsocket) {
+unsigned __stdcall SendClientInput(void *SENDsocket_param) {
+
+    // cast the socket parameter back to socket for use
+  	SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
+
+
   	// init the decoder here
   	char *message = "Hey from the client!\n";
     int sendsize;
@@ -161,16 +141,17 @@ int32_t SendClientInput(SOCKET SENDsocket) {
   		// test data send
   		if((sendsize = send(SENDsocket, message, strlen(message), 0)) < 0)
   		{
-  			printf("Send failed\n");
+  			printf("Send failed with error code: %d\n", WSAGetLastError());
+        _endthreadex(0);
   			return 1;
   		}
-  		//printf("Sent! #bytes = %d.\n", sendsize);
+  		printf("Sent! #bytes = %d.\n", sendsize);
       // sleep to be able to see what's happening
       Sleep(5000L);
   	}
   	printf("Repeat is false, exit\n");
   // terminate thread as we are done with the stream
-  _endthread();
+  _endthreadex(0);
   return 0;
 }
 // add linux thread version/windows fix on both server/client
@@ -208,6 +189,7 @@ int32_t main(int32_t argc, char **argv)
   struct sockaddr_in clientRECV, serverRECV; // this client receive port the server streams to, and the server receive port this client streams to
   int bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
+  HANDLE ThreadHandles[2]; // array containing our 2 thread handles
 
   // initialize Winsock if this is a Windows client
   #if defined(_WIN32)
@@ -297,30 +279,43 @@ int32_t main(int32_t argc, char **argv)
   // since this is a UDP socket, there is no connection necessary
   // time to start receiving the stream and sending user input
   // launch thread #1 to start streaming video & audio from server
-  _beginthread(ReceiveStream(RECVsocket, clientRECV), 0, NULL);
+
+
+  printf("test1-client\n");
+
+  printf("socket descriptor: %d\n", RECVsocket);
+
+
+
+
+
+  ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveStream, &RECVsocket, 0, NULL);
+
+  printf("test2-client\n");
 
   // launch thread #2 to start sending user input
-  _beginthread(SendClientInput(SENDsocket), 0, NULL);
+  ThreadHandles[1] = (HANDLE)_beginthreadex(NULL, 0, &SendClientInput, &SENDsocket, 0, NULL);
+
+  printf("test3-client");
+
+  // block until our 2 threads terminate, so until the protocol terminates
+  WaitForMultipleObjects(2, ThreadHandles, true, INFINITE);
+
+  printf("test4-client");
 
 
   // add threads for linux/macos
 
 
 
-  // keep looping until the client sends user input to disconnect, at which
-  // point the server will send a packet/stop stream to say "stop sending user
-  // input" and it will set the repear varto false in ReceiveStream
-  while (repeat) {
-    // wait one second between loops (arbitrary, these loops just wait)
-    #if defined(_WIN32)
-      Sleep(1000L);
-    #else
-      sleep(1000);
-    #endif
-  }
   // client or server disconnected, close everything
   // Windows case, closing sockets
   #if defined(_WIN32)
+    // threads are done, let's close their handles and exit
+    CloseHandle(ThreadHandles[0]);
+    CloseHandle(ThreadHandles[1]);
+
+    // close the sockets
     closesocket(RECVsocket);
     closesocket(SENDsocket);
     WSACleanup(); // close Windows socket library

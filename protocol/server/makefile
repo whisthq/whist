@@ -16,7 +16,10 @@ SHARED_LIBS = \
 	libucrt.lib \
 	libcmt.lib \
 	kernel32.lib \
-	ws2_32.lib
+	ws2_32.lib \
+	crypt32.lib \
+	wldap32.lib \
+	normaliz.lib
 
 LD_FLAGS = \
 	/nodefaultlib \
