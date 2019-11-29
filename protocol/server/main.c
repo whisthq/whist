@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 // global vars and definitions
-#define RECV_BUFFER_LEN 512 // max len of receive buffer
+#define RECV_BUFFER_LEN 2048 // max len of receive buffer
 bool repeat = true; // global flag to keep streaming until client disconnects
 
 // main function to stream the video and audio from this server to the client

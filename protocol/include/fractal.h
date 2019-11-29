@@ -3,7 +3,7 @@
  * streaming protocol.
 
  Protocol version: 1.0
- Last modification: 11/24/2019
+ Last modification: 11/29/2019
 
  By: Philippe Noël
 
@@ -515,9 +515,29 @@ typedef struct FractalClientCursorEvent {
 	uint32_t key;         ///< Buffer lookup key passed to FractalGetBuffer to retrieve the cursor image, if available.
 } FractalClientCursorEvent;
 
+typedef enum FractalMessageType {
+	MESSAGE_KEYBOARD       = 1, ///< `keyboard` FractalKeyboardMessage is valid in FractalMessage.
+	MESSAGE_MOUSE_BUTTON   = 2, ///< `mouseButton` FractalMouseButtonMessage is valid in FractalMessage.
+	MESSAGE_MOUSE_WHEEL    = 3, ///< `mouseWheel` FractalMouseWheelMessage is valid in FractalMessage.
+	MESSAGE_MOUSE_MOTION   = 4, ///< `mouseMotion` FractalMouseMotionMessage is valid in FractalMessage.
+	MESSAGE_RELEASE        = 5, ///< Message instructing the host to release all input that is currently pressed.
+	__MESSAGE_MAKE_32      = 0x7FFFFFFF,
+} FractalMessageType;
+
+typedef struct FractalMessage {
+	FractalMessageType type;                     ///< Input message type.
+	union {
+		FractalKeyboardMessage keyboard;           ///< Keyboard message.
+		FractalMouseButtonMessage mouseButton;     ///< Mouse button message.
+		FractalMouseWheelMessage mouseWheel;       ///< Mouse wheel message.
+		FractalMouseMotionMessage mouseMotion;     ///< Mouse motion message.
+	};
+} FractalMessage;
 /*** STRUCTS END ***/
 
 /*** TYPEDEFS START ***/
+
+
 /// @brief OpenGL/GLES 32-bit unsigned integer.
 /// @details Passed to HostGLSubmitFrame. Prevents obligatory include of GL headers.
 typedef uint32_t FractalGLuint;
@@ -581,16 +601,6 @@ typedef void (*FractalAudioCallback)(int16_t *pcm, uint32_t frames, void *opaque
 /*** CLIENT FUNCTIONS END ***/
 
 /*** SERVER FUNCTIONS START ***/
-/// @brief Initialize the server
-/// @param[in] cfg Fractal instance configuration. May be `NULL` to use FRACTAL_DEFAULTS.
-/// @returns error if an init error appears, else FRACTAL_OK
-FractalStatus FractalInit(FractalConfig *cfg);
-
-/// @brief Shuts doen the server instance.
-/// @param[in] none
-/// @returns none
-void FractalDestroy();
-
 /*** SERVER FUNCTIONS END ***/
 
 #ifdef __cplusplus

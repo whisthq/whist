@@ -27,8 +27,6 @@
 #define SDL_MAIN_HANDLED
 #include "SDL2/SDL.h"
 
-#define MSG_CLIPBOARD 7
-
 #define WINDOW_W 1280
 #define WINDOW_H 720
 
@@ -57,27 +55,82 @@ extern "C" {
 static bool loggedIn = false; // global user login variable
 bool repeat = true; // global flag to stream until disconnection
 
+// SDL global vars for displaying
+SDL_Surface *imageSurface = NULL;
+SDL_Surface *windowSurface = NULL;
+SDL_Window *window;
+
 // main function to send client user inputs
 unsigned __stdcall SendClientInput(void *SENDsocket_param) {
     // cast the socket parameter back to socket for use
   	SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
 
-    // message to send to the server
-  	char *message = "Hey from the client!";
-    int sendsize;
+    // define SDL variable to listen for user inputs
+    SDL_Event msg;
 
     // loop indefinitely to keep sending to the server until repeat set to fasl
-  	while (repeat) {
-      // send data message to server
-  		if ((sendsize = send(SENDsocket, message, strlen(message), 0)) < 0) {
-        // error, terminate thread and exit
-  			printf("Send failed with error code: %d\n", WSAGetLastError());
-        _endthreadex(0);
-  			return 1;
-  		}
-      // 5 seconds sleep to see what's happening in the terminal
-      Sleep(5000L);
-  	}
+    while (repeat) {
+      // poll for an SDL event
+      if (SDL_PollEvent(&msg)) {
+        // event received, define Fractal message and find which event type it is
+        FractalMessage fmsg = {0};
+        switch (msg.type) {
+          // SDL quit event, exit switch
+          case SDL_QUIT:
+            break;
+          // SDL event for keyboard key pressed or released
+          case SDL_KEYDOWN:
+          case SDL_KEYUP:
+            // fill Fractal message structure for sending
+            fmsg.type = MESSAGE_KEYBOARD;
+            fmsg.keyboard.code = (FractalKeycode) msg.key.keysym.scancode;
+            fmsg.keyboard.mod = msg.key.keysym.mod;
+            fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN;
+            printf("Key Code: %d\n", fmsg.keyboard.code); // print statement to see what's happening
+            break;
+          // SDL event for mouse location when it moves
+          case SDL_MOUSEMOTION:
+            fmsg.type = MESSAGE_MOUSE_MOTION;
+            fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
+            fmsg.mouseMotion.x = fmsg.mouseMotion.relative ? msg.motion.xrel : msg.motion.x;
+            fmsg.mouseMotion.y = fmsg.mouseMotion.relative ? msg.motion.yrel : msg.motion.y;
+            printf("Mouse Position: (%d, %d)\n", fmsg.mouseMotion.x, fmsg.mouseMotion.y); // print statement to see what's happening
+            break;
+          // SDL event for mouse button pressed or released
+          case SDL_MOUSEBUTTONDOWN:
+          case SDL_MOUSEBUTTONUP:
+            fmsg.type = MESSAGE_MOUSE_BUTTON;
+            fmsg.mouseButton.button = msg.button.button;
+            fmsg.mouseButton.pressed = msg.button.type == SDL_MOUSEBUTTONDOWN;
+            printf("Mouse Button Code: %d\n", fmsg.mouseButton.button); // print statement to see what's happening
+            break;
+          // SDL event for mouse wheel scroll
+          case SDL_MOUSEWHEEL:
+            fmsg.type = MESSAGE_MOUSE_WHEEL;
+            fmsg.mouseWheel.x = msg.wheel.x;
+            fmsg.mouseWheel.y = msg.wheel.y;
+            printf("Mouse Scroll Position: (%d, %d)\n", fmsg.mouseWheel.x, fmsg.mouseWheel.y); // print statement to see what's happening
+          break;
+        }
+        // we broke out of the listen loop, so we have an event
+        // if we have a message type identified, send event to server
+        if (fmsg.type != 0) {
+
+          // TODO: serialize fmsg to send it over the socket
+
+          // send data message to server
+          if (send(SENDsocket, fmsg, strlen(fmsg), 0) < 0) {
+            // error, terminate thread and exit
+            printf("Send failed with error code: %d\n", WSAGetLastError());
+            _endthreadex(0);
+            return 1;
+          }
+        }
+      }
+      // packet sent, let's update the SDL surface
+      SDL_BlitSurface(imageSurface, NULL, windowSurface, NULL);
+      SDL_UpdateWindowSurface(window);
+    }
     // connection interrupted by setting repeat to false, exit protocol
     printf("Connection interrupted.\n");
 
@@ -236,6 +289,24 @@ int32_t main(int32_t argc, char **argv) {
   printf("Bind done on port: %d.\n", ntohs(clientRECV.sin_port));
 
   // since this is a UDP socket, there is no connection necessary
+  // now that everything is ready for the communication sockets, we need to init
+  // SDL to start capturing user input & displaying stream
+  if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+      printf("SDL init error.\n");
+      return 5;
+  }
+
+  // TODO LATER: function to call to adapt window size to client
+
+  // set the SDL window properties
+  window = SDL_CreateWindow("Fractal", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_W, WINDOW_H, SDL_WINDOW_ALLOW_HIGHDPI);
+  windowSurface = SDL_GetWindowSurface(window);
+  if (window == NULL) {
+      printf("SDL window error.\n");
+      return 6;
+  }
+
+  // now that SDL is ready, time to start the protocol
   // time to start receiving the stream and sending user input
   // launch thread #1 to start streaming video & audio from server
   ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveStream, &RECVsocket, 0, NULL);
@@ -250,6 +321,18 @@ int32_t main(int32_t argc, char **argv) {
   WaitForMultipleObjects(2, ThreadHandles, true, INFINITE);
 
   // client or server disconnected, close everything
+  // free SDL and set variables to null
+  SDL_FreeSurface(imageSurface);
+  SDL_FreeSurface(windowSurface);
+
+  // set SDL vars to null
+  imageSurface = NULL;
+  windowSurface = NULL;
+
+  // terminate SDL
+  SDL_DestroyWindow(window);
+  SDL_Quit();
+
   // Windows case, closing sockets
   #if defined(_WIN32)
     // threads are done, let's close their handles and exit

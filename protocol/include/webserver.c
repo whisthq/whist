@@ -28,6 +28,8 @@
   #pragma comment(lib, "Ws2_32.lib")
   #pragma warning(disable: 4996) // snprintf unsafe warning
   #pragma warning(disable: 4047) // levels of indirection
+  #pragma warning(disable: 4311) // typecast warning
+  #pragma warning(disable: 4267) // size_t to int
 #endif
 
 #ifdef __cplusplus
@@ -44,7 +46,7 @@ char *sendJSONPost(char *path, char *jsonObj) {
     if (WSAStartup(MAKEWORD(2,2), &wsa) != 0)
     {
       printf("Failed. Error Code : %d.\n", WSAGetLastError());
-      return (char *) WSAGetLastError();
+      return "";
     }
     printf("Winsock Initialised.\n");
   #endif
@@ -63,9 +65,6 @@ char *sendJSONPost(char *path, char *jsonObj) {
     return "";
   }
   printf("TCP socket created.\n");
-
-
-
 
   // get the host address of the web server
   host = gethostbyname("cube-celery-vm.herokuapp.com");
@@ -87,7 +86,7 @@ char *sendJSONPost(char *path, char *jsonObj) {
   // now that we're connected, we can send the POST request to authenticate the user
   // first, we create the POST request message
   char message[5000];
-  sprintf(message, "POST %s HTTP/1.0\r\nHost: cube-celery-vm.herokuapp.com\r\nContent-Type: application/json\r\nContent-Length:%d\r\n\r\n%s", path, strlen(jsonObj), jsonObj);
+  sprintf(message, "POST %s HTTP/1.0\r\nHost: cube-celery-vm.herokuapp.com\r\nContent-Type: application/json\r\nContent-Length:%zd\r\n\r\n%s", path, strlen(jsonObj), jsonObj);
 
   // now we send it
   if (send(Socket, message, strlen(message), 0) < 0) {
@@ -179,4 +178,6 @@ int32_t logout(char *username) {
 #if defined(_WIN32)
   #pragma warning(default: 4996)
   #pragma warning(default: 4047)
+  #pragma warning(default: 4311)
+  #pragma warning(default: 4267)
 #endif
