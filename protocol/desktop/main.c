@@ -111,9 +111,12 @@ unsigned __stdcall ReceiveStream(void *RECVsocket_param) {
 
 // main client function
 int32_t main(int32_t argc, char **argv) {
+  // tmp unused var
+  (void) argv;
+
   // variable for storing user credentials
-  char *credentials;
-  char *user_vm_ip;
+  //char *credentials;
+  char *user_vm_ip = "";
 
   // usage check for authenticating on our web servers
   if (argc != 3) {
@@ -123,25 +126,22 @@ int32_t main(int32_t argc, char **argv) {
 
   // user inputs for username and password
   char *username = argv[1];
-  char *password = argv[2];
+  //char *password = argv[2];
 
   // if the user isn't logged in currently, try to authenticate
   if (!loggedIn) {
-    credentials = login(username, password);
+
+    // TODO LATER: FIX CODE HERE ON A LOCAL WINDOWS FOR WEBSERVER QUERY
+    //credentials = login(username, password);
+    // print
+    //printf("\r\n");
+    //printf("Server response: \r\n\r\n");
+    //printf(credentials);
 
 
-    printf("\r\n");
-    printf("Server response: \r\n\r\n");
-    printf(credentials);
-
-    // if correct credentials
-    // authenticate and store the VM IP
-    // else exit
-
-    return 2;
-    /*
-    if () {
-
+    if (true) { // if correct credentials
+      user_vm_ip = "3.90.174.193";
+      loggedIn = true; // set flag as false
     }
     else {
       // incorrect username or password, couldn't authenticate
@@ -150,27 +150,7 @@ int32_t main(int32_t argc, char **argv) {
     }
     // user authenticated, let's start the protocol
     printf("Successfully authenticated.\n");
-    */
   }
-
-
-
-
-
-
-
-  // query Fractal web servers to authenticate the user and get the server IP
-  //vm_ip = login(username, password);
-  //if (!loggedIn || vm_ip == "")
-  //{
-  //  printf("Could not authenticate user, invalid username or password\n");
-  //  return 2;
-  // }
-
-
-
-
-
 
   // all good, we have a user and the VM IP written, time to set up the sockets
   // socket environment variables
@@ -208,11 +188,11 @@ int32_t main(int32_t argc, char **argv) {
 
   // prepare the sockaddr_in structure for the send socket (server receive port)
 	serverRECV.sin_family = AF_INET; // IPv4
-  serverRECV.sin_addr.s_addr = inet_addr("40.117.226.121"); // VM (server) IP received from authenticating
+  serverRECV.sin_addr.s_addr = inet_addr(user_vm_ip); // VM (server) IP received from authenticating
   serverRECV.sin_port = htons(config.serverPortRECV); // initial default port 48888
 
 	// connect the client send socket to the server receive port (TCP)
-	char* connect_status = connect(SENDsocket, (struct sockaddr*) &serverRECV, sizeof(serverRECV));
+	char *connect_status = connect(SENDsocket, (struct sockaddr *) &serverRECV, sizeof(serverRECV));
 	if (connect_status == SOCKET_ERROR || connect_status < 0)
 	{
     printf("Could not connect to the VM (server).\n");
@@ -286,8 +266,8 @@ int32_t main(int32_t argc, char **argv) {
   #endif
 
   // write close time to server, set loggedin to false and return
-  //logout(username);
-  //loggedIn = false;
+  logout(username);
+  loggedIn = false; // logout user
   return 0;
 }
 

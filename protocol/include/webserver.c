@@ -27,6 +27,7 @@
   #include <ws2tcpip.h>
   #pragma comment(lib, "Ws2_32.lib")
   #pragma warning(disable: 4996) // snprintf unsafe warning
+  #pragma warning(disable: 4047) // levels of indirection
 #endif
 
 #ifdef __cplusplus
@@ -48,49 +49,80 @@ char *sendJSONPost(char *path, char *jsonObj) {
     printf("Winsock Initialised.\n");
   #endif
 
+  // environment variables
+  SOCKET Socket; // socket to send/receive POST request
+  struct hostent *host; // address struct of the host webserver
+  struct sockaddr_in webserver_socketAddress; // address of the web server socket
+
+  // Creating our TCP socket to connect to the web server
+  Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (Socket == INVALID_SOCKET || Socket < 0) // Windows & Unix cases
+  {
+    // if can't create socket, return
+    printf("Could not create socket.\n");
+    return "";
+  }
+  printf("TCP socket created.\n");
 
 
 
 
-  // Open socket
-  SOCKET Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  struct hostent *host;
+  // get the host address of the web server
   host = gethostbyname("cube-celery-vm.herokuapp.com");
 
-  printf("%s", host);
+  // create the struct for the webserver address socket we will query
+  webserver_socketAddress.sin_family = AF_INET;
+  webserver_socketAddress.sin_port = htons(80); // HTTP port
+  webserver_socketAddress.sin_addr.s_addr = ((unsigned long) host->h_addr);
 
-  struct sockaddr_in SocketAddress;
-  SocketAddress.sin_family = AF_INET;
-  SocketAddress.sin_port = htons(80); // HTTP port
-  SocketAddress.sin_addr.s_addr = ((unsigned long) host->h_addr);
+  // connect to the web server before sending the POST request packet
+	char *connect_status = connect(Socket, (struct sockaddr *) &webserver_socketAddress, sizeof(webserver_socketAddress));
+	if (connect_status == SOCKET_ERROR || connect_status < 0)
+	{
+    printf("Could not connect to the webserver.\n");
+    return "";
+	}
+  printf("Connected.\n");
 
-  if (connect(Socket,(SOCKADDR*)(&SocketAddress),sizeof(SocketAddress)) < 0) {
-      printf("ERROR connecting %d\n", WSAGetLastError());
-      return 0;
-  }
-
+  // now that we're connected, we can send the POST request to authenticate the user
+  // first, we create the POST request message
   char message[5000];
   sprintf(message, "POST %s HTTP/1.0\r\nHost: cube-celery-vm.herokuapp.com\r\nContent-Type: application/json\r\nContent-Length:%d\r\n\r\n%s", path, strlen(jsonObj), jsonObj);
 
-  send(Socket, message, strlen(message), 0);
-  char buffer[4096];
-  int len;
-  len = recv(Socket,buffer,4096,0);
-  int i,z;
-  for(i=0;!(buffer[i]=='\r' && buffer[i+1]=='\n' && buffer[i+2]=='\r' && buffer[i+3]=='\n');i++);
-  i+=4;
-  char* buffer2;
-  buffer2 = calloc(sizeof(char),len);
-  for(z=0;i<len;i++)
-      buffer2[z++] = buffer[i];
-  closesocket(Socket);
-  WSACleanup();
-  return buffer2;
+  // now we send it
+  if (send(Socket, message, strlen(message), 0) < 0) {
+    // error sending, terminate
+    printf("Sending POST message failed.\n");
+    return "";
+  }
 
+  // now that it's sent, let's get the reply
+  char buffer[4096]; // buffer to store the reply
+  int len, i, z; // counters
+  len = recv(Socket, buffer, 4096, 0); // get the reply
 
+  // parse the reply
+  for (i = 0; !(buffer[i] == '\r' && buffer[i + 1] == '\n' && buffer[i + 2] == '\r' && buffer[i + 3] == '\n'); i++);
+  i += 4;
 
+  // get the parsed credentials
+  char *credentials;
+  credentials = calloc(sizeof(char), len);
+  for (z = 0; i < len; i++) {
+    credentials[z++] = buffer[i];
+  }
 
+  // Windows case, closing sockets
+  #if defined(_WIN32)
+    // close the socket
+    closesocket(Socket);
+    WSACleanup(); // close Windows socket library
+  #else
+    close(Socket);
+  #endif
 
+  // return the user credentials if correct authentication, else empty
+  return credentials;
 }
 
 // log the user in and log its connection time
@@ -99,9 +131,9 @@ char *login(char *username, char *password) {
 	char *credentials;
 
   // generate JSON logout format
-  char  *jsonFrame = "{\"username\" : \"%s\", \"password\" : \"%s\"}";
-  size_t jsonSize  = strlen(jsonFrame) + strlen(username) + strlen(password) - 1;
-  char  *jsonObj   = malloc(jsonSize);
+  char *jsonFrame = "{\"username\" : \"%s\", \"password\" : \"%s\"}";
+  size_t jsonSize = strlen(jsonFrame) + strlen(username) + strlen(password) - 1;
+  char *jsonObj = malloc(jsonSize);
 
   // send the logout JSON to log the user in
   if (jsonObj != NULL) {
@@ -122,9 +154,9 @@ char *login(char *username, char *password) {
 // log the logout time of a user
 int32_t logout(char *username) {
   // generate JSON logout format
-  char  *jsonFrame = "{\"username\" : \"%s\"}";
-  size_t jsonSize  = strlen(jsonFrame) + strlen(username) - 1;
-  char  *jsonObj   = malloc(jsonSize);
+  char *jsonFrame = "{\"username\" : \"%s\"}";
+  size_t jsonSize = strlen(jsonFrame) + strlen(username) - 1;
+  char *jsonObj = malloc(jsonSize);
 
   // send the logout JSON to log the logout time
   if (jsonObj != NULL) {
@@ -143,7 +175,8 @@ int32_t logout(char *username) {
 }
 #endif
 
-// renable Windows warning, if Windows client
+// re-enable Windows warning, if Windows client
 #if defined(_WIN32)
   #pragma warning(default: 4996)
+  #pragma warning(default: 4047)
 #endif
