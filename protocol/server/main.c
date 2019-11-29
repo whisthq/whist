@@ -101,7 +101,7 @@ int32_t main(int32_t argc, char **argv) {
    (void) argv;
 
   // usage check
-  if (argc > 1) {
+  if (argc != 1) {
     printf("Usage: server\n"); // no argument needed, server listens
     return 1;
   }
@@ -253,5 +253,5 @@ int32_t main(int32_t argc, char **argv) {
 	#pragma warning(default: 4244)
 	#pragma warning(default: 4047)
 	#pragma warning(default: 4701)
-	#pragma warning(disable: 4477)
+	#pragma warning(default: 4477)
 #endif

@@ -22,6 +22,7 @@
 #include <stdbool.h>
 
 #include "../include/fractal.h" // header file for protocol functions
+#include "../include/webserver.h" // header file for webserver query functions
 
 #define SDL_MAIN_HANDLED
 #include "SDL2/SDL.h"
@@ -53,7 +54,7 @@ extern "C" {
 
 // global vars and definitions
 #define RECV_BUFFER_LEN 512 // max len of receive buffer
-static bool loggedIn = true; // global user login variable
+static bool loggedIn = false; // global user login variable
 bool repeat = true; // global flag to stream until disconnection
 
 // main function to send client user inputs
@@ -109,22 +110,54 @@ unsigned __stdcall ReceiveStream(void *RECVsocket_param) {
 }
 
 // main client function
-int32_t main(int32_t argc, char **argv)
-{
-  // unused argv this is momentary until we have the login
-  (void) argv;
-  // variable for storing server IP address
-  //char *vm_ip = "";
+int32_t main(int32_t argc, char **argv) {
+  // variable for storing user credentials
+  char *credentials;
+  char *user_vm_ip;
 
   // usage check for authenticating on our web servers
   if (argc != 3) {
-    printf("Usage: client fractal-username fractal-password\n");
+    printf("Usage: client [username] [password]\n");
     return 1;
   }
 
   // user inputs for username and password
-  //char *username = argv[1];
-  //char *password = argv[2];
+  char *username = argv[1];
+  char *password = argv[2];
+
+  // if the user isn't logged in currently, try to authenticate
+  if (!loggedIn) {
+    credentials = login(username, password);
+
+
+    printf("\r\n");
+    printf("Server response: \r\n\r\n");
+    printf(credentials);
+
+    // if correct credentials
+    // authenticate and store the VM IP
+    // else exit
+
+    return 2;
+    /*
+    if () {
+
+    }
+    else {
+      // incorrect username or password, couldn't authenticate
+      printf("Incorrect username or password.\n");
+      return 2;
+    }
+    // user authenticated, let's start the protocol
+    printf("Successfully authenticated.\n");
+    */
+  }
+
+
+
+
+
+
 
   // query Fractal web servers to authenticate the user and get the server IP
   //vm_ip = login(username, password);
@@ -133,6 +166,11 @@ int32_t main(int32_t argc, char **argv)
   //  printf("Could not authenticate user, invalid username or password\n");
   //  return 2;
   // }
+
+
+
+
+
 
   // all good, we have a user and the VM IP written, time to set up the sockets
   // socket environment variables
@@ -150,7 +188,7 @@ int32_t main(int32_t argc, char **argv)
     if (WSAStartup(MAKEWORD(2,2), &wsa) != 0)
     {
       printf("Failed. Error Code : %d.\n", WSAGetLastError());
-      return 2;
+      return 3;
     }
     printf("Winsock Initialised.\n");
   #endif
@@ -162,7 +200,9 @@ int32_t main(int32_t argc, char **argv)
   SENDsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (SENDsocket == INVALID_SOCKET || SENDsocket < 0) // Windows & Unix cases
   {
+    // if can't create socket, return
     printf("Could not create Send TCP socket.\n");
+    return 4;
   }
   printf("Send TCP Socket created.\n");
 
@@ -176,7 +216,7 @@ int32_t main(int32_t argc, char **argv)
 	if (connect_status == SOCKET_ERROR || connect_status < 0)
 	{
     printf("Could not connect to the VM (server).\n");
-    return 3;
+    return 5;
 	}
   printf("Connected.\n");
 
@@ -224,18 +264,10 @@ int32_t main(int32_t argc, char **argv)
   ThreadHandles[1] = (HANDLE)_beginthreadex(NULL, 0, &SendClientInput, &SENDsocket, 0, NULL);
 
   // TODO LATER: Add a third thread that listens for disconnect and sets repeat=false
+  // TODO LATER: Split this file into Windows/Unix and do threads for Unix for max efficiency
 
   // block until our 2 threads terminate, so until the protocol terminates
   WaitForMultipleObjects(2, ThreadHandles, true, INFINITE);
-
-
-
-  // add threads for linux/macos
-
-
-
-
-
 
   // client or server disconnected, close everything
   // Windows case, closing sockets
@@ -263,12 +295,12 @@ int32_t main(int32_t argc, char **argv)
 }
 #endif
 
-// renable Windows warning, if Windows client
+// re-enable Windows warning, if Windows client
 #if defined(_WIN32)
 	#pragma warning(default: 4201)
-  #pragma warning(disable: 4024)
-  #pragma warning(disable: 4113)
-  #pragma warning(disable: 4244)
-  #pragma warning(disable: 4047)
-  #pragma warning(disable: 4477)
+  #pragma warning(default: 4024)
+  #pragma warning(default: 4113)
+  #pragma warning(default: 4244)
+  #pragma warning(default: 4047)
+  #pragma warning(default: 4477)
 #endif

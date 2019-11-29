@@ -38,7 +38,7 @@ endif
 
 ### COMMON ###
 BIN_NAME = client
-OBJS = main.o
+OBJS = main.o ../include/webserver.o
 STATIC_LIBS = lib/$(PLATFORM)/libSDL2.a
 
 CFLAGS = \

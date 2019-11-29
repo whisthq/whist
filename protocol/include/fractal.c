@@ -3,7 +3,7 @@
  * streaming protocol.
 
  Protocol version: 1.0
- Last modification: 11/24/2019
+ Last modification: 11/28/2019
 
  By: Philippe Noël
 
@@ -31,38 +31,6 @@ extern "C" {
 /*** CLIENT FUNCTIONS END ***/
 
 /*** SERVER FUNCTIONS START ***/
-/// @brief Initialize the server
-/// @param[in] cfg Fractal instance configuration. May be `NULL` to use FRACTAL_DEFAULTS.
-/// @returns error if an init error appears, else FRACTAL_OK
-//static FractalStatus FractalInit(FractalConfig *cfg) {}
-
-
-
-
-
-
-
-
-
-
-/// @brief Shuts down the server instance.
-/// @param[in] none
-/// @returns none
-//static void FractalDestroy() {}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*** SERVER FUNCTIONS END ***/
 
 #ifdef __cplusplus

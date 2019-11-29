@@ -1,5 +1,5 @@
 BIN_NAME = client.exe
-OBJS = main.obj
+OBJS = main.obj ../include/webserver.obj
 
 STATIC_LIBS = lib/windows/SDL2.lib
 
