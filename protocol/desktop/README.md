@@ -6,4 +6,4 @@ It should be easily built via `make` (on MacOS and Linux) or `nmake` (on Windows
 
 ## Running
 
-```client.exe fractal-username fractal-password```
+```client username password```

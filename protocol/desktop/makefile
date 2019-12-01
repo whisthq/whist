@@ -1,14 +1,13 @@
 BIN_NAME = client.exe
 OBJS = main.obj ../include/webserver.obj
-
 STATIC_LIBS = lib/windows/SDL2.lib
 
 CFLAGS = \
 	/nologo \
 	/W4 \
 	/O2 \
-	/MP \
 	/MT \
+	/MP \
 	-Iinclude \
 	-DWIN32_LEAN_AND_MEAN \
 	-DUNICODE \

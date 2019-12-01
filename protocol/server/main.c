@@ -4,7 +4,7 @@
  * and audio to the client, and receiving the user input back.
 
  Protocol version: 1.0
- Last modification: 11/28/2019
+ Last modification: 11/30/2019
 
  By: Philippe Noël
 
@@ -219,6 +219,8 @@ int32_t main(int32_t argc, char **argv) {
 
 			// launch thread #2 to start receiving and processing client input
 			ThreadHandles[1] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveClientInput, &RECVsocket, 0, NULL);
+
+			// TODO LATER: Add a third thread that listens for disconnect and sets repeat=false
 
 			// block until our 2 threads terminate, so until the protocol terminates
 			WaitForMultipleObjects(2, ThreadHandles, true, INFINITE);
