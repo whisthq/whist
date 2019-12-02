@@ -34,6 +34,8 @@
 	#pragma warning(disable: 4047) // disable char * indirection levels warning
 	#pragma warning(disable: 4701) // potentially unitialized var
 	#pragma warning(disable: 4477) // printf type warning
+	#pragma warning(disable: 4267) // conversion from size_t to int
+	#pragma warning(disable: 4996) // strncpy unsafe warning
 #endif
 
 #ifdef __cplusplus
@@ -41,7 +43,7 @@ extern "C" {
 #endif
 
 // global vars and definitions
-#define RECV_BUFFER_LEN 2048 // max len of receive buffer
+#define RECV_BUFFER_LEN 33 // our protocol sends packets of len 33, this prevents two packets clumping together in the socket buffer
 bool repeat = true; // global flag to keep streaming until client disconnects
 
 // main function to stream the video and audio from this server to the client
@@ -78,14 +80,101 @@ unsigned __stdcall ReceiveClientInput(void *RECVsocket_param) {
 	// cast the socket parameter back to socket for use
 	SOCKET RECVsocket = *(SOCKET *) RECVsocket_param;
 
-	// initiate buffer to store the reply
+	// initiate buffer to store the user action that we will receive
   int recv_size;
-  char *client_reply[RECV_BUFFER_LEN];
-  // while stream is on, listen for messages
-  while (repeat) {
-		// query for packets reception indefinitely via recv until repeat set to false
-		recv_size = recv(RECVsocket, client_reply, RECV_BUFFER_LEN, 0);
-    printf("Message received: %s\n", client_reply);
+  char *client_action_buffer[RECV_BUFFER_LEN];
+	char hexa[] = "0123456789abcdef"; // array of hexadecimal values + null character for deserializing
+
+	// while stream is on, listen for messages
+	while (repeat) {
+	  // query for packets reception indefinitely via recv until repeat set to false
+	  recv_size = recv(RECVsocket, client_action_buffer, RECV_BUFFER_LEN, 0);
+	  printf("Received packet of size: %d\n", recv_size);
+	  printf("Message received: %s\n", client_action_buffer);
+
+	  // if the packet isn't empty (aka there is an action to process)
+	  if (recv_size != 0) {
+	    // the packet we receive is the FractalMessage struct serialized to hexadecimal,
+	    // we need to deserialize it to feed it to the Windows API
+	    unsigned char fmsg_char[sizeof(struct FractalMessage)]; // array to hold the hexa values in char (decimal) format
+
+	    // first, we need to copy it to a char[] for it to be iterable
+	    char iterable_buffer[RECV_BUFFER_LEN] = "";
+	    strncpy(iterable_buffer, client_action_buffer, RECV_BUFFER_LEN);
+
+	    // now we iterate over the length of the FractalMessage struct and fill an
+	    // array with the decimal value conversion of the hex we received
+	    int i, index_0, index_1; // tmp
+	    for (i = 0; i < sizeof(struct FractalMessage); i++) {
+	      // find index of the two characters for the current hexadecimal value
+	    index_0 = strchr(hexa, iterable_buffer[i * 2]) - hexa;
+	    index_1 = strchr(hexa, iterable_buffer[(i * 2) + 1]) - hexa;
+
+	    // now convert back to decimal and store in array
+	    fmsg_char[i] = index_0 * 16 + index_1; // conversion formula
+	    }
+	    // now that we got the de-serialized memory values of the user input, we
+	    // can copy it back to a FractalMessage struct
+	    FractalMessage fmsg = {0};
+	    memcpy(&fmsg, &fmsg_char, sizeof(struct FractalMessage));
+
+			// all good, we're back with our user input to replay
+			printf("User action deserialized, ready for replaying.\n");
+
+			// time to create an input event for the windows API based on our Fractal event
+			INPUT Event = {0};
+
+
+
+
+
+			//
+			switch (fmsg.type) {
+				// Windows event for keyboard action
+				case MESSAGE_KEYBOARD:
+					Event.type = INPUT_KEYBOARD;
+					Event.ki.wScan = fmsg.keyboard.code;
+					Event.ki.time = 0; // system supplies timestamp
+
+
+
+
+					if (fmsg.keyboard.pressed) {
+					Event.ki.dwFlags = KEYEVENTF_SCANCODE;
+					} else {
+						Event.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+					}
+					break;
+
+				case MESSAGE_MOUSE_MOTION:
+
+
+					Event.type = INPUT_MOUSE;
+					Event.mi.dx = fmsg.mouseMotion.x;
+					Event.mi.dy = fmsg.mouseMotion.y;
+					Event.mi.mouseData = 0;
+					Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+					break;
+
+
+				case  MESSAGE_MOUSE_BUTTON:
+
+
+					break;
+
+
+				case MESSAGE_MOUSE_WHEEL:
+
+					break;
+
+			}
+
+
+
+
+			// now that we have mapped our FMSG to a Windows event, let's play it
+			SendInput(1, &Event, sizeof(INPUT)); // 1 structure to send
+		}
   }
 	// connection interrupted by setting repeat to false, exit protocol
   printf("Connection interrupted.\n");
@@ -256,4 +345,6 @@ int32_t main(int32_t argc, char **argv) {
 	#pragma warning(default: 4047)
 	#pragma warning(default: 4701)
 	#pragma warning(default: 4477)
+	#pragma warning(default: 4267)
+	#pragma warning(default: 4996)
 #endif

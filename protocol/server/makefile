@@ -19,7 +19,18 @@ SHARED_LIBS = \
 	ws2_32.lib \
 	crypt32.lib \
 	wldap32.lib \
-	normaliz.lib
+	normaliz.lib \
+	gdi32.lib \
+	winmm.lib \
+	imm32.lib \
+	shell32.lib \
+	advapi32.lib \
+	ole32.lib \
+	oleaut32.lib \
+	opengl32.lib \
+	user32.lib \
+	uuid.lib \
+	version.lib
 
 LD_FLAGS = \
 	/nodefaultlib \

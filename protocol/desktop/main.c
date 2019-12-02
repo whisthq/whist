@@ -41,6 +41,7 @@
   #pragma warning(disable: 4244) // disable u_int to u_short conversion warning
   #pragma warning(disable: 4047) // disable char * indirection levels warning
   #pragma warning(disable: 4477) // printf type warning
+  #pragma warning(disable: 4267) // conversion from size_t to int
 #else
   #include <pthread.h> // thread library on unix
   #include <unistd.h>
@@ -130,8 +131,7 @@ int32_t main(int32_t argc, char **argv) {
   int bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
   HANDLE ThreadHandles[1]; // array containing our extra thread handle
-  char hexa[17] = "0123456789abcdef";   // array of hexadecimal values + null character for serializing
-
+  char hexa[17] = "0123456789abcdef"; // array of hexadecimal values + null character for serializing
 
   // initialize Winsock if this is a Windows client
   #if defined(_WIN32)
@@ -297,6 +297,16 @@ int32_t main(int32_t argc, char **argv) {
         memcpy(fmsg_char, &fmsg, sizeof(struct FractalMessage));
         char fmsg_serialized[2 * sizeof(struct FractalMessage) + 1]; // serialized array is 2x the length since hexa
 
+
+
+        int j;
+        for (j = 0; j < sizeof(struct FractalMessage); j++) {
+          printf("char #%i: %d\n", j, (int) fmsg_char[j]);
+        }
+
+
+
+
         // loop over the char struct, convert each value to hexadecimal
         int i;
         for (i = 0; i < sizeof(struct FractalMessage); i++) {
@@ -366,4 +376,5 @@ int32_t main(int32_t argc, char **argv) {
   #pragma warning(default: 4244)
   #pragma warning(default: 4047)
   #pragma warning(default: 4477)
+  #pragma warning(default: 4267)
 #endif

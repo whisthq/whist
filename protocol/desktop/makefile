@@ -29,11 +29,7 @@ SHARED_LIBS = \
 	user32.lib \
 	uuid.lib \
 	version.lib \
-	ws2_32.lib \
-	crypt32.lib \
-	wldap32.lib \
-	normaliz.lib \
-	advapi32.lib
+	ws2_32.lib
 
 LD_FLAGS = \
 	/nodefaultlib \
