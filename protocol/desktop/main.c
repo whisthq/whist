@@ -80,14 +80,10 @@ unsigned __stdcall ReceiveStream(void *RECVsocket_param) {
 
 // main client function
 int32_t main(int32_t argc, char **argv) {
-  // tmp unused var
-  (void) argv;
-
   // user login status var
   static bool loggedIn = false;
 
   // variable for storing user credentials
-  //char *credentials;
   char *user_vm_ip = "";
 
   // usage check for authenticating on our web servers
@@ -97,28 +93,45 @@ int32_t main(int32_t argc, char **argv) {
   }
 
   // user inputs for username and password
-  //char *username = argv[1];
-  //char *password = argv[2];
+  char *username = argv[1];
+  char *password = argv[2];
 
   // if the user isn't logged in currently, try to authenticate
   if (!loggedIn) {
 
     // TODO LATER: FIX CODE HERE ON A LOCAL WINDOWS FOR WEBSERVER QUERY
-    //credentials = login(username, password);
-    // print
-    //printf("\r\n");
-    //printf("Server response: \r\n\r\n");
-    //printf(credentials);
-
-
-    if (true) { // if correct credentials
-      user_vm_ip = "3.90.174.193";
-      loggedIn = true; // set flag as false
-    }
-    else {
+    char *credentials = login(username, password);
+    // check if correct authentication
+    if (strcmp(credentials, "{}") == 0) {
       // incorrect username or password, couldn't authenticate
       printf("Incorrect username or password.\n");
       return 2;
+    }
+    else { // correct credentials, authenticate user
+      char* trailing_string = "";
+      char* leading_string;
+      char* vm_key = "\"public_ip\":\"";
+      bool found = false;
+      while(*credentials) {
+        // printf("%c", *credentials++);
+        size_t len = strlen(trailing_string);
+        leading_string = malloc(len + 1 + 1 );
+        strcpy(leading_string, trailing_string);
+        leading_string[len] = *credentials++;
+        leading_string[len + 1] = '\0';
+        if(found && strstr(leading_string, "\"")) {
+          user_vm_ip = trailing_string;
+          break;
+        }
+        trailing_string = leading_string;
+        free(leading_string);
+        if(strstr(leading_string, vm_key) != NULL) {
+          trailing_string = "";
+          found = true;
+        }
+      }
+      printf("%s\n", user_vm_ip);
+      loggedIn = true; // set user as logged in
     }
     // user authenticated, let's start the protocol
     printf("Successfully authenticated.\n");
@@ -159,7 +172,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // prepare the sockaddr_in structure for the send socket (server receive port)
 	serverRECV.sin_family = AF_INET; // IPv4
-  serverRECV.sin_addr.s_addr = inet_addr(user_vm_ip); // VM (server) IP received from authenticating
+  serverRECV.sin_addr.s_addr = inet_addr((char *) user_vm_ip); // VM (server) IP received from authenticating
   serverRECV.sin_port = htons(config.serverPortRECV); // initial default port 48888
 
 	// connect the client send socket to the server receive port (TCP)

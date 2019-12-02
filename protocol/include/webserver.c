@@ -72,7 +72,7 @@ char *sendJSONPost(char *path, char *jsonObj) {
   // create the struct for the webserver address socket we will query
   webserver_socketAddress.sin_family = AF_INET;
   webserver_socketAddress.sin_port = htons(80); // HTTP port
-  webserver_socketAddress.sin_addr.s_addr = ((unsigned long) host->h_addr);
+  webserver_socketAddress.sin_addr.s_addr = *((unsigned long*)host->h_addr);
 
   // connect to the web server before sending the POST request packet
 	char *connect_status = connect(Socket, (struct sockaddr *) &webserver_socketAddress, sizeof(webserver_socketAddress));
@@ -126,6 +126,7 @@ char *sendJSONPost(char *path, char *jsonObj) {
 
 // log the user in and log its connection time
 char *login(char *username, char *password) {
+  printf("login started");
   // var to store the usr credentials
 	char *credentials;
 
