@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <windows.h>
+#include <Winuser.h>
 #include <ws2tcpip.h> // other Windows socket library (of course, thanks #Microsoft)
 #include <winsock2.h> // lib for socket programming on windows
 #include <process.h> // for threads programming
@@ -45,6 +46,127 @@ extern "C" {
 // global vars and definitions
 #define RECV_BUFFER_LEN 33 // our protocol sends packets of len 33, this prevents two packets clumping together in the socket buffer
 bool repeat = true; // global flag to keep streaming until client disconnects
+char virtual_codes[140] = 
+{ 0x41,
+0x42,
+0x43,
+0x44,
+0x45,
+0x46,
+0x47,
+0x48,
+0x49,
+0x4A,
+0x4B,
+0x4C,
+0x4D,
+0x4E,
+0x4F,
+0x50,
+0x51,
+0x52,
+0x53,
+0x54,
+0x55,
+0x56,
+0x57,
+0x58,
+0x59,
+0x5A,
+0x31,
+0x32,
+0x33,
+0x34,
+0x35,
+0x36,
+0x37,
+0x38,
+0x39,
+0x30,
+0x0D,
+0x1B,
+0x08,
+0x09,
+0x20,
+0xBD,
+0xBB,
+0xDB,
+0xDD,
+0xDC,
+0xBA,
+0xDE,
+0xC0,
+0xBC,
+0xBE,
+0xBF,
+0x14,
+0x70,
+0x71,
+0x72,
+0x73,
+0x74,
+0x75,
+0x76,
+0x77,
+0x78,
+0x79,
+0x7A,
+0x7B,
+0x2C,
+0x91,
+0x13,
+0x2D,
+0x24,
+0x21,
+0x2E,
+0x23,
+0x22,
+0x27,
+0x25,
+0x28,
+0x26,
+0x90,
+0x6F,
+0x6A,
+0x6D,
+0x6B,
+0x0D,
+0x61,
+0x62,
+0x63,
+0x64,
+0x65,
+0x66,
+0x67,
+0x68,
+0x69,
+0x60,
+0xBE,
+0x5D,
+0x7C,
+0x7D,
+0x7E,
+0x7F,
+0x80,
+0x81,
+0x82,
+0xA4,
+0xAF,
+0xAE,
+0xA2,
+0xA0,
+0x12,
+0x5B,
+0xA3,
+0x12,
+0xA3,
+0xB0,
+0xB1,
+0xB2,
+0xB3,
+0xAD,
+0xB5,
+0x7FFFFFFF };
 
 // main function to stream the video and audio from this server to the client
 unsigned __stdcall SendStream(void *SENDsocket_param) {
@@ -86,11 +208,13 @@ unsigned __stdcall ReceiveClientInput(void *RECVsocket_param) {
 	char hexa[] = "0123456789abcdef"; // array of hexadecimal values + null character for deserializing
 
 	// while stream is on, listen for messages
+	int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
+	int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
 	while (repeat) {
 	  // query for packets reception indefinitely via recv until repeat set to false
 	  recv_size = recv(RECVsocket, client_action_buffer, RECV_BUFFER_LEN, 0);
-	  printf("Received packet of size: %d\n", recv_size);
-	  printf("Message received: %s\n", client_action_buffer);
+	  //printf("Received packet of size: %d\n", recv_size);
+	  //printf("Message received: %s\n", client_action_buffer);
 
 	  // if the packet isn't empty (aka there is an action to process)
 	  if (recv_size != 0) {
@@ -119,59 +243,61 @@ unsigned __stdcall ReceiveClientInput(void *RECVsocket_param) {
 	    memcpy(&fmsg, &fmsg_char, sizeof(struct FractalMessage));
 
 			// all good, we're back with our user input to replay
-			printf("User action deserialized, ready for replaying.\n");
+			//printf("User action deserialized, ready for replaying.\n");
 
 			// time to create an input event for the windows API based on our Fractal event
 			INPUT Event = {0};
 
-
-
-
-
-			//
+			// switch to fill in the Windows event depending on the FractalMessage type
 			switch (fmsg.type) {
 				// Windows event for keyboard action
 				case MESSAGE_KEYBOARD:
+					Event.ki.wVk = virtual_codes[fmsg.keyboard.code - 4];
 					Event.type = INPUT_KEYBOARD;
-					Event.ki.wScan = fmsg.keyboard.code;
+					Event.ki.wScan = 0;
 					Event.ki.time = 0; // system supplies timestamp
 
+					if (!fmsg.keyboard.pressed) {
+					Event.ki.dwFlags = KEYEVENTF_KEYUP;
+					}
+
+					break;
+				case MESSAGE_MOUSE_MOTION:
+					Event.type = INPUT_MOUSE;
+					Event.mi.dx = fmsg.mouseMotion.x * ((float)65536 / sWidth);
+					Event.mi.dy = fmsg.mouseMotion.y * ((float)65536 / sHeight);
+					Event.mi.dwFlags = MOUSEEVENTF_MOVE;
 
 
-
-					if (fmsg.keyboard.pressed) {
-					Event.ki.dwFlags = KEYEVENTF_SCANCODE;
-					} else {
-						Event.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+					break;
+				case  MESSAGE_MOUSE_BUTTON:
+					Event.type = INPUT_MOUSE;
+					Event.mi.dx = 0;
+					Event.mi.dy = 0;
+					if (fmsg.mouseButton.button == 1) {
+						if (fmsg.mouseButton.pressed) {
+							Event.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+						}
+						else {
+							Event.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+						}
+					} else if (fmsg.mouseButton.button == 3) {
+						if (fmsg.mouseButton.pressed) {
+							Event.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
+						}
+						else { 
+							Event.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
+						}
 					}
 					break;
-
-				case MESSAGE_MOUSE_MOTION:
-
-
-					Event.type = INPUT_MOUSE;
-					Event.mi.dx = fmsg.mouseMotion.x;
-					Event.mi.dy = fmsg.mouseMotion.y;
-					Event.mi.mouseData = 0;
-					Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-					break;
-
-
-				case  MESSAGE_MOUSE_BUTTON:
-
-
-					break;
-
-
 				case MESSAGE_MOUSE_WHEEL:
-
+					Event.type = INPUT_MOUSE;
+					Event.mi.dwFlags = MOUSEEVENTF_WHEEL;
+					Event.mi.dx = 0;
+					Event.mi.dy = 0;
+					Event.mi.mouseData = fmsg.mouseWheel.x;
 					break;
-
 			}
-
-
-
-
 			// now that we have mapped our FMSG to a Windows event, let's play it
 			SendInput(1, &Event, sizeof(INPUT)); // 1 structure to send
 		}
