@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "../include/fractal.h" // header file for protocol functions
 #include "../include/webserver.h" // header file for webserver query functions
@@ -105,7 +106,7 @@ int32_t main(int32_t argc, char **argv) {
     if (strcmp(credentials, "{}") == 0) {
       // incorrect username or password, couldn't authenticate
       printf("Incorrect username or password.\n");
-      return 2;
+      // return 2;
     }
     else { // correct credentials, authenticate user
       char* trailing_string = "";
@@ -171,8 +172,12 @@ int32_t main(int32_t argc, char **argv) {
   printf("Send TCP Socket created.\n");
 
   // prepare the sockaddr_in structure for the send socket (server receive port)
+  user_vm_ip = "52.168.122.131"; //aws:"3.90.174.193";
+
+
+  printf("%d\n", inet_addr(user_vm_ip));
 	serverRECV.sin_family = AF_INET; // IPv4
-  serverRECV.sin_addr.s_addr = inet_addr((char *) user_vm_ip); // VM (server) IP received from authenticating
+  serverRECV.sin_addr.s_addr = inet_addr(user_vm_ip); // VM (server) IP received from authenticating
   serverRECV.sin_port = htons(config.serverPortRECV); // initial default port 48888
 
 	// connect the client send socket to the server receive port (TCP)
@@ -252,10 +257,20 @@ int32_t main(int32_t argc, char **argv) {
   // define SDL variable to listen for user inputs
   SDL_Event msg;
 
+
+
+
+//   clock_t start, end;
+  // double cpu_time_used;
+
   // loop indefinitely to keep sending to the server until repeat set to fasl
   while (repeat) {
     // poll for an SDL event
     if (SDL_PollEvent(&msg)) {
+
+  //    start = clock();
+
+
       // event received, define Fractal message and find which event type it is
       FractalMessage fmsg = {0};
 
@@ -271,16 +286,17 @@ int32_t main(int32_t argc, char **argv) {
           fmsg.type = MESSAGE_KEYBOARD;
           fmsg.keyboard.code = (FractalKeycode) msg.key.keysym.scancode;
           fmsg.keyboard.mod = msg.key.keysym.mod;
-          fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN;
-          printf("Key Code: %d\n", fmsg.keyboard.code); // print statement to see what's happening
+          fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN; // print statement to see what's happening
           break;
         // SDL event for mouse location when it moves
         case SDL_MOUSEMOTION:
           fmsg.type = MESSAGE_MOUSE_MOTION;
-          fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
-          fmsg.mouseMotion.x = fmsg.mouseMotion.relative ? msg.motion.xrel : msg.motion.x;
-          fmsg.mouseMotion.y = fmsg.mouseMotion.relative ? msg.motion.yrel : msg.motion.y;
-          printf("Mouse Position: (%d, %d)\n", fmsg.mouseMotion.x, fmsg.mouseMotion.y); // print statement to see what's happening
+          // fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
+          // fmsg.mouseMotion.x = fmsg.mouseMotion.relative ? msg.motion.xrel : msg.motion.x;
+          // fmsg.mouseMotion.y = fmsg.mouseMotion.relative ? msg.motion.yrel : msg.motion.y;
+          fmsg.mouseMotion.x = msg.motion.xrel;
+          fmsg.mouseMotion.y = msg.motion.yrel;
+          // printf("Mouse Position: (%d, %d)\n", fmsg.mouseMotion.x, fmsg.mouseMotion.y); // print statement to see what's happening
           break;
         // SDL event for mouse button pressed or released
         case SDL_MOUSEBUTTONDOWN:
@@ -288,14 +304,14 @@ int32_t main(int32_t argc, char **argv) {
           fmsg.type = MESSAGE_MOUSE_BUTTON;
           fmsg.mouseButton.button = msg.button.button;
           fmsg.mouseButton.pressed = msg.button.type == SDL_MOUSEBUTTONDOWN;
-          printf("Mouse Button Code: %d\n", fmsg.mouseButton.button); // print statement to see what's happening
+          // printf("Mouse Button Code: %d\n", fmsg.mouseButton.button); // print statement to see what's happening
           break;
         // SDL event for mouse wheel scroll
         case SDL_MOUSEWHEEL:
           fmsg.type = MESSAGE_MOUSE_WHEEL;
           fmsg.mouseWheel.x = msg.wheel.x;
           fmsg.mouseWheel.y = msg.wheel.y;
-          printf("Mouse Scroll Position: (%d, %d)\n", fmsg.mouseWheel.x, fmsg.mouseWheel.y); // print statement to see what's happening
+          // printf("Mouse Scroll Position: (%d, %d)\n", fmsg.mouseWheel.x, fmsg.mouseWheel.y); // print statement to see what's happening
           break;
 
         // TODO LATER: clipboard switch case
@@ -310,16 +326,6 @@ int32_t main(int32_t argc, char **argv) {
         memcpy(fmsg_char, &fmsg, sizeof(struct FractalMessage));
         char fmsg_serialized[2 * sizeof(struct FractalMessage) + 1]; // serialized array is 2x the length since hexa
 
-
-
-        int j;
-        for (j = 0; j < sizeof(struct FractalMessage); j++) {
-          printf("char #%i: %d\n", j, (int) fmsg_char[j]);
-        }
-
-
-
-
         // loop over the char struct, convert each value to hexadecimal
         int i;
         for (i = 0; i < sizeof(struct FractalMessage); i++) {
@@ -327,7 +333,13 @@ int32_t main(int32_t argc, char **argv) {
           fmsg_serialized[i * 2] = hexa[fmsg_char[i] / 16];
           fmsg_serialized[(i * 2 ) + 1] = hexa[fmsg_char[i] % 16];
         }
-        printf("User action serialized, ready for sending.\n");
+        // printf("User action serialized, ready for sending.\n");
+
+
+  //      end = clock();
+    //    cpu_time_used = ((double) (end - start)); /// CLOCKS_PER_SEC;
+      //  printf("user action packet took %f seconds to execute \n", cpu_time_used);
+
 
         // user input is serialized, ready to stream over the network
         // send data message to server
@@ -336,7 +348,7 @@ int32_t main(int32_t argc, char **argv) {
           printf("Send failed with error code: %d\n", WSAGetLastError());
           return 7;
         }
-        printf("User action sent.\n");
+        // printf("User action sent.\n");
       }
     }
     // packet sent, let's update the SDL surface
