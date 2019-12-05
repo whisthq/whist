@@ -1,6 +1,16 @@
 BIN_NAME = client.exe
 OBJS = main.obj ../include/webserver.obj
-STATIC_LIBS = lib/windows/SDL2.lib
+
+STATIC_LIBS = \
+	lib/avcodec.lib \
+	lib/avdevice.lib \
+	lib/avfilter.lib \
+	lib/avformat.lib \
+	lib/avutil.lib \
+	lib/postproc.lib \
+	lib/swresample.lib \
+	lib/swscale.lib \
+	lib/windows/SDL2.lib
 
 CFLAGS = \
 	/nologo \

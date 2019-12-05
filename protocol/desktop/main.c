@@ -25,11 +25,20 @@
 #include "../include/fractal.h" // header file for protocol functions
 #include "../include/webserver.h" // header file for webserver query functions
 
+#include "include/libavcodec/avcodec.h"
+#include "include/libavdevice/avdevice.h"
+#include "include/libavfilter/avfilter.h"
+#include "include/libavformat/avformat.h"
+#include "include/libavutil/avutil.h"
+#include "include/libavfilter/buffersink.h"
+#include "include/libavfilter/buffersrc.h"
+
+
 #define SDL_MAIN_HANDLED
 #include "SDL2/SDL.h"
 
-#define WINDOW_W 1280
-#define WINDOW_H 720
+#define WINDOW_W 640
+#define WINDOW_H 480
 
 // include Winsock library & disable warning if on Windows client
 // include pthread library for unix threads if on linux/macos
@@ -54,22 +63,62 @@
 
 // global vars and definitions
 #define RECV_BUFFER_LEN 512 // max len of receive buffer
+
+struct SDL_Context {
+  bool done;
+  SDL_Window *window;
+  SDL_Surface *surface;
+  SDL_Cursor *cursor;
+  SOCKET RECVSocket;
+  SDL_AudioDeviceID audio;
+};
 bool repeat = true; // global flag to stream until disconnection
 
 // main thread function to receive server video and audio stream and process it
-unsigned __stdcall ReceiveStream(void *RECVsocket_param) {
-  // cast the socket parameter back to socket for use
-	SOCKET RECVsocket = *(SOCKET *) RECVsocket_param;
-
+static int32_t renderThread(struct SDL_Context SDL_Context) {	
   // initiate buffer to store the reply
-  int recv_size;
-  char *server_reply[RECV_BUFFER_LEN];
-
-  // while stream is on, listen for messages
+   SDL_GLContext *gl = SDL_GL_CreateContext(SDL_Context.window);
+   SDL_GL_SetSwapInterval(1);
   while (repeat) {
+    int recv_size;
+    char *server_reply[RECV_BUFFER_LEN];
+    AVCodec *codec;
+    AVCodecContext *context= NULL;
+    int frame_count;
+    AVFrame *frame;
+    // while stream is on, listen for messages
+    codec = avcodec_find_decoder(AV_CODEC_ID_MPEG1VIDEO);
+     if (!codec) {
+         printf("Codec not found\n");
+         exit(1);
+     }
+     context = avcodec_alloc_context3(codec);
+     if (!context) {
+         printf("Could not allocate video codec context\n");
+         exit(1);
+     }
+     // if(codec->capabilities&CODEC_CAP_TRUNCATED)
+     //     c->flags|= CODEC_FLAG_TRUNCATED; /* we do not send complete frames */
+
+     if (avcodec_open2(context, codec, NULL) < 0) {
+         printf("Could not open codec\n");
+         exit(1);
+     }
+     frame = av_frame_alloc();
+     if (!frame) {
+         printf("Could not allocate video frame\n");
+         exit(1);
+     }
     // query for packets reception indefinitely via recv until repeat set to false
-    recv_size = recv(RECVsocket, server_reply, RECV_BUFFER_LEN, 0);
-    printf("Message received: %s\n", server_reply);
+    recv_size = recv(SDL_Context.RECVSocket, server_reply, RECV_BUFFER_LEN, 0);
+    int len, got_frame;
+    len = avcodec_decode_video2(context, frame, &got_frame, server_reply);
+     if (len < 0) {
+         printf("Error while decoding frame %d\n", frame_count);
+         return len;
+     }
+    printf("%d\n", got_frame);
+    // printf("Message received: %s\n", server_reply);
   }
   // connection interrupted by setting repeat to false, exit protocol
   printf("Connection interrupted.\n");
@@ -140,7 +189,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // all good, we have a user and the VM IP written, time to set up the sockets
   // socket environment variables
-  SOCKET RECVsocket, SENDsocket; // socket file descriptors
+  SOCKET RECVSocket, SENDsocket; // socket file descriptors
   struct sockaddr_in clientRECV, serverRECV; // this client receive port the server streams to, and the server receive port this client streams to
   int bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
@@ -193,8 +242,8 @@ int32_t main(int32_t argc, char **argv) {
   // AF_INET = IPv4
   // SOCK_DGAM = UDP Socket
   // IPROTO_UDP = UDP protocol
-  RECVsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (RECVsocket == INVALID_SOCKET || RECVsocket < 0) { // Windows & Unix cases
+  RECVSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (RECVSocket == INVALID_SOCKET || RECVSocket < 0) { // Windows & Unix cases
     printf("Could not create Receive UDP socket.\n");
   }
   printf("Receive UDP Socket created.\n");
@@ -206,7 +255,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // for the recv/recvfrom function to work, we need to bind the socket even if it is UDP
   // bind our socket to this port. If it fails, increment port by one and retry
-  while (bind(RECVsocket, (struct sockaddr *) &clientRECV, sizeof(clientRECV)) == SOCKET_ERROR) {
+  while (bind(RECVSocket, (struct sockaddr *) &clientRECV, sizeof(clientRECV)) == SOCKET_ERROR) {
     // at most 50 attempts, after that we give up
     if (bind_attempts == 50) {
       printf("Cannot find an open port, abort.\n");
@@ -240,25 +289,40 @@ int32_t main(int32_t argc, char **argv) {
   // TODO LATER: function to call to adapt window size to client
 
   // set the SDL window properties
-  window = SDL_CreateWindow("Fractal", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_W, WINDOW_H, SDL_WINDOW_ALLOW_HIGHDPI);
-  windowSurface = SDL_GetWindowSurface(window);
-  if (window == NULL) {
-      printf("SDL window error.\n");
-      return 6;
-  }
+  struct SDL_Context context = {0};
+  context.window = SDL_CreateWindow("Fractal", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_W, WINDOW_H, SDL_WINDOW_OPENGL);
+  int32_t glW = 0;
+  SDL_GL_GetDrawableSize(context.window, &glW, NULL);
+
+  SDL_Renderer* sdlRenderer;
+  SDL_Texture* sdlTexture;
+  SDL_Rect sdlRect;
+  
+  sdlRenderer = SDL_CreateRenderer(context.window, -1, 0); 
+  sdlTexture = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING,WINDOW_W,WINDOW_H); 
+  
+  sdlRect.x=0;
+  sdlRect.y=0;
+  sdlRect.w=WINDOW_W;
+  sdlRect.h=WINDOW_H;
+
+  // windowSurface = SDL_GetWindowSurface(context.window);
+  // if (window == NULL) {
+  //     printf("SDL window error.\n");
+  //     return 6;
+  // }
 
   // now that SDL is ready, time to start the protocol
   // the user inputs sending is done in thread 1 (this thread)  while the video
   // receiving from the server is done in a second thread
   // launch thread #2 to start streaming video & audio from server
-  ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveStream, &RECVsocket, 0, NULL);
+  // ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveStream, &RECVsocket, 0, NULL);
 
   // all good there, time to start sending user input
   // define SDL variable to listen for user inputs
   SDL_Event msg;
-
-
-
+  context.RECVSocket = RECVSocket;
+  SDL_Thread *render_thread = SDL_CreateThread(renderThread, "renderThread", &context);
 
 //   clock_t start, end;
   // double cpu_time_used;
@@ -375,11 +439,11 @@ int32_t main(int32_t argc, char **argv) {
     CloseHandle(ThreadHandles[0]);
 
     // close the sockets
-    closesocket(RECVsocket);
+    closesocket(RECVSocket);
     closesocket(SENDsocket);
     WSACleanup(); // close Windows socket library
   #else
-    close(RECVsocket);
+    close(RECVSocket);
     close(SENDsocket);
   #endif
 
