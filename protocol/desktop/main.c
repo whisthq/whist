@@ -62,7 +62,7 @@
 #endif
 
 // global vars and definitions
-#define RECV_BUFFER_LEN 512 // max len of receive buffer
+#define RECV_BUFFER_LEN 5000 // max len of receive buffer
 
 struct SDL_Context {
   bool done;
@@ -86,8 +86,15 @@ static int32_t renderThread(struct SDL_Context SDL_Context) {
     AVCodecContext *context= NULL;
     int frame_count;
     AVFrame *frame;
+    AVFormatContext *ifmt_ctx = NULL;
+    int len, got_frame, ret;
+    AVCodecParserContext *pCodecParserCtx=NULL;
+
+    av_register_all();
+    avformat_network_init();
+
     // while stream is on, listen for messages
-    codec = avcodec_find_decoder(AV_CODEC_ID_MPEG1VIDEO);
+    codec = avcodec_find_decoder(AV_CODEC_ID_H264);
      if (!codec) {
          printf("Codec not found\n");
          exit(1);
@@ -100,6 +107,12 @@ static int32_t renderThread(struct SDL_Context SDL_Context) {
      // if(codec->capabilities&CODEC_CAP_TRUNCATED)
      //     c->flags|= CODEC_FLAG_TRUNCATED; /* we do not send complete frames */
 
+    pCodecParserCtx=av_parser_init(AV_CODEC_ID_H264);
+    if (!pCodecParserCtx){
+      printf("Could not allocate video parser context\n");
+      return -1;
+    }
+
      if (avcodec_open2(context, codec, NULL) < 0) {
          printf("Could not open codec\n");
          exit(1);
@@ -111,14 +124,36 @@ static int32_t renderThread(struct SDL_Context SDL_Context) {
      }
     // query for packets reception indefinitely via recv until repeat set to false
     recv_size = recv(SDL_Context.RECVSocket, server_reply, RECV_BUFFER_LEN, 0);
-    int len, got_frame;
-    len = avcodec_decode_video2(context, frame, &got_frame, server_reply);
-     if (len < 0) {
-         printf("Error while decoding frame %d\n", frame_count);
-         return len;
-     }
+    printf("bytes received: %d, server reply size: %d\n", recv_size, sizeof(server_reply));
+    AVPacket packet;
+    av_init_packet(&packet);
+
+    uint8_t udp_array[sizeof(server_reply)];
+    packet.data = udp_array;
+    memcpy(packet.data, &server_reply, sizeof(server_reply));
+    packet.size = sizeof(server_reply);
+    unsigned char in_buffer[4096 + 100]={0};
+    unsigned char *cur_ptr;
+    cur_ptr=in_buffer;
+    len = av_parser_parse2(
+      pCodecParserCtx, context,
+      &packet.data, &packet.size,
+      cur_ptr, 4096, 
+      AV_NOPTS_VALUE, AV_NOPTS_VALUE, AV_NOPTS_VALUE);
+    ret = avcodec_send_packet(context, &packet);
+    while(ret >= 0) {
+      ret = avcodec_receive_frame(context, frame);
+      // if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+      //   printf("frame error");
+      // } else {
+      //   printf("frame received");
+      // }
+    }
+    // ret = avcodec_decode_video2(context, frame, &got_frame, &packet);
     printf("%d\n", got_frame);
-    // printf("Message received: %s\n", server_reply);
+    if(got_frame + 1) {
+      printf("got frame!");
+    }
   }
   // connection interrupted by setting repeat to false, exit protocol
   printf("Connection interrupted.\n");
@@ -297,7 +332,7 @@ int32_t main(int32_t argc, char **argv) {
   SDL_Renderer* sdlRenderer;
   SDL_Texture* sdlTexture;
   SDL_Rect sdlRect;
-  
+
   sdlRenderer = SDL_CreateRenderer(context.window, -1, 0); 
   sdlTexture = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING,WINDOW_W,WINDOW_H); 
   
