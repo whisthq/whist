@@ -91,6 +91,7 @@ static AVCodecContext* codecToContext(AVCodec *codec) {
 // Encode frame into packet
 static AVPacket encode(AVCodecContext *EncodeContext, AVFrame *pFrame, AVPacket packet) {
   int got_output, ret;
+  av_init_packet(&packet);
   ret = avcodec_encode_video2(EncodeContext, &packet, pFrame, &got_output);
   return packet;
 }
@@ -285,8 +286,10 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
 
           packet = encode(EncodeContext, filt_frame, packet);
           SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
-          if ((sent_size = send(SENDsocket, &packet, sizeof(&packet), 0)) == SOCKET_ERROR) {
+          if ((sent_size = send(SENDsocket, &packet, sizeof(packet), 0)) == SOCKET_ERROR) {
             printf("Socket sending error \n");
+          } else {
+            printf("%d\n", sent_size);
           }
           av_free_packet(&packet);
           av_frame_free(&filt_frame);
