@@ -256,7 +256,7 @@ int32_t main(int32_t argc, char **argv) {
   printf("Send TCP Socket created.\n");
 
   // prepare the sockaddr_in structure for the send socket (server receive port)
-  user_vm_ip = "52.168.122.131"; //aws:"3.90.174.193";
+  user_vm_ip = "140.247.148.129"; //aws:"3.90.174.193";
 
 
   printf("%d\n", inet_addr(user_vm_ip));
