@@ -153,9 +153,11 @@ unsigned __stdcall renderThread(void *opaque) {
       // now that we got the de-serialized memory values of the user input, we
       // can copy it back to a FractalMessage struct
       AVPacket packet = {0};
-      av_free_packet(&packet);
+      // av_free_packet(&packet);
       av_init_packet(&packet);
       memcpy(&packet, &fmsg_char, sizeof(AVPacket));
+      printf("size of packet: %d\n", sizeof(packet));
+      printf("size of packet: %d\n", packet.size);
       pFrame = decode(context->CodecContext, pFrame, packet);
       AVPicture pict;
       pict.data[0] = context->yPlane;

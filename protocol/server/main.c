@@ -289,10 +289,7 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
           char hexa[17] = "0123456789abcdef";
           unsigned char fmsg_char[sizeof(AVPacket)];
           memcpy(fmsg_char, &packet, sizeof(AVPacket));
-          int n;
-          for(n = 0; n < sizeof(AVPacket); n++) {
-            printf("%d\n", (int) fmsg_char[n]);
-          }
+          printf("lenght of packet: %d, size of char: %d\n", packet.data, sizeof(fmsg_char));
           char fmsg_serialized[2 * sizeof(AVPacket) + 1]; // serialized array is 2x the length since hexa
 
           // loop over the char struct, convert each value to hexadecimal
