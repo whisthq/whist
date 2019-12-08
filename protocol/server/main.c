@@ -59,362 +59,135 @@ extern "C" {
 // global vars and definitions
 #define RECV_BUFFER_LEN 33 // our protocol sends packets of len 33, this prevents two packets clumping together in the socket buffer
 bool repeat = true; // global flag to keep streaming until client disconnects
-char virtual_codes[140] =
-{ 0x41,
-0x42,
-0x43,
-0x44,
-0x45,
-0x46,
-0x47,
-0x48,
-0x49,
-0x4A,
-0x4B,
-0x4C,
-0x4D,
-0x4E,
-0x4F,
-0x50,
-0x51,
-0x52,
-0x53,
-0x54,
-0x55,
-0x56,
-0x57,
-0x58,
-0x59,
-0x5A,
-0x31,
-0x32,
-0x33,
-0x34,
-0x35,
-0x36,
-0x37,
-0x38,
-0x39,
-0x30,
-0x0D,
-0x1B,
-0x08,
-0x09,
-0x20,
-0xBD,
-0xBB,
-0xDB,
-0xDD,
-0xDC,
-0xBA,
-0xDE,
-0xC0,
-0xBC,
-0xBE,
-0xBF,
-0x14,
-0x70,
-0x71,
-0x72,
-0x73,
-0x74,
-0x75,
-0x76,
-0x77,
-0x78,
-0x79,
-0x7A,
-0x7B,
-0x2C,
-0x91,
-0x13,
-0x2D,
-0x24,
-0x21,
-0x2E,
-0x23,
-0x22,
-0x27,
-0x25,
-0x28,
-0x26,
-0x90,
-0x6F,
-0x6A,
-0x6D,
-0x6B,
-0x0D,
-0x61,
-0x62,
-0x63,
-0x64,
-0x65,
-0x66,
-0x67,
-0x68,
-0x69,
-0x60,
-0xBE,
-0x5D,
-0x7C,
-0x7D,
-0x7E,
-0x7F,
-0x80,
-0x81,
-0x82,
-0xA4,
-0xAF,
-0xAE,
-0xA2,
-0xA0,
-0x12,
-0x5B,
-0xA3,
-0x12,
-0xA3,
-0xB0,
-0xB1,
-0xB2,
-0xB3,
-0xAD,
-0xB5,
-0x7FFFFFFF };
+
+
+// Create an AVCodecContext object for a given codec
+static AVCodecContext* codecToContext(AVCodec *codec) {
+  AVCodecContext* context = avcodec_alloc_context3(codec);
+  if (!context) {
+    fprintf(stderr, "Could not allocate video codec context\n");
+    exit(1);
+  }
+
+  context->width = 640;
+  context->height = 480;
+  context->time_base = (AVRational){1,60};
+  // EncodeContext->framerate = (AVRational){30,1};
+  context->gop_size = 10;
+  context->max_b_frames = 1;
+  context->pix_fmt = AV_PIX_FMT_YUV420P;
+
+  av_opt_set(context -> priv_data, "preset", "ultrafast", 0);
+  av_opt_set(context -> priv_data, "tune", "zerolatency", 0);
+
+  // and open it
+  if (avcodec_open2(context, codec, NULL) < 0) {
+    fprintf(stderr, "Could not open codec\n");
+    exit(1);
+  }
+  return context;
+}
+
+// Encode frame into packet
+static AVPacket encode(AVCodecContext *EncodeContext, AVFrame *pFrame, AVPacket packet) {
+  int got_output, ret;
+  av_init_packet(&packet);
+  ret = avcodec_encode_video2(EncodeContext, &packet, pFrame, &got_output);
+  return packet;
+}
 
 // main function to stream the video and audio from this server to the client
 unsigned __stdcall SendStream(void *SENDsocket_param) {
-  // cast the socket parameter back to socket for use
-  SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
-
-
-
-
- // Register all codecs, devices, filters with the library
+  // Initialize variables/functions
   av_register_all();
   avcodec_register_all();
   avdevice_register_all();
   avfilter_register_all();
 
-  // Codecs
+  // Create codecs, contexts, packets, dictionaries, etc.
   AVCodec *pCodecOut;
   AVCodec *pCodecInCam;
-
-  // In and out
-  AVCodecContext *pCodecCtxOut= NULL;
-  AVCodecContext *pCodecCtxInCam = NULL;
-
-  char args_cam[512]; // we'll use this in the filter_graph
-
-  int i, ret, got_output,video_stream_idx_cam;
-
-  // the frames to be used
-  AVFrame *cam_frame,*outFrame,*filt_frame;
+  AVCodecContext *ScreenCaptureContext = NULL;
+  AVFrame *cam_frame, *filt_frame;
   AVPacket packet;
-
-  // output filename
-  const char *filename = "out.h264";
-
-  AVOutputFormat *pOfmtOut = NULL;
-  AVStream *strmVdoOut = NULL;
-
-  // we will capture from a dshow device
-  // @see https://trac.ffmpeg.org/wiki/DirectShow
-  // @see http://www.ffmpeg.org/ffmpeg-devices.html#dshow
-  AVInputFormat *inFrmt= av_find_input_format("dshow");
-
-  // used to set the input options
+  AVFormatContext *pFormatCtx = NULL;
+  AVFrame *pFrame = NULL;
+  AVCodecParserContext *parser;
+  AVCodecParameters *params;
+  AVCodec *H264CodecEncode = avcodec_find_encoder(AV_CODEC_ID_H264);
+  AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
   AVDictionary *inOptions = NULL;
-
-  // set the format context
   AVFormatContext *pFormatCtxOut;
   AVFormatContext *pFormatCtxInCam;
 
-  // to create the filter graph
+
+  char args_cam[512]; 
+  int i, ret, got_output,video_stream_idx_cam;
+
+  // Initialize codec contexts
+  AVCodecContext* EncodeContext = codecToContext(H264CodecEncode);
+  AVCodecContext* DecodeContext = codecToContext(H264CodecDecode);
+
+  // Initialize variables used for screen recording
+  avcodec_parameters_alloc();
+  AVInputFormat *inFrmt= av_find_input_format("dshow");
   AVFilter *buffersrc_cam  = avfilter_get_by_name("buffer");
   AVFilter *buffersink = avfilter_get_by_name("buffersink");
-
   AVFilterInOut *outputs = avfilter_inout_alloc();
   AVFilterInOut *inputs  = avfilter_inout_alloc();
-
   AVFilterContext *buffersink_ctx;
   AVFilterContext *buffersrc_ctx_cam;
   AVFilterGraph *filter_graph;
-
   AVBufferSinkParams *buffersink_params;
-
-  // the filtergraph, string, scale keeping the height constant, and setting the pixel format
-  const char *filter_str = "scale='w=-1:h=480',format='yuv420p'"; // add padding for 16:9 and then scale to 1280x720
-
-  /////////////////////////// decoder
-
-  // create the new context
   pFormatCtxInCam = avformat_alloc_context();
+  cam_frame = av_frame_alloc();
+  filt_frame = av_frame_alloc();
+  video_stream_idx_cam = -1;
+  size_t sent_size;
 
-
-  printf("test1\n"); // run
-
-  // set input resolution
+  // Set screen recording resolution and frame rate
   // av_dict_set(&inOptions, "video_size", "1280x720", 0);
-  av_dict_set(&inOptions, "frame_rate", "30", 0);
+  av_dict_set(&inOptions, "frame_rate", "60", 0);
 
-  printf("test2\n"); // run
-
-  // input device, since we selected dshow
+  // Specify screen capture device and open decoders
   ret = avformat_open_input(&pFormatCtxInCam, "video=screen-capture-recorder", inFrmt, &inOptions);
-
-  printf("test3\n");
-
-  // lookup infor
   if(avformat_find_stream_info(pFormatCtxInCam,NULL)<0)
     return -1;
 
-  video_stream_idx_cam = -1;
-
-  // find the stream index, we'll only be encoding the video for now
-  for(i=0; i<pFormatCtxInCam->nb_streams; i++)
+  for(i=0; i < pFormatCtxInCam->nb_streams; i++)
     if(pFormatCtxInCam->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO)
       video_stream_idx_cam=i;
 
   if(video_stream_idx_cam == -1)
     return -1;
 
-  // set the coded ctx & codec
-  pCodecCtxInCam = pFormatCtxInCam->streams[video_stream_idx_cam]->codec;
-
-  pCodecInCam = avcodec_find_decoder(pCodecCtxInCam->codec_id);
+  ScreenCaptureContext = pFormatCtxInCam->streams[video_stream_idx_cam]->codec;
+  pCodecInCam = avcodec_find_decoder(ScreenCaptureContext->codec_id);
 
   if(pCodecInCam == NULL){
     fprintf(stderr,"decoder not found");
     exit(1);
   }
 
-  // open it
-  if (avcodec_open2(pCodecCtxInCam, pCodecInCam, NULL) < 0) {
+  if (avcodec_open2(ScreenCaptureContext, pCodecInCam, NULL) < 0) {
     av_log(NULL, AV_LOG_ERROR, "Cannot open video decoder for webcam\n");
     exit(1);
   }
 
-  //////////////////////// encoder
-
-  // find the format based on the filename
-  pOfmtOut = av_guess_format(NULL, filename,NULL);
-
-  pFormatCtxOut = avformat_alloc_context();
-
-  // set the codec
-  pOfmtOut->video_codec = AV_CODEC_ID_H264;
-
-  // set the output format
-  pFormatCtxOut->oformat = pOfmtOut;
-
-  snprintf(pFormatCtxOut->filename,sizeof(pFormatCtxOut->filename),"%s",filename);
-
-  // add a new video stream
-  strmVdoOut = avformat_new_stream(pFormatCtxOut,NULL);
-  if (!strmVdoOut ) {
-    fprintf(stderr, "Could not alloc stream\n");
-    exit(1);
-  }
-
-  pCodecCtxOut = strmVdoOut->codec;
-  if (!pCodecCtxOut) {
-    fprintf(stderr, "Could not allocate video codec context\n");
-    exit(1);
-  }
-
-  // set the output codec params
-  pCodecCtxOut->codec_id = pOfmtOut->video_codec;
-  pCodecCtxOut->codec_type = AVMEDIA_TYPE_VIDEO;
-
-  // pCodecCtxOut->bit_rate = 1200000;
-  pCodecCtxOut->pix_fmt = AV_PIX_FMT_YUV420P;
-  pCodecCtxOut->width = 640;
-  pCodecCtxOut->height = 480;
-  pCodecCtxOut->time_base = (AVRational){1,30};
-  // pCodecCtxOut->preset = "slow";
-
-
-  pCodecCtxOut->bit_rate = 500*1000;
-  pCodecCtxOut->bit_rate_tolerance = 0;
-  pCodecCtxOut->rc_max_rate = 0;
-  pCodecCtxOut->rc_buffer_size = 0;
-  pCodecCtxOut->gop_size = 40;
-  pCodecCtxOut->max_b_frames = 3;
-  pCodecCtxOut->b_frame_strategy = 1;
-  pCodecCtxOut->coder_type = 1;
-  pCodecCtxOut->me_cmp = 1;
-  pCodecCtxOut->me_range = 16;
-  pCodecCtxOut->qmin = 10;
-  pCodecCtxOut->qmax = 51;
-  pCodecCtxOut->scenechange_threshold = 40;
-  pCodecCtxOut->flags |= CODEC_FLAG_LOOP_FILTER;
-  // pCodecCtxOut->me_method = ME_HEX;
-  pCodecCtxOut->me_subpel_quality = 5;
-  pCodecCtxOut->i_quant_factor = 0.71;
-  pCodecCtxOut->qcompress = 0.6;
-  pCodecCtxOut->max_qdiff = 4;
-  // pCodecCtxOut->directpred = 1;
-  pCodecCtxOut->flags2 |= AV_CODEC_FLAG2_FAST;
-
-  // if the format wants global header, we'll set one
-  if(pFormatCtxOut->oformat->flags & AVFMT_GLOBALHEADER)
-    pCodecCtxOut->flags |= CODEC_FLAG_GLOBAL_HEADER;
-
-  // find the encoder
-  pCodecOut = avcodec_find_encoder(pCodecCtxOut->codec_id);
-  //avcodec_find_encoder_by_name("h264_nvenc");
-  if (!pCodecOut) {
-    fprintf(stderr, "Codec not found\n");
-    exit(1);
-  }
-
-  // and open it
-  if (avcodec_open2(pCodecCtxOut, pCodecOut,NULL) < 0) {
-    fprintf(stderr, "Could not open codec\n");
-    exit(1);
-  }
-
-  // open the file for writing
-  if (avio_open(&pFormatCtxOut->pb, filename, AVIO_FLAG_WRITE) <0) {
-    fprintf(stderr, "Could not open '%s'\n", filename);
-    exit(1);
-  }
-
-  // write the format headers
-  ret = avformat_write_header(pFormatCtxOut, NULL);
-  if(ret < 0 ){
-    fprintf(stderr, "Could not write header '%d'\n", ret);
-    exit(1);
-  }
-
-  ////////////////// create frame
-
-  // allocate frames
-  // these can be done down under also
-  cam_frame = av_frame_alloc();
-  outFrame = av_frame_alloc();
-  filt_frame = av_frame_alloc();
-
-  if (!cam_frame || !outFrame || !filt_frame) {
+  if (!cam_frame || !filt_frame) {
     fprintf(stderr, "Could not allocate video frame\n");
     exit(1);
   }
 
-  ////////////////////////// fix pix fmt
-  enum AVPixelFormat pix_fmts[] = { pCodecCtxInCam->pix_fmt,  AV_PIX_FMT_NONE};
-
-  /////////////////////////// FILTER GRAPH
-
-  // create a filter graph
+  enum AVPixelFormat pix_fmts[] = { ScreenCaptureContext->pix_fmt,  AV_PIX_FMT_NONE};
   filter_graph = avfilter_graph_alloc();
 
   snprintf(args_cam, sizeof(args_cam),
       "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
-      pCodecCtxInCam->width, pCodecCtxInCam->height, pCodecCtxInCam->pix_fmt,
-      pCodecCtxInCam->time_base.num, pCodecCtxInCam->time_base.den,
-      pCodecCtxInCam->sample_aspect_ratio.num, pCodecCtxInCam->sample_aspect_ratio.den);
+      ScreenCaptureContext->width, ScreenCaptureContext->height, ScreenCaptureContext->pix_fmt,
+      ScreenCaptureContext->time_base.num, ScreenCaptureContext->time_base.den,
+      ScreenCaptureContext->sample_aspect_ratio.num, ScreenCaptureContext->sample_aspect_ratio.den);
 
-  // input source buffer
   ret = avfilter_graph_create_filter(&buffersrc_ctx_cam, buffersrc_cam, "in",
       args_cam, NULL, filter_graph);
   if (ret < 0) {
@@ -425,7 +198,6 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
   buffersink_params = av_buffersink_params_alloc();
   buffersink_params->pixel_fmts = pix_fmts;
 
-  // output sink
   ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out",
       NULL, buffersink_params, filter_graph);
   av_free(buffersink_params);
@@ -444,7 +216,8 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
   inputs->pad_idx    = 0;
   inputs->next       = NULL;
 
-  // parse the filter string we set
+
+  const char *filter_str = "scale='640:480',format='yuv420p'";
   if ((ret = avfilter_graph_parse_ptr(filter_graph, filter_str,
           &inputs, &outputs, NULL)) < 0){
     printf("error in graph parse");
@@ -455,19 +228,14 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
     printf("error in graph config");
     exit(ret);
   }
-  //////////////////////////////DUMP
 
-  // for info stuff
-  av_dump_format(pFormatCtxInCam,0,"screen-capture-recorder",0);
-  av_dump_format(pFormatCtxOut,0,filename,1);
+  // Open codec
+  if (avcodec_open2(DecodeContext, H264CodecDecode, NULL) < 0)
+      return -1; // Could not open codec
 
-  ////////////////////////// TRANSCODE
-
-  // since a dshow is never ending, i've just a static number
-  for(i=0;i<300;i++){
+  while(repeat) {
     av_init_packet(&packet);
 
-    // get a frame from input
     ret = av_read_frame(pFormatCtxInCam,&packet);
 
     if(ret < 0){
@@ -477,9 +245,6 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
 
     // chaeck if its a avideo frame
     if(packet.stream_index == video_stream_idx_cam){
-
-      // set the dts & pts
-      // @see http://stackoverflow.com/q/6044330/651547
       packet.dts = av_rescale_q_rnd(packet.dts,
           pFormatCtxInCam->streams[video_stream_idx_cam]->time_base,
           pFormatCtxInCam->streams[video_stream_idx_cam]->codec->time_base,
@@ -489,8 +254,7 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
           pFormatCtxInCam->streams[video_stream_idx_cam]->codec->time_base,
           AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX);
 
-      // decode from the format and store in cam_frame
-      ret = avcodec_decode_video2(pCodecCtxInCam,cam_frame,&got_output,&packet);
+      ret = avcodec_decode_video2(ScreenCaptureContext,cam_frame,&got_output,&packet);
 
       cam_frame->pts = av_frame_get_best_effort_timestamp(cam_frame);
 
@@ -502,11 +266,8 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
         // add frame to filter graph
         ret = av_buffersrc_add_frame_flags(buffersrc_ctx_cam, cam_frame, 0);
 
-
-
-
         // get the frames from the filter graph
-        while(repeat){
+        while(1){
           filt_frame = av_frame_alloc();
           if ( ret < 0) {
             av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
@@ -523,153 +284,53 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
             break;
           }
 
-          // this is redundant
-          outFrame = filt_frame;
+          packet = encode(EncodeContext, filt_frame, packet);
+          SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
+          char hexa[17] = "0123456789abcdef";
+          unsigned char fmsg_char[sizeof(AVPacket)];
+          memcpy(fmsg_char, &packet, sizeof(AVPacket));
+          printf("lenght of packet: %d, size of char: %d\n", packet.data, sizeof(fmsg_char));
+          char fmsg_serialized[2 * sizeof(AVPacket) + 1]; // serialized array is 2x the length since hexa
 
-          // encode according the output format
-          ret = avcodec_encode_video2(pCodecCtxOut, &packet, outFrame, &got_output);
-          if (got_output) {
-
-            // dts, pts dance
-            packet.dts = av_rescale_q_rnd(packet.dts,
-                pFormatCtxOut->streams[video_stream_idx_cam]->codec->time_base,
-                pFormatCtxOut->streams[video_stream_idx_cam]->time_base,
-                AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX);
-
-            packet.pts = av_rescale_q_rnd(packet.pts,
-                pFormatCtxOut->streams[video_stream_idx_cam]->codec->time_base,
-                pFormatCtxOut->streams[video_stream_idx_cam]->time_base,
-                AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX);
-
-            packet.duration = av_rescale_q(packet.duration,
-                pFormatCtxOut->streams[video_stream_idx_cam]->codec->time_base,
-                pFormatCtxOut->streams[video_stream_idx_cam]->time_base
-                );
-
-
-
-
-
-            // and write it to file
-            //if(av_interleaved_write_frame(pFormatCtxOut,&packet) < 0){
-            //  fprintf(stderr,"error writing frame");
-            //  exit(1);
-            //}
-            // instead of writing to file, we write to socket
-
-
-            int sent_size;
-      if ((sent_size = send(SENDsocket, &packet, sizeof(&packet), 0)) == SOCKET_ERROR) {
-        // error, terminate thread and exit
-        printf("Send failed, terminate stream.\n");
-        _endthreadex(0);
-        return 1;
-      }
-      // printf("packet sent\n");
-
-
-
+          // loop over the char struct, convert each value to hexadecimal
+          int i;
+          for (i = 0; i < sizeof(AVPacket); i++) {
+            // converting to hexa
+            fmsg_serialized[i * 2] = hexa[fmsg_char[i] / 16];
+            fmsg_serialized[(i * 2 ) + 1] = hexa[fmsg_char[i] % 16];
           }
-          if (ret < 0){
-            av_frame_free(&filt_frame);
-            break;
+          if ((sent_size = send(SENDsocket, fmsg_serialized, strlen(fmsg_serialized), 0)) == SOCKET_ERROR) {
+            printf("Socket sending error \n");
           }
+          av_free_packet(&packet);
+          av_frame_free(&filt_frame);
         }
       }
     }
-    // free the packet everytime
     av_free_packet(&packet);
   }
 
   // flush out delayed frames
   for (got_output = 1; got_output; i++) {
-    ret = avcodec_encode_video2(pCodecCtxOut, &packet, NULL, &got_output);
+    ret = avcodec_encode_video2(EncodeContext, &packet, NULL, &got_output);
     if (ret < 0) {
       fprintf(stderr, "Error encoding frame\n");
       exit(1);
     }
-
-    if (got_output) {
-      packet.dts = av_rescale_q_rnd(packet.dts,
-          pFormatCtxOut->streams[video_stream_idx_cam]->codec->time_base,
-          pFormatCtxOut->streams[video_stream_idx_cam]->time_base,
-          AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX);
-
-      packet.pts = av_rescale_q_rnd(packet.pts,
-          pFormatCtxOut->streams[video_stream_idx_cam]->codec->time_base,
-          pFormatCtxOut->streams[video_stream_idx_cam]->time_base,
-          AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX);
-
-      packet.duration = av_rescale_q(packet.duration,
-          pFormatCtxOut->streams[video_stream_idx_cam]->codec->time_base,
-          pFormatCtxOut->streams[video_stream_idx_cam]->time_base
-          );
-
-      if(pCodecCtxOut->coded_frame->key_frame)
-        packet.flags |= AV_PKT_FLAG_KEY;
-
-      ret = av_interleaved_write_frame(pFormatCtxOut,&packet);
-      if(ret < 0 ){
-        exit(1);
-      }
+    if (got_output) {    
       av_free_packet(&packet);
     }
   }
 
-  ret = av_write_trailer(pFormatCtxOut);
-  if(ret < 0 ){
-    exit(1);
-  }
 
+  // Free the YUV frame
+  av_frame_free(&pFrame);
+  // Close the codec
+  avcodec_close(DecodeContext);
+  avcodec_close(EncodeContext);
 
-
-
-
-
-
-
-
-
-
-
-  /////////////// close everything
-  avcodec_close(strmVdoOut->codec);
-  avcodec_close(pCodecCtxInCam);
-  avcodec_close(pCodecCtxOut);
-  for(i = 0; i < pFormatCtxOut->nb_streams; i++) {
-    av_freep(&pFormatCtxOut->streams[i]->codec);
-    av_freep(&pFormatCtxOut->streams[i]);
-  }
-  avio_close(pFormatCtxOut->pb);
-  av_free(pFormatCtxOut);
-  av_free(pFormatCtxInCam);
-  av_dict_free(&inOptions);
-
-
-
-
-
-  /*
-  // message to send to the client
-  char *message = "Hey from the server!";
-  int sent_size; // size of data sent
-  // loop indefinitely to keep sending to the client until repeat set to fasle
-  while (repeat) {
-    // send data message to client
-    if ((sent_size = send(SENDsocket, message, strlen(message), 0)) == SOCKET_ERROR) {
-      // error, terminate thread and exit
-      printf("Send failed, terminate stream.\n");
-      _endthreadex(0);
-      return 1;
-    }
-    // 5 seconds sleep to see what's happening in the terminal
-    Sleep(5000L);
-  }
-  */
-  // connection interrupted by setting repeat to false, exit protocol
-  printf("Connection interrupted.\n");
-
-  // terminate thread as we are done with the stream
+  // Close the video file
+  avformat_close_input(&pFormatCtx);
   _endthreadex(0);
   return 0;
 }

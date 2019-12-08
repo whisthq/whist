@@ -32,10 +32,10 @@
 #include "include/libavutil/avutil.h"
 #include "include/libavfilter/buffersink.h"
 #include "include/libavfilter/buffersrc.h"
-
-
+#include "include/libswscale/swscale.h"
 #define SDL_MAIN_HANDLED
-#include "SDL2/SDL.h"
+#include "include/SDL2/SDL.h"
+#include "include/SDL2/SDL_thread.h"
 
 #define WINDOW_W 640
 #define WINDOW_H 480
@@ -58,109 +58,138 @@
 #endif
 
 #ifdef __cplusplus
-//extern "C" {
+extern "C" {
 #endif
 
 // global vars and definitions
-#define RECV_BUFFER_LEN 5000 // max len of receive buffer
+#define RECV_BUFFER_LEN 100000 // max len of receive buffer
 
-struct SDL_Context {
-  bool done;
-  SDL_Window *window;
-  SDL_Surface *surface;
-  SDL_Cursor *cursor;
-  SOCKET RECVSocket;
-  SDL_AudioDeviceID audio;
-};
 bool repeat = true; // global flag to stream until disconnection
 
-// main thread function to receive server video and audio stream and process it
-static int32_t renderThread(struct SDL_Context SDL_Context) {	
-  // initiate buffer to store the reply
-   SDL_GLContext *gl = SDL_GL_CreateContext(SDL_Context.window);
-   SDL_GL_SetSwapInterval(1);
-  while (repeat) {
-    int recv_size;
-    char *server_reply[RECV_BUFFER_LEN];
-    AVCodec *codec;
-    AVCodecContext *context= NULL;
-    int frame_count;
-    AVFrame *frame;
-    AVFormatContext *ifmt_ctx = NULL;
-    int len, got_frame, ret;
-    AVCodecParserContext *pCodecParserCtx=NULL;
+struct context {
+    Uint8 yPlane;
+    Uint8 uPlane;
+    Uint8 vPlane;
+    int uvPitch;
+    AVCodecContext* CodecContext;
+    SDL_Renderer* Renderer;
+    SDL_Texture* Texture;
+    struct SwsContext* SwsContext;
+    SOCKET Socket;
+};
 
-    av_register_all();
-    avformat_network_init();
-
-    // while stream is on, listen for messages
-    codec = avcodec_find_decoder(AV_CODEC_ID_H264);
-     if (!codec) {
-         printf("Codec not found\n");
-         exit(1);
-     }
-     context = avcodec_alloc_context3(codec);
-     if (!context) {
-         printf("Could not allocate video codec context\n");
-         exit(1);
-     }
-     // if(codec->capabilities&CODEC_CAP_TRUNCATED)
-     //     c->flags|= CODEC_FLAG_TRUNCATED; /* we do not send complete frames */
-
-    pCodecParserCtx=av_parser_init(AV_CODEC_ID_H264);
-    if (!pCodecParserCtx){
-      printf("Could not allocate video parser context\n");
-      return -1;
-    }
-
-     if (avcodec_open2(context, codec, NULL) < 0) {
-         printf("Could not open codec\n");
-         exit(1);
-     }
-     frame = av_frame_alloc();
-     if (!frame) {
-         printf("Could not allocate video frame\n");
-         exit(1);
-     }
-    // query for packets reception indefinitely via recv until repeat set to false
-    recv_size = recv(SDL_Context.RECVSocket, server_reply, RECV_BUFFER_LEN, 0);
-    printf("bytes received: %d, server reply size: %d\n", recv_size, sizeof(server_reply));
-    AVPacket packet;
-    av_init_packet(&packet);
-
-    uint8_t udp_array[sizeof(server_reply)];
-    packet.data = udp_array;
-    memcpy(packet.data, &server_reply, sizeof(server_reply));
-    packet.size = sizeof(server_reply);
-    unsigned char in_buffer[4096 + 100]={0};
-    unsigned char *cur_ptr;
-    cur_ptr=in_buffer;
-    len = av_parser_parse2(
-      pCodecParserCtx, context,
-      &packet.data, &packet.size,
-      cur_ptr, 4096, 
-      AV_NOPTS_VALUE, AV_NOPTS_VALUE, AV_NOPTS_VALUE);
-    ret = avcodec_send_packet(context, &packet);
-    while(ret >= 0) {
-      ret = avcodec_receive_frame(context, frame);
-      // if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-      //   printf("frame error");
-      // } else {
-      //   printf("frame received");
-      // }
-    }
-    // ret = avcodec_decode_video2(context, frame, &got_frame, &packet);
-    printf("%d\n", got_frame);
-    if(got_frame + 1) {
-      printf("got frame!");
-    }
+static AVCodecContext* codecToContext(AVCodec *codec) {
+  AVCodecContext* context = avcodec_alloc_context3(codec);
+  if (!context) {
+    fprintf(stderr, "Could not allocate video codec context\n");
+    exit(1);
   }
-  // connection interrupted by setting repeat to false, exit protocol
-  printf("Connection interrupted.\n");
 
-	// terminate thread as we are done with the stream
-	_endthreadex(0);
-	return 0;
+  context->width = 640;
+  context->height = 480;
+  context->time_base = (AVRational){1,60};
+  // EncodeContext->framerate = (AVRational){30,1};
+  context->gop_size = 10;
+  context->max_b_frames = 1;
+  context->pix_fmt = AV_PIX_FMT_YUV420P;
+
+  av_opt_set(context -> priv_data, "preset", "ultrafast", 0);
+  av_opt_set(context -> priv_data, "tune", "zerolatency", 0);
+
+  // and open it
+  if (avcodec_open2(context, codec, NULL) < 0) {
+    fprintf(stderr, "Could not open codec\n");
+    exit(1);
+  }
+  return context;
+}
+
+// Decode packet into frame
+static AVFrame* decode(AVCodecContext *DecodeContext, AVFrame *pFrame, AVPacket packet) {
+  int got_output, ret;
+  ret = avcodec_decode_video2(DecodeContext, pFrame, &got_output, &packet);
+  printf("Decode Status: %d\n", got_output);
+  return pFrame;
+}
+
+// main thread function to receive server video and audio stream and process it
+unsigned __stdcall renderThread(void *opaque) {
+  int recv_size;
+  AVCodecParserContext* parser;
+  struct context* context = (struct context *) opaque;
+  char* server_reply[RECV_BUFFER_LEN];
+  AVFrame *pFrame = NULL;
+  pFrame = av_frame_alloc();
+  // parser = av_parser_init(context->CodecContext->codec_id);
+  char *client_action_buffer[RECV_BUFFER_LEN];
+  char hexa[] = "0123456789abcdef"; // array of hexadecimal values + null character for deserializing
+
+  // while stream is on, listen for messages
+  int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
+  int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
+  while(repeat) {
+    recv_size = recv(context->Socket, client_action_buffer, RECV_BUFFER_LEN, 0);
+    printf("%d\n", recv_size);
+    if (recv_size != 0) {
+      // the packet we receive is the FractalMessage struct serialized to hexadecimal,
+      // we need to deserialize it to feed it to the Windows API
+      unsigned char fmsg_char[sizeof(AVPacket)]; // array to hold the hexa values in char (decimal) format
+
+      // first, we need to copy it to a char[] for it to be iterable
+      char iterable_buffer[RECV_BUFFER_LEN] = "";
+      strncpy(iterable_buffer, client_action_buffer, RECV_BUFFER_LEN);
+
+      // now we iterate over the length of the FractalMessage struct and fill an
+      // array with the decimal value conversion of the hex we received
+      int i, index_0, index_1; // tmp
+      for (i = 0; i < sizeof(AVPacket); i++) {
+          // find index of the two characters for the current hexadecimal value
+        index_0 = strchr(hexa, iterable_buffer[i * 2]) - hexa;
+        index_1 = strchr(hexa, iterable_buffer[(i * 2) + 1]) - hexa;
+
+        // now convert back to decimal and store in array
+        fmsg_char[i] = index_0 * 16 + index_1; // conversion formula
+      }
+      // now that we got the de-serialized memory values of the user input, we
+      // can copy it back to a FractalMessage struct
+      AVPacket packet = {0};
+      // av_free_packet(&packet);
+      av_init_packet(&packet);
+      memcpy(&packet, &fmsg_char, sizeof(AVPacket));
+      printf("size of packet: %d\n", sizeof(packet));
+      printf("size of packet: %d\n", packet.size);
+      pFrame = decode(context->CodecContext, pFrame, packet);
+      AVPicture pict;
+      pict.data[0] = context->yPlane;
+      pict.data[1] = context->uPlane;
+      pict.data[2] = context->vPlane;
+      pict.linesize[0] = context->CodecContext->width;
+      pict.linesize[1] = context->uvPitch;
+      pict.linesize[2] = context->uvPitch;
+
+      sws_scale(context->SwsContext, (uint8_t const * const *) pFrame->data,
+              pFrame->linesize, 0, context->CodecContext->height, pict.data,
+              pict.linesize);
+
+      SDL_UpdateYUVTexture(
+              context->Texture,
+              NULL,
+              context->yPlane,
+              context->CodecContext->width,
+              context->uPlane,
+              context->uvPitch,
+              context->vPlane,
+              context->uvPitch
+          );
+
+      SDL_RenderClear(context->Renderer);
+      SDL_RenderCopy(context->Renderer, context->Texture, NULL, NULL);
+      SDL_RenderPresent(context->Renderer);
+    }
+
+  }
+
+  return 0;
 }
 
 // main client function
@@ -224,7 +253,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // all good, we have a user and the VM IP written, time to set up the sockets
   // socket environment variables
-  SOCKET RECVSocket, SENDsocket; // socket file descriptors
+  SOCKET RECVSocket, SENDSocket; // socket file descriptors
   struct sockaddr_in clientRECV, serverRECV; // this client receive port the server streams to, and the server receive port this client streams to
   int bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
@@ -247,8 +276,8 @@ int32_t main(int32_t argc, char **argv) {
   // AF_INET = IPv4
   // SOCK_STREAM = TCP Socket
   // IPPROTO_TCP = TCP protocol
-  SENDsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (SENDsocket == INVALID_SOCKET || SENDsocket < 0) { // Windows & Unix cases
+  SENDSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (SENDSocket == INVALID_SOCKET || SENDSocket < 0) { // Windows & Unix cases
     // if can't create socket, return
     printf("Could not create Send TCP socket.\n");
     return 4;
@@ -256,20 +285,20 @@ int32_t main(int32_t argc, char **argv) {
   printf("Send TCP Socket created.\n");
 
   // prepare the sockaddr_in structure for the send socket (server receive port)
-  user_vm_ip = "52.168.122.131"; //aws:"3.90.174.193";
+  user_vm_ip = "140.247.148.129"; //aws:"3.90.174.193";
 
 
   printf("%d\n", inet_addr(user_vm_ip));
-	serverRECV.sin_family = AF_INET; // IPv4
+  serverRECV.sin_family = AF_INET; // IPv4
   serverRECV.sin_addr.s_addr = inet_addr(user_vm_ip); // VM (server) IP received from authenticating
   serverRECV.sin_port = htons(config.serverPortRECV); // initial default port 48888
 
-	// connect the client send socket to the server receive port (TCP)
-	char *connect_status = connect(SENDsocket, (struct sockaddr *) &serverRECV, sizeof(serverRECV));
-	if (connect_status == SOCKET_ERROR || connect_status < 0) {
+  // connect the client send socket to the server receive port (TCP)
+  char *connect_status = connect(SENDSocket, (struct sockaddr *) &serverRECV, sizeof(serverRECV));
+  if (connect_status == SOCKET_ERROR || connect_status < 0) {
     printf("Could not connect to the VM (server).\n");
     return 5;
-	}
+  }
   printf("Connected.\n");
 
   // now that we're connected, we need to create our receiving UDP socket
@@ -310,59 +339,94 @@ int32_t main(int32_t argc, char **argv) {
   // now that everything is ready for the communication sockets, we need to init
   // SDL to be ready to process user inputs and display the stream
   // SDL vars for displaying
-  SDL_Surface *imageSurface = NULL;
-  SDL_Surface *windowSurface = NULL;
-  SDL_Window *window = NULL;
 
-  // init SDL
-  if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-      printf("SDL init error.\n");
-      return 5;
+  AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
+  AVCodecContext* DecodeContext = codecToContext(H264CodecDecode);
+  SDL_Event event;
+  SDL_Window *screen;
+  SDL_Renderer *renderer;
+  SDL_Texture *texture;
+  Uint8 *yPlane, *uPlane, *vPlane;
+  size_t yPlaneSz, uvPlaneSz;
+  struct SwsContext *sws_ctx = NULL;
+  int got_output,video_stream_idx_cam, videoStream, frameFinished, uvPitch;
+  struct context context = {0};
+
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+      fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+      exit(1);
   }
-  printf("SDL initialized.\n");
+
+  screen = SDL_CreateWindow(
+          "Fractal",
+          SDL_WINDOWPOS_UNDEFINED,
+          SDL_WINDOWPOS_UNDEFINED,
+          DecodeContext->width,
+          DecodeContext->height,
+          0
+      );
+
+  if (!screen) {
+      fprintf(stderr, "SDL: could not create window - exiting\n");
+      exit(1);
+  }
+
+  renderer = SDL_CreateRenderer(screen, -1, 0);
+  if (!renderer) {
+      fprintf(stderr, "SDL: could not create renderer - exiting\n");
+      exit(1);
+  }
+  // Allocate a place to put our YUV image on that screen
+  texture = SDL_CreateTexture(
+          renderer,
+          SDL_PIXELFORMAT_YV12,
+          SDL_TEXTUREACCESS_STREAMING,
+          DecodeContext->width,
+          DecodeContext->height
+      );
+  if (!texture) {
+      fprintf(stderr, "SDL: could not create texture - exiting\n");
+      exit(1);
+  }
+  // initialize SWS context for software scaling
+  sws_ctx = sws_getContext(DecodeContext->width, DecodeContext->height,
+          DecodeContext->pix_fmt, DecodeContext->width, DecodeContext->height,
+          AV_PIX_FMT_YUV420P,
+          SWS_BILINEAR,
+          NULL,
+          NULL,
+          NULL);
+
+  // set up YV12 pixel array (12 bits per pixel)
+  yPlaneSz = DecodeContext->width * DecodeContext->height;
+  uvPlaneSz = DecodeContext->width * DecodeContext->height / 4;
+  yPlane = (Uint8*)malloc(yPlaneSz);
+  uPlane = (Uint8*)malloc(uvPlaneSz);
+  vPlane = (Uint8*)malloc(uvPlaneSz);
+  if (!yPlane || !uPlane || !vPlane) {
+      fprintf(stderr, "Could not allocate pixel buffers - exiting\n");
+      exit(1);
+  }
+
+  uvPitch = DecodeContext->width / 2;
 
   // TODO LATER: function to call to adapt window size to client
 
-  // set the SDL window properties
-  struct SDL_Context context = {0};
-  context.window = SDL_CreateWindow("Fractal", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_W, WINDOW_H, SDL_WINDOW_OPENGL);
-  int32_t glW = 0;
-  SDL_GL_GetDrawableSize(context.window, &glW, NULL);
-
-  SDL_Renderer* sdlRenderer;
-  SDL_Texture* sdlTexture;
-  SDL_Rect sdlRect;
-
-  sdlRenderer = SDL_CreateRenderer(context.window, -1, 0); 
-  sdlTexture = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING,WINDOW_W,WINDOW_H); 
-  
-  sdlRect.x=0;
-  sdlRect.y=0;
-  sdlRect.w=WINDOW_W;
-  sdlRect.h=WINDOW_H;
-
-  // windowSurface = SDL_GetWindowSurface(context.window);
-  // if (window == NULL) {
-  //     printf("SDL window error.\n");
-  //     return 6;
-  // }
-
-  // now that SDL is ready, time to start the protocol
-  // the user inputs sending is done in thread 1 (this thread)  while the video
-  // receiving from the server is done in a second thread
-  // launch thread #2 to start streaming video & audio from server
-  // ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveStream, &RECVsocket, 0, NULL);
-
-  // all good there, time to start sending user input
-  // define SDL variable to listen for user inputs
-  SDL_Event msg;
-  context.RECVSocket = RECVSocket;
+  context.yPlane = yPlane;
+  context.uPlane = uPlane;
+  context.vPlane = vPlane;
+  context.uvPitch = uvPitch;
+  context.CodecContext = DecodeContext;
+  context.Renderer = renderer;
+  context.Texture = texture;
+  context.SwsContext = sws_ctx;
+  context.Socket = RECVSocket;
   SDL_Thread *render_thread = SDL_CreateThread(renderThread, "renderThread", &context);
-
 //   clock_t start, end;
   // double cpu_time_used;
 
   // loop indefinitely to keep sending to the server until repeat set to fasl
+  SDL_Event msg;
   while (repeat) {
     // poll for an SDL event
     if (SDL_PollEvent(&msg)) {
@@ -374,10 +438,6 @@ int32_t main(int32_t argc, char **argv) {
       FractalMessage fmsg = {0};
 
       switch (msg.type) {
-        // SDL quit event, exit switch
-        case SDL_QUIT:
-          repeat = false; // used clicked to close the window, close protocol
-          break;
         // SDL event for keyboard key pressed or released
         case SDL_KEYDOWN:
         case SDL_KEYUP:
@@ -412,7 +472,14 @@ int32_t main(int32_t argc, char **argv) {
           fmsg.mouseWheel.y = msg.wheel.y;
           // printf("Mouse Scroll Position: (%d, %d)\n", fmsg.mouseWheel.x, fmsg.mouseWheel.y); // print statement to see what's happening
           break;
-
+        case SDL_QUIT:
+          repeat = false;
+          SDL_DestroyTexture(texture);
+          SDL_DestroyRenderer(renderer);
+          SDL_DestroyWindow(screen);
+          SDL_Quit();
+          exit(0);
+          break;
         // TODO LATER: clipboard switch case
       }
       // we broke out of the listen loop, so we have an event
@@ -442,7 +509,7 @@ int32_t main(int32_t argc, char **argv) {
 
         // user input is serialized, ready to stream over the network
         // send data message to server
-        if (send(SENDsocket, fmsg_serialized, strlen(fmsg_serialized), 0) < 0) {
+        if (send(SENDSocket, fmsg_serialized, strlen(fmsg_serialized), 0) < 0) {
           // error sending, terminate
           printf("Send failed with error code: %d\n", WSAGetLastError());
           return 7;
@@ -450,23 +517,12 @@ int32_t main(int32_t argc, char **argv) {
         // printf("User action sent.\n");
       }
     }
-    // packet sent, let's update the SDL surface
-    SDL_BlitSurface(imageSurface, NULL, windowSurface, NULL);
-    SDL_UpdateWindowSurface(window);
   }
   // left the while loop, protocol received instruction to terminate
   printf("Connection interrupted.\n");
 
   // TODO LATER: Split this file into Windows/Unix and do threads for Unix for max efficiency
 
-  // client or server disconnected, close everything
-  // free SDL and set variables to null
-  SDL_FreeSurface(imageSurface);
-  SDL_FreeSurface(windowSurface);
-
-  // terminate SDL
-  SDL_DestroyWindow(window);
-  SDL_Quit();
 
   // Windows case, closing sockets
   #if defined(_WIN32)
@@ -475,11 +531,11 @@ int32_t main(int32_t argc, char **argv) {
 
     // close the sockets
     closesocket(RECVSocket);
-    closesocket(SENDsocket);
+    closesocket(SENDSocket);
     WSACleanup(); // close Windows socket library
   #else
     close(RECVSocket);
-    close(SENDsocket);
+    close(SENDSocket);
   #endif
 
   // write close time to server, set loggedin to false and return
@@ -494,7 +550,7 @@ int32_t main(int32_t argc, char **argv) {
 
 // re-enable Windows warning, if Windows client
 #if defined(_WIN32)
-	#pragma warning(default: 4201)
+  #pragma warning(default: 4201)
   #pragma warning(default: 4024)
   #pragma warning(default: 4113)
   #pragma warning(default: 4244)
