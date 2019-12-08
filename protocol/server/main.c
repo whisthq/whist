@@ -286,10 +286,24 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
 
           packet = encode(EncodeContext, filt_frame, packet);
           SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
-          if ((sent_size = send(SENDsocket, &packet, sizeof(packet), 0)) == SOCKET_ERROR) {
+          char hexa[17] = "0123456789abcdef";
+          unsigned char fmsg_char[sizeof(AVPacket)];
+          memcpy(fmsg_char, &packet, sizeof(AVPacket));
+          int n;
+          for(n = 0; n < sizeof(AVPacket); n++) {
+            printf("%d\n", (int) fmsg_char[n]);
+          }
+          char fmsg_serialized[2 * sizeof(AVPacket) + 1]; // serialized array is 2x the length since hexa
+
+          // loop over the char struct, convert each value to hexadecimal
+          int i;
+          for (i = 0; i < sizeof(AVPacket); i++) {
+            // converting to hexa
+            fmsg_serialized[i * 2] = hexa[fmsg_char[i] / 16];
+            fmsg_serialized[(i * 2 ) + 1] = hexa[fmsg_char[i] % 16];
+          }
+          if ((sent_size = send(SENDsocket, fmsg_serialized, strlen(fmsg_serialized), 0)) == SOCKET_ERROR) {
             printf("Socket sending error \n");
-          } else {
-            printf("%d\n", sent_size);
           }
           av_free_packet(&packet);
           av_frame_free(&filt_frame);

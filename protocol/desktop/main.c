@@ -62,7 +62,7 @@ extern "C" {
 #endif
 
 // global vars and definitions
-#define RECV_BUFFER_LEN 50000000 // max len of receive buffer
+#define RECV_BUFFER_LEN 100000 // max len of receive buffer
 
 bool repeat = true; // global flag to stream until disconnection
 
@@ -108,63 +108,86 @@ static AVCodecContext* codecToContext(AVCodec *codec) {
 static AVFrame* decode(AVCodecContext *DecodeContext, AVFrame *pFrame, AVPacket packet) {
   int got_output, ret;
   ret = avcodec_decode_video2(DecodeContext, pFrame, &got_output, &packet);
-  printf("%d\n", got_output);
+  printf("Decode Status: %d\n", got_output);
   return pFrame;
 }
 
 // main thread function to receive server video and audio stream and process it
-static int32_t renderThread(void *opaque) {
-  printf("starting to render!");
+unsigned __stdcall renderThread(void *opaque) {
   int recv_size;
-  AVPacket packet;
   AVCodecParserContext* parser;
-  struct context context = *(struct context *) opaque;
+  struct context* context = (struct context *) opaque;
   char* server_reply[RECV_BUFFER_LEN];
-  printf("starting to render!");
   AVFrame *pFrame = NULL;
   pFrame = av_frame_alloc();
-  av_init_packet(&packet);
-  parser = av_parser_init(context.CodecContext->codec_id);
+  // parser = av_parser_init(context->CodecContext->codec_id);
+  char *client_action_buffer[RECV_BUFFER_LEN];
+  char hexa[] = "0123456789abcdef"; // array of hexadecimal values + null character for deserializing
 
-  recv_size = recv(context.Socket, server_reply, RECV_BUFFER_LEN, 0);
-  // int ret = av_parser_parse2(parser, context->CodecContext,
-  //   packet.data, 
-  //   packet.size,
-  //   server_reply,
-  //   sizeof(server_reply),
-  //   AV_NOPTS_VALUE,
-  //   AV_NOPTS_VALUE,
-  //   0);
-  // pFrame = decode(context->CodecContext, pFrame, packet);
+  // while stream is on, listen for messages
+  int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
+  int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
+  while(repeat) {
+    recv_size = recv(context->Socket, client_action_buffer, RECV_BUFFER_LEN, 0);
+    printf("%d\n", recv_size);
+    if (recv_size != 0) {
+      // the packet we receive is the FractalMessage struct serialized to hexadecimal,
+      // we need to deserialize it to feed it to the Windows API
+      unsigned char fmsg_char[sizeof(AVPacket)]; // array to hold the hexa values in char (decimal) format
 
-  // AVPicture pict;
-  // pict.data[0] = context->yPlane;
-  // pict.data[1] = context->uPlane;
-  // pict.data[2] = context->vPlane;
-  // pict.linesize[0] = context->CodecContext->width;
-  // pict.linesize[1] = context->uvPitch;
-  // pict.linesize[2] = context->uvPitch;
+      // first, we need to copy it to a char[] for it to be iterable
+      char iterable_buffer[RECV_BUFFER_LEN] = "";
+      strncpy(iterable_buffer, client_action_buffer, RECV_BUFFER_LEN);
 
-  // sws_scale(context->SwsContext, (uint8_t const * const *) pFrame->data,
-  //         pFrame->linesize, 0, context->CodecContext->height, pict.data,
-  //         pict.linesize);
+      // now we iterate over the length of the FractalMessage struct and fill an
+      // array with the decimal value conversion of the hex we received
+      int i, index_0, index_1; // tmp
+      for (i = 0; i < sizeof(AVPacket); i++) {
+          // find index of the two characters for the current hexadecimal value
+        index_0 = strchr(hexa, iterable_buffer[i * 2]) - hexa;
+        index_1 = strchr(hexa, iterable_buffer[(i * 2) + 1]) - hexa;
 
-  // SDL_UpdateYUVTexture(
-  //         context->Texture,
-  //         NULL,
-  //         context->yPlane,
-  //         context->CodecContext->width,
-  //         context->uPlane,
-  //         context->uvPitch,
-  //         context->vPlane,
-  //         context->uvPitch
-  //     );
+        // now convert back to decimal and store in array
+        fmsg_char[i] = index_0 * 16 + index_1; // conversion formula
+      }
+      // now that we got the de-serialized memory values of the user input, we
+      // can copy it back to a FractalMessage struct
+      AVPacket packet = {0};
+      av_free_packet(&packet);
+      av_init_packet(&packet);
+      memcpy(&packet, &fmsg_char, sizeof(AVPacket));
+      pFrame = decode(context->CodecContext, pFrame, packet);
+      AVPicture pict;
+      pict.data[0] = context->yPlane;
+      pict.data[1] = context->uPlane;
+      pict.data[2] = context->vPlane;
+      pict.linesize[0] = context->CodecContext->width;
+      pict.linesize[1] = context->uvPitch;
+      pict.linesize[2] = context->uvPitch;
 
-  // SDL_RenderClear(context->Renderer);
-  // SDL_RenderCopy(context->Renderer, context->Texture, NULL, NULL);
-  // SDL_RenderPresent(context->Renderer);
+      sws_scale(context->SwsContext, (uint8_t const * const *) pFrame->data,
+              pFrame->linesize, 0, context->CodecContext->height, pict.data,
+              pict.linesize);
 
-	return 0;
+      SDL_UpdateYUVTexture(
+              context->Texture,
+              NULL,
+              context->yPlane,
+              context->CodecContext->width,
+              context->uPlane,
+              context->uvPitch,
+              context->vPlane,
+              context->uvPitch
+          );
+
+      SDL_RenderClear(context->Renderer);
+      SDL_RenderCopy(context->Renderer, context->Texture, NULL, NULL);
+      SDL_RenderPresent(context->Renderer);
+    }
+
+  }
+
+  return 0;
 }
 
 // main client function
@@ -228,7 +251,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // all good, we have a user and the VM IP written, time to set up the sockets
   // socket environment variables
-  SOCKET RECVSocket, SENDsocket; // socket file descriptors
+  SOCKET RECVSocket, SENDSocket; // socket file descriptors
   struct sockaddr_in clientRECV, serverRECV; // this client receive port the server streams to, and the server receive port this client streams to
   int bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
@@ -251,8 +274,8 @@ int32_t main(int32_t argc, char **argv) {
   // AF_INET = IPv4
   // SOCK_STREAM = TCP Socket
   // IPPROTO_TCP = TCP protocol
-  SENDsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (SENDsocket == INVALID_SOCKET || SENDsocket < 0) { // Windows & Unix cases
+  SENDSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (SENDSocket == INVALID_SOCKET || SENDSocket < 0) { // Windows & Unix cases
     // if can't create socket, return
     printf("Could not create Send TCP socket.\n");
     return 4;
@@ -264,16 +287,16 @@ int32_t main(int32_t argc, char **argv) {
 
 
   printf("%d\n", inet_addr(user_vm_ip));
-	serverRECV.sin_family = AF_INET; // IPv4
+  serverRECV.sin_family = AF_INET; // IPv4
   serverRECV.sin_addr.s_addr = inet_addr(user_vm_ip); // VM (server) IP received from authenticating
   serverRECV.sin_port = htons(config.serverPortRECV); // initial default port 48888
 
-	// connect the client send socket to the server receive port (TCP)
-	char *connect_status = connect(SENDsocket, (struct sockaddr *) &serverRECV, sizeof(serverRECV));
-	if (connect_status == SOCKET_ERROR || connect_status < 0) {
+  // connect the client send socket to the server receive port (TCP)
+  char *connect_status = connect(SENDSocket, (struct sockaddr *) &serverRECV, sizeof(serverRECV));
+  if (connect_status == SOCKET_ERROR || connect_status < 0) {
     printf("Could not connect to the VM (server).\n");
     return 5;
-	}
+  }
   printf("Connected.\n");
 
   // now that we're connected, we need to create our receiving UDP socket
@@ -351,7 +374,6 @@ int32_t main(int32_t argc, char **argv) {
       fprintf(stderr, "SDL: could not create renderer - exiting\n");
       exit(1);
   }
-  printf("here");
   // Allocate a place to put our YUV image on that screen
   texture = SDL_CreateTexture(
           renderer,
@@ -397,10 +419,7 @@ int32_t main(int32_t argc, char **argv) {
   context.Texture = texture;
   context.SwsContext = sws_ctx;
   context.Socket = RECVSocket;
-  printf("here");
   SDL_Thread *render_thread = SDL_CreateThread(renderThread, "renderThread", &context);
-  printf("Failed: %s\n", SDL_GetError());
-  printf("here");
 //   clock_t start, end;
   // double cpu_time_used;
 
@@ -488,7 +507,7 @@ int32_t main(int32_t argc, char **argv) {
 
         // user input is serialized, ready to stream over the network
         // send data message to server
-        if (send(SENDsocket, fmsg_serialized, strlen(fmsg_serialized), 0) < 0) {
+        if (send(SENDSocket, fmsg_serialized, strlen(fmsg_serialized), 0) < 0) {
           // error sending, terminate
           printf("Send failed with error code: %d\n", WSAGetLastError());
           return 7;
@@ -510,11 +529,11 @@ int32_t main(int32_t argc, char **argv) {
 
     // close the sockets
     closesocket(RECVSocket);
-    closesocket(SENDsocket);
+    closesocket(SENDSocket);
     WSACleanup(); // close Windows socket library
   #else
     close(RECVSocket);
-    close(SENDsocket);
+    close(SENDSocket);
   #endif
 
   // write close time to server, set loggedin to false and return
@@ -529,7 +548,7 @@ int32_t main(int32_t argc, char **argv) {
 
 // re-enable Windows warning, if Windows client
 #if defined(_WIN32)
-	#pragma warning(default: 4201)
+  #pragma warning(default: 4201)
   #pragma warning(default: 4024)
   #pragma warning(default: 4113)
   #pragma warning(default: 4244)
