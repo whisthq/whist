@@ -120,8 +120,6 @@ unsigned __stdcall renderThread(void *opaque) {
   struct context* context = (struct context *) opaque;
   AVFrame *pFrame = NULL;
   pFrame = av_frame_alloc();
-  // parser = av_parser_init(context->CodecContext->codec_id);
-  uint8_t *client_action_buffer = malloc(sizeof(uint8_t));
   // char hexa[] = "0123456789abcdef"; // array of hexadecimal values + null character for deserializing
 
   // while stream is on, listen for messages
@@ -129,12 +127,12 @@ unsigned __stdcall renderThread(void *opaque) {
   int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
   while(repeat) {
     int addrSize = sizeof(context->Address);
-    memset(client_action_buffer, 0, RECV_BUFFER_LEN);
-    printf("packet size: %d", sizeof(client_action_buffer));
-    recv_size = recvfrom(context->Socket, client_action_buffer, sizeof(*client_action_buffer), 0, &(context->Address), &addrSize);
+    char buff[100000];
+    recv_size = recv(context->Socket, buff, 100000, 0);
     if(recv_size == SOCKET_ERROR) {
       printf("Error: %d\n", WSAGetLastError());
     } else {
+      printf("size received: %d\n", recv_size);
       // the packet we receive is the FractalMessage struct serialized to hexadecimal,
       // we need to deserialize it to feed it to the Windows API
       // unsigned char fmsg_char[sizeof(AVPacket)]; // array to hold the hexa values in char (decimal) format
@@ -160,9 +158,8 @@ unsigned __stdcall renderThread(void *opaque) {
       // av_free_packet(&packet);
       av_init_packet(&packet);
       // memcpy(&packet, &fmsg_char, sizeof(AVPacket));
-      packet.data = client_action_buffer;
-      packet.size = strlen(client_action_buffer);
-      printf("packet size:", *client_action_buffer);
+      packet.data = buff;
+      packet.size = strlen(recv_size);
       pFrame = decode(context->CodecContext, pFrame, packet);
       AVPicture pict;
       pict.data[0] = context->yPlane;

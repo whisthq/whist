@@ -287,7 +287,9 @@ unsigned __stdcall SendStream(void *opaque) {
             break;
           }
 
-          packet = encode(EncodeContext, filt_frame, packet);
+          // packet = encode(EncodeContext, filt_frame, packet);
+
+          ret = avcodec_encode_video2(EncodeContext, &packet, filt_frame, &got_output);
           struct SocketContext* sendContext = (struct SocketContext*) opaque;
           // char hexa[17] = "0123456789abcdef";
           // unsigned char fmsg_char[sizeof(AVPacket)];
@@ -302,8 +304,9 @@ unsigned __stdcall SendStream(void *opaque) {
           //   fmsg_serialized[i * 2] = hexa[fmsg_char[i] / 16];
           //   fmsg_serialized[(i * 2 ) + 1] = hexa[fmsg_char[i] % 16];
           // }
+          char* message = "hello from the server";
           int addrSize = sizeof(sendContext->Address);
-          if ((sent_size = sendto(sendContext->Socket, packet.data, packet.size, 0, &(sendContext->Address), addrSize)) < 0) {
+          if ((sent_size = send(sendContext->Socket, (const char *)packet.data, strlen((const char *)packet.data), 0)) < 0) {
             printf("Socket sending error \n");
           } else {
             printf("sent size: %d\n", sent_size);
