@@ -59,7 +59,10 @@ extern "C" {
 // global vars and definitions
 #define RECV_BUFFER_LEN 33 // our protocol sends packets of len 33, this prevents two packets clumping together in the socket buffer
 bool repeat = true; // global flag to keep streaming until client disconnects
-
+struct SocketContext {
+  SOCKET Socket;
+  struct sockaddr_in Address;
+};
 
 // Create an AVCodecContext object for a given codec
 static AVCodecContext* codecToContext(AVCodec *codec) {
@@ -97,7 +100,7 @@ static AVPacket encode(AVCodecContext *EncodeContext, AVFrame *pFrame, AVPacket 
 }
 
 // main function to stream the video and audio from this server to the client
-unsigned __stdcall SendStream(void *SENDsocket_param) {
+unsigned __stdcall SendStream(void *opaque) {
   // Initialize variables/functions
   av_register_all();
   avcodec_register_all();
@@ -285,21 +288,21 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
           }
 
           packet = encode(EncodeContext, filt_frame, packet);
-          SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
-          char hexa[17] = "0123456789abcdef";
-          unsigned char fmsg_char[sizeof(AVPacket)];
-          memcpy(fmsg_char, &packet, sizeof(AVPacket));
-          printf("lenght of packet: %d, size of char: %d\n", packet.data, sizeof(fmsg_char));
-          char fmsg_serialized[2 * sizeof(AVPacket) + 1]; // serialized array is 2x the length since hexa
+          struct SocketContext* sendContext = (struct SocketContext*) opaque;
+          // char hexa[17] = "0123456789abcdef";
+          // unsigned char fmsg_char[sizeof(AVPacket)];
+          // memcpy(fmsg_char, &packet, sizeof(AVPacket));
+          // printf("lenght of packet: %d, size of char: %d\n", packet.data, sizeof(fmsg_char));
+          // char fmsg_serialized[2 * sizeof(AVPacket) + 1]; // serialized array is 2x the length since hexa
 
-          // loop over the char struct, convert each value to hexadecimal
-          int i;
-          for (i = 0; i < sizeof(AVPacket); i++) {
-            // converting to hexa
-            fmsg_serialized[i * 2] = hexa[fmsg_char[i] / 16];
-            fmsg_serialized[(i * 2 ) + 1] = hexa[fmsg_char[i] % 16];
-          }
-          if ((sent_size = send(SENDsocket, fmsg_serialized, strlen(fmsg_serialized), 0)) == SOCKET_ERROR) {
+          // // loop over the char struct, convert each value to hexadecimal
+          // int i;
+          // for (i = 0; i < sizeof(AVPacket); i++) {
+          //   // converting to hexa
+          //   fmsg_serialized[i * 2] = hexa[fmsg_char[i] / 16];
+          //   fmsg_serialized[(i * 2 ) + 1] = hexa[fmsg_char[i] % 16];
+          // }
+          if ((sent_size = sendto(sendContext->Socket, packet.data, packet.size, 0, &(sendContext->Address), sizeof(sendContext->Address))) < 0) {
             printf("Socket sending error \n");
           }
           av_free_packet(&packet);
@@ -568,7 +571,11 @@ int32_t main(int32_t argc, char **argv) {
 
       // time to start streaming and receiving user input
       // launch thread #1 to start streaming video & audio from server
-      ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &SendStream, &SENDsocket, 0, NULL);
+      struct SocketContext sendContext = {0};
+      sendContext.Socket = SENDsocket;
+      sendContext.Address = clientRECV;
+
+      ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &SendStream, &sendContext, 0, NULL);
 
       // launch thread #2 to start receiving and processing client input
       ThreadHandles[1] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveClientInput, &RECVsocket, 0, NULL);

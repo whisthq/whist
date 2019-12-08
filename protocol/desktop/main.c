@@ -76,6 +76,7 @@ struct context {
     SDL_Texture* Texture;
     struct SwsContext* SwsContext;
     SOCKET Socket;
+    struct sockaddr_in Address;
 };
 
 static AVCodecContext* codecToContext(AVCodec *codec) {
@@ -117,47 +118,47 @@ unsigned __stdcall renderThread(void *opaque) {
   int recv_size;
   AVCodecParserContext* parser;
   struct context* context = (struct context *) opaque;
-  char* server_reply[RECV_BUFFER_LEN];
   AVFrame *pFrame = NULL;
   pFrame = av_frame_alloc();
   // parser = av_parser_init(context->CodecContext->codec_id);
   char *client_action_buffer[RECV_BUFFER_LEN];
-  char hexa[] = "0123456789abcdef"; // array of hexadecimal values + null character for deserializing
+  // char hexa[] = "0123456789abcdef"; // array of hexadecimal values + null character for deserializing
 
   // while stream is on, listen for messages
   int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
   int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
   while(repeat) {
-    recv_size = recv(context->Socket, client_action_buffer, RECV_BUFFER_LEN, 0);
-    printf("%d\n", recv_size);
-    if (recv_size != 0) {
+    recv_size = recvfrom(context->Socket, client_action_buffer, RECV_BUFFER_LEN, 0, &(context->Address), sizeof(context->Address));
+    if(recv_size == SOCKET_ERROR) {
+      printf("Error: %d\n", WSAGetLastError());
+    } else {
       // the packet we receive is the FractalMessage struct serialized to hexadecimal,
       // we need to deserialize it to feed it to the Windows API
-      unsigned char fmsg_char[sizeof(AVPacket)]; // array to hold the hexa values in char (decimal) format
+      // unsigned char fmsg_char[sizeof(AVPacket)]; // array to hold the hexa values in char (decimal) format
 
-      // first, we need to copy it to a char[] for it to be iterable
-      char iterable_buffer[RECV_BUFFER_LEN] = "";
-      strncpy(iterable_buffer, client_action_buffer, RECV_BUFFER_LEN);
+      // // first, we need to copy it to a char[] for it to be iterable
+      // char iterable_buffer[RECV_BUFFER_LEN] = "";
+      // strncpy(iterable_buffer, client_action_buffer, RECV_BUFFER_LEN);
 
-      // now we iterate over the length of the FractalMessage struct and fill an
-      // array with the decimal value conversion of the hex we received
-      int i, index_0, index_1; // tmp
-      for (i = 0; i < sizeof(AVPacket); i++) {
-          // find index of the two characters for the current hexadecimal value
-        index_0 = strchr(hexa, iterable_buffer[i * 2]) - hexa;
-        index_1 = strchr(hexa, iterable_buffer[(i * 2) + 1]) - hexa;
+      // // now we iterate over the length of the FractalMessage struct and fill an
+      // // array with the decimal value conversion of the hex we received
+      // int i, index_0, index_1; // tmp
+      // for (i = 0; i < sizeof(AVPacket); i++) {
+      //     // find index of the two characters for the current hexadecimal value
+      //   index_0 = strchr(hexa, iterable_buffer[i * 2]) - hexa;
+      //   index_1 = strchr(hexa, iterable_buffer[(i * 2) + 1]) - hexa;
 
-        // now convert back to decimal and store in array
-        fmsg_char[i] = index_0 * 16 + index_1; // conversion formula
-      }
+      //   // now convert back to decimal and store in array
+      //   fmsg_char[i] = index_0 * 16 + index_1; // conversion formula
+      // }
       // now that we got the de-serialized memory values of the user input, we
       // can copy it back to a FractalMessage struct
-      AVPacket packet = {0};
+      AVPacket packet;
       // av_free_packet(&packet);
       av_init_packet(&packet);
-      memcpy(&packet, &fmsg_char, sizeof(AVPacket));
-      printf("size of packet: %d\n", sizeof(packet));
-      printf("size of packet: %d\n", packet.size);
+      // memcpy(&packet, &fmsg_char, sizeof(AVPacket));
+      packet.data = client_action_buffer;
+      packet.size = strlen(client_action_buffer);
       pFrame = decode(context->CodecContext, pFrame, packet);
       AVPicture pict;
       pict.data[0] = context->yPlane;
@@ -285,7 +286,7 @@ int32_t main(int32_t argc, char **argv) {
   printf("Send TCP Socket created.\n");
 
   // prepare the sockaddr_in structure for the send socket (server receive port)
-  user_vm_ip = "140.247.148.129"; //aws:"3.90.174.193";
+  user_vm_ip = "52.168.122.131"; //aws:"3.90.174.193";
 
 
   printf("%d\n", inet_addr(user_vm_ip));
@@ -421,6 +422,7 @@ int32_t main(int32_t argc, char **argv) {
   context.Texture = texture;
   context.SwsContext = sws_ctx;
   context.Socket = RECVSocket;
+  context.Address = serverRECV;
   SDL_Thread *render_thread = SDL_CreateThread(renderThread, "renderThread", &context);
 //   clock_t start, end;
   // double cpu_time_used;
