@@ -62,7 +62,7 @@ extern "C" {
 #endif
 
 // global vars and definitions
-#define RECV_BUFFER_LEN 100000 // max len of receive buffer
+#define RECV_BUFFER_LEN 50000 // max len of receive buffer
 
 bool repeat = true; // global flag to stream until disconnection
 
@@ -121,14 +121,17 @@ unsigned __stdcall renderThread(void *opaque) {
   AVFrame *pFrame = NULL;
   pFrame = av_frame_alloc();
   // parser = av_parser_init(context->CodecContext->codec_id);
-  char *client_action_buffer[RECV_BUFFER_LEN];
+  uint8_t *client_action_buffer = malloc(sizeof(uint8_t));
   // char hexa[] = "0123456789abcdef"; // array of hexadecimal values + null character for deserializing
 
   // while stream is on, listen for messages
   int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
   int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
   while(repeat) {
-    recv_size = recvfrom(context->Socket, client_action_buffer, RECV_BUFFER_LEN, 0, &(context->Address), sizeof(context->Address));
+    int addrSize = sizeof(context->Address);
+    memset(client_action_buffer, 0, RECV_BUFFER_LEN);
+    printf("packet size: %d", sizeof(client_action_buffer));
+    recv_size = recvfrom(context->Socket, client_action_buffer, sizeof(*client_action_buffer), 0, &(context->Address), &addrSize);
     if(recv_size == SOCKET_ERROR) {
       printf("Error: %d\n", WSAGetLastError());
     } else {
@@ -159,6 +162,7 @@ unsigned __stdcall renderThread(void *opaque) {
       // memcpy(&packet, &fmsg_char, sizeof(AVPacket));
       packet.data = client_action_buffer;
       packet.size = strlen(client_action_buffer);
+      printf("packet size:", *client_action_buffer);
       pFrame = decode(context->CodecContext, pFrame, packet);
       AVPicture pict;
       pict.data[0] = context->yPlane;

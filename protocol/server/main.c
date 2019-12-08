@@ -302,8 +302,11 @@ unsigned __stdcall SendStream(void *opaque) {
           //   fmsg_serialized[i * 2] = hexa[fmsg_char[i] / 16];
           //   fmsg_serialized[(i * 2 ) + 1] = hexa[fmsg_char[i] % 16];
           // }
-          if ((sent_size = sendto(sendContext->Socket, packet.data, packet.size, 0, &(sendContext->Address), sizeof(sendContext->Address))) < 0) {
+          int addrSize = sizeof(sendContext->Address);
+          if ((sent_size = sendto(sendContext->Socket, packet.data, packet.size, 0, &(sendContext->Address), addrSize)) < 0) {
             printf("Socket sending error \n");
+          } else {
+            printf("sent size: %d\n", sent_size);
           }
           av_free_packet(&packet);
           av_frame_free(&filt_frame);
