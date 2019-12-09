@@ -125,14 +125,30 @@ unsigned __stdcall renderThread(void *opaque) {
   // while stream is on, listen for messages
   int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
   int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
+
+
+  int addrSize = sizeof(context->Address);
+  char buff[100000];
+
   while(repeat) {
-    int addrSize = sizeof(context->Address);
-    char buff[100000];
+
+    // set the buffer to empry in case there was previous stuff
+    memset(buff, 0, 100000);
+
     recv_size = recv(context->Socket, buff, 100000, 0);
+
+    printf("test\n");
+
     if(recv_size == SOCKET_ERROR) {
       printf("Error: %d\n", WSAGetLastError());
     } else {
       printf("size received: %d\n", recv_size);
+
+      // if we received an empty packet, just do nothing
+      if (recv_size != 0) {
+
+
+
       // the packet we receive is the FractalMessage struct serialized to hexadecimal,
       // we need to deserialize it to feed it to the Windows API
       // unsigned char fmsg_char[sizeof(AVPacket)]; // array to hold the hexa values in char (decimal) format
@@ -158,8 +174,23 @@ unsigned __stdcall renderThread(void *opaque) {
       // av_free_packet(&packet);
       av_init_packet(&packet);
       // memcpy(&packet, &fmsg_char, sizeof(AVPacket));
-      packet.data = buff;
-      packet.size = strlen(recv_size);
+
+
+
+      // fill in the data back -- need to allocate new pointer here
+
+
+      // cast the packet data back to its data type
+      uint8_t packet_data = (uint8_t) buff;
+
+      // poiner the AVpacket struct poiner to the packet data
+      packet.data = &packet_data;
+
+
+      // set the packet size back in the struct
+      packet.size = recv_size;
+
+
       pFrame = decode(context->CodecContext, pFrame, packet);
       AVPicture pict;
       pict.data[0] = context->yPlane;
@@ -184,10 +215,13 @@ unsigned __stdcall renderThread(void *opaque) {
               context->uvPitch
           );
 
+      printf("pastabolognese\n");
+
       SDL_RenderClear(context->Renderer);
       SDL_RenderCopy(context->Renderer, context->Texture, NULL, NULL);
       SDL_RenderPresent(context->Renderer);
     }
+  } // closing if packet not empty
 
   }
 

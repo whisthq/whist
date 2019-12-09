@@ -124,7 +124,7 @@ unsigned __stdcall SendStream(void *opaque) {
   AVFormatContext *pFormatCtxInCam;
 
 
-  char args_cam[512]; 
+  char args_cam[512];
   int i, ret, got_output,video_stream_idx_cam;
 
   // Initialize codec contexts
@@ -287,7 +287,7 @@ unsigned __stdcall SendStream(void *opaque) {
             break;
           }
 
-          // packet = encode(EncodeContext, filt_frame, packet);
+           packet = encode(EncodeContext, filt_frame, packet);
 
           ret = avcodec_encode_video2(EncodeContext, &packet, filt_frame, &got_output);
           struct SocketContext* sendContext = (struct SocketContext*) opaque;
@@ -306,13 +306,30 @@ unsigned __stdcall SendStream(void *opaque) {
           // }
           char* message = "hello from the server";
           int addrSize = sizeof(sendContext->Address);
-          if ((sent_size = send(sendContext->Socket, (const char *)packet.data, strlen((const char *)packet.data), 0)) < 0) {
-            printf("Socket sending error \n");
-          } else {
-            printf("sent size: %d\n", sent_size);
+
+
+          // we'll print a bunch of stuff here to figure out what to send
+          //printf("\nPacket data: %d\n", packet.data);
+          //printf("Packet size: %d\n", packet.size);
+          //printf("Packet length: %s\n", strlen((char *) packet.data)); //this errors
+          //printf("Packet sizeof: %d\n", sizeof(packet.data));
+          //printf("&Packet sizeof: %d\n", sizeof(&packet.data));
+          //printf("*Packet sizeof: %d\n", sizeof(*packet.data));
+
+        //  printf("Unsigned char packet: %s\n", ((unsigned char *) packet.data));
+
+
+          // only send if the packet is not empty obviously
+          if (packet.size != 0) {
+
+            if ((sent_size = send(sendContext->Socket, (unsigned char *)packet.data, packet.size, 0)) < 0) {
+              printf("Socket sending error \n");
+            } else {
+              printf("sent size: %d\n", sent_size);
+            }
+            av_free_packet(&packet);
+            av_frame_free(&filt_frame);
           }
-          av_free_packet(&packet);
-          av_frame_free(&filt_frame);
         }
       }
     }
@@ -326,7 +343,7 @@ unsigned __stdcall SendStream(void *opaque) {
       fprintf(stderr, "Error encoding frame\n");
       exit(1);
     }
-    if (got_output) {    
+    if (got_output) {
       av_free_packet(&packet);
     }
   }
