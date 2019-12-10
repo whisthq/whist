@@ -3,7 +3,7 @@
  * streaming protocol.
 
  Protocol version: 1.0
- Last modification: 11/29/2019
+ Last modification: 12/10/2019
 
  By: Philippe Noël
 
@@ -55,6 +55,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+
+
 
 
 static char virtual_codes[140] =

@@ -4,9 +4,9 @@
  * and audio to the client, and receiving the user input back.
 
  Protocol version: 1.0
- Last modification: 11/30/2019
+ Last modification: 12/10/2019
 
- By: Philippe Noël
+ By: Philippe Noël, Ming Ying
 
  Copyright Fractal Computers, Inc. 2019
 */
@@ -17,8 +17,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <windows.h>
-#include <Winuser.h>
-#include <ws2tcpip.h> // other Windows socket library (of course, thanks #Microsoft)
+#include <winuser.h>
+#include <ws2tcpip.h> // other Windows socket library
 #include <winsock2.h> // lib for socket programming on windows
 #include <process.h> // for threads programming
 
@@ -57,8 +57,17 @@ extern "C" {
 #endif
 
 // global vars and definitions
-#define RECV_BUFFER_LEN 33 // our protocol sends packets of len 33, this prevents two packets clumping together in the socket buffer
 bool repeat = true; // global flag to keep streaming until client disconnects
+// client sends packets of len 33, this fitted size prevents packets clumping
+#define RECV_BUFFER_LEN 33
+
+
+
+
+
+
+
+
 struct SocketContext {
   SOCKET Socket;
   struct sockaddr_in Address;
@@ -74,12 +83,12 @@ static AVCodecContext* codecToContext(AVCodec *codec) {
 
   context->width = 640;
   context->height = 480;
-  context->time_base = (AVRational){1,60};
+  context->time_base = (AVRational){1,30};
   // EncodeContext->framerate = (AVRational){30,1};
   context->gop_size = 10;
   context->max_b_frames = 1;
   context->pix_fmt = AV_PIX_FMT_YUV420P;
-
+  context->bit_rate = 800000;
   av_opt_set(context -> priv_data, "preset", "ultrafast", 0);
   av_opt_set(context -> priv_data, "tune", "zerolatency", 0);
 
@@ -150,7 +159,7 @@ unsigned __stdcall SendStream(void *opaque) {
 
   // Set screen recording resolution and frame rate
   // av_dict_set(&inOptions, "video_size", "1280x720", 0);
-  av_dict_set(&inOptions, "frame_rate", "60", 0);
+  av_dict_set(&inOptions, "frame_rate", "30", 0);
 
   // Specify screen capture device and open decoders
   ret = avformat_open_input(&pFormatCtxInCam, "video=screen-capture-recorder", inFrmt, &inOptions);
@@ -329,8 +338,9 @@ unsigned __stdcall SendStream(void *opaque) {
 
 
 
-
-            if ((sent_size = send(sendContext->Socket, (const char*) packet.data, packet.size, 0)) < 0) {
+            // char* message = "message from the server!";
+            // int msglen = strlen(message);
+            if ((sent_size = send(sendContext->Socket, packet.data, packet.size, 0)) < 0) {
               printf("Socket sending error \n");
             } else {
               printf("sent size: %d\n", sent_size);
@@ -368,6 +378,9 @@ unsigned __stdcall SendStream(void *opaque) {
   _endthreadex(0);
   return 0;
 }
+
+
+
 
 // main function to receive client user inputs and process them
 unsigned __stdcall ReceiveClientInput(void *RECVsocket_param) {

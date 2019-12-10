@@ -5,9 +5,9 @@
  * starts streaming its user inputs to the server.
 
  Protocol version: 1.0
- Last modification: 11/30/2019
+ Last modification: 12/10/2019
 
- By: Philippe Noël
+ By: Philippe Noël, Ming Ying
 
  Copyright Fractal Computers, Inc. 2019
 */
@@ -15,23 +15,11 @@
   #define _WINSOCK_DEPRECATED_NO_WARNINGS // silence the deprecated warnings
 #endif
 
-// to find memory leaks
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-
-
-
-//rtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-
-
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include <time.h>
 
 #include "../include/fractal.h" // header file for protocol functions
 #include "../include/webserver.h" // header file for webserver query functions
@@ -44,10 +32,12 @@
 #include "include/libavfilter/buffersink.h"
 #include "include/libavfilter/buffersrc.h"
 #include "include/libswscale/swscale.h"
-#define SDL_MAIN_HANDLED
+
+#define SDL_MAIN_HANDLED // SDL definition
 #include "include/SDL2/SDL.h"
 #include "include/SDL2/SDL_thread.h"
 
+// define placeholder window size, will get actual monitor size
 #define WINDOW_W 640
 #define WINDOW_H 480
 
@@ -64,7 +54,6 @@
   #pragma warning(disable: 4477) // printf type warning
   #pragma warning(disable: 4267) // conversion from size_t to int
 #else
-  #include <pthread.h> // thread library on unix
   #include <unistd.h>
 #endif
 
@@ -74,8 +63,8 @@ extern "C" {
 
 // global vars and definitions
 #define RECV_BUFFER_LEN 35000 // max len of receive buffer
-
 bool repeat = true; // global flag to stream until disconnection
+
 
 struct context {
     Uint8 *yPlane;
@@ -99,8 +88,9 @@ static AVCodecContext* codecToContext(AVCodec *codec) {
 
   context->width = 640;
   context->height = 480;
-  context->time_base = (AVRational){1,60};
+  context->time_base = (AVRational){1,30};
   // EncodeContext->framerate = (AVRational){30,1};
+  context->bit_rate = 800000;
   context->gop_size = 10;
   context->max_b_frames = 1;
   context->pix_fmt = AV_PIX_FMT_YUV420P;
@@ -116,14 +106,6 @@ static AVCodecContext* codecToContext(AVCodec *codec) {
   return context;
 }
 
-// Decode packet into frame
-static AVFrame* decode(AVCodecContext *DecodeContext, AVFrame *pFrame, AVPacket packet) {
-  int got_output, ret;
-  ret = avcodec_decode_video2(DecodeContext, pFrame, &got_output, &packet);
-  printf("Decode Status: %d\n", got_output);
-  return pFrame;
-}
-
 // main thread function to receive server video and audio stream and process it
 static int32_t renderThread(void *opaque) {
   av_register_all();
@@ -131,169 +113,68 @@ static int32_t renderThread(void *opaque) {
   avdevice_register_all();
   avfilter_register_all();
 
-  int recv_size, got_output;
-  AVCodecParserContext* parser;
   struct context* context = (struct context *) opaque;
   AVFrame *pFrame = NULL;
   AVPacket packet;
-  av_init_packet(&packet);
-  // char hexa[] = "0123456789abcdef"; // array of hexadecimal values + null character for deserializing
-
-  // while stream is on, listen for messages
+  int recv_size, got_output;
+  uint8_t buff[35000];
   int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
   int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
 
-  int addrSize = sizeof(context->Address);
-  uint8_t buff[35000];
+  av_init_packet(&packet);
   pFrame = av_frame_alloc();
   AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
   AVCodecContext* DecodeContext = codecToContext(H264CodecDecode);
-//  pFrame = av_frame_alloc();
+
   while(repeat) {
 
-    // set the buffer to empry in case there was previous stuff
-    // memset(buff, 255, 35000);
-    //printf("frame size: %d\n", strlen(pFrame->data));
     recv_size = recv(context->Socket, buff, 35000, 0);
-
+    printf("Received: %d\n", recv_size);
     if(recv_size == SOCKET_ERROR) {
       printf("Error: %d\n", WSAGetLastError());
     } else {
-      // if we received an empty packet, just do nothing
       if (recv_size != 0) {
-        printf("size received: %d\n", recv_size);
-        // printf("buffer size received: %d\n", sizeof(buff));
+        av_free_packet(&packet);
+        packet.data = buff;
+        packet.size = recv_size;
 
-        // memcpy(arr, &buff, recv_size);
-      // the packet we receive is the FractalMessage struct serialized to hexadecimal,
-      // we need to deserialize it to feed it to the Windows API
-      // unsigned char fmsg_char[sizeof(AVPacket)]; // array to hold the hexa values in char (decimal) format
+        int ret = avcodec_decode_video2(DecodeContext, pFrame, &got_output, &packet);
 
-      // // first, we need to copy it to a char[] for it to be iterable
-      // char iterable_buffer[RECV_BUFFER_LEN] = "";
-      // strncpy(iterable_buffer, client_action_buffer, RECV_BUFFER_LEN);
+        if (got_output) {
 
-      // // now we iterate over the length of the FractalMessage struct and fill an
-      // // array with the decimal value conversion of the hex we received
-      // int i, index_0, index_1; // tmp
-      // for (i = 0; i < sizeof(AVPacket); i++) {
-      //     // find index of the two characters for the current hexadecimal value
-      //   index_0 = strchr(hexa, iterable_buffer[i * 2]) - hexa;
-      //   index_1 = strchr(hexa, iterable_buffer[(i * 2) + 1]) - hexa;
-
-      //   // now convert back to decimal and store in array
-      //   fmsg_char[i] = index_0 * 16 + index_1; // conversion formula
-      // }
-      // now that we got the de-serialized memory values of the user input, we
-      // can copy it back to a FractalMessage struct
-      av_free_packet(&packet);
-      // memcpy(&packet, &fmsg_char, sizeof(AVPacket));
+          AVPicture pict;
+          pict.data[0] = context->yPlane;
+          pict.data[1] = context->uPlane;
+          pict.data[2] = context->vPlane;
+          pict.linesize[0] = context->CodecContext->width;
+          pict.linesize[1] = context->uvPitch;
+          pict.linesize[2] = context->uvPitch;
 
 
+         sws_scale(context->SwsContext, (uint8_t const * const *) pFrame->data,
+                 pFrame->linesize, 0, context->CodecContext->height, pict.data,
+                 pict.linesize);
 
+          SDL_UpdateYUVTexture(
+                  context->Texture,
+                  NULL,
+                  context->yPlane,
+                  context->CodecContext->width,
+                  context->uPlane,
+                  context->uvPitch,
+                  context->vPlane,
+                  context->uvPitch
+              );
 
-//      printf("packet data: %s\n", buff);
+          SDL_RenderClear(context->Renderer);
+          SDL_RenderCopy(context->Renderer, context->Texture, NULL, NULL);
+          SDL_RenderPresent(context->Renderer);
+        }
 
-//      for (int i = 0; i < recv_size; i++) {
-//        printf("packet data char: %c\n", buff[i]);
-//      }
-
-
-      // fill in the data back -- need to allocate new pointer here
-
-
-      // cast the packet data back to its data type
-      // uint8_t packet_data = (uint8_t) buff;
-
-      // poiner the AVpacket struct poiner to the packet data
-      // uint8_t packet_data = (uint8_t) buff;
-      //packet.data = &buff;
-      //packet.data = (uint8_t) buff;
-      packet.data = (uint8_t *) buff;
-
-      // set the packet size back in the struct
-      packet.size = recv_size;
-
-      printf("test1\n");
-
-
-      // memory leaks
-      //_CrtDumpMemoryLeaks();
-
-
-      // here, trying to read from memory we don't have access to
-      int ret = avcodec_decode_video2(DecodeContext, pFrame, &got_output, &packet);
-
-      printf("test2\n");
-
-      printf("Decode status: %d\n", ret);
-
-      if (got_output) {
-
-      // pFrame = decode(context->CodecContext, pFrame, packet);
-      printf("nacholibre\n");
-
-
-      // error happens in the decoder
-
-
-      AVPicture pict;
-      pict.data[0] = context->yPlane;
-      pict.data[1] = context->uPlane;
-      pict.data[2] = context->vPlane;
-      pict.linesize[0] = context->CodecContext->width;
-      pict.linesize[1] = context->uvPitch;
-      pict.linesize[2] = context->uvPitch;
-
-
-      printf("test10\n");
-
-
-      printf("data sizeof: %d\n", sizeof(pFrame->data));
-      printf("linesize: %d\n", pFrame->linesize);
-
-      printf("Height: %d\n", context->CodecContext->height);
-
-
-      printf("pict.data: %d\n", pict.data);
-      printf("pict.linesize: %d\n", pict.linesize);
-
-
-       sws_scale(context->SwsContext, (uint8_t const * const *) pFrame->data,
-               pFrame->linesize, 0, context->CodecContext->height, pict.data,
-               pict.linesize);
-
-
-
-       printf("test20\n");
-
-
-      SDL_UpdateYUVTexture(
-              context->Texture,
-              NULL,
-              context->yPlane,
-              context->CodecContext->width,
-              context->uPlane,
-              context->uvPitch,
-              context->vPlane,
-              context->uvPitch
-          );
-
-      printf("pastabolognese\n");
-
-      SDL_RenderClear(context->Renderer);
-      SDL_RenderCopy(context->Renderer, context->Texture, NULL, NULL);
-      SDL_RenderPresent(context->Renderer);
+        // av_free(pFrame->data[0]);
+        // av_frame_free(pFrame);
       }
-
-
-      printf("tostitos\n");
-
-      // av_frame_unref(pFrame);
-      av_free(pFrame->data[0]);
-      av_frame_free(pFrame);
-    }
-  } // closing if packet not empty
+    } // closing if packet not empty
 
   }
 
@@ -327,7 +208,7 @@ int32_t main(int32_t argc, char **argv) {
   // if the user isn't logged in currently, try to authenticate
   if (!loggedIn) {
 
-    // TODO LATER: FIX CODE HERE ON A LOCAL WINDOWS FOR WEBSERVER QUERY
+    // query the webservers
     char *credentials = login(username, password);
     // check if correct authentication
     if (strcmp(credentials, "{}") == 0) {
@@ -335,7 +216,8 @@ int32_t main(int32_t argc, char **argv) {
       printf("Incorrect username or password.\n");
       // return 2;
     }
-    else { // correct credentials, authenticate user
+    else {
+      // correct credentials, authenticate user
       char* trailing_string = "";
       char* leading_string;
       char* vm_key = "\"public_ip\":\"";
