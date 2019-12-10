@@ -287,7 +287,7 @@ unsigned __stdcall SendStream(void *opaque) {
             break;
           }
 
-           packet = encode(EncodeContext, filt_frame, packet);
+          packet = encode(EncodeContext, filt_frame, packet);
 
           ret = avcodec_encode_video2(EncodeContext, &packet, filt_frame, &got_output);
           struct SocketContext* sendContext = (struct SocketContext*) opaque;
@@ -322,7 +322,15 @@ unsigned __stdcall SendStream(void *opaque) {
           // only send if the packet is not empty obviously
           if (packet.size != 0) {
 
-            if ((sent_size = send(sendContext->Socket, (unsigned char *)packet.data, packet.size, 0)) < 0) {
+
+//            for (int i = 0; i < packet.size; i++) {
+//              printf("packet data char: %c\n", (unsigned char *) packet.data[i]);
+//            }
+
+
+
+
+            if ((sent_size = send(sendContext->Socket, packet.data, packet.size, 0)) < 0) {
               printf("Socket sending error \n");
             } else {
               printf("sent size: %d\n", sent_size);

@@ -128,7 +128,7 @@ unsigned __stdcall renderThread(void *opaque) {
 
 
   int addrSize = sizeof(context->Address);
-  char buff[100000];
+  uint8_t buff[100000];
 
   while(repeat) {
 
@@ -142,11 +142,15 @@ unsigned __stdcall renderThread(void *opaque) {
     if(recv_size == SOCKET_ERROR) {
       printf("Error: %d\n", WSAGetLastError());
     } else {
-      printf("size received: %d\n", recv_size);
-
       // if we received an empty packet, just do nothing
       if (recv_size != 0) {
+        printf("size received: %d\n", recv_size);
+        // printf("buffer size received: %d\n", sizeof(buff));
 
+
+
+        char *arr = malloc(sizeof(uint8_t) * recv_size);
+        // memcpy(arr, &buff, recv_size);
 
 
       // the packet we receive is the FractalMessage struct serialized to hexadecimal,
@@ -177,21 +181,34 @@ unsigned __stdcall renderThread(void *opaque) {
 
 
 
+
+//      printf("packet data: %s\n", buff);
+
+//      for (int i = 0; i < recv_size; i++) {
+//        printf("packet data char: %c\n", buff[i]);
+//      }
+
+
       // fill in the data back -- need to allocate new pointer here
 
 
       // cast the packet data back to its data type
-      uint8_t packet_data = (uint8_t) buff;
+      // uint8_t packet_data = (uint8_t) buff;
 
       // poiner the AVpacket struct poiner to the packet data
-      packet.data = &packet_data;
-
+      packet.data = &buff;
+      //packet.data = (uint8_t) buff;
 
       // set the packet size back in the struct
       packet.size = recv_size;
 
 
       pFrame = decode(context->CodecContext, pFrame, packet);
+
+
+      // error happens in the decoder
+
+
       AVPicture pict;
       pict.data[0] = context->yPlane;
       pict.data[1] = context->uPlane;
