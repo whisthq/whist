@@ -15,6 +15,17 @@
   #define _WINSOCK_DEPRECATED_NO_WARNINGS // silence the deprecated warnings
 #endif
 
+// to find memory leaks
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
+
+
+//rtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+
+
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -62,14 +73,14 @@ extern "C" {
 #endif
 
 // global vars and definitions
-#define RECV_BUFFER_LEN 50000 // max len of receive buffer
+#define RECV_BUFFER_LEN 35000 // max len of receive buffer
 
 bool repeat = true; // global flag to stream until disconnection
 
 struct context {
-    Uint8 yPlane;
-    Uint8 uPlane;
-    Uint8 vPlane;
+    Uint8 *yPlane;
+    Uint8 *uPlane;
+    Uint8 *vPlane;
     int uvPitch;
     AVCodecContext* CodecContext;
     SDL_Renderer* Renderer;
@@ -114,30 +125,36 @@ static AVFrame* decode(AVCodecContext *DecodeContext, AVFrame *pFrame, AVPacket 
 }
 
 // main thread function to receive server video and audio stream and process it
-unsigned __stdcall renderThread(void *opaque) {
-  int recv_size;
+static int32_t renderThread(void *opaque) {
+  av_register_all();
+  avcodec_register_all();
+  avdevice_register_all();
+  avfilter_register_all();
+
+  int recv_size, got_output;
   AVCodecParserContext* parser;
   struct context* context = (struct context *) opaque;
   AVFrame *pFrame = NULL;
-  pFrame = av_frame_alloc();
+  AVPacket packet;
+  av_init_packet(&packet);
   // char hexa[] = "0123456789abcdef"; // array of hexadecimal values + null character for deserializing
 
   // while stream is on, listen for messages
   int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
   int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
 
-
   int addrSize = sizeof(context->Address);
-  uint8_t buff[100000];
-
+  uint8_t buff[35000];
+  pFrame = av_frame_alloc();
+  AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
+  AVCodecContext* DecodeContext = codecToContext(H264CodecDecode);
+//  pFrame = av_frame_alloc();
   while(repeat) {
 
     // set the buffer to empry in case there was previous stuff
-    memset(buff, 0, 100000);
-
-    recv_size = recv(context->Socket, buff, 100000, 0);
-
-    printf("test\n");
+    // memset(buff, 255, 35000);
+    //printf("frame size: %d\n", strlen(pFrame->data));
+    recv_size = recv(context->Socket, buff, 35000, 0);
 
     if(recv_size == SOCKET_ERROR) {
       printf("Error: %d\n", WSAGetLastError());
@@ -147,12 +164,7 @@ unsigned __stdcall renderThread(void *opaque) {
         printf("size received: %d\n", recv_size);
         // printf("buffer size received: %d\n", sizeof(buff));
 
-
-
-        char *arr = malloc(sizeof(uint8_t) * recv_size);
         // memcpy(arr, &buff, recv_size);
-
-
       // the packet we receive is the FractalMessage struct serialized to hexadecimal,
       // we need to deserialize it to feed it to the Windows API
       // unsigned char fmsg_char[sizeof(AVPacket)]; // array to hold the hexa values in char (decimal) format
@@ -174,9 +186,7 @@ unsigned __stdcall renderThread(void *opaque) {
       // }
       // now that we got the de-serialized memory values of the user input, we
       // can copy it back to a FractalMessage struct
-      AVPacket packet;
-      // av_free_packet(&packet);
-      av_init_packet(&packet);
+      av_free_packet(&packet);
       // memcpy(&packet, &fmsg_char, sizeof(AVPacket));
 
 
@@ -196,14 +206,32 @@ unsigned __stdcall renderThread(void *opaque) {
       // uint8_t packet_data = (uint8_t) buff;
 
       // poiner the AVpacket struct poiner to the packet data
-      packet.data = &buff;
+      // uint8_t packet_data = (uint8_t) buff;
+      //packet.data = &buff;
       //packet.data = (uint8_t) buff;
+      packet.data = (uint8_t *) buff;
 
       // set the packet size back in the struct
       packet.size = recv_size;
 
+      printf("test1\n");
 
-      pFrame = decode(context->CodecContext, pFrame, packet);
+
+      // memory leaks
+      //_CrtDumpMemoryLeaks();
+
+
+      // here, trying to read from memory we don't have access to
+      int ret = avcodec_decode_video2(DecodeContext, pFrame, &got_output, &packet);
+
+      printf("test2\n");
+
+      printf("Decode status: %d\n", ret);
+
+      if (got_output) {
+
+      // pFrame = decode(context->CodecContext, pFrame, packet);
+      printf("nacholibre\n");
 
 
       // error happens in the decoder
@@ -217,9 +245,28 @@ unsigned __stdcall renderThread(void *opaque) {
       pict.linesize[1] = context->uvPitch;
       pict.linesize[2] = context->uvPitch;
 
-      sws_scale(context->SwsContext, (uint8_t const * const *) pFrame->data,
-              pFrame->linesize, 0, context->CodecContext->height, pict.data,
-              pict.linesize);
+
+      printf("test10\n");
+
+
+      printf("data sizeof: %d\n", sizeof(pFrame->data));
+      printf("linesize: %d\n", pFrame->linesize);
+
+      printf("Height: %d\n", context->CodecContext->height);
+
+
+      printf("pict.data: %d\n", pict.data);
+      printf("pict.linesize: %d\n", pict.linesize);
+
+
+       sws_scale(context->SwsContext, (uint8_t const * const *) pFrame->data,
+               pFrame->linesize, 0, context->CodecContext->height, pict.data,
+               pict.linesize);
+
+
+
+       printf("test20\n");
+
 
       SDL_UpdateYUVTexture(
               context->Texture,
@@ -237,10 +284,24 @@ unsigned __stdcall renderThread(void *opaque) {
       SDL_RenderClear(context->Renderer);
       SDL_RenderCopy(context->Renderer, context->Texture, NULL, NULL);
       SDL_RenderPresent(context->Renderer);
+      }
+
+
+      printf("tostitos\n");
+
+      // av_frame_unref(pFrame);
+      av_free(pFrame->data[0]);
+      av_frame_free(pFrame);
     }
   } // closing if packet not empty
 
   }
+
+
+
+
+
+
 
   return 0;
 }
@@ -576,6 +637,16 @@ int32_t main(int32_t argc, char **argv) {
   printf("Connection interrupted.\n");
 
   // TODO LATER: Split this file into Windows/Unix and do threads for Unix for max efficiency
+
+
+  // free al that shit
+  free(yPlane);
+  free(uPlane);
+  free(vPlane);
+
+  // close codec
+  avcodec_close(DecodeContext);
+
 
 
   // Windows case, closing sockets

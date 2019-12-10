@@ -330,7 +330,7 @@ unsigned __stdcall SendStream(void *opaque) {
 
 
 
-            if ((sent_size = send(sendContext->Socket, packet.data, packet.size, 0)) < 0) {
+            if ((sent_size = send(sendContext->Socket, (const char*) packet.data, packet.size, 0)) < 0) {
               printf("Socket sending error \n");
             } else {
               printf("sent size: %d\n", sent_size);
