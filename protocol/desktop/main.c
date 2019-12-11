@@ -118,8 +118,6 @@ static int32_t renderThread(void *opaque) {
   AVPacket packet;
   int recv_size, got_output;
   uint8_t buff[35000];
-  int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
-  int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
 
   av_init_packet(&packet);
   pFrame = av_frame_alloc();
@@ -138,7 +136,7 @@ static int32_t renderThread(void *opaque) {
         packet.data = buff;
         packet.size = recv_size;
 
-        int ret = avcodec_decode_video2(DecodeContext, pFrame, &got_output, &packet);
+        avcodec_decode_video2(DecodeContext, pFrame, &got_output, &packet);
 
         if (got_output) {
 
@@ -191,6 +189,17 @@ static int32_t renderThread(void *opaque) {
 int32_t main(int32_t argc, char **argv) {
   // user login status var
   static bool loggedIn = false;
+  AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
+  AVCodecContext* DecodeContext = codecToContext(H264CodecDecode);
+  SDL_Event msg;
+  SDL_Window *screen;
+  SDL_Renderer *renderer;
+  SDL_Texture *texture;
+  Uint8 *yPlane, *uPlane, *vPlane;
+  size_t yPlaneSz, uvPlaneSz;
+  struct SwsContext *sws_ctx = NULL;
+  int uvPitch;
+  struct context context = {0};
 
   // variable for storing user credentials
   char *user_vm_ip = "";
@@ -336,18 +345,6 @@ int32_t main(int32_t argc, char **argv) {
   // SDL to be ready to process user inputs and display the stream
   // SDL vars for displaying
 
-  AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
-  AVCodecContext* DecodeContext = codecToContext(H264CodecDecode);
-  SDL_Event event;
-  SDL_Window *screen;
-  SDL_Renderer *renderer;
-  SDL_Texture *texture;
-  Uint8 *yPlane, *uPlane, *vPlane;
-  size_t yPlaneSz, uvPlaneSz;
-  struct SwsContext *sws_ctx = NULL;
-  int got_output,video_stream_idx_cam, videoStream, frameFinished, uvPitch;
-  struct context context = {0};
-
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
       fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
       exit(1);
@@ -423,7 +420,6 @@ int32_t main(int32_t argc, char **argv) {
   // double cpu_time_used;
 
   // loop indefinitely to keep sending to the server until repeat set to fasl
-  SDL_Event msg;
   while (repeat) {
     // poll for an SDL event
     if (SDL_PollEvent(&msg)) {

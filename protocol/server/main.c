@@ -61,13 +61,6 @@ bool repeat = true; // global flag to keep streaming until client disconnects
 // client sends packets of len 33, this fitted size prevents packets clumping
 #define RECV_BUFFER_LEN 33
 
-
-
-
-
-
-
-
 struct SocketContext {
   SOCKET Socket;
   struct sockaddr_in Address;
@@ -88,7 +81,7 @@ static AVCodecContext* codecToContext(AVCodec *codec) {
   context->gop_size = 10;
   context->max_b_frames = 1;
   context->pix_fmt = AV_PIX_FMT_YUV420P;
-  context->bit_rate = 800000;
+  context->bit_rate = 1000000;
   av_opt_set(context -> priv_data, "preset", "ultrafast", 0);
   av_opt_set(context -> priv_data, "tune", "zerolatency", 0);
 
@@ -117,19 +110,15 @@ unsigned __stdcall SendStream(void *opaque) {
   avfilter_register_all();
 
   // Create codecs, contexts, packets, dictionaries, etc.
-  AVCodec *pCodecOut;
   AVCodec *pCodecInCam;
   AVCodecContext *ScreenCaptureContext = NULL;
   AVFrame *cam_frame, *filt_frame;
   AVPacket packet;
   AVFormatContext *pFormatCtx = NULL;
   AVFrame *pFrame = NULL;
-  AVCodecParserContext *parser;
-  AVCodecParameters *params;
   AVCodec *H264CodecEncode = avcodec_find_encoder(AV_CODEC_ID_H264);
   AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
   AVDictionary *inOptions = NULL;
-  AVFormatContext *pFormatCtxOut;
   AVFormatContext *pFormatCtxInCam;
 
 
@@ -300,46 +289,9 @@ unsigned __stdcall SendStream(void *opaque) {
 
           ret = avcodec_encode_video2(EncodeContext, &packet, filt_frame, &got_output);
           struct SocketContext* sendContext = (struct SocketContext*) opaque;
-          // char hexa[17] = "0123456789abcdef";
-          // unsigned char fmsg_char[sizeof(AVPacket)];
-          // memcpy(fmsg_char, &packet, sizeof(AVPacket));
-          // printf("lenght of packet: %d, size of char: %d\n", packet.data, sizeof(fmsg_char));
-          // char fmsg_serialized[2 * sizeof(AVPacket) + 1]; // serialized array is 2x the length since hexa
-
-          // // loop over the char struct, convert each value to hexadecimal
-          // int i;
-          // for (i = 0; i < sizeof(AVPacket); i++) {
-          //   // converting to hexa
-          //   fmsg_serialized[i * 2] = hexa[fmsg_char[i] / 16];
-          //   fmsg_serialized[(i * 2 ) + 1] = hexa[fmsg_char[i] % 16];
-          // }
-          char* message = "hello from the server";
-          int addrSize = sizeof(sendContext->Address);
-
-
-          // we'll print a bunch of stuff here to figure out what to send
-          //printf("\nPacket data: %d\n", packet.data);
-          //printf("Packet size: %d\n", packet.size);
-          //printf("Packet length: %s\n", strlen((char *) packet.data)); //this errors
-          //printf("Packet sizeof: %d\n", sizeof(packet.data));
-          //printf("&Packet sizeof: %d\n", sizeof(&packet.data));
-          //printf("*Packet sizeof: %d\n", sizeof(*packet.data));
-
-        //  printf("Unsigned char packet: %s\n", ((unsigned char *) packet.data));
-
 
           // only send if the packet is not empty obviously
           if (packet.size != 0) {
-
-
-//            for (int i = 0; i < packet.size; i++) {
-//              printf("packet data char: %c\n", (unsigned char *) packet.data[i]);
-//            }
-
-
-
-            // char* message = "message from the server!";
-            // int msglen = strlen(message);
             if ((sent_size = send(sendContext->Socket, packet.data, packet.size, 0)) < 0) {
               printf("Socket sending error \n");
             } else {
