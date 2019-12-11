@@ -93,14 +93,6 @@ static AVCodecContext* codecToContext(AVCodec *codec) {
   return context;
 }
 
-// Encode frame into packet
-static AVPacket encode(AVCodecContext *EncodeContext, AVFrame *pFrame, AVPacket packet) {
-  int got_output, ret;
-  av_init_packet(&packet);
-  ret = avcodec_encode_video2(EncodeContext, &packet, pFrame, &got_output);
-  return packet;
-}
-
 // main function to stream the video and audio from this server to the client
 unsigned __stdcall SendStream(void *opaque) {
   // Initialize variables/functions
@@ -285,8 +277,6 @@ unsigned __stdcall SendStream(void *opaque) {
             break;
           }
 
-          packet = encode(EncodeContext, filt_frame, packet);
-
           ret = avcodec_encode_video2(EncodeContext, &packet, filt_frame, &got_output);
           struct SocketContext* sendContext = (struct SocketContext*) opaque;
 
@@ -294,8 +284,6 @@ unsigned __stdcall SendStream(void *opaque) {
           if (packet.size != 0) {
             if ((sent_size = send(sendContext->Socket, packet.data, packet.size, 0)) < 0) {
               printf("Socket sending error \n");
-            } else {
-              printf("sent!");
             }
             av_free_packet(&packet);
             av_frame_free(&filt_frame);
