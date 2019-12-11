@@ -174,13 +174,6 @@ static int32_t renderThread(void *opaque) {
     } // closing if packet not empty
 
   }
-
-
-
-
-
-
-
   return 0;
 }
 
@@ -315,7 +308,7 @@ int32_t main(int32_t argc, char **argv) {
     printf("Could not create Receive UDP socket.\n");
   }
   printf("Receive UDP Socket created.\n");
-  int timeout = 800;
+  int timeout = 1000;
   int sizeTimeout = sizeof(int);
   setsockopt(RECVSocket, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeTimeout);
   // prepare the sockaddr_in structure for the receiving socket

@@ -294,6 +294,8 @@ unsigned __stdcall SendStream(void *opaque) {
           if (packet.size != 0) {
             if ((sent_size = send(sendContext->Socket, packet.data, packet.size, 0)) < 0) {
               printf("Socket sending error \n");
+            } else {
+              printf("sent!");
             }
             av_free_packet(&packet);
             av_frame_free(&filt_frame);
