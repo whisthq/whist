@@ -127,7 +127,6 @@ static int32_t renderThread(void *opaque) {
   while(repeat) {
 
     recv_size = recv(context->Socket, buff, 35000, 0);
-    printf("Received: %d\n", recv_size);
     if(recv_size == SOCKET_ERROR) {
       printf("Error: %d\n", WSAGetLastError());
     } else {
@@ -316,7 +315,9 @@ int32_t main(int32_t argc, char **argv) {
     printf("Could not create Receive UDP socket.\n");
   }
   printf("Receive UDP Socket created.\n");
-
+  int timeout = 800;
+  int sizeTimeout = sizeof(int);
+  setsockopt(RECVSocket, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeTimeout);
   // prepare the sockaddr_in structure for the receiving socket
   clientRECV.sin_family = AF_INET; // IPv4
   clientRECV.sin_addr.s_addr = INADDR_ANY; // any IP
