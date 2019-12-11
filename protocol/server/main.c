@@ -81,7 +81,7 @@ static AVCodecContext* codecToContext(AVCodec *codec) {
   context->gop_size = 10;
   context->max_b_frames = 1;
   context->pix_fmt = AV_PIX_FMT_YUV420P;
-  // context->bit_rate = 1000000;
+  context->bit_rate = 500000;
   av_opt_set(context -> priv_data, "preset", "ultrafast", 0);
   av_opt_set(context -> priv_data, "tune", "zerolatency", 0);
 
@@ -318,8 +318,6 @@ unsigned __stdcall SendStream(void *opaque) {
   _endthreadex(0);
   return 0;
 }
-
-
 
 
 // main function to receive client user inputs and process them

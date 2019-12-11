@@ -123,7 +123,7 @@ static int32_t renderThread(void *opaque) {
   pFrame = av_frame_alloc();
   AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
   AVCodecContext* DecodeContext = codecToContext(H264CodecDecode);
-
+  int n = 0;
   while(repeat) {
 
     recv_size = recv(context->Socket, buff, 35000, 0);
