@@ -81,7 +81,7 @@ static AVCodecContext* codecToContext(AVCodec *codec) {
   context->gop_size = 10;
   context->max_b_frames = 1;
   context->pix_fmt = AV_PIX_FMT_YUV420P;
-  context->bit_rate = 800000;
+  context->bit_rate = 500000;
   av_opt_set(context -> priv_data, "preset", "ultrafast", 0);
   av_opt_set(context -> priv_data, "tune", "zerolatency", 0);
 
@@ -228,7 +228,6 @@ unsigned __stdcall SendStream(void *opaque) {
 
   while(repeat) {
     av_init_packet(&packet);
-    filt_frame = av_frame_alloc();
 
     ret = av_read_frame(pFormatCtxInCam,&packet);
 
@@ -259,11 +258,12 @@ unsigned __stdcall SendStream(void *opaque) {
 
         // add frame to filter graph
         ret = av_buffersrc_add_frame_flags(buffersrc_ctx_cam, cam_frame, 0);
+
         // get the frames from the filter graph
         while(1){
+          filt_frame = av_frame_alloc();
           if ( ret < 0) {
             av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
-            av_frame_free(&filt_frame);
             break;
           }
 
@@ -286,11 +286,11 @@ unsigned __stdcall SendStream(void *opaque) {
               printf("Socket sending error \n");
             }
             av_free_packet(&packet);
+            av_frame_free(&filt_frame);
           }
         }
       }
     }
-    // av_frame_free(&filt_frame);
     av_free_packet(&packet);
   }
 
