@@ -3,9 +3,9 @@
  * webserver to login and logout the user.
 
  Protocol version: 1.0
- Last modification: 11/28/2019
+ Last modification: 12/14/2019
 
- By: Philippe Noël
+ By: Philippe Noël, Ming Ying
 
  Copyright Fractal Computers, Inc. 2019
 */
@@ -32,23 +32,17 @@
   #pragma warning(disable: 4267) // size_t to int
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // send JSON post to query the database, authenticate the user and return the VM IP
 char *sendJSONPost(char *path, char *jsonObj) {
   // initialize Winsock if this is a Windows client
   #if defined(_WIN32)
     WSADATA wsa;
     // initialize Winsock (sockets library)
-    printf("Initialising Winsock...\n");
     if (WSAStartup(MAKEWORD(2,2), &wsa) != 0)
     {
       printf("Failed. Error Code : %d.\n", WSAGetLastError());
-      return "";
+      return "1";
     }
-    printf("Winsock Initialised.\n");
   #endif
 
   // environment variables
@@ -62,9 +56,8 @@ char *sendJSONPost(char *path, char *jsonObj) {
   {
     // if can't create socket, return
     printf("Could not create socket.\n");
-    return "";
+    return "2";
   }
-  printf("TCP socket created.\n");
 
   // get the host address of the web server
   host = gethostbyname("cube-celery-vm.herokuapp.com");
@@ -79,9 +72,8 @@ char *sendJSONPost(char *path, char *jsonObj) {
 	if (connect_status == SOCKET_ERROR || connect_status < 0)
 	{
     printf("Could not connect to the webserver.\n");
-    return "";
+    return "3";
 	}
-  printf("Connected.\n");
 
   // now that we're connected, we can send the POST request to authenticate the user
   // first, we create the POST request message
@@ -92,7 +84,7 @@ char *sendJSONPost(char *path, char *jsonObj) {
   if (send(Socket, message, strlen(message), 0) < 0) {
     // error sending, terminate
     printf("Sending POST message failed.\n");
-    return "";
+    return "4";
   }
 
   // now that it's sent, let's get the reply
@@ -126,7 +118,6 @@ char *sendJSONPost(char *path, char *jsonObj) {
 
 // log the user in and log its connection time
 char *login(char *username, char *password) {
-  printf("login started");
   // var to store the usr credentials
 	char *credentials;
 
@@ -171,9 +162,49 @@ int32_t logout(char *username) {
   return 0;
 }
 
-#ifdef __cplusplus
+// parse the server response to get the VM IP address
+char *parse_response(char *credentials) {
+  // output variable
+  char *user_vm_ip = "";
+
+  // vars used to parse
+  char *trailing_string = "";
+  char *leading_string;
+  char *vm_key = "\"public_ip\":\"";
+  bool found = false;
+
+  // while we haven't walked the whole response
+  while (*credentials) {
+    // get trailing and leading strings
+    size_t len = strlen(trailing_string);
+    leading_string = malloc(len + 1 + 1);
+    strcpy(leading_string, trailing_string);
+
+    // format leadning string to compare
+    leading_string[len] = *credentials++;
+    leading_string[len + 1] = '\0';
+
+    // if we found it and it's not a slash
+    if (found && strstr(leading_string, "\"")) {
+      // found it, break
+      user_vm_ip = trailing_string;
+      break;
+    }
+
+    // increment leading string
+    trailing_string = leading_string;
+    free(leading_string);
+
+    // reset trailing string
+    if (strstr(leading_string, vm_key) != NULL) {
+      trailing_string = "";
+      found = true;
+    }
+  }
+
+  // return IP found
+  return user_vm_ip;
 }
-#endif
 
 // re-enable Windows warning, if Windows client
 #if defined(_WIN32)

@@ -1,16 +1,24 @@
+# specify compiler
+CC = cl.exe
+
+# specify linker
+LINK = link.exe
+
+# specify bin name
 BIN_NAME = server.exe
-OBJS = main.obj
 
+# static libs to link against
 STATIC_LIBS = \
-	lib/avcodec.lib \
-	lib/avdevice.lib \
-	lib/avfilter.lib \
-	lib/avformat.lib \
-	lib/avutil.lib \
-	lib/postproc.lib \
-	lib/swresample.lib \
-	lib/swscale.lib
+	../lib/ffmpeg/windows/avcodec.lib \
+	../lib/ffmpeg/windows/avdevice.lib \
+	../lib/ffmpeg/windows/avfilter.lib \
+	../lib/ffmpeg/windows/avformat.lib \
+	../lib/ffmpeg/windows/avutil.lib \
+	../lib/ffmpeg/windows/postproc.lib \
+	../lib/ffmpeg/windows/swresample.lib \
+	../lib/ffmpeg/windows/swscale.lib
 
+# compiler flags
 CFLAGS = \
 	/nologo \
 	/W4 \
@@ -21,6 +29,7 @@ CFLAGS = \
 	-DUNICODE \
 	-DWIN32
 
+# system libs to link against
 SHARED_LIBS = \
 	libvcruntime.lib \
 	libcmt.lib \
@@ -53,16 +62,36 @@ SHARED_LIBS = \
 	libcpmt.lib \
 	msvcprt.lib
 
+# linking flags
 LD_FLAGS = \
 	/nodefaultlib \
 	/nologo
 
-all: clean clear $(OBJS)
+# build all files into executable
+all: clean clear fractal.obj videocapture.obj encode.obj main.obj
 	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
+# compile the main fractal header source file into object file
+fractal.obj: ../include/fractal.c
+	$(CC) /c ../include/fractal.c
+
+# compile the video capture source file into object file
+videocapture.obj: ../include/videocapture.c
+	$(CC) /c ../include/videocapture.c
+
+# compile the encoder source file into object file
+encode.obj: ../include/encode.c
+	$(CC) /c ../include/encode.c
+
+# compile the source main file into object file
+main.obj: main.c
+	$(CC) /c main.c
+
+# clean prior object files
 clean:
 	-@del $(BIN_NAME)
 	-@del *.obj
 
+# clear folder
 clear:
 	cls

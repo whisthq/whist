@@ -5,7 +5,7 @@
  * starts streaming its user inputs to the server.
 
  Protocol version: 1.0
- Last modification: 12/10/2019
+ Last modification: 12/14/2019
 
  By: Philippe Noël, Ming Ying
 
@@ -24,20 +24,11 @@
 #include "../include/fractal.h" // header file for protocol functions
 #include "../include/webserver.h" // header file for webserver query functions
 
-#include "include/libavcodec/avcodec.h"
-#include "include/libavdevice/avdevice.h"
-#include "include/libavfilter/avfilter.h"
-#include "include/libavformat/avformat.h"
-#include "include/libavutil/avutil.h"
-#include "include/libavfilter/buffersink.h"
-#include "include/libavfilter/buffersrc.h"
-#include "include/libswscale/swscale.h"
-
 #define SDL_MAIN_HANDLED // SDL definition
-#include "include/SDL2/SDL.h"
-#include "include/SDL2/SDL_thread.h"
+#include "../include/SDL2/SDL.h"
+#include "../include/SDL2/SDL_thread.h"
 
-// define placeholder window size, will get actual monitor size
+// placeholder window size, will get actual monitor size
 #define WINDOW_W 640
 #define WINDOW_H 480
 
@@ -57,12 +48,8 @@
   #include <unistd.h>
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // global vars and definitions
-#define RECV_BUFFER_LEN 35000 // max len of receive buffer
+#define RECV_BUFFER_LEN 100000 // max len of receive buffer
 bool repeat = true; // global flag to stream until disconnection
 
 
@@ -117,7 +104,7 @@ static int32_t renderThread(void *opaque) {
   AVFrame *pFrame = NULL;
   AVPacket packet;
   int recv_size, got_output;
-  uint8_t buff[35000];
+  char buff[RECV_BUFFER_LEN];
 
   av_init_packet(&packet);
   pFrame = av_frame_alloc();
@@ -126,13 +113,19 @@ static int32_t renderThread(void *opaque) {
   int n = 0;
   while(repeat) {
 
-    recv_size = recv(context->Socket, buff, 35000, 0);
+    recv_size = recv(context->Socket, buff, RECV_BUFFER_LEN, 0);
     if(recv_size == SOCKET_ERROR) {
       printf("Error: %d\n", WSAGetLastError());
     } else {
       if (recv_size != 0) {
         av_free_packet(&packet);
-        packet.data = buff;
+
+
+        memcpy(packet.data, &buff, recv_size);
+        //packet.data = buff;
+
+
+
         packet.size = recv_size;
 
         avcodec_decode_video2(DecodeContext, pFrame, &got_output, &packet);
@@ -177,8 +170,12 @@ static int32_t renderThread(void *opaque) {
   return 0;
 }
 
+
+
 // main client function
 int32_t main(int32_t argc, char **argv) {
+
+
   // user login status var
   static bool loggedIn = false;
   AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
@@ -211,39 +208,19 @@ int32_t main(int32_t argc, char **argv) {
 
     // query the webservers
     char *credentials = login(username, password);
+
     // check if correct authentication
     if (strcmp(credentials, "{}") == 0) {
       // incorrect username or password, couldn't authenticate
       printf("Incorrect username or password.\n");
-      // return 2;
+      return 2;
     }
-    else {
-      // correct credentials, authenticate user
-      char* trailing_string = "";
-      char* leading_string;
-      char* vm_key = "\"public_ip\":\"";
-      bool found = false;
-      while(*credentials) {
-        // printf("%c", *credentials++);
-        size_t len = strlen(trailing_string);
-        leading_string = malloc(len + 1 + 1 );
-        strcpy(leading_string, trailing_string);
-        leading_string[len] = *credentials++;
-        leading_string[len + 1] = '\0';
-        if(found && strstr(leading_string, "\"")) {
-          user_vm_ip = trailing_string;
-          break;
-        }
-        trailing_string = leading_string;
-        free(leading_string);
-        if(strstr(leading_string, vm_key) != NULL) {
-          trailing_string = "";
-          found = true;
-        }
-      }
-      printf("%s\n", user_vm_ip);
-      loggedIn = true; // set user as logged in
-    }
+
+    // easy
+    user_vm_ip = parse_response(credentials);
+    printf("%s\n", user_vm_ip);
+    loggedIn = true; // set user as logged in
+
     // user authenticated, let's start the protocol
     printf("Successfully authenticated.\n");
   }
@@ -254,7 +231,6 @@ int32_t main(int32_t argc, char **argv) {
   struct sockaddr_in clientRECV, serverRECV; // this client receive port the server streams to, and the server receive port this client streams to
   int bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
-  HANDLE ThreadHandles[1]; // array containing our extra thread handle
   char hexa[17] = "0123456789abcdef"; // array of hexadecimal values + null character for serializing
 
   // initialize Winsock if this is a Windows client
@@ -282,7 +258,7 @@ int32_t main(int32_t argc, char **argv) {
   printf("Send TCP Socket created.\n");
 
   // prepare the sockaddr_in structure for the send socket (server receive port)
-  user_vm_ip = "52.168.122.131"; //aws:"3.90.174.193";
+  user_vm_ip = /*"52.168.122.131";*/"3.90.174.193"; // aws one
 
 
   printf("%d\n", inet_addr(user_vm_ip));
@@ -489,9 +465,6 @@ int32_t main(int32_t argc, char **argv) {
         // printf("User action serialized, ready for sending.\n");
 
 
-  //      end = clock();
-    //    cpu_time_used = ((double) (end - start)); /// CLOCKS_PER_SEC;
-      //  printf("user action packet took %f seconds to execute \n", cpu_time_used);
 
 
         // user input is serialized, ready to stream over the network
@@ -524,7 +497,6 @@ int32_t main(int32_t argc, char **argv) {
   // Windows case, closing sockets
   #if defined(_WIN32)
     // threads are done, let's close the extra handle and exit
-    CloseHandle(ThreadHandles[0]);
 
     // close the sockets
     closesocket(RECVSocket);
@@ -540,10 +512,6 @@ int32_t main(int32_t argc, char **argv) {
   //loggedIn = false; // logout user
   return 0;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 // re-enable Windows warning, if Windows client
 #if defined(_WIN32)

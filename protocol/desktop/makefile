@@ -1,17 +1,25 @@
+# specify compiler
+CC = cl.exe
+
+# specify linker
+LINK = link.exe
+
+# specify bin name
 BIN_NAME = client.exe
-OBJS = main.obj ../include/webserver.obj
 
+# static libs to link against
 STATIC_LIBS = \
-	lib/avcodec.lib \
-	lib/avdevice.lib \
-	lib/avfilter.lib \
-	lib/avformat.lib \
-	lib/avutil.lib \
-	lib/postproc.lib \
-	lib/swresample.lib \
-	lib/swscale.lib \
-	lib/windows/SDL2.lib
+	../lib/ffmpeg/windows/avcodec.lib \
+	../lib/ffmpeg/windows/avdevice.lib \
+	../lib/ffmpeg/windows/avfilter.lib \
+	../lib/ffmpeg/windows/avformat.lib \
+	../lib/ffmpeg/windows/avutil.lib \
+	../lib/ffmpeg/windows/postproc.lib \
+	../lib/ffmpeg/windows/swresample.lib \
+	../lib/ffmpeg/windows/swscale.lib \
+	../lib/SDL2/windows/SDL2.lib
 
+# compiler flags
 CFLAGS = \
 	/nologo \
 	/W4 \
@@ -23,6 +31,7 @@ CFLAGS = \
 	-DUNICODE \
 	-DWIN32
 
+# system libs to link against
 SHARED_LIBS = \
 	libvcruntime.lib \
 	libucrt.lib \
@@ -41,16 +50,32 @@ SHARED_LIBS = \
 	version.lib \
 	ws2_32.lib
 
+# linking flags
 LD_FLAGS = \
 	/nodefaultlib \
 	/nologo
 
-all: clean clear $(OBJS)
-	link $(LD_FLAGS) $(STATIC_LIBS) $(SHARED_LIBS) /out:$(BIN_NAME) *.obj
+# build all files into executable
+all: clean clear fractal.obj webserver.obj main.obj
+	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
+# compile the main fractal header source file into object file
+fractal.obj: ../include/fractal.c
+	$(CC) /c ../include/fractal.c
+
+# compile the webserver source file into object file
+webserver.obj: ../include/webserver.c
+	$(CC) /c ../include/webserver.c
+
+# compile the source main file into object file
+main.obj: main.c
+	$(CC) /c main.c
+
+# clean prior object files
 clean:
 	-@del $(BIN_NAME)
 	-@del *.obj
 
+# clear folder
 clear:
 	cls

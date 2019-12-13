@@ -4,7 +4,7 @@
  * and audio to the client, and receiving the user input back.
 
  Protocol version: 1.0
- Last modification: 12/10/2019
+ Last modification: 12/14/2019
 
  By: Philippe Noël, Ming Ying
 
@@ -16,26 +16,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <windows.h>
-#include <winuser.h>
-#include <ws2tcpip.h> // other Windows socket library
-#include <winsock2.h> // lib for socket programming on windows
-#include <process.h> // for threads programming
 
 #include "../include/fractal.h" // header file for protocol functions
-
-// ffmpeg libraries
-#include "include/libavcodec/avcodec.h"
-#include "include/libavdevice/avdevice.h"
-#include "include/libavfilter/avfilter.h"
-#include "include/libavformat/avformat.h"
-#include "include/libavutil/avutil.h"
-#include "include/libavfilter/buffersink.h"
-#include "include/libavfilter/buffersrc.h"
-
-// ffmpeg codec definition
-#define CODEC_FLAG_GLOBAL_HEADER AV_CODEC_FLAG_GLOBAL_HEADER
-#define CODEC_FLAG_LOOP_FILTER AV_CODEC_FLAG_LOOP_FILTER
+#include "../include/videocapture.h"
+#include "../include/encode.h"
 
 // Winsock Library
 #pragma comment(lib, "ws2_32.lib")
@@ -52,270 +36,96 @@
   #pragma warning(disable: 4996) // strncpy unsafe warning
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // global vars and definitions
 bool repeat = true; // global flag to keep streaming until client disconnects
-// client sends packets of len 33, this fitted size prevents packets clumping
-#define RECV_BUFFER_LEN 33
+#define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
 
-struct SocketContext {
-  SOCKET Socket;
-  struct sockaddr_in Address;
-};
 
-// Create an AVCodecContext object for a given codec
-static AVCodecContext* codecToContext(AVCodec *codec) {
-  AVCodecContext* context = avcodec_alloc_context3(codec);
-  if (!context) {
-    fprintf(stderr, "Could not allocate video codec context\n");
-    exit(1);
-  }
 
-  context->width = 640;
-  context->height = 480;
-  context->time_base = (AVRational){1,30};
-  // EncodeContext->framerate = (AVRational){30,1};
-  context->gop_size = 10;
-  context->max_b_frames = 1;
-  context->pix_fmt = AV_PIX_FMT_YUV420P;
-  context->bit_rate = 500000;
-  av_opt_set(context -> priv_data, "preset", "ultrafast", 0);
-  av_opt_set(context -> priv_data, "tune", "zerolatency", 0);
 
-  // and open it
-  if (avcodec_open2(context, codec, NULL) < 0) {
-    fprintf(stderr, "Could not open codec\n");
-    exit(1);
-  }
-  return context;
-}
+typedef enum {
+	videotype = 0xFA010000,
+	audiotype = 0xFB010000
+} Fractalframe_type_t;
+
+typedef struct {
+	Fractalframe_type_t type;
+	int size;
+	char data[0];
+} Fractalframe_t;
+
+#define FRAME_BUFFER_SIZE (1024 * 1024)
+
+
+
 
 // main function to stream the video and audio from this server to the client
-unsigned __stdcall SendStream(void *opaque) {
-  // Initialize variables/functions
-  av_register_all();
-  avcodec_register_all();
-  avdevice_register_all();
-  avfilter_register_all();
+unsigned __stdcall SendStream(void *SENDsocket_param) {
+  // cast the socket parameter back to socket for use
+  SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
 
-  // Create codecs, contexts, packets, dictionaries, etc.
-  AVCodec *pCodecInCam;
-  AVCodecContext *ScreenCaptureContext = NULL;
-  AVFrame *cam_frame, *filt_frame;
-  AVPacket packet;
-  AVFormatContext *pFormatCtx = NULL;
-  AVFrame *pFrame = NULL;
-  AVCodec *H264CodecEncode = avcodec_find_encoder(AV_CODEC_ID_H264);
-  AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
-  AVDictionary *inOptions = NULL;
-  AVFormatContext *pFormatCtxInCam;
+  // get window
+  HWND window = NULL;
+  window = GetDesktopWindow();
+  frame_area frame = {0, 0, 0, 0}; // init  frame area
 
+  // init screen capture device
+  capture_device *device;
+  device = create_capture_device(window, frame);
 
-  char args_cam[512];
-  int i, ret, got_output,video_stream_idx_cam;
+  // set encoder parameters
+  int width = device->width; // in and out from the capture device
+  int height = device->height; // in and out from the capture device
+  int bitrate = width * 1500; // estimate bit rate based on output size
 
-  // Initialize codec contexts
-  AVCodecContext* EncodeContext = codecToContext(H264CodecEncode);
-  AVCodecContext* DecodeContext = codecToContext(H264CodecDecode);
+  // init encoder
+  encoder_t * encoder;
+  encoder = create_encoder(width, height, width, height, bitrate);
 
-  // Initialize variables used for screen recording
-  avcodec_parameters_alloc();
-  AVInputFormat *inFrmt= av_find_input_format("dshow");
-  AVFilter *buffersrc_cam  = avfilter_get_by_name("buffer");
-  AVFilter *buffersink = avfilter_get_by_name("buffersink");
-  AVFilterInOut *outputs = avfilter_inout_alloc();
-  AVFilterInOut *inputs  = avfilter_inout_alloc();
-  AVFilterContext *buffersink_ctx;
-  AVFilterContext *buffersrc_ctx_cam;
-  AVFilterGraph *filter_graph;
-  AVBufferSinkParams *buffersink_params;
-  pFormatCtxInCam = avformat_alloc_context();
-  cam_frame = av_frame_alloc();
-  filt_frame = av_frame_alloc();
-  video_stream_idx_cam = -1;
-  size_t sent_size;
+  // video variables
+  int sent_size; // var to keep track of size of packets sent
+  void *capturedframe; // var to hold captured frame, as a void* to RGB pixels
 
-  // Set screen recording resolution and frame rate
-  // av_dict_set(&inOptions, "video_size", "1280x720", 0);
-  av_dict_set(&inOptions, "frame_rate", "30", 0);
+  // init encoded frame parameters
+  Fractalframe_t *encodedframe = (Fractalframe_t *) malloc(FRAME_BUFFER_SIZE);
+  memset(encodedframe, 0, FRAME_BUFFER_SIZE); // set memory to null
+  encodedframe->type = videotype; // specify that this is a video frame
+  size_t encoded_size; // init encoded buffer size
 
-  // Specify screen capture device and open decoders
-  ret = avformat_open_input(&pFormatCtxInCam, "video=screen-capture-recorder", inFrmt, &inOptions);
-  if(avformat_find_stream_info(pFormatCtxInCam,NULL)<0)
-    return -1;
+  // while stream is on
+  while (repeat) {
+    // capture a frame
+    capturedframe = capture_screen(device);
 
-  for(i=0; i < pFormatCtxInCam->nb_streams; i++)
-    if(pFormatCtxInCam->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO)
-      video_stream_idx_cam=i;
+    // reset encoded frame to 0 and reset buffer  before encoding
+    encodedframe->size = 0;
+    encoded_size = FRAME_BUFFER_SIZE - sizeof(Fractalframe_t);
 
-  if(video_stream_idx_cam == -1)
-    return -1;
-
-  ScreenCaptureContext = pFormatCtxInCam->streams[video_stream_idx_cam]->codec;
-  pCodecInCam = avcodec_find_decoder(ScreenCaptureContext->codec_id);
-
-  if(pCodecInCam == NULL){
-    fprintf(stderr,"decoder not found");
-    exit(1);
-  }
-
-  if (avcodec_open2(ScreenCaptureContext, pCodecInCam, NULL) < 0) {
-    av_log(NULL, AV_LOG_ERROR, "Cannot open video decoder for webcam\n");
-    exit(1);
-  }
-
-  if (!cam_frame || !filt_frame) {
-    fprintf(stderr, "Could not allocate video frame\n");
-    exit(1);
-  }
-
-  enum AVPixelFormat pix_fmts[] = { ScreenCaptureContext->pix_fmt,  AV_PIX_FMT_NONE};
-  filter_graph = avfilter_graph_alloc();
-
-  snprintf(args_cam, sizeof(args_cam),
-      "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
-      ScreenCaptureContext->width, ScreenCaptureContext->height, ScreenCaptureContext->pix_fmt,
-      ScreenCaptureContext->time_base.num, ScreenCaptureContext->time_base.den,
-      ScreenCaptureContext->sample_aspect_ratio.num, ScreenCaptureContext->sample_aspect_ratio.den);
-
-  ret = avfilter_graph_create_filter(&buffersrc_ctx_cam, buffersrc_cam, "in",
-      args_cam, NULL, filter_graph);
-  if (ret < 0) {
-    av_log(NULL, AV_LOG_ERROR, "Cannot create buffer source\n");
-    exit(ret);
-  }
-
-  buffersink_params = av_buffersink_params_alloc();
-  buffersink_params->pixel_fmts = pix_fmts;
-
-  ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out",
-      NULL, buffersink_params, filter_graph);
-  av_free(buffersink_params);
-  if (ret < 0) {
-    av_log(NULL, AV_LOG_ERROR, "Cannot create buffer sink\n");
-    exit(ret);
-  }
-
-  outputs->name       = av_strdup("in");
-  outputs->filter_ctx = buffersrc_ctx_cam;
-  outputs->pad_idx    = 0;
-  outputs->next       = NULL;
-
-  inputs->name       = av_strdup("out");
-  inputs->filter_ctx = buffersink_ctx;
-  inputs->pad_idx    = 0;
-  inputs->next       = NULL;
+    // encode captured frame into encodedframe->data
+    encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
 
 
-  const char *filter_str = "scale='640:480',format='yuv420p'";
-  if ((ret = avfilter_graph_parse_ptr(filter_graph, filter_str,
-          &inputs, &outputs, NULL)) < 0){
-    printf("error in graph parse");
-    exit(ret);
-  }
 
-  if ((ret = avfilter_graph_config(filter_graph, NULL)) < 0){
-    printf("error in graph config");
-    exit(ret);
-  }
+    printf("encoded size after: %d\n", encoded_size);
 
-  // Open codec
-  if (avcodec_open2(DecodeContext, H264CodecDecode, NULL) < 0)
-      return -1; // Could not open codec
 
-  while(repeat) {
-    av_init_packet(&packet);
-
-    ret = av_read_frame(pFormatCtxInCam,&packet);
-
-    if(ret < 0){
-      fprintf(stderr,"Error reading frame\n");
-      break;
-    }
-
-    // chaeck if its a avideo frame
-    if(packet.stream_index == video_stream_idx_cam){
-      packet.dts = av_rescale_q_rnd(packet.dts,
-          pFormatCtxInCam->streams[video_stream_idx_cam]->time_base,
-          pFormatCtxInCam->streams[video_stream_idx_cam]->codec->time_base,
-          AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX);
-      packet.pts = av_rescale_q_rnd(packet.pts,
-          pFormatCtxInCam->streams[video_stream_idx_cam]->time_base,
-          pFormatCtxInCam->streams[video_stream_idx_cam]->codec->time_base,
-          AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX);
-
-      ret = avcodec_decode_video2(ScreenCaptureContext,cam_frame,&got_output,&packet);
-
-      cam_frame->pts = av_frame_get_best_effort_timestamp(cam_frame);
-
-      if (got_output) {
-
-        av_free_packet(&packet);
-        av_init_packet(&packet);
-
-        // add frame to filter graph
-        ret = av_buffersrc_add_frame_flags(buffersrc_ctx_cam, cam_frame, 0);
-
-        // get the frames from the filter graph
-        while(1){
-          filt_frame = av_frame_alloc();
-          if ( ret < 0) {
-            av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
-            break;
-          }
-
-          // we'll get a frame that we can now encode to
-          ret = av_buffersink_get_frame(buffersink_ctx, filt_frame);
-          if (ret < 0) {
-            // if there are no more frames or end of frames that is normal
-            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-              ret = 0;
-            av_frame_free(&filt_frame);
-            break;
-          }
-
-          ret = avcodec_encode_video2(EncodeContext, &packet, filt_frame, &got_output);
-          struct SocketContext* sendContext = (struct SocketContext*) opaque;
-
-          // only send if the packet is not empty obviously
-          if (packet.size != 0) {
-            if ((sent_size = send(sendContext->Socket, packet.data, packet.size, 0)) < 0) {
-              printf("Socket sending error \n");
-            }
-            av_free_packet(&packet);
-            av_frame_free(&filt_frame);
-          }
-        }
+    // only send if packet is not empty
+    if (encoded_size != 0) {
+      // send packet
+      if ((sent_size = send(SENDsocket, encodedframe->data, encoded_size, 0)) < 0) {
+        // error statement if something went wrong
+        printf("Socket could not send packet w/ error %d\n", WSAGetLastError());
       }
     }
-    av_free_packet(&packet);
+
+    // packet sent, let's reset the encoded frame memory for the next one
+    memset(encodedframe, 0, FRAME_BUFFER_SIZE);
   }
 
-  // flush out delayed frames
-  for (got_output = 1; got_output; i++) {
-    ret = avcodec_encode_video2(EncodeContext, &packet, NULL, &got_output);
-    if (ret < 0) {
-      fprintf(stderr, "Error encoding frame\n");
-      exit(1);
-    }
-    if (got_output) {
-      av_free_packet(&packet);
-    }
-  }
-
-
-  // Free the YUV frame
-  av_frame_free(&pFrame);
-  // Close the codec
-  avcodec_close(DecodeContext);
-  avcodec_close(EncodeContext);
-
-  // Close the video file
-  avformat_close_input(&pFormatCtx);
-  _endthreadex(0);
+  // exited while loop, stream done let's close everything
+  destroy_encoder(encoder); // destroy encoder
+  destroy_capture_device(device); // destroy capture device
+  _endthreadex(0); // end thread and return
   return 0;
 }
 
@@ -325,113 +135,46 @@ unsigned __stdcall ReceiveClientInput(void *RECVsocket_param) {
   // cast the socket parameter back to socket for use
   SOCKET RECVsocket = *(SOCKET *) RECVsocket_param;
 
-  // initiate buffer to store the user action that we will receive
-  int recv_size;
-  char *client_action_buffer[RECV_BUFFER_LEN];
-  char hexa[] = "0123456789abcdef"; // array of hexadecimal values + null character for deserializing
+  int recv_size; // packet size we receive
+  char *recv_buffer[RECV_BUFFER_LEN]; // buffer to receive into
 
-  // while stream is on, listen for messages
-  int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
-  int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
+  // while stream is on, listen for user messages
   while (repeat) {
     // query for packets reception indefinitely via recv until repeat set to false
-    recv_size = recv(RECVsocket, client_action_buffer, RECV_BUFFER_LEN, 0);
-    //printf("Received packet of size: %d\n", recv_size);
-    //printf("Message received: %s\n", client_action_buffer);
+    recv_size = recv(RECVsocket, recv_buffer, RECV_BUFFER_LEN, 0);
+    printf("Received packet of size: %d\n", recv_size);
+    printf("Message received: %s\n", recv_buffer);
 
     // if the packet isn't empty (aka there is an action to process)
     if (recv_size != 0) {
-      // the packet we receive is the FractalMessage struct serialized to hexadecimal,
-      // we need to deserialize it to feed it to the Windows API
-      unsigned char fmsg_char[sizeof(struct FractalMessage)]; // array to hold the hexa values in char (decimal) format
-
-      // first, we need to copy it to a char[] for it to be iterable
-      char iterable_buffer[RECV_BUFFER_LEN] = "";
-      strncpy(iterable_buffer, client_action_buffer, RECV_BUFFER_LEN);
-
-      // now we iterate over the length of the FractalMessage struct and fill an
-      // array with the decimal value conversion of the hex we received
-      int i, index_0, index_1; // tmp
-      for (i = 0; i < sizeof(struct FractalMessage); i++) {
-        // find index of the two characters for the current hexadecimal value
-      index_0 = strchr(hexa, iterable_buffer[i * 2]) - hexa;
-      index_1 = strchr(hexa, iterable_buffer[(i * 2) + 1]) - hexa;
-
-      // now convert back to decimal and store in array
-      fmsg_char[i] = index_0 * 16 + index_1; // conversion formula
-      }
-      // now that we got the de-serialized memory values of the user input, we
-      // can copy it back to a FractalMessage struct
+      // the packet we receive is the memory copy of the FractalMessage struct
+      // so we memcpy it back into a FractalMessage struct
       FractalMessage fmsg = {0};
-      memcpy(&fmsg, &fmsg_char, sizeof(struct FractalMessage));
+      memcpy(&fmsg, &recv_buffer, sizeof(struct FractalMessage));
 
-      // all good, we're back with our user input to replay
-      //printf("User action deserialized, ready for replaying.\n");
-
-      // time to create an input event for the windows API based on our Fractal event
-      INPUT Event = {0};
-
-      // switch to fill in the Windows event depending on the FractalMessage type
-      switch (fmsg.type) {
-        // Windows event for keyboard action
-        case MESSAGE_KEYBOARD:
-          Event.ki.wVk = virtual_codes[fmsg.keyboard.code - 4];
-          Event.type = INPUT_KEYBOARD;
-          Event.ki.wScan = 0;
-          Event.ki.time = 0; // system supplies timestamp
-
-          if (!fmsg.keyboard.pressed) {
-          Event.ki.dwFlags = KEYEVENTF_KEYUP;
-          }
-
-          break;
-        case MESSAGE_MOUSE_MOTION:
-          Event.type = INPUT_MOUSE;
-          Event.mi.dx = fmsg.mouseMotion.x * ((float)65536 / sWidth);
-          Event.mi.dy = fmsg.mouseMotion.y * ((float)65536 / sHeight);
-          Event.mi.dwFlags = MOUSEEVENTF_MOVE;
-
-
-          break;
-        case  MESSAGE_MOUSE_BUTTON:
-          Event.type = INPUT_MOUSE;
-          Event.mi.dx = 0;
-          Event.mi.dy = 0;
-          if (fmsg.mouseButton.button == 1) {
-            if (fmsg.mouseButton.pressed) {
-              Event.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-            }
-            else {
-              Event.mi.dwFlags = MOUSEEVENTF_LEFTUP;
-            }
-          } else if (fmsg.mouseButton.button == 3) {
-            if (fmsg.mouseButton.pressed) {
-              Event.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-            }
-            else {
-              Event.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
-            }
-          }
-          break;
-        case MESSAGE_MOUSE_WHEEL:
-          Event.type = INPUT_MOUSE;
-          Event.mi.dwFlags = MOUSEEVENTF_WHEEL;
-          Event.mi.dx = 0;
-          Event.mi.dy = 0;
-          Event.mi.mouseData = fmsg.mouseWheel.x;
-          break;
-      }
-      // now that we have mapped our FMSG to a Windows event, let's play it
-      SendInput(1, &Event, sizeof(INPUT)); // 1 structure to send
+      // we can now replay the user input
+      ReplayUserInput(fmsg);
     }
   }
   // connection interrupted by setting repeat to false, exit protocol
   printf("Connection interrupted.\n");
-
-  // terminate thread as we are done with the stream
-  _endthreadex(0);
+  _endthreadex(0); // close thread
   return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // main server function
 int32_t main(int32_t argc, char **argv) {
@@ -444,66 +187,22 @@ int32_t main(int32_t argc, char **argv) {
     return 1;
   }
 
-  // socket environment variables
-  WSADATA wsa;
+  // protocol environment variables
   SOCKET listensocket, RECVsocket, SENDsocket; // socket file descriptors
-  struct sockaddr_in serverRECV, clientRECV, clientServerRECV; // file descriptors for the ports, clientRECV = clientServerRECV
-  int clientServerRECV_addr_len, bind_attempts = 0;
+  struct sockaddr_in clientRECV, clientServerRECV; // file descriptors for ports
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
-  HANDLE ThreadHandles[2]; // array containing our 2 thread handles
+  HANDLE ThreadHandles[2] = {0, 0}; // array containing our 2 thread handles
+  SOCKET sockets[3] = {0, 0, 0}; // array containing our socket file descriptors
+  int clientServerRECV_addr_len = sizeof(struct sockaddr_in); // client address length
 
-  // initialize Winsock (sockets library)
-  printf("Initialising Winsock...\n");
-  if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
-    printf("Failed. Error Code : %d.\n", WSAGetLastError());
-    return 2;
-  }
-  printf("Winsock Initialised.\n");
-
-  // Creating our TCP (receiving) socket (need it first to initiate connection)
-  // AF_INET = IPv4
-  // SOCK_STREAM = TCP Socket
-  // 0 = protocol automatically detected
-  if ((listensocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
-    printf("Could not create listen TCP socket: %d.\n" , WSAGetLastError());
-    WSACleanup(); // close Windows socket library
-    return 3;
-  }
-  printf("Listen TCP Socket created.\n");
-
-  // prepare the sockaddr_in structure for the listening socket
-  serverRECV.sin_family = AF_INET; // IPv4
-  serverRECV.sin_addr.s_addr = INADDR_ANY; // any IP
-  serverRECV.sin_port = htons(config.serverPortRECV); // initial default port
-
-  // bind our socket to this port. If it fails, increment port by one and retry
-  while (bind(listensocket, (struct sockaddr *) &serverRECV, sizeof(serverRECV)) == SOCKET_ERROR) {
-    // at most 50 attempts, after that we give up
-    if (bind_attempts == 50) {
-      printf("Cannot find an open port, abort.\n");
-      closesocket(listensocket); // close open socket
-      WSACleanup(); // close Windows socket library
-      return 4;
-    }
-    // display failed attempt
-    printf("Bind attempt #%i failed with error code: %d.\n", bind_attempts, WSAGetLastError());
-
-    // increment port number and retry
-    bind_attempts += 1;
-    serverRECV.sin_port = htons(config.serverPortRECV + bind_attempts); // initial default port 48888
-  }
-  // successfully binded, we're good to go
-  printf("Bind done on port: %d.\n", ntohs(serverRECV.sin_port));
-
-  // this passive socket is always open to listen for an incoming connection
-  listen(listensocket, 1); // 1 maximum concurrent connection
-  printf("Waiting for an incoming connection...\n");
+  // initialize server listen socket (TCP) and start listening
+  listensocket = ServerInit(listensocket, config);
+  sockets[0] = listensocket; // store to make destroying simpler
 
   // forever loop to always be listening to pick up a new connection if idle
   while (true) {
     // accept client connection once there's one on the listensocket queue
     // new active socket created on same port as listensocket,
-    clientServerRECV_addr_len = sizeof(struct sockaddr_in);
     RECVsocket = accept(listensocket, (struct sockaddr *) &clientServerRECV, &clientServerRECV_addr_len);
     if (RECVsocket == INVALID_SOCKET) {
       // print error but keep listening to new potential connections
@@ -513,6 +212,11 @@ int32_t main(int32_t argc, char **argv) {
       // now that we got our receive socket ready to receive client input, we
       // need to create our send socket to initiate the stream
       printf("Connection accepted - Receive TCP Socket created.\n");
+      sockets[1] = RECVsocket; // store to make destroying simpler
+
+
+
+
 
       // Creating our UDP (sending) socket
       // AF_INET = IPv4
@@ -520,12 +224,12 @@ int32_t main(int32_t argc, char **argv) {
       // IPPROTO_UDP = UDP protocol
       if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
         printf("Could not create UDP socket : %d.\n" , WSAGetLastError());
-        closesocket(listensocket); // close open socket
-        closesocket(RECVsocket); // close open socket
-        WSACleanup(); // close Windows socket library
+        ServerDestroy(sockets, ThreadHandles, false);
         return 5;
       }
       printf("Send UDP Socket created.\n");
+
+      sockets[2] = SENDsocket;
 
       // to bind to the client receiving port, we need its IP and port, which we
       // can get since we have accepted connection on our receiving port
@@ -543,51 +247,40 @@ int32_t main(int32_t argc, char **argv) {
       char *connect_status = connect(SENDsocket, (struct sockaddr *) &clientRECV, sizeof(clientRECV));
       if (connect_status == SOCKET_ERROR) {
         printf("Could not connect to the client w/ error: %d\n", WSAGetLastError());
-        closesocket(listensocket); // close open socket
-        closesocket(RECVsocket); // close open socket
-        closesocket(SENDsocket); // close open socket
-        WSACleanup(); // close Windows socket library
+        ServerDestroy(sockets, ThreadHandles, false);
         return 3;
       }
       printf("Connected on port: %d.\n", config.clientPortRECV);
 
+
+
+
+
+
       // time to start streaming and receiving user input
       // launch thread #1 to start streaming video & audio from server
-      struct SocketContext sendContext = {0};
-      sendContext.Socket = SENDsocket;
-      sendContext.Address = clientRECV;
-
-      ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &SendStream, &sendContext, 0, NULL);
+      ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &SendStream, &SENDsocket, 0, NULL);
 
       // launch thread #2 to start receiving and processing client input
       ThreadHandles[1] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveClientInput, &RECVsocket, 0, NULL);
 
-      // TODO LATER: Add a third thread that listens for disconnect and sets repeat=false
+      // this thread, thread #0, listens for user logging out of their cloud
+      // computer to stop the protocol when that happens
+      while (repeat) {
+        // TODO: helper function for listening to logoff event
 
-      // block until our 2 threads terminate, so until the protocol terminates
-      WaitForMultipleObjects(2, ThreadHandles, true, INFINITE);
-
-      // threads are done, let's close their handles and exit
-      CloseHandle(ThreadHandles[0]);
-      CloseHandle(ThreadHandles[1]);
+        // user deconnected, set repeat to false to close the protocol
+        //repeat = false;
+      }
     }
-    // client disconnected, restart listening for connections
+    // client disconnected, destroy connection and restart listening
     printf("Client disconnected.\n");
-
-    // client disconnected, close the send socket since it's client specific
-    // threads already closed from within their respective function
-    closesocket(SENDsocket);
+    ServerDestroy(sockets, ThreadHandles, false);
   }
   // server loop exited, close everything
-  closesocket(RECVsocket);
-  closesocket(listensocket);
-  WSACleanup(); // close Windows socket library
+  ServerDestroy(sockets, ThreadHandles, true);
   return 0;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 // re-enable Windows warnings
 #if defined(_WIN32)
