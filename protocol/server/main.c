@@ -116,6 +116,7 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
         // error statement if something went wrong
         printf("Socket could not send packet w/ error %d\n", WSAGetLastError());
       }
+      printf("Sent packet of size %d.\n", sent_size);
     }
 
     // packet sent, let's reset the encoded frame memory for the next one
@@ -146,7 +147,7 @@ unsigned __stdcall ReceiveClientInput(void *RECVsocket_param) {
     printf("Message received: %s\n", recv_buffer);
 
     // if the packet isn't empty (aka there is an action to process)
-    if (recv_size != 0) {
+    if (recv_size > 0) {
       // the packet we receive is the memory copy of the FractalMessage struct
       // so we memcpy it back into a FractalMessage struct
       FractalMessage fmsg = {0};

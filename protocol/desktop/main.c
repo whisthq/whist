@@ -113,22 +113,33 @@ static int32_t renderThread(void *opaque) {
   int n = 0;
   while(repeat) {
 
+
+
+
+    // query for packets reception indefinitely via recv until repeat set to false
     recv_size = recv(context->Socket, buff, RECV_BUFFER_LEN, 0);
-    if(recv_size == SOCKET_ERROR) {
-      printf("Error: %d\n", WSAGetLastError());
-    } else {
-      if (recv_size != 0) {
+    printf("Received packet of size: %d\n", recv_size);
+    printf("Message received: %s\n", buff);
+
+    // if the packet isn't empty (aka there is an action to process
+      if (recv_size > 0) {
         av_free_packet(&packet);
 
 
-        memcpy(packet.data, &buff, recv_size);
+        printf("pastabolognese\n");
+
+        memcpy(&packet.data, &buff, recv_size);
         //packet.data = buff;
 
+        printf("tostitos\n");
 
 
         packet.size = recv_size;
 
+        // this function is where the error is!
         avcodec_decode_video2(DecodeContext, pFrame, &got_output, &packet);
+
+        printf("test3333\n");
 
         if (got_output) {
 
@@ -164,7 +175,7 @@ static int32_t renderThread(void *opaque) {
         // av_free(pFrame->data[0]);
         // av_frame_free(pFrame);
       }
-    } // closing if packet not empty
+     // closing if packet not empty
 
   }
   return 0;
@@ -386,15 +397,13 @@ int32_t main(int32_t argc, char **argv) {
   context.Socket = RECVSocket;
   context.Address = serverRECV;
   SDL_Thread *render_thread = SDL_CreateThread(renderThread, "renderThread", &context);
-//   clock_t start, end;
-  // double cpu_time_used;
+
+
 
   // loop indefinitely to keep sending to the server until repeat set to fasl
   while (repeat) {
     // poll for an SDL event
     if (SDL_PollEvent(&msg)) {
-
-  //    start = clock();
 
 
       // event received, define Fractal message and find which event type it is
