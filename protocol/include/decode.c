@@ -39,7 +39,7 @@ decoder_t *create_decoder(int in_width, int in_height, int out_width, int out_he
 	decoder->context->height = out_height;
 	decoder->context->time_base.num = 1;
 	decoder->context->time_base.den = 30;
-	decoder->context->gop_size = 30;
+	decoder->context->gop_size = 1; // send SPS/PPS headers every packet
 	decoder->context->max_b_frames = 0;
 	decoder->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
@@ -102,49 +102,43 @@ void *decoder_decode(decoder_t *decoder, char *buffer, int buffer_size, void *de
 	int success = 0; // boolean for success or failure of decoding
   decoder->frame->pts++; // still not quite sure what that is for
 
-	printf("zero\n");
-
-
   // copy the received packet back into the decoder AVPacket
   memcpy(&decoder->packet.data, &buffer, buffer_size);
   decoder->packet.size = buffer_size;
-
-
-	printf("packetdata: %s\n", decoder->packet.data);
-	printf("packetsize: %d\n", decoder->packet.size);
-
-
-
-	printf("uno\n");
 
   // decode the frame
 	avcodec_decode_video2(decoder->context, decoder->frame, &success, &decoder->packet);
 
 
-	printf("dos\n");
+	printf("tototot\n");
 
   // if decoding succeeded
 	if (success) {
+
+		printf("welp\n");
+
     // define scaling parameters
-		int in_linesize[1] = {decoder->in_width * 4};
-
-
-		// void pointer to the decoded pixels
-     void *yuv_decoded_pixels;
-
-		 // point the pointer to the decoded data pixels
-		 yuv_decoded_pixels = decoder->frame->data;
-
-    uint8_t *in_data[1] = {(uint8_t *) yuv_decoded_pixels};
 
 
 
+		int in_linesize[1] = {decoder->in_width / 4};
+//		uint8_t *in_data[1] = {decoder->frame->data}; // already a uint8_t pointer
+	int in_linesize = decoder->in_width / 4;
+	uint8_t *in_data = decoder->frame->data; // already a uint8_t pointer
 
-		printf("tres\n");
+	/*
+	// define input data to encoder
+	uint8_t *in_data[1] = {(uint8_t *) rgb_pixels};
+	int in_linesize[1] = {encoder->in_width * 4};
+
+  // scale to the encoder format
+	sws_scale(encoder->sws, in_data, in_linesize, 0, encoder->in_height, encoder->frame->data, encoder->frame->linesize);
+	*/
+
+
 
     // scale to the decoder format
   	sws_scale(decoder->sws, in_data, in_linesize, 0, decoder->in_height, decoded_data, decoder->frame->linesize);
-
 
 		printf("supppp\n");
 

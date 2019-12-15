@@ -76,15 +76,15 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
   // set encoder parameters
   int width = device->width; // in and out from the capture device
   int height = device->height; // in and out from the capture device
-  int bitrate = width * 1500; // estimate bit rate based on output size
+  int bitrate = width * 7500; // estimate bit rate based on output size
 
   // init encoder
   encoder_t *encoder;
   encoder = create_encoder(width, height, width, height, bitrate);
 
   // video variables
-  int sent_size; // var to keep track of size of packets sent
   void *capturedframe; // var to hold captured frame, as a void* to RGB pixels
+  int sent_size; // var to keep track of size of packets sent
 
   // init encoded frame parameters
   Fractalframe_t *encodedframe = (Fractalframe_t *) malloc(FRAME_BUFFER_SIZE);
@@ -94,15 +94,34 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
 
   // while stream is on
   while (repeat) {
+
+
+
     // capture a frame
     capturedframe = capture_screen(device);
+
+
 
     // reset encoded frame to 0 and reset buffer  before encoding
     encodedframe->size = 0;
     encoded_size = FRAME_BUFFER_SIZE - sizeof(Fractalframe_t);
 
+
+
+
+
+
+    /*Print the value pointed to by iptr*/
+//    printf("pixels:  %d\n", sizeof(*(uint8_t *) capturedframe ));
+
+
+
     // encode captured frame into encodedframe->data
     encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
+
+
+//    printf("testo\n");
+
 
     // only send if packet is not empty
     if (encoded_size != 0) {

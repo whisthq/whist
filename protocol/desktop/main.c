@@ -100,6 +100,9 @@ static int32_t renderThread(void *opaque) {
   int recv_size; // var to keep track of size of packets received
   char buff[RECV_BUFFER_LEN]; // buffer to receive the packets
 
+
+
+
   // initdecoded frame parameters
   Fractalframe_t *decodedframe = (Fractalframe_t *) malloc(FRAME_BUFFER_SIZE);
   memset(decodedframe, 0, FRAME_BUFFER_SIZE); // set memory to null
@@ -116,10 +119,6 @@ static int32_t renderThread(void *opaque) {
       // decode the packet we received into a frame
       decoder_decode(decoder, buff, recv_size, decodedframe->data);
 
-
-
-
-      printf("decode succeeded\n");
 
 
 

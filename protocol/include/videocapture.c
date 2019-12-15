@@ -51,7 +51,7 @@ capture_device *create_capture_device(HWND window, frame_area frame) {
 	device->bitmapInfo.biPlanes = 1; // single plane
 	device->bitmapInfo.biBitCount = 32; // 32 bit
 	device->bitmapInfo.biWidth = device->width;
-	device->bitmapInfo.biHeight = -device->height;
+	device->bitmapInfo.biHeight = device->height;
 	device->bitmapInfo.biCompression = BI_RGB; // RGB color format
 	device->bitmapInfo.biSizeImage = 0;
 

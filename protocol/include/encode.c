@@ -39,7 +39,7 @@ encoder_t *create_encoder(int in_width, int in_height, int out_width, int out_he
 	encoder->context->height = out_height;
 	encoder->context->time_base.num = 1;
 	encoder->context->time_base.den = 30;
-	encoder->context->gop_size = 30;
+	encoder->context->gop_size = 1; // send SPS/PPS headers every packet
 	encoder->context->max_b_frames = 0;
 	encoder->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
@@ -98,7 +98,7 @@ void destroy_encoder(encoder_t *encoder) {
 /// @details encode a RGB frame into encoded format as YUV color
 void *encoder_encode(encoder_t *encoder, void *rgb_pixels, void *encoded_data, size_t *encoded_size) {
   // define input data to encoder
-  uint8_t *in_data[1] = {(uint8_t *) rgb_pixels};
+	uint8_t *in_data[1] = {(uint8_t *) rgb_pixels};
 	int in_linesize[1] = {encoder->in_width * 4};
 
   // scale to the encoder format
