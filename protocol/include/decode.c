@@ -119,12 +119,12 @@ void *decoder_decode(decoder_t *decoder, char *buffer, int buffer_size, void *de
 
     // define scaling parameters
 
-
-
 		int in_linesize[1] = {decoder->in_width / 4};
-//		uint8_t *in_data[1] = {decoder->frame->data}; // already a uint8_t pointer
-	int in_linesize = decoder->in_width / 4;
-	uint8_t *in_data = decoder->frame->data; // already a uint8_t pointer
+
+
+		uint8_t *in_data[1] = {(uint8_t *) &decoder->frame->data}; // already a uint8_t pointer
+//	int in_linesize = decoder->in_width / 4;
+//	uint8_t *in_data = decoder->frame->data; // already a uint8_t pointer
 
 	/*
 	// define input data to encoder
