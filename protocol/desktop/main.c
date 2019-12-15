@@ -62,6 +62,7 @@ struct context {
     SDL_Renderer* Renderer;
     SDL_Texture* Texture;
     SOCKET Socket;
+    struct SwsContext* sws;
 };
 
 
@@ -117,13 +118,14 @@ static int32_t renderThread(void *opaque) {
 
     // if the packet isn't empty (aka there is an action to process
     if (recv_size > 0) {
+      printf("starting to decode");
       // decode the packet we received into a frame
       decoder_decode(decoder, buff, recv_size, decodedframe->data);
 
+      printf("test");
 
 
-
-      /*
+      
       AVPicture pict;
       pict.data[0] = context->yPlane;
       pict.data[1] = context->uPlane;
@@ -131,13 +133,13 @@ static int32_t renderThread(void *opaque) {
       pict.linesize[0] = 1200;
       pict.linesize[1] = context->uvPitch;
       pict.linesize[2] = context->uvPitch;
+      printf("test");
 
-
-
-         sws_scale(context->SwsContext, (uint8_t const * const *) pFrame->data,
-                 pFrame->linesize, 0, context->CodecContext->height, pict.data,
+         printf("line size %d\n", decoder->frame->linesize);
+         sws_scale(context->sws, (uint8_t const * const *) decoder->frame->data,
+                 decoder->frame->linesize, 0, decoder->context->height, pict.data,
                  pict.linesize);
-
+         printf("done scaling");
 
           SDL_UpdateYUVTexture(
                   context->Texture,
@@ -149,11 +151,13 @@ static int32_t renderThread(void *opaque) {
                   context->vPlane,
                   context->uvPitch
               );
-
+          printf("test");
           SDL_RenderClear(context->Renderer);
+          printf("test1");
           SDL_RenderCopy(context->Renderer, context->Texture, NULL, NULL);
+          printf("test2");
           SDL_RenderPresent(context->Renderer);
-          */
+          printf("test3");
 
 
 
@@ -350,7 +354,14 @@ int32_t main(int32_t argc, char **argv) {
       exit(1);
   }
 
-
+  struct SwsContext *sws_ctx = NULL;
+  sws_ctx = sws_getContext(1200, 1080,
+          AV_PIX_FMT_YUV420P, 1200, 1080,
+          AV_PIX_FMT_YUV420P,
+          SWS_BILINEAR,
+          NULL,
+          NULL,
+          NULL);
 
   // set up YV12 pixel array (12 bits per pixel)
   yPlaneSz = 1200 * 1080;
@@ -368,6 +379,7 @@ int32_t main(int32_t argc, char **argv) {
   // TODO LATER: function to call to adapt window size to client
 
   context.yPlane = yPlane;
+  context.sws = sws_ctx;
   context.uPlane = uPlane;
   context.vPlane = vPlane;
   context.uvPitch = uvPitch;

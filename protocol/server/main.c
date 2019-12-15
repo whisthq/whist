@@ -76,7 +76,7 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
   // set encoder parameters
   int width = device->width; // in and out from the capture device
   int height = device->height; // in and out from the capture device
-  int bitrate = width * 7500; // estimate bit rate based on output size
+  int bitrate = width * 1500; // estimate bit rate based on output size
 
   // init encoder
   encoder_t *encoder;

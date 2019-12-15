@@ -62,10 +62,10 @@ decoder_t *create_decoder(int in_width, int in_height, int out_width, int out_he
 	decoder->frame_buffer = malloc(frame_size);
 
   // fill picture with empty frame buffer
-	avpicture_fill((AVPicture *) decoder->frame, (uint8_t *) decoder->frame_buffer, AV_PIX_FMT_YUV420P, out_width, out_height);
+	// avpicture_fill((AVPicture *) decoder->frame, (uint8_t *) decoder->frame_buffer, AV_PIX_FMT_YUV420P, out_width, out_height);
 
   // set sws context for color format conversion
-	decoder->sws = sws_getContext(in_width, in_height, AV_PIX_FMT_YUV420P, out_width, out_height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, 0, 0, 0);
+	decoder->sws = sws_getContext(in_width, in_height, AV_PIX_FMT_YUV420P, out_width, out_height, AV_PIX_FMT_YUV420P, SWS_BILINEAR, 0, 0, 0);
 
   // return created decoder
 	return decoder;
@@ -100,57 +100,60 @@ void *decoder_decode(decoder_t *decoder, char *buffer, int buffer_size, void *de
   // init packet to prepare decoding
 	av_init_packet(&decoder->packet);
 	int success = 0; // boolean for success or failure of decoding
-  decoder->frame->pts++; // still not quite sure what that is for
+ 	 decoder->frame->pts++; // still not quite sure what that is for
 
   // copy the received packet back into the decoder AVPacket
-  memcpy(&decoder->packet.data, &buffer, buffer_size);
+  // memcpy(&decoder->packet.data, &buffer, buffer_size);
+  decoder->packet.data = buffer;
   decoder->packet.size = buffer_size;
 
   // decode the frame
 	avcodec_decode_video2(decoder->context, decoder->frame, &success, &decoder->packet);
+	printf("decode status %d\n", success);
+
+// 	printf("tototot\n");
+
+//   // if decoding succeeded
+// 	if (success) {
+
+// 		printf("welp\n");
+
+//     // define scaling parameters
+// 		int in_linesize[1] = {decoder->in_width / 4};
+
+// 		uint8_t *in_data[1] = {decoder->frame->data}; // already a uint8_t pointer
+// //	int in_linesize = decoder->in_width / 4;
+// //	uint8_t *in_data = decoder->frame->data; // already a uint8_t pointer
+
+	
+// 	// define input data to encoder
+// 	uint8_t *in_data[1] = {(uint8_t *) rgb_pixels};
+// 	int in_linesize[1] = {encoder->in_width * 4};
+
+//   // scale to the encoder format
+// 	sws_scale(encoder->sws, in_data, in_linesize, 0, encoder->in_height, encoder->frame->data, encoder->frame->linesize);
+	
 
 
-	printf("tototot\n");
 
-  // if decoding succeeded
-	if (success) {
+//     // scale to the decoder format
+//   	sws_scale(decoder->sws, (uint8_t const * const *) decoder->frame->data, in_linesize, 0, decoder->in_height, decoded_data, decoder->frame->linesize);
 
-		printf("welp\n");
+// 		printf("supppp\n");
 
-    // define scaling parameters
-		int in_linesize[1] = {decoder->in_width / 4};
-
-		uint8_t *in_data[1] = {decoder->frame->data}; // already a uint8_t pointer
-//	int in_linesize = decoder->in_width / 4;
-//	uint8_t *in_data = decoder->frame->data; // already a uint8_t pointer
-
-	/*
-	// define input data to encoder
-	uint8_t *in_data[1] = {(uint8_t *) rgb_pixels};
-	int in_linesize[1] = {encoder->in_width * 4};
-
-  // scale to the encoder format
-	sws_scale(encoder->sws, in_data, in_linesize, 0, encoder->in_height, encoder->frame->data, encoder->frame->linesize);
-	*/
+//   }
+//   // if decoding failed
+//   else {
+//     printf("Could not decoded packet.\n");
+//     return;
+//   }
 
 
-
-    // scale to the decoder format
-  	sws_scale(decoder->sws, in_data, in_linesize, 0, decoder->in_height, decoded_data, decoder->frame->linesize);
-
-		printf("supppp\n");
-
-  }
-  // if decoding failed
-  else {
-    printf("Could not decoded packet.\n");
-    return;
-  }
-
-
-	printf("quatro\n");
+// 	printf("quatro\n");
 
   // free the packet, it's now stored in encoded_data
+	printf("test");
 	av_free_packet(&decoder->packet);
+	printf("test");
   return;
 }
