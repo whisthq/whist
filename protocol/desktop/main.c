@@ -103,6 +103,7 @@ static int32_t renderThread(void *opaque) {
 
 
 
+
   // initdecoded frame parameters
   Fractalframe_t *decodedframe = (Fractalframe_t *) malloc(FRAME_BUFFER_SIZE);
   memset(decodedframe, 0, FRAME_BUFFER_SIZE); // set memory to null
