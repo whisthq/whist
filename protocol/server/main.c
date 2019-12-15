@@ -74,9 +74,9 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
   device = create_capture_device(window, frame);
 
   // set encoder parameters
-  int width = device->width; // in and out from the capture device
+  int width = 2560; // in and out from the capture device
   int height = device->height; // in and out from the capture device
-  int bitrate = width * 1500; // estimate bit rate based on output size
+  int bitrate = width * 5500; // estimate bit rate based on output size
 
   // init encoder
   encoder_t *encoder;
@@ -108,9 +108,6 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
     // encode captured frame into encodedframe->data
     encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
 
-
-//    printf("testo\n");
-    printf("encoded size %d\n", encoded_size);
 
     // only send if packet is not empty
     if (encoded_size != 0) {
@@ -146,8 +143,6 @@ unsigned __stdcall ReceiveClientInput(void *RECVsocket_param) {
   while (repeat) {
     // query for packets reception indefinitely via recv until repeat set to false
     recv_size = recv(RECVsocket, recv_buffer, RECV_BUFFER_LEN, 0);
-    printf("Received packet of size: %d\n", recv_size);
-    printf("Message received: %s\n", recv_buffer);
 
     // if the packet isn't empty (aka there is an action to process)
     if (recv_size > 0) {
