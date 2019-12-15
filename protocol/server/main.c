@@ -95,33 +95,22 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
   // while stream is on
   while (repeat) {
 
-
-
     // capture a frame
     capturedframe = capture_screen(device);
-
-
 
     // reset encoded frame to 0 and reset buffer  before encoding
     encodedframe->size = 0;
     encoded_size = FRAME_BUFFER_SIZE - sizeof(Fractalframe_t);
 
-
-
-
-
-
     /*Print the value pointed to by iptr*/
 //    printf("pixels:  %d\n", sizeof(*(uint8_t *) capturedframe ));
-
-
 
     // encode captured frame into encodedframe->data
     encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
 
 
 //    printf("testo\n");
-
+    printf("encoded size %d\n", encoded_size);
 
     // only send if packet is not empty
     if (encoded_size != 0) {
@@ -176,18 +165,6 @@ unsigned __stdcall ReceiveClientInput(void *RECVsocket_param) {
   _endthreadex(0); // close thread
   return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -50,7 +50,7 @@
 #endif
 
 // global vars and definitions
-#define RECV_BUFFER_LEN 100000 // max len of receive buffer
+#define RECV_BUFFER_LEN 160000 // max len of receive buffer
 bool repeat = true; // global flag to stream until disconnection
 
 
@@ -77,7 +77,7 @@ typedef struct {
 	char data[0];
 } Fractalframe_t;
 
-#define FRAME_BUFFER_SIZE (1024 * 1024)
+#define FRAME_BUFFER_SIZE (1920 * 1080)
 
 
 
@@ -255,7 +255,7 @@ int32_t main(int32_t argc, char **argv) {
   printf("Send TCP Socket created.\n");
 
   // prepare the sockaddr_in structure for the send socket (server receive port)
-  user_vm_ip = /*"52.168.122.131";*/"3.90.174.193"; // aws one
+  user_vm_ip = /*"52.168.122.131";*/"140.247.148.157"; // aws one
 
 
   serverRECV.sin_family = AF_INET; // IPv4
