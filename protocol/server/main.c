@@ -79,7 +79,7 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
   int bitrate = width * 1500; // estimate bit rate based on output size
 
   // init encoder
-  encoder_t * encoder;
+  encoder_t *encoder;
   encoder = create_encoder(width, height, width, height, bitrate);
 
   // video variables
@@ -104,11 +104,6 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
     // encode captured frame into encodedframe->data
     encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
 
-
-
-    printf("encoded size after: %d\n", encoded_size);
-
-
     // only send if packet is not empty
     if (encoded_size != 0) {
       // send packet
@@ -116,7 +111,7 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
         // error statement if something went wrong
         printf("Socket could not send packet w/ error %d\n", WSAGetLastError());
       }
-      printf("Sent packet of size %d.\n", sent_size);
+      printf("Sent packet of size: %d\n", sent_size);
     }
 
     // packet sent, let's reset the encoded frame memory for the next one

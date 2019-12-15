@@ -34,8 +34,8 @@ encoder_t *create_encoder(int in_width, int in_height, int out_width, int out_he
 /// @details frees FFmpeg encoder memory
 void destroy_encoder(encoder_t *encoder);
 
-/// @brief encode a frame using the encoder device
-/// @details encode a RGB frame into encoded format as YUV color
+/// @brief encodes a frame using the encoder device
+/// @details encodes a RGB frame into encoded format as YUV color
 void *encoder_encode(encoder_t *encoder, void *rgb_pixels, void *encoded_data, size_t *encoded_size);
 
 #endif // ENCODE_H

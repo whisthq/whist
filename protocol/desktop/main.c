@@ -23,6 +23,7 @@
 
 #include "../include/fractal.h" // header file for protocol functions
 #include "../include/webserver.h" // header file for webserver query functions
+#include "../include/decode.h" // header file for decoder
 
 #define SDL_MAIN_HANDLED // SDL definition
 #include "../include/SDL2/SDL.h"
@@ -58,109 +59,91 @@ struct context {
     Uint8 *uPlane;
     Uint8 *vPlane;
     int uvPitch;
-    AVCodecContext* CodecContext;
     SDL_Renderer* Renderer;
     SDL_Texture* Texture;
-    struct SwsContext* SwsContext;
     SOCKET Socket;
-    struct sockaddr_in Address;
 };
 
-static AVCodecContext* codecToContext(AVCodec *codec) {
-  AVCodecContext* context = avcodec_alloc_context3(codec);
-  if (!context) {
-    fprintf(stderr, "Could not allocate video codec context\n");
-    exit(1);
-  }
 
-  context->width = 640;
-  context->height = 480;
-  context->time_base = (AVRational){1,30};
-  // EncodeContext->framerate = (AVRational){30,1};
-  context->bit_rate = 800000;
-  context->gop_size = 10;
-  context->max_b_frames = 1;
-  context->pix_fmt = AV_PIX_FMT_YUV420P;
 
-  av_opt_set(context -> priv_data, "preset", "ultrafast", 0);
-  av_opt_set(context -> priv_data, "tune", "zerolatency", 0);
+typedef enum {
+	videotype = 0xFA010000,
+	audiotype = 0xFB010000
+} Fractalframe_type_t;
 
-  // and open it
-  if (avcodec_open2(context, codec, NULL) < 0) {
-    fprintf(stderr, "Could not open codec\n");
-    exit(1);
-  }
-  return context;
-}
+typedef struct {
+	Fractalframe_type_t type;
+	int size;
+	char data[0];
+} Fractalframe_t;
+
+#define FRAME_BUFFER_SIZE (1024 * 1024)
+
+
+
 
 // main thread function to receive server video and audio stream and process it
 static int32_t renderThread(void *opaque) {
-  av_register_all();
-  avcodec_register_all();
-  avdevice_register_all();
-  avfilter_register_all();
-
+  // cast socket and SDL variables back to their data type for usage
   struct context* context = (struct context *) opaque;
-  AVFrame *pFrame = NULL;
-  AVPacket packet;
-  int recv_size, got_output;
-  char buff[RECV_BUFFER_LEN];
 
-  av_init_packet(&packet);
-  pFrame = av_frame_alloc();
-  AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
-  AVCodecContext* DecodeContext = codecToContext(H264CodecDecode);
-  int n = 0;
-  while(repeat) {
+  // arbitrary values for testing for now
+  int height = 1080;
+  int width = 1200;
+  int bitrate = width * 1500; // estimate bit rate based on output size
 
+  // init decoder
+  decoder_t *decoder;
+  decoder = create_decoder(width, height, width, height, bitrate);
 
+  // init receiving variables
+  int recv_size; // var to keep track of size of packets received
+  char buff[RECV_BUFFER_LEN]; // buffer to receive the packets
 
+  // initdecoded frame parameters
+  Fractalframe_t *decodedframe = (Fractalframe_t *) malloc(FRAME_BUFFER_SIZE);
+  memset(decodedframe, 0, FRAME_BUFFER_SIZE); // set memory to null
+  decodedframe->type = videotype; // specify that this is a video frame
 
+  // while stream is on
+  while (repeat) {
     // query for packets reception indefinitely via recv until repeat set to false
     recv_size = recv(context->Socket, buff, RECV_BUFFER_LEN, 0);
     printf("Received packet of size: %d\n", recv_size);
-    printf("Message received: %s\n", buff);
 
     // if the packet isn't empty (aka there is an action to process
-      if (recv_size > 0) {
-        av_free_packet(&packet);
+    if (recv_size > 0) {
+      // decode the packet we received into a frame
+      decoder_decode(decoder, buff, recv_size, decodedframe->data);
 
 
-        printf("pastabolognese\n");
-
-        memcpy(&packet.data, &buff, recv_size);
-        //packet.data = buff;
-
-        printf("tostitos\n");
 
 
-        packet.size = recv_size;
+      printf("decode succeeded\n");
 
-        // this function is where the error is!
-        avcodec_decode_video2(DecodeContext, pFrame, &got_output, &packet);
 
-        printf("test3333\n");
 
-        if (got_output) {
+      /*
+      AVPicture pict;
+      pict.data[0] = context->yPlane;
+      pict.data[1] = context->uPlane;
+      pict.data[2] = context->vPlane;
+      pict.linesize[0] = 1200;
+      pict.linesize[1] = context->uvPitch;
+      pict.linesize[2] = context->uvPitch;
 
-          AVPicture pict;
-          pict.data[0] = context->yPlane;
-          pict.data[1] = context->uPlane;
-          pict.data[2] = context->vPlane;
-          pict.linesize[0] = context->CodecContext->width;
-          pict.linesize[1] = context->uvPitch;
-          pict.linesize[2] = context->uvPitch;
 
 
          sws_scale(context->SwsContext, (uint8_t const * const *) pFrame->data,
                  pFrame->linesize, 0, context->CodecContext->height, pict.data,
                  pict.linesize);
 
+
           SDL_UpdateYUVTexture(
                   context->Texture,
                   NULL,
                   context->yPlane,
-                  context->CodecContext->width,
+                  1200,
                   context->uPlane,
                   context->uvPitch,
                   context->vPlane,
@@ -170,16 +153,20 @@ static int32_t renderThread(void *opaque) {
           SDL_RenderClear(context->Renderer);
           SDL_RenderCopy(context->Renderer, context->Texture, NULL, NULL);
           SDL_RenderPresent(context->Renderer);
-        }
+          */
 
-        // av_free(pFrame->data[0]);
-        // av_frame_free(pFrame);
-      }
-     // closing if packet not empty
 
+
+
+    }
+    // frame displayed, let's reset the decoded frame memory for the next one
+    memset(decodedframe, 0, FRAME_BUFFER_SIZE);
   }
+  // exited while loop, stream done let's close everything
+  destroy_decoder(decoder); // destroy encoder
   return 0;
 }
+
 
 
 
@@ -189,15 +176,15 @@ int32_t main(int32_t argc, char **argv) {
 
   // user login status var
   static bool loggedIn = false;
-  AVCodec *H264CodecDecode = avcodec_find_decoder(AV_CODEC_ID_H264);
-  AVCodecContext* DecodeContext = codecToContext(H264CodecDecode);
+
+
   SDL_Event msg;
   SDL_Window *screen;
   SDL_Renderer *renderer;
   SDL_Texture *texture;
+
   Uint8 *yPlane, *uPlane, *vPlane;
   size_t yPlaneSz, uvPlaneSz;
-  struct SwsContext *sws_ctx = NULL;
   int uvPitch;
   struct context context = {0};
 
@@ -272,7 +259,6 @@ int32_t main(int32_t argc, char **argv) {
   user_vm_ip = /*"52.168.122.131";*/"3.90.174.193"; // aws one
 
 
-  printf("%d\n", inet_addr(user_vm_ip));
   serverRECV.sin_family = AF_INET; // IPv4
   serverRECV.sin_addr.s_addr = inet_addr(user_vm_ip); // VM (server) IP received from authenticating
   serverRECV.sin_port = htons(config.serverPortRECV); // initial default port 48888
@@ -335,8 +321,9 @@ int32_t main(int32_t argc, char **argv) {
           "Fractal",
           SDL_WINDOWPOS_UNDEFINED,
           SDL_WINDOWPOS_UNDEFINED,
-          DecodeContext->width,
-          DecodeContext->height,
+
+          1200, // width
+          1080, // height
           0
       );
 
@@ -355,25 +342,19 @@ int32_t main(int32_t argc, char **argv) {
           renderer,
           SDL_PIXELFORMAT_YV12,
           SDL_TEXTUREACCESS_STREAMING,
-          DecodeContext->width,
-          DecodeContext->height
+          1200, // width
+          1080 // height
       );
   if (!texture) {
       fprintf(stderr, "SDL: could not create texture - exiting\n");
       exit(1);
   }
-  // initialize SWS context for software scaling
-  sws_ctx = sws_getContext(DecodeContext->width, DecodeContext->height,
-          DecodeContext->pix_fmt, DecodeContext->width, DecodeContext->height,
-          AV_PIX_FMT_YUV420P,
-          SWS_BILINEAR,
-          NULL,
-          NULL,
-          NULL);
+
+
 
   // set up YV12 pixel array (12 bits per pixel)
-  yPlaneSz = DecodeContext->width * DecodeContext->height;
-  uvPlaneSz = DecodeContext->width * DecodeContext->height / 4;
+  yPlaneSz = 1200 * 1080;
+  uvPlaneSz = 1200 * 1080 / 4;
   yPlane = (Uint8*)malloc(yPlaneSz);
   uPlane = (Uint8*)malloc(uvPlaneSz);
   vPlane = (Uint8*)malloc(uvPlaneSz);
@@ -382,7 +363,7 @@ int32_t main(int32_t argc, char **argv) {
       exit(1);
   }
 
-  uvPitch = DecodeContext->width / 2;
+  uvPitch = 1200 / 2;
 
   // TODO LATER: function to call to adapt window size to client
 
@@ -390,12 +371,11 @@ int32_t main(int32_t argc, char **argv) {
   context.uPlane = uPlane;
   context.vPlane = vPlane;
   context.uvPitch = uvPitch;
-  context.CodecContext = DecodeContext;
   context.Renderer = renderer;
   context.Texture = texture;
-  context.SwsContext = sws_ctx;
   context.Socket = RECVSocket;
-  context.Address = serverRECV;
+
+
   SDL_Thread *render_thread = SDL_CreateThread(renderThread, "renderThread", &context);
 
 
@@ -497,9 +477,6 @@ int32_t main(int32_t argc, char **argv) {
   free(yPlane);
   free(uPlane);
   free(vPlane);
-
-  // close codec
-  avcodec_close(DecodeContext);
 
 
 

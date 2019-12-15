@@ -56,7 +56,7 @@ LD_FLAGS = \
 	/nologo
 
 # build all files into executable
-all: clean clear fractal.obj webserver.obj main.obj
+all: clean clear fractal.obj webserver.obj decode.obj main.obj
 	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
@@ -66,6 +66,10 @@ fractal.obj: ../include/fractal.c
 # compile the webserver source file into object file
 webserver.obj: ../include/webserver.c
 	$(CC) /c ../include/webserver.c
+
+# compile the decoder source file into object file
+decode.obj: ../include/decode.c
+	$(CC) /c ../include/decode.c
 
 # compile the source main file into object file
 main.obj: main.c
