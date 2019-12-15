@@ -74,13 +74,14 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
   device = create_capture_device(window, frame);
 
   // set encoder parameters
-  int width = 2560; // in and out from the capture device
+  int width = device->width; // in and out from the capture device
   int height = device->height; // in and out from the capture device
-  int bitrate = width * 5500; // estimate bit rate based on output size
+  int bitrate = width * 10000; // estimate bit rate based on output size
 
   // init encoder
   encoder_t *encoder;
-  encoder = create_encoder(width, height, width, height, bitrate);
+  printf("create encoder");
+  encoder = create_encoder(width, height, 1920, 1080, bitrate);
 
   // video variables
   void *capturedframe; // var to hold captured frame, as a void* to RGB pixels
@@ -94,7 +95,7 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
 
   // while stream is on
   while (repeat) {
-
+    printf("captureing");
     // capture a frame
     capturedframe = capture_screen(device);
 
@@ -104,7 +105,7 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
 
     /*Print the value pointed to by iptr*/
 //    printf("pixels:  %d\n", sizeof(*(uint8_t *) capturedframe ));
-
+    printf("encoding");
     // encode captured frame into encodedframe->data
     encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
 

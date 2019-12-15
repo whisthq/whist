@@ -65,8 +65,7 @@ decoder_t *create_decoder(int in_width, int in_height, int out_width, int out_he
 	// avpicture_fill((AVPicture *) decoder->frame, (uint8_t *) decoder->frame_buffer, AV_PIX_FMT_YUV420P, out_width, out_height);
 
   // set sws context for color format conversion
-	decoder->sws = sws_getContext(in_width, in_height, AV_PIX_FMT_YUV420P, out_width, out_height, AV_PIX_FMT_YUV420P, SWS_BILINEAR, 0, 0, 0);
-
+	// decoder->sws = sws_getContext(in_width, in_height, AV_PIX_FMT_YUV420P, out_width, out_height, AV_PIX_FMT_YUV420P, SWS_BILINEAR, 0, 0, 0);
   // return created decoder
 	return decoder;
 }

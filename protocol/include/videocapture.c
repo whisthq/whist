@@ -27,10 +27,11 @@ capture_device *create_capture_device(HWND window, frame_area frame) {
 
   // store rectangle information in capture device
 	device->window = window;
-	device->width = rect.right - rect.left;
-	device->height = rect.bottom - rect.top;
+	device->width = 1920 * 0.7;
+	device->height = 1080 * 0.7;
 	device->frame = frame;
-
+	printf("width is %d\n", device->width);
+	printf("height is %d\n", device->height);
   // adjust dimensions if height or width is zero
 	if (frame.width == 0 || frame.height == 0 ) {
 		device->frame.width = device->width - frame.x;
@@ -38,8 +39,10 @@ capture_device *create_capture_device(HWND window, frame_area frame) {
 	}
 
   // get final dimensions after adjustement (if happened)
-	device->width = device->frame.width;
-	device->height = device->frame.height;
+	// device->width = device->frame.width;
+	// device->height = device->frame.height;
+	printf("width is %d\n", device->width);
+	printf("height is %d\n", device->height);
 
   // set window features
 	device->windowDC = GetDC(window);
@@ -51,7 +54,7 @@ capture_device *create_capture_device(HWND window, frame_area frame) {
 	device->bitmapInfo.biPlanes = 1; // single plane
 	device->bitmapInfo.biBitCount = 32; // 32 bit
 	device->bitmapInfo.biWidth = device->width;
-	device->bitmapInfo.biHeight = device->height;
+	device->bitmapInfo.biHeight = -device->height;
 	device->bitmapInfo.biCompression = BI_RGB; // RGB color format
 	device->bitmapInfo.biSizeImage = 0;
 
