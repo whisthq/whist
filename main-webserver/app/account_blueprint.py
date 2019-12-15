@@ -45,6 +45,7 @@ def account(action):
 		registerUser(username, password)
 		return jsonify({'status': 200}), 200
 
+
 @account_bp.route('/form/<action>', methods = ['POST'])
 def form(action):
 	body = request.get_json()
@@ -65,3 +66,16 @@ def order():
 	order = body['order']
 	storePreOrder(address1, address2, zipCode, email, order)
 	return jsonify({'status': 200}), 200
+
+
+@account_bp.route('/mail/<action>', methods = ['POST'])
+def mail(action):
+	body = request.get_json()
+	if action == 'forgot':
+		username = body['username']
+		verified = lookup(username)
+		return jsonify({'verified': verified}), 200
+	elif action == 'reset':
+		username, password = body['username'], body['password']
+		resetPassword(username, password)
+		return jsonify({'status': 200}), 200

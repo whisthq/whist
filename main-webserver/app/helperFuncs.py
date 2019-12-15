@@ -203,11 +203,31 @@ def loginUser(username, password):
         user = conn.execute(command, **params).fetchall()
         return len(user) > 0
 
+def lookup(username):
+    command = text("""
+        SELECT * FROM users WHERE "userName" = :userName
+        """)
+    params = {'userName': username}
+    with engine.connect() as conn:
+        user = conn.execute(command, **params).fetchall()
+        return len(user) > 0
+
 def registerUser(username, password):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     command = text("""
         INSERT INTO users("userName", "password") 
         VALUES(:userName, :password)
+        """)
+    params = {'userName': username, 'password': pwd_token}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+
+def resetPassword(username, password):
+    pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
+    command = text("""
+        UPDATE users 
+        SET "password" = :password
+        WHERE "userName" = :userName
         """)
     params = {'userName': username, 'password': pwd_token}
     with engine.connect() as conn:
