@@ -30,8 +30,6 @@ capture_device *create_capture_device(HWND window, frame_area frame) {
 	device->width = 1920 * 0.7;
 	device->height = 1080 * 0.7;
 	device->frame = frame;
-	printf("width is %d\n", device->width);
-	printf("height is %d\n", device->height);
   // adjust dimensions if height or width is zero
 	if (frame.width == 0 || frame.height == 0 ) {
 		device->frame.width = device->width - frame.x;
@@ -41,9 +39,6 @@ capture_device *create_capture_device(HWND window, frame_area frame) {
   // get final dimensions after adjustement (if happened)
 	// device->width = device->frame.width;
 	// device->height = device->frame.height;
-	printf("width is %d\n", device->width);
-	printf("height is %d\n", device->height);
-
   // set window features
 	device->windowDC = GetDC(window);
 	device->memoryDC = CreateCompatibleDC(device->windowDC);

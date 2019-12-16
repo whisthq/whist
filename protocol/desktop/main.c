@@ -101,10 +101,6 @@ static int32_t renderThread(void *opaque) {
   int recv_size; // var to keep track of size of packets received
   char buff[RECV_BUFFER_LEN]; // buffer to receive the packets
 
-
-
-
-
   // initdecoded frame parameters
   Fractalframe_t *decodedframe = (Fractalframe_t *) malloc(FRAME_BUFFER_SIZE);
   memset(decodedframe, 0, FRAME_BUFFER_SIZE); // set memory to null
@@ -114,7 +110,6 @@ static int32_t renderThread(void *opaque) {
   while (repeat) {
     // query for packets reception indefinitely via recv until repeat set to false
     recv_size = recv(context->Socket, buff, RECV_BUFFER_LEN, 0);
-    printf("Received packet of size: %d\n", recv_size);
 
     // if the packet isn't empty (aka there is an action to process
     if (recv_size > 0) {
@@ -128,24 +123,23 @@ static int32_t renderThread(void *opaque) {
       pict.linesize[0] = 1920;
       pict.linesize[1] = context->uvPitch;
       pict.linesize[2] = context->uvPitch;
-         printf("decoder context height %d\n", decoder->context->height);
-         sws_scale(context->sws, (uint8_t const * const *) decoder->frame->data,
-                 decoder->frame->linesize, 0, decoder->context->height, pict.data,
-                 pict.linesize);
+     sws_scale(context->sws, (uint8_t const * const *) decoder->frame->data,
+             decoder->frame->linesize, 0, decoder->context->height, pict.data,
+             pict.linesize);
 
-          SDL_UpdateYUVTexture(
-                  context->Texture,
-                  NULL,
-                  context->yPlane,
-                  1920,
-                  context->uPlane,
-                  context->uvPitch,
-                  context->vPlane,
-                  context->uvPitch
-              );
-          SDL_RenderClear(context->Renderer);
-          SDL_RenderCopy(context->Renderer, context->Texture, NULL, NULL);
-          SDL_RenderPresent(context->Renderer);
+      SDL_UpdateYUVTexture(
+              context->Texture,
+              NULL,
+              context->yPlane,
+              1920,
+              context->uPlane,
+              context->uvPitch,
+              context->vPlane,
+              context->uvPitch
+          );
+      SDL_RenderClear(context->Renderer);
+      SDL_RenderCopy(context->Renderer, context->Texture, NULL, NULL);
+      SDL_RenderPresent(context->Renderer);
     }
     // frame displayed, let's reset the decoded frame memory for the next one
     memset(decodedframe, 0, FRAME_BUFFER_SIZE);
