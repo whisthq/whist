@@ -80,7 +80,6 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
 
   // init encoder
   encoder_t *encoder;
-  printf("create encoder");
   encoder = create_encoder(width, height, 1920, 1080, bitrate);
 
   // video variables
@@ -95,7 +94,6 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
 
   // while stream is on
   while (repeat) {
-    printf("captureing");
     // capture a frame
     capturedframe = capture_screen(device);
 
@@ -103,9 +101,6 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
     encodedframe->size = 0;
     encoded_size = FRAME_BUFFER_SIZE - sizeof(Fractalframe_t);
 
-    /*Print the value pointed to by iptr*/
-//    printf("pixels:  %d\n", sizeof(*(uint8_t *) capturedframe ));
-    printf("encoding");
     // encode captured frame into encodedframe->data
     encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
 
@@ -117,7 +112,6 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
         // error statement if something went wrong
         printf("Socket could not send packet w/ error %d\n", WSAGetLastError());
       }
-      printf("Sent packet of size: %d\n", sent_size);
     }
 
     // packet sent, let's reset the encoded frame memory for the next one
@@ -239,10 +233,6 @@ int32_t main(int32_t argc, char **argv) {
         return 3;
       }
       printf("Connected on port: %d.\n", config.clientPortRECV);
-
-
-
-
 
 
       // time to start streaming and receiving user input
