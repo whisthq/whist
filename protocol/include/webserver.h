@@ -3,14 +3,14 @@
  * webserver to login and logout the user.
 
  Protocol version: 1.0
- Last modification: 11/28/2019
+ Last modification: 12/14/2019
 
  By: Philippe Noël
 
  Copyright Fractal Computers, Inc. 2019
 */
-#ifndef WEBSERVER_H_  // include guard
-#define WEBSERVER_H_
+#ifndef WEBSERVER_H  // include guard
+#define WEBSERVER_H
 
 // @brief sends a JSON POST request to the Fractal webservers
 // @details authenticate the user and return the credentials
@@ -24,4 +24,8 @@ char *login(char *username, char *password);
 // @details logs the time at which the user logged out
 int32_t logout(char *username);
 
-#endif // WEBSERVER_H_
+// @brief parse the webserver response for the VM IP
+// @details walks the string and finds the IP
+char *parse_response(char *credentials);
+
+#endif // WEBSERVER_H

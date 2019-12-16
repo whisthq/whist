@@ -3,22 +3,40 @@
  * streaming protocol.
 
  Protocol version: 1.0
- Last modification: 11/29/2019
+ Last modification: 12/10/2019
 
  By: Philippe Noël
 
  Copyright Fractal Computers, Inc. 2019
 */
+#ifndef FRACTAL_H
+#define FRACTAL_H
+
+// only include this header file once at compile time
 #pragma once
 
 #include <stdint.h>
 #include <stdbool.h>
 
+// ffmpeg libraries
+#include "ffmpeg/libavcodec/avcodec.h"
+#include "ffmpeg/libavdevice/avdevice.h"
+#include "ffmpeg/libavfilter/avfilter.h"
+#include "ffmpeg/libavformat/avformat.h"
+#include "ffmpeg/libavutil/avutil.h"
+#include "ffmpeg/libavfilter/buffersink.h"
+#include "ffmpeg/libavfilter/buffersrc.h"
+#include "ffmpeg/libswscale/swscale.h"
+
 #if defined(_WIN32)
+	#include <winsock2.h> // libs for socket programming on windows
+	#include <windows.h>
+	#include <winuser.h>
 	#pragma warning(disable: 4201)
 #endif
 
 /*** DEFINITIONS START ***/
+
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org
 /// Increment by one if these are taken, until a port is found available
@@ -48,12 +66,10 @@
   /* refreshRate (fps)      */ 60,   \
   /* audioBuffer            */ 6,    \
 }
+
 /*** DEFINITIONS END ***/
 
 /*** ENUMERATIONS START ***/
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /// @brief Status codes indicating success, warning, or error.
 /// @details Returned by most Fractal functions. FRACTAL_OK is '0',
@@ -135,6 +151,7 @@ typedef enum FractalStatus {
 
 	CAPTURE_ERR_INIT          = -14003,  ///< -14003
 	CAPTURE_ERR_TEXTURE       = -14004,  ///< -14004
+	CAPTURE_ERR_DESTROY				= -14005,  ///< -14005
 
 	ENCODE_ERR_INIT           = -15000,  ///< -15000
 	ENCODE_ERR_ENCODE         = -15002,  ///< -15002
@@ -206,14 +223,6 @@ typedef enum FractalStatus {
 
 	__ERR_MAKE_32             = 0x7FFFFFFF,
 } FractalStatus;
-
-/// @brief Log level.
-/// @details Passed through FractalLogCallback
-typedef enum FractalLogLevel {
-	LOG_INFO      = 0x0069, ///< Messages interesting to support staff trying to figure out the context of an issue.
-	LOG_DEBUG     = 0x0064, ///< Messages interesting to developers trying to debug an issue.
-	__LOG_MAKE_32 = 0x7FFFFFFF,
-} FractalLogLevel;
 
 /// @brief Keyboard input.
 /// @details Integer code for each of the user keyboard inputs.
@@ -384,7 +393,7 @@ typedef enum FractalColorFormat {
 /// @brief Network protocol used for peer-to-peer connections.
 /// @details Two modes depending on whther this is web or native
 typedef enum FractalProtocol {
-	PROTO_MODE_UDP       = 1, ///< Fractal's low-latency optimized BUD protocol.
+	PROTO_MODE_UDP       = 1, ///< Fractal's low-latency optimized UDP protocol.
 	PROTO_MODE_SCTP      = 2, ///< SCTP protocol compatible with WebRTC data channels.
 	__PROTO_MODE_MAKE_32 = 0x7FFFFFFF,
 } FractalProtocol;
@@ -404,9 +413,11 @@ typedef enum FractalPCMFormat {
 	PCM_FORMAT_INT16     = 2, ///< 16-bit signed integer samples.
 	__PCM_FORMAT_MAKE_32 = 0x7FFFFFFF,
 } FractalPCMFormat;
+
 /*** ENUMERATIONS END ***/
 
 /*** STRUCTS START ***/
+
 /// @brief Fractal instance configuration.
 /// @details Passed to FractalInit to generate config
 /// serve as the first port used when the `bind` call is made internally. If the port is already in use,
@@ -533,81 +544,28 @@ typedef struct FractalMessage {
 		FractalMouseMotionMessage mouseMotion;     ///< Mouse motion message.
 	};
 } FractalMessage;
+
 /*** STRUCTS END ***/
 
-/*** TYPEDEFS START ***/
+/*** FRACTAL FUNCTIONS START ***/
 
+/// @brief destroy the server sockets and threads, and WSA for windows
+/// @details if full=true, destroys everything, else only current connection
+FractalStatus ServerDestroy(SOCKET sockets[], HANDLE threads[], bool full);
 
-/// @brief OpenGL/GLES 32-bit unsigned integer.
-/// @details Passed to HostGLSubmitFrame. Prevents obligatory include of GL headers.
-typedef uint32_t FractalGLuint;
+/// @brief initialize the listen socket (TCP path)
+/// @details initializes windows socket, creates and binds our listen socket
+SOCKET ServerInit(SOCKET listensocket, FractalConfig config);
 
-/// @brief D3D9 `IDirect3DDevice9`.
-/// @details Passed to FractalHostD3D9SubmitFrame. Prevents obligatory include of d3d9.h.
-typedef void FractalD3D9Device;
+/// @brief replays a user action taken on the client and sent to the server
+/// @details parses the FractalMessage struct and send input to Windows OS
+FractalStatus ReplayUserInput(FractalMessage fmsg);
 
-/// @brief D3D9 `IDirect3DSurface9`.
-/// @details Passed to FractalHostD3D9SubmitFrame. Prevents obligatory include of d3d9.h.
-typedef void FractalD3D9Surface;
-
-/// @brief D3D11 `ID3D11Device`.
-/// @details Passed to FractalHostD3D11SubmitFrame. Prevents obligatory include of d3d11.h.
-typedef void FractalD3D11Device;
-
-/// @brief D3D11 `ID3D11DeviceContext`.
-/// @details Passed to FractalHostD3D11SubmitFrame. Prevents obligatory include of d3d11.h.
-typedef void FractalD3D11DeviceContext;
-
-/// @brief D3D11 `ID3D11Texture2D`.
-/// @details Passed to FractalHostD3D11SubmitFrame. Prevents obligatory include of d3d11.h.
-typedef void FractalD3D11Texture2D;
-
-/// @brief Fired when a new log message is available from the Fractal SDK.
-/// @details Passed to FractalSetLogCallback.
-/// @param level FractalLogLevel level value.
-/// @param msg Null-terminated UTF-8 string containing the full log message.
-/// @param opaque User supplied context passed to FractalSetLogCallback.
-typedef void (*FractalLogCallback)(FractalLogLevel level, char *msg, void *opaque);
-
-/// @brief Fired synchronously if a new host video frame is available.
-/// @details Passed to FractalClientPollFrame.
-/// @param frame Video frame properties.
-/// @param image The video frame buffer containing image data.
-/// @param opaque User supplied context passed to FractalClientPollFrame.
-typedef void (*FractalFrameCallback)(FractalFrame *frame, uint8_t *image, void *opaque);
-
-/// @brief Fired synchronously just before a new host video frame is rendered.
-/// @details Passed to the `ClientRenderFrame` family of functions, i.e. FractalClientGLRenderFrame.
-/// @param opaque User supplied context passed to the `ClientRenderFrame` function.
-/// @returns `true` if the frame should be rendered internally, `false` if rendering should be skipped.
-typedef bool (*FractalPreRenderCallback)(void *opaque);
-
-/// @brief Fired synchronously just after a new host video frame is rendered.
-/// @details Passed to the `ClientRenderFrame` family of functions, i.e. FractalClientGLRenderFrame.
-/// @param preRenderSuccess The return value of the ::FractalPreRenderCallback associated with
-/// the `ClientRenderFrame` function.
-/// @param opaque User supplied context passed to the `ClientRenderFrame` function.
-typedef void (*FractalPostRenderCallback)(bool preRenderSuccess, void *opaque);
-
-/// @brief Fired synchronously if new audio is available from the host.
-/// @details Passed to FractalClientPollAudio.
-/// @param pcm 16-bit signed, two channel, 48KHz PCM audio samples.
-/// @param frames Number of audio frames.
-/// @param opaque User supplied context passed to FractalClientPollAudio.
-typedef void (*FractalAudioCallback)(int16_t *pcm, uint32_t frames, void *opaque);
-/*** TYPEDEFS END ***/
-
-/*** CLIENT FUNCTIONS START ***/
-/*** CLIENT FUNCTIONS END ***/
-
-/*** SERVER FUNCTIONS START ***/
-/*** SERVER FUNCTIONS END ***/
-
-#ifdef __cplusplus
-}
-#endif
+/*** FRACTAL FUNCTIONS END ***/
 
 // renable Windows warning
 #if defined(_WIN32)
 	#pragma warning(default: 4201)
 #endif
+
+#endif // FRACTAL_H
