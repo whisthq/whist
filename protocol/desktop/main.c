@@ -78,7 +78,7 @@ typedef struct {
 	char data[0];
 } Fractalframe_t;
 
-#define FRAME_BUFFER_SIZE (1920 * 1080)
+#define FRAME_BUFFER_SIZE (WINDOW_W * WINDOW_H)
 
 
 
@@ -89,8 +89,8 @@ static int32_t renderThread(void *opaque) {
   struct context* context = (struct context *) opaque;
 
   // arbitrary values for testing for now
-  int height = 1920;
-  int width = 1080;
+  int height = WINDOW_W;
+  int width = WINDOW_H;
   int bitrate = width * 10000; // estimate bit rate based on output size
 
   // init decoder
@@ -109,9 +109,10 @@ static int32_t renderThread(void *opaque) {
   while (repeat) {
     // query for packets reception indefinitely via recv until repeat set to false
     recv_size = recv(context->Socket, buff, RECV_BUFFER_LEN, 0);
-
+    printf("received size %d\n", recv_size);
     // if the packet isn't empty (aka there is an action to process
     if (recv_size > 0) {
+      printf("received\n");
       // decode the packet we received into a frame
       decoder_decode(decoder, buff, recv_size, decodedframe->data);
 
@@ -119,7 +120,7 @@ static int32_t renderThread(void *opaque) {
       pict.data[0] = context->yPlane;
       pict.data[1] = context->uPlane;
       pict.data[2] = context->vPlane;
-      pict.linesize[0] = 1920;
+      pict.linesize[0] = WINDOW_W;
       pict.linesize[1] = context->uvPitch;
       pict.linesize[2] = context->uvPitch;
      sws_scale(context->sws, (uint8_t const * const *) decoder->frame->data,
@@ -130,7 +131,7 @@ static int32_t renderThread(void *opaque) {
               context->Texture,
               NULL,
               context->yPlane,
-              1920,
+              WINDOW_W,
               context->uPlane,
               context->uvPitch,
               context->vPlane,
@@ -237,7 +238,7 @@ int32_t main(int32_t argc, char **argv) {
   printf("Send TCP Socket created.\n");
 
   // prepare the sockaddr_in structure for the send socket (server receive port)
-  user_vm_ip = /*"52.168.122.131";*/"140.247.148.157"; // aws one
+  user_vm_ip = /*"52.168.122.131";*/"40.87.10.42"; // aws one
 
   serverRECV.sin_family = AF_INET; // IPv4
   serverRECV.sin_addr.s_addr = inet_addr(user_vm_ip); // VM (server) IP received from authenticating
@@ -302,8 +303,8 @@ int32_t main(int32_t argc, char **argv) {
           SDL_WINDOWPOS_UNDEFINED,
           SDL_WINDOWPOS_UNDEFINED,
 
-          1920, // width
-          1080, // height
+          WINDOW_W, // width
+          WINDOW_H, // height
           0
       );
 
@@ -322,8 +323,8 @@ int32_t main(int32_t argc, char **argv) {
           renderer,
           SDL_PIXELFORMAT_YV12,
           SDL_TEXTUREACCESS_STREAMING,
-          1920, // width
-          1080 // height
+          WINDOW_W, // width
+          WINDOW_H // height
       );
   if (!texture) {
       fprintf(stderr, "SDL: could not create texture - exiting\n");
@@ -331,8 +332,8 @@ int32_t main(int32_t argc, char **argv) {
   }
 
   struct SwsContext *sws_ctx = NULL;
-  sws_ctx = sws_getContext(1920, 1080,
-          AV_PIX_FMT_YUV420P, 1920, 1080,
+  sws_ctx = sws_getContext(WINDOW_W, WINDOW_H,
+          AV_PIX_FMT_YUV420P, WINDOW_W, WINDOW_H,
           AV_PIX_FMT_YUV420P,
           SWS_BILINEAR,
           NULL,
@@ -340,8 +341,8 @@ int32_t main(int32_t argc, char **argv) {
           NULL);
 
   // set up YV12 pixel array (12 bits per pixel)
-  yPlaneSz = 1920 * 1080;
-  uvPlaneSz = 1920 * 1080 / 4;
+  yPlaneSz = WINDOW_W * WINDOW_H;
+  uvPlaneSz = WINDOW_W * WINDOW_H / 4;
   yPlane = (Uint8*)malloc(yPlaneSz);
   uPlane = (Uint8*)malloc(uvPlaneSz);
   vPlane = (Uint8*)malloc(uvPlaneSz);
@@ -350,7 +351,7 @@ int32_t main(int32_t argc, char **argv) {
       exit(1);
   }
 
-  uvPitch = 1920 / 2;
+  uvPitch = WINDOW_W / 2;
 
   // TODO LATER: function to call to adapt window size to client
 

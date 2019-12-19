@@ -40,7 +40,7 @@ encoder_t *create_encoder(int in_width, int in_height, int out_width, int out_he
 	encoder->context->time_base.num = 1;
 	encoder->context->time_base.den = 30;
 	encoder->context->gop_size = 1; // send SPS/PPS headers every packet
-	encoder->context->max_b_frames = 0;
+	encoder->context->max_b_frames = 3;
 	encoder->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
 	// set encoder parameters to max performance

@@ -40,9 +40,6 @@
 bool repeat = true; // global flag to keep streaming until client disconnects
 #define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
 
-
-
-
 typedef enum {
 	videotype = 0xFA010000,
 	audiotype = 0xFB010000
@@ -55,9 +52,8 @@ typedef struct {
 } Fractalframe_t;
 
 #define FRAME_BUFFER_SIZE (1024 * 1024)
-
-
-
+#define WINDOW_H 480
+#define WINDOW_W 640
 
 // main function to stream the video and audio from this server to the client
 unsigned __stdcall SendStream(void *SENDsocket_param) {
@@ -80,7 +76,7 @@ unsigned __stdcall SendStream(void *SENDsocket_param) {
 
   // init encoder
   encoder_t *encoder;
-  encoder = create_encoder(width, height, 1920, 1080, bitrate);
+  encoder = create_encoder(width, height, WINDOW_W, WINDOW_H, bitrate);
 
   // video variables
   void *capturedframe; // var to hold captured frame, as a void* to RGB pixels
@@ -138,7 +134,6 @@ unsigned __stdcall ReceiveClientInput(void *RECVsocket_param) {
   while (repeat) {
     // query for packets reception indefinitely via recv until repeat set to false
     recv_size = recv(RECVsocket, recv_buffer, RECV_BUFFER_LEN, 0);
-
     // if the packet isn't empty (aka there is an action to process)
     if (recv_size > 0) {
       // the packet we receive is the memory copy of the FractalMessage struct
