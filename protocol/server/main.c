@@ -1,274 +1,229 @@
 /*
- * This file creates a server on the host (Windows 10) VM that waits for a
- * connection request from a client, and then starts streaming its desktop video
- * and audio to the client, and receiving the user input back.
-
- Protocol version: 1.0
- Last modification: 12/14/2019
-
- By: Philippe Noël, Ming Ying
-
- Copyright Fractal Computers, Inc. 2019
-*/
-#define _WINSOCK_DEPRECATED_NO_WARNINGS // silence the deprecated warnings
+ * This file turns a host (Windows 10) VM into a server that gets connected to
+ * a local client via UDP hole punching, and then starts streaming its desktop
+ * video and audio to the client, and receiving the user actions back.
+ *
+ * Fractal Protocol version 1.1
+ *
+ * Last modified: 12/20/2019
+ *
+ * By: Philippe Noël
+ *
+ * Copyright Fractal Computers, Inc. 2019
+**/
 
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <process.h>
+#include <windows.h>
 
-#include "../include/fractal.h" // header file for protocol functions
-#include "../include/videocapture.h"
-#include "../include/encode.h"
+#define BUFLEN 512 // length of buffer to receive UDP packets
+#define HOLEPUNCH_SERVER_IP "34.200.170.47" // Fractal-HolePunchServer-1 on AWS Lightsail
+#define HOLEPUNCH_PORT 48488 // Fractal default holepunch port
+#define RECV_PORT 48800 // port on which this client listens for UDP packets
 
-// Winsock Library
-#pragma comment(lib, "ws2_32.lib")
+int repeat = 1; // boolean to keep the protocol going until a closing event happens
 
-#if defined(_WIN32)
-  #pragma warning(disable: 4201)
-  #pragma warning(disable: 4024) // disable thread warning
-  #pragma warning(disable: 4113) // disable thread warning type
-  #pragma warning(disable: 4244) // disable u_int to u_short conversion warning
-  #pragma warning(disable: 4047) // disable char * indirection levels warning
-  #pragma warning(disable: 4701) // potentially unitialized var
-  #pragma warning(disable: 4477) // printf type warning
-  #pragma warning(disable: 4267) // conversion from size_t to int
-  #pragma warning(disable: 4996) // strncpy unsafe warning
-#endif
+// simple struct to copy memory back
+struct client {
+  uint32_t ipv4;
+  uint16_t port;
+  char target[128]; // buflen for address
+};
 
-// global vars and definitions
-bool repeat = true; // global flag to keep streaming until client disconnects
-#define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
+// simple struct with socket information for passing to threads
+struct context {
+  SOCKET Socket;
+  struct sockaddr_in dest_addr;
+  socklen_t addr_len;
+};
 
+// thread to send the audio/video of this VM to the local client
+unsigned __stdcall SendStream(void *opaque) {
+  // cast the context back
+  struct context send_context = *(struct context *) opaque;
 
+  // keep track of packets size
+  int sent_size;
+  char *message = "Hello from the VM!\n";
 
-
-typedef enum {
-	videotype = 0xFA010000,
-	audiotype = 0xFB010000
-} Fractalframe_type_t;
-
-typedef struct {
-	Fractalframe_type_t type;
-	int size;
-	char data[0];
-} Fractalframe_t;
-
-#define FRAME_BUFFER_SIZE (1024 * 1024)
-
-
-
-
-// main function to stream the video and audio from this server to the client
-unsigned __stdcall SendStream(void *SENDsocket_param) {
-  // cast the socket parameter back to socket for use
-  SOCKET SENDsocket = *(SOCKET *) SENDsocket_param;
-
-  // get window
-  HWND window = NULL;
-  window = GetDesktopWindow();
-  frame_area frame = {0, 0, 0, 0}; // init  frame area
-
-  // init screen capture device
-  capture_device *device;
-  device = create_capture_device(window, frame);
-
-  // set encoder parameters
-  int width = device->width; // in and out from the capture device
-  int height = device->height; // in and out from the capture device
-  int bitrate = width * 10000; // estimate bit rate based on output size
-
-  // init encoder
-  encoder_t *encoder;
-  encoder = create_encoder(width, height, 1920, 1080, bitrate);
-
-  // video variables
-  void *capturedframe; // var to hold captured frame, as a void* to RGB pixels
-  int sent_size; // var to keep track of size of packets sent
-
-  // init encoded frame parameters
-  Fractalframe_t *encodedframe = (Fractalframe_t *) malloc(FRAME_BUFFER_SIZE);
-  memset(encodedframe, 0, FRAME_BUFFER_SIZE); // set memory to null
-  encodedframe->type = videotype; // specify that this is a video frame
-  size_t encoded_size; // init encoded buffer size
-
-  // while stream is on
+  // listens for and send user actions as long as the protocol is on
   while (repeat) {
-    // capture a frame
-    capturedframe = capture_screen(device);
-
-    // reset encoded frame to 0 and reset buffer  before encoding
-    encodedframe->size = 0;
-    encoded_size = FRAME_BUFFER_SIZE - sizeof(Fractalframe_t);
-
-    // encode captured frame into encodedframe->data
-    encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
-
-
-    // only send if packet is not empty
-    if (encoded_size != 0) {
-      // send packet
-      if ((sent_size = send(SENDsocket, encodedframe->data, encoded_size, 0)) < 0) {
-        // error statement if something went wrong
-        printf("Socket could not send packet w/ error %d\n", WSAGetLastError());
-      }
+    // send the packet to the VM directly
+    if ((sent_size = sendto(send_context.Socket, message, strlen(message), 0, (struct sockaddr *) &send_context.dest_addr, send_context.addr_len)) < 0) {
+      printf("Failed to send frame packet to VM.\n");
     }
-
-    // packet sent, let's reset the encoded frame memory for the next one
-    memset(encodedframe, 0, FRAME_BUFFER_SIZE);
+    printf("Sent user action packet of size %d to the VM.\n", sent_size);
   }
-
-  // exited while loop, stream done let's close everything
-  destroy_encoder(encoder); // destroy encoder
-  destroy_capture_device(device); // destroy capture device
-  _endthreadex(0); // end thread and return
+  // protocol loop exited, close stream
   return 0;
 }
 
+// thread to receive and replay the local client actions on the VM
+unsigned __stdcall ReceiveUserActions(void *opaque) {
+  // cast the context back
+  struct context recv_context = *(struct context *) opaque;
 
-// main function to receive client user inputs and process them
-unsigned __stdcall ReceiveClientInput(void *RECVsocket_param) {
-  // cast the socket parameter back to socket for use
-  SOCKET RECVsocket = *(SOCKET *) RECVsocket_param;
+  // keep track of packets size
+  int recv_size;
+  char recv_buff[BUFLEN];
 
-  int recv_size; // packet size we receive
-  char *recv_buffer[RECV_BUFFER_LEN]; // buffer to receive into
-
-  // while stream is on, listen for user messages
+  // loop as long as the stream is on
   while (repeat) {
-    // query for packets reception indefinitely via recv until repeat set to false
-    recv_size = recv(RECVsocket, recv_buffer, RECV_BUFFER_LEN, 0);
-
-    // if the packet isn't empty (aka there is an action to process)
-    if (recv_size > 0) {
-      // the packet we receive is the memory copy of the FractalMessage struct
-      // so we memcpy it back into a FractalMessage struct
-      FractalMessage fmsg = {0};
-      memcpy(&fmsg, &recv_buffer, sizeof(struct FractalMessage));
-
-      // we can now replay the user input
-      ReplayUserInput(fmsg);
-    }
+    // receive a packet
+    recv_size = recvfrom(recv_context.Socket, recv_buff, sizeof(struct client), 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
+    printf("Received packet from the local client of size: %d.\n", recv_size);
   }
-  // connection interrupted by setting repeat to false, exit protocol
-  printf("Connection interrupted.\n");
-  _endthreadex(0); // close thread
+  // protocol loop exited, close stream
   return 0;
 }
 
-
-
-// main server function
+// main server loop
 int32_t main(int32_t argc, char **argv) {
-   // unused argv
-   (void) argv;
+  // unused argv
+  (void) argv;
 
   // usage check
   if (argc != 1) {
-    printf("Usage: server\n"); // no argument needed, server listens
+    printf("Usage: client\n"); // no argument needed
     return 1;
   }
 
-  // protocol environment variables
-  SOCKET listensocket, RECVsocket, SENDsocket; // socket file descriptors
-  struct sockaddr_in clientRECV, clientServerRECV; // file descriptors for ports
-  FractalConfig config = FRACTAL_DEFAULTS; // default port settings
-  HANDLE ThreadHandles[2] = {0, 0}; // array containing our 2 thread handles
-  SOCKET sockets[3] = {0, 0, 0}; // array containing our socket file descriptors
-  int clientServerRECV_addr_len = sizeof(struct sockaddr_in); // client address length
-
-  // initialize server listen socket (TCP) and start listening
-  listensocket = ServerInit(listensocket, config);
-  sockets[0] = listensocket; // store to make destroying simpler
-
-  // forever loop to always be listening to pick up a new connection if idle
-  while (true) {
-    // accept client connection once there's one on the listensocket queue
-    // new active socket created on same port as listensocket,
-    RECVsocket = accept(listensocket, (struct sockaddr *) &clientServerRECV, &clientServerRECV_addr_len);
-    if (RECVsocket == INVALID_SOCKET) {
-      // print error but keep listening to new potential connections
-      printf("Accept failed with error code: %d.\n", WSAGetLastError());
-    }
-    else {
-      // now that we got our receive socket ready to receive client input, we
-      // need to create our send socket to initiate the stream
-      printf("Connection accepted - Receive TCP Socket created.\n");
-      sockets[1] = RECVsocket; // store to make destroying simpler
-
-
-
-
-
-      // Creating our UDP (sending) socket
-      // AF_INET = IPv4
-      // SOCK_DGRAM = UDP Socket
-      // IPPROTO_UDP = UDP protocol
-      if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
-        printf("Could not create UDP socket : %d.\n" , WSAGetLastError());
-        ServerDestroy(sockets, ThreadHandles, false);
-        return 5;
-      }
-      printf("Send UDP Socket created.\n");
-
-      sockets[2] = SENDsocket;
-
-      // to bind to the client receiving port, we need its IP and port, which we
-      // can get since we have accepted connection on our receiving port
-      char *client_ip = inet_ntoa(clientServerRECV.sin_addr);
-
-      // prepare the sockaddr_in structure for the sending socket
-      clientRECV.sin_family = AF_INET; // IPv4
-      clientRECV.sin_addr.s_addr = inet_addr(client_ip); // client IP to send stream to
-      clientRECV.sin_port = htons(config.clientPortRECV); // client port to send stream to
-
-      // since this is a UDP socket, there is no connection necessary
-      // however, we do a connect to force only this specific server IP onto the
-      // client socket to ensure our stream will stay intact
-      // connect the server send socket to the client receive port (UDP)
-      char *connect_status = connect(SENDsocket, (struct sockaddr *) &clientRECV, sizeof(clientRECV));
-      if (connect_status == SOCKET_ERROR) {
-        printf("Could not connect to the client w/ error: %d\n", WSAGetLastError());
-        ServerDestroy(sockets, ThreadHandles, false);
-        return 3;
-      }
-      printf("Connected on port: %d.\n", config.clientPortRECV);
-
-
-      // time to start streaming and receiving user input
-      // launch thread #1 to start streaming video & audio from server
-      ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &SendStream, &SENDsocket, 0, NULL);
-
-      // launch thread #2 to start receiving and processing client input
-      ThreadHandles[1] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveClientInput, &RECVsocket, 0, NULL);
-
-      // this thread, thread #0, listens for user logging out of their cloud
-      // computer to stop the protocol when that happens
-      while (repeat) {
-        // TODO: helper function for listening to logoff event
-
-        // user deconnected, set repeat to false to close the protocol
-        //repeat = false;
-      }
-    }
-    // client disconnected, destroy connection and restart listening
-    printf("Client disconnected.\n");
-    ServerDestroy(sockets, ThreadHandles, false);
+  // initialize the windows socket library if this is a windows client
+  WSADATA wsa;
+  if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
+    printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
+    return 2;
   }
-  // server loop exited, close everything
-  ServerDestroy(sockets, ThreadHandles, true);
+  printf("Winsock initialized successfully.\n");
+
+  // environment variables
+  SOCKET SENDsocket, RECVsocket; // socket file descriptors
+  struct sockaddr_in recv_addr, send_addr, holepunch_addr; // addresses of endpoints
+  socklen_t addr_len = sizeof(holepunch_addr); // any addr, all same len
+  HANDLE ThreadHandles[2]; // our two other threads for the audio/video and user actions
+  char punch_buff[sizeof(struct client)]; // buffer to receive the hole punch server reply
+  int sent_size; // keep track of packets size
+
+  // create sending UDP socket
+  if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    printf("Unable to create send socket with error code: %d.\n", WSAGetLastError());
+    return 3;
+  }
+  printf("UDP Send socket created.\n");
+
+  // create receiving UDP socket, this where we will receive from the local
+  // client with which we are initiating the protocol
+  if ((RECVsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    printf("Unable to create receive socket with error code: %d.\n", WSAGetLastError());
+    return 4;
+  }
+  printf("UDP Receive socket created.\n");
+
+  // set our endpoint data to receive UDP packets
+  memset(&recv_addr, 0, sizeof(recv_addr));
+  recv_addr.sin_family = AF_INET;
+  recv_addr.sin_port = htons(RECV_PORT); // port on which we receive UDP packets
+  recv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+  // bind the receive socket to our receive port address
+  if (bind(RECVsocket, (struct sockaddr *) &recv_addr, sizeof(recv_addr)) < 0) {
+    printf("Unable to bound socket to port %d with error code: %d.\n", RECV_PORT, WSAGetLastError());
+    return 5;
+  }
+  printf("UDP socket bound to port %d.\n", RECV_PORT);
+
+  // forever loop to automatically re-initiate the hole punching and be ready
+  // to pick up a new user as soon as a user logs out
+  while (1) {
+    // set the hole punching server endpoint to send the first packet to initiate
+    // hole punching. We will set another endpoint later for the actual server we
+    // will communicate with
+    memset(&holepunch_addr, 0, sizeof(holepunch_addr));
+    holepunch_addr.sin_family = AF_INET;
+    holepunch_addr.sin_port = htons(HOLEPUNCH_PORT);
+    holepunch_addr.sin_addr.s_addr = inet_addr(HOLEPUNCH_SERVER_IP);
+
+    // now we need to send a simple datagram to the hole punching server to let it
+    // know of our public UDP endpoint. Since this is a "server" (VM) being connected
+    // to, it doesn't know the IP of the client it gets connected with so we will
+    // just send an empty packet
+
+    // send our endpoint to the hole punching server
+    // we send with our RECV socket to the hole punch server, so that it maps the
+    // RECV socket to the local client and the local client sends datagram to the receive socket address
+    if (sendto(RECVsocket, "", 0, 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
+      printf("Unable to send VM endpoint to hole punching server w/ error code: %d.\n", WSAGetLastError());
+      return 6;
+    }
+
+    // the hole punching server has now mapped our NAT endpoint and "punched" a
+    // hole through the NAT for peers to send us direct datagrams, we now look to
+    // receive the punched endpoint of the local client we connect with
+
+    // blocking call to wait for the hole punching server to pair this VM with
+    // the local client that requested connection
+    recvfrom(RECVsocket, punch_buff, sizeof(struct client), 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+    printf("Received the endpoint of the local client from the hole punch server.\n");
+
+    // now that we received the endpoint, we can copy it to our client struct to
+    // recover the endpoint and initiate the protocol
+    struct client local_client; // struct to hold the endpoint
+    memcpy(&local_client, punch_buff, sizeof(struct client)); // copy into struct
+
+    // now that we have the memory, we can create the endpoint we send to
+    memset(&send_addr, 0, sizeof(send_addr));
+    send_addr.sin_family = AF_INET;
+    send_addr.sin_port = htons(local_client.port); // the port to communicate with
+    send_addr.sin_addr.s_addr = htonl(local_client.ipv4); // the IP of the local client to send to
+
+    // hole punching fully done, we have the info to communicate directly with the
+    // local client, so we create the two threads to process the audio/video and
+    // the user actions and start the protocol
+    repeat = 1; // new client found, set the protocol to on
+
+    // first we create the context to pass to the user actions thread
+    struct context recv_context;
+    recv_context.Socket = RECVsocket;
+    recv_context.dest_addr = recv_addr;
+    recv_context.addr_len = addr_len;
+
+    // and the context to pass to the video/audio thread
+    struct context send_context;
+    send_context.Socket = SENDsocket;
+    send_context.dest_addr = send_addr;
+    send_context.addr_len = addr_len;
+
+    // launch thread #2 to stream the video/audio of this VM to the local client
+    ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &SendStream, (void *) &send_context, 0, NULL);
+
+    // launch thread #3 to receive and replay actions done on the local client
+    ThreadHandles[1] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveUserActions, (void *) &recv_context, 0, NULL);
+
+    // in this thread, we listen for a user trying to shut down/disconnect from
+    // the VM, to stop the stream and keep the VM turned on if that happens, to be
+    // ready to pick up a new user right away
+    while (repeat) {
+      // TODO: listen for Windows logout functions
+    }
+    // this user logged off, since repeat is false, so we go back to waiting for a new user
+  }
+  // protocol loop fully exited, shut down
+  // thread handles
+  CloseHandle(ThreadHandles[0]);
+  CloseHandle(ThreadHandles[1]);
+
+  // sockets
+  closesocket(SENDsocket);
+  closesocket(RECVsocket);
+
+  // Windows socket library
+  WSACleanup();
+
+  // exit
   return 0;
 }
-
-// re-enable Windows warnings
-#if defined(_WIN32)
-  #pragma warning(default: 4201)
-  #pragma warning(default: 4024)
-  #pragma warning(default: 4113)
-  #pragma warning(default: 4244)
-  #pragma warning(default: 4047)
-  #pragma warning(default: 4701)
-  #pragma warning(default: 4477)
-  #pragma warning(default: 4267)
-  #pragma warning(default: 4996)
-#endif
