@@ -31,6 +31,8 @@
   #include <sys/socket.h>
 #endif
 
+#include "../include/findip.h" // find IPv4 of host
+
 #define BUFLEN 512 // length of buffer to receive UDP packets
 #define HOLEPUNCH_SERVER_IP "34.200.170.47" // Fractal-HolePunchServer-1 on AWS Lightsail
 #define HOLEPUNCH_PORT 48488 // Fractal default holepunch port
@@ -140,15 +142,17 @@ int32_t main(int32_t argc, char **argv) {
   // know of our public UDP endpoint. Not only the holepunch server, but the VM
   // will send their data through this endpoint. Datagram paylod is the IP
   // address of the VM with which we want to connect, normally gotten by authenticating
-  char *target_vm_ip = "40.87.10.42"; // azure VM
+  // and our IPv4 so that it can be passed to the VM
+  char *holepunch_message = "40.117.57.45|"; // Azure VM IP + delimitor
+  char *my_ip = get_host_ip();
+  strcat(holepunch_message, my_ip); // concatenate to get final message
 
   // send our endpoint and target vm IP to the hole punching server
-  // we send with our RECV socket to the hole punch server, so that it maps the
-  // RECV socket to the VM and the VM sends datagram to the receive socket address
-  if (sendto(RECVsocket, target_vm_ip, strlen(target_vm_ip), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
+  if (sendto(SENDsocket, holepunch_message, strlen(holepunch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
     printf("Unable to send client endpoint to hole punching server.\n");
     return 6;
   }
+  printf("Local endpoint sent to the hole punching server.\n");
 
   // the hole punching server has now mapped our NAT endpoint and "punched" a
   // hole through the NAT for peers to send us direct datagrams, we now look to

@@ -160,6 +160,7 @@ int32_t main(int32_t argc, char **argv) {
       printf("Unable to send VM endpoint to hole punching server w/ error code: %d.\n", WSAGetLastError());
       return 6;
     }
+    printf("Local endpoint sent to the hole punching server.\n");
 
     // the hole punching server has now mapped our NAT endpoint and "punched" a
     // hole through the NAT for peers to send us direct datagrams, we now look to
