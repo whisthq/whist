@@ -137,7 +137,7 @@ int32_t main(int32_t argc, char **argv) {
     printf("Unable to bound socket to port %d with error code: %d.\n", RECV_PORT, WSAGetLastError());
     return 5;
   }
-  printf("UDP socket bound to port %d.\n", RECV_PORT);
+  printf("UDP Receive Socket bound to port %d.\n", RECV_PORT);
 
   // forever loop to automatically re-initiate the hole punching and be ready
   // to pick up a new user as soon as a user logs out

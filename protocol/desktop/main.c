@@ -128,7 +128,7 @@ int32_t main(int32_t argc, char **argv) {
     printf("Unable to bound socket to port %d.\n", RECV_PORT);
     return 5;
   }
-  printf("UDP socket bound to port %d.\n", RECV_PORT);
+  printf("UDP Receive Socket bound to port %d.\n", RECV_PORT);
 
   // set the hole punching server endpoint to send the first packet to initiate
   // hole punching. We will set another endpoint later for the actual server we
@@ -143,9 +143,8 @@ int32_t main(int32_t argc, char **argv) {
   // will send their data through this endpoint. Datagram paylod is the IP
   // address of the VM with which we want to connect, normally gotten by authenticating
   // and our IPv4 so that it can be passed to the VM
-  char *holepunch_message = "40.117.57.45|"; // Azure VM IP + delimitor
-  char *my_ip = get_host_ipv4();
-  strcat(holepunch_message, my_ip); // concatenate to get final message
+  char *holepunch_message = get_host_ipv4(); // this host's IPv4
+  strcat(holepunch_message, "|40.117.57.45"); // azure VM IP + concatenate to get final message
 
   // send our endpoint and target vm IP to the hole punching server
   if (sendto(SENDsocket, holepunch_message, strlen(holepunch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
