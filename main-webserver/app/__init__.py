@@ -14,4 +14,7 @@ engine = db.create_engine(
 	os.getenv('DATABASE_URL'), echo=True, pool_pre_ping = True)
 register_after_fork(engine, dispose_engine)
 app = create_app(celery = celery)
+app.config['MAIL_SERVER'] = "ming@fractalcomputers.com"
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
 CORS(app)

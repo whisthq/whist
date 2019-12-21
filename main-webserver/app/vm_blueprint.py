@@ -33,6 +33,14 @@ def vm(action):
         if not task: 
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
+    elif action == 'fetchip':
+        vm_name = request.get_json()['vm_name']
+        try:
+            vm = getVM(vm_name)
+            ip = getIP(vm)
+            return({'public_ip': ip}), 200
+        except:
+            return({'public_ip': None}), 404
     return jsonify({}), 400
 
 @vm_bp.route('/tracker/<action>', methods = ['POST'])

@@ -74,6 +74,8 @@ def mail(action):
 	if action == 'forgot':
 		username = body['username']
 		verified = lookup(username)
+		if verified:
+			sendEmail(username)
 		return jsonify({'verified': verified}), 200
 	elif action == 'reset':
 		username, password = body['username'], body['password']

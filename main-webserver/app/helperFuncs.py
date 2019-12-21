@@ -291,8 +291,6 @@ def addTimeTable(username, action):
 
 
 def fetchUserVMs(username):
-    print("username!")
-    print(username)
     command = text("""
         SELECT * FROM v_ms WHERE "username" = :username
         """)
