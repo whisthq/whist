@@ -154,11 +154,11 @@ int32_t main(int32_t argc, char **argv) {
     // know of our public UDP endpoint. Since this is a "server" (VM) being connected
     // to, it doesn't know the IP of the client it gets connected with so we will
     // just send a packet with our own IPv4 for the client to connect to
-    char *punch_message = get_host_ipv4();
+    char *punch_message = "40.117.57.45"; // hardcoded for this VM, TODO: replace this by webserver querying
     strcat(punch_message, "S"); // add client tag to let the hole punch server know this is from a VM/server
 
     // send our endpoint to the hole punching server
-    // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to 
+    // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to
     // then send to it, but will use the SENDsocket to send to the local client after hole punching is done
     if (sendto(RECVsocket, punch_message, strlen(punch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
       printf("Unable to send VM endpoint to hole punching server w/ error code: %d.\n", WSAGetLastError());
