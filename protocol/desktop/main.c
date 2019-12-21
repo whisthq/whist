@@ -144,7 +144,7 @@ int32_t main(int32_t argc, char **argv) {
   // address of the VM with which we want to connect, normally gotten by authenticating
   // and our IPv4 so that it can be passed to the VM
   char *holepunch_message = "40.117.57.45|"; // Azure VM IP + delimitor
-  char *my_ip = get_host_ip();
+  char *my_ip = get_host_ipv4();
   strcat(holepunch_message, my_ip); // concatenate to get final message
 
   // send our endpoint and target vm IP to the hole punching server

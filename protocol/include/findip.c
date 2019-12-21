@@ -35,7 +35,7 @@ char *get_host_ipv4() {
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
       printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
-      return 2;
+      return "1";
     }
   #endif
 

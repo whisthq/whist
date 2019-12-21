@@ -21,6 +21,8 @@
 #include <process.h>
 #include <windows.h>
 
+#include "../include/findip.h" // find IPv4 of host
+
 #define BUFLEN 512 // length of buffer to receive UDP packets
 #define HOLEPUNCH_SERVER_IP "34.200.170.47" // Fractal-HolePunchServer-1 on AWS Lightsail
 #define HOLEPUNCH_PORT 48488 // Fractal default holepunch port
@@ -151,12 +153,11 @@ int32_t main(int32_t argc, char **argv) {
     // now we need to send a simple datagram to the hole punching server to let it
     // know of our public UDP endpoint. Since this is a "server" (VM) being connected
     // to, it doesn't know the IP of the client it gets connected with so we will
-    // just send an empty packet
+    // just send a packet with our own IPv4 for the client to connect to
+    char *my_ip = get_host_ipv4();
 
     // send our endpoint to the hole punching server
-    // we send with our RECV socket to the hole punch server, so that it maps the
-    // RECV socket to the local client and the local client sends datagram to the receive socket address
-    if (sendto(RECVsocket, "", 0, 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
+    if (sendto(SENDsocket, my_ip, strlen(my_ip), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
       printf("Unable to send VM endpoint to hole punching server w/ error code: %d.\n", WSAGetLastError());
       return 6;
     }
