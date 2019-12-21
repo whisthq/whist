@@ -159,7 +159,7 @@ int32_t main(int32_t argc, char **argv) {
 
     // send our endpoint to the hole punching server
     // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to 
-    // then send to it, but will use the SENDsocket to send to the VM after hole punching is done
+    // then send to it, but will use the SENDsocket to send to the local client after hole punching is done
     if (sendto(RECVsocket, punch_message, strlen(punch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
       printf("Unable to send VM endpoint to hole punching server w/ error code: %d.\n", WSAGetLastError());
       return 6;

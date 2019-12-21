@@ -150,6 +150,9 @@ int32_t main(int32_t argc, char **argv) {
   strcat(holepunch_message, "C"); // add local client tag
 
   // send our endpoint to the hole punching server
+  // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to
+  // then send to it, but will use the SENDsocket to send to the VM after hole punching is done
+
   if (sendto(SENDsocket, holepunch_message, strlen(holepunch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
     printf("Unable to send client endpoint to hole punching server.\n");
     return 6;
@@ -165,7 +168,8 @@ int32_t main(int32_t argc, char **argv) {
   char *target_vm_ipv4 = "40.117.57.45"; // azure VM ipv4
 
   // send the target VM ipv4 to the hole punching server
-  if (sendto(SENDsocket, target_vm_ipv4, strlen(target_vm_ipv4), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
+  // send with RECVsocket here again
+  if (sendto(RECVsocket, target_vm_ipv4, strlen(target_vm_ipv4), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
     printf("Unable to send client endpoint to hole punching server.\n");
     return 6;
   }
