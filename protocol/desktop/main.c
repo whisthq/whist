@@ -145,14 +145,12 @@ int32_t main(int32_t argc, char **argv) {
   // server know this is from a local client, and then we will send a second
   // datagram with the IPv4 of the VM we want to be paired with, whic hwe received
   // by authenticating as a user
-
   char *holepunch_message = get_host_ipv4(); // this host's IPv4
   strcat(holepunch_message, "C"); // add local client tag
 
   // send our endpoint to the hole punching server
   // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to
   // then send to it, but will use the SENDsocket to send to the VM after hole punching is done
-
   if (sendto(RECVsocket, holepunch_message, strlen(holepunch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
     printf("Unable to send client endpoint to hole punching server.\n");
     return 6;
@@ -197,8 +195,8 @@ int32_t main(int32_t argc, char **argv) {
   // now that we have the memory, we can create the endpoint we send to
   memset(&send_addr, 0, sizeof(send_addr));
   send_addr.sin_family = AF_INET;
-  send_addr.sin_port = htons(vm.port); // the port to communicate with
-  send_addr.sin_addr.s_addr = htonl(vm.ipv4); // the IP of the vm to send to
+  send_addr.sin_port = vm.port; // the port to communicate with, already in byte network order
+  send_addr.sin_addr.s_addr = vm.ipv4; // the IP of the vm to send to, already in byte network order
 
   // hole punching fully done, we have the info to communicate directly with the
   // VM, so we create receive video thread and start the protocol, the user actions

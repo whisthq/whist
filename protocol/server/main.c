@@ -59,7 +59,7 @@ unsigned __stdcall SendStream(void *opaque) {
     if ((sent_size = sendto(send_context.Socket, message, strlen(message), 0, (struct sockaddr *) &send_context.dest_addr, send_context.addr_len)) < 0) {
       printf("Failed to send frame packet to VM.\n");
     }
-    printf("Sent user action packet of size %d to the VM.\n", sent_size);
+    printf("Sent frame packet of size %d to the VM.\n", sent_size);
   }
   // protocol loop exited, close stream
   return 0;
@@ -188,8 +188,8 @@ int32_t main(int32_t argc, char **argv) {
     // now that we have the memory, we can create the endpoint we send to
     memset(&send_addr, 0, sizeof(send_addr));
     send_addr.sin_family = AF_INET;
-    send_addr.sin_port = htons(local_client.port); // the port to communicate with
-    send_addr.sin_addr.s_addr = htonl(local_client.ipv4); // the IP of the local client to send to
+    send_addr.sin_port = local_client.port; // the port to communicate with, already in byte network order
+    send_addr.sin_addr.s_addr = local_client.ipv4; // the IP of the local client to send to, already in byte network order
 
     // hole punching fully done, we have the info to communicate directly with the
     // local client, so we create the two threads to process the audio/video and
