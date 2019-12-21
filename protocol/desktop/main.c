@@ -153,7 +153,7 @@ int32_t main(int32_t argc, char **argv) {
   // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to
   // then send to it, but will use the SENDsocket to send to the VM after hole punching is done
 
-  if (sendto(SENDsocket, holepunch_message, strlen(holepunch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
+  if (sendto(RECVsocket, holepunch_message, strlen(holepunch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
     printf("Unable to send client endpoint to hole punching server.\n");
     return 6;
   }
