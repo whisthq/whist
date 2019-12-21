@@ -140,18 +140,41 @@ int32_t main(int32_t argc, char **argv) {
 
   // now we need to send a simple datagram to the hole punching server to let it
   // know of our public UDP endpoint. Not only the holepunch server, but the VM
-  // will send their data through this endpoint. Datagram paylod is the IP
-  // address of the VM with which we want to connect, normally gotten by authenticating
-  // and our IPv4 so that it can be passed to the VM
-  char *holepunch_message = get_host_ipv4(); // this host's IPv4
-  strcat(holepunch_message, "|40.117.57.45"); // azure VM IP + concatenate to get final message
+  // will send their data through this endpoint. Since this is a local client,
+  // we first send a datagram with our own IPv4 and a tag to let the hole punch
+  // server know this is from a local client, and then we will send a second
+  // datagram with the IPv4 of the VM we want to be paired with, whic hwe received
+  // by authenticating as a user
 
-  // send our endpoint and target vm IP to the hole punching server
+  char *holepunch_message = get_host_ipv4(); // this host's IPv4
+  strcat(holepunch_message, "C"); // add local client tag
+
+  // send our endpoint to the hole punching server
   if (sendto(SENDsocket, holepunch_message, strlen(holepunch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
     printf("Unable to send client endpoint to hole punching server.\n");
     return 6;
   }
   printf("Local endpoint sent to the hole punching server.\n");
+
+  // confirm that the hole punch server received our connection request
+  recvfrom(RECVsocket, punch_buff, sizeof(struct client), 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+  printf("Confirmed the hole punching server received the connection request.\n");
+
+  // now that this is confirmed, since we are a client, we send another message
+  // with the IPv4 of the VM we want to be paired with
+  char *target_vm_ipv4 = "40.117.57.45"; // azure VM ipv4
+
+  // send the target VM ipv4 to the hole punching server
+  if (sendto(SENDsocket, target_vm_ipv4, strlen(target_vm_ipv4), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
+    printf("Unable to send client endpoint to hole punching server.\n");
+    return 6;
+  }
+  printf("Target VM IPv4 sent to the hole punching server.\n");
+
+  // confirm that the hole punch server received our connection request, no need
+  // to empty it since ack packets are empty
+  recvfrom(RECVsocket, punch_buff, sizeof(struct client), 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+  printf("Confirmed the hole punching server received the target VM IPv4 request.\n");
 
   // the hole punching server has now mapped our NAT endpoint and "punched" a
   // hole through the NAT for peers to send us direct datagrams, we now look to

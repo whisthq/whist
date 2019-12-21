@@ -154,14 +154,20 @@ int32_t main(int32_t argc, char **argv) {
     // know of our public UDP endpoint. Since this is a "server" (VM) being connected
     // to, it doesn't know the IP of the client it gets connected with so we will
     // just send a packet with our own IPv4 for the client to connect to
-    char *my_ip = get_host_ipv4();
+    char *punch_message = get_host_ipv4();
+    strcat(punch_message, "S"); // add client tag to let the hole punch server know this is from a VM/server
 
     // send our endpoint to the hole punching server
-    if (sendto(SENDsocket, my_ip, strlen(my_ip), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
+    if (sendto(SENDsocket, punch_message, strlen(punch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
       printf("Unable to send VM endpoint to hole punching server w/ error code: %d.\n", WSAGetLastError());
       return 6;
     }
     printf("Local endpoint sent to the hole punching server.\n");
+
+    // confirm reception from the hole punch server, no need to empty buff after
+    // since the acknowledgement packets are empty
+    recvfrom(RECVsocket, punch_buff, sizeof(struct client), 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+    printf("Confirmed the hole punching server received the connection request.\n");
 
     // the hole punching server has now mapped our NAT endpoint and "punched" a
     // hole through the NAT for peers to send us direct datagrams, we now look to
