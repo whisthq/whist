@@ -66,7 +66,7 @@ unsigned __stdcall ReceiveStream(void *opaque) {
   // loop as long as the stream is on
   while (repeat) {
     // receive a packet
-    recv_size = recvfrom(recv_context.Socket, recv_buff, sizeof(struct client), 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
+    recv_size = recvfrom(recv_context.Socket, recv_buff, BUFLEN, 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
     printf("Received packet from the VM of size: %d.\n", recv_size);
   }
   // protocol loop exited, close stream
@@ -157,7 +157,7 @@ int32_t main(int32_t argc, char **argv) {
   printf("Local endpoint sent to the hole punching server.\n");
 
   // confirm that the hole punch server received our connection request
-  recvfrom(RECVsocket, punch_buff, sizeof(struct client), 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+  recvfrom(RECVsocket, punch_buff, BUFLEN, 0, (struct sockaddr *) &holepunch_addr, &addr_len);
   printf("Confirmed the hole punching server received the connection request.\n");
 
   // now that this is confirmed, since we are a client, we send another message
@@ -173,7 +173,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // confirm that the hole punch server received our connection request, no need
   // to empty it since ack packets are empty
-  recvfrom(RECVsocket, punch_buff, sizeof(struct client), 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+  recvfrom(RECVsocket, punch_buff, BUFLEN, 0, (struct sockaddr *) &holepunch_addr, &addr_len);
   printf("Confirmed the hole punching server received the target VM IPv4 request.\n");
 
   // the hole punching server has now mapped our NAT endpoint and "punched" a
@@ -182,7 +182,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // blocking call to wait for the hole punching server to pair this client with
   // the respective VM
-  recvfrom(RECVsocket, punch_buff, sizeof(struct client), 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+  recvfrom(RECVsocket, punch_buff, BUFLEN, 0, (struct sockaddr *) &holepunch_addr, &addr_len);
   printf("Received the endpoint of the VM from the hole punch server.\n");
 
   // now that we received the endpoint, we can copy it to our client struct to

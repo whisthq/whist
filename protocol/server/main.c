@@ -77,7 +77,7 @@ unsigned __stdcall ReceiveUserActions(void *opaque) {
   // loop as long as the stream is on
   while (repeat) {
     // receive a packet
-    recv_size = recvfrom(recv_context.Socket, recv_buff, sizeof(struct client), 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
+    recv_size = recvfrom(recv_context.Socket, recv_buff, BUFLEN, 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
     printf("Received packet from the local client of size: %d.\n", recv_size);
   }
   // protocol loop exited, close stream
@@ -166,7 +166,7 @@ int32_t main(int32_t argc, char **argv) {
 
     // confirm reception from the hole punch server, no need to empty buff after
     // since the acknowledgement packets are empty
-    recvfrom(RECVsocket, punch_buff, sizeof(struct client), 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+    recvfrom(RECVsocket, punch_buff, BUFLEN, 0, (struct sockaddr *) &holepunch_addr, &addr_len);
     printf("Confirmed the hole punching server received the connection request.\n");
 
     // the hole punching server has now mapped our NAT endpoint and "punched" a
@@ -175,7 +175,7 @@ int32_t main(int32_t argc, char **argv) {
 
     // blocking call to wait for the hole punching server to pair this VM with
     // the local client that requested connection
-    recvfrom(RECVsocket, punch_buff, sizeof(struct client), 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+    recvfrom(RECVsocket, punch_buff, BUFLEN, 0, (struct sockaddr *) &holepunch_addr, &addr_len);
     printf("Received the endpoint of the local client from the hole punch server.\n");
 
     // now that we received the endpoint, we can copy it to our client struct to
