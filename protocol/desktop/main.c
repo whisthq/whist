@@ -32,6 +32,7 @@
 #endif
 
 #include "../include/findip.h" // find IPv4 of host
+#include "../include/socket.h"
 
 #define BUFLEN 512 // length of buffer to receive UDP packets
 #define HOLEPUNCH_SERVER_IP "34.200.170.47" // Fractal-HolePunchServer-1 on AWS Lightsail
@@ -151,23 +152,23 @@ int32_t main(int32_t argc, char **argv) {
   // send our endpoint to the hole punching server
   // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to
   // then send to it, but will use the SENDsocket to send to the VM after hole punching is done
-  if (sendto(RECVsocket, holepunch_message, strlen(holepunch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
+  if (reliable_udp_sendto(RECVsocket, holepunch_message, strlen(holepunch_message), holepunch_addr, addr_len) < 0) {
     printf("Unable to send client endpoint to hole punching server.\n");
     return 6;
   }
   printf("Local endpoint sent to the hole punching server.\n");
 
   // confirm that the hole punch server received our connection request
-  recvfrom(RECVsocket, punch_buff, BUFLEN, 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, &addr_len);
   printf("Confirmed the hole punching server received the connection request.\n");
 
   // now that this is confirmed, since we are a client, we send another message
   // with the IPv4 of the VM we want to be paired with
-  char *target_vm_ipv4 = "40.117.57.45"; // azure VM ipv4
+  char *target_vm_ipv4 = "140.247.148.157"; // azure VM ipv4
 
   // send the target VM ipv4 to the hole punching server
   // send with RECVsocket here again
-  if (sendto(RECVsocket, target_vm_ipv4, strlen(target_vm_ipv4), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
+  if (reliable_udp_sendto(RECVsocket, target_vm_ipv4, strlen(target_vm_ipv4), holepunch_addr, addr_len) < 0) {
     printf("Unable to send client endpoint to hole punching server.\n");
     return 6;
   }
@@ -175,7 +176,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // confirm that the hole punch server received our connection request, no need
   // to empty it since ack packets are empty
-  recvfrom(RECVsocket, punch_buff, BUFLEN, 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, &addr_len);
   printf("Confirmed the hole punching server received the target VM IPv4 request.\n");
 
   // the hole punching server has now mapped our NAT endpoint and "punched" a
@@ -184,7 +185,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // blocking call to wait for the hole punching server to pair this client with
   // the respective VM
-  recvfrom(RECVsocket, punch_buff, BUFLEN, 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, &addr_len);
   printf("Received the endpoint of the VM from the hole punch server.\n");
 
   // now that we received the endpoint, we can copy it to our client struct to
