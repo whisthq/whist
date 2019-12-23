@@ -58,9 +58,9 @@ unsigned __stdcall SendStream(void *opaque) {
   while (repeat) {
     // send the packet to the VM directly
     if ((sent_size = sendto(send_context.Socket, message, strlen(message), 0, (struct sockaddr *) &send_context.dest_addr, send_context.addr_len)) < 0) {
-      printf("Failed to send frame packet to VM.\n");
+      // printf("Failed to send frame packet to VM.\n");
     }
-    printf("Sent frame packet of size %d to the VM.\n", sent_size);
+    // printf("Sent frame packet of size %d to the VM.\n", sent_size);
   }
   // protocol loop exited, close stream
   return 0;
@@ -79,7 +79,7 @@ unsigned __stdcall ReceiveUserActions(void *opaque) {
   while (repeat) {
     // receive a packet
     recv_size = recvfrom(recv_context.Socket, recv_buff, BUFLEN, 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
-    printf("Received packet from the local client of size: %d.\n", recv_size);
+    // printf("Received packet from the local client of size: %d.\n", recv_size);
   }
   // protocol loop exited, close stream
   return 0;
