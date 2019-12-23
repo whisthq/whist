@@ -50,6 +50,8 @@ int reliable_udp_sendto(int socket_fd, unsigned char *message, int message_len, 
       return 2;
     }
 
+    printf("msgsentsize: %d\n", msg_sent_size);
+
     // message sent, listen for the receipt acknowledgement
     if ((ack_recv_size = recvfrom(socket_fd, ack_buff, ACK_BUFFLEN, 0, (struct sockaddr *) &dest_addr, &addr_size)) < 0) {
       printf("Ack receipt timeout reached on attempt #%d. Resending message.\n", attempts);
@@ -59,7 +61,7 @@ int reliable_udp_sendto(int socket_fd, unsigned char *message, int message_len, 
     }
     // received ack to confirm the packet was received
     else {
-      printf("Received Ack, sending succesful.\n");
+      printf("Received Ack, sending successful.\n");
       break; // done sending
     }
   }

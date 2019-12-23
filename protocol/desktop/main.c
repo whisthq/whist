@@ -149,18 +149,29 @@ int32_t main(int32_t argc, char **argv) {
   char *holepunch_message = get_host_ipv4(); // this host's IPv4
   strcat(holepunch_message, "C"); // add local client tag
 
+
+
+
+
+
+
+  printf("msg: %s\n", holepunch_message);
+  int sentt;
+
   // send our endpoint to the hole punching server
   // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to
   // then send to it, but will use the SENDsocket to send to the VM after hole punching is done
-  if (reliable_udp_sendto(RECVsocket, holepunch_message, strlen(holepunch_message), holepunch_addr, addr_len) < 0) {
+  if ((sentt = reliable_udp_sendto(RECVsocket, holepunch_message, strlen(holepunch_message), holepunch_addr, addr_len)) < 0) {
     printf("Unable to send client endpoint to hole punching server.\n");
     return 6;
   }
   printf("Local endpoint sent to the hole punching server.\n");
 
-  // confirm that the hole punch server received our connection request
-  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
-  printf("Confirmed the hole punching server received the connection request.\n");
+  printf("sentsize: %d\n", sentt);
+
+  // sleep two second: IMPORTANT OTHERWISE THE TWO SENDS WILL CLUMP TOGETHER AND THE HOLE PUNCH SERVER WILL FAIL
+  Sleep(2000L);
+
 
   // now that this is confirmed, since we are a client, we send another message
   // with the IPv4 of the VM we want to be paired with
@@ -174,18 +185,19 @@ int32_t main(int32_t argc, char **argv) {
   }
   printf("Target VM IPv4 sent to the hole punching server.\n");
 
-  // confirm that the hole punch server received our connection request, no need
-  // to empty it since ack packets are empty
-  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
-  printf("Confirmed the hole punching server received the target VM IPv4 request.\n");
-
   // the hole punching server has now mapped our NAT endpoint and "punched" a
   // hole through the NAT for peers to send us direct datagrams, we now look to
   // receive the punched endpoint of the vm we connect with
 
+  while (1) {
+    Sleep(5000L);
+  }
+
+
+
   // blocking call to wait for the hole punching server to pair this client with
-  // the respective VM
-  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
+  // the respective VM, last argument is recv timeout
+  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len, 0);
   printf("Received the endpoint of the VM from the hole punch server.\n");
 
   // now that we received the endpoint, we can copy it to our client struct to
@@ -198,6 +210,21 @@ int32_t main(int32_t argc, char **argv) {
   send_addr.sin_family = AF_INET;
   send_addr.sin_port = vm.port; // the port to communicate with, already in byte network order
   send_addr.sin_addr.s_addr = vm.ipv4; // the IP of the vm to send to, already in byte network order
+
+
+
+
+  printf("received port is: %d\n", vm.port);
+  printf("received IP is: %d\n", vm.ipv4);
+  while (1) {
+    Sleep(5000L);
+  }
+
+
+
+
+
+
 
   // hole punching fully done, we have the info to communicate directly with the
   // VM, so we create receive video thread and start the protocol, the user actions
