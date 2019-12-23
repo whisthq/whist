@@ -22,6 +22,7 @@
 #include <windows.h>
 
 #include "../include/findip.h" // find IPv4 of host
+#include "../include/socket.h"
 
 #define BUFLEN 512 // length of buffer to receive UDP packets
 #define HOLEPUNCH_SERVER_IP "34.200.170.47" // Fractal-HolePunchServer-1 on AWS Lightsail
@@ -160,7 +161,7 @@ int32_t main(int32_t argc, char **argv) {
     // send our endpoint to the hole punching server
     // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to
     // then send to it, but will use the SENDsocket to send to the local client after hole punching is done
-    if (sendto(RECVsocket, punch_message, strlen(punch_message), 0, (struct sockaddr *) &holepunch_addr, addr_len) < 0) {
+    if (reliable_udp_sendto(RECVsocket, punch_message, strlen(punch_message), holepunch_addr, addr_len) < 0) {
       printf("Unable to send VM endpoint to hole punching server w/ error code: %d.\n", WSAGetLastError());
       return 6;
     }
@@ -168,7 +169,7 @@ int32_t main(int32_t argc, char **argv) {
 
     // confirm reception from the hole punch server, no need to empty buff after
     // since the acknowledgement packets are empty
-    recvfrom(RECVsocket, punch_buff, BUFLEN, 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+    reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, &addr_len);
     printf("Confirmed the hole punching server received the connection request.\n");
 
     // the hole punching server has now mapped our NAT endpoint and "punched" a
@@ -177,7 +178,7 @@ int32_t main(int32_t argc, char **argv) {
 
     // blocking call to wait for the hole punching server to pair this VM with
     // the local client that requested connection
-    recvfrom(RECVsocket, punch_buff, BUFLEN, 0, (struct sockaddr *) &holepunch_addr, &addr_len);
+    reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, &addr_len);
     printf("Received the endpoint of the local client from the hole punch server.\n");
 
     // now that we received the endpoint, we can copy it to our client struct to
