@@ -159,7 +159,7 @@ int32_t main(int32_t argc, char **argv) {
   printf("Local endpoint sent to the hole punching server.\n");
 
   // confirm that the hole punch server received our connection request
-  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, &addr_len);
+  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
   printf("Confirmed the hole punching server received the connection request.\n");
 
   // now that this is confirmed, since we are a client, we send another message
@@ -176,7 +176,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // confirm that the hole punch server received our connection request, no need
   // to empty it since ack packets are empty
-  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, &addr_len);
+  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
   printf("Confirmed the hole punching server received the target VM IPv4 request.\n");
 
   // the hole punching server has now mapped our NAT endpoint and "punched" a
@@ -185,7 +185,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // blocking call to wait for the hole punching server to pair this client with
   // the respective VM
-  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, &addr_len);
+  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
   printf("Received the endpoint of the VM from the hole punch server.\n");
 
   // now that we received the endpoint, we can copy it to our client struct to

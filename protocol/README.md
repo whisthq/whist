@@ -23,8 +23,3 @@ In order to achieve low latency, a standard Remote Desktop Protocol (RDP) is not
 efficient enough for Fractal's needs. Our protocol is based on a light UDP stream
 with minimal headers (think RTP) and uses H.264/H.265 for encoding, sending
 user actions back via TCP from SDL2.
-
-Here is a schematic of the protocol infrastructure, with "Game Server = Virtual
-Machine" and "Game Client = User Client":
-
-![img](img/protocol_infrastructure.png)

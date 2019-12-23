@@ -22,7 +22,7 @@
   #include <windows.h>
   #include <ws2tcpip.h>
   #pragma comment(lib, "ws2_lib")
-#else 
+#else
   #include <unistd.h>
   #include <sys/types.h>
   #include <sys/socket.h>
@@ -37,4 +37,4 @@ int reliable_udp_sendto(int socket_fd, unsigned char *message, int message_len, 
 
 // @brief ensures reliable UDP receiving over a socket by listening for an ack
 // @details requires complementary reliable_udp_sendto on the sending end
-int reliable_udp_recvfrom(int socket_fd, char *msg_buff, int msg_bufflen, struct sockaddr_in dest_addr, socklen_t addr_size);
+int reliable_udp_recvfrom(int socket_fd, char *msg_buff, int msg_bufflen, struct sockaddr_in dest_addr, socklen_t addr_size, int timeout);
