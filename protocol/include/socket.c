@@ -92,6 +92,21 @@ int reliable_udp_recvfrom(int socket_fd, char *msg_buff, int msg_bufflen, struct
   int ack_sent = 0, failed = 0; // failed is dummy bool to check for failed recvfrom call to avoid long if statements
   int timeout = 0; // to check in if statement
 
+  // define struct to handle timeout (only on receive calls)
+  #if defined(_WIN32)
+    DWORD tv = 0; // timeout in seconds * 1000 milliseconds per second, 0 at first
+  #else
+    struct timeval tv;
+    tv.tv_sec = 0; // 0 seconds timeout at first
+    tv.tv_usec = 0;
+  #endif
+
+  // set timeout
+  if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char *) &tv, sizeof(tv)) < 0) {
+    printf("Could not re-set timeout on socket.\n");
+    return -2;
+  }
+
   // we recv the UDP packet and send an ack, if we don't receive the  message we
   // wait for another attempt, or if our ack isn't received we try again up to
   // MAX_N_ATTEMPTS times, after which we give up
@@ -147,20 +162,16 @@ int reliable_udp_recvfrom(int socket_fd, char *msg_buff, int msg_bufflen, struct
       // store message received size
       msg_recv_size = tmp_recv_size;
 
-      // now that the message is received, we need to set a timeout on the socket so that if no
+      // now that the message is received, we need to re-set a timeout on the socket so that if no
       // further message attempt happens, it successfully exists
       // 4 seconds (double the sendto timeout) to wait to see if the connection was received
       // if nothing is received after those 4 seconds, we assume the sendto call received our
       // ack and so stopped, while if it didn't receive it it would have re-sent a packe and
       // we would have received something within those 4 second
-
-      // define struct to handle timeout (only on receive calls)
       #if defined(_WIN32)
-        DWORD tv = 4 * 1000; // timeout in seconds * 1000 milliseconds per second
+        tv = 4 * 1000; // timeout in seconds * 1000 milliseconds per second
       #else
-        struct timeval tv;
         tv.tv_sec = 4; // 4 seconds timeout
-        tv.tv_usec = 0;
       #endif
 
       timeout = 4; // set timeout for checking in if statement
