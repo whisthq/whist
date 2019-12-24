@@ -159,8 +159,6 @@ int main(int32_t argc, char **argv) {
   }
   printf("Local endpoint sent to the hole punching server.\n");
 
-  printf("sentsize: %d\n", sentt);
-
   // sleep two second: IMPORTANT OTHERWISE THE TWO SENDS WILL CLUMP TOGETHER AND
   // THE HOLE PUNCH SERVER WILL FAIL
   Sleep(2000L);

@@ -102,7 +102,7 @@ int reliable_udp_recvfrom(int socket_fd, char *msg_buff, int msg_bufflen, struct
     // if nothing is received before timeout (errno checks) or the socket fails
     // while without a timeout
     #if defined(_WIN32)
-    if (tmp_recv_size < 0 || WSAGetLastError() = WSAEAGAIN || WSAGetLastError() == WSAEWOULDBLOCK) {
+    if (tmp_recv_size < 0 || WSAGetLastError() == WSAEWOULDBLOCK) {
       failed = 1; // recvfrom call failed, need to enter fail if statement
     }
     #else
@@ -166,7 +166,7 @@ int reliable_udp_recvfrom(int socket_fd, char *msg_buff, int msg_bufflen, struct
       timeout = 4; // set timeout for checking in if statement
 
       // set timeout
-      if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+      if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char *) &tv, sizeof(tv)) < 0) {
         printf("Could not re-set timeout on socket.\n");
         return -2;
       }
