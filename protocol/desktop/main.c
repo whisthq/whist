@@ -161,7 +161,7 @@ int main(int32_t argc, char **argv) {
 
   // sleep two second: IMPORTANT OTHERWISE THE TWO SENDS WILL CLUMP TOGETHER AND
   // THE HOLE PUNCH SERVER WILL FAIL
-  Sleep(2000L);
+  Sleep(5000L);
 
   // now that this is confirmed, since we are a client, we send another message
   // with the IPv4 of the VM we want to be paired with
