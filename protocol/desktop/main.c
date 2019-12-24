@@ -148,8 +148,13 @@ int main(int32_t argc, char **argv) {
   // datagram with the IPv4 of the VM we want to be paired with, whic hwe received
   // by authenticating as a user
   char *holepunch_message = get_host_ipv4(); // this host's IPv4
+  char *target_vm_ipv4 = "140.247.148.157"; 
+
+  strcat(holepunch_message, "F");
+  strcat(holepunch_message, target_vm_ipv4);
   strcat(holepunch_message, "C"); // add local client tag
 
+  printf("Sending %s\n", holepunch_message);
   // send our endpoint to the hole punching server
   // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to
   // then send to it, but will use the SENDsocket to send to the VM after hole punching is done
@@ -165,15 +170,15 @@ int main(int32_t argc, char **argv) {
 
   // now that this is confirmed, since we are a client, we send another message
   // with the IPv4 of the VM we want to be paired with
-  char *target_vm_ipv4 = "140.247.148.157"; // azure VM ipv4
+  // char *target_vm_ipv4 = "140.247.148.157"; // azure VM ipv4
 
-  // send the target VM ipv4 to the hole punching server
-  // send with RECVsocket here again
-  if (reliable_udp_sendto(RECVsocket, target_vm_ipv4, strlen(target_vm_ipv4), holepunch_addr, addr_len) < 0) {
-    printf("Unable to send client endpoint to hole punching server.\n");
-    return -7;
-  }
-  printf("Target VM IPv4 sent to the hole punching server.\n");
+  // // send the target VM ipv4 to the hole punching server
+  // // send with RECVsocket here again
+  // if (reliable_udp_sendto(RECVsocket, target_vm_ipv4, strlen(target_vm_ipv4), holepunch_addr, addr_len) < 0) {
+  //   printf("Unable to send client endpoint to hole punching server.\n");
+  //   return -7;
+  // }
+  // printf("Target VM IPv4 sent to the hole punching server.\n");
 
   // the hole punching server has now mapped our NAT endpoint and "punched" a
   // hole through the NAT for peers to send us direct datagrams, we now look to
