@@ -5,7 +5,7 @@
  *
  * Fractal Protocol version 1.1
  *
- * Last modified: 12/20/2019
+ * Last modified: 12/24/2019
  *
  * By: Philippe Noël
  *
@@ -86,21 +86,12 @@ unsigned __stdcall ReceiveUserActions(void *opaque) {
 }
 
 // main server loop
-int32_t main(int32_t argc, char **argv) {
-  // unused argv
-  (void) argv;
-
-  // usage check
-  if (argc != 1) {
-    printf("Usage: client\n"); // no argument needed
-    return 1;
-  }
-
+int main() {
   // initialize the windows socket library if this is a windows client
   WSADATA wsa;
   if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
     printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
-    return 2;
+    return -1;
   }
   printf("Winsock initialized successfully.\n");
 
@@ -115,7 +106,7 @@ int32_t main(int32_t argc, char **argv) {
   // create sending UDP socket
   if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
     printf("Unable to create send socket with error code: %d.\n", WSAGetLastError());
-    return 3;
+    return -2;
   }
   printf("UDP Send socket created.\n");
 
@@ -123,7 +114,7 @@ int32_t main(int32_t argc, char **argv) {
   // client with which we are initiating the protocol
   if ((RECVsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
     printf("Unable to create receive socket with error code: %d.\n", WSAGetLastError());
-    return 4;
+    return -3;
   }
   printf("UDP Receive socket created.\n");
 
@@ -136,7 +127,7 @@ int32_t main(int32_t argc, char **argv) {
   // bind the receive socket to our receive port address
   if (bind(RECVsocket, (struct sockaddr *) &recv_addr, sizeof(recv_addr)) < 0) {
     printf("Unable to bound socket to port %d with error code: %d.\n", RECV_PORT, WSAGetLastError());
-    return 5;
+    return -4;
   }
   printf("UDP Receive Socket bound to port %d.\n", RECV_PORT);
 
@@ -163,7 +154,7 @@ int32_t main(int32_t argc, char **argv) {
     // then send to it, but will use the SENDsocket to send to the local client after hole punching is done
     if (reliable_udp_sendto(RECVsocket, punch_message, strlen(punch_message), holepunch_addr, addr_len) < 0) {
       printf("Unable to send VM endpoint to hole punching server w/ error code: %d.\n", WSAGetLastError());
-      return 6;
+      return -5;
     }
     printf("Local endpoint sent to the hole punching server.\n");
 
@@ -179,9 +170,10 @@ int32_t main(int32_t argc, char **argv) {
 
 
 
+
     // blocking call to wait for the hole punching server to pair this VM with
     // the local client that requested connection
-    reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len, 0);
+    reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
     printf("Received the endpoint of the local client from the hole punch server.\n");
 
     // now that we received the endpoint, we can copy it to our client struct to

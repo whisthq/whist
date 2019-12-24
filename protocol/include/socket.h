@@ -29,6 +29,7 @@
   #include <sys/time.h>
   #include <arpa/inet.h>
   #include <netinet/in.h>
+  #include <errno.h>
 #endif
 
 // @brief ensures reliable UDP sending over a socket by listening for an ack
@@ -37,4 +38,4 @@ int reliable_udp_sendto(int socket_fd, unsigned char *message, int message_len, 
 
 // @brief ensures reliable UDP receiving over a socket by listening for an ack
 // @details requires complementary reliable_udp_sendto on the sending end
-int reliable_udp_recvfrom(int socket_fd, char *msg_buff, int msg_bufflen, struct sockaddr_in dest_addr, socklen_t addr_size, int timeout);
+int reliable_udp_recvfrom(int socket_fd, char *msg_buff, int msg_bufflen, struct sockaddr_in dest_addr, socklen_t addr_size);

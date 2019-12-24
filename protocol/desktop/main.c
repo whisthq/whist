@@ -29,6 +29,7 @@
   #include <netinet/in.h>
   #include <sys/types.h>
   #include <sys/socket.h>
+  #include <errno.h>
 #endif
 
 #include "../include/findip.h" // find IPv4 of host
@@ -75,14 +76,14 @@ unsigned __stdcall ReceiveStream(void *opaque) {
 }
 
 // main client loop
-int32_t main(int32_t argc, char **argv) {
-  // unused argv
+int main(int32_t argc, char **argv) {
+  // unused argv for now -- will use in the actual product
   (void) argv;
 
   // usage check
   if (argc != 1) {
     printf("Usage: client\n"); // no argument needed
-    return 1;
+    return -1;
   }
 
   // initialize the windows socket library if this is a windows client
@@ -90,7 +91,7 @@ int32_t main(int32_t argc, char **argv) {
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
       printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
-      return 2;
+      return -2;
     }
     printf("Winsock initialized successfully.\n");
   #endif
@@ -106,7 +107,7 @@ int32_t main(int32_t argc, char **argv) {
   // create sending UDP socket
   if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
     printf("Unable to create send socket.\n");
-    return 3;
+    return -3;
   }
   printf("UDP Send socket created.\n");
 
@@ -114,7 +115,7 @@ int32_t main(int32_t argc, char **argv) {
   // which we are initiating the protocol
   if ((RECVsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
     printf("Unable to create receive socket.\n");
-    return 4;
+    return -4;
   }
   printf("UDP Receive socket created.\n");
 
@@ -127,7 +128,7 @@ int32_t main(int32_t argc, char **argv) {
   // bind the receive socket to our receive port address
   if (bind(RECVsocket, (struct sockaddr *) &recv_addr, sizeof(recv_addr)) < 0) {
     printf("Unable to bound socket to port %d.\n", RECV_PORT);
-    return 5;
+    return -5;
   }
   printf("UDP Receive Socket bound to port %d.\n", RECV_PORT);
 
@@ -149,29 +150,20 @@ int32_t main(int32_t argc, char **argv) {
   char *holepunch_message = get_host_ipv4(); // this host's IPv4
   strcat(holepunch_message, "C"); // add local client tag
 
-
-
-
-
-
-
-  printf("msg: %s\n", holepunch_message);
-  int sentt;
-
   // send our endpoint to the hole punching server
   // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to
   // then send to it, but will use the SENDsocket to send to the VM after hole punching is done
-  if ((sentt = reliable_udp_sendto(RECVsocket, holepunch_message, strlen(holepunch_message), holepunch_addr, addr_len)) < 0) {
+  if (reliable_udp_sendto(RECVsocket, holepunch_message, strlen(holepunch_message), holepunch_addr, addr_len) < 0) {
     printf("Unable to send client endpoint to hole punching server.\n");
-    return 6;
+    return -6;
   }
   printf("Local endpoint sent to the hole punching server.\n");
 
   printf("sentsize: %d\n", sentt);
 
-  // sleep two second: IMPORTANT OTHERWISE THE TWO SENDS WILL CLUMP TOGETHER AND THE HOLE PUNCH SERVER WILL FAIL
+  // sleep two second: IMPORTANT OTHERWISE THE TWO SENDS WILL CLUMP TOGETHER AND
+  // THE HOLE PUNCH SERVER WILL FAIL
   Sleep(2000L);
-
 
   // now that this is confirmed, since we are a client, we send another message
   // with the IPv4 of the VM we want to be paired with
@@ -181,13 +173,18 @@ int32_t main(int32_t argc, char **argv) {
   // send with RECVsocket here again
   if (reliable_udp_sendto(RECVsocket, target_vm_ipv4, strlen(target_vm_ipv4), holepunch_addr, addr_len) < 0) {
     printf("Unable to send client endpoint to hole punching server.\n");
-    return 6;
+    return -7;
   }
   printf("Target VM IPv4 sent to the hole punching server.\n");
 
   // the hole punching server has now mapped our NAT endpoint and "punched" a
   // hole through the NAT for peers to send us direct datagrams, we now look to
   // receive the punched endpoint of the vm we connect with
+
+
+
+
+
 
   while (1) {
     Sleep(5000L);
@@ -197,7 +194,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // blocking call to wait for the hole punching server to pair this client with
   // the respective VM, last argument is recv timeout
-  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len, 0);
+  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
   printf("Received the endpoint of the VM from the hole punch server.\n");
 
   // now that we received the endpoint, we can copy it to our client struct to
