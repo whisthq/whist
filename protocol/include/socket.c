@@ -90,6 +90,7 @@ int reliable_udp_recvfrom(int socket_fd, char *msg_buff, int msg_bufflen, struct
   // vars to know packet sizes, number of connection attempts and whether an ack was sent
   int msg_recv_size, tmp_recv_size, attempts = 0;
   int ack_sent = 0, failed = 0; // failed is dummy bool to check for failed recvfrom call to avoid long if statements
+  int timeout = 0; // to check in if statement
 
   // we recv the UDP packet and send an ack, if we don't receive the  message we
   // wait for another attempt, or if our ack isn't received we try again up to
@@ -161,6 +162,8 @@ int reliable_udp_recvfrom(int socket_fd, char *msg_buff, int msg_bufflen, struct
         tv.tv_sec = 4; // 4 seconds timeout
         tv.tv_usec = 0;
       #endif
+
+      timeout = 4; // set timeout for checking in if statement
 
       // set timeout
       if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
