@@ -33,9 +33,9 @@ int repeat = 1; // boolean to keep the protocol going until a closing event happ
 
 // simple struct to copy memory back
 struct client {
-  uint32_t ipv4;
+  char* ipv4;
   uint16_t port;
-  char target[128]; // buflen for address
+  char* target_ipv4; // buflen for address
 };
 
 // simple struct with socket information for passing to threads
@@ -79,7 +79,8 @@ unsigned __stdcall ReceiveUserActions(void *opaque) {
   while (repeat) {
     // receive a packet
     recv_size = recvfrom(recv_context.Socket, recv_buff, BUFLEN, 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
-    // printf("Received packet from the local client of size: %d.\n", recv_size);
+
+    printf("Received the following message: %s\n", recv_buff);
   }
   // protocol loop exited, close stream
   return 0;
@@ -146,7 +147,7 @@ int main() {
     // know of our public UDP endpoint. Since this is a "server" (VM) being connected
     // to, it doesn't know the IP of the client it gets connected with so we will
     // just send a packet with our own IPv4 for the client to connect to
-    char *punch_message = "66.30.118.186"; // hardcoded for this VM, TODO: replace this by webserver querying
+    char *punch_message = "108.7.202.126"; // hardcoded for this VM, TODO: replace this by webserver querying
     strcat(punch_message, "S"); // add client tag to let the hole punch server know this is from a VM/server
 
     // send our endpoint to the hole punching server
@@ -173,6 +174,7 @@ int main() {
 
     // blocking call to wait for the hole punching server to pair this VM with
     // the local client that requested connection
+    // memset(&holepunch_addr, 0, sizeof(holepunch_addr));
     reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
     printf("Received the endpoint of the local client from the hole punch server.\n");
 
@@ -181,11 +183,17 @@ int main() {
     struct client local_client; // struct to hold the endpoint
     memcpy(&local_client, punch_buff, sizeof(struct client)); // copy into struct
 
+    // printf("received port is: %d\n", local_client.port);
+    // printf("received IP is: %s\n", local_client.ipv4);
+
     // now that we have the memory, we can create the endpoint we send to
     memset(&send_addr, 0, sizeof(send_addr));
     send_addr.sin_family = AF_INET;
-    send_addr.sin_port = local_client.port; // the port to communicate with, already in byte network order
-    send_addr.sin_addr.s_addr = local_client.ipv4; // the IP of the local client to send to, already in byte network order
+    // send_addr.sin_port = local_client.port; // the port to communicate with, already in byte network order
+    // send_addr.sin_addr.s_addr = local_client.ipv4; // the IP of the local client to send to, already in byte network order
+
+    send_addr.sin_port = htons(48800); // the port to communicate with, already in byte network order
+    send_addr.sin_addr.s_addr = inet_addr("108.7.202.126"); // the IP of the local client to send to, already in byte network order
 
     // hole punching fully done, we have the info to communicate directly with the
     // local client, so we create the two threads to process the audio/video and

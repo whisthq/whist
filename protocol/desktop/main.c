@@ -166,7 +166,7 @@ int main(int32_t argc, char **argv) {
 
   // sleep two second: IMPORTANT OTHERWISE THE TWO SENDS WILL CLUMP TOGETHER AND
   // THE HOLE PUNCH SERVER WILL FAIL
-  Sleep(5000L);
+  Sleep(2000L);
 
   // now that this is confirmed, since we are a client, we send another message
   // with the IPv4 of the VM we want to be paired with
@@ -187,16 +187,9 @@ int main(int32_t argc, char **argv) {
 
 
 
-
-
-  while (1) {
-    Sleep(5000L);
-  }
-
-
-
   // blocking call to wait for the hole punching server to pair this client with
   // the respective VM, last argument is recv timeout
+  memset(&holepunch_addr, 0, sizeof(holepunch_addr));
   reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
   printf("Received the endpoint of the VM from the hole punch server.\n");
 
@@ -219,10 +212,6 @@ int main(int32_t argc, char **argv) {
   while (1) {
     Sleep(5000L);
   }
-
-
-
-
 
 
 
