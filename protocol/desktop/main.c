@@ -56,6 +56,44 @@ struct context {
   socklen_t addr_len;
 };
 
+SOCKET create_udp_socket(port, timeout) {
+  SOCKET RECVSocket; // socket file descriptors
+  struct sockaddr_in clientRECV;
+  int bind_attempts = 0;
+
+  RECVSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (RECVSocket == INVALID_SOCKET || RECVSocket < 0) { // Windows & Unix cases
+    printf("Could not create Receive UDP socket.\n");
+  }
+  printf("Receive UDP Socket created.\n");
+
+  int sizeTimeout = sizeof(int);
+  setsockopt(RECVSocket, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeTimeout);
+  // prepare the sockaddr_in structure for the receiving socket
+  clientRECV.sin_family = AF_INET; // IPv4
+  clientRECV.sin_addr.s_addr = INADDR_ANY; // any IP
+  clientRECV.sin_port = htons(port); // initial default port 48888
+
+  // for the recv/recvfrom function to work, we need to bind the socket even if it is UDP
+  // bind our socket to this port. If it fails, increment port by one and retry
+  while (bind(RECVSocket, (struct sockaddr *) &clientRECV, sizeof(clientRECV)) == SOCKET_ERROR) {
+    // at most 50 attempts, after that we give up
+    if (bind_attempts == 50) {
+      printf("Cannot find an open port, abort.\n");
+      return 4;
+    }
+    // display failed attempt
+    printf("Bind attempt #%i failed with error code : %d.\n", bind_attempts, WSAGetLastError());
+
+    // increment port number and retry
+    bind_attempts += 1;
+    clientRECV.sin_port = htons(port + bind_attempts); // initial default port 48888
+  }
+  // successfully binded, we're good to go
+  printf("Bind done on port: %d.\n", ntohs(clientRECV.sin_port));
+  return RECVSocket;
+}
+
 // thread to receive the video from the VM
 unsigned __stdcall ReceiveStream(void *opaque) {
   // cast the context back
