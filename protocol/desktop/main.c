@@ -44,9 +44,9 @@ int repeat = 1; // boolean to keep the protocol going until a closing event happ
 
 // simple struct to copy memory back
 struct client {
-  uint32_t ipv4;
+  char* ipv4;
   uint16_t port;
-  char target[128]; // buflen for address
+  char* target_ipv4; // buflen for address
 };
 
 // simple struct with socket information for passing to threads
@@ -147,8 +147,8 @@ int main(int32_t argc, char **argv) {
   // server know this is from a local client, and then we will send a second
   // datagram with the IPv4 of the VM we want to be paired with, whic hwe received
   // by authenticating as a user
-  char *holepunch_message = "66.30.118.186"; // this host's IPv4
-  char *target_vm_ipv4 = "66.30.118.186"; 
+  char *holepunch_message = "108.7.202.126"; // this host's IPv4
+  char *target_vm_ipv4 = "108.7.202.126"; 
 
   strcat(holepunch_message, "F");
   strcat(holepunch_message, target_vm_ipv4);
@@ -189,7 +189,7 @@ int main(int32_t argc, char **argv) {
 
   // blocking call to wait for the hole punching server to pair this client with
   // the respective VM, last argument is recv timeout
-  memset(&holepunch_addr, 0, sizeof(holepunch_addr));
+  // memset(&holepunch_addr, 0, sizeof(holepunch_addr));
   reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
   printf("Received the endpoint of the VM from the hole punch server.\n");
 
@@ -201,18 +201,15 @@ int main(int32_t argc, char **argv) {
   // now that we have the memory, we can create the endpoint we send to
   memset(&send_addr, 0, sizeof(send_addr));
   send_addr.sin_family = AF_INET;
-  send_addr.sin_port = vm.port; // the port to communicate with, already in byte network order
-  send_addr.sin_addr.s_addr = vm.ipv4; // the IP of the vm to send to, already in byte network order
+  // send_addr.sin_port = vm.port; // the port to communicate with, already in byte network order
+  // send_addr.sin_addr.s_addr = inet_addr(vm.ipv4); // the IP of the vm to send to, already in byte network order
+
+  send_addr.sin_port = htons(48801); // the port to communicate with, already in byte network order
+  send_addr.sin_addr.s_addr = inet_addr("108.7.202.126"); // the IP of the vm to send to, already in byte network order
 
 
-
-
-  printf("received port is: %d\n", vm.port);
-  printf("received IP is: %d\n", vm.ipv4);
-  while (1) {
-    Sleep(5000L);
-  }
-
+  // printf("received port is: %d\n", vm.port);
+  // printf("received IP is: %s\n", vm.ipv4);
 
 
   // hole punching fully done, we have the info to communicate directly with the
@@ -233,9 +230,9 @@ int main(int32_t argc, char **argv) {
   while (repeat) {
     // send the packet to the VM directly
     if ((sent_size = sendto(SENDsocket, message, strlen(message), 0, (struct sockaddr *) &send_addr, addr_len)) < 0) {
-      printf("Failed to send user action packet to VM.\n");
+      // printf("Failed to send user action packet to VM.\n");
     }
-    printf("Sent user action packet of size %d to the VM.\n", sent_size);
+    // printf("Sent user action packet of size %d to the VM.\n", sent_size);
   }
 
   // protocol loop exited, close everything
