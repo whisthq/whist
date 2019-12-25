@@ -27,7 +27,7 @@
 #define BUFLEN 512 // length of buffer to receive UDP packets
 #define HOLEPUNCH_SERVER_IP "34.200.170.47" // Fractal-HolePunchServer-1 on AWS Lightsail
 #define HOLEPUNCH_PORT 48488 // Fractal default holepunch port
-#define RECV_PORT 48800 // port on which this client listens for UDP packets
+#define RECV_PORT 48801 // port on which this client listens for UDP packets
 
 int repeat = 1; // boolean to keep the protocol going until a closing event happens
 

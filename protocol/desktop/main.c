@@ -148,7 +148,8 @@ int main(int32_t argc, char **argv) {
   // datagram with the IPv4 of the VM we want to be paired with, whic hwe received
   // by authenticating as a user
   char *holepunch_message = get_host_ipv4(); // this host's IPv4
-  char *target_vm_ipv4 = "140.247.148.157"; 
+  printf("my ip is %s\n", holepunch_message);
+  char *target_vm_ipv4 = "66.30.118.186"; 
 
   strcat(holepunch_message, "F");
   strcat(holepunch_message, target_vm_ipv4);
