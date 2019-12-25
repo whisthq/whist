@@ -142,34 +142,34 @@ int main(int32_t argc, char **argv) {
   char punch_buff[sizeof(struct client)]; // buffer to receive the hole punch server reply
   int sent_size; // keep track of packets size
 
-  // create sending UDP socket
-  if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-    printf("Unable to create send socket.\n");
-    return -3;
-  }
-  printf("UDP Send socket created.\n");
+  // // create sending UDP socket
+  // if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+  //   printf("Unable to create send socket.\n");
+  //   return -3;
+  // }
+  // printf("UDP Send socket created.\n");
 
   // create receiving UDP socket, this where we will receive from the VM with
   // which we are initiating the protocol
-  if ((RECVsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-    printf("Unable to create receive socket.\n");
-    return -4;
-  }
-  printf("UDP Receive socket created.\n");
+  // if ((RECVsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+  //   printf("Unable to create receive socket.\n");
+  //   return -4;
+  // }
+  // printf("UDP Receive socket created.\n");
 
-  // set our endpoint data to receive UDP packets
-  memset(&recv_addr, 0, sizeof(recv_addr));
-  recv_addr.sin_family = AF_INET;
-  recv_addr.sin_port = htons(RECV_PORT); // port on which we receive UDP packets
-  recv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  // // set our endpoint data to receive UDP packets
+  // memset(&recv_addr, 0, sizeof(recv_addr));
+  // recv_addr.sin_family = AF_INET;
+  // recv_addr.sin_port = htons(RECV_PORT); // port on which we receive UDP packets
+  // recv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-  // bind the receive socket to our receive port address
-  if (bind(RECVsocket, (struct sockaddr *) &recv_addr, sizeof(recv_addr)) < 0) {
-    printf("Unable to bound socket to port %d.\n", RECV_PORT);
-    return -5;
-  }
-  printf("UDP Receive Socket bound to port %d.\n", RECV_PORT);
-
+  // // bind the receive socket to our receive port address
+  // if (bind(RECVsocket, (struct sockaddr *) &recv_addr, sizeof(recv_addr)) < 0) {
+  //   printf("Unable to bound socket to port %d.\n", RECV_PORT);
+  //   return -5;
+  // }
+  // printf("UDP Receive Socket bound to port %d.\n", RECV_PORT);
+  RECVsocket = create_udp_socket(RECV_PORT, 17);
   // set the hole punching server endpoint to send the first packet to initiate
   // hole punching. We will set another endpoint later for the actual server we
   // will communicate with
@@ -233,17 +233,17 @@ int main(int32_t argc, char **argv) {
 
   // now that we received the endpoint, we can copy it to our client struct to
   // recover the endpoint and initiate the protocol
-  struct client vm; // struct to hold the endpoint
-  memcpy(&vm, punch_buff, sizeof(struct client)); // copy into struct
+  // struct client vm; // struct to hold the endpoint
+  // memcpy(&vm, punch_buff, sizeof(struct client)); // copy into struct
 
-  // now that we have the memory, we can create the endpoint we send to
-  memset(&send_addr, 0, sizeof(send_addr));
-  send_addr.sin_family = AF_INET;
-  // send_addr.sin_port = vm.port; // the port to communicate with, already in byte network order
-  // send_addr.sin_addr.s_addr = inet_addr(vm.ipv4); // the IP of the vm to send to, already in byte network order
+  // // now that we have the memory, we can create the endpoint we send to
+  // memset(&send_addr, 0, sizeof(send_addr));
+  // send_addr.sin_family = AF_INET;
+  // // send_addr.sin_port = vm.port; // the port to communicate with, already in byte network order
+  // // send_addr.sin_addr.s_addr = inet_addr(vm.ipv4); // the IP of the vm to send to, already in byte network order
 
-  send_addr.sin_port = htons(48800); // the port to communicate with, already in byte network order
-  send_addr.sin_addr.s_addr = inet_addr("108.7.202.126"); // the IP of the vm to send to, already in byte network order
+  // send_addr.sin_port = htons(48800); // the port to communicate with, already in byte network order
+  // send_addr.sin_addr.s_addr = inet_addr("108.7.202.126"); // the IP of the vm to send to, already in byte network order
 
 
   // printf("received port is: %d\n", vm.port);
@@ -255,6 +255,8 @@ int main(int32_t argc, char **argv) {
   // are processed directly in this thread
 
   // first we create the context to pass to the video/audio thread
+
+
   struct context recv_context;
   recv_context.Socket = RECVsocket;
   recv_context.dest_addr = recv_addr;
@@ -264,14 +266,14 @@ int main(int32_t argc, char **argv) {
   ThreadHandle = (HANDLE)_beginthreadex(NULL, 0, &ReceiveStream, (void *) &recv_context, 0, NULL);
 
   // listens for and send user actions as long as the protocol is on
-  char *message = "Hello from the client!\n";
-  while (repeat) {
-    // send the packet to the VM directly
-    if ((sent_size = sendto(SENDsocket, message, strlen(message), 0, (struct sockaddr *) &send_addr, addr_len)) < 0) {
-      // printf("Failed to send user action packet to VM.\n");
-    }
-    // printf("Sent user action packet of size %d to the VM.\n", sent_size);
-  }
+  // char *message = "Hello from the client!\n";
+  // while (repeat) {
+  //   // send the packet to the VM directly
+  //   if ((sent_size = sendto(SENDsocket, message, strlen(message), 0, (struct sockaddr *) &send_addr, addr_len)) < 0) {
+  //     // printf("Failed to send user action packet to VM.\n");
+  //   }
+  //   // printf("Sent user action packet of size %d to the VM.\n", sent_size);
+  // }
 
   // protocol loop exited, close everything
   #if defined(_WIN32)
