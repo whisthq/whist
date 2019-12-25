@@ -202,17 +202,11 @@ int reliable_udp_recvfrom(int socket_fd, char *msg_buff, int msg_bufflen, struct
       }
       // ack sent
       ack_sent = 1;
+      return msg_recv_size;
     }
   }
 
   // if we have less than the max number of attempts, that means the sending
   // succeeded, so we return a success
-  if (attempts < MAX_N_ATTEMPTS) {
-    // return the size of the message sent, as per the usual socket send/recv functions
-    return msg_recv_size;
-  }
-  // if it is equal, it failed so we return an error
-  else {
-    return -1; // error code
-  }
+  return -1;
 }

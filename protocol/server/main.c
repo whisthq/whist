@@ -26,7 +26,7 @@
 
 #define BUFLEN 512 // length of buffer to receive UDP packets
 #define HOLEPUNCH_SERVER_IP "34.200.170.47" // Fractal-HolePunchServer-1 on AWS Lightsail
-#define HOLEPUNCH_PORT 48488 // Fractal default holepunch port
+#define HOLEPUNCH_PORT 48489 // Fractal default holepunch port
 #define RECV_PORT 48801 // port on which this client listens for UDP packets
 
 int repeat = 1; // boolean to keep the protocol going until a closing event happens
@@ -146,7 +146,7 @@ int main() {
     // know of our public UDP endpoint. Since this is a "server" (VM) being connected
     // to, it doesn't know the IP of the client it gets connected with so we will
     // just send a packet with our own IPv4 for the client to connect to
-    char *punch_message = "40.117.57.45"; // hardcoded for this VM, TODO: replace this by webserver querying
+    char *punch_message = "66.30.118.186"; // hardcoded for this VM, TODO: replace this by webserver querying
     strcat(punch_message, "S"); // add client tag to let the hole punch server know this is from a VM/server
 
     // send our endpoint to the hole punching server
