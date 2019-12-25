@@ -108,6 +108,7 @@ unsigned __stdcall ReceiveStream(void *opaque) {
     // receive a packet
     recv_size = recvfrom(recv_context.Socket, recv_buff, BUFLEN, 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
     printf("Received packet from the VM of size: %d.\n", recv_size);
+    memset(&recv_buff, 0, sizeof(recv_buff));
   }
   // protocol loop exited, close stream
   return 0;
@@ -142,33 +143,6 @@ int main(int32_t argc, char **argv) {
   char punch_buff[sizeof(struct client)]; // buffer to receive the hole punch server reply
   int sent_size; // keep track of packets size
 
-  // // create sending UDP socket
-  // if ((SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-  //   printf("Unable to create send socket.\n");
-  //   return -3;
-  // }
-  // printf("UDP Send socket created.\n");
-
-  // create receiving UDP socket, this where we will receive from the VM with
-  // which we are initiating the protocol
-  // if ((RECVsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-  //   printf("Unable to create receive socket.\n");
-  //   return -4;
-  // }
-  // printf("UDP Receive socket created.\n");
-
-  // // set our endpoint data to receive UDP packets
-  // memset(&recv_addr, 0, sizeof(recv_addr));
-  // recv_addr.sin_family = AF_INET;
-  // recv_addr.sin_port = htons(RECV_PORT); // port on which we receive UDP packets
-  // recv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-  // // bind the receive socket to our receive port address
-  // if (bind(RECVsocket, (struct sockaddr *) &recv_addr, sizeof(recv_addr)) < 0) {
-  //   printf("Unable to bound socket to port %d.\n", RECV_PORT);
-  //   return -5;
-  // }
-  // printf("UDP Receive Socket bound to port %d.\n", RECV_PORT);
   RECVsocket = create_udp_socket(RECV_PORT, 17);
   // set the hole punching server endpoint to send the first packet to initiate
   // hole punching. We will set another endpoint later for the actual server we
@@ -236,15 +210,28 @@ int main(int32_t argc, char **argv) {
   // struct client vm; // struct to hold the endpoint
   // memcpy(&vm, punch_buff, sizeof(struct client)); // copy into struct
 
+  SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  printf("SCoekt created");
+  if (SENDsocket == INVALID_SOCKET || SENDsocket < 0) { // Windows & Unix cases
+    // if can't create socket, return
+    printf("Could not create Send UDP socket.\n");
+    return 4;
+  }
+
   // // now that we have the memory, we can create the endpoint we send to
   // memset(&send_addr, 0, sizeof(send_addr));
-  // send_addr.sin_family = AF_INET;
+  send_addr.sin_family = AF_INET;
   // // send_addr.sin_port = vm.port; // the port to communicate with, already in byte network order
   // // send_addr.sin_addr.s_addr = inet_addr(vm.ipv4); // the IP of the vm to send to, already in byte network order
 
-  // send_addr.sin_port = htons(48800); // the port to communicate with, already in byte network order
-  // send_addr.sin_addr.s_addr = inet_addr("108.7.202.126"); // the IP of the vm to send to, already in byte network order
+  send_addr.sin_port = htons(48801); // the port to communicate with, already in byte network order
+  send_addr.sin_addr.s_addr = inet_addr("108.7.202.126"); // the IP of the vm to send to, already in byte network order
 
+  char *connect_status = connect(SENDsocket, (struct sockaddr *) &send_addr, sizeof(send_addr));
+  if (connect_status == SOCKET_ERROR) {
+    printf("Could not connect to the client w/ error: %d\n", WSAGetLastError());
+    return 3;
+  }
 
   // printf("received port is: %d\n", vm.port);
   // printf("received IP is: %s\n", vm.ipv4);
@@ -264,6 +251,14 @@ int main(int32_t argc, char **argv) {
 
   // launch thread #2 to start streaming the user input on this device
   ThreadHandle = (HANDLE)_beginthreadex(NULL, 0, &ReceiveStream, (void *) &recv_context, 0, NULL);
+
+  char *message = "Hello from the client!\n";
+  while(1) {
+    if ((sent_size = send(SENDsocket, message, strlen(message), 0)) < 0) {
+      // error statement if something went wrong
+      printf("Socket could not send packet w/ error %d\n", WSAGetLastError());
+    }
+  }
 
   // listens for and send user actions as long as the protocol is on
   // char *message = "Hello from the client!\n";
