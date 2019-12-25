@@ -37,7 +37,7 @@
 
 #define BUFLEN 512 // length of buffer to receive UDP packets
 #define HOLEPUNCH_SERVER_IP "34.200.170.47" // Fractal-HolePunchServer-1 on AWS Lightsail
-#define HOLEPUNCH_PORT 48488 // Fractal default holepunch port
+#define HOLEPUNCH_PORT 48489 // Fractal default holepunch port
 #define RECV_PORT 48800 // port on which this client listens for UDP packets
 
 int repeat = 1; // boolean to keep the protocol going until a closing event happens
@@ -147,8 +147,7 @@ int main(int32_t argc, char **argv) {
   // server know this is from a local client, and then we will send a second
   // datagram with the IPv4 of the VM we want to be paired with, whic hwe received
   // by authenticating as a user
-  char *holepunch_message = get_host_ipv4(); // this host's IPv4
-  printf("my ip is %s\n", holepunch_message);
+  char *holepunch_message = "66.30.118.186"; // this host's IPv4
   char *target_vm_ipv4 = "66.30.118.186"; 
 
   strcat(holepunch_message, "F");
