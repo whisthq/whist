@@ -60,7 +60,7 @@ unsigned __stdcall SendStream(void *opaque) {
     if ((sent_size = sendto(send_context.Socket, message, strlen(message), 0, (struct sockaddr *) &send_context.dest_addr, send_context.addr_len)) < 0) {
       // printf("Failed to send frame packet to VM.\n");
     }
-    // printf("Sent frame packet of size %d to the VM.\n", sent_size);
+    // printf("Sent frame packet of size %d to the client.\n", sent_size);
   }
   // protocol loop exited, close stream
   return 0;
@@ -80,7 +80,7 @@ unsigned __stdcall ReceiveUserActions(void *opaque) {
     // receive a packet
     recv_size = recvfrom(recv_context.Socket, recv_buff, BUFLEN, 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
 
-    printf("Received the following message: %s\n", recv_buff);
+    printf("Received message of size: %d\n", recv_size);
   }
   // protocol loop exited, close stream
   return 0;
@@ -192,7 +192,7 @@ int main() {
     // send_addr.sin_port = local_client.port; // the port to communicate with, already in byte network order
     // send_addr.sin_addr.s_addr = local_client.ipv4; // the IP of the local client to send to, already in byte network order
 
-    send_addr.sin_port = htons(48800); // the port to communicate with, already in byte network order
+    send_addr.sin_port = htons(48801); // the port to communicate with, already in byte network order
     send_addr.sin_addr.s_addr = inet_addr("108.7.202.126"); // the IP of the local client to send to, already in byte network order
 
     // hole punching fully done, we have the info to communicate directly with the
