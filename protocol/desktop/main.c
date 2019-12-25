@@ -204,7 +204,7 @@ int main(int32_t argc, char **argv) {
   // send_addr.sin_port = vm.port; // the port to communicate with, already in byte network order
   // send_addr.sin_addr.s_addr = inet_addr(vm.ipv4); // the IP of the vm to send to, already in byte network order
 
-  send_addr.sin_port = htons(48801); // the port to communicate with, already in byte network order
+  send_addr.sin_port = htons(48800); // the port to communicate with, already in byte network order
   send_addr.sin_addr.s_addr = inet_addr("108.7.202.126"); // the IP of the vm to send to, already in byte network order
 
 
