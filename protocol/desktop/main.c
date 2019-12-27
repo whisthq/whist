@@ -17,7 +17,7 @@
 
 #pragma comment (lib, "ws2_32.lib")
 
-#define BUFLEN 512
+#define BUFLEN 1000
  
 unsigned __stdcall SendStream(void *opaque) {
     struct context context = *(struct context *) opaque;
@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
     context.s = s;
     context.si_other = si_other;
 
-    if(CreateUDPSendContext(&context, "C", "40.117.57.45", 1000) < 0) {
+    if(CreateUDPSendContext(&context, "S", "", -1) < 0) {
         exit(1);
     }
 
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
         char recv_buf[BUFLEN];
         int recv_size;
 
-        if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&si_me), &slen)) < 0) {
+        if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.si_other), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
             printf("Received message: %s\n", recv_buf);
