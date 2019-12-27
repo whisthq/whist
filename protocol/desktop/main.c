@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
         char recv_buf[1000];
         int recv_size;
 
-        if ((recv_size = recvfrom(s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&si_other), &slen))==-1) {
+        if ((recv_size = recvfrom(s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&si_me), &slen))==-1) {
             printf("Packet not received \n");
         } else {
             printf("Received message: %s\n", recv_buf);
