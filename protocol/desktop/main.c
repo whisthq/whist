@@ -48,14 +48,15 @@ unsigned __stdcall SendStream(void *opaque) {
 
     // Once again, the payload is irrelevant. Feel free to send your VoIP
     // data in here.
-    char *message = "Hello from the client!";
+    char *message = "Hello from the server!";
     while(1) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.si_other), slen)==-1)
             diep("sendto()");
     }
 }
 
-int CreateUDPSendContext(struct context *context, char* origin, char* destination) {
+
+int CreateUDPSendContext(struct context *context, char* origin, char* destination, int timeout) {
     struct client buf;
     int slen=sizeof(context->si_other), n = 0;
 
