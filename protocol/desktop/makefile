@@ -57,12 +57,12 @@ LD_FLAGS = \
   /nologo
 
 # build all files into executable
-all: clean clear findip.obj socket.obj main.obj
+all: clean clear fractal.obj socket.obj main.obj
   link $(LD_FLAGS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the IP finder helper file into object file
-findip.obj: ../include/findip.c
-	$(CC) /c ../include/findip.c
+findip.obj: ../include/fractal.c
+	$(CC) /c ../include/fractal.c
 
 socket.obj: ../include/socket.c
   $(CC) /c ../include/socket.c
