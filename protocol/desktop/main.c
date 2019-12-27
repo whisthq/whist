@@ -21,7 +21,7 @@
 
 #define BUFLEN 1000
  
-unsigned __stdcall SendStream(void *opaque) {
+static int32_t SendStream(void *opaque) {
     printf("1");
     struct context context = *(struct context *) opaque;
     int slen = sizeof(context.addr);
@@ -69,7 +69,9 @@ int main(int argc, char* argv[])
     ReceiveContext.s = SendContext.s;
     ReceiveContext.addr = receive_address;
 
-    ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &SendStream, (void *) &SendContext, 0, NULL);
+    SDL_Thread *send_thread = SDL_CreateThread(SendStream, "SendStream", &SendContext);
+
+    // ThreadHandles[0] = (HANDLE)_beginthreadex(NULL, 0, &SendStream, (void *) &SendContext, 0, NULL);
     // ThreadHandles[1] = (HANDLE)_beginthreadex(NULL, 0, &ReceiveStream, (void *) &SendContext, 0, NULL);
 
     char recv_buf[BUFLEN];
