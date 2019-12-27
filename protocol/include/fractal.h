@@ -37,6 +37,9 @@
 
 /*** DEFINITIONS START ***/
 
+#define PORT 48800 
+#define SRV_IP "34.200.170.47"
+
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org
 /// Increment by one if these are taken, until a port is found available
@@ -550,6 +553,13 @@ typedef struct FractalDestination
     int host;
     short port;
 } FractalDestination;
+
+typedef struct context
+{
+    SOCKET s;
+    struct sockaddr_in si_other;
+} context;
+
 
 /*** STRUCTS END ***/
 

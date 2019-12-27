@@ -61,7 +61,7 @@ all: clean clear fractal.obj socket.obj main.obj
   link $(LD_FLAGS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the IP finder helper file into object file
-findip.obj: ../include/fractal.c
+fractal.obj: ../include/fractal.c
 	$(CC) /c ../include/fractal.c
 
 socket.obj: ../include/socket.c

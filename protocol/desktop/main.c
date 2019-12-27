@@ -18,17 +18,6 @@
 #pragma comment (lib, "ws2_32.lib")
 
 #define BUFLEN 512
-#define NPACK 10
-#define PORT 48800
- 
-// This is our server's IP address. In case you're wondering, this one is an RFC 5737 address.
-#define SRV_IP "34.200.170.47"
- 
-struct context
-{
-    SOCKET s;
-    struct sockaddr_in si_other;
-};
  
 unsigned __stdcall SendStream(void *opaque) {
     struct context context = *(struct context *) opaque;
@@ -68,7 +57,7 @@ int main(int argc, char* argv[])
     context.s = s;
     context.si_other = si_other;
 
-    if(CreateUDPSendContext(&context, "C", "40.117.57.45") < 0) {
+    if(CreateUDPSendContext(&context, "C", "40.117.57.45", 1000) < 0) {
         exit(1);
     }
 
@@ -76,10 +65,10 @@ int main(int argc, char* argv[])
 
     while (1)
     {
-        char recv_buf[1000];
+        char recv_buf[BUFLEN];
         int recv_size;
 
-        if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.si_me), &slen)) < 0) {
+        if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&si_me), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
             printf("Received message: %s\n", recv_buf);
