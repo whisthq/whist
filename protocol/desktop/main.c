@@ -1,292 +1,152 @@
-/*
- * This file initiates a connection from this local client to a user's Fractal
- * cloud computer through UDP hole punching, and then starts streaming the user
- * actions to the VM and receiving the video/audio stream back for display.
- *
- * Fractal Protocol version 1.1
- *
- * Last modified: 12/20/2019
- *
- * By: Philippe Noël
- *
- * Copyright Fractal Computers, Inc. 2019
-**/
-
-#include <stdint.h>
+// UDP hole punching example, client code
+// Base UDP code stolen from http://www.abc.se/~m6695/udp.html
+// By Oscar Rodriguez
+// This code is public domain, but you're a complete lunatic
+// if you plan to use this code in any real program.
+ 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <process.h>
+#include <windows.h>
 
-#if defined(_WIN32)
-  #include <winsock2.h>
-  #include <ws2tcpip.h>
-  #include <process.h>
-  #include <windows.h>
-#else
-  #include <unistd.h>
-  #include <netdb.h>
-  #include <arpa/inet.h>
-  #include <netinet/in.h>
-  #include <sys/types.h>
-  #include <sys/socket.h>
-  #include <errno.h>
-#endif
+#pragma comment (lib, "ws2_32.lib")
 
-#include "../include/findip.h" // find IPv4 of host
-#include "../include/socket.h"
-
-#define BUFLEN 512 // length of buffer to receive UDP packets
-#define HOLEPUNCH_SERVER_IP "34.200.170.47" // Fractal-HolePunchServer-1 on AWS Lightsail
-#define HOLEPUNCH_PORT 48489 // Fractal default holepunch port
-#define RECV_PORT 48800 // port on which this client listens for UDP packets
-
-int repeat = 1; // boolean to keep the protocol going until a closing event happens
-
-// simple struct to copy memory back
-struct client {
-  char* ipv4;
-  uint16_t port;
-  char* target_ipv4; // buflen for address
+#define BUFLEN 512
+#define NPACK 10
+#define PORT 48800
+ 
+// This is our server's IP address. In case you're wondering, this one is an RFC 5737 address.
+#define SRV_IP "34.200.170.47"
+ 
+// A small struct to hold a UDP endpoint. We'll use this to hold each peer's endpoint.
+struct client
+{
+    int host;
+    short port;
 };
+ 
+// Just a function to kill the program when something goes wrong.
+void diep(char *s)
+{
+    perror(s);
+    exit(1);
+}
 
-// simple struct with socket information for passing to threads
-struct context {
-  SOCKET Socket;
-  struct sockaddr_in dest_addr;
-  socklen_t addr_len;
+struct context
+{
+    SOCKET s;
+    struct sockaddr_in si_other;
 };
+ 
+unsigned __stdcall SendStream(void *opaque) {
+    struct context context = *(struct context *) opaque;
+    int i, slen = sizeof(context.si_other);
 
-SOCKET create_udp_socket(port, timeout) {
-  SOCKET RECVSocket; // socket file descriptors
-  struct sockaddr_in clientRECV;
-  int bind_attempts = 0;
-
-  RECVSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (RECVSocket == INVALID_SOCKET || RECVSocket < 0) { // Windows & Unix cases
-    printf("Could not create Receive UDP socket.\n");
-  }
-  printf("Receive UDP Socket created.\n");
-
-  int sizeTimeout = sizeof(int);
-  setsockopt(RECVSocket, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeTimeout);
-  // prepare the sockaddr_in structure for the receiving socket
-  clientRECV.sin_family = AF_INET; // IPv4
-  clientRECV.sin_addr.s_addr = INADDR_ANY; // any IP
-  clientRECV.sin_port = htons(port); // initial default port 48888
-
-  // for the recv/recvfrom function to work, we need to bind the socket even if it is UDP
-  // bind our socket to this port. If it fails, increment port by one and retry
-  while (bind(RECVSocket, (struct sockaddr *) &clientRECV, sizeof(clientRECV)) == SOCKET_ERROR) {
-    // at most 50 attempts, after that we give up
-    if (bind_attempts == 50) {
-      printf("Cannot find an open port, abort.\n");
-      return 4;
+    // Once again, the payload is irrelevant. Feel free to send your VoIP
+    // data in here.
+    char *message = "Hello from the client!";
+    while(1) {
+        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.si_other), slen)==-1)
+            diep("sendto()");
     }
-    // display failed attempt
-    printf("Bind attempt #%i failed with error code : %d.\n", bind_attempts, WSAGetLastError());
-
-    // increment port number and retry
-    bind_attempts += 1;
-    clientRECV.sin_port = htons(port + bind_attempts); // initial default port 48888
-  }
-  // successfully binded, we're good to go
-  printf("Bind done on port: %d.\n", ntohs(clientRECV.sin_port));
-  return RECVSocket;
 }
 
-// thread to receive the video from the VM
-unsigned __stdcall ReceiveStream(void *opaque) {
-  // cast the context back
-  struct context recv_context = *(struct context *) opaque;
-
-  // keep track of packets size
-  int recv_size;
-  char recv_buff[BUFLEN];
-
-  // loop as long as the stream is on
-  while (repeat) {
-    // receive a packet
-    recv_size = recvfrom(recv_context.Socket, recv_buff, BUFLEN, 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
-    printf("Received packet from the VM of size: %d.\n", recv_size);
-    memset(&recv_buff, 0, sizeof(recv_buff));
-  }
-  // protocol loop exited, close stream
-  return 0;
-}
-
-// main client loop
-int main(int32_t argc, char **argv) {
-  // unused argv for now -- will use in the actual product
-  (void) argv;
-
-  // usage check
-  if (argc != 1) {
-    printf("Usage: client\n"); // no argument needed
-    return -1;
-  }
-
-  // initialize the windows socket library if this is a windows client
-  #if defined(_WIN32)
+int main(int argc, char* argv[])
+{
+    // initialize the windows socket library if this is a windows client
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
-      printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
-      return -2;
+        printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
+        return -1;
     }
     printf("Winsock initialized successfully.\n");
-  #endif
 
-  // environment variables
-  SOCKET SENDsocket, RECVsocket; // socket file descriptors
-  struct sockaddr_in recv_addr, send_addr, holepunch_addr; // addresses of endpoints
-  socklen_t addr_len = sizeof(holepunch_addr); // any addr, all same len
-  HANDLE ThreadHandle; // our second thread for the audio/video
-  char punch_buff[sizeof(struct client)]; // buffer to receive the hole punch server reply
-  int sent_size; // keep track of packets size
-
-  RECVsocket = create_udp_socket(RECV_PORT, 17);
-  // set the hole punching server endpoint to send the first packet to initiate
-  // hole punching. We will set another endpoint later for the actual server we
-  // will communicate with
-  memset(&holepunch_addr, 0, sizeof(holepunch_addr));
-  holepunch_addr.sin_family = AF_INET;
-  holepunch_addr.sin_port = htons(HOLEPUNCH_PORT);
-  holepunch_addr.sin_addr.s_addr = inet_addr(HOLEPUNCH_SERVER_IP);
-
-  // now we need to send a simple datagram to the hole punching server to let it
-  // know of our public UDP endpoint. Not only the holepunch server, but the VM
-  // will send their data through this endpoint. Since this is a local client,
-  // we first send a datagram with our own IPv4 and a tag to let the hole punch
-  // server know this is from a local client, and then we will send a second
-  // datagram with the IPv4 of the VM we want to be paired with, whic hwe received
-  // by authenticating as a user
-  char *holepunch_message = "66.30.118.186"; // this host's IPv4
-  char *target_vm_ipv4 = "40.117.57.45"; 
-
-  strcat(holepunch_message, "F");
-  strcat(holepunch_message, target_vm_ipv4);
-  strcat(holepunch_message, "C"); // add local client tag
-
-  printf("Sending %s\n", holepunch_message);
-  // send our endpoint to the hole punching server
-  // NOTE: we send with the RECVsocket so that the hole punch servers maps the port of the RECV socket to
-  // then send to it, but will use the SENDsocket to send to the VM after hole punching is done
-  if (reliable_udp_sendto(RECVsocket, holepunch_message, strlen(holepunch_message), holepunch_addr, addr_len) < 0) {
-    printf("Unable to send client endpoint to hole punching server.\n");
-    return -6;
-  }
-  printf("Local endpoint sent to the hole punching server.\n");
-
-  // sleep two second: IMPORTANT OTHERWISE THE TWO SENDS WILL CLUMP TOGETHER AND
-  // THE HOLE PUNCH SERVER WILL FAIL
-  Sleep(2000L);
-
-  // now that this is confirmed, since we are a client, we send another message
-  // with the IPv4 of the VM we want to be paired with
-  // char *target_vm_ipv4 = "140.247.148.157"; // azure VM ipv4
-
-  // // send the target VM ipv4 to the hole punching server
-  // // send with RECVsocket here again
-  // if (reliable_udp_sendto(RECVsocket, target_vm_ipv4, strlen(target_vm_ipv4), holepunch_addr, addr_len) < 0) {
-  //   printf("Unable to send client endpoint to hole punching server.\n");
-  //   return -7;
-  // }
-  // printf("Target VM IPv4 sent to the hole punching server.\n");
-
-  // the hole punching server has now mapped our NAT endpoint and "punched" a
-  // hole through the NAT for peers to send us direct datagrams, we now look to
-  // receive the punched endpoint of the vm we connect with
-
-
-
-
-  // blocking call to wait for the hole punching server to pair this client with
-  // the respective VM, last argument is recv timeout
-  // memset(&holepunch_addr, 0, sizeof(holepunch_addr));
-  reliable_udp_recvfrom(RECVsocket, punch_buff, BUFLEN, holepunch_addr, addr_len);
-  printf("Received the endpoint of the VM from the hole punch server.\n");
-
-  // now that we received the endpoint, we can copy it to our client struct to
-  // recover the endpoint and initiate the protocol
-  // struct client vm; // struct to hold the endpoint
-  // memcpy(&vm, punch_buff, sizeof(struct client)); // copy into struct
-
-  SENDsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  printf("SCoekt created");
-  if (SENDsocket == INVALID_SOCKET || SENDsocket < 0) { // Windows & Unix cases
-    // if can't create socket, return
-    printf("Could not create Send UDP socket.\n");
-    return 4;
-  }
-
-  // // now that we have the memory, we can create the endpoint we send to
-  // memset(&send_addr, 0, sizeof(send_addr));
-  send_addr.sin_family = AF_INET;
-  // // send_addr.sin_port = vm.port; // the port to communicate with, already in byte network order
-  // // send_addr.sin_addr.s_addr = inet_addr(vm.ipv4); // the IP of the vm to send to, already in byte network order
-
-  send_addr.sin_port = htons(48801); // the port to communicate with, already in byte network order
-  send_addr.sin_addr.s_addr = inet_addr("66.30.118.186"); // the IP of the vm to send to, already in byte network order
-
-  char *connect_status = connect(RECVsocket, (struct sockaddr *) &send_addr, sizeof(send_addr));
-  if (connect_status == SOCKET_ERROR) {
-    printf("Could not connect to the client w/ error: %d\n", WSAGetLastError());
-    return 3;
-  }
-
-  // printf("received port is: %d\n", vm.port);
-  // printf("received IP is: %s\n", vm.ipv4);
-
-
-  // hole punching fully done, we have the info to communicate directly with the
-  // VM, so we create receive video thread and start the protocol, the user actions
-  // are processed directly in this thread
-
-  // first we create the context to pass to the video/audio thread
-
-
-  struct context recv_context;
-  recv_context.Socket = RECVsocket;
-  recv_context.dest_addr = recv_addr;
-  recv_context.addr_len = addr_len;
-
-  // launch thread #2 to start streaming the user input on this device
-  ThreadHandle = (HANDLE)_beginthreadex(NULL, 0, &ReceiveStream, (void *) &recv_context, 0, NULL);
-
-  char *message = "Hello from the client!\n";
-  while(1) {
-    if ((sent_size = send(SENDsocket, message, strlen(message), 0)) < 0) {
-      // error statement if something went wrong
-      printf("Socket could not send packet w/ error %d\n", WSAGetLastError());
+    struct sockaddr_in si_me, si_other;
+    int i, f, j, k, slen=sizeof(si_other);
+    struct client buf;
+    struct client server;
+    struct client peers[10]; // 10 peers. Notice that we're not doing any bound checking.
+    int n = 0;
+    SOCKET s;
+    HANDLE ThreadHandle;
+ 
+    s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (s == INVALID_SOCKET || s < 0) { // Windows & Unix cases
+        printf("Could not create UDP socket.\n");
     }
-  }
+ 
+    // Our own endpoint data
+    memset((char *) &si_me, 0, sizeof(si_me));
+    si_me.sin_family = AF_INET;
+    si_me.sin_port = htons(PORT); // This is not really necessary, we can also use 0 (any port)
+    si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+ 
+    // The server's endpoint data
+    memset((char *) &si_other, 0, sizeof(si_other));
+    si_other.sin_family = AF_INET;
+    si_other.sin_port = htons(PORT);
+    si_other.sin_addr.s_addr = inet_addr(SRV_IP);
 
-  // listens for and send user actions as long as the protocol is on
-  // char *message = "Hello from the client!\n";
-  // while (repeat) {
-  //   // send the packet to the VM directly
-  //   if ((sent_size = sendto(SENDsocket, message, strlen(message), 0, (struct sockaddr *) &send_addr, addr_len)) < 0) {
-  //     // printf("Failed to send user action packet to VM.\n");
-  //   }
-  //   // printf("Sent user action packet of size %d to the VM.\n", sent_size);
-  // }
+ 
+    // Store the server's endpoint data so we can easily discriminate between server and peer datagrams.
+    server.host = si_other.sin_addr.s_addr;
+    server.port = si_other.sin_port;
+ 
+    // Send a simple datagram to the server to let it know of our public UDP endpoint.
+    // Not only the server, but other clients will send their data through this endpoint.
+    // The datagram payload is irrelevant, but if we wanted to support multiple
+    // clients behind the same NAT, we'd send our won private UDP endpoint information
+    // as well.
+    if (sendto(s, "40.117.57.45C", strlen("40.117.57.45C"), 0, (struct sockaddr*)(&si_other), slen)==-1) {
+        printf("Sent failed");
+    } else {
+        printf("Sent message to STUN server\n");
+    }
 
-  // protocol loop exited, close everything
-  #if defined(_WIN32)
-    // thread handle
-    CloseHandle(ThreadHandle);
+    // Right here, our NAT should have a session entry between our host and the server.
+    // We can only hope our NAT maps the same public endpoint (both host and port) when we
+    // send datagrams to other clients using our same private endpoint.
+    int punched = 0;
+    while (punched == 0)
+    {
+        // Receive data from the socket. Notice that we use the same socket for server and
+        // peer communications. We discriminate by using the remote host endpoint data, but
+        // remember that IP addresses are easily spoofed (actually, that's what the NAT is
+        // doing), so remember to do some kind of validation in here.
+        if (recvfrom(s, &buf, sizeof(buf), 0, (struct sockaddr*)(&si_other), &slen)==-1) {
+            printf("receive error \n");
+        } else {
+            printf("Received packet from STUN server at %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
+            punched = 1;
+        }
+    }
 
-    // sockets
-    closesocket(SENDsocket);
-    closesocket(RECVsocket);
+    si_other.sin_addr.s_addr = buf.host;
+    si_other.sin_port = buf.port;
 
-    // Windows socket library
-    WSACleanup();
-  #else
-    // if not Windows client, just close the sockets
-    close(SENDsocket);
-    close(RECVsocket);
-  #endif
+    struct context context = {0};
+    context.s = s;
+    context.si_other = si_other;
 
-  // exit
-  return 0;
+    ThreadHandle = (HANDLE)_beginthreadex(NULL, 0, &SendStream, (void *) &context, 0, NULL);
+
+    while (1)
+    {
+        char recv_buf[1000];
+        int recv_size;
+
+        if ((recv_size = recvfrom(s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&si_other), &slen))==-1) {
+            printf("Packet not received \n");
+        } else {
+            printf("Received message: %s\n", recv_buf);
+        }
+    }
+ 
+    // Actually, we never reach this point...
+    closesocket(s);
+    return 0;
 }
