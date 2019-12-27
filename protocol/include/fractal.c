@@ -465,7 +465,7 @@ FractalStatus ReplayUserInput(FractalMessage fmsg) {
 }
 
 int CreateUDPSendContext(struct context *context, char* origin, char* destination, int timeout) {
-    struct client buf;
+    struct FractalDestination buf;
     int slen=sizeof(context->si_other), n = 0;
 
     if(!(strcmp(origin, "C") == 0 || strcmp(origin, "S") == 0)) {
@@ -486,15 +486,7 @@ int CreateUDPSendContext(struct context *context, char* origin, char* destinatio
     context->si_other.sin_port = htons(PORT);
     context->si_other.sin_addr.s_addr = inet_addr(SRV_IP);
  
-    // Send a simple datagram to the server to let it know of our public UDP endpoint.
-    // Not only the server, but other clients will send their data through this endpoint.
-    // The datagram payload is irrelevant, but if we wanted to support multiple
-    // clients behind the same NAT, we'd send our won private UDP endpoint information
-    // as well.
-
-
     strcat(destination, origin);
-    printf("Payload is %s\n", destination);
 
     if (sendto(context->s, destination, strlen(destination), 0, (struct sockaddr*)(&context->si_other), slen)==-1) {
         printf("Sent failed");

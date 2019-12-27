@@ -545,6 +545,12 @@ typedef struct FractalMessage {
 	};
 } FractalMessage;
 
+typedef struct FractalDestination
+{
+    int host;
+    short port;
+} FractalDestination;
+
 /*** STRUCTS END ***/
 
 /*** FRACTAL FUNCTIONS START ***/
