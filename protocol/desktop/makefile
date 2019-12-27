@@ -7,6 +7,17 @@ LINK = link.exe
 # specify bin name
 BIN_NAME = client.exe
 
+STATIC_LIBS = \
+  ../lib/ffmpeg/windows/avcodec.lib \
+  ../lib/ffmpeg/windows/avdevice.lib \
+  ../lib/ffmpeg/windows/avfilter.lib \
+  ../lib/ffmpeg/windows/avformat.lib \
+  ../lib/ffmpeg/windows/avutil.lib \
+  ../lib/ffmpeg/windows/postproc.lib \
+  ../lib/ffmpeg/windows/swresample.lib \
+  ../lib/ffmpeg/windows/swscale.lib \
+  ../lib/SDL2/windows/SDL2.lib
+  
 # compiler flags
 CFLAGS = \
   /nologo \
@@ -58,7 +69,7 @@ LD_FLAGS = \
 
 # build all files into executable
 all: clean clear fractal.obj socket.obj main.obj
-  link $(LD_FLAGS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
+  link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the IP finder helper file into object file
 fractal.obj: ../include/fractal.c
