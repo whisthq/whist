@@ -464,6 +464,68 @@ FractalStatus ReplayUserInput(FractalMessage fmsg) {
 	return FRACTAL_OK;
 }
 
+int CreateUDPSendContext(struct context *context, char* origin, char* destination, int timeout) {
+    struct client buf;
+    int slen=sizeof(context->si_other), n = 0;
+
+    if(!(strcmp(origin, "C") == 0 || strcmp(origin, "S") == 0)) {
+        printf("Invalid origin parameter. Specify 'S' or 'C'.");
+        return -1;
+    }
+
+    context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (context->s == INVALID_SOCKET || context->s < 0) { // Windows & Unix cases
+        printf("Could not create UDP socket\n");
+        return -1;
+    }
+ 	
+ 	setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
+    // The server's endpoint data
+    memset((char *) &context->si_other, 0, sizeof(context->si_other));
+    context->si_other.sin_family = AF_INET;
+    context->si_other.sin_port = htons(PORT);
+    context->si_other.sin_addr.s_addr = inet_addr(SRV_IP);
+ 
+    // Send a simple datagram to the server to let it know of our public UDP endpoint.
+    // Not only the server, but other clients will send their data through this endpoint.
+    // The datagram payload is irrelevant, but if we wanted to support multiple
+    // clients behind the same NAT, we'd send our won private UDP endpoint information
+    // as well.
+
+
+    strcat(destination, origin);
+    printf("Payload is %s\n", destination);
+
+    if (sendto(context->s, destination, strlen(destination), 0, (struct sockaddr*)(&context->si_other), slen)==-1) {
+        printf("Sent failed");
+    } else {
+        printf("Sent message to STUN server\n");
+    }
+
+    // Right here, our NAT should have a session entry between our host and the server.
+    // We can only hope our NAT maps the same public endpoint (both host and port) when we
+    // send datagrams to other clients using our same private endpoint.
+    int punched = 0;
+    while (punched == 0)
+    {
+        // Receive data from the socket. Notice that we use the same socket for server and
+        // peer communications. We discriminate by using the remote host endpoint data, but
+        // remember that IP addresses are easily spoofed (actually, that's what the NAT is
+        // doing), so remember to do some kind of validation in here.
+        if (recvfrom(context->s, &buf, sizeof(buf), 0, (struct sockaddr*)(&context->si_other), &slen)==-1) {
+            printf("Did not receive anything from STUN server \n");
+            return -1;
+        } else {
+            printf("Received packet from STUN server at %s:%d\n", inet_ntoa(context->si_other.sin_addr), ntohs(context->si_other.sin_port));
+            punched = 1;
+        }
+    }
+
+    context->si_other.sin_addr.s_addr = buf.host;
+    context->si_other.sin_port = buf.port;
+    return 0;
+}
+
 /*** FRACTAL FUNCTIONS END ***/
 
 // renable Windows warning
