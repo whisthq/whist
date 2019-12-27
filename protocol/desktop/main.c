@@ -55,53 +55,38 @@ unsigned __stdcall SendStream(void *opaque) {
     }
 }
 
-int main(int argc, char* argv[])
-{
-    // initialize the windows socket library if this is a windows client
-    WSADATA wsa;
-    if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
-        printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
+int CreateUDPSendContext(struct context *context, char* origin, char* destination) {
+    struct client buf;
+    int slen=sizeof(context->si_other), n = 0;
+
+    if(!(strcmp(origin, "C") == 0 || strcmp(origin, "S") == 0)) {
+        printf("Invalid origin parameter. Specify 'S' or 'C'.");
         return -1;
     }
-    printf("Winsock initialized successfully.\n");
 
-    struct sockaddr_in si_me, si_other;
-    int i, f, j, k, slen=sizeof(si_other);
-    struct client buf;
-    struct client server;
-    struct client peers[10]; // 10 peers. Notice that we're not doing any bound checking.
-    int n = 0;
-    SOCKET s;
-    HANDLE ThreadHandle;
- 
-    s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (s == INVALID_SOCKET || s < 0) { // Windows & Unix cases
-        printf("Could not create UDP socket.\n");
+    context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (context->s == INVALID_SOCKET || context->s < 0) { // Windows & Unix cases
+        printf("Could not create UDP socket\n");
+        return -1;
     }
  
-    // Our own endpoint data
-    memset((char *) &si_me, 0, sizeof(si_me));
-    si_me.sin_family = AF_INET;
-    si_me.sin_port = htons(PORT); // This is not really necessary, we can also use 0 (any port)
-    si_me.sin_addr.s_addr = htonl(INADDR_ANY);
- 
     // The server's endpoint data
-    memset((char *) &si_other, 0, sizeof(si_other));
-    si_other.sin_family = AF_INET;
-    si_other.sin_port = htons(PORT);
-    si_other.sin_addr.s_addr = inet_addr(SRV_IP);
-
- 
-    // Store the server's endpoint data so we can easily discriminate between server and peer datagrams.
-    server.host = si_other.sin_addr.s_addr;
-    server.port = si_other.sin_port;
+    memset((char *) &context->si_other, 0, sizeof(context->si_other));
+    context->si_other.sin_family = AF_INET;
+    context->si_other.sin_port = htons(PORT);
+    context->si_other.sin_addr.s_addr = inet_addr(SRV_IP);
  
     // Send a simple datagram to the server to let it know of our public UDP endpoint.
     // Not only the server, but other clients will send their data through this endpoint.
     // The datagram payload is irrelevant, but if we wanted to support multiple
     // clients behind the same NAT, we'd send our won private UDP endpoint information
     // as well.
-    if (sendto(s, "40.117.57.45C", strlen("40.117.57.45C"), 0, (struct sockaddr*)(&si_other), slen)==-1) {
+
+
+    strcat(destination, origin);
+    printf("Payload is %s\n", destination);
+
+    if (sendto(context->s, destination, strlen(destination), 0, (struct sockaddr*)(&context->si_other), slen)==-1) {
         printf("Sent failed");
     } else {
         printf("Sent message to STUN server\n");
@@ -117,29 +102,59 @@ int main(int argc, char* argv[])
         // peer communications. We discriminate by using the remote host endpoint data, but
         // remember that IP addresses are easily spoofed (actually, that's what the NAT is
         // doing), so remember to do some kind of validation in here.
-        if (recvfrom(s, &buf, sizeof(buf), 0, (struct sockaddr*)(&si_other), &slen)==-1) {
-            printf("receive error \n");
+        if (recvfrom(context->s, &buf, sizeof(buf), 0, (struct sockaddr*)(&context->si_other), &slen)==-1) {
+            printf("Did not receive anything from STUN server \n");
+            return -1;
         } else {
-            printf("Received packet from STUN server at %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
+            printf("Received packet from STUN server at %s:%d\n", inet_ntoa(context->si_other.sin_addr), ntohs(context->si_other.sin_port));
             punched = 1;
         }
     }
 
-    si_other.sin_addr.s_addr = buf.host;
-    si_other.sin_port = buf.port;
+    context->si_other.sin_addr.s_addr = buf.host;
+    context->si_other.sin_port = buf.port;
+    return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    // initialize the windows socket library if this is a windows client
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
+        printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
+        return -1;
+    }
+    printf("Winsock initialized successfully.\n");
+
+    struct sockaddr_in si_me, si_other;
+    int i, f, j, k, slen=sizeof(si_other);
+    int n = 0;
+    SOCKET s;
+    HANDLE ThreadHandle;
+ 
+    memset((char *) &si_me, 0, sizeof(si_me));
+    si_me.sin_family = AF_INET;
+    si_me.sin_port = htons(PORT); // This is not really necessary, we can also use 0 (any port)
+    si_me.sin_addr.s_addr = htonl(INADDR_ANY);
 
     struct context context = {0};
     context.s = s;
     context.si_other = si_other;
 
+    if(CreateUDPSendContext(&context, "C", "40.117.57.45") < 0) {
+        exit(1);
+    }
+
     ThreadHandle = (HANDLE)_beginthreadex(NULL, 0, &SendStream, (void *) &context, 0, NULL);
+
+    printf("Now paired with %s:%d\n", inet_ntoa(context.si_other.sin_addr), ntohs(context.si_other.sin_port));
 
     while (1)
     {
         char recv_buf[1000];
         int recv_size;
 
-        if ((recv_size = recvfrom(s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&si_me), &slen))==-1) {
+        if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.si_other), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
             printf("Received message: %s\n", recv_buf);
