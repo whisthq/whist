@@ -466,7 +466,7 @@ FractalStatus ReplayUserInput(FractalMessage fmsg) {
 
 int CreateUDPSendContext(struct context *context, char* origin, char* destination, int timeout) {
     struct FractalDestination buf;
-    int slen=sizeof(context->si_other), n = 0;
+    int slen=sizeof(context->addr), n = 0;
 
     if(!(strcmp(origin, "C") == 0 || strcmp(origin, "S") == 0)) {
         printf("Invalid origin parameter. Specify 'S' or 'C'.");
@@ -481,14 +481,14 @@ int CreateUDPSendContext(struct context *context, char* origin, char* destinatio
  	
  	setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
     // The server's endpoint data
-    memset((char *) &context->si_other, 0, sizeof(context->si_other));
-    context->si_other.sin_family = AF_INET;
-    context->si_other.sin_port = htons(PORT);
-    context->si_other.sin_addr.s_addr = inet_addr(SRV_IP);
+    memset((char *) &context->addr, 0, sizeof(context->addr));
+    context->addr.sin_family = AF_INET;
+    context->addr.sin_port = htons(PORT);
+    context->addr.sin_addr.s_addr = inet_addr(SRV_IP);
  
     strcat(destination, origin);
 
-    if (sendto(context->s, destination, strlen(destination), 0, (struct sockaddr*)(&context->si_other), slen)==-1) {
+    if (sendto(context->s, destination, strlen(destination), 0, (struct sockaddr*)(&context->addr), slen)==-1) {
         printf("Sent failed");
     } else {
         printf("Sent message to STUN server\n");
@@ -504,17 +504,18 @@ int CreateUDPSendContext(struct context *context, char* origin, char* destinatio
         // peer communications. We discriminate by using the remote host endpoint data, but
         // remember that IP addresses are easily spoofed (actually, that's what the NAT is
         // doing), so remember to do some kind of validation in here.
-        if (recvfrom(context->s, &buf, sizeof(buf), 0, (struct sockaddr*)(&context->si_other), &slen)==-1) {
+        if (recvfrom(context->s, &buf, sizeof(buf), 0, (struct sockaddr*)(&context->addr), &slen)==-1) {
             printf("Did not receive anything from STUN server \n");
             return -1;
         } else {
-            printf("Received packet from STUN server at %s:%d\n", inet_ntoa(context->si_other.sin_addr), ntohs(context->si_other.sin_port));
+            printf("Received packet from STUN server at %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
             punched = 1;
         }
     }
 
-    context->si_other.sin_addr.s_addr = buf.host;
-    context->si_other.sin_port = buf.port;
+    context->addr.sin_addr.s_addr = buf.host;
+    context->addr.sin_port = buf.port;
+    printf("Destination is %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
     return 0;
 }
 

@@ -557,7 +557,7 @@ typedef struct FractalDestination
 typedef struct context
 {
     SOCKET s;
-    struct sockaddr_in si_other;
+    struct sockaddr_in addr;
 } context;
 
 
