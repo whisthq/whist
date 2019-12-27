@@ -159,8 +159,8 @@ int main(int32_t argc, char **argv) {
   // server know this is from a local client, and then we will send a second
   // datagram with the IPv4 of the VM we want to be paired with, whic hwe received
   // by authenticating as a user
-  char *holepunch_message = "108.7.202.126"; // this host's IPv4
-  char *target_vm_ipv4 = "108.7.202.126"; 
+  char *holepunch_message = "66.30.118.186"; // this host's IPv4
+  char *target_vm_ipv4 = "40.117.57.45"; 
 
   strcat(holepunch_message, "F");
   strcat(holepunch_message, target_vm_ipv4);
@@ -225,9 +225,9 @@ int main(int32_t argc, char **argv) {
   // // send_addr.sin_addr.s_addr = inet_addr(vm.ipv4); // the IP of the vm to send to, already in byte network order
 
   send_addr.sin_port = htons(48801); // the port to communicate with, already in byte network order
-  send_addr.sin_addr.s_addr = inet_addr("108.7.202.126"); // the IP of the vm to send to, already in byte network order
+  send_addr.sin_addr.s_addr = inet_addr("66.30.118.186"); // the IP of the vm to send to, already in byte network order
 
-  char *connect_status = connect(SENDsocket, (struct sockaddr *) &send_addr, sizeof(send_addr));
+  char *connect_status = connect(RECVsocket, (struct sockaddr *) &send_addr, sizeof(send_addr));
   if (connect_status == SOCKET_ERROR) {
     printf("Could not connect to the client w/ error: %d\n", WSAGetLastError());
     return 3;

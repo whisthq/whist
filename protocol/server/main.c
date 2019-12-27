@@ -52,7 +52,7 @@ unsigned __stdcall SendStream(void *opaque) {
 
   // keep track of packets size
   int sent_size;
-  char *message = "Hello from the VM!\n";
+  char *message = "Hello from the VM! Hello from the VM!\n";
 
   // listens for and send user actions as long as the protocol is on
   while (repeat) {
@@ -78,7 +78,8 @@ unsigned __stdcall ReceiveUserActions(void *opaque) {
   // loop as long as the stream is on
   while (repeat) {
     // receive a packet
-    recv_size = recvfrom(recv_context.Socket, recv_buff, BUFLEN, 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
+    recv_size = recv(recv_context.Socket, recv_buff, BUFLEN, 0);
+    // recv_size = recvfrom(recv_context.Socket, recv_buff, BUFLEN, 0, (struct sockaddr *) &recv_context.dest_addr, &recv_context.addr_len);
 
     printf("Received message of size: %d\n", recv_size);
   }
@@ -192,7 +193,7 @@ int main() {
     // send_addr.sin_port = local_client.port; // the port to communicate with, already in byte network order
     // send_addr.sin_addr.s_addr = local_client.ipv4; // the IP of the local client to send to, already in byte network order
 
-    send_addr.sin_port = htons(48801); // the port to communicate with, already in byte network order
+    send_addr.sin_port = htons(48800); // the port to communicate with, already in byte network order
     send_addr.sin_addr.s_addr = inet_addr("108.7.202.126"); // the IP of the local client to send to, already in byte network order
 
     // hole punching fully done, we have the info to communicate directly with the
