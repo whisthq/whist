@@ -24,20 +24,6 @@
 // This is our server's IP address. In case you're wondering, this one is an RFC 5737 address.
 #define SRV_IP "34.200.170.47"
  
-// A small struct to hold a UDP endpoint. We'll use this to hold each peer's endpoint.
-struct client
-{
-    int host;
-    short port;
-};
- 
-// Just a function to kill the program when something goes wrong.
-void diep(char *s)
-{
-    perror(s);
-    exit(1);
-}
-
 struct context
 {
     SOCKET s;
@@ -52,8 +38,8 @@ unsigned __stdcall SendStream(void *opaque) {
     // data in here.
     char *message = "Hello from the server!";
     while(1) {
-        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.si_other), slen)==-1)
-            diep("sendto()");
+        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.si_other), slen) < 0)
+            printf("Could not send packet\n");
     }
 }
 
