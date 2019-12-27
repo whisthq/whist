@@ -14,6 +14,8 @@
 #include <windows.h>
 
 #include "../include/fractal.h"
+#include "../include/SDL2/SDL.h"
+#include "../include/SDL2/SDL_thread.h"
 
 #pragma comment (lib, "ws2_32.lib")
 
