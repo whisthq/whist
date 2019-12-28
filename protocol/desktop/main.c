@@ -94,8 +94,6 @@ int main(int argc, char* argv[])
     SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &VideoReceiveContext);
     SDL_Thread *receive_audio = SDL_CreateThread(ReceiveAudio, "ReceiveAudio", &AudioReceiveContext);
 
-
-    char* ack1 = "ACK";
     while (1)
     {
         if (SendAck(&VideoReceiveContext.s) < 0)
