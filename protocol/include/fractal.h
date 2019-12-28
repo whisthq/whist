@@ -558,6 +558,7 @@ typedef struct context
 {
     SOCKET s;
     struct sockaddr_in addr;
+    int ack;
 } context;
 
 
@@ -577,7 +578,7 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config);
 /// @details parses the FractalMessage struct and send input to Windows OS
 FractalStatus ReplayUserInput(FractalMessage fmsg);
 
-int CreateUDPSendContext(struct context *context, char* origin, char* destination, int timeout);
+int CreateUDPContext(struct context *context, char* origin, char* destination, int timeout);
 
 /*** FRACTAL FUNCTIONS END ***/
 
