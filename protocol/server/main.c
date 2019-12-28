@@ -36,6 +36,30 @@ typedef struct {
   char data[0];
 } Fractalframe_t;
 
+
+static int fragmented_sendto(struct context *context, char *buf, int len, int max_size) {
+  char *ptr = malloc(len + 1);
+  strcpy(ptr, buf);
+  printf("The copied message is %s\n", ptr);
+  int new_size, sent_size, total = 0, slen = sizeof(context->addr);
+  while(total <= len) {
+    new_size = len - total;
+    if(new_size > max_size) {
+      new_size = max_size;
+    }
+    printf("Sending %s\n", ptr);
+    if((sent_size = sendto(context->s, ptr, new_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
+      return -1;
+    } else {
+      total += sent_size;
+      ptr += sent_size;
+    }
+  }
+  free(ptr);
+  return total;
+}
+
+
 static int32_t ReceiveUserInput(void *opaque) {
     struct context context = *(struct context *) opaque;
     int i, recv_size, slen = sizeof(context.addr);
@@ -96,10 +120,10 @@ static int32_t SendVideo(void *opaque) {
 
 
       // only send if packet is not empty
-      char *msg = "test";
+      char *msg = "testing";
       if (encoded_size != 0) {
         // send packet
-        if (sendto(context.s, msg, strlen(msg), 0, (struct sockaddr*)(&context.addr), slen) < 0)
+        if (fragmented_sendto(&context, msg, strlen(msg), 1000) < 0)
             printf("Could not send video frame\n");
       }
 
