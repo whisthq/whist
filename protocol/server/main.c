@@ -17,10 +17,25 @@
 
 #define BUFLEN 1000
 
-static int32_t SendStream1(void *opaque) {
+static int32_t SendInputAck(void *opaque) {
     struct context context = *(struct context *) opaque;
-    int slen = sizeof(context.addr);
-    char *message = "Hello from the first stream!";
+    int i, recv_size, slen = sizeof(context.addr);
+    char recv_buf[BUFLEN];
+    char *message = "ACK";
+
+    while(1) {
+        if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
+            printf("Packet not received \n");
+        } else {
+            printf("Received %s\n", recv_buf);
+        }
+    }
+}
+
+static int32_t SendVideo(void *opaque) {
+    struct context context = *(struct context *) opaque;
+    int i, slen = sizeof(context.addr);
+    char *message = "Video";
 
     while(1) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
@@ -28,16 +43,17 @@ static int32_t SendStream1(void *opaque) {
     }
 }
 
-static int32_t SendStream2(void *opaque) {
+static int32_t SendAudio(void *opaque) {
     struct context context = *(struct context *) opaque;
-    int slen = sizeof(context.addr);
-    char *message = "Hello from the second stream!";
+    int i, slen = sizeof(context.addr);
+    char *message = "Audio";
 
     while(1) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
             printf("Could not send packet\n");
     }
 }
+
 
 
 int main(int argc, char* argv[])
@@ -54,39 +70,40 @@ int main(int argc, char* argv[])
     int recv_size, slen=sizeof(receive_address);
     char recv_buf[BUFLEN];
 
-    struct context SendContext = {0};
-    if(CreateUDPContext(&SendContext, "S", "", -1, 0) < 0) {
+    struct context InputAckContext = {0};
+    if(CreateUDPContext(&InputAckContext, "S", "", -1, 0) < 0) {
         exit(1);
     }
 
-    struct context ReceiveContext = {0};
-    if(CreateUDPContext(&ReceiveContext, "S", "", -1, 0) < 0) {
+    struct context VideoContext = {0};
+    if(CreateUDPContext(&VideoContext, "S", "", -1, 20) < 0) {
         exit(1);
     }
 
-    SDL_Thread *send_stream_1 = SDL_CreateThread(SendStream1, "SendStream1", &SendContext);
-    SDL_Thread *send_stream_2 = SDL_CreateThread(SendStream2, "SendStream2", &ReceiveContext);
+    struct context AudioContext = {0};
+    if(CreateUDPContext(&AudioContext, "S", "", -1, 20) < 0) {
+        exit(1);
+    }
 
-    // memset((char *) &receive_address, 0, sizeof(receive_address));
-    // receive_address.sin_family = AF_INET;
-    // receive_address.sin_port = htons(PORT + 1);
-    // receive_address.sin_addr.s_addr = htonl(INADDR_ANY);
+    SDL_Thread *send_input_ack = SDL_CreateThread(SendInputAck, "SendInputAck", &InputAckContext);
+    SDL_Thread *send_video = SDL_CreateThread(SendVideo, "SendVideo", &VideoContext);
+    SDL_Thread *send_audio = SDL_CreateThread(SendAudio, "SendAudio", &AudioContext);
 
-    // struct context VideoContext = {0};
-    // VideoContext.addr = receive_address;
-    // VideoContext.s = UserInputAckContext.s;
-
+    char *message = "ACK";
     while (1)
     {
-        if ((recv_size = recvfrom(ReceiveContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&ReceiveContext.addr), &slen)) < 0) {
+        if (sendto(InputAckContext.s, message, strlen(message), 0, (struct sockaddr*)(&InputAckContext.addr), slen) < 0)
+            printf("Could not send packet\n");
+        if ((recv_size = recvfrom(VideoContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&VideoContext.addr), &slen)) < 0) 
             printf("Packet not received \n");
-        }
+        if ((recv_size = recvfrom(AudioContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&AudioContext.addr), &slen)) < 0) 
+            printf("Packet not received \n");
     }
  
     // Actually, we never reach this point...
 
-    closesocket(SendContext.s);
-    closesocket(ReceiveContext.s);
+    closesocket(InputAckContext.s);
+    closesocket(VideoContext.s);
 
     WSACleanup();
 
