@@ -63,7 +63,6 @@ int main(int argc, char* argv[])
         printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
         return -1;
     }
-    printf("Winsock initialized successfully.\n");
 
     struct sockaddr_in receive_address;
     int recv_size, slen=sizeof(receive_address);
@@ -84,7 +83,6 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-
     SDL_Thread *send_input_ack = SDL_CreateThread(ReceiveUserInput, "ReceiveUserInput", &InputReceiveContext);
     SDL_Thread *send_video = SDL_CreateThread(SendVideo, "SendVideo", &VideoContext);
     SDL_Thread *send_audio = SDL_CreateThread(SendAudio, "SendAudio", &AudioContext);
@@ -104,6 +102,7 @@ int main(int argc, char* argv[])
 
     closesocket(InputReceiveContext.s);
     closesocket(VideoContext.s);
+    closesocket(AudioContext.s);
 
     WSACleanup();
 
