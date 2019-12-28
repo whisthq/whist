@@ -516,7 +516,7 @@ int CreateUDPContext(struct context *context, char* origin, char* destination, i
     // Set destination address to the client that the STUN server has paired us with
     context->addr.sin_addr.s_addr = buf.host;
     context->addr.sin_port = buf.port;
-	
+
     // Great success!
     return 0;
 }
