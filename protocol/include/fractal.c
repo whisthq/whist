@@ -481,10 +481,6 @@ int CreateUDPContext(struct context *context, char* origin, char* destination, i
         printf("Could not create UDP socket\n");
         return -1;
     }
- 	// Set timeout
- 	if(timeout > 0) {
- 		setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
- 	}
 
     memset((char *) &context->addr, 0, sizeof(context->addr));
     context->addr.sin_family = AF_INET;
@@ -517,6 +513,11 @@ int CreateUDPContext(struct context *context, char* origin, char* destination, i
     context->addr.sin_addr.s_addr = buf.host;
     context->addr.sin_port = buf.port;
 
+ 	// Set timeout
+ 	if(timeout > 0) {
+ 		setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
+ 	}
+ 	
     // Great success!
     return 0;
 }
