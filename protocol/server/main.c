@@ -8,6 +8,10 @@
 #include <windows.h>
 
 #include "../include/fractal.h"
+#include "../include/videocapture.h"
+#include "../include/audiocapture.h"
+#include "../include/videoencode.h"
+#include "../include/audioencode.h"
 
 #define SDL_MAIN_HANDLED
 #include "../include/SDL2/SDL.h"
