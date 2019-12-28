@@ -1,9 +1,3 @@
-// UDP hole punching example, client code
-// Base UDP code stolen from http://www.abc.se/~m6695/udp.html
-// By Oscar Rodriguez
-// This code is public domain, but you're a complete lunatic
-// if you plan to use this code in any real program.
- 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -26,10 +20,8 @@
 static int32_t SendStream1(void *opaque) {
     struct context context = *(struct context *) opaque;
     int slen = sizeof(context.addr);
-
-    // Once again, the payload is irrelevant. Feel free to send your VoIP
-    // data in here.
     char *message = "Hello from the first stream!";
+
     while(1) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
             printf("Could not send packet\n");
@@ -39,10 +31,8 @@ static int32_t SendStream1(void *opaque) {
 static int32_t SendStream2(void *opaque) {
     struct context context = *(struct context *) opaque;
     int slen = sizeof(context.addr);
-
-    // Once again, the payload is irrelevant. Feel free to send your VoIP
-    // data in here.
     char *message = "Hello from the second stream!";
+
     while(1) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
             printf("Could not send packet\n");
@@ -78,9 +68,9 @@ int main(int argc, char* argv[])
     receive_address.sin_addr.s_addr = htonl(INADDR_ANY);
 
     struct context ReceiveContext = {0};
-    ReceiveContext.s = SendContext.s;
     ReceiveContext.addr = receive_address;
-    
+    ReceiveContext.s = SendContext.s;
+
     while (1)
     {
         if ((recv_size = recvfrom(ReceiveContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&ReceiveContext.addr), &slen)) < 0) {
