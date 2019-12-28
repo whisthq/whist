@@ -96,9 +96,10 @@ static int32_t SendVideo(void *opaque) {
 
 
       // only send if packet is not empty
+      char *msg = "test";
       if (encoded_size != 0) {
         // send packet
-        if (sendto(context.s, encodedframe->data, encoded_size, 0, (struct sockaddr*)(&context.addr), slen) < 0)
+        if (sendto(context.s, msg, strlen(msg), 0, (struct sockaddr*)(&context.addr), slen) < 0)
             printf("Could not send video frame\n");
       }
 
