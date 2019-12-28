@@ -98,9 +98,9 @@ int main(int argc, char* argv[])
     char* ack1 = "ACK";
     while (1)
     {
-        if (sendto(VideoReceiveContext.s, ack1, strlen(ack1), 0, (struct sockaddr*)(&VideoReceiveContext.addr), slen) < 0)
+        if (SendAck(&VideoReceiveContext.s) < 0)
             printf("Could not send packet\n");
-        if (sendto(AudioReceiveContext.s, ack1, strlen(ack1), 0, (struct sockaddr*)(&AudioReceiveContext.addr), slen) < 0)
+        if (SendAck(&AudioReceiveContext.s) < 0)
             printf("Could not send packet\n");
         if ((recv_size = recvfrom(InputContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&InputContext.addr), &slen)) < 0)
             printf("Packet not received \n");
