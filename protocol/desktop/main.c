@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
     char recv_buf[BUFLEN];
  
     struct context SendContext = {0};
-    if(CreateUDPSendContext(&SendContext, "C", "40.117.57.45", -1) < 0) {
+    if(CreateUDPContext(&SendContext, "C", "40.117.57.45", -1, 0) < 0) {
         exit(1);
     }
 
