@@ -43,6 +43,17 @@ static int32_t SendVideo(void *opaque) {
     }
 }
 
+static int32_t SendAudio(void *opaque) {
+    struct context context = *(struct context *) opaque;
+    int i, slen = sizeof(context.addr);
+    char *message = "Audio\n";
+
+    while(1) {
+        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
+            printf("Could not send packet\n");
+    }
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -68,34 +79,33 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    struct context AudioContext = {0};
+    if(CreateUDPContext(&AudioContext, "S", "", -1, 0) < 0) {
+        exit(1);
+    }
+
     SDL_Thread *send_input_ack = SDL_CreateThread(SendInputAck, "SendInputAck", &InputAckContext);
     SDL_Thread *send_video = SDL_CreateThread(SendVideo, "SendVideo", &VideoContext);
+    // SDL_Thread *send_audio = SDL_CreateThread(SendAudio, "SendAudio", &AudioContext);
 
-    // memset((char *) &receive_address, 0, sizeof(receive_address));
-    // receive_address.sin_family = AF_INET;
-    // receive_address.sin_port = htons(PORT + 1);
-    // receive_address.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    // struct context VideoContext = {0};
-    // VideoContext.addr = receive_address;
-    // VideoContext.s = UserInputAckContext.s;
-
-    char *message = "ACK";
+    char *ack = "ACK";
     while (1)
     {
-        if (sendto(InputAckContext.s, message, strlen(message), 0, (struct sockaddr*)(&InputAckContext.addr), slen) < 0)
+        if (sendto(InputAckContext.s, ack, strlen(ack), 0, (struct sockaddr*)(&InputAckContext.addr), slen) < 0)
             printf("Could not send packet\n");
         if ((recv_size = recvfrom(VideoContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&VideoContext.addr), &slen)) < 0) {
             printf("Packet not received \n");
-        } else {
-            printf("Received %s\n", recv_buf);
-        }
+        }         
+        // if ((recv_size = recvfrom(AudioContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&AudioContext.addr), &slen)) < 0) {
+        //     printf("Packet not received \n");
+        // }
     }
  
     // Actually, we never reach this point...
 
     closesocket(InputAckContext.s);
     closesocket(VideoContext.s);
+    closesocket(AudioContext.s);
 
     WSACleanup();
 
