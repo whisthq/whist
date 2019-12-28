@@ -60,31 +60,27 @@ int main(int argc, char* argv[])
     }
     printf("Winsock initialized successfully.\n");
 
-    struct sockaddr_in receive_address, send_address;
-    int recv_size, slen=sizeof(send_address);
+    struct sockaddr_in receive_address;
+    int recv_size, slen=sizeof(receive_address);
     char recv_buf[BUFLEN];
-    SOCKET s;
  
+    struct context SendContext = {0};
+    if(CreateUDPSendContext(&SendContext, "C", "40.117.57.45", -1) < 0) {
+        exit(1);
+    }
+
+    SDL_Thread *send_stream_1 = SDL_CreateThread(SendStream1, "SendStream1", &SendContext);
+    SDL_Thread *send_stream_2 = SDL_CreateThread(SendStream2, "SendStream2", &SendContext);
+
     memset((char *) &receive_address, 0, sizeof(receive_address));
     receive_address.sin_family = AF_INET;
     receive_address.sin_port = htons(PORT + 1);
     receive_address.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    struct context SendContext = {0};
-    SendContext.s = s;
-    SendContext.addr = send_address;
-
-    if(CreateUDPSendContext(&SendContext, "C", "40.117.57.45", -1) < 0) {
-        exit(1);
-    }
-
     struct context ReceiveContext = {0};
     ReceiveContext.s = SendContext.s;
     ReceiveContext.addr = receive_address;
-
-    SDL_Thread *send_stream_1 = SDL_CreateThread(SendStream1, "SendStream1", &SendContext);
-    SDL_Thread *send_stream_2 = SDL_CreateThread(SendStream2, "SendStream2", &SendContext);
-
+    
     while (1)
     {
         if ((recv_size = recvfrom(ReceiveContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&ReceiveContext.addr), &slen)) < 0) {
