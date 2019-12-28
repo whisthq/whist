@@ -15,7 +15,7 @@
 
 #pragma comment (lib, "ws2_32.lib")
 
-#define BUFLEN 1280
+#define BUFLEN 100000
 
 
 static int32_t SendUserInput(void *opaque) {
@@ -40,7 +40,7 @@ static int32_t ReceiveVideo(void *opaque) {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            printf("Received %s\n", recv_buf);
+            printf("Received size %d\n", recv_size);
         }
     }
 }
