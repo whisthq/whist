@@ -1,9 +1,3 @@
-// UDP hole punching example, client code
-// Base UDP code stolen from http://www.abc.se/~m6695/udp.html
-// By Oscar Rodriguez
-// This code is public domain, but you're a complete lunatic
-// if you plan to use this code in any real program.
- 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -15,19 +9,32 @@
 
 #include "../include/fractal.h"
 
+#define SDL_MAIN_HANDLED
+#include "../include/SDL2/SDL.h"
+#include "../include/SDL2/SDL_thread.h"
+
 #pragma comment (lib, "ws2_32.lib")
 
 #define BUFLEN 1000
  
-unsigned __stdcall SendStream(void *opaque) {
+static int32_t SendStream1(void *opaque) {
     struct context context = *(struct context *) opaque;
-    int i, slen = sizeof(context.si_other);
+    int slen = sizeof(context.addr);
+    char *message = "Hello from the first stream!";
 
-    // Once again, the payload is irrelevant. Feel free to send your VoIP
-    // data in here.
-    char *message = "Hello from the server!";
     while(1) {
-        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.si_other), slen) < 0)
+        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
+            printf("Could not send packet\n");
+    }
+}
+
+static int32_t SendStream2(void *opaque) {
+    struct context context = *(struct context *) opaque;
+    int slen = sizeof(context.addr);
+    char *message = "Hello from the second stream!";
+
+    while(1) {
+        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
             printf("Could not send packet\n");
     }
 }
@@ -43,39 +50,42 @@ int main(int argc, char* argv[])
     }
     printf("Winsock initialized successfully.\n");
 
-    struct sockaddr_in si_me, si_other;
-    int slen=sizeof(si_other);
-    SOCKET s;
-    HANDLE ThreadHandle;
+    struct sockaddr_in receive_address;
+    int recv_size, slen=sizeof(receive_address);
+    char recv_buf[BUFLEN];
  
-    memset((char *) &si_me, 0, sizeof(si_me));
-    si_me.sin_family = AF_INET;
-    si_me.sin_port = htons(PORT); // This is not really necessary, we can also use 0 (any port)
-    si_me.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    struct context context = {0};
-    context.s = s;
-    context.si_other = si_other;
-
-    if(CreateUDPSendContext(&context, "S", "", -1) < 0) {
+    struct context SendContext = {0};
+    if(CreateUDPSendContext(&SendContext, "C", "40.117.57.45", -1) < 0) {
         exit(1);
     }
 
-    ThreadHandle = (HANDLE)_beginthreadex(NULL, 0, &SendStream, (void *) &context, 0, NULL);
+    SDL_Thread *send_stream_1 = SDL_CreateThread(SendStream1, "SendStream1", &SendContext);
+    SDL_Thread *send_stream_2 = SDL_CreateThread(SendStream2, "SendStream2", &SendContext);
+
+    memset((char *) &receive_address, 0, sizeof(receive_address));
+    receive_address.sin_family = AF_INET;
+    receive_address.sin_port = htons(PORT + 1);
+    receive_address.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    struct context ReceiveContext = {0};
+    ReceiveContext.addr = receive_address;
+    ReceiveContext.s = SendContext.s;
 
     while (1)
     {
-        char recv_buf[BUFLEN];
-        int recv_size;
-
-        if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.si_other), &slen)) < 0) {
+        if ((recv_size = recvfrom(ReceiveContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&ReceiveContext.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
             printf("Received message: %s\n", recv_buf);
         }
     }
+
  
     // Actually, we never reach this point...
-    closesocket(s);
+    closesocket(SendContext.s);
+    closesocket(ReceiveContext.s);
+
+    WSACleanup();
+
     return 0;
 }

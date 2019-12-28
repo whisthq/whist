@@ -465,56 +465,56 @@ FractalStatus ReplayUserInput(FractalMessage fmsg) {
 }
 
 int CreateUDPSendContext(struct context *context, char* origin, char* destination, int timeout) {
+	SOCKET s;
+	struct sockaddr_in addr;
     struct FractalDestination buf;
-    int slen=sizeof(context->si_other), n = 0;
+    int slen=sizeof(context->addr), n = 0;
 
+    // Function parameter checking
     if(!(strcmp(origin, "C") == 0 || strcmp(origin, "S") == 0)) {
         printf("Invalid origin parameter. Specify 'S' or 'C'.");
         return -1;
     }
-
+    // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (context->s == INVALID_SOCKET || context->s < 0) { // Windows & Unix cases
         printf("Could not create UDP socket\n");
         return -1;
     }
- 	
- 	setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
-    // The server's endpoint data
-    memset((char *) &context->si_other, 0, sizeof(context->si_other));
-    context->si_other.sin_family = AF_INET;
-    context->si_other.sin_port = htons(PORT);
-    context->si_other.sin_addr.s_addr = inet_addr(SRV_IP);
- 
+ 	// Set timeout
+ 	if(timeout > 0) {
+ 		setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
+ 	}
+ 	// Point address to STUN server
+    memset((char *) &context->addr, 0, sizeof(context->addr));
+    context->addr.sin_family = AF_INET;
+    context->addr.sin_port = htons(PORT);
+    context->addr.sin_addr.s_addr = inet_addr(SRV_IP);
+ 	// Create payload to send to STUN server
     strcat(destination, origin);
-
-    if (sendto(context->s, destination, strlen(destination), 0, (struct sockaddr*)(&context->si_other), slen)==-1) {
+    // Send payload to STUN server
+    if (sendto(context->s, destination, strlen(destination), 0, (struct sockaddr*)(&context->addr), slen)==-1) {
         printf("Sent failed");
     } else {
         printf("Sent message to STUN server\n");
     }
-
-    // Right here, our NAT should have a session entry between our host and the server.
-    // We can only hope our NAT maps the same public endpoint (both host and port) when we
-    // send datagrams to other clients using our same private endpoint.
+    // Wait for response from STUN server
+    // TODO: ACK packets
     int punched = 0;
     while (punched == 0)
     {
-        // Receive data from the socket. Notice that we use the same socket for server and
-        // peer communications. We discriminate by using the remote host endpoint data, but
-        // remember that IP addresses are easily spoofed (actually, that's what the NAT is
-        // doing), so remember to do some kind of validation in here.
-        if (recvfrom(context->s, &buf, sizeof(buf), 0, (struct sockaddr*)(&context->si_other), &slen)==-1) {
+        if (recvfrom(context->s, &buf, sizeof(buf), 0, (struct sockaddr*)(&context->addr), &slen)==-1) {
             printf("Did not receive anything from STUN server \n");
             return -1;
         } else {
-            printf("Received packet from STUN server at %s:%d\n", inet_ntoa(context->si_other.sin_addr), ntohs(context->si_other.sin_port));
+            printf("Received packet from STUN server at %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
             punched = 1;
         }
     }
-
-    context->si_other.sin_addr.s_addr = buf.host;
-    context->si_other.sin_port = buf.port;
+    // Set destination address to the client that the STUN server has paired us with
+    context->addr.sin_addr.s_addr = buf.host;
+    context->addr.sin_port = buf.port;
+    // Great success!
     return 0;
 }
 
