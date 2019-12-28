@@ -15,7 +15,7 @@
 
 #pragma comment (lib, "ws2_32.lib")
 
-#define BUFLEN 1000
+#define BUFLEN 1280
 
 
 static int32_t SendUserInput(void *opaque) {
@@ -30,7 +30,6 @@ static int32_t SendUserInput(void *opaque) {
 }
 
 static int32_t ReceiveVideo(void *opaque) {
-    printf("1");
     struct context context = *(struct context *) opaque;
     int i, slen = sizeof(context.addr);
     int recv_size;
@@ -46,6 +45,21 @@ static int32_t ReceiveVideo(void *opaque) {
     }
 }
 
+static int32_t ReceiveAudio(void *opaque) {
+    struct context context = *(struct context *) opaque;
+    int i, slen = sizeof(context.addr);
+    int recv_size;
+    char recv_buf[BUFLEN];
+
+    while (1)
+    {
+        if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
+            printf("Packet not received \n");
+        } else {
+            printf("Received %s\n", recv_buf);
+        }
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -62,7 +76,7 @@ int main(int argc, char* argv[])
     char recv_buf[BUFLEN];
 
     struct context InputContext = {0};
-    if(CreateUDPContext(&InputContext, "C", "40.117.57.45", -1, 0) < 0) {
+    if(CreateUDPContext(&InputContext, "C", "40.117.57.45", -1, 20) < 0) {
         exit(1);
     }
 
@@ -71,29 +85,25 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    struct context AudioReceiveContext = {0};
+    if(CreateUDPContext(&AudioReceiveContext, "C", "40.117.57.45", -1, 0) < 0) {
+        exit(1);
+    }
+
     SDL_Thread *send_input = SDL_CreateThread(SendUserInput, "SendUserInput", &InputContext);
     SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &VideoReceiveContext);
-    // SDL_Thread *send_stream_2 = SDL_CreateThread(SendStream2, "SendStream2", &ReceiveContext);
+    SDL_Thread *receive_audio = SDL_CreateThread(ReceiveAudio, "ReceiveAudio", &AudioReceiveContext);
 
-    // memset((char *) &receive_address, 0, sizeof(receive_address));
-    // receive_address.sin_family = AF_INET;
-    // receive_address.sin_port = htons(PORT + 1);
-    // receive_address.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    // struct context VideoContext = {0};
-    // VideoContext.addr = receive_address;
-    // VideoContext.s = UserInputAckContext.s;
 
     char* ack1 = "ACK";
     while (1)
     {
-        if ((recv_size = recvfrom(InputContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&InputContext.addr), &slen)) < 0) {
-            printf("Packet not received \n");
-        } else {
-            printf("Received %s\n", recv_buf);
-        }
         if (sendto(VideoReceiveContext.s, ack1, strlen(ack1), 0, (struct sockaddr*)(&VideoReceiveContext.addr), slen) < 0)
             printf("Could not send packet\n");
+        if (sendto(AudioReceiveContext.s, ack1, strlen(ack1), 0, (struct sockaddr*)(&AudioReceiveContext.addr), slen) < 0)
+            printf("Could not send packet\n");
+        if ((recv_size = recvfrom(InputContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&InputContext.addr), &slen)) < 0)
+            printf("Packet not received \n");
         // Sleep(2000);
     }
  
