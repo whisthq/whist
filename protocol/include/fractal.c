@@ -513,9 +513,10 @@ int CreateUDPContext(struct context *context, char* origin, char* destination, i
     }
     // Set destination address to the client that the STUN server has paired us with
     if(recv_socket) {
-  	    context->addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	    context->addr.sin_port = buf.port + 1;  	
+    	printf("Receive socket!\n");
+  	    context->addr.sin_addr.s_addr = htonl(INADDR_ANY); 	
     } else {
+    	printf("Send socket!\n");
 	    context->addr.sin_addr.s_addr = buf.host;
 	    context->addr.sin_port = buf.port;
 	}
