@@ -464,7 +464,7 @@ FractalStatus ReplayUserInput(FractalMessage fmsg) {
 	return FRACTAL_OK;
 }
 
-int CreateUDPContext(struct context *context, char* origin, char* destination, int timeout, int recv_socket) {
+int CreateUDPContext(struct context *context, char* origin, char* destination, int timeout) {
 	SOCKET s;
 	struct sockaddr_in addr;
     struct FractalDestination buf;
@@ -516,7 +516,6 @@ int CreateUDPContext(struct context *context, char* origin, char* destination, i
     // Set destination address to the client that the STUN server has paired us with
     context->addr.sin_addr.s_addr = buf.host;
     context->addr.sin_port = buf.port;
-
     // Great success!
     return 0;
 }
