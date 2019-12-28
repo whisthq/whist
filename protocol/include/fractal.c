@@ -464,7 +464,7 @@ FractalStatus ReplayUserInput(FractalMessage fmsg) {
 	return FRACTAL_OK;
 }
 
-int CreateUDPContext(struct context *context, char* origin, char* destination, int timeout, int recv_socket) {
+int CreateUDPContext(struct context *context, char* origin, char* destination, int timeout) {
 	SOCKET s;
 	struct sockaddr_in addr;
     struct FractalDestination buf;
@@ -485,10 +485,12 @@ int CreateUDPContext(struct context *context, char* origin, char* destination, i
  	if(timeout > 0) {
  		setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
  	}
- 	// Point address to STUN server
+
     memset((char *) &context->addr, 0, sizeof(context->addr));
     context->addr.sin_family = AF_INET;
     context->addr.sin_port = htons(PORT);
+
+ 	// Point address to STUN server
     context->addr.sin_addr.s_addr = inet_addr(SRV_IP);
  	// Create payload to send to STUN server
     strcat(destination, origin);
@@ -512,13 +514,9 @@ int CreateUDPContext(struct context *context, char* origin, char* destination, i
         }
     }
     // Set destination address to the client that the STUN server has paired us with
-    if(recv_socket) {
-  	    context->addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	    context->addr.sin_port = buf.port + 1;  	
-    } else {
-	    context->addr.sin_addr.s_addr = buf.host;
-	    context->addr.sin_port = buf.port;
-	}
+    context->addr.sin_addr.s_addr = buf.host;
+    context->addr.sin_port = buf.port;
+	
     // Great success!
     return 0;
 }
