@@ -59,6 +59,11 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    struct context ReceiveContext = {0};
+    if(CreateUDPSendContext(&SendContext, "C", "40.117.57.45", -1) < 0) {
+        exit(1);
+    }
+
     SDL_Thread *send_stream_1 = SDL_CreateThread(SendStream1, "SendStream1", &SendContext);
     SDL_Thread *send_stream_2 = SDL_CreateThread(SendStream2, "SendStream2", &SendContext);
 
