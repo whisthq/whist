@@ -38,27 +38,21 @@ typedef struct {
 
 
 static int fragmented_sendto(struct context *context, char *buf, int len, int max_size) {
-  char *ptr = malloc(len + 1);
-  strcpy(ptr, buf);
-  printf("The copied message is %s\n", ptr);
-  int new_size, sent_size, total = 0, slen = sizeof(context->addr);
-  while(total <= len) {
-    new_size = len - total;
-    if(new_size > max_size) {
-      new_size = max_size;
-    }
-    printf("Sending %s\n", ptr);
-    if((sent_size = sendto(context->s, ptr, new_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
+  int sent_size, slen = sizeof(context->addr);
+
+  while(len > 0) {
+    if((sent_size = sendto(context->s, buf, max_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
       return -1;
     } else {
-      total += sent_size;
-      ptr += sent_size;
+      if(strlen(buf) >= max_size) {
+        buf += max_size;
+        len -= max_size;
+      }
     }
   }
-  free(ptr);
-  return total;
-}
 
+  return 0;
+}
 
 static int32_t ReceiveUserInput(void *opaque) {
     struct context context = *(struct context *) opaque;
@@ -119,11 +113,9 @@ static int32_t SendVideo(void *opaque) {
       video_encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
 
 
-      // only send if packet is not empty
-      char *msg = "testing";
       if (encoded_size != 0) {
         // send packet
-        if (fragmented_sendto(&context, msg, strlen(msg), 1000) < 0)
+        if (fragmented_sendto(&context, encodedframe->data, encoded_size, 1000) < 0)
             printf("Could not send video frame\n");
       }
 
