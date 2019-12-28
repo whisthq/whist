@@ -16,10 +16,10 @@
 
 // @brief creates a struct device to capture a Windows 10 screen
 // @details returns the capture device created for a specific window and area
-capture_device *create_capture_device(HWND window, frame_area frame) {
+video_capture_device *create_video_capture_device(HWND window, frame_area frame) {
   // malloc required memory and set to 0
-  capture_device *device = (capture_device *) malloc(sizeof(capture_device));
-  memset(device, 0, sizeof(capture_device));
+  video_capture_device *device = (video_capture_device *) malloc(sizeof(video_capture_device));
+  memset(device, 0, sizeof(video_capture_device));
 
   // get client screen rectangle
   RECT rect;
@@ -27,8 +27,8 @@ capture_device *create_capture_device(HWND window, frame_area frame) {
 
   // store rectangle information in capture device
 	device->window = window;
-	device->width = 1920 * 0.7;
-	device->height = 1080 * 0.7;
+	device->width = CAPTURE_WIDTH;
+	device->height = CAPTURE_HEIGHT;
 	device->frame = frame;
   // adjust dimensions if height or width is zero
 	if (frame.width == 0 || frame.height == 0 ) {
@@ -62,7 +62,7 @@ capture_device *create_capture_device(HWND window, frame_area frame) {
 
 // @brief destroy the capture device
 // @details deletes the capture device struct
-FractalStatus destroy_capture_device(capture_device *device) {
+FractalStatus destroy_video_capture_device(video_capture_device *device) {
   // check if capture device exists
 	if (device == NULL) {
     printf("Cannot destroy video capture device.\n");
@@ -71,10 +71,10 @@ FractalStatus destroy_capture_device(capture_device *device) {
 
   // release Microsoft objects memory
 	ReleaseDC(device->window, device->windowDC);
-  DeleteDC(device->memoryDC);
-  DeleteObject(device->bitmap);
+    DeleteDC(device->memoryDC);
+    DeleteObject(device->bitmap);
 
-  // release standard C objects memory
+    // release standard C objects memory
 	free(device->pixels);
 	free(device);
 
@@ -84,14 +84,12 @@ FractalStatus destroy_capture_device(capture_device *device) {
 
 // @brief captures a frame
 // @details uses the capture device to capture a desktop frame
-void *capture_screen(capture_device *device) {
-  // select object to copy into
-  SelectObject(device->memoryDC, device->bitmap);
-
-  // get pixels
+void *capture_screen(video_capture_device *device) {
+    // select object to copy into
+    SelectObject(device->memoryDC, device->bitmap);
+    // get pixels
 	BitBlt(device->memoryDC, 0, 0, device->width, device->height, device->windowDC, device->frame.x, device->frame.y, SRCCOPY);
-	GetDIBits(device->memoryDC, device->bitmap, 0, device->height, device->pixels, (BITMAPINFO *) &(device->bitmapInfo), DIB_RGB_COLORS);
-
-  // return pointer to captured pixels
+	GetDIBits(device->windowDC, device->bitmap, 0, device->height, device->pixels, (BITMAPINFO *) &(device->bitmapInfo), DIB_RGB_COLORS);
+    // return pointer to captured pixels
 	return device->pixels;
 }

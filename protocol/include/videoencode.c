@@ -12,11 +12,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "encode.h" // header file for this file
+#include "videoencode.h" // header file for this file
 
 /// @brief creates encoder encoder
 /// @details creates FFmpeg encoder
-encoder_t *create_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate) {
+encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate) {
   // set memory for the encoder
 	encoder_t *encoder = (encoder_t *) malloc(sizeof(encoder_t));
 	memset(encoder, 0, sizeof(encoder_t));
@@ -40,12 +40,13 @@ encoder_t *create_encoder(int in_width, int in_height, int out_width, int out_he
 	encoder->context->time_base.num = 1;
 	encoder->context->time_base.den = 30;
 	encoder->context->gop_size = 1; // send SPS/PPS headers every packet
-	encoder->context->max_b_frames = 0;
+	encoder->context->max_b_frames = 1;
 	encoder->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
 	// set encoder parameters to max performance
+	av_opt_set(encoder->context->priv_data, "profile", "main", 0);
 	av_opt_set(encoder->context->priv_data, "preset", "ultrafast", 0);
-  av_opt_set(encoder->context->priv_data, "tune", "zerolatency", 0);
+    av_opt_set(encoder->context->priv_data, "tune", "zerolatency", 0);
 
   // open capture encoder
 	avcodec_open2(encoder->context, encoder->codec, NULL);
@@ -73,7 +74,7 @@ encoder_t *create_encoder(int in_width, int in_height, int out_width, int out_he
 
 /// @brief destroy encoder encoder
 /// @details frees FFmpeg encoder memory
-void destroy_encoder(encoder_t *encoder) {
+void destroy_video_encoder(encoder_t *encoder) {
   // check if encoder encoder exists
 	if (encoder == NULL) {
     printf("Cannot destroy encoder encoder.\n");
@@ -96,7 +97,7 @@ void destroy_encoder(encoder_t *encoder) {
 
 /// @brief encode a frame using the encoder encoder
 /// @details encode a RGB frame into encoded format as YUV color
-void *encoder_encode(encoder_t *encoder, void *rgb_pixels, void *encoded_data, size_t *encoded_size) {
+void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels, void *encoded_data, size_t *encoded_size) {
   // define input data to encoder
 	uint8_t *in_data[1] = {(uint8_t *) rgb_pixels};
 	int in_linesize[1] = {encoder->in_width * 4};
@@ -115,7 +116,7 @@ void *encoder_encode(encoder_t *encoder, void *rgb_pixels, void *encoded_data, s
 
   // attempt to encode the frame
 	avcodec_encode_video2(encoder->context, &encoder->packet, encoder->frame, &success);
-
+	printf("Packet size %d\n", encoder->packet.size);
   // if encoding succeeded
 	if (success) {
     // make sure the encoded size is smaller or equal to the max allowed size

@@ -14,6 +14,7 @@
 
 #include "fractal.h" // contains all the headers
 
+
 // struct holding the frame
 typedef struct {
 	int x, y, width, height;
@@ -30,18 +31,18 @@ typedef struct {
 	int height;
 	void *pixels;
 	frame_area frame;
-} capture_device;
+} video_capture_device;
 
 // @brief creates a struct device to capture a Windows 10 screen
 // @details returns the capture device created for a specific window and area
-capture_device *create_capture_device(HWND window, frame_area frame);
+video_capture_device *create_video_capture_device(HWND window, frame_area frame);
 
 // @brief destroy the capture device
 // @details deletes the capture device struct
-FractalStatus destroy_capture_device(capture_device *device);
+FractalStatus destroy_video_capture_device(video_capture_device *device);
 
 // @brief captures a frame
 // @details uses the capture device to capture a desktop frame
-void *capture_screen(capture_device *device);
+void *capture_screen(video_capture_device *device);
 
 #endif // VIDEOCAPTURE_H
