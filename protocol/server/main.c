@@ -17,25 +17,21 @@
 
 #define BUFLEN 1000
 
-static int32_t SendInputAck(void *opaque) {
+static int32_t SendStream1(void *opaque) {
     struct context context = *(struct context *) opaque;
-    int i, recv_size, slen = sizeof(context.addr);
-    char recv_buf[BUFLEN];
-    char *message = "ACK";
+    int slen = sizeof(context.addr);
+    char *message = "Hello from the first stream!";
 
     while(1) {
-        if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
-            printf("Packet not received \n");
-        } else {
-            printf("Received %s\n", recv_buf);
-        }
+        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
+            printf("Could not send packet\n");
     }
 }
 
-static int32_t SendVideo(void *opaque) {
+static int32_t SendStream2(void *opaque) {
     struct context context = *(struct context *) opaque;
-    int i, slen = sizeof(context.addr);
-    char *message = "Video\n";
+    int slen = sizeof(context.addr);
+    char *message = "Hello from the second stream!";
 
     while(1) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
@@ -69,13 +65,13 @@ int main(int argc, char* argv[])
     int recv_size, slen=sizeof(receive_address);
     char recv_buf[BUFLEN];
 
-    struct context InputAckContext = {0};
-    if(CreateUDPContext(&InputAckContext, "S", "", -1, 0) < 0) {
+    struct context SendContext = {0};
+    if(CreateUDPContext(&SendContext, "S", "", -1, 0) < 0) {
         exit(1);
     }
 
-    struct context VideoContext = {0};
-    if(CreateUDPContext(&VideoContext, "S", "", -1, 0) < 0) {
+    struct context ReceiveContext = {0};
+    if(CreateUDPContext(&ReceiveContext, "S", "", -1, 0) < 0) {
         exit(1);
     }
 
@@ -105,7 +101,6 @@ int main(int argc, char* argv[])
 
     closesocket(InputAckContext.s);
     closesocket(VideoContext.s);
-    closesocket(AudioContext.s);
 
     WSACleanup();
 
