@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+
     SDL_Thread *send_input_ack = SDL_CreateThread(SendInputAck, "SendInputAck", &InputAckContext);
     SDL_Thread *send_video = SDL_CreateThread(SendVideo, "SendVideo", &VideoContext);
     SDL_Thread *send_audio = SDL_CreateThread(SendAudio, "SendAudio", &AudioContext);
