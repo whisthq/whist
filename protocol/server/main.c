@@ -21,7 +21,6 @@ static int32_t ReceiveUserInput(void *opaque) {
     struct context context = *(struct context *) opaque;
     int i, recv_size, slen = sizeof(context.addr);
     char recv_buf[BUFLEN];
-    char *message = "ACK";
 
     while(1) {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
@@ -70,8 +69,8 @@ int main(int argc, char* argv[])
     int recv_size, slen=sizeof(receive_address);
     char recv_buf[BUFLEN];
 
-    struct context InputAckContext = {0};
-    if(CreateUDPContext(&InputAckContext, "S", "", -1, 0) < 0) {
+    struct context InputReceiveContext = {0};
+    if(CreateUDPContext(&InputReceiveContext, "S", "", -1, 0) < 0) {
         exit(1);
     }
 
@@ -86,24 +85,24 @@ int main(int argc, char* argv[])
     }
 
 
-    SDL_Thread *send_input_ack = SDL_CreateThread(ReceiveUserInput, "ReceiveUserInput", &InputAckContext);
+    SDL_Thread *send_input_ack = SDL_CreateThread(ReceiveUserInput, "ReceiveUserInput", &InputReceiveContext);
     SDL_Thread *send_video = SDL_CreateThread(SendVideo, "SendVideo", &VideoContext);
     SDL_Thread *send_audio = SDL_CreateThread(SendAudio, "SendAudio", &AudioContext);
 
-    char *message = "ACK";
     while (1)
     {
-        if (sendto(InputAckContext.s, message, strlen(message), 0, (struct sockaddr*)(&InputAckContext.addr), slen) < 0)
+        if (SendAck(&InputReceiveContext) < 0)
             printf("Could not send packet\n");
         if ((recv_size = recvfrom(VideoContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&VideoContext.addr), &slen)) < 0) 
             printf("Packet not received \n");
         if ((recv_size = recvfrom(AudioContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&AudioContext.addr), &slen)) < 0) 
             printf("Packet not received \n");
+        Sleep(2000);
     }
  
     // Actually, we never reach this point...
 
-    closesocket(InputAckContext.s);
+    closesocket(InputReceiveContext.s);
     closesocket(VideoContext.s);
 
     WSACleanup();

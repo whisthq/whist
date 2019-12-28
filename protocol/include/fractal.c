@@ -521,6 +521,29 @@ int CreateUDPContext(struct context *context, char* origin, char* destination, i
     return 0;
 }
 
+int SendAck(struct context *context) {
+	char* message = "ACK";
+	int slen = sizeof(context->addr);
+
+    if (sendto(context->s, message, strlen(message), 0, (struct sockaddr*)(&context->addr), slen) < 0) {
+        return -1;
+    } else {
+    	return 0;
+    }
+}
+
+int ReceiveAck(struct context *context) {
+	char recv_buf[1000];
+	int slen = sizeof(context->addr);
+
+    if (recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen) < 0) {
+        return -1;
+    } else {
+    	return 0;
+    }
+}
+
+
 /*** FRACTAL FUNCTIONS END ***/
 
 // renable Windows warning

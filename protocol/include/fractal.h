@@ -580,6 +580,10 @@ FractalStatus ReplayUserInput(FractalMessage fmsg);
 
 int CreateUDPContext(struct context *context, char* origin, char* destination, int timeout);
 
+int SendAck(struct context *context);
+
+int ReceiveAck(struct context *context);
+
 /*** FRACTAL FUNCTIONS END ***/
 
 // renable Windows warning
