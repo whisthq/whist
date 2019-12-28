@@ -17,7 +17,7 @@
 
 #define BUFLEN 1000
 
-static int32_t SendInputAck(void *opaque) {
+static int32_t ReceiveUserInput(void *opaque) {
     struct context context = *(struct context *) opaque;
     int i, recv_size, slen = sizeof(context.addr);
     char recv_buf[BUFLEN];
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
     }
 
 
-    SDL_Thread *send_input_ack = SDL_CreateThread(SendInputAck, "SendInputAck", &InputAckContext);
+    SDL_Thread *send_input_ack = SDL_CreateThread(ReceiveUserInput, "ReceiveUserInput", &InputAckContext);
     SDL_Thread *send_video = SDL_CreateThread(SendVideo, "SendVideo", &VideoContext);
     SDL_Thread *send_audio = SDL_CreateThread(SendAudio, "SendAudio", &AudioContext);
 
