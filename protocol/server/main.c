@@ -69,17 +69,17 @@ int main(int argc, char* argv[])
     char recv_buf[BUFLEN];
 
     struct context InputReceiveContext = {0};
-    if(CreateUDPContext(&InputReceiveContext, "S", "", -1, 0) < 0) {
+    if(CreateUDPContext(&InputReceiveContext, "S", "", -1) < 0) {
         exit(1);
     }
 
     struct context VideoContext = {0};
-    if(CreateUDPContext(&VideoContext, "S", "", -1, 20) < 0) {
+    if(CreateUDPContext(&VideoContext, "S", "", -1) < 0) {
         exit(1);
     }
 
     struct context AudioContext = {0};
-    if(CreateUDPContext(&AudioContext, "S", "", -1, 20) < 0) {
+    if(CreateUDPContext(&AudioContext, "S", "", -1) < 0) {
         exit(1);
     }
 
