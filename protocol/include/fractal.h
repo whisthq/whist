@@ -39,6 +39,8 @@
 
 #define PORT 48800 
 #define SRV_IP "34.200.170.47"
+#define CAPTURE_WIDTH 1280
+#define CAPTURE_HEIGHT 720
 
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org

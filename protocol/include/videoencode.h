@@ -9,8 +9,8 @@
 
  Copyright Fractal Computers, Inc. 2019
 */
-#ifndef ENCODE_H
-#define ENCODE_H
+#ifndef VIDEO_ENCODE_H
+#define VIDEO_ENCODE_H
 
 #include "fractal.h" // contains all the headers
 
@@ -28,14 +28,14 @@ typedef struct {
 
 /// @brief creates encoder device
 /// @details creates FFmpeg encoder
-encoder_t *create_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate);
+encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate);
 
 /// @brief destroy encoder device
 /// @details frees FFmpeg encoder memory
-void destroy_encoder(encoder_t *encoder);
+void destroy_video_encoder(encoder_t *encoder);
 
 /// @brief encodes a frame using the encoder device
 /// @details encodes a RGB frame into encoded format as YUV color
-void *encoder_encode(encoder_t *encoder, void *rgb_pixels, void *encoded_data, size_t *encoded_size);
+void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels, void *encoded_data, size_t *encoded_size);
 
 #endif // ENCODE_H

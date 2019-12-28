@@ -67,13 +67,30 @@ LD_FLAGS = \
   /nodefaultlib \
   /nologo
 
-# build all files into executable
-all: clean clear fractal.obj socket.obj main.obj
-  link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
-# compile the IP finder helper file into object file
+# build all files into executable
+all: clean clear fractal.obj videocapture.obj audiocapture.obj videoencode.obj audioencode.obj socket.obj main.obj
+	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
+
+# compile the main fractal header source file into object file
 fractal.obj: ../include/fractal.c
-  $(CC) /c ../include/fractal.c
+	$(CC) /c ../include/fractal.c
+
+# compile the video capture source file into object file
+videocapture.obj: ../include/videocapture.c
+	$(CC) /c ../include/videocapture.c
+
+# compile the audio capture source file into object file
+audiocapture.obj: ../include/audiocapture.c
+	$(CC) /c ../include/audiocapture.c
+
+# compile the video encoder source file into object file
+videoencode.obj: ../include/videoencode.c
+	$(CC) /c ../include/videoencode.c
+
+# compile the audio encoder source file into object file
+audioencode.obj: ../include/audioencode.c
+	$(CC) /c ../include/audioencode.c
 
 socket.obj: ../include/socket.c
   $(CC) /c ../include/socket.c
