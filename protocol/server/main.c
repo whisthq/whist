@@ -53,23 +53,28 @@ int main(int argc, char* argv[])
     struct sockaddr_in receive_address;
     int recv_size, slen=sizeof(receive_address);
     char recv_buf[BUFLEN];
- 
+
+    struct context ReceiveContext = {0};
+    if(CreateUDPContext(&ReceiveContext, "S", "", -1, 1) < 0) {
+        exit(1);
+    }
+
     struct context SendContext = {0};
-    if(CreateUDPSendContext(&SendContext, "S", "", -1) < 0) {
+    if(CreateUDPContext(&SendContext, "S", "", -1, 0) < 0) {
         exit(1);
     }
 
     // SDL_Thread *send_stream_1 = SDL_CreateThread(SendStream1, "SendStream1", &SendContext);
     // SDL_Thread *send_stream_2 = SDL_CreateThread(SendStream2, "SendStream2", &SendContext);
 
-    memset((char *) &receive_address, 0, sizeof(receive_address));
-    receive_address.sin_family = AF_INET;
-    receive_address.sin_port = htons(PORT + 1);
-    receive_address.sin_addr.s_addr = htonl(INADDR_ANY);
+    // memset((char *) &receive_address, 0, sizeof(receive_address));
+    // receive_address.sin_family = AF_INET;
+    // receive_address.sin_port = htons(PORT + 1);
+    // receive_address.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    struct context ReceiveContext = {0};
-    ReceiveContext.addr = receive_address;
-    ReceiveContext.s = SendContext.s;
+    // struct context ReceiveContext = {0};
+    // ReceiveContext.addr = receive_address;
+    // ReceiveContext.s = SendContext.s;
 
     while (1)
     {
@@ -82,7 +87,7 @@ int main(int argc, char* argv[])
 
  
     // Actually, we never reach this point...
-    closesocket(SendContext.s);
+    // closesocket(SendContext.s);
     closesocket(ReceiveContext.s);
 
     WSACleanup();
