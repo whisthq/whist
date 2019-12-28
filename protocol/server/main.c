@@ -66,19 +66,19 @@ int main(int argc, char* argv[])
     char recv_buf[BUFLEN];
 
     struct context SendContext = {0};
-    if(CreateUDPContext(&SendContext, "S", "", -1, 0) < 0) {
+    if(CreateUDPContext(&SendContext, "S", "", -1) < 0) {
         exit(1);
     }
 
     struct context ReceiveContext = {0};
-    if(CreateUDPContext(&ReceiveContext, "S", "", -1, 0) < 0) {
+    if(CreateUDPContext(&ReceiveContext, "S", "", -1) < 0) {
         exit(1);
     }
 
-    struct context AudioContext = {0};
-    if(CreateUDPContext(&AudioContext, "S", "", -1, 0) < 0) {
-        exit(1);
-    }
+    // struct context AudioContext = {0};
+    // if(CreateUDPContext(&AudioContext, "S", "", -1, 0) < 0) {
+    //     exit(1);
+    // }
 
     SDL_Thread *send_input_ack = SDL_CreateThread(SendInputAck, "SendInputAck", &InputAckContext);
     SDL_Thread *send_video = SDL_CreateThread(SendVideo, "SendVideo", &VideoContext);
