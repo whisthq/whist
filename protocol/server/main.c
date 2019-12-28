@@ -16,6 +16,21 @@
 #pragma comment (lib, "ws2_32.lib")
 
 #define BUFLEN 1000
+#define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
+#define FRAME_BUFFER_SIZE (1024 * 1024)
+
+bool repeat = true; // global flag to keep streaming until client disconnects
+
+typedef enum {
+  videotype = 0xFA010000,
+  audiotype = 0xFB010000
+} Fractalframe_type_t;
+
+typedef struct {
+  Fractalframe_type_t type;
+  int size;
+  char data[0];
+} Fractalframe_t;
 
 static int32_t ReceiveUserInput(void *opaque) {
     struct context context = *(struct context *) opaque;
