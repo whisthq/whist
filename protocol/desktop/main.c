@@ -69,7 +69,6 @@ int main(int argc, char* argv[])
         printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
         return -1;
     }
-    printf("Winsock initialized successfully.\n");
 
     struct sockaddr_in receive_address;
     int recv_size, slen=sizeof(receive_address);
@@ -94,23 +93,19 @@ int main(int argc, char* argv[])
     SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &VideoReceiveContext);
     SDL_Thread *receive_audio = SDL_CreateThread(ReceiveAudio, "ReceiveAudio", &AudioReceiveContext);
 
-
-    char* ack1 = "ACK";
     while (1)
     {
-        if (sendto(VideoReceiveContext.s, ack1, strlen(ack1), 0, (struct sockaddr*)(&VideoReceiveContext.addr), slen) < 0)
+        if (SendAck(&InputContext) < 0)
             printf("Could not send packet\n");
-        if (sendto(AudioReceiveContext.s, ack1, strlen(ack1), 0, (struct sockaddr*)(&AudioReceiveContext.addr), slen) < 0)
+        if (SendAck(&VideoReceiveContext) < 0)
             printf("Could not send packet\n");
         if ((recv_size = recvfrom(InputContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&InputContext.addr), &slen)) < 0)
             printf("Packet not received \n");
-        // Sleep(2000);
     }
- 
-    // Actually, we never reach this point...
 
     closesocket(InputContext.s);
     closesocket(VideoReceiveContext.s);
+    closesocket(AudioReceiveContext.s);
 
     WSACleanup();
 
