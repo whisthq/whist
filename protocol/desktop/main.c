@@ -27,6 +27,8 @@ static int32_t SendUserInput(void *opaque) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
             printf("Could not send packet\n");
     }
+
+    return 0;
 }
 
 static int32_t ReceiveVideo(void *opaque) {
@@ -40,7 +42,7 @@ static int32_t ReceiveVideo(void *opaque) {
         if ((recv_size = recvfrom(context.s, &recv_buf, BUFLEN, 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            printf("Received message %d\n", recv_size);
+            printf("Received video size %d\n", recv_size);
         }
     }
 }
@@ -55,8 +57,10 @@ static int32_t ReceiveAudio(void *opaque) {
     {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
-        }
+        } 
     }
+
+    return 0;
 }
 
 int main(int argc, char* argv[])
