@@ -38,16 +38,17 @@ typedef struct {
 
 
 static int fragmented_sendto(struct context *context, char *buf, int len, int max_size) {
-  int sent_size, slen = sizeof(context->addr);
+  int sent_size, slen = sizeof(context->addr), i = 0;
 
   while(len > 0) {
-    if((sent_size = sendto(context->s, buf, max_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
+    if((sent_size = sendto(context->s, strcat(&(char)i,buf), max_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
       return -1;
     } else {
       if(strlen(buf) > max_size) {
         buf += max_size;
       }
       len -= max_size;
+      i++;
       printf("Sent size %d remaining %d\n", sent_size, len);
     }
   }
@@ -119,13 +120,6 @@ static int32_t SendVideo(void *opaque) {
         if (fragmented_sendto(&context, encodedframe->data, encoded_size, 1000) < 0)
             printf("Could not send video frame\n");
       }
-
-      // char *msg = "testingmycode123123123123123123asdf89a9sdfhaksdfEND";
-      // if (encoded_size != 0) {
-      //   // send packet
-      //   if (fragmented_sendto(&context, msg, strlen(msg), 10) < 0)
-      //       printf("Could not send video frame\n");
-      // }
 
       // packet sent, let's reset the encoded frame memory for the next one
       memset(encodedframe, 0, FRAME_BUFFER_SIZE);
