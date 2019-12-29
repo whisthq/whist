@@ -41,7 +41,10 @@ static int fragmented_sendto(struct context *context, char *buf, int len, int ma
   int sent_size, slen = sizeof(context->addr), i = 0;
 
   while(len > 0) {
-    if((sent_size = sendto(context->s, strcat(&(char)i,buf), max_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
+    char payload[32];
+    sprintf(payload, "%d", i);
+    strcat(payload, buf);
+    if((sent_size = sendto(context->s, payload, max_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
       return -1;
     } else {
       if(strlen(buf) > max_size) {
@@ -49,10 +52,8 @@ static int fragmented_sendto(struct context *context, char *buf, int len, int ma
       }
       len -= max_size;
       i++;
-      printf("Sent size %d remaining %d\n", sent_size, len);
     }
   }
-  printf("SENT\n");
   return 0;
 }
 
@@ -64,72 +65,85 @@ static int32_t ReceiveUserInput(void *opaque) {
     while(1) {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
-        } else {
-            printf("Received %s\n", recv_buf);
         }
     }
 }
 
 static int32_t SendVideo(void *opaque) {
+    // struct context context = *(struct context *) opaque;
+    // int i, slen = sizeof(context.addr);
+    // char *message = "VideoVideoVideoVideoVideoVideoVideoVideoVideoVideoVideoVideoVideoVideoVideoVideoVideo";
+
+
+    // while(1) {
+    //   // send packet
+    //   if (fragmented_sendto(&context, message, strlen(message), 10) < 0)
+    //       printf("Could not send video frame\n");
+    // }
     struct context context = *(struct context *) opaque;
     int i, slen = sizeof(context.addr);
     char *message = "Video";
 
+    while(1) {
+        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
+            printf("Could not send packet\n");
+    }
+    return 0;
     // get window
-    HWND window = NULL;
-    window = GetDesktopWindow();
-    frame_area frame = {0, 0, 0, 0}; // init  frame area
+  //   HWND window = NULL;
+  //   window = GetDesktopWindow();
+  //   frame_area frame = {0, 0, 0, 0}; // init  frame area
 
-    // init screen capture device
-    video_capture_device *device;
-    device = create_video_capture_device(window, frame);
+  //   // init screen capture device
+  //   video_capture_device *device;
+  //   device = create_video_capture_device(window, frame);
 
-    // set encoder parameters
-    int width = device->width; // in and out from the capture device
-    int height = device->height; // in and out from the capture device
-    int bitrate = width * 8000; // estimate bit rate based on output size
+  //   // set encoder parameters
+  //   int width = device->width; // in and out from the capture device
+  //   int height = device->height; // in and out from the capture device
+  //   int bitrate = width * 8000; // estimate bit rate based on output size
 
-    // init encoder
-    encoder_t *encoder;
-    encoder = create_video_encoder(width, height, CAPTURE_WIDTH, CAPTURE_HEIGHT, bitrate);
+  //   // init encoder
+  //   encoder_t *encoder;
+  //   encoder = create_video_encoder(width, height, CAPTURE_WIDTH, CAPTURE_HEIGHT, bitrate);
 
-    // video variables
-    void *capturedframe; // var to hold captured frame, as a void* to RGB pixels
-    int sent_size; // var to keep track of size of packets sent
+  //   // video variables
+  //   void *capturedframe; // var to hold captured frame, as a void* to RGB pixels
+  //   int sent_size; // var to keep track of size of packets sent
 
-    // init encoded frame parameters
-    Fractalframe_t *encodedframe = (Fractalframe_t *) malloc(FRAME_BUFFER_SIZE);
-    memset(encodedframe, 0, FRAME_BUFFER_SIZE); // set memory to null
-    encodedframe->type = videotype; // specify that this is a video frame
-    size_t encoded_size; // init encoded buffer size
+  //   // init encoded frame parameters
+  //   Fractalframe_t *encodedframe = (Fractalframe_t *) malloc(FRAME_BUFFER_SIZE);
+  //   memset(encodedframe, 0, FRAME_BUFFER_SIZE); // set memory to null
+  //   encodedframe->type = videotype; // specify that this is a video frame
+  //   size_t encoded_size; // init encoded buffer size
 
-    // while stream is on
-    while (repeat) {
-      // capture a frame
-      capturedframe = capture_screen(device);
-      // reset encoded frame to 0 and reset buffer  before encoding
-      encodedframe->size = 0;
-      encoded_size = FRAME_BUFFER_SIZE - sizeof(Fractalframe_t);
+  //   // while stream is on
+  //   while (repeat) {
+  //     // capture a frame
+  //     capturedframe = capture_screen(device);
+  //     // reset encoded frame to 0 and reset buffer  before encoding
+  //     encodedframe->size = 0;
+  //     encoded_size = FRAME_BUFFER_SIZE - sizeof(Fractalframe_t);
 
-      // encode captured frame into encodedframe->data
-      video_encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
+  //     // encode captured frame into encodedframe->data
+  //     video_encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
 
 
-      if (encoded_size != 0) {
-        // send packet
-        if (fragmented_sendto(&context, encodedframe->data, encoded_size, 1000) < 0)
-            printf("Could not send video frame\n");
-      }
+  //     // if (encoded_size != 0) {
+  //     //   // send packet
+  //     //   if (fragmented_sendto(&context, encodedframe->data, encoded_size, 1000) < 0)
+  //     //       printf("Could not send video frame\n");
+  //     // }
 
-      // packet sent, let's reset the encoded frame memory for the next one
-      memset(encodedframe, 0, FRAME_BUFFER_SIZE);
-  }
+  //     // packet sent, let's reset the encoded frame memory for the next one
+  //     memset(encodedframe, 0, FRAME_BUFFER_SIZE);
+  // }
 
-  // exited while loop, stream done let's close everything
-  destroy_video_encoder(encoder); // destroy encoder
-  destroy_video_capture_device(device); // destroy capture device
-  _endthreadex(0); // end thread and return
-  return 0;
+  // // exited while loop, stream done let's close everything
+  // destroy_video_encoder(encoder); // destroy encoder
+  // destroy_video_capture_device(device); // destroy capture device
+  // _endthreadex(0); // end thread and return
+  // return 0;
 }
 
 static int32_t SendAudio(void *opaque) {
@@ -141,6 +155,8 @@ static int32_t SendAudio(void *opaque) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
             printf("Could not send packet\n");
     }
+
+    return 0;
 }
 
 
