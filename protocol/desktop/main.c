@@ -23,9 +23,13 @@ static int32_t SendUserInput(void *opaque) {
     int i, slen = sizeof(context.addr);
     char *message = "Keyboard Input";
 
-    while(1) {
-        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
+    for(i = 0; i < 50; i++) {
+        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0) {
             printf("Could not send packet\n");
+        } else {
+            printf("Sent keyboard info\n");
+        }
+        Sleep(1000);
     }
 
     return 0;
@@ -39,10 +43,11 @@ static int32_t ReceiveVideo(void *opaque) {
 
     while (1)
     {
+        printf("Listneing for video\n");
         if ((recv_size = recvfrom(context.s, &recv_buf, BUFLEN, 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            printf("Received video size %d\n", recv_size);
+            printf("Received video\n");
         }
     }
 }
@@ -55,9 +60,12 @@ static int32_t ReceiveAudio(void *opaque) {
 
     while (1)
     {
+        printf("Listneing for audio\n");
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
-        } 
+        } else {
+            printf("Received audio\n");
+        }
     }
 
     return 0;
@@ -78,17 +86,17 @@ int main(int argc, char* argv[])
     char recv_buf[BUFLEN];
 
     struct context InputContext = {0};
-    if(CreateUDPContext(&InputContext, "C", "40.117.57.45", -1, 20) < 0) {
+    if(CreateUDPContext(&InputContext, "C", "3.232.55.216", -1, 20) < 0) {
         exit(1);
     }
 
     struct context VideoReceiveContext = {0};
-    if(CreateUDPContext(&VideoReceiveContext, "C", "40.117.57.45", -1, 0) < 0) {
+    if(CreateUDPContext(&VideoReceiveContext, "C", "3.232.55.216", -1, 0) < 0) {
         exit(1);
     }
 
     struct context AudioReceiveContext = {0};
-    if(CreateUDPContext(&AudioReceiveContext, "C", "40.117.57.45", -1, 0) < 0) {
+    if(CreateUDPContext(&AudioReceiveContext, "C", "3.232.55.216", -1, 0) < 0) {
         exit(1);
     }
 
