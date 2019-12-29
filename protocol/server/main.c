@@ -41,7 +41,9 @@ static int fragmented_sendto(struct context *context, char *buf, int len, int ma
   int sent_size, slen = sizeof(context->addr), i = 0;
 
   while(len > 0) {
-    if((sent_size = sendto(context->s, strcat(&(char)i,buf), max_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
+    char *payload = &i;
+    strcat(payload, buf);
+    if((sent_size = sendto(context->s, payload, max_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
       return -1;
     } else {
       if(strlen(buf) > max_size) {
@@ -52,7 +54,6 @@ static int fragmented_sendto(struct context *context, char *buf, int len, int ma
       printf("Sent size %d remaining %d\n", sent_size, len);
     }
   }
-  printf("SENT\n");
   return 0;
 }
 
@@ -64,8 +65,6 @@ static int32_t ReceiveUserInput(void *opaque) {
     while(1) {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
-        } else {
-            printf("Received %s\n", recv_buf);
         }
     }
 }
@@ -117,7 +116,7 @@ static int32_t SendVideo(void *opaque) {
 
       if (encoded_size != 0) {
         // send packet
-        if (fragmented_sendto(&context, encodedframe->data, encoded_size, 1000) < 0)
+        if (fragmented_sendto(&context, encodedframe->data, encoded_size, 500) < 0)
             printf("Could not send video frame\n");
       }
 
