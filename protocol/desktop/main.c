@@ -43,7 +43,7 @@ static int32_t ReceiveVideo(void *opaque) {
         if ((recv_size = recvfrom(context.s, &recv_buf, BUFLEN, 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            printf("Received video %d\n", recv_buf[0]);
+            printf("Received video %d of size %d\n", recv_buf[0], recv_size);
         }
     }
 }
