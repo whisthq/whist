@@ -1,6 +1,6 @@
 {
   "name": "figma-linux-rust-binding",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "description": "Rust module that makes object of meta data of fonts",
   "main": "native/index.node",
   "author": "ChugunovRoman <Zebs-BMK@yandex.ru>",
@@ -25,12 +25,16 @@
   "dependencies": {
     "neon-cli": "^0.3.3"
   },
+  "devDependencies": {
+    "electron-build-env": "^0.2",
+    "neon-cli": "^0.3.3"
+  },
   "types": "index.d.ts",
   "deprecated": false,
   "scripts": {
-    "install": "neon build --release",
+    "install": "electron-build-env neon build --release",
     "start": "node --experimental-modules ./index.mjs",
-    "build": "neon build",
-    "release": "neon build --release"
+    "build": "electron-build-env neon build",
+    "release": "electron-build-env neon build --release"
   }
 }

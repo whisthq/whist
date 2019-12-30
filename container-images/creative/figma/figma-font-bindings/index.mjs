@@ -1,6 +1,7 @@
 import addon from './native/index.node';
 
 let dirs = [
+    `${process.env.HOME}/.local/share/bad_fonts`,
     `${process.env.HOME}/.local/share/fonts`,
     '/usr/share/fonts'
 ];

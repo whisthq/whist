@@ -24,4 +24,4 @@ neon-build = "0.3.3"
 
 [dependencies]
 neon = "0.3.3"
-libfonthelper = "0.1.4"
+libfonthelper = "0.2.4"
