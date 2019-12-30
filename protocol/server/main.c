@@ -22,6 +22,7 @@
 #define BUFLEN 1000
 #define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
 #define FRAME_BUFFER_SIZE (1024 * 1024)
+#define MAX_PACKET_SIZE 1500
 
 bool repeat = true; // global flag to keep streaming until client disconnects
 
@@ -37,22 +38,23 @@ typedef struct {
 } Fractalframe_t;
 
 
-static int fragmented_sendto(struct context *context, char *buf, int len, int max_size) {
-  int sent_size, slen = sizeof(context->addr), i = 0;
-  while(len > 0) {
-    char *payload = &i;
-    strcat(payload, buf);
-    if((sent_size = sendto(context->s, payload, max_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
+static int fragmented_sendto(struct context *context, uint8_t *data, int len) {
+  int sent_size, payload_size, slen = sizeof(context->addr), i = 0;
+  uint8_t payload[MAX_PACKET_SIZE];
+  uint8_t *payload_ptr;
+  int curr_index = 0, iteration = 0;
+  while (curr_index < len) {
+    payload_ptr = payload + 1;
+    payload_size = min((MAX_PACKET_SIZE - 1), (len - curr_index));
+    memcpy(payload_ptr, data + curr_index, payload_size);
+    payload[0] = iteration;
+    if((sent_size = sendto(context->s, payload, (payload_size + 1), 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
       return -1;
     } else {
-      if(strlen(buf) > max_size) {
-        buf += max_size;
-      }
-      len -= max_size;
-      i++;
+      iteration++;
+      curr_index += payload_size;
     }
   }
-  printf("Sent successfully\n");
   return 0;
 }
 
@@ -95,35 +97,23 @@ static int32_t SendVideo(void *opaque) {
     void *capturedframe; // var to hold captured frame, as a void* to RGB pixels
     int sent_size; // var to keep track of size of packets sent
 
-    // init encoded frame parameters
-    Fractalframe_t *encodedframe = (Fractalframe_t *) malloc(FRAME_BUFFER_SIZE);
-    memset(encodedframe, 0, FRAME_BUFFER_SIZE); // set memory to null
-    encodedframe->type = videotype; // specify that this is a video frame
-    size_t encoded_size; // init encoded buffer size
-
     // while stream is on
     for(i = 0; i < 50; i++) {
       // capture a frame
       capturedframe = capture_screen(device);
-      // reset encoded frame to 0 and reset buffer  before encoding
-      encodedframe->size = 0;
-      encoded_size = FRAME_BUFFER_SIZE - sizeof(Fractalframe_t);
 
-      // encode captured frame into encodedframe->data
-      video_encoder_encode(encoder, capturedframe, encodedframe->data, &encoded_size);
+      video_encoder_encode(encoder, capturedframe);
 
-
-      if (encoded_size != 0) {
+      if (encoder->packet.size != 0) {
         // send packet
-
-
-        //if (fragmented_sendto(&context, encodedframe->data, encoded_size, 500) < 0)
-        if (fragmented_sendto(&context, encodedframe->data, encoded_size, 1000) < 0)
+        //if (fragmented_sendto(&context, "MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS", strlen("MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS"), 10) < 0)
+        printf("Sending length %d\n", encoder->packet.size);
+        if (fragmented_sendto(&context, encoder->packet.data, encoder->packet.size) < 0) {
             printf("Could not send video frame\n");
+        } else {
+        	printf("Video frame sent successfully\n");
+        }
       }
-
-      // packet sent, let's reset the encoded frame memory for the next one
-      memset(encodedframe, 0, FRAME_BUFFER_SIZE);
   }
 
   // exited while loop, stream done let's close everything
