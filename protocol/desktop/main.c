@@ -81,17 +81,17 @@ int main(int argc, char* argv[])
     char recv_buf[BUFLEN];
 
     struct context InputContext = {0};
-    if(CreateUDPContext(&InputContext, "C", "40.121.132.26", -1, 20) < 0) {
+    if(CreateUDPContext(&InputContext, "C", "40.121.132.26", 100) < 0) {
         exit(1);
     }
 
     struct context VideoReceiveContext = {0};
-    if(CreateUDPContext(&VideoReceiveContext, "C", "40.121.132.26", -1, 0) < 0) {
+    if(CreateUDPContext(&VideoReceiveContext, "C", "40.121.132.26", -1) < 0) {
         exit(1);
     }
 
     struct context AudioReceiveContext = {0};
-    if(CreateUDPContext(&AudioReceiveContext, "C", "40.121.132.26", -1, 0) < 0) {
+    if(CreateUDPContext(&AudioReceiveContext, "C", "40.121.132.26", -1) < 0) {
         exit(1);
     }
 
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
             printf("Could not send packet\n");
         if ((recv_size = recvfrom(InputContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&InputContext.addr), &slen)) < 0)
             printf("Packet not received \n");
-        // Sleep(2000);
+        Sleep(2000);
     }
  
     // Actually, we never reach this point...
