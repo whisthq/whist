@@ -39,7 +39,6 @@ typedef struct {
 
 static int fragmented_sendto(struct context *context, char *buf, int len, int max_size) {
   int sent_size, slen = sizeof(context->addr), i = 0;
-
   while(len > 0) {
     char *payload = &i;
     strcat(payload, buf);
@@ -51,9 +50,9 @@ static int fragmented_sendto(struct context *context, char *buf, int len, int ma
       }
       len -= max_size;
       i++;
-      printf("Sent size %d remaining %d\n", sent_size, len);
     }
   }
+  printf("Sent successfully\n");
   return 0;
 }
 
@@ -103,7 +102,7 @@ static int32_t SendVideo(void *opaque) {
     size_t encoded_size; // init encoded buffer size
 
     // while stream is on
-    while (repeat) {
+    for(i = 0; i < 50; i++) {
       // capture a frame
       capturedframe = capture_screen(device);
       // reset encoded frame to 0 and reset buffer  before encoding
@@ -116,7 +115,10 @@ static int32_t SendVideo(void *opaque) {
 
       if (encoded_size != 0) {
         // send packet
-        if (fragmented_sendto(&context, encodedframe->data, encoded_size, 500) < 0)
+
+
+        //if (fragmented_sendto(&context, encodedframe->data, encoded_size, 500) < 0)
+        if (fragmented_sendto(&context, encodedframe->data, encoded_size, 1000) < 0)
             printf("Could not send video frame\n");
       }
 
@@ -127,7 +129,6 @@ static int32_t SendVideo(void *opaque) {
   // exited while loop, stream done let's close everything
   destroy_video_encoder(encoder); // destroy encoder
   destroy_video_capture_device(device); // destroy capture device
-  _endthreadex(0); // end thread and return
   return 0;
 }
 
@@ -136,7 +137,7 @@ static int32_t SendAudio(void *opaque) {
     int i, slen = sizeof(context.addr);
     char *message = "Audio";
 
-    while(1) {
+    for(i = 0; i < 50; i++) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
             printf("Could not send packet\n");
     }
@@ -163,12 +164,12 @@ int main(int argc, char* argv[])
     }
 
     struct context VideoContext = {0};
-    if(CreateUDPContext(&VideoContext, "S", "", -1) < 0) {
+    if(CreateUDPContext(&VideoContext, "S", "", 100) < 0) {
         exit(1);
     }
 
     struct context AudioContext = {0};
-    if(CreateUDPContext(&AudioContext, "S", "", -1) < 0) {
+    if(CreateUDPContext(&AudioContext, "S", "", 100) < 0) {
         exit(1);
     }
 
