@@ -57,7 +57,9 @@ static int32_t ReceiveAudio(void *opaque) {
     {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
-        } 
+        } else {
+            printf("Received audio\n");
+        }
     }
 
     return 0;
