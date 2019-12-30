@@ -24,8 +24,9 @@ static int32_t SendUserInput(void *opaque) {
     char *message = "Keyboard Input";
 
     while(1) {
-        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
+        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0) {
             printf("Could not send packet\n");
+        }
     }
 
     return 0;
@@ -42,7 +43,7 @@ static int32_t ReceiveVideo(void *opaque) {
         if ((recv_size = recvfrom(context.s, &recv_buf, BUFLEN, 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            printf("Received video size %d\n", recv_size);
+            printf("Received video %d\n", recv_buf[0]);
         }
     }
 }
@@ -80,17 +81,17 @@ int main(int argc, char* argv[])
     char recv_buf[BUFLEN];
 
     struct context InputContext = {0};
-    if(CreateUDPContext(&InputContext, "C", "40.117.57.45", -1, 20) < 0) {
+    if(CreateUDPContext(&InputContext, "C", "40.121.132.26", -1, 20) < 0) {
         exit(1);
     }
 
     struct context VideoReceiveContext = {0};
-    if(CreateUDPContext(&VideoReceiveContext, "C", "40.117.57.45", -1, 0) < 0) {
+    if(CreateUDPContext(&VideoReceiveContext, "C", "40.121.132.26", -1, 0) < 0) {
         exit(1);
     }
 
     struct context AudioReceiveContext = {0};
-    if(CreateUDPContext(&AudioReceiveContext, "C", "40.117.57.45", -1, 0) < 0) {
+    if(CreateUDPContext(&AudioReceiveContext, "C", "40.121.132.26", -1, 0) < 0) {
         exit(1);
     }
 
