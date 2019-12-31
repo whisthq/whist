@@ -43,8 +43,7 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 	encoder->context->max_b_frames = 1;
 	encoder->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
-	// set encoder parameters to max performance
-	av_opt_set(encoder->context->priv_data, "profile", "main", 0);
+	// set encoder parameters to max performancen
 	av_opt_set(encoder->context->priv_data, "preset", "ultrafast", 0);
     av_opt_set(encoder->context->priv_data, "tune", "zerolatency", 0);
 
@@ -105,7 +104,6 @@ void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
   // scale to the encoder format
 	sws_scale(encoder->sws, in_data, in_linesize, 0, encoder->in_height, encoder->frame->data, encoder->frame->linesize);
 
-  // init our encoded size and get ready for the frame
 	encoder->frame->pts++;
 
   // init packet to prepare encoding
@@ -115,9 +113,10 @@ void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
 
   // attempt to encode the frame
 	avcodec_encode_video2(encoder->context, &encoder->packet, encoder->frame, &success);
+	printf("Packet size %d\n", encoder->packet.size);
   // if encoding succeeded
 	if (success) {
-		return;
+      return;
 	}
   return;
 }
