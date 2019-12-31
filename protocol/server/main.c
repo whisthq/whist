@@ -22,7 +22,7 @@
 #define BUFLEN 1000
 #define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
 #define FRAME_BUFFER_SIZE (1024 * 1024)
-#define MAX_PACKET_SIZE 1500
+#define MAX_PACKET_SIZE 1000
 
 bool repeat = true; // global flag to keep streaming until client disconnects
 
@@ -38,29 +38,7 @@ typedef struct {
 } Fractalframe_t;
 
 
-// static int fragmented_sendto(struct context *context, uint8_t *data, int len) {
-//   int sent_size, payload_size, slen = sizeof(context->addr), i = 0;
-//   uint8_t payload[MAX_PACKET_SIZE];
-//   uint8_t *payload_ptr;
-//   uint8_t iteration = 0;
-//   int curr_index = 0;
-
-//   while (curr_index < len) {
-//     payload_ptr = payload + 1;
-//     payload_size = min((MAX_PACKET_SIZE - 1), (len - curr_index));
-//     memcpy(payload_ptr, data + curr_index, payload_size);
-//     payload[0] = iteration;
-//     if((sent_size = sendto(context->s, payload, (payload_size + 1), 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
-//       return -1;
-//     } else {
-//       iteration++;
-//       curr_index += payload_size;
-//     }
-//   }
-//   return 0;
-// }
-
-static int fragmented_sendto(struct context *context, uint8_t *data, int len) {
+static int fragmented_sendto(struct SocketContext *context, uint8_t *data, int len) {
   int sent_size, payload_size, slen = sizeof(context->addr), i = 0;
   uint8_t payload[MAX_PACKET_SIZE];
   int curr_index = 0;
@@ -70,7 +48,6 @@ static int fragmented_sendto(struct context *context, uint8_t *data, int len) {
     if((sent_size = sendto(context->s, (data + curr_index), payload_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
       return -1;
     } else {
-      printf("Sent %d\n", sent_size);
       curr_index += payload_size;
     }
   }
@@ -78,11 +55,11 @@ static int fragmented_sendto(struct context *context, uint8_t *data, int len) {
 }
 
 static int32_t ReceiveUserInput(void *opaque) {
-    struct context context = *(struct context *) opaque;
+    struct SocketContext context = *(struct SocketContext *) opaque;
     int i, recv_size, slen = sizeof(context.addr);
     char recv_buf[BUFLEN];
 
-    for(i = 0; i < 50; i++) {
+    for(i = 0; i < 3000; i++) {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         }
@@ -92,7 +69,7 @@ static int32_t ReceiveUserInput(void *opaque) {
 }
 
 static int32_t SendVideo(void *opaque) {
-    struct context context = *(struct context *) opaque;
+    struct SocketContext context = *(struct SocketContext *) opaque;
     int i, slen = sizeof(context.addr);
     char *message = "Video";
 
@@ -119,7 +96,7 @@ static int32_t SendVideo(void *opaque) {
     int sent_size; // var to keep track of size of packets sent
 
     // while stream is on
-    for(i = 0; i < 50; i++) {
+    for(i = 0; i < 3000; i++) {
       // capture a frame
       capturedframe = capture_screen(device);
 
@@ -144,11 +121,11 @@ static int32_t SendVideo(void *opaque) {
 }
 
 static int32_t SendAudio(void *opaque) {
-    struct context context = *(struct context *) opaque;
+    struct SocketContext context = *(struct SocketContext *) opaque;
     int i, slen = sizeof(context.addr);
     char *message = "Audio";
 
-    for(i = 0; i < 50; i++) {
+    for(i = 0; i < 3000; i++) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
             printf("Could not send packet\n");
     }
@@ -171,17 +148,17 @@ int main(int argc, char* argv[])
     int recv_size, slen=sizeof(receive_address);
     char recv_buf[BUFLEN];
 
-    struct context InputReceiveContext = {0};
+    struct SocketContext InputReceiveContext = {0};
     if(CreateUDPContext(&InputReceiveContext, "S", "", -1) < 0) {
         exit(1);
     }
 
-    struct context VideoContext = {0};
+    struct SocketContext VideoContext = {0};
     if(CreateUDPContext(&VideoContext, "S", "", 100) < 0) {
         exit(1);
     }
 
-    struct context AudioContext = {0};
+    struct SocketContext AudioContext = {0};
     if(CreateUDPContext(&AudioContext, "S", "", 100) < 0) {
         exit(1);
     }
