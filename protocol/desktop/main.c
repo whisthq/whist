@@ -21,6 +21,8 @@
 #define BUFLEN 160000
 #define SDL_AUDIO_BUFFER_SIZE 1024;
 
+int repeat = 1;
+
 struct SDLVideoContext {
     Uint8 *yPlane;
     Uint8 *uPlane;
@@ -42,7 +44,7 @@ static int32_t SendUserInput(void *opaque) {
             printf("Could not send packet\n");
         }
     }
-
+    repeat = 0;
     return 0;
 }
 
@@ -61,6 +63,7 @@ static int32_t ReceiveVideo(void *opaque) {
             printf("Packet not received \n");
         } else {
             recv_index += recv_size;
+            printf("Received video size %d\n", recv_size);
             if(recv_size != 1000) {
                 video_decoder_decode(decoder, recv_buf, recv_index);
 
@@ -93,7 +96,7 @@ static int32_t ReceiveVideo(void *opaque) {
             }
         }
     }
-
+    repeat = 0;
     return 0;
 }
 
@@ -134,6 +137,7 @@ static int32_t ReceiveAudio(void *opaque) {
 
     SDL_CloseAudioDevice(dev);
     destroy_audio_decoder(audio_decoder);
+    repeat = 0;
     return 0;
 }
 
@@ -250,7 +254,7 @@ int main(int argc, char* argv[])
     SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &SDLVideoContext);
     SDL_Thread *receive_audio = SDL_CreateThread(ReceiveAudio, "ReceiveAudio", &AudioReceiveContext);
 
-    while (1)
+    while (repeat)
     {
         if (SendAck(&VideoReceiveContext.s) < 0)
             printf("Could not send packet\n");
