@@ -71,8 +71,8 @@ void destroy_audio_decoder(audio_decoder_t *decoder) {
 /// @details decode an encoded frame under YUV color format into RGB frame
 int audio_decoder_decode(audio_decoder_t *decoder, char *buffer, int buffer_size) {
 	av_init_packet(&decoder->packet);
-	int success = 0; // boolean for success or failure of decoding
- 	 decoder->frame->pts++; // still not quite sure what that is for
+	int success, len; // boolean for success or failure of decoding
+ 	decoder->frame->pts++; // still not quite sure what that is for
 
   // copy the received packet back into the decoder AVPacket
   // memcpy(&decoder->packet.data, &buffer, buffer_size);
@@ -80,8 +80,7 @@ int audio_decoder_decode(audio_decoder_t *decoder, char *buffer, int buffer_size
 	decoder->packet.size = buffer_size;
 
   // decode the frame
-	int len = avcodec_decode_audio4(decoder->context, decoder->frame, &success, &decoder->packet);
-  printf("Audio decode status is %d\n", success);
+	len = avcodec_decode_audio4(decoder->context, decoder->frame, &success, &decoder->packet);
 	av_free_packet(&decoder->packet);
   return len;
 }

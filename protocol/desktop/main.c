@@ -21,6 +21,8 @@
 #define BUFLEN 160000
 #define SDL_AUDIO_BUFFER_SIZE 1024;
 
+int repeat = 1;
+
 struct SDLVideoContext {
     Uint8 *yPlane;
     Uint8 *uPlane;
@@ -251,7 +253,7 @@ int main(int argc, char* argv[])
     SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &SDLVideoContext);
     SDL_Thread *receive_audio = SDL_CreateThread(ReceiveAudio, "ReceiveAudio", &AudioReceiveContext);
 
-    while (1)
+    while (repeat)
     {
         if (SendAck(&VideoReceiveContext.s) < 0)
             printf("Could not send packet\n");
