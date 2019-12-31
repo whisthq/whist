@@ -59,7 +59,7 @@ static int32_t ReceiveUserInput(void *opaque) {
     int i, recv_size, slen = sizeof(context.addr);
     char recv_buf[BUFLEN];
 
-    for(i = 0; i < 3000; i++) {
+    for(i = 0; i < 60000; i++) {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         }
@@ -85,7 +85,7 @@ static int32_t SendVideo(void *opaque) {
     // set encoder parameters
     int width = device->width; // in and out from the capture device
     int height = device->height; // in and out from the capture device
-    int bitrate = width * 8000; // estimate bit rate based on output size
+    int bitrate = width * 12000; // estimate bit rate based on output size
 
     // init encoder
     encoder_t *encoder;
@@ -96,7 +96,7 @@ static int32_t SendVideo(void *opaque) {
     int sent_size; // var to keep track of size of packets sent
 
     // while stream is on
-    for(i = 0; i < 3000; i++) {
+    for(i = 0; i < 60000; i++) {
       // capture a frame
       capturedframe = capture_screen(device);
 
@@ -108,8 +108,6 @@ static int32_t SendVideo(void *opaque) {
         // printf("Sending length %d\n", encoder->packet.size);
         if (fragmented_sendto(&context, encoder->packet.data, encoder->packet.size) < 0) {
             printf("Could not send video frame\n");
-        } else {
-        	printf("Video frame sent successfully\n");
         }
       }
   }
@@ -123,14 +121,29 @@ static int32_t SendVideo(void *opaque) {
 static int32_t SendAudio(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
     int i, slen = sizeof(context.addr);
-    char *message = "Audio";
 
-    for(i = 0; i < 3000; i++) {
-        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
-            printf("Could not send packet\n");
-    }
+	audio_capture_device *device;
+	device = create_audio_capture_device();
 
-    return 0;
+	audio_encoder_t *encoder;
+	encoder = create_audio_encoder(96000);
+
+	audio_filter *filter;
+	filter = create_audio_filter(device, encoder);
+
+	for(i = 0; i < 60000; i++) {
+	  audio_encode_and_send(device, encoder, filter, context);
+	}
+
+	/* flush the encoder */
+	int got_output;
+	avcodec_encode_audio2(encoder->context, &encoder->packet, NULL, &got_output);
+
+	av_frame_free(&encoder->input_frame);
+	av_packet_free(&encoder->packet);
+	avcodec_free_context(&encoder->context);
+	destroy_audio_capture_device(device);
+	return 0;
 }
 
 
