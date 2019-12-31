@@ -34,16 +34,20 @@ static int32_t SendUserInput(void *opaque) {
 
 static int32_t ReceiveVideo(void *opaque) {
     struct context context = *(struct context *) opaque;
-    int i, slen = sizeof(context.addr);
-    int recv_size;
+    int i, recv_size, slen = sizeof(context.addr), recv_index = 0;
     char recv_buf[BUFLEN];
 
     while (1)
     {
-        if ((recv_size = recvfrom(context.s, &recv_buf, BUFLEN, 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
+        if ((recv_size = recvfrom(context.s, recv_buf + recv_index, BUFLEN, 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            printf("Received video %d of size %d\n", recv_buf[0], recv_size);
+            if(recv_size == 10) {
+                recv_index += recv_size;
+            } else {
+                recv_index = 0;
+                memset(recv_buf, 0, BUFLEN);
+            }
         }
     }
 }
