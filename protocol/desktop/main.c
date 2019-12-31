@@ -109,13 +109,12 @@ static int32_t ReceiveAudio(void *opaque) {
     audio_decoder_t* audio_decoder;
     audio_decoder = create_audio_decoder();
 
-    SDL_zero(wantedSpec);
-    SDL_zero(audioSpec);
-    wantedSpec.channels = audio_decoder->context->channels;
+    // SDL_zero(wantedSpec);
+    // SDL_zero(audioSpec);
+    wantedSpec.channels = av_get_channel_layout_nb_channels(3);
     wantedSpec.freq = audio_decoder->context->sample_rate;
-    wantedSpec.format = AUDIO_F32SYS;
-    wantedSpec.silence = 0;
-    wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
+    wantedSpec.format = AUDIO_S16;
+    wantedSpec.samples = 2048;
 
     dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if(dev == 0) {
