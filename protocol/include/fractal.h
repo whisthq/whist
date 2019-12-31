@@ -41,6 +41,8 @@
 #define SRV_IP "34.200.170.47"
 #define CAPTURE_WIDTH 1280
 #define CAPTURE_HEIGHT 720
+#define OUTPUT_WIDTH 640
+#define OUTPUT_HEIGHT 480
 
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org
@@ -556,12 +558,12 @@ typedef struct FractalDestination
     short port;
 } FractalDestination;
 
-typedef struct context
+typedef struct SocketContext
 {
     SOCKET s;
     struct sockaddr_in addr;
     int ack;
-} context;
+} SocketContext;
 
 
 /*** STRUCTS END ***/
