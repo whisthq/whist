@@ -38,7 +38,7 @@ typedef struct {
 } Fractalframe_t;
 
 
-static int fragmented_sendto(struct SocketContext *context, uint8_t *data, int len) {
+static int SendPacket(struct SocketContext *context, uint8_t *data, int len) {
   int sent_size, payload_size, slen = sizeof(context->addr), i = 0;
   uint8_t payload[MAX_PACKET_SIZE];
   int curr_index = 0;
@@ -104,12 +104,10 @@ static int32_t SendVideo(void *opaque) {
 
       if (encoder->packet.size != 0) {
         // send packet
-        // if (fragmented_sendto(&context, "MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS", strlen("MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS")) < 0) {
+        // if (SendPacket(&context, "MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS", strlen("MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS")) < 0) {
         // printf("Sending length %d\n", encoder->packet.size);
-        if (fragmented_sendto(&context, encoder->packet.data, encoder->packet.size) < 0) {
+        if (SendPacket(&context, encoder->packet.data, encoder->packet.size) < 0) {
             printf("Could not send video frame\n");
-        } else {
-        	printf("Video frame sent successfully\n");
         }
       }
   }
