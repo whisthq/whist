@@ -177,7 +177,7 @@ audio_encoder_t *create_audio_encoder(int bit_rate) {
     encoder->context->sample_rate    = 44100;
     encoder->context->channel_layout = 3;
     encoder->context->channels       = av_get_channel_layout_nb_channels(encoder->context->channel_layout);
-    encoder->context->gop_size = 1;
+    // encoder->context->gop_size = 1;
 
     /* open it */
     if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
