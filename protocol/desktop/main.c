@@ -19,6 +19,7 @@
 #pragma comment (lib, "ws2_32.lib")
 
 #define BUFLEN 160000
+#define SDL_AUDIO_BUFFER_SIZE 1024;
 
 struct SDLVideoContext {
     Uint8 *yPlane;
@@ -108,25 +109,27 @@ static int32_t ReceiveAudio(void *opaque) {
     audio_decoder_t* audio_decoder;
     audio_decoder = create_audio_decoder();
 
+    SDL_zero(wantedSpec);
+    SDL_zero(audioSpec);
     wantedSpec.channels = audio_decoder->context->channels;
     wantedSpec.freq = audio_decoder->context->sample_rate;
-    wantedSpec.format = AUDIO_F32;
+    wantedSpec.format = AUDIO_F32SYS;
     wantedSpec.silence = 0;
     wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
 
     dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if(dev == 0) {
-    printf("Failed to open audio\n");
-    exit(1);
+        printf("Failed to open audio\n");
+        exit(1);
     }
+    SDL_PauseAudioDevice(dev, 0);
 
     for(i = 0; i < 60000; i++) {
         if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            printf("Received audio size %d\n", recv_size);
-            audio_decoder_decode(audio_decoder, buff, recv_size);
-            int ret = SDL_QueueAudio(dev, audio_decoder->frame->data[0], audio_decoder->frame->linesize[0]);
+            audio_decoder_decode(audio_decoder, recv_buf, recv_size);
+            SDL_QueueAudio(dev, audio_decoder->frame->data[0], audio_decoder->frame->linesize[0]);
         }
     }
 
