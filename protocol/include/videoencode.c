@@ -43,8 +43,7 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 	encoder->context->max_b_frames = 1;
 	encoder->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
-	// set encoder parameters to max performance
-	av_opt_set(encoder->context->priv_data, "profile", "main", 0);
+	// set encoder parameters to max performancen
 	av_opt_set(encoder->context->priv_data, "preset", "ultrafast", 0);
     av_opt_set(encoder->context->priv_data, "tune", "zerolatency", 0);
 
@@ -97,7 +96,7 @@ void destroy_video_encoder(encoder_t *encoder) {
 
 /// @brief encode a frame using the encoder encoder
 /// @details encode a RGB frame into encoded format as YUV color
-void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels, void *encoded_data, size_t *encoded_size) {
+void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
   // define input data to encoder
 	uint8_t *in_data[1] = {(uint8_t *) rgb_pixels};
 	int in_linesize[1] = {encoder->in_width * 4};
@@ -105,12 +104,10 @@ void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels, void *encoded_d
   // scale to the encoder format
 	sws_scale(encoder->sws, in_data, in_linesize, 0, encoder->in_height, encoder->frame->data, encoder->frame->linesize);
 
-  // init our encoded size and get ready for the frame
-	int available_size = *encoded_size;
-	*encoded_size = 0;
 	encoder->frame->pts++;
 
   // init packet to prepare encoding
+	av_free_packet(&encoder->packet);
 	av_init_packet(&encoder->packet);
 	int success = 0; // boolean for success or failure of encoding
 
@@ -119,19 +116,7 @@ void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels, void *encoded_d
 	printf("Packet size %d\n", encoder->packet.size);
   // if encoding succeeded
 	if (success) {
-    // make sure the encoded size is smaller or equal to the max allowed size
-		if (encoder->packet.size <= available_size) {
-      // if it is, then we can save the encoded packet
-			memcpy(encoded_data, encoder->packet.data, encoder->packet.size);
-			*encoded_size = encoder->packet.size;
-		}
-    // if it isn't we exit
-		else {
-			printf("Frame too large for buffer (size: %d needed: %d)\n", available_size, encoder->packet.size);
       return;
-		}
 	}
-  // free the packet, it's now stored in the encoder data
-	av_free_packet(&encoder->packet);
   return;
 }

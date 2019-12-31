@@ -38,20 +38,39 @@ typedef struct {
 } Fractalframe_t;
 
 
+// static int fragmented_sendto(struct context *context, uint8_t *data, int len) {
+//   int sent_size, payload_size, slen = sizeof(context->addr), i = 0;
+//   uint8_t payload[MAX_PACKET_SIZE];
+//   uint8_t *payload_ptr;
+//   uint8_t iteration = 0;
+//   int curr_index = 0;
+
+//   while (curr_index < len) {
+//     payload_ptr = payload + 1;
+//     payload_size = min((MAX_PACKET_SIZE - 1), (len - curr_index));
+//     memcpy(payload_ptr, data + curr_index, payload_size);
+//     payload[0] = iteration;
+//     if((sent_size = sendto(context->s, payload, (payload_size + 1), 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
+//       return -1;
+//     } else {
+//       iteration++;
+//       curr_index += payload_size;
+//     }
+//   }
+//   return 0;
+// }
+
 static int fragmented_sendto(struct context *context, uint8_t *data, int len) {
   int sent_size, payload_size, slen = sizeof(context->addr), i = 0;
   uint8_t payload[MAX_PACKET_SIZE];
-  uint8_t *payload_ptr;
-  int curr_index = 0, iteration = 0;
+  int curr_index = 0;
+
   while (curr_index < len) {
-    payload_ptr = payload + 1;
-    payload_size = min((MAX_PACKET_SIZE - 1), (len - curr_index));
-    memcpy(payload_ptr, data + curr_index, payload_size);
-    payload[0] = iteration;
-    if((sent_size = sendto(context->s, payload, (payload_size + 1), 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
+    payload_size = min((MAX_PACKET_SIZE), (len - curr_index));
+    if((sent_size = sendto(context->s, (data + curr_index), payload_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
       return -1;
     } else {
-      iteration++;
+      printf("Sent %d\n", sent_size);
       curr_index += payload_size;
     }
   }
@@ -63,11 +82,13 @@ static int32_t ReceiveUserInput(void *opaque) {
     int i, recv_size, slen = sizeof(context.addr);
     char recv_buf[BUFLEN];
 
-    while(1) {
+    for(i = 0; i < 50; i++) {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         }
     }
+
+    return 0;
 }
 
 static int32_t SendVideo(void *opaque) {
@@ -106,8 +127,8 @@ static int32_t SendVideo(void *opaque) {
 
       if (encoder->packet.size != 0) {
         // send packet
-        //if (fragmented_sendto(&context, "MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS", strlen("MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS"), 10) < 0)
-        printf("Sending length %d\n", encoder->packet.size);
+        // if (fragmented_sendto(&context, "MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS", strlen("MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS")) < 0) {
+        // printf("Sending length %d\n", encoder->packet.size);
         if (fragmented_sendto(&context, encoder->packet.data, encoder->packet.size) < 0) {
             printf("Could not send video frame\n");
         } else {
@@ -131,6 +152,8 @@ static int32_t SendAudio(void *opaque) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
             printf("Could not send packet\n");
     }
+
+    return 0;
 }
 
 
