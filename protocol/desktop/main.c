@@ -114,11 +114,12 @@ static int32_t ReceiveVideo(void *opaque) {
     decoder_t *decoder;
     decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
 
-    for(i = 0; i < 60000; i++)
+    for(i = 0; i < 600000; i++)
     {
         if ((recv_size = recvfrom(context.socketContext.s, recv_buf + recv_index, (BUFLEN - recv_index), 0, (struct sockaddr*)(&context.socketContext.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
+            printf("Received video packet index %d\n", i);
             recv_index += recv_size;
             if(recv_size != 1000) {
                 video_decoder_decode(decoder, recv_buf, recv_index);
@@ -183,7 +184,8 @@ static int32_t ReceiveAudio(void *opaque) {
     }
     SDL_PauseAudioDevice(dev, 0);
 
-    for(i = 0; i < 60000; i++) {
+    for(i = 0; i < 600000; i++) {
+        printf("Audio index is %d\n", i);
         if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
@@ -325,62 +327,62 @@ int main(int argc, char* argv[])
             printf("Could not send packet\n");
         if ((recv_size = recvfrom(InputContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&InputContext.addr), &slen)) < 0)
             printf("Packet not received \n");
-        // if(SDL_PollEvent(&msg)) {
-        //     // printf("User input index is %d\n", i);
-        //     printf("Event detected!\n");
-        //     // event received, define Fractal message and find which event type it is
-        //     FractalMessage fmsg = {0};
+        if(SDL_PollEvent(&msg)) {
+            // printf("User input index is %d\n", i);
+            printf("Event detected!\n");
+            // event received, define Fractal message and find which event type it is
+            FractalMessage fmsg = {0};
 
-        //     switch (msg.type) {
-        //     // SDL event for keyboard key pressed or released
-        //     case SDL_KEYDOWN:
-        //     case SDL_KEYUP:
-        //       // fill Fractal message structure for sending
-        //       fmsg.type = MESSAGE_KEYBOARD;
-        //       fmsg.keyboard.code = (FractalKeycode) msg.key.keysym.scancode;
-        //       fmsg.keyboard.mod = msg.key.keysym.mod;
-        //       fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN; // print statement to see what's happening
-        //       break;
-        //     // SDL event for mouse location when it moves
-        //     case SDL_MOUSEMOTION:
-        //       fmsg.type = MESSAGE_MOUSE_MOTION;
-        //       fmsg.mouseMotion.x = msg.motion.xrel;
-        //       fmsg.mouseMotion.y = msg.motion.yrel;
-        //       printf("Mouse Position: (%d, %d)\n", fmsg.mouseMotion.x, fmsg.mouseMotion.y); // print statement to see what's happening
-        //       break;
-        //     // SDL event for mouse button pressed or released
-        //     case SDL_MOUSEBUTTONDOWN:
-        //     case SDL_MOUSEBUTTONUP:
-        //       fmsg.type = MESSAGE_MOUSE_BUTTON;
-        //       fmsg.mouseButton.button = msg.button.button;
-        //       fmsg.mouseButton.pressed = msg.button.type == SDL_MOUSEBUTTONDOWN;
-        //       // printf("Mouse Button Code: %d\n", fmsg.mouseButton.button); // print statement to see what's happening
-        //       break;
-        //     // SDL event for mouse wheel scroll
-        //     case SDL_MOUSEWHEEL:
-        //       fmsg.type = MESSAGE_MOUSE_WHEEL;
-        //       fmsg.mouseWheel.x = msg.wheel.x;
-        //       fmsg.mouseWheel.y = msg.wheel.y;
-        //       // printf("Mouse Scroll Position: (%d, %d)\n", fmsg.mouseWheel.x, fmsg.mouseWheel.y); // print statement to see what's happening
-        //       break;
-        //     case SDL_QUIT:
-        //       SDL_DestroyTexture(texture);
-        //       SDL_DestroyRenderer(renderer);
-        //       SDL_DestroyWindow(screen);
-        //       SDL_Quit();
-        //       exit(0);
-        //       break;
-        //     // TODO LATER: clipboard switch case
-        //     }
-        //     if (fmsg.type != 0) {
-        //     // user input is serialized, ready to stream over the network
-        //     // send data message to server
-        //         if (sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen) < 0) {
-        //             printf("Could not send packet\n");
-        //         }
-        //         printf("User action sent.\n");
-        //     }
-        // }
+            switch (msg.type) {
+            // SDL event for keyboard key pressed or released
+            case SDL_KEYDOWN:
+            case SDL_KEYUP:
+              // fill Fractal message structure for sending
+              fmsg.type = MESSAGE_KEYBOARD;
+              fmsg.keyboard.code = (FractalKeycode) msg.key.keysym.scancode;
+              fmsg.keyboard.mod = msg.key.keysym.mod;
+              fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN; // print statement to see what's happening
+              break;
+            // SDL event for mouse location when it moves
+            case SDL_MOUSEMOTION:
+              fmsg.type = MESSAGE_MOUSE_MOTION;
+              fmsg.mouseMotion.x = msg.motion.xrel;
+              fmsg.mouseMotion.y = msg.motion.yrel;
+              printf("Mouse Position: (%d, %d)\n", fmsg.mouseMotion.x, fmsg.mouseMotion.y); // print statement to see what's happening
+              break;
+            // SDL event for mouse button pressed or released
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP:
+              fmsg.type = MESSAGE_MOUSE_BUTTON;
+              fmsg.mouseButton.button = msg.button.button;
+              fmsg.mouseButton.pressed = msg.button.type == SDL_MOUSEBUTTONDOWN;
+              // printf("Mouse Button Code: %d\n", fmsg.mouseButton.button); // print statement to see what's happening
+              break;
+            // SDL event for mouse wheel scroll
+            case SDL_MOUSEWHEEL:
+              fmsg.type = MESSAGE_MOUSE_WHEEL;
+              fmsg.mouseWheel.x = msg.wheel.x;
+              fmsg.mouseWheel.y = msg.wheel.y;
+              // printf("Mouse Scroll Position: (%d, %d)\n", fmsg.mouseWheel.x, fmsg.mouseWheel.y); // print statement to see what's happening
+              break;
+            case SDL_QUIT:
+              SDL_DestroyTexture(texture);
+              SDL_DestroyRenderer(renderer);
+              SDL_DestroyWindow(screen);
+              SDL_Quit();
+              exit(0);
+              break;
+            // TODO LATER: clipboard switch case
+            }
+            if (fmsg.type != 0) {
+            // user input is serialized, ready to stream over the network
+            // send data message to server
+                if (sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen) < 0) {
+                    printf("Could not send packet\n");
+                }
+                printf("User action sent.\n");
+            }
+        }
     }
  
     // Actually, we never reach this point...
