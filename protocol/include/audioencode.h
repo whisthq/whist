@@ -39,6 +39,6 @@ int select_channel_layout(AVCodec *codec);
 
 audio_filter *create_audio_filter(audio_capture_device *device, audio_encoder_t *encoder);
 audio_encoder_t *create_audio_encoder(int bit_rate); 
-void audio_encode_and_send(audio_capture_device *device, audio_encoder_t *encoder, audio_filter *filter, SOCKET SENDsocket);
+void audio_encode_and_send(audio_capture_device *device, audio_encoder_t *encoder, audio_filter *filter, SocketContext context);
 
 #endif // ENCODE_H

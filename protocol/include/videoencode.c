@@ -113,7 +113,6 @@ void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
 
   // attempt to encode the frame
 	avcodec_encode_video2(encoder->context, &encoder->packet, encoder->frame, &success);
-	printf("Packet size %d\n", encoder->packet.size);
   // if encoding succeeded
 	if (success) {
       return;

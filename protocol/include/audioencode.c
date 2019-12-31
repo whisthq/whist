@@ -177,7 +177,7 @@ audio_encoder_t *create_audio_encoder(int bit_rate) {
     encoder->context->sample_rate    = 44100;
     encoder->context->channel_layout = 3;
     encoder->context->channels       = av_get_channel_layout_nb_channels(encoder->context->channel_layout);
-    encoder->context->gop_size = 1;
+    // encoder->context->gop_size = 1;
 
     /* open it */
     if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
@@ -206,8 +206,8 @@ audio_encoder_t *create_audio_encoder(int bit_rate) {
     return encoder;
 }
 
-void audio_encode_and_send(audio_capture_device *device, audio_encoder_t *encoder, audio_filter *filter, SOCKET SENDsocket) {
-    int got_frame, got_output, sent_size;
+void audio_encode_and_send(audio_capture_device *device, audio_encoder_t *encoder, audio_filter *filter, SocketContext context) {
+    int got_frame, got_output, sent_size, slen = sizeof(context.addr);
 
     encoder->output_frame = av_frame_alloc();
     av_init_packet(&encoder->packet);
@@ -237,7 +237,7 @@ void audio_encode_and_send(audio_capture_device *device, audio_encoder_t *encode
                 }
                 avcodec_encode_audio2(encoder->context, &encoder->packet, encoder->output_frame, &got_output);
                 if((&encoder->packet.size != 0) && (got_output)) {
-                    if ((sent_size = send(SENDsocket, encoder->packet.data, encoder->packet.size, 0)) < 0) {
+                    if ((sent_size = sendto(context.s, encoder->packet.data, encoder->packet.size, 0, (struct sockaddr*)(&context.addr), slen)) < 0) {
     			        // error statement if something went wrong
     			    	printf("Socket could not send packet w/ error %d\n", WSAGetLastError());
     			    }
