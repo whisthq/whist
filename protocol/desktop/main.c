@@ -38,13 +38,65 @@ static int32_t SendUserInput(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
     int i, slen = sizeof(context.addr);
     char *message = "Keyboard Input";
+    SDL_Event msg;
 
-    for(i = 0; i < 60000; i++) {
+    while(1) {
+        
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0) {
             printf("Could not send packet\n");
         }
+        // if (SDL_PollEvent(&msg)) {
+        //   // event received, define Fractal message and find which event type it is
+        //   FractalMessage fmsg = {0};
+        //   switch (msg.type) {
+        //     // SDL event for keyboard key pressed or released
+        //     case SDL_KEYDOWN:
+        //     case SDL_KEYUP:
+        //       // fill Fractal message structure for sending
+        //       fmsg.type = MESSAGE_KEYBOARD;
+        //       fmsg.keyboard.code = (FractalKeycode) msg.key.keysym.scancode;
+        //       fmsg.keyboard.mod = msg.key.keysym.mod;
+        //       fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN; // print statement to see what's happening
+        //       break;
+        //     // SDL event for mouse location when it moves
+        //     case SDL_MOUSEMOTION:
+        //       fmsg.type = MESSAGE_MOUSE_MOTION;
+        //       fmsg.mouseMotion.x = msg.motion.xrel;
+        //       fmsg.mouseMotion.y = msg.motion.yrel;
+        //       printf("Mouse Position: (%d, %d)\n", fmsg.mouseMotion.x, fmsg.mouseMotion.y); // print statement to see what's happening
+        //       break;
+        //     // SDL event for mouse button pressed or released
+        //     case SDL_MOUSEBUTTONDOWN:
+        //     case SDL_MOUSEBUTTONUP:
+        //       fmsg.type = MESSAGE_MOUSE_BUTTON;
+        //       fmsg.mouseButton.button = msg.button.button;
+        //       fmsg.mouseButton.pressed = msg.button.type == SDL_MOUSEBUTTONDOWN;
+        //       printf("Mouse Button Code: %d\n", fmsg.mouseButton.button); // print statement to see what's happening
+        //       break;
+        //     // SDL event for mouse wheel scroll
+        //     case SDL_MOUSEWHEEL:
+        //       fmsg.type = MESSAGE_MOUSE_WHEEL;
+        //       fmsg.mouseWheel.x = msg.wheel.x;
+        //       fmsg.mouseWheel.y = msg.wheel.y;
+        //       printf("Mouse Scroll Position: (%d, %d)\n", fmsg.mouseWheel.x, fmsg.mouseWheel.y); // print statement to see what's happening
+        //       break;
+        //     case SDL_QUIT:
+        //       SDL_Quit();
+        //       exit(0);
+        //       break;
+        //     // TODO LATER: clipboard switch case
+        //   }
+        //   // we broke out of the listen loop, so we have an event
+        //   // if we have a message type identified, send event to server
+        //   if (fmsg.type != 0) {
+        //     if (sendto(context.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&context.addr), slen) < 0) {
+        //         printf("Send failed with error code: %d\n", WSAGetLastError());
+        //         return 7;
+        //     }
+        //     // printf("User action sent.\n");
+        //   }
+        // }
     }
-    repeat = 0;
     return 0;
 }
 
@@ -60,8 +112,9 @@ static int32_t ReceiveVideo(void *opaque) {
     for(i = 0; i < 60000; i++)
     {
         if ((recv_size = recvfrom(context.socketContext.s, recv_buf + recv_index, (BUFLEN - recv_index), 0, (struct sockaddr*)(&context.socketContext.addr), &slen)) < 0) {
-            printf("Packet not received \n");
+            printf("Video packet not received \n");
         } else {
+            printf("Video Index %d\n", i);
             recv_index += recv_size;
             printf("Received video size %d\n", recv_size);
             if(recv_size != 1000) {
@@ -96,7 +149,6 @@ static int32_t ReceiveVideo(void *opaque) {
             }
         }
     }
-    repeat = 0;
     return 0;
 }
 
@@ -127,8 +179,9 @@ static int32_t ReceiveAudio(void *opaque) {
     SDL_PauseAudioDevice(dev, 0);
 
     for(i = 0; i < 60000; i++) {
+        printf("Audio index %d\n", i);
         if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) < 0) {
-            printf("Packet not received \n");
+            printf("Audio packet not received \n");
         } else {
             audio_decoder_decode(audio_decoder, recv_buf, recv_size);
             SDL_QueueAudio(dev, audio_decoder->frame->data[0], audio_decoder->frame->linesize[0]);
@@ -137,7 +190,6 @@ static int32_t ReceiveAudio(void *opaque) {
 
     SDL_CloseAudioDevice(dev);
     destroy_audio_decoder(audio_decoder);
-    repeat = 0;
     return 0;
 }
 
@@ -266,6 +318,10 @@ int main(int argc, char* argv[])
     }
  
     // Actually, we never reach this point...
+
+    SDL_DestroyTexture(SDLVideoContext.Texture);
+    SDL_DestroyRenderer(SDLVideoContext.Renderer);
+    SDL_DestroyWindow(screen);
 
     closesocket(InputContext.s);
     closesocket(VideoReceiveContext.s);
