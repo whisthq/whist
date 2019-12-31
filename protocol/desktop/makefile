@@ -5,7 +5,7 @@ CC = cl.exe
 LINK = link.exe
 
 # specify bin name
-BIN_NAME = client.exe
+BIN_NAME = desktop.exe
 
 # static libs to link against
 STATIC_LIBS = \
