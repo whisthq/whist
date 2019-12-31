@@ -36,7 +36,7 @@ static int32_t SendUserInput(void *opaque) {
     int i, slen = sizeof(context.addr);
     char *message = "Keyboard Input";
 
-    for(i = 0; i < 3000; i++) {
+    for(i = 0; i < 60000; i++) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0) {
             printf("Could not send packet\n");
         }
@@ -54,12 +54,11 @@ static int32_t ReceiveVideo(void *opaque) {
     decoder_t *decoder;
     decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
 
-    while(1)
+    for(i = 0; i < 60000; i++)
     {
         if ((recv_size = recvfrom(context.socketContext.s, recv_buf + recv_index, (BUFLEN - recv_index), 0, (struct sockaddr*)(&context.socketContext.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            printf("Received %d\n", recv_size);
             recv_index += recv_size;
             if(recv_size != 1000) {
                 video_decoder_decode(decoder, recv_buf, recv_index);
@@ -103,7 +102,7 @@ static int32_t ReceiveAudio(void *opaque) {
     int recv_size;
     char recv_buf[BUFLEN];
 
-    for(i = 0; i < 3000; i++)
+    for(i = 0; i < 60000; i++)
     {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
