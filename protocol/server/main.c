@@ -57,11 +57,15 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len) {
 static int32_t ReceiveUserInput(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
     int i, recv_size, slen = sizeof(context.addr);
-    char recv_buf[BUFLEN];
+    // char recv_buf[BUFLEN];
+    struct FractalMessage recv_buf;
 
     for(i = 0; i < 60000; i++) {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
+        } else {
+        	printf("Received input %d\n", i);
+        	ReplayUserInput(recv_buf);
         }
     }
 
