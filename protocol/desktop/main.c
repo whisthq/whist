@@ -97,20 +97,41 @@ static int32_t ReceiveVideo(void *opaque) {
 }
 
 static int32_t ReceiveAudio(void *opaque) {
-    struct SocketContext context = *(struct SocketContext *) opaque;
-    int i, slen = sizeof(context.addr);
-    int recv_size;
+    // cast socket and SDL variables back to their data type for usage
+    struct SocketContext* context = (struct SocketContext *) opaque;
+    int i, recv_size, slen = sizeof(context->addr), recv_index = 0;
     char recv_buf[BUFLEN];
 
-    for(i = 0; i < 60000; i++)
-    {
-        if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
+    SDL_AudioSpec wantedSpec = { 0 }, audioSpec = { 0 };
+    SDL_AudioDeviceID dev;
+
+    audio_decoder_t* audio_decoder;
+    audio_decoder = create_audio_decoder();
+
+    wantedSpec.channels = audio_decoder->context->channels;
+    wantedSpec.freq = audio_decoder->context->sample_rate;
+    wantedSpec.format = AUDIO_F32;
+    wantedSpec.silence = 0;
+    wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
+
+    dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+    if(dev == 0) {
+    printf("Failed to open audio\n");
+    exit(1);
+    }
+
+    for(i = 0; i < 60000; i++) {
+        if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            printf("Received audio\n");
+            printf("Received audio size %d\n", recv_size);
+            audio_decoder_decode(audio_decoder, buff, recv_size);
+            int ret = SDL_QueueAudio(dev, audio_decoder->frame->data[0], audio_decoder->frame->linesize[0]);
         }
     }
 
+    SDL_CloseAudioDevice(dev);
+    destroy_audio_decoder(audio_decoder);
     return 0;
 }
 
