@@ -8,6 +8,9 @@
 #include <windows.h>
 
 #include "../include/fractal.h"
+#include "../include/webserver.h" // header file for webserver query functions
+#include "../include/videodecode.h" // header file for audio decoder
+#include "../include/audiodecode.h" // header file for audio decoder
 
 #define SDL_MAIN_HANDLED
 #include "../include/SDL2/SDL.h"
@@ -17,13 +20,23 @@
 
 #define BUFLEN 160000
 
+struct SDLVideoContext {
+    Uint8 *yPlane;
+    Uint8 *uPlane;
+    Uint8 *vPlane;
+    int uvPitch;
+    SDL_Renderer* Renderer;
+    SDL_Texture* Texture;
+    struct SocketContext socketContext;
+    struct SwsContext* sws;
+};
 
 static int32_t SendUserInput(void *opaque) {
-    struct context context = *(struct context *) opaque;
+    struct SocketContext context = *(struct SocketContext *) opaque;
     int i, slen = sizeof(context.addr);
     char *message = "Keyboard Input";
 
-    while(1) {
+    for(i = 0; i < 50; i++) {
         if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0) {
             printf("Could not send packet\n");
         }
@@ -33,32 +46,64 @@ static int32_t SendUserInput(void *opaque) {
 }
 
 static int32_t ReceiveVideo(void *opaque) {
-    struct context context = *(struct context *) opaque;
-    int i, recv_size, slen = sizeof(context.addr), recv_index = 0;
+    struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
+    int i, recv_size, slen = sizeof(context.socketContext.addr), recv_index = 0;
     char recv_buf[BUFLEN];
 
-    while (1)
+    // init decoder
+    decoder_t *decoder;
+    decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
+
+    while(1)
     {
-        if ((recv_size = recvfrom(context.s, recv_buf + recv_index, BUFLEN, 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
+        if ((recv_size = recvfrom(context.socketContext.s, recv_buf + recv_index, BUFLEN, 0, (struct sockaddr*)(&context.socketContext.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            if(recv_size == 10) {
-                recv_index += recv_size;
-            } else {
+            recv_index += recv_size;
+            if(recv_size != 1500) {
+                printf("Received %d\n", recv_size);
+                video_decoder_decode(decoder, recv_buf, recv_index);
+
+                AVPicture pict;
+                pict.data[0] = context.yPlane;
+                pict.data[1] = context.uPlane;
+                pict.data[2] = context.vPlane;
+                pict.linesize[0] = OUTPUT_WIDTH;
+                pict.linesize[1] = context.uvPitch;
+                pict.linesize[2] = context.uvPitch;
+                sws_scale(context.sws, (uint8_t const * const *) decoder->frame->data,
+                     decoder->frame->linesize, 0, decoder->context->height, pict.data,
+                     pict.linesize);
+
+                SDL_UpdateYUVTexture(
+                      context.Texture,
+                      NULL,
+                      context.yPlane,
+                      OUTPUT_WIDTH,
+                      context.uPlane,
+                      context.uvPitch,
+                      context.vPlane,
+                      context.uvPitch
+                  );
+                SDL_RenderClear(context.Renderer);
+                SDL_RenderCopy(context.Renderer, context.Texture, NULL, NULL);
+                SDL_RenderPresent(context.Renderer);
                 recv_index = 0;
                 memset(recv_buf, 0, BUFLEN);
             }
         }
     }
+
+    return 0;
 }
 
 static int32_t ReceiveAudio(void *opaque) {
-    struct context context = *(struct context *) opaque;
+    struct SocketContext context = *(struct SocketContext *) opaque;
     int i, slen = sizeof(context.addr);
     int recv_size;
     char recv_buf[BUFLEN];
 
-    while (1)
+    for(i = 0; i < 50; i++)
     {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
@@ -84,23 +129,103 @@ int main(int argc, char* argv[])
     int recv_size, slen=sizeof(receive_address);
     char recv_buf[BUFLEN];
 
-    struct context InputContext = {0};
+    SDL_Event msg;
+    SDL_Window *screen;
+    SDL_Renderer *renderer;
+    SDL_Texture *texture;
+    Uint8 *yPlane, *uPlane, *vPlane;
+    size_t yPlaneSz, uvPlaneSz;
+    int uvPitch;
+    struct SDLVideoContext SDLVideoContext = {0};
+
+    struct SocketContext InputContext = {0};
     if(CreateUDPContext(&InputContext, "C", "40.121.132.26", 100) < 0) {
         exit(1);
     }
 
-    struct context VideoReceiveContext = {0};
+    struct SocketContext VideoReceiveContext = {0};
     if(CreateUDPContext(&VideoReceiveContext, "C", "40.121.132.26", -1) < 0) {
         exit(1);
     }
 
-    struct context AudioReceiveContext = {0};
+    struct SocketContext AudioReceiveContext = {0};
     if(CreateUDPContext(&AudioReceiveContext, "C", "40.121.132.26", -1) < 0) {
         exit(1);
     }
 
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+      fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+      exit(1);
+    }
+
+    screen = SDL_CreateWindow(
+          "Fractal",
+          SDL_WINDOWPOS_UNDEFINED,
+          SDL_WINDOWPOS_UNDEFINED,
+
+          OUTPUT_WIDTH, // width
+          OUTPUT_HEIGHT, // height
+          0
+      );
+
+    if (!screen) {
+      fprintf(stderr, "SDL: could not create window - exiting\n");
+      exit(1);
+    }
+
+    renderer = SDL_CreateRenderer(screen, -1, 0);
+    if (!renderer) {
+      fprintf(stderr, "SDL: could not create renderer - exiting\n");
+      exit(1);
+    }
+    // Allocate a place to put our YUV image on that screen
+    texture = SDL_CreateTexture(
+          renderer,
+          SDL_PIXELFORMAT_YV12,
+          SDL_TEXTUREACCESS_STREAMING,
+          OUTPUT_WIDTH, // width
+          OUTPUT_HEIGHT // height
+      );
+    if (!texture) {
+      fprintf(stderr, "SDL: could not create texture - exiting\n");
+      exit(1);
+    }
+
+    struct SwsContext *sws_ctx = NULL;
+    sws_ctx = sws_getContext(CAPTURE_WIDTH, CAPTURE_HEIGHT,
+          AV_PIX_FMT_YUV420P, OUTPUT_WIDTH, OUTPUT_HEIGHT,
+          AV_PIX_FMT_YUV420P,
+          SWS_BILINEAR,
+          NULL,
+          NULL,
+          NULL);
+
+    // set up YV12 pixel array (12 bits per pixel)
+    yPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT;
+    uvPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT / 4;
+    yPlane = (Uint8*)malloc(yPlaneSz);
+    uPlane = (Uint8*)malloc(uvPlaneSz);
+    vPlane = (Uint8*)malloc(uvPlaneSz);
+    if (!yPlane || !uPlane || !vPlane) {
+      fprintf(stderr, "Could not allocate pixel buffers - exiting\n");
+      exit(1);
+    }
+
+    uvPitch = OUTPUT_WIDTH / 2;
+
+    // TODO LATER: function to call to adapt window size to client
+
+    SDLVideoContext.yPlane = yPlane;
+    SDLVideoContext.sws = sws_ctx;
+    SDLVideoContext.uPlane = uPlane;
+    SDLVideoContext.vPlane = vPlane;
+    SDLVideoContext.uvPitch = uvPitch;
+    SDLVideoContext.Renderer = renderer;
+    SDLVideoContext.Texture = texture;
+    SDLVideoContext.socketContext = VideoReceiveContext;
+
     SDL_Thread *send_input = SDL_CreateThread(SendUserInput, "SendUserInput", &InputContext);
-    SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &VideoReceiveContext);
+    SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &SDLVideoContext);
     SDL_Thread *receive_audio = SDL_CreateThread(ReceiveAudio, "ReceiveAudio", &AudioReceiveContext);
 
     while (1)
@@ -118,6 +243,7 @@ int main(int argc, char* argv[])
 
     closesocket(InputContext.s);
     closesocket(VideoReceiveContext.s);
+    closesocket(AudioReceiveContext.s);
 
     WSACleanup();
 

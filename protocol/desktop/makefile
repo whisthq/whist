@@ -7,6 +7,7 @@ LINK = link.exe
 # specify bin name
 BIN_NAME = client.exe
 
+# static libs to link against
 STATIC_LIBS = \
   ../lib/ffmpeg/windows/avcodec.lib \
   ../lib/ffmpeg/windows/avdevice.lib \
@@ -17,14 +18,15 @@ STATIC_LIBS = \
   ../lib/ffmpeg/windows/swresample.lib \
   ../lib/ffmpeg/windows/swscale.lib \
   ../lib/SDL2/windows/SDL2.lib
-  
+
 # compiler flags
 CFLAGS = \
   /nologo \
   /W4 \
-  /Ofast \
+  /O2 \
   /MT \
   /MP \
+  -Iinclude \
   -DWIN32_LEAN_AND_MEAN \
   -DUNICODE \
   -DWIN32
@@ -32,12 +34,9 @@ CFLAGS = \
 # system libs to link against
 SHARED_LIBS = \
   libvcruntime.lib \
+  libucrt.lib \
   libcmt.lib \
   kernel32.lib \
-  ws2_32.lib \
-  crypt32.lib \
-  wldap32.lib \
-  normaliz.lib \
   gdi32.lib \
   winmm.lib \
   imm32.lib \
@@ -49,18 +48,7 @@ SHARED_LIBS = \
   user32.lib \
   uuid.lib \
   version.lib \
-  dxgi.lib \
-  d3d11.lib \
-  winspool.lib \
-  comdlg32.lib \
-  odbc32.lib \
-  odbccp32.lib \
-  ucrt.lib \
-  vcruntime.lib \
-  msvcrt.lib \
-  msvcmrt.lib \
-  libcpmt.lib \
-  msvcprt.lib
+  ws2_32.lib
 
 # linking flags
 LD_FLAGS = \
@@ -68,17 +56,26 @@ LD_FLAGS = \
   /nologo
 
 # build all files into executable
-all: clean clear fractal.obj socket.obj main.obj
+all: clean clear fractal.obj webserver.obj videodecode.obj audiodecode.obj main.obj
   link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
-# compile the IP finder helper file into object file
+# compile the main fractal header source file into object file
 fractal.obj: ../include/fractal.c
-	$(CC) /c ../include/fractal.c
+  $(CC) /c ../include/fractal.c
 
-socket.obj: ../include/socket.c
-  $(CC) /c ../include/socket.c
-  
-# compile the source main client file into object file
+# compile the webserver source file into object file
+webserver.obj: ../include/webserver.c
+  $(CC) /c ../include/webserver.c
+
+# compile the video decoder source file into object file
+videodecode.obj: ../include/videodecode.c
+  $(CC) /c ../include/videodecode.c
+
+# compile the audio decoder source file into object file
+audiodecode.obj: ../include/audiodecode.c
+  $(CC) /c ../include/audiodecode.c
+
+# compile the source main file into object file
 main.obj: main.c
   $(CC) /c main.c
 

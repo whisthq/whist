@@ -65,7 +65,7 @@ void destroy_video_decoder(decoder_t *decoder) {
 
 /// @brief decode a frame using the decoder decoder
 /// @details decode an encoded frame under YUV color format into RGB frame
-void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size, void *decoded_data) {
+void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size) {
   // init packet to prepare decoding
 	av_init_packet(&decoder->packet);
 	int success = 0; // boolean for success or failure of decoding
@@ -77,8 +77,6 @@ void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size, vo
 	decoder->packet.size = buffer_size;
   // decode the frame
 	avcodec_decode_video2(decoder->context, decoder->frame, &success, &decoder->packet);
-    // sws_scale(decoder->sws, (const uint8_t * const *)decoder->frame->data, decoder->frame->linesize, 0,
-    //         decoder->frame->height, decoder->scaled_frame->data, decoder->scaled_frame->linesize);
 	av_free_packet(&decoder->packet);
 
     return;

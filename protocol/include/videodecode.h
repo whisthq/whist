@@ -33,6 +33,6 @@ void destroy_video_decoder(decoder_t *decoder);
 
 /// @brief decodes a frame using the decoder device
 /// @details decode an encoded frame under YUV color format into RGB frame
-void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size, void *decoded_data);
+void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size);
 
 #endif // ENCODE_H

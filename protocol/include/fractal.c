@@ -464,7 +464,7 @@ FractalStatus ReplayUserInput(FractalMessage fmsg) {
 	return FRACTAL_OK;
 }
 
-int CreateUDPContext(struct context *context, char* origin, char* destination, int timeout) {
+int CreateUDPContext(struct SocketContext *context, char* origin, char* destination, int timeout) {
 	SOCKET s;
 	struct sockaddr_in addr;
     struct FractalDestination buf;
@@ -522,7 +522,7 @@ int CreateUDPContext(struct context *context, char* origin, char* destination, i
     return 0;
 }
 
-int SendAck(struct context *context) {
+int SendAck(struct SocketContext *context) {
 	char* message = "ACK";
 	int slen = sizeof(context->addr);
 
@@ -533,7 +533,7 @@ int SendAck(struct context *context) {
     }
 }
 
-int ReceiveAck(struct context *context) {
+int ReceiveAck(struct SocketContext *context) {
 	char recv_buf[1000];
 	int slen = sizeof(context->addr);
 
