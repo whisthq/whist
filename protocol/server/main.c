@@ -121,14 +121,29 @@ static int32_t SendVideo(void *opaque) {
 static int32_t SendAudio(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
     int i, slen = sizeof(context.addr);
-    char *message = "Audio";
 
-    for(i = 0; i < 60000; i++) {
-        if (sendto(context.s, message, strlen(message), 0, (struct sockaddr*)(&context.addr), slen) < 0)
-            printf("Could not send packet\n");
-    }
+	audio_capture_device *device;
+	device = create_audio_capture_device();
 
-    return 0;
+	audio_encoder_t *encoder;
+	encoder = create_audio_encoder(96000);
+
+	audio_filter *filter;
+	filter = create_audio_filter(device, encoder);
+
+	for(i = 0; i < 60000; i++) {
+	  audio_encode_and_send(device, encoder, filter, context);
+	}
+
+	/* flush the encoder */
+	int got_output;
+	avcodec_encode_audio2(encoder->context, &encoder->packet, NULL, &got_output);
+
+	av_frame_free(&encoder->input_frame);
+	av_packet_free(&encoder->packet);
+	avcodec_free_context(&encoder->context);
+	destroy_audio_capture_device(device);
+	return 0;
 }
 
 
