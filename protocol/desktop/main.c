@@ -66,12 +66,17 @@ static int32_t ReceiveVideo(void *opaque) {
     decoder_t *decoder;
     decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
 
+    for(i = 0; i < 5; i++) {
+        if (SendAck(&context.socketContext.s) < 0)
+            printf("Could not send packet\n");
+    }
+
     for(i = 0; i < 600000; i++)
     {
         if ((recv_size = recvfrom(context.socketContext.s, recv_buf + recv_index, (BUFLEN - recv_index), 0, (struct sockaddr*)(&context.socketContext.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            printf("Video index is %d\n", i);
+            // printf("Video index is %d\n", i);
             recv_index += recv_size;
             if(recv_size != 1000) {
                 video_decoder_decode(decoder, recv_buf, recv_index);
@@ -135,6 +140,11 @@ static int32_t ReceiveAudio(void *opaque) {
         exit(1);
     }
     SDL_PauseAudioDevice(dev, 0);
+
+    for(i = 0; i < 5; i++) {
+        if (SendAck(&context->s) < 0)
+            printf("Could not send packet\n");
+    }
 
     for(i = 0; i < 600000; i++) {
         if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) < 0) {
@@ -272,12 +282,9 @@ int main(int argc, char* argv[])
 
     FractalMessage fmsg = {0};
 
+
     while (repeat)
     {
-        if (SendAck(&VideoReceiveContext.s) < 0)
-            printf("Could not send packet\n");
-        if (SendAck(&AudioReceiveContext.s) < 0)
-            printf("Could not send packet\n");
         if ((recv_size = recvfrom(InputContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&InputContext.addr), &slen)) < 0) {
             printf("ACK packet not received \n");
         } else {
@@ -341,7 +348,6 @@ int main(int argc, char* argv[])
         if (sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen) < 0) {
             printf("Could not send packet\n");
         }
-        printf("Actual user action sent.\n");
     }
  
     // Actually, we never reach this point...
