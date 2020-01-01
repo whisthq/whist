@@ -189,7 +189,7 @@ int main(int argc, char* argv[])
     struct SDLInputContext SDLInputContext = {0};
 
     struct SocketContext InputContext = {0};
-    if(CreateUDPContext(&InputContext, "C", "40.121.132.26", 100) < 0) {
+    if(CreateUDPContext(&InputContext, "C", "40.121.132.26", -1) < 0) {
         exit(1);
     }
 
@@ -289,7 +289,7 @@ int main(int argc, char* argv[])
 
     while (repeat)
     {
-        if(SDL_PollEvent(&msg)) {
+        if(SDL_WaitEvent(&msg)) {
             // printf("User input index is %d\n", i);
             printf("Event detected!\n");
             // event received, define Fractal message and find which event type it is
@@ -337,14 +337,14 @@ int main(int argc, char* argv[])
             }
         }
         if (fmsg.type != 0) {
-        // user input is serialized, ready to stream over the network
-        // send data message to server
             if (sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen) < 0) {
                 printf("Could not send packet\n");
             }
-            printf("Actual user action sent.\n");
+            if(fmsg.type == MESSAGE_KEYBOARD) {
+                printf("Keyboard sent!\n");
+            }
         }
-        Sleep(10);
+        Sleep(1);
     }
  
     // Actually, we never reach this point...
