@@ -57,19 +57,13 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len) {
 static int32_t ReceiveUserInput(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
     int i, recv_size, slen = sizeof(context.addr);
-    // char recv_buf[BUFLEN];
-    struct FractalMessage recv_buf;
-    struct FractalMessage empty = {0};
+    struct FractalMessage fmsg;
 
     for(i = 0; i < 60000; i++) {
-        if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
+        if ((recv_size = recvfrom(context.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-        	if(recv_buf.type == MESSAGE_KEYBOARD) {
-        		printf("Received size %d\n", recv_size);
-        	}
-        	ReplayUserInput(recv_buf);
-        	recv_buf = empty;
+        	ReplayUserInput(fmsg);
         }
     }
 
@@ -79,15 +73,6 @@ static int32_t ReceiveUserInput(void *opaque) {
 static int32_t SendVideo(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
     int i, slen = sizeof(context.addr);
-    char *message = "Video";
-    char recv_buf[BUFLEN];
-
-    // printf("Waiting for ACK packet\n");
-    // if (recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen) < 0) {
-    //     printf("ACK packet not received \n");
-    // } else {
-    // 	printf("Received ACK packet\n");
-    // }
 
     // get window
     HWND window = NULL;
@@ -120,8 +105,6 @@ static int32_t SendVideo(void *opaque) {
 
       if (encoder->packet.size != 0) {
         // send packet
-        // if (SendPacket(&context, "MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS", strlen("MHYVIDOEISPLAYINGRIGHTNOWSOIAMTESTINGATSTARBUKCS")) < 0) {
-        // printf("Sending length %d\n", encoder->packet.size);
         if (SendPacket(&context, encoder->packet.data, encoder->packet.size) < 0) {
             printf("Could not send video frame\n");
         }
@@ -198,19 +181,11 @@ int main(int argc, char* argv[])
 
     while (1)
     {
-        if (SendAck(&InputReceiveContext) < 0) {
+        if (SendAck(&InputReceiveContext) < 0)
             printf("Could not send packet\n");
-        } else {
-        	printf("ACK sent");
-        }
-        // if ((recv_size = recvfrom(VideoContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&VideoContext.addr), &slen)) < 0) 
-        //     printf("Packet not received \n");
-        // if ((recv_size = recvfrom(AudioContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&AudioContext.addr), &slen)) < 0) 
-        //     printf("Packet not received \n");
         Sleep(3000);
     }
  
-    // Actually, we never reach this point...
 
     closesocket(InputReceiveContext.s);
     closesocket(VideoContext.s);
