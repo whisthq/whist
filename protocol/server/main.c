@@ -59,12 +59,17 @@ static int32_t ReceiveUserInput(void *opaque) {
     int i, recv_size, slen = sizeof(context.addr);
     // char recv_buf[BUFLEN];
     struct FractalMessage recv_buf;
+    struct FractalMessage empty = {0};
 
     for(i = 0; i < 60000; i++) {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
+        	if(recv_buf.type == MESSAGE_KEYBOARD) {
+        		printf("Received size %d\n", recv_size);
+        	}
         	ReplayUserInput(recv_buf);
+        	recv_buf = empty;
         }
     }
 
@@ -193,13 +198,16 @@ int main(int argc, char* argv[])
 
     while (1)
     {
-        if (SendAck(&InputReceiveContext) < 0)
+        if (SendAck(&InputReceiveContext) < 0) {
             printf("Could not send packet\n");
-        if ((recv_size = recvfrom(VideoContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&VideoContext.addr), &slen)) < 0) 
-            printf("Packet not received \n");
-        if ((recv_size = recvfrom(AudioContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&AudioContext.addr), &slen)) < 0) 
-            printf("Packet not received \n");
-        Sleep(2000);
+        } else {
+        	printf("ACK sent");
+        }
+        // if ((recv_size = recvfrom(VideoContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&VideoContext.addr), &slen)) < 0) 
+        //     printf("Packet not received \n");
+        // if ((recv_size = recvfrom(AudioContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&AudioContext.addr), &slen)) < 0) 
+        //     printf("Packet not received \n");
+        Sleep(3000);
     }
  
     // Actually, we never reach this point...
