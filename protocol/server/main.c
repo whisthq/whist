@@ -64,7 +64,6 @@ static int32_t ReceiveUserInput(void *opaque) {
         if ((recv_size = recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-        	printf("Received input %d\n", i);
         	ReplayUserInput(recv_buf);
         }
     }
@@ -76,6 +75,14 @@ static int32_t SendVideo(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
     int i, slen = sizeof(context.addr);
     char *message = "Video";
+    char recv_buf[BUFLEN];
+
+    // printf("Waiting for ACK packet\n");
+    // if (recvfrom(context.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context.addr), &slen) < 0) {
+    //     printf("ACK packet not received \n");
+    // } else {
+    // 	printf("Received ACK packet\n");
+    // }
 
     // get window
     HWND window = NULL;
@@ -100,7 +107,7 @@ static int32_t SendVideo(void *opaque) {
     int sent_size; // var to keep track of size of packets sent
 
     // while stream is on
-    for(i = 0; i < 60000; i++) {
+    for(i = 0; i < 600000; i++) {
       // capture a frame
       capturedframe = capture_screen(device);
 
@@ -135,7 +142,7 @@ static int32_t SendAudio(void *opaque) {
 	audio_filter *filter;
 	filter = create_audio_filter(device, encoder);
 
-	for(i = 0; i < 60000; i++) {
+	for(i = 0; i < 600000; i++) {
 	  audio_encode_and_send(device, encoder, filter, context);
 	}
 
