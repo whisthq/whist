@@ -44,64 +44,16 @@ struct SDLInputContext {
 
 static int32_t SendUserInput(void *opaque) {
     struct SDLInputContext context = *(struct SDLInputContext *) opaque;
-    int i, slen = sizeof(context.socketContext.addr);
+    int i, recv_size, slen = sizeof(context.socketContext.addr);
+    char recv_buf[BUFLEN];
 
-    for (SDL_Event msg; SDL_PollEvent(&msg);) {
-        // printf("User input index is %d\n", i);
-        printf("Event detected!\n");
-        // event received, define Fractal message and find which event type it is
-        FractalMessage fmsg = {0};
-
-        switch (msg.type) {
-        // SDL event for keyboard key pressed or released
-        case SDL_KEYDOWN:
-        case SDL_KEYUP:
-          // fill Fractal message structure for sending
-          fmsg.type = MESSAGE_KEYBOARD;
-          fmsg.keyboard.code = (FractalKeycode) msg.key.keysym.scancode;
-          fmsg.keyboard.mod = msg.key.keysym.mod;
-          fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN; // print statement to see what's happening
-          break;
-        // SDL event for mouse location when it moves
-        case SDL_MOUSEMOTION:
-          fmsg.type = MESSAGE_MOUSE_MOTION;
-          fmsg.mouseMotion.x = msg.motion.xrel;
-          fmsg.mouseMotion.y = msg.motion.yrel;
-          printf("Mouse Position: (%d, %d)\n", fmsg.mouseMotion.x, fmsg.mouseMotion.y); // print statement to see what's happening
-          break;
-        // SDL event for mouse button pressed or released
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
-          fmsg.type = MESSAGE_MOUSE_BUTTON;
-          fmsg.mouseButton.button = msg.button.button;
-          fmsg.mouseButton.pressed = msg.button.type == SDL_MOUSEBUTTONDOWN;
-          // printf("Mouse Button Code: %d\n", fmsg.mouseButton.button); // print statement to see what's happening
-          break;
-        // SDL event for mouse wheel scroll
-        case SDL_MOUSEWHEEL:
-          fmsg.type = MESSAGE_MOUSE_WHEEL;
-          fmsg.mouseWheel.x = msg.wheel.x;
-          fmsg.mouseWheel.y = msg.wheel.y;
-          // printf("Mouse Scroll Position: (%d, %d)\n", fmsg.mouseWheel.x, fmsg.mouseWheel.y); // print statement to see what's happening
-          break;
-        case SDL_QUIT:
-          SDL_DestroyTexture(context.Texture);
-          SDL_DestroyRenderer(context.Renderer);
-          SDL_DestroyWindow(context.Screen);
-          SDL_Quit();
-          exit(0);
-          break;
-        // TODO LATER: clipboard switch case
-        }
-        if (fmsg.type != 0) {
-        // user input is serialized, ready to stream over the network
-        // send data message to server
-            if (sendto(context.socketContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&context.socketContext.addr), slen) < 0) {
-                printf("Could not send packet\n");
-            }
-            printf("User action sent.\n");
-        }
-    }
+    // for(i = 0; i < 60000; i++) {
+    //     if(sendto(context.socketContext.s, "hi", strlen("hi"), 0, (struct sockaddr*)(&context.socketContext.addr), slen) < 0) {
+    //         printf("Could not send user input\n");
+    //     } else {
+    //         Sleep(1000);
+    //     }
+    // }
     return 0;
 }
 
@@ -119,7 +71,7 @@ static int32_t ReceiveVideo(void *opaque) {
         if ((recv_size = recvfrom(context.socketContext.s, recv_buf + recv_index, (BUFLEN - recv_index), 0, (struct sockaddr*)(&context.socketContext.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            printf("Received video packet index %d\n", i);
+            printf("Video index is %d\n", i);
             recv_index += recv_size;
             if(recv_size != 1000) {
                 video_decoder_decode(decoder, recv_buf, recv_index);
@@ -185,7 +137,6 @@ static int32_t ReceiveAudio(void *opaque) {
     SDL_PauseAudioDevice(dev, 0);
 
     for(i = 0; i < 600000; i++) {
-        printf("Audio index is %d\n", i);
         if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
@@ -319,19 +270,23 @@ int main(int argc, char* argv[])
     SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &SDLVideoContext);
     SDL_Thread *receive_audio = SDL_CreateThread(ReceiveAudio, "ReceiveAudio", &AudioReceiveContext);
 
+    FractalMessage fmsg = {0};
+
     while (repeat)
     {
         if (SendAck(&VideoReceiveContext.s) < 0)
             printf("Could not send packet\n");
         if (SendAck(&AudioReceiveContext.s) < 0)
             printf("Could not send packet\n");
-        if ((recv_size = recvfrom(InputContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&InputContext.addr), &slen)) < 0)
-            printf("Packet not received \n");
+        if ((recv_size = recvfrom(InputContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&InputContext.addr), &slen)) < 0) {
+            printf("ACK packet not received \n");
+        } else {
+            printf("User input ack received!!!!!!!!!!!!!!!!\n");
+        }
         if(SDL_PollEvent(&msg)) {
             // printf("User input index is %d\n", i);
             printf("Event detected!\n");
             // event received, define Fractal message and find which event type it is
-            FractalMessage fmsg = {0};
 
             switch (msg.type) {
             // SDL event for keyboard key pressed or released
@@ -374,15 +329,19 @@ int main(int argc, char* argv[])
               break;
             // TODO LATER: clipboard switch case
             }
-            if (fmsg.type != 0) {
-            // user input is serialized, ready to stream over the network
-            // send data message to server
-                if (sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen) < 0) {
-                    printf("Could not send packet\n");
-                }
-                printf("User action sent.\n");
-            }
         }
+        // if (fmsg.type != 0) {
+        // // user input is serialized, ready to stream over the network
+        // // send data message to server
+        //     if (sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen) < 0) {
+        //         printf("Could not send packet\n");
+        //     }
+        //     printf("Actual user action sent.\n");
+        // }
+        if (sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen) < 0) {
+            printf("Could not send packet\n");
+        }
+        printf("Actual user action sent.\n");
     }
  
     // Actually, we never reach this point...
