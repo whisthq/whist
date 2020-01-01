@@ -290,10 +290,6 @@ int main(int argc, char* argv[])
     while (repeat)
     {
         if(SDL_WaitEvent(&msg)) {
-            // printf("User input index is %d\n", i);
-            printf("Event detected!\n");
-            // event received, define Fractal message and find which event type it is
-
             switch (msg.type) {
             // SDL event for keyboard key pressed or released
             case SDL_KEYDOWN:
@@ -338,13 +334,11 @@ int main(int argc, char* argv[])
         }
         if (fmsg.type != 0) {
             if (sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen) < 0) {
-                printf("Could not send packet\n");
-            }
-            if(fmsg.type == MESSAGE_KEYBOARD) {
-                printf("Keyboard sent!\n");
+                printf("Could not input send packet\n");
             }
         }
-        Sleep(1);
+        memset(&fmsg, 0, sizeof(fmsg));
+        Sleep(0.5);
     }
  
     // Actually, we never reach this point...
