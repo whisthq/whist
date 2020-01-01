@@ -43,9 +43,9 @@ struct SDLInputContext {
 };
 
 static int32_t SendUserInput(void *opaque) {
-    struct SDLInputContext context = *(struct SDLInputContext *) opaque;
-    int i, recv_size, slen = sizeof(context.socketContext.addr);
-    char recv_buf[BUFLEN];
+    // struct SDLInputContext context = *(struct SDLInputContext *) opaque;
+    // int i, recv_size, slen = sizeof(context.socketContext.addr);
+    // char recv_buf[BUFLEN];
 
     // for(i = 0; i < 60000; i++) {
     //     if(sendto(context.socketContext.s, "hi", strlen("hi"), 0, (struct sockaddr*)(&context.socketContext.addr), slen) < 0) {
@@ -54,6 +54,10 @@ static int32_t SendUserInput(void *opaque) {
     //         Sleep(1000);
     //     }
     // }
+    int i;
+    for(i = 0; i < 60000; i++) {
+        Sleep(1000);
+    }
     return 0;
 }
 
@@ -285,11 +289,6 @@ int main(int argc, char* argv[])
 
     while (repeat)
     {
-        if ((recv_size = recvfrom(InputContext.s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&InputContext.addr), &slen)) < 0) {
-            printf("ACK packet not received \n");
-        } else {
-            printf("User input ack received!!!!!!!!!!!!!!!!\n");
-        }
         if(SDL_PollEvent(&msg)) {
             // printf("User input index is %d\n", i);
             printf("Event detected!\n");
@@ -337,17 +336,15 @@ int main(int argc, char* argv[])
             // TODO LATER: clipboard switch case
             }
         }
-        // if (fmsg.type != 0) {
-        // // user input is serialized, ready to stream over the network
-        // // send data message to server
-        //     if (sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen) < 0) {
-        //         printf("Could not send packet\n");
-        //     }
-        //     printf("Actual user action sent.\n");
-        // }
-        if (sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen) < 0) {
-            printf("Could not send packet\n");
+        if (fmsg.type != 0) {
+        // user input is serialized, ready to stream over the network
+        // send data message to server
+            if (sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen) < 0) {
+                printf("Could not send packet\n");
+            }
+            printf("Actual user action sent.\n");
         }
+        Sleep(10);
     }
  
     // Actually, we never reach this point...
