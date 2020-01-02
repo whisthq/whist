@@ -56,14 +56,41 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len) {
 
 static int32_t ReceiveUserInput(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
-    int i, recv_size, slen = sizeof(context.addr);
+    int i, recv_size, slen = sizeof(context.addr), j = 0, active = 0;
+    struct FractalMessage fmsgs[6];
     struct FractalMessage fmsg;
 
     for(i = 0; i < 60000; i++) {
         if ((recv_size = recvfrom(context.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-        	ReplayUserInput(fmsg);
+          if(fmsg.type == MESSAGE_KEYBOARD) {
+            if(active) {
+              fmsgs[j] = fmsg;
+              if(fmsg.keyboard.pressed) {
+                if(fmsg.keyboard.code != fmsgs[j - 1].keyboard.code) {
+                  printf("Keyboard press detected at index %d\n", j);
+                  j++;
+                }
+              } else {
+                ReplayUserInput(fmsgs, j + 1);
+                active = 0;
+                j = 0;
+              }
+            } else {
+              fmsgs[0] = fmsg;
+              if(fmsg.keyboard.pressed && (fmsg.keyboard.code >= 224 && fmsg.keyboard.code <= 231)) {
+                printf("Special key detected");
+                active = 1;
+                j++;
+              } else {
+                ReplayUserInput(fmsgs, 1);
+              }    
+            }
+          } else {
+            fmsgs[0] = fmsg;
+            ReplayUserInput(fmsgs, 1);
+          }
         }
     }
 
@@ -86,7 +113,7 @@ static int32_t SendVideo(void *opaque) {
     // set encoder parameters
     int width = device->width; // in and out from the capture device
     int height = device->height; // in and out from the capture device
-    int bitrate = width * 5000; // estimate bit rate based on output size
+    int bitrate = width * 3000; // estimate bit rate based on output size
 
     // init encoder
     encoder_t *encoder;
