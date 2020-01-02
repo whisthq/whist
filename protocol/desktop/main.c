@@ -105,9 +105,6 @@ static int32_t ReceiveAudio(void *opaque) {
     audio_decoder_t* audio_decoder;
     audio_decoder = create_audio_decoder();
 
-    if (SendAck(&context->s, 5) < 0)
-        printf("Could not send packet\n");
-
     SDL_zero(wantedSpec);
     SDL_zero(audioSpec);
     wantedSpec.channels = audio_decoder->context->channels;
@@ -116,6 +113,9 @@ static int32_t ReceiveAudio(void *opaque) {
     wantedSpec.silence = 0;
     wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
 
+    if (SendAck(&context->s, 5) < 0)
+        printf("Could not send packet\n");
+    
     dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if(dev == 0) {
         printf("Failed to open audio\n");
@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
 
     while (repeat)
     {
-        if(SDL_PollEvent(&msg)) {
+        if(SDL_WaitEvent(&msg)) {
             switch (msg.type) {
             // SDL event for keyboard key pressed or released
             case SDL_KEYDOWN:
@@ -281,6 +281,8 @@ int main(int argc, char* argv[])
               fmsg.mouseWheel.x = msg.wheel.x;
               fmsg.mouseWheel.y = msg.wheel.y;
               break;
+            case SDL_MULTIGESTURE:
+              break;
             case SDL_QUIT:
               SDL_DestroyTexture(texture);
               SDL_DestroyRenderer(renderer);
@@ -296,7 +298,7 @@ int main(int argc, char* argv[])
         }
         if (fmsg.type != 0) {
             sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen);
-            Sleep(1);
+            Sleep(0.5);
         }
         memset(&fmsg, 0, sizeof(fmsg));
     }
