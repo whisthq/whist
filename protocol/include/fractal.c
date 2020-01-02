@@ -25,7 +25,7 @@
 
 // @brief Windows keycodes for replaying SDL user inputs on server
 // @details index is SDL keycode, value is Windows keycode
-const char windows_keycodes[264] = {
+const int windows_keycodes[265] = {
 	NULL, // SDL keycodes start at index 4
 	NULL, // SDL keycodes start at index 4
 	NULL, // SDL keycodes start at index 4
@@ -144,7 +144,7 @@ const char windows_keycodes[264] = {
 	NULL, // 115 -> no SDL keycode at index 115
 	NULL, // 116 -> no SDL keycode at index 116
 	NULL, // 117 -> no SDL keycode at index 117
-	0xA4, // 118 -> Menu
+	VK_MENU, // 118 -> Menu
 	NULL, // 119 -> no SDL keycode at index 119
 	NULL, // 120 -> no SDL keycode at index 120
 	NULL, // 121 -> no SDL keycode at index 121
@@ -153,9 +153,9 @@ const char windows_keycodes[264] = {
 	NULL, // 124 -> no SDL keycode at index 124
 	NULL, // 125 -> no SDL keycode at index 125
 	NULL, // 126 -> no SDL keycode at index 126
-	0xAD, // 127 -> Mute
-	0xAF, // 128 -> Volume Up
-	0xAE, // 129 -> Volume Down
+	VK_VOLUME_MUTE, // 127 -> Mute
+	VK_VOLUME_UP, // 128 -> Volume Up
+	VK_VOLUME_DOWN, // 129 -> Volume Down
 	NULL, // 130 -> no SDL keycode at index 130
 	NULL, // 131 -> no SDL keycode at index 131
 	NULL, // 132 -> no SDL keycode at index 132
@@ -249,14 +249,15 @@ const char windows_keycodes[264] = {
 	NULL, // 221 -> no SDL keycode at index 221
 	NULL, // 222 -> no SDL keycode at index 222
 	NULL, // 223 -> no SDL keycode at index 223
-	0xA2, // 224 -> Left Ctrl
-	0xA0, // 225 -> Left Shift
-	0x12, // 226 -> Left Alt
-	0x5B, // 227 -> Left GUI (Windows Key)
-	0xA3, // 228 -> Right Ctrl
-	0xA1, // 229 -> Right Shift
-	0x12, // 230 -> Right Alt
-	0x5C, // 231 -> Right GUI (Windows Key)
+	NULL, 
+	VK_LCONTROL, // 224 -> Left Ctrl
+	VK_LSHIFT, // 225 -> Left Shift
+	VK_MENU, // 226 -> Left Alt
+	VK_LWIN, // 227 -> Left GUI (Windows Key)
+	VK_RCONTROL, // 228 -> Right Ctrl
+	VK_RSHIFT, // 229 -> Right Shift
+	VK_MENU, // 230 -> Right Alt
+	VK_RWIN, // 231 -> Right GUI (Windows Key)
 	NULL, // 232 -> no SDL keycode at index 232
 	NULL, // 233 -> no SDL keycode at index 233
 	NULL, // 234 -> no SDL keycode at index 234
@@ -283,12 +284,12 @@ const char windows_keycodes[264] = {
 	NULL, // 255 -> no SDL keycode at index 255
 	NULL, // 256 -> no SDL keycode at index 256
 	NULL, // 257 -> no SDL keycode at index 257
-	0xB0, // 258 -> Audio/Media Next
-	0xB1, // 259 -> Audio/Media Prev
-	0xB2, // 260 -> Audio/Media Stop
-	0xB3, // 261 -> Audio/Media Play
-	0xAD, // 262 -> Audio/Media Mute
-	0xB5, // 263 -> Media Select
+	VK_MEDIA_NEXT_TRACK, // 258 -> Audio/Media Next
+	VK_MEDIA_PREV_TRACK, // 259 -> Audio/Media Prev
+	VK_MEDIA_STOP, // 260 -> Audio/Media Stop
+	VK_MEDIA_PLAY_PAUSE, // 261 -> Audio/Media Play
+	VK_VOLUME_MUTE, // 262 -> Audio/Media Mute
+	VK_LAUNCH_MEDIA_SELECT, // 263 -> Media Select
 	0x7FFFFFFF};
 
 /*** DEFINITIONS END ***/
@@ -462,8 +463,8 @@ FractalStatus ReplayUserInput(struct FractalMessage fmsg[6], int len) {
 			// TODO: add clipboard
 	  }
 	}
-  // send FMSG mapped to Windows event to Windows and return
-  SendInput(len, Event, sizeof(INPUT)); // 1 structure to send
+    // send FMSG mapped to Windows event to Windows and return
+    SendInput(len, Event, sizeof(INPUT)); // 1 structure to send
  
 	return FRACTAL_OK;
 }

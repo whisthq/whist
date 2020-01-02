@@ -73,6 +73,7 @@ static int32_t ReceiveUserInput(void *opaque) {
                   j++;
                 }
               } else {
+                printf("Last index %d\n", j);
                 ReplayUserInput(fmsgs, j + 1);
                 active = 0;
                 j = 0;
