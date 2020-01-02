@@ -52,9 +52,9 @@ static int32_t ReceiveVideo(void *opaque) {
         if ((recv_size = recvfrom(context.socketContext.s, recv_buf + recv_index, (BUFLEN - recv_index), 0, (struct sockaddr*)(&context.socketContext.addr), &slen)) < 0) {
             printf("Packet not received \n");
         } else {
-            // printf("Video index is %d\n", i);
             recv_index += recv_size;
             if(recv_size != 1000) {
+                printf("The video time is %d\n", av_gettime());
                 video_decoder_decode(decoder, recv_buf, recv_index);
 
                 AVPicture pict;
@@ -115,7 +115,7 @@ static int32_t ReceiveAudio(void *opaque) {
 
     if (SendAck(&context->s, 5) < 0)
         printf("Could not send packet\n");
-    
+
     dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if(dev == 0) {
         printf("Failed to open audio\n");
@@ -128,6 +128,7 @@ static int32_t ReceiveAudio(void *opaque) {
         if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) > 0) {
             audio_decoder_decode(audio_decoder, recv_buf, recv_size);
             SDL_QueueAudio(dev, audio_decoder->frame->data[0], audio_decoder->frame->linesize[0]);
+            printf("The audio time is %d\n", av_gettime());
         }
         if (i % (30 * 60) == 0) {
             SendAck(&context->s, 1);

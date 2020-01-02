@@ -527,15 +527,17 @@ int CreateUDPContext(struct SocketContext *context, char* origin, char* destinat
     return 0;
 }
 
-int SendAck(struct SocketContext *context) {
+int SendAck(struct SocketContext *context, int reps) {
 	char* message = "ACK";
-	int slen = sizeof(context->addr);
+	int rep, slen = sizeof(context->addr);
 
-    if (sendto(context->s, message, strlen(message), 0, (struct sockaddr*)(&context->addr), slen) < 0) {
-        return -1;
-    } else {
-    	return 0;
-    }
+	for(rep = 0; rep < reps; rep++) {
+	    if (sendto(context->s, message, strlen(message), 0, (struct sockaddr*)(&context->addr), slen) < 0) {
+	        return -1;
+	    }
+	}
+
+	return 0;
 }
 
 int ReceiveAck(struct SocketContext *context) {
