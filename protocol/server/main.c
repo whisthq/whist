@@ -61,19 +61,15 @@ static int32_t ReceiveUserInput(void *opaque) {
     struct FractalMessage fmsg;
 
     for(i = 0; i < 60000; i++) {
-        if ((recv_size = recvfrom(context.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&context.addr), &slen)) < 0) {
-            printf("Packet not received \n");
-        } else {
+        if ((recv_size = recvfrom(context.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&context.addr), &slen)) > 0) {
           if(fmsg.type == MESSAGE_KEYBOARD) {
             if(active) {
               fmsgs[j] = fmsg;
               if(fmsg.keyboard.pressed) {
                 if(fmsg.keyboard.code != fmsgs[j - 1].keyboard.code) {
-                  printf("Keyboard press detected at index %d\n", j);
                   j++;
                 }
               } else {
-                printf("Last index %d\n", j);
                 ReplayUserInput(fmsgs, j + 1);
                 active = 0;
                 j = 0;
@@ -81,7 +77,6 @@ static int32_t ReceiveUserInput(void *opaque) {
             } else {
               fmsgs[0] = fmsg;
               if(fmsg.keyboard.pressed && (fmsg.keyboard.code >= 224 && fmsg.keyboard.code <= 231)) {
-                printf("Special key detected");
                 active = 1;
                 j++;
               } else {
