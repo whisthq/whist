@@ -458,7 +458,7 @@ FractalStatus ReplayUserInput(struct FractalMessage fmsg[6], int len) {
 	      Event[i].mi.dwFlags = MOUSEEVENTF_WHEEL;
 	      Event[i].mi.dx = 0;
 	      Event[i].mi.dy = 0;
-	      Event[i].mi.mouseData = fmsg[i].mouseWheel.x;
+	      Event[i].mi.mouseData = fmsg[i].mouseWheel.y * 100;
 	      break;
 			// TODO: add clipboard
 	  }
