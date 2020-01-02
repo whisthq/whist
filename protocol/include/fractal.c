@@ -420,7 +420,7 @@ FractalStatus ReplayUserInput(FractalMessage fmsg) {
       Event.type = INPUT_MOUSE;
       Event.mi.dx = fmsg.mouseMotion.x * ((float) 65536 / sWidth);
       Event.mi.dy = fmsg.mouseMotion.y * ((float) 65536 / sHeight);
-      Event.mi.dwFlags = MOUSEEVENTF_MOVE;
+      Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
       break;
 		// mouse button event
     case MESSAGE_MOUSE_BUTTON:
