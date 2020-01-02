@@ -580,7 +580,7 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config);
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalMessage struct and send input to Windows OS
-FractalStatus ReplayUserInput(FractalMessage fmsg);
+FractalStatus ReplayUserInput(struct FractalMessage fmsg[6], int len);
 
 int CreateUDPContext(struct context *context, char* origin, char* destination, int timeout);
 

@@ -393,74 +393,78 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalMessage struct and send input to Windows OS
-FractalStatus ReplayUserInput(FractalMessage fmsg) {
+FractalStatus ReplayUserInput(struct FractalMessage fmsg[6], int len) {
   // get screen width and height for mouse cursor
   int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
   int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
+  int i;
+  INPUT Event[6];
 
-  // create an input event for the windows API based on our Fractal event
-  INPUT Event = {0};
+  len = min(len, 6);
 
+  for(i = 0; i < len; i++) {
   // switch to fill in the Windows event depending on the FractalMessage type
-  switch (fmsg.type) {
-    // Windows event for keyboard action
-    case MESSAGE_KEYBOARD:
-      Event.ki.wVk = windows_keycodes[fmsg.keyboard.code];
-      Event.type = INPUT_KEYBOARD;
-      Event.ki.wScan = 0;
-      Event.ki.time = 0; // system supplies timestamp
-
-			// release key case
-      if (!fmsg.keyboard.pressed) {
-      	Event.ki.dwFlags = KEYEVENTF_KEYUP;
-      }
-      break;
-		// mouse motion event
-    case MESSAGE_MOUSE_MOTION:
-      Event.type = INPUT_MOUSE;
-      Event.mi.dx = fmsg.mouseMotion.x * ((float) 65536 / sWidth);
-      Event.mi.dy = fmsg.mouseMotion.y * ((float) 65536 / sHeight);
-      Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-      break;
-		// mouse button event
-    case MESSAGE_MOUSE_BUTTON:
-      Event.type = INPUT_MOUSE;
-      Event.mi.dx = 0;
-      Event.mi.dy = 0;
-			// switch to parse button type
-			switch (fmsg.mouseButton.button) {
-				// leftclick
-				case 1:
-					if (fmsg.mouseButton.pressed) {
-						Event.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-					}
-					else {
-						Event.mi.dwFlags = MOUSEEVENTF_LEFTUP;
-					}
-					break; // inner switch
-				// right click
-				case 3:
-					if (fmsg.mouseButton.pressed) {
-						Event.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-					}
-					else {
-						Event.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
-					}
-					break; // inner switch
-			}
-      break; // outer switch
-		// mouse wheel event
-    case MESSAGE_MOUSE_WHEEL:
-      Event.type = INPUT_MOUSE;
-      Event.mi.dwFlags = MOUSEEVENTF_WHEEL;
-      Event.mi.dx = 0;
-      Event.mi.dy = 0;
-      Event.mi.mouseData = fmsg.mouseWheel.x;
-      break;
-		// TODO: add clipboard
-  }
+	  switch (fmsg[i].type) {
+	    // Windows event for keyboard action
+	    case MESSAGE_KEYBOARD:
+	      Event[i].ki.wVk = windows_keycodes[fmsg[i].keyboard.code];
+	      Event[i].type = INPUT_KEYBOARD;
+	      Event[i].ki.wScan = 0;
+	      Event[i].ki.time = 0; // system supplies timestamp
+	      if (!fmsg[i].keyboard.pressed) {
+	      	Event[i].ki.dwFlags = KEYEVENTF_KEYUP;
+	      } else {
+	      	Event[i].ki.dwFlags = 0;
+	      }
+	      break;
+			// mouse motion event
+	    case MESSAGE_MOUSE_MOTION:
+	      Event[i].type = INPUT_MOUSE;
+	      Event[i].mi.dx = fmsg[i].mouseMotion.x * ((float) 65536 / sWidth);
+	      Event[i].mi.dy = fmsg[i].mouseMotion.y * ((float) 65536 / sHeight);
+	      Event[i].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+	      break;
+			// mouse button event
+	    case MESSAGE_MOUSE_BUTTON:
+	      Event[i].type = INPUT_MOUSE;
+	      Event[i].mi.dx = 0;
+	      Event[i].mi.dy = 0;
+				// switch to parse button type
+				switch (fmsg[i].mouseButton.button) {
+					// leftclick
+					case 1:
+						if (fmsg[i].mouseButton.pressed) {
+							Event[i].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+						}
+						else {
+							Event[i].mi.dwFlags = MOUSEEVENTF_LEFTUP;
+						}
+						break; // inner switch
+					// right click
+					case 3:
+						if (fmsg[i].mouseButton.pressed) {
+							Event[i].mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
+						}
+						else {
+							Event[i].mi.dwFlags = MOUSEEVENTF_RIGHTUP;
+						}
+						break; // inner switch
+				}
+	      break; // outer switch
+			// mouse wheel event
+	    case MESSAGE_MOUSE_WHEEL:
+	      Event[i].type = INPUT_MOUSE;
+	      Event[i].mi.dwFlags = MOUSEEVENTF_WHEEL;
+	      Event[i].mi.dx = 0;
+	      Event[i].mi.dy = 0;
+	      Event[i].mi.mouseData = fmsg[i].mouseWheel.x;
+	      break;
+			// TODO: add clipboard
+	  }
+	}
   // send FMSG mapped to Windows event to Windows and return
-  SendInput(1, &Event, sizeof(INPUT)); // 1 structure to send
+  SendInput(len, Event, sizeof(INPUT)); // 1 structure to send
+ 
 	return FRACTAL_OK;
 }
 
