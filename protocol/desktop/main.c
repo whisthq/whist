@@ -265,9 +265,6 @@ int main(int argc, char* argv[])
               break;
             // SDL event for mouse location when it moves
             case SDL_MOUSEMOTION:
-            // fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
-            // fmsg.mouseMotion.x = fmsg.mouseMotion.relative ? msg.motion.xrel : msg.motion.x;
-            // fmsg.mouseMotion.y = fmsg.mouseMotion.relative ? msg.motion.yrel : msg.motion.y;
               fmsg.type = MESSAGE_MOUSE_MOTION;
               fmsg.mouseMotion.x = msg.motion.x * CAPTURE_WIDTH / OUTPUT_WIDTH;
               fmsg.mouseMotion.y = msg.motion.y * CAPTURE_HEIGHT / OUTPUT_HEIGHT;
