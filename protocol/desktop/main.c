@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
 
     while (repeat)
     {
-        if(SDL_WaitEvent(&msg)) {
+        if(SDL_PollEvent(&msg)) {
             switch (msg.type) {
             // SDL event for keyboard key pressed or released
             case SDL_KEYDOWN:
