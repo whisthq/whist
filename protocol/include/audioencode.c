@@ -27,6 +27,7 @@ audio_filter *create_audio_filter(audio_capture_device *device, audio_encoder_t 
     AVFilterInOut *inputs  = avfilter_inout_alloc();
 
     AVRational time_base = device->fmt_ctx->streams[device->audio_stream_index]->time_base;
+    printf("Audio time base is %d by %d\n", time_base.num, time_base.den);
     filter->filter_graph = avfilter_graph_alloc();
     if (!outputs || !inputs || !filter->filter_graph) {
         ret = AVERROR(ENOMEM);
@@ -177,6 +178,8 @@ audio_encoder_t *create_audio_encoder(int bit_rate) {
     encoder->context->sample_rate    = 44100;
     encoder->context->channel_layout = 3;
     encoder->context->channels       = av_get_channel_layout_nb_channels(encoder->context->channel_layout);
+    encoder->context->time_base.num = 1;
+    encoder->context->time_base.den = 30;
     // encoder->context->gop_size = 1;
 
     /* open it */

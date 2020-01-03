@@ -44,7 +44,7 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len) {
 
 static int32_t SendVideo(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
-    int i, slen = sizeof(context.addr);
+    int slen = sizeof(context.addr);
 
     // get window
     HWND window = NULL;
@@ -69,7 +69,7 @@ static int32_t SendVideo(void *opaque) {
     int sent_size; // var to keep track of size of packets sent
 
     // while stream is on
-    for(i = 0; i < 600000; i++) {
+    while(1) {
       // capture a frame
       capturedframe = capture_screen(device);
 
@@ -90,8 +90,8 @@ static int32_t SendVideo(void *opaque) {
 }
 
 static int32_t SendAudio(void *opaque) {
-    struct SocketContext context = *(struct SocketContext *) opaque;
-    int i, slen = sizeof(context.addr);
+  struct SocketContext context = *(struct SocketContext *) opaque;
+  int slen = sizeof(context.addr);
 
 	audio_capture_device *device;
 	device = create_audio_capture_device();
@@ -102,7 +102,7 @@ static int32_t SendAudio(void *opaque) {
 	audio_filter *filter;
 	filter = create_audio_filter(device, encoder);
 
-	for(i = 0; i < 600000; i++) {
+	while(1) {
 	  audio_encode_and_send(device, encoder, filter, context);
 	}
 
@@ -143,14 +143,13 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    SendAck(&InputReceiveContext, 5); 
     SDL_Thread *send_video = SDL_CreateThread(SendVideo, "SendVideo", &VideoContext);
     SDL_Thread *send_audio = SDL_CreateThread(SendAudio, "SendAudio", &AudioContext);
 
-
     struct FractalMessage fmsgs[6];
     struct FractalMessage fmsg;
-    int i, slen = sizeof(InputReceiveContext.addr), j = 0, active = 0, repeat = 1;
-    SendAck(&InputReceiveContext, 5); 
+    int slen = sizeof(InputReceiveContext.addr), i = 0, j = 0, active = 0, repeat = 1;
     FractalStatus status;
 
     while(repeat) {
