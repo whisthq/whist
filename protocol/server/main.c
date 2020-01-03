@@ -41,7 +41,6 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len) {
   return 0;
 }
 
-
 static int32_t SendVideo(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
     int slen = sizeof(context.addr);
