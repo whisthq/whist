@@ -539,6 +539,7 @@ typedef enum FractalMessageType {
 	MESSAGE_MOUSE_WHEEL    = 3, ///< `mouseWheel` FractalMouseWheelMessage is valid in FractalMessage.
 	MESSAGE_MOUSE_MOTION   = 4, ///< `mouseMotion` FractalMouseMotionMessage is valid in FractalMessage.
 	MESSAGE_RELEASE        = 5, ///< Message instructing the host to release all input that is currently pressed.
+	MESSAGE_QUIT           = 6,
 	__MESSAGE_MAKE_32      = 0x7FFFFFFF,
 } FractalMessageType;
 

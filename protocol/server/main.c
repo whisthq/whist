@@ -60,6 +60,8 @@ static int32_t ReceiveUserInput(void *opaque) {
     struct FractalMessage fmsgs[6];
     struct FractalMessage fmsg;
 
+    SendAck(&context, 5); 
+
     for(i = 0; i < 60000; i++) {
         if ((recv_size = recvfrom(context.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&context.addr), &slen)) > 0) {
           if(fmsg.type == MESSAGE_KEYBOARD) {
@@ -87,6 +89,9 @@ static int32_t ReceiveUserInput(void *opaque) {
             fmsgs[0] = fmsg;
             ReplayUserInput(fmsgs, 1);
           }
+        }
+        if(i % (30 * 60) == 0) {
+          SendAck(&context, 1);
         }
     }
 
@@ -179,10 +184,6 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    struct sockaddr_in receive_address;
-    int recv_size, slen=sizeof(receive_address);
-    char recv_buf[BUFLEN];
-
     struct SocketContext InputReceiveContext = {0};
     if(CreateUDPContext(&InputReceiveContext, "S", "", -1) < 0) {
         exit(1);
@@ -198,17 +199,51 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    SDL_Thread *send_input_ack = SDL_CreateThread(ReceiveUserInput, "ReceiveUserInput", &InputReceiveContext);
     SDL_Thread *send_video = SDL_CreateThread(SendVideo, "SendVideo", &VideoContext);
     SDL_Thread *send_audio = SDL_CreateThread(SendAudio, "SendAudio", &AudioContext);
 
-    while (1)
-    {
-        if (SendAck(&InputReceiveContext) < 0)
-            printf("Could not send packet\n");
-        Sleep(3000);
+
+    struct FractalMessage fmsgs[6];
+    struct FractalMessage fmsg;
+    int i, slen = sizeof(InputReceiveContext.addr), j = 0, active = 0, repeat = 1;
+    SendAck(&InputReceiveContext, 5); 
+    FractalStatus status;
+
+    while(repeat) {
+        if (recvfrom(InputReceiveContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputReceiveContext.addr), &slen) > 0) {
+          if(fmsg.type == MESSAGE_KEYBOARD) {
+            if(active) {
+              fmsgs[j] = fmsg;
+              if(fmsg.keyboard.pressed) {
+                if(fmsg.keyboard.code != fmsgs[j - 1].keyboard.code) {
+                  j++;
+                }
+              } else {
+                status = ReplayUserInput(fmsgs, j + 1);
+                active = 0;
+                j = 0;
+              }
+            } else {
+              fmsgs[0] = fmsg;
+              if(fmsg.keyboard.pressed && (fmsg.keyboard.code >= 224 && fmsg.keyboard.code <= 231)) {
+                active = 1;
+                j++;
+              } else {
+                status = ReplayUserInput(fmsgs, 1);
+              }    
+            }
+          } else {
+            fmsgs[0] = fmsg;
+            status = ReplayUserInput(fmsgs, 1);
+          }
+        }
+        if(i % (30 * 60) == 0) {
+          SendAck(&InputReceiveContext, 1);
+        }
+        if(status != FRACTAL_OK) {
+          repeat = 0;
+        }
     }
- 
 
     closesocket(InputReceiveContext.s);
     closesocket(VideoContext.s);
