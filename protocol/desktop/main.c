@@ -54,7 +54,6 @@ static int32_t ReceiveVideo(void *opaque) {
         } else {
             recv_index += recv_size;
             if(recv_size != 1000) {
-                printf("The video time is %d\n", av_gettime());
                 video_decoder_decode(decoder, recv_buf, recv_index);
 
                 AVPicture pict;
@@ -128,7 +127,6 @@ static int32_t ReceiveAudio(void *opaque) {
         if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) > 0) {
             audio_decoder_decode(audio_decoder, recv_buf, recv_size);
             SDL_QueueAudio(dev, audio_decoder->frame->data[0], audio_decoder->frame->linesize[0]);
-            printf("The audio time is %d\n", av_gettime());
         }
         if (i % (30 * 60) == 0) {
             SendAck(&context->s, 1);
@@ -235,7 +233,6 @@ int main(int argc, char* argv[])
 
     uvPitch = OUTPUT_WIDTH / 2;
 
-
     SDLVideoContext.yPlane = yPlane;
     SDLVideoContext.sws = sws_ctx;
     SDLVideoContext.uPlane = uPlane;
@@ -247,9 +244,6 @@ int main(int argc, char* argv[])
 
     SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &SDLVideoContext);
     SDL_Thread *receive_audio = SDL_CreateThread(ReceiveAudio, "ReceiveAudio", &AudioReceiveContext);
-
-    int mode = SDL_GetRelativeMouseMode();
-    printf("The mouse mode is %d\n", mode);
 
     while (repeat)
     {
@@ -285,15 +279,11 @@ int main(int argc, char* argv[])
             case SDL_MULTIGESTURE:
               break;
             case SDL_QUIT:
+              fmsg.type = MESSAGE_QUIT;
               SDL_DestroyTexture(texture);
               SDL_DestroyRenderer(renderer);
               SDL_DestroyWindow(screen);
               SDL_Quit();
-              closesocket(InputContext.s);
-              closesocket(VideoReceiveContext.s);
-              closesocket(AudioReceiveContext.s);
-              WSACleanup();
-              exit(0);
               break;
             }
         }
@@ -303,6 +293,12 @@ int main(int argc, char* argv[])
         }
         memset(&fmsg, 0, sizeof(fmsg));
     }
+
+    closesocket(InputContext.s);
+    closesocket(VideoReceiveContext.s);
+    closesocket(AudioReceiveContext.s);
+    WSACleanup();
+    exit(0);
  
     return 0;
 }
