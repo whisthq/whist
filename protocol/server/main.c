@@ -24,19 +24,6 @@
 #define FRAME_BUFFER_SIZE (1024 * 1024)
 #define MAX_PACKET_SIZE 1000
 
-bool repeat = true; // global flag to keep streaming until client disconnects
-
-typedef enum {
-  videotype = 0xFA010000,
-  audiotype = 0xFB010000
-} Fractalframe_type_t;
-
-typedef struct {
-  Fractalframe_type_t type;
-  int size;
-  char data[0];
-} Fractalframe_t;
-
 
 static int SendPacket(struct SocketContext *context, uint8_t *data, int len) {
   int sent_size, payload_size, slen = sizeof(context->addr), i = 0;
@@ -54,49 +41,6 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len) {
   return 0;
 }
 
-static int32_t ReceiveUserInput(void *opaque) {
-    struct SocketContext context = *(struct SocketContext *) opaque;
-    int i, recv_size, slen = sizeof(context.addr), j = 0, active = 0;
-    struct FractalMessage fmsgs[6];
-    struct FractalMessage fmsg;
-
-    SendAck(&context, 5); 
-
-    for(i = 0; i < 60000; i++) {
-        if ((recv_size = recvfrom(context.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&context.addr), &slen)) > 0) {
-          if(fmsg.type == MESSAGE_KEYBOARD) {
-            if(active) {
-              fmsgs[j] = fmsg;
-              if(fmsg.keyboard.pressed) {
-                if(fmsg.keyboard.code != fmsgs[j - 1].keyboard.code) {
-                  j++;
-                }
-              } else {
-                ReplayUserInput(fmsgs, j + 1);
-                active = 0;
-                j = 0;
-              }
-            } else {
-              fmsgs[0] = fmsg;
-              if(fmsg.keyboard.pressed && (fmsg.keyboard.code >= 224 && fmsg.keyboard.code <= 231)) {
-                active = 1;
-                j++;
-              } else {
-                ReplayUserInput(fmsgs, 1);
-              }    
-            }
-          } else {
-            fmsgs[0] = fmsg;
-            ReplayUserInput(fmsgs, 1);
-          }
-        }
-        if(i % (30 * 60) == 0) {
-          SendAck(&context, 1);
-        }
-    }
-
-    return 0;
-}
 
 static int32_t SendVideo(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
