@@ -69,7 +69,6 @@ void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size) {
   // init packet to prepare decoding
 	av_init_packet(&decoder->packet);
 	int success = 0; // boolean for success or failure of decoding
- 	 decoder->frame->pts++; // still not quite sure what that is for
 
   // copy the received packet back into the decoder AVPacket
   // memcpy(&decoder->packet.data, &buffer, buffer_size);
