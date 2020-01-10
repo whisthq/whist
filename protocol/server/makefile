@@ -70,7 +70,7 @@ LD_FLAGS = \
 
 
 # build all files into executable
-all: clean clear fractal.obj videocapture.obj audiocapture.obj videoencode.obj audioencode.obj socket.obj main.obj
+all: clean clear fractal.obj videocapture.obj audiocapture.obj videoencode.obj audioencode.obj socket.obj wasapicapture.obj main.obj
 	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
@@ -95,6 +95,9 @@ audioencode.obj: ../include/audioencode.c
 
 socket.obj: ../include/socket.c
   $(CC) /c ../include/socket.c
+  
+wasapicapture.obj: ../include/wasapicapture.c
+  $(CC) /c ../include/wasapicapture.c
   
 # compile the source main client file into object file
 main.obj: main.c

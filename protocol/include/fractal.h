@@ -17,8 +17,12 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <initguid.h>
+#include <mmdeviceapi.h>
+#include <Audioclient.h>
+#include <Functiondiscoverykeys_devpkey.h>
+#include<avrt.h>
 
-// ffmpeg libraries
 #include "ffmpeg/libavcodec/avcodec.h"
 #include "ffmpeg/libavdevice/avdevice.h"
 #include "ffmpeg/libavfilter/avfilter.h"
@@ -29,7 +33,6 @@
 #include "ffmpeg/libswscale/swscale.h"
 
 #if defined(_WIN32)
-	#include <winsock2.h> // libs for socket programming on windows
 	#include <windows.h>
 	#include <winuser.h>
 	#pragma warning(disable: 4201)
