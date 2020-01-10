@@ -60,7 +60,8 @@ SHARED_LIBS = \
   msvcrt.lib \
   msvcmrt.lib \
   libcpmt.lib \
-  msvcprt.lib
+  msvcprt.lib \
+  avrt.lib
 
 # linking flags
 LD_FLAGS = \

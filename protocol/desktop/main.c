@@ -122,8 +122,8 @@ static int32_t ReceiveAudio(void *opaque) {
 
     while(1) {
         if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) > 0) {
-            audio_decoder_decode(audio_decoder, recv_buf, recv_size);
-            SDL_QueueAudio(dev, audio_decoder->frame->data[0], audio_decoder->frame->linesize[0]);
+            // audio_decoder_decode(audio_decoder, recv_buf, recv_size);
+            SDL_QueueAudio(dev, recv_buf, recv_size);
         }
         if (i % (30 * 60) == 0) {
             SendAck(context, 1);
