@@ -22,23 +22,36 @@
 #define BUFLEN 1000
 #define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
 #define FRAME_BUFFER_SIZE (1024 * 1024)
-#define MAX_PACKET_SIZE 1000
+#define MAX_PACKET_SIZE 1400
+#define BITRATE 30000
+
+struct RTPPacket {
+  uint8_t data[MAX_PACKET_SIZE];
+  int index;
+  int payload_size;
+};
+
 
 static int SendPacket(struct SocketContext *context, uint8_t *data, int len) {
-  int sent_size, payload_size, slen = sizeof(context->addr), i = 0;
-  uint8_t payload[MAX_PACKET_SIZE];
-  int curr_index = 0;
+  int sent_size, payload_size, slen = sizeof(context->addr);
+  int curr_index = 0, i = 0;
 
   while (curr_index < len) {
-    payload_size = min((MAX_PACKET_SIZE), (len - curr_index));
-    if((sent_size = sendto(context->s, (data + curr_index), payload_size, 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
+    struct RTPPacket packet = {0};
+    payload_size = min(MAX_PACKET_SIZE, (len - curr_index));
+    memcpy(packet.data, data + curr_index, payload_size);
+    packet.index = i;
+    packet.payload_size = payload_size;
+    if((sent_size = sendto(context->s, &packet, sizeof(packet), 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
       return -1;
     } else {
+      i++;
       curr_index += payload_size;
     }
   }
   return 0;
 }
+
 
 static int32_t SendVideo(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
@@ -56,7 +69,7 @@ static int32_t SendVideo(void *opaque) {
     // set encoder parameters
     int width = device->width; // in and out from the capture device
     int height = device->height; // in and out from the capture device
-    int bitrate = width * 30000; // estimate bit rate based on output size
+    int bitrate = width * BITRATE; // estimate bit rate based on output size
 
     // init encoder
     encoder_t *encoder;
