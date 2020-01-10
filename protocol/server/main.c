@@ -7,15 +7,6 @@
 #include <process.h>
 #include <windows.h>
 
-// specific headers for audio processing
-#include <initguid.h>
-#include <mmdeviceapi.h>
-#include <Audioclient.h>
-#include <Functiondiscoverykeys_devpkey.h>
-
-// Something for threads
-#include<avrt.h>
-
 #include "../include/fractal.h"
 #include "../include/videocapture.h"
 #include "../include/wasapicapture.h"
@@ -83,7 +74,6 @@ static int32_t SendVideo(void *opaque) {
       video_encoder_encode(encoder, capturedframe);
 
       if (encoder->packet.size != 0) {
-        // send packet
         // printf("Sending packet of size %d\n", encoder->packet.size);
         if (SendPacket(&context, encoder->packet.data, encoder->packet.size) < 0) {
             printf("Could not send video frame\n");
@@ -124,7 +114,7 @@ static int32_t SendAudio(void *opaque) {
 
           if (audio_device->audioBufSize != 0) {
             if (SendPacket(&context, audio_device->pData, audio_device->audioBufSize) < 0) {
-                printf("Could not send video frame\n");
+                printf("Could not send audio frame\n");
             }
           }
 
