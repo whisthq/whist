@@ -496,9 +496,12 @@ int CreateUDPContext(struct SocketContext *context, char* origin, char* destinat
  	// Point address to STUN server
     context->addr.sin_addr.s_addr = inet_addr(SRV_IP);
  	// Create payload to send to STUN server
-    strcat(destination, origin);
+ 	char dest[20];
+ 	memcpy(dest, destination, 20);
+    strcat(dest, origin);
+
     // Send payload to STUN server
-    if (sendto(context->s, destination, strlen(destination), 0, (struct sockaddr*)(&context->addr), slen)==-1) {
+    if (sendto(context->s, dest, strlen(dest), 0, (struct sockaddr*)(&context->addr), slen)==-1) {
         printf("Sent failed");
     } else {
         printf("Sent message to STUN server\n");

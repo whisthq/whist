@@ -104,7 +104,6 @@ static int32_t SendVideo(void *opaque) {
       video_encoder_encode(encoder, capturedframe);
 
       if (encoder->packet.size != 0) {
-        // printf("Sending packet of size %d\n", encoder->packet.size);
         if (SendPacket(&context, encoder->packet.data, encoder->packet.size, id) < 0) {
             printf("Could not send video frame\n");
         } 
