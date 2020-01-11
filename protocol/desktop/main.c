@@ -166,7 +166,7 @@ static int32_t ReceiveVideo(void *opaque) {
                     //printf("Rendered!\n");
                 }
             } else {
-              printf("Intercepted\n");
+              //printf("Intercepted\n");
               tracker = 0;
               current_id = -1;
 
@@ -259,17 +259,17 @@ int main(int argc, char* argv[])
     FractalMessage fmsg = {0};
 
     struct SocketContext InputContext = {0};
-    if(CreateUDPContext(&InputContext, "C", "168.61.54.231", -1) < 0) {
+    if(CreateUDPContext(&InputContext, "C", "40.121.132.26", -1) < 0) {
         exit(1);
     }
 
     struct SocketContext VideoReceiveContext = {0};
-    if(CreateUDPContext(&VideoReceiveContext, "C", "168.61.54.231", -1) < 0) {
+    if(CreateUDPContext(&VideoReceiveContext, "C", "40.121.132.26", -1) < 0) {
         exit(1);
     }
 
     struct SocketContext AudioReceiveContext = {0};
-    if(CreateUDPContext(&AudioReceiveContext, "C", "168.61.54.231", -1) < 0) {
+    if(CreateUDPContext(&AudioReceiveContext, "C", "40.121.132.26", -1) < 0) {
         exit(1);
     }
 

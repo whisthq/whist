@@ -54,6 +54,21 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len, int
   return 0;
 }
 
+uint32_t Hash(char *key, size_t len)
+{
+    uint32_t hash, i;
+    for(hash = i = 0; i < len; ++i)
+    {
+        hash += key[i];
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+    return hash;
+}
+
 
 static int32_t SendVideo(void *opaque) {
     struct SocketContext context = *(struct SocketContext *) opaque;
