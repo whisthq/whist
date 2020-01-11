@@ -18,8 +18,27 @@
 
 #pragma comment (lib, "ws2_32.lib")
 
-#define BUFLEN 160000
-#define SDL_AUDIO_BUFFER_SIZE 1024;
+#define BUFLEN 500000
+#define SDL_AUDIO_BUFFER_SIZE 1024
+#define MAX_PACKET_SIZE 1400
+
+/// BEGIN TIME
+LARGE_INTEGER frequency;        // ticks per second
+LARGE_INTEGER t1, t2;           // ticks
+
+void StartCounter()
+{
+    if(!QueryPerformanceFrequency(&frequency))
+      printf("QueryPerformanceFrequency failed!\n");
+
+    QueryPerformanceCounter(&t1);
+}
+double GetCounter()
+{
+    QueryPerformanceCounter(&t2);
+    return (t2.QuadPart-t1.QuadPart) * 1000.0/frequency.QuadPart;
+}
+/// END TIME
 
 
 struct SDLVideoContext {
@@ -27,60 +46,140 @@ struct SDLVideoContext {
     Uint8 *uPlane;
     Uint8 *vPlane;
     int uvPitch;
+    int frame_size;
     SDL_Renderer* Renderer;
     SDL_Texture* Texture;
+    decoder_t *decoder;
+    char *prev_frame;
     struct SocketContext socketContext;
     struct SwsContext* sws;
 };
 
+struct RTPPacket {
+  uint8_t data[MAX_PACKET_SIZE];
+  int index;
+  int payload_size;
+  int id;
+};
+
+struct node {
+  struct SDLVideoContext context;
+  struct node* next;
+};
+
+static int sillymutex = 0;
+
+static int32_t RenderScreen(void *opaque) {
+  struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
+  video_decoder_decode(context.decoder, context.prev_frame, context.frame_size);
+
+  AVPicture pict;
+  pict.data[0] = context.yPlane;
+  pict.data[1] = context.uPlane;
+  pict.data[2] = context.vPlane;
+  pict.linesize[0] = OUTPUT_WIDTH;
+  pict.linesize[1] = context.uvPitch;
+  pict.linesize[2] = context.uvPitch;
+  sws_scale(context.sws, (uint8_t const * const *) context.decoder->frame->data,
+       context.decoder->frame->linesize, 0, context.decoder->context->height, pict.data,
+       pict.linesize);
+
+  SDL_UpdateYUVTexture(
+        context.Texture,
+        NULL,
+        context.yPlane,
+        OUTPUT_WIDTH,
+        context.uPlane,
+        context.uvPitch,
+        context.vPlane,
+        context.uvPitch
+    );
+
+  SDL_RenderClear(context.Renderer);
+  SDL_RenderCopy(context.Renderer, context.Texture, NULL, NULL);
+  SDL_RenderPresent(context.Renderer);
+
+  free(opaque);
+  sillymutex = 0;
+  return 0;
+}
+
 static int32_t ReceiveVideo(void *opaque) {
     struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
     int recv_size, slen = sizeof(context.socketContext.addr), recv_index = 0, i = 0;
-    char recv_buf[BUFLEN];
+    char recv_buf[MAX_PACKET_SIZE];
 
+    context.prev_frame = malloc(sizeof(char) * BUFLEN);
+    memset(context.prev_frame, 0, sizeof(char) * BUFLEN);
+
+    uint8_t tracker = 0;
+    int current_id = -1;
+
+    int max_index = 0, curr_index = 0;
+    struct RTPPacket packet = {0};
     // init decoder
-    decoder_t *decoder;
-    decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
+    context.decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
 
     if (SendAck(&context.socketContext, 5) < 0)
         printf("Could not send video ACK\n");
 
+
     while(1)
     {
-        if ((recv_size = recvfrom(context.socketContext.s, recv_buf + recv_index, (BUFLEN - recv_index), 0, (struct sockaddr*)(&context.socketContext.addr), &slen)) > 0) {
-            recv_index += recv_size;
-            if(recv_size != 1000) {
-                video_decoder_decode(decoder, recv_buf, recv_index);
+        recv_size = recvfrom(context.socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&context.socketContext.addr), &slen);
 
-                AVPicture pict;
-                pict.data[0] = context.yPlane;
-                pict.data[1] = context.uPlane;
-                pict.data[2] = context.vPlane;
-                pict.linesize[0] = OUTPUT_WIDTH;
-                pict.linesize[1] = context.uvPitch;
-                pict.linesize[2] = context.uvPitch;
-                sws_scale(context.sws, (uint8_t const * const *) decoder->frame->data,
-                     decoder->frame->linesize, 0, decoder->context->height, pict.data,
-                     pict.linesize);
+        if (current_id == -1) {
+          current_id = packet.id;
+        }
 
-                SDL_UpdateYUVTexture(
-                      context.Texture,
-                      NULL,
-                      context.yPlane,
-                      OUTPUT_WIDTH,
-                      context.uPlane,
-                      context.uvPitch,
-                      context.vPlane,
-                      context.uvPitch
-                  );
-                SDL_RenderClear(context.Renderer);
-                SDL_RenderCopy(context.Renderer, context.Texture, NULL, NULL);
-                SDL_RenderPresent(context.Renderer);
-                recv_index = 0;
-                memset(recv_buf, 0, BUFLEN);
+        StartCounter();
+        bool final = false;
+
+        if(recv_size > 0) {
+            if (current_id == packet.id) {
+                tracker++;
+
+                int place = packet.index * MAX_PACKET_SIZE;
+                memcpy(context.prev_frame + place, packet.data, packet.payload_size);
+                if(packet.payload_size != MAX_PACKET_SIZE) {
+                    if (packet.index + 1 == tracker) {                  
+                        final = true;
+                        context.frame_size = place + packet.payload_size;
+
+                        while(sillymutex != 0);
+                        sillymutex = 1;
+
+                        struct SDLVideoContext* threadContext = malloc(sizeof(struct SDLVideoContext));
+                        memcpy(threadContext, &context, sizeof(struct SDLVideoContext));
+
+                        SDL_Thread *render_screen = SDL_CreateThread(RenderScreen, "RenderScreen", threadContext);
+                        struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
+
+                        tracker = 0;
+                        current_id = -1;
+                        //printf("Rendered!\n");
+                    } else {
+                        printf("Missed a packet: Only got %d, but expected %d\n", tracker, packet.index + 1);
+                    }
+                }
+            } else {
+              printf("Intercepted\n");
+              tracker = 0;
+              current_id = -1;
+
+              current_id = packet.id;
+              tracker++;
+
+              int place = packet.index * MAX_PACKET_SIZE;
+              memcpy(context.prev_frame + place, packet.data, packet.payload_size);
             }
         }
-        if (i % (30 * 60) == 0) {
+
+        if (final) {
+        }
+
+        if (i == 30 * 60) {
+            i = 0;
             SendAck(&context.socketContext, 1);
         }
         i++;
@@ -104,11 +203,12 @@ static int32_t ReceiveAudio(void *opaque) {
     SDL_zero(wantedSpec);
     SDL_zero(audioSpec);
     wantedSpec.channels = audio_decoder->context->channels;
-    wantedSpec.freq = audio_decoder->context->sample_rate * 0.5;
+    wantedSpec.freq = audio_decoder->context->sample_rate;
     wantedSpec.format = AUDIO_F32SYS;
     wantedSpec.silence = 0;
     wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
 
+//    dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if(dev == 0) {
         printf("Failed to open audio\n");
@@ -122,11 +222,11 @@ static int32_t ReceiveAudio(void *opaque) {
 
     while(1) {
         if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) > 0) {
-            // audio_decoder_decode(audio_decoder, recv_buf, recv_size);
             SDL_QueueAudio(dev, recv_buf, recv_size);
         }
-        if (i % (30 * 60) == 0) {
-            SendAck(context, 1);
+        if (i == 30 * 60) {
+          i = 0;
+          SendAck(context, 1);
         }
         i++;
     }
@@ -156,17 +256,17 @@ int main(int argc, char* argv[])
     FractalMessage fmsg = {0};
 
     struct SocketContext InputContext = {0};
-    if(CreateUDPContext(&InputContext, "C", "40.121.132.26", -1) < 0) {
+    if(CreateUDPContext(&InputContext, "C", "168.61.54.231", -1) < 0) {
         exit(1);
     }
 
     struct SocketContext VideoReceiveContext = {0};
-    if(CreateUDPContext(&VideoReceiveContext, "C", "40.121.132.26", -1) < 0) {
+    if(CreateUDPContext(&VideoReceiveContext, "C", "168.61.54.231", -1) < 0) {
         exit(1);
     }
 
     struct SocketContext AudioReceiveContext = {0};
-    if(CreateUDPContext(&AudioReceiveContext, "C", "40.121.132.26", -1) < 0) {
+    if(CreateUDPContext(&AudioReceiveContext, "C", "168.61.54.231", -1) < 0) {
         exit(1);
     }
 
@@ -201,8 +301,8 @@ int main(int argc, char* argv[])
           renderer,
           SDL_PIXELFORMAT_YV12,
           SDL_TEXTUREACCESS_STREAMING,
-          OUTPUT_WIDTH, // width
-          OUTPUT_HEIGHT // height
+          OUTPUT_WIDTH,
+          OUTPUT_HEIGHT
       );
     if (!texture) {
       fprintf(stderr, "SDL: could not create texture - exiting\n");
@@ -247,22 +347,18 @@ int main(int argc, char* argv[])
     {
         if(SDL_WaitEvent(&msg)) {
             switch (msg.type) {
-              // SDL event for keyboard key pressed or released
               case SDL_KEYDOWN:
               case SDL_KEYUP:
-                // fill Fractal message structure for sending
                 fmsg.type = MESSAGE_KEYBOARD;
                 fmsg.keyboard.code = (FractalKeycode) msg.key.keysym.scancode;
                 fmsg.keyboard.mod = msg.key.keysym.mod;
-                fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN; // print statement to see what's happening
+                fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN;
                 break;
-              // SDL event for mouse location when it moves
               case SDL_MOUSEMOTION:
                 fmsg.type = MESSAGE_MOUSE_MOTION;
                 fmsg.mouseMotion.x = msg.motion.x * CAPTURE_WIDTH / OUTPUT_WIDTH;
                 fmsg.mouseMotion.y = msg.motion.y * CAPTURE_HEIGHT / OUTPUT_HEIGHT;
                 break;
-              // SDL event for mouse button pressed or released
               case SDL_MOUSEBUTTONDOWN:
               case SDL_MOUSEBUTTONUP:
                 fmsg.type = MESSAGE_MOUSE_BUTTON;
@@ -284,13 +380,9 @@ int main(int argc, char* argv[])
                 SDL_Quit();
                 break;
             }
-        } else {
-          SendAck(&InputContext, 1);
-          Sleep(0.5);
         }
         if (fmsg.type != 0) {
-            sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen);
-            Sleep(0.5);
+          sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen);
         }
         memset(&fmsg, 0, sizeof(fmsg));
     }
@@ -299,6 +391,6 @@ int main(int argc, char* argv[])
     closesocket(VideoReceiveContext.s);
     closesocket(AudioReceiveContext.s);
     WSACleanup();
- 
+
     return 0;
 }
