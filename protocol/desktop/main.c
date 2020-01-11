@@ -100,6 +100,7 @@ static int32_t RenderScreen(void *opaque) {
   SDL_RenderPresent(context.Renderer);
 
   free(opaque);
+  free(context.prev_frame);
   sillymutex = 0;
   return 0;
 }
@@ -110,10 +111,10 @@ static int32_t ReceiveVideo(void *opaque) {
     char recv_buf[MAX_PACKET_SIZE];
 
     context.prev_frame = malloc(sizeof(char) * BUFLEN);
-    memset(context.prev_frame, 0, sizeof(char) * BUFLEN);
 
     uint8_t tracker = 0;
     int current_id = -1;
+    int total_packets = -1;
 
     int max_index = 0, curr_index = 0;
     struct RTPPacket packet = {0};
@@ -141,26 +142,28 @@ static int32_t ReceiveVideo(void *opaque) {
 
                 int place = packet.index * MAX_PACKET_SIZE;
                 memcpy(context.prev_frame + place, packet.data, packet.payload_size);
+
                 if(packet.payload_size != MAX_PACKET_SIZE) {
-                    if (packet.index + 1 == tracker) {                  
-                        final = true;
-                        context.frame_size = place + packet.payload_size;
+                    total_packets = packet.index + 1;
+                }
 
-                        while(sillymutex != 0);
-                        sillymutex = 1;
+                if (tracker == total_packets) {                  
+                    final = true;
+                    context.frame_size = place + packet.payload_size;
 
-                        struct SDLVideoContext* threadContext = malloc(sizeof(struct SDLVideoContext));
-                        memcpy(threadContext, &context, sizeof(struct SDLVideoContext));
+                    while(sillymutex != 0);
+                    sillymutex = 1;
 
-                        SDL_Thread *render_screen = SDL_CreateThread(RenderScreen, "RenderScreen", threadContext);
-                        struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
+                    struct SDLVideoContext* threadContext = malloc(sizeof(struct SDLVideoContext));
+                    memcpy(threadContext, &context, sizeof(struct SDLVideoContext));
 
-                        tracker = 0;
-                        current_id = -1;
-                        //printf("Rendered!\n");
-                    } else {
-                        printf("Missed a packet: Only got %d, but expected %d\n", tracker, packet.index + 1);
-                    }
+                    SDL_Thread *render_screen = SDL_CreateThread(RenderScreen, "RenderScreen", threadContext);
+
+                    tracker = 0;
+                    current_id = -1;
+                    context.prev_frame = malloc(sizeof(char) * BUFLEN);
+
+                    //printf("Rendered!\n");
                 }
             } else {
               printf("Intercepted\n");
