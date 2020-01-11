@@ -29,10 +29,11 @@ struct RTPPacket {
   uint8_t data[MAX_PACKET_SIZE];
   int index;
   int payload_size;
+  int id;
 };
 
 
-static int SendPacket(struct SocketContext *context, uint8_t *data, int len) {
+static int SendPacket(struct SocketContext *context, uint8_t *data, int len, int id) {
   int sent_size, payload_size, slen = sizeof(context->addr);
   int curr_index = 0, i = 0;
 
@@ -42,6 +43,7 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len) {
     memcpy(packet.data, data + curr_index, payload_size);
     packet.index = i;
     packet.payload_size = payload_size;
+    packet.id = id;
     if((sent_size = sendto(context->s, &packet, sizeof(packet), 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
       return -1;
     } else {
@@ -77,7 +79,7 @@ static int32_t SendVideo(void *opaque) {
 
     // video variables
     void *capturedframe; // var to hold captured frame, as a void* to RGB pixels
-    int sent_size; // var to keep track of size of packets sent
+    int sent_size, id = 0; // var to keep track of size of packets sent
 
     // while stream is on
     while(1) {
@@ -88,10 +90,15 @@ static int32_t SendVideo(void *opaque) {
 
       if (encoder->packet.size != 0) {
         // printf("Sending packet of size %d\n", encoder->packet.size);
-        if (SendPacket(&context, encoder->packet.data, encoder->packet.size) < 0) {
+        if (SendPacket(&context, encoder->packet.data, encoder->packet.size, id) < 0) {
             printf("Could not send video frame\n");
-        }
+        } 
       }
+
+      if(id == 100) {
+        id = 0;
+      }
+      id++;
   }
 
   // exited while loop, stream done let's close everything
@@ -126,7 +133,7 @@ static int32_t SendAudio(void *opaque) {
           audio_device->audioBufSize = nNumFramesToRead * nBlockAlign;
 
           if (audio_device->audioBufSize != 0) {
-            if (SendPacket(&context, audio_device->pData, audio_device->audioBufSize) < 0) {
+            if (SendPacket(&context, audio_device->pData, audio_device->audioBufSize, 0) < 0) {
                 printf("Could not send audio frame\n");
             }
           }
