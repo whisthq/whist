@@ -44,8 +44,8 @@
 #define SRV_IP "34.200.170.47"
 #define CAPTURE_WIDTH 1920
 #define CAPTURE_HEIGHT 1080
-#define OUTPUT_WIDTH 1280
-#define OUTPUT_HEIGHT 720
+#define OUTPUT_WIDTH 1920
+#define OUTPUT_HEIGHT 1080
 
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org

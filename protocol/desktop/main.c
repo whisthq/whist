@@ -53,6 +53,7 @@ struct SDLVideoContext {
     char *prev_frame;
     struct SocketContext socketContext;
     struct SwsContext* sws;
+    int id;
 };
 
 struct RTPPacket {
@@ -60,6 +61,7 @@ struct RTPPacket {
   int index;
   int payload_size;
   int id;
+  bool is_ending;
 };
 
 struct node {
@@ -69,8 +71,26 @@ struct node {
 
 static int sillymutex = 0;
 
+uint32_t Hash(char *key, size_t len)
+{
+    uint32_t hash, i;
+    for(hash = i = 0; i < len; ++i)
+    {
+        hash += key[i];
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+    return hash;
+}
+
 static int32_t RenderScreen(void *opaque) {
   struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
+
+  //printf("Id: %d\nSize: %d\nHash: %d\n\n", context.id, context.frame_size, Hash(context.prev_frame, context.frame_size));
+
   video_decoder_decode(context.decoder, context.prev_frame, context.frame_size);
 
   AVPicture pict;
@@ -143,7 +163,7 @@ static int32_t ReceiveVideo(void *opaque) {
                 int place = packet.index * MAX_PACKET_SIZE;
                 memcpy(context.prev_frame + place, packet.data, packet.payload_size);
 
-                if(packet.payload_size != MAX_PACKET_SIZE) {
+                if(packet.is_ending) {
                     total_packets = packet.index + 1;
                 }
 
@@ -156,11 +176,13 @@ static int32_t ReceiveVideo(void *opaque) {
 
                     struct SDLVideoContext* threadContext = malloc(sizeof(struct SDLVideoContext));
                     memcpy(threadContext, &context, sizeof(struct SDLVideoContext));
+                    threadContext->id = current_id;
 
                     SDL_Thread *render_screen = SDL_CreateThread(RenderScreen, "RenderScreen", threadContext);
 
                     tracker = 0;
                     current_id = -1;
+                    total_packets = -1;
                     context.prev_frame = malloc(sizeof(char) * BUFLEN);
 
                     //printf("Rendered!\n");
@@ -169,6 +191,7 @@ static int32_t ReceiveVideo(void *opaque) {
               printf("Intercepted\n");
               tracker = 0;
               current_id = -1;
+              total_packets = -1;
 
               current_id = packet.id;
               tracker++;
@@ -258,18 +281,20 @@ int main(int argc, char* argv[])
     struct SDLVideoContext SDLVideoContext = {0};
     FractalMessage fmsg = {0};
 
+    char* ip = "40.121.132.26";
+
     struct SocketContext InputContext = {0};
-    if(CreateUDPContext(&InputContext, "C", "168.61.54.231", -1) < 0) {
+    if(CreateUDPContext(&InputContext, "C", ip, -1) < 0) {
         exit(1);
     }
 
     struct SocketContext VideoReceiveContext = {0};
-    if(CreateUDPContext(&VideoReceiveContext, "C", "168.61.54.231", -1) < 0) {
+    if(CreateUDPContext(&VideoReceiveContext, "C", ip, -1) < 0) {
         exit(1);
     }
 
     struct SocketContext AudioReceiveContext = {0};
-    if(CreateUDPContext(&AudioReceiveContext, "C", "168.61.54.231", -1) < 0) {
+    if(CreateUDPContext(&AudioReceiveContext, "C", ip, -1) < 0) {
         exit(1);
     }
 
