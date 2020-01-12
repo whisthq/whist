@@ -11,6 +11,7 @@
 #include "../include/webserver.h" // header file for webserver query functions
 #include "../include/videodecode.h" // header file for audio decoder
 #include "../include/audiodecode.h" // header file for audio decoder
+#include "../include/linkedlist.h" // header file for audio decoder
 
 #define SDL_MAIN_HANDLED
 #include "../include/SDL2/SDL.h"
@@ -54,6 +55,8 @@ struct SDLVideoContext {
     struct SocketContext socketContext;
     struct SwsContext* sws;
     int id;
+    int packets_received;
+    int num_packets;
 };
 
 struct RTPPacket {
@@ -64,12 +67,9 @@ struct RTPPacket {
   bool is_ending;
 };
 
-struct node {
-  struct SDLVideoContext context;
-  struct node* next;
-};
+struct gll_t *root;
 
-static int sillymutex = 0;
+volatile static int sillymutex = 0;
 
 uint32_t Hash(char *key, size_t len)
 {
@@ -88,6 +88,7 @@ uint32_t Hash(char *key, size_t len)
 
 static int32_t RenderScreen(void *opaque) {
   struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
+  //printf("Render: %d\n", context.id);
 
   //printf("Id: %d\nSize: %d\nHash: %d\n\n", context.id, context.frame_size, Hash(context.prev_frame, context.frame_size));
 
@@ -119,24 +120,18 @@ static int32_t RenderScreen(void *opaque) {
   SDL_RenderCopy(context.Renderer, context.Texture, NULL, NULL);
   SDL_RenderPresent(context.Renderer);
 
-  free(opaque);
-  free(context.prev_frame);
   sillymutex = 0;
+
   return 0;
 }
 
 static int32_t ReceiveVideo(void *opaque) {
+    root = gll_init();
+
     struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
-    int recv_size, slen = sizeof(context.socketContext.addr), recv_index = 0, i = 0;
+    int recv_size, slen = sizeof(context.socketContext.addr), recv_index = 0, i = 0, intercepts = 0;
     char recv_buf[MAX_PACKET_SIZE];
 
-    context.prev_frame = malloc(sizeof(char) * BUFLEN);
-
-    uint8_t tracker = 0;
-    int current_id = -1;
-    int total_packets = -1;
-
-    int max_index = 0, curr_index = 0;
     struct RTPPacket packet = {0};
     // init decoder
     context.decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
@@ -144,64 +139,134 @@ static int32_t ReceiveVideo(void *opaque) {
     if (SendAck(&context.socketContext, 5) < 0)
         printf("Could not send video ACK\n");
 
+    struct SDLVideoContext* pending_ctx = NULL;
+    struct SDLVideoContext* rendered_ctx = NULL;
 
     while(1)
     {
+        if (sillymutex == 0) {
+          if (rendered_ctx != NULL) {
+            free(rendered_ctx->prev_frame);
+            free(rendered_ctx);
+            rendered_ctx = NULL;
+          }
+          if (pending_ctx != NULL) {
+            //printf("Render: %d\n", pending_ctx->id);
+            sillymutex = 1;
+            SDL_Thread *render_screen = SDL_CreateThread(RenderScreen, "RenderScreen", pending_ctx);
+            rendered_ctx = pending_ctx;
+            pending_ctx = NULL;
+          }
+        }
+
         recv_size = recvfrom(context.socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&context.socketContext.addr), &slen);
 
-        if (current_id == -1) {
-          current_id = packet.id;
-        }
-
-        StartCounter();
-        bool final = false;
-
+        // Find frame in linked list that matches the id
         if(recv_size > 0) {
-            if (current_id == packet.id) {
-                tracker++;
+          //printf("ID: %d, Index: %d\n", packet.id, packet.index);
 
-                int place = packet.index * MAX_PACKET_SIZE;
-                memcpy(context.prev_frame + place, packet.data, packet.payload_size);
-
-                if(packet.is_ending) {
-                    total_packets = packet.index + 1;
-                }
-
-                if (tracker == total_packets) {                  
-                    final = true;
-                    context.frame_size = place + packet.payload_size;
-
-                    while(sillymutex != 0);
-                    sillymutex = 1;
-
-                    struct SDLVideoContext* threadContext = malloc(sizeof(struct SDLVideoContext));
-                    memcpy(threadContext, &context, sizeof(struct SDLVideoContext));
-                    threadContext->id = current_id;
-
-                    SDL_Thread *render_screen = SDL_CreateThread(RenderScreen, "RenderScreen", threadContext);
-
-                    tracker = 0;
-                    current_id = -1;
-                    total_packets = -1;
-                    context.prev_frame = malloc(sizeof(char) * BUFLEN);
-
-                    //printf("Rendered!\n");
-                }
-            } else {
-              //printf("Intercepted\n");
-              tracker = 0;
-              current_id = -1;
-              total_packets = -1;
-
-              current_id = packet.id;
-              tracker++;
-
-              int place = packet.index * MAX_PACKET_SIZE;
-              memcpy(context.prev_frame + place, packet.data, packet.payload_size);
+          struct SDLVideoContext* gllctx = NULL;
+          int gllindex = -1;
+          
+          //printf("Start For Loop %d\n", root->size);
+          struct gll_node_t *node = root->first;
+          for(int i = 0; i < root->size; i++) {
+            struct SDLVideoContext* ctx = node->data;
+            if (ctx->id == packet.id) {
+              //printf("Context found for id %d\n", packet.id);
+              gllctx = ctx;
+              gllindex = i;
+              break;
             }
-        }
+            node = node->next;
+          }
+          //printf("Done with for loop\n");
+          
 
-        if (final) {
+          // Could not find frame in linked list, add a new node to the linked list
+          if (gllctx == NULL) {
+              //printf("Could not find context for id %d\n", packet.id);
+              struct SDLVideoContext* threadContext = malloc(sizeof(struct SDLVideoContext));
+              memcpy(threadContext, &context, sizeof(struct SDLVideoContext));
+              threadContext->id = packet.id;
+              threadContext->prev_frame = malloc(sizeof(char) * BUFLEN);
+              threadContext->packets_received = 0;
+              threadContext->num_packets = -1;
+              gll_push_end(root, threadContext);
+              gllctx = threadContext;
+              gllindex = root->size - 1;
+          }
+
+          gllctx->packets_received++;
+
+          // Copy packet data
+          int place = packet.index * MAX_PACKET_SIZE;
+          memcpy(gllctx->prev_frame + place, packet.data, packet.payload_size);
+          gllctx->frame_size += packet.payload_size;
+
+          // Keep track of how many packets are necessary
+          if (packet.is_ending) {
+            gllctx->num_packets = packet.index + 1;
+            //printf("Packet with id %d is ending, with %d packets\n", packet.id, gllctx->num_packets);
+          }
+
+          // If we received all of the packets
+          if (gllctx->packets_received == gllctx->num_packets) {
+            //printf("Received all packets for id %d, getting ready to render\n", packet.id);
+            gll_remove(root, gllindex);
+
+            //printf("ID: %d\n", gllctx->id);
+
+            // Wipe out the out of date linked list
+            int keepers = 0;
+            while (root->size > keepers) {
+              //printf("Root ID: %d\n", ((struct SDLVideoContext*)(root->first->data))->id);
+              //printf("Keepers: %d, Size: %d\n", keepers, root->size);
+              struct SDLVideoContext *linkedlistctx = gll_find_node(root, keepers)->data;
+
+              //printf("Root First: %p\n", root->first);
+              //printf("find_node(0): %p\n", gll_find_node(root, 0));
+
+              //printf("ll ID %d\n", linkedlistctx->id);
+              if (linkedlistctx->id < gllctx->id) {
+                //printf("Remove\n");
+                //printf("Removing old frame with id %d, in preference of completed frame id %d\n", linkedlistctx->id, gllctx->id);
+                //printf("Free :%d\n", linkedlistctx->id);
+                free(linkedlistctx->prev_frame);
+                free(linkedlistctx);
+                gll_remove(root, keepers);
+              } else {
+                //printf("Keep\n");
+                keepers++;
+              }
+
+              //printf("Done Recvd %d\n", );
+            }
+
+            //printf("Done While\n");
+            if (pending_ctx != NULL) {
+              //printf("Free: %d\n", pending_ctx->id);
+              free(pending_ctx->prev_frame);
+              free(pending_ctx);
+            }
+
+            pending_ctx = gllctx;
+            //printf("Pending: %d\n", pending_ctx->id);
+          }
+
+          if (root->size > 10) {
+            printf("Too many frames!\n");
+
+            // Wipe Array
+            while(root->size > 0) {
+              struct SDLVideoContext *linkedlistctx = gll_find_node(root, 0)->data;
+              free(linkedlistctx->prev_frame);
+              free(linkedlistctx);
+              gll_remove(root, 0);
+            }
+          }
+
+          //printf("\n");
         }
 
         if (i == 30 * 60) {
@@ -218,7 +283,7 @@ static int32_t ReceiveAudio(void *opaque) {
     // cast socket and SDL variables back to their data type for usage
     struct SocketContext* context = (struct SocketContext *) opaque;
     int recv_size, slen = sizeof(context->addr), recv_index = 0, i = 0;
-    char recv_buf[BUFLEN];
+    struct RTPPacket recv_buf = {0};
 
     SDL_AudioSpec wantedSpec = { 0 }, audioSpec = { 0 };
     SDL_AudioDeviceID dev;
@@ -248,7 +313,7 @@ static int32_t ReceiveAudio(void *opaque) {
 
     while(1) {
         if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) > 0) {
-            SDL_QueueAudio(dev, recv_buf, recv_size);
+            SDL_QueueAudio(dev, recv_buf.data, recv_buf.payload_size);
         }
         if (i == 30 * 60) {
           i = 0;
