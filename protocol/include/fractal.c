@@ -295,6 +295,7 @@ const char windows_keycodes[264] = {
 
 /*** FRACTAL FUNCTIONS START ***/
 
+/*
 /// @brief destroy the server sockets and threads, and WSA for windows
 /// @details if full=true, destroys everything, else only current connection
 FractalStatus ServerDestroy(SOCKET sockets[], HANDLE threads[], bool full) {
@@ -390,7 +391,9 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
 	// done initializing, waiting for a connection
 	return listensocket;
 }
+*/
 
+#if defined(_WIN32)
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalMessage struct and send input to Windows OS
 FractalStatus ReplayUserInput(FractalMessage fmsg) {
@@ -463,6 +466,7 @@ FractalStatus ReplayUserInput(FractalMessage fmsg) {
   SendInput(1, &Event, sizeof(INPUT)); // 1 structure to send
 	return FRACTAL_OK;
 }
+#endif
 
 /*** FRACTAL FUNCTIONS END ***/
 
