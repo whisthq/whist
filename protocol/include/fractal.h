@@ -549,7 +549,6 @@ typedef struct FractalMessage {
 
 /*** FRACTAL FUNCTIONS START ***/
 
-/*
 /// @brief destroy the server sockets and threads, and WSA for windows
 /// @details if full=true, destroys everything, else only current connection
 FractalStatus ServerDestroy(SOCKET sockets[], HANDLE threads[], bool full);
@@ -557,7 +556,6 @@ FractalStatus ServerDestroy(SOCKET sockets[], HANDLE threads[], bool full);
 /// @brief initialize the listen socket (TCP path)
 /// @details initializes windows socket, creates and binds our listen socket
 SOCKET ServerInit(SOCKET listensocket, FractalConfig config);
-*/
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalMessage struct and send input to Windows OS

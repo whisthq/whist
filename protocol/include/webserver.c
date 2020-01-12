@@ -30,12 +30,6 @@
   #pragma warning(disable: 4047) // levels of indirection
   #pragma warning(disable: 4311) // typecast warning
   #pragma warning(disable: 4267) // size_t to int
-#else
-  #include <unistd.h>
-  #include <sys/types.h>
-  #include <sys/socket.h>
-  #include <netinet/in.h>
-  #include <netdb.h>
 #endif
 
 // send JSON post to query the database, authenticate the user and return the VM IP
@@ -52,18 +46,13 @@ char *sendJSONPost(char *path, char *jsonObj) {
   #endif
 
   // environment variables
-  #if defined(_WIN32)
-    SOCKET Socket; // socket to send/receive POST request
-  #else
-    int Socket;
-  #endif
-
+  SOCKET Socket; // socket to send/receive POST request
   struct hostent *host; // address struct of the host webserver
   struct sockaddr_in webserver_socketAddress; // address of the web server socket
 
   // Creating our TCP socket to connect to the web server
   Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (Socket < 0) // Windows & Unix cases
+  if (Socket == INVALID_SOCKET || Socket < 0) // Windows & Unix cases
   {
     // if can't create socket, return
     printf("Could not create socket.\n");
@@ -79,11 +68,11 @@ char *sendJSONPost(char *path, char *jsonObj) {
   webserver_socketAddress.sin_addr.s_addr = *((unsigned long*)host->h_addr);
 
   // connect to the web server before sending the POST request packet
-	int connect_status = connect(Socket, (struct sockaddr *) &webserver_socketAddress, sizeof(webserver_socketAddress));
-	if (connect_status < 0)
+	char *connect_status = connect(Socket, (struct sockaddr *) &webserver_socketAddress, sizeof(webserver_socketAddress));
+	if (connect_status == SOCKET_ERROR || connect_status < 0)
 	{
-	  printf("Could not connect to the webserver.\n");
-	  return "3";
+    printf("Could not connect to the webserver.\n");
+    return "3";
 	}
 
   // now that we're connected, we can send the POST request to authenticate the user

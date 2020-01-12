@@ -1,7 +1,5 @@
-# Prerequisite: sudo apt install libswscale-dev
-
 UNAME = $(shell uname -s)
-CC = gcc
+
 
 ### LINUX ###
 ifeq ($(UNAME), Linux)
@@ -11,7 +9,6 @@ PLATFORM = linux
 SHARED_LIBS = \
 	-lm \
 	-ldl \
-	-lswscale \
 	-lpthread
 endif
 
@@ -44,10 +41,10 @@ endif
 BIN_NAME = client
 
 # objects to build
-OBJS = fractal.o webserver.o videodecode.o main.o
+OBJS = ../include/fractal.o ../include/webserver.o main.o
 
 # static libs to link against
-STATIC_LIBS = ../lib/SDL2/$(PLATFORM)/libSDL2.a
+STATIC_LIBS = # lib/$(PLATFORM)/libSDL2.a add ffmpeg and sdl libs
 
 # compiler flags
 CFLAGS = \
@@ -57,13 +54,6 @@ CFLAGS = \
 	-Wno-missing-field-initializers \
 	-O3 \
 	-Iinclude
-
-fractal.obj: ../include/fractal.c
-	$(CC) -c ../include/fractal.c
-webserver.obj: ../include/webserver.c
-	$(CC) -c ../include/webserver.c
-videodecode.obj: ../include/videodecode.c
-	$(CC) -c ../include/videodecode.c
 
 # build all files into executable
 all: clean clear $(OBJS)
@@ -77,4 +67,3 @@ clean:
 # clear folder
 clear:
 	clear
-

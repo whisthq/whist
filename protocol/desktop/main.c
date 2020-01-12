@@ -47,17 +47,6 @@
   #pragma warning(disable: 4267) // conversion from size_t to int
 #else
   #include <unistd.h>
-  #include <sys/types.h>
-  #include <sys/socket.h>
-  #include <netinet/in.h>
-  #include <netinet/tcp.h>
-  #include <errno.h>
-#endif
-
-#if defined(_WIN32)
-  #define GetLastError() WSAGetLastError()
-#else
-  #define GetLastError() errno
 #endif
 
 // global vars and definitions
@@ -72,11 +61,7 @@ struct context {
     int uvPitch;
     SDL_Renderer* Renderer;
     SDL_Texture* Texture;
-#if defined(_WIN32)
     SOCKET Socket;
-#else
-    int Socket;
-#endif
     struct SwsContext* sws;
 };
 
@@ -222,12 +207,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // all good, we have a user and the VM IP written, time to set up the sockets
   // socket environment variables
-  #if defined(_WIN32)
-    SOCKET RECVSocket, SENDSocket; // socket file descriptors
-  #else
-    int RECVSocket, SENDSocket;
-  #endif
-
+  SOCKET RECVSocket, SENDSocket; // socket file descriptors
   struct sockaddr_in clientRECV, serverRECV; // this client receive port the server streams to, and the server receive port this client streams to
   int bind_attempts = 0;
   FractalConfig config = FRACTAL_DEFAULTS; // default port settings
@@ -239,7 +219,7 @@ int32_t main(int32_t argc, char **argv) {
     // initialize Winsock (sockets library)
     printf("Initialising Winsock...\n");
     if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
-      printf("Failed. Error Code : %d.\n", GetLastError());
+      printf("Failed. Error Code : %d.\n", WSAGetLastError());
       return 3;
     }
     printf("Winsock Initialised.\n");
@@ -250,7 +230,7 @@ int32_t main(int32_t argc, char **argv) {
   // SOCK_STREAM = TCP Socket
   // IPPROTO_TCP = TCP protocol
   SENDSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (SENDSocket < 0) { // Windows & Unix cases
+  if (SENDSocket == INVALID_SOCKET || SENDSocket < 0) { // Windows & Unix cases
     // if can't create socket, return
     printf("Could not create Send TCP socket.\n");
     return 4;
@@ -266,7 +246,7 @@ int32_t main(int32_t argc, char **argv) {
 
   // connect the client send socket to the server receive port (TCP)
   char *connect_status = connect(SENDSocket, (struct sockaddr *) &serverRECV, sizeof(serverRECV));
-  if (connect_status < 0) {
+  if (connect_status == SOCKET_ERROR || connect_status < 0) {
     printf("Could not connect to the VM (server).\n");
     return 5;
   }
@@ -278,7 +258,7 @@ int32_t main(int32_t argc, char **argv) {
   // SOCK_DGAM = UDP Socket
   // IPROTO_UDP = UDP protocol
   RECVSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (RECVSocket < 0) { // Windows & Unix cases
+  if (RECVSocket == INVALID_SOCKET || RECVSocket < 0) { // Windows & Unix cases
     printf("Could not create Receive UDP socket.\n");
   }
   printf("Receive UDP Socket created.\n");
@@ -292,14 +272,14 @@ int32_t main(int32_t argc, char **argv) {
 
   // for the recv/recvfrom function to work, we need to bind the socket even if it is UDP
   // bind our socket to this port. If it fails, increment port by one and retry
-  while (bind(RECVSocket, (struct sockaddr *) &clientRECV, sizeof(clientRECV)) < 0) {
+  while (bind(RECVSocket, (struct sockaddr *) &clientRECV, sizeof(clientRECV)) == SOCKET_ERROR) {
     // at most 50 attempts, after that we give up
     if (bind_attempts == 50) {
       printf("Cannot find an open port, abort.\n");
       return 4;
     }
     // display failed attempt
-    printf("Bind attempt #%i failed with error code : %d.\n", bind_attempts, GetLastError());
+    printf("Bind attempt #%i failed with error code : %d.\n", bind_attempts, WSAGetLastError());
 
     // increment port number and retry
     bind_attempts += 1;
@@ -465,7 +445,7 @@ int32_t main(int32_t argc, char **argv) {
         // send data message to server
         if (send(SENDSocket, fmsg_serialized, strlen(fmsg_serialized), 0) < 0) {
           // error sending, terminate
-          printf("Send failed with error code: %d\n", GetLastError());
+          printf("Send failed with error code: %d\n", WSAGetLastError());
           return 7;
         }
         // printf("User action sent.\n");
