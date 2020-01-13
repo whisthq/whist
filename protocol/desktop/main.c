@@ -23,24 +23,10 @@
 #define SDL_AUDIO_BUFFER_SIZE 1024
 #define MAX_PACKET_SIZE 1400
 
-/// BEGIN TIME
-LARGE_INTEGER frequency;        // ticks per second
-LARGE_INTEGER t1, t2;           // ticks
-
-void StartCounter()
-{
-    if(!QueryPerformanceFrequency(&frequency))
-      printf("QueryPerformanceFrequency failed!\n");
-
-    QueryPerformanceCounter(&t1);
-}
-double GetCounter()
-{
-    QueryPerformanceCounter(&t2);
-    return (t2.QuadPart-t1.QuadPart) * 1000.0/frequency.QuadPart;
-}
-/// END TIME
-
+  LARGE_INTEGER frequency;
+  LARGE_INTEGER start;
+  LARGE_INTEGER end;
+  double interval;
 
 struct SDLVideoContext {
     Uint8 *yPlane;
@@ -69,28 +55,10 @@ struct RTPPacket {
 
 struct gll_t *root;
 
-volatile static int sillymutex = 0;
-
-uint32_t Hash(char *key, size_t len)
-{
-    uint32_t hash, i;
-    for(hash = i = 0; i < len; ++i)
-    {
-        hash += key[i];
-        hash += (hash << 10);
-        hash ^= (hash >> 6);
-    }
-    hash += (hash << 3);
-    hash ^= (hash >> 11);
-    hash += (hash << 15);
-    return hash;
-}
+volatile static int mutex = 0;
 
 static int32_t RenderScreen(void *opaque) {
   struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
-  //printf("Render: %d\n", context.id);
-
-  //printf("Id: %d\nSize: %d\nHash: %d\n\n", context.id, context.frame_size, Hash(context.prev_frame, context.frame_size));
 
   video_decoder_decode(context.decoder, context.prev_frame, context.frame_size);
 
@@ -120,39 +88,43 @@ static int32_t RenderScreen(void *opaque) {
   SDL_RenderCopy(context.Renderer, context.Texture, NULL, NULL);
   SDL_RenderPresent(context.Renderer);
 
-  sillymutex = 0;
+  mutex = 0;
 
   return 0;
 }
 
 static int32_t ReceiveVideo(void *opaque) {
-    root = gll_init();
-
     struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
     int recv_size, slen = sizeof(context.socketContext.addr), recv_index = 0, i = 0, intercepts = 0;
     char recv_buf[MAX_PACKET_SIZE];
 
     struct RTPPacket packet = {0};
-    // init decoder
-    context.decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
-
-
     struct SDLVideoContext* pending_ctx = NULL;
     struct SDLVideoContext* rendered_ctx = NULL;
+
+    context.decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
+    root = gll_init();
 
     if (SendAck(&context.socketContext, 5) < 0)
         printf("Could not send video ACK\n");
 
+    int frames_received = 0;
+
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&start);
     while(1)
     {
-        if (sillymutex == 0) {
+        if(frames_received == 100) {
+          break;
+        }
+        if (mutex == 0) {
           if (rendered_ctx != NULL) {
             free(rendered_ctx->prev_frame);
             free(rendered_ctx);
             rendered_ctx = NULL;
           }
           if (pending_ctx != NULL) {
-            sillymutex = 1;
+            mutex = 1;
             SDL_Thread *render_screen = SDL_CreateThread(RenderScreen, "RenderScreen", pending_ctx);
             rendered_ctx = pending_ctx;
             pending_ctx = NULL;
@@ -177,10 +149,8 @@ static int32_t ReceiveVideo(void *opaque) {
             node = node->next;
           }
 
-        
           // Could not find frame in linked list, add a new node to the linked list
           if (gllctx == NULL) {
-              //printf("Could not find context for id %d\n", packet.id);
               struct SDLVideoContext* threadContext = malloc(sizeof(struct SDLVideoContext));
               memcpy(threadContext, &context, sizeof(struct SDLVideoContext));
               threadContext->id = packet.id;
@@ -202,15 +172,13 @@ static int32_t ReceiveVideo(void *opaque) {
           // Keep track of how many packets are necessary
           if (packet.is_ending) {
             gllctx->num_packets = packet.index + 1;
-            //printf("Packet with id %d is ending, with %d packets\n", packet.id, gllctx->num_packets);
           }
 
           // If we received all of the packets
           if (gllctx->packets_received == gllctx->num_packets) {
+            frames_received++;
             //printf("Received all packets for id %d, getting ready to render\n", packet.id);
             gll_remove(root, gllindex);
-
-            //printf("ID: %d\n", gllctx->id);
 
             // Wipe out the out of date linked list
             int keepers = 0;
@@ -222,22 +190,16 @@ static int32_t ReceiveVideo(void *opaque) {
                 free(linkedlistctx);
                 gll_remove(root, keepers);
               } else {
-                //printf("Keep\n");
                 keepers++;
               }
-
-              //printf("Done Recvd %d\n", );
             }
 
-            //printf("Done While\n");
             if (pending_ctx != NULL) {
-              //printf("Free: %d\n", pending_ctx->id);
               free(pending_ctx->prev_frame);
               free(pending_ctx);
             }
 
             pending_ctx = gllctx;
-            //printf("Pending: %d\n", pending_ctx->id);
           }
 
           if (root->size > 10) {
@@ -251,8 +213,6 @@ static int32_t ReceiveVideo(void *opaque) {
               gll_remove(root, 0);
             }
           }
-
-          //printf("\n");
         }
 
         if (i == 30 * 60) {
@@ -262,14 +222,19 @@ static int32_t ReceiveVideo(void *opaque) {
         i++;
     }
 
+    QueryPerformanceCounter(&end);
+    interval = (double) (end.QuadPart - start.QuadPart) / frequency.QuadPart;
+    printf("Rendered %d frames in %f seconds\n", frames_received, interval);
+
     return 0;
 }
 
 static int32_t ReceiveAudio(void *opaque) {
     // cast socket and SDL variables back to their data type for usage
     struct SocketContext* context = (struct SocketContext *) opaque;
-    int recv_size, slen = sizeof(context->addr), recv_index = 0, i = 0;
-    struct RTPPacket recv_buf = {0};
+    int recv_size, slen = sizeof(context->addr), recv_index = 0, i = 0, curr_id = -1, sample_size = 0;
+    uint8_t recv_sample[10000];
+    struct RTPPacket packet = {0};
 
     SDL_AudioSpec wantedSpec = { 0 }, audioSpec = { 0 };
     SDL_AudioDeviceID dev;
@@ -298,8 +263,8 @@ static int32_t ReceiveAudio(void *opaque) {
         printf("Could not send audio ACK\n");
 
     while(1) {
-        if ((recv_size = recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen)) > 0) {
-            SDL_QueueAudio(dev, recv_buf.data, recv_buf.payload_size);
+        if ((recv_size = recvfrom(context->s, &packet, sizeof(packet), 0, (struct sockaddr*)(&context->addr), &slen)) > 0) {
+          SDL_QueueAudio(dev, packet.data, packet.payload_size);
         }
         if (i == 30 * 60) {
           i = 0;
