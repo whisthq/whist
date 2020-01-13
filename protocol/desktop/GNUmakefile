@@ -64,14 +64,20 @@ webserver.o:
 videoencode.o:
 	$(CC) -c ../include/videoencode.c
 
+videodecode.o:
+	$(CC) -c ../include/videodecode.c
+
+audiodecode.o:
+	$(CC) -c ../include/audiodecode.c
+
 linkedlist.o:
 	$(CC) -c ../include/linkedlist.c
 
 main.o:
 	$(CC) -c main.c
 
-desktop: main.o fractal.o webserver.o videoencode.o linkedlist.o
-	$(CC) -o desktop main.o fractal.o webserver.o videoencode.o linkedlist.o $(STATIC_LIBS) $(SHARED_LIBS)
+desktop: main.o fractal.o webserver.o videoencode.o videodecode.o audiodecode.o linkedlist.o
+	$(CC) -o desktop main.o fractal.o webserver.o videoencode.o videodecode.o audiodecode.o linkedlist.o $(STATIC_LIBS) $(SHARED_LIBS)
 
 # build all files into executable
 all: clean clear $(OBJS)
