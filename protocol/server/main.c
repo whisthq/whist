@@ -24,6 +24,8 @@
 #define FRAME_BUFFER_SIZE (1024 * 1024)
 #define MAX_PACKET_SIZE 1400
 #define BITRATE 25000
+#define USE_GPU 0
+#define USE_MONITOR 0
 
 struct RTPPacket {
   uint8_t data[MAX_PACKET_SIZE];
@@ -32,6 +34,158 @@ struct RTPPacket {
   int id;
   bool is_ending;
 };
+
+struct ScreenshotContainer {
+  IDXGIResource *desktop_resource;
+  ID3D11Texture2D *final_texture;
+  DXGI_MAPPED_RECT mapped_rect;
+  IDXGISurface *surface;
+};
+
+struct CaptureDevice {
+  D3D11_BOX Box;
+  ID3D11Device *D3D11device;
+  ID3D11DeviceContext *D3D11context;
+  IDXGIOutputDuplication *duplication;
+  ID3D11Texture2D *staging_texture;
+  DXGI_OUTDUPL_FRAME_INFO frame_info;
+  DXGI_OUTDUPL_DESC duplication_desc;
+  int counter;
+};
+
+struct DisplayHardware {
+  IDXGIAdapter1 *adapter;
+  IDXGIOutput* output;
+  DXGI_OUTPUT_DESC final_output_desc;
+};
+
+void CreateDisplayHardware(struct DisplayHardware *hardware, struct CaptureDevice *device) {
+  int num_adapters = 0, num_outputs = 0, i = 0, j = 0;
+  IDXGIFactory1 *factory;
+  IDXGIOutput *outputs[10];
+  IDXGIAdapter *adapters[10];
+  DXGI_OUTPUT_DESC output_desc;
+  D3D_FEATURE_LEVEL FeatureLevel;
+
+  HRESULT hr = CreateDXGIFactory1(&IID_IDXGIFactory1, (void**)(&factory));
+
+  // GET ALL GPUS
+  while(factory->lpVtbl->EnumAdapters1(factory, num_adapters, &hardware->adapter) != DXGI_ERROR_NOT_FOUND) {
+    adapters[num_adapters] = hardware->adapter;
+    ++num_adapters;
+  }
+
+  // GET GPU DESCRIPTIONS
+  for(i = 0; i < num_adapters; i++) {
+    DXGI_ADAPTER_DESC1 desc;
+    hardware->adapter = adapters[i];
+    hr = hardware->adapter->lpVtbl->GetDesc1(hardware->adapter, &desc);
+    // printf("Adapter: %s\n", desc.Description);
+  }
+
+  // GET ALL MONITORS
+  for(i = 0; i < num_adapters; i++) {
+    int this_adapter_outputs = 0;
+    hardware->adapter = adapters[i];
+    while(hardware->adapter->lpVtbl->EnumOutputs(hardware->adapter, this_adapter_outputs, &hardware->output) != DXGI_ERROR_NOT_FOUND) {
+      // printf("Found monitor %d on adapter %lu\n", this_adapter_outputs, i);
+      outputs[num_outputs] = hardware->output;
+      ++this_adapter_outputs;
+      ++num_outputs;
+    }  
+  }
+
+  // GET MONITOR DESCRIPTIONS
+  for(i = 0; i < num_outputs; i++) {
+    hardware->output = outputs[i];
+    hr = hardware->output->lpVtbl->GetDesc(hardware->output, &output_desc);
+    // printf("Monitor: %s\n", output_desc.DeviceName);
+  }
+
+  hardware->adapter = adapters[USE_GPU];
+  hardware->output = outputs[USE_MONITOR];
+
+
+  hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
+    D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
+
+}
+
+void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *device) {
+  D3D11_TEXTURE2D_DESC tDesc;
+  IDXGIOutput1* output1;
+
+  hardware->output->lpVtbl->QueryInterface(hardware->output, &IID_IDXGIOutput1, (void**)&output1);
+  output1->lpVtbl->DuplicateOutput(output1, device->D3D11device, &device->duplication);
+  hardware->output->lpVtbl->GetDesc(hardware->output, &hardware->final_output_desc);
+
+  // Texture to store GPU pixels
+  tDesc.Width = hardware->final_output_desc.DesktopCoordinates.right;
+  tDesc.Height = hardware->final_output_desc.DesktopCoordinates.bottom;
+  tDesc.MipLevels = 1;
+  tDesc.ArraySize = 1;
+  tDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+  tDesc.SampleDesc.Count = 1;
+  tDesc.SampleDesc.Quality = 0;
+  tDesc.Usage = D3D11_USAGE_STAGING;
+  tDesc.BindFlags = 0;
+  tDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+  tDesc.MiscFlags = 0;
+
+  device->Box.top = hardware->final_output_desc.DesktopCoordinates.top;
+  device->Box.left = hardware->final_output_desc.DesktopCoordinates.left;
+  device->Box.right = hardware->final_output_desc.DesktopCoordinates.right;
+  device->Box.bottom = hardware->final_output_desc.DesktopCoordinates.bottom;
+  device->Box.front = 0;
+  device->Box.back = 1;
+
+  device->D3D11device->lpVtbl->CreateTexture2D(device->D3D11device, &tDesc, NULL, &device->staging_texture);
+
+  device->duplication->lpVtbl->GetDesc(device->duplication, &device->duplication_desc);
+  printf("Desktop image in memory: %d\n", device->duplication_desc.DesktopImageInSystemMemory);
+}
+
+void CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot) {
+  int frameCaptured;
+  HRESULT hr;
+
+  device->duplication->lpVtbl->ReleaseFrame(device->duplication);
+
+  if (NULL != screenshot->final_texture) {
+    screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
+    screenshot->final_texture = NULL;
+  }
+  
+  if (NULL != screenshot->desktop_resource) {
+    screenshot->desktop_resource->lpVtbl->Release(screenshot->desktop_resource);
+    screenshot->desktop_resource = NULL;
+  }
+
+  hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 0, &device->frame_info, &screenshot->desktop_resource);
+  if(FAILED(hr)) {
+    frameCaptured = 0;
+  } else {
+    frameCaptured = 1;
+  }
+
+  if(frameCaptured) {
+    device->counter++;
+    hr = screenshot->desktop_resource->lpVtbl->QueryInterface(screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
+    hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &screenshot->mapped_rect);
+    if(hr == DXGI_ERROR_UNSUPPORTED) {
+      device->D3D11context->lpVtbl->CopySubresourceRegion(device->D3D11context, (ID3D11Resource*)device->staging_texture, 0, 0, 0, 0,
+                                              (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
+
+      hr = device->staging_texture->lpVtbl->QueryInterface(device->staging_texture, &IID_IDXGISurface, (void**)&screenshot->surface);
+      hr = screenshot->surface->lpVtbl->Map(screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
+    }
+  }
+}
+
+
+void ReleaseScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot) {
+  device->duplication->lpVtbl->UnMapDesktopSurface(device->duplication);
+}
 
 static int SendPacket(struct SocketContext *context, uint8_t *data, int len, int id) {
   int sent_size, payload_size, slen = sizeof(context->addr);
@@ -57,67 +211,42 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len, int
   return 0;
 }
 
-uint32_t Hash(char *key, size_t len)
-{
-    uint32_t hash, i;
-    for(hash = i = 0; i < len; ++i)
-    {
-        hash += key[i];
-        hash += (hash << 10);
-        hash ^= (hash >> 6);
-    }
-    hash += (hash << 3);
-    hash ^= (hash >> 11);
-    hash += (hash << 15);
-    return hash;
-}
-
 
 static int32_t SendVideo(void *opaque) {
-    struct SocketContext context = *(struct SocketContext *) opaque;
-    int slen = sizeof(context.addr);
+  struct SocketContext context = *(struct SocketContext *) opaque;
+  int slen = sizeof(context.addr);
 
-    // get window
-    HWND window = NULL;
-    window = GetDesktopWindow();
-    frame_area frame = {0, 0, 0, 0}; // init  frame area
+  int frameCaptured = 0, counter = 0, id = 0, i;
+  HRESULT hr;
 
-    // init screen capture device
-    video_capture_device *device;
-    device = create_video_capture_device(window, frame);
+  struct DisplayHardware *hardware = (struct DisplayHardware *) malloc(sizeof(struct DisplayHardware));
+  memset(hardware, 0, sizeof(struct DisplayHardware));
 
-    // set encoder parameters
-    int width = device->width; // in and out from the capture device
-    int height = device->height; // in and out from the capture device
-    int bitrate = width * BITRATE; // estimate bit rate based on output size
+  struct CaptureDevice *device = (struct CaptureDevice *) malloc(sizeof(struct CaptureDevice));
+  memset(device, 0, sizeof(struct CaptureDevice));
 
-    // init encoder
-    encoder_t *encoder;
-    encoder = create_video_encoder(width, height, CAPTURE_WIDTH, CAPTURE_HEIGHT, bitrate);
+  struct ScreenshotContainer *screenshot = (struct ScreenshotContainer *) malloc(sizeof(struct ScreenshotContainer));
+  memset(screenshot, 0, sizeof(struct ScreenshotContainer));
 
-    // video variables
-    void *capturedframe; // var to hold captured frame, as a void* to RGB pixels
-    int sent_size, id = 0; // var to keep track of size of packets sent
+  CreateDisplayHardware(hardware, device);
+  CreateTexture(hardware, device);
 
-    // while stream is on
-    while(1) {
-      // capture a frame
-      capturedframe = capture_screen(device);
+  device->counter = 0;
 
-      video_encoder_encode(encoder, capturedframe);
+  encoder_t *encoder;
+  encoder = create_video_encoder(
+    CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * BITRATE);
 
-      if (encoder->packet.size != 0) {
-        if (SendPacket(&context, encoder->packet.data, encoder->packet.size, id) < 0) {
-            printf("Could not send video frame\n");
-        } 
-      }
-
-      id++;
+  while(1) {
+    CaptureScreen(device, screenshot);
+    video_encoder_encode(encoder, screenshot->mapped_rect.pBits);
+    if (encoder->packet.size != 0) {
+      if (SendPacket(&context, encoder->packet.data, encoder->packet.size, id) < 0) {
+          printf("Could not send video frame\n");
+      } 
+    }
+    ReleaseScreen(device, screenshot);
   }
-
-  // exited while loop, stream done let's close everything
-  destroy_video_encoder(encoder); // destroy encoder
-  destroy_video_capture_device(device); // destroy capture device
   return 0;
 }
 

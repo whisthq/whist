@@ -61,7 +61,9 @@ SHARED_LIBS = \
   msvcmrt.lib \
   libcpmt.lib \
   msvcprt.lib \
-  avrt.lib
+  avrt.lib \
+  d3dcompiler.lib \
+  dxguid.lib
 
 # linking flags
 LD_FLAGS = \

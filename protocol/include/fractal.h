@@ -35,6 +35,10 @@
 #if defined(_WIN32)
 	#include <windows.h>
 	#include <winuser.h>
+	#include <D3D11.h>
+	#include <D3d11_1.h> 
+	#include <dxgi1_2.h>
+	#include <DXGITYPE.h>
 	#pragma warning(disable: 4201)
 #endif
 
