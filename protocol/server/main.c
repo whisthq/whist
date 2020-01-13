@@ -23,15 +23,15 @@
 #define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
 #define FRAME_BUFFER_SIZE (1024 * 1024)
 #define MAX_PACKET_SIZE 1400
-#define BITRATE 30000
+#define BITRATE 25000
 
 struct RTPPacket {
   uint8_t data[MAX_PACKET_SIZE];
   int index;
   int payload_size;
   int id;
+  bool is_ending;
 };
-
 
 static int SendPacket(struct SocketContext *context, uint8_t *data, int len, int id) {
   int sent_size, payload_size, slen = sizeof(context->addr);
@@ -41,9 +41,12 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len, int
     struct RTPPacket packet = {0};
     payload_size = min(MAX_PACKET_SIZE, (len - curr_index));
     memcpy(packet.data, data + curr_index, payload_size);
+
     packet.index = i;
     packet.payload_size = payload_size;
     packet.id = id;
+    packet.is_ending = curr_index + payload_size == len;
+
     if((sent_size = sendto(context->s, &packet, sizeof(packet), 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
       return -1;
     } else {
@@ -109,9 +112,6 @@ static int32_t SendVideo(void *opaque) {
         } 
       }
 
-      if(id == 100) {
-        id = 0;
-      }
       id++;
   }
 
@@ -123,7 +123,7 @@ static int32_t SendVideo(void *opaque) {
 
 static int32_t SendAudio(void *opaque) {
   struct SocketContext context = *(struct SocketContext *) opaque;
-  int slen = sizeof(context.addr);
+  int slen = sizeof(context.addr), id = 0;
 
   wasapi_device *audio_device = (wasapi_device *) malloc(sizeof(struct wasapi_device));
   audio_device = CreateAudioDevice(audio_device);
@@ -147,7 +147,7 @@ static int32_t SendAudio(void *opaque) {
           audio_device->audioBufSize = nNumFramesToRead * nBlockAlign;
 
           if (audio_device->audioBufSize != 0) {
-            if (SendPacket(&context, audio_device->pData, audio_device->audioBufSize, 0) < 0) {
+            if (SendPacket(&context, audio_device->pData, audio_device->audioBufSize, id) < 0) {
                 printf("Could not send audio frame\n");
             }
           }
@@ -155,13 +155,14 @@ static int32_t SendAudio(void *opaque) {
           audio_device->pAudioCaptureClient->lpVtbl->ReleaseBuffer(
               audio_device->pAudioCaptureClient,
               nNumFramesToRead);
+
+          id++;
       }
       dwWaitResult =  WaitForSingleObject(audio_device->hWakeUp, INFINITE);
   } 
   DestroyAudioDevice(audio_device);
-	return 0;
+  return 0;
 }
-
 
 
 int main(int argc, char* argv[])
