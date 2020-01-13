@@ -17,11 +17,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <initguid.h>
-#include <mmdeviceapi.h>
-#include <Audioclient.h>
-#include <Functiondiscoverykeys_devpkey.h>
-#include<avrt.h>
 
 #include "ffmpeg/libavcodec/avcodec.h"
 #include "ffmpeg/libavdevice/avdevice.h"
@@ -33,9 +28,19 @@
 #include "ffmpeg/libswscale/swscale.h"
 
 #if defined(_WIN32)
+	#include <avrt.h>
+	#include <Functiondiscoverykeys_devpkey.h>
+	#include <Audioclient.h>
+	#include <mmdeviceapi.h>
+	#include <initguid.h>
 	#include <windows.h>
 	#include <winuser.h>
 	#pragma warning(disable: 4201)
+#else
+	#define SOCKET int
+	#include <sys/socket.h>
+	#include <netinet/in.h>
+	#include <arpa/inet.h>
 #endif
 
 /*** DEFINITIONS START ***/
@@ -574,6 +579,7 @@ typedef struct SocketContext
 
 /*** FRACTAL FUNCTIONS START ***/
 
+/*
 /// @brief destroy the server sockets and threads, and WSA for windows
 /// @details if full=true, destroys everything, else only current connection
 FractalStatus ServerDestroy(SOCKET sockets[], HANDLE threads[], bool full);
@@ -581,14 +587,15 @@ FractalStatus ServerDestroy(SOCKET sockets[], HANDLE threads[], bool full);
 /// @brief initialize the listen socket (TCP path)
 /// @details initializes windows socket, creates and binds our listen socket
 SOCKET ServerInit(SOCKET listensocket, FractalConfig config);
+*/
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalMessage struct and send input to Windows OS
 FractalStatus ReplayUserInput(struct FractalMessage fmsg[6], int len);
 
-int CreateUDPContext(struct context *context, char* origin, char* destination, int timeout);
+int CreateUDPContext(struct SocketContext *context, char* origin, char* destination, int timeout);
 
-int SendAck(struct context *context, int reps);
+int SendAck(struct SocketContext *context, int reps);
 
 /*** FRACTAL FUNCTIONS END ***/
 

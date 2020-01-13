@@ -2,10 +2,15 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <process.h>
-#include <windows.h>
+
+#if defined(_WIN32)
+  #include <windows.h>
+  #include <winsock2.h>
+  #include <ws2tcpip.h>
+  #include <process.h>
+#else
+  #include <unistd.h>
+#endif
 
 #include "../include/fractal.h"
 #include "../include/webserver.h" // header file for webserver query functions
@@ -22,24 +27,6 @@
 #define BUFLEN 500000
 #define SDL_AUDIO_BUFFER_SIZE 1024
 #define MAX_PACKET_SIZE 1400
-
-/// BEGIN TIME
-LARGE_INTEGER frequency;        // ticks per second
-LARGE_INTEGER t1, t2;           // ticks
-
-void StartCounter()
-{
-    if(!QueryPerformanceFrequency(&frequency))
-      printf("QueryPerformanceFrequency failed!\n");
-
-    QueryPerformanceCounter(&t1);
-}
-double GetCounter()
-{
-    QueryPerformanceCounter(&t2);
-    return (t2.QuadPart-t1.QuadPart) * 1000.0/frequency.QuadPart;
-}
-/// END TIME
 
 
 struct SDLVideoContext {
@@ -330,11 +317,13 @@ static int32_t ReceiveAudio(void *opaque) {
 int main(int argc, char* argv[])
 {
     // initialize the windows socket library if this is a windows client
+#if defined(_WIN32)
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
         printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
         return -1;
     }
+#endif
 
     SDL_Event msg;
     SDL_Window *screen;
@@ -480,10 +469,16 @@ int main(int argc, char* argv[])
         memset(&fmsg, 0, sizeof(fmsg));
     }
 
+#if defined(_WIN32)
     closesocket(InputContext.s);
     closesocket(VideoReceiveContext.s);
     closesocket(AudioReceiveContext.s);
     WSACleanup();
+#else
+    close(InputContext.s);
+    close(VideoReceiveContext.s);
+    close(AudioReceiveContext.s);
+#endif
 
     return 0;
 }
