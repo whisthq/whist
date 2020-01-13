@@ -123,11 +123,12 @@ static int32_t ReceiveVideo(void *opaque) {
     // init decoder
     context.decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
 
-    if (SendAck(&context.socketContext, 5) < 0)
-        printf("Could not send video ACK\n");
 
     struct SDLVideoContext* pending_ctx = NULL;
     struct SDLVideoContext* rendered_ctx = NULL;
+
+    if (SendAck(&context.socketContext, 5) < 0)
+        printf("Could not send video ACK\n");
 
     while(1)
     {
@@ -138,7 +139,6 @@ static int32_t ReceiveVideo(void *opaque) {
             rendered_ctx = NULL;
           }
           if (pending_ctx != NULL) {
-            //printf("Render: %d\n", pending_ctx->id);
             sillymutex = 1;
             SDL_Thread *render_screen = SDL_CreateThread(RenderScreen, "RenderScreen", pending_ctx);
             rendered_ctx = pending_ctx;
@@ -150,26 +150,21 @@ static int32_t ReceiveVideo(void *opaque) {
 
         // Find frame in linked list that matches the id
         if(recv_size > 0) {
-          //printf("ID: %d, Index: %d\n", packet.id, packet.index);
-
           struct SDLVideoContext* gllctx = NULL;
           int gllindex = -1;
           
-          //printf("Start For Loop %d\n", root->size);
           struct gll_node_t *node = root->first;
           for(int i = 0; i < root->size; i++) {
             struct SDLVideoContext* ctx = node->data;
             if (ctx->id == packet.id) {
-              //printf("Context found for id %d\n", packet.id);
               gllctx = ctx;
               gllindex = i;
               break;
             }
             node = node->next;
           }
-          //printf("Done with for loop\n");
-          
 
+        
           // Could not find frame in linked list, add a new node to the linked list
           if (gllctx == NULL) {
               //printf("Could not find context for id %d\n", packet.id);
@@ -207,18 +202,9 @@ static int32_t ReceiveVideo(void *opaque) {
             // Wipe out the out of date linked list
             int keepers = 0;
             while (root->size > keepers) {
-              //printf("Root ID: %d\n", ((struct SDLVideoContext*)(root->first->data))->id);
-              //printf("Keepers: %d, Size: %d\n", keepers, root->size);
               struct SDLVideoContext *linkedlistctx = gll_find_node(root, keepers)->data;
 
-              //printf("Root First: %p\n", root->first);
-              //printf("find_node(0): %p\n", gll_find_node(root, 0));
-
-              //printf("ll ID %d\n", linkedlistctx->id);
               if (linkedlistctx->id < gllctx->id) {
-                //printf("Remove\n");
-                //printf("Removing old frame with id %d, in preference of completed frame id %d\n", linkedlistctx->id, gllctx->id);
-                //printf("Free :%d\n", linkedlistctx->id);
                 free(linkedlistctx->prev_frame);
                 free(linkedlistctx);
                 gll_remove(root, keepers);
