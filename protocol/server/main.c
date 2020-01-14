@@ -23,9 +23,15 @@
 #define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
 #define FRAME_BUFFER_SIZE (1024 * 1024)
 #define MAX_PACKET_SIZE 1400
-#define BITRATE 25000
+#define BITRATE 35000
 #define USE_GPU 0
 #define USE_MONITOR 0
+
+
+LARGE_INTEGER frequency;
+LARGE_INTEGER start;
+LARGE_INTEGER end;
+double interval;
 
 struct RTPPacket {
   uint8_t data[MAX_PACKET_SIZE];
@@ -196,6 +202,8 @@ static int32_t SendVideo(void *opaque) {
   encoder = create_video_encoder(
     CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * BITRATE);
 
+  int sent_frames = 0;
+
   while(1) {
     HRESULT hNextFrame = pOutputDuplication->lpVtbl->AcquireNextFrame(pOutputDuplication, 17, &frameInfo, &pDesktopResource);
     
@@ -208,6 +216,7 @@ static int32_t SendVideo(void *opaque) {
         if (SendPacket(&context, encoder->packet.data, encoder->packet.size, id) < 0) {
             printf("Could not send video frame\n");
         } 
+        sent_frames++;
       }
       id++;
     }
