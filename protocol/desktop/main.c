@@ -23,10 +23,10 @@
 #define SDL_AUDIO_BUFFER_SIZE 1024
 #define MAX_PACKET_SIZE 1400
 
-  LARGE_INTEGER frequency;
-  LARGE_INTEGER start;
-  LARGE_INTEGER end;
-  double interval;
+LARGE_INTEGER frequency;
+LARGE_INTEGER start;
+LARGE_INTEGER end;
+double interval;
 
 struct SDLVideoContext {
     Uint8 *yPlane;
@@ -110,13 +110,8 @@ static int32_t ReceiveVideo(void *opaque) {
 
     int frames_received = 0;
 
-    QueryPerformanceFrequency(&frequency);
-    QueryPerformanceCounter(&start);
     while(1)
     {
-        if(frames_received == 100) {
-          break;
-        }
         if (mutex == 0) {
           if (rendered_ctx != NULL) {
             free(rendered_ctx->prev_frame);
@@ -221,10 +216,6 @@ static int32_t ReceiveVideo(void *opaque) {
         }
         i++;
     }
-
-    QueryPerformanceCounter(&end);
-    interval = (double) (end.QuadPart - start.QuadPart) / frequency.QuadPart;
-    printf("Rendered %d frames in %f seconds\n", frames_received, interval);
 
     return 0;
 }
