@@ -28,11 +28,11 @@
 #include "ffmpeg/libswscale/swscale.h"
 
 #if defined(_WIN32)
-	#include <avrt.h>
-	#include <Functiondiscoverykeys_devpkey.h>
-	#include <Audioclient.h>
-	#include <mmdeviceapi.h>
 	#include <initguid.h>
+	#include <mmdeviceapi.h>
+	#include <Audioclient.h>
+	#include <Functiondiscoverykeys_devpkey.h>
+	#include <avrt.h>
 	#include <windows.h>
 	#include <winuser.h>
 	#pragma warning(disable: 4201)
