@@ -6,6 +6,7 @@
 #include <ws2tcpip.h>
 #include <process.h>
 #include <windows.h>
+#include <synchapi.h>
 
 #include "../include/fractal.h"
 #include "../include/webserver.h" // header file for webserver query functions
@@ -130,6 +131,8 @@ static int32_t ReceiveVideo(void *opaque) {
 
         // Find frame in linked list that matches the id
         if(recv_size > 0) {
+            printf("ID %d Index %d\n", packet.id, packet.index);
+
           struct SDLVideoContext* gllctx = NULL;
           int gllindex = -1;
           
@@ -271,6 +274,8 @@ static int32_t ReceiveAudio(void *opaque) {
 
 int main(int argc, char* argv[])
 {
+    printf("STARTING\n");
+
     // initialize the windows socket library if this is a windows client
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
@@ -374,6 +379,8 @@ int main(int argc, char* argv[])
     SDLVideoContext.Renderer = renderer;
     SDLVideoContext.Texture = texture;
     SDLVideoContext.socketContext = VideoReceiveContext;
+
+    printf("Receiving\n");
 
     SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &SDLVideoContext);
     SDL_Thread *receive_audio = SDL_CreateThread(ReceiveAudio, "ReceiveAudio", &AudioReceiveContext);
