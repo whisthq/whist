@@ -24,7 +24,7 @@
 #define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
 #define FRAME_BUFFER_SIZE (1024 * 1024)
 #define MAX_PACKET_SIZE 1400
-#define BITRATE 10000
+#define BITRATE 30000
 #define USE_GPU 0
 #define USE_MONITOR 0
 
@@ -85,6 +85,8 @@ static int32_t SendVideo(void *opaque) {
       if (encoder->packet.size != 0) {
         if (SendPacket(&context, encoder->packet.data, encoder->packet.size, id) < 0) {
             printf("Could not send video frame\n");
+        } else {
+          printf("Sent size %d\n", encoder->packet.size);
         }
       }
     }
