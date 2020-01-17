@@ -97,6 +97,7 @@ static int32_t SendVideo(void *opaque) {
 }
 
 static int32_t SendAudio(void *opaque) {
+  return 0;
   struct SocketContext context = *(struct SocketContext *) opaque;
   int slen = sizeof(context.addr), id = 0;
 
