@@ -8,3 +8,5 @@
 *.ilk
 *.o
 .DS_Store
+desktop/desktop
+

@@ -2,11 +2,17 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <process.h>
-#include <windows.h>
-#include <synchapi.h>
+
+#if defined(_WIN32)
+  #include <winsock2.h>
+  #include <ws2tcpip.h>
+  #include <process.h>
+  #include <windows.h>
+  #include <synchapi.h>
+  #pragma comment (lib, "ws2_32.lib")
+#else
+  #include <unistd.h>
+#endif
 
 #include "../include/fractal.h"
 #include "../include/webserver.h" // header file for webserver query functions
@@ -18,16 +24,16 @@
 #include "../include/SDL2/SDL.h"
 #include "../include/SDL2/SDL_thread.h"
 
-#pragma comment (lib, "ws2_32.lib")
-
 #define BUFLEN 500000
 #define SDL_AUDIO_BUFFER_SIZE 1024
 #define MAX_PACKET_SIZE 1400
 
+#if defined(_WIN32)
 LARGE_INTEGER frequency;
 LARGE_INTEGER start;
 LARGE_INTEGER end;
 double interval;
+#endif
 
 struct SDLVideoContext {
     Uint8 *yPlane;
@@ -131,8 +137,6 @@ static int32_t ReceiveVideo(void *opaque) {
 
         // Find frame in linked list that matches the id
         if(recv_size > 0) {
-            printf("ID %d Index %d\n", packet.id, packet.index);
-
           struct SDLVideoContext* gllctx = NULL;
           int gllindex = -1;
           
@@ -201,15 +205,32 @@ static int32_t ReceiveVideo(void *opaque) {
           }
 
           if (root->size > 10) {
-            printf("Too many frames!\n");
+            int max_id = -1;
 
-            // Wipe Array
-            while(root->size > 0) {
-              struct SDLVideoContext *linkedlistctx = gll_find_node(root, 0)->data;
-              free(linkedlistctx->prev_frame);
-              free(linkedlistctx);
-              gll_remove(root, 0);
+            struct gll_node_t* node = root->first;
+            for (int i = 0; i < root->size; i++) {
+                struct SDLVideoContext* ctx = node->data;
+                if (ctx->id > max_id) {
+                    max_id = ctx->id;
+                }
+                node = node->next;
             }
+
+            int keepers = 0;
+            // Wipe Array
+            while(root->size > keepers) {
+              struct SDLVideoContext *linkedlistctx = gll_find_node(root, keepers)->data;
+              if (linkedlistctx->id < max_id - 5) {
+                  free(linkedlistctx->prev_frame);
+                  free(linkedlistctx);
+                  gll_remove(root, keepers);
+              }
+              else {
+                  keepers++;
+              }
+            }
+
+            printf("Too many frames! Down to %d\n", root->size);
           }
         }
 
@@ -274,14 +295,14 @@ static int32_t ReceiveAudio(void *opaque) {
 
 int main(int argc, char* argv[])
 {
-    printf("STARTING\n");
-
     // initialize the windows socket library if this is a windows client
+#if defined(_WIN32)
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
         printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
         return -1;
     }
+#endif
 
     SDL_Event msg;
     SDL_Window *screen;
@@ -429,10 +450,16 @@ int main(int argc, char* argv[])
         memset(&fmsg, 0, sizeof(fmsg));
     }
 
+#if defined(_WIN32)
     closesocket(InputContext.s);
     closesocket(VideoReceiveContext.s);
     closesocket(AudioReceiveContext.s);
     WSACleanup();
+#else
+    close(InputContext.s);
+    close(VideoReceiveContext.s);
+    close(AudioReceiveContext.s);
+#endif
 
     return 0;
 }
