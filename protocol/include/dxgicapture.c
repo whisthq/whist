@@ -116,11 +116,15 @@ void CreateDXGIDevice(DXGIDevice *device) {
 
 HRESULT CaptureScreen(DXGIDevice *device) {
   HRESULT hr;
-  hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 17, &device->frame_info, &device->resource);
+  hr = device->duplication->lpVtbl->AcquireNextFrame(10, device->duplication, 17, &device->frame_info, &device->resource);
   if(FAILED(hr)) {
     return hr;
   }
   hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &device->frame_data); 
+  if (FAILED(hr)) {
+      ReleaseScreen(device);
+      return hr;
+  }
   return hr; 
 }
 

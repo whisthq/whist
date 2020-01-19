@@ -28,37 +28,6 @@
 #define SDL_AUDIO_BUFFER_SIZE 1024
 #define MAX_PACKET_SIZE 1400
 
-#if defined(_WIN32)
-    #define clock LARGE_INTEGER*
-    LARGE_INTEGER frequency;
-
-    clock StartTimer() {
-        LARGE_INTEGER* timer = malloc(sizeof(LARGE_INTEGER));
-        QueryPerformanceFrequency(&frequency);
-        QueryPerformanceCounter(timer);
-        return timer;
-    }
-
-    double EndTimer(clock clk) {
-        LARGE_INTEGER end;
-        QueryPerformanceCounter(&end);
-        double ret = (double)(end.QuadPart - clk->QuadPart) / frequency.QuadPart;
-        free(clk);
-        return ret;
-    }
-#else
-    void StartTimer() {
-
-    }
-
-    double EndTimer() {
-        return 0.0;
-    }
-#endif
-
-clock StartTimer();
-double EndTimer(clock clk);
-
 struct SDLVideoContext {
     Uint8 *yPlane;
     Uint8 *uPlane;
@@ -84,47 +53,52 @@ struct RTPPacket {
   bool is_ending;
 };
 
-struct gll_t *root;
+SDL_sem* semaphore;
+volatile static bool rendering = false;
+volatile static struct SDLVideoContext* renderContext;
 
-volatile static int mutex = 0;
+static double max_mbps = 100.0;
+volatile static bool update_mbps = false;
 
 static int32_t RenderScreen(void *opaque) {
-  struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
+    while (true) {
+        SDL_SemWait(semaphore);
+        struct SDLVideoContext context = *renderContext;
 
-  video_decoder_decode(context.decoder, context.prev_frame, context.frame_size);
+        video_decoder_decode(context.decoder, context.prev_frame, context.frame_size);
 
-  AVPicture pict;
-  pict.data[0] = context.yPlane;
-  pict.data[1] = context.uPlane;
-  pict.data[2] = context.vPlane;
-  pict.linesize[0] = OUTPUT_WIDTH;
-  pict.linesize[1] = context.uvPitch;
-  pict.linesize[2] = context.uvPitch;
-  sws_scale(context.sws, (uint8_t const * const *) context.decoder->frame->data,
-       context.decoder->frame->linesize, 0, context.decoder->context->height, pict.data,
-       pict.linesize);
+        AVPicture pict;
+        pict.data[0] = context.yPlane;
+        pict.data[1] = context.uPlane;
+        pict.data[2] = context.vPlane;
+        pict.linesize[0] = OUTPUT_WIDTH;
+        pict.linesize[1] = context.uvPitch;
+        pict.linesize[2] = context.uvPitch;
+        sws_scale(context.sws, (uint8_t const* const*)context.decoder->frame->data,
+            context.decoder->frame->linesize, 0, context.decoder->context->height, pict.data,
+            pict.linesize);
 
-  SDL_UpdateYUVTexture(
-        context.Texture,
-        NULL,
-        context.yPlane,
-        OUTPUT_WIDTH,
-        context.uPlane,
-        context.uvPitch,
-        context.vPlane,
-        context.uvPitch
-    );
+        SDL_UpdateYUVTexture(
+            context.Texture,
+            NULL,
+            context.yPlane,
+            OUTPUT_WIDTH,
+            context.uPlane,
+            context.uvPitch,
+            context.vPlane,
+            context.uvPitch
+        );
 
-  SDL_RenderClear(context.Renderer);
-  SDL_RenderCopy(context.Renderer, context.Texture, NULL, NULL);
-  SDL_RenderPresent(context.Renderer);
+        SDL_RenderClear(context.Renderer);
+        SDL_RenderCopy(context.Renderer, context.Texture, NULL, NULL);
+        SDL_RenderPresent(context.Renderer);
 
-  mutex = 0;
-
-  return 0;
+        renderContext = NULL;
+        rendering = false;
+    }
 }
 
-void multithreadedPrintf(void* opaque) {
+void MultiThreadedPrintf(void* opaque) {
     char* str = (char*)opaque;
     printf(str);
     free(str);
@@ -139,7 +113,7 @@ void mprintf(const char* fmtStr, ...) {
 
     va_end(args);
 
-    SDL_CreateThread(multithreadedPrintf, "multithreadedPrintf", buf);
+    SDL_CreateThread(MultiThreadedPrintf, "MultiThreadedPrintf", buf);
 }
 
 static int32_t ReceiveVideo(void *opaque) {
@@ -152,28 +126,37 @@ static int32_t ReceiveVideo(void *opaque) {
     struct SDLVideoContext* rendered_ctx = NULL;
 
     context.decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
-    root = gll_init();
 
     if (SendAck(&context.socketContext, 5) < 0)
         printf("Could not send video ACK\n");
 
+    semaphore = SDL_CreateSemaphore(0);
+    SDL_CreateThread(RenderScreen, "RenderScreen", NULL);
+
+    struct gll_t* frame_list;
+    frame_list = gll_init();
+
     int frames_received = 0;
     int bytes_transferred = 0;
-    clock frameTimer = StartTimer();
+    clock frameTimer;
+    StartTimer(&frameTimer);
     int last_max_id = 1;
     int max_id = 1;
 
     while(1)
     {
-        if (mutex == 0) {
+        if (!rendering) {
           if (rendered_ctx != NULL) {
             free(rendered_ctx->prev_frame);
             free(rendered_ctx);
             rendered_ctx = NULL;
           }
           if (pending_ctx != NULL) {
-            mutex = 1;
-            SDL_Thread *render_screen = SDL_CreateThread(RenderScreen, "RenderScreen", pending_ctx);
+            renderContext = pending_ctx;
+            rendering = true;
+
+            SDL_SemPost(semaphore);
+
             rendered_ctx = pending_ctx;
             pending_ctx = NULL;
           }
@@ -182,7 +165,7 @@ static int32_t ReceiveVideo(void *opaque) {
         recv_size = recvfrom(context.socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&context.socketContext.addr), &slen);
 
         // Find frame in linked list that matches the id
-        if(recv_size > 0) {
+        if(recv_size > 0 && packet.id > max_id - 4) {
             bytes_transferred += recv_size;
             if (packet.id > max_id) {
                 max_id = packet.id;
@@ -191,15 +174,15 @@ static int32_t ReceiveVideo(void *opaque) {
           struct SDLVideoContext* gllctx = NULL;
           int gllindex = -1;
           
-          struct gll_node_t *node = root->first;
-          for(int i = 0; i < root->size; i++) {
+          struct gll_node_t *node = frame_list->last;
+          for(int i = 0; i < frame_list->size; i++) {
             struct SDLVideoContext* ctx = node->data;
             if (ctx->id == packet.id) {
               gllctx = ctx;
               gllindex = i;
               break;
             }
-            node = node->next;
+            node = node->prev;
           }
 
           // Could not find frame in linked list, add a new node to the linked list
@@ -210,9 +193,9 @@ static int32_t ReceiveVideo(void *opaque) {
               threadContext->prev_frame = malloc(sizeof(char) * BUFLEN);
               threadContext->packets_received = 0;
               threadContext->num_packets = -1;
-              gll_push_end(root, threadContext);
+              gll_push_end(frame_list, threadContext);
               gllctx = threadContext;
-              gllindex = root->size - 1;
+              gllindex = frame_list->size - 1;
           }
 
           gllctx->packets_received++;
@@ -230,26 +213,40 @@ static int32_t ReceiveVideo(void *opaque) {
           // If we received all of the packets
           if (gllctx->packets_received == gllctx->num_packets) {
             frames_received++;
-            if (frames_received % 100 == 0) {
-                double time = EndTimer(frameTimer);
-                int expected_frames = max_id - last_max_id;
-                mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n", 100.0 / time, bytes_transferred * 8.0 / 1024.0 / 1024.0 / time, 100.0 * (1.0 - 100.0 / expected_frames));
-                frameTimer = StartTimer();
+            if (GetTimer(frameTimer) > 1.5) {
+                double time = GetTimer(frameTimer);
+                int expected_frames = gllctx->id - last_max_id;
+
+                double fps = 1.0 * expected_frames / time;
+                double mbps = bytes_transferred * 8.0 / 1024.0 / 1024.0 / time;
+                double receive_rate = 1.0 * frames_received / expected_frames;
+                double dropped_rate = 1.0 - receive_rate;
+
+                mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 * dropped_rate);
+
+                if (dropped_rate > 0.05) {
+                    max_mbps = mbps;
+                    update_mbps = true;
+                }
+
+                StartTimer(&frameTimer);  
                 bytes_transferred = 0;
-                last_max_id = max_id;
+                frames_received = 0;
+                last_max_id = gllctx->id;
             }
+
             //printf("Received all packets for id %d, getting ready to render\n", packet.id);
-            gll_remove(root, gllindex);
+            gll_remove(frame_list, gllindex);
 
             // Wipe out the out of date linked list
             int keepers = 0;
-            while (root->size > keepers) {
-              struct SDLVideoContext *linkedlistctx = gll_find_node(root, keepers)->data;
+            while (frame_list->size > keepers) {
+              struct SDLVideoContext *linkedlistctx = gll_find_node(frame_list, keepers)->data;
 
               if (linkedlistctx->id < gllctx->id) {
                 free(linkedlistctx->prev_frame);
                 free(linkedlistctx);
-                gll_remove(root, keepers);
+                gll_remove(frame_list, keepers);
               } else {
                 keepers++;
               }
@@ -263,22 +260,22 @@ static int32_t ReceiveVideo(void *opaque) {
             pending_ctx = gllctx;
           }
 
-          if (root->size > 10) {
+          if (frame_list->size > 10) {
             int keepers = 0;
             // Wipe Array
-            while(root->size > keepers) {
-              struct SDLVideoContext *linkedlistctx = gll_find_node(root, keepers)->data;
+            while(frame_list->size > keepers) {
+              struct SDLVideoContext *linkedlistctx = gll_find_node(frame_list, keepers)->data;
               if (linkedlistctx->id <= max_id - 4) {
                   free(linkedlistctx->prev_frame);
                   free(linkedlistctx);
-                  gll_remove(root, keepers);
+                  gll_remove(frame_list, keepers);
               }
               else {
                   keepers++;
               }
             }
           }
-        }
+        }   
 
         if (i == 30 * 60) {
             i = 0;
@@ -447,7 +444,7 @@ int main(int argc, char* argv[])
     SDLVideoContext.Texture = texture;
     SDLVideoContext.socketContext = VideoReceiveContext;
 
-    printf("Receiving\n");
+    printf("Receiving\n\n");
 
     SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &SDLVideoContext);
     SDL_Thread *receive_audio = SDL_CreateThread(ReceiveAudio, "ReceiveAudio", &AudioReceiveContext);
@@ -492,6 +489,12 @@ int main(int argc, char* argv[])
         }
         if (fmsg.type != 0) {
           sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen);
+        }
+        if (update_mbps) {
+            update_mbps = false;
+            fmsg.type = MESSAGE_MBPS;
+            fmsg.mbps = max_mbps;
+            sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen);
         }
         memset(&fmsg, 0, sizeof(fmsg));
     }

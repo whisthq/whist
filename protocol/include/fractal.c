@@ -395,6 +395,11 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
 }
 */
 
+static double max_mbps = 100.0;
+double getMaxMBPS() {
+	return max_mbps;
+}
+
 #if defined(_WIN32)
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalMessage struct and send input to Windows OS
@@ -464,6 +469,8 @@ FractalStatus ReplayUserInput(struct FractalMessage fmsg[6], int len) {
 	      Event[i].mi.dy = 0;
 	      Event[i].mi.mouseData = fmsg[i].mouseWheel.y * 100;
 	      break;
+		case MESSAGE_MBPS:
+			max_mbps = fmsg[i].mbps;
 	    case MESSAGE_QUIT:
 	      return NETWORK_WRN_TIMEOUT;
 			// TODO: add clipboard
@@ -561,6 +568,26 @@ int ReceiveAck(struct SocketContext *context) {
     }
 }
 
+#if defined(_WIN32)
+	LARGE_INTEGER frequency;
+	bool set_frequency = false;
+
+	void StartTimer(clock* timer) {
+		if (!set_frequency) {
+			QueryPerformanceFrequency(&frequency);
+			set_frequency = true;
+		}
+		QueryPerformanceCounter(timer);
+	}
+
+	double GetTimer(clock timer) {
+		LARGE_INTEGER end;
+		QueryPerformanceCounter(&end);
+		double ret = (double)(end.QuadPart - timer.QuadPart) / frequency.QuadPart;
+		return ret;
+	}
+#else
+#endif
 
 /*** FRACTAL FUNCTIONS END ***/
 

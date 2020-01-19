@@ -550,8 +550,9 @@ typedef enum FractalMessageType {
 	MESSAGE_MOUSE_BUTTON   = 2, ///< `mouseButton` FractalMouseButtonMessage is valid in FractalMessage.
 	MESSAGE_MOUSE_WHEEL    = 3, ///< `mouseWheel` FractalMouseWheelMessage is valid in FractalMessage.
 	MESSAGE_MOUSE_MOTION   = 4, ///< `mouseMotion` FractalMouseMotionMessage is valid in FractalMessage.
-	MESSAGE_RELEASE        = 5, ///< Message instructing the host to release all input that is currently pressed.
-	MESSAGE_QUIT           = 6,
+	MESSAGE_MBPS		   = 5, ///< `mbps` double is valid in FractalMessage.
+	MESSAGE_RELEASE        = 6, ///< Message instructing the host to release all input that is currently pressed.
+	MESSAGE_QUIT           = 7,
 	__MESSAGE_MAKE_32      = 0x7FFFFFFF,
 } FractalMessageType;
 
@@ -562,6 +563,7 @@ typedef struct FractalMessage {
 		FractalMouseButtonMessage mouseButton;     ///< Mouse button message.
 		FractalMouseWheelMessage mouseWheel;       ///< Mouse wheel message.
 		FractalMouseMotionMessage mouseMotion;     ///< Mouse motion message.
+		double mbps;
 	};
 } FractalMessage;
 
@@ -600,6 +602,18 @@ FractalStatus ReplayUserInput(struct FractalMessage fmsg[6], int len);
 int CreateUDPContext(struct SocketContext *context, char* origin, char* destination, int timeout);
 
 int SendAck(struct SocketContext *context, int reps);
+
+double getMaxMBPS();
+
+
+#if defined(_WIN32)
+	#define clock LARGE_INTEGER
+#else
+	#define clock int
+#endif
+
+void StartTimer(clock* timer);
+double GetTimer(clock timer);
 
 /*** FRACTAL FUNCTIONS END ***/
 

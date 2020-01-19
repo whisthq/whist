@@ -70,6 +70,9 @@ static int32_t SendVideo(void *opaque) {
   struct SocketContext context = *(struct SocketContext *) opaque;
   int slen = sizeof(context.addr), id = 0;
 
+  double current_fps = 0;
+  double current_bitrate = 0.0;
+
   encoder_t *encoder;
   encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, 
     CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * BITRATE);
@@ -78,20 +81,39 @@ static int32_t SendVideo(void *opaque) {
   memset(device, 0, sizeof(DXGIDevice));
   CreateDXGIDevice(device);
 
+  clock previousFrameTime;
+  int previousFrameSize = 0;
+
   while(1) {
     HRESULT hr = CaptureScreen(device);
     if (hr == S_OK) {
       video_encoder_encode(encoder, device->frame_data.pBits);
       if (encoder->packet.size != 0) {
+        if (previousFrameSize > 0) {
+            double mbps = previousFrameSize / GetTimer(previousFrameTime);
+            printf("MBPS: %f\n", mbps);
+        }
         if (SendPacket(&context, encoder->packet.data, encoder->packet.size, id) < 0) {
-            printf("Could not send video frame\n");
+          printf("Could not send video frame\n");
         } else {
           printf("Sent size %d\n", encoder->packet.size);
+          previousFrameSize = encoder->packet.size;
+          StartTimer(&previousFrameTime);
         }
       }
+
+      id++;
+      ReleaseScreen(device);
+
+      frames++;
     }
-    id++;
-    ReleaseScreen(device);
+    else if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
+        continue;
+    }
+    else {
+        printf("ERROR\n");
+        break;
+    }
   }
   return 0;
 }
