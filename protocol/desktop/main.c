@@ -29,11 +29,35 @@
 #define MAX_PACKET_SIZE 1400
 
 #if defined(_WIN32)
-LARGE_INTEGER frequency;
-LARGE_INTEGER start;
-LARGE_INTEGER end;
-double interval;
+    #define clock LARGE_INTEGER*
+    LARGE_INTEGER frequency;
+
+    clock StartTimer() {
+        LARGE_INTEGER* timer = malloc(sizeof(LARGE_INTEGER));
+        QueryPerformanceFrequency(&frequency);
+        QueryPerformanceCounter(timer);
+        return timer;
+    }
+
+    double EndTimer(clock clk) {
+        LARGE_INTEGER end;
+        QueryPerformanceCounter(&end);
+        double ret = (double)(end.QuadPart - clk->QuadPart) / frequency.QuadPart;
+        free(clk);
+        return ret;
+    }
+#else
+    void StartTimer() {
+
+    }
+
+    double EndTimer() {
+        return 0.0;
+    }
 #endif
+
+clock StartTimer();
+double EndTimer(clock clk);
 
 struct SDLVideoContext {
     Uint8 *yPlane;
@@ -100,6 +124,24 @@ static int32_t RenderScreen(void *opaque) {
   return 0;
 }
 
+void multithreadedPrintf(void* opaque) {
+    char* str = (char*)opaque;
+    printf(str);
+    free(str);
+}
+
+void mprintf(const char* fmtStr, ...) {
+    va_list args;
+    va_start(args, fmtStr);
+
+    char* buf = malloc(1000);
+    vsnprintf(buf, 1000, fmtStr, args);
+
+    va_end(args);
+
+    SDL_CreateThread(multithreadedPrintf, "multithreadedPrintf", buf);
+}
+
 static int32_t ReceiveVideo(void *opaque) {
     struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
     int recv_size, slen = sizeof(context.socketContext.addr), recv_index = 0, i = 0, intercepts = 0;
@@ -116,6 +158,10 @@ static int32_t ReceiveVideo(void *opaque) {
         printf("Could not send video ACK\n");
 
     int frames_received = 0;
+    int bytes_transferred = 0;
+    clock frameTimer = StartTimer();
+    int last_max_id = 1;
+    int max_id = 1;
 
     while(1)
     {
@@ -137,6 +183,11 @@ static int32_t ReceiveVideo(void *opaque) {
 
         // Find frame in linked list that matches the id
         if(recv_size > 0) {
+            bytes_transferred += recv_size;
+            if (packet.id > max_id) {
+                max_id = packet.id;
+            }
+
           struct SDLVideoContext* gllctx = NULL;
           int gllindex = -1;
           
@@ -179,6 +230,14 @@ static int32_t ReceiveVideo(void *opaque) {
           // If we received all of the packets
           if (gllctx->packets_received == gllctx->num_packets) {
             frames_received++;
+            if (frames_received % 100 == 0) {
+                double time = EndTimer(frameTimer);
+                int expected_frames = max_id - last_max_id;
+                mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n", 100.0 / time, bytes_transferred * 8.0 / 1024.0 / 1024.0 / time, 100.0 * (1.0 - 100.0 / expected_frames));
+                frameTimer = StartTimer();
+                bytes_transferred = 0;
+                last_max_id = max_id;
+            }
             //printf("Received all packets for id %d, getting ready to render\n", packet.id);
             gll_remove(root, gllindex);
 
@@ -205,22 +264,11 @@ static int32_t ReceiveVideo(void *opaque) {
           }
 
           if (root->size > 10) {
-            int max_id = -1;
-
-            struct gll_node_t* node = root->first;
-            for (int i = 0; i < root->size; i++) {
-                struct SDLVideoContext* ctx = node->data;
-                if (ctx->id > max_id) {
-                    max_id = ctx->id;
-                }
-                node = node->next;
-            }
-
             int keepers = 0;
             // Wipe Array
             while(root->size > keepers) {
               struct SDLVideoContext *linkedlistctx = gll_find_node(root, keepers)->data;
-              if (linkedlistctx->id < max_id - 5) {
+              if (linkedlistctx->id <= max_id - 4) {
                   free(linkedlistctx->prev_frame);
                   free(linkedlistctx);
                   gll_remove(root, keepers);
@@ -229,8 +277,6 @@ static int32_t ReceiveVideo(void *opaque) {
                   keepers++;
               }
             }
-
-            printf("Too many frames! Down to %d\n", root->size);
           }
         }
 
