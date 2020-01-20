@@ -116,7 +116,7 @@ void CreateDXGIDevice(DXGIDevice *device) {
 
 HRESULT CaptureScreen(DXGIDevice *device) {
   HRESULT hr;
-  hr = device->duplication->lpVtbl->AcquireNextFrame(10, device->duplication, 17, &device->frame_info, &device->resource);
+  hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 17, &device->frame_info, &device->resource);
   if(FAILED(hr)) {
     return hr;
   }

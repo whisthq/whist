@@ -96,7 +96,7 @@ void destroy_video_encoder(encoder_t *encoder) {
 
 /// @brief encode a frame using the encoder encoder
 /// @details encode a RGB frame into encoded format as YUV color
-void *	(encoder_t *encoder, void *rgb_pixels) {
+void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
   // define input data to encoder
 	uint8_t *in_data[1] = {(uint8_t *) rgb_pixels};
 	int in_linesize[1] = {encoder->in_width * 4};

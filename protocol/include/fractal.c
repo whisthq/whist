@@ -396,7 +396,7 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
 */
 
 static double max_mbps = 100.0;
-double getMaxMBPS() {
+double GetMaxMBPS() {
 	return max_mbps;
 }
 

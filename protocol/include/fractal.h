@@ -603,7 +603,7 @@ int CreateUDPContext(struct SocketContext *context, char* origin, char* destinat
 
 int SendAck(struct SocketContext *context, int reps);
 
-double getMaxMBPS();
+double GetMaxMBPS();
 
 
 #if defined(_WIN32)
