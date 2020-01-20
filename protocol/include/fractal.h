@@ -55,6 +55,7 @@
 #define CAPTURE_HEIGHT 1080
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
+#define MAX_PACKET_SIZE 1400
 
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org
@@ -580,6 +581,14 @@ typedef struct SocketContext
     int ack;
 } SocketContext;
 
+struct RTPPacket {
+	uint8_t data[MAX_PACKET_SIZE];
+	int index;
+	int payload_size;
+	int id;
+	bool is_ending;
+	uint32_t hash;
+};
 
 /*** STRUCTS END ***/
 
@@ -614,6 +623,8 @@ double GetMaxMBPS();
 
 void StartTimer(clock* timer);
 double GetTimer(clock timer);
+
+uint32_t Hash(void* key, size_t len);
 
 /*** FRACTAL FUNCTIONS END ***/
 

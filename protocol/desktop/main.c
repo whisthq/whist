@@ -45,14 +45,6 @@ struct SDLVideoContext {
     int num_packets;
 };
 
-struct RTPPacket {
-  uint8_t data[MAX_PACKET_SIZE];
-  int index;
-  int payload_size;
-  int id;
-  bool is_ending;
-};
-
 SDL_sem* semaphore;
 volatile static bool rendering = false;
 volatile static struct SDLVideoContext* renderContext;
@@ -190,6 +182,11 @@ static int32_t ReceiveVideo(void *opaque) {
 
         // Find frame in linked list that matches the id
         if(recv_size > 0 && packet.id > max_id - 4) {
+            if (Hash(packet.data, min(packet.payload_size, recv_size)) != packet.hash) {
+                mprintf("Incorrect Hash\n");
+                continue;
+            }
+
             bytes_transferred += recv_size;
             if (packet.id > max_id) {
                 max_id = packet.id;

@@ -20,10 +20,6 @@
 
 #pragma comment (lib, "ws2_32.lib")
 
-#define BUFLEN 1000
-#define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
-#define FRAME_BUFFER_SIZE (1024 * 1024)
-#define MAX_PACKET_SIZE 1400
 #define BITRATE 10000
 #define USE_GPU 0
 #define USE_MONITOR 0
@@ -32,14 +28,6 @@ LARGE_INTEGER frequency;
 LARGE_INTEGER start;
 LARGE_INTEGER end;
 double interval;
-
-struct RTPPacket {
-  uint8_t data[MAX_PACKET_SIZE];
-  int index;
-  int payload_size;
-  int id;
-  bool is_ending;
-};
 
 static int SendPacket(struct SocketContext *context, uint8_t *data, int len, int id, double time) {
   int sent_size, payload_size, slen = sizeof(context->addr);
@@ -51,12 +39,13 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len, int
   while (curr_index < len) {
     struct RTPPacket packet = {0};
     payload_size = min(MAX_PACKET_SIZE, (len - curr_index));
-    memcpy(packet.data, data + curr_index, payload_size);
 
+    memcpy(packet.data, data + curr_index, payload_size);
     packet.index = i;
     packet.payload_size = payload_size;
     packet.id = id;
     packet.is_ending = curr_index + payload_size == len;
+    packet.hash = Hash(packet.data, packet.payload_size);
 
     if((sent_size = sendto(context->s, &packet, sizeof(packet), 0, (struct sockaddr*)(&context->addr), slen)) < 0) {
       return -1;
