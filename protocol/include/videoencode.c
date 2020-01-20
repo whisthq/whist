@@ -39,8 +39,8 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 	encoder->context->height = out_height;
 	encoder->context->time_base.num = 1;
 	encoder->context->time_base.den = 30;
-	encoder->context->gop_size = 1; // send SPS/PPS headers every packet
-	encoder->context->max_b_frames = 1;
+	encoder->context->gop_size = 3; // send SPS/PPS headers every packet
+	encoder->context->max_b_frames = 0;
 	encoder->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
 	// set encoder parameters to max performancen
@@ -75,7 +75,7 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 /// @details frees FFmpeg encoder memory
 void destroy_video_encoder(encoder_t *encoder) {
   // check if encoder encoder exists
-	if (encoder == NULL) {
+  if (encoder == NULL) {
     printf("Cannot destroy encoder encoder.\n");
     return;
   }

@@ -24,7 +24,7 @@
 #define RECV_BUFFER_LEN 38 // exact user input packet line to prevent clumping
 #define FRAME_BUFFER_SIZE (1024 * 1024)
 #define MAX_PACKET_SIZE 1400
-#define BITRATE 30000
+#define BITRATE 10000
 #define USE_GPU 0
 #define USE_MONITOR 0
 
@@ -41,9 +41,12 @@ struct RTPPacket {
   bool is_ending;
 };
 
-static int SendPacket(struct SocketContext *context, uint8_t *data, int len, int id) {
+static int SendPacket(struct SocketContext *context, uint8_t *data, int len, int id, double time) {
   int sent_size, payload_size, slen = sizeof(context->addr);
   int curr_index = 0, i = 0;
+
+  clock packet_timer;
+  StartTimer(&packet_timer);
 
   while (curr_index < len) {
     struct RTPPacket packet = {0};
@@ -60,6 +63,7 @@ static int SendPacket(struct SocketContext *context, uint8_t *data, int len, int
     } else {
       i++;
       curr_index += payload_size;
+      while(time > 0.0 && GetTimer(packet_timer) / time < 1.0 * curr_index / len);
     }
   }
   return 0;
@@ -70,40 +74,75 @@ static int32_t SendVideo(void *opaque) {
   struct SocketContext context = *(struct SocketContext *) opaque;
   int slen = sizeof(context.addr), id = 0;
 
+  int current_bitrate = BITRATE;
   encoder_t *encoder;
   encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, 
-    CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * BITRATE);
+    CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate);
 
   DXGIDevice *device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
   memset(device, 0, sizeof(DXGIDevice));
   CreateDXGIDevice(device);
 
   double current_max_mbps = 100.0;
+  bool update_bitrate = false;
 
-  clock previousFrameTime;
-  int previousFrameSize = 0;
+  double worst_fps = 20.0;
+  int ideal_bitrate = current_bitrate;
+  int bitrate_tested_frames = 0;
+
+  clock previous_frame_time;
+  int previous_frame_size = 0;
 
   while(1) {
-    /*if (current_max_mbps != GetMaxMBPS()) {
+    if (current_max_mbps != GetMaxMBPS()) {
       current_max_mbps = GetMaxMBPS();
-      printf("New Max MBPS: ", current_max_mbps);
-    }*/
+    }
     HRESULT hr = CaptureScreen(device);
     if (hr == S_OK) {
-      video_encoder_encode(encoder, device->frame_data.pBits);
-      if (encoder->packet.size != 0) {
+      if (update_bitrate) {
+        destroy_video_encoder(encoder);
+        encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate);
+        update_bitrate = false;
+      }
 
-        if (previousFrameSize > 0) {
-            double mbps = previousFrameSize / 1024.0 / 1024.0 / GetTimer(previousFrameTime);
-            //printf("MBPS: %f, VS MAX MBPS: %f\n", mbps, current_max_mbps);
+      bitrate_tested_frames++;
+      video_encoder_encode(encoder, device->frame_data.pBits);
+
+      if (encoder->packet.size != 0) {
+        double delay = -1.0;
+
+        if (previous_frame_size > 0) {
+            double frame_time = GetTimer(previous_frame_time);
+            double mbps = previous_frame_size * 8.0 / 1024.0 / 1024.0 / frame_time;
+            // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime = current_max_mbps
+            // previousFrameSize * 8.0 / 1024.0 / 1024.0 / current_max_mbps = IdealTime
+            double ideal_time = previous_frame_size * 8.0 / 1024.0 / 1024.0 / current_max_mbps;
+            printf("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time: %f, Ideal Time: %f, Wait Time: %f\n", previous_frame_size, mbps, current_max_mbps, frame_time, ideal_time, ideal_time - frame_time);
+            if (ideal_time > frame_time) {
+              // Ceiling of how much time to delay
+              delay = ideal_time - frame_time;
+            }
+
+            double previous_fps = 1.0 / ideal_time;
+            if ((previous_fps < worst_fps || ideal_bitrate > current_bitrate) && bitrate_tested_frames > 20) {
+              // Rather than having lower than the worst acceptable fps, find the ratio for what the bitrate should be
+              double ratio_bitrate = previous_fps / worst_fps;
+              int new_bitrate = (int) (ratio_bitrate * current_bitrate);
+              if (abs(new_bitrate - current_bitrate) / new_bitrate > 0.05) {
+                printf("Updating bitrate from %d to %d\n", current_bitrate, new_bitrate);
+                current_bitrate = new_bitrate;
+                update_bitrate = true;
+                bitrate_tested_frames = 0;
+              }
+            }
         }
 
-        if (SendPacket(&context, encoder->packet.data, encoder->packet.size, id) < 0) {
+        if (SendPacket(&context, encoder->packet.data, encoder->packet.size, id, delay) < 0) {
           printf("Could not send video frame\n");
         } else {
-          printf("Sent size %d\n", encoder->packet.size);
-          previousFrameSize = encoder->packet.size;
-          StartTimer(&previousFrameTime);
+          //printf("Sent size %d\n", encoder->packet.size);
+          previous_frame_size = encoder->packet.size;
+          StartTimer(&previous_frame_time);
         }
       }
 
@@ -148,7 +187,7 @@ static int32_t SendAudio(void *opaque) {
           audio_device->audioBufSize = nNumFramesToRead * nBlockAlign;
 
           if (audio_device->audioBufSize != 0) {
-            if (SendPacket(&context, audio_device->pData, audio_device->audioBufSize, id) < 0) {
+            if (SendPacket(&context, audio_device->pData, audio_device->audioBufSize, id, -1.0) < 0) {
                 printf("Could not send audio frame\n");
             }
           }
