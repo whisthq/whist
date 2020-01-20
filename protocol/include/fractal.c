@@ -470,7 +470,8 @@ FractalStatus ReplayUserInput(struct FractalMessage fmsg[6], int len) {
 	      Event[i].mi.mouseData = fmsg[i].mouseWheel.y * 100;
 	      break;
 		case MESSAGE_MBPS:
-			max_mbps = fmsg[i].mbps;
+		  max_mbps = fmsg[i].mbps;
+		  break;
 	    case MESSAGE_QUIT:
 	      return NETWORK_WRN_TIMEOUT;
 			// TODO: add clipboard
