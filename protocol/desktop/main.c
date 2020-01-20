@@ -60,10 +60,30 @@ volatile static struct SDLVideoContext* renderContext;
 static double max_mbps = 100.0;
 volatile static bool update_mbps = false;
 
+void MultiThreadedPrintf(void* opaque) {
+    char* str = (char*)opaque;
+    printf(str);
+    free(str);
+}
+
+void mprintf(const char* fmtStr, ...) {
+    va_list args;
+    va_start(args, fmtStr);
+
+    char* buf = malloc(1000);
+    vsnprintf(buf, 1000, fmtStr, args);
+
+    va_end(args);
+
+    SDL_CreateThread(MultiThreadedPrintf, "MultiThreadedPrintf", buf);
+}
+
 static int32_t RenderScreen(void *opaque) {
     while (true) {
         SDL_SemWait(semaphore);
         struct SDLVideoContext context = *renderContext;
+
+        mprintf("Rendering\n");
 
         video_decoder_decode(context.decoder, context.prev_frame, context.frame_size);
 
@@ -98,24 +118,6 @@ static int32_t RenderScreen(void *opaque) {
     }
 }
 
-void MultiThreadedPrintf(void* opaque) {
-    char* str = (char*)opaque;
-    printf(str);
-    free(str);
-}
-
-void mprintf(const char* fmtStr, ...) {
-    va_list args;
-    va_start(args, fmtStr);
-
-    char* buf = malloc(1000);
-    vsnprintf(buf, 1000, fmtStr, args);
-
-    va_end(args);
-
-    SDL_CreateThread(MultiThreadedPrintf, "MultiThreadedPrintf", buf);
-}
-
 static int32_t ReceiveVideo(void *opaque) {
     struct SDLVideoContext context = *(struct SDLVideoContext *) opaque;
     int recv_size, slen = sizeof(context.socketContext.addr), recv_index = 0, i = 0, intercepts = 0;
@@ -145,6 +147,28 @@ static int32_t ReceiveVideo(void *opaque) {
 
     while(1)
     {
+        if (GetTimer(frameTimer) > 1.5) {
+            double time = GetTimer(frameTimer);
+            int expected_frames = max_id - last_max_id;
+
+            double fps = 1.0 * expected_frames / time;
+            double mbps = bytes_transferred * 8.0 / 1024.0 / 1024.0 / time;
+            double receive_rate = expected_frames == 0 ? 1.0 : 1.0 * frames_received / expected_frames;
+            double dropped_rate = 1.0 - receive_rate;
+
+            mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 * dropped_rate);
+
+            if (dropped_rate > 0.05) {
+                max_mbps = 0.95 * min(mbps, max_mbps);
+                update_mbps = true;
+            }
+
+            StartTimer(&frameTimer);
+            bytes_transferred = 0;
+            frames_received = 0;
+            last_max_id = max_id;
+        }
+
         if (!rendering) {
           if (rendered_ctx != NULL) {
             free(rendered_ctx->prev_frame);
@@ -174,7 +198,7 @@ static int32_t ReceiveVideo(void *opaque) {
           struct SDLVideoContext* gllctx = NULL;
           int gllindex = -1;
           
-          struct gll_node_t *node = frame_list->last;
+          struct gll_node_t *node = frame_list->first;
           for(int i = 0; i < frame_list->size; i++) {
             struct SDLVideoContext* ctx = node->data;
             if (ctx->id == packet.id) {
@@ -182,7 +206,7 @@ static int32_t ReceiveVideo(void *opaque) {
               gllindex = i;
               break;
             }
-            node = node->prev;
+            node = node->next;
           }
 
           // Could not find frame in linked list, add a new node to the linked list
@@ -213,27 +237,6 @@ static int32_t ReceiveVideo(void *opaque) {
           // If we received all of the packets
           if (gllctx->packets_received == gllctx->num_packets) {
             frames_received++;
-            if (GetTimer(frameTimer) > 1.5) {
-                double time = GetTimer(frameTimer);
-                int expected_frames = gllctx->id - last_max_id;
-
-                double fps = 1.0 * expected_frames / time;
-                double mbps = bytes_transferred * 8.0 / 1024.0 / 1024.0 / time;
-                double receive_rate = 1.0 * frames_received / expected_frames;
-                double dropped_rate = 1.0 - receive_rate;
-
-                mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 * dropped_rate);
-
-                if (dropped_rate > 0.05) {
-                    max_mbps = mbps;
-                    update_mbps = true;
-                }
-
-                StartTimer(&frameTimer);  
-                bytes_transferred = 0;
-                frames_received = 0;
-                last_max_id = gllctx->id;
-            }
 
             //printf("Received all packets for id %d, getting ready to render\n", packet.id);
             gll_remove(frame_list, gllindex);
@@ -261,11 +264,12 @@ static int32_t ReceiveVideo(void *opaque) {
           }
 
           if (frame_list->size > 10) {
+            mprintf("Too many frames!\n");
             int keepers = 0;
             // Wipe Array
             while(frame_list->size > keepers) {
               struct SDLVideoContext *linkedlistctx = gll_find_node(frame_list, keepers)->data;
-              if (linkedlistctx->id <= max_id - 4) {
+              if (linkedlistctx->id <= max_id - 6) {
                   free(linkedlistctx->prev_frame);
                   free(linkedlistctx);
                   gll_remove(frame_list, keepers);
@@ -451,7 +455,15 @@ int main(int argc, char* argv[])
 
     while (repeat)
     {
-        if(SDL_WaitEvent(&msg)) {
+        if (update_mbps) {
+            mprintf("Updating MBPS\n");
+            update_mbps = false;
+            fmsg.type = MESSAGE_MBPS;
+            fmsg.mbps = max_mbps < 20.0 ? 20.0 : max_mbps;
+            sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen);
+            memset(&fmsg, 0, sizeof(fmsg));
+        }
+        if(SDL_WaitEventTimeout(&msg, 10)) {
             switch (msg.type) {
               case SDL_KEYDOWN:
               case SDL_KEYUP:
@@ -490,14 +502,6 @@ int main(int argc, char* argv[])
         if (fmsg.type != 0) {
           sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen);
           memset(&fmsg, 0, sizeof(fmsg));
-        }
-        if (update_mbps) {
-            printf("Updating MBPS\n");
-            update_mbps = false;
-            fmsg.type = MESSAGE_MBPS;
-            fmsg.mbps = max_mbps;
-            sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen);
-            memset(&fmsg, 0, sizeof(fmsg));
         }
     }
 
