@@ -20,7 +20,7 @@
 
 #pragma comment (lib, "ws2_32.lib")
 
-#define BITRATE 10000
+#define BITRATE 35000
 #define USE_GPU 0
 #define USE_MONITOR 0
 

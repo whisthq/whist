@@ -45,37 +45,73 @@ struct SDLVideoContext {
     int num_packets;
 };
 
-SDL_sem* semaphore;
+SDL_sem* renderscreen_semaphore;
+SDL_sem* multithreadedprintf_semaphore;
+SDL_mutex* multithreadedprintf_mutex;
 volatile static bool rendering = false;
 volatile static struct SDLVideoContext* renderContext;
 
 static double max_mbps = 100.0;
+static double working_mbps = 100.0;
 volatile static bool update_mbps = false;
 
+volatile static char* queue[100];
+volatile static int size = 0;
+
 void MultiThreadedPrintf(void* opaque) {
-    char* str = (char*)opaque;
-    printf(str);
-    free(str);
+    while (true) {
+        SDL_SemWait(multithreadedprintf_semaphore);
+
+        char* buf;
+        SDL_LockMutex(multithreadedprintf_mutex);
+        buf = queue[0];
+        for (int i = 0; i < size; i++) {
+            queue[i] = queue[i + 1];
+        }
+        size--;
+        SDL_UnlockMutex(multithreadedprintf_mutex);
+        printf("%s", buf);
+
+        free(buf);
+    }
 }
 
 void mprintf(const char* fmtStr, ...) {
     va_list args;
     va_start(args, fmtStr);
 
-    char* buf = malloc(1000);
-    vsnprintf(buf, 1000, fmtStr, args);
+    const int buf_len = 1000;
+
+    char* buf = malloc(buf_len);
+    vsnprintf(buf, buf_len, fmtStr, args);
+    buf[buf_len - 5] = '.';
+    buf[buf_len - 4] = '.';
+    buf[buf_len - 3] = '.';
+    buf[buf_len - 2] = '\n';
+    buf[buf_len - 1] = '\0';
 
     va_end(args);
 
-    SDL_CreateThread(MultiThreadedPrintf, "MultiThreadedPrintf", buf);
+    SDL_LockMutex(multithreadedprintf_mutex);
+    if (size < 98) {
+        queue[size++] = buf;
+        SDL_SemPost(multithreadedprintf_semaphore);
+    }
+    else if (size == 99) {
+        strcpy(buf, "Buffer maxed out!!!\n");
+        queue[size++] = buf;
+        SDL_SemPost(multithreadedprintf_semaphore);
+    }
+    else {
+        free(buf);
+    }
+    SDL_UnlockMutex(multithreadedprintf_mutex);
 }
 
 static int32_t RenderScreen(void *opaque) {
     while (true) {
-        SDL_SemWait(semaphore);
+        SDL_SemWait(renderscreen_semaphore);
         struct SDLVideoContext context = *renderContext;
-
-        mprintf("Rendering\n");
 
         video_decoder_decode(context.decoder, context.prev_frame, context.frame_size);
 
@@ -124,7 +160,7 @@ static int32_t ReceiveVideo(void *opaque) {
     if (SendAck(&context.socketContext, 5) < 0)
         printf("Could not send video ACK\n");
 
-    semaphore = SDL_CreateSemaphore(0);
+    renderscreen_semaphore = SDL_CreateSemaphore(0);
     SDL_CreateThread(RenderScreen, "RenderScreen", NULL);
 
     struct gll_t* frame_list;
@@ -152,6 +188,13 @@ static int32_t ReceiveVideo(void *opaque) {
 
             if (dropped_rate > 0.05) {
                 max_mbps = 0.95 * min(mbps, max_mbps);
+                working_mbps = max_mbps;
+                update_mbps = true;
+            }
+
+            if (dropped_rate == 0.00) {
+                working_mbps = max(mbps, working_mbps);
+                max_mbps = max_mbps + (working_mbps - max_mbps) * 0.05;
                 update_mbps = true;
             }
 
@@ -171,7 +214,7 @@ static int32_t ReceiveVideo(void *opaque) {
             renderContext = pending_ctx;
             rendering = true;
 
-            SDL_SemPost(semaphore);
+            SDL_SemPost(renderscreen_semaphore);
 
             rendered_ctx = pending_ctx;
             pending_ctx = NULL;
@@ -339,6 +382,10 @@ static int32_t ReceiveAudio(void *opaque) {
 
 int main(int argc, char* argv[])
 {
+    multithreadedprintf_mutex = SDL_CreateMutex();
+    multithreadedprintf_semaphore = SDL_CreateSemaphore(0);
+    SDL_CreateThread(MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
+
     // initialize the windows socket library if this is a windows client
 #if defined(_WIN32)
     WSADATA wsa;
