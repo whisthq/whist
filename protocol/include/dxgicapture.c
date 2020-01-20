@@ -122,9 +122,11 @@ HRESULT CaptureScreen(DXGIDevice *device) {
   }
   hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &device->frame_data); 
   if (FAILED(hr)) {
+      printf("Not in system memory\n");
       ReleaseScreen(device);
       return hr;
   }
+  printf("Screen captured\n");
   return hr; 
 }
 

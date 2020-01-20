@@ -51,10 +51,10 @@
 
 #define PORT 48800 
 #define SRV_IP "34.200.170.47"
-#define CAPTURE_WIDTH 1920
-#define CAPTURE_HEIGHT 1080
-#define OUTPUT_WIDTH 1920
-#define OUTPUT_HEIGHT 1080
+#define CAPTURE_WIDTH 1280
+#define CAPTURE_HEIGHT 720
+#define OUTPUT_WIDTH 1280
+#define OUTPUT_HEIGHT 720
 #define MAX_PACKET_SIZE 1400
 
 /// @brief Default ports configurations to pass to FractalInit
