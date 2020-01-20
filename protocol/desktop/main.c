@@ -489,14 +489,16 @@ int main(int argc, char* argv[])
         }
         if (fmsg.type != 0) {
           sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen);
+          memset(&fmsg, 0, sizeof(fmsg));
         }
         if (update_mbps) {
+            printf("Updating MBPS\n");
             update_mbps = false;
             fmsg.type = MESSAGE_MBPS;
             fmsg.mbps = max_mbps;
             sendto(InputContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputContext.addr), slen);
+            memset(&fmsg, 0, sizeof(fmsg));
         }
-        memset(&fmsg, 0, sizeof(fmsg));
     }
 
 #if defined(_WIN32)
