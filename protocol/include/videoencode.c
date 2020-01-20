@@ -39,7 +39,7 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 	encoder->context->height = out_height;
 	encoder->context->time_base.num = 1;
 	encoder->context->time_base.den = 30;
-	encoder->context->gop_size = 3; // send SPS/PPS headers every packet
+	encoder->context->gop_size = 1; // send SPS/PPS headers every packet
 	encoder->context->max_b_frames = 0;
 	encoder->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
