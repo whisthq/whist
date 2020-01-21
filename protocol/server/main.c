@@ -95,7 +95,14 @@ static int32_t SendVideo(void *opaque) {
       }
 
       bitrate_tested_frames++;
+      QueryPerformanceFrequency(&frequency);
+      QueryPerformanceCounter(&start);
+
       video_encoder_encode(encoder, device->frame_data.pBits);
+
+      QueryPerformanceCounter(&end);
+      interval = (double) (end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
+      printf("Encode time is %f ms\n", interval);
 
       if (encoder->packet.size != 0) {
         double delay = -1.0;
@@ -106,7 +113,7 @@ static int32_t SendVideo(void *opaque) {
             // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime = current_max_mbps
             // previousFrameSize * 8.0 / 1024.0 / 1024.0 / current_max_mbps = IdealTime
             double ideal_time = previous_frame_size * 8.0 / 1024.0 / 1024.0 / current_max_mbps;
-            printf("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time: %f, Ideal Time: %f, Wait Time: %f\n", previous_frame_size, mbps, current_max_mbps, frame_time, ideal_time, ideal_time - frame_time);
+            // printf("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time: %f, Ideal Time: %f, Wait Time: %f\n", previous_frame_size, mbps, current_max_mbps, frame_time, ideal_time, ideal_time - frame_time);
             if (ideal_time > frame_time) {
               // Ceiling of how much time to delay
               delay = ideal_time - frame_time;

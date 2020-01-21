@@ -18,7 +18,8 @@
 typedef struct {
 	AVCodec *codec;
 	AVCodecContext *context;
-	AVFrame *frame;
+	AVFrame *sw_frame;
+	AVFrame *hw_frame;
 	void *frame_buffer;
 	int in_width, in_height;
 	int out_width, out_height;
