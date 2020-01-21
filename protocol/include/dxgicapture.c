@@ -126,7 +126,6 @@ HRESULT CaptureScreen(DXGIDevice *device) {
       ReleaseScreen(device);
       return hr;
   }
-  printf("Screen captured\n");
   return hr; 
 }
 

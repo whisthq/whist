@@ -95,14 +95,8 @@ static int32_t SendVideo(void *opaque) {
       }
 
       bitrate_tested_frames++;
-      QueryPerformanceFrequency(&frequency);
-      QueryPerformanceCounter(&start);
 
       video_encoder_encode(encoder, device->frame_data.pBits);
-
-      QueryPerformanceCounter(&end);
-      interval = (double) (end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
-      printf("Encode time is %f ms\n", interval);
 
       if (encoder->packet.size != 0) {
         double delay = -1.0;
