@@ -39,13 +39,13 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
     encoder->context->width     = out_width;
     encoder->context->height    = out_height;
     encoder->context->bit_rate  = bitrate;
-	encoder->context->time_base.num = 1;
-	encoder->context->time_base.den = 30;
+	  encoder->context->time_base.num = 1;
+	  encoder->context->time_base.den = 30;
     encoder->context->gop_size = 1;
     encoder->context->pix_fmt   = AV_PIX_FMT_CUDA;
 
     av_opt_set(encoder->context->priv_data, "tune", "zerolatency", 0);
-	av_opt_set(encoder->context->priv_data, "preset", "llhq", 0);
+	  av_opt_set(encoder->context->priv_data, "preset", "llhq", 0);
 
     av_buffer_unref(&encoder->context->hw_frames_ctx);
     encoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(hw_device_ctx);
