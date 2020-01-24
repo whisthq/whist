@@ -115,7 +115,8 @@ static int32_t RenderScreen(void *opaque) {
     while (true) {
         SDL_SemWait(renderscreen_semaphore);
         struct SDLVideoContext context = *renderContext;
-
+        QueryPerformanceCounter(&start);
+        QueryPerformanceFrequency(&frequency);
         video_decoder_decode(context.decoder, context.prev_frame, context.frame_size);
 
         AVPicture pict;
@@ -146,6 +147,9 @@ static int32_t RenderScreen(void *opaque) {
 
         renderContext = NULL;
         rendering = false;
+        QueryPerformanceCounter(&end);
+        interval = (double) (end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
+        mprintf("Decode time is %f ms\n", interval);
     }
 }
 
