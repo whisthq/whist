@@ -4,7 +4,7 @@ This repository contains the source code for the Fractal Protocol, which streams
 in real-time a desktop environment from a virtual machine (cloud computer) to a
 user's local client (Desktop OSes, iOS, Android, Cube/Slate (RPi), etc.). The
 protocol is designed to achieve as low latency as possible so to offer a fully
-fluid experience to users for any use, even the most deamdning (watching videos,
+fluid experience to users for any use, even the most demanding (watching videos,
 gaming, etc.).
 
 This repository contains both the source code for the server, which runs
