@@ -126,8 +126,8 @@ static int32_t RenderScreen(void *opaque) {
         pict.linesize[0] = OUTPUT_WIDTH;
         pict.linesize[1] = context.uvPitch;
         pict.linesize[2] = context.uvPitch;
-        sws_scale(context.sws, (uint8_t const* const*)context.decoder->frame->data,
-            context.decoder->frame->linesize, 0, context.decoder->context->height, pict.data,
+        sws_scale(context.sws, (uint8_t const* const*)context.decoder->sw_frame->data,
+            context.decoder->sw_frame->linesize, 0, context.decoder->context->height, pict.data,
             pict.linesize);
 
         SDL_UpdateYUVTexture(
@@ -470,7 +470,7 @@ int main(int argc, char* argv[])
 
     struct SwsContext *sws_ctx = NULL;
     sws_ctx = sws_getContext(CAPTURE_WIDTH, CAPTURE_HEIGHT,
-          AV_PIX_FMT_YUV420P, OUTPUT_WIDTH, OUTPUT_HEIGHT,
+          AV_PIX_FMT_NV12, OUTPUT_WIDTH, OUTPUT_HEIGHT,
           AV_PIX_FMT_YUV420P,
           SWS_BILINEAR,
           NULL,

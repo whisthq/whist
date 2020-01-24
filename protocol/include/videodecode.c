@@ -14,31 +14,71 @@
 
 #include "videodecode.h" // header file for this file
 
+static AVBufferRef *hw_device_ctx = NULL;
 /// @brief creates decoder decoder
 /// @details creates FFmpeg decoder
+
+void my_log_callback(void *ptr, int level, const char *fmt, va_list vargs)
+{
+  printf("Error found\n");
+  vprintf(fmt, vargs);
+}
+
+static enum AVPixelFormat get_format(AVCodecContext *ctx,
+                                        const enum AVPixelFormat *pix_fmts)
+{
+    const enum AVPixelFormat *p;
+    for (p = pix_fmts; *p != -1; p++) {
+        if (*p == AV_PIX_FMT_QSV) {
+          printf("QSV found\n");
+            return *p;
+        }
+    }
+    fprintf(stderr, "Failed to get HW surface format.\n");
+    return AV_PIX_FMT_NONE;
+}
+
 decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int out_height, int bitrate) {
-  // set memory for the decoder
-	decoder_t *decoder = (decoder_t *) malloc(sizeof(decoder_t));
-	memset(decoder, 0, sizeof(decoder_t));
+
+  decoder_t *decoder = (decoder_t *) malloc(sizeof(decoder_t));
+  memset(decoder, 0, sizeof(decoder_t));
 
   // init ffmpeg decoder for H264 software encoding
-	avcodec_register_all();
-	decoder->codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+  avcodec_register_all();
 
-  // allocate and set ffmpeg context
-	decoder->context = avcodec_alloc_context3(decoder->codec);
+    decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
+    decoder->context = avcodec_alloc_context3(decoder->codec);
+    decoder->context->get_format  = get_format;
 
-  // open capture decoder
-	avcodec_open2(decoder->context, decoder->codec, NULL);
+    av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_QSV, "auto", NULL, 0);
+    decoder->context->hw_device_ctx = av_buffer_ref(hw_device_ctx);
 
-  // alloc frame format
-	decoder->frame = (AVFrame *) av_frame_alloc();
-	decoder->frame->format = AV_PIX_FMT_YUV420P;
-	decoder->frame->width  = in_width;
-	decoder->frame->height = in_height;
-	decoder->frame->pts = 0;
+    av_buffer_unref(&decoder->context->hw_frames_ctx);
+    decoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(hw_device_ctx);
 
-	return decoder;
+    AVHWFramesContext *frames_ctx;
+    AVQSVFramesContext *frames_hwctx;
+
+    frames_ctx = (AVHWFramesContext*)decoder->context->hw_frames_ctx->data;
+    frames_hwctx = frames_ctx->hwctx;
+
+    frames_ctx->format = AV_PIX_FMT_QSV;
+    frames_ctx->sw_format = AV_PIX_FMT_NV12;
+    frames_ctx->width = in_width;
+    frames_ctx->height = in_height;
+    frames_ctx->initial_pool_size = 32;
+    frames_hwctx->frame_type = MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
+
+
+    av_hwframe_ctx_init(decoder->context->hw_frames_ctx);
+
+    avcodec_open2(decoder->context, NULL, NULL);
+
+    decoder->sw_frame = av_frame_alloc();
+    decoder->hw_frame = av_frame_alloc();
+    av_hwframe_get_buffer(decoder->context->hw_frames_ctx, decoder->hw_frame, 0);
+    printf("QSV decoder created\n");
+  return decoder;
 }
 
 /// @brief destroy decoder decoder
@@ -46,37 +86,47 @@ decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int 
 
 void destroy_video_decoder(decoder_t *decoder) {
   // check if decoder decoder exists
-	if (decoder == NULL) {
-    	printf("Cannot destroy decoder decoder.\n");
-    	return;
-  	}
+  if (decoder == NULL) {
+      printf("Cannot destroy decoder decoder.\n");
+      return;
+    }
 
   // free the ffmpeg contextes
-	avcodec_close(decoder->context);
+  avcodec_close(decoder->context);
 
   // free the decoder context and frame
-	av_free(decoder->context);
-	av_free(decoder->frame);
+  av_free(decoder->context);
+  av_free(decoder->sw_frame);
+  av_free(decoder->hw_frame);
 
   // free the buffer and decoder
-	free(decoder);
-	return;
+  free(decoder);
+  return;
 }
 
 /// @brief decode a frame using the decoder decoder
 /// @details decode an encoded frame under YUV color format into RGB frame
 void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size) {
   // init packet to prepare decoding
-	av_init_packet(&decoder->packet);
-	int success = 0; // boolean for success or failure of decoding
+  av_log_set_level(AV_LOG_ERROR);
+  av_log_set_callback(my_log_callback);
+  av_init_packet(&decoder->packet);
+  int success = 0, ret = 0; // boolean for success or failure of decoding
 
   // copy the received packet back into the decoder AVPacket
   // memcpy(&decoder->packet.data, &buffer, buffer_size);
-	decoder->packet.data = buffer;
-	decoder->packet.size = buffer_size;
+  decoder->packet.data = buffer;
+  decoder->packet.size = buffer_size;
   // decode the frame
-	avcodec_decode_video2(decoder->context, decoder->frame, &success, &decoder->packet);
-	av_free_packet(&decoder->packet);
+  ret = avcodec_decode_video2(decoder->context, decoder->sw_frame, &success, &decoder->packet);
+  
+  if(ret < 0) {
+    return;
+  }
+
+  // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
+
+  av_free_packet(&decoder->packet);
 
     return;
 }

@@ -19,7 +19,8 @@
 typedef struct {
 	AVCodec *codec;
 	AVCodecContext *context;
-	AVFrame *frame;
+	AVFrame *sw_frame;
+	AVFrame *hw_frame;
 	AVPacket packet;
 } decoder_t;
 
