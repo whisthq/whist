@@ -58,6 +58,9 @@ volatile static bool update_mbps = false;
 volatile static char* queue[100];
 volatile static int size = 0;
 
+LARGE_INTEGER start, end, frequency;
+double interval;
+
 void MultiThreadedPrintf(void* opaque) {
     while (true) {
         SDL_SemWait(multithreadedprintf_semaphore);
