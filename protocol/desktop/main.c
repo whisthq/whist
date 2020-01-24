@@ -405,7 +405,7 @@ int main(int argc, char* argv[])
     struct SDLVideoContext SDLVideoContext = {0};
     FractalMessage fmsg = {0};
 
-    char* ip = "40.121.132.26";
+    char* ip = "40.117.176.26";
 
     struct SocketContext InputContext = {0};
     if(CreateUDPContext(&InputContext, "C", ip, -1) < 0) {
