@@ -130,7 +130,7 @@ static int32_t SendVideo(void *opaque) {
         if (SendPacket(&context, encoder->packet.data, encoder->packet.size, id, delay) < 0) {
           printf("Could not send video frame\n");
         } else {
-          //printf("Sent size %d\n", encoder->packet.size);
+          printf("Sent size %d\n", encoder->packet.size);
           previous_frame_size = encoder->packet.size;
           StartTimer(&previous_frame_time);
         }
