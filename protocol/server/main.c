@@ -23,7 +23,7 @@
 #define BITRATE 10000
 #define USE_GPU 0
 #define USE_MONITOR 0
-#define ENCODE_TYPE SOFTWARE_ENCODE
+#define ENCODE_TYPE NVENC_ENCODE
 
 LARGE_INTEGER frequency;
 LARGE_INTEGER start;
@@ -87,6 +87,8 @@ static int32_t SendVideo(void *opaque) {
     if (current_max_mbps != GetMaxMBPS()) {
       current_max_mbps = GetMaxMBPS();
     }
+    QueryPerformanceCounter(&start);
+    QueryPerformanceFrequency(&frequency);
     HRESULT hr = CaptureScreen(device);
     if (hr == S_OK) {
       if (update_bitrate) {
@@ -131,7 +133,7 @@ static int32_t SendVideo(void *opaque) {
         if (SendPacket(&context, encoder->packet.data, encoder->packet.size, id, delay) < 0) {
           printf("Could not send video frame\n");
         } else {
-          printf("Sent size %d\n", encoder->packet.size);
+          // printf("Sent size %d\n", encoder->packet.size);
           previous_frame_size = encoder->packet.size;
           StartTimer(&previous_frame_time);
         }
@@ -139,6 +141,9 @@ static int32_t SendVideo(void *opaque) {
 
       id++;
       ReleaseScreen(device);
+      QueryPerformanceCounter(&end);
+      interval = (double) (end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
+      printf("Encode time is %f ms\n", interval);
     }
     else if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
         continue;
