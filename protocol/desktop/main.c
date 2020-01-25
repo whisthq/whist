@@ -27,7 +27,7 @@
 #define BUFLEN 500000
 #define SDL_AUDIO_BUFFER_SIZE 1024
 #define MAX_PACKET_SIZE 1400
-#define DECODE_TYPE QSV_DECODE
+#define DECODE_TYPE SOFTWARE_DECODE
 
 struct SDLVideoContext {
     Uint8 *yPlane;
@@ -163,7 +163,7 @@ static int32_t ReceiveVideo(void *opaque) {
     struct SDLVideoContext* pending_ctx = NULL;
     struct SDLVideoContext* rendered_ctx = NULL;
 
-    context.decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000);
+    context.decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000, DECODE_TYPE);
 
     if (SendAck(&context.socketContext, 5) < 0)
         printf("Could not send video ACK\n");
@@ -470,8 +470,16 @@ int main(int argc, char* argv[])
     }
 
     struct SwsContext *sws_ctx = NULL;
+
+    enum AVPixelFormat input_fmt;
+    if(DECODE_TYPE == QSV_DECODE) {
+      input_fmt = AV_PIX_FMT_NV12;
+    } else {
+      input_fmt = AV_PIX_FMT_YUV420P;
+    }
+
     sws_ctx = sws_getContext(CAPTURE_WIDTH, CAPTURE_HEIGHT,
-          AV_PIX_FMT_NV12, OUTPUT_WIDTH, OUTPUT_HEIGHT,
+          input_fmt, OUTPUT_WIDTH, OUTPUT_HEIGHT,
           AV_PIX_FMT_YUV420P,
           SWS_BILINEAR,
           NULL,

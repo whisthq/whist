@@ -82,12 +82,13 @@ decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int 
   } else {
     decoder->codec = avcodec_find_decoder(AV_CODEC_ID_H264);
     decoder->context = avcodec_alloc_context3(decoder->codec);
-    decoder->context->format = AV_PIX_FMT_YUV420P;
+    decoder->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
     avcodec_open2(decoder->context, decoder->codec, NULL);
 
-    decoder->sw_frame = av_frame_alloc();
-    decoder->sw_frame->width = in_width;
+    decoder->sw_frame = (AVFrame *) av_frame_alloc();
+    decoder->sw_frame->format = AV_PIX_FMT_YUV420P;
+    decoder->sw_frame->width  = in_width;
     decoder->sw_frame->height = in_height;
   }
   return decoder;
@@ -139,6 +140,5 @@ void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size) {
   // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
 
   av_free_packet(&decoder->packet);
-
-    return;
+  return;
 }
