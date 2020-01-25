@@ -89,6 +89,7 @@ decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int 
     decoder->sw_frame->format = AV_PIX_FMT_YUV420P;
     decoder->sw_frame->width  = in_width;
     decoder->sw_frame->height = in_height;
+    decoder->sw_frame->pts = 0;
   }
   return decoder;
 }
@@ -120,8 +121,8 @@ void destroy_video_decoder(decoder_t *decoder) {
 /// @details decode an encoded frame under YUV color format into RGB frame
 void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size) {
   // init packet to prepare decoding
-  av_log_set_level(AV_LOG_ERROR);
-  av_log_set_callback(my_log_callback);
+  // av_log_set_level(AV_LOG_ERROR);
+  // av_log_set_callback(my_log_callback);
   av_init_packet(&decoder->packet);
   int success = 0, ret = 0; // boolean for success or failure of decoding
 
@@ -132,10 +133,6 @@ void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size) {
   // decode the frame
   ret = avcodec_decode_video2(decoder->context, decoder->sw_frame, &success, &decoder->packet);
   
-  if(ret < 0) {
-    return;
-  }
-
   // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
 
   av_free_packet(&decoder->packet);
