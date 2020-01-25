@@ -82,7 +82,6 @@ decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int 
   } else {
     decoder->codec = avcodec_find_decoder(AV_CODEC_ID_H264);
     decoder->context = avcodec_alloc_context3(decoder->codec);
-    decoder->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
     avcodec_open2(decoder->context, decoder->codec, NULL);
 
