@@ -27,7 +27,7 @@
 #define BUFLEN 500000
 #define SDL_AUDIO_BUFFER_SIZE 1024
 #define MAX_PACKET_SIZE 1400
-#define DECODE_TYPE SOFTWARE_DECODE
+#define DECODE_TYPE QSV_DECODE
 
 struct SDLVideoContext {
     Uint8 *yPlane;
@@ -115,9 +115,10 @@ void mprintf(const char* fmtStr, ...) {
 static int32_t RenderScreen(void *opaque) {
     while (true) {
         SDL_SemWait(renderscreen_semaphore);
-        struct SDLVideoContext context = *renderContext;
         QueryPerformanceCounter(&start);
         QueryPerformanceFrequency(&frequency);
+        struct SDLVideoContext context = *renderContext;
+
         video_decoder_decode(context.decoder, context.prev_frame, context.frame_size);
 
         AVPicture pict;
@@ -150,7 +151,7 @@ static int32_t RenderScreen(void *opaque) {
         rendering = false;
         QueryPerformanceCounter(&end);
         interval = (double) (end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
-        mprintf("Decode time is %f ms\n", interval);
+        mprintf("Decode time is %f ms\n", interval);   
     }
 }
 
@@ -327,7 +328,7 @@ static int32_t ReceiveVideo(void *opaque) {
               }
             }
           }
-        }   
+        }
 
         if (i == 30 * 60) {
             i = 0;
@@ -507,8 +508,6 @@ int main(int argc, char* argv[])
     SDLVideoContext.Renderer = renderer;
     SDLVideoContext.Texture = texture;
     SDLVideoContext.socketContext = VideoReceiveContext;
-
-    printf("Receiving\n\n");
 
     SDL_Thread *receive_video = SDL_CreateThread(ReceiveVideo, "ReceiveVideo", &SDLVideoContext);
     SDL_Thread *receive_audio = SDL_CreateThread(ReceiveAudio, "ReceiveAudio", &AudioReceiveContext);
