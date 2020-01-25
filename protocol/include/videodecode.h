@@ -22,6 +22,7 @@ typedef struct {
 	AVFrame *sw_frame;
 	AVFrame *hw_frame;
 	AVPacket packet;
+	DecodeType type;
 } decoder_t;
 
 /// @brief creates encoder device

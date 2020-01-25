@@ -38,14 +38,16 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx,
     return AV_PIX_FMT_NONE;
 }
 
-decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int out_height, int bitrate) {
+decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int out_height, int bitrate, DecodeType type) {
 
   decoder_t *decoder = (decoder_t *) malloc(sizeof(decoder_t));
   memset(decoder, 0, sizeof(decoder_t));
 
+  decoder->type = type;
   // init ffmpeg decoder for H264 software encoding
   avcodec_register_all();
 
+  if(type == QSV_DECODE) {
     decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
     decoder->context = avcodec_alloc_context3(decoder->codec);
     decoder->context->get_format  = get_format;
@@ -77,7 +79,17 @@ decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int 
     decoder->sw_frame = av_frame_alloc();
     decoder->hw_frame = av_frame_alloc();
     av_hwframe_get_buffer(decoder->context->hw_frames_ctx, decoder->hw_frame, 0);
-    printf("QSV decoder created\n");
+  } else {
+    decoder->codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+    decoder->context = avcodec_alloc_context3(decoder->codec);
+    decoder->context->format = AV_PIX_FMT_YUV420P;
+
+    avcodec_open2(decoder->context, decoder->codec, NULL);
+
+    decoder->sw_frame = av_frame_alloc();
+    decoder->sw_frame->width = in_width;
+    decoder->sw_frame->height = in_height;
+  }
   return decoder;
 }
 
