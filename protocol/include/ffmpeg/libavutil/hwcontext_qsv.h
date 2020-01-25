@@ -19,7 +19,7 @@
 #ifndef AVUTIL_HWCONTEXT_QSV_H
 #define AVUTIL_HWCONTEXT_QSV_H
 
-#include <mfx/mfxvideo.h>
+#include "../../mfx/mfxvideo.h"
 
 /**
  * @file

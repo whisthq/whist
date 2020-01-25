@@ -17,7 +17,8 @@ STATIC_LIBS = \
   ../lib/ffmpeg/windows/postproc.lib \
   ../lib/ffmpeg/windows/swresample.lib \
   ../lib/ffmpeg/windows/swscale.lib \
-  ../lib/SDL2/windows/SDL2.lib
+  ../lib/SDL2/windows/SDL2.lib \
+  ../lib/mfx/libmfx.lib
 
 # compiler flags
 CFLAGS = \

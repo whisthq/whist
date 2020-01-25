@@ -26,6 +26,8 @@
 #include "ffmpeg/libavfilter/buffersink.h"
 #include "ffmpeg/libavfilter/buffersrc.h"
 #include "ffmpeg/libswscale/swscale.h"
+#include "ffmpeg/libavutil/hwcontext.h"
+#include "ffmpeg/libavutil/hwcontext_qsv.h"
 
 #if defined(_WIN32)
 	#include <initguid.h>
