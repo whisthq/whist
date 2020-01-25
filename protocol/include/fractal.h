@@ -244,6 +244,16 @@ typedef enum FractalStatus {
 	__ERR_MAKE_32             = 0x7FFFFFFF,
 } FractalStatus;
 
+typedef enum EncodeType {
+	SOFTWARE_ENCODE        = 0,
+	NVENC_ENCODE           = 1
+} EncodeType;
+
+typedef enum DecodeType {
+	SOFTWARE_DECODE        = 0,
+	QSV_DECODE             = 1
+} DecodeType;
+
 /// @brief Keyboard input.
 /// @details Integer code for each of the user keyboard inputs.
 typedef enum FractalKeycode {

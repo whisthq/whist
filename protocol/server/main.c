@@ -20,9 +20,10 @@
 
 #pragma comment (lib, "ws2_32.lib")
 
-#define BITRATE 35000
+#define BITRATE 10000
 #define USE_GPU 0
 #define USE_MONITOR 0
+#define ENCODE_TYPE SOFTWARE_ENCODE
 
 LARGE_INTEGER frequency;
 LARGE_INTEGER start;
@@ -66,7 +67,7 @@ static int32_t SendVideo(void *opaque) {
   int current_bitrate = BITRATE;
   encoder_t *encoder;
   encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, 
-    CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate);
+    CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate, ENCODE_TYPE);
 
   DXGIDevice *device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
   memset(device, 0, sizeof(DXGIDevice));
@@ -90,7 +91,7 @@ static int32_t SendVideo(void *opaque) {
     if (hr == S_OK) {
       if (update_bitrate) {
         destroy_video_encoder(encoder);
-        encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate);
+        encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate, ENCODE_TYPE);
         update_bitrate = false;
       }
 
