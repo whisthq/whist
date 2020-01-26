@@ -20,7 +20,7 @@
 
 #pragma comment (lib, "ws2_32.lib")
 
-#define BITRATE 10000
+#define BITRATE 30000
 #define USE_GPU 0
 #define USE_MONITOR 0
 #define ENCODE_TYPE NVENC_ENCODE
@@ -143,7 +143,7 @@ static int32_t SendVideo(void *opaque) {
       ReleaseScreen(device);
       QueryPerformanceCounter(&end);
       interval = (double) (end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
-      printf("Encode time is %f ms\n", interval);
+      // printf("Encode time is %f ms\n", interval);
     }
     else if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
         continue;
@@ -237,6 +237,7 @@ int main(int argc, char* argv[])
     while(repeat) {
         if (recvfrom(InputReceiveContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputReceiveContext.addr), &slen) > 0) {
           if(fmsg.type == MESSAGE_KEYBOARD) {
+            // printf("Received code %d\n", fmsg.keyboard.code);
             if(active) {
               fmsgs[j] = fmsg;
               if(fmsg.keyboard.pressed) {

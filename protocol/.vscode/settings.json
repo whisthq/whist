@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "ws2tcpip.h": "c",
-        "videodecode.h": "c"
+        "videodecode.h": "c",
+        "videoencode.h": "c"
     }
 }
