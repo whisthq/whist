@@ -115,8 +115,11 @@ void mprintf(const char* fmtStr, ...) {
 static int32_t RenderScreen(void *opaque) {
     while (true) {
         SDL_SemWait(renderscreen_semaphore);
-        QueryPerformanceCounter(&start);
-        QueryPerformanceFrequency(&frequency);
+
+        QueryPerformanceCounter(&end);
+        interval = (double) (end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
+        // mprintf("Decode time is %f ms\n", interval); 
+
         struct SDLVideoContext context = *renderContext;
 
         video_decoder_decode(context.decoder, context.prev_frame, context.frame_size);
@@ -149,9 +152,9 @@ static int32_t RenderScreen(void *opaque) {
 
         renderContext = NULL;
         rendering = false;
-        QueryPerformanceCounter(&end);
-        interval = (double) (end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
-        mprintf("Decode time is %f ms\n", interval);   
+
+        QueryPerformanceCounter(&start);
+        QueryPerformanceFrequency(&frequency);  
     }
 }
 
@@ -182,6 +185,9 @@ static int32_t ReceiveVideo(void *opaque) {
     int last_max_id = 1;
     int max_id = 1;
 
+    QueryPerformanceCounter(&start);
+    QueryPerformanceFrequency(&frequency);  
+
     while(1)
     {
         if (GetTimer(frameTimer) > 1.5) {
@@ -193,7 +199,7 @@ static int32_t ReceiveVideo(void *opaque) {
             double receive_rate = expected_frames == 0 ? 1.0 : 1.0 * frames_received / expected_frames;
             double dropped_rate = 1.0 - receive_rate;
 
-            mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 * dropped_rate);
+            // mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 * dropped_rate);
 
             if (dropped_rate > 0.05) {
                 max_mbps = 0.95 * min(mbps, max_mbps);
@@ -287,7 +293,7 @@ static int32_t ReceiveVideo(void *opaque) {
           if (gllctx->packets_received == gllctx->num_packets) {
             frames_received++;
 
-            //printf("Received all packets for id %d, getting ready to render\n", packet.id);
+            // mprintf("Received all packets for id %d, getting ready to render\n", packet.id);
             gll_remove(frame_list, gllindex);
 
             // Wipe out the out of date linked list
@@ -515,7 +521,7 @@ int main(int argc, char* argv[])
     while (repeat)
     {
         if (update_mbps) {
-            mprintf("Updating MBPS\n");
+            // mprintf("Updating MBPS\n");
             update_mbps = false;
             fmsg.type = MESSAGE_MBPS;
             fmsg.mbps = max_mbps < 20.0 ? 20.0 : max_mbps;
