@@ -73,6 +73,7 @@ decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int 
 
 
     av_hwframe_ctx_init(decoder->context->hw_frames_ctx);
+    av_opt_set(decoder->context->priv_data, "async_depth", "1", 0);
 
     avcodec_open2(decoder->context, NULL, NULL);
 
