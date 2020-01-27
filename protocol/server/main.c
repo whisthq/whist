@@ -20,7 +20,6 @@
 
 #pragma comment (lib, "ws2_32.lib")
 
-#define BITRATE 45000
 #define USE_GPU 0
 #define USE_MONITOR 0
 #define ENCODE_TYPE NVENC_ENCODE
@@ -72,7 +71,7 @@ static int32_t SendVideo(void* opaque) {
     struct SocketContext context = *(struct SocketContext*) opaque;
     int slen = sizeof(context.addr), id = 0;
 
-    int current_bitrate = BITRATE;
+    int current_bitrate = STARTING_BITRATE;
     encoder_t* encoder;
     encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT,
         CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate, ENCODE_TYPE);

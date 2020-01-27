@@ -51,16 +51,19 @@
 
 /*** DEFINITIONS START ***/
 
-#define PORT 48800 
 #define STUN_SERVER_IP "34.200.170.47"
+#define PORT 48800 
+
 #define SERVER_IP "52.186.125.178"
+#define MAX_PACKET_SIZE 1400
+#define START_MAX_MBPS 300.0
+
+#define LARGEST_FRAME_SIZE 1000000
+#define STARTING_BITRATE 45000
 #define CAPTURE_WIDTH 1920
 #define CAPTURE_HEIGHT 1080
 #define OUTPUT_WIDTH 1920
 #define OUTPUT_HEIGHT 1080
-#define MAX_PACKET_SIZE 1400
-#define START_MAX_MBPS 300.0
-#define LARGEST_FRAME_SIZE 1000000
 
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org
