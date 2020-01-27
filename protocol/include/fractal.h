@@ -52,7 +52,8 @@
 /*** DEFINITIONS START ***/
 
 #define PORT 48800 
-#define SRV_IP "34.200.170.47"
+#define STUN_SERVER_IP "34.200.170.47"
+#define SERVER_IP "52.186.125.178"
 #define CAPTURE_WIDTH 1920
 #define CAPTURE_HEIGHT 1080
 #define OUTPUT_WIDTH 1920
@@ -647,7 +648,7 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config);
 /// @details parses the FractalMessage struct and send input to Windows OS
 FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len);
 
-int CreateUDPContext(struct SocketContext *context, char* origin, char* destination, int timeout);
+int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int recvfrom_timeout, int stun_timeout);
 
 int SendAck(struct SocketContext *context, int reps);
 

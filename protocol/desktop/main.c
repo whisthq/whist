@@ -235,11 +235,12 @@ static int32_t ReceivePackets(void* opaque) {
     initVideo();
     initAudio();
 
-    for (int i = 0; !shutting_down; i++) {
+    for (int i = 0; !shutting_down; i++) {  
         tryRenderingPendingFrame();
-        int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
 
+        int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
+
         if (recv_size < 0) {
             int error = WSAGetLastError();
             switch (error) {
@@ -536,15 +537,13 @@ int main(int argc, char* argv[])
     int uvPitch;
     FractalClientMessage fmsg = { 0 };
 
-    char* ip = "52.186.125.178";
-
     struct SocketContext PacketSendContext = { 0 };
-    if (CreateUDPContext(&PacketSendContext, "C", ip, 0) < 0) {
+    if (CreateUDPContext(&PacketSendContext, "C", SERVER_IP, 0, 250) < 0) {
         exit(1);
     }
 
     struct SocketContext PacketReceiveContext = { 0 };
-    if (CreateUDPContext(&PacketReceiveContext, "C", ip, 0) < 0) {
+    if (CreateUDPContext(&PacketReceiveContext, "C", SERVER_IP, 0, 250) < 0) {
         exit(1);
     }
 
@@ -695,8 +694,7 @@ int main(int argc, char* argv[])
     destroyVideo();
     destroyAudio();
     destroyMultiThreadedPrintf();
-    SDL_WaitThread(receive_packets_thread, NULL);
-
+    
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(screen);

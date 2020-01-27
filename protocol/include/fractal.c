@@ -475,7 +475,7 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 }
 #endif
 
-int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int timeout) {
+int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int recvfrom_timeout, int stun_timeout) {
 	SOCKET s;
 	struct sockaddr_in addr;
 	struct FractalDestination buf;
@@ -498,7 +498,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 	context->addr.sin_port = htons(PORT);
 
 	// Point address to STUN server
-	context->addr.sin_addr.s_addr = inet_addr(SRV_IP);
+	context->addr.sin_addr.s_addr = inet_addr(STUN_SERVER_IP);
 	// Create payload to send to STUN server
 	char dest[20];
 	memcpy(dest, destination, 20);
@@ -506,6 +506,13 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 	// Set timeout, will refresh STUN this often
 	int stun_server_timeout_ms = 250;
+	if (stun_timeout == 0) {
+		printf("STUN timeout can't be zero!\n");
+		return -1;
+	}
+	if (stun_timeout > 0) {
+		stun_server_timeout_ms = stun_timeout / 3 + 1;
+	}
 #if defined(_WIN32)
 	int read_timeout = stun_server_timeout_ms;
 #else
@@ -522,12 +529,18 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 	// Connect to STUN server
 	printf("Connecting to STUN server...\n");
+	int attempt_time = 0;
 	do {
+		if (stun_timeout > 0 && attempt_time > stun_timeout) {
+			printf("STUN server failed to respond!\n");
+			return -1;
+		}
 		// Refresh STUN
 		if (sendto(context->s, dest, strlen(dest), 0, (struct sockaddr*)(&context->addr), slen) < 0) {
 			printf("Failed to message STUN server, trying again...\n");
 		}
 		// Wait for response from STUN server
+		attempt_time += stun_server_timeout_ms;
 	} while (recvfrom(context->s, &buf, sizeof(buf), 0, (struct sockaddr*)(&context->addr), &slen) < 0);
 
 	printf("Received packet from STUN server at %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
@@ -537,15 +550,15 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 	context->addr.sin_port = buf.port;
 
 	// Set timeout, default 5 seconds
-	if (timeout < 0) {
-		timeout = 5000;
+	if (recvfrom_timeout < 0) {
+		recvfrom_timeout = 5000;
 	}
 
 #if defined(_WIN32)
-	read_timeout = timeout;
+	read_timeout = recvfrom_timeout;
 #else
 	read_timeout.tv_sec = 0;
-	read_timeout.tv_usec = timeout * 1000;
+	read_timeout.tv_usec = recvfrom_timeout * 1000;
 #endif
 	setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
 
