@@ -219,7 +219,7 @@ int main(int argc, char* argv[])
         }
 
         struct SocketContext InputReceiveContext = { 0 };
-        if (CreateUDPContext(&InputReceiveContext, "S", "", 5, -1) < 0) {
+        if (CreateUDPContext(&InputReceiveContext, "S", "", 0, -1) < 0) {
             exit(1);
         }
 
@@ -233,7 +233,7 @@ int main(int argc, char* argv[])
 
         packet_mutex = SDL_CreateMutex();
 
-        SendAck(&InputReceiveContext, 5);
+        SendAck(&InputReceiveContext, 0);
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketContext);
         SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketContext);
 
@@ -245,6 +245,8 @@ int main(int argc, char* argv[])
         clock last_ping;
         StartTimer(&last_ping);
 
+        clock ack_timer;
+        StartTimer(&ack_timer);
         while (connected) {
             if (GetTimer(last_ping) > 1.5) {
                 mprintf("Client connection dropped.\n");
@@ -298,8 +300,10 @@ int main(int argc, char* argv[])
                     status = ReplayUserInput(fmsgs, 1);
                 }
             }
-            if (i % (30 * 60) == 0) {
+
+            if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
                 SendAck(&InputReceiveContext, 1);
+                StartTimer(&ack_timer);
             }
         }
 
