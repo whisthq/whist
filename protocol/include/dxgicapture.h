@@ -25,7 +25,7 @@ ID3D11Device *createDirect3D11Device(IDXGIAdapter1 *pOutputAdapter);
 
 IDXGIOutput1 *findAttachedOutput(IDXGIFactory1 *factory);
 
-void CreateDXGIDevice(DXGIDevice *device);
+int CreateDXGIDevice(DXGIDevice *device);
 
 HRESULT CaptureScreen(DXGIDevice *device);
 
