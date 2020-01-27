@@ -24,9 +24,8 @@
 #include "../include/SDL2/SDL.h"
 #include "../include/SDL2/SDL_thread.h"
 
-#define BUFLEN 500000
 #define SDL_AUDIO_BUFFER_SIZE 1024
-#define DECODE_TYPE QSV_DECODE
+#define DECODE_TYPE SOFTWARE_DECODE
 
 struct SDLVideoContext {
     Uint8* yPlane;
@@ -53,13 +52,6 @@ struct VideoData {
     int last_max_id;
     int max_id;
 
-    int previous_id;
-    int previous_index;
-    clock packet_timer;
-
-    clock test_timer;
-    float test_time;
-
     SDL_Thread* render_screen_thread;
     bool run_render_screen_thread;
 
@@ -84,7 +76,7 @@ volatile static SDL_mutex* multithreadedprintf_mutex;
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 100
 struct SDLVideoContext receiving_frames[RECV_FRAMES_BUFFER_SIZE];
-char frame_bufs[RECV_FRAMES_BUFFER_SIZE][BUFLEN];
+char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
 
 // Keeping track of mbps
 volatile static double max_mbps = START_MAX_MBPS;
@@ -101,6 +93,7 @@ volatile static int mprintf_queue_size = 0;
 // Function Declarations
 static void initVideo();
 static void initAudio();
+static void tryRenderingPendingFrame();
 static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size);
 static int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size);
 static void destroyVideo();
@@ -241,9 +234,8 @@ static int32_t ReceivePackets(void* opaque) {
     initAudio();
 
     for (int i = 0; !shutting_down; i++) {
-        StartTimer(&VideoData.test_timer);
+        tryRenderingPendingFrame();
         int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
-        VideoData.test_time += GetTimer(VideoData.test_timer);
 
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
         if (recv_size < 0) {
@@ -271,7 +263,6 @@ static int32_t ReceivePackets(void* opaque) {
                     break;
                 case PACKET_VIDEO:
                     ReceiveVideo(&packet, recv_size);
-                    VideoData.test_time = 0.0;
                     break;
                 case PACKET_MESSAGE:
                     ReceiveMessage(&packet, recv_size);
@@ -294,9 +285,6 @@ static void initVideo() {
     VideoData.last_max_id = 1;
     VideoData.max_id = 1;
 
-    VideoData.previous_id = -1;
-    VideoData.previous_index = -1;
-
     for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
         receiving_frames[i].id = -1;
     }
@@ -310,6 +298,19 @@ static void destroyVideo() {
     VideoData.run_render_screen_thread = false;
     SDL_WaitThread(VideoData.render_screen_thread, NULL);
     SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
+}
+
+static void tryRenderingPendingFrame() {
+    if (!rendering) {
+        if (VideoData.pending_ctx != NULL) {
+            renderContext = *VideoData.pending_ctx;
+            rendering = true;
+
+            SDL_SemPost(VideoData.renderscreen_semaphore);
+
+            VideoData.pending_ctx = NULL;
+        }
+    }
 }
 
 static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
@@ -384,14 +385,6 @@ static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
         }
     }
 
-    if (VideoData.previous_id != -1) {
-        //mprintf("Took %f to compute packet for ID %d and Index %d | Test %f\n", GetTimer(VideoData.packet_timer), VideoData.previous_id, VideoData.previous_index, VideoData.test_time);
-    }
-
-    VideoData.previous_id = packet->id;
-    VideoData.previous_index = packet->index;
-    StartTimer(&VideoData.packet_timer);
-
     //mprintf("Packet ID %d, Packet Index %d, Hash %x\n", packet->id, packet->index, packet->hash);
 
     // Find frame in linked list that matches the id
@@ -423,6 +416,10 @@ static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
 
         // Copy packet data
         int place = packet->index * MAX_PACKET_SIZE;
+        if (place + packet->payload_size >= LARGEST_FRAME_SIZE) {
+            mprintf("Packet total payload is too large for buffer!\n");
+            return -1;
+        }
         memcpy(ctx->prev_frame + place, packet->data, packet->payload_size);
         ctx->frame_size += packet->payload_size;
 
@@ -534,12 +531,12 @@ int main(int argc, char* argv[])
     char* ip = "52.186.125.178";
 
     struct SocketContext PacketSendContext = { 0 };
-    if (CreateUDPContext(&PacketSendContext, "C", ip, 1) < 0) {
+    if (CreateUDPContext(&PacketSendContext, "C", ip, 0) < 0) {
         exit(1);
     }
 
     struct SocketContext PacketReceiveContext = { 0 };
-    if (CreateUDPContext(&PacketReceiveContext, "C", ip, 1) < 0) {
+    if (CreateUDPContext(&PacketReceiveContext, "C", ip, 0) < 0) {
         exit(1);
     }
 

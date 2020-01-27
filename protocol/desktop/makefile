@@ -1,5 +1,5 @@
 # specify compiler
-CC = cl.exe /DEBUG
+CC = cl.exe
 
 # specify linker
 LINK = link.exe

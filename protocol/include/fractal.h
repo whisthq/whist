@@ -59,6 +59,7 @@
 #define OUTPUT_HEIGHT 1080
 #define MAX_PACKET_SIZE 1400
 #define START_MAX_MBPS 300.0
+#define LARGEST_FRAME_SIZE 1000000
 
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org
