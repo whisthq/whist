@@ -220,12 +220,12 @@ int main(int argc, char* argv[])
         }
 
         struct SocketContext InputReceiveContext = { 0 };
-        if (CreateUDPContext(&InputReceiveContext, "S", "", 0) < 0) {
+        if (CreateUDPContext(&InputReceiveContext, "S", "", 0, -1) < 0) {
             exit(1);
         }
 
         struct SocketContext PacketContext = { 0 };
-        if (CreateUDPContext(&PacketContext, "S", "", 0) < 0) {
+        if (CreateUDPContext(&PacketContext, "S", "", 0, -1) < 0) {
             exit(1);
         }
 

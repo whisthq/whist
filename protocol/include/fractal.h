@@ -651,7 +651,7 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config);
 /// @details parses the FractalMessage struct and send input to Windows OS
 FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len);
 
-int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int recvfrom_timeout, int stun_timeout);
+int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int recvfrom_timeout_s, int stun_timeout_ms);
 
 int SendAck(struct SocketContext *context, int reps);
 
