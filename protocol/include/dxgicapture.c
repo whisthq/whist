@@ -11,130 +11,150 @@
 
 #include "dxgicapture.h"
 
-ID3D11Device *createDirect3D11Device(IDXGIAdapter1 * pOutputAdapter) {
-  D3D_FEATURE_LEVEL aFeatureLevels[] =
+ID3D11Device* createDirect3D11Device(IDXGIAdapter1* pOutputAdapter) {
+    D3D_FEATURE_LEVEL aFeatureLevels[] =
     {
       D3D_FEATURE_LEVEL_11_0
     };
 
-  ID3D11Device * pDevice;
-  D3D_FEATURE_LEVEL featureLevel;
+    ID3D11Device* pDevice;
+    D3D_FEATURE_LEVEL featureLevel;
 
-  ID3D11DeviceContext * pDeviceContext;
-  HRESULT hCreateDevice;
-  hCreateDevice = D3D11CreateDevice(pOutputAdapter,
-              D3D_DRIVER_TYPE_UNKNOWN,
-              NULL,
-              0,
-              aFeatureLevels,
-              ARRAYSIZE(aFeatureLevels),
-              D3D11_SDK_VERSION,
-              &pDevice,
-              &featureLevel,
-              &pDeviceContext);
-  if (hCreateDevice == S_OK) {
-    return pDevice;
-  }
-  return NULL;
+    ID3D11DeviceContext* pDeviceContext;
+    HRESULT hCreateDevice;
+    hCreateDevice = D3D11CreateDevice(pOutputAdapter,
+        D3D_DRIVER_TYPE_UNKNOWN,
+        NULL,
+        0,
+        aFeatureLevels,
+        ARRAYSIZE(aFeatureLevels),
+        D3D11_SDK_VERSION,
+        &pDevice,
+        &featureLevel,
+        &pDeviceContext);
+    if (hCreateDevice == S_OK) {
+        return pDevice;
+    }
+    return NULL;
 }
 
-IDXGIOutput1 *findAttachedOutput(IDXGIFactory1 *factory) {
-  IDXGIAdapter1* pAdapter;
+IDXGIOutput1* findAttachedOutput(IDXGIFactory1* factory) {
+    IDXGIAdapter1* pAdapter;
 
-  UINT adapterIndex = 0;
-  while (factory->lpVtbl->EnumAdapters1(factory, adapterIndex, &pAdapter) != DXGI_ERROR_NOT_FOUND) {
-    IDXGIAdapter2* pAdapter2 = (IDXGIAdapter2*) pAdapter;
-        
-    UINT outputIndex = 0;
-    IDXGIOutput * pOutput;
+    UINT adapterIndex = 0;
+    while (factory->lpVtbl->EnumAdapters1(factory, adapterIndex, &pAdapter) != DXGI_ERROR_NOT_FOUND) {
+        IDXGIAdapter2* pAdapter2 = (IDXGIAdapter2*)pAdapter;
 
-    DXGI_ADAPTER_DESC aDesc;
-    pAdapter2->lpVtbl->GetDesc(pAdapter2, &aDesc);
+        UINT outputIndex = 0;
+        IDXGIOutput* pOutput;
 
-    HRESULT hEnumOutputs = pAdapter->lpVtbl->EnumOutputs(pAdapter, outputIndex, &pOutput);
-    while(hEnumOutputs != DXGI_ERROR_NOT_FOUND) {
-      if (hEnumOutputs != S_OK) {
-        return NULL;
-      }
+        DXGI_ADAPTER_DESC aDesc;
+        pAdapter2->lpVtbl->GetDesc(pAdapter2, &aDesc);
 
-      DXGI_OUTPUT_DESC oDesc;
-      pOutput->lpVtbl->GetDesc(pOutput, &oDesc);
+        HRESULT hEnumOutputs = pAdapter->lpVtbl->EnumOutputs(pAdapter, outputIndex, &pOutput);
+        while (hEnumOutputs != DXGI_ERROR_NOT_FOUND) {
+            if (hEnumOutputs != S_OK) {
+                return NULL;
+            }
 
-      if (oDesc.AttachedToDesktop) {
-        return (IDXGIOutput1*)pOutput;
-      }
+            DXGI_OUTPUT_DESC oDesc;
+            pOutput->lpVtbl->GetDesc(pOutput, &oDesc);
 
-      ++outputIndex;
-      hEnumOutputs = pAdapter->lpVtbl->EnumOutputs(pAdapter, outputIndex, &pOutput);
+            if (oDesc.AttachedToDesktop) {
+                return (IDXGIOutput1*)pOutput;
+            }
+
+            ++outputIndex;
+            hEnumOutputs = pAdapter->lpVtbl->EnumOutputs(pAdapter, outputIndex, &pOutput);
+        }
+
+        ++adapterIndex;
+    }
+    return -1;
+}
+
+int CreateDXGIDevice(DXGIDevice* device) {
+    //Initialize the factory pointer
+    IDXGIFactory1* factory;
+
+    //Actually create it
+    HRESULT hCreateFactory = CreateDXGIFactory1(&IID_IDXGIFactory2, (void**)(&factory));
+    if (hCreateFactory != S_OK) {
+        printf("Error creating Factory: 0x%X\n", hCreateFactory);
+        return -1;
     }
 
-    ++adapterIndex;
-  }
-  return -1;
+    IDXGIOutput1* output = findAttachedOutput(factory);
+
+    void* pOutputParent;
+    HRESULT hGetParent = output->lpVtbl->GetParent(output, &IID_IDXGIAdapter1, &pOutputParent);
+    if (hGetParent != S_OK) {
+        printf("Error getting patent: 0x%X\n", hGetParent);
+        return -1;
+    }
+
+    IDXGIAdapter1* adapter = (IDXGIAdapter1*)pOutputParent;
+    ID3D11Device* pD3Device = createDirect3D11Device(adapter);
+
+    DXGI_OUTPUT_DESC oDesc;
+
+    HRESULT hOutputDesc = output->lpVtbl->GetDesc(output, &oDesc);
+    if (hOutputDesc != S_OK) {
+        printf("Error getting output description: 0x%X\n", hOutputDesc);
+        return -1;
+    }
+
+    DXGI_ADAPTER_DESC aDesc;
+    HRESULT hAdapterDesc = adapter->lpVtbl->GetDesc(adapter, &aDesc);
+    if (hAdapterDesc != S_OK) {
+        printf("Error getting adapter description: 0x%X\n", hAdapterDesc);
+        return -1;
+    }
+
+    printf("Duplicating '%S' attached to '%S'\n", oDesc.DeviceName, aDesc.Description);
+
+    HRESULT hDuplicateOutput = output->lpVtbl->DuplicateOutput(output, pD3Device, &device->duplication);
+    if (hDuplicateOutput != S_OK) {
+        printf("Error duplicating output: 0x%X\n", hDuplicateOutput);
+        return -1;
+    }
+
+    DXGI_OUTDUPL_DESC odDesc;
+    device->duplication->lpVtbl->GetDesc(device->duplication, &odDesc);
+
+    printf("Able to duplicate a %ix%i desktop\n", odDesc.ModeDesc.Width, odDesc.ModeDesc.Height);
+
+    return 0;
 }
 
-void CreateDXGIDevice(DXGIDevice *device) {
-  //Initialize the factory pointer
-  IDXGIFactory2* factory;
-  
-  //Actually create it
-  HRESULT hCreateFactory = CreateDXGIFactory1(&IID_IDXGIFactory2, (void**)(&factory));
-  if (hCreateFactory != S_OK) {
-    printf("ERROR: 0x%X\n", hCreateFactory);
-    return 1;
-  }
-
-  IDXGIOutput1 *output = findAttachedOutput(factory);
-
-  void * pOutputParent;
-  if (output->lpVtbl->GetParent(output, &IID_IDXGIAdapter1, &pOutputParent) != S_OK) {
-    return -1;
-  }
-
-  IDXGIAdapter1 * adapter = (IDXGIAdapter1 *)pOutputParent;
-  ID3D11Device * pD3Device = createDirect3D11Device(adapter);
-
-  DXGI_OUTPUT_DESC oDesc;
-  output->lpVtbl->GetDesc(output, &oDesc);
-
-  DXGI_ADAPTER_DESC aDesc;
-  adapter->lpVtbl->GetDesc(adapter, &aDesc);
-
-  printf("Duplicating '%S' attached to '%S'\n", oDesc.DeviceName, aDesc.Description);
-
-  HRESULT hDuplicateOutput = output->lpVtbl->DuplicateOutput(output, pD3Device, &device->duplication);
-  if (hDuplicateOutput != S_OK) {
-    printf("Error duplicating output: 0x%X\n", hDuplicateOutput);
-    return 1;
-  }
-
-  DXGI_OUTDUPL_DESC odDesc;
-  device->duplication->lpVtbl->GetDesc(device->duplication, &odDesc);
-
-  printf("Able to duplicate a %ix%i desktop\n", odDesc.ModeDesc.Width, odDesc.ModeDesc.Height);
+int DestroyDXGIDevice(DXGIDevice* device) {
+    if (device->duplication) {
+        device->duplication->lpVtbl->Release(device->duplication);
+        device->duplication = NULL;
+    }
+    return 0;
 }
 
-HRESULT CaptureScreen(DXGIDevice *device) {
-  HRESULT hr;
-  hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 17, &device->frame_info, &device->resource);
-  if(FAILED(hr)) {
+HRESULT CaptureScreen(DXGIDevice* device) {
+    HRESULT hr;
+    hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 25, &device->frame_info, &device->resource);
+    if (FAILED(hr)) {
+        return hr;
+    }
+    hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &device->frame_data);
+    if (FAILED(hr)) {
+        ReleaseScreen(device);
+        return hr;
+    }
     return hr;
-  }
-  hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &device->frame_data); 
-  if (FAILED(hr)) {
-      printf("Not in system memory\n");
-      ReleaseScreen(device);
-      return hr;
-  }
-  return hr; 
 }
 
-HRESULT ReleaseScreen(DXGIDevice *device) {
-  HRESULT hr;
-  hr = device->duplication->lpVtbl->UnMapDesktopSurface(device->duplication);
-  if(FAILED(hr)) {
+HRESULT ReleaseScreen(DXGIDevice* device) {
+    HRESULT hr;
+    hr = device->duplication->lpVtbl->UnMapDesktopSurface(device->duplication);
+    if (FAILED(hr)) {
+        return hr;
+    }
+    hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
     return hr;
-  }
-  hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
-  return hr;
 }
