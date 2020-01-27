@@ -497,7 +497,7 @@ int main(int argc, char* argv[])
 
     struct SwsContext* sws_ctx = NULL;
     sws_ctx = sws_getContext(CAPTURE_WIDTH, CAPTURE_HEIGHT,
-        AV_PIX_FMT_YUV420P, OUTPUT_WIDTH, OUTPUT_HEIGHT,
+        AV_PIX_FMT_NV12, OUTPUT_WIDTH, OUTPUT_HEIGHT,
         AV_PIX_FMT_YUV420P,
         SWS_BILINEAR,
         NULL,
