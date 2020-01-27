@@ -580,6 +580,7 @@ typedef struct FractalClientMessage {
 		FractalMouseWheelMessage mouseWheel;       ///< Mouse wheel message.
 		FractalMouseMotionMessage mouseMotion;     ///< Mouse motion message.
 		double mbps;
+		int ping_id;
 	};
 } FractalClientMessage;
 
@@ -592,7 +593,7 @@ typedef enum FractalServerMessageType {
 typedef struct FractalServerMessage {
 	FractalServerMessageType type;                     ///< Input message type.
 	union {
-		char nothing;
+		int ping_id;
 	};
 } FractalServerMessage;
 
@@ -644,13 +645,11 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config);
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalMessage struct and send input to Windows OS
-FractalStatus ReplayUserInput(struct FractalMessage fmsg[6], int len);
+FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len);
 
 int CreateUDPContext(struct SocketContext *context, char* origin, char* destination, int timeout);
 
 int SendAck(struct SocketContext *context, int reps);
-
-double GetMaxMBPS();
 
 
 #if defined(_WIN32)

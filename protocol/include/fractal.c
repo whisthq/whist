@@ -395,11 +395,6 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
 }
 */
 
-static double max_mbps = 100.0;
-double GetMaxMBPS() {
-	return max_mbps;
-}
-
 #if defined(_WIN32)
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
@@ -562,13 +557,14 @@ int SendAck(struct SocketContext* context, int reps) {
 	char* message = "ACK";
 	int rep, slen = sizeof(context->addr);
 
+	bool success = false;
 	for (rep = 0; rep < reps; rep++) {
-		if (sendto(context->s, message, strlen(message), 0, (struct sockaddr*)(&context->addr), slen) < 0) {
-			return -1;
+		if (sendto(context->s, message, strlen(message), 0, (struct sockaddr*)(&context->addr), slen) >= 0) {
+			success = true;
 		}
 	}
 
-	return 0;
+	return success ? 0 : -1;
 }
 
 int ReceiveAck(struct SocketContext* context) {

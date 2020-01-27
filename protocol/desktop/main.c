@@ -63,6 +63,7 @@ volatile static bool shutting_down = false;
 volatile static bool rendering = false;
 volatile static bool is_timing_latency = false;
 volatile static clock latency_timer;
+volatile static int ping_id = 1;
 
 // Base video context that all contexts derive from
 volatile static struct SDLVideoContext videoContext;
@@ -89,6 +90,7 @@ volatile static bool update_mbps = false;
 volatile static char mprintf_queue[MPRINTF_QUEUE_SIZE][MPRINTF_BUF_SIZE];
 volatile static int mprintf_queue_index = 0;
 volatile static int mprintf_queue_size = 0;
+volatile static int ping_failures = 0;
 
 // Function Declarations
 static void initVideo();
@@ -495,8 +497,14 @@ static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
     FractalServerMessage fmsg = *(FractalServerMessage*)packet->data;
     switch (fmsg.type) {
     case MESSAGE_PONG:
-        mprintf("Latency: %f\n", GetTimer(latency_timer));
-        is_timing_latency = false;
+        if (ping_id == fmsg.ping_id) {
+            mprintf("Latency: %f\n", GetTimer(latency_timer));
+            is_timing_latency = false;
+            ping_failures = 0;
+        }
+        else {
+            mprintf("Old Ping ID found.\n");
+        }
         break;
     default:
         mprintf("Unknown Server Message Received\n");
@@ -613,6 +621,7 @@ int main(int argc, char* argv[])
     SDL_Thread* receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
     StartTimer(&latency_timer);
+
     while (!shutting_down)
     {
         if (update_mbps) {
@@ -624,9 +633,22 @@ int main(int argc, char* argv[])
             sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr));
         }
 
-        if (!is_timing_latency && GetTimer(latency_timer) > 2) {
+        if (is_timing_latency && GetTimer(latency_timer) > 0.5) {
+            mprintf("Ping received no response.");
+            is_timing_latency = false;
+            ping_failures++;
+            if (ping_failures == 3) {
+                mprintf("Server disconnected: 3 consecutive ping failures.");
+                shutting_down = true;
+                break;
+            }
+        }
+
+        if (!is_timing_latency && GetTimer(latency_timer) > 0.5) {
             memset(&fmsg, 0, sizeof(fmsg));
+            ping_id++;
             fmsg.type = MESSAGE_PING;
+            fmsg.ping_id = ping_id;
             is_timing_latency = true;
             StartTimer(&latency_timer);
             sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr));

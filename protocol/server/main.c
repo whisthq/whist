@@ -221,12 +221,12 @@ int main(int argc, char* argv[])
         }
 
         struct SocketContext InputReceiveContext = { 0 };
-        if (CreateUDPContext(&InputReceiveContext, "S", "", -1) < 0) {
+        if (CreateUDPContext(&InputReceiveContext, "S", "", 0) < 0) {
             exit(1);
         }
 
         struct SocketContext PacketContext = { 0 };
-        if (CreateUDPContext(&PacketContext, "S", "", 100) < 0) {
+        if (CreateUDPContext(&PacketContext, "S", "", 0) < 0) {
             exit(1);
         }
 
@@ -244,7 +244,16 @@ int main(int argc, char* argv[])
         int slen = sizeof(InputReceiveContext.addr), i = 0, j = 0, active = 0;
         FractalStatus status;
 
+        clock last_ping;
+        StartTimer(&last_ping);
+
         while (connected) {
+            if (GetTimer(last_ping) > 1.5) {
+                printf("Client connection dropped.\n");
+                connected = false;
+                break;
+            }
+
             memset(&fmsg, 0, sizeof(fmsg));
             if (recvfrom(InputReceiveContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputReceiveContext.addr), &slen) > 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
@@ -278,6 +287,8 @@ int main(int argc, char* argv[])
                 else if (fmsg.type == MESSAGE_PING) {
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = MESSAGE_PONG;
+                    fmsg_response.ping_id = fmsg.ping_id;
+                    StartTimer(&last_ping);
                     SendPacket(&PacketContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), -1, -1);
                 }
                 else if (fmsg.type == MESSAGE_QUIT) {
