@@ -634,11 +634,11 @@ int main(int argc, char* argv[])
         }
 
         if (is_timing_latency && GetTimer(latency_timer) > 0.5) {
-            mprintf("Ping received no response.");
+            mprintf("Ping received no response.\n");
             is_timing_latency = false;
             ping_failures++;
             if (ping_failures == 3) {
-                mprintf("Server disconnected: 3 consecutive ping failures.");
+                mprintf("Server disconnected: 3 consecutive ping failures.\n");
                 shutting_down = true;
                 break;
             }
