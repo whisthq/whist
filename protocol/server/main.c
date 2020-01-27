@@ -50,13 +50,14 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
+            int error = WSAGetLastError();
+            mprintf("Unexpected Packet Error: %d\n", error);
             return -1;
         }
-        else {
-            i++;
-            curr_index += payload_size;
-            while (time > 0.0 && GetTimer(packet_timer) / time < 1.0 * curr_index / len);
-        }
+
+        i++;
+        curr_index += payload_size;
+        while (time > 0.0 && GetTimer(packet_timer) / time < 1.0 * curr_index / len);
     }
 
     return 0;
@@ -218,12 +219,12 @@ int main(int argc, char* argv[])
         }
 
         struct SocketContext InputReceiveContext = { 0 };
-        if (CreateUDPContext(&InputReceiveContext, "S", "", 0, -1) < 0) {
+        if (CreateUDPContext(&InputReceiveContext, "S", "", 5, -1) < 0) {
             exit(1);
         }
 
         struct SocketContext PacketContext = { 0 };
-        if (CreateUDPContext(&PacketContext, "S", "", 0, -1) < 0) {
+        if (CreateUDPContext(&PacketContext, "S", "", 5, -1) < 0) {
             exit(1);
         }
 
