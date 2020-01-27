@@ -14,10 +14,6 @@
 #include "../include/audioencode.h"
 #include "../include/dxgicapture.h"
 
-#define SDL_MAIN_HANDLED
-#include "../include/SDL2/SDL.h"
-#include "../include/SDL2/SDL_thread.h"
-
 #pragma comment (lib, "ws2_32.lib")
 
 #define USE_GPU 0
@@ -79,7 +75,7 @@ static int32_t SendVideo(void* opaque) {
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
     memset(device, 0, sizeof(DXGIDevice));
     if (CreateDXGIDevice(device) < 0) {
-        printf("Error Creating DXGI Device\n");
+        mprintf("Error Creating DXGI Device\n");
         return -1;
     }
 
@@ -123,14 +119,14 @@ static int32_t SendVideo(void* opaque) {
 
                     delay = transmit_time - frame_time;
 
-                    printf("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time: %f, Transmit Time: %f, Delay: %f\n", previous_frame_size, mbps, max_mbps, frame_time, transmit_time, delay);
+                    mprintf("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time: %f, Transmit Time: %f, Delay: %f\n", previous_frame_size, mbps, max_mbps, frame_time, transmit_time, delay);
 
                     if ((current_fps < worst_fps || ideal_bitrate > current_bitrate) && bitrate_tested_frames > 20) {
                         // Rather than having lower than the worst acceptable fps, find the ratio for what the bitrate should be
                         double ratio_bitrate = current_fps / worst_fps;
                         int new_bitrate = (int)(ratio_bitrate * current_bitrate);
                         if (abs(new_bitrate - current_bitrate) / new_bitrate > 0.05) {
-                            printf("Updating bitrate from %d to %d\n", current_bitrate, new_bitrate);
+                            mprintf("Updating bitrate from %d to %d\n", current_bitrate, new_bitrate);
                             current_bitrate = new_bitrate;
                             update_bitrate = true;
 
@@ -141,7 +137,7 @@ static int32_t SendVideo(void* opaque) {
                 }
 
                 if (SendPacket(&context, PACKET_VIDEO, encoder->packet.data, encoder->packet.size, id, delay) < 0) {
-                    printf("Could not send video frame\n");
+                    mprintf("Could not send video frame\n");
                 }
                 else {
                     //printf("Sent size %d\n", encoder->packet.size);
@@ -156,7 +152,7 @@ static int32_t SendVideo(void* opaque) {
             continue;
         }
         else {
-            printf("ERROR\n");
+            mprintf("ERROR\n");
             break;
         }
     }
@@ -192,7 +188,7 @@ static int32_t SendAudio(void* opaque) {
 
             if (audio_device->audioBufSize != 0) {
                 if (SendPacket(&context, PACKET_AUDIO, audio_device->pData, audio_device->audioBufSize, id, -1.0) < 0) {
-                    printf("Could not send audio frame\n");
+                    mprintf("Could not send audio frame\n");
                 }
             }
 
@@ -211,11 +207,13 @@ static int32_t SendAudio(void* opaque) {
 
 int main(int argc, char* argv[])
 {
+    initMultiThreadedPrintf();
+
     while (true) {
         // initialize the windows socket library if this is a windows client
         WSADATA wsa;
         if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-            printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
+            mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
             return -1;
         }
 
@@ -248,7 +246,7 @@ int main(int argc, char* argv[])
 
         while (connected) {
             if (GetTimer(last_ping) > 1.5) {
-                printf("Client connection dropped.\n");
+                mprintf("Client connection dropped.\n");
                 connected = false;
                 break;
             }
@@ -291,7 +289,7 @@ int main(int argc, char* argv[])
                     SendPacket(&PacketContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), -1, -1);
                 }
                 else if (fmsg.type == MESSAGE_QUIT) {
-                    printf("Client Quit\n");
+                    mprintf("Client Quit\n");
                     connected = false;
                 }
                 else {
@@ -314,6 +312,8 @@ int main(int argc, char* argv[])
 
         WSACleanup();
     }
+
+    destroyMultiThreadedPrintf();
 
     return 0;
 }

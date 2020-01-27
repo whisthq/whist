@@ -20,10 +20,6 @@
 #include "../include/audiodecode.h" // header file for audio decoder
 #include "../include/linkedlist.h" // header file for audio decoder
 
-#define SDL_MAIN_HANDLED
-#include "../include/SDL2/SDL.h"
-#include "../include/SDL2/SDL_thread.h"
-
 #define SDL_AUDIO_BUFFER_SIZE 1024
 #define DECODE_TYPE SOFTWARE_DECODE
 
@@ -64,15 +60,12 @@ volatile static bool rendering = false;
 volatile static bool is_timing_latency = false;
 volatile static clock latency_timer;
 volatile static int ping_id = 1;
+volatile static int ping_failures = 0;
 
 // Base video context that all contexts derive from
 volatile static struct SDLVideoContext videoContext;
 // Context of the frame that is currently being rendered
 volatile static struct SDLVideoContext renderContext;
-
-// Semaphores and Mutexes
-volatile static SDL_sem* multithreadedprintf_semaphore;
-volatile static SDL_mutex* multithreadedprintf_mutex;
 
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 100
@@ -84,14 +77,6 @@ volatile static double max_mbps = START_MAX_MBPS;
 volatile static double working_mbps = START_MAX_MBPS;
 volatile static bool update_mbps = false;
 
-// Multithreaded printf queue
-#define MPRINTF_QUEUE_SIZE 100
-#define MPRINTF_BUF_SIZE 1000
-volatile static char mprintf_queue[MPRINTF_QUEUE_SIZE][MPRINTF_BUF_SIZE];
-volatile static int mprintf_queue_index = 0;
-volatile static int mprintf_queue_size = 0;
-volatile static int ping_failures = 0;
-
 // Function Declarations
 static void initVideo();
 static void initAudio();
@@ -101,82 +86,8 @@ static int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size);
 static void destroyVideo();
 static void destroyAudio();
 
-void initMultiThreadedPrintf();
-void destroyMultiThreadedPrintf();
-void MultiThreadedPrintf(void* opaque);
-void mprintf(const char* fmtStr, ...);
-SDL_Thread* mprintf_thread;
-volatile static bool run_multithreaded_printf;
-
-void initMultiThreadedPrintf() {
-    run_multithreaded_printf = true;
-    multithreadedprintf_mutex = SDL_CreateMutex();
-    multithreadedprintf_semaphore = SDL_CreateSemaphore(0);
-    mprintf_thread = SDL_CreateThread(MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
-}
-
-void destroyMultiThreadedPrintf() {
-    run_multithreaded_printf = false;
-    for (int i = 0; i < 200; i++) {
-        SDL_SemPost(multithreadedprintf_semaphore);
-    }
-    SDL_WaitThread(mprintf_thread, NULL);
-    mprintf_thread = NULL;
-}
-
-void MultiThreadedPrintf(void* opaque) {
-    while (true) {
-        SDL_SemWait(multithreadedprintf_semaphore);
-
-        if (!run_multithreaded_printf) {
-            break;
-        }
-
-        char* buf;
-
-        SDL_LockMutex(multithreadedprintf_mutex);
-        buf = mprintf_queue[mprintf_queue_index];
-        mprintf_queue_index++;
-        mprintf_queue_index %= MPRINTF_QUEUE_SIZE;
-        mprintf_queue_size--;
-        SDL_UnlockMutex(multithreadedprintf_mutex);
-
-        printf("%s", buf);
-    }
-}
-
-void mprintf(const char* fmtStr, ...) {
-    va_list args;
-    va_start(args, fmtStr);
-
-    SDL_LockMutex(multithreadedprintf_mutex);
-    int index = (mprintf_queue_index + mprintf_queue_size) % MPRINTF_QUEUE_SIZE;
-    char* buf = NULL;
-    if (mprintf_queue_size < 98) {
-        buf = &mprintf_queue[index];
-        mprintf_queue_size++;
-    }
-    else if (mprintf_queue_size == 99) {
-        strcpy(buf, "Buffer maxed out!!!\n");
-        buf = &mprintf_queue[index];
-        mprintf_queue_size++;
-    }
-    if (buf != NULL) {
-        vsnprintf(buf, MPRINTF_BUF_SIZE, fmtStr, args);
-        buf[MPRINTF_BUF_SIZE - 5] = '.';
-        buf[MPRINTF_BUF_SIZE - 4] = '.';
-        buf[MPRINTF_BUF_SIZE - 3] = '.';
-        buf[MPRINTF_BUF_SIZE - 2] = '\n';
-        buf[MPRINTF_BUF_SIZE - 1] = '\0';
-        SDL_SemPost(multithreadedprintf_semaphore);
-    }
-    SDL_UnlockMutex(multithreadedprintf_mutex);
-
-    va_end(args);
-}
-
 static int32_t RenderScreen(void* opaque) {
-    printf("RenderScreen running on Thread %d\n", SDL_GetThreadID(NULL));
+    mprintf("RenderScreen running on Thread %d\n", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
     while (VideoData.run_render_screen_thread) {
@@ -185,7 +96,7 @@ static int32_t RenderScreen(void* opaque) {
             continue;
         }
         if (ret < 0) {
-            printf("Semaphore Error\n");
+            mprintf("Semaphore Error\n");
             return -1;
         }
 
@@ -224,7 +135,7 @@ static int32_t RenderScreen(void* opaque) {
 }
 
 static int32_t ReceivePackets(void* opaque) {
-    printf("ReceivePackets running on Thread %d\n", SDL_GetThreadID(NULL));
+    mprintf("ReceivePackets running on Thread %d\n", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
     struct RTPPacket packet = { 0 };
@@ -437,7 +348,7 @@ static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
 
             if (packet->id > VideoData.max_id) {
                 VideoData.max_id = packet->id;
-                //printf("Received all packets for id %d, getting ready to render\n", packet.id);
+                //mprintf("Received all packets for id %d, getting ready to render\n", packet.id);
 
                 VideoData.pending_ctx = ctx;
             }
@@ -470,7 +381,7 @@ static void initAudio() {
 
     AudioData.dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (AudioData.dev == 0) {
-        printf("Failed to open audio\n");
+        mprintf("Failed to open audio\n");
         exit(1);
     }
 
@@ -523,7 +434,7 @@ int main(int argc, char* argv[])
 #if defined(_WIN32)
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        printf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
+        mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
         return -1;
     }
 #endif
@@ -615,7 +526,7 @@ int main(int argc, char* argv[])
     videoContext.Texture = texture;
     videoContext.decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000, DECODE_TYPE);
 
-    printf("Receiving\n\n");
+    mprintf("Receiving\n\n");
 
     SDL_Thread* receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
@@ -680,7 +591,7 @@ int main(int argc, char* argv[])
                 fmsg.mouseWheel.y = msg.wheel.y;
                 break;
             case SDL_QUIT:
-                printf("Quitting...\n");
+                mprintf("Quitting...\n");
                 fmsg.type = MESSAGE_QUIT;
                 shutting_down = true;
                 break;

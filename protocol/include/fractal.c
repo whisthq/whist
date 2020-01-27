@@ -590,6 +590,94 @@ int ReceiveAck(struct SocketContext* context) {
 	}
 }
 
+// Multithreaded printf Semaphores and Mutexes
+volatile static SDL_sem* multithreadedprintf_semaphore;
+volatile static SDL_mutex* multithreadedprintf_mutex;
+
+// Multithreaded printf queue
+#define MPRINTF_QUEUE_SIZE 100
+#define MPRINTF_BUF_SIZE 1000
+volatile static char mprintf_queue[MPRINTF_QUEUE_SIZE][MPRINTF_BUF_SIZE];
+volatile static int mprintf_queue_index = 0;
+volatile static int mprintf_queue_size = 0;
+
+// Multithreaded printf global variables
+SDL_Thread* mprintf_thread = NULL;
+volatile static bool run_multithreaded_printf;
+void MultiThreadedPrintf(void* opaque);
+
+void initMultiThreadedPrintf() {
+	run_multithreaded_printf = true;
+	multithreadedprintf_mutex = SDL_CreateMutex();
+	multithreadedprintf_semaphore = SDL_CreateSemaphore(0);
+	mprintf_thread = SDL_CreateThread(MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
+}
+
+void destroyMultiThreadedPrintf() {
+	run_multithreaded_printf = false;
+	for (int i = 0; i < 200; i++) {
+		SDL_SemPost(multithreadedprintf_semaphore);
+	}
+	SDL_WaitThread(mprintf_thread, NULL);
+	mprintf_thread = NULL;
+}
+
+void MultiThreadedPrintf(void* opaque) {
+	while (true) {
+		SDL_SemWait(multithreadedprintf_semaphore);
+
+		if (!run_multithreaded_printf) {
+			break;
+		}
+
+		char* buf;
+
+		SDL_LockMutex(multithreadedprintf_mutex);
+		buf = mprintf_queue[mprintf_queue_index];
+		mprintf_queue_index++;
+		mprintf_queue_index %= MPRINTF_QUEUE_SIZE;
+		mprintf_queue_size--;
+		SDL_UnlockMutex(multithreadedprintf_mutex);
+
+		printf("%s", buf);
+	}
+}
+
+void mprintf(const char* fmtStr, ...) {
+	if (mprintf_thread == NULL) {
+		printf("initMultiThreadedPrintf has not been called!\n");
+		return;
+	}
+
+	va_list args;
+	va_start(args, fmtStr);
+
+	SDL_LockMutex(multithreadedprintf_mutex);
+	int index = (mprintf_queue_index + mprintf_queue_size) % MPRINTF_QUEUE_SIZE;
+	char* buf = NULL;
+	if (mprintf_queue_size < 98) {
+		buf = &mprintf_queue[index];
+		mprintf_queue_size++;
+	}
+	else if (mprintf_queue_size == 99) {
+		strcpy(buf, "Buffer maxed out!!!\n");
+		buf = &mprintf_queue[index];
+		mprintf_queue_size++;
+	}
+	if (buf != NULL) {
+		vsnprintf(buf, MPRINTF_BUF_SIZE, fmtStr, args);
+		buf[MPRINTF_BUF_SIZE - 5] = '.';
+		buf[MPRINTF_BUF_SIZE - 4] = '.';
+		buf[MPRINTF_BUF_SIZE - 3] = '.';
+		buf[MPRINTF_BUF_SIZE - 2] = '\n';
+		buf[MPRINTF_BUF_SIZE - 1] = '\0';
+		SDL_SemPost(multithreadedprintf_semaphore);
+	}
+	SDL_UnlockMutex(multithreadedprintf_mutex);
+
+	va_end(args);
+}
+
 #if defined(_WIN32)
 LARGE_INTEGER frequency;
 bool set_frequency = false;

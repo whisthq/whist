@@ -29,6 +29,10 @@
 #include "ffmpeg/libavutil/hwcontext.h"
 #include "ffmpeg/libavutil/hwcontext_qsv.h"
 
+#define SDL_MAIN_HANDLED
+#include "../include/SDL2/SDL.h"
+#include "../include/SDL2/SDL_thread.h"
+
 #if defined(_WIN32)
 	#include <initguid.h>
 	#include <mmdeviceapi.h>
@@ -655,12 +659,15 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 int SendAck(struct SocketContext *context, int reps);
 
-
 #if defined(_WIN32)
 	#define clock LARGE_INTEGER
 #else
 	#define clock int
 #endif
+
+void initMultiThreadedPrintf();
+void destroyMultiThreadedPrintf();
+void mprintf(const char* fmtStr, ...);
 
 void StartTimer(clock* timer);
 double GetTimer(clock timer);
