@@ -27,6 +27,8 @@ IDXGIOutput1 *findAttachedOutput(IDXGIFactory1 *factory);
 
 int CreateDXGIDevice(DXGIDevice *device);
 
+int DestroyDXGIDevice(DXGIDevice* device);
+
 HRESULT CaptureScreen(DXGIDevice *device);
 
 HRESULT ReleaseScreen(DXGIDevice *device);
