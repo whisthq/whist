@@ -552,13 +552,20 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		recvfrom_timeout_ms = 5000;
 	}
 
+	if (recvfrom_timeout_ms == 0) {
+		u_long mode = 1;
+		ioctlsocket(context->s, FIONBIO, &mode);
+	}
+	else {
 #if defined(_WIN32)
-	read_timeout = recvfrom_timeout_ms;
+		read_timeout = recvfrom_timeout_ms;
 #else
-	read_timeout.tv_sec = 0;
-	read_timeout.tv_usec = recvfrom_timeout_ms * 1000;
+		read_timeout.tv_sec = 0;
+		read_timeout.tv_usec = recvfrom_timeout_ms * 1000;
 #endif
-	setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
+		setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
+
+	}
 
 	// Great success!
 	return 0;

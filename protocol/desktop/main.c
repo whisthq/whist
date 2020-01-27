@@ -55,7 +55,7 @@ struct VideoData {
 } volatile static VideoData;
 
 // Global state variables
-volatile static bool shutting_down = false;
+volatile static bool run_receive_packets = false;
 volatile static bool rendering = false;
 volatile static bool is_timing_latency = false;
 volatile static clock latency_timer;
@@ -80,7 +80,7 @@ volatile static bool update_mbps = false;
 // Function Declarations
 static void initVideo();
 static void initAudio();
-static void tryRenderingPendingFrame();
+static void updateVideo();
 static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size);
 static int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size);
 static void destroyVideo();
@@ -100,7 +100,12 @@ static int32_t RenderScreen(void* opaque) {
             return -1;
         }
 
-        //mprintf("Rendering ID %d\n", context.id);
+        if (!rendering) {
+            mprintf("Sem opened but rendering is not true!\n");
+            continue;
+        }
+
+        //mprintf("Rendering ID %d\n", renderContext.id);
 
         video_decoder_decode(renderContext.decoder, renderContext.prev_frame, renderContext.frame_size);
 
@@ -132,6 +137,8 @@ static int32_t RenderScreen(void* opaque) {
 
         rendering = false;
     }
+
+    SDL_Delay(5);
 }
 
 static int32_t ReceivePackets(void* opaque) {
@@ -146,8 +153,9 @@ static int32_t ReceivePackets(void* opaque) {
     initVideo();
     initAudio();
 
-    for (int i = 0; !shutting_down; i++) {  
-        tryRenderingPendingFrame();
+    for (int i = 0; run_receive_packets; i++) {
+        // Call as often as possible
+        updateVideo();
 
         int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
@@ -156,9 +164,10 @@ static int32_t ReceivePackets(void* opaque) {
             int error = WSAGetLastError();
             switch (error) {
             case WSAETIMEDOUT:
+            case WSAEWOULDBLOCK:
                 break;
             default:
-                mprintf("Unexpected Error: %d\n", error);
+                mprintf("Unexpected Packet Error: %d\n", error);
                 break;
             }
         }
@@ -189,6 +198,9 @@ static int32_t ReceivePackets(void* opaque) {
             SendAck(&socketContext, 1);
         }
     }
+
+    SDL_Delay(5);
+    printf("Dying...\n");
 }
 
 static void initVideo() {
@@ -204,8 +216,8 @@ static void initVideo() {
     }
 
     VideoData.renderscreen_semaphore = SDL_CreateSemaphore(0);
-    VideoData.render_screen_thread = SDL_CreateThread(RenderScreen, "RenderScreen", NULL);
     VideoData.run_render_screen_thread = true;
+    VideoData.render_screen_thread = SDL_CreateThread(RenderScreen, "RenderScreen", NULL);
 }
 
 static void destroyVideo() {
@@ -214,20 +226,7 @@ static void destroyVideo() {
     SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
 }
 
-static void tryRenderingPendingFrame() {
-    if (!rendering) {
-        if (VideoData.pending_ctx != NULL) {
-            renderContext = *VideoData.pending_ctx;
-            rendering = true;
-
-            SDL_SemPost(VideoData.renderscreen_semaphore);
-
-            VideoData.pending_ctx = NULL;
-        }
-    }
-}
-
-static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
+static void updateVideo() {
     // Get statistics from the last 3 seconds of data
     if (GetTimer(VideoData.frame_timer) > 3) {
         double time = GetTimer(VideoData.frame_timer);
@@ -282,10 +281,10 @@ static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
             update_mbps = true;
         }
 
-        StartTimer(&VideoData.frame_timer);
         VideoData.bytes_transferred = 0;
         VideoData.frames_received = 0;
         VideoData.last_max_id = VideoData.max_id;
+        StartTimer(&VideoData.frame_timer);
     }
 
     if (!rendering) {
@@ -293,11 +292,15 @@ static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
             renderContext = *VideoData.pending_ctx;
             rendering = true;
 
+            //printf("Rendering ID %d\n", renderContext.id);
             SDL_SemPost(VideoData.renderscreen_semaphore);
 
             VideoData.pending_ctx = NULL;
         }
     }
+}
+
+static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
 
     //mprintf("Packet ID %d, Packet Index %d, Hash %x\n", packet->id, packet->index, packet->hash);
 
@@ -496,8 +499,17 @@ int main(int argc, char* argv[])
     }
 
     struct SwsContext* sws_ctx = NULL;
+
+    enum AVPixelFormat input_fmt;
+    if (DECODE_TYPE == QSV_DECODE) {
+        input_fmt = AV_PIX_FMT_NV12;
+    }
+    else {
+        input_fmt = AV_PIX_FMT_YUV420P;
+    }
+
     sws_ctx = sws_getContext(CAPTURE_WIDTH, CAPTURE_HEIGHT,
-        AV_PIX_FMT_YUV420P, OUTPUT_WIDTH, OUTPUT_HEIGHT,
+        input_fmt, OUTPUT_WIDTH, OUTPUT_HEIGHT,
         AV_PIX_FMT_YUV420P,
         SWS_BILINEAR,
         NULL,
@@ -528,10 +540,12 @@ int main(int argc, char* argv[])
 
     mprintf("Receiving\n\n");
 
+    run_receive_packets = true;
     SDL_Thread* receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
     StartTimer(&latency_timer);
 
+    bool shutting_down = false;
     while (!shutting_down)
     {
         if (update_mbps) {
@@ -601,6 +615,9 @@ int main(int argc, char* argv[])
             }
         }
     }
+
+    run_receive_packets = false;
+    SDL_WaitThread(receive_packets_thread, NULL);
 
     destroyVideo();
     destroyAudio();
