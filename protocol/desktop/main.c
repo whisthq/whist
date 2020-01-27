@@ -148,11 +148,14 @@ static int32_t ReceivePackets(void* opaque) {
     struct RTPPacket packet = { 0 };
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
     int slen = sizeof(socketContext.addr);
-    SendAck(&socketContext, 1);
 
     initVideo();
     initAudio();
 
+    SendAck(&socketContext, 1);
+    const float ack_send_ms = 75;
+    clock ackTimer;
+    StartTimer(&ackTimer);
     for (int i = 0; run_receive_packets; i++) {
         // Call as often as possible
         updateVideo();
@@ -194,8 +197,9 @@ static int32_t ReceivePackets(void* opaque) {
             }
         }
 
-        if (i % 20 == 0) {
+        if (GetTimer(ackTimer) * 1000.0 > ack_send_ms) {
             SendAck(&socketContext, 1);
+            StartTimer(&ackTimer);
         }
     }
 
@@ -291,7 +295,6 @@ static void updateVideo() {
             renderContext = *VideoData.pending_ctx;
             rendering = true;
 
-            //printf("Rendering ID %d\n", renderContext.id);
             SDL_SemPost(VideoData.renderscreen_semaphore);
 
             VideoData.pending_ctx = NULL;
