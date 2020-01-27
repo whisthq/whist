@@ -53,11 +53,12 @@
 
 #define PORT 48800 
 #define SRV_IP "34.200.170.47"
-#define CAPTURE_WIDTH 1280
-#define CAPTURE_HEIGHT 720
-#define OUTPUT_WIDTH 1280
-#define OUTPUT_HEIGHT 720
+#define CAPTURE_WIDTH 1920
+#define CAPTURE_HEIGHT 1080
+#define OUTPUT_WIDTH 1920
+#define OUTPUT_HEIGHT 1080
 #define MAX_PACKET_SIZE 1400
+#define START_MAX_MBPS 300.0
 
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org
@@ -558,19 +559,20 @@ typedef struct FractalClientCursorEvent {
 	uint32_t key;         ///< Buffer lookup key passed to FractalGetBuffer to retrieve the cursor image, if available.
 } FractalClientCursorEvent;
 
-typedef enum FractalMessageType {
-	MESSAGE_KEYBOARD       = 1, ///< `keyboard` FractalKeyboardMessage is valid in FractalMessage.
-	MESSAGE_MOUSE_BUTTON   = 2, ///< `mouseButton` FractalMouseButtonMessage is valid in FractalMessage.
-	MESSAGE_MOUSE_WHEEL    = 3, ///< `mouseWheel` FractalMouseWheelMessage is valid in FractalMessage.
-	MESSAGE_MOUSE_MOTION   = 4, ///< `mouseMotion` FractalMouseMotionMessage is valid in FractalMessage.
-	MESSAGE_MBPS		   = 5, ///< `mbps` double is valid in FractalMessage.
-	MESSAGE_RELEASE        = 6, ///< Message instructing the host to release all input that is currently pressed.
-	MESSAGE_QUIT           = 7,
-	__MESSAGE_MAKE_32      = 0x7FFFFFFF,
-} FractalMessageType;
+typedef enum FractalClientMessageType {
+	CMESSAGE_NONE = 0, ///< No Message
+	MESSAGE_KEYBOARD = 1, ///< `keyboard` FractalKeyboardMessage is valid in FractalMessage.
+	MESSAGE_MOUSE_BUTTON = 2, ///< `mouseButton` FractalMouseButtonMessage is valid in FractalMessage.
+	MESSAGE_MOUSE_WHEEL = 3, ///< `mouseWheel` FractalMouseWheelMessage is valid in FractalMessage.
+	MESSAGE_MOUSE_MOTION = 4, ///< `mouseMotion` FractalMouseMotionMessage is valid in FractalMessage.
+	MESSAGE_RELEASE = 5, ///< Message instructing the host to release all input that is currently pressed.
+	MESSAGE_MBPS = 6, ///< `mbps` double is valid in FractalMessage.
+	MESSAGE_PING = 7,
+	MESSAGE_QUIT = 100,
+} FractalClientMessageType;
 
-typedef struct FractalMessage {
-	FractalMessageType type;                     ///< Input message type.
+typedef struct FractalClientMessage {
+	FractalClientMessageType type;                     ///< Input message type.
 	union {
 		FractalKeyboardMessage keyboard;           ///< Keyboard message.
 		FractalMouseButtonMessage mouseButton;     ///< Mouse button message.
@@ -578,7 +580,20 @@ typedef struct FractalMessage {
 		FractalMouseMotionMessage mouseMotion;     ///< Mouse motion message.
 		double mbps;
 	};
-} FractalMessage;
+} FractalClientMessage;
+
+
+typedef enum FractalServerMessageType {
+	SMESSAGE_NONE = 0, ///< No Message
+	MESSAGE_PONG = 1,
+} FractalServerMessageType;
+
+typedef struct FractalServerMessage {
+	FractalServerMessageType type;                     ///< Input message type.
+	union {
+		char nothing;
+	};
+} FractalServerMessage;
 
 typedef struct FractalDestination
 {
@@ -593,13 +608,23 @@ typedef struct SocketContext
     int ack;
 } SocketContext;
 
+typedef enum FractalPacketType {
+	PACKET_AUDIO,
+	PACKET_VIDEO,
+	PACKET_MESSAGE,
+} FractalPacketType;
+
+// Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) + RTPPacket.payload_size
 struct RTPPacket {
-	uint8_t data[MAX_PACKET_SIZE];
+	// hash at the beginning of the struct, which is the hash of the rest of the packet
+	uint32_t hash;
+	FractalPacketType type;
 	int index;
 	int payload_size;
 	int id;
 	bool is_ending;
-	uint32_t hash;
+	// data at the end of the struct, in the case of a truncated packet
+	uint8_t data[MAX_PACKET_SIZE];
 };
 
 /*** STRUCTS END ***/
