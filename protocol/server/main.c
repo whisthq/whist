@@ -22,6 +22,7 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
+volatile static int gop_size = 10;
 
 SDL_mutex* packet_mutex;
 
@@ -71,7 +72,7 @@ static int32_t SendVideo(void* opaque) {
     int current_bitrate = STARTING_BITRATE;
     encoder_t* encoder;
     encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT,
-        CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate, ENCODE_TYPE);
+        CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate, gop_size, ENCODE_TYPE);
 
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
     memset(device, 0, sizeof(DXGIDevice));
@@ -80,7 +81,7 @@ static int32_t SendVideo(void* opaque) {
         return -1;
     }
 
-    bool update_bitrate = false;
+    bool update_encoder = false;
 
     double worst_fps = 40.0;
     int ideal_bitrate = current_bitrate;
@@ -93,10 +94,10 @@ static int32_t SendVideo(void* opaque) {
     while (connected) {
         HRESULT hr = CaptureScreen(device);
         if (hr == S_OK) {
-            if (update_bitrate) {
+            if (update_encoder) {
                 destroy_video_encoder(encoder);
-                encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate, ENCODE_TYPE);
-                update_bitrate = false;
+                encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate, gop_size, ENCODE_TYPE);
+                update_encoder = false;
             }
 
             video_encoder_encode(encoder, device->frame_data.pBits);
@@ -129,7 +130,7 @@ static int32_t SendVideo(void* opaque) {
                         if (abs(new_bitrate - current_bitrate) / new_bitrate > 0.05) {
                             mprintf("Updating bitrate from %d to %d\n", current_bitrate, new_bitrate);
                             current_bitrate = new_bitrate;
-                            update_bitrate = true;
+                            update_encoder = true;
 
                             bitrate_tested_frames = 0;
                             bytes_tested_frames = 0;
@@ -137,6 +138,7 @@ static int32_t SendVideo(void* opaque) {
                     }
                 }
 
+                mprintf("Sending frame ID %d\n", id);
                 if (SendPacket(&context, PACKET_VIDEO, encoder->packet.data, encoder->packet.size, id, delay) < 0) {
                     mprintf("Could not send video frame\n");
                 }
@@ -218,13 +220,13 @@ int main(int argc, char* argv[])
             return -1;
         }
 
-        struct SocketContext InputReceiveContext = { 0 };
-        if (CreateUDPContext(&InputReceiveContext, "S", "", 0, -1) < 0) {
+        struct SocketContext PacketReceiveContext = { 0 };
+        if (CreateUDPContext(&PacketReceiveContext, "S", "", 0, -1) < 0) {
             exit(1);
         }
 
-        struct SocketContext PacketContext = { 0 };
-        if (CreateUDPContext(&PacketContext, "S", "", 5, -1) < 0) {
+        struct SocketContext PacketSendContext = { 0 };
+        if (CreateUDPContext(&PacketSendContext, "S", "", 5, -1) < 0) {
             exit(1);
         }
 
@@ -233,13 +235,13 @@ int main(int argc, char* argv[])
 
         packet_mutex = SDL_CreateMutex();
 
-        SendAck(&InputReceiveContext, 0);
-        SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketContext);
-        SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketContext);
+        SendAck(&PacketReceiveContext, 0);
+        SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
+        SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
 
         struct FractalClientMessage fmsgs[6];
         struct FractalClientMessage fmsg;
-        int slen = sizeof(InputReceiveContext.addr), i = 0, j = 0, active = 0;
+        int slen = sizeof(PacketReceiveContext.addr), i = 0, j = 0, active = 0;
         FractalStatus status;
 
         clock last_ping;
@@ -255,7 +257,7 @@ int main(int argc, char* argv[])
             }
 
             memset(&fmsg, 0, sizeof(fmsg));
-            if (recvfrom(InputReceiveContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&InputReceiveContext.addr), &slen) > 0) {
+            if (recvfrom(PacketReceiveContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketReceiveContext.addr), &slen) > 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
                     if (active) {
                         fmsgs[j] = fmsg;
@@ -288,8 +290,14 @@ int main(int argc, char* argv[])
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = MESSAGE_PONG;
                     fmsg_response.ping_id = fmsg.ping_id;
+                    mprintf("Ping Received - ID %d\n", fmsg.ping_id);
                     StartTimer(&last_ping);
-                    SendPacket(&PacketContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), -1, -1);
+                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), -1, -1) < 0) {
+                        mprintf("Could not send Pong\n");
+                    }
+                }
+                else if (fmsg.type == MESSAGE_DIMENSIONS) {
+
                 }
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");
@@ -302,7 +310,7 @@ int main(int argc, char* argv[])
             }
 
             if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
-                SendAck(&InputReceiveContext, 1);
+                SendAck(&PacketReceiveContext, 1);
                 StartTimer(&ack_timer);
             }
         }
@@ -312,8 +320,8 @@ int main(int argc, char* argv[])
 
         SDL_DestroyMutex(packet_mutex);
 
-        closesocket(InputReceiveContext.s);
-        closesocket(PacketContext.s);
+        closesocket(PacketReceiveContext.s);
+        closesocket(PacketSendContext.s);
 
         WSACleanup();
     }
