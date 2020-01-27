@@ -200,7 +200,6 @@ static int32_t ReceivePackets(void* opaque) {
     }
 
     SDL_Delay(5);
-    printf("Dying...\n");
 }
 
 static void initVideo() {
