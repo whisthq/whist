@@ -153,9 +153,9 @@ static int32_t ReceivePackets(void* opaque) {
     initAudio();
 
     SendAck(&socketContext, 1);
-    const float ack_send_ms = 75;
-    clock ackTimer;
-    StartTimer(&ackTimer);
+
+    clock ack_timer;
+    StartTimer(&ack_timer);
     for (int i = 0; run_receive_packets; i++) {
         // Call as often as possible
         updateVideo();
@@ -197,9 +197,9 @@ static int32_t ReceivePackets(void* opaque) {
             }
         }
 
-        if (GetTimer(ackTimer) * 1000.0 > ack_send_ms) {
+        if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
-            StartTimer(&ackTimer);
+            StartTimer(&ack_timer);
         }
     }
 
@@ -454,7 +454,7 @@ int main(int argc, char* argv[])
     FractalClientMessage fmsg = { 0 };
 
     struct SocketContext PacketSendContext = { 0 };
-    if (CreateUDPContext(&PacketSendContext, "C", SERVER_IP, 0, 250) < 0) {
+    if (CreateUDPContext(&PacketSendContext, "C", SERVER_IP, 10, 250) < 0) {
         exit(1);
     }
 
@@ -556,7 +556,9 @@ int main(int argc, char* argv[])
             memset(&fmsg, 0, sizeof(fmsg));
             fmsg.type = MESSAGE_MBPS;
             fmsg.mbps = max_mbps;
-            sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr));
+            if (sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr)) < 0) {
+                mprintf("Failed to send packet!\n");
+            }
         }
 
         if (is_timing_latency && GetTimer(latency_timer) > 0.5) {
@@ -577,7 +579,9 @@ int main(int argc, char* argv[])
             fmsg.ping_id = ping_id;
             is_timing_latency = true;
             StartTimer(&latency_timer);
-            sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr));
+            if (sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr)) < 0) {
+                mprintf("Failed to send packet!\n");
+            }
         }
 
         memset(&fmsg, 0, sizeof(fmsg));
@@ -613,7 +617,9 @@ int main(int argc, char* argv[])
                 break;
             }
             if (fmsg.type != 0) {
-                sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr));
+                if (sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr)) < 0) {
+                    mprintf("Failed to send packet!\n");
+                }
             }
         }
     }
