@@ -24,12 +24,14 @@
 #define DECODE_TYPE QSV_DECODE
 
 struct SDLVideoContext {
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    SDL_Texture* texture;
+
     Uint8* yPlane;
     Uint8* uPlane;
     Uint8* vPlane;
     int uvPitch;
-    SDL_Renderer* Renderer;
-    SDL_Texture* Texture;
     decoder_t* decoder;
     struct SwsContext* sws;
 };
@@ -170,7 +172,7 @@ static int32_t RenderScreen(void* opaque) {
             pict.linesize);
 
         SDL_UpdateYUVTexture(
-            videoContext.Texture,
+            videoContext.texture,
             NULL,
             videoContext.yPlane,
             OUTPUT_WIDTH,
@@ -180,14 +182,36 @@ static int32_t RenderScreen(void* opaque) {
             videoContext.uvPitch
         );
 
-        SDL_RenderClear(videoContext.Renderer);
-        SDL_RenderCopy(videoContext.Renderer, videoContext.Texture, NULL, NULL);
-        SDL_RenderPresent(videoContext.Renderer);
+        SDL_RenderClear(videoContext.renderer);
+        SDL_RenderCopy(videoContext.renderer, videoContext.texture, NULL, NULL);
+        SDL_RenderPresent(videoContext.renderer);
 
         rendering = false;
     }
 
     SDL_Delay(5);
+}
+
+static void initReceivePackets(struct SocketContext* context);
+static int32_t ReceivePackets(void* opaque);
+static void destroyReceivePackets();
+
+SDL_Thread* receive_packets_thread;
+
+static void initReceivePackets(struct SocketContext* context) {
+    initVideo();
+    initAudio();
+
+    run_receive_packets = true;
+    receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", context);
+}
+
+static void destroyReceivePackets() {
+    run_receive_packets = false;
+    SDL_WaitThread(receive_packets_thread, NULL);
+
+    destroyVideo();
+    destroyAudio();
 }
 
 static int32_t ReceivePackets(void* opaque) {
@@ -197,9 +221,6 @@ static int32_t ReceivePackets(void* opaque) {
     struct RTPPacket packet = { 0 };
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
     int slen = sizeof(socketContext.addr);
-
-    initVideo();
-    initAudio();
 
     SendAck(&socketContext, 1);
 
@@ -256,6 +277,69 @@ static int32_t ReceivePackets(void* opaque) {
 }
 
 static void initVideo() {
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    SDL_Texture* texture;
+
+    Uint8* yPlane, * uPlane, * vPlane;
+    size_t yPlaneSz, uvPlaneSz;
+    int uvPitch;
+
+    window = SDL_CreateWindow(
+        "Fractal",
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        OUTPUT_WIDTH,
+        OUTPUT_HEIGHT,
+        0
+    );
+
+    if (!window) {
+        fprintf(stderr, "SDL: could not create window - exiting\n");
+        exit(1);
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, 0);
+    if (!renderer) {
+        fprintf(stderr, "SDL: could not create renderer - exiting\n");
+        exit(1);
+    }
+    // Allocate a place to put our YUV image on that screen
+    texture = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_YV12,
+        SDL_TEXTUREACCESS_STREAMING,
+        OUTPUT_WIDTH,
+        OUTPUT_HEIGHT
+    );
+    if (!texture) {
+        fprintf(stderr, "SDL: could not create texture - exiting\n");
+        exit(1);
+    }
+
+    // set up YV12 pixel array (12 bits per pixel)
+    yPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT;
+    uvPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT / 4;
+    yPlane = (Uint8*)malloc(yPlaneSz);
+    uPlane = (Uint8*)malloc(uvPlaneSz);
+    vPlane = (Uint8*)malloc(uvPlaneSz);
+
+    if (!yPlane || !uPlane || !vPlane) {
+        fprintf(stderr, "Could not allocate pixel buffers - exiting\n");
+        exit(1);
+    }
+
+    uvPitch = OUTPUT_WIDTH / 2;
+
+    videoContext.window = window;
+    videoContext.renderer = renderer;
+    videoContext.texture = texture;
+
+    videoContext.yPlane = yPlane;
+    videoContext.uPlane = uPlane;
+    videoContext.vPlane = vPlane;
+    videoContext.uvPitch = uvPitch;
+
     VideoData.pending_ctx = NULL;
     VideoData.frames_received = 0;
     VideoData.bytes_transferred = 0;
@@ -277,6 +361,13 @@ static void destroyVideo() {
     VideoData.run_render_screen_thread = false;
     SDL_WaitThread(VideoData.render_screen_thread, NULL);
     SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
+
+    SDL_DestroyTexture(videoContext.texture);
+    SDL_DestroyRenderer(videoContext.renderer);
+    SDL_DestroyWindow(videoContext.window);
+    free(videoContext.yPlane);
+    free(videoContext.uPlane);
+    free(videoContext.vPlane);
 }
 
 static void updateVideo() {
@@ -504,12 +595,6 @@ int main(int argc, char* argv[])
 #endif
 
     SDL_Event msg;
-    SDL_Window* screen;
-    SDL_Renderer* renderer;
-    SDL_Texture* texture;
-    Uint8* yPlane, * uPlane, * vPlane;
-    size_t yPlaneSz, uvPlaneSz;
-    int uvPitch;
     FractalClientMessage fmsg = { 0 };
 
     struct SocketContext PacketSendContext = { 0 };
@@ -527,62 +612,9 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    screen = SDL_CreateWindow(
-        "Fractal",
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
-        OUTPUT_WIDTH,
-        OUTPUT_HEIGHT,
-        0
-    );
-
-    if (!screen) {
-        fprintf(stderr, "SDL: could not create window - exiting\n");
-        exit(1);
-    }
-
-    renderer = SDL_CreateRenderer(screen, -1, 0);
-    if (!renderer) {
-        fprintf(stderr, "SDL: could not create renderer - exiting\n");
-        exit(1);
-    }
-    // Allocate a place to put our YUV image on that screen
-    texture = SDL_CreateTexture(
-        renderer,
-        SDL_PIXELFORMAT_YV12,
-        SDL_TEXTUREACCESS_STREAMING,
-        OUTPUT_WIDTH,
-        OUTPUT_HEIGHT
-    );
-    if (!texture) {
-        fprintf(stderr, "SDL: could not create texture - exiting\n");
-        exit(1);
-    }
-
-    // set up YV12 pixel array (12 bits per pixel)
-    yPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT;
-    uvPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT / 4;
-    yPlane = (Uint8*)malloc(yPlaneSz);
-    uPlane = (Uint8*)malloc(uvPlaneSz);
-    vPlane = (Uint8*)malloc(uvPlaneSz);
-    if (!yPlane || !uPlane || !vPlane) {
-        fprintf(stderr, "Could not allocate pixel buffers - exiting\n");
-        exit(1);
-    }
-
-    uvPitch = OUTPUT_WIDTH / 2;
-
-    videoContext.yPlane = yPlane;
-    videoContext.uPlane = uPlane;
-    videoContext.vPlane = vPlane;
-    videoContext.uvPitch = uvPitch;
-    videoContext.Renderer = renderer;
-    videoContext.Texture = texture;
-
     mprintf("Receiving\n\n");
 
-    run_receive_packets = true;
-    SDL_Thread* receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
+    initReceivePackets(&PacketReceiveContext);
 
     StartTimer(&latency_timer);
 
@@ -673,17 +705,11 @@ int main(int argc, char* argv[])
         }
     }
 
-    run_receive_packets = false;
-    SDL_WaitThread(receive_packets_thread, NULL);
-
-    destroyVideo();
-    destroyAudio();
+    destroyReceivePackets();
     destroyMultiThreadedPrintf();
-    
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(screen);
+
     SDL_Quit();
+    
 #if defined(_WIN32)
     closesocket(PacketSendContext.s);
     closesocket(PacketReceiveContext.s);
