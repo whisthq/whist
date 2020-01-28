@@ -38,9 +38,9 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx,
     return AV_PIX_FMT_NONE;
 }
 
-decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int out_height, DecodeType type) {
-  decoder_t *decoder = (decoder_t *) malloc(sizeof(decoder_t));
-  memset(decoder, 0, sizeof(decoder_t));
+video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width, int out_height, DecodeType type) {
+  video_decoder_t*decoder = (video_decoder_t*) malloc(sizeof(video_decoder_t));
+  memset(decoder, 0, sizeof(video_decoder_t));
 
   decoder->type = type;
   // init ffmpeg decoder for H264 software encoding
@@ -97,7 +97,7 @@ decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int 
 /// @brief destroy decoder decoder
 /// @details frees FFmpeg decoder memory
 
-void destroy_video_decoder(decoder_t *decoder) {
+void destroy_video_decoder(video_decoder_t*decoder) {
   // check if decoder decoder exists
   if (decoder == NULL) {
       printf("Cannot destroy decoder decoder.\n");
@@ -119,7 +119,7 @@ void destroy_video_decoder(decoder_t *decoder) {
 
 /// @brief decode a frame using the decoder decoder
 /// @details decode an encoded frame under YUV color format into RGB frame
-void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size) {
+void *video_decoder_decode(video_decoder_t*decoder, char *buffer, int buffer_size) {
   // init packet to prepare decoding
   // av_log_set_level(AV_LOG_ERROR);
   // av_log_set_callback(my_log_callback);

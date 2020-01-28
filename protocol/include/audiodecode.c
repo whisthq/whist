@@ -35,8 +35,8 @@ audio_decoder_t *create_audio_decoder() {
     decoder->context->sample_rate    = 44100;
     decoder->context->channel_layout = 3;
     decoder->context->channels       = av_get_channel_layout_nb_channels(decoder->context->channel_layout);
-    decoder->context->gop_size = 1;
-    decoder->context->sample_fmt = decoder->codec->sample_fmts[0];
+    decoder->context->gop_size       = 1;
+    decoder->context->sample_fmt     = decoder->codec->sample_fmts[0];
 
     if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
         printf("Could not open codec\n");

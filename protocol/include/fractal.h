@@ -12,9 +12,6 @@
 #ifndef FRACTAL_H
 #define FRACTAL_H
 
-// only include this header file once at compile time
-#pragma once
-
 #include <stdint.h>
 #include <stdbool.h>
 
