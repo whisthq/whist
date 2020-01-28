@@ -21,7 +21,7 @@
 #include "../include/linkedlist.h" // header file for audio decoder
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
-#define DECODE_TYPE QSV_DECODE
+#define DECODE_TYPE SOFTWARE_DECODE
 
 struct SDLVideoContext {
     Uint8* yPlane;
