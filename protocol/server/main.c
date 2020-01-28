@@ -151,8 +151,9 @@ static int32_t SendVideo(void* opaque) {
                     frame->width = device->width;
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
-                    memcpy(&frame->compressed_frame, encoder->packet.data, encoder->packet.size);
-                    if (SendPacket(&context, PACKET_VIDEO, &frame, frame_size, id, delay) < 0) {
+                    memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
+                    
+                    if (SendPacket(&context, PACKET_VIDEO, frame, frame_size, id, delay) < 0) {
                         mprintf("Could not send video frame\n");
                     }
                     else {
