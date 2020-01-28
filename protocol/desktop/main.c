@@ -90,11 +90,11 @@ static int32_t ReceivePackets(void* opaque) {
             }
             else {
                 switch (packet.type) {
-                case PACKET_AUDIO:
-                    ReceiveAudio(&packet, recv_size);
-                    break;
                 case PACKET_VIDEO:
                     ReceiveVideo(&packet, recv_size);
+                    break;
+                case PACKET_AUDIO:
+                    ReceiveAudio(&packet, recv_size);
                     break;
                 case PACKET_MESSAGE:
                     ReceiveMessage(&packet, recv_size);
@@ -219,6 +219,8 @@ int main(int argc, char* argv[])
             is_timing_latency = true;
 
             StartTimer(&latency_timer);
+
+            mprintf("Ping! %d\n", ping_id);
             SendPacket(&PacketSendContext, &fmsg, sizeof(fmsg));
         }
 
