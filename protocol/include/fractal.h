@@ -65,8 +65,6 @@
 
 #define LARGEST_FRAME_SIZE 1000000
 #define STARTING_BITRATE 45000
-#define CAPTURE_WIDTH 1920
-#define CAPTURE_HEIGHT 1080
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
@@ -642,6 +640,13 @@ struct RTPPacket {
 	// data at the end of the struct, in the case of a truncated packet
 	uint8_t data[MAX_PACKET_SIZE];
 };
+
+typedef struct Frame {
+	int width;
+	int height;
+	int size;
+	unsigned char compressed_frame[];
+} Frame;
 
 /*** STRUCTS END ***/
 

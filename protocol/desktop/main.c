@@ -28,12 +28,15 @@ struct SDLVideoContext {
     Uint8* uPlane;
     Uint8* vPlane;
     int uvPitch;
-    int frame_size;
     SDL_Renderer* Renderer;
     SDL_Texture* Texture;
     decoder_t* decoder;
-    char* prev_frame;
     struct SwsContext* sws;
+};
+
+struct FrameData {
+    char* prev_frame;
+    int frame_size;
     int id;
     int packets_received;
     int num_packets;
@@ -46,7 +49,7 @@ struct SDLVideoContext {
 };
 
 struct VideoData {
-    struct SDLVideoContext* pending_ctx;
+    struct FrameData* pending_ctx;
     int frames_received;
     int bytes_transferred;
     clock frame_timer;
@@ -71,17 +74,22 @@ volatile static int ping_failures = 0;
 // Base video context that all contexts derive from
 volatile static struct SDLVideoContext videoContext;
 // Context of the frame that is currently being rendered
-volatile static struct SDLVideoContext renderContext;
+volatile static struct FrameData renderContext;
 
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 100
-struct SDLVideoContext receiving_frames[RECV_FRAMES_BUFFER_SIZE];
+struct FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
 char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
 
 // Keeping track of mbps
 volatile static double max_mbps = START_MAX_MBPS;
 volatile static double working_mbps = START_MAX_MBPS;
 volatile static bool update_mbps = false;
+
+// Width and Height
+int server_width = 1920;
+int server_height = 1080;
+void updateWidthAndHeight(int width, int height);
 
 // Function Declarations
 static void initVideo();
@@ -91,6 +99,35 @@ static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size);
 static int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size);
 static void destroyVideo();
 static void destroyAudio();
+
+void updateWidthAndHeight(int width, int height) {
+    struct SwsContext* sws_ctx = NULL;
+
+    enum AVPixelFormat input_fmt;
+    if (DECODE_TYPE == QSV_DECODE) {
+        input_fmt = AV_PIX_FMT_NV12;
+    }
+    else {
+        input_fmt = AV_PIX_FMT_YUV420P;
+    }
+
+    sws_ctx = sws_getContext(width, height,
+        input_fmt, OUTPUT_WIDTH, OUTPUT_HEIGHT,
+        AV_PIX_FMT_YUV420P,
+        SWS_BILINEAR,
+        NULL,
+        NULL,
+        NULL
+    );
+
+    videoContext.sws = sws_ctx;
+
+    decoder_t* decoder = create_video_decoder(width, height, OUTPUT_WIDTH, OUTPUT_HEIGHT, DECODE_TYPE);
+    videoContext.decoder = decoder;
+
+    server_width = width;
+    server_height = height;
+}
 
 static int32_t RenderScreen(void* opaque) {
     mprintf("RenderScreen running on Thread %d\n", SDL_GetThreadID(NULL));
@@ -113,33 +150,38 @@ static int32_t RenderScreen(void* opaque) {
 
         //mprintf("Rendering ID %d\n", renderContext.id);
 
-        video_decoder_decode(renderContext.decoder, renderContext.prev_frame, renderContext.frame_size);
+        Frame* frame = renderContext.prev_frame;
+        if (frame->width != server_width || frame->height != server_height) {
+            updateWidthAndHeight(frame->width, frame->height);
+        }
+
+        video_decoder_decode(videoContext.decoder, renderContext.prev_frame, renderContext.frame_size);
 
         AVPicture pict;
-        pict.data[0] = renderContext.yPlane;
-        pict.data[1] = renderContext.uPlane;
-        pict.data[2] = renderContext.vPlane;
+        pict.data[0] = videoContext.yPlane;
+        pict.data[1] = videoContext.uPlane;
+        pict.data[2] = videoContext.vPlane;
         pict.linesize[0] = OUTPUT_WIDTH;
-        pict.linesize[1] = renderContext.uvPitch;
-        pict.linesize[2] = renderContext.uvPitch;
-        sws_scale(renderContext.sws, (uint8_t const* const*)renderContext.decoder->sw_frame->data,
-            renderContext.decoder->sw_frame->linesize, 0, renderContext.decoder->context->height, pict.data,
+        pict.linesize[1] = videoContext.uvPitch;
+        pict.linesize[2] = videoContext.uvPitch;
+        sws_scale(videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
+            videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, pict.data,
             pict.linesize);
 
         SDL_UpdateYUVTexture(
-            renderContext.Texture,
+            videoContext.Texture,
             NULL,
-            renderContext.yPlane,
+            videoContext.yPlane,
             OUTPUT_WIDTH,
-            renderContext.uPlane,
-            renderContext.uvPitch,
-            renderContext.vPlane,
-            renderContext.uvPitch
+            videoContext.uPlane,
+            videoContext.uvPitch,
+            videoContext.vPlane,
+            videoContext.uvPitch
         );
 
-        SDL_RenderClear(renderContext.Renderer);
-        SDL_RenderCopy(renderContext.Renderer, renderContext.Texture, NULL, NULL);
-        SDL_RenderPresent(renderContext.Renderer);
+        SDL_RenderClear(videoContext.Renderer);
+        SDL_RenderCopy(videoContext.Renderer, videoContext.Texture, NULL, NULL);
+        SDL_RenderPresent(videoContext.Renderer);
 
         rendering = false;
     }
@@ -312,13 +354,12 @@ static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
 
         int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
 
-        struct SDLVideoContext* ctx = &receiving_frames[index];
+        struct FrameData* ctx = &receiving_frames[index];
         if (ctx->id != packet->id) {
             if (rendering && renderContext.id == ctx->id) {
                 mprintf("Error! Currently rendering an ID that will be overwritten! Skipping packet.\n");
                 return 0;
             }
-            *ctx = videoContext;
             ctx->id = packet->id;
             ctx->prev_frame = &frame_bufs[index];
             ctx->packets_received = 0;
@@ -517,24 +558,6 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    struct SwsContext* sws_ctx = NULL;
-
-    enum AVPixelFormat input_fmt;
-    if (DECODE_TYPE == QSV_DECODE) {
-        input_fmt = AV_PIX_FMT_NV12;
-    }
-    else {
-        input_fmt = AV_PIX_FMT_YUV420P;
-    }
-
-    sws_ctx = sws_getContext(CAPTURE_WIDTH, CAPTURE_HEIGHT,
-        input_fmt, OUTPUT_WIDTH, OUTPUT_HEIGHT,
-        AV_PIX_FMT_YUV420P,
-        SWS_BILINEAR,
-        NULL,
-        NULL,
-        NULL);
-
     // set up YV12 pixel array (12 bits per pixel)
     yPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT;
     uvPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT / 4;
@@ -549,13 +572,13 @@ int main(int argc, char* argv[])
     uvPitch = OUTPUT_WIDTH / 2;
 
     videoContext.yPlane = yPlane;
-    videoContext.sws = sws_ctx;
     videoContext.uPlane = uPlane;
     videoContext.vPlane = vPlane;
     videoContext.uvPitch = uvPitch;
     videoContext.Renderer = renderer;
     videoContext.Texture = texture;
-    videoContext.decoder = create_video_decoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, OUTPUT_WIDTH * 12000, DECODE_TYPE);
+
+    updateWidthAndHeight(server_width, server_height);
 
     mprintf("Receiving\n\n");
 
@@ -625,8 +648,8 @@ int main(int argc, char* argv[])
                 break;
             case SDL_MOUSEMOTION:
                 fmsg.type = MESSAGE_MOUSE_MOTION;
-                fmsg.mouseMotion.x = msg.motion.x * CAPTURE_WIDTH / OUTPUT_WIDTH;
-                fmsg.mouseMotion.y = msg.motion.y * CAPTURE_HEIGHT / OUTPUT_HEIGHT;
+                fmsg.mouseMotion.x = msg.motion.x * server_width / OUTPUT_WIDTH;
+                fmsg.mouseMotion.y = msg.motion.y * server_height / OUTPUT_HEIGHT;
                 break;
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP:
