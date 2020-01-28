@@ -42,7 +42,7 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 		encoder->context->bit_rate  = bitrate;
 		encoder->context->time_base.num = 1;
 		encoder->context->time_base.den = 30;
-		encoder->context->gop_size = 10;
+		encoder->context->gop_size = 1;
 		encoder->context->pix_fmt   = AV_PIX_FMT_CUDA;
 
 		av_opt_set(encoder->context->priv_data, "preset", "llhp", 0);
