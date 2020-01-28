@@ -45,7 +45,8 @@ struct VideoData {
     int frames_received;
     int bytes_transferred;
     clock frame_timer;
-    int last_max_id;
+    int last_statistics_id;
+    int last_rendered_id;
     int max_id;
 
     SDL_Thread* render_screen_thread;
@@ -211,7 +212,8 @@ static void initVideo() {
     VideoData.frames_received = 0;
     VideoData.bytes_transferred = 0;
     StartTimer(&VideoData.frame_timer);
-    VideoData.last_max_id = 1;
+    VideoData.last_statistics_id = 1;
+    VideoData.last_rendered_id = 1;
     VideoData.max_id = 1;
 
     for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
@@ -235,20 +237,13 @@ static void updateVideo() {
         double time = GetTimer(VideoData.frame_timer);
 
         // Calculate statistics
-        int expected_frames = VideoData.max_id - VideoData.last_max_id;
+        int expected_frames = VideoData.max_id - VideoData.last_statistics_id;
         double fps = 1.0 * expected_frames / time;
         double mbps = VideoData.bytes_transferred * 8.0 / 1024.0 / 1024.0 / time;
         double receive_rate = expected_frames == 0 ? 1.0 : 1.0 * VideoData.frames_received / expected_frames;
         double dropped_rate = 1.0 - receive_rate;
 
         // Print statistics
-
-        for (int i = VideoData.last_max_id + 1; i <= VideoData.max_id; i++) {
-            int index = i % RECV_FRAMES_BUFFER_SIZE;
-            if (receiving_frames[index].id == i) {
-                mprintf("Frame with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
-            }
-        }
 
         mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 * dropped_rate);
 
@@ -286,7 +281,7 @@ static void updateVideo() {
 
         VideoData.bytes_transferred = 0;
         VideoData.frames_received = 0;
-        VideoData.last_max_id = VideoData.max_id;
+        VideoData.last_statistics_id = VideoData.max_id;
         StartTimer(&VideoData.frame_timer);
     }
 
@@ -354,6 +349,15 @@ static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
             if (packet->id > VideoData.max_id) {
                 VideoData.max_id = packet->id;
                 //mprintf("Received all packets for id %d, getting ready to render\n", packet.id);
+
+                for (int i = VideoData.last_rendered_id + 1; i <= VideoData.max_id; i++) {
+                    int index = i % RECV_FRAMES_BUFFER_SIZE;
+                    if (receiving_frames[index].id == i && receiving_frames[index].packets_received != receiving_frames[index].num_packets) {
+                        mprintf("Frame dropped with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
+                    }
+                }
+
+                VideoData.last_rendered_id = VideoData.max_id;
 
                 VideoData.pending_ctx = ctx;
             }
@@ -578,6 +582,7 @@ int main(int argc, char* argv[])
             fmsg.type = MESSAGE_PING;
             fmsg.ping_id = ping_id;
             is_timing_latency = true;
+
             StartTimer(&latency_timer);
             if (sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr)) < 0) {
                 mprintf("Failed to send packet!\n");

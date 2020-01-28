@@ -65,6 +65,7 @@
 
 #define LARGEST_FRAME_SIZE 1000000
 #define STARTING_BITRATE 45000
+
 #define CAPTURE_WIDTH 1280
 #define CAPTURE_HEIGHT 720
 #define OUTPUT_WIDTH 1280
@@ -570,14 +571,15 @@ typedef struct FractalClientCursorEvent {
 } FractalClientCursorEvent;
 
 typedef enum FractalClientMessageType {
-	CMESSAGE_NONE = 0, ///< No Message
-	MESSAGE_KEYBOARD = 1, ///< `keyboard` FractalKeyboardMessage is valid in FractalMessage.
-	MESSAGE_MOUSE_BUTTON = 2, ///< `mouseButton` FractalMouseButtonMessage is valid in FractalMessage.
-	MESSAGE_MOUSE_WHEEL = 3, ///< `mouseWheel` FractalMouseWheelMessage is valid in FractalMessage.
-	MESSAGE_MOUSE_MOTION = 4, ///< `mouseMotion` FractalMouseMotionMessage is valid in FractalMessage.
-	MESSAGE_RELEASE = 5, ///< Message instructing the host to release all input that is currently pressed.
-	MESSAGE_MBPS = 6, ///< `mbps` double is valid in FractalMessage.
-	MESSAGE_PING = 7,
+	CMESSAGE_NONE           = 0, ///< No Message
+	MESSAGE_KEYBOARD        = 1, ///< `keyboard` FractalKeyboardMessage is valid in FractClientMessage.
+	MESSAGE_MOUSE_BUTTON    = 2, ///< `mouseButton` FractalMouseButtonMessage is valid in FractClientMessage.
+	MESSAGE_MOUSE_WHEEL     = 3, ///< `mouseWheel` FractalMouseWheelMessage is valid in FractClientMessage.
+	MESSAGE_MOUSE_MOTION    = 4, ///< `mouseMotion` FractalMouseMotionMessage is valid in FractClientMessage.
+	MESSAGE_RELEASE         = 5, ///< Message instructing the host to release all input that is currently pressed.
+	MESSAGE_MBPS            = 6, ///< `mbps` double is valid in FractClientMessage.
+	MESSAGE_PING            = 7,
+	MESSAGE_DIMENSIONS      = 8, ///< `dimensions.width` int and `dimensions.height` int is valid in FractClientMessage
 	MESSAGE_QUIT = 100,
 } FractalClientMessageType;
 
@@ -590,6 +592,10 @@ typedef struct FractalClientMessage {
 		FractalMouseMotionMessage mouseMotion;     ///< Mouse motion message.
 		double mbps;
 		int ping_id;
+		struct dimensions {
+			int width;
+			int height;
+		};
 	};
 } FractalClientMessage;
 
