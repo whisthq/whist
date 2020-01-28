@@ -500,8 +500,13 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 	// Point address to STUN server
 	context->addr.sin_addr.s_addr = inet_addr(STUN_SERVER_IP);
 	// Create payload to send to STUN server
-	char dest[20];
-	memcpy(dest, destination, 20);
+#define DEST_BUF_LEN 20
+	char dest[DEST_BUF_LEN];
+	if (strlen(destination) + strlen(origin) + 1 > DEST_BUF_LEN) {
+		printf("Strings too long!\n");
+		return -1;
+	}
+	strcpy(dest, destination);
 	strcat(dest, origin);
 
 	if (stun_timeout_ms == 0) {
@@ -602,9 +607,10 @@ volatile static SDL_sem* multithreadedprintf_semaphore;
 volatile static SDL_mutex* multithreadedprintf_mutex;
 
 // Multithreaded printf queue
-#define MPRINTF_QUEUE_SIZE 100
+#define MPRINTF_QUEUE_SIZE 1000
 #define MPRINTF_BUF_SIZE 1000
 volatile static char mprintf_queue[MPRINTF_QUEUE_SIZE][MPRINTF_BUF_SIZE];
+volatile static char mprintf_queue_cache[MPRINTF_QUEUE_SIZE][MPRINTF_BUF_SIZE];
 volatile static int mprintf_queue_index = 0;
 volatile static int mprintf_queue_size = 0;
 
@@ -630,6 +636,7 @@ void destroyMultiThreadedPrintf() {
 }
 
 void MultiThreadedPrintf(void* opaque) {
+	int produced_in_advance = 0;
 	while (true) {
 		SDL_SemWait(multithreadedprintf_semaphore);
 
@@ -637,16 +644,24 @@ void MultiThreadedPrintf(void* opaque) {
 			break;
 		}
 
-		char* buf;
+		int cache_size = 0;
 
 		SDL_LockMutex(multithreadedprintf_mutex);
-		buf = mprintf_queue[mprintf_queue_index];
-		mprintf_queue_index++;
-		mprintf_queue_index %= MPRINTF_QUEUE_SIZE;
-		mprintf_queue_size--;
+		cache_size = mprintf_queue_size;
+		for (int i = 0; i < mprintf_queue_size; i++) {
+			strcpy(mprintf_queue_cache[i], mprintf_queue[mprintf_queue_index]);
+			mprintf_queue_index++;
+			mprintf_queue_index %= MPRINTF_QUEUE_SIZE;
+			if (i != 0) {
+				SDL_SemWait(multithreadedprintf_semaphore);
+			}
+		}
+		mprintf_queue_size = 0;
 		SDL_UnlockMutex(multithreadedprintf_mutex);
 
-		printf("%s", buf);
+		for (int i = 0; i < cache_size; i++) {
+			printf("%s", mprintf_queue_cache[i]);
+		}
 	}
 }
 
@@ -662,17 +677,17 @@ void mprintf(const char* fmtStr, ...) {
 	SDL_LockMutex(multithreadedprintf_mutex);
 	int index = (mprintf_queue_index + mprintf_queue_size) % MPRINTF_QUEUE_SIZE;
 	char* buf = NULL;
-	if (mprintf_queue_size < 98) {
+	if (mprintf_queue_size < MPRINTF_QUEUE_SIZE - 2) {
 		buf = &mprintf_queue[index];
+		vsnprintf(buf, MPRINTF_BUF_SIZE, fmtStr, args);
 		mprintf_queue_size++;
 	}
-	else if (mprintf_queue_size == 99) {
-		strcpy(buf, "Buffer maxed out!!!\n");
+	else if (mprintf_queue_size == MPRINTF_QUEUE_SIZE - 2) {
 		buf = &mprintf_queue[index];
+		strcpy(buf, "Buffer maxed out!!!\n");
 		mprintf_queue_size++;
 	}
 	if (buf != NULL) {
-		vsnprintf(buf, MPRINTF_BUF_SIZE, fmtStr, args);
 		buf[MPRINTF_BUF_SIZE - 5] = '.';
 		buf[MPRINTF_BUF_SIZE - 4] = '.';
 		buf[MPRINTF_BUF_SIZE - 3] = '.';

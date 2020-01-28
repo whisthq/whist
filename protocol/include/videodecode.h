@@ -14,7 +14,6 @@
 
 #include "fractal.h" // contains all the headers
 
-
 // define decoder struct to pass as a type
 typedef struct {
 	AVCodec *codec;

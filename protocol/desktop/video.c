@@ -49,8 +49,8 @@ typedef struct FrameData {
     int num_packets;
     bool received_indicies[500];
 
-    clock timer;
-    float time1;
+    clock client_frame_timer;
+    float client_frame_time;
     float time2;
     float time3;
 } FrameData;
@@ -132,7 +132,10 @@ int32_t RenderScreen(void* opaque) {
             updateWidthAndHeight(frame->width, frame->height);
         }
 
+        clock t;
+        StartTimer(&t);
         video_decoder_decode(videoContext.decoder, frame->compressed_frame, frame->size);
+        //mprintf("Decode Time: %f\n", GetTimer(t));
 
         AVPicture pict;
         pict.data[0] = videoContext.yPlane;
@@ -158,6 +161,7 @@ int32_t RenderScreen(void* opaque) {
 
         SDL_RenderClear(videoContext.renderer);
         SDL_RenderCopy(videoContext.renderer, videoContext.texture, NULL, NULL);
+        //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
         SDL_RenderPresent(videoContext.renderer);
 
         rendering = false;
@@ -307,6 +311,7 @@ void updateVideo() {
             renderContext = *VideoData.pending_ctx;
             rendering = true;
 
+            //mprintf("Status: %f\n", GetTimer(renderContext.client_frame_timer));
             SDL_SemPost(VideoData.renderscreen_semaphore);
 
             VideoData.pending_ctx = NULL;
@@ -315,70 +320,71 @@ void updateVideo() {
 }
 
 int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
-
     //mprintf("Packet ID %d, Packet Index %d, Hash %x\n", packet->id, packet->index, packet->hash);
 
     // Find frame in linked list that matches the id
-    if (recv_size > 0) {
-        VideoData.bytes_transferred += recv_size;
+    VideoData.bytes_transferred += recv_size;
 
-        int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
+    int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
 
-        struct FrameData* ctx = &receiving_frames[index];
-        if (ctx->id != packet->id) {
-            if (rendering && renderContext.id == ctx->id) {
-                mprintf("Error! Currently rendering an ID that will be overwritten! Skipping packet.\n");
-                return 0;
-            }
-            ctx->id = packet->id;
-            ctx->prev_frame = &frame_bufs[index];
-            ctx->packets_received = 0;
-            ctx->num_packets = -1;
-            memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
-        }
-
-        if (ctx->received_indicies[packet->index]) {
+    struct FrameData* ctx = &receiving_frames[index];
+    if (ctx->id != packet->id) {
+        if (rendering && renderContext.id == ctx->id) {
+            mprintf("Error! Currently rendering an ID that will be overwritten! Skipping packet.\n");
             return 0;
         }
+        ctx->id = packet->id;
+        ctx->prev_frame = &frame_bufs[index];
+        ctx->packets_received = 0;
+        ctx->num_packets = -1;
+        memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
+        StartTimer(&ctx->client_frame_timer);
+    }
+    else {
+       // mprintf("Already Started: %d/%d - %f\n", ctx->packets_received + 1, ctx->num_packets, GetTimer(ctx->client_frame_timer));
+    }
 
-        ctx->received_indicies[packet->index] = true;
-        ctx->packets_received++;
+    if (ctx->received_indicies[packet->index]) {
+        return 0;
+    }
 
-        // Copy packet data
-        int place = packet->index * MAX_PACKET_SIZE;
-        if (place + packet->payload_size >= LARGEST_FRAME_SIZE) {
-            mprintf("Packet total payload is too large for buffer!\n");
-            return -1;
-        }
-        memcpy(ctx->prev_frame + place, packet->data, packet->payload_size);
-        ctx->frame_size += packet->payload_size;
+    ctx->received_indicies[packet->index] = true;
+    ctx->packets_received++;
 
-        // Keep track of how many packets are necessary
-        if (packet->is_ending) {
-            ctx->num_packets = packet->index + 1;
-        }
+    // Copy packet data
+    int place = packet->index * MAX_PACKET_SIZE;
+    if (place + packet->payload_size >= LARGEST_FRAME_SIZE) {
+        mprintf("Packet total payload is too large for buffer!\n");
+        return -1;
+    }
+    memcpy(ctx->prev_frame + place, packet->data, packet->payload_size);
+    ctx->frame_size += packet->payload_size;
 
-        // If we received all of the packets
-        if (ctx->packets_received == ctx->num_packets) {
-            VideoData.frames_received++;
+    // Keep track of how many packets are necessary
+    if (packet->is_ending) {
+        ctx->num_packets = packet->index + 1;
+    }
 
-            if (packet->id > VideoData.max_id) {
-                VideoData.max_id = packet->id;
-                //mprintf("Received all packets for id %d, getting ready to render\n", packet.id);
+    // If we received all of the packets
+    if (ctx->packets_received == ctx->num_packets) {
+        VideoData.frames_received++;
 
-                for (int i = VideoData.last_rendered_id + 1; i <= VideoData.max_id; i++) {
-                    int index = i % RECV_FRAMES_BUFFER_SIZE;
-                    if (receiving_frames[index].id == i && receiving_frames[index].packets_received != receiving_frames[index].num_packets) {
-                        mprintf("Frame dropped with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
-                    }
+        if (packet->id > VideoData.max_id) {
+            VideoData.max_id = packet->id;
+            //mprintf("Received all packets for id %d, getting ready to render\n", packet.id);
+
+            for (int i = VideoData.last_rendered_id + 1; i <= VideoData.max_id; i++) {
+                int index = i % RECV_FRAMES_BUFFER_SIZE;
+                if (receiving_frames[index].id == i && receiving_frames[index].packets_received != receiving_frames[index].num_packets) {
+                    mprintf("Frame dropped with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
                 }
-
-                VideoData.last_rendered_id = VideoData.max_id;
-
-                VideoData.pending_ctx = ctx;
             }
 
+            VideoData.last_rendered_id = VideoData.max_id;
+
+            VideoData.pending_ctx = ctx;
         }
+
     }
 
     return 0;

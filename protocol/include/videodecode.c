@@ -80,7 +80,7 @@ video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width,
     decoder->hw_frame = av_frame_alloc();
     av_hwframe_get_buffer(decoder->context->hw_frames_ctx, decoder->hw_frame, 0);
   } else {
-    decoder->codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+    decoder->codec = avcodec_find_decoder_by_name("h264");
     decoder->context = avcodec_alloc_context3(decoder->codec);
 
     avcodec_open2(decoder->context, decoder->codec, NULL);
