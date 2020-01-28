@@ -12,9 +12,6 @@
 #ifndef FRACTAL_H
 #define FRACTAL_H
 
-// only include this header file once at compile time
-#pragma once
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -61,7 +58,7 @@
 #define SERVER_IP "52.186.125.178"
 #define MAX_PACKET_SIZE 1400
 #define START_MAX_MBPS 300.0
-#define ACK_REFRESH_MS 75
+#define ACK_REFRESH_MS 100
 
 #define LARGEST_FRAME_SIZE 1000000
 #define STARTING_BITRATE 45000

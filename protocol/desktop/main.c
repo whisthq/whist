@@ -4,190 +4,50 @@
 #include <string.h>
 
 #if defined(_WIN32)
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <process.h>
-#include <windows.h>
-#include <synchapi.h>
-#pragma comment (lib, "ws2_32.lib")
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <process.h>
+    #include <windows.h>
+    #include <synchapi.h>
+    #pragma comment (lib, "ws2_32.lib")
 #else
-#include <unistd.h>
+    #include <unistd.h>
 #endif
 
 #include "../include/fractal.h"
 #include "../include/webserver.h" // header file for webserver query functions
-#include "../include/videodecode.h" // header file for audio decoder
-#include "../include/audiodecode.h" // header file for audio decoder
 #include "../include/linkedlist.h" // header file for audio decoder
 
-#define SDL_AUDIO_BUFFER_SIZE 1024
-#define DECODE_TYPE SOFTWARE_DECODE
+#include "video.h"
+#include "audio.h"
 
-struct SDLVideoContext {
-    Uint8* yPlane;
-    Uint8* uPlane;
-    Uint8* vPlane;
-    int uvPitch;
-    SDL_Renderer* Renderer;
-    SDL_Texture* Texture;
-    decoder_t* decoder;
-    struct SwsContext* sws;
-};
+// Width and Height
+volatile int server_width = -1;
+volatile int server_height = -1;
 
-typedef struct FrameData {
-    char* prev_frame;
-    int frame_size;
-    int id;
-    int packets_received;
-    int num_packets;
-    bool received_indicies[500];
-
-    clock timer;
-    float time1;
-    float time2;
-    float time3;
-} FrameData;
-
-struct VideoData {
-    struct FrameData* pending_ctx;
-    int frames_received;
-    int bytes_transferred;
-    clock frame_timer;
-    int last_statistics_id;
-    int last_rendered_id;
-    int max_id;
-
-    SDL_Thread* render_screen_thread;
-    bool run_render_screen_thread;
-
-    SDL_sem* renderscreen_semaphore;
-} volatile static VideoData;
+// maximum mbps
+volatile double max_mbps = START_MAX_MBPS;
+volatile bool update_mbps = false;
 
 // Global state variables
 volatile static bool run_receive_packets = false;
-volatile static bool rendering = false;
 volatile static bool is_timing_latency = false;
 volatile static clock latency_timer;
 volatile static int ping_id = 1;
 volatile static int ping_failures = 0;
 
-// Base video context that all contexts derive from
-volatile static struct SDLVideoContext videoContext;
-// Context of the frame that is currently being rendered
-volatile static struct FrameData renderContext;
-
-// Hold information about frames as the packets come in
-#define RECV_FRAMES_BUFFER_SIZE 100
-struct FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
-char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
-
-// Keeping track of mbps
-volatile static double max_mbps = START_MAX_MBPS;
-volatile static double working_mbps = START_MAX_MBPS;
-volatile static bool update_mbps = false;
-
-// Width and Height
-int server_width = -1;
-int server_height = -1;
-void updateWidthAndHeight(int width, int height);
-
 // Function Declarations
-static void initVideo();
-static void initAudio();
-static void updateVideo();
-static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size);
-static int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size);
-static void destroyVideo();
-static void destroyAudio();
 
-void updateWidthAndHeight(int width, int height) {
-    struct SwsContext* sws_ctx = NULL;
+int SendPacket(struct SocketContext* context, void* data, int len);
+static int32_t ReceivePackets(void* opaque);
+static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size);
 
-    enum AVPixelFormat input_fmt;
-    if (DECODE_TYPE == QSV_DECODE) {
-        input_fmt = AV_PIX_FMT_NV12;
+int SendPacket(struct SocketContext* context, void* data, int len) {
+    if (sendto(context->s, data, len, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) < 0) {
+        mprintf("Failed to send packet!\n");
+        return -1;
     }
-    else {
-        input_fmt = AV_PIX_FMT_YUV420P;
-    }
-
-    sws_ctx = sws_getContext(width, height,
-        input_fmt, OUTPUT_WIDTH, OUTPUT_HEIGHT,
-        AV_PIX_FMT_YUV420P,
-        SWS_BILINEAR,
-        NULL,
-        NULL,
-        NULL
-    );
-
-    videoContext.sws = sws_ctx;
-
-    decoder_t* decoder = create_video_decoder(width, height, OUTPUT_WIDTH, OUTPUT_HEIGHT, DECODE_TYPE);
-    videoContext.decoder = decoder;
-
-    server_width = width;
-    server_height = height;
-}
-
-static int32_t RenderScreen(void* opaque) {
-    mprintf("RenderScreen running on Thread %d\n", SDL_GetThreadID(NULL));
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-
-    while (VideoData.run_render_screen_thread) {
-        int ret = SDL_SemTryWait(VideoData.renderscreen_semaphore);
-        if (ret == SDL_MUTEX_TIMEDOUT) {
-            continue;
-        }
-        if (ret < 0) {
-            mprintf("Semaphore Error\n");
-            return -1;
-        }
-
-        if (!rendering) {
-            mprintf("Sem opened but rendering is not true!\n");
-            continue;
-        }
-
-        //mprintf("Rendering ID %d\n", renderContext.id);
-
-        Frame* frame = renderContext.prev_frame;
-        if (frame->width != server_width || frame->height != server_height) {
-            mprintf("Updating server width and height! From %dx%d to %dx%d\n", server_width, server_height, frame->width, frame->height);
-            updateWidthAndHeight(frame->width, frame->height);
-        }
-
-        video_decoder_decode(videoContext.decoder, frame->compressed_frame, frame->size);
-
-        AVPicture pict;
-        pict.data[0] = videoContext.yPlane;
-        pict.data[1] = videoContext.uPlane;
-        pict.data[2] = videoContext.vPlane;
-        pict.linesize[0] = OUTPUT_WIDTH;
-        pict.linesize[1] = videoContext.uvPitch;
-        pict.linesize[2] = videoContext.uvPitch;
-        sws_scale(videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
-            videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, pict.data,
-            pict.linesize);
-
-        SDL_UpdateYUVTexture(
-            videoContext.Texture,
-            NULL,
-            videoContext.yPlane,
-            OUTPUT_WIDTH,
-            videoContext.uPlane,
-            videoContext.uvPitch,
-            videoContext.vPlane,
-            videoContext.uvPitch
-        );
-
-        SDL_RenderClear(videoContext.Renderer);
-        SDL_RenderCopy(videoContext.Renderer, videoContext.Texture, NULL, NULL);
-        SDL_RenderPresent(videoContext.Renderer);
-
-        rendering = false;
-    }
-
-    SDL_Delay(5);
+    return 0;
 }
 
 static int32_t ReceivePackets(void* opaque) {
@@ -197,9 +57,6 @@ static int32_t ReceivePackets(void* opaque) {
     struct RTPPacket packet = { 0 };
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
     int slen = sizeof(socketContext.addr);
-
-    initVideo();
-    initAudio();
 
     SendAck(&socketContext, 1);
 
@@ -233,11 +90,11 @@ static int32_t ReceivePackets(void* opaque) {
             }
             else {
                 switch (packet.type) {
-                case PACKET_AUDIO:
-                    ReceiveAudio(&packet, recv_size);
-                    break;
                 case PACKET_VIDEO:
                     ReceiveVideo(&packet, recv_size);
+                    break;
+                case PACKET_AUDIO:
+                    ReceiveAudio(&packet, recv_size);
                     break;
                 case PACKET_MESSAGE:
                     ReceiveMessage(&packet, recv_size);
@@ -253,212 +110,6 @@ static int32_t ReceivePackets(void* opaque) {
     }
 
     SDL_Delay(5);
-}
-
-static void initVideo() {
-    VideoData.pending_ctx = NULL;
-    VideoData.frames_received = 0;
-    VideoData.bytes_transferred = 0;
-    StartTimer(&VideoData.frame_timer);
-    VideoData.last_statistics_id = 1;
-    VideoData.last_rendered_id = 1;
-    VideoData.max_id = 1;
-
-    for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
-        receiving_frames[i].id = -1;
-    }
-
-    VideoData.renderscreen_semaphore = SDL_CreateSemaphore(0);
-    VideoData.run_render_screen_thread = true;
-    VideoData.render_screen_thread = SDL_CreateThread(RenderScreen, "RenderScreen", NULL);
-}
-
-static void destroyVideo() {
-    VideoData.run_render_screen_thread = false;
-    SDL_WaitThread(VideoData.render_screen_thread, NULL);
-    SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
-}
-
-static void updateVideo() {
-    // Get statistics from the last 3 seconds of data
-    if (GetTimer(VideoData.frame_timer) > 3) {
-        double time = GetTimer(VideoData.frame_timer);
-
-        // Calculate statistics
-        int expected_frames = VideoData.max_id - VideoData.last_statistics_id;
-        double fps = 1.0 * expected_frames / time;
-        double mbps = VideoData.bytes_transferred * 8.0 / 1024.0 / 1024.0 / time;
-        double receive_rate = expected_frames == 0 ? 1.0 : 1.0 * VideoData.frames_received / expected_frames;
-        double dropped_rate = 1.0 - receive_rate;
-
-        // Print statistics
-
-        mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 * dropped_rate);
-
-        // Adjust mbps based on dropped packets
-        if (dropped_rate > 0.4) {
-            max_mbps = max_mbps * 0.75;
-            working_mbps = max_mbps;
-            update_mbps = true;
-        }
-        else if (dropped_rate > 0.2) {
-            max_mbps = max_mbps * 0.8;
-            working_mbps = max_mbps;
-            update_mbps = true;
-        }
-        else if (dropped_rate > 0.1) {
-            max_mbps = max_mbps * 0.85;
-            working_mbps = max_mbps;
-            update_mbps = true;
-        }
-        else if (dropped_rate > 0.05) {
-            max_mbps = max_mbps * 0.9;
-            working_mbps = max_mbps;
-            update_mbps = true;
-        }
-        else if (dropped_rate > 0.00) {
-            max_mbps = max_mbps * 0.95;
-            working_mbps = max_mbps;
-            update_mbps = true;
-        }
-        else if (dropped_rate == 0.00) {
-            working_mbps = max(max_mbps * 1.05, working_mbps);
-            max_mbps = (max_mbps + working_mbps) / 2.0;
-            update_mbps = true;
-        }
-
-        VideoData.bytes_transferred = 0;
-        VideoData.frames_received = 0;
-        VideoData.last_statistics_id = VideoData.max_id;
-        StartTimer(&VideoData.frame_timer);
-    }
-
-    if (!rendering) {
-        if (VideoData.pending_ctx != NULL) {
-            renderContext = *VideoData.pending_ctx;
-            rendering = true;
-
-            SDL_SemPost(VideoData.renderscreen_semaphore);
-
-            VideoData.pending_ctx = NULL;
-        }
-    }
-}
-
-static int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
-
-    //mprintf("Packet ID %d, Packet Index %d, Hash %x\n", packet->id, packet->index, packet->hash);
-
-    // Find frame in linked list that matches the id
-    if (recv_size > 0) {
-        VideoData.bytes_transferred += recv_size;
-
-        int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
-
-        struct FrameData* ctx = &receiving_frames[index];
-        if (ctx->id != packet->id) {
-            if (rendering && renderContext.id == ctx->id) {
-                mprintf("Error! Currently rendering an ID that will be overwritten! Skipping packet.\n");
-                return 0;
-            }
-            ctx->id = packet->id;
-            ctx->prev_frame = &frame_bufs[index];
-            ctx->packets_received = 0;
-            ctx->num_packets = -1;
-            memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
-        }
-
-        if (ctx->received_indicies[packet->index]) {
-            return 0;
-        }
-
-        ctx->received_indicies[packet->index] = true;
-        ctx->packets_received++;
-
-        // Copy packet data
-        int place = packet->index * MAX_PACKET_SIZE;
-        if (place + packet->payload_size >= LARGEST_FRAME_SIZE) {
-            mprintf("Packet total payload is too large for buffer!\n");
-            return -1;
-        }
-        memcpy(ctx->prev_frame + place, packet->data, packet->payload_size);
-        ctx->frame_size += packet->payload_size;
-
-        // Keep track of how many packets are necessary
-        if (packet->is_ending) {
-            ctx->num_packets = packet->index + 1;
-        }
-
-        // If we received all of the packets
-        if (ctx->packets_received == ctx->num_packets) {
-            VideoData.frames_received++;
-
-            if (packet->id > VideoData.max_id) {
-                VideoData.max_id = packet->id;
-                //mprintf("Received all packets for id %d, getting ready to render\n", packet.id);
-
-                for (int i = VideoData.last_rendered_id + 1; i <= VideoData.max_id; i++) {
-                    int index = i % RECV_FRAMES_BUFFER_SIZE;
-                    if (receiving_frames[index].id == i && receiving_frames[index].packets_received != receiving_frames[index].num_packets) {
-                        mprintf("Frame dropped with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
-                    }
-                }
-
-                VideoData.last_rendered_id = VideoData.max_id;
-
-                VideoData.pending_ctx = ctx;
-            }
-
-        }
-    }
-
-    return 0;
-}
-
-struct AudioData {
-    SDL_AudioDeviceID dev;
-    audio_decoder_t* audio_decoder;
-    int last_played_id;
-} volatile static AudioData;
-
-static void initAudio() {
-    // cast socket and SDL variables back to their data type for usage
-    SDL_AudioSpec wantedSpec = { 0 }, audioSpec = { 0 };
-
-    AudioData.audio_decoder = create_audio_decoder();
-
-    SDL_zero(wantedSpec);
-    SDL_zero(audioSpec);
-    wantedSpec.channels = AudioData.audio_decoder->context->channels;
-    wantedSpec.freq = AudioData.audio_decoder->context->sample_rate;
-    wantedSpec.format = AUDIO_F32SYS;
-    wantedSpec.silence = 0;
-    wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
-
-    AudioData.dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
-    if (AudioData.dev == 0) {
-        mprintf("Failed to open audio\n");
-        exit(1);
-    }
-
-    SDL_PauseAudioDevice(AudioData.dev, 0);
-
-    AudioData.last_played_id = -1;
-}
-
-static void destroyAudio() {
-    SDL_CloseAudioDevice(AudioData.dev);
-    destroy_audio_decoder(AudioData.audio_decoder);
-}
-
-static int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size) {
-    int played_id = packet->id * 1000 + packet->index;
-    if (played_id > AudioData.last_played_id) {
-        AudioData.last_played_id = played_id;
-        SDL_QueueAudio(AudioData.dev, packet->data, packet->payload_size);
-    }
-
-    return 0;
 }
 
 static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
@@ -481,14 +132,6 @@ static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
     return 0;
 }
 
-int SendPacket(struct SocketContext* context, void* data, int len) {
-    if (sendto(context->s, data, len, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) < 0) {
-        mprintf("Failed to send packet!\n");
-        return -1;
-    }
-    return 0;
-}
-
 int main(int argc, char* argv[])
 {
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
@@ -504,12 +147,6 @@ int main(int argc, char* argv[])
 #endif
 
     SDL_Event msg;
-    SDL_Window* screen;
-    SDL_Renderer* renderer;
-    SDL_Texture* texture;
-    Uint8* yPlane, * uPlane, * vPlane;
-    size_t yPlaneSz, uvPlaneSz;
-    int uvPitch;
     FractalClientMessage fmsg = { 0 };
 
     struct SocketContext PacketSendContext = { 0 };
@@ -527,62 +164,12 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    screen = SDL_CreateWindow(
-        "Fractal",
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
-        OUTPUT_WIDTH,
-        OUTPUT_HEIGHT,
-        0
-    );
-
-    if (!screen) {
-        fprintf(stderr, "SDL: could not create window - exiting\n");
-        exit(1);
-    }
-
-    renderer = SDL_CreateRenderer(screen, -1, 0);
-    if (!renderer) {
-        fprintf(stderr, "SDL: could not create renderer - exiting\n");
-        exit(1);
-    }
-    // Allocate a place to put our YUV image on that screen
-    texture = SDL_CreateTexture(
-        renderer,
-        SDL_PIXELFORMAT_YV12,
-        SDL_TEXTUREACCESS_STREAMING,
-        OUTPUT_WIDTH,
-        OUTPUT_HEIGHT
-    );
-    if (!texture) {
-        fprintf(stderr, "SDL: could not create texture - exiting\n");
-        exit(1);
-    }
-
-    // set up YV12 pixel array (12 bits per pixel)
-    yPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT;
-    uvPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT / 4;
-    yPlane = (Uint8*)malloc(yPlaneSz);
-    uPlane = (Uint8*)malloc(uvPlaneSz);
-    vPlane = (Uint8*)malloc(uvPlaneSz);
-    if (!yPlane || !uPlane || !vPlane) {
-        fprintf(stderr, "Could not allocate pixel buffers - exiting\n");
-        exit(1);
-    }
-
-    uvPitch = OUTPUT_WIDTH / 2;
-
-    videoContext.yPlane = yPlane;
-    videoContext.uPlane = uPlane;
-    videoContext.vPlane = vPlane;
-    videoContext.uvPitch = uvPitch;
-    videoContext.Renderer = renderer;
-    videoContext.Texture = texture;
-
-    mprintf("Receiving\n\n");
+    initVideo();
+    initAudio();
 
     run_receive_packets = true;
-    SDL_Thread* receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
+    SDL_Thread* receive_packets_thread;
+    receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
     StartTimer(&latency_timer);
 
@@ -595,7 +182,6 @@ int main(int argc, char* argv[])
     while (!shutting_down)
     {
         if (needs_dimension_update && !tried_to_update_dimension && (server_width != OUTPUT_WIDTH || server_height != OUTPUT_HEIGHT)) {
-            mprintf("Sending dim message!\n");
             memset(&fmsg, 0, sizeof(fmsg));
             fmsg.type = MESSAGE_DIMENSIONS;
             fmsg.width = OUTPUT_WIDTH;
@@ -632,6 +218,8 @@ int main(int argc, char* argv[])
             is_timing_latency = true;
 
             StartTimer(&latency_timer);
+
+            mprintf("Ping! %d\n", ping_id);
             SendPacket(&PacketSendContext, &fmsg, sizeof(fmsg));
         }
 
@@ -678,12 +266,9 @@ int main(int argc, char* argv[])
 
     destroyVideo();
     destroyAudio();
-    destroyMultiThreadedPrintf();
-    
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(screen);
+
     SDL_Quit();
+    
 #if defined(_WIN32)
     closesocket(PacketSendContext.s);
     closesocket(PacketReceiveContext.s);
@@ -692,6 +277,8 @@ int main(int argc, char* argv[])
     close(PacketSendContext.s);
     close(PacketReceiveContext.s);
 #endif
+
+    destroyMultiThreadedPrintf();
     printf("Closing Client...\n");
 
     return 0;

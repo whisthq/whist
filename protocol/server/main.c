@@ -22,7 +22,7 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 10;
+volatile static int gop_size = 1;
 char buf[LARGEST_FRAME_SIZE];
 
 SDL_mutex* packet_mutex;
@@ -302,10 +302,11 @@ int main(int argc, char* argv[])
                     max_mbps = fmsg.mbps;
                 }
                 else if (fmsg.type == MESSAGE_PING) {
+                    mprintf("Ping Received - ID %d\n", fmsg.ping_id);
+
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = MESSAGE_PONG;
                     fmsg_response.ping_id = fmsg.ping_id;
-                    mprintf("Ping Received - ID %d\n", fmsg.ping_id);
                     StartTimer(&last_ping);
                     if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), -1, -1) < 0) {
                         mprintf("Could not send Pong\n");

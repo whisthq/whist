@@ -23,18 +23,18 @@ typedef struct {
 	AVFrame *hw_frame;
 	AVPacket packet;
 	DecodeType type;
-} decoder_t;
+} video_decoder_t;
 
 /// @brief creates encoder device
 /// @details creates FFmpeg encoder
-decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int out_height, DecodeType type);
+video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width, int out_height, DecodeType type);
 
 /// @brief destroy decoder device
 /// @details frees FFmpeg decoder memory
-void destroy_video_decoder(decoder_t *decoder);
+void destroy_video_decoder(video_decoder_t*decoder);
 
 /// @brief decodes a frame using the decoder device
 /// @details decode an encoded frame under YUV color format into RGB frame
-void *video_decoder_decode(decoder_t *decoder, char *buffer, int buffer_size);
+void *video_decoder_decode(video_decoder_t*decoder, char *buffer, int buffer_size);
 
 #endif // ENCODE_H
