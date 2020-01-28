@@ -182,7 +182,6 @@ int main(int argc, char* argv[])
     while (!shutting_down)
     {
         if (needs_dimension_update && !tried_to_update_dimension && (server_width != OUTPUT_WIDTH || server_height != OUTPUT_HEIGHT)) {
-            mprintf("Sending dim message!\n");
             memset(&fmsg, 0, sizeof(fmsg));
             fmsg.type = MESSAGE_DIMENSIONS;
             fmsg.width = OUTPUT_WIDTH;
