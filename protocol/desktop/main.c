@@ -87,8 +87,8 @@ volatile static double working_mbps = START_MAX_MBPS;
 volatile static bool update_mbps = false;
 
 // Width and Height
-int server_width = 1280;
-int server_height = 720;
+int server_width = -1;
+int server_height = -1;
 void updateWidthAndHeight(int width, int height);
 
 // Function Declarations
@@ -578,8 +578,6 @@ int main(int argc, char* argv[])
     videoContext.uvPitch = uvPitch;
     videoContext.Renderer = renderer;
     videoContext.Texture = texture;
-
-    updateWidthAndHeight(server_width, server_height);
 
     mprintf("Receiving\n\n");
 
