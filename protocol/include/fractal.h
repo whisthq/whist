@@ -641,6 +641,13 @@ struct RTPPacket {
 	uint8_t data[MAX_PACKET_SIZE];
 };
 
+typedef struct Frame {
+	int width;
+	int height;
+	int size;
+	unsigned char compressed_frame[];
+} Frame;
+
 /*** STRUCTS END ***/
 
 /*** FRACTAL FUNCTIONS START ***/

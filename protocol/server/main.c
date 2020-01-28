@@ -23,6 +23,7 @@
 volatile static bool connected;
 volatile static double max_mbps;
 volatile static int gop_size = 10;
+char buf[LARGEST_FRAME_SIZE];
 
 SDL_mutex* packet_mutex;
 
@@ -141,12 +142,23 @@ static int32_t SendVideo(void* opaque) {
                 }
 
                 mprintf("Sending frame ID %d\n", id);
-                if (SendPacket(&context, PACKET_VIDEO, encoder->packet.data, encoder->packet.size, id, delay) < 0) {
-                    mprintf("Could not send video frame\n");
+                int frame_size = sizeof(Frame) + encoder->packet.size;
+                if (frame_size > LARGEST_FRAME_SIZE) {
+                    mprintf("Frame too large: %d\n", frame_size);
                 }
                 else {
-                    //mprintf("Sent size %d\n", encoder->packet.size);
-                    previous_frame_size = encoder->packet.size;
+                    Frame* frame = buf;
+                    frame->width = device->width;
+                    frame->height = device->height;
+                    frame->size = encoder->packet.size;
+                    memcpy(&frame, encoder->packet.data, encoder->packet.size);
+                    if (SendPacket(&context, PACKET_VIDEO, &frame, frame_size, id, delay) < 0) {
+                        mprintf("Could not send video frame\n");
+                    }
+                    else {
+                        //mprintf("Sent size %d\n", encoder->packet.size);
+                        previous_frame_size = encoder->packet.size;
+                    }
                 }
             }
 
