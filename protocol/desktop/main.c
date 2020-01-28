@@ -62,12 +62,20 @@ static int32_t ReceivePackets(void* opaque) {
 
     clock ack_timer;
     StartTimer(&ack_timer);
+
+    clock temp_recv_timer;
+    double recv_time;
+    int total_recvs = 0;
+
     for (int i = 0; run_receive_packets; i++) {
         // Call as often as possible
         updateVideo();
 
+        StartTimer(&temp_recv_timer);
         int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
+        recv_time += GetTimer(temp_recv_timer);
+        total_recvs++;
 
         if (recv_size < 0) {
             int error = WSAGetLastError();
@@ -85,10 +93,12 @@ static int32_t ReceivePackets(void* opaque) {
         }
         else {
             uint32_t hash = Hash((char*)&packet + sizeof(packet.hash), packet_size - sizeof(packet.hash));
+
             if (hash != packet.hash) {
                 mprintf("Incorrect Hash\n");
             }
             else {
+                //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
                 switch (packet.type) {
                 case PACKET_VIDEO:
                     ReceiveVideo(&packet, recv_size);
@@ -98,6 +108,9 @@ static int32_t ReceivePackets(void* opaque) {
                     break;
                 case PACKET_MESSAGE:
                     ReceiveMessage(&packet, recv_size);
+                    break;
+                default:
+                    mprintf("Unknown Packet\n");
                     break;
                 }
             }
