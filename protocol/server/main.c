@@ -94,16 +94,26 @@ static int32_t SendVideo(void* opaque) {
     clock previous_frame_time;
     int previous_frame_size = 0;
 
+    int consecutive_capture_screen_errors = 0;
     while (connected) {
         HRESULT hr = CaptureScreen(device);
+        clock server_frame_timer;
+        StartTimer(&server_frame_timer);
+
         if (hr == S_OK) {
+            consecutive_capture_screen_errors = 0;
+
             if (update_encoder) {
                 destroy_video_encoder(encoder);
                 encoder = create_video_encoder(device->width, device->height, device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
                 update_encoder = false;
             }
 
+            clock t;
+            StartTimer(&t);
             video_encoder_encode(encoder, device->frame_data.pBits);
+            mprintf("Encode Time: %f\n", GetTimer(t));
+
             bitrate_tested_frames++;
             bytes_tested_frames += encoder->packet.size;
 
@@ -123,6 +133,7 @@ static int32_t SendVideo(void* opaque) {
                     double current_fps = 1.0 / current_trasmit_time;
 
                     delay = transmit_time - frame_time;
+                    delay = min(delay, 0.004);
 
                     mprintf("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time: %f, Transmit Time: %f, Delay: %f\n", previous_frame_size, mbps, max_mbps, frame_time, transmit_time, delay);
 
@@ -160,18 +171,21 @@ static int32_t SendVideo(void* opaque) {
                         //mprintf("Sent size %d\n", encoder->packet.size);
                         previous_frame_size = encoder->packet.size;
                     }
+                    float server_frame_time = GetTimer(server_frame_timer);
+                    mprintf("Server Frame Time for ID %d: %f\n", id, server_frame_time);
                 }
             }
 
             id++;
             ReleaseScreen(device);
         }
-        else if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
-            continue;
-        }
-        else {
-            mprintf("ERROR\n");
-            break;
+        else if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
+            mprintf("ERROR: %d\n", WSAGetLastError());
+            consecutive_capture_screen_errors++;
+            if (consecutive_capture_screen_errors == 3) {
+                mprintf("DXGI errored too many times!\n");
+                break;
+            }
         }
     }
 

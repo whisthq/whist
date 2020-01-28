@@ -36,6 +36,8 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
     	av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_CUDA, "CUDA", NULL, 0);
    		encoder->codec = avcodec_find_encoder_by_name("h264_nvenc");
 
+		enum AVPixelFormat encoder_format = AV_PIX_FMT_CUDA;
+
 		encoder->context = avcodec_alloc_context3(encoder->codec);
 		encoder->context->width           = out_width;
 		encoder->context->height          = out_height;
@@ -43,7 +45,7 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 		encoder->context->time_base.num   = 1;
 		encoder->context->time_base.den   = 30;
 		encoder->context->gop_size        = gop_size;
-		encoder->context->pix_fmt         = AV_PIX_FMT_CUDA;
+		encoder->context->pix_fmt = encoder_format;
 
 		av_opt_set(encoder->context->priv_data, "preset", "llhp", 0);
 		av_opt_set(encoder->context->priv_data, "zerolatency", "1", 0);
@@ -56,7 +58,7 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 		AVHWFramesContext *frames_ctx;
 
 		frames_ctx = (AVHWFramesContext*)encoder->context->hw_frames_ctx->data;
-		frames_ctx->format = AV_PIX_FMT_CUDA;
+		frames_ctx->format = encoder_format;
 		frames_ctx->sw_format = AV_PIX_FMT_YUV420P;
 		frames_ctx->width = encoder->context->width;
 		frames_ctx->height = encoder->context->height;
