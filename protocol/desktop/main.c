@@ -155,7 +155,7 @@ static int32_t RenderScreen(void* opaque) {
             updateWidthAndHeight(frame->width, frame->height);
         }
 
-        video_decoder_decode(videoContext.decoder, renderContext.prev_frame, renderContext.frame_size);
+        video_decoder_decode(videoContext.decoder, frame->compressed_frame, frame->size);
 
         AVPicture pict;
         pict.data[0] = videoContext.yPlane;
