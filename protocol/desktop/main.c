@@ -87,8 +87,8 @@ volatile static double working_mbps = START_MAX_MBPS;
 volatile static bool update_mbps = false;
 
 // Width and Height
-int server_width = 1920;
-int server_height = 1080;
+int server_width = 1280;
+int server_height = 720;
 void updateWidthAndHeight(int width, int height);
 
 // Function Declarations
@@ -152,6 +152,7 @@ static int32_t RenderScreen(void* opaque) {
 
         Frame* frame = renderContext.prev_frame;
         if (frame->width != server_width || frame->height != server_height) {
+            mprintf("Updating server width and height! From %dx%d to %dx%d\n", server_width, server_height, frame->width, frame->height);
             updateWidthAndHeight(frame->width, frame->height);
         }
 
