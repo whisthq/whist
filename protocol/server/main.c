@@ -69,17 +69,19 @@ static int32_t SendVideo(void* opaque) {
     struct SocketContext context = *(struct SocketContext*) opaque;
     int slen = sizeof(context.addr), id = 0;
 
-    int current_bitrate = STARTING_BITRATE;
-    encoder_t* encoder;
-    encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT,
-        CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate, gop_size, ENCODE_TYPE);
-
+    // Init DXGI Device
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
     memset(device, 0, sizeof(DXGIDevice));
     if (CreateDXGIDevice(device) < 0) {
         mprintf("Error Creating DXGI Device\n");
         return -1;
     }
+
+    // Init FFMPEG Encoder
+    int current_bitrate = STARTING_BITRATE;
+    encoder_t* encoder;
+    encoder = create_video_encoder(device->width, device->height,
+        device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
 
     bool update_encoder = false;
 
@@ -96,7 +98,7 @@ static int32_t SendVideo(void* opaque) {
         if (hr == S_OK) {
             if (update_encoder) {
                 destroy_video_encoder(encoder);
-                encoder = create_video_encoder(CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH, CAPTURE_HEIGHT, CAPTURE_WIDTH * current_bitrate, gop_size, ENCODE_TYPE);
+                encoder = create_video_encoder(device->width, device->height, device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
                 update_encoder = false;
             }
 
@@ -143,7 +145,7 @@ static int32_t SendVideo(void* opaque) {
                     mprintf("Could not send video frame\n");
                 }
                 else {
-                    //printf("Sent size %d\n", encoder->packet.size);
+                    //mprintf("Sent size %d\n", encoder->packet.size);
                     previous_frame_size = encoder->packet.size;
                 }
             }
@@ -297,7 +299,9 @@ int main(int argc, char* argv[])
                     }
                 }
                 else if (fmsg.type == MESSAGE_DIMENSIONS) {
-
+                    int width = fmsg.width;
+                    int height = fmsg.height;
+                    mprintf("Changing dimensions: %d by %d\n", width, height);
                 }
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");
