@@ -19,6 +19,8 @@ typedef struct {
   IDXGIOutputDuplication *duplication;
   DXGI_OUTDUPL_FRAME_INFO frame_info;
   DXGI_MAPPED_RECT frame_data;
+  int width;
+  int height;
 } DXGIDevice;
 
 ID3D11Device *createDirect3D11Device(IDXGIAdapter1 *pOutputAdapter);

@@ -38,7 +38,7 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx,
     return AV_PIX_FMT_NONE;
 }
 
-decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int out_height, int bitrate, DecodeType type) {
+decoder_t *create_video_decoder(int in_width, int in_height, int out_width, int out_height, DecodeType type) {
 
   decoder_t *decoder = (decoder_t *) malloc(sizeof(decoder_t));
   memset(decoder, 0, sizeof(decoder_t));

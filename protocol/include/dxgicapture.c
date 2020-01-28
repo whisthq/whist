@@ -124,6 +124,19 @@ int CreateDXGIDevice(DXGIDevice* device) {
 
     printf("Able to duplicate a %ix%i desktop\n", odDesc.ModeDesc.Width, odDesc.ModeDesc.Height);
 
+    // get width and height
+    HMONITOR hMonitor = oDesc.Monitor;
+    MONITORINFOEX monitorInfo;
+    monitorInfo.cbSize = sizeof(MONITORINFOEX);
+    GetMonitorInfo(hMonitor, &monitorInfo);
+    DEVMODE devMode;
+    devMode.dmSize = sizeof(DEVMODE);
+    devMode.dmDriverExtra = 0;
+    EnumDisplaySettings(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode);
+
+    device->width = devMode.dmPelsWidth;
+    device->height = devMode.dmPelsHeight;
+
     return 0;
 }
 

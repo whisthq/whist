@@ -27,8 +27,8 @@ video_capture_device *create_video_capture_device(HWND window, frame_area frame)
 
   // store rectangle information in capture device
 	device->window = window;
-	device->width = CAPTURE_WIDTH;
-	device->height = CAPTURE_HEIGHT;
+	device->width = 1;
+	device->height = 1;
 	device->frame = frame;
   // adjust dimensions if height or width is zero
 	if (frame.width == 0 || frame.height == 0 ) {
