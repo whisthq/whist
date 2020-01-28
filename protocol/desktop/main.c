@@ -38,6 +38,11 @@ struct SDLVideoContext {
     int packets_received;
     int num_packets;
     bool received_indicies[500];
+
+    clock timer;
+    float time1;
+    float time2;
+    float time3;
 };
 
 struct VideoData {
@@ -434,6 +439,14 @@ static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
     return 0;
 }
 
+int SendPacket(struct SocketContext* context, void* data, int len) {
+    if (sendto(context->s, data, len, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) < 0) {
+        mprintf("Failed to send packet!\n");
+        return -1;
+    }
+    return 0;
+}
+
 int main(int argc, char* argv[])
 {
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
@@ -551,18 +564,31 @@ int main(int argc, char* argv[])
 
     StartTimer(&latency_timer);
 
+    bool needs_dimension_update = true;
+    bool tried_to_update_dimension = false;
+    clock last_dimension_update;
+    StartTimer(&last_dimension_update);
+
     bool shutting_down = false;
     while (!shutting_down)
     {
+        if (needs_dimension_update && !tried_to_update_dimension && (CAPTURE_WIDTH != OUTPUT_WIDTH || CAPTURE_HEIGHT != OUTPUT_HEIGHT)) {
+            mprintf("Sending dim message!\n");
+            memset(&fmsg, 0, sizeof(fmsg));
+            fmsg.type = MESSAGE_DIMENSIONS;
+            fmsg.width = OUTPUT_WIDTH;
+            fmsg.height = OUTPUT_HEIGHT;
+            SendPacket(&PacketSendContext, &fmsg, sizeof(fmsg));
+            tried_to_update_dimension = true;
+        }
+
         if (update_mbps) {
             mprintf("Updating MBPS: %f\n", max_mbps);
             update_mbps = false;
             memset(&fmsg, 0, sizeof(fmsg));
             fmsg.type = MESSAGE_MBPS;
             fmsg.mbps = max_mbps;
-            if (sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr)) < 0) {
-                mprintf("Failed to send packet!\n");
-            }
+            SendPacket(&PacketSendContext, &fmsg, sizeof(fmsg));
         }
 
         if (is_timing_latency && GetTimer(latency_timer) > 0.5) {
@@ -584,9 +610,7 @@ int main(int argc, char* argv[])
             is_timing_latency = true;
 
             StartTimer(&latency_timer);
-            if (sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr)) < 0) {
-                mprintf("Failed to send packet!\n");
-            }
+            SendPacket(&PacketSendContext, &fmsg, sizeof(fmsg));
         }
 
         memset(&fmsg, 0, sizeof(fmsg));
@@ -622,9 +646,7 @@ int main(int argc, char* argv[])
                 break;
             }
             if (fmsg.type != 0) {
-                if (sendto(PacketSendContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr)) < 0) {
-                    mprintf("Failed to send packet!\n");
-                }
+                SendPacket(&PacketSendContext, &fmsg, sizeof(fmsg));
             }
         }
     }
