@@ -154,6 +154,10 @@ HRESULT CaptureScreen(DXGIDevice* device) {
     if (FAILED(hr)) {
         return hr;
     }
+    int accumulated_frames = device->frame_info.AccumulatedFrames;
+    if (accumulated_frames > 1) {
+        mprintf("Accumulated Frames %d\n", accumulated_frames);
+    }
     hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &device->frame_data);
     if (FAILED(hr)) {
         ReleaseScreen(device);
