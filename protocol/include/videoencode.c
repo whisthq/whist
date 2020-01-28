@@ -18,7 +18,7 @@ static AVBufferRef *hw_device_ctx = NULL;
 
 /// @brief creates encoder encoder
 /// @details creates FFmpeg encoder
-encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate, EncodeType type) {
+encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate, int gop_size, EncodeType type) {
   // set memory for the encoder
 	encoder_t *encoder = (encoder_t *) malloc(sizeof(encoder_t));
 	memset(encoder, 0, sizeof(encoder_t));
@@ -37,13 +37,13 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
    		encoder->codec = avcodec_find_encoder_by_name("h264_nvenc");
 
 		encoder->context = avcodec_alloc_context3(encoder->codec);
-		encoder->context->width     = out_width;
-		encoder->context->height    = out_height;
-		encoder->context->bit_rate  = bitrate;
-		encoder->context->time_base.num = 1;
-		encoder->context->time_base.den = 30;
-		encoder->context->gop_size = 1;
-		encoder->context->pix_fmt   = AV_PIX_FMT_CUDA;
+		encoder->context->width           = out_width;
+		encoder->context->height          = out_height;
+		encoder->context->bit_rate        = bitrate;
+		encoder->context->time_base.num   = 1;
+		encoder->context->time_base.den   = 30;
+		encoder->context->gop_size        = gop_size;
+		encoder->context->pix_fmt         = AV_PIX_FMT_CUDA;
 
 		av_opt_set(encoder->context->priv_data, "preset", "llhp", 0);
 		av_opt_set(encoder->context->priv_data, "zerolatency", "1", 0);
@@ -87,13 +87,13 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
    		encoder->codec = avcodec_find_encoder_by_name("libx264");
 
 		encoder->context = avcodec_alloc_context3(encoder->codec);
-		encoder->context->width     = out_width;
-		encoder->context->height    = out_height;
-		encoder->context->bit_rate  = bitrate;
-		encoder->context->time_base.num = 1;
-		encoder->context->time_base.den = 30;
-		encoder->context->gop_size = 1;
-		encoder->context->pix_fmt   = AV_PIX_FMT_YUV420P;
+		encoder->context->width           = out_width;
+		encoder->context->height          = out_height;
+		encoder->context->bit_rate        = bitrate;
+		encoder->context->time_base.num   = 1;
+		encoder->context->time_base.den   = 30;
+		encoder->context->gop_size        = gop_size;
+		encoder->context->pix_fmt         = AV_PIX_FMT_YUV420P;
 
 		av_opt_set(encoder->context->priv_data, "preset", "ultrafast", 0);
 		av_opt_set(encoder->context->priv_data, "tune", "zerolatency", 0);
