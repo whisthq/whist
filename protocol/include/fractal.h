@@ -574,6 +574,8 @@ typedef enum FractalClientMessageType {
 	MESSAGE_MBPS            = 6, ///< `mbps` double is valid in FractClientMessage.
 	MESSAGE_PING            = 7,
 	MESSAGE_DIMENSIONS      = 8, ///< `dimensions.width` int and `dimensions.height` int is valid in FractClientMessage
+	MESSAGE_VIDEO_NOK       = 9,
+	MESSAGE_AUDIO_NOK       = 10,
 	MESSAGE_QUIT = 100,
 } FractalClientMessageType;
 
@@ -589,6 +591,10 @@ typedef struct FractalClientMessage {
 		struct dimensions {
 			int width;
 			int height;
+		};
+		struct nok_data {
+			int id;
+			int index;
 		};
 	};
 } FractalClientMessage;
