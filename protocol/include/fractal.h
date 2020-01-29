@@ -52,7 +52,7 @@
 
 /*** DEFINITIONS START ***/
 
-#define STUN_SERVER_IP "34.200.170.47"
+#define STUN_SERVER_IP "3.233.46.94"
 #define PORT 48800 
 
 #define SERVER_IP "52.186.125.178"
