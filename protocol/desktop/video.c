@@ -275,22 +275,22 @@ void updateVideo() {
             update_mbps = true;
         }
         else if (dropped_rate > 0.2) {
-            max_mbps = max_mbps * 0.8;
+            max_mbps = max_mbps * 0.83;
             working_mbps = max_mbps;
             update_mbps = true;
         }
         else if (dropped_rate > 0.1) {
-            max_mbps = max_mbps * 0.85;
-            working_mbps = max_mbps;
-            update_mbps = true;
-        }
-        else if (dropped_rate > 0.05) {
             max_mbps = max_mbps * 0.9;
             working_mbps = max_mbps;
             update_mbps = true;
         }
-        else if (dropped_rate > 0.00) {
+        else if (dropped_rate > 0.05) {
             max_mbps = max_mbps * 0.95;
+            working_mbps = max_mbps;
+            update_mbps = true;
+        }
+        else if (dropped_rate > 0.00) {
+            max_mbps = max_mbps * 0.98;
             working_mbps = max_mbps;
             update_mbps = true;
         }
