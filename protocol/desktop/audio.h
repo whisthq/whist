@@ -7,6 +7,7 @@
 
 void initAudio();
 int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size);
+void updateAudio();
 void destroyAudio();
 
 #endif

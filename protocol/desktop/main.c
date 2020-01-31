@@ -82,6 +82,7 @@ static int32_t ReceivePackets(void* opaque) {
     for (int i = 0; run_receive_packets; i++) {
         // Call as often as possible
         updateVideo();
+        updateAudio();
 
         StartTimer(&temp_recv_timer);
         int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
