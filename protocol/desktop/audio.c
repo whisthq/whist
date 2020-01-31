@@ -8,8 +8,8 @@ typedef struct audio_packet {
     char data[MAX_PACKET_SIZE];
 } audio_packet;
 
-#define RECV_AUDIO_BUFFER_SIZE 5000
-#define MAX_NUM_AUDIO_INDICES 10
+#define RECV_AUDIO_BUFFER_SIZE 50
+#define MAX_NUM_AUDIO_INDICES 5
 audio_packet receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
