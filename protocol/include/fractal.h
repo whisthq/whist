@@ -564,6 +564,12 @@ typedef struct FractalClientCursorEvent {
 	uint32_t key;         ///< Buffer lookup key passed to FractalGetBuffer to retrieve the cursor image, if available.
 } FractalClientCursorEvent;
 
+typedef enum FractalPacketType {
+	PACKET_AUDIO,
+	PACKET_VIDEO,
+	PACKET_MESSAGE,
+} FractalPacketType;
+
 typedef enum FractalClientMessageType {
 	CMESSAGE_NONE           = 0, ///< No Message
 	MESSAGE_KEYBOARD        = 1, ///< `keyboard` FractalKeyboardMessage is valid in FractClientMessage.
@@ -574,8 +580,8 @@ typedef enum FractalClientMessageType {
 	MESSAGE_MBPS            = 6, ///< `mbps` double is valid in FractClientMessage.
 	MESSAGE_PING            = 7,
 	MESSAGE_DIMENSIONS      = 8, ///< `dimensions.width` int and `dimensions.height` int is valid in FractClientMessage
-	MESSAGE_VIDEO_NOK       = 9,
-	MESSAGE_AUDIO_NOK       = 10,
+	MESSAGE_VIDEO_NACK      = 9,
+	MESSAGE_AUDIO_NACK      = 10,
 	MESSAGE_QUIT = 100,
 } FractalClientMessageType;
 
@@ -591,11 +597,11 @@ typedef struct FractalClientMessage {
 		struct dimensions {
 			int width;
 			int height;
-		};
-		struct nok_data {
+		} dimensions;
+		struct nack_data {
 			int id;
 			int index;
-		};
+		} nack_data;
 	};
 } FractalClientMessage;
 
@@ -624,12 +630,6 @@ typedef struct SocketContext
     struct sockaddr_in addr;
     int ack;
 } SocketContext;
-
-typedef enum FractalPacketType {
-	PACKET_AUDIO,
-	PACKET_VIDEO,
-	PACKET_MESSAGE,
-} FractalPacketType;
 
 // Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) + RTPPacket.payload_size
 struct RTPPacket {

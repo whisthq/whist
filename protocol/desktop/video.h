@@ -3,6 +3,7 @@
 
 #include "../include/fractal.h"
 #include "../include/videodecode.h"
+#include "main.h"
 
 void initVideo();
 void updateVideo();

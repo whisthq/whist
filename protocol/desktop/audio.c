@@ -53,12 +53,18 @@ void destroyAudio() {
     destroy_audio_decoder(AudioData.audio_decoder);
 }
 
+int last_nacked_id = -1;
+
 void updateQueuedAudio() {
-    while (true) {
+    bool still_more_audio_packets = true;
+    while (still_more_audio_packets) {
         int next_to_play_id = AudioData.last_played_id + 1;
         int next_to_play_buffer_index = next_to_play_id % RECV_AUDIO_BUFFER_SIZE;
         audio_packet* packet = &receiving_audio[next_to_play_buffer_index];
+
+        still_more_audio_packets = false;
         if (packet->id == next_to_play_id) {
+            still_more_audio_packets = true;
             //mprintf("Playing ID %d\n", packet->id);
             AudioData.last_played_id = next_to_play_id;
             if (packet->size > 0) {
@@ -66,8 +72,20 @@ void updateQueuedAudio() {
             }
             packet->id = -1;
         }
-        else {
-            break;
+        else if (packet->id > next_to_play_id) {
+            // Find all pending audio packets and NACK them
+            for (int i = max(next_to_play_id, last_nacked_id + 1); i < packet->id; i++) {
+                int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
+                audio_packet* i_packet = &receiving_audio[i_buffer_index];
+                if (i_packet->id == -1) {   
+                    FractalClientMessage fmsg;
+                    fmsg.type = MESSAGE_AUDIO_NACK;
+                    fmsg.nack_data.id = i / MAX_NUM_AUDIO_INDICES;
+                    fmsg.nack_data.index = i % MAX_NUM_AUDIO_INDICES;
+                    SendPacket(&fmsg, sizeof(fmsg));
+                }
+            }
+            last_nacked_id = packet->id - 1;
         }
     }
 }
