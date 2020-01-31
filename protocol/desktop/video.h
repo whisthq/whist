@@ -3,10 +3,11 @@
 
 #include "../include/fractal.h"
 #include "../include/videodecode.h"
+#include "main.h"
 
 void initVideo();
-void updateVideo();
 int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size);
+void updateVideo();
 void destroyVideo();
 
 #endif

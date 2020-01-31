@@ -3,9 +3,11 @@
 
 #include "../include/fractal.h"
 #include "../include/audiodecode.h"
+#include "main.h"
 
 void initAudio();
 int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size);
+void updateAudio();
 void destroyAudio();
 
 #endif

@@ -52,16 +52,16 @@
 
 /*** DEFINITIONS START ***/
 
-#define STUN_SERVER_IP "34.200.170.47"
+#define STUN_SERVER_IP "3.233.46.94"
 #define PORT 48800 
 
 #define SERVER_IP "52.186.125.178"
-#define MAX_PACKET_SIZE 1400
+#define MAX_PAYLOAD_SIZE 1400
 #define START_MAX_MBPS 300.0
 #define ACK_REFRESH_MS 100
 
 #define LARGEST_FRAME_SIZE 1000000
-#define STARTING_BITRATE 45000
+#define STARTING_BITRATE 65000
 #define OUTPUT_WIDTH 1920
 #define OUTPUT_HEIGHT 1080
 
@@ -564,6 +564,12 @@ typedef struct FractalClientCursorEvent {
 	uint32_t key;         ///< Buffer lookup key passed to FractalGetBuffer to retrieve the cursor image, if available.
 } FractalClientCursorEvent;
 
+typedef enum FractalPacketType {
+	PACKET_AUDIO,
+	PACKET_VIDEO,
+	PACKET_MESSAGE,
+} FractalPacketType;
+
 typedef enum FractalClientMessageType {
 	CMESSAGE_NONE           = 0, ///< No Message
 	MESSAGE_KEYBOARD        = 1, ///< `keyboard` FractalKeyboardMessage is valid in FractClientMessage.
@@ -574,6 +580,8 @@ typedef enum FractalClientMessageType {
 	MESSAGE_MBPS            = 6, ///< `mbps` double is valid in FractClientMessage.
 	MESSAGE_PING            = 7,
 	MESSAGE_DIMENSIONS      = 8, ///< `dimensions.width` int and `dimensions.height` int is valid in FractClientMessage
+	MESSAGE_VIDEO_NACK      = 9,
+	MESSAGE_AUDIO_NACK      = 10,
 	MESSAGE_QUIT = 100,
 } FractalClientMessageType;
 
@@ -589,7 +597,11 @@ typedef struct FractalClientMessage {
 		struct dimensions {
 			int width;
 			int height;
-		};
+		} dimensions;
+		struct nack_data {
+			int id;
+			int index;
+		} nack_data;
 	};
 } FractalClientMessage;
 
@@ -619,12 +631,6 @@ typedef struct SocketContext
     int ack;
 } SocketContext;
 
-typedef enum FractalPacketType {
-	PACKET_AUDIO,
-	PACKET_VIDEO,
-	PACKET_MESSAGE,
-} FractalPacketType;
-
 // Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) + RTPPacket.payload_size
 struct RTPPacket {
 	// hash at the beginning of the struct, which is the hash of the rest of the packet
@@ -635,8 +641,10 @@ struct RTPPacket {
 	int id;
 	bool is_ending;
 	// data at the end of the struct, in the case of a truncated packet
-	uint8_t data[MAX_PACKET_SIZE];
+	uint8_t data[MAX_PAYLOAD_SIZE];
 };
+
+#define MAX_PACKET_SIZE (sizeof(struct RTPPacket))
 
 typedef struct Frame {
 	int width;

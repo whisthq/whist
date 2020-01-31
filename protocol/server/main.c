@@ -25,30 +25,67 @@ volatile static double max_mbps;
 volatile static int gop_size = 1;
 char buf[LARGEST_FRAME_SIZE];
 
-SDL_mutex* packet_mutex;
+#define MAX_AUDIO_INDEX 10
+#define MAX_AUDIO_BUFFER_SIZE 1000
 
+struct RTPPacket audio_buffer[MAX_AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
+int audio_buffer_packet_len[MAX_AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
+
+static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet, int len) {
+    if (len > sizeof(struct RTPPacket)) {
+        mprintf("Len too long!\n");
+        return -1;
+    }
+    int sent_size = sendto(context->s, packet, len, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr));
+    if (sent_size < 0) {
+        mprintf("Could not replay packet!\n");
+        return -1;
+    }
+}
+
+SDL_mutex* packet_mutex;
 static int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* data, int len, int id, double time) {
-    int payload_size, slen = sizeof(context->addr);
+    if (id <= 0) {
+        mprintf("IDs must be positive!\n");
+        return -1;
+    }
+
+    int payload_size;
     int curr_index = 0, i = 0;
 
     clock packet_timer;
     StartTimer(&packet_timer);
 
     while (curr_index < len) {
-        struct RTPPacket packet = { 0 };
-        payload_size = min(MAX_PACKET_SIZE, (len - curr_index));
+        struct RTPPacket l_packet = { 0 };
+        int l_len = 0;
 
-        memcpy(packet.data, data + curr_index, payload_size);
-        packet.type = type;
-        packet.index = i;
-        packet.payload_size = payload_size;
-        packet.id = id;
-        packet.is_ending = curr_index + payload_size == len;
-        int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
-        packet.hash = Hash((char*)&packet + sizeof(packet.hash), packet_size - sizeof(packet.hash));
+        int* packet_len = &l_len;
+        struct RTPPacket* packet = &l_packet;
+        if (type == PACKET_AUDIO) {
+            if (i >= MAX_AUDIO_INDEX) {
+                mprintf("Audio index too long!\n");
+                return -1;
+            }
+            else {
+                packet = &audio_buffer[id % MAX_AUDIO_BUFFER_SIZE][i];
+                packet_len = &audio_buffer_packet_len[id % MAX_AUDIO_BUFFER_SIZE][i];
+            }
+        }
+        payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
+
+        memcpy(packet->data, data + curr_index, payload_size);
+        packet->type = type;
+        packet->index = i;
+        packet->payload_size = payload_size;
+        packet->id = id;
+        packet->is_ending = curr_index + payload_size == len;
+        int packet_size = sizeof(*packet) - sizeof(packet->data) + packet->payload_size;
+        packet->hash = Hash((char*)packet + sizeof(packet->hash), packet_size - sizeof(packet->hash));
 
         SDL_LockMutex(packet_mutex);
-        int sent_size = sendto(context->s, &packet, packet_size, 0, (struct sockaddr*)(&context->addr), slen);
+        *packet_len = packet_size;
+        int sent_size = sendto(context->s, packet, packet_size, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr));
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
@@ -68,7 +105,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
 static int32_t SendVideo(void* opaque) {
     struct SocketContext context = *(struct SocketContext*) opaque;
-    int slen = sizeof(context.addr), id = 0;
+    int slen = sizeof(context.addr), id = 1;
 
     // Init DXGI Device
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
@@ -143,8 +180,8 @@ static int32_t SendVideo(void* opaque) {
                         int new_bitrate = (int)(ratio_bitrate * current_bitrate);
                         if (abs(new_bitrate - current_bitrate) / new_bitrate > 0.05) {
                             mprintf("Updating bitrate from %d to %d\n", current_bitrate, new_bitrate);
-                            current_bitrate = new_bitrate;
-                            update_encoder = true;
+                            //current_bitrate = new_bitrate;
+                            //update_encoder = true;
 
                             bitrate_tested_frames = 0;
                             bytes_tested_frames = 0;
@@ -195,7 +232,7 @@ static int32_t SendVideo(void* opaque) {
 
 static int32_t SendAudio(void* opaque) {
     struct SocketContext context = *(struct SocketContext*) opaque;
-    int slen = sizeof(context.addr), id = 0;
+    int slen = sizeof(context.addr), id = 1;
 
     wasapi_device* audio_device = (wasapi_device*)malloc(sizeof(struct wasapi_device));
     audio_device = CreateAudioDevice(audio_device);
@@ -322,18 +359,30 @@ int main(int argc, char* argv[])
                     fmsg_response.type = MESSAGE_PONG;
                     fmsg_response.ping_id = fmsg.ping_id;
                     StartTimer(&last_ping);
-                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), -1, -1) < 0) {
+                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), 1, -1) < 0) {
                         mprintf("Could not send Pong\n");
                     }
                 }
                 else if (fmsg.type == MESSAGE_DIMENSIONS) {
-                    int width = fmsg.width;
-                    int height = fmsg.height;
+                    int width = fmsg.dimensions.width;
+                    int height = fmsg.dimensions.height;
                     mprintf("Changing dimensions: %d by %d\n", width, height);
                 }
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");
                     connected = false;
+                }
+                else if (fmsg.type == MESSAGE_AUDIO_NACK) {
+                    mprintf("Audio NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
+                    struct RTPPacket *audio_packet = &audio_buffer[fmsg.nack_data.id % MAX_AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
+                    int len = audio_buffer_packet_len[fmsg.nack_data.id % MAX_AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
+                    if (audio_packet->id == fmsg.nack_data.id) {
+                        mprintf("NACKed packet found of length %d. Relaying!\n", len);
+                        ReplayPacket(&PacketSendContext, audio_packet, len);
+                    }
+                    else {
+                        mprintf("NACKed packet not found, ID %d was located instead.\n", audio_packet->id);
+                    }
                 }
                 else {
                     fmsgs[0] = fmsg;
