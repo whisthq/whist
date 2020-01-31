@@ -22,12 +22,21 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 1;
+volatile static int gop_size = 30;
 char buf[LARGEST_FRAME_SIZE];
 
-SDL_mutex* packet_mutex;
+#define MAX_AUDIO_INDEX 10
+#define MAX_AUDIO_BUFFER_SIZE 100
 
+struct RTPPacket audio_buffer[MAX_AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
+
+SDL_mutex* packet_mutex;
 static int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* data, int len, int id, double time) {
+    if (id <= 0) {
+        mprintf("IDs must be positive!\n");
+        return -1;
+    }
+
     int payload_size, slen = sizeof(context->addr);
     int curr_index = 0, i = 0;
 
@@ -35,20 +44,30 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
     StartTimer(&packet_timer);
 
     while (curr_index < len) {
-        struct RTPPacket packet = { 0 };
+        struct RTPPacket l_packet = { 0 };
+        struct RTPPacket* packet = &l_packet;
+        if (type == PACKET_AUDIO) {
+            if (i >= MAX_AUDIO_INDEX) {
+                mprintf("Audio index too long!\n");
+                return -1;
+            }
+            else {
+                packet = &audio_buffer[id % MAX_AUDIO_BUFFER_SIZE][i];
+            }
+        }
         payload_size = min(MAX_PACKET_SIZE, (len - curr_index));
 
-        memcpy(packet.data, data + curr_index, payload_size);
-        packet.type = type;
-        packet.index = i;
-        packet.payload_size = payload_size;
-        packet.id = id;
-        packet.is_ending = curr_index + payload_size == len;
-        int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
-        packet.hash = Hash((char*)&packet + sizeof(packet.hash), packet_size - sizeof(packet.hash));
+        memcpy(packet->data, data + curr_index, payload_size);
+        packet->type = type;
+        packet->index = i;
+        packet->payload_size = payload_size;
+        packet->id = id;
+        packet->is_ending = curr_index + payload_size == len;
+        int packet_size = sizeof(packet) - sizeof(packet->data) + packet->payload_size;
+        packet->hash = Hash((char*)&packet + sizeof(packet->hash), packet_size - sizeof(packet->hash));
 
         SDL_LockMutex(packet_mutex);
-        int sent_size = sendto(context->s, &packet, packet_size, 0, (struct sockaddr*)(&context->addr), slen);
+        int sent_size = sendto(context->s, packet, packet_size, 0, (struct sockaddr*)(&context->addr), slen);
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
@@ -68,7 +87,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
 static int32_t SendVideo(void* opaque) {
     struct SocketContext context = *(struct SocketContext*) opaque;
-    int slen = sizeof(context.addr), id = 0;
+    int slen = sizeof(context.addr), id = 1;
 
     // Init DXGI Device
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
@@ -143,8 +162,8 @@ static int32_t SendVideo(void* opaque) {
                         int new_bitrate = (int)(ratio_bitrate * current_bitrate);
                         if (abs(new_bitrate - current_bitrate) / new_bitrate > 0.05) {
                             mprintf("Updating bitrate from %d to %d\n", current_bitrate, new_bitrate);
-                            current_bitrate = new_bitrate;
-                            update_encoder = true;
+                            //current_bitrate = new_bitrate;
+                            //update_encoder = true;
 
                             bitrate_tested_frames = 0;
                             bytes_tested_frames = 0;
@@ -195,7 +214,7 @@ static int32_t SendVideo(void* opaque) {
 
 static int32_t SendAudio(void* opaque) {
     struct SocketContext context = *(struct SocketContext*) opaque;
-    int slen = sizeof(context.addr), id = 0;
+    int slen = sizeof(context.addr), id = 1;
 
     wasapi_device* audio_device = (wasapi_device*)malloc(sizeof(struct wasapi_device));
     audio_device = CreateAudioDevice(audio_device);
@@ -334,6 +353,8 @@ int main(int argc, char* argv[])
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");
                     connected = false;
+                }
+                else if (fmsg.type == MESSAGE_AUDIO_NACK) {
                 }
                 else {
                     fmsgs[0] = fmsg;
