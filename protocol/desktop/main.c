@@ -38,16 +38,28 @@ volatile static int ping_failures = 0;
 
 // Function Declarations
 
-int SendPacket(struct SocketContext* context, void* data, int len);
+SDL_mutex* send_packet_mutex;
+int SendPacket(void* data, int len);
 static int32_t ReceivePackets(void* opaque);
 static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size);
 
-int SendPacket(struct SocketContext* context, void* data, int len) {
-    if (sendto(context->s, data, len, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) < 0) {
-        mprintf("Failed to send packet!\n");
+struct SocketContext PacketSendContext;
+int SendPacket(void* data, int len) {
+    if (len > MAX_PACKET_SIZE) {
+        mprintf("Packet too large!\n");
         return -1;
     }
-    return 0;
+
+    bool failed = false;
+
+    SDL_LockMutex(send_packet_mutex);
+    if (sendto(PacketSendContext.s, data, len, 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr)) < 0) {
+        mprintf("Failed to send packet!\n");
+        failed = true;
+    }
+    SDL_UnlockMutex(send_packet_mutex);
+
+    return failed ? -1 : 0;
 }
 
 static int32_t ReceivePackets(void* opaque) {
@@ -150,6 +162,8 @@ int main(int argc, char* argv[])
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf();
 
+    send_packet_mutex = SDL_CreateMutex();
+
     // initialize the windows socket library if this is a windows client
 #if defined(_WIN32)
     WSADATA wsa;
@@ -162,7 +176,6 @@ int main(int argc, char* argv[])
     SDL_Event msg;
     FractalClientMessage fmsg = { 0 };
 
-    struct SocketContext PacketSendContext = { 0 };
     if (CreateUDPContext(&PacketSendContext, "C", SERVER_IP, 10, 250) < 0) {
         exit(1);
     }
@@ -197,11 +210,11 @@ int main(int argc, char* argv[])
         if (needs_dimension_update && !tried_to_update_dimension && (server_width != OUTPUT_WIDTH || server_height != OUTPUT_HEIGHT)) {
             memset(&fmsg, 0, sizeof(fmsg));
             fmsg.type = MESSAGE_DIMENSIONS;
-            fmsg.width = OUTPUT_WIDTH;
-            fmsg.height = OUTPUT_HEIGHT;
-            SendPacket(&PacketSendContext, &fmsg, sizeof(fmsg));
+            fmsg.dimensions.width = OUTPUT_WIDTH;
+            fmsg.dimensions.height = OUTPUT_HEIGHT;
+            SendPacket(&fmsg, sizeof(fmsg));
             tried_to_update_dimension = true;
-        }
+        }   
 
         if (update_mbps) {
             mprintf("Updating MBPS: %f\n", max_mbps);
@@ -209,7 +222,7 @@ int main(int argc, char* argv[])
             memset(&fmsg, 0, sizeof(fmsg));
             fmsg.type = MESSAGE_MBPS;
             fmsg.mbps = max_mbps;
-            SendPacket(&PacketSendContext, &fmsg, sizeof(fmsg));
+            SendPacket(&fmsg, sizeof(fmsg));
         }
 
         if (is_timing_latency && GetTimer(latency_timer) > 0.5) {
@@ -233,7 +246,7 @@ int main(int argc, char* argv[])
             StartTimer(&latency_timer);
 
             mprintf("Ping! %d\n", ping_id);
-            SendPacket(&PacketSendContext, &fmsg, sizeof(fmsg));
+            SendPacket(&fmsg, sizeof(fmsg));
         }
 
         memset(&fmsg, 0, sizeof(fmsg));
@@ -269,7 +282,7 @@ int main(int argc, char* argv[])
                 break;
             }
             if (fmsg.type != 0) {
-                SendPacket(&PacketSendContext, &fmsg, sizeof(fmsg));
+                SendPacket(&fmsg, sizeof(fmsg));
             }
         }
     }
