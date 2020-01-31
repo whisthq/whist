@@ -47,7 +47,11 @@ typedef struct FrameData {
     int id;
     int packets_received;
     int num_packets;
-    bool received_indicies[500];
+    bool received_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
+
+    int last_nacked_id;
+
+    float time_sent[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
 
     clock client_frame_timer;
     float client_frame_time;
@@ -337,6 +341,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
         ctx->prev_frame = &frame_bufs[index];
         ctx->packets_received = 0;
         ctx->num_packets = -1;
+        ctx->last_nacked_id = -1;
         memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
         StartTimer(&ctx->client_frame_timer);
     }
@@ -349,10 +354,18 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
     }
 
     ctx->received_indicies[packet->index] = true;
+    if (packet->index > 0) {
+        for (int i = packet->index - 1; i >= 0 && i > ctx->last_nacked_id; i--) {
+            if (!ctx->received_indicies[i]) {
+                mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", packet->id, i);
+            }
+        }
+        ctx->last_nacked_id = max(ctx->last_nacked_id, packet->index - 1);
+    }
     ctx->packets_received++;
 
     // Copy packet data
-    int place = packet->index * MAX_PACKET_SIZE;
+    int place = packet->index * MAX_PAYLOAD_SIZE;
     if (place + packet->payload_size >= LARGEST_FRAME_SIZE) {
         mprintf("Packet total payload is too large for buffer!\n");
         return -1;

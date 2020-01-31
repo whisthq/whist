@@ -72,7 +72,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
                 packet_len = &audio_buffer_packet_len[id % MAX_AUDIO_BUFFER_SIZE][i];
             }
         }
-        payload_size = min(MAX_PACKET_SIZE, (len - curr_index));
+        payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
 
         memcpy(packet->data, data + curr_index, payload_size);
         packet->type = type;
