@@ -79,15 +79,21 @@ static int32_t ReceivePackets(void* opaque) {
     double recv_time;
     int total_recvs = 0;
 
+    int recv_size = 0;
+
+    StartTimer(&temp_recv_timer);
     for (int i = 0; run_receive_packets; i++) {
         // Call as often as possible
         updateVideo();
         updateAudio();
 
-        StartTimer(&temp_recv_timer);
-        int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
+        double d = GetTimer(temp_recv_timer);
+        if (d > 0.0001) {
+            mprintf("Time: %f\n", d);
+        }
+        recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
-        recv_time += GetTimer(temp_recv_timer);
+        StartTimer(&temp_recv_timer);
         total_recvs++;
 
         if (recv_size < 0) {
