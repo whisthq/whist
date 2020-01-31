@@ -36,7 +36,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
     while (curr_index < len) {
         struct RTPPacket packet = { 0 };
-        payload_size = min(MAX_PACKET_SIZE, (len - curr_index));
+        payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
 
         memcpy(packet.data, data + curr_index, payload_size);
         packet.type = type;

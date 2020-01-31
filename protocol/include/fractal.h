@@ -56,7 +56,7 @@
 #define PORT 48800 
 
 #define SERVER_IP "52.186.125.178"
-#define MAX_PACKET_SIZE 1400
+#define MAX_PAYLOAD_SIZE 1400
 #define START_MAX_MBPS 300.0
 #define ACK_REFRESH_MS 100
 
@@ -641,8 +641,10 @@ struct RTPPacket {
 	int id;
 	bool is_ending;
 	// data at the end of the struct, in the case of a truncated packet
-	uint8_t data[MAX_PACKET_SIZE];
+	uint8_t data[MAX_PAYLOAD_SIZE];
 };
+
+#define MAX_PACKET_SIZE (sizeof(struct RTPPacket))
 
 typedef struct Frame {
 	int width;

@@ -5,7 +5,7 @@ typedef struct audio_packet {
     int id;
     int size;
     int nacked_for;
-    char data[MAX_PACKET_SIZE];
+    char data[MAX_PAYLOAD_SIZE];
 } audio_packet;
 
 #define RECV_AUDIO_BUFFER_SIZE 50
