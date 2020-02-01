@@ -153,7 +153,16 @@ static int32_t SendVideo(void* opaque) {
 
     int consecutive_capture_screen_errors = 0;
 
+    clock ack_timer;
+    SendAck(&socketContext, 1);
+    StartTimer(&ack_timer);
+
     while (connected) {
+        if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
+            SendAck(&socketContext, 1);
+            StartTimer(&ack_timer);
+        }
+
         HRESULT hr = CaptureScreen(device);
         clock server_frame_timer;
         StartTimer(&server_frame_timer);
@@ -342,7 +351,7 @@ int main(int argc, char* argv[])
                 StartTimer(&ack_timer);
             }
 
-            if (GetTimer(last_ping) > 1.5) {
+            if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
                 connected = false;
                 break;
@@ -385,7 +394,6 @@ int main(int argc, char* argv[])
                     fmsg_response.type = MESSAGE_PONG;
                     fmsg_response.ping_id = fmsg.ping_id;
                     StartTimer(&last_ping);
-
                     if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), 1, -1) < 0) {
                         mprintf("Could not send Pong\n");
                     }
