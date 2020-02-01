@@ -355,7 +355,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
 
     ctx->received_indicies[packet->index] = true;
     if (packet->index > 0) {
-        for (int i = packet->index - 1; i >= 0 && i > ctx->last_nacked_id; i--) {
+        for (int i = max(0, ctx->last_nacked_id + 1); i < packet->index; i++) {
             if (!ctx->received_indicies[i]) {
                 mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", packet->id, i);
             }

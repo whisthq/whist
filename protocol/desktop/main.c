@@ -70,8 +70,6 @@ static int32_t ReceivePackets(void* opaque) {
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
     int slen = sizeof(socketContext.addr);
 
-    SendAck(&socketContext, 1);
-
     clock temp_recv_timer;
     double recv_time;
     int total_recvs = 0;
@@ -91,17 +89,23 @@ static int32_t ReceivePackets(void* opaque) {
         }
 
         // Call as often as possible
+        clock updates;
+        StartTimer(&updates);
         updateVideo();
         updateAudio();
+        double update_timer = GetTimer(updates);
 
         double d = GetTimer(temp_recv_timer);
         if (d > 0.0001) {
-            mprintf("Time: %f\n", d);
+            mprintf("Time: %f for I %i\n", d, i-1);
+            mprintf("Updates: %f for I %i\n", update_timer, i - 1);
         }
+
         recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
-        StartTimer(&temp_recv_timer);
         total_recvs++;
+
+        StartTimer(&temp_recv_timer);
 
         if (recv_size == 0) {
             // ACK
@@ -130,6 +134,7 @@ static int32_t ReceivePackets(void* opaque) {
                 //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
                 switch (packet.type) {
                 case PACKET_VIDEO:
+                    //mprintf("Video %d\n", i);
                     ReceiveVideo(&packet, recv_size);
                     break;
                 case PACKET_AUDIO:
