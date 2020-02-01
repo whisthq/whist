@@ -70,37 +70,15 @@ static int32_t ReceivePackets(void* opaque) {
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
     int slen = sizeof(socketContext.addr);
 
-    SendAck(&socketContext, 1);
-
-    clock temp_recv_timer;
-    double recv_time;
     int total_recvs = 0;
 
-    int recv_size = 0;
-
-    StartTimer(&temp_recv_timer);
-
-    clock ack_timer;
-    SendAck(&socketContext, 1);
-    StartTimer(&ack_timer);
-
     for (int i = 0; run_receive_packets; i++) {
-        if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
-            SendAck(&socketContext, 1);
-            StartTimer(&ack_timer);
-        }
-
         // Call as often as possible
         updateVideo();
         updateAudio();
 
-        double d = GetTimer(temp_recv_timer);
-        if (d > 0.0001) {
-            mprintf("Time: %f\n", d);
-        }
-        recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
+        int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
-        StartTimer(&temp_recv_timer);
         total_recvs++;
 
         if (recv_size == 0) {
@@ -154,7 +132,7 @@ static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
     switch (fmsg.type) {
     case MESSAGE_PONG:
         if (ping_id == fmsg.ping_id) {
-            mprintf("Latency: %f\n", GetTimer(latency_timer));
+            //mprintf("Latency: %f\n", GetTimer(latency_timer));
             is_timing_latency = false;
             ping_failures = 0;
         }
@@ -193,7 +171,7 @@ int main(int argc, char* argv[])
     }
 
     struct SocketContext PacketReceiveContext = { 0 };
-    if (CreateUDPContext(&PacketReceiveContext, "C", SERVER_IP, 0, 250) < 0) {
+    if (CreateUDPContext(&PacketReceiveContext, "C", SERVER_IP, 1, 250) < 0) {
         exit(1);
     }
 
@@ -218,6 +196,9 @@ int main(int argc, char* argv[])
 
     clock ack_timer;
     SendAck(&PacketReceiveContext, 1);
+    SDL_LockMutex(send_packet_mutex);
+    SendAck(&PacketSendContext, 1);
+    SDL_UnlockMutex(send_packet_mutex);
     StartTimer(&ack_timer);
 
     bool shutting_down = false;
@@ -225,6 +206,11 @@ int main(int argc, char* argv[])
     {
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&PacketReceiveContext, 1);
+            SDL_LockMutex(send_packet_mutex);
+            if (SendAck(&PacketSendContext, 1) < 0) {
+                mprintf("Could not send ACK!\n");
+            }
+            SDL_UnlockMutex(send_packet_mutex);
             StartTimer(&ack_timer);
         }
 
@@ -238,7 +224,7 @@ int main(int argc, char* argv[])
         }   
 
         if (update_mbps) {
-            mprintf("Updating MBPS: %f\n", max_mbps);
+            //mprintf("Updating MBPS: %f\n", max_mbps);
             update_mbps = false;
             memset(&fmsg, 0, sizeof(fmsg));
             fmsg.type = MESSAGE_MBPS;
@@ -247,7 +233,7 @@ int main(int argc, char* argv[])
         }
 
         if (is_timing_latency && GetTimer(latency_timer) > 0.5) {
-            mprintf("Ping received no response.\n");
+            mprintf("Ping received no response: %d\n", ping_id);
             is_timing_latency = false;
             ping_failures++;
             if (ping_failures == 3) {
@@ -266,7 +252,8 @@ int main(int argc, char* argv[])
 
             StartTimer(&latency_timer);
 
-            mprintf("Ping! %d\n", ping_id);
+            //mprintf("Ping! %d\n", ping_id);
+            SendPacket(&fmsg, sizeof(fmsg));
             SendPacket(&fmsg, sizeof(fmsg));
         }
 
