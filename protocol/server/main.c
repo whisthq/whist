@@ -104,8 +104,8 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
 
 static int32_t SendVideo(void* opaque) {
-    struct SocketContext context = *(struct SocketContext*) opaque;
-    int slen = sizeof(context.addr), id = 1;
+    struct SocketContext socketContext = *(struct SocketContext*) opaque;
+    int slen = sizeof(socketContext.addr), id = 1;
 
     // Init DXGI Device
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
@@ -132,7 +132,17 @@ static int32_t SendVideo(void* opaque) {
     int previous_frame_size = 0;
 
     int consecutive_capture_screen_errors = 0;
+
+    clock ack_timer;
+    SendAck(&socketContext, 1);
+    StartTimer(&ack_timer);
+
     while (connected) {
+        if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
+            SendAck(&socketContext, 1);
+            StartTimer(&ack_timer);
+        }
+
         HRESULT hr = CaptureScreen(device);
         clock server_frame_timer;
         StartTimer(&server_frame_timer);
@@ -201,7 +211,7 @@ static int32_t SendVideo(void* opaque) {
                     frame->size = encoder->packet.size;
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
                     
-                    if (SendPacket(&context, PACKET_VIDEO, frame, frame_size, id, delay) < 0) {
+                    if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id, delay) < 0) {
                         mprintf("Could not send video frame\n");
                     }
                     else {
@@ -301,7 +311,6 @@ int main(int argc, char* argv[])
 
         packet_mutex = SDL_CreateMutex();
 
-        SendAck(&PacketReceiveContext, 0);
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
         SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
 
@@ -314,8 +323,15 @@ int main(int argc, char* argv[])
         StartTimer(&last_ping);
 
         clock ack_timer;
+        SendAck(&PacketReceiveContext, 1);
         StartTimer(&ack_timer);
+
         while (connected) {
+            if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
+                SendAck(&PacketReceiveContext, 1);
+                StartTimer(&ack_timer);
+            }
+
             if (GetTimer(last_ping) > 1.5) {
                 mprintf("Client connection dropped.\n");
                 connected = false;
@@ -388,11 +404,6 @@ int main(int argc, char* argv[])
                     fmsgs[0] = fmsg;
                     status = ReplayUserInput(fmsgs, 1);
                 }
-            }
-
-            if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
-                SendAck(&PacketReceiveContext, 1);
-                StartTimer(&ack_timer);
             }
         }
 

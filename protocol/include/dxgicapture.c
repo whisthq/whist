@@ -150,7 +150,7 @@ int DestroyDXGIDevice(DXGIDevice* device) {
 
 HRESULT CaptureScreen(DXGIDevice* device) {
     HRESULT hr;
-    hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 25, &device->frame_info, &device->resource);
+    hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 0, &device->frame_info, &device->resource);
     if (FAILED(hr)) {
         return hr;
     }
