@@ -254,6 +254,7 @@ int main(int argc, char* argv[])
 
             //mprintf("Ping! %d\n", ping_id);
             SendPacket(&fmsg, sizeof(fmsg));
+            SendPacket(&fmsg, sizeof(fmsg));
         }
 
         memset(&fmsg, 0, sizeof(fmsg));
