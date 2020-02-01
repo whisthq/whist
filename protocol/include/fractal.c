@@ -499,6 +499,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 	// Point address to STUN server
 	context->addr.sin_addr.s_addr = inet_addr(STUN_SERVER_IP);
+
 	// Create payload to send to STUN server
 #define DEST_BUF_LEN 20
 	char dest[DEST_BUF_LEN];
@@ -578,11 +579,10 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 int SendAck(struct SocketContext* context, int reps) {
 	char* message = "ACK";
-	int rep, slen = sizeof(context->addr);
 
 	bool success = false;
-	for (rep = 0; rep < reps; rep++) {
-		if (sendto(context->s, message, strlen(message), 0, (struct sockaddr*)(&context->addr), slen) >= 0) {
+	for (int rep = 0; rep < reps; rep++) {
+		if (sendto(context->s, message, strlen(message), 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) >= 0) {
 			success = true;
 		}
 	}
