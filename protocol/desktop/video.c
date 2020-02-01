@@ -270,7 +270,7 @@ void updateVideo() {
 
         // Print statistics
 
-        mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 * dropped_rate);
+        //mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 * dropped_rate);
 
         // Adjust mbps based on dropped packets
         if (dropped_rate > 0.4) {
@@ -350,7 +350,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
     }
 
     if (ctx->received_indicies[packet->index]) {
-        mprintf("NACK for Video ID %d, Index %d Received!\n", packet->id, packet->index);
+        //mprintf("NACK for Video ID %d, Index %d Received!\n", packet->id, packet->index);
         return 0;
     }
 
@@ -358,7 +358,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
     if (packet->index > 0) {
         for (int i = max(0, ctx->last_nacked_id + 1); i < packet->index; i++) {
             if (!ctx->received_indicies[i]) {
-                mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", packet->id, i);
+                //mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", packet->id, i);
                 FractalClientMessage fmsg;
                 fmsg.type = MESSAGE_VIDEO_NACK;
                 fmsg.nack_data.id = packet->id;
