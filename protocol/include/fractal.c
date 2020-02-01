@@ -578,11 +578,9 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 }
 
 int SendAck(struct SocketContext* context, int reps) {
-	char* message = "ACK";
-
 	bool success = false;
 	for (int rep = 0; rep < reps; rep++) {
-		if (sendto(context->s, message, strlen(message), 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) >= 0) {
+		if (sendto(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) >= 0) {
 			success = true;
 		}
 	}
