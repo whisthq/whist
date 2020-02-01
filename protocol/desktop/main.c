@@ -103,7 +103,10 @@ static int32_t ReceivePackets(void* opaque) {
         StartTimer(&temp_recv_timer);
         total_recvs++;
 
-        if (recv_size < 0) {
+        if (recv_size == 0) {
+            // ACK
+        }
+        else if (recv_size < 0) {
             int error = WSAGetLastError();
             switch (error) {
             case WSAETIMEDOUT:
