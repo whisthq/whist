@@ -75,6 +75,7 @@ IDXGIOutput1* findAttachedOutput(IDXGIFactory1* factory) {
 
 int CreateDXGIDevice(DXGIDevice* device) {
     //Initialize the factory pointer
+    FILE *fp;
     IDXGIFactory1* factory;
 
     //Actually create it
@@ -112,6 +113,9 @@ int CreateDXGIDevice(DXGIDevice* device) {
     }
 
     printf("Duplicating '%S' attached to '%S'\n", oDesc.DeviceName, aDesc.Description);
+    fp = fopen("/log1.txt", "a+");
+    fprintf(fp, "Duplicating '%S' attached to '%S'\n", oDesc.DeviceName, aDesc.Description);
+    fclose(fp);
 
     HRESULT hDuplicateOutput = output->lpVtbl->DuplicateOutput(output, pD3Device, &device->duplication);
     if (hDuplicateOutput != S_OK) {
@@ -123,7 +127,10 @@ int CreateDXGIDevice(DXGIDevice* device) {
     device->duplication->lpVtbl->GetDesc(device->duplication, &odDesc);
 
     printf("Able to duplicate a %ix%i desktop\n", odDesc.ModeDesc.Width, odDesc.ModeDesc.Height);
-
+    fp = fopen("/log1.txt", "a+");
+    fprintf(fp, "Able to duplicate a %ix%i desktop\n", odDesc.ModeDesc.Width, odDesc.ModeDesc.Height);
+    fclose(fp);
+    
     // get width and height
     HMONITOR hMonitor = oDesc.Monitor;
     MONITORINFOEX monitorInfo;
@@ -137,6 +144,11 @@ int CreateDXGIDevice(DXGIDevice* device) {
     device->width = devMode.dmPelsWidth;
     device->height = devMode.dmPelsHeight;
 
+    printf("Dimensions are %ix%i\n", device->width, device->height);
+    fp = fopen("/log1.txt", "a+");
+    fprintf(fp, "Dimensions are %ix%i\n", device->width, device->height);
+    fclose(fp);
+    
     return 0;
 }
 

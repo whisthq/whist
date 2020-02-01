@@ -127,13 +127,21 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 static int32_t SendVideo(void* opaque) {
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
     int slen = sizeof(socketContext.addr), id = 1;
+    FILE *fp;
 
+    SendAck(&socketContext, 1);
     InitDesktop();
+    fp = fopen("/log1.txt", "a+");
+    fprintf(fp, "Desktop initialized\n");
+    fclose(fp); 
     // Init DXGI Device
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
     memset(device, 0, sizeof(DXGIDevice));
 
     OpenNewDesktop(NULL, false);
+    fp = fopen("/log1.txt", "a+");
+    fprintf(fp, "New desktop opened\n");
+    fclose(fp);
     if (CreateDXGIDevice(device) < 0) {
         mprintf("Error Creating DXGI Device\n");
         return -1;
@@ -144,6 +152,10 @@ static int32_t SendVideo(void* opaque) {
     encoder_t* encoder;
     encoder = create_video_encoder(device->width, device->height,
         device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
+
+    fp = fopen("/log1.txt", "a+");
+    fprintf(fp, "Encoder created\n");
+    fclose(fp); 
 
     bool update_encoder = false;
 
@@ -157,11 +169,22 @@ static int32_t SendVideo(void* opaque) {
 
     int consecutive_capture_screen_errors = 0;
 
+    fp = fopen("/log1.txt", "a+");
+    fprintf(fp, "About to send acks\n");
+    fclose(fp);
+
     clock ack_timer;
     SendAck(&socketContext, 1);
     StartTimer(&ack_timer);
 
+    fp = fopen("/log1.txt", "a+");
+    fprintf(fp, "About to start sending video\n");
+    fclose(fp); 
+
     while (connected) {
+        // fp = fopen("/log1.txt", "a+");
+        // fprintf(fp, "About to capture screen\n------------------\n");
+        // fclose(fp); 
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
@@ -169,7 +192,12 @@ static int32_t SendVideo(void* opaque) {
 
         HRESULT hr = CaptureScreen(device);
 
-        if(hr == DXGI_ERROR_INVALID_CALL) {
+        // fp = fopen("/log1.txt", "a+");
+        // fprintf(fp, "Screen captured %X\n", hr);
+        // fclose(fp); 
+
+
+        if(hr == DXGI_ERROR_INVALID_CALL) {  
           OpenNewDesktop("default", false);
 
           free(device);
@@ -321,7 +349,7 @@ static int32_t SendAudio(void* opaque) {
 int main(int argc, char* argv[])
 {
     initMultiThreadedPrintf();
-
+    FILE *fp;
     while (true) {
         // initialize the windows socket library if this is a windows client
         WSADATA wsa;
@@ -357,10 +385,14 @@ int main(int argc, char* argv[])
         StartTimer(&last_ping);
 
         clock ack_timer;
-        SendAck(&PacketReceiveContext, 1);
+        SendAck(&PacketReceiveContext, 5);
+        SendAck(&PacketSendContext, 5);
         StartTimer(&ack_timer);
 
         while (connected) {
+            fp = fopen("/log1.txt", "a+");
+            fprintf(fp, "Listening...\n");
+            fclose(fp); 
             if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
                 SendAck(&PacketReceiveContext, 1);
                 StartTimer(&ack_timer);
@@ -368,8 +400,8 @@ int main(int argc, char* argv[])
 
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
-                connected = false;
-                break;
+                // connected = false;
+                // break;
             }
 
             memset(&fmsg, 0, sizeof(fmsg));
@@ -404,6 +436,9 @@ int main(int argc, char* argv[])
                 }
                 else if (fmsg.type == MESSAGE_PING) {
                     mprintf("Ping Received - ID %d\n", fmsg.ping_id);
+                    fp = fopen("/log1.txt", "a+");
+                    fprintf(fp, "Ping received %d\n", fmsg.ping_id);
+                    fclose(fp); 
 
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = MESSAGE_PONG;
