@@ -473,6 +473,36 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 
 	return FRACTAL_OK;
 }
+
+FractalStatus EnterWinString(enum FractalKeycode keycodes[100], int len) {
+  // get screen width and height for mouse cursor
+  int i, index = 0;
+  enum FractalKeycode keycode;
+  INPUT Event[200];
+
+  for(i = 0; i < len; i++) {
+	keycode = keycodes[i];
+	Event[index].ki.wVk = windows_keycodes[keycode];
+	Event[index].type = INPUT_KEYBOARD;
+	Event[index].ki.wScan = 0;
+	Event[index].ki.time = 0; // system supplies timestamp
+	Event[index].ki.dwFlags = 0;
+
+	index++;
+
+	Event[index].ki.wVk = windows_keycodes[keycode];
+	Event[index].type = INPUT_KEYBOARD;
+	Event[index].ki.wScan = 0;
+	Event[index].ki.time = 0; // system supplies timestamp
+	Event[index].ki.dwFlags = KEYEVENTF_KEYUP;
+
+	index++;
+  }
+  // send FMSG mapped to Windows event to Windows and return
+  SendInput(index, Event, sizeof(INPUT)); // 1 structure to send
+ 
+	return FRACTAL_OK;
+}
 #endif
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int recvfrom_timeout_ms, int stun_timeout_ms) {

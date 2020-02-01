@@ -13,6 +13,7 @@
 #include "../include/videoencode.h"
 #include "../include/audioencode.h"
 #include "../include/dxgicapture.h"
+#include "../include/desktop.h"
 
 #pragma comment (lib, "ws2_32.lib")
 
@@ -107,9 +108,12 @@ static int32_t SendVideo(void* opaque) {
     struct SocketContext context = *(struct SocketContext*) opaque;
     int slen = sizeof(context.addr), id = 1;
 
+    InitDesktop();
     // Init DXGI Device
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
     memset(device, 0, sizeof(DXGIDevice));
+
+    OpenNewDesktop(NULL, false);
     if (CreateDXGIDevice(device) < 0) {
         mprintf("Error Creating DXGI Device\n");
         return -1;
@@ -134,6 +138,17 @@ static int32_t SendVideo(void* opaque) {
     int consecutive_capture_screen_errors = 0;
     while (connected) {
         HRESULT hr = CaptureScreen(device);
+
+        if(hr == DXGI_ERROR_INVALID_CALL) {
+          OpenNewDesktop("default", false);
+
+          free(device);
+          device = NULL;
+          device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
+          memset(device, 0, sizeof(DXGIDevice));
+          hr = CreateDXGIDevice(device);
+        }
+
         clock server_frame_timer;
         StartTimer(&server_frame_timer);
 
