@@ -70,13 +70,7 @@ static int32_t ReceivePackets(void* opaque) {
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
     int slen = sizeof(socketContext.addr);
 
-    clock temp_recv_timer;
-    double recv_time;
     int total_recvs = 0;
-
-    int recv_size = 0;
-
-    StartTimer(&temp_recv_timer);
 
     clock ack_timer;
     SendAck(&socketContext, 1);
@@ -89,23 +83,12 @@ static int32_t ReceivePackets(void* opaque) {
         }
 
         // Call as often as possible
-        clock updates;
-        StartTimer(&updates);
         updateVideo();
         updateAudio();
-        double update_timer = GetTimer(updates);
 
-        double d = GetTimer(temp_recv_timer);
-        if (d > 0.0001) {
-            mprintf("Time: %f for I %i\n", d, i-1);
-            mprintf("Updates: %f for I %i\n", update_timer, i - 1);
-        }
-
-        recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
+        int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
         total_recvs++;
-
-        StartTimer(&temp_recv_timer);
 
         if (recv_size == 0) {
             // ACK
@@ -198,7 +181,7 @@ int main(int argc, char* argv[])
     }
 
     struct SocketContext PacketReceiveContext = { 0 };
-    if (CreateUDPContext(&PacketReceiveContext, "C", SERVER_IP, 0, 250) < 0) {
+    if (CreateUDPContext(&PacketReceiveContext, "C", SERVER_IP, 1, 250) < 0) {
         exit(1);
     }
 

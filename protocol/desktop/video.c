@@ -350,6 +350,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
     }
 
     if (ctx->received_indicies[packet->index]) {
+        mprintf("NACK for Video ID %d, Index %d Received!\n", packet->id, packet->index);
         return 0;
     }
 
@@ -358,6 +359,13 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
         for (int i = max(0, ctx->last_nacked_id + 1); i < packet->index; i++) {
             if (!ctx->received_indicies[i]) {
                 mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", packet->id, i);
+                FractalClientMessage fmsg;
+                fmsg.type = MESSAGE_VIDEO_NACK;
+                fmsg.nack_data.id = packet->id;
+                fmsg.nack_data.index = i;
+                SendPacket(&fmsg, sizeof(fmsg));
+                SendPacket(&fmsg, sizeof(fmsg));
+                SendPacket(&fmsg, sizeof(fmsg));
             }
         }
         ctx->last_nacked_id = max(ctx->last_nacked_id, packet->index - 1);

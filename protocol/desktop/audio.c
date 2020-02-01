@@ -102,7 +102,7 @@ void updateAudio() {
                 fmsg.type = MESSAGE_AUDIO_NACK;
                 fmsg.nack_data.id = i / MAX_NUM_AUDIO_INDICES;
                 fmsg.nack_data.index = i % MAX_NUM_AUDIO_INDICES;
-                mprintf("Missing Audio Packet ID %d, Index %d. NACKing...\n", fmsg.nack_data.id, fmsg.nack_data.index);
+                //mprintf("Missing Audio Packet ID %d, Index %d. NACKing...\n", fmsg.nack_data.id, fmsg.nack_data.index);
                 i_packet->nacked_for = i;
                 SendPacket(&fmsg, sizeof(fmsg));
             }
@@ -127,7 +127,7 @@ int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size) {
         }
 
         if (audio_pkt->nacked_for == audio_id) {
-            mprintf("NACK for Audio ID %d, Index %d Received!\n", packet->id, packet->index);
+            //mprintf("NACK for Audio ID %d, Index %d Received!\n", packet->id, packet->index);
         }
         audio_pkt->nacked_for = -1;
         audio_pkt->id = audio_id;
