@@ -22,28 +22,38 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 1;
+volatile static int gop_size = 10;
+
 char buf[LARGEST_FRAME_SIZE];
 
-#define MAX_AUDIO_INDEX 10
-#define MAX_AUDIO_BUFFER_SIZE 1000
+#define MAX_VIDEO_INDEX 500
+#define VIDEO_BUFFER_SIZE 25
+struct RTPPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
+int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 
-struct RTPPacket audio_buffer[MAX_AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
-int audio_buffer_packet_len[MAX_AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
+#define MAX_AUDIO_INDEX 10
+#define AUDIO_BUFFER_SIZE 1000
+
+struct RTPPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
+int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
+
+SDL_mutex* packet_mutex;
 
 static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet, int len) {
     if (len > sizeof(struct RTPPacket)) {
         mprintf("Len too long!\n");
         return -1;
     }
+    SDL_LockMutex(packet_mutex);
     int sent_size = sendto(context->s, packet, len, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr));
+    SDL_UnlockMutex(packet_mutex);
+
     if (sent_size < 0) {
         mprintf("Could not replay packet!\n");
         return -1;
     }
 }
 
-SDL_mutex* packet_mutex;
 static int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* data, int len, int id, double time) {
     if (id <= 0) {
         mprintf("IDs must be positive!\n");
@@ -68,8 +78,18 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
                 return -1;
             }
             else {
-                packet = &audio_buffer[id % MAX_AUDIO_BUFFER_SIZE][i];
-                packet_len = &audio_buffer_packet_len[id % MAX_AUDIO_BUFFER_SIZE][i];
+                packet = &audio_buffer[id % AUDIO_BUFFER_SIZE][i];
+                packet_len = &audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE][i];
+            }
+        }
+        else if (type == PACKET_VIDEO) {
+            if (i >= MAX_VIDEO_INDEX) {
+                mprintf("Video index too long!\n");
+                return -1;
+            }
+            else {
+                packet = &video_buffer[id % VIDEO_BUFFER_SIZE][i];
+                packet_len = &video_buffer_packet_len[id % VIDEO_BUFFER_SIZE][i];
             }
         }
         payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
@@ -159,7 +179,7 @@ static int32_t SendVideo(void* opaque) {
             clock t;
             StartTimer(&t);
             video_encoder_encode(encoder, device->frame_data.pBits);
-            mprintf("Encode Time: %f\n", GetTimer(t));
+            //mprintf("Encode Time: %f\n", GetTimer(t));
 
             bitrate_tested_frames++;
             bytes_tested_frames += encoder->packet.size;
@@ -182,7 +202,7 @@ static int32_t SendVideo(void* opaque) {
                     delay = transmit_time - frame_time;
                     delay = min(delay, 0.004);
 
-                    mprintf("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time: %f, Transmit Time: %f, Delay: %f\n", previous_frame_size, mbps, max_mbps, frame_time, transmit_time, delay);
+                    //mprintf("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time: %f, Transmit Time: %f, Delay: %f\n", previous_frame_size, mbps, max_mbps, frame_time, transmit_time, delay);
 
                     if ((current_fps < worst_fps || ideal_bitrate > current_bitrate) && bitrate_tested_frames > 20) {
                         // Rather than having lower than the worst acceptable fps, find the ratio for what the bitrate should be
@@ -199,7 +219,6 @@ static int32_t SendVideo(void* opaque) {
                     }
                 }
 
-                mprintf("Sending frame ID %d\n", id);
                 int frame_size = sizeof(Frame) + encoder->packet.size;
                 if (frame_size > LARGEST_FRAME_SIZE) {
                     mprintf("Frame too large: %d\n", frame_size);
@@ -219,7 +238,7 @@ static int32_t SendVideo(void* opaque) {
                         previous_frame_size = encoder->packet.size;
                     }
                     float server_frame_time = GetTimer(server_frame_timer);
-                    mprintf("Server Frame Time for ID %d: %f\n", id, server_frame_time);
+                    //mprintf("Server Frame Time for ID %d: %f\n", id, server_frame_time);
                 }
             }
 
@@ -390,14 +409,26 @@ int main(int argc, char* argv[])
                 }
                 else if (fmsg.type == MESSAGE_AUDIO_NACK) {
                     mprintf("Audio NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
-                    struct RTPPacket *audio_packet = &audio_buffer[fmsg.nack_data.id % MAX_AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
-                    int len = audio_buffer_packet_len[fmsg.nack_data.id % MAX_AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
+                    struct RTPPacket *audio_packet = &audio_buffer[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
+                    int len = audio_buffer_packet_len[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
                     if (audio_packet->id == fmsg.nack_data.id) {
                         mprintf("NACKed packet found of length %d. Relaying!\n", len);
                         ReplayPacket(&PacketSendContext, audio_packet, len);
                     }
                     else {
                         mprintf("NACKed packet not found, ID %d was located instead.\n", audio_packet->id);
+                    }
+                }
+                else if (fmsg.type == MESSAGE_VIDEO_NACK) {
+                    mprintf("Video NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
+                    struct RTPPacket* video_packet = &video_buffer[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
+                    int len = video_buffer_packet_len[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
+                    if (video_packet->id == fmsg.nack_data.id) {
+                        mprintf("NACKed packet found of length %d. Relaying!\n", len);
+                        ReplayPacket(&PacketSendContext, video_packet, len);
+                    }
+                    else {
+                        mprintf("NACKed packet not found, ID %d was located instead.\n", video_packet->id);
                     }
                 }
                 else {
