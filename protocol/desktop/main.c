@@ -72,9 +72,6 @@ static int32_t ReceivePackets(void* opaque) {
 
     SendAck(&socketContext, 1);
 
-    clock ack_timer;
-    StartTimer(&ack_timer);
-
     clock temp_recv_timer;
     double recv_time;
     int total_recvs = 0;
@@ -82,7 +79,17 @@ static int32_t ReceivePackets(void* opaque) {
     int recv_size = 0;
 
     StartTimer(&temp_recv_timer);
+
+    clock ack_timer;
+    SendAck(&socketContext, 1);
+    StartTimer(&ack_timer);
+
     for (int i = 0; run_receive_packets; i++) {
+        if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
+            SendAck(&socketContext, 1);
+            StartTimer(&ack_timer);
+        }
+
         // Call as often as possible
         updateVideo();
         updateAudio();
@@ -96,7 +103,10 @@ static int32_t ReceivePackets(void* opaque) {
         StartTimer(&temp_recv_timer);
         total_recvs++;
 
-        if (recv_size < 0) {
+        if (recv_size == 0) {
+            // ACK
+        }
+        else if (recv_size < 0) {
             int error = WSAGetLastError();
             switch (error) {
             case WSAETIMEDOUT:
@@ -133,11 +143,6 @@ static int32_t ReceivePackets(void* opaque) {
                     break;
                 }
             }
-        }
-
-        if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
-            SendAck(&socketContext, 1);
-            StartTimer(&ack_timer);
         }
     }
 
@@ -211,9 +216,18 @@ int main(int argc, char* argv[])
     clock last_dimension_update;
     StartTimer(&last_dimension_update);
 
+    clock ack_timer;
+    SendAck(&PacketReceiveContext, 1);
+    StartTimer(&ack_timer);
+
     bool shutting_down = false;
     while (!shutting_down)
     {
+        if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
+            SendAck(&PacketReceiveContext, 1);
+            StartTimer(&ack_timer);
+        }
+
         if (needs_dimension_update && !tried_to_update_dimension && (server_width != OUTPUT_WIDTH || server_height != OUTPUT_HEIGHT)) {
             memset(&fmsg, 0, sizeof(fmsg));
             fmsg.type = MESSAGE_DIMENSIONS;
