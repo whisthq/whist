@@ -316,7 +316,7 @@ int main(int argc, char* argv[])
         }
 
         struct SocketContext PacketReceiveContext = { 0 };
-        if (CreateUDPContext(&PacketReceiveContext, "S", "", 0, -1) < 0) {
+        if (CreateUDPContext(&PacketReceiveContext, "S", "", 1, -1) < 0) {
             exit(1);
         }
 
