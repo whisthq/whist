@@ -131,17 +131,13 @@ static int32_t SendVideo(void* opaque) {
 
     SendAck(&socketContext, 1);
     InitDesktop();
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "Desktop initialized\n");
-    fclose(fp); 
+
     // Init DXGI Device
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
     memset(device, 0, sizeof(DXGIDevice));
 
     OpenNewDesktop(NULL, false);
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "New desktop opened\n");
-    fclose(fp);
+
     if (CreateDXGIDevice(device) < 0) {
         mprintf("Error Creating DXGI Device\n");
         return -1;
@@ -152,10 +148,6 @@ static int32_t SendVideo(void* opaque) {
     encoder_t* encoder;
     encoder = create_video_encoder(device->width, device->height,
         device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
-
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "Encoder created\n");
-    fclose(fp); 
 
     bool update_encoder = false;
 
@@ -169,33 +161,17 @@ static int32_t SendVideo(void* opaque) {
 
     int consecutive_capture_screen_errors = 0;
 
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "About to send acks\n");
-    fclose(fp);
-
     clock ack_timer;
     SendAck(&socketContext, 1);
     StartTimer(&ack_timer);
 
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "About to start sending video\n");
-    fclose(fp); 
-
     while (connected) {
-        // fp = fopen("/log1.txt", "a+");
-        // fprintf(fp, "About to capture screen\n------------------\n");
-        // fclose(fp); 
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
         }
 
         HRESULT hr = CaptureScreen(device);
-
-        // fp = fopen("/log1.txt", "a+");
-        // fprintf(fp, "Screen captured %X\n", hr);
-        // fclose(fp); 
-
 
         if(hr == DXGI_ERROR_INVALID_CALL) {  
           OpenNewDesktop("default", false);
@@ -374,7 +350,7 @@ int main(int argc, char* argv[])
         packet_mutex = SDL_CreateMutex();
 
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
-        SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
+        // SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
 
         struct FractalClientMessage fmsgs[6];
         struct FractalClientMessage fmsg;
@@ -390,9 +366,6 @@ int main(int argc, char* argv[])
         StartTimer(&ack_timer);
 
         while (connected) {
-            fp = fopen("/log1.txt", "a+");
-            fprintf(fp, "Listening...\n");
-            fclose(fp); 
             if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
                 SendAck(&PacketReceiveContext, 1);
                 StartTimer(&ack_timer);
@@ -436,9 +409,6 @@ int main(int argc, char* argv[])
                 }
                 else if (fmsg.type == MESSAGE_PING) {
                     mprintf("Ping Received - ID %d\n", fmsg.ping_id);
-                    fp = fopen("/log1.txt", "a+");
-                    fprintf(fp, "Ping received %d\n", fmsg.ping_id);
-                    fclose(fp); 
 
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = MESSAGE_PONG;
@@ -489,7 +459,7 @@ int main(int argc, char* argv[])
         }
 
         SDL_WaitThread(send_video, NULL);
-        SDL_WaitThread(send_audio, NULL);
+        // SDL_WaitThread(send_audio, NULL);
 
         SDL_DestroyMutex(packet_mutex);
 
