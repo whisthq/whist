@@ -158,6 +158,7 @@ static int32_t SendVideo(void* opaque) {
     int bytes_tested_frames = 0;
 
     clock previous_frame_time;
+    StartTimer(&previous_frame_time);
     int previous_frame_size = 0;
 
     int consecutive_capture_screen_errors = 0;

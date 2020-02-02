@@ -81,7 +81,7 @@ int CreateDXGIDevice(DXGIDevice* device) {
     //Actually create it
     HRESULT hCreateFactory = CreateDXGIFactory1(&IID_IDXGIFactory2, (void**)(&factory));
     if (hCreateFactory != S_OK) {
-        printf("Error creating Factory: 0x%X\n", hCreateFactory);
+        mprintf("Error creating Factory: 0x%X\n", hCreateFactory);
         return -1;
     }
 
@@ -90,7 +90,7 @@ int CreateDXGIDevice(DXGIDevice* device) {
     void* pOutputParent;
     HRESULT hGetParent = output->lpVtbl->GetParent(output, &IID_IDXGIAdapter1, &pOutputParent);
     if (hGetParent != S_OK) {
-        printf("Error getting patent: 0x%X\n", hGetParent);
+        mprintf("Error getting patent: 0x%X\n", hGetParent);
         return -1;
     }
 
@@ -101,32 +101,32 @@ int CreateDXGIDevice(DXGIDevice* device) {
 
     HRESULT hOutputDesc = output->lpVtbl->GetDesc(output, &oDesc);
     if (hOutputDesc != S_OK) {
-        printf("Error getting output description: 0x%X\n", hOutputDesc);
+        mprintf("Error getting output description: 0x%X\n", hOutputDesc);
         return -1;
     }
 
     DXGI_ADAPTER_DESC aDesc;
     HRESULT hAdapterDesc = adapter->lpVtbl->GetDesc(adapter, &aDesc);
     if (hAdapterDesc != S_OK) {
-        printf("Error getting adapter description: 0x%X\n", hAdapterDesc);
+        mprintf("Error getting adapter description: 0x%X\n", hAdapterDesc);
         return -1;
     }
 
-    printf("Duplicating '%S' attached to '%S'\n", oDesc.DeviceName, aDesc.Description);
+    mprintf("Duplicating '%S' attached to '%S'\n", oDesc.DeviceName, aDesc.Description);
     fp = fopen("/log1.txt", "a+");
     fprintf(fp, "Duplicating '%S' attached to '%S'\n", oDesc.DeviceName, aDesc.Description);
     fclose(fp);
 
     HRESULT hDuplicateOutput = output->lpVtbl->DuplicateOutput(output, pD3Device, &device->duplication);
     if (hDuplicateOutput != S_OK) {
-        printf("Error duplicating output: 0x%X\n", hDuplicateOutput);
+        mprintf("Error duplicating output: 0x%X\n", hDuplicateOutput);
         return -1;
     }
 
     DXGI_OUTDUPL_DESC odDesc;
     device->duplication->lpVtbl->GetDesc(device->duplication, &odDesc);
 
-    printf("Able to duplicate a %ix%i desktop\n", odDesc.ModeDesc.Width, odDesc.ModeDesc.Height);
+    mprintf("Able to duplicate a %ix%i desktop\n", odDesc.ModeDesc.Width, odDesc.ModeDesc.Height);
     fp = fopen("/log1.txt", "a+");
     fprintf(fp, "Able to duplicate a %ix%i desktop\n", odDesc.ModeDesc.Width, odDesc.ModeDesc.Height);
     fclose(fp);
@@ -136,15 +136,24 @@ int CreateDXGIDevice(DXGIDevice* device) {
     MONITORINFOEX monitorInfo;
     monitorInfo.cbSize = sizeof(MONITORINFOEX);
     GetMonitorInfo(hMonitor, &monitorInfo);
+
     DEVMODE devMode;
     devMode.dmSize = sizeof(DEVMODE);
     devMode.dmDriverExtra = 0;
+
+    EnumDisplaySettings(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode);
+
+    devMode.dmPelsWidth = 1280;
+    devMode.dmPelsHeight = 720;
+
+    //ChangeDisplaySettings(&devMode, 0);
+
     EnumDisplaySettings(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode);
 
     device->width = devMode.dmPelsWidth;
     device->height = devMode.dmPelsHeight;
 
-    printf("Dimensions are %ix%i\n", device->width, device->height);
+    mprintf("Dimensions are %ix%i\n", device->width, device->height);
     fp = fopen("/log1.txt", "a+");
     fprintf(fp, "Dimensions are %ix%i\n", device->width, device->height);
     fclose(fp);
