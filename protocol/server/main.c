@@ -131,6 +131,7 @@ static int32_t SendVideo(void* opaque) {
     FILE *fp;
 
     SendAck(&socketContext, 1);
+
     InitDesktop();
 
     // Init DXGI Device
