@@ -190,7 +190,7 @@ void initVideo() {
         SDL_WINDOWPOS_UNDEFINED,
         OUTPUT_WIDTH,
         OUTPUT_HEIGHT,
-        0
+        SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_BORDERLESS
     );
 
     if (!window) {

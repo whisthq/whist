@@ -55,15 +55,15 @@
 #define STUN_SERVER_IP "3.233.46.94"
 #define PORT 48800 
 
-#define SERVER_IP "52.186.125.178"
+#define SERVER_IP "40.117.176.26"
 #define MAX_PAYLOAD_SIZE 1400
 #define START_MAX_MBPS 300.0
 #define ACK_REFRESH_MS 50
 
 #define LARGEST_FRAME_SIZE 1000000
 #define STARTING_BITRATE 5000
-#define OUTPUT_WIDTH 1920
-#define OUTPUT_HEIGHT 1080
+#define OUTPUT_WIDTH 1200
+#define OUTPUT_HEIGHT 700
 
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org

@@ -83,6 +83,7 @@ void updateAudio() {
             //mprintf("Playing ID %d\n", packet->id);
             AudioData.last_played_id = next_to_play_id;
             if (packet->size > 0) {
+                printf("Got audio size %d\n", packet->size);
                 SDL_QueueAudio(AudioData.dev, packet->data, packet->size);
             }
             packet->id = -1;
