@@ -29,10 +29,20 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx,
 {
     const enum AVPixelFormat *p;
     for (p = pix_fmts; *p != -1; p++) {
+
+      // for apple devices, we use videotoolbox, else we use QSV
+      #if defined(__APPLE__)
+        if (*p == AV_PIX_FMT_VIDEOTOOLBOX) {
+          printf("Videotoolbox found\n");
+          return *p;
+        }
+      // QSV for windows and linux
+      #else
         if (*p == AV_PIX_FMT_QSV) {
           printf("QSV found\n");
             return *p;
         }
+      #endif
     }
     fprintf(stderr, "Failed to get HW surface format.\n");
     return AV_PIX_FMT_NONE;
@@ -136,5 +146,5 @@ void *video_decoder_decode(video_decoder_t*decoder, char *buffer, int buffer_siz
   // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
 
   av_free_packet(&decoder->packet);
-  return;
+  return NULL;
 }

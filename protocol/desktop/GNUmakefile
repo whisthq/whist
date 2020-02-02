@@ -1,25 +1,50 @@
+# shell
 UNAME = $(shell uname -s)
-CC = gcc
 
-### LINUX ###
+################## LINUX ##################
 ifeq ($(UNAME), Linux)
 
+# specify compiler
+CC = gcc
+
+# specify platform
 PLATFORM = linux
 
+# system libs to link against
 SHARED_LIBS = \
 	-lm \
 	-ldl \
-	-lswscale -lavutil -lavcodec \
+	-lswscale \
+	-lavutil \
+	-lavcodec \
 	-lpthread
 endif
 
-### MACOS ###
+
+################## MACOS ##################
 ifeq ($(UNAME), Darwin)
 
-export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+# specify compiler
+CC = clang
 
+# specify platform
 PLATFORM = macos
 
+# Apple SDK
+export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+
+# dynamic libs to link against
+DYNAMIC_LIBS = \
+  ../lib/ffmpeg/macos/libavcodec.58.dylib \
+	../lib/ffmpeg/macos/libavdevice.58.dylib \
+	../lib/ffmpeg/macos/libavfilter.7.dylib \
+	../lib/ffmpeg/macos/libavformat.58.dylib \
+	../lib/ffmpeg/macos/libavutil.56.dylib \
+	../lib/ffmpeg/macos/libpostproc.55.dylib \
+	../lib/ffmpeg/macos/libswresample.3.dylib \
+	../lib/ffmpeg/macos/libswscale.5.dylib
+
+# system libs to link against
 SHARED_LIBS = \
 	-liconv \
 	-framework OpenGL \
@@ -36,12 +61,20 @@ SHARED_LIBS = \
 endif
 
 
-### COMMON ###
+################## COMMON ##################
 # executable name
-BIN_NAME = client
+BIN_NAME = desktop
 
-# objects to build
-OBJS = ../include/fractal.o ../include/webserver.o ../include/videoencode.o main.o
+# files to build into object files
+OBJS = \
+	fractal.o \
+	webserver.o \
+	videodecode.o \
+	audiodecode.o \
+	linkedlist.o \
+	video.o \
+	audio.o \
+	main.o
 
 # static libs to link against
 STATIC_LIBS = ../lib/SDL2/$(PLATFORM)/libSDL2.a
@@ -55,33 +88,41 @@ CFLAGS = \
 	-O3 \
 	-Iinclude
 
+# build all files into executable
+all: clean clear $(OBJS)
+	$(CC) -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
+
+# compile the main fractal header source file into object file
 fractal.o:
 	$(CC) -c ../include/fractal.c
 
+# compile the webserver source file into object file
 webserver.o:
 	$(CC) -c ../include/webserver.c
 
-videoencode.o:
-	$(CC) -c ../include/videoencode.c
-
+# compile the video decoder source file into object file
 videodecode.o:
 	$(CC) -c ../include/videodecode.c
 
+# compile the audio decoder source file into object file
 audiodecode.o:
 	$(CC) -c ../include/audiodecode.c
 
+# compile the linked list source file into object file
 linkedlist.o:
 	$(CC) -c ../include/linkedlist.c
 
+# compile the source main file into object file
+video.o:
+	$(CC) -c video.c
+
+# compile the source main file into object file
+audio.o:
+	$(CC) -c audio.c
+
+# compile the source main file into object file
 main.o:
 	$(CC) -c main.c
-
-desktop: main.o fractal.o webserver.o videoencode.o videodecode.o audiodecode.o linkedlist.o
-	$(CC) -o desktop main.o fractal.o webserver.o videoencode.o videodecode.o audiodecode.o linkedlist.o $(STATIC_LIBS) $(SHARED_LIBS)
-
-# build all files into executable
-all: clean clear $(OBJS)
-	$(CC) -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(SHARED_LIBS)
 
 # clean prior object files
 clean:
@@ -91,4 +132,3 @@ clean:
 # clear folder
 clear:
 	clear
-

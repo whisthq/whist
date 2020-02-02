@@ -590,7 +590,11 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 	if (recvfrom_timeout_ms == 0) {
 		u_long mode = 1;
-		ioctlsocket(context->s, FIONBIO, &mode);
+		#if defined(_WIN32)
+			ioctlsocket(context->s, FIONBIO, &mode);
+		#else
+			ioctl(context->s, FIONBIO, &mode);
+		#endif
 	}
 	else {
 #if defined(_WIN32)
@@ -728,26 +732,53 @@ void mprintf(const char* fmtStr, ...) {
 	va_end(args);
 }
 
+
+
+
+
 #if defined(_WIN32)
 LARGE_INTEGER frequency;
 bool set_frequency = false;
+#endif
 
 void StartTimer(clock* timer) {
-	if (!set_frequency) {
-		QueryPerformanceFrequency(&frequency);
-		set_frequency = true;
-	}
+	#if defined(_WIN32)
+		if (!set_frequency) {
+			QueryPerformanceFrequency(&frequency);
+			set_frequency = true;
+		}
 	QueryPerformanceCounter(timer);
+	#elif __APPLE__
+		// start timer
+		gettimeofday(timer, NULL);
+	#endif
 }
 
 double GetTimer(clock timer) {
-	LARGE_INTEGER end;
-	QueryPerformanceCounter(&end);
-	double ret = (double)(end.QuadPart - timer.QuadPart) / frequency.QuadPart;
+	#if defined(_WIN32)
+		LARGE_INTEGER end;
+		QueryPerformanceCounter(&end);
+		double ret = (double) (end.QuadPart - timer.QuadPart) / frequency.QuadPart;
+	#elif __APPLE__
+		// stop timer
+		struct timeval t2;
+		gettimeofday(&t2, NULL);
+
+		// compute and print the elapsed time in millisec
+		double elapsedTime = (t2.tv_sec - timer.tv_sec) * 1000.0;    // sec to ms
+		elapsedTime += (t2.tv_usec - timer.tv_usec) / 1000.0;        // us to ms
+
+		//printf("elapsed time in ms is: %f\n", elapsedTime);
+
+
+		// standard var to return and convert to seconds since it gets converted to ms in function call
+		double ret = elapsedTime / 1000.0;
+	#endif
 	return ret;
 }
-#else
-#endif
+
+
+
 
 uint32_t Hash(void* key, size_t len)
 {
@@ -763,6 +794,18 @@ uint32_t Hash(void* key, size_t len)
 	hash ^= (hash >> 11);
 	hash += (hash << 15);
 	return hash;
+}
+
+
+void getClientResolution(unsigned int *width, unsigned int *height) {
+	#if defined (_WIN32)
+		width = (int) GetSystemMetrics(SM_CXSCREEN);
+		height = (int) GetSystemMetrics(SM_CYSCREEN);
+	#else // apple, prob need a different one for linux TODO
+		auto mainDisplayId = CGMainDisplayID();
+		width = CGDisplayPixelsWide(mainDisplayId);
+		height = CGDisplayPixelsHigh(mainDisplayId);
+	#endif
 }
 
 /*** FRACTAL FUNCTIONS END ***/

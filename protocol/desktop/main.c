@@ -12,6 +12,11 @@
     #pragma comment (lib, "ws2_32.lib")
 #else
     #include <unistd.h>
+    #include <errno.h>
+
+    // adapt windows error codes
+    #define WSAETIMEDOUT ETIMEDOUT
+    #define WSAEWOULDBLOCK EWOULDBLOCK
 #endif
 
 #include "../include/fractal.h"
@@ -85,7 +90,12 @@ static int32_t ReceivePackets(void* opaque) {
             // ACK
         }
         else if (recv_size < 0) {
-            int error = WSAGetLastError();
+            #if defined(_WIN32)
+              int error = WSAGetLastError();
+            #else
+              int error = errno;
+            #endif
+
             switch (error) {
             case WSAETIMEDOUT:
             case WSAEWOULDBLOCK:

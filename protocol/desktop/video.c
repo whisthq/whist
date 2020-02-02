@@ -1,6 +1,6 @@
 #include "video.h"
 
-#define DECODE_TYPE QSV_DECODE
+#define DECODE_TYPE SOFTWARE_DECODE
 
 // Global Variables
 

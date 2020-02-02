@@ -26,6 +26,11 @@
 #include "ffmpeg/libavutil/hwcontext.h"
 #include "ffmpeg/libavutil/hwcontext_qsv.h"
 
+#if defined(__APPLE__)
+	#include "ffmpeg/libavutil/hwcontext_videotoolbox.h"
+	#include "ffmpeg/libavcodec/videotoolbox.h"
+#endif
+
 #define SDL_MAIN_HANDLED
 #include "../include/SDL2/SDL.h"
 #include "../include/SDL2/SDL_thread.h"
@@ -45,9 +50,18 @@
 	#pragma warning(disable: 4201)
 #else
 	#define SOCKET int
+
+	#if defined(__APPLE__)
+		// this one is apple specific
+		#include <CoreGraphics/CGDisplayConfiguration.h>
+	#endif
+
 	#include <sys/socket.h>
+	#include <sys/types.h>
+	#include <sys/ioctl.h>
 	#include <netinet/in.h>
 	#include <arpa/inet.h>
+	#include <sys/time.h>
 #endif
 
 /*** DEFINITIONS START ***/
@@ -55,7 +69,7 @@
 #define STUN_SERVER_IP "3.233.46.94"
 #define PORT 48800 
 
-#define SERVER_IP "40.117.176.26"
+#define SERVER_IP "40.87.80.179"
 #define MAX_PAYLOAD_SIZE 1400
 #define START_MAX_MBPS 300.0
 #define ACK_REFRESH_MS 50
@@ -678,6 +692,11 @@ int SendAck(struct SocketContext *context, int reps);
 
 #if defined(_WIN32)
 	#define clock LARGE_INTEGER
+#elif __APPLE__
+	#define clock struct timeval
+
+
+	#define max fmax
 #else
 	#define clock int
 #endif
@@ -690,6 +709,8 @@ void StartTimer(clock* timer);
 double GetTimer(clock timer);
 
 uint32_t Hash(void* key, size_t len);
+
+void getClientResolution(unsigned int *width, unsigned int *height);
 
 /*** FRACTAL FUNCTIONS END ***/
 
