@@ -2,6 +2,7 @@
 *.iml
 *.pyc
 .vs/
+.vscode/
 .idea/
 *.exe
 *.pdb
