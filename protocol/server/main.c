@@ -150,7 +150,6 @@ static int32_t SendVideo(void* opaque) {
     encoder = create_video_encoder(device->width, device->height,
         device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
 
-
     bool update_encoder = false;
 
     double worst_fps = 40.0;
@@ -168,20 +167,12 @@ static int32_t SendVideo(void* opaque) {
     StartTimer(&ack_timer);
 
     while (connected) {
-        // fp = fopen("/log1.txt", "a+");
-        // fprintf(fp, "About to capture screen\n------------------\n");
-        // fclose(fp); 
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
         }
 
         HRESULT hr = CaptureScreen(device);
-
-        // fp = fopen("/log1.txt", "a+");
-        // fprintf(fp, "Screen captured %X\n", hr);
-        // fclose(fp); 
-
 
         if(hr == DXGI_ERROR_INVALID_CALL) {  
             fp = fopen("/log1.txt", "a+");
@@ -397,7 +388,7 @@ int main(int argc, char* argv[])
         packet_mutex = SDL_CreateMutex();
 
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
-        SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
+        // SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
 
         struct FractalClientMessage fmsgs[6];
         struct FractalClientMessage fmsg;
@@ -506,7 +497,7 @@ int main(int argc, char* argv[])
         }
 
         SDL_WaitThread(send_video, NULL);
-        SDL_WaitThread(send_audio, NULL);
+        // SDL_WaitThread(send_audio, NULL);
 
         SDL_DestroyMutex(packet_mutex);
 
