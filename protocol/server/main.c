@@ -131,13 +131,23 @@ static int32_t SendVideo(void* opaque) {
     FILE *fp;
 
     SendAck(&socketContext, 1);
-    InitDesktop();
+    char* desktop_name = InitDesktop();
 
     // Init DXGI Device
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
     memset(device, 0, sizeof(DXGIDevice));
 
-    OpenNewDesktop(NULL, false);
+    bool defaultFound = (strcmp("Default", desktop_name) == 0);
+    if(!defaultFound) {
+        fp = fopen("/log1.txt", "a+");
+        fprintf(fp, "Default not found!\n");
+        fclose(fp);
+        OpenNewDesktop(NULL, false, true);
+    } else {
+        fp = fopen("/log1.txt", "a+");
+        fprintf(fp, "Default found!\n");
+        fclose(fp);
+    }
 
     if (CreateDXGIDevice(device) < 0) {
         mprintf("Error Creating DXGI Device\n");
@@ -166,20 +176,61 @@ static int32_t SendVideo(void* opaque) {
     SendAck(&socketContext, 1);
     StartTimer(&ack_timer);
 
+    int defaultCounts = 1;
+    HRESULT hr;
+
     while (connected) {
+        if(!defaultFound) {
+            defaultCounts += 1;
+            desktopContext = OpenNewDesktop(NULL, true, false);
+
+            fp = fopen("/log1.txt", "a+");
+            fprintf(fp, "Queried desktop %s\n", desktopContext.desktop_name);
+            fclose(fp);
+
+            if(strcmp("Default", desktopContext.desktop_name) == 0) {
+                fp = fopen("/log1.txt", "a+");
+                fprintf(fp, "DESKTOP FOUND\n");
+                fclose(fp);
+
+                desktopContext = OpenNewDesktop("default", true, true);
+
+                free(device);
+                device = NULL;
+                device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
+                memset(device, 0, sizeof(DXGIDevice));
+                hr = CreateDXGIDevice(device);
+
+                defaultFound = true;
+                fp = fopen("/log1.txt", "a+");
+                fprintf(fp, "DESKTOP SET\n");
+                fclose(fp);
+            }
+            
+        }
+
+
+        fp = fopen("/log1.txt", "a+");
+        fprintf(fp, "Default count is %d\n", defaultCounts);
+        fclose(fp);
+
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
         }
 
-        HRESULT hr = CaptureScreen(device);
+        hr = CaptureScreen(device);
+
+        fp = fopen("/log1.txt", "a+");
+        fprintf(fp, "Capture status %X\n", hr);
+        fclose(fp);
 
         if(hr == DXGI_ERROR_INVALID_CALL) {  
             fp = fopen("/log1.txt", "a+");
-            fprintf(fp, "Switching to desktop\n");
-            fclose(fp); 
+            fprintf(fp, "INVALID CALL FOUND\n");
+            fclose(fp);
 
-            desktopContext = OpenNewDesktop("default", false);
+            desktopContext = OpenNewDesktop("default", false, true);
             desktopContext.ready = true;
 
             free(device);
@@ -187,6 +238,8 @@ static int32_t SendVideo(void* opaque) {
             device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
             memset(device, 0, sizeof(DXGIDevice));
             hr = CreateDXGIDevice(device);
+
+            defaultFound = true;
         }
 
         clock server_frame_timer;
@@ -333,7 +386,7 @@ static int32_t SendAudio(void* opaque) {
 
             audio_device->audioBufSize = nNumFramesToRead * nBlockAlign;
 
-            if (audio_device->audioBufSize != 0) {
+            if (audio_device->audioBufSize > 0 && audio_device->audioBufSize < 10000) {
                 fp = fopen("/log0.txt", "a+");
                 fprintf(fp, "Captured audio packet %d\n", audio_device->audioBufSize);
                 fclose(fp); 

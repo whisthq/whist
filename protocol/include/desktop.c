@@ -32,22 +32,24 @@ int setCurrentInputDesktop(HDESK currentInputDesktop) {
     return 0;
 }
 
-DesktopContext OpenNewDesktop(char* desktop_name, bool get_name) {
+DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread) {
   DesktopContext context = {0};
   HDESK new_desktop;
 
   if(desktop_name == NULL) {
     new_desktop = OpenInputDesktop(0, FALSE, GENERIC_ALL);
   } else {
-    new_desktop = OpenDesktop("default", 0, FALSE, GENERIC_ALL);
+    new_desktop = OpenDesktop(desktop_name, 0, FALSE, GENERIC_ALL);
   }
   
-  setCurrentInputDesktop(new_desktop);
+  if(set_thread) {
+    setCurrentInputDesktop(new_desktop);
+  }
 
   if(get_name) {
     TCHAR szName[1000];
     DWORD dwLen;
-    GetUserObjectInformation(new_desktop, UOI_TYPE, szName, sizeof(szName), &dwLen);
+    GetUserObjectInformation(new_desktop, UOI_NAME, szName, sizeof(szName), &dwLen);
     memcpy(context.desktop_name, szName, strlen(szName));
   }
 
@@ -61,20 +63,17 @@ void OpenWindow() {
   SetProcessWindowStation(hwinsta);
 }
 
-void InitDesktop() {
-  DesktopContext lock_screen;
-  FILE *fp;
+char* InitDesktop() {
+  DesktopContext lock_screen, logon_screen;
+  char* out;
 
   OpenWindow();
-  lock_screen = OpenNewDesktop(NULL, true);
+  lock_screen = OpenNewDesktop(NULL, true, true);
 
-  logToFile("Found initial desktop\n", "/log1.txt");
   printf("Desktop name is %s\n", lock_screen.desktop_name);
 
-  if(strcmp("Winlogon", lock_screen.desktop_name) == 0 || 
-     strcmp("Desktop" , lock_screen.desktop_name) == 0) 
+  if(strcmp("Winlogon", lock_screen.desktop_name) == 0) 
   {
-    logToFile("Found winlogon screen\n", "/log1.txt");
     enum FractalKeycode keycodes[100] = {
       KEY_SPACE, KEY_BACKSPACE, KEY_BACKSPACE
     };
@@ -82,7 +81,8 @@ void InitDesktop() {
     EnterWinString(keycodes, 3);
 
     Sleep(500);
-
+    // logon_screen = OpenNewDesktop(NULL, true);
+    
     enum FractalKeycode keycodes2[100] = {
       KEY_P, KEY_A, KEY_S, KEY_S, KEY_W, KEY_O, KEY_R, KEY_D, KEY_1, 
       KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_PERIOD, KEY_ENTER, 
@@ -90,5 +90,10 @@ void InitDesktop() {
     };
 
     EnterWinString(keycodes2, 18);
-  }
+
+    out = "Winlogon";
+    return out;
+  } 
+  out = "Default";
+  return out;
 }
