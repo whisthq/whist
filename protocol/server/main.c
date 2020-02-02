@@ -24,6 +24,7 @@
 volatile static bool connected;
 volatile static double max_mbps;
 volatile static int gop_size = 10;
+volatile static DesktopContext desktopContext = {0};
 
 char buf[LARGEST_FRAME_SIZE];
 
@@ -127,13 +128,28 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 static int32_t SendVideo(void* opaque) {
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
     int slen = sizeof(socketContext.addr), id = 1;
+    FILE *fp;
 
-    InitDesktop();
+    SendAck(&socketContext, 1);
+
+    char* desktop_name = InitDesktop();
+
     // Init DXGI Device
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
     memset(device, 0, sizeof(DXGIDevice));
 
-    OpenNewDesktop(NULL, false);
+    bool defaultFound = (strcmp("Default", desktop_name) == 0);
+    if(!defaultFound) {
+        fp = fopen("/log1.txt", "a+");
+        fprintf(fp, "Default not found!\n");
+        fclose(fp);
+        OpenNewDesktop(NULL, false, true);
+    } else {
+        fp = fopen("/log1.txt", "a+");
+        fprintf(fp, "Default found!\n");
+        fclose(fp);
+    }
+
     if (CreateDXGIDevice(device) < 0) {
         mprintf("Error Creating DXGI Device\n");
         return -1;
@@ -153,6 +169,7 @@ static int32_t SendVideo(void* opaque) {
     int bytes_tested_frames = 0;
 
     clock previous_frame_time;
+    StartTimer(&previous_frame_time);
     int previous_frame_size = 0;
 
     int consecutive_capture_screen_errors = 0;
@@ -161,22 +178,70 @@ static int32_t SendVideo(void* opaque) {
     SendAck(&socketContext, 1);
     StartTimer(&ack_timer);
 
+    int defaultCounts = 1;
+    HRESULT hr;
+
     while (connected) {
+        if(!defaultFound) {
+            defaultCounts += 1;
+            desktopContext = OpenNewDesktop(NULL, true, false);
+
+            fp = fopen("/log1.txt", "a+");
+            fprintf(fp, "Queried desktop %s\n", desktopContext.desktop_name);
+            fclose(fp);
+
+            if(strcmp("Default", desktopContext.desktop_name) == 0) {
+                fp = fopen("/log1.txt", "a+");
+                fprintf(fp, "DESKTOP FOUND\n");
+                fclose(fp);
+
+                desktopContext = OpenNewDesktop("default", true, true);
+
+                free(device);
+                device = NULL;
+                device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
+                memset(device, 0, sizeof(DXGIDevice));
+                hr = CreateDXGIDevice(device);
+
+                defaultFound = true;
+                fp = fopen("/log1.txt", "a+");
+                fprintf(fp, "DESKTOP SET\n");
+                fclose(fp);
+            }
+            
+        }
+
+
+        fp = fopen("/log1.txt", "a+");
+        fprintf(fp, "Default count is %d\n", defaultCounts);
+        fclose(fp);
+
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
         }
 
-        HRESULT hr = CaptureScreen(device);
+        hr = CaptureScreen(device);
 
-        if(hr == DXGI_ERROR_INVALID_CALL) {
-          OpenNewDesktop("default", false);
+        fp = fopen("/log1.txt", "a+");
+        fprintf(fp, "Capture status %X\n", hr);
+        fclose(fp);
 
-          free(device);
-          device = NULL;
-          device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
-          memset(device, 0, sizeof(DXGIDevice));
-          hr = CreateDXGIDevice(device);
+        if(hr == DXGI_ERROR_INVALID_CALL) {  
+            fp = fopen("/log1.txt", "a+");
+            fprintf(fp, "INVALID CALL FOUND\n");
+            fclose(fp);
+
+            desktopContext = OpenNewDesktop("default", false, true);
+            desktopContext.ready = true;
+
+            free(device);
+            device = NULL;
+            device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
+            memset(device, 0, sizeof(DXGIDevice));
+            hr = CreateDXGIDevice(device);
+
+            defaultFound = true;
         }
 
         clock server_frame_timer;
@@ -275,12 +340,36 @@ static int32_t SendVideo(void* opaque) {
 }
 
 static int32_t SendAudio(void* opaque) {
+    while(!desktopContext.ready) {
+        Sleep(500);
+    }
+
+    FILE *fp;
+    fp = fopen("/log0.txt", "a+");
+    fprintf(fp, "Desktop found, starting audio\n");
+    fclose(fp); 
+
+
+    if(setCurrentInputDesktop(desktopContext.desktop_handle) == 0) {
+        fp = fopen("/log0.txt", "a+");
+        fprintf(fp, "Audio thread set\n");
+        fclose(fp); 
+    } else {
+        fp = fopen("/log0.txt", "a+");
+        fprintf(fp, "Audio thread failed\n");
+        fclose(fp);    
+    }
+
     struct SocketContext context = *(struct SocketContext*) opaque;
     int slen = sizeof(context.addr), id = 1;
 
     wasapi_device* audio_device = (wasapi_device*)malloc(sizeof(struct wasapi_device));
     audio_device = CreateAudioDevice(audio_device);
     StartAudioDevice(audio_device);
+
+    fp = fopen("/log0.txt", "a+");
+    fprintf(fp, "Done starting audio device\n");
+    fclose(fp); 
 
     HRESULT hr = CoInitialize(NULL);
     DWORD dwWaitResult;
@@ -299,9 +388,16 @@ static int32_t SendAudio(void* opaque) {
 
             audio_device->audioBufSize = nNumFramesToRead * nBlockAlign;
 
-            if (audio_device->audioBufSize != 0) {
+            if (audio_device->audioBufSize > 0 && audio_device->audioBufSize < 10000) {
+                fp = fopen("/log0.txt", "a+");
+                fprintf(fp, "Captured audio packet %d\n", audio_device->audioBufSize);
+                fclose(fp); 
                 if (SendPacket(&context, PACKET_AUDIO, audio_device->pData, audio_device->audioBufSize, id, -1.0) < 0) {
                     mprintf("Could not send audio frame\n");
+                } else {
+                    fp = fopen("/log0.txt", "a+");
+                    fprintf(fp, "Sent audio packet of size %d\n", audio_device->audioBufSize);
+                    fclose(fp);  
                 }
             }
 
@@ -321,7 +417,7 @@ static int32_t SendAudio(void* opaque) {
 int main(int argc, char* argv[])
 {
     initMultiThreadedPrintf();
-
+    FILE *fp;
     while (true) {
         // initialize the windows socket library if this is a windows client
         WSADATA wsa;
@@ -340,13 +436,14 @@ int main(int argc, char* argv[])
             exit(1);
         }
 
+        desktopContext.ready = false;
         connected = true;
         max_mbps = START_MAX_MBPS;
 
         packet_mutex = SDL_CreateMutex();
 
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
-        SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
+        // SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
 
         struct FractalClientMessage fmsgs[6];
         struct FractalClientMessage fmsg;
@@ -357,7 +454,8 @@ int main(int argc, char* argv[])
         StartTimer(&last_ping);
 
         clock ack_timer;
-        SendAck(&PacketReceiveContext, 1);
+        SendAck(&PacketReceiveContext, 5);
+        SendAck(&PacketSendContext, 5);
         StartTimer(&ack_timer);
 
         while (connected) {
@@ -403,7 +501,7 @@ int main(int argc, char* argv[])
                     max_mbps = fmsg.mbps;
                 }
                 else if (fmsg.type == MESSAGE_PING) {
-                    mprintf("Ping Received - ID %d\n", fmsg.ping_id);
+                    mprintf("Ping Received - ID %d\n", fmsg.ping_id); 
 
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = MESSAGE_PONG;
@@ -454,7 +552,7 @@ int main(int argc, char* argv[])
         }
 
         SDL_WaitThread(send_video, NULL);
-        SDL_WaitThread(send_audio, NULL);
+        // SDL_WaitThread(send_audio, NULL);
 
         SDL_DestroyMutex(packet_mutex);
 

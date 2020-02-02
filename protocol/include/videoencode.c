@@ -86,7 +86,7 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 		encoder->hw_frame = av_frame_alloc();
 		av_hwframe_get_buffer(encoder->context->hw_frames_ctx, encoder->hw_frame, 0);
 	} else {
-   		encoder->codec = avcodec_find_encoder_by_name("libx264");
+   		encoder->codec = avcodec_find_encoder(AV_CODEC_ID_H264);
 
 		encoder->context = avcodec_alloc_context3(encoder->codec);
 		encoder->context->width           = out_width;
