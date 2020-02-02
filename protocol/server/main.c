@@ -24,6 +24,7 @@
 volatile static bool connected;
 volatile static double max_mbps;
 volatile static int gop_size = 10;
+volatile static DesktopContext desktopContext = {0};
 
 char buf[LARGEST_FRAME_SIZE];
 
@@ -131,17 +132,13 @@ static int32_t SendVideo(void* opaque) {
 
     SendAck(&socketContext, 1);
     InitDesktop();
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "Desktop initialized\n");
-    fclose(fp); 
+
     // Init DXGI Device
     DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
     memset(device, 0, sizeof(DXGIDevice));
 
     OpenNewDesktop(NULL, false);
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "New desktop opened\n");
-    fclose(fp);
+
     if (CreateDXGIDevice(device) < 0) {
         mprintf("Error Creating DXGI Device\n");
         return -1;
@@ -153,9 +150,6 @@ static int32_t SendVideo(void* opaque) {
     encoder = create_video_encoder(device->width, device->height,
         device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
 
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "Encoder created\n");
-    fclose(fp); 
 
     bool update_encoder = false;
 
@@ -169,17 +163,9 @@ static int32_t SendVideo(void* opaque) {
 
     int consecutive_capture_screen_errors = 0;
 
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "About to send acks\n");
-    fclose(fp);
-
     clock ack_timer;
     SendAck(&socketContext, 1);
     StartTimer(&ack_timer);
-
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "About to start sending video\n");
-    fclose(fp); 
 
     while (connected) {
         // fp = fopen("/log1.txt", "a+");
@@ -198,13 +184,18 @@ static int32_t SendVideo(void* opaque) {
 
 
         if(hr == DXGI_ERROR_INVALID_CALL) {  
-          OpenNewDesktop("default", false);
+            fp = fopen("/log1.txt", "a+");
+            fprintf(fp, "Switching to desktop\n");
+            fclose(fp); 
 
-          free(device);
-          device = NULL;
-          device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
-          memset(device, 0, sizeof(DXGIDevice));
-          hr = CreateDXGIDevice(device);
+            desktopContext = OpenNewDesktop("default", false);
+            desktopContext.ready = true;
+
+            free(device);
+            device = NULL;
+            device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
+            memset(device, 0, sizeof(DXGIDevice));
+            hr = CreateDXGIDevice(device);
         }
 
         clock server_frame_timer;
@@ -303,12 +294,36 @@ static int32_t SendVideo(void* opaque) {
 }
 
 static int32_t SendAudio(void* opaque) {
+    while(!desktopContext.ready) {
+        Sleep(500);
+    }
+
+    FILE *fp;
+    fp = fopen("/log0.txt", "a+");
+    fprintf(fp, "Desktop found, starting audio\n");
+    fclose(fp); 
+
+
+    if(setCurrentInputDesktop(desktopContext.desktop_handle) == 0) {
+        fp = fopen("/log0.txt", "a+");
+        fprintf(fp, "Audio thread set\n");
+        fclose(fp); 
+    } else {
+        fp = fopen("/log0.txt", "a+");
+        fprintf(fp, "Audio thread failed\n");
+        fclose(fp);    
+    }
+
     struct SocketContext context = *(struct SocketContext*) opaque;
     int slen = sizeof(context.addr), id = 1;
 
     wasapi_device* audio_device = (wasapi_device*)malloc(sizeof(struct wasapi_device));
     audio_device = CreateAudioDevice(audio_device);
     StartAudioDevice(audio_device);
+
+    fp = fopen("/log0.txt", "a+");
+    fprintf(fp, "Done starting audio device\n");
+    fclose(fp); 
 
     HRESULT hr = CoInitialize(NULL);
     DWORD dwWaitResult;
@@ -328,8 +343,15 @@ static int32_t SendAudio(void* opaque) {
             audio_device->audioBufSize = nNumFramesToRead * nBlockAlign;
 
             if (audio_device->audioBufSize != 0) {
+                fp = fopen("/log0.txt", "a+");
+                fprintf(fp, "Captured audio packet %d\n", audio_device->audioBufSize);
+                fclose(fp); 
                 if (SendPacket(&context, PACKET_AUDIO, audio_device->pData, audio_device->audioBufSize, id, -1.0) < 0) {
                     mprintf("Could not send audio frame\n");
+                } else {
+                    fp = fopen("/log0.txt", "a+");
+                    fprintf(fp, "Sent audio packet of size %d\n", audio_device->audioBufSize);
+                    fclose(fp);  
                 }
             }
 
@@ -368,6 +390,7 @@ int main(int argc, char* argv[])
             exit(1);
         }
 
+        desktopContext.ready = false;
         connected = true;
         max_mbps = START_MAX_MBPS;
 
@@ -390,9 +413,6 @@ int main(int argc, char* argv[])
         StartTimer(&ack_timer);
 
         while (connected) {
-            fp = fopen("/log1.txt", "a+");
-            fprintf(fp, "Listening...\n");
-            fclose(fp); 
             if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
                 SendAck(&PacketReceiveContext, 1);
                 StartTimer(&ack_timer);
@@ -400,8 +420,8 @@ int main(int argc, char* argv[])
 
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
-                // connected = false;
-                // break;
+                connected = false;
+                break;
             }
 
             memset(&fmsg, 0, sizeof(fmsg));
@@ -435,10 +455,7 @@ int main(int argc, char* argv[])
                     max_mbps = fmsg.mbps;
                 }
                 else if (fmsg.type == MESSAGE_PING) {
-                    mprintf("Ping Received - ID %d\n", fmsg.ping_id);
-                    fp = fopen("/log1.txt", "a+");
-                    fprintf(fp, "Ping received %d\n", fmsg.ping_id);
-                    fclose(fp); 
+                    mprintf("Ping Received - ID %d\n", fmsg.ping_id); 
 
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = MESSAGE_PONG;

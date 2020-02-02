@@ -19,10 +19,6 @@ static AVBufferRef *hw_device_ctx = NULL;
 /// @brief creates encoder encoder
 /// @details creates FFmpeg encoder
 encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate, int gop_size, EncodeType type) {
-	FILE *fp;
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "Starting encoder creation\n");
-    fclose(fp); 
   // set memory for the encoder
 	encoder_t *encoder = (encoder_t *) malloc(sizeof(encoder_t));
 	memset(encoder, 0, sizeof(encoder_t));
@@ -37,9 +33,6 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 	avcodec_register_all();
 
 	if(type == NVENC_ENCODE) {
-	    fp = fopen("/log1.txt", "a+");
-	    fprintf(fp, "Starting NVENC\n");
-	    fclose(fp); 
     	av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_CUDA, "CUDA", NULL, 0);
    		encoder->codec = avcodec_find_encoder_by_name("h264_nvenc");
 
@@ -70,10 +63,6 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 		frames_ctx->width = encoder->context->width;
 		frames_ctx->height = encoder->context->height;
 
-	    fp = fopen("/log1.txt", "a+");
-	    fprintf(fp, "About to init hw frame\n");
-	    fclose(fp); 
-
 		av_hwframe_ctx_init(encoder->context->hw_frames_ctx);
 
 		avcodec_open2(encoder->context, encoder->codec, NULL);
@@ -96,11 +85,8 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 
 		encoder->hw_frame = av_frame_alloc();
 		av_hwframe_get_buffer(encoder->context->hw_frames_ctx, encoder->hw_frame, 0);
-	    fp = fopen("/log1.txt", "a+");
-	    fprintf(fp, "Done encoder\n");
-	    fclose(fp); 
 	} else {
-   		encoder->codec = avcodec_find_encoder_by_name("libx264");
+   		encoder->codec = avcodec_find_encoder(AV_CODEC_ID_H264);
 
 		encoder->context = avcodec_alloc_context3(encoder->codec);
 		encoder->context->width           = out_width;

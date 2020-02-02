@@ -25,6 +25,7 @@
 typedef struct DesktopContext{
   TCHAR desktop_name[1000];
   HDESK desktop_handle;
+  bool ready;
 } DesktopContext;
 
 // @brief Attaches the current thread to the current input desktop.
