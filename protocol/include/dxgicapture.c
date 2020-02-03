@@ -74,6 +74,8 @@ IDXGIOutput1* findAttachedOutput(IDXGIFactory1* factory) {
 }
 
 int CreateDXGIDevice(DXGIDevice* device) {
+    memset(device, 0, sizeof(DXGIDevice));
+
     //Initialize the factory pointer
     FILE *fp;
     IDXGIFactory1* factory;

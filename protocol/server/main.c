@@ -134,10 +134,6 @@ static int32_t SendVideo(void* opaque) {
 
     char* desktop_name = InitDesktop();
 
-    // Init DXGI Device
-    DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
-    memset(device, 0, sizeof(DXGIDevice));
-
     bool defaultFound = (strcmp("Default", desktop_name) == 0);
     if(!defaultFound) {
         fp = fopen("/log1.txt", "a+");
@@ -149,6 +145,10 @@ static int32_t SendVideo(void* opaque) {
         fprintf(fp, "Default found!\n");
         fclose(fp);
     }
+
+
+    // Init DXGI Device
+    DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
 
     if (CreateDXGIDevice(device) < 0) {
         mprintf("Error Creating DXGI Device\n");
@@ -197,10 +197,7 @@ static int32_t SendVideo(void* opaque) {
 
                 desktopContext = OpenNewDesktop("default", true, true);
 
-                free(device);
-                device = NULL;
-                device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
-                memset(device, 0, sizeof(DXGIDevice));
+                DestroyDXGIDevice(device);
                 hr = CreateDXGIDevice(device);
 
                 defaultFound = true;
@@ -235,10 +232,7 @@ static int32_t SendVideo(void* opaque) {
             desktopContext = OpenNewDesktop("default", false, true);
             desktopContext.ready = true;
 
-            free(device);
-            device = NULL;
-            device = (DXGIDevice *) malloc(sizeof(DXGIDevice));
-            memset(device, 0, sizeof(DXGIDevice));
+            DestroyDXGIDevice(device);
             hr = CreateDXGIDevice(device);
 
             defaultFound = true;
