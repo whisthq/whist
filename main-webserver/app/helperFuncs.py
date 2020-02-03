@@ -94,7 +94,7 @@ def createVMParameters(vmName, nic_id, vm_size):
         vm_reference = {
             'publisher': 'MicrosoftWindowsDesktop',
             'offer': 'Windows-10',
-            'sku': 'RS2-ProN',
+            'sku': 'RS2-Pro',
             'version': 'latest'
         }
 
