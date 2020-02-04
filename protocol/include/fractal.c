@@ -432,7 +432,6 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 			break;
 			// mouse button event
 		case MESSAGE_MOUSE_BUTTON:
-			break;
 			Event[i].type = INPUT_MOUSE;
 			Event[i].mi.dx = 0;
 			Event[i].mi.dy = 0;
