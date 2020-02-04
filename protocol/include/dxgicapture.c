@@ -67,7 +67,6 @@ void CreateDisplayHardware(struct DisplayHardware *hardware, struct CaptureDevic
 
   hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
     D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
-
 }
 
 void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *device) {
@@ -80,6 +79,11 @@ void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *devic
 
   device->width = hardware->final_output_desc.DesktopCoordinates.right;
   device->height = hardware->final_output_desc.DesktopCoordinates.bottom;
+
+  FILE *fp;
+  fp = fopen("/log1.txt", "a+");
+  fprintf(fp, "Able to duplicate %d x %d\n", device->width, device->height);
+  fclose(fp);
 
   // Texture to store GPU pixels
   tDesc.Width = hardware->final_output_desc.DesktopCoordinates.right;
@@ -150,4 +154,11 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
 
 void ReleaseScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot) {
   device->duplication->lpVtbl->UnMapDesktopSurface(device->duplication);
+}
+
+void DestroyCaptureDevice(struct CaptureDevice* device) {
+    if (device->duplication) {
+        device->duplication->lpVtbl->Release(device->duplication);
+        device->duplication = NULL;
+    }
 }

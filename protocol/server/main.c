@@ -132,23 +132,20 @@ static int32_t SendVideo(void* opaque) {
 
     SendAck(&socketContext, 1);
 
-    // char* desktop_name = InitDesktop();
+    char* desktop_name = InitDesktop();
 
-    // bool defaultFound = (strcmp("Default", desktop_name) == 0);
-    // if(!defaultFound) {
-    //     fp = fopen("/log1.txt", "a+");
-    //     fprintf(fp, "Default not found!\n");
-    //     fclose(fp);
-    //     OpenNewDesktop(NULL, false, true);
-    // } else {
-    //     desktopContext.ready = true;
-    //     fp = fopen("/log1.txt", "a+");
-    //     fprintf(fp, "Default found!\n");
-    //     fclose(fp);
-    // }
-
-    desktopContext.ready = true;
-    bool defaultFound = true;
+    bool defaultFound = (strcmp("Default", desktop_name) == 0);
+    if(!defaultFound) {
+        fp = fopen("/log1.txt", "a+");
+        fprintf(fp, "Default not found!\n");
+        fclose(fp);
+        OpenNewDesktop(NULL, false, true);
+    } else {
+        desktopContext.ready = true;
+        fp = fopen("/log1.txt", "a+");
+        fprintf(fp, "Default found!\n");
+        fclose(fp);
+    }
 
     // Init DXGI Device
     struct DisplayHardware *hardware = (struct DisplayHardware *) malloc(sizeof(struct DisplayHardware));
@@ -193,57 +190,53 @@ static int32_t SendVideo(void* opaque) {
     StartTimer(&world_timer);
 
     while (connected) {
-        // if(!defaultFound) {
-        //     defaultCounts += 1;
-        //     desktopContext = OpenNewDesktop(NULL, true, false);
+        if(!defaultFound) {
+            defaultCounts += 1;
+            desktopContext = OpenNewDesktop(NULL, true, false);
 
-        //     fp = fopen("/log1.txt", "a+");
-        //     fprintf(fp, "Queried desktop %s\n", desktopContext.desktop_name);
-        //     fclose(fp);
+            fp = fopen("/log1.txt", "a+");
+            fprintf(fp, "Queried desktop %s\n", desktopContext.desktop_name);
+            fclose(fp);
 
-        //     if(strcmp("Default", desktopContext.desktop_name) == 0) {
-        //         fp = fopen("/log1.txt", "a+");
-        //         fprintf(fp, "DESKTOP FOUND\n");
-        //         fclose(fp);
+            if(strcmp("Default", desktopContext.desktop_name) == 0) {
+                fp = fopen("/log1.txt", "a+");
+                fprintf(fp, "DESKTOP FOUND\n");
+                fclose(fp);
 
-        //         desktopContext = OpenNewDesktop("default", true, true);
+                desktopContext = OpenNewDesktop("default", true, true);
 
-        //         DestroyDXGIDevice(device);
-        //         hr = CreateDXGIDevice(device);
+                DestroyCaptureDevice(device);
+                CreateTexture(hardware, device);
 
-        //         defaultFound = true;
-        //         desktopContext.ready = true;
-        //         fp = fopen("/log1.txt", "a+");
-        //         fprintf(fp, "DESKTOP SET\n");
-        //         fclose(fp);
-        //     }
+                defaultFound = true;
+                desktopContext.ready = true;
+                fp = fopen("/log1.txt", "a+");
+                fprintf(fp, "DESKTOP SET\n");
+                fclose(fp);
+            }
             
-        // }
+        }
 
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
-
-            fp = fopen("/log1.txt", "a+");
-            fprintf(fp, "Ack: %f\n", GetTimer(world_timer));
-            fclose(fp);
         }
 
         hr = CaptureScreen(device, screenshot);
 
-        // if(hr == DXGI_ERROR_INVALID_CALL) {  
-        //     fp = fopen("/log1.txt", "a+");
-        //     fprintf(fp, "INVALID CALL FOUND\n");
-        //     fclose(fp);
+        if(hr == DXGI_ERROR_INVALID_CALL) {  
+            fp = fopen("/log1.txt", "a+");
+            fprintf(fp, "INVALID CALL FOUND\n");
+            fclose(fp);
 
-        //     desktopContext = OpenNewDesktop(NULL, false, true);
-        //     desktopContext.ready = true;
+            desktopContext = OpenNewDesktop(NULL, false, true);
+            desktopContext.ready = true;
 
-        //     DestroyDXGIDevice(device);
-        //     hr = CreateDXGIDevice(device);
+            DestroyCaptureDevice(device);
+            CreateTexture(hardware, device);
 
-        //     defaultFound = true;
-        // }
+            defaultFound = true;
+        }
 
         clock server_frame_timer;
         StartTimer(&server_frame_timer);
@@ -336,7 +329,7 @@ static int32_t SendVideo(void* opaque) {
         }
     }
 
-    // DestroyDXGIDevice(device);
+    DestroyCaptureDevice(device);
     return 0;
 }
 
