@@ -86,30 +86,7 @@ void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *devic
       dm.dmPelsHeight = device->height;
       dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
 
-      LONG result = ChangeDisplaySettings(&dm, 0);
-      if(result == DISP_CHANGE_SUCCESSFUL) {
-          fp = fopen("/log.txt", "a+");
-          fprintf(fp, "RESOLUTION CHANGE WORKED\n");
-          printf("SUCCESS\n");
-          fclose(fp);
-      } else if(result == DISP_CHANGE_FAILED) {
-          fp = fopen("/log.txt", "a+");
-          fprintf(fp, "RESOLUTION CHANGE FAILED\n");
-          fclose(fp);
-      } else if(result == DISP_CHANGE_RESTART) {
-          fp = fopen("/log.txt", "a+");
-          fprintf(fp, "RESOLUTION CHANGE RESTART\n");
-          fclose(fp);
-      } else if(result == DISP_CHANGE_NOTUPDATED) {
-          fp = fopen("/log.txt", "a+");
-          fprintf(fp, "RESOLUTION CHANGE NOT UPDATED\n");
-          fclose(fp);
-      } else if(result == DISP_CHANGE_BADMODE) {
-          fp = fopen("/log.txt", "a+");
-          fprintf(fp, "RESOLUTION CHANGE BAD MODE\n");
-          printf("BAD MODE\n");
-          fclose(fp);
-      }
+      ChangeDisplaySettings(&dm, 0);
   }
 
   hardware->output->lpVtbl->QueryInterface(hardware->output, &IID_IDXGIOutput1, (void**)&output1);
@@ -118,10 +95,6 @@ void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *devic
 
   device->width = hardware->final_output_desc.DesktopCoordinates.right;
   device->height = hardware->final_output_desc.DesktopCoordinates.bottom;
-
-  fp = fopen("/log1.txt", "a+");
-  fprintf(fp, "Able to duplicate %d x %d\n", device->width, device->height);
-  fclose(fp);
 
   // Texture to store GPU pixels
   tDesc.Width = hardware->final_output_desc.DesktopCoordinates.right;
@@ -177,20 +150,13 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
     hr = screenshot->desktop_resource->lpVtbl->QueryInterface(screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
     hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &screenshot->mapped_rect);
     if(hr == DXGI_ERROR_UNSUPPORTED) {
-      fp = fopen("/log1.txt", "a+");
-      fprintf(fp, "GPU copy\n");
-      fclose(fp);
       device->D3D11context->lpVtbl->CopySubresourceRegion(device->D3D11context, (ID3D11Resource*)device->staging_texture, 0, 0, 0, 0,
                                               (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
 
       hr = device->staging_texture->lpVtbl->QueryInterface(device->staging_texture, &IID_IDXGISurface, (void**)&screenshot->surface);
       hr = screenshot->surface->lpVtbl->Map(screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
       return hr;
-    } else {
-      fp = fopen("/log1.txt", "a+");
-      fprintf(fp, "CPU copy\n");
-      fclose(fp);
-    }
+    } 
     return hr;
   }
 

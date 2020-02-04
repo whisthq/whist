@@ -140,15 +140,9 @@ static int32_t SendVideo(void* opaque) {
 
     bool defaultFound = (strcmp("Default", desktop_name) == 0);
     if(!defaultFound) {
-        fp = fopen("/log1.txt", "a+");
-        fprintf(fp, "Default not found!\n");
-        fclose(fp);
         OpenNewDesktop(NULL, false, true);
     } else {
         desktopContext.ready = true;
-        fp = fopen("/log1.txt", "a+");
-        fprintf(fp, "Default found!\n");
-        fclose(fp);
     }
 
     // Init DXGI Device
@@ -195,15 +189,7 @@ static int32_t SendVideo(void* opaque) {
             defaultCounts += 1;
             desktopContext = OpenNewDesktop(NULL, true, false);
 
-            fp = fopen("/log1.txt", "a+");
-            fprintf(fp, "Queried desktop %s\n", desktopContext.desktop_name);
-            fclose(fp);
-
             if(strcmp("Default", desktopContext.desktop_name) == 0) {
-                fp = fopen("/log1.txt", "a+");
-                fprintf(fp, "DESKTOP FOUND\n");
-                fclose(fp);
-
                 desktopContext = OpenNewDesktop("default", true, true);
 
                 DestroyCaptureDevice(device);
@@ -211,9 +197,6 @@ static int32_t SendVideo(void* opaque) {
 
                 defaultFound = true;
                 desktopContext.ready = true;
-                fp = fopen("/log1.txt", "a+");
-                fprintf(fp, "DESKTOP SET\n");
-                fclose(fp);
             }
             
         }
@@ -226,11 +209,6 @@ static int32_t SendVideo(void* opaque) {
         hr = CaptureScreen(device, screenshot);
 
         if(hr == DXGI_ERROR_INVALID_CALL) {  
-            printf("Invalid call found\n");
-            fp = fopen("/log1.txt", "a+");
-            fprintf(fp, "INVALID CALL FOUND\n");
-            fclose(fp);
-
             desktopContext = OpenNewDesktop("default", true, true);
 
             DestroyCaptureDevice(device);
@@ -347,21 +325,7 @@ static int32_t SendAudio(void* opaque) {
     //     Sleep(500);
     // }
 
-    FILE *fp;
-    // fp = fopen("/log0.txt", "a+");
-    // fprintf(fp, "Desktop found, starting audio\n");
-    // fclose(fp); 
-
-
-    // if(setCurrentInputDesktop(desktopContext.desktop_handle) == 0) {
-    //     fp = fopen("/log0.txt", "a+");
-    //     fprintf(fp, "Audio thread set\n");
-    //     fclose(fp); 
-    // } else {
-    //     fp = fopen("/log0.txt", "a+");
-    //     fprintf(fp, "Audio thread failed\n");
-    //     fclose(fp);    
-    // }
+    // setCurrentInputDesktop(desktopContext.desktop_handle);
 
     struct SocketContext context = *(struct SocketContext*) opaque;
     int slen = sizeof(context.addr), id = 1;
@@ -369,10 +333,6 @@ static int32_t SendAudio(void* opaque) {
     wasapi_device* audio_device = (wasapi_device*)malloc(sizeof(struct wasapi_device));
     audio_device = CreateAudioDevice(audio_device);
     StartAudioDevice(audio_device);
-
-    fp = fopen("/log0.txt", "a+");
-    fprintf(fp, "Done starting audio device\n");
-    fclose(fp); 
 
     HRESULT hr = CoInitialize(NULL);
     DWORD dwWaitResult;
@@ -524,10 +484,6 @@ int main(int argc, char* argv[])
                 else if (fmsg.type == MESSAGE_DIMENSIONS) {
                     int width = fmsg.dimensions.width;
                     int height = fmsg.dimensions.height;
-
-                    fp = fopen("/log2.txt", "a+");
-                    fprintf(fp, "Changing dimensions: %d x %d\n", width, height);
-                    fclose(fp);
 
                     DestroyCaptureDevice(device);
                     CreateTexture(hardware, device);
