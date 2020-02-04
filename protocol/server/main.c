@@ -23,7 +23,7 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 10;
+volatile static int gop_size = 1;
 volatile static DesktopContext desktopContext = {0};
 
 char buf[LARGEST_FRAME_SIZE];
@@ -220,16 +220,12 @@ static int32_t SendVideo(void* opaque) {
 
         hr = CaptureScreen(device);
 
-        fp = fopen("/log1.txt", "a+");
-        fprintf(fp, "Capture status %X\n", hr);
-        fclose(fp);
-
         if(hr == DXGI_ERROR_INVALID_CALL) {  
             fp = fopen("/log1.txt", "a+");
             fprintf(fp, "INVALID CALL FOUND\n");
             fclose(fp);
 
-            desktopContext = OpenNewDesktop("default", false, true);
+            desktopContext = OpenNewDesktop(NULL, false, true);
             desktopContext.ready = true;
 
             DestroyDXGIDevice(device);
