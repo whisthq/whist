@@ -388,15 +388,8 @@ static int32_t SendAudio(void* opaque) {
             audio_device->audioBufSize = nNumFramesToRead * nBlockAlign;
 
             if (audio_device->audioBufSize > 0 && audio_device->audioBufSize < 10000) {
-                fp = fopen("/log0.txt", "a+");
-                fprintf(fp, "Captured audio packet %d\n", audio_device->audioBufSize);
-                fclose(fp); 
                 if (SendPacket(&context, PACKET_AUDIO, audio_device->pData, audio_device->audioBufSize, id, -1.0) < 0) {
                     mprintf("Could not send audio frame\n");
-                } else {
-                    fp = fopen("/log0.txt", "a+");
-                    fprintf(fp, "Sent audio packet of size %d\n", audio_device->audioBufSize);
-                    fclose(fp);  
                 }
             }
 
