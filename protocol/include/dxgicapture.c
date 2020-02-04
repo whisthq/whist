@@ -11,190 +11,143 @@
 
 #include "dxgicapture.h"
 
-ID3D11Device* createDirect3D11Device(IDXGIAdapter1* pOutputAdapter) {
-    D3D_FEATURE_LEVEL aFeatureLevels[] =
-    {
-      D3D_FEATURE_LEVEL_11_0
-    };
+#define USE_GPU 0
+#define USE_MONITOR 0
 
-    ID3D11Device* pDevice;
-    D3D_FEATURE_LEVEL featureLevel;
+D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1,
+                                  D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_9_1 };
+UINT NumFeatureLevels = ARRAYSIZE(FeatureLevels);
+D3D_FEATURE_LEVEL FeatureLevel;
 
-    ID3D11DeviceContext* pDeviceContext;
-    HRESULT hCreateDevice;
-    hCreateDevice = D3D11CreateDevice(pOutputAdapter,
-        D3D_DRIVER_TYPE_UNKNOWN,
-        NULL,
-        0,
-        aFeatureLevels,
-        ARRAYSIZE(aFeatureLevels),
-        D3D11_SDK_VERSION,
-        &pDevice,
-        &featureLevel,
-        &pDeviceContext);
-    if (hCreateDevice == S_OK) {
-        return pDevice;
-    }
-    return NULL;
+void CreateDisplayHardware(struct DisplayHardware *hardware, struct CaptureDevice *device) {
+  int num_adapters = 0, num_outputs = 0, i = 0, j = 0;
+  IDXGIFactory1 *factory;
+  IDXGIOutput *outputs[10];
+  IDXGIAdapter *adapters[10];
+  DXGI_OUTPUT_DESC output_desc;
+
+  HRESULT hr = CreateDXGIFactory1(&IID_IDXGIFactory1, (void**)(&factory));
+
+  // GET ALL GPUS
+  while(factory->lpVtbl->EnumAdapters1(factory, num_adapters, &hardware->adapter) != DXGI_ERROR_NOT_FOUND) {
+    adapters[num_adapters] = hardware->adapter;
+    ++num_adapters;
+  }
+
+  // GET GPU DESCRIPTIONS
+  for(i = 0; i < num_adapters; i++) {
+    DXGI_ADAPTER_DESC1 desc;
+    hardware->adapter = adapters[i];
+    hr = hardware->adapter->lpVtbl->GetDesc1(hardware->adapter, &desc);
+    // printf("Adapter: %s\n", desc.Description);
+  }
+
+  // GET ALL MONITORS
+  for(i = 0; i < num_adapters; i++) {
+    int this_adapter_outputs = 0;
+    hardware->adapter = adapters[i];
+    while(hardware->adapter->lpVtbl->EnumOutputs(hardware->adapter, this_adapter_outputs, &hardware->output) != DXGI_ERROR_NOT_FOUND) {
+      // printf("Found monitor %d on adapter %lu\n", this_adapter_outputs, i);
+      outputs[num_outputs] = hardware->output;
+      ++this_adapter_outputs;
+      ++num_outputs;
+    }  
+  }
+
+  // GET MONITOR DESCRIPTIONS
+  for(i = 0; i < num_outputs; i++) {
+    hardware->output = outputs[i];
+    hr = hardware->output->lpVtbl->GetDesc(hardware->output, &output_desc);
+    // printf("Monitor: %s\n", output_desc.DeviceName);
+  }
+
+  hardware->adapter = adapters[USE_GPU];
+  hardware->output = outputs[USE_MONITOR];
+
+
+  hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
+    D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
+
 }
 
-IDXGIOutput1* findAttachedOutput(IDXGIFactory1* factory) {
-    IDXGIAdapter1* pAdapter;
+void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *device) {
+  D3D11_TEXTURE2D_DESC tDesc;
+  IDXGIOutput1* output1;
 
-    UINT adapterIndex = 0;
-    while (factory->lpVtbl->EnumAdapters1(factory, adapterIndex, &pAdapter) != DXGI_ERROR_NOT_FOUND) {
-        IDXGIAdapter2* pAdapter2 = (IDXGIAdapter2*)pAdapter;
+  hardware->output->lpVtbl->QueryInterface(hardware->output, &IID_IDXGIOutput1, (void**)&output1);
+  output1->lpVtbl->DuplicateOutput(output1, device->D3D11device, &device->duplication);
+  hardware->output->lpVtbl->GetDesc(hardware->output, &hardware->final_output_desc);
 
-        UINT outputIndex = 0;
-        IDXGIOutput* pOutput;
+  device->width = hardware->final_output_desc.DesktopCoordinates.right;
+  device->height = hardware->final_output_desc.DesktopCoordinates.bottom;
 
-        DXGI_ADAPTER_DESC aDesc;
-        pAdapter2->lpVtbl->GetDesc(pAdapter2, &aDesc);
+  // Texture to store GPU pixels
+  tDesc.Width = hardware->final_output_desc.DesktopCoordinates.right;
+  tDesc.Height = hardware->final_output_desc.DesktopCoordinates.bottom;
+  tDesc.MipLevels = 1;
+  tDesc.ArraySize = 1;
+  tDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+  tDesc.SampleDesc.Count = 1;
+  tDesc.SampleDesc.Quality = 0;
+  tDesc.Usage = D3D11_USAGE_STAGING;
+  tDesc.BindFlags = 0;
+  tDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+  tDesc.MiscFlags = 0;
 
-        HRESULT hEnumOutputs = pAdapter->lpVtbl->EnumOutputs(pAdapter, outputIndex, &pOutput);
-        while (hEnumOutputs != DXGI_ERROR_NOT_FOUND) {
-            if (hEnumOutputs != S_OK) {
-                return NULL;
-            }
+  device->Box.top = hardware->final_output_desc.DesktopCoordinates.top;
+  device->Box.left = hardware->final_output_desc.DesktopCoordinates.left;
+  device->Box.right = hardware->final_output_desc.DesktopCoordinates.right;
+  device->Box.bottom = hardware->final_output_desc.DesktopCoordinates.bottom;
+  device->Box.front = 0;
+  device->Box.back = 1;
 
-            DXGI_OUTPUT_DESC oDesc;
-            pOutput->lpVtbl->GetDesc(pOutput, &oDesc);
+  device->D3D11device->lpVtbl->CreateTexture2D(device->D3D11device, &tDesc, NULL, &device->staging_texture);
 
-            if (oDesc.AttachedToDesktop) {
-                return (IDXGIOutput1*)pOutput;
-            }
-
-            ++outputIndex;
-            hEnumOutputs = pAdapter->lpVtbl->EnumOutputs(pAdapter, outputIndex, &pOutput);
-        }
-
-        ++adapterIndex;
-    }
-    return -1;
+  device->duplication->lpVtbl->GetDesc(device->duplication, &device->duplication_desc);
 }
 
-int CreateDXGIDevice(DXGIDevice* device) {
-    memset(device, 0, sizeof(DXGIDevice));
+HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot) {
+  int frameCaptured;
+  HRESULT hr;
 
-    //Initialize the factory pointer
-    FILE *fp;
-    IDXGIFactory2* factory;
+  device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
-    //Actually create it
-    HRESULT hCreateFactory = CreateDXGIFactory1(&IID_IDXGIFactory2, (void**)(&factory));
-    if (hCreateFactory != S_OK) {
-        mprintf("Error creating Factory: 0x%X\n", hCreateFactory);
-        return -1;
-    }
+  if (NULL != screenshot->final_texture) {
+    screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
+    screenshot->final_texture = NULL;
+  }
+  
+  if (NULL != screenshot->desktop_resource) {
+    screenshot->desktop_resource->lpVtbl->Release(screenshot->desktop_resource);
+    screenshot->desktop_resource = NULL;
+  }
 
-    IDXGIOutput1* output = findAttachedOutput(factory);
+  hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 0, &device->frame_info, &screenshot->desktop_resource);
+  if(FAILED(hr)) {
+    return hr;
+  } else {
+    frameCaptured = 1;
+  }
 
-    void* pOutputParent;
-    HRESULT hGetParent = output->lpVtbl->GetParent(output, &IID_IDXGIAdapter1, &pOutputParent);
-    if (hGetParent != S_OK) {
-        mprintf("Error getting patent: 0x%X\n", hGetParent);
-        return -1;
-    }
+  if(frameCaptured) {
+    device->counter++;
+    hr = screenshot->desktop_resource->lpVtbl->QueryInterface(screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
+    hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &screenshot->mapped_rect);
+    if(hr == DXGI_ERROR_UNSUPPORTED) {
+      device->D3D11context->lpVtbl->CopySubresourceRegion(device->D3D11context, (ID3D11Resource*)device->staging_texture, 0, 0, 0, 0,
+                                              (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
 
-    IDXGIAdapter1* adapter = (IDXGIAdapter1*)pOutputParent;
-    ID3D11Device* pD3Device = createDirect3D11Device(adapter);
-
-    DXGI_OUTPUT_DESC oDesc;
-
-    HRESULT hOutputDesc = output->lpVtbl->GetDesc(output, &oDesc);
-    if (hOutputDesc != S_OK) {
-        mprintf("Error getting output description: 0x%X\n", hOutputDesc);
-        return -1;
-    }
-
-    DXGI_ADAPTER_DESC aDesc;
-    HRESULT hAdapterDesc = adapter->lpVtbl->GetDesc(adapter, &aDesc);
-    if (hAdapterDesc != S_OK) {
-        mprintf("Error getting adapter description: 0x%X\n", hAdapterDesc);
-        return -1;
-    }
-
-    mprintf("Duplicating '%S' attached to '%S'\n", oDesc.DeviceName, aDesc.Description);
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "Duplicating '%S' attached to '%S'\n", oDesc.DeviceName, aDesc.Description);
-    fclose(fp);
-
-    HRESULT hDuplicateOutput = output->lpVtbl->DuplicateOutput(output, pD3Device, &device->duplication);
-    if (hDuplicateOutput != S_OK) {
-        mprintf("Error duplicating output: 0x%X\n", hDuplicateOutput);
-        return -1;
-    }
-
-    DXGI_OUTDUPL_DESC odDesc;
-    device->duplication->lpVtbl->GetDesc(device->duplication, &odDesc);
-
-    mprintf("Able to duplicate a %ix%i desktop\n", odDesc.ModeDesc.Width, odDesc.ModeDesc.Height);
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "Able to duplicate a %ix%i desktop\n", odDesc.ModeDesc.Width, odDesc.ModeDesc.Height);
-    fclose(fp);
-    
-    // get width and height
-    HMONITOR hMonitor = oDesc.Monitor;
-    MONITORINFOEX monitorInfo;
-    monitorInfo.cbSize = sizeof(MONITORINFOEX);
-    GetMonitorInfo(hMonitor, &monitorInfo);
-
-    DEVMODE devMode;
-    devMode.dmSize = sizeof(DEVMODE);
-    devMode.dmDriverExtra = 0;
-
-    EnumDisplaySettings(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode);
-
-    devMode.dmPelsWidth = 1280;
-    devMode.dmPelsHeight = 720;
-
-    //ChangeDisplaySettings(&devMode, 0);
-
-    EnumDisplaySettings(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode);
-
-    device->width = devMode.dmPelsWidth;
-    device->height = devMode.dmPelsHeight;
-
-    mprintf("Dimensions are %ix%i\n", device->width, device->height);
-    fp = fopen("/log1.txt", "a+");
-    fprintf(fp, "Dimensions are %ix%i\n", device->width, device->height);
-    fclose(fp);
-    
-    return 0;
-}
-
-int DestroyDXGIDevice(DXGIDevice* device) {
-    if (device->duplication) {
-        device->duplication->lpVtbl->Release(device->duplication);
-        device->duplication = NULL;
-    }
-    return 0;
-}
-
-HRESULT CaptureScreen(DXGIDevice* device) {
-    HRESULT hr;
-    hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 0, &device->frame_info, &device->resource);
-    if (FAILED(hr)) {
-        return hr;
-    }
-    int accumulated_frames = device->frame_info.AccumulatedFrames;
-    if (accumulated_frames > 1) {
-        mprintf("Accumulated Frames %d\n", accumulated_frames);
-    }
-    hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &device->frame_data);
-    if (FAILED(hr)) {
-        ReleaseScreen(device);
-        return hr;
+      hr = device->staging_texture->lpVtbl->QueryInterface(device->staging_texture, &IID_IDXGISurface, (void**)&screenshot->surface);
+      hr = screenshot->surface->lpVtbl->Map(screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
+      return hr;
     }
     return hr;
+  }
+
+  return S_OK;
 }
 
-HRESULT ReleaseScreen(DXGIDevice* device) {
-    HRESULT hr;
-    hr = device->duplication->lpVtbl->UnMapDesktopSurface(device->duplication);
-    if (FAILED(hr)) {
-        return hr;
-    }
-    hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
-    return hr;
+
+void ReleaseScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot) {
+  device->duplication->lpVtbl->UnMapDesktopSurface(device->duplication);
 }

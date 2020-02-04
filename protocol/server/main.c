@@ -132,29 +132,36 @@ static int32_t SendVideo(void* opaque) {
 
     SendAck(&socketContext, 1);
 
-    char* desktop_name = InitDesktop();
+    // char* desktop_name = InitDesktop();
 
-    bool defaultFound = (strcmp("Default", desktop_name) == 0);
-    if(!defaultFound) {
-        fp = fopen("/log1.txt", "a+");
-        fprintf(fp, "Default not found!\n");
-        fclose(fp);
-        OpenNewDesktop(NULL, false, true);
-    } else {
-        desktopContext.ready = true;
-        fp = fopen("/log1.txt", "a+");
-        fprintf(fp, "Default found!\n");
-        fclose(fp);
-    }
+    // bool defaultFound = (strcmp("Default", desktop_name) == 0);
+    // if(!defaultFound) {
+    //     fp = fopen("/log1.txt", "a+");
+    //     fprintf(fp, "Default not found!\n");
+    //     fclose(fp);
+    //     OpenNewDesktop(NULL, false, true);
+    // } else {
+    //     desktopContext.ready = true;
+    //     fp = fopen("/log1.txt", "a+");
+    //     fprintf(fp, "Default found!\n");
+    //     fclose(fp);
+    // }
 
+    desktopContext.ready = true;
+    bool defaultFound = true;
 
     // Init DXGI Device
-    DXGIDevice* device = (DXGIDevice*)malloc(sizeof(DXGIDevice));
+    struct DisplayHardware *hardware = (struct DisplayHardware *) malloc(sizeof(struct DisplayHardware));
+    memset(hardware, 0, sizeof(struct DisplayHardware));
 
-    if (CreateDXGIDevice(device) < 0) {
-        mprintf("Error Creating DXGI Device\n");
-        return -1;
-    }
+    struct CaptureDevice *device = (struct CaptureDevice *) malloc(sizeof(struct CaptureDevice));
+    memset(device, 0, sizeof(struct CaptureDevice));
+
+    struct ScreenshotContainer *screenshot = (struct ScreenshotContainer *) malloc(sizeof(struct ScreenshotContainer));
+    memset(screenshot, 0, sizeof(struct ScreenshotContainer));
+
+    CreateDisplayHardware(hardware, device);
+    CreateTexture(hardware, device);
 
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
@@ -186,37 +193,32 @@ static int32_t SendVideo(void* opaque) {
     StartTimer(&world_timer);
 
     while (connected) {
-        if(!defaultFound) {
-            defaultCounts += 1;
-            desktopContext = OpenNewDesktop(NULL, true, false);
+        // if(!defaultFound) {
+        //     defaultCounts += 1;
+        //     desktopContext = OpenNewDesktop(NULL, true, false);
 
-            fp = fopen("/log1.txt", "a+");
-            fprintf(fp, "Queried desktop %s\n", desktopContext.desktop_name);
-            fclose(fp);
+        //     fp = fopen("/log1.txt", "a+");
+        //     fprintf(fp, "Queried desktop %s\n", desktopContext.desktop_name);
+        //     fclose(fp);
 
-            if(strcmp("Default", desktopContext.desktop_name) == 0) {
-                fp = fopen("/log1.txt", "a+");
-                fprintf(fp, "DESKTOP FOUND\n");
-                fclose(fp);
+        //     if(strcmp("Default", desktopContext.desktop_name) == 0) {
+        //         fp = fopen("/log1.txt", "a+");
+        //         fprintf(fp, "DESKTOP FOUND\n");
+        //         fclose(fp);
 
-                desktopContext = OpenNewDesktop("default", true, true);
+        //         desktopContext = OpenNewDesktop("default", true, true);
 
-                DestroyDXGIDevice(device);
-                hr = CreateDXGIDevice(device);
+        //         DestroyDXGIDevice(device);
+        //         hr = CreateDXGIDevice(device);
 
-                defaultFound = true;
-                desktopContext.ready = true;
-                fp = fopen("/log1.txt", "a+");
-                fprintf(fp, "DESKTOP SET\n");
-                fclose(fp);
-            }
+        //         defaultFound = true;
+        //         desktopContext.ready = true;
+        //         fp = fopen("/log1.txt", "a+");
+        //         fprintf(fp, "DESKTOP SET\n");
+        //         fclose(fp);
+        //     }
             
-        }
-
-
-        fp = fopen("/log1.txt", "a+");
-        fprintf(fp, "Default count is %d\n", defaultCounts);
-        fclose(fp);
+        // }
 
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
@@ -227,21 +229,21 @@ static int32_t SendVideo(void* opaque) {
             fclose(fp);
         }
 
-        hr = CaptureScreen(device);
+        hr = CaptureScreen(device, screenshot);
 
-        if(hr == DXGI_ERROR_INVALID_CALL) {  
-            fp = fopen("/log1.txt", "a+");
-            fprintf(fp, "INVALID CALL FOUND\n");
-            fclose(fp);
+        // if(hr == DXGI_ERROR_INVALID_CALL) {  
+        //     fp = fopen("/log1.txt", "a+");
+        //     fprintf(fp, "INVALID CALL FOUND\n");
+        //     fclose(fp);
 
-            desktopContext = OpenNewDesktop(NULL, false, true);
-            desktopContext.ready = true;
+        //     desktopContext = OpenNewDesktop(NULL, false, true);
+        //     desktopContext.ready = true;
 
-            DestroyDXGIDevice(device);
-            hr = CreateDXGIDevice(device);
+        //     DestroyDXGIDevice(device);
+        //     hr = CreateDXGIDevice(device);
 
-            defaultFound = true;
-        }
+        //     defaultFound = true;
+        // }
 
         clock server_frame_timer;
         StartTimer(&server_frame_timer);
@@ -257,7 +259,7 @@ static int32_t SendVideo(void* opaque) {
 
             clock t;
             StartTimer(&t);
-            video_encoder_encode(encoder, device->frame_data.pBits);
+            video_encoder_encode(encoder, screenshot->mapped_rect.pBits);
             //mprintf("Encode Time: %f\n", GetTimer(t));
 
             bitrate_tested_frames++;
@@ -322,10 +324,10 @@ static int32_t SendVideo(void* opaque) {
             }
 
             id++;
-            ReleaseScreen(device);
+            ReleaseScreen(device, screenshot);
         }
         else if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
-            mprintf("ERROR: %d\n", WSAGetLastError());
+            mprintf("ERROR: %d %X\n", WSAGetLastError(), hr);
             consecutive_capture_screen_errors++;
             if (consecutive_capture_screen_errors == 3) {
                 mprintf("DXGI errored too many times!\n");
@@ -334,30 +336,30 @@ static int32_t SendVideo(void* opaque) {
         }
     }
 
-    DestroyDXGIDevice(device);
+    // DestroyDXGIDevice(device);
     return 0;
 }
 
 static int32_t SendAudio(void* opaque) {
-    while(!desktopContext.ready) {
-        Sleep(500);
-    }
+    // while(!desktopContext.ready) {
+    //     Sleep(500);
+    // }
 
     FILE *fp;
-    fp = fopen("/log0.txt", "a+");
-    fprintf(fp, "Desktop found, starting audio\n");
-    fclose(fp); 
+    // fp = fopen("/log0.txt", "a+");
+    // fprintf(fp, "Desktop found, starting audio\n");
+    // fclose(fp); 
 
 
-    if(setCurrentInputDesktop(desktopContext.desktop_handle) == 0) {
-        fp = fopen("/log0.txt", "a+");
-        fprintf(fp, "Audio thread set\n");
-        fclose(fp); 
-    } else {
-        fp = fopen("/log0.txt", "a+");
-        fprintf(fp, "Audio thread failed\n");
-        fclose(fp);    
-    }
+    // if(setCurrentInputDesktop(desktopContext.desktop_handle) == 0) {
+    //     fp = fopen("/log0.txt", "a+");
+    //     fprintf(fp, "Audio thread set\n");
+    //     fclose(fp); 
+    // } else {
+    //     fp = fopen("/log0.txt", "a+");
+    //     fprintf(fp, "Audio thread failed\n");
+    //     fclose(fp);    
+    // }
 
     struct SocketContext context = *(struct SocketContext*) opaque;
     int slen = sizeof(context.addr), id = 1;
@@ -435,7 +437,7 @@ int main(int argc, char* argv[])
         packet_mutex = SDL_CreateMutex();
 
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
-        // SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
+        SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
 
         struct FractalClientMessage fmsgs[6];
         struct FractalClientMessage fmsg;
@@ -556,7 +558,7 @@ int main(int argc, char* argv[])
         LockWorkStation();
 
         SDL_WaitThread(send_video, NULL);
-        // SDL_WaitThread(send_audio, NULL);
+        SDL_WaitThread(send_audio, NULL);
 
         SDL_DestroyMutex(packet_mutex);
 
