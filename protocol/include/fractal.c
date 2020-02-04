@@ -469,7 +469,11 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 		}
 	}
 	// send FMSG mapped to Windows event to Windows and return
-	SendInput(len, Event, sizeof(INPUT)); // 1 structure to send
+	int num_events_sent = SendInput(len, Event, sizeof(INPUT)); // 1 structure to send
+
+	if (len != num_events_sent) {
+		mprintf("SendInput did not send all events! %d/%d\n", num_events_sent, len);
+	}
 
 	return FRACTAL_OK;
 }

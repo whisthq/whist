@@ -78,7 +78,7 @@ int CreateDXGIDevice(DXGIDevice* device) {
 
     //Initialize the factory pointer
     FILE *fp;
-    IDXGIFactory1* factory;
+    IDXGIFactory2* factory;
 
     //Actually create it
     HRESULT hCreateFactory = CreateDXGIFactory1(&IID_IDXGIFactory2, (void**)(&factory));

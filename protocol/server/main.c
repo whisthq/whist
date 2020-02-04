@@ -141,6 +141,7 @@ static int32_t SendVideo(void* opaque) {
         fclose(fp);
         OpenNewDesktop(NULL, false, true);
     } else {
+        desktopContext.ready = true;
         fp = fopen("/log1.txt", "a+");
         fprintf(fp, "Default found!\n");
         fclose(fp);
@@ -181,6 +182,9 @@ static int32_t SendVideo(void* opaque) {
     int defaultCounts = 1;
     HRESULT hr;
 
+    clock world_timer;
+    StartTimer(&world_timer);
+
     while (connected) {
         if(!defaultFound) {
             defaultCounts += 1;
@@ -201,6 +205,7 @@ static int32_t SendVideo(void* opaque) {
                 hr = CreateDXGIDevice(device);
 
                 defaultFound = true;
+                desktopContext.ready = true;
                 fp = fopen("/log1.txt", "a+");
                 fprintf(fp, "DESKTOP SET\n");
                 fclose(fp);
@@ -216,6 +221,10 @@ static int32_t SendVideo(void* opaque) {
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
+
+            fp = fopen("/log1.txt", "a+");
+            fprintf(fp, "Ack: %f\n", GetTimer(world_timer));
+            fclose(fp);
         }
 
         hr = CaptureScreen(device);
@@ -437,6 +446,7 @@ int main(int argc, char* argv[])
 
         struct FractalClientMessage fmsgs[6];
         struct FractalClientMessage fmsg;
+        struct FractalClientMessage last_mouse = { 0 };
         int slen = sizeof(PacketReceiveContext.addr), i = 0, j = 0, active = 0;
         FractalStatus status;
 
@@ -448,6 +458,9 @@ int main(int argc, char* argv[])
         SendAck(&PacketSendContext, 5);
         StartTimer(&ack_timer);
 
+        clock totaltime;
+        StartTimer(&totaltime);
+
         while (connected) {
             if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
                 SendAck(&PacketReceiveContext, 1);
@@ -458,6 +471,10 @@ int main(int argc, char* argv[])
                 mprintf("Client connection dropped.\n");
                 connected = false;
                 break;
+            }
+
+            if (last_mouse.type != 0) {
+                ReplayUserInput(&last_mouse, 1);
             }
 
             memset(&fmsg, 0, sizeof(fmsg));
@@ -534,12 +551,16 @@ int main(int argc, char* argv[])
                         mprintf("NACKed packet not found, ID %d was located instead.\n", video_packet->id);
                     }
                 }
-                else {
-                    fmsgs[0] = fmsg;
-                    status = ReplayUserInput(fmsgs, 1);
+                else if (fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
+                    if (fmsg.type == MESSAGE_MOUSE_MOTION) {
+                        last_mouse = fmsg;
+                    }
+                    status = ReplayUserInput(&fmsg, 1);
                 }
             }
         }
+
+        LockWorkStation();
 
         SDL_WaitThread(send_video, NULL);
         // SDL_WaitThread(send_audio, NULL);
