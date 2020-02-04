@@ -73,6 +73,45 @@ void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *devic
   D3D11_TEXTURE2D_DESC tDesc;
   IDXGIOutput1* output1;
 
+  FILE *fp;
+  DEVMODE dm;
+  memset(&dm, 0, sizeof(dm));
+  dm.dmSize = sizeof(dm);
+
+  if (0 != EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm))
+  {
+      int savew = dm.dmPelsWidth;
+      int saveh = dm.dmPelsHeight;
+      dm.dmPelsWidth = device->width;
+      dm.dmPelsHeight = device->height;
+      dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
+
+      LONG result = ChangeDisplaySettings(&dm, 0);
+      if(result == DISP_CHANGE_SUCCESSFUL) {
+          fp = fopen("/log.txt", "a+");
+          fprintf(fp, "RESOLUTION CHANGE WORKED\n");
+          printf("SUCCESS\n");
+          fclose(fp);
+      } else if(result == DISP_CHANGE_FAILED) {
+          fp = fopen("/log.txt", "a+");
+          fprintf(fp, "RESOLUTION CHANGE FAILED\n");
+          fclose(fp);
+      } else if(result == DISP_CHANGE_RESTART) {
+          fp = fopen("/log.txt", "a+");
+          fprintf(fp, "RESOLUTION CHANGE RESTART\n");
+          fclose(fp);
+      } else if(result == DISP_CHANGE_NOTUPDATED) {
+          fp = fopen("/log.txt", "a+");
+          fprintf(fp, "RESOLUTION CHANGE NOT UPDATED\n");
+          fclose(fp);
+      } else if(result == DISP_CHANGE_BADMODE) {
+          fp = fopen("/log.txt", "a+");
+          fprintf(fp, "RESOLUTION CHANGE BAD MODE\n");
+          printf("BAD MODE\n");
+          fclose(fp);
+      }
+  }
+
   hardware->output->lpVtbl->QueryInterface(hardware->output, &IID_IDXGIOutput1, (void**)&output1);
   output1->lpVtbl->DuplicateOutput(output1, device->D3D11device, &device->duplication);
   hardware->output->lpVtbl->GetDesc(hardware->output, &hardware->final_output_desc);
@@ -80,7 +119,6 @@ void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *devic
   device->width = hardware->final_output_desc.DesktopCoordinates.right;
   device->height = hardware->final_output_desc.DesktopCoordinates.bottom;
 
-  FILE *fp;
   fp = fopen("/log1.txt", "a+");
   fprintf(fp, "Able to duplicate %d x %d\n", device->width, device->height);
   fclose(fp);

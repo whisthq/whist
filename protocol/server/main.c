@@ -20,11 +20,15 @@
 #define USE_GPU 0
 #define USE_MONITOR 0
 #define ENCODE_TYPE NVENC_ENCODE
+#define DEFAULT_WIDTH 1920
+#define DEFAULT_HEIGHT 1080
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 1;
+volatile static int gop_size = 2;
 volatile static DesktopContext desktopContext = {0};
+volatile static struct CaptureDevice *device;
+volatile static struct DisplayHardware *hardware;
 
 char buf[LARGEST_FRAME_SIZE];
 
@@ -148,16 +152,13 @@ static int32_t SendVideo(void* opaque) {
     }
 
     // Init DXGI Device
-    struct DisplayHardware *hardware = (struct DisplayHardware *) malloc(sizeof(struct DisplayHardware));
-    memset(hardware, 0, sizeof(struct DisplayHardware));
-
-    struct CaptureDevice *device = (struct CaptureDevice *) malloc(sizeof(struct CaptureDevice));
-    memset(device, 0, sizeof(struct CaptureDevice));
 
     struct ScreenshotContainer *screenshot = (struct ScreenshotContainer *) malloc(sizeof(struct ScreenshotContainer));
     memset(screenshot, 0, sizeof(struct ScreenshotContainer));
 
     CreateDisplayHardware(hardware, device);
+    device->width = DEFAULT_WIDTH;
+    device->height = DEFAULT_HEIGHT;
     CreateTexture(hardware, device);
 
     // Init FFMPEG Encoder
@@ -225,17 +226,18 @@ static int32_t SendVideo(void* opaque) {
         hr = CaptureScreen(device, screenshot);
 
         if(hr == DXGI_ERROR_INVALID_CALL) {  
+            printf("Invalid call found\n");
             fp = fopen("/log1.txt", "a+");
             fprintf(fp, "INVALID CALL FOUND\n");
             fclose(fp);
 
-            desktopContext = OpenNewDesktop(NULL, false, true);
-            desktopContext.ready = true;
+            desktopContext = OpenNewDesktop("default", true, true);
 
             DestroyCaptureDevice(device);
             CreateTexture(hardware, device);
 
             defaultFound = true;
+            desktopContext.ready = true;
         }
 
         clock server_frame_timer;
@@ -322,6 +324,13 @@ static int32_t SendVideo(void* opaque) {
         else if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
             mprintf("ERROR: %d %X\n", WSAGetLastError(), hr);
             consecutive_capture_screen_errors++;
+            desktopContext = OpenNewDesktop("default", true, true);
+
+            DestroyCaptureDevice(device);
+            CreateTexture(hardware, device);
+
+            defaultFound = true;
+            desktopContext.ready = true;
             if (consecutive_capture_screen_errors == 3) {
                 mprintf("DXGI errored too many times!\n");
                 break;
@@ -429,6 +438,12 @@ int main(int argc, char* argv[])
 
         packet_mutex = SDL_CreateMutex();
 
+        device = (struct CaptureDevice *) malloc(sizeof(struct CaptureDevice));
+        memset(device, 0, sizeof(struct CaptureDevice));
+
+        hardware = (struct DisplayHardware *) malloc(sizeof(struct DisplayHardware));
+        memset(hardware, 0, sizeof(struct DisplayHardware));
+
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
         SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
 
@@ -509,11 +524,18 @@ int main(int argc, char* argv[])
                 else if (fmsg.type == MESSAGE_DIMENSIONS) {
                     int width = fmsg.dimensions.width;
                     int height = fmsg.dimensions.height;
-                    mprintf("Changing dimensions: %d by %d\n", width, height);
+
+                    fp = fopen("/log2.txt", "a+");
+                    fprintf(fp, "Changing dimensions: %d x %d\n", width, height);
+                    fclose(fp);
+
+                    DestroyCaptureDevice(device);
+                    CreateTexture(hardware, device);
                 }
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");
                     connected = false;
+                    LockWorkStation();
                 }
                 else if (fmsg.type == MESSAGE_AUDIO_NACK) {
                     mprintf("Audio NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
