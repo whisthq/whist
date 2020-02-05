@@ -136,15 +136,6 @@ static int32_t SendVideo(void* opaque) {
 
     SendAck(&socketContext, 1);
 
-    char* desktop_name = InitDesktop();
-
-    bool defaultFound = (strcmp("Default", desktop_name) == 0);
-    if(!defaultFound) {
-        OpenNewDesktop(NULL, false, true);
-    } else {
-        desktopContext.ready = true;
-    }
-
     // Init DXGI Device
 
     struct ScreenshotContainer *screenshot = (struct ScreenshotContainer *) malloc(sizeof(struct ScreenshotContainer));
@@ -185,38 +176,12 @@ static int32_t SendVideo(void* opaque) {
     StartTimer(&world_timer);
 
     while (connected) {
-        if(!defaultFound) {
-            defaultCounts += 1;
-            desktopContext = OpenNewDesktop(NULL, true, false);
-
-            if(strcmp("Default", desktopContext.desktop_name) == 0) {
-                desktopContext = OpenNewDesktop("default", true, true);
-
-                DestroyCaptureDevice(device);
-                CreateTexture(hardware, device);
-
-                defaultFound = true;
-                desktopContext.ready = true;
-            }
-            
-        }
-
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
         }
 
         hr = CaptureScreen(device, screenshot);
-
-        if(hr == DXGI_ERROR_INVALID_CALL) {  
-            desktopContext = OpenNewDesktop("default", true, true);
-
-            DestroyCaptureDevice(device);
-            CreateTexture(hardware, device);
-
-            defaultFound = true;
-            desktopContext.ready = true;
-        }
 
         clock server_frame_timer;
         StartTimer(&server_frame_timer);
@@ -301,14 +266,8 @@ static int32_t SendVideo(void* opaque) {
         }
         else if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
             mprintf("ERROR: %d %X\n", WSAGetLastError(), hr);
+
             consecutive_capture_screen_errors++;
-            desktopContext = OpenNewDesktop("default", true, true);
-
-            DestroyCaptureDevice(device);
-            CreateTexture(hardware, device);
-
-            defaultFound = true;
-            desktopContext.ready = true;
             if (consecutive_capture_screen_errors == 3) {
                 mprintf("DXGI errored too many times!\n");
                 break;
@@ -392,6 +351,14 @@ int main(int argc, char* argv[])
             exit(1);
         }
 
+        clock startup_time;
+        StartTimer(&startup_time);
+
+        char* desktop_name = InitDesktop();
+
+        int time_remaining = CONNECTION_TIME - GetTimer(startup_time) * 1000;
+        SDL_Delay(max(time_remaining, 1));
+
         desktopContext.ready = false;
         connected = true;
         max_mbps = START_MAX_MBPS;
@@ -432,8 +399,7 @@ int main(int argc, char* argv[])
 
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
-                connected = false;
-                break;
+                //connected = false;
             }
 
             if (last_mouse.type != 0) {
@@ -491,7 +457,6 @@ int main(int argc, char* argv[])
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");
                     connected = false;
-                    LockWorkStation();
                 }
                 else if (fmsg.type == MESSAGE_AUDIO_NACK) {
                     mprintf("Audio NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);

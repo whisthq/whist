@@ -78,6 +78,7 @@ static int32_t ReceivePackets(void* opaque) {
     int total_recvs = 0;
 
     for (int i = 0; run_receive_packets; i++) {
+        mprintf("Update\n");
         // Call as often as possible
         updateVideo();
         updateAudio();
@@ -118,6 +119,7 @@ static int32_t ReceivePackets(void* opaque) {
                 //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
                 switch (packet.type) {
                 case PACKET_VIDEO:
+                    mprintf("Recv Video %d %d\n", packet.id, packet.index);
                     ReceiveVideo(&packet, recv_size);
                     break;
                 case PACKET_AUDIO:
@@ -185,6 +187,8 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    SDL_Delay(CONNECTION_TIME);
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
         fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
         exit(1);
@@ -248,8 +252,7 @@ int main(int argc, char* argv[])
             ping_failures++;
             if (ping_failures == 3) {
                 mprintf("Server disconnected: 3 consecutive ping failures.\n");
-                shutting_down = true;
-                break;
+                //shutting_down = true;
             }
         }
 
