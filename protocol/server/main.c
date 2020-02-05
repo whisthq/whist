@@ -399,7 +399,7 @@ int main(int argc, char* argv[])
 
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
-                connected = false;
+                //connected = false;
                 break;
             }
 
