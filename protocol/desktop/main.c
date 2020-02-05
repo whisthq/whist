@@ -253,7 +253,6 @@ int main(int argc, char* argv[])
             if (ping_failures == 3) {
                 mprintf("Server disconnected: 3 consecutive ping failures.\n");
                 //shutting_down = true;
-                break;
             }
         }
 

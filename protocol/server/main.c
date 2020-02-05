@@ -400,7 +400,6 @@ int main(int argc, char* argv[])
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
                 //connected = false;
-                break;
             }
 
             if (last_mouse.type != 0) {
