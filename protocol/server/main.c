@@ -25,7 +25,7 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 2;
+volatile static int gop_size = 1;
 volatile static DesktopContext desktopContext = {0};
 volatile static struct CaptureDevice *device;
 volatile static struct DisplayHardware *hardware;

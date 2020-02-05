@@ -14,12 +14,13 @@
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1,
-                                  D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_9_1 };
-UINT NumFeatureLevels = ARRAYSIZE(FeatureLevels);
-D3D_FEATURE_LEVEL FeatureLevel;
 
 void CreateDisplayHardware(struct DisplayHardware *hardware, struct CaptureDevice *device) {
+  D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1,
+                                    D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_9_1 };
+  UINT NumFeatureLevels = ARRAYSIZE(FeatureLevels);
+  D3D_FEATURE_LEVEL FeatureLevel;
+
   int num_adapters = 0, num_outputs = 0, i = 0, j = 0;
   IDXGIFactory1 *factory;
   IDXGIOutput *outputs[10];
@@ -63,7 +64,6 @@ void CreateDisplayHardware(struct DisplayHardware *hardware, struct CaptureDevic
 
   hardware->adapter = adapters[USE_GPU];
   hardware->output = outputs[USE_MONITOR];
-
 
   hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
     D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
