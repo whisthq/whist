@@ -14,7 +14,6 @@
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-
 void CreateDisplayHardware(struct DisplayHardware *hardware, struct CaptureDevice *device) {
   D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1,
                                     D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_9_1 };
@@ -124,7 +123,6 @@ void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *devic
 HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot) {
   int frameCaptured;
   HRESULT hr;
-  FILE *fp;
 
   device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
@@ -149,12 +147,14 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
     device->counter++;
     hr = screenshot->desktop_resource->lpVtbl->QueryInterface(screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
     hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &screenshot->mapped_rect);
+    device->did_use_map_desktop_surface = true;
     if(hr == DXGI_ERROR_UNSUPPORTED) {
       device->D3D11context->lpVtbl->CopySubresourceRegion(device->D3D11context, (ID3D11Resource*)device->staging_texture, 0, 0, 0, 0,
                                               (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
 
       hr = device->staging_texture->lpVtbl->QueryInterface(device->staging_texture, &IID_IDXGISurface, (void**)&screenshot->surface);
       hr = screenshot->surface->lpVtbl->Map(screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
+      device->did_use_map_desktop_surface = false;
       return hr;
     }
     return hr;
@@ -165,7 +165,9 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
 
 
 void ReleaseScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot) {
-  device->duplication->lpVtbl->UnMapDesktopSurface(device->duplication);
+  if (device->did_use_map_desktop_surface) {
+    device->duplication->lpVtbl->UnMapDesktopSurface(device->duplication);
+  }
 }
 
 void DestroyCaptureDevice(struct CaptureDevice* device) {

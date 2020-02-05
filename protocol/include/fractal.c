@@ -665,11 +665,6 @@ void initMultiThreadedPrintf(bool use_logging) {
 	multithreadedprintf_mutex = SDL_CreateMutex();
 	multithreadedprintf_semaphore = SDL_CreateSemaphore(0);
 	mprintf_thread = SDL_CreateThread(MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
-
-	if (mprintf_log_file) {
-		fclose(mprintf_log_file);
-	}
-	mprintf_log_file = NULL;
 }
 
 void destroyMultiThreadedPrintf() {
@@ -679,6 +674,11 @@ void destroyMultiThreadedPrintf() {
 	}
 	SDL_WaitThread(mprintf_thread, NULL);
 	mprintf_thread = NULL;
+
+	if (mprintf_log_file) {
+		fclose(mprintf_log_file);
+	}
+	mprintf_log_file = NULL;
 }
 
 void MultiThreadedPrintf(void* opaque) {

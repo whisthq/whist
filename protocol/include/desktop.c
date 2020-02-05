@@ -24,6 +24,10 @@ int setCurrentInputDesktop(HDESK currentInputDesktop) {
     return 0;
 }
 
+void updateInputDesktop() {
+    OpenNewDesktop("default", true, true);
+}
+
 DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread) {
     DesktopContext context = { 0 };
     HDESK new_desktop;
@@ -48,6 +52,7 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread
 
     context.desktop_handle = new_desktop;
     CloseDesktop(new_desktop);
+
     return context;
 }
 
@@ -62,7 +67,7 @@ int InitDesktop() {
     OpenWindow();
     lock_screen = OpenNewDesktop(NULL, true, true);
 
-    printf("Desktop name is %s\n", lock_screen.desktop_name);
+    mprintf("Desktop name is %s\n", lock_screen.desktop_name);
 
     if (strcmp("Winlogon", lock_screen.desktop_name) == 0)
     {

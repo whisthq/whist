@@ -42,6 +42,7 @@ struct CaptureDevice {
   int counter;
   int width;
   int height;
+  bool did_use_map_desktop_surface;
 };
 
 struct DisplayHardware {

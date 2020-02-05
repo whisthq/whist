@@ -32,6 +32,8 @@ typedef struct DesktopContext{
 // @details Uses SetThreadDesktop from WinAPI.
 int setCurrentInputDesktop(HDESK currentInputDesktop);
 
+void updateInputDesktop();
+
 // @brief Opens current or specified desktop, fills the DesktopContext, sets thread to desktop.
 // @details Uses OpenInputDesktop and SetThreadDesktop from WinAPI.
 DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread);

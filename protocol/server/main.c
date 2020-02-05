@@ -26,8 +26,12 @@
 volatile static bool connected;
 volatile static double max_mbps;
 volatile static int gop_size = 1;
-volatile static struct CaptureDevice *device;
+volatile static struct CaptureDevice *device = NULL;
 volatile static struct DisplayHardware *hardware;
+
+int server_width = DEFAULT_WIDTH;
+int server_height = DEFAULT_HEIGHT;
+bool update_server_dimensions = true;
 
 char buf[LARGEST_FRAME_SIZE];
 
@@ -129,6 +133,8 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
 
 static int32_t SendVideo(void* opaque) {
+    updateInputDesktop();
+
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
     int slen = sizeof(socketContext.addr), id = 1;
     FILE *fp;
@@ -140,16 +146,9 @@ static int32_t SendVideo(void* opaque) {
     struct ScreenshotContainer *screenshot = (struct ScreenshotContainer *) malloc(sizeof(struct ScreenshotContainer));
     memset(screenshot, 0, sizeof(struct ScreenshotContainer));
 
-    CreateDisplayHardware(hardware, device);
-    device->width = DEFAULT_WIDTH;
-    device->height = DEFAULT_HEIGHT;
-    CreateTexture(hardware, device);
-
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
-    encoder_t* encoder;
-    encoder = create_video_encoder(device->width, device->height,
-        device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
+    encoder_t* encoder = NULL;
 
     bool update_encoder = false;
 
@@ -174,10 +173,37 @@ static int32_t SendVideo(void* opaque) {
     clock world_timer;
     StartTimer(&world_timer);
 
+    update_server_dimensions = true;
     while (connected) {
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
+        }
+
+        if (update_server_dimensions) {
+            if (device) {
+                mprintf("Destroying old Device\n");
+                DestroyCaptureDevice(device);
+            }
+
+            mprintf("Creating new Device\n");
+            CreateDisplayHardware(hardware, device);
+            device->width = server_width;
+            device->height = server_height;
+            CreateTexture(hardware, device);
+
+            update_encoder = true;
+            update_server_dimensions = false;
+        }
+
+        if (update_encoder) {
+            if (encoder) {
+                mprintf("Destroying old encoder\n");
+                destroy_video_encoder(encoder);
+            }
+            mprintf("Creating new encoder\n");
+            encoder = create_video_encoder(device->width, device->height, device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
+            update_encoder = false;
         }
 
         hr = CaptureScreen(device, screenshot);
@@ -187,12 +213,6 @@ static int32_t SendVideo(void* opaque) {
 
         if (hr == S_OK) {
             consecutive_capture_screen_errors = 0;
-
-            if (update_encoder) {
-                destroy_video_encoder(encoder);
-                encoder = create_video_encoder(device->width, device->height, device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
-                update_encoder = false;
-            }
 
             clock t;
             StartTimer(&t);
@@ -275,15 +295,13 @@ static int32_t SendVideo(void* opaque) {
     }
 
     DestroyCaptureDevice(device);
+    device = NULL;
+
     return 0;
 }
 
 static int32_t SendAudio(void* opaque) {
-    // while(!desktopContext.ready) {
-    //     Sleep(500);
-    // }
-
-    // setCurrentInputDesktop(desktopContext.desktop_handle);
+    updateInputDesktop();
 
     struct SocketContext context = *(struct SocketContext*) opaque;
     int slen = sizeof(context.addr), id = 1;
@@ -450,11 +468,9 @@ int main(int argc, char* argv[])
                     }
                 }
                 else if (fmsg.type == MESSAGE_DIMENSIONS) {
-                    int width = fmsg.dimensions.width;
-                    int height = fmsg.dimensions.height;
-
-                    DestroyCaptureDevice(device);
-                    CreateTexture(hardware, device);
+                    server_width = fmsg.dimensions.width;
+                    server_height = fmsg.dimensions.height;
+                    update_server_dimensions = true;
                 }
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");
