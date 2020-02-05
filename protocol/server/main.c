@@ -133,7 +133,15 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
 
 static int32_t SendVideo(void* opaque) {
-    updateInputDesktop();
+
+    mprintf("Initializing desktop...\n");
+
+    if (InitDesktop() < 0) {
+        mprintf("Failed to log into desktop\n");
+        return -1;
+    }
+
+    mprintf("Desktop initialized\n");
 
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
     int slen = sizeof(socketContext.addr), id = 1;
@@ -346,15 +354,6 @@ static int32_t SendAudio(void* opaque) {
 int main(int argc, char* argv[])
 {
     initMultiThreadedPrintf(true);
-
-    mprintf("Initializing desktop...\n");
-
-    if (InitDesktop() < 0) {
-        mprintf("Failed to log into desktop\n");
-        return -1;
-    }
-
-    mprintf("Desktop initialized\n");
 
     while (true) {
         // initialize the windows socket library if this is a windows client
