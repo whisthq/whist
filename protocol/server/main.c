@@ -458,7 +458,6 @@ int main(int argc, char* argv[])
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");
                     connected = false;
-                    LockWorkStation();
                 }
                 else if (fmsg.type == MESSAGE_AUDIO_NACK) {
                     mprintf("Audio NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
