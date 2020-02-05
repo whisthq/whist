@@ -14,7 +14,14 @@
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-void CreateDisplayHardware(struct DisplayHardware *hardware, struct CaptureDevice *device) {
+void CreateTexture(struct CaptureDevice* device);
+
+void CreateDisplayHardware(struct CaptureDevice *device, int width, int height) {
+  device->hardware = (struct DisplayHardware*) malloc(sizeof(struct DisplayHardware));
+  memset(device->hardware, 0, sizeof(struct DisplayHardware));
+
+  struct DisplayHardware* hardware = device->hardware;
+
   D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1,
                                     D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_9_1 };
   UINT NumFeatureLevels = ARRAYSIZE(FeatureLevels);
@@ -66,9 +73,15 @@ void CreateDisplayHardware(struct DisplayHardware *hardware, struct CaptureDevic
 
   hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
     D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
+
+  device->width = width;
+  device->height = height;
+  CreateTexture(device);
 }
 
-void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *device) {
+void CreateTexture(struct CaptureDevice *device) {
+  struct DisplayHardware* hardware = device->hardware;
+
   D3D11_TEXTURE2D_DESC tDesc;
   IDXGIOutput1* output1;
 
@@ -171,6 +184,9 @@ void ReleaseScreen(struct CaptureDevice *device, struct ScreenshotContainer *scr
 }
 
 void DestroyCaptureDevice(struct CaptureDevice* device) {
+    if (device->hardware) {
+        free(device->hardware);
+    }
     if (device->duplication) {
         device->duplication->lpVtbl->Release(device->duplication);
         device->duplication = NULL;

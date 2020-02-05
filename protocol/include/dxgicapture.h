@@ -31,6 +31,12 @@ struct ScreenshotContainer {
   IDXGISurface *surface;
 };
 
+struct DisplayHardware {
+    IDXGIAdapter1* adapter;
+    IDXGIOutput* output;
+    DXGI_OUTPUT_DESC final_output_desc;
+};
+
 struct CaptureDevice {
   D3D11_BOX Box;
   ID3D11Device *D3D11device;
@@ -43,22 +49,12 @@ struct CaptureDevice {
   int width;
   int height;
   bool did_use_map_desktop_surface;
+  struct DisplayHardware *hardware;
 };
 
-struct DisplayHardware {
-  IDXGIAdapter1 *adapter;
-  IDXGIOutput* output;
-  DXGI_OUTPUT_DESC final_output_desc;
-};
-
-void CreateDisplayHardware(struct DisplayHardware *hardware, struct CaptureDevice *device);
-
-
-void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *device); 
-
+void CreateDisplayHardware(struct CaptureDevice *device, int width, int height);
 
 HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot);
-
 
 void ReleaseScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot);
 

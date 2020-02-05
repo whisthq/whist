@@ -31,7 +31,7 @@ volatile static struct DisplayHardware *hardware;
 
 int server_width = DEFAULT_WIDTH;
 int server_height = DEFAULT_HEIGHT;
-bool update_server_dimensions = true;
+bool update_device = true;
 
 char buf[LARGEST_FRAME_SIZE];
 
@@ -173,27 +173,24 @@ static int32_t SendVideo(void* opaque) {
     clock world_timer;
     StartTimer(&world_timer);
 
-    update_server_dimensions = true;
+    update_device = true;
     while (connected) {
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
         }
 
-        if (update_server_dimensions) {
+        if (update_device) {
             if (device) {
                 mprintf("Destroying old Device\n");
                 DestroyCaptureDevice(device);
             }
 
             mprintf("Creating new Device\n");
-            CreateDisplayHardware(hardware, device);
-            device->width = server_width;
-            device->height = server_height;
-            CreateTexture(hardware, device);
+            CreateDisplayHardware(device, server_width, server_height);
 
             update_encoder = true;
-            update_server_dimensions = false;
+            update_device = false;
         }
 
         if (update_encoder) {
@@ -388,9 +385,6 @@ int main(int argc, char* argv[])
         device = (struct CaptureDevice *) malloc(sizeof(struct CaptureDevice));
         memset(device, 0, sizeof(struct CaptureDevice));
 
-        hardware = (struct DisplayHardware *) malloc(sizeof(struct DisplayHardware));
-        memset(hardware, 0, sizeof(struct DisplayHardware));
-
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
         SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
 
@@ -470,7 +464,7 @@ int main(int argc, char* argv[])
                 else if (fmsg.type == MESSAGE_DIMENSIONS) {
                     server_width = fmsg.dimensions.width;
                     server_height = fmsg.dimensions.height;
-                    update_server_dimensions = true;
+                    update_device = true;
                 }
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");
