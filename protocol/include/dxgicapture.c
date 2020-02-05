@@ -128,15 +128,15 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
 
   device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
-  if (NULL != screenshot->final_texture) {
-    screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
-    screenshot->final_texture = NULL;
-  }
+  // if (NULL != screenshot->final_texture) {
+  //   screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
+  //   screenshot->final_texture = NULL;
+  // }
   
-  if (NULL != screenshot->desktop_resource) {
-    screenshot->desktop_resource->lpVtbl->Release(screenshot->desktop_resource);
-    screenshot->desktop_resource = NULL;
-  }
+  // if (NULL != screenshot->desktop_resource) {
+  //   screenshot->desktop_resource->lpVtbl->Release(screenshot->desktop_resource);
+  //   screenshot->desktop_resource = NULL;
+  // }
 
   hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 0, &device->frame_info, &screenshot->desktop_resource);
   if(FAILED(hr)) {
@@ -156,7 +156,7 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
       hr = device->staging_texture->lpVtbl->QueryInterface(device->staging_texture, &IID_IDXGISurface, (void**)&screenshot->surface);
       hr = screenshot->surface->lpVtbl->Map(screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
       return hr;
-    } 
+    }
     return hr;
   }
 
