@@ -55,6 +55,7 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread
 
   context.desktop_handle = new_desktop;
   CloseDesktop(new_desktop);
+
   return context;
 }
 
@@ -74,7 +75,7 @@ char* InitDesktop() {
 
   if(strcmp("Winlogon", lock_screen.desktop_name) == 0) 
   {
-    enum FractalKeycode keycodes[100] = {
+    enum FractalKeycode keycodes[] = {
       KEY_SPACE, KEY_BACKSPACE, KEY_BACKSPACE
     };
 
@@ -83,17 +84,22 @@ char* InitDesktop() {
     Sleep(500);
     // logon_screen = OpenNewDesktop(NULL, true);
     
-    enum FractalKeycode keycodes2[100] = {
+    enum FractalKeycode keycodes2[] = {
       KEY_P, KEY_A, KEY_S, KEY_S, KEY_W, KEY_O, KEY_R, KEY_D, KEY_1, 
       KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_PERIOD, KEY_ENTER, 
       KEY_ENTER
     };
 
     EnterWinString(keycodes2, 18);
+  }
 
-    out = "Winlogon";
-    return out;
-  } 
+  while (strcmp("Default", lock_screen.desktop_name) != 0) {
+      SDL_Delay(50);
+      lock_screen = OpenNewDesktop(NULL, true, true);
+  }
+
+  SDL_Delay(1000);
+
   out = "Default";
   return out;
 }
