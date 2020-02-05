@@ -124,7 +124,6 @@ void CreateTexture(struct DisplayHardware *hardware, struct CaptureDevice *devic
 HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot) {
   int frameCaptured;
   HRESULT hr;
-  FILE *fp;
 
   device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 

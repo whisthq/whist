@@ -78,7 +78,7 @@ static int32_t ReceivePackets(void* opaque) {
     int total_recvs = 0;
 
     for (int i = 0; run_receive_packets; i++) {
-        mprintf("Update\n");
+        //mprintf("Update\n");
         // Call as often as possible
         updateVideo();
         updateAudio();
@@ -119,7 +119,7 @@ static int32_t ReceivePackets(void* opaque) {
                 //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
                 switch (packet.type) {
                 case PACKET_VIDEO:
-                    mprintf("Recv Video %d %d\n", packet.id, packet.index);
+                    //mprintf("Recv Video %d %d\n", packet.id, packet.index);
                     ReceiveVideo(&packet, recv_size);
                     break;
                 case PACKET_AUDIO:
