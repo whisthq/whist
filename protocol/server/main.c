@@ -392,6 +392,8 @@ int main(int argc, char* argv[])
             exit(1);
         }
 
+        SDL_Delay(CONNECTION_TIME);
+
         desktopContext.ready = false;
         connected = true;
         max_mbps = START_MAX_MBPS;
