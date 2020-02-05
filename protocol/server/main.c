@@ -26,7 +26,6 @@
 volatile static bool connected;
 volatile static double max_mbps;
 volatile static int gop_size = 1;
-volatile static DesktopContext desktopContext = {0};
 volatile static struct CaptureDevice *device;
 volatile static struct DisplayHardware *hardware;
 
@@ -331,8 +330,17 @@ static int32_t SendAudio(void* opaque) {
 
 int main(int argc, char* argv[])
 {
-    initMultiThreadedPrintf();
-    FILE *fp;
+    initMultiThreadedPrintf(true);
+
+    mprintf("Initializing desktop...\n");
+
+    if (InitDesktop() < 0) {
+        mprintf("Failed to log into desktop\n");
+        return -1;
+    }
+
+    mprintf("Desktop initialized\n");
+
     while (true) {
         // initialize the windows socket library if this is a windows client
         WSADATA wsa;
@@ -354,12 +362,6 @@ int main(int argc, char* argv[])
         clock startup_time;
         StartTimer(&startup_time);
 
-        char* desktop_name = InitDesktop();
-
-        int time_remaining = CONNECTION_TIME - GetTimer(startup_time) * 1000;
-        SDL_Delay(max(time_remaining, 1));
-
-        desktopContext.ready = false;
         connected = true;
         max_mbps = START_MAX_MBPS;
 
@@ -490,8 +492,6 @@ int main(int argc, char* argv[])
                 }
             }
         }
-
-        LockWorkStation();
 
         SDL_WaitThread(send_video, NULL);
         SDL_WaitThread(send_audio, NULL);

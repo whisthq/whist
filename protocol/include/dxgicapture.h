@@ -61,4 +61,6 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
 
 void ReleaseScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot);
 
+void DestroyCaptureDevice(struct CaptureDevice* device);
+
 #endif

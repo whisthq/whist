@@ -702,7 +702,7 @@ int SendAck(struct SocketContext *context, int reps);
 	#define clock int
 #endif
 
-void initMultiThreadedPrintf();
+void initMultiThreadedPrintf(bool use_logging);
 void destroyMultiThreadedPrintf();
 void mprintf(const char* fmtStr, ...);
 

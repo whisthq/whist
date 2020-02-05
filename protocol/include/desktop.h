@@ -40,7 +40,7 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread
 void OpenWindow();
 
 // @brief Calls the above functions; opens a windows station and desktop.
-char* InitDesktop();
+int InitDesktop();
 
 
 #endif // DESKTOP_H

@@ -138,7 +138,7 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
   //   screenshot->desktop_resource = NULL;
   // }
 
-  hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 0, &device->frame_info, &screenshot->desktop_resource);
+  hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 1, &device->frame_info, &screenshot->desktop_resource);
   if(FAILED(hr)) {
     return hr;
   } else {

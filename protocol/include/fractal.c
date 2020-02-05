@@ -654,12 +654,22 @@ volatile static int mprintf_queue_size = 0;
 SDL_Thread* mprintf_thread = NULL;
 volatile static bool run_multithreaded_printf;
 void MultiThreadedPrintf(void* opaque);
+FILE* mprintf_log_file = NULL;
 
-void initMultiThreadedPrintf() {
+void initMultiThreadedPrintf(bool use_logging) {
+	if (use_logging) {
+		mprintf_log_file = fopen("C:\\log.txt", "a+");
+	}
+
 	run_multithreaded_printf = true;
 	multithreadedprintf_mutex = SDL_CreateMutex();
 	multithreadedprintf_semaphore = SDL_CreateSemaphore(0);
 	mprintf_thread = SDL_CreateThread(MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
+
+	if (mprintf_log_file) {
+		fclose(mprintf_log_file);
+	}
+	mprintf_log_file = NULL;
 }
 
 void destroyMultiThreadedPrintf() {
@@ -696,6 +706,10 @@ void MultiThreadedPrintf(void* opaque) {
 		SDL_UnlockMutex(multithreadedprintf_mutex);
 
 		for (int i = 0; i < cache_size; i++) {
+			if (mprintf_log_file) {
+				fprintf(mprintf_log_file, "%s", mprintf_queue_cache[i]);
+				fflush(mprintf_log_file);
+			}
 			printf("%s", mprintf_queue_cache[i]);
 		}
 	}

@@ -162,7 +162,7 @@ static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
 int main(int argc, char* argv[])
 {
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-    initMultiThreadedPrintf();
+    initMultiThreadedPrintf(false);
 
     send_packet_mutex = SDL_CreateMutex();
 
