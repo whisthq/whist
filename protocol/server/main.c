@@ -136,15 +136,6 @@ static int32_t SendVideo(void* opaque) {
 
     SendAck(&socketContext, 1);
 
-    char* desktop_name = InitDesktop();
-
-    bool defaultFound = (strcmp("Default", desktop_name) == 0);
-    if(!defaultFound) {
-        OpenNewDesktop(NULL, false, true);
-    } else {
-        desktopContext.ready = true;
-    }
-
     // Init DXGI Device
 
     struct ScreenshotContainer *screenshot = (struct ScreenshotContainer *) malloc(sizeof(struct ScreenshotContainer));
@@ -185,38 +176,12 @@ static int32_t SendVideo(void* opaque) {
     StartTimer(&world_timer);
 
     while (connected) {
-        if(!defaultFound) {
-            defaultCounts += 1;
-            desktopContext = OpenNewDesktop(NULL, true, false);
-
-            if(strcmp("Default", desktopContext.desktop_name) == 0) {
-                desktopContext = OpenNewDesktop("default", true, true);
-
-                DestroyCaptureDevice(device);
-                CreateTexture(hardware, device);
-
-                defaultFound = true;
-                desktopContext.ready = true;
-            }
-            
-        }
-
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
         }
 
         hr = CaptureScreen(device, screenshot);
-
-        if(hr == DXGI_ERROR_INVALID_CALL) {  
-            desktopContext = OpenNewDesktop("default", true, true);
-
-            DestroyCaptureDevice(device);
-            CreateTexture(hardware, device);
-
-            defaultFound = true;
-            desktopContext.ready = true;
-        }
 
         clock server_frame_timer;
         StartTimer(&server_frame_timer);
@@ -301,14 +266,8 @@ static int32_t SendVideo(void* opaque) {
         }
         else if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
             mprintf("ERROR: %d %X\n", WSAGetLastError(), hr);
+
             consecutive_capture_screen_errors++;
-            desktopContext = OpenNewDesktop("default", true, true);
-
-            DestroyCaptureDevice(device);
-            CreateTexture(hardware, device);
-
-            defaultFound = true;
-            desktopContext.ready = true;
             if (consecutive_capture_screen_errors == 3) {
                 mprintf("DXGI errored too many times!\n");
                 break;
@@ -392,7 +351,13 @@ int main(int argc, char* argv[])
             exit(1);
         }
 
-        SDL_Delay(CONNECTION_TIME);
+        clock startup_time;
+        StartTimer(&startup_time);
+
+        char* desktop_name = InitDesktop();
+
+        int time_remaining = CONNECTION_TIME - GetTimer(startup_time) * 1000;
+        SDL_Delay(max(time_remaining, 1));
 
         desktopContext.ready = false;
         connected = true;

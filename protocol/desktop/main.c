@@ -187,6 +187,8 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    SDL_Delay(CONNECTION_TIME);
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
         fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
         exit(1);
