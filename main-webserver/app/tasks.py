@@ -27,7 +27,7 @@ def fetchAll(self, update):
     vm_usernames = []
     vm_names = []
     if update:
-        current_vms = fetchUserVMs()
+        current_vms = fetchUserVMs(None)
     for entry in azure_portal_vms:
         vm = getVM(entry.name)
         vm_ip = getIP(vm)
