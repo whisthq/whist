@@ -323,7 +323,7 @@ def updateRow(username, vm_name, usernames, vm_names):
     if not (username in usernames and vm_name in vm_names):
         command = text("""
             INSERT INTO v_ms("vmUserName", "vmPassword", "vmName") 
-            VALUES(:username, :password :vm_name)
+            VALUES(:username, :password, :vm_name)
             """)
         params = {'username': username, 
                   'password': jwt.encode({'pwd': os.getenv('VM_PASSWORD')}, os.getenv('SECRET_KEY')),
