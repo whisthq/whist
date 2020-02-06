@@ -310,13 +310,24 @@ def fetchUserVMs(username):
             out = [{'vm_username': vm_info[2], 'vm_name': vm_info[0]} for vm_info in vms_info]
             return out
 
-def updateRow(username, vm_name, usernames, vm_names):
+def deleteRow(username, vm_name, usernames, vm_names):
     if not (username in usernames and vm_name in vm_names):
-        print("Deleting VM " + vm_name)
         command = text("""
             DELETE FROM v_ms WHERE "vmUserName" = :username AND "vmName" = :vm_name 
             """)
         params = {'username': username, 'vm_name': vm_name}
+        with engine.connect() as conn:
+            conn.execute(command, **params)
+
+def updateRow(username, vm_name, usernames, vm_names):
+    if not (username in usernames and vm_name in vm_names):
+        command = text("""
+            INSERT INTO v_ms("vmUserName", "vmPassword", "vmName") 
+            VALUES(:username, :password :vm_name)
+            """)
+        params = {'vmUserName': username, 
+                  'vmPassword': jwt.encode({'pwd': os.getenv('VM_PASSWORD')}, os.getenv('SECRET_KEY')),
+                  'vmName': vm_name}
         with engine.connect() as conn:
             conn.execute(command, **params)
 

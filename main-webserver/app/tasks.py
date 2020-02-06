@@ -26,8 +26,12 @@ def fetchAll(self, update):
     azure_portal_vms = compute_client.virtual_machines.list(os.getenv('VM_GROUP'))
     vm_usernames = []
     vm_names = []
+    current_usernames = []
+    current_names = []
     if update:
         current_vms = fetchUserVMs(None)
+        current_usernames = [current_vm['vm_username'] for current_vm in current_vms]
+        current_names = [current_vm['vm_name'] for current_vm in current_vms]
     for entry in azure_portal_vms:
         vm = getVM(entry.name)
         vm_ip = getIP(vm)
@@ -40,7 +44,10 @@ def fetchAll(self, update):
         vm_usernames.append(entry.os_profile.admin_username)
         vm_names.append(entry.name)
 
+        if update:
+            updateRow(entry.name, entry.os_profile.admin_username, current_usernames, current_names)
+
     if update:
         for current_vm in current_vms:
-            updateRow(current_vm['vm_username'], current_vm['vm_name'], vm_usernames, vm_names)
+            deleteRow(current_vm['vm_username'], current_vm['vm_name'], vm_usernames, vm_names)
     return vms
