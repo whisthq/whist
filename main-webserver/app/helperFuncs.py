@@ -304,6 +304,7 @@ def fetchUserVMs(username):
         command = text("""
             SELECT * FROM v_ms
             """)
+        params = {}
         with engine.connect() as conn:
             vms_info = conn.execute(command, **params).fetchall()
             out = [{'vm_username': vm_info[2], 'vm_name': vm_info[0]} for vm_info in vms_info]
