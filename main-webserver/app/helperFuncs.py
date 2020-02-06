@@ -314,7 +314,7 @@ def updateRow(username, vm_name, usernames, vm_names):
     if not (username in usernames and vm_name in vm_names):
         print("Deleting VM " + vm_name)
         command = text("""
-            DELETE FROM v_ms WHERE "vmUserMame" = :username AND "vmName" = :vm_name 
+            DELETE FROM v_ms WHERE "vmUserName" = :username AND "vmName" = :vm_name 
             """)
         params = {'username': username, 'vm_name': vm_name}
         with engine.connect() as conn:
