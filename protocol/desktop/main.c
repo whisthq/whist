@@ -154,7 +154,7 @@ static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
         break;
     default:
         mprintf("Unknown Server Message Received\n");
-        return -1;
+        return -1; 
     }
     return 0;
 }
@@ -164,166 +164,171 @@ int main(int argc, char* argv[])
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
 
-    send_packet_mutex = SDL_CreateMutex();
+    for (int try_amount = 0; try_amount < 3; try_amount++) {
+        send_packet_mutex = SDL_CreateMutex();
 
-    // initialize the windows socket library if this is a windows client
+        // initialize the windows socket library if this is a windows client
 #if defined(_WIN32)
-    WSADATA wsa;
-    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
-        return -1;
-    }
+        WSADATA wsa;
+        if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+            mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
+            return -1;
+        }
 #endif
 
-    SDL_Event msg;
-    FractalClientMessage fmsg = { 0 };
+        SDL_Event msg;
+        FractalClientMessage fmsg = { 0 };
 
-    if (CreateUDPContext(&PacketSendContext, "C", SERVER_IP, 10, 250) < 0) {
-        exit(1);
-    }
+        if (CreateUDPContext(&PacketSendContext, "C", SERVER_IP, 10, 250) < 0) {
+            exit(1);
+        }
 
-    struct SocketContext PacketReceiveContext = { 0 };
-    if (CreateUDPContext(&PacketReceiveContext, "C", SERVER_IP, 1, 250) < 0) {
-        exit(1);
-    }
+        struct SocketContext PacketReceiveContext = { 0 };
+        if (CreateUDPContext(&PacketReceiveContext, "C", SERVER_IP, 1, 250) < 0) {
+            exit(1);
+        }
 
-    SDL_Delay(CONNECTION_TIME);
+        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+            fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+            exit(1);
+        }
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
-        exit(1);
-    }
+        initVideo();
+        initAudio();
 
-    initVideo();
-    initAudio();
+        run_receive_packets = true;
+        SDL_Thread* receive_packets_thread;
+        receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
-    run_receive_packets = true;
-    SDL_Thread* receive_packets_thread;
-    receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
+        StartTimer(&latency_timer);
 
-    StartTimer(&latency_timer);
+        bool needs_dimension_update = true;
+        bool tried_to_update_dimension = false;
+        clock last_dimension_update;
+        StartTimer(&last_dimension_update);
 
-    bool needs_dimension_update = true;
-    bool tried_to_update_dimension = false;
-    clock last_dimension_update;
-    StartTimer(&last_dimension_update);
+        clock ack_timer;
+        SendAck(&PacketReceiveContext, 1);
+        SDL_LockMutex(send_packet_mutex);
+        SendAck(&PacketSendContext, 1);
+        SDL_UnlockMutex(send_packet_mutex);
+        StartTimer(&ack_timer);
 
-    clock ack_timer;
-    SendAck(&PacketReceiveContext, 1);
-    SDL_LockMutex(send_packet_mutex);
-    SendAck(&PacketSendContext, 1);
-    SDL_UnlockMutex(send_packet_mutex);
-    StartTimer(&ack_timer);
-
-    bool shutting_down = false;
-    while (!shutting_down)
-    {
-        if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
-            SendAck(&PacketReceiveContext, 1);
-            SDL_LockMutex(send_packet_mutex);
-            if (SendAck(&PacketSendContext, 1) < 0) {
-                mprintf("Could not send ACK!\n");
+        bool shutting_down = false;
+        bool connected = true;
+        while (connected && !shutting_down)
+        {
+            if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
+                SendAck(&PacketReceiveContext, 1);
+                SDL_LockMutex(send_packet_mutex);
+                if (SendAck(&PacketSendContext, 1) < 0) {
+                    mprintf("Could not send ACK!\n");
+                }
+                SDL_UnlockMutex(send_packet_mutex);
+                StartTimer(&ack_timer);
             }
-            SDL_UnlockMutex(send_packet_mutex);
-            StartTimer(&ack_timer);
-        }
 
-        if (needs_dimension_update && !tried_to_update_dimension && (server_width != OUTPUT_WIDTH || server_height != OUTPUT_HEIGHT)) {
-            memset(&fmsg, 0, sizeof(fmsg));
-            fmsg.type = MESSAGE_DIMENSIONS;
-            fmsg.dimensions.width = OUTPUT_WIDTH;
-            fmsg.dimensions.height = OUTPUT_HEIGHT;
-            SendPacket(&fmsg, sizeof(fmsg));
-            tried_to_update_dimension = true;
-        }   
-
-        if (update_mbps) {
-            //mprintf("Updating MBPS: %f\n", max_mbps);
-            update_mbps = false;
-            memset(&fmsg, 0, sizeof(fmsg));
-            fmsg.type = MESSAGE_MBPS;
-            fmsg.mbps = max_mbps;
-            SendPacket(&fmsg, sizeof(fmsg));
-        }
-
-        if (is_timing_latency && GetTimer(latency_timer) > 0.5) {
-            mprintf("Ping received no response: %d\n", ping_id);
-            is_timing_latency = false;
-            ping_failures++;
-            if (ping_failures == 3) {
-                mprintf("Server disconnected: 3 consecutive ping failures.\n");
-                //shutting_down = true;
+            if (needs_dimension_update && !tried_to_update_dimension && (server_width != OUTPUT_WIDTH || server_height != OUTPUT_HEIGHT)) {
+                memset(&fmsg, 0, sizeof(fmsg));
+                fmsg.type = MESSAGE_DIMENSIONS;
+                fmsg.dimensions.width = OUTPUT_WIDTH;
+                fmsg.dimensions.height = OUTPUT_HEIGHT;
+                SendPacket(&fmsg, sizeof(fmsg));
+                tried_to_update_dimension = true;
             }
-        }
 
-        if (!is_timing_latency && GetTimer(latency_timer) > 0.5) {
-            memset(&fmsg, 0, sizeof(fmsg));
-            ping_id++;
-            fmsg.type = MESSAGE_PING;
-            fmsg.ping_id = ping_id;
-            is_timing_latency = true;
-
-            StartTimer(&latency_timer);
-
-            //mprintf("Ping! %d\n", ping_id);
-            SendPacket(&fmsg, sizeof(fmsg));
-            SendPacket(&fmsg, sizeof(fmsg));
-        }
-
-        memset(&fmsg, 0, sizeof(fmsg));
-        if (SDL_PollEvent(&msg)) {
-            switch (msg.type) {
-            case SDL_KEYDOWN:
-            case SDL_KEYUP:
-                fmsg.type = MESSAGE_KEYBOARD;
-                fmsg.keyboard.code = (FractalKeycode)msg.key.keysym.scancode;
-                fmsg.keyboard.mod = msg.key.keysym.mod;
-                fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN;
-                break;
-            case SDL_MOUSEMOTION:
-                fmsg.type = MESSAGE_MOUSE_MOTION;
-                fmsg.mouseMotion.x = msg.motion.x * server_width / OUTPUT_WIDTH;
-                fmsg.mouseMotion.y = msg.motion.y * server_height / OUTPUT_HEIGHT;
-                break;
-            case SDL_MOUSEBUTTONDOWN:
-            case SDL_MOUSEBUTTONUP:
-                fmsg.type = MESSAGE_MOUSE_BUTTON;
-                fmsg.mouseButton.button = msg.button.button;
-                fmsg.mouseButton.pressed = msg.button.type == SDL_MOUSEBUTTONDOWN;
-                break;
-            case SDL_MOUSEWHEEL:
-                fmsg.type = MESSAGE_MOUSE_WHEEL;
-                fmsg.mouseWheel.x = msg.wheel.x;
-                fmsg.mouseWheel.y = msg.wheel.y;
-                break;
-            case SDL_QUIT:
-                mprintf("Quitting...\n");
-                fmsg.type = MESSAGE_QUIT;
-                shutting_down = true;
-                break;
-            }
-            if (fmsg.type != 0) {
+            if (update_mbps) {
+                //mprintf("Updating MBPS: %f\n", max_mbps);
+                update_mbps = false;
+                memset(&fmsg, 0, sizeof(fmsg));
+                fmsg.type = MESSAGE_MBPS;
+                fmsg.mbps = max_mbps;
                 SendPacket(&fmsg, sizeof(fmsg));
             }
+
+            if (is_timing_latency && GetTimer(latency_timer) > 0.5) {
+                mprintf("Ping received no response: %d\n", ping_id);
+                is_timing_latency = false;
+                ping_failures++;
+                if (ping_failures == 3) {
+                    mprintf("Server disconnected: 3 consecutive ping failures.\n");
+                    connected = false;
+                }
+            }
+
+            if (!is_timing_latency && GetTimer(latency_timer) > 0.5) {
+                memset(&fmsg, 0, sizeof(fmsg));
+                ping_id++;
+                fmsg.type = MESSAGE_PING;
+                fmsg.ping_id = ping_id;
+                is_timing_latency = true;
+
+                StartTimer(&latency_timer);
+
+                //mprintf("Ping! %d\n", ping_id);
+                SendPacket(&fmsg, sizeof(fmsg));
+                SendPacket(&fmsg, sizeof(fmsg));
+            }
+
+            memset(&fmsg, 0, sizeof(fmsg));
+            if (SDL_PollEvent(&msg)) {
+                switch (msg.type) {
+                case SDL_KEYDOWN:
+                case SDL_KEYUP:
+                    fmsg.type = MESSAGE_KEYBOARD;
+                    fmsg.keyboard.code = (FractalKeycode)msg.key.keysym.scancode;
+                    fmsg.keyboard.mod = msg.key.keysym.mod;
+                    fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN;
+                    break;
+                case SDL_MOUSEMOTION:
+                    fmsg.type = MESSAGE_MOUSE_MOTION;
+                    fmsg.mouseMotion.x = msg.motion.x * server_width / OUTPUT_WIDTH;
+                    fmsg.mouseMotion.y = msg.motion.y * server_height / OUTPUT_HEIGHT;
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                case SDL_MOUSEBUTTONUP:
+                    fmsg.type = MESSAGE_MOUSE_BUTTON;
+                    fmsg.mouseButton.button = msg.button.button;
+                    fmsg.mouseButton.pressed = msg.button.type == SDL_MOUSEBUTTONDOWN;
+                    break;
+                case SDL_MOUSEWHEEL:
+                    fmsg.type = MESSAGE_MOUSE_WHEEL;
+                    fmsg.mouseWheel.x = msg.wheel.x;
+                    fmsg.mouseWheel.y = msg.wheel.y;
+                    break;
+                case SDL_QUIT:
+                    mprintf("Quitting...\n");
+                    fmsg.type = MESSAGE_QUIT;
+                    shutting_down = true;
+                    break;
+                }
+                if (fmsg.type != 0) {
+                    SendPacket(&fmsg, sizeof(fmsg));
+                }
+            }
+        }
+
+        run_receive_packets = false;
+        SDL_WaitThread(receive_packets_thread, NULL);
+
+        destroyVideo();
+        destroyAudio();
+
+        SDL_Quit();
+
+#if defined(_WIN32)
+        closesocket(PacketSendContext.s);
+        closesocket(PacketReceiveContext.s);
+        WSACleanup();
+#else
+        close(PacketSendContext.s);
+        close(PacketReceiveContext.s);
+#endif
+
+        if (shutting_down) {
+            break;
         }
     }
-
-    run_receive_packets = false;
-    SDL_WaitThread(receive_packets_thread, NULL);
-
-    destroyVideo();
-    destroyAudio();
-
-    SDL_Quit();
-    
-#if defined(_WIN32)
-    closesocket(PacketSendContext.s);
-    closesocket(PacketReceiveContext.s);
-    WSACleanup();
-#else
-    close(PacketSendContext.s);
-    close(PacketReceiveContext.s);
-#endif
 
     destroyMultiThreadedPrintf();
     printf("Closing Client...\n");

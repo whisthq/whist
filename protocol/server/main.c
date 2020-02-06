@@ -133,7 +133,6 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
 
 static int32_t SendVideo(void* opaque) {
-
     mprintf("Initializing desktop...\n");
 
     if (InitDesktop() < 0) {
@@ -412,7 +411,7 @@ int main(int argc, char* argv[])
 
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
-                //connected = false;
+                connected = false;
             }
 
             if (last_mouse.type != 0) {
@@ -461,9 +460,11 @@ int main(int argc, char* argv[])
                     }
                 }
                 else if (fmsg.type == MESSAGE_DIMENSIONS) {
-                    server_width = fmsg.dimensions.width;
-                    server_height = fmsg.dimensions.height;
-                    update_device = true;
+                    mprintf("Request to use dimensions %dx%d received\n", fmsg.dimensions.width, fmsg.dimensions.height);
+                    //TODO: Check if dimensions are valid
+                    //server_width = fmsg.dimensions.width;
+                    //server_height = fmsg.dimensions.height;
+                    //update_device = true;
                 }
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");
