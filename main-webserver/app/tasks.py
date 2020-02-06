@@ -20,10 +20,15 @@ def createVM(self, vm_size):
     return fetchVMCredentials(vmParameters['vmName'])
 
 @celery.task(bind = True)
-def fetchAll(self):
+def fetchAll(self, update):
     _, compute_client, _ = createClients()
     vms = {'value': []}
-    for entry in compute_client.virtual_machines.list(os.getenv('VM_GROUP')):
+    azure_portal_vms = compute_client.virtual_machines.list(os.getenv('VM_GROUP'))
+    vm_usernames = []
+    vm_names = []
+    if update:
+        current_vms = fetchUserVMs()
+    for entry in azure_portal_vms:
         vm = getVM(entry.name)
         vm_ip = getIP(vm)
         vm_info = {
@@ -32,4 +37,10 @@ def fetchAll(self):
             'ip': vm_ip
         }
         vms['value'].append(vm_info)
+        vm_usernames.append(entry.os_profile.admin_username)
+        vm_names.append(entry.name)
+
+    if update:
+        for current_vm in current_vms:
+            updateRow(current_vm['vm_username'], current_vm['vm_name'], vm_usernames, vm_names)
     return vms

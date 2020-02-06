@@ -291,11 +291,31 @@ def addTimeTable(username, action):
 
 
 def fetchUserVMs(username):
-    command = text("""
-        SELECT * FROM v_ms WHERE "username" = :username
-        """)
-    params = {'username': username}
-    with engine.connect() as conn:
-        vms_info = conn.execute(command, **params).fetchall()
-        out = [{'vm_username': vm_info[2], 'vm_password': jwt.decode(vm_info[1], os.getenv('SECRET_KEY'))['pwd']} for vm_info in vms_info]
-        return out
+    if(username):
+        command = text("""
+            SELECT * FROM v_ms WHERE "username" = :username
+            """)
+        params = {'username': username}
+        with engine.connect() as conn:
+            vms_info = conn.execute(command, **params).fetchall()
+            out = [{'vm_username': vm_info[2], 'vm_password': jwt.decode(vm_info[1], os.getenv('SECRET_KEY'))['pwd']} for vm_info in vms_info]
+            return out
+    else:
+        command = text("""
+            SELECT * FROM v_ms
+            """)
+        with engine.connect() as conn:
+            vms_info = conn.execute(command, **params).fetchall()
+            out = [{'vm_username': vm_info[2], 'vm_name': vm_info[0]} for vm_info in vms_info]
+            return out
+
+def updateRow(username, vm_name, usernames, vm_names):
+    if not (username in usernames and vm_name in vm_names):
+        print("Deleting VM " + vm_name)
+        command = text("""
+            DELETE FROM v_ms WHERE "vmUserMame" = :username AND "vmName" = :vm_name 
+            """)
+        params = {'username': username, 'vm_name': vm_name}
+        with engine.connect() as conn:
+            conn.execute(command, **params)
+

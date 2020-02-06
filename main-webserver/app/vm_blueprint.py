@@ -58,18 +58,19 @@ def tracker(action):
         addTimeTable(username, 'logoff', time)
     return jsonify({}), 200
 
-@vm_bp.route('/info/<action>', methods = ['GET'])
+@vm_bp.route('/info/<action>', methods = ['GET', 'POST'])
 def info(action):
     body = request.get_json()
-    if action == 'list_all':
-        task = fetchAll.apply_async()
+    if action == 'list_all' and request.method == 'GET':
+        task = fetchAll.apply_async([False])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
+    if action == 'update_db' and request.method == 'POST':
+        task = fetchAll.apply_async([True])
+        if not task:
+            return jsonify({}), 400
+        return jsonify({'ID': task.id}), 202
+
     return jsonify({}), 400
 
-
-@vm_bp.route('/test', methods = ['GET'])
-def test():
-    print("TEST")
-    return({'status': 'good'}), 200
