@@ -83,7 +83,7 @@ void updateAudio() {
             //mprintf("Playing ID %d\n", packet->id);
             AudioData.last_played_id = next_to_play_id;
             if (packet->size > 0) {
-                mprintf("Playing %d\n", packet->id);
+                //mprintf("Playing %d\n", packet->id);
                 SDL_QueueAudio(AudioData.dev, packet->data, packet->size);
             }
             packet->id = -1;
@@ -116,7 +116,7 @@ int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size) {
     int audio_id = packet->id * MAX_NUM_AUDIO_INDICES + packet->index;
     audio_packet* audio_pkt = &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
 
-    mprintf("Receiving %d\n", audio_id);
+    //mprintf("Receiving %d\n", audio_id);
 
     if (audio_id > audio_pkt->id && audio_id > AudioData.last_played_id) {
         if (audio_pkt->id != -1) {

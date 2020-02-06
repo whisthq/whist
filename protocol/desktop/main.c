@@ -77,13 +77,65 @@ static int32_t ReceivePackets(void* opaque) {
 
     int total_recvs = 0;
 
+
+    /****
+    Timers
+    ****/
+    clock world_timer;
+    StartTimer(&world_timer);
+
+    double recvfrom_time = 0;
+    double update_video_time = 0;
+    double update_audio_time = 0;
+    double hash_time = 0;
+    double video_time = 0;
+    double audio_time = 0;
+    double message_time = 0;
+
+    double max_audio_time = 0;
+    double max_video_time = 0;
+
+    clock recvfrom_timer;
+    clock update_video_timer;
+    clock update_audio_timer;
+    clock hash_timer;
+    clock video_timer;
+    clock audio_timer;
+    clock message_timer;
+
+    /****
+    End Timers
+    ****/
+
     for (int i = 0; run_receive_packets; i++) {
         //mprintf("Update\n");
         // Call as often as possible
-        updateVideo();
-        updateAudio();
+        if (GetTimer(world_timer) > 5) {
+            mprintf("\nworld_time: %f\n", GetTimer(world_timer));
+            mprintf("recvfrom_time: %f\n", recvfrom_time);
+            mprintf("update_video_time: %f\n", update_video_time);
+            mprintf("update_audio_time: %f\n", update_audio_time);
+            mprintf("hash_time: %f\n", hash_time);
+            mprintf("video_time: %f\n", video_time);
+            mprintf("max_video_time: %f\n", max_video_time);
+            mprintf("audio_time: %f\n", audio_time);
+            mprintf("max_audio_time: %f\n", max_audio_time);
+            mprintf("message_time: %f\n", message_time);
+            StartTimer(&world_timer);
+        }
 
+        StartTimer(&update_video_timer);
+        updateVideo();
+        update_video_time += GetTimer(update_video_timer);
+
+        StartTimer(&update_audio_timer);
+        updateAudio();
+        update_audio_time += GetTimer(update_audio_timer);
+
+        StartTimer(&recvfrom_timer);
         int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
+        recvfrom_time += GetTimer(recvfrom_timer);
+
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
         total_recvs++;
 
@@ -110,9 +162,11 @@ static int32_t ReceivePackets(void* opaque) {
             mprintf("Invalid packet size\nPayload Size: %d\nPacket Size: %d\nRecv_size: %d\n", packet_size, recv_size, packet.payload_size);
         }
         else {
-            uint32_t hash = Hash((char*)&packet + sizeof(packet.hash), packet_size - sizeof(packet.hash));
+            StartTimer(&hash_timer);
+            uint32_t hash = 0;// Hash((char*)&packet + sizeof(packet.hash), packet_size - sizeof(packet.hash));
+            hash_time += GetTimer(hash_timer);
 
-            if (hash != packet.hash) {
+            if (hash == packet.hash) {
                 mprintf("Incorrect Hash\n");
             }
             else {
@@ -120,13 +174,21 @@ static int32_t ReceivePackets(void* opaque) {
                 switch (packet.type) {
                 case PACKET_VIDEO:
                     //mprintf("Recv Video %d %d\n", packet.id, packet.index);
+                    StartTimer(&video_timer);
                     ReceiveVideo(&packet, recv_size);
+                    video_time += GetTimer(video_timer);
+                    max_video_time = max(max_video_time, GetTimer(video_timer));
                     break;
                 case PACKET_AUDIO:
+                    StartTimer(&audio_timer);
                     ReceiveAudio(&packet, recv_size);
+                    audio_time += GetTimer(audio_timer);
+                    max_audio_time = max(max_audio_time, GetTimer(audio_timer));
                     break;
                 case PACKET_MESSAGE:
+                    StartTimer(&message_timer); 
                     ReceiveMessage(&packet, recv_size);
+                    message_time += GetTimer(message_timer);
                     break;
                 default:
                     mprintf("Unknown Packet\n");

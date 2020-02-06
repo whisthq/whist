@@ -24,13 +24,10 @@ STATIC_LIBS = \
 CFLAGS = \
   /nologo \
   /W4 \
-  /O2 \
+  /O2i \
   /MT \
   /MP \
-  -Iinclude \
-  -DWIN32_LEAN_AND_MEAN \
-  -DUNICODE \
-  -DWIN32
+  /DWIN32 \
 
 # system libs to link against
 SHARED_LIBS = \
@@ -62,35 +59,35 @@ all: clean clear fractal.obj webserver.obj videodecode.obj audiodecode.obj linke
 
 # compile the main fractal header source file into object file
 fractal.obj: ../include/fractal.c
-  $(CC) /c ../include/fractal.c
+  $(CC) /c $(CFLAGS) ../include/fractal.c
 
 # compile the webserver source file into object file
 webserver.obj: ../include/webserver.c
-  $(CC) /c ../include/webserver.c
+  $(CC) /c $(CFLAGS) ../include/webserver.c
 
 # compile the video decoder source file into object file
 videodecode.obj: ../include/videodecode.c
-  $(CC) /c ../include/videodecode.c
+  $(CC) /c $(CFLAGS) ../include/videodecode.c
 
 # compile the audio decoder source file into object file
 audiodecode.obj: ../include/audiodecode.c
-  $(CC) /c ../include/audiodecode.c
+  $(CC) /c $(CFLAGS) ../include/audiodecode.c
 
 # compile the linked list source file into object file
 linkedlist.obj: ../include/linkedlist.c
-  $(CC) /c ../include/linkedlist.c
+  $(CC) /c $(CFLAGS) ../include/linkedlist.c
 
 # compile the source main file into object file
 video.obj: video.c
-  $(CC) /c video.c
+  $(CC) /c $(CFLAGS) video.c
 
 # compile the source main file into object file
 audio.obj: audio.c
-  $(CC) /c audio.c
+  $(CC) /c $(CFLAGS) audio.c
 
 # compile the source main file into object file
 main.obj: main.c
-  $(CC) /c main.c
+  $(CC) /c $(CFLAGS) main.c
 
 # clean prior object files
 clean:
