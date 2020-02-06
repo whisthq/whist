@@ -325,9 +325,9 @@ def updateRow(username, vm_name, usernames, vm_names):
             INSERT INTO v_ms("vmUserName", "vmPassword", "vmName") 
             VALUES(:username, :password :vm_name)
             """)
-        params = {'vmUserName': username, 
-                  'vmPassword': jwt.encode({'pwd': os.getenv('VM_PASSWORD')}, os.getenv('SECRET_KEY')),
-                  'vmName': vm_name}
+        params = {'username': username, 
+                  'password': jwt.encode({'pwd': os.getenv('VM_PASSWORD')}, os.getenv('SECRET_KEY')),
+                  'vm_name': vm_name}
         with engine.connect() as conn:
             conn.execute(command, **params)
 

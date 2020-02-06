@@ -45,7 +45,7 @@ def fetchAll(self, update):
         vm_names.append(entry.name)
 
         if update:
-            updateRow(entry.name, entry.os_profile.admin_username, current_usernames, current_names)
+            updateRow(entry.os_profile.admin_username, entry.name, current_usernames, current_names)
 
     if update:
         for current_vm in current_vms:
