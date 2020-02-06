@@ -63,6 +63,8 @@ def info(action):
     body = request.get_json()
     if action == 'list_all':
         task = fetchAll.apply_async()
+        if not task:
+            return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
     return jsonify({}), 400
 
