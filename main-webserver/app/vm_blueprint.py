@@ -57,3 +57,17 @@ def tracker(action):
     elif action == 'logoff':
         addTimeTable(username, 'logoff', time)
     return jsonify({}), 200
+
+@vm_bp.route('/info/<action>', methods = ['GET'])
+def info(action):
+    body = request.get_json()
+    if action == 'list_all':
+        task = fetchAll.apply_async()
+        return jsonify({'ID': task.id}), 202
+    return jsonify({}), 400
+
+
+@vm_bp.route('/test', methods = ['GET'])
+def test():
+    print("TEST")
+    return({'status': 'good'}), 200
