@@ -276,7 +276,7 @@ static int32_t SendVideo(void* opaque) {
                         mprintf("Could not send video frame\n");
                     }
                     else {
-                        //mprintf("Sent size %d\n", encoder->packet.size);
+                        mprintf("Sent size %d\n", encoder->packet.size);
                         previous_frame_size = encoder->packet.size;
                     }
                     float server_frame_time = GetTimer(server_frame_timer);
