@@ -233,6 +233,18 @@ def resetPassword(username, password):
     with engine.connect() as conn:
         conn.execute(command, **params)
 
+def resetVMPassword(username, password):
+    pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
+    command = text("""
+        UPDATE v_ms
+        SET "vmPassword" = :password
+        WHERE "vmUserName" = :userName
+        """)
+    params = {'userName': username, 'password': pwd_token}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+
+
 def fetchVMCredentials(vm_name):
     command = text("""
         SELECT * FROM v_ms WHERE "vmName" = :vm_name
@@ -285,6 +297,15 @@ def addTimeTable(username, action):
         """)
     if time:
         params = {'userName': username, 'currentTime': dt.now().strftime('%m-%d-%Y, %H:%M:%S'), 'action': action}
+
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+
+def deleteTimeTable():
+    command = text("""
+        DELETE FROM login_history
+        """)
+    params = {}
 
     with engine.connect() as conn:
         conn.execute(command, **params)

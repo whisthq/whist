@@ -32,6 +32,10 @@ def user(action):
 			return jsonify({'vms': fetchUserVMs(username)}), 200
 		except Exception as e:
 			return jsonify({}), 403
+	elif action == 'reset':
+		username, password = body['username'], body['password']
+		resetVMPassword(username, password)
+		return jsonify({'status': 200}), 200
 
 @account_bp.route('/account/<action>', methods = ['POST'])
 def account(action):

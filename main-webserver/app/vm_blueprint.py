@@ -56,6 +56,8 @@ def tracker(action):
         addTimeTable(username, 'logon', time)
     elif action == 'logoff':
         addTimeTable(username, 'logoff', time)
+    elif action == 'clear':
+        deleteTimeTable()
     return jsonify({}), 200
 
 @vm_bp.route('/info/<action>', methods = ['GET', 'POST'])
