@@ -189,13 +189,18 @@ void initVideo() {
     size_t yPlaneSz, uvPlaneSz;
     int uvPitch;
 
+    int full_width = GetSystemMetrics(SM_CXSCREEN);
+    int full_height = GetSystemMetrics(SM_CYSCREEN);
+
+    bool is_fullscreen = full_width == output_width && full_height == output_height;
+
     window = SDL_CreateWindow(
         "Fractal",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
         output_width,
         output_height,
-        SDL_WINDOW_MAXIMIZED
+        is_fullscreen ? SDL_WINDOW_FULLSCREEN : NULL
     );
 
     if (!window) {
@@ -347,10 +352,9 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
             return 0;
         }
         ctx->id = packet->id;
-        ctx->num_packets = packet->num_indices;
         ctx->prev_frame = &frame_bufs[index];
         ctx->packets_received = 0;
-        ctx->num_packets = -1;
+        ctx->num_packets = packet->num_indices;
         ctx->last_nacked_id = -1;
         memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
         StartTimer(&ctx->client_frame_timer);

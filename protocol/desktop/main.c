@@ -177,7 +177,6 @@ static int32_t ReceivePackets(void* opaque) {
                 //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
                 switch (packet.type) {
                 case PACKET_VIDEO:
-                    //mprintf("Recv Video %d %d\n", packet.id, packet.index);
                     StartTimer(&video_timer);
                     ReceiveVideo(&packet, recv_size);
                     video_time += GetTimer(video_timer);
@@ -227,7 +226,7 @@ static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
 
 int main(int argc, char* argv[])
 {
-    if(argc < 2) {
+    if(argc < 2 || argc > 4) {
         printf("Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT]");
         return -1;
     }
