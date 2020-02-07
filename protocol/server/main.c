@@ -75,6 +75,8 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
     clock packet_timer;
     StartTimer(&packet_timer);
 
+    int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
+
     while (curr_index < len) {
         struct RTPPacket l_packet = { 0 };
         int l_len = 0;
@@ -108,7 +110,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
         packet->index = i;
         packet->payload_size = payload_size;
         packet->id = id;
-        packet->is_ending = curr_index + payload_size == len;
+        packet->num_indices = num_indices;
         int packet_size = sizeof(*packet) - sizeof(packet->data) + packet->payload_size;
         packet->hash = Hash((char*)packet + sizeof(packet->hash), packet_size - sizeof(packet->hash));
 

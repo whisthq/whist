@@ -655,10 +655,10 @@ struct RTPPacket {
 	// hash at the beginning of the struct, which is the hash of the rest of the packet
 	uint32_t hash;
 	FractalPacketType type;
-	int index;
-	int payload_size;
 	int id;
-	bool is_ending;
+	short index;
+	short num_indices;
+	short payload_size;
 	// data at the end of the struct, in the case of a truncated packet
 	uint8_t data[MAX_PAYLOAD_SIZE];
 };

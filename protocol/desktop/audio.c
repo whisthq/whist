@@ -214,7 +214,7 @@ int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size) {
         audio_pkt->size = packet->payload_size;
         memcpy(audio_pkt->data, packet->data, packet->payload_size);
 
-        if (packet->is_ending) {
+        if (packet->index + 1 == packet->num_indices) {
             //mprintf("Audio Packet %d Received! Last Played: %d\n", packet->id, last_played_id);
             for (int i = audio_id + 1; i % MAX_NUM_AUDIO_INDICES != 0; i++) {
                 //mprintf("Receiving %d\n", i);
