@@ -8,8 +8,8 @@ typedef struct audio_packet {
     char data[MAX_PAYLOAD_SIZE];
 } audio_packet;
 
-#define AUDIO_QUEUE_LIMIT 25000
-#define RECV_AUDIO_BUFFER_SIZE 50
+#define AUDIO_QUEUE_LIMIT 35000
+#define RECV_AUDIO_BUFFER_SIZE 75
 #define MAX_NUM_AUDIO_INDICES 5
 audio_packet receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
@@ -20,7 +20,12 @@ struct AudioData {
     audio_decoder_t* audio_decoder;
 } volatile AudioData;
 
+
+clock nack_timer;
+
 void initAudio() {
+    StartTimer(&nack_timer);
+
     // cast socket and SDL variables back to their data type for usage
     SDL_AudioSpec wantedSpec = { 0 }, audioSpec = { 0 };
 
@@ -96,7 +101,7 @@ void updateAudio() {
                     next_to_play_id += MAX_NUM_AUDIO_INDICES - 1;
                 }
                 else {
-                    //mprintf("Playing %d (%d)\n", packet->id, packet->size);
+                    mprintf("Playing %d (%d) (%d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
                     if (SDL_QueueAudio(AudioData.dev, packet->data, packet->size) < 0) {
                         mprintf("Could not play audio!\n");
                     }
@@ -109,6 +114,11 @@ void updateAudio() {
     }
 
     if (last_played_id > -1) {
+        if (GetTimer(nack_timer) > 3.0 / 1000.0) {
+            StartTimer(&nack_timer);
+            last_nacked_id = last_played_id;
+        }
+
         next_to_play_id = last_played_id + 1;
         next_to_play_buffer_index = next_to_play_id % RECV_AUDIO_BUFFER_SIZE;
 
