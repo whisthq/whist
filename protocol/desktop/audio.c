@@ -8,7 +8,7 @@ typedef struct audio_packet {
     char data[MAX_PAYLOAD_SIZE];
 } audio_packet;
 
-#define AUDIO_QUEUE_LIMIT 35000
+#define AUDIO_QUEUE_LIMIT 95000
 #define RECV_AUDIO_BUFFER_SIZE 75
 #define MAX_NUM_AUDIO_INDICES 5
 audio_packet receiving_audio[RECV_AUDIO_BUFFER_SIZE];
@@ -34,7 +34,8 @@ void initAudio() {
     SDL_zero(wantedSpec);
     SDL_zero(audioSpec);
     wantedSpec.channels  = AudioData.audio_decoder->context->channels;
-    wantedSpec.freq      = AudioData.audio_decoder->context->sample_rate;
+    wantedSpec.freq      = 48200;//AudioData.audio_decoder->context->sample_rate * 1.05;
+    mprintf("Freq: %d\n", wantedSpec.freq);
     wantedSpec.format    = AUDIO_F32SYS;
     wantedSpec.silence   = 0;
     wantedSpec.samples   = SDL_AUDIO_BUFFER_SIZE;
