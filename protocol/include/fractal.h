@@ -474,6 +474,11 @@ typedef enum FractalPCMFormat {
 /// @details Passed to FractalInit to generate config
 /// serve as the first port used when the `bind` call is made internally. If the port is already in use,
 /// the next port will be tried until an open port has been found or 50 attempts have been made.
+typedef struct FractalDimension {
+	int width;
+	int height;
+} FractalDimension;
+
 typedef struct FractalConfig {
 	int32_t upnp;       		///< `1` enables and maintains UPnP to assist NAT traversal, `0` disables it.
 	int32_t clientPortRECV; ///< First port tried for client connections. A value of `0` uses a pseudo random default.

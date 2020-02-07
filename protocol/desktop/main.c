@@ -82,7 +82,6 @@ static int32_t ReceivePackets(void* opaque) {
 
     int total_recvs = 0;
 
-
     /****
     Timers
     ****/
