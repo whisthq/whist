@@ -461,9 +461,9 @@ int main(int argc, char* argv[])
                 else if (fmsg.type == MESSAGE_DIMENSIONS) {
                     mprintf("Request to use dimensions %dx%d received\n", fmsg.dimensions.width, fmsg.dimensions.height);
                     //TODO: Check if dimensions are valid
-                    //server_width = fmsg.dimensions.width;
-                    //server_height = fmsg.dimensions.height;
-                    //update_device = true;
+                    server_width = fmsg.dimensions.width;
+                    server_height = fmsg.dimensions.height;
+                    update_device = true;
                 }
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");

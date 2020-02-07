@@ -401,7 +401,7 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
 FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 	// get screen width and height for mouse cursor
 	int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
-	int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
+	int sHeight = GetSystemMetrics(SM_CYSCREEN) - 10;
 	int i;
 	INPUT Event[6];
 
