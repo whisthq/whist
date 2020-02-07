@@ -188,6 +188,10 @@ static int32_t SendVideo(void* opaque) {
         }
 
         if (update_device) {
+            fp = fopen("/log.txt", "a+");
+            fprintf(fp, "Update device\n");
+            fclose(fp);
+
             if (device) {
                 mprintf("Destroying old Device\n");
                 DestroyCaptureDevice(device);
@@ -290,6 +294,21 @@ static int32_t SendVideo(void* opaque) {
         else if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
             mprintf("ERROR: %d %X\n", WSAGetLastError(), hr);
 
+            fp = fopen("/log.txt", "a+");
+            fprintf(fp, "Non timeout caught\n");
+            fclose(fp);
+
+            if (device) {
+                mprintf("Destroying old Device\n");
+                DestroyCaptureDevice(device);
+            }
+
+            mprintf("Creating new Device\n");
+            CreateDisplayHardware(device, server_width, server_height);
+
+            update_encoder = true;
+            update_device = false;
+
             consecutive_capture_screen_errors++;
             if (consecutive_capture_screen_errors == 3) {
                 mprintf("DXGI errored too many times!\n");
@@ -351,7 +370,7 @@ static int32_t SendAudio(void* opaque) {
 
 int main(int argc, char* argv[])
 {
-    initMultiThreadedPrintf(true);
+    initMultiThreadedPrintf(false);
 
     while (true) {
         // initialize the windows socket library if this is a windows client
@@ -461,9 +480,9 @@ int main(int argc, char* argv[])
                 else if (fmsg.type == MESSAGE_DIMENSIONS) {
                     mprintf("Request to use dimensions %dx%d received\n", fmsg.dimensions.width, fmsg.dimensions.height);
                     //TODO: Check if dimensions are valid
-                    //server_width = fmsg.dimensions.width;
-                    //server_height = fmsg.dimensions.height;
-                    //update_device = true;
+                    server_width = fmsg.dimensions.width;
+                    server_height = fmsg.dimensions.height;
+                    update_device = true;
                 }
                 else if (fmsg.type == MESSAGE_QUIT) {
                     mprintf("Client Quit\n");

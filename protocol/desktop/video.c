@@ -12,7 +12,9 @@ extern volatile bool update_mbps;
 
 extern volatile int output_width;
 extern volatile int output_height;
+
 // START VIDEO VARIABLES
+
 
 struct VideoData {
     struct FrameData* pending_ctx;
@@ -81,6 +83,7 @@ char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
 
 void updateWidthAndHeight(int width, int height);
 int32_t RenderScreen(void* opaque);
+
 
 void updateWidthAndHeight(int width, int height) {
     struct SwsContext* sws_ctx = NULL;
@@ -188,11 +191,11 @@ void initVideo() {
 
     window = SDL_CreateWindow(
         "Fractal",
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
         output_width,
         output_height,
-        SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_BORDERLESS
+        SDL_WINDOW_MAXIMIZED
     );
 
     if (!window) {
@@ -205,6 +208,8 @@ void initVideo() {
         fprintf(stderr, "SDL: could not create renderer - exiting\n");
         exit(1);
     }
+
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     // Allocate a place to put our YUV image on that screen
     texture = SDL_CreateTexture(
         renderer,

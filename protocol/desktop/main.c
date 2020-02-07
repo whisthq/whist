@@ -52,6 +52,8 @@ static int32_t ReceivePackets(void* opaque);
 static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size);
 
 struct SocketContext PacketSendContext;
+
+
 int SendPacket(void* data, int len) {
     if (len > MAX_PACKET_SIZE) {
         mprintf("Packet too large!\n");
@@ -225,14 +227,23 @@ static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
 
 int main(int argc, char* argv[])
 {
-    if(argc != 4) {
-        printf("Usage: desktop [IP ADDRESS] [WIDTH] [HEIGHT]");
+    if(argc < 2) {
+        printf("Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT]");
         return -1;
     }
 
+
     char* server_ip = argv[1];
-    output_width = atoi(argv[2]);
-    output_height = atoi(argv[3]);
+    output_width = GetSystemMetrics(SM_CXSCREEN);
+    output_height = GetSystemMetrics(SM_CYSCREEN);
+
+    if(argc >= 3) {
+        output_width = atoi(argv[2]);
+    }
+
+    if(argc == 4) {
+        output_height = atoi(argv[3]);
+    }
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
@@ -289,6 +300,7 @@ int main(int argc, char* argv[])
 
         bool shutting_down = false;
         bool connected = true;
+
         while (connected && !shutting_down)
         {
             if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
