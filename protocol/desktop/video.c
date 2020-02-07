@@ -339,12 +339,15 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
     int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
 
     struct FrameData* ctx = &receiving_frames[index];
+
+    // Check if we have to initialize the frame buffer
     if (ctx->id != packet->id) {
         if (rendering && renderContext.id == ctx->id) {
             mprintf("Error! Currently rendering an ID that will be overwritten! Skipping packet.\n");
             return 0;
         }
         ctx->id = packet->id;
+        ctx->num_packets = packet->num_indices;
         ctx->prev_frame = &frame_bufs[index];
         ctx->packets_received = 0;
         ctx->num_packets = -1;
@@ -356,6 +359,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
        // mprintf("Already Started: %d/%d - %f\n", ctx->packets_received + 1, ctx->num_packets, GetTimer(ctx->client_frame_timer));
     }
 
+    // If we already received this packet, we can skip
     if (ctx->received_indicies[packet->index]) {
         //mprintf("NACK for Video ID %d, Index %d Received!\n", packet->id, packet->index);
         return 0;
@@ -387,11 +391,6 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
     }
     memcpy(ctx->prev_frame + place, packet->data, packet->payload_size);
     ctx->frame_size += packet->payload_size;
-
-    // Keep track of how many packets are necessary
-    if (packet->is_ending) {
-        ctx->num_packets = packet->index + 1;
-    }
 
     // If we received all of the packets
     if (ctx->packets_received == ctx->num_packets) {
