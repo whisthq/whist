@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
     }
 
     if(argc == 4) {
-        output_height = atoi(argv[3]) - 40;
+        output_height = atoi(argv[3]);
     }
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);

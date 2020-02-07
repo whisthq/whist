@@ -191,11 +191,11 @@ void initVideo() {
 
     window = SDL_CreateWindow(
         "Fractal",
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
         output_width,
         output_height,
-        0
+        SDL_WINDOW_MAXIMIZED
     );
 
     if (!window) {
