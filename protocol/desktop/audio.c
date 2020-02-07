@@ -96,7 +96,7 @@ void updateAudio() {
         if (packet->id == next_to_play_id) {
             still_more_audio_packets = true;
             if (packet->size > 0) {
-                if (next_to_play_id % MAX_NUM_AUDIO_INDICES == 0 && SDL_GetQueuedAudioSize(AudioData.dev) > AUDIO_QUEUE_LIMIT) {
+                if (next_to_play_id % MAX_NUM_AUDIO_INDICES == 0 && SDL_GetQueuedAudioSize(AudioData.dev) > AUDIO_QUEUE_LIMIT && (next_to_play_id / MAX_NUM_AUDIO_INDICES) % 5 == 0) {
                     mprintf("Audio queue full, catching up by one frame\n");
                     next_to_play_id += MAX_NUM_AUDIO_INDICES - 1;
                 }
