@@ -76,8 +76,8 @@
 
 #define LARGEST_FRAME_SIZE 1000000
 #define STARTING_BITRATE 25000
-#define OUTPUT_WIDTH 1024
-#define OUTPUT_HEIGHT 768
+#define OUTPUT_WIDTH 1280
+#define OUTPUT_HEIGHT 720
 
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org
@@ -474,6 +474,11 @@ typedef enum FractalPCMFormat {
 /// @details Passed to FractalInit to generate config
 /// serve as the first port used when the `bind` call is made internally. If the port is already in use,
 /// the next port will be tried until an open port has been found or 50 attempts have been made.
+typedef struct FractalDimension {
+	int width;
+	int height;
+} FractalDimension;
+
 typedef struct FractalConfig {
 	int32_t upnp;       		///< `1` enables and maintains UPnP to assist NAT traversal, `0` disables it.
 	int32_t clientPortRECV; ///< First port tried for client connections. A value of `0` uses a pseudo random default.

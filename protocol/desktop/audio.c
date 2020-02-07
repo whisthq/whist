@@ -36,7 +36,8 @@ void initAudio() {
     SDL_zero(wantedSpec);
     SDL_zero(audioSpec);
     wantedSpec.channels  = AudioData.audio_decoder->context->channels;
-    wantedSpec.freq      = AudioData.audio_decoder->context->sample_rate;
+    wantedSpec.freq      = 48200;//AudioData.audio_decoder->context->sample_rate * 1.05;
+    mprintf("Freq: %d\n", wantedSpec.freq);
     wantedSpec.format    = AUDIO_F32SYS;
     wantedSpec.silence   = 0;
     wantedSpec.samples   = SDL_AUDIO_BUFFER_SIZE;

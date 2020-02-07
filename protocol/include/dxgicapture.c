@@ -92,8 +92,6 @@ void CreateTexture(struct CaptureDevice *device) {
 
   if (0 != EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm))
   {
-      int savew = dm.dmPelsWidth;
-      int saveh = dm.dmPelsHeight;
       dm.dmPelsWidth = device->width;
       dm.dmPelsHeight = device->height;
       dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;

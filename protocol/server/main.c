@@ -335,13 +335,12 @@ static int32_t SendAudio(void* opaque) {
                 if (SendPacket(&context, PACKET_AUDIO, audio_device->pData, audio_device->audioBufSize, id, -1.0) < 0) {
                     mprintf("Could not send audio frame\n");
                 }
+                id++;
             }
 
             audio_device->pAudioCaptureClient->lpVtbl->ReleaseBuffer(
                 audio_device->pAudioCaptureClient,
                 nNumFramesToRead);
-
-            id++;
         }
         dwWaitResult = WaitForSingleObject(audio_device->hWakeUp, INFINITE);
     }
