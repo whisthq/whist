@@ -76,8 +76,8 @@
 
 #define LARGEST_FRAME_SIZE 1000000
 #define STARTING_BITRATE 25000
-#define OUTPUT_WIDTH 1024
-#define OUTPUT_HEIGHT 768
+#define OUTPUT_WIDTH 1280
+#define OUTPUT_HEIGHT 720
 
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org

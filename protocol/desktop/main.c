@@ -41,6 +41,9 @@ volatile static clock latency_timer;
 volatile static int ping_id = 1;
 volatile static int ping_failures = 0;
 
+volatile int output_width;
+volatile int output_height;
+
 // Function Declarations
 
 SDL_mutex* send_packet_mutex;
@@ -223,6 +226,15 @@ static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
 
 int main(int argc, char* argv[])
 {
+    if(argc != 4) {
+        printf("Usage: desktop [IP ADDRESS] [WIDTH] [HEIGHT]");
+        return -1;
+    }
+
+    char* server_ip = argv[1];
+    output_width = atoi(argv[2]);
+    output_height = atoi(argv[3]);
+
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
 
@@ -241,12 +253,12 @@ int main(int argc, char* argv[])
         SDL_Event msg;
         FractalClientMessage fmsg = { 0 };
 
-        if (CreateUDPContext(&PacketSendContext, "C", SERVER_IP, 10, 250) < 0) {
+        if (CreateUDPContext(&PacketSendContext, "C", server_ip, 10, 250) < 0) {
             exit(1);
         }
 
         struct SocketContext PacketReceiveContext = { 0 };
-        if (CreateUDPContext(&PacketReceiveContext, "C", SERVER_IP, 1, 250) < 0) {
+        if (CreateUDPContext(&PacketReceiveContext, "C", server_ip, 1, 250) < 0) {
             exit(1);
         }
 
@@ -290,11 +302,11 @@ int main(int argc, char* argv[])
                 StartTimer(&ack_timer);
             }
 
-            if (needs_dimension_update && !tried_to_update_dimension && (server_width != OUTPUT_WIDTH || server_height != OUTPUT_HEIGHT)) {
+            if (needs_dimension_update && !tried_to_update_dimension && (server_width != output_width || server_height != output_height)) {
                 memset(&fmsg, 0, sizeof(fmsg));
                 fmsg.type = MESSAGE_DIMENSIONS;
-                fmsg.dimensions.width = OUTPUT_WIDTH;
-                fmsg.dimensions.height = OUTPUT_HEIGHT;
+                fmsg.dimensions.width = output_width;
+                fmsg.dimensions.height = output_height;
                 SendPacket(&fmsg, sizeof(fmsg));
                 tried_to_update_dimension = true;
             }
@@ -344,8 +356,8 @@ int main(int argc, char* argv[])
                     break;
                 case SDL_MOUSEMOTION:
                     fmsg.type = MESSAGE_MOUSE_MOTION;
-                    fmsg.mouseMotion.x = msg.motion.x * server_width / OUTPUT_WIDTH;
-                    fmsg.mouseMotion.y = msg.motion.y * server_height / OUTPUT_HEIGHT;
+                    fmsg.mouseMotion.x = msg.motion.x * server_width / output_width;
+                    fmsg.mouseMotion.y = msg.motion.y * server_height / output_height;
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                 case SDL_MOUSEBUTTONUP:

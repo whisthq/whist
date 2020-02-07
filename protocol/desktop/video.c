@@ -10,6 +10,8 @@ extern volatile int server_height;
 extern volatile double max_mbps;
 extern volatile bool update_mbps;
 
+extern volatile int output_width;
+extern volatile int output_height;
 // START VIDEO VARIABLES
 
 struct VideoData {
@@ -92,7 +94,7 @@ void updateWidthAndHeight(int width, int height) {
     }
 
     sws_ctx = sws_getContext(width, height,
-        input_fmt, OUTPUT_WIDTH, OUTPUT_HEIGHT,
+        input_fmt, output_width, output_height,
         AV_PIX_FMT_YUV420P,
         SWS_BILINEAR,
         NULL,
@@ -102,7 +104,7 @@ void updateWidthAndHeight(int width, int height) {
 
     videoContext.sws = sws_ctx;
 
-    video_decoder_t* decoder = create_video_decoder(width, height, OUTPUT_WIDTH, OUTPUT_HEIGHT, DECODE_TYPE);
+    video_decoder_t* decoder = create_video_decoder(width, height, output_width, output_height, DECODE_TYPE);
     videoContext.decoder = decoder;
 
     server_width = width;
@@ -145,7 +147,7 @@ int32_t RenderScreen(void* opaque) {
         pict.data[0] = videoContext.yPlane;
         pict.data[1] = videoContext.uPlane;
         pict.data[2] = videoContext.vPlane;
-        pict.linesize[0] = OUTPUT_WIDTH;
+        pict.linesize[0] = output_width;
         pict.linesize[1] = videoContext.uvPitch;
         pict.linesize[2] = videoContext.uvPitch;
         sws_scale(videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
@@ -156,7 +158,7 @@ int32_t RenderScreen(void* opaque) {
             videoContext.texture,
             NULL,
             videoContext.yPlane,
-            OUTPUT_WIDTH,
+            output_width,
             videoContext.uPlane,
             videoContext.uvPitch,
             videoContext.vPlane,
@@ -188,8 +190,8 @@ void initVideo() {
         "Fractal",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        OUTPUT_WIDTH,
-        OUTPUT_HEIGHT,
+        output_width,
+        output_height,
         SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_BORDERLESS
     );
 
@@ -208,8 +210,8 @@ void initVideo() {
         renderer,
         SDL_PIXELFORMAT_YV12,
         SDL_TEXTUREACCESS_STREAMING,
-        OUTPUT_WIDTH,
-        OUTPUT_HEIGHT
+        output_width,
+        output_height
     );
     if (!texture) {
         fprintf(stderr, "SDL: could not create texture - exiting\n");
@@ -217,8 +219,8 @@ void initVideo() {
     }
 
     // set up YV12 pixel array (12 bits per pixel)
-    yPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT;
-    uvPlaneSz = OUTPUT_WIDTH * OUTPUT_HEIGHT / 4;
+    yPlaneSz = output_width * output_height;
+    uvPlaneSz = output_width * output_height / 4;
     yPlane = (Uint8*)malloc(yPlaneSz);
     uPlane = (Uint8*)malloc(uvPlaneSz);
     vPlane = (Uint8*)malloc(uvPlaneSz);
@@ -228,7 +230,7 @@ void initVideo() {
         exit(1);
     }
 
-    uvPitch = OUTPUT_WIDTH / 2;
+    uvPitch = output_width / 2;
 
     videoContext.window = window;
     videoContext.renderer = renderer;
