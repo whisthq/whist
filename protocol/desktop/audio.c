@@ -5,10 +5,11 @@ typedef struct audio_packet {
     int id;
     int size;
     int nacked_for;
+    int nacked_amount;
     char data[MAX_PAYLOAD_SIZE];
 } audio_packet;
 
-#define AUDIO_QUEUE_LIMIT 35000
+#define AUDIO_QUEUE_LIMIT 45000
 #define RECV_AUDIO_BUFFER_SIZE 75
 #define MAX_NUM_AUDIO_INDICES 5
 audio_packet receiving_audio[RECV_AUDIO_BUFFER_SIZE];
@@ -49,6 +50,7 @@ void initAudio() {
 
     for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
         receiving_audio[i].id = -1;
+        receiving_audio[i].nacked_amount = 0;
         receiving_audio[i].nacked_for = -1;
     }
 }
@@ -71,10 +73,12 @@ void updateAudio() {
     if (last_played_id == -1 && most_recent_audio_id > 0) {
         last_played_id = most_recent_audio_id - 1;
 
+
         // Clean out the old packets
         for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
             if (receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id <= last_played_id) {
                 receiving_audio[i].id = -1;
+                receiving_audio[i].nacked_amount = 0;
             }
         }
     }
@@ -110,11 +114,12 @@ void updateAudio() {
 
             last_played_id = next_to_play_id;
             packet->id = -1;
+            packet->nacked_amount = 0;
         }
     }
 
     if (last_played_id > -1) {
-        if (GetTimer(nack_timer) > 3.0 / 1000.0) {
+        if (GetTimer(nack_timer) > 2.0 / 1000.0) {
             StartTimer(&nack_timer);
             last_nacked_id = last_played_id;
         }
@@ -126,14 +131,14 @@ void updateAudio() {
         for (int i = max(next_to_play_id, last_nacked_id + 1); i < most_recent_audio_id; i++) {
             int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
             audio_packet* i_packet = &receiving_audio[i_buffer_index];
-            if (i_packet->id == -1) {
+            if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
+                i_packet->nacked_amount++;
                 FractalClientMessage fmsg;
                 fmsg.type = MESSAGE_AUDIO_NACK;
                 fmsg.nack_data.id = i / MAX_NUM_AUDIO_INDICES;
                 fmsg.nack_data.index = i % MAX_NUM_AUDIO_INDICES;
                 //mprintf("Missing Audio Packet ID %d, Index %d. NACKing...\n", fmsg.nack_data.id, fmsg.nack_data.index);
                 i_packet->nacked_for = i;
-                SendPacket(&fmsg, sizeof(fmsg));
                 SendPacket(&fmsg, sizeof(fmsg));
             }
             last_nacked_id = i;
@@ -171,14 +176,15 @@ int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size) {
                 // We'll make it like we already played this packet
                 last_played_id = audio_pkt->id;
                 audio_pkt->id = -1;
+                audio_pkt->nacked_amount = 0;
 
-                /*
                 // And we'll skip the whole frame
                 while (last_played_id % MAX_NUM_AUDIO_INDICES != MAX_NUM_AUDIO_INDICES - 1) {
                     // "Play" that packet
                     last_played_id++;
                     receiving_audio[last_played_id % RECV_AUDIO_BUFFER_SIZE].id = -1;
-                }*/
+                    receiving_audio[last_played_id % RECV_AUDIO_BUFFER_SIZE].nacked_amount = 0;
+                }
             }
 
             mprintf("Audio packet being overwritten before being played! ID %d replaced with ID %d, when the Last Played ID was %d. Last Played ID is Now %d\n", audio_pkt->id, audio_id, old_last_played_id, last_played_id);
