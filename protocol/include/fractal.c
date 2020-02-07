@@ -645,8 +645,12 @@ volatile static SDL_mutex* multithreadedprintf_mutex;
 // Multithreaded printf queue
 #define MPRINTF_QUEUE_SIZE 1000
 #define MPRINTF_BUF_SIZE 1000
-volatile static char mprintf_queue[MPRINTF_QUEUE_SIZE][MPRINTF_BUF_SIZE];
-volatile static char mprintf_queue_cache[MPRINTF_QUEUE_SIZE][MPRINTF_BUF_SIZE];
+typedef struct mprintf_queue_item {
+	bool log;
+	char buf[MPRINTF_BUF_SIZE];
+} mprintf_queue_item;
+volatile static mprintf_queue_item mprintf_queue[MPRINTF_QUEUE_SIZE];
+volatile static mprintf_queue_item mprintf_queue_cache[MPRINTF_QUEUE_SIZE];
 volatile static int mprintf_queue_index = 0;
 volatile static int mprintf_queue_size = 0;
 
@@ -654,6 +658,7 @@ volatile static int mprintf_queue_size = 0;
 SDL_Thread* mprintf_thread = NULL;
 volatile static bool run_multithreaded_printf;
 void MultiThreadedPrintf(void* opaque);
+void real_mprintf(bool log, const char* fmtStr, va_list args);
 FILE* mprintf_log_file = NULL;
 
 void initMultiThreadedPrintf(bool use_logging) {
@@ -695,7 +700,8 @@ void MultiThreadedPrintf(void* opaque) {
 		SDL_LockMutex(multithreadedprintf_mutex);
 		cache_size = mprintf_queue_size;
 		for (int i = 0; i < mprintf_queue_size; i++) {
-			strcpy(mprintf_queue_cache[i], mprintf_queue[mprintf_queue_index]);
+			mprintf_queue_cache[i].log = mprintf_queue[mprintf_queue_index].log;
+			strcpy(mprintf_queue_cache[i].buf, mprintf_queue[mprintf_queue_index].buf);
 			mprintf_queue_index++;
 			mprintf_queue_index %= MPRINTF_QUEUE_SIZE;
 			if (i != 0) {
@@ -706,37 +712,49 @@ void MultiThreadedPrintf(void* opaque) {
 		SDL_UnlockMutex(multithreadedprintf_mutex);
 
 		for (int i = 0; i < cache_size; i++) {
-			if (mprintf_log_file) {
-				fprintf(mprintf_log_file, "%s", mprintf_queue_cache[i]);
+			if (mprintf_log_file && mprintf_queue_cache[i].log) {
+				fprintf(mprintf_log_file, "%s", mprintf_queue_cache[i].buf);
 				fflush(mprintf_log_file);
 			}
-			printf("%s", mprintf_queue_cache[i]);
+			printf("%s", mprintf_queue_cache[i].buf);
 		}
 	}
 }
 
 void mprintf(const char* fmtStr, ...) {
+	va_list args;
+	va_start(args, fmtStr);
+	real_mprintf(false, fmtStr, args);
+}
+
+void lprintf(const char* fmtStr, ...) {
+	va_list args;
+	va_start(args, fmtStr);
+	real_mprintf(true, fmtStr, args);
+}
+
+void real_mprintf(bool log, const char* fmtStr, va_list args) {
 	if (mprintf_thread == NULL) {
 		printf("initMultiThreadedPrintf has not been called!\n");
 		return;
 	}
 
-	va_list args;
-	va_start(args, fmtStr);
-
 	SDL_LockMutex(multithreadedprintf_mutex);
 	int index = (mprintf_queue_index + mprintf_queue_size) % MPRINTF_QUEUE_SIZE;
 	char* buf = NULL;
 	if (mprintf_queue_size < MPRINTF_QUEUE_SIZE - 2) {
-		buf = &mprintf_queue[index];
+		mprintf_queue[index].log = log;
+		buf = mprintf_queue[index].buf;
 		vsnprintf(buf, MPRINTF_BUF_SIZE, fmtStr, args);
 		mprintf_queue_size++;
 	}
 	else if (mprintf_queue_size == MPRINTF_QUEUE_SIZE - 2) {
-		buf = &mprintf_queue[index];
+		mprintf_queue[index].log = log;
+		buf = mprintf_queue[index].buf;
 		strcpy(buf, "Buffer maxed out!!!\n");
 		mprintf_queue_size++;
 	}
+
 	if (buf != NULL) {
 		buf[MPRINTF_BUF_SIZE - 5] = '.';
 		buf[MPRINTF_BUF_SIZE - 4] = '.';

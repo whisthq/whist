@@ -190,16 +190,10 @@ static int32_t SendVideo(void* opaque) {
         }
 
         if (update_device) {
-            fp = fopen("/log.txt", "a+");
-            fprintf(fp, "Update device\n");
-            fclose(fp);
-
             if (device) {
-                mprintf("Destroying old Device\n");
                 DestroyCaptureDevice(device);
             }
 
-            mprintf("Creating new Device\n");
             CreateDisplayHardware(device, server_width, server_height);
 
             update_encoder = true;
@@ -208,10 +202,8 @@ static int32_t SendVideo(void* opaque) {
 
         if (update_encoder) {
             if (encoder) {
-                mprintf("Destroying old encoder\n");
                 destroy_video_encoder(encoder);
             }
-            mprintf("Creating new encoder\n");
             encoder = create_video_encoder(device->width, device->height, device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
             update_encoder = false;
         }
@@ -282,7 +274,7 @@ static int32_t SendVideo(void* opaque) {
                         mprintf("Could not send video frame\n");
                     }
                     else {
-                        mprintf("Sent size %d\n", encoder->packet.size);
+                        //mprintf("Sent size %d\n", encoder->packet.size);
                         previous_frame_size = encoder->packet.size;
                     }
                     float server_frame_time = GetTimer(server_frame_timer);
@@ -365,6 +357,7 @@ static int32_t SendAudio(void* opaque) {
         }
         dwWaitResult = WaitForSingleObject(audio_device->hWakeUp, INFINITE);
     }
+
     DestroyAudioDevice(audio_device);
     return 0;
 }
@@ -372,7 +365,7 @@ static int32_t SendAudio(void* opaque) {
 
 int main(int argc, char* argv[])
 {
-    initMultiThreadedPrintf(false);
+    initMultiThreadedPrintf(true);
 
     while (true) {
         // initialize the windows socket library if this is a windows client
@@ -469,7 +462,7 @@ int main(int argc, char* argv[])
                     max_mbps = fmsg.mbps;
                 }
                 else if (fmsg.type == MESSAGE_PING) {
-                    mprintf("Ping Received - ID %d\n", fmsg.ping_id); 
+                    //mprintf("Ping Received - ID %d\n", fmsg.ping_id); 
 
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = MESSAGE_PONG;
@@ -491,27 +484,27 @@ int main(int argc, char* argv[])
                     connected = false;
                 }
                 else if (fmsg.type == MESSAGE_AUDIO_NACK) {
-                    mprintf("Audio NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
+                    //mprintf("Audio NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
                     struct RTPPacket *audio_packet = &audio_buffer[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
                     int len = audio_buffer_packet_len[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
                     if (audio_packet->id == fmsg.nack_data.id) {
-                        mprintf("NACKed packet found of length %d. Relaying!\n", len);
+                        //mprintf("NACKed audio packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
                         ReplayPacket(&PacketSendContext, audio_packet, len);
                     }
                     else {
-                        mprintf("NACKed packet not found, ID %d was located instead.\n", audio_packet->id);
+                        mprintf("NACKed audio packet %d not found, ID %d was located instead.\n", fmsg.nack_data.id, audio_packet->id);
                     }
                 }
                 else if (fmsg.type == MESSAGE_VIDEO_NACK) {
-                    mprintf("Video NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
+                    //mprintf("Video NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
                     struct RTPPacket* video_packet = &video_buffer[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
                     int len = video_buffer_packet_len[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
                     if (video_packet->id == fmsg.nack_data.id) {
-                        mprintf("NACKed packet found of length %d. Relaying!\n", len);
+                        //mprintf("NACKed video packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
                         ReplayPacket(&PacketSendContext, video_packet, len);
                     }
                     else {
-                        mprintf("NACKed packet not found, ID %d was located instead.\n", video_packet->id);
+                        mprintf("NACKed video packet %d not found, ID %d was located instead.\n", fmsg.nack_data.id, video_packet->id);
                     }
                 }
                 else if (fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {

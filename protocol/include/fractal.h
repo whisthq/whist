@@ -709,6 +709,7 @@ int SendAck(struct SocketContext *context, int reps);
 void initMultiThreadedPrintf(bool use_logging);
 void destroyMultiThreadedPrintf();
 void mprintf(const char* fmtStr, ...);
+void lprintf(const char* fmtStr, ...);
 
 void StartTimer(clock* timer);
 double GetTimer(clock timer);
