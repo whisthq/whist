@@ -124,7 +124,7 @@ static int32_t ReceivePackets(void* opaque) {
             mprintf("max_video_time: %f\n", max_video_time);
             mprintf("audio_time: %f\n", audio_time);
             mprintf("max_audio_time: %f\n", max_audio_time);
-            mprintf("message_time: %f\n", message_time);
+            mprintf("message_time: %f\n\n", message_time);
             StartTimer(&world_timer);
         }
 
