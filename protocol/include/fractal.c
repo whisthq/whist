@@ -347,21 +347,21 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
 	struct sockaddr_in serverRECV; // serverRECV port parameters
 
 	// initialize Winsock (sockets library)
-	printf("Initialising Winsock...\n");
+	mprintf("Initialising Winsock...\n");
 	if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
-		printf("Failed. Error Code : %d.\n", WSAGetLastError());
+		mprintf("Failed. Error Code : %d.\n", WSAGetLastError());
 	}
-	printf("Winsock Initialised.\n");
+	mprintf("Winsock Initialised.\n");
 
 	// Creating our TCP (receiving) socket (need it first to initiate connection)
 	// AF_INET = IPv4
 	// SOCK_STREAM = TCP Socket
 	// 0 = protocol automatically detected
 	if ((listensocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
-		printf("Could not create listen TCP socket: %d.\n" , WSAGetLastError());
+		mprintf("Could not create listen TCP socket: %d.\n" , WSAGetLastError());
 		WSACleanup(); // close Windows socket library
 	}
-	printf("Listen TCP Socket created.\n");
+	mprintf("Listen TCP Socket created.\n");
 
 	// prepare the sockaddr_in structure for the listening socket
 	serverRECV.sin_family = AF_INET; // IPv4
@@ -372,23 +372,23 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
 	while (bind(listensocket, (struct sockaddr *) &serverRECV, sizeof(serverRECV)) == SOCKET_ERROR) {
 		// at most 50 attempts, after that we give up
 		if (bind_attempts == 50) {
-			printf("Cannot find an open port, abort.\n");
+			mprintf("Cannot find an open port, abort.\n");
 			closesocket(listensocket); // close open socket
 			WSACleanup(); // close Windows socket library
 		}
 		// display failed attempt
-		printf("Bind attempt #%i failed with error code: %d.\n", bind_attempts, WSAGetLastError());
+		mprintf("Bind attempt #%i failed with error code: %d.\n", bind_attempts, WSAGetLastError());
 
 		// increment port number and retry
 		bind_attempts += 1;
 		serverRECV.sin_port = htons(config.serverPortRECV + bind_attempts); // initial default port 48888
 	}
 	// successfully binded, we're good to go
-	printf("Bind done on port: %d.\n", ntohs(serverRECV.sin_port));
+	mprintf("Bind done on port: %d.\n", ntohs(serverRECV.sin_port));
 
 	// this passive socket is always open to listen for an incoming connection
 	listen(listensocket, 1); // 1 maximum concurrent connection
-	printf("Waiting for an incoming connection...\n");
+	mprintf("Waiting for an incoming connection...\n");
 
 	// done initializing, waiting for a connection
 	return listensocket;
@@ -517,13 +517,13 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 	// Function parameter checking
 	if (!(strcmp(origin, "C") == 0 || strcmp(origin, "S") == 0)) {
-		printf("Invalid origin parameter. Specify 'S' or 'C'.");
+		mprintf("Invalid origin parameter. Specify 'S' or 'C'.");
 		return -1;
 	}
 	// Create UDP socket
 	context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (context->s < 0) { // Windows & Unix cases
-		printf("Could not create UDP socket\n");
+		mprintf("Could not create UDP socket\n");
 		return -1;
 	}
 
@@ -538,14 +538,14 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 #define DEST_BUF_LEN 20
 	char dest[DEST_BUF_LEN];
 	if (strlen(destination) + strlen(origin) + 1 > DEST_BUF_LEN) {
-		printf("Strings too long!\n");
+		mprintf("Strings too long!\n");
 		return -1;
 	}
 	strcpy(dest, destination);
 	strcat(dest, origin);
 
 	if (stun_timeout_ms == 0) {
-		printf("STUN timeout can't be zero!\n");
+		mprintf("STUN timeout can't be zero!\n");
 		return -1;
 	}
 
@@ -561,27 +561,27 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 
 	if (setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout)) < 0) {
-		printf("Failed to set timeout\n");
+		mprintf("Failed to set timeout\n");
 		return -1;
 	}
 
 	// Connect to STUN server
-	printf("Connecting to STUN server...\n");
+	mprintf("Connecting to STUN server...\n");
 	clock attempt_time;
 	StartTimer(&attempt_time);
 	do {
 		if (stun_timeout_ms > 0 && GetTimer(attempt_time)*1000.0 > stun_timeout_ms) {
-			printf("STUN server failed to respond!\n");
+			mprintf("STUN server failed to respond!\n");
 			return -1;
 		}
 		// Refresh STUN
 		if (sendto(context->s, dest, strlen(dest), 0, (struct sockaddr*)(&context->addr), slen) < 0) {
-			printf("Failed to message STUN server, trying again...\n");
+			mprintf("Failed to message STUN server, trying again...\n");
 		}
 		// Wait for response from STUN server
 	} while (recvfrom(context->s, &buf, sizeof(buf), 0, (struct sockaddr*)(&context->addr), &slen) < 0);
 
-	printf("Received packet from STUN server at %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
+	mprintf("Received packet from STUN server at %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
 	// Set destination address to the client that the STUN server has paired us with
 	context->addr.sin_addr.s_addr = buf.host;
@@ -659,6 +659,7 @@ SDL_Thread* mprintf_thread = NULL;
 volatile static bool run_multithreaded_printf;
 void MultiThreadedPrintf(void* opaque);
 void real_mprintf(bool log, const char* fmtStr, va_list args);
+clock mprintf_timer;
 FILE* mprintf_log_file = NULL;
 
 void initMultiThreadedPrintf(bool use_logging) {
@@ -670,6 +671,7 @@ void initMultiThreadedPrintf(bool use_logging) {
 	multithreadedprintf_mutex = SDL_CreateMutex();
 	multithreadedprintf_semaphore = SDL_CreateSemaphore(0);
 	mprintf_thread = SDL_CreateThread(MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
+	StartTimer(&mprintf_timer);
 }
 
 void destroyMultiThreadedPrintf() {
@@ -724,7 +726,7 @@ void MultiThreadedPrintf(void* opaque) {
 void mprintf(const char* fmtStr, ...) {
 	va_list args;
 	va_start(args, fmtStr);
-	real_mprintf(false, fmtStr, args);
+	real_mprintf(WRITE_MPRINTF_TO_LOG, fmtStr, args);
 }
 
 void lprintf(const char* fmtStr, ...) {
@@ -735,7 +737,7 @@ void lprintf(const char* fmtStr, ...) {
 
 void real_mprintf(bool log, const char* fmtStr, va_list args) {
 	if (mprintf_thread == NULL) {
-		printf("initMultiThreadedPrintf has not been called!\n");
+		mprintf("initMultiThreadedPrintf has not been called!\n");
 		return;
 	}
 
@@ -745,7 +747,9 @@ void real_mprintf(bool log, const char* fmtStr, va_list args) {
 	if (mprintf_queue_size < MPRINTF_QUEUE_SIZE - 2) {
 		mprintf_queue[index].log = log;
 		buf = mprintf_queue[index].buf;
-		vsnprintf(buf, MPRINTF_BUF_SIZE, fmtStr, args);
+		snprintf(buf, MPRINTF_BUF_SIZE, "%15.4f: ", GetTimer(mprintf_timer));
+		int len = strlen(buf);
+		vsnprintf(buf + len, MPRINTF_BUF_SIZE - len, fmtStr, args);
 		mprintf_queue_size++;
 	}
 	else if (mprintf_queue_size == MPRINTF_QUEUE_SIZE - 2) {

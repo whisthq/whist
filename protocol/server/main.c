@@ -274,10 +274,7 @@ static int32_t SendVideo(void* opaque) {
                     if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id, delay) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
-                    else {
-                        //mprintf("Sent size %d\n", encoder->packet.size);
-                        previous_frame_size = encoder->packet.size;
-                    }
+                    previous_frame_size = encoder->packet.size;
                     float server_frame_time = GetTimer(server_frame_timer);
                     //mprintf("Server Frame Time for ID %d: %f\n", id, server_frame_time);
                 }

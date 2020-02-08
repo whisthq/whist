@@ -79,6 +79,8 @@
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
+#define WRITE_MPRINTF_TO_LOG true
+
 /// @brief Default ports configurations to pass to FractalInit
 /// @details Picked from unassigned range from IANA.org
 /// Increment by one if these are taken, until a port is found available
