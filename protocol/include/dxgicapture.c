@@ -74,26 +74,16 @@ void CreateDisplayHardware(struct CaptureDevice *device, int width, int height) 
   hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
     D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
 
-  device->width = width;
-  device->height = height;
-  CreateTexture(device);
-}
-
-void CreateTexture(struct CaptureDevice *device) {
-  struct DisplayHardware* hardware = device->hardware;
-
-  D3D11_TEXTURE2D_DESC tDesc;
   IDXGIOutput1* output1;
 
-  FILE *fp;
   DEVMODE dm;
   memset(&dm, 0, sizeof(dm));
   dm.dmSize = sizeof(dm);
 
   if (0 != EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm))
   {
-      dm.dmPelsWidth = device->width;
-      dm.dmPelsHeight = device->height;
+      dm.dmPelsWidth = width;
+      dm.dmPelsHeight = height;
       dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
 
       ChangeDisplaySettings(&dm, 0);
@@ -105,6 +95,13 @@ void CreateTexture(struct CaptureDevice *device) {
 
   device->width = hardware->final_output_desc.DesktopCoordinates.right;
   device->height = hardware->final_output_desc.DesktopCoordinates.bottom;
+  CreateTexture(device);
+}
+
+void CreateTexture(struct CaptureDevice *device) {
+  struct DisplayHardware* hardware = device->hardware;
+
+  D3D11_TEXTURE2D_DESC tDesc;
 
   // Texture to store GPU pixels
   tDesc.Width = hardware->final_output_desc.DesktopCoordinates.right;
@@ -164,6 +161,7 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
     hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &screenshot->mapped_rect);
     device->did_use_map_desktop_surface = true;
     if(hr == DXGI_ERROR_UNSUPPORTED) {
+        CreateTexture(device);
         device->D3D11context->lpVtbl->CopySubresourceRegion(device->D3D11context, (ID3D11Resource*)device->staging_texture, 0, 0, 0, 0,
                                                 (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
 
