@@ -270,8 +270,9 @@ static int32_t SendVideo(void* opaque) {
                     frame->size = encoder->packet.size;
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
                     
+                    //mprintf("Sent video packet %d (Size: %d)\n", id, encoder->packet.size);
                     if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id, delay) < 0) {
-                        mprintf("Could not send video frame\n");
+                        mprintf("Could not send video frame ID %d\n", id);
                     }
                     else {
                         //mprintf("Sent size %d\n", encoder->packet.size);
@@ -283,6 +284,7 @@ static int32_t SendVideo(void* opaque) {
             }
 
             id++;
+
             ReleaseScreen(device, screenshot);
         }
         else if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
@@ -344,7 +346,10 @@ static int32_t SendAudio(void* opaque) {
 
             audio_device->audioBufSize = nNumFramesToRead * nBlockAlign;
 
-            if (audio_device->audioBufSize > 0 && audio_device->audioBufSize < 10000) {
+            if (audio_device->audioBufSize > 10000) {
+                mprintf("Audio buffer size too large!\n");
+            }
+            else if (audio_device->audioBufSize > 0) {
                 if (SendPacket(&context, PACKET_AUDIO, audio_device->pData, audio_device->audioBufSize, id, -1.0) < 0) {
                     mprintf("Could not send audio frame\n");
                 }
@@ -491,8 +496,9 @@ int main(int argc, char* argv[])
                         //mprintf("NACKed audio packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
                         ReplayPacket(&PacketSendContext, audio_packet, len);
                     }
-                    else {
-                        mprintf("NACKed audio packet %d not found, ID %d was located instead.\n", fmsg.nack_data.id, audio_packet->id);
+                    // If we were asked for an invalid index, just ignore it
+                    else if (fmsg.nack_data.index < audio_packet->num_indices) {
+                        mprintf("NACKed audio packet %d %d not found, ID %d %d was located instead.\n", fmsg.nack_data.id, fmsg.nack_data.index, audio_packet->id, audio_packet->index);
                     }
                 }
                 else if (fmsg.type == MESSAGE_VIDEO_NACK) {
@@ -503,8 +509,9 @@ int main(int argc, char* argv[])
                         //mprintf("NACKed video packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
                         ReplayPacket(&PacketSendContext, video_packet, len);
                     }
-                    else {
-                        mprintf("NACKed video packet %d not found, ID %d was located instead.\n", fmsg.nack_data.id, video_packet->id);
+                    // If we were asked for an invalid index, just ignore it
+                    else if (fmsg.nack_data.index < video_packet->num_indices) {
+                        mprintf("NACKed video packet %d %d not found, ID %d %d was located instead.\n", fmsg.nack_data.id, fmsg.nack_data.index, video_packet->id, video_packet->index);
                     }
                 }
                 else if (fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
