@@ -9,7 +9,8 @@ typedef struct audio_packet {
     char data[MAX_PAYLOAD_SIZE];
 } audio_packet;
 
-#define AUDIO_QUEUE_LIMIT 35000
+#define AUDIO_QUEUE_LIMIT 50000
+#define TRIGGERED_AUDIO_QUEUE_LIMIT 30000
 #define MAX_NUM_AUDIO_FRAMES 10
 #define MAX_NUM_AUDIO_INDICES 10
 #define RECV_AUDIO_BUFFER_SIZE (MAX_NUM_AUDIO_FRAMES * MAX_NUM_AUDIO_INDICES)
@@ -22,8 +23,13 @@ struct AudioData {
     audio_decoder_t* audio_decoder;
 } volatile AudioData;
 
-
 clock nack_timer;
+
+int last_nacked_id = -1;
+int most_recent_audio_id = -1;
+int last_played_id = -1;
+
+bool triggered = false;
 
 void initAudio() {
     StartTimer(&nack_timer);
@@ -61,10 +67,6 @@ void destroyAudio() {
     SDL_CloseAudioDevice(AudioData.dev);
     destroy_audio_decoder(AudioData.audio_decoder);
 }
-
-int last_nacked_id = -1;
-int most_recent_audio_id = -1;
-int last_played_id = -1;
 
 void updateAudio() {
     bool still_more_audio_packets = true;
@@ -110,19 +112,23 @@ void updateAudio() {
         if (valid) {
             still_more_audio_packets = true;
 
-            if (SDL_GetQueuedAudioSize(AudioData.dev) > AUDIO_QUEUE_LIMIT && (next_to_play_id / MAX_NUM_AUDIO_INDICES) % 5 == 0) {
+            int real_limit = triggered ? TRIGGERED_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_LIMIT;
+
+            if (SDL_GetQueuedAudioSize(AudioData.dev) > real_limit) {
                 mprintf("Audio queue full, catching up by one frame\n");
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     packet->id = -1;
                     packet->nacked_amount = 0;
                 }
+                triggered = true;
             }
             else {
+                triggered = false;
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     if (packet->size > 0) {
-                            //mprintf("Playing %d (%d) (%d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
+                            mprintf("Playing %d (%d) (%d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
                             if (SDL_QueueAudio(AudioData.dev, packet->data, packet->size) < 0) {
                                 mprintf("Could not play audio!\n");
                             }
