@@ -386,7 +386,7 @@ int main(int argc, char* argv[])
         }
 
         struct SocketContext PacketSendContext = { 0 };
-        if (CreateUDPContext(&PacketSendContext, "S", "", 5, -1) < 0) {
+        if (CreateUDPContext(&PacketSendContext, "S", "", 1, -1) < 0) {
             exit(1);
         }
 
@@ -421,6 +421,9 @@ int main(int argc, char* argv[])
         clock totaltime;
         StartTimer(&totaltime);
 
+        clock mouse_update_timer;
+        StartTimer(&mouse_update_timer);
+
         while (connected) {
             if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
                 SendAck(&PacketReceiveContext, 1);
@@ -432,11 +435,13 @@ int main(int argc, char* argv[])
                 connected = false;
             }
 
-            if (last_mouse.type != 0) {
+            if (last_mouse.type != 0 && GetTimer(mouse_update_timer) > 2.0 / 1000.0) {
                 ReplayUserInput(&last_mouse, 1);
+                StartTimer(&mouse_update_timer);
             }
 
             memset(&fmsg, 0, sizeof(fmsg));
+            // 1ms timeout
             if (recvfrom(PacketReceiveContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketReceiveContext.addr), &slen) > 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
                     if (active) {
