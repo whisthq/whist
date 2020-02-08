@@ -1,6 +1,6 @@
 #include "video.h"
 
-#define DECODE_TYPE SOFTWARE_DECODE
+#define DECODE_TYPE QSV_DECODE
 
 // Global Variables
 
@@ -14,7 +14,6 @@ extern volatile int output_width;
 extern volatile int output_height;
 
 // START VIDEO VARIABLES
-
 
 struct VideoData {
     struct FrameData* pending_ctx;
@@ -52,6 +51,7 @@ typedef struct FrameData {
     int packets_received;
     int num_packets;
     bool received_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
+    bool rendered;
 
     int last_nacked_id;
 
@@ -121,6 +121,7 @@ int32_t RenderScreen(void* opaque) {
     while (VideoData.run_render_screen_thread) {
         int ret = SDL_SemTryWait(VideoData.renderscreen_semaphore);
         if (ret == SDL_MUTEX_TIMEDOUT) {
+            SDL_Delay(1);
             continue;
         }
         if (ret < 0) {
@@ -136,15 +137,17 @@ int32_t RenderScreen(void* opaque) {
         //mprintf("Rendering ID %d\n", renderContext.id);
 
         Frame* frame = renderContext.prev_frame;
+
+        if (sizeof(Frame) + frame->size != renderContext.frame_size) {
+            mprintf("Incorrect Frame Size! %d instead of %d\n", sizeof(Frame) + frame->size, renderContext.frame_size);
+        }
+
         if (frame->width != server_width || frame->height != server_height) {
             mprintf("Updating server width and height! From %dx%d to %dx%d\n", server_width, server_height, frame->width, frame->height);
             updateWidthAndHeight(frame->width, frame->height);
         }
 
-        clock t;
-        StartTimer(&t);
         video_decoder_decode(videoContext.decoder, frame->compressed_frame, frame->size);
-        //mprintf("Decode Time: %f\n", GetTimer(t));
 
         AVPicture pict;
         pict.data[0] = videoContext.yPlane;
@@ -153,6 +156,7 @@ int32_t RenderScreen(void* opaque) {
         pict.linesize[0] = output_width;
         pict.linesize[1] = videoContext.uvPitch;
         pict.linesize[2] = videoContext.uvPitch;
+
         sws_scale(videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
             videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, pict.data,
             pict.linesize);
@@ -169,8 +173,8 @@ int32_t RenderScreen(void* opaque) {
         );
 
         SDL_RenderClear(videoContext.renderer);
-        SDL_RenderCopy(videoContext.renderer, videoContext.texture, NULL, NULL);
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
+        SDL_RenderCopy(videoContext.renderer, videoContext.texture, NULL, NULL);
         SDL_RenderPresent(videoContext.renderer);
 
         rendering = false;
@@ -324,6 +328,9 @@ void updateVideo() {
 
     if (!rendering) {
         if (VideoData.pending_ctx != NULL) {
+            //mprintf("Rendering %d\n", VideoData.pending_ctx->id);
+            VideoData.pending_ctx->rendered = true;
+
             renderContext = *VideoData.pending_ctx;
             rendering = true;
 
@@ -336,7 +343,7 @@ void updateVideo() {
 }
 
 int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
-    //mprintf("Packet ID %d, Packet Index %d, Hash %x\n", packet->id, packet->index, packet->hash);
+    //mprintf("Video Packet ID %d, Index %d (Max: %d) (Size: %d)\n", packet->id, packet->index, packet->num_indices, packet->payload_size);
 
     // Find frame in linked list that matches the id
     VideoData.bytes_transferred += recv_size;
@@ -356,6 +363,8 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
         ctx->packets_received = 0;
         ctx->num_packets = packet->num_indices;
         ctx->last_nacked_id = -1;
+        ctx->rendered = false;
+        ctx->frame_size = 0;
         memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
         StartTimer(&ctx->client_frame_timer);
     }
@@ -379,8 +388,6 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
                 fmsg.nack_data.id = packet->id;
                 fmsg.nack_data.index = i;
                 SendPacket(&fmsg, sizeof(fmsg));
-                SendPacket(&fmsg, sizeof(fmsg));
-                SendPacket(&fmsg, sizeof(fmsg));
             }
         }
         ctx->last_nacked_id = max(ctx->last_nacked_id, packet->index - 1);
@@ -400,13 +407,15 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
     if (ctx->packets_received == ctx->num_packets) {
         VideoData.frames_received++;
 
-        if (packet->id > VideoData.max_id) {
-            VideoData.max_id = packet->id;
+        if (ctx->id > VideoData.max_id) {
+            VideoData.max_id = ctx->id;
             //mprintf("Received all packets for id %d, getting ready to render\n", packet.id);
 
-            for (int i = VideoData.last_rendered_id + 1; i <= VideoData.max_id; i++) {
+            for (int i = VideoData.last_rendered_id + 1; i < VideoData.max_id; i++) {
                 int index = i % RECV_FRAMES_BUFFER_SIZE;
-                if (receiving_frames[index].id == i && receiving_frames[index].packets_received != receiving_frames[index].num_packets) {
+                if (receiving_frames[index].id != i) {
+                    mprintf("Wrong ID?\n");
+                } else if (!receiving_frames[index].rendered) {
                     mprintf("Frame dropped with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
                 }
             }

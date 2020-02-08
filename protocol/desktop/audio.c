@@ -128,7 +128,7 @@ void updateAudio() {
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     if (packet->size > 0) {
-                            mprintf("Playing %d (%d) (%d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
+                            //mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
                             if (SDL_QueueAudio(AudioData.dev, packet->data, packet->size) < 0) {
                                 mprintf("Could not play audio!\n");
                             }
