@@ -27,7 +27,6 @@ volatile static bool connected;
 volatile static double max_mbps;
 volatile static int gop_size = 1;
 volatile static struct CaptureDevice *device = NULL;
-volatile static struct DisplayHardware *hardware;
 
 int server_width = DEFAULT_WIDTH;
 int server_height = DEFAULT_HEIGHT;
@@ -35,14 +34,13 @@ bool update_device = true;
 
 char buf[LARGEST_FRAME_SIZE];
 
-#define MAX_VIDEO_INDEX 500
 #define VIDEO_BUFFER_SIZE 25
+#define MAX_VIDEO_INDEX 500
 struct RTPPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 
-#define MAX_AUDIO_INDEX 10
-#define AUDIO_BUFFER_SIZE 1000
-
+#define AUDIO_BUFFER_SIZE 100
+#define MAX_AUDIO_INDEX 3
 struct RTPPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
 int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
 
@@ -194,7 +192,10 @@ static int32_t SendVideo(void* opaque) {
                 DestroyCaptureDevice(device);
             }
 
-            CreateDisplayHardware(device, server_width, server_height);
+            int result = CreateCaptureDevice(device, server_width, server_height);
+            if (result < 0) {
+                connected = false;
+            }
 
             update_encoder = true;
             update_device = false;
@@ -274,10 +275,7 @@ static int32_t SendVideo(void* opaque) {
                     if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id, delay) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
-                    else {
-                        //mprintf("Sent size %d\n", encoder->packet.size);
-                        previous_frame_size = encoder->packet.size;
-                    }
+                    previous_frame_size = encoder->packet.size;
                     float server_frame_time = GetTimer(server_frame_timer);
                     //mprintf("Server Frame Time for ID %d: %f\n", id, server_frame_time);
                 }
@@ -288,22 +286,9 @@ static int32_t SendVideo(void* opaque) {
             ReleaseScreen(device, screenshot);
         }
         else if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
-            mprintf("ERROR: %d %X\n", WSAGetLastError(), hr);
+            mprintf("CaptureScreen returned with error code: %d %X\n", WSAGetLastError(), hr);
 
-            fp = fopen("/log.txt", "a+");
-            fprintf(fp, "Non timeout caught\n");
-            fclose(fp);
-
-            if (device) {
-                mprintf("Destroying old Device\n");
-                DestroyCaptureDevice(device);
-            }
-
-            mprintf("Creating new Device\n");
-            CreateDisplayHardware(device, server_width, server_height);
-
-            update_encoder = true;
-            update_device = false;
+            update_device = true;
 
             consecutive_capture_screen_errors++;
             if (consecutive_capture_screen_errors == 3) {
@@ -436,7 +421,7 @@ int main(int argc, char* argv[])
             }
 
             if (last_mouse.type != 0 && GetTimer(mouse_update_timer) > 2.0 / 1000.0) {
-                ReplayUserInput(&last_mouse, 1);
+                //ReplayUserInput(&last_mouse, 1);
                 StartTimer(&mouse_update_timer);
             }
 
