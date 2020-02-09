@@ -52,7 +52,7 @@ struct CaptureDevice {
   struct DisplayHardware *hardware;
 };
 
-void CreateDisplayHardware(struct CaptureDevice *device, int width, int height);
+int CreateCaptureDevice(struct CaptureDevice *device, int width, int height);
 
 HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot);
 

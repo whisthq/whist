@@ -16,7 +16,7 @@
 
 void CreateTexture(struct CaptureDevice* device);
 
-void CreateDisplayHardware(struct CaptureDevice *device, int width, int height) {
+int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   device->hardware = (struct DisplayHardware*) malloc(sizeof(struct DisplayHardware));
   memset(device->hardware, 0, sizeof(struct DisplayHardware));
 
@@ -29,14 +29,21 @@ void CreateDisplayHardware(struct CaptureDevice *device, int width, int height) 
 
   int num_adapters = 0, num_outputs = 0, i = 0, j = 0;
   IDXGIFactory1 *factory;
-  IDXGIOutput *outputs[10];
-  IDXGIAdapter *adapters[10];
+
+#define MAX_NUM_ADAPTERS 10
+#define MAX_NUM_OUTPUTS 10
+  IDXGIOutput *outputs[MAX_NUM_OUTPUTS];
+  IDXGIAdapter *adapters[MAX_NUM_ADAPTERS];
   DXGI_OUTPUT_DESC output_desc;
 
   HRESULT hr = CreateDXGIFactory1(&IID_IDXGIFactory1, (void**)(&factory));
 
   // GET ALL GPUS
   while(factory->lpVtbl->EnumAdapters1(factory, num_adapters, &hardware->adapter) != DXGI_ERROR_NOT_FOUND) {
+    if (num_adapters == MAX_NUM_ADAPTERS) {
+      mprintf("Too many adaters!\n");
+      break;
+    }
     adapters[num_adapters] = hardware->adapter;
     ++num_adapters;
   }
@@ -46,29 +53,46 @@ void CreateDisplayHardware(struct CaptureDevice *device, int width, int height) 
     DXGI_ADAPTER_DESC1 desc;
     hardware->adapter = adapters[i];
     hr = hardware->adapter->lpVtbl->GetDesc1(hardware->adapter, &desc);
-    // printf("Adapter: %s\n", desc.Description);
+    //mprintf("Adapter %d: %s\n", i, desc.Description);
   }
 
+  // Set used GPU
+  if (USE_GPU >= num_adapters) {
+      mprintf("No GPU with ID %d, only %d adapters\n", USE_GPU, num_adapters);
+      return -1;
+  }
+  hardware->adapter = adapters[USE_GPU];
+
   // GET ALL MONITORS
-  for(i = 0; i < num_adapters; i++) {
-    int this_adapter_outputs = 0;
-    hardware->adapter = adapters[i];
-    while(hardware->adapter->lpVtbl->EnumOutputs(hardware->adapter, this_adapter_outputs, &hardware->output) != DXGI_ERROR_NOT_FOUND) {
-      // printf("Found monitor %d on adapter %lu\n", this_adapter_outputs, i);
-      outputs[num_outputs] = hardware->output;
-      ++this_adapter_outputs;
-      ++num_outputs;
-    }  
+  for (int i = 0; i < num_adapters; i++) {
+      for (int j = 0; hardware->adapter->lpVtbl->EnumOutputs(adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND; j++) {
+          //mprintf("Found monitor %d on adapter %lu\n", j, i);
+          if (i == USE_GPU) {
+              if (j == MAX_NUM_OUTPUTS) {
+                  mprintf("Too many adapters!\n");
+                  break;
+              }
+              else {
+                  outputs[j] = hardware->output;
+                  num_outputs++;
+              }
+          }
+
+      }
   }
 
   // GET MONITOR DESCRIPTIONS
   for(i = 0; i < num_outputs; i++) {
     hardware->output = outputs[i];
     hr = hardware->output->lpVtbl->GetDesc(hardware->output, &output_desc);
-    // printf("Monitor: %s\n", output_desc.DeviceName);
+    //mprintf("Monitor %d: %s\n", i, output_desc.DeviceName);
   }
 
-  hardware->adapter = adapters[USE_GPU];
+  // Set used output
+  if (USE_MONITOR >= num_outputs) {
+      mprintf("No Monitor with ID %d, only %d adapters\n", USE_MONITOR, num_outputs);
+      return -1;
+  }
   hardware->output = outputs[USE_MONITOR];
 
   hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
@@ -95,7 +119,6 @@ void CreateDisplayHardware(struct CaptureDevice *device, int width, int height) 
 
   device->width = hardware->final_output_desc.DesktopCoordinates.right;
   device->height = hardware->final_output_desc.DesktopCoordinates.bottom;
-  CreateTexture(device);
 }
 
 void CreateTexture(struct CaptureDevice *device) {
@@ -143,7 +166,9 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
      screenshot->desktop_resource = NULL;
   }
 
+  //mprintf("Acquiring...\n");
   hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 1, &device->frame_info, &screenshot->desktop_resource);
+  //mprintf("Acquired: 0x%X\n", hr);
   if(FAILED(hr)) {
     if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
         mprintf("Failed to Acquire Next Frame! 0x%X %d\n", hr, WSAGetLastError());
