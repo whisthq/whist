@@ -3,7 +3,6 @@
 #define DECODE_TYPE QSV_DECODE
 
 // Global Variables
-
 extern volatile int server_width;
 extern volatile int server_height;
 // Keeping track of max mbps
@@ -73,7 +72,7 @@ volatile struct FrameData renderContext;
 volatile bool rendering = false;
 
 // Hold information about frames as the packets come in
-#define RECV_FRAMES_BUFFER_SIZE 100
+#define RECV_FRAMES_BUFFER_SIZE 15
 struct FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
 char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
 
@@ -343,7 +342,7 @@ void updateVideo() {
 }
 
 int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
-    //mprintf("Video Packet ID %d, Index %d (Max: %d) (Size: %d)\n", packet->id, packet->index, packet->num_indices, packet->payload_size);
+    //mprintf("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)\n", packet->id, packet->index, packet->num_indices, packet->payload_size);
 
     // Find frame in linked list that matches the id
     VideoData.bytes_transferred += recv_size;
@@ -353,7 +352,10 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
     struct FrameData* ctx = &receiving_frames[index];
 
     // Check if we have to initialize the frame buffer
-    if (ctx->id != packet->id) {
+    if (packet->id < ctx->id) {
+        mprintf("Old packet received!\n");
+    }
+    else if (packet->id > ctx->id) {
         if (rendering && renderContext.id == ctx->id) {
             mprintf("Error! Currently rendering an ID that will be overwritten! Skipping packet.\n");
             return 0;
@@ -406,6 +408,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
     // If we received all of the packets
     if (ctx->packets_received == ctx->num_packets) {
         VideoData.frames_received++;
+        //mprintf("Video Packet ID %d (Packets: %d) (Size: %d)\n", packet->id, packet->num_indices, packet->payload_size);
 
         if (ctx->id > VideoData.max_id) {
             VideoData.max_id = ctx->id;
@@ -413,10 +416,13 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
 
             for (int i = VideoData.last_rendered_id + 1; i < VideoData.max_id; i++) {
                 int index = i % RECV_FRAMES_BUFFER_SIZE;
-                if (receiving_frames[index].id != i) {
+                if (receiving_frames[index].id == i) {
+                    if (!receiving_frames[index].rendered) {
+                        mprintf("Frame dropped with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
+                    }
+                }
+                else {
                     mprintf("Wrong ID?\n");
-                } else if (!receiving_frames[index].rendered) {
-                    mprintf("Frame dropped with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
                 }
             }
 

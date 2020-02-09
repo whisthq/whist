@@ -115,7 +115,7 @@ void updateAudio() {
             int real_limit = triggered ? TRIGGERED_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_LIMIT;
 
             if (SDL_GetQueuedAudioSize(AudioData.dev) > real_limit) {
-                mprintf("Audio queue full, catching up by one frame\n");
+                mprintf("Audio queue full, skipping ID %d (Queued: %d)\n", next_to_play_id / MAX_NUM_AUDIO_INDICES, SDL_GetQueuedAudioSize(AudioData.dev));
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     packet->id = -1;

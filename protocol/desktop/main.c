@@ -38,8 +38,8 @@ volatile bool update_mbps = false;
 volatile static bool run_receive_packets = false;
 volatile static bool is_timing_latency = false;
 volatile static clock latency_timer;
-volatile static int ping_id = 1;
-volatile static int ping_failures = 0;
+volatile static int ping_id;
+volatile static int ping_failures;
 
 volatile int output_width;
 volatile int output_height;
@@ -299,6 +299,9 @@ int main(int argc, char* argv[])
 
         bool shutting_down = false;
         bool connected = true;
+
+        ping_id = 1;
+        ping_failures = 0;
 
         while (connected && !shutting_down)
         {
