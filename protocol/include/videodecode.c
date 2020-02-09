@@ -20,7 +20,7 @@ static AVBufferRef *hw_device_ctx = NULL;
 
 void my_log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 {
-  printf("Error found\n");
+  mprintf("Error found\n");
   vprintf(fmt, vargs);
 }
 
@@ -29,22 +29,21 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx,
 {
     const enum AVPixelFormat *p;
     for (p = pix_fmts; *p != -1; p++) {
-
       // for apple devices, we use videotoolbox, else we use QSV
       #if defined(__APPLE__)
         if (*p == AV_PIX_FMT_VIDEOTOOLBOX) {
-          printf("Videotoolbox found\n");
+          mprintf("Videotoolbox found\n");
           return *p;
         }
       // QSV for windows and linux
       #else
         if (*p == AV_PIX_FMT_QSV) {
-          printf("QSV found\n");
-            return *p;
+           //mprintf("QSV found\n");
+           return *p;
         }
       #endif
     }
-    fprintf(stderr, "Failed to get HW surface format.\n");
+    mprintf("Failed to get HW surface format.\n");
     return AV_PIX_FMT_NONE;
 }
 
@@ -57,6 +56,7 @@ video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width,
   avcodec_register_all();
 
   if(type == QSV_DECODE) {
+    mprintf("Using hardware decoder\n");
     decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
     decoder->context = avcodec_alloc_context3(decoder->codec);
     decoder->context->get_format  = get_format;
@@ -90,6 +90,7 @@ video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width,
     decoder->hw_frame = av_frame_alloc();
     av_hwframe_get_buffer(decoder->context->hw_frames_ctx, decoder->hw_frame, 0);
   } else {
+    mprintf("Using software decoder\n");
     decoder->codec = avcodec_find_decoder_by_name("h264");
     decoder->context = avcodec_alloc_context3(decoder->codec);
 
@@ -110,7 +111,7 @@ video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width,
 void destroy_video_decoder(video_decoder_t*decoder) {
   // check if decoder decoder exists
   if (decoder == NULL) {
-      printf("Cannot destroy decoder decoder.\n");
+      mprintf("Cannot destroy decoder decoder.\n");
       return;
     }
 

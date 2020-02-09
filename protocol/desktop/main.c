@@ -417,8 +417,8 @@ int main(int argc, char* argv[])
         }
     }
 
+    mprintf("Closing Client...\n");
     destroyMultiThreadedPrintf();
-    printf("Closing Client...\n");
 
     return 0;
 }
