@@ -44,6 +44,9 @@ volatile static int ping_failures;
 volatile int output_width;
 volatile int output_height;
 
+volatile int32_t positionX;
+volatile int32_t positionY;
+
 // Function Declarations
 
 SDL_mutex* send_packet_mutex;
@@ -355,6 +358,8 @@ int main(int argc, char* argv[])
                         fmsg.type = MESSAGE_MOUSE_MOTION;
                         fmsg.mouseMotion.x = msg.motion.x * server_width / output_width;
                         fmsg.mouseMotion.y = msg.motion.y * server_height / output_height;
+                        positionX = msg.motion.x * server_width / output_width;
+                        positionY = msg.motion.y * server_height / output_height;
                     }
                     break;
                 case SDL_MOUSEBUTTONDOWN:

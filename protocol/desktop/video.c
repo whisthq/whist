@@ -12,8 +12,11 @@ extern volatile bool update_mbps;
 extern volatile int output_width;
 extern volatile int output_height;
 
-static FractalCursorID last_cursor = CURSOR_ID_NORMAL;
+extern volatile int32_t positionX;
+extern volatile int32_t positionY;
 
+extern FractalCursorID last_cursor = CURSOR_ID_NORMAL;
+extern FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 // START VIDEO VARIABLES
 
 struct VideoData {
@@ -179,6 +182,12 @@ int32_t RenderScreen(void* opaque) {
 
             SetSystemCursor(new_cursor, last_cursor);
             last_cursor = frame->cursor.cursor_id;
+        }
+
+        if(frame->cursor.cursor_state != cursor_state) {
+            mprintf("Change in cursor state detected\n \n \n");
+            SDL_SetRelativeMouseMode(SDL_DISABLE);
+            SDL_WarpMouseInWindow(videoContext.window, positionX, positionY);
         }
 
         SDL_RenderClear(videoContext.renderer);
