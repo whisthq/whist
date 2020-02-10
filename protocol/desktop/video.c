@@ -12,7 +12,7 @@ extern volatile bool update_mbps;
 extern volatile int output_width;
 extern volatile int output_height;
 
-static FractalCursorID last_cursor = CURSOR_ID_NORMAL;
+extern volatile FractalCursorID last_cursor = CURSOR_ID_NORMAL;
 
 // START VIDEO VARIABLES
 
