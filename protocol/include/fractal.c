@@ -179,6 +179,11 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 	int recv_size;
 
+	// Wait for server to sync
+	if (strcmp(origin, "C") == 0) {
+		SDL_Delay(150);
+	}
+
 	// Connect to STUN server
 	mprintf("Connecting to STUN server...\n");
 	clock attempt_time;
@@ -229,8 +234,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 #endif
 		setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
 	}
-
-	SDL_Delay(150);
 
 	// Great success!
 	return 0;
