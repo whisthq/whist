@@ -302,6 +302,7 @@ static int32_t SendVideo(void* opaque) {
                 }
                 else {
                     LPCSTR current_cursor = GetCurrentCursor(types);
+                    
                     Frame* frame = buf;
                     frame->width = device->width;
                     frame->height = device->height;

@@ -414,17 +414,21 @@ void LoadCursors(FractalCursorTypes *types) {
 
 LPCSTR GetCursorName(FractalCursorTypes *types, PCURSORINFO pci) {
 	HCURSOR cursor = pci->hCursor;
+
 	if(cursor == types->CursorAppStarting) {
 		return IDC_APPSTARTING;
 	} else if(cursor == types->CursorArrow) {
+		mprintf("NORMAL ARROW \n\n\n");
 		return IDC_ARROW;
 	} else if(cursor == types->CursorCross) {
 		return IDC_CROSS;
 	} else if(cursor == types->CursorHand) {
+		mprintf("HAND \n\n\n");
 		return IDC_HAND;
 	} else if(cursor == types->CursorHelp) {
 		return IDC_HELP;
 	} else if(cursor == types->CursorIBeam) {
+		mprintf("IBEAM \n\n\n");
 		return IDC_IBEAM;
 	} else if(cursor == types->CursorIcon) {
 		return IDC_ICON;
@@ -437,13 +441,15 @@ LPCSTR GetCursorName(FractalCursorTypes *types, PCURSORINFO pci) {
 	} else if(cursor == types->CursorSizeNESW) {
 		return IDC_SIZENESW;
 	} else if(cursor == types->CursorSizeNS) {
+		mprintf("NORTH SOUTH \n\n\n");
 		return IDC_SIZENS;
 	} else if(cursor == types->CursorSizeNWSE) {
 		return IDC_SIZENWSE;
 	} else if(cursor == types->CursorSizeWE) {
+		mprintf("EAST WEST \n\n\n");
 		return IDC_SIZEWE;
 	} else if(cursor == types->CursorUpArrow) {
-		return IDC_ARROW;
+		return IDC_UPARROW;
 	} else if(cursor == types->CursorWait) {
 		return IDC_WAIT;
 	} else {
