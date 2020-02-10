@@ -137,7 +137,7 @@ static int32_t ReceivePackets(void* opaque) {
         update_audio_time += GetTimer(update_audio_timer);
 
         StartTimer(&recvfrom_timer);
-        int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, (struct sockaddr*)(&socketContext.addr), &slen);
+        int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, NULL, NULL);
         recvfrom_time += GetTimer(recvfrom_timer);
 
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
@@ -368,9 +368,11 @@ int main(int argc, char* argv[])
                     fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN;
                     break;
                 case SDL_MOUSEMOTION:
-                    fmsg.type = MESSAGE_MOUSE_MOTION;
-                    fmsg.mouseMotion.x = msg.motion.x * server_width / output_width;
-                    fmsg.mouseMotion.y = msg.motion.y * server_height / output_height;
+                    if (server_width > -1 && server_height > -1) {
+                        fmsg.type = MESSAGE_MOUSE_MOTION;
+                        fmsg.mouseMotion.x = msg.motion.x * server_width / output_width;
+                        fmsg.mouseMotion.y = msg.motion.y * server_height / output_height;
+                    }
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                 case SDL_MOUSEBUTTONUP:

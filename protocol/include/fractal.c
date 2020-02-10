@@ -581,11 +581,14 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		// Wait for response from STUN server
 	} while (recvfrom(context->s, &buf, sizeof(buf), 0, (struct sockaddr*)(&context->addr), &slen) < 0);
 
-	mprintf("Received packet from STUN server at %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
-
 	// Set destination address to the client that the STUN server has paired us with
 	context->addr.sin_addr.s_addr = buf.host;
 	context->addr.sin_port = buf.port;
+
+	mprintf("Received packet from STUN server, connecting to %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
+	if (sendto(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) < 0) {
+		mprintf("Could not open connection\n");
+	}
 
 	// Set timeout, default 5 seconds
 	if (recvfrom_timeout_ms < 0) {
