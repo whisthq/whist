@@ -28,11 +28,10 @@ volatile static bool connected;
 volatile static double max_mbps;
 volatile static int gop_size = 1;
 volatile static DesktopContext desktopContext = { 0 };
-volatile static struct CaptureDevice *device = NULL;
 
-int server_width = DEFAULT_WIDTH;
-int server_height = DEFAULT_HEIGHT;
-bool update_device = true;
+volatile int server_width = DEFAULT_WIDTH;
+volatile int server_height = DEFAULT_HEIGHT;
+volatile bool update_device = true;
 
 char buf[LARGEST_FRAME_SIZE];
 
@@ -53,6 +52,7 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
         mprintf("Len too long!\n");
         return -1;
     }
+
     SDL_LockMutex(packet_mutex);
     int sent_size = sendto(context->s, packet, len, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr));
     SDL_UnlockMutex(packet_mutex);
@@ -61,6 +61,8 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
         mprintf("Could not replay packet!\n");
         return -1;
     }
+
+    return 0;
 }
 
 static int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* data, int len, int id, double time) {
@@ -141,14 +143,10 @@ static int32_t SendVideo(void* opaque) {
     mprintf("Desktop initialized\n");
 
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
-    int slen = sizeof(socketContext.addr), id = 1;
-
-    SendAck(&socketContext, 1);
+    int id = 1;
 
     // Init DXGI Device
-
-    struct ScreenshotContainer *screenshot = (struct ScreenshotContainer *) malloc(sizeof(struct ScreenshotContainer));
-    memset(screenshot, 0, sizeof(struct ScreenshotContainer));
+    struct CaptureDevice* device = NULL;
 
     struct FractalCursorTypes *types = (struct FractalCursorTypes *) malloc(sizeof(struct FractalCursorTypes));
     memset(types, 0, sizeof(struct FractalCursorTypes));
@@ -163,7 +161,6 @@ static int32_t SendVideo(void* opaque) {
         desktopContext.ready = true;
         mprintf("DESKTOP INITIALY READY\n");
     }
-    CreateCaptureDevice(device, server_width, server_height);
 
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
@@ -199,9 +196,10 @@ static int32_t SendVideo(void* opaque) {
 
                 if (device) {
                     DestroyCaptureDevice(device);
+                    device = NULL;
                 }
 
-                CreateCaptureDevice(device, server_width, server_height);
+                CreateCaptureDevice(&device, server_width, server_height);
 
                 defaultFound = true;
                 desktopContext.ready = true;
@@ -212,9 +210,10 @@ static int32_t SendVideo(void* opaque) {
         if (update_device) {
             if (device) {
                 DestroyCaptureDevice(device);
+                device = NULL;
             }
 
-            int result = CreateCaptureDevice(device, server_width, server_height);
+            int result = CreateCaptureDevice(&device, server_width, server_height);
             if (result < 0) {
                 mprintf("Failed to create capture device\n");
                 connected = false;
@@ -232,30 +231,27 @@ static int32_t SendVideo(void* opaque) {
             update_encoder = false;
         }
 
-        hr = CaptureScreen(device, screenshot);
-
-        mprintf("Capture screen 0x%X\n", hr);
-
-        if (hr == DXGI_ERROR_INVALID_CALL) {
-            mprintf("DXGI ERROR INVALID CALL\n");
-            OpenNewDesktop("default", false, true);
-
-            if (device) {
-                DestroyCaptureDevice(device);
-            }
-
-            CreateCaptureDevice(device, server_width, server_height);
+        int accumulated_frames = CaptureScreen(device);
+        if (accumulated_frames < 0) {
+            mprintf("Failed to capture screen\n");
+            connected = false;
+            continue;
         }
 
         clock server_frame_timer;
         StartTimer(&server_frame_timer);
 
-        if (hr == S_OK) {
+        // Only if we have a frame to render
+        if (accumulated_frames > 0) {
+            if (accumulated_frames > 1) {
+                mprintf("Accumulated Frames: %d\n", accumulated_frames);
+            }
+
             consecutive_capture_screen_errors = 0;
 
             clock t;
             StartTimer(&t);
-            video_encoder_encode(encoder, screenshot->mapped_rect.pBits);
+            video_encoder_encode(encoder, device->frame_data);
             //mprintf("Encode Time: %f\n", GetTimer(t));
 
             bitrate_tested_frames++;
@@ -301,13 +297,13 @@ static int32_t SendVideo(void* opaque) {
                     mprintf("Frame too large: %d\n", frame_size);
                 }
                 else {
-                    LPCSTR current_cursor = GetCurrentCursor(types);
-                    
+                    FractalCursorImage image = {0};
+                    image = GetCurrentCursor(types);
                     Frame* frame = buf;
                     frame->width = device->width;
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
-                    frame->cursor = current_cursor;
+                    frame->cursor = image;
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
                     
                     //mprintf("Sent video packet %d (Size: %d)\n", id, encoder->packet.size);
@@ -322,18 +318,7 @@ static int32_t SendVideo(void* opaque) {
 
             id++;
 
-            ReleaseScreen(device, screenshot);
-        }
-        else if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
-            mprintf("CaptureScreen returned with error code: %d %X\n", WSAGetLastError(), hr);
-
-            update_device = true;
-
-            consecutive_capture_screen_errors++;
-            if (consecutive_capture_screen_errors == 3) {
-                mprintf("DXGI errored too many times!\n");
-                break;
-            }
+            ReleaseScreen(device);
         }
     }
 
@@ -354,7 +339,7 @@ static int32_t SendAudio(void* opaque) {
     }
 
     struct SocketContext context = *(struct SocketContext*) opaque;
-    int slen = sizeof(context.addr), id = 1;
+    int id = 1;
 
     wasapi_device* audio_device = (wasapi_device*)malloc(sizeof(struct wasapi_device));
     audio_device = CreateAudioDevice(audio_device);
@@ -431,9 +416,6 @@ int main(int argc, char* argv[])
 
         packet_mutex = SDL_CreateMutex();
 
-        device = (struct CaptureDevice *) malloc(sizeof(struct CaptureDevice));
-        memset(device, 0, sizeof(struct CaptureDevice));
-
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
         SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
         mprintf("Sending video and audio...\n");
@@ -441,7 +423,7 @@ int main(int argc, char* argv[])
         struct FractalClientMessage fmsgs[6];
         struct FractalClientMessage fmsg;
         struct FractalClientMessage last_mouse = { 0 };
-        int slen = sizeof(PacketReceiveContext.addr), i = 0, j = 0, active = 0;
+        int i = 0, j = 0, active = 0;
         FractalStatus status;
 
         clock last_ping;

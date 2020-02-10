@@ -229,29 +229,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 	return 0;
 }
 
-int SendAck(struct SocketContext* context, int reps) {
-	bool success = false;
-	for (int rep = 0; rep < reps; rep++) {
-		if (sendto(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) >= 0) {
-			success = true;
-		}
-	}
-
-	return success ? 0 : -1;
-}
-
-int ReceiveAck(struct SocketContext* context) {
-	char recv_buf[1000];
-	unsigned int slen = sizeof(context->addr);
-
-	if (recvfrom(context->s, &recv_buf, sizeof(recv_buf), 0, (struct sockaddr*)(&context->addr), &slen) < 0) {
-		return -1;
-	}
-	else {
-		return 0;
-	}
-}
-
 // Multithreaded printf Semaphores and Mutexes
 volatile static SDL_sem* multithreadedprintf_semaphore;
 volatile static SDL_mutex* multithreadedprintf_mutex;

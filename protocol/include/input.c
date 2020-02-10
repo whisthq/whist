@@ -412,56 +412,68 @@ void LoadCursors(FractalCursorTypes *types) {
   types->CursorWait = LoadCursor(NULL, IDC_WAIT);
 }
 
-LPCSTR GetCursorName(FractalCursorTypes *types, PCURSORINFO pci) {
+FractalCursorImage GetCursorImage(FractalCursorTypes *types, PCURSORINFO pci) {
 	HCURSOR cursor = pci->hCursor;
 
+	FractalCursorImage image = {0};
 	if(cursor == types->CursorAppStarting) {
-		return IDC_APPSTARTING;
+			image.cursor_type = IDC_APPSTARTING;
+			image.cursor_id   = CURSOR_ID_APPSTARTING;
 	} else if(cursor == types->CursorArrow) {
-		mprintf("NORMAL ARROW \n\n\n");
-		return IDC_ARROW;
+			image.cursor_type = IDC_ARROW;
+			image.cursor_id   = CURSOR_ID_NORMAL;
 	} else if(cursor == types->CursorCross) {
-		return IDC_CROSS;
+			image.cursor_type = IDC_CROSS;
+			image.cursor_id   = CURSOR_ID_CROSS;
 	} else if(cursor == types->CursorHand) {
-		mprintf("HAND \n\n\n");
-		return IDC_HAND;
+			image.cursor_type = IDC_HAND;
+			image.cursor_id   = CURSOR_ID_HAND;
 	} else if(cursor == types->CursorHelp) {
-		return IDC_HELP;
+			image.cursor_type = IDC_HELP;
+			image.cursor_id   = CURSOR_ID_HELP;
 	} else if(cursor == types->CursorIBeam) {
-		mprintf("IBEAM \n\n\n");
-		return IDC_IBEAM;
+			image.cursor_type = IDC_IBEAM;
+			image.cursor_id   = CURSOR_ID_IBEAM;
 	} else if(cursor == types->CursorIcon) {
-		return IDC_ICON;
+			image.cursor_type = IDC_ARROW;
+			image.cursor_id   = CURSOR_ID_NORMAL;
 	} else if(cursor == types->CursorNo) {
-		return IDC_NO;
+			image.cursor_type = IDC_NO;
+			image.cursor_id   = CURSOR_ID_NO;
 	} else if(cursor == types->CursorSize) {
-		return IDC_SIZE;
+			image.cursor_type = IDC_ARROW;
+			image.cursor_id   = CURSOR_ID_NORMAL;
 	} else if(cursor == types->CursorSizeAll) {
-		return IDC_SIZEALL;
+			image.cursor_type = IDC_SIZEALL;
+			image.cursor_id   = CURSOR_ID_SIZEALL;
 	} else if(cursor == types->CursorSizeNESW) {
-		return IDC_SIZENESW;
+			image.cursor_type = IDC_SIZENESW;
+			image.cursor_id   = CURSOR_ID_SIZENESW;
 	} else if(cursor == types->CursorSizeNS) {
-		mprintf("NORTH SOUTH \n\n\n");
-		return IDC_SIZENS;
+			image.cursor_type = IDC_SIZENS;
+			image.cursor_id   = CURSOR_ID_SIZENS;
 	} else if(cursor == types->CursorSizeNWSE) {
-		return IDC_SIZENWSE;
+			image.cursor_type = IDC_SIZENWSE;
+			image.cursor_id   = CURSOR_ID_SIZENWSE;
 	} else if(cursor == types->CursorSizeWE) {
-		mprintf("EAST WEST \n\n\n");
-		return IDC_SIZEWE;
+			image.cursor_type = IDC_SIZEWE;
+			image.cursor_id   = CURSOR_ID_SIZEWE;
 	} else if(cursor == types->CursorUpArrow) {
-		return IDC_UPARROW;
+			image.cursor_type = IDC_ARROW;
+			image.cursor_id   = CURSOR_ID_NORMAL;
 	} else if(cursor == types->CursorWait) {
-		return IDC_WAIT;
-	} else {
-		return IDC_ARROW;
+			image.cursor_type = IDC_WAIT;
+			image.cursor_id   = CURSOR_ID_WAIT;
 	}
+	return image;
 }
 
-LPCSTR GetCurrentCursor(FractalCursorTypes *types) {
+FractalCursorImage GetCurrentCursor(FractalCursorTypes *types) {
     PCURSORINFO pci = (PCURSORINFO)malloc(sizeof(CURSORINFO));
     pci->cbSize = sizeof(CURSORINFO);
     GetCursorInfo(pci);
 
-    LPCSTR cursor_name = GetCursorName(types, pci);
-    return cursor_name;
+    FractalCursorImage image = {0};
+    image = GetCursorImage(types, pci);
+    return image;
 }
