@@ -3,6 +3,7 @@
 #define DECODE_TYPE QSV_DECODE
 
 // Global Variables
+extern volatile SDL_Window *window;
 extern volatile int server_width;
 extern volatile int server_height;
 // Keeping track of max mbps
@@ -14,12 +15,11 @@ extern volatile int output_width;
 extern volatile int output_height;
 
 extern volatile FractalCursorID last_cursor = CURSOR_ID_NORMAL;
+extern volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 
 extern volatile int32_t positionX;
 extern volatile int32_t positionY;
 
-extern FractalCursorID last_cursor = CURSOR_ID_NORMAL;
-extern FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 // START VIDEO VARIABLES
 
 struct VideoData {
@@ -187,9 +187,13 @@ int32_t RenderScreen(void* opaque) {
         }
 
         if(frame->cursor.cursor_state != cursor_state) {
-            mprintf("Change in cursor state detected\n \n \n");
-            SDL_SetRelativeMouseMode(SDL_DISABLE);
-            SDL_WarpMouseInWindow(videoContext.window, positionX, positionY);
+            if(frame->cursor.cursor_state == CURSOR_STATE_HIDDEN) {
+                SDL_SetRelativeMouseMode(SDL_TRUE);
+            } else {
+                SDL_SetRelativeMouseMode(SDL_DISABLE);
+            }
+
+            cursor_state = frame->cursor.cursor_state;
         }
 
         SDL_RenderClear(videoContext.renderer);
