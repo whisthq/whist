@@ -259,7 +259,7 @@ int initSDL() {
 
 void destroySDL() {
     if (window) {
-        SDL_DestroyWindow(window);
+        SDL_DestroyWindow((SDL_Window*)window);
     }
     SDL_Quit();
 }

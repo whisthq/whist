@@ -42,7 +42,7 @@ void initAudio() {
     SDL_zero(wantedSpec);
     SDL_zero(audioSpec);
     wantedSpec.channels  = (Uint8)AudioData.audio_decoder->context->channels;
-    wantedSpec.freq      = 44100;//AudioData.audio_decoder->context->sample_rate * 1.05;
+    wantedSpec.freq      = 48000;
     mprintf("Freq: %d\n", wantedSpec.freq);
     wantedSpec.format    = AUDIO_F32SYS;
     wantedSpec.silence   = 0;
