@@ -72,7 +72,7 @@ LD_FLAGS = \
 
 
 # build all files into executable
-all: clean clear fractal.obj videocapture.obj audiocapture.obj videoencode.obj audioencode.obj socket.obj wasapicapture.obj dxgicapture.obj desktop.obj main.obj
+all: clean clear fractal.obj videocapture.obj audiocapture.obj videoencode.obj audioencode.obj socket.obj wasapicapture.obj dxgicapture.obj desktop.obj input.obj main.obj
 	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
@@ -106,6 +106,9 @@ dxgicapture.obj: ../include/dxgicapture.c
 
 desktop.obj: ../include/desktop.c
   $(CC) /c ../include/desktop.c
+
+input.obj: ../include/input.c
+  $(CC) /c ../include/input.c
 
 # compile the source main client file into object file
 main.obj: main.c

@@ -671,7 +671,7 @@ typedef struct Frame {
 	int width;
 	int height;
 	int size;
-	HCURSOR cursor;
+	LPCSTR cursor;
 	unsigned char compressed_frame[];
 } Frame;
 

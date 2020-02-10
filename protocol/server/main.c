@@ -14,6 +14,7 @@
 #include "../include/audioencode.h"
 #include "../include/dxgicapture.h"
 #include "../include/desktop.h"
+#include "../include/input.h"
 
 #pragma comment (lib, "ws2_32.lib")
 
@@ -146,6 +147,10 @@ static int32_t SendVideo(void* opaque) {
 
     // Init DXGI Device
     struct CaptureDevice* device = NULL;
+
+    struct FractalCursorTypes *types = (struct FractalCursorTypes *) malloc(sizeof(struct FractalCursorTypes));
+    memset(types, 0, sizeof(struct FractalCursorTypes));
+    LoadCursors(types);
 
     // Open desktop
     bool defaultFound = (strcmp("Default", desktop_name) == 0);
@@ -292,11 +297,12 @@ static int32_t SendVideo(void* opaque) {
                     mprintf("Frame too large: %d\n", frame_size);
                 }
                 else {
+                    LPCSTR current_cursor = GetCurrentCursor(types);
                     Frame* frame = buf;
                     frame->width = device->width;
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
-                    frame->cursor = GetCursor();
+                    frame->cursor = current_cursor;
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
                     
                     //mprintf("Sent video packet %d (Size: %d)\n", id, encoder->packet.size);
