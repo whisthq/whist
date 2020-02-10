@@ -311,9 +311,15 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 			// mouse motion event
 		case MESSAGE_MOUSE_MOTION:
 			Event[i].type = INPUT_MOUSE;
-			Event[i].mi.dx = fmsg[i].mouseMotion.x * (double)65536 / 1000000;
-			Event[i].mi.dy = fmsg[i].mouseMotion.y * (double)65536 / 1000000;
-			Event[i].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+			if(fmsg[i].mouseMotion.relative) {
+				Event[i].mi.dx = fmsg[i].mouseMotion.x * 0.9;
+				Event[i].mi.dy = fmsg[i].mouseMotion.y * 0.9;
+				Event[i].mi.dwFlags = MOUSEEVENTF_MOVE;
+			} else {
+				Event[i].mi.dx = fmsg[i].mouseMotion.x * (double)65536 / 1000000;
+				Event[i].mi.dy = fmsg[i].mouseMotion.y * (double)65536 / 1000000;
+				Event[i].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+			}
 			break;
 			// mouse button event
 		case MESSAGE_MOUSE_BUTTON:
@@ -395,27 +401,27 @@ FractalStatus EnterWinString(enum FractalKeycode keycodes[100], int len) {
 
 void LoadCursors(FractalCursorTypes *types) {
   types->CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
-  types->CursorArrow = LoadCursor(NULL, IDC_ARROW);
-  types->CursorCross = LoadCursor(NULL, IDC_CROSS);
-  types->CursorHand = LoadCursor(NULL, IDC_HAND);
-  types->CursorHelp = LoadCursor(NULL, IDC_HELP);
-  types->CursorIBeam = LoadCursor(NULL, IDC_IBEAM);
-  types->CursorIcon = LoadCursor(NULL, IDC_ICON);
-  types->CursorNo = LoadCursor(NULL, IDC_NO);
-  types->CursorSize = LoadCursor(NULL, IDC_SIZE);
-  types->CursorSizeAll = LoadCursor(NULL, IDC_SIZEALL);
-  types->CursorSizeNESW = LoadCursor(NULL, IDC_SIZENESW);
-  types->CursorSizeNS = LoadCursor(NULL, IDC_SIZENS);
-  types->CursorSizeNWSE = LoadCursor(NULL, IDC_SIZENWSE);
-  types->CursorSizeWE = LoadCursor(NULL, IDC_SIZEWE);
-  types->CursorUpArrow = LoadCursor(NULL, IDC_UPARROW);
-  types->CursorWait = LoadCursor(NULL, IDC_WAIT);
+  types->CursorArrow       = LoadCursor(NULL, IDC_ARROW);
+  types->CursorCross       = LoadCursor(NULL, IDC_CROSS);
+  types->CursorHand        = LoadCursor(NULL, IDC_HAND);
+  types->CursorHelp        = LoadCursor(NULL, IDC_HELP);
+  types->CursorIBeam       = LoadCursor(NULL, IDC_IBEAM);
+  types->CursorIcon        = LoadCursor(NULL, IDC_ICON);
+  types->CursorNo          = LoadCursor(NULL, IDC_NO);
+  types->CursorSize        = LoadCursor(NULL, IDC_SIZE);
+  types->CursorSizeAll     = LoadCursor(NULL, IDC_SIZEALL);
+  types->CursorSizeNESW    = LoadCursor(NULL, IDC_SIZENESW);
+  types->CursorSizeNS      = LoadCursor(NULL, IDC_SIZENS);
+  types->CursorSizeNWSE    = LoadCursor(NULL, IDC_SIZENWSE);
+  types->CursorSizeWE      = LoadCursor(NULL, IDC_SIZEWE);
+  types->CursorUpArrow     = LoadCursor(NULL, IDC_UPARROW);
+  types->CursorWait        = LoadCursor(NULL, IDC_WAIT);
 }
 
 FractalCursorImage GetCursorImage(FractalCursorTypes *types, PCURSORINFO pci) {
 	HCURSOR cursor = pci->hCursor;
-	FractalCursorImage image = {0};
 
+	FractalCursorImage image = {0};
 	if(cursor == types->CursorAppStarting) {
 			image.cursor_type = IDC_APPSTARTING;
 			image.cursor_id   = CURSOR_ID_APPSTARTING;
@@ -475,5 +481,8 @@ FractalCursorImage GetCurrentCursor(FractalCursorTypes *types) {
 
     FractalCursorImage image = {0};
     image = GetCursorImage(types, pci);
+
+    image.cursor_state = pci->flags;
+
     return image;
 }

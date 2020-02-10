@@ -75,7 +75,7 @@
 #define ACK_REFRESH_MS 50
 
 #define LARGEST_FRAME_SIZE 1000000
-#define STARTING_BITRATE 55000
+#define STARTING_BITRATE 10000
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
@@ -294,6 +294,11 @@ typedef enum FractalCursorID {
   CURSOR_ID_UP          = 32516,
   CURSOR_ID_WAIT        = 32514
 } FractalCursorID;
+
+typedef enum FractalCursorState {
+	CURSOR_STATE_HIDDEN  = 0,
+	CURSOR_STATE_VISIBLE = 1
+} FractalCursorState;
 
 /// @brief Keyboard input.
 /// @details Integer code for each of the user keyboard inputs.
@@ -556,6 +561,7 @@ typedef struct FractalCursorTypes {
 typedef struct FractalCursorImage {
   LPCSTR cursor_type;
   FractalCursorID cursor_id;
+  FractalCursorState cursor_state;
 } FractalCursorImage;
 
 
@@ -685,7 +691,7 @@ typedef struct FractalServerMessage {
 typedef struct FractalDestination
 {
     int host;
-    short port;
+    int port;
 } FractalDestination;
 
 typedef struct SocketContext

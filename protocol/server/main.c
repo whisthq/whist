@@ -26,12 +26,13 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 1;
+volatile static int gop_size = 250;
 volatile static DesktopContext desktopContext = { 0 };
 
 volatile int server_width = DEFAULT_WIDTH;
 volatile int server_height = DEFAULT_HEIGHT;
 volatile bool update_device = true;
+volatile FractalCursorID last_cursor;
 
 char buf[LARGEST_FRAME_SIZE];
 
@@ -65,7 +66,7 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     return 0;
 }
 
-static int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* data, int len, int id, double time) {
+static int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* data, int len, int id) {
     if (id <= 0) {
         mprintf("IDs must be positive!\n");
         return -1;
@@ -307,7 +308,7 @@ static int32_t SendVideo(void* opaque) {
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
                     
                     //mprintf("Sent video packet %d (Size: %d)\n", id, encoder->packet.size);
-                    if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id, delay) < 0) {
+                    if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
                     previous_frame_size = encoder->packet.size;
@@ -321,6 +322,10 @@ static int32_t SendVideo(void* opaque) {
             ReleaseScreen(device);
         }
     }
+
+    HCURSOR new_cursor = LoadCursor(NULL, IDC_ARROW);
+
+    SetSystemCursor(new_cursor, last_cursor);
 
     DestroyCaptureDevice(device);
     device = NULL;
@@ -366,7 +371,7 @@ static int32_t SendAudio(void* opaque) {
                 mprintf("Audio buffer size too large!\n");
             }
             else if (audio_device->audioBufSize > 0) {
-                if (SendPacket(&context, PACKET_AUDIO, audio_device->pData, audio_device->audioBufSize, id, -1.0) < 0) {
+                if (SendPacket(&context, PACKET_AUDIO, audio_device->pData, audio_device->audioBufSize, id) < 0) {
                     mprintf("Could not send audio frame\n");
                 }
                 id++;
@@ -480,6 +485,11 @@ int main(int argc, char* argv[])
                         last_mouse = fmsg;
                     }
                     status = ReplayUserInput(&fmsg, 1);
+                    POINT point1;
+                    POINT point2;
+                    GetCursorPos(&point1);
+                    GetPhysicalCursorPos(&point2);
+                    mprintf("Cursor now at %ld x %ld, physically %ld x %ld\n", point1.x, point1.y, point2.x, point2.y);
                 }
                 else if (fmsg.type == MESSAGE_MBPS) {
                     max_mbps = fmsg.mbps;
@@ -491,7 +501,7 @@ int main(int argc, char* argv[])
                     fmsg_response.type = MESSAGE_PONG;
                     fmsg_response.ping_id = fmsg.ping_id;
                     StartTimer(&last_ping);
-                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), 1, -1) < 0) {
+                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), 1) < 0) {
                         mprintf("Could not send Pong\n");
                     }
                 }
