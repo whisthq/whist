@@ -26,7 +26,7 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 250;
+volatile static int gop_size = 50;
 volatile static DesktopContext desktopContext = { 0 };
 
 volatile int server_width = DEFAULT_WIDTH;
@@ -311,13 +311,12 @@ static int32_t SendVideo(void* opaque) {
                     if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
+                    id++;
                     previous_frame_size = encoder->packet.size;
                     float server_frame_time = GetTimer(server_frame_timer);
                     //mprintf("Server Frame Time for ID %d: %f\n", id, server_frame_time);
                 }
             }
-
-            id++;
 
             ReleaseScreen(device);
         }
@@ -420,6 +419,8 @@ int main(int argc, char* argv[])
         max_mbps = START_MAX_MBPS;
 
         packet_mutex = SDL_CreateMutex();
+
+        SDL_Delay(250);
 
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
         SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
