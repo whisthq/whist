@@ -37,6 +37,10 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   DXGI_OUTPUT_DESC output_desc;
 
   HRESULT hr = CreateDXGIFactory1(&IID_IDXGIFactory1, (void**)(&factory));
+  if (FAILED(hr)) {
+      mprintf("Failed CreateDXGIFactory1: 0x%X %d", hr, WSAGetLastError());
+      return -1;
+  }
 
   // GET ALL GPUS
   while(factory->lpVtbl->EnumAdapters1(factory, num_adapters, &hardware->adapter) != DXGI_ERROR_NOT_FOUND) {
@@ -97,6 +101,10 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
 
   hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
     D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
+  if (FAILED(hr)) {
+      mprintf("Failed D3D11CreateDevice: 0x%X %d", hr, WSAGetLastError());
+      return -1;
+  }
 
   IDXGIOutput1* output1;
 
@@ -119,6 +127,8 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
 
   device->width = hardware->final_output_desc.DesktopCoordinates.right;
   device->height = hardware->final_output_desc.DesktopCoordinates.bottom;
+
+  return 0;
 }
 
 void CreateTexture(struct CaptureDevice *device) {
@@ -183,6 +193,10 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
 
     device->counter++;
     hr = screenshot->desktop_resource->lpVtbl->QueryInterface(screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
+    if (FAILED(hr)) {
+        mprintf("Query Interface Failed!\n");
+        return hr;
+    }
     hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &screenshot->mapped_rect);
     device->did_use_map_desktop_surface = true;
     if(hr == DXGI_ERROR_UNSUPPORTED) {
@@ -193,15 +207,21 @@ HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *
         hr = device->staging_texture->lpVtbl->QueryInterface(device->staging_texture, &IID_IDXGISurface, (void**)&screenshot->surface);
         if (FAILED(hr)) {
             mprintf("Query Interface Failed!\n");
+            return hr;
         }
         hr = screenshot->surface->lpVtbl->Map(screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
         if (FAILED(hr)) {
             mprintf("Map Failed!\n");
+            return hr;
         }
         device->did_use_map_desktop_surface = false;
+    } else if (FAILED(hr)) {
+        mprintf("MapDesktopSurface Failed!\n");
+        return hr;
     }
     if (FAILED(hr)) {
         mprintf("Something went wrong?\n");
+        return hr;
     }
     return hr;
 }

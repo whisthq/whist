@@ -401,7 +401,7 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
 FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 	// get screen width and height for mouse cursor
 	int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
-	int sHeight = GetSystemMetrics(SM_CYSCREEN) - 10;
+	int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
 	int i;
 	INPUT Event[6];
 
@@ -581,11 +581,11 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		// Wait for response from STUN server
 	} while (recvfrom(context->s, &buf, sizeof(buf), 0, (struct sockaddr*)(&context->addr), &slen) < 0);
 
-	mprintf("Received packet from STUN server at %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
-
 	// Set destination address to the client that the STUN server has paired us with
 	context->addr.sin_addr.s_addr = buf.host;
 	context->addr.sin_port = buf.port;
+
+	mprintf("Received packet from STUN server, connecting to %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
 	// Set timeout, default 5 seconds
 	if (recvfrom_timeout_ms < 0) {
@@ -608,7 +608,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		read_timeout.tv_usec = recvfrom_timeout_ms * 1000;
 #endif
 		setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
-
 	}
 
 	// Great success!

@@ -13,19 +13,23 @@
 
 #include "desktop.h"
 
+void logToFile(char* msg, char* filename) {
+    FILE* fp;
+    fp = fopen(filename, "a+");
+    fprintf(fp, msg);
+    printf(msg);
+    fclose(fp);
+}
+
 // @brief Attaches the current thread to the current input desktop.
 // @details Uses OpenInputDesktop and SetThreadDesktop from WinAPI.
 int setCurrentInputDesktop(HDESK currentInputDesktop) {
     // Set current thread to the current user input desktop
     if (!SetThreadDesktop(currentInputDesktop)) {
-        printf("SetThreadDesktop failed w/ error code: %d.\n", GetLastError());
+        mprintf("SetThreadDesktop failed w/ error code: %d.\n", GetLastError());
         return -2;
     }
     return 0;
-}
-
-void updateInputDesktop() {
-    OpenNewDesktop("default", true, true);
 }
 
 DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread) {
@@ -52,7 +56,6 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread
 
     context.desktop_handle = new_desktop;
     CloseDesktop(new_desktop);
-
     return context;
 }
 
@@ -61,8 +64,9 @@ void OpenWindow() {
     SetProcessWindowStation(hwinsta);
 }
 
-int InitDesktop() {
+char* InitDesktop() {
     DesktopContext lock_screen, logon_screen;
+    char* out;
 
     OpenWindow();
     lock_screen = OpenNewDesktop(NULL, true, true);
@@ -71,16 +75,16 @@ int InitDesktop() {
 
     if (strcmp("Winlogon", lock_screen.desktop_name) == 0)
     {
-        enum FractalKeycode keycodes[] = {
+        enum FractalKeycode keycodes[100] = {
           KEY_SPACE, KEY_BACKSPACE, KEY_BACKSPACE
         };
 
         EnterWinString(keycodes, 3);
 
-        SDL_Delay(500);
+        Sleep(500);
         // logon_screen = OpenNewDesktop(NULL, true);
 
-        enum FractalKeycode keycodes2[] = {
+        enum FractalKeycode keycodes2[100] = {
           KEY_P, KEY_A, KEY_S, KEY_S, KEY_W, KEY_O, KEY_R, KEY_D, KEY_1,
           KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_PERIOD, KEY_ENTER,
           KEY_ENTER
@@ -88,15 +92,11 @@ int InitDesktop() {
 
         EnterWinString(keycodes2, 18);
 
-        OpenNewDesktop(NULL, false, true);
+        Sleep(500);
 
-        lock_screen = OpenNewDesktop(NULL, true, false);
-        while (strcmp("Winlogon", lock_screen.desktop_name) == 0) {
-            SDL_Delay(15);
-            lock_screen = OpenNewDesktop(NULL, true, false);
-        }
-        lock_screen = OpenNewDesktop("default", true, true);
+        out = "Winlogon";
+        return out;
     }
-
-    return 0;
+    out = "Default";
+    return out;
 }

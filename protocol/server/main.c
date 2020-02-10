@@ -26,6 +26,7 @@
 volatile static bool connected;
 volatile static double max_mbps;
 volatile static int gop_size = 1;
+volatile static DesktopContext desktopContext = { 0 };
 volatile static struct CaptureDevice *device = NULL;
 
 int server_width = DEFAULT_WIDTH;
@@ -135,16 +136,12 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 static int32_t SendVideo(void* opaque) {
     mprintf("Initializing desktop...\n");
 
-    if (InitDesktop() < 0) {
-        mprintf("Failed to log into desktop\n");
-        return -1;
-    }
+    char* desktop_name = InitDesktop();
 
     mprintf("Desktop initialized\n");
 
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
     int slen = sizeof(socketContext.addr), id = 1;
-    FILE *fp;
 
     SendAck(&socketContext, 1);
 
@@ -152,6 +149,17 @@ static int32_t SendVideo(void* opaque) {
 
     struct ScreenshotContainer *screenshot = (struct ScreenshotContainer *) malloc(sizeof(struct ScreenshotContainer));
     memset(screenshot, 0, sizeof(struct ScreenshotContainer));
+
+    // Open desktop
+    bool defaultFound = (strcmp("Default", desktop_name) == 0);
+    if (!defaultFound) {
+        OpenNewDesktop(NULL, false, true);
+    }
+    else {
+        desktopContext.ready = true;
+        mprintf("DESKTOP INITIALY READY\n");
+    }
+    CreateCaptureDevice(device, server_width, server_height);
 
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
@@ -182,6 +190,25 @@ static int32_t SendVideo(void* opaque) {
 
     update_device = true;
     while (connected) {
+        if (!defaultFound) {
+            desktopContext = OpenNewDesktop(NULL, true, false);
+
+            if (strcmp("Default", desktopContext.desktop_name) == 0) {
+                mprintf("Default found in capture loop\n");
+                desktopContext = OpenNewDesktop("default", true, true);
+
+                if (device) {
+                    DestroyCaptureDevice(device);
+                }
+
+                CreateCaptureDevice(device, server_width, server_height);
+
+                defaultFound = true;
+                desktopContext.ready = true;
+            }
+
+        }
+
         if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
             SendAck(&socketContext, 1);
             StartTimer(&ack_timer);
@@ -194,6 +221,7 @@ static int32_t SendVideo(void* opaque) {
 
             int result = CreateCaptureDevice(device, server_width, server_height);
             if (result < 0) {
+                mprintf("Failed to create capture device\n");
                 connected = false;
             }
 
@@ -210,6 +238,19 @@ static int32_t SendVideo(void* opaque) {
         }
 
         hr = CaptureScreen(device, screenshot);
+
+        mprintf("Capture screen 0x%X\n", hr);
+
+        if (hr == DXGI_ERROR_INVALID_CALL) {
+            mprintf("DXGI ERROR INVALID CALL\n");
+            OpenNewDesktop("default", false, true);
+
+            if (device) {
+                DestroyCaptureDevice(device);
+            }
+
+            CreateCaptureDevice(device, server_width, server_height);
+        }
 
         clock server_frame_timer;
         StartTimer(&server_frame_timer);
@@ -305,7 +346,14 @@ static int32_t SendVideo(void* opaque) {
 }
 
 static int32_t SendAudio(void* opaque) {
-    updateInputDesktop();
+    while (!desktopContext.ready) {
+        Sleep(500);
+        mprintf("Audio looping...\n");
+    }
+
+    if (setCurrentInputDesktop(desktopContext.desktop_handle) == 0) {
+        mprintf("Audio thread set\n");
+    }
 
     struct SocketContext context = *(struct SocketContext*) opaque;
     int slen = sizeof(context.addr), id = 1;
@@ -357,22 +405,24 @@ int main(int argc, char* argv[])
 {
     initMultiThreadedPrintf(true);
 
-    while (true) {
-        // initialize the windows socket library if this is a windows client
-        WSADATA wsa;
-        if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-            mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
-            return -1;
-        }
+    // initialize the windows socket library if this is a windows client
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
+        return -1;
+    }
 
+    while (true) {
         struct SocketContext PacketReceiveContext = { 0 };
         if (CreateUDPContext(&PacketReceiveContext, "S", "", 1, -1) < 0) {
-            exit(1);
+            mprintf("Failed to start connection\n");
+            continue;
         }
 
         struct SocketContext PacketSendContext = { 0 };
-        if (CreateUDPContext(&PacketSendContext, "S", "", 1, -1) < 0) {
-            exit(1);
+        if (CreateUDPContext(&PacketSendContext, "S", "", 1, 500) < 0) {
+            mprintf("Failed to finish connection.\n");
+            continue;
         }
 
         clock startup_time;
@@ -388,6 +438,7 @@ int main(int argc, char* argv[])
 
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
         SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
+        mprintf("Sending video and audio...\n");
 
         struct FractalClientMessage fmsgs[6];
         struct FractalClientMessage fmsg;
@@ -409,6 +460,7 @@ int main(int argc, char* argv[])
         clock mouse_update_timer;
         StartTimer(&mouse_update_timer);
 
+        mprintf("Receiving packets...\n");
         while (connected) {
             if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
                 SendAck(&PacketReceiveContext, 1);
@@ -427,7 +479,7 @@ int main(int argc, char* argv[])
 
             memset(&fmsg, 0, sizeof(fmsg));
             // 1ms timeout
-            if (recvfrom(PacketReceiveContext.s, &fmsg, sizeof(fmsg), 0, (struct sockaddr*)(&PacketReceiveContext.addr), &slen) > 0) {
+            if (recvfrom(PacketReceiveContext.s, &fmsg, sizeof(fmsg), 0, NULL, NULL) > 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
                     if (active) {
                         fmsgs[j] = fmsg;
@@ -453,11 +505,17 @@ int main(int argc, char* argv[])
                         }
                     }
                 }
+                else if (fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
+                    if (fmsg.type == MESSAGE_MOUSE_MOTION) {
+                        last_mouse = fmsg;
+                    }
+                    status = ReplayUserInput(&fmsg, 1);
+                }
                 else if (fmsg.type == MESSAGE_MBPS) {
                     max_mbps = fmsg.mbps;
                 }
                 else if (fmsg.type == MESSAGE_PING) {
-                    //mprintf("Ping Received - ID %d\n", fmsg.ping_id); 
+                    mprintf("Ping Received - ID %d\n", fmsg.ping_id); 
 
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = MESSAGE_PONG;
@@ -504,14 +562,9 @@ int main(int argc, char* argv[])
                         mprintf("NACKed video packet %d %d not found, ID %d %d was located instead.\n", fmsg.nack_data.id, fmsg.nack_data.index, video_packet->id, video_packet->index);
                     }
                 }
-                else if (fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
-                    if (fmsg.type == MESSAGE_MOUSE_MOTION) {
-                        last_mouse = fmsg;
-                    }
-                    status = ReplayUserInput(&fmsg, 1);
-                }
             }
         }
+        mprintf("Disconnected\n");
 
         SDL_WaitThread(send_video, NULL);
         SDL_WaitThread(send_audio, NULL);
@@ -520,9 +573,9 @@ int main(int argc, char* argv[])
 
         closesocket(PacketReceiveContext.s);
         closesocket(PacketSendContext.s);
-
-        WSACleanup();
     }
+
+    WSACleanup();
 
     destroyMultiThreadedPrintf();
 
