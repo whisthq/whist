@@ -54,7 +54,7 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     }
 
     SDL_LockMutex(packet_mutex);
-    int sent_size = sendp(&context, packet, len);
+    int sent_size = sendp(context, packet, len);
     SDL_UnlockMutex(packet_mutex);
 
     if (sent_size < 0) {
@@ -118,7 +118,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
         SDL_LockMutex(packet_mutex);
         *packet_len = packet_size;
-        int sent_size = sendp(&context, packet, packet_size);
+        int sent_size = sendp(context, packet, packet_size);
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
@@ -449,7 +449,7 @@ int main(int argc, char* argv[])
 
             memset(&fmsg, 0, sizeof(fmsg));
             // 1ms timeout
-            if (recvp(PacketReceiveContext.s, &fmsg, sizeof(fmsg)) > 0) {
+            if (recvp(&PacketReceiveContext, &fmsg, sizeof(fmsg)) > 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
                     if (active) {
                         fmsgs[j] = fmsg;
