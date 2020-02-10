@@ -311,9 +311,15 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 			// mouse motion event
 		case MESSAGE_MOUSE_MOTION:
 			Event[i].type = INPUT_MOUSE;
-			Event[i].mi.dx = fmsg[i].mouseMotion.x * (double)65536 / 1000000;
-			Event[i].mi.dy = fmsg[i].mouseMotion.y * (double)65536 / 1000000;
-			Event[i].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+			if(fmsg[i].mouseMotion.relative) {
+				Event[i].mi.dx = fmsg[i].mouseMotion.x * 0.9;
+				Event[i].mi.dy = fmsg[i].mouseMotion.y * 0.9;
+				Event[i].mi.dwFlags = MOUSEEVENTF_MOVE;
+			} else {
+				Event[i].mi.dx = fmsg[i].mouseMotion.x * (double)65536 / 1000000;
+				Event[i].mi.dy = fmsg[i].mouseMotion.y * (double)65536 / 1000000;
+				Event[i].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+			}
 			break;
 			// mouse button event
 		case MESSAGE_MOUSE_BUTTON:
