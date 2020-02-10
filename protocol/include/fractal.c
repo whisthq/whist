@@ -401,7 +401,7 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
 FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 	// get screen width and height for mouse cursor
 	int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
-	int sHeight = GetSystemMetrics(SM_CYSCREEN) - 10;
+	int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
 	int i;
 	INPUT Event[6];
 
@@ -611,7 +611,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		read_timeout.tv_usec = recvfrom_timeout_ms * 1000;
 #endif
 		setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
-
 	}
 
 	// Great success!
