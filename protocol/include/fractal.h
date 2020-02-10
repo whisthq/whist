@@ -278,6 +278,23 @@ typedef enum DecodeType {
 	QSV_DECODE             = 1
 } DecodeType;
 
+typedef enum FractalCursorID {
+  CURSOR_ID_APPSTARTING = 32650,
+  CURSOR_ID_NORMAL      = 32512,
+  CURSOR_ID_CROSS       = 32515,
+  CURSOR_ID_HAND        = 32649,
+  CURSOR_ID_HELP        = 32651,
+  CURSOR_ID_IBEAM       = 32513,
+  CURSOR_ID_NO          = 32648,
+  CURSOR_ID_SIZEALL     = 32646,
+  CURSOR_ID_SIZENESW    = 32643,
+  CURSOR_ID_SIZENS      = 32645,
+  CURSOR_ID_SIZENWSE    = 32642,
+  CURSOR_ID_SIZEWE      = 32644,
+  CURSOR_ID_UP          = 32516,
+  CURSOR_ID_WAIT        = 32514
+} FractalCursorID;
+
 /// @brief Keyboard input.
 /// @details Integer code for each of the user keyboard inputs.
 typedef enum FractalKeycode {
@@ -516,6 +533,32 @@ typedef struct FractalCursor {
 	uint8_t __pad[1];
 } FractalCursor;
 
+
+typedef struct FractalCursorTypes {
+  HCURSOR CursorAppStarting;
+  HCURSOR CursorArrow;
+  HCURSOR CursorCross;
+  HCURSOR CursorHand;
+  HCURSOR CursorHelp;
+  HCURSOR CursorIBeam;
+  HCURSOR CursorIcon;
+  HCURSOR CursorNo;
+  HCURSOR CursorSize;
+  HCURSOR CursorSizeAll;
+  HCURSOR CursorSizeNESW;
+  HCURSOR CursorSizeNS;
+  HCURSOR CursorSizeNWSE;
+  HCURSOR CursorSizeWE;
+  HCURSOR CursorUpArrow;
+  HCURSOR CursorWait;
+} FractalCursorTypes;
+
+typedef struct FractalCursorImage {
+  LPCSTR cursor_type;
+  FractalCursorID cursor_id;
+} FractalCursorImage;
+
+
 /// @brief Latency performance metrics.
 /// @details Latency metrics for the client
 typedef struct FractalMetrics {
@@ -671,7 +714,7 @@ typedef struct Frame {
 	int width;
 	int height;
 	int size;
-	LPCSTR cursor;
+	FractalCursorImage cursor;
 	unsigned char compressed_frame[];
 } Frame;
 

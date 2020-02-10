@@ -12,6 +12,8 @@ extern volatile bool update_mbps;
 extern volatile int output_width;
 extern volatile int output_height;
 
+static FractalCursorID last_cursor = CURSOR_ID_NORMAL;
+
 // START VIDEO VARIABLES
 
 struct VideoData {
@@ -171,8 +173,13 @@ int32_t RenderScreen(void* opaque) {
             videoContext.uvPitch
         );
 
-        HCURSOR cursor = LoadCursor(NULL, frame->cursor);
-        SetCursor(cursor);
+
+        if(frame->cursor.cursor_id != last_cursor) {
+            HCURSOR new_cursor = LoadCursor(NULL, frame->cursor.cursor_type);
+
+            SetSystemCursor(new_cursor, last_cursor);
+            last_cursor = frame->cursor.cursor_id;
+        }
 
         SDL_RenderClear(videoContext.renderer);
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
@@ -206,7 +213,7 @@ void initVideo() {
         SDL_WINDOWPOS_CENTERED,
         output_width,
         output_height,
-        is_fullscreen ? SDL_WINDOW_MAXIMIZED : NULL
+        is_fullscreen ? SDL_WINDOW_FULLSCREEN : NULL
     );
 
     if (!window) {
