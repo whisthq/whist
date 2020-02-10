@@ -446,6 +446,7 @@ void destroyVideo() {
     SDL_DestroyTexture(videoContext.texture);
     SDL_DestroyRenderer(videoContext.renderer);
     SDL_DestroyWindow(videoContext.window);
+
     free(videoContext.yPlane);
     free(videoContext.uPlane);
     free(videoContext.vPlane);

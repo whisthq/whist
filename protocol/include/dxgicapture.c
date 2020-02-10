@@ -11,12 +11,43 @@
 
 #include "dxgicapture.h"
 
+#include <windows.h>
+#include <psapi.h>
+#include <processthreadsapi.h>
+
+void PrintMemoryInfo()
+{
+    DWORD processID = GetCurrentProcessId();
+    HANDLE hProcess;
+    PROCESS_MEMORY_COUNTERS pmc;
+
+    // Print information about the memory usage of the process.
+
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |
+        PROCESS_VM_READ,
+        FALSE, processID);
+    if (NULL == hProcess)
+        return;
+
+    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc)))
+    {
+        mprintf("\tPeakWorkingSetSize: %lld\n", (long long)pmc.PeakWorkingSetSize);
+        mprintf("\tWorkingSetSize: %lld\n", (long long)pmc.WorkingSetSize);
+    }
+
+    CloseHandle(hProcess);
+}
+
+#include "dxgicapture.h"
+
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-void CreateTexture(struct CaptureDevice* device);
+int CreateCaptureDevice(struct CaptureDevice **pdevice, int width, int height) {
+    *pdevice = malloc(sizeof(struct CaptureDevice));
+  struct CaptureDevice* device = *pdevice;
+  memset(device, 0, sizeof(struct CaptureDevice));
 
-int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   device->hardware = (struct DisplayHardware*) malloc(sizeof(struct DisplayHardware));
   memset(device->hardware, 0, sizeof(struct DisplayHardware));
 
@@ -38,7 +69,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
 
   HRESULT hr = CreateDXGIFactory1(&IID_IDXGIFactory1, (void**)(&factory));
   if (FAILED(hr)) {
-      mprintf("Failed CreateDXGIFactory1: 0x%X %d", hr, WSAGetLastError());
+      mprintf("Failed CreateDXGIFactory1: 0x%X %d", hr, GetLastError());
       return -1;
   }
 
@@ -102,7 +133,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
     D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
   if (FAILED(hr)) {
-      mprintf("Failed D3D11CreateDevice: 0x%X %d", hr, WSAGetLastError());
+      mprintf("Failed D3D11CreateDevice: 0x%X %d", hr, GetLastError());
       return -1;
   }
 
@@ -131,7 +162,9 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   return 0;
 }
 
-void CreateTexture(struct CaptureDevice *device) {
+ID3D11Texture2D* CreateTexture(struct CaptureDevice *device) {
+  HRESULT hr;
+
   struct DisplayHardware* hardware = device->hardware;
 
   D3D11_TEXTURE2D_DESC tDesc;
@@ -156,80 +189,129 @@ void CreateTexture(struct CaptureDevice *device) {
   device->Box.front = 0;
   device->Box.back = 1;
 
-  device->D3D11device->lpVtbl->CreateTexture2D(device->D3D11device, &tDesc, NULL, &device->staging_texture);
+  ID3D11Texture2D *texture;
+  hr = device->D3D11device->lpVtbl->CreateTexture2D(device->D3D11device, &tDesc, NULL, &texture);
+  if (FAILED(hr)) {
+      mprintf("Failed to create Texture2D 0x%X %d\n", hr, GetLastError());
+      return NULL;
+  }
 
   device->duplication->lpVtbl->GetDesc(device->duplication, &device->duplication_desc);
+
+  return texture;
 }
 
-HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot) {
+int CaptureScreen(struct CaptureDevice *device) {
   HRESULT hr;
+
+  struct ScreenshotContainer* screenshot = &device->screenshot;
 
   device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
-  if (NULL != screenshot->final_texture) {
+  if (screenshot->final_texture != NULL) {
      screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
      screenshot->final_texture = NULL;
   }
   
-  if (NULL != screenshot->desktop_resource) {
+  if (screenshot->desktop_resource != NULL) {
      screenshot->desktop_resource->lpVtbl->Release(screenshot->desktop_resource);
      screenshot->desktop_resource = NULL;
   }
 
-  //mprintf("Acquiring...\n");
+  if (screenshot->staging_texture != NULL) {
+      screenshot->staging_texture->lpVtbl->Release(screenshot->staging_texture);
+      screenshot->staging_texture = NULL;
+  }
+
+  if (screenshot->surface != NULL) {
+      screenshot->surface->lpVtbl->Release(screenshot->surface);
+      screenshot->surface = NULL;
+  }
+
   hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 1, &device->frame_info, &screenshot->desktop_resource);
-  //mprintf("Acquired: 0x%X\n", hr);
   if(FAILED(hr)) {
     if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
-        mprintf("Failed to Acquire Next Frame! 0x%X %d\n", hr, WSAGetLastError());
+        mprintf("Failed to Acquire Next Frame! 0x%X %d\n", hr, GetLastError());
+        return -1;
     }
-    return hr;
+    else {
+        return 0;
+    }
   }
 
   int accumulated_frames = device->frame_info.AccumulatedFrames;
-  if (accumulated_frames > 1) {
-      mprintf("Accumulated Frames: %d\n", accumulated_frames);
-  }
 
     device->counter++;
     hr = screenshot->desktop_resource->lpVtbl->QueryInterface(screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
     if (FAILED(hr)) {
         mprintf("Query Interface Failed!\n");
-        return hr;
+        return -1;
     }
     hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &screenshot->mapped_rect);
-    device->did_use_map_desktop_surface = true;
+
+    // If MapDesktopSurface doesn't work, then do it manually
     if(hr == DXGI_ERROR_UNSUPPORTED) {
-        CreateTexture(device);
-        device->D3D11context->lpVtbl->CopySubresourceRegion(device->D3D11context, (ID3D11Resource*)device->staging_texture, 0, 0, 0, 0,
+        /*
+        mprintf("1\n");
+        screenshot->staging_texture = CreateTexture(device);
+        mprintf("2\n");
+        device->D3D11context->lpVtbl->CopyResource(device->D3D11context, screenshot->staging_texture, screenshot->final_texture);
+        mprintf("3\n");
+        hr = device->D3D11context->lpVtbl->Map(device->D3D11context, screenshot->staging_texture, 0, D3D11_MAP_READ, 0, &screenshot->mapped_subresource);
+        mprintf("4\n");
+        if (FAILED(hr)) {
+            mprintf("d3d context map Failed! 0x%X %d\n", hr, GetLastError());
+            return -1;
+        }
+        screenshot->frame_data = screenshot->mapped_subresource.pData;
+        */
+        screenshot->staging_texture = CreateTexture(device);
+        if (screenshot->staging_texture == NULL) {
+            // Error already printed inside of CreateTexture
+            return -1;
+        }
+        device->D3D11context->lpVtbl->CopySubresourceRegion(device->D3D11context, (ID3D11Resource*)screenshot->staging_texture, 0, 0, 0, 0,
                                                 (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
 
-        hr = device->staging_texture->lpVtbl->QueryInterface(device->staging_texture, &IID_IDXGISurface, (void**)&screenshot->surface);
+        hr = screenshot->staging_texture->lpVtbl->QueryInterface(screenshot->staging_texture, &IID_IDXGISurface, (void**)&screenshot->surface);
         if (FAILED(hr)) {
-            mprintf("Query Interface Failed!\n");
-            return hr;
+            mprintf("Query Interface Failed! 0x%X %d\n", hr, GetLastError());
+            return -1;
         }
         hr = screenshot->surface->lpVtbl->Map(screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
         if (FAILED(hr)) {
             mprintf("Map Failed!\n");
-            return hr;
+            return -1;
         }
         device->did_use_map_desktop_surface = false;
-    } else if (FAILED(hr)) {
-        mprintf("MapDesktopSurface Failed!\n");
-        return hr;
     }
-    if (FAILED(hr)) {
-        mprintf("Something went wrong?\n");
-        return hr;
+    else if (FAILED(hr)) {
+        mprintf("MapDesktopSurface Failed! 0x%X %d\n", hr, GetLastError());
+        return -1;
     }
-    return hr;
+    else {
+        device->did_use_map_desktop_surface = true;
+    }
+
+    device->frame_data = screenshot->mapped_rect.pBits;
+    return accumulated_frames;
 }
 
 
-void ReleaseScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot) {
+void ReleaseScreen(struct CaptureDevice *device) {
+    HRESULT hr;
   if (device->did_use_map_desktop_surface) {
-    device->duplication->lpVtbl->UnMapDesktopSurface(device->duplication);
+    hr = device->duplication->lpVtbl->UnMapDesktopSurface(device->duplication);
+    if (FAILED(hr)) {
+        mprintf("Failed to unmap duplication's desktop surface 0x%X %d\n", hr, GetLastError());
+    }
+  }
+  else {
+      struct ScreenshotContainer* screenshot = &device->screenshot;
+      hr = screenshot->surface->lpVtbl->Unmap(screenshot->surface);
+      if (FAILED(hr)) {
+          mprintf("Failed to unmap screenshot surface 0x%X %d\n", hr, GetLastError());
+      }
   }
 }
 
@@ -241,4 +323,5 @@ void DestroyCaptureDevice(struct CaptureDevice* device) {
         device->duplication->lpVtbl->Release(device->duplication);
         device->duplication = NULL;
     }
+    free(device);
 }
