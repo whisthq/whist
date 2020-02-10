@@ -75,7 +75,7 @@
 #define ACK_REFRESH_MS 50
 
 #define LARGEST_FRAME_SIZE 1000000
-#define STARTING_BITRATE 55000
+#define STARTING_BITRATE 10000
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
@@ -685,7 +685,7 @@ typedef struct FractalServerMessage {
 typedef struct FractalDestination
 {
     int host;
-    short port;
+    int port;
 } FractalDestination;
 
 typedef struct SocketContext
