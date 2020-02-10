@@ -359,12 +359,12 @@ void updateVideo() {
                 SDL_SemPost(VideoData.renderscreen_semaphore);
             }
             else if ((GetTimer(ctx->last_packet_timer) > 12.0 / 1000.0 || ctx->num_times_nacked > 0) && GetTimer(ctx->last_nacked_timer) > 2.0 / 1000.0 && ctx->num_times_nacked < 4) {
-                mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
+                //mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
                 for (int i = 0; i < ctx->num_packets; i++) {
-                    mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
+                    mprintf("************NACKING PACKET %d %d, alive for %f MS\n", ctx->id, i, GetTimer(ctx->frame_creation_timer));
                     //mprintf("NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
                     if (!ctx->received_indicies[i] && (i % 2) == (ctx->num_times_nacked % 2)) {
-                       // nack(ctx->id, i);
+                       nack(ctx->id, i);
                     }
                 }
                 ctx->num_times_nacked++;
@@ -448,7 +448,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     // If we received all of the packets
     if (ctx->packets_received == ctx->num_packets) {
         VideoData.frames_received++;
-        mprintf("Received Video Packet ID %d (Packets: %d) (Size: %d)\n", packet->id, packet->num_indices, packet->payload_size);
+        mprintf("Received Video Packet ID %d (Packets: %d) (Size: %d)\n", ctx->id, ctx->num_packets, ctx->frame_size);
         /*
         if (ctx->id == VideoData.last_rendered_id + 1) {
             VideoData.max_id = ctx->id;
