@@ -6,7 +6,7 @@
 #include "main.h"
 
 void initVideo();
-int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size);
+int32_t ReceiveVideo(struct RTPPacket* packet);
 void updateVideo();
 void destroyVideo();
 

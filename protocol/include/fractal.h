@@ -295,6 +295,11 @@ typedef enum FractalCursorID {
   CURSOR_ID_WAIT        = 32514
 } FractalCursorID;
 
+typedef enum FractalCursorState {
+	CURSOR_STATE_HIDDEN  = 0,
+	CURSOR_STATE_VISIBLE = 1
+} FractalCursorState;
+
 /// @brief Keyboard input.
 /// @details Integer code for each of the user keyboard inputs.
 typedef enum FractalKeycode {
@@ -556,6 +561,7 @@ typedef struct FractalCursorTypes {
 typedef struct FractalCursorImage {
   LPCSTR cursor_type;
   FractalCursorID cursor_id;
+  FractalCursorState cursor_state;
 } FractalCursorImage;
 
 
@@ -738,6 +744,8 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len);
 FractalStatus EnterWinString(enum FractalKeycode keycodes[100], int len);
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int recvfrom_timeout_s, int stun_timeout_ms);
+int recvp(struct SocketContext* context, void* buf, int len);
+int sendp(struct SocketContext* context, void* buf, int len);
 
 #if defined(_WIN32)
 	#define clock LARGE_INTEGER

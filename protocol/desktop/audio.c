@@ -41,8 +41,8 @@ void initAudio() {
 
     SDL_zero(wantedSpec);
     SDL_zero(audioSpec);
-    wantedSpec.channels  = AudioData.audio_decoder->context->channels;
-    wantedSpec.freq      = 44100;//AudioData.audio_decoder->context->sample_rate * 1.05;
+    wantedSpec.channels  = (Uint8)AudioData.audio_decoder->context->channels;
+    wantedSpec.freq      = 48000;
     mprintf("Freq: %d\n", wantedSpec.freq);
     wantedSpec.format    = AUDIO_F32SYS;
     wantedSpec.silence   = 0;
@@ -114,7 +114,7 @@ void updateAudio() {
 
             int real_limit = triggered ? TRIGGERED_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_LIMIT;
 
-            if (SDL_GetQueuedAudioSize(AudioData.dev) > real_limit) {
+            if (SDL_GetQueuedAudioSize(AudioData.dev) > (unsigned int)real_limit) {
                 mprintf("Audio queue full, skipping ID %d (Queued: %d)\n", next_to_play_id / MAX_NUM_AUDIO_INDICES, SDL_GetQueuedAudioSize(AudioData.dev));
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
@@ -169,7 +169,7 @@ void updateAudio() {
     }
 }
 
-int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size) {
+int32_t ReceiveAudio(struct RTPPacket* packet) {
     if (packet->index >= MAX_NUM_AUDIO_INDICES) {
         mprintf("Packet Index too large!\n");
         return -1;

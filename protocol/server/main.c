@@ -55,7 +55,7 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     }
 
     SDL_LockMutex(packet_mutex);
-    int sent_size = sendto(context->s, packet, len, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr));
+    int sent_size = sendp(context, packet, len);
     SDL_UnlockMutex(packet_mutex);
 
     if (sent_size < 0) {
@@ -119,7 +119,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
         SDL_LockMutex(packet_mutex);
         *packet_len = packet_size;
-        int sent_size = sendto(context->s, packet, packet_size, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr));
+        int sent_size = sendp(context, packet, packet_size);
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
@@ -454,7 +454,7 @@ int main(int argc, char* argv[])
 
             memset(&fmsg, 0, sizeof(fmsg));
             // 1ms timeout
-            if (recvfrom(PacketReceiveContext.s, &fmsg, sizeof(fmsg), 0, NULL, NULL) > 0) {
+            if (recvp(&PacketReceiveContext, &fmsg, sizeof(fmsg)) > 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
                     if (active) {
                         fmsgs[j] = fmsg;
@@ -485,6 +485,11 @@ int main(int argc, char* argv[])
                         last_mouse = fmsg;
                     }
                     status = ReplayUserInput(&fmsg, 1);
+                    POINT point1;
+                    POINT point2;
+                    GetCursorPos(&point1);
+                    GetPhysicalCursorPos(&point2);
+                    mprintf("Cursor now at %ld x %ld, physically %ld x %ld\n", point1.x, point1.y, point2.x, point2.y);
                 }
                 else if (fmsg.type == MESSAGE_MBPS) {
                     max_mbps = fmsg.mbps;

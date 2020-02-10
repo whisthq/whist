@@ -35,21 +35,25 @@ volatile double max_mbps = START_MAX_MBPS;
 volatile bool update_mbps = false;
 
 // Global state variables
-volatile static bool run_receive_packets = false;
-volatile static bool is_timing_latency = false;
-volatile static clock latency_timer;
-volatile static int ping_id;
-volatile static int ping_failures;
+volatile SDL_Window* window;
+volatile bool run_receive_packets = false;
+volatile bool is_timing_latency = false;
+volatile clock latency_timer;
+volatile int ping_id;
+volatile int ping_failures;
 
 volatile int output_width;
 volatile int output_height;
+
+volatile int32_t positionX;
+volatile int32_t positionY;
 
 // Function Declarations
 
 SDL_mutex* send_packet_mutex;
 int SendPacket(void* data, int len);
 static int32_t ReceivePackets(void* opaque);
-static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size);
+static int32_t ReceiveMessage(struct RTPPacket* packet);
 
 struct SocketContext PacketSendContext;
 
@@ -63,7 +67,7 @@ int SendPacket(void* data, int len) {
     bool failed = false;
 
     SDL_LockMutex(send_packet_mutex);
-    if (sendto(PacketSendContext.s, data, len, 0, (struct sockaddr*)(&PacketSendContext.addr), sizeof(PacketSendContext.addr)) < 0) {
+    if (sendp(&PacketSendContext, data, len) < 0) {
         mprintf("Failed to send packet!\n");
         failed = true;
     }
@@ -78,7 +82,6 @@ static int32_t ReceivePackets(void* opaque) {
 
     struct RTPPacket packet = { 0 };
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
-    int slen = sizeof(socketContext.addr);
 
     int total_recvs = 0;
 
@@ -137,7 +140,7 @@ static int32_t ReceivePackets(void* opaque) {
         update_audio_time += GetTimer(update_audio_timer);
 
         StartTimer(&recvfrom_timer);
-        int recv_size = recvfrom(socketContext.s, &packet, sizeof(packet), 0, NULL, NULL);
+        int recv_size = recvp(&socketContext, &packet, sizeof(packet));
         recvfrom_time += GetTimer(recvfrom_timer);
 
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
@@ -178,19 +181,19 @@ static int32_t ReceivePackets(void* opaque) {
                 switch (packet.type) {
                 case PACKET_VIDEO:
                     StartTimer(&video_timer);
-                    ReceiveVideo(&packet, recv_size);
+                    ReceiveVideo(&packet);
                     video_time += GetTimer(video_timer);
                     max_video_time = max(max_video_time, GetTimer(video_timer));
                     break;
                 case PACKET_AUDIO:
                     StartTimer(&audio_timer);
-                    ReceiveAudio(&packet, recv_size);
+                    ReceiveAudio(&packet);
                     audio_time += GetTimer(audio_timer);
                     max_audio_time = max(max_audio_time, GetTimer(audio_timer));
                     break;
                 case PACKET_MESSAGE:
                     StartTimer(&message_timer); 
-                    ReceiveMessage(&packet, recv_size);
+                    ReceiveMessage(&packet);
                     message_time += GetTimer(message_timer);
                     break;
                 default:
@@ -202,9 +205,14 @@ static int32_t ReceivePackets(void* opaque) {
     }
 
     SDL_Delay(5);
+
+    return 0;
 }
 
-static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
+static int32_t ReceiveMessage(struct RTPPacket* packet) {
+    if (packet->payload_size != sizeof(FractalServerMessage)) {
+        mprintf("Incorrect payload size for a server message!\n");
+    }
     FractalServerMessage fmsg = *(FractalServerMessage*)packet->data;
     switch (fmsg.type) {
     case MESSAGE_PONG:
@@ -224,6 +232,41 @@ static int32_t ReceiveMessage(struct RTPPacket* packet, int recv_size) {
     return 0;
 }
 
+int initSDL() {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+        mprintf("Could not initialize SDL - %s\n", SDL_GetError());
+        return -1;
+    }
+
+    int full_width = GetSystemMetrics(SM_CXSCREEN);
+    int full_height = GetSystemMetrics(SM_CYSCREEN);
+
+    bool is_fullscreen = full_width == output_width && full_height == output_height;
+
+    window = SDL_CreateWindow(
+        "Fractal",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        output_width,
+        output_height,
+        is_fullscreen ? SDL_WINDOW_FULLSCREEN : 0
+    );
+
+    if (!window) {
+        mprintf("SDL: could not create window - exiting\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+void destroySDL() {
+    if (window) {
+        SDL_DestroyWindow((SDL_Window*)window);
+    }
+    SDL_Quit();
+}
+
 int main(int argc, char* argv[])
 {
     if(argc < 2 || argc > 4) {
@@ -241,6 +284,11 @@ int main(int argc, char* argv[])
 
     if(argc == 4) {
         output_height = atoi(argv[3]);
+    }
+
+    if (initSDL() < 0) {
+        mprintf("Failed to initialized SDL\n");
+        return -1;
     }
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
@@ -270,20 +318,15 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        send_packet_mutex = SDL_CreateMutex();
-        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-            mprintf("Could not initialize SDL - %s\n", SDL_GetError());
-            continue;
-        }
-
+        // Initialize video and audio
         initVideo();
         initAudio();
 
+        // Create thread to receive all packets and handle them as needed
+        send_packet_mutex = SDL_CreateMutex();
         run_receive_packets = true;
         SDL_Thread* receive_packets_thread;
         receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
-
-        StartTimer(&latency_timer);
 
         bool needs_dimension_update = true;
         bool tried_to_update_dimension = false;
@@ -293,6 +336,7 @@ int main(int argc, char* argv[])
         bool shutting_down = false;
         bool connected = true;
 
+        StartTimer((clock*)&latency_timer);
         ping_id = 1;
         ping_failures = -2;
 
@@ -333,7 +377,7 @@ int main(int argc, char* argv[])
                 fmsg.ping_id = ping_id;
                 is_timing_latency = true;
 
-                StartTimer(&latency_timer);
+                StartTimer((clock*)&latency_timer);
 
                 //mprintf("Ping! %d\n", ping_id);
                 SendPacket(&fmsg, sizeof(fmsg));
@@ -353,8 +397,10 @@ int main(int argc, char* argv[])
                 case SDL_MOUSEMOTION:
                     if (server_width > -1 && server_height > -1) {
                         fmsg.type = MESSAGE_MOUSE_MOTION;
-                        fmsg.mouseMotion.x = msg.motion.x * server_width / output_width;
-                        fmsg.mouseMotion.y = msg.motion.y * server_height / output_height;
+                        fmsg.mouseMotion.x = msg.motion.x * 1000000 / output_width;
+                        fmsg.mouseMotion.y = msg.motion.y * 1000000 / output_height;
+                        positionX = msg.motion.x * server_width / output_width;
+                        positionY = msg.motion.y * server_height / output_height;
                     }
                     break;
                 case SDL_MOUSEBUTTONDOWN:
@@ -383,10 +429,9 @@ int main(int argc, char* argv[])
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
 
+        // Destroy video and audio
         destroyVideo();
         destroyAudio();
-
-        SDL_Quit();
 
 #if defined(_WIN32)
         closesocket(PacketSendContext.s);
@@ -403,7 +448,9 @@ int main(int argc, char* argv[])
     }
 
     mprintf("Closing Client...\n");
+
     destroyMultiThreadedPrintf();
+    destroySDL();
 
     return 0;
 }

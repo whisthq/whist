@@ -311,8 +311,8 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 			// mouse motion event
 		case MESSAGE_MOUSE_MOTION:
 			Event[i].type = INPUT_MOUSE;
-			Event[i].mi.dx = fmsg[i].mouseMotion.x * ((float)65536 / sWidth);
-			Event[i].mi.dy = fmsg[i].mouseMotion.y * ((float)65536 / sHeight);
+			Event[i].mi.dx = fmsg[i].mouseMotion.x * (double)65536 / 1000000;
+			Event[i].mi.dy = fmsg[i].mouseMotion.y * (double)65536 / 1000000;
 			Event[i].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
 			break;
 			// mouse button event
@@ -414,8 +414,8 @@ void LoadCursors(FractalCursorTypes *types) {
 
 FractalCursorImage GetCursorImage(FractalCursorTypes *types, PCURSORINFO pci) {
 	HCURSOR cursor = pci->hCursor;
-	FractalCursorImage image = {0};
 
+	FractalCursorImage image = {0};
 	if(cursor == types->CursorAppStarting) {
 			image.cursor_type = IDC_APPSTARTING;
 			image.cursor_id   = CURSOR_ID_APPSTARTING;
@@ -475,5 +475,8 @@ FractalCursorImage GetCurrentCursor(FractalCursorTypes *types) {
 
     FractalCursorImage image = {0};
     image = GetCursorImage(types, pci);
+
+    image.cursor_state = pci->flags;
+
     return image;
 }
