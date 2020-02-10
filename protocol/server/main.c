@@ -32,6 +32,7 @@ volatile static DesktopContext desktopContext = { 0 };
 volatile int server_width = DEFAULT_WIDTH;
 volatile int server_height = DEFAULT_HEIGHT;
 volatile bool update_device = true;
+volatile FractalCursorID last_cursor;
 
 char buf[LARGEST_FRAME_SIZE];
 
@@ -322,6 +323,10 @@ static int32_t SendVideo(void* opaque) {
         }
     }
 
+    HCURSOR new_cursor = LoadCursor(NULL, IDC_ARROW);
+
+    SetSystemCursor(new_cursor, last_cursor);
+
     DestroyCaptureDevice(device);
     device = NULL;
 
@@ -480,6 +485,11 @@ int main(int argc, char* argv[])
                         last_mouse = fmsg;
                     }
                     status = ReplayUserInput(&fmsg, 1);
+                    POINT point1;
+                    POINT point2;
+                    GetCursorPos(&point1);
+                    GetPhysicalCursorPos(&point2);
+                    mprintf("Cursor now at %ld x %ld, physically %ld x %ld\n", point1.x, point1.y, point2.x, point2.y);
                 }
                 else if (fmsg.type == MESSAGE_MBPS) {
                     max_mbps = fmsg.mbps;
