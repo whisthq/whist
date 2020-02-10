@@ -140,6 +140,8 @@ static int32_t ReceivePackets(void* opaque) {
         int recv_size = recvp(&socketContext, &packet, sizeof(packet));
         recvfrom_time += GetTimer(recvfrom_timer);
 
+        //mprintf("Recv wait time: %f\n", GetTimer(recvfrom_timer));
+
         int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
         total_recvs++;
 
@@ -304,13 +306,13 @@ int main(int argc, char* argv[])
         SDL_Event msg;
         FractalClientMessage fmsg = { 0 };
 
-        if (CreateUDPContext(&PacketSendContext, "C", server_ip, 10, 250) < 0) {
+        if (CreateUDPContext(&PacketSendContext, "C", server_ip, 10, 500) < 0) {
             mprintf("Failed to connect to server\n");
             continue;
         }
 
         struct SocketContext PacketReceiveContext = { 0 };
-        if (CreateUDPContext(&PacketReceiveContext, "C", server_ip, 1, 250) < 0) {
+        if (CreateUDPContext(&PacketReceiveContext, "C", server_ip, 1, 500) < 0) {
             mprintf("Failed finish connection to server\n");
             continue;
         }

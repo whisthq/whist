@@ -55,13 +55,12 @@ typedef struct FrameData {
     bool rendered;
 
     int last_nacked_id;
+    int num_times_nacked;
+    clock last_nacked_timer;
 
-    float time_sent[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
+    clock last_packet_timer;
 
-    clock client_frame_timer;
-    float client_frame_time;
-    float time2;
-    float time3;
+    clock frame_creation_timer;
 } FrameData;
 
 // mbps that currently works
@@ -74,7 +73,7 @@ volatile struct FrameData renderContext;
 volatile bool rendering = false;
 
 // Hold information about frames as the packets come in
-#define RECV_FRAMES_BUFFER_SIZE 15
+#define RECV_FRAMES_BUFFER_SIZE 250
 struct FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
 char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
 
@@ -85,6 +84,14 @@ char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
 void updateWidthAndHeight(int width, int height);
 int32_t RenderScreen(void* opaque);
 
+void nack(int id, int index) {
+    mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", id, index);
+    FractalClientMessage fmsg;
+    fmsg.type = MESSAGE_VIDEO_NACK;
+    fmsg.nack_data.id = id;
+    fmsg.nack_data.index = index;
+    SendPacket(&fmsg, sizeof(fmsg));
+}
 
 void updateWidthAndHeight(int width, int height) {
     struct SwsContext* sws_ctx = NULL;
@@ -120,10 +127,12 @@ int32_t RenderScreen(void* opaque) {
 
     while (VideoData.run_render_screen_thread) {
         int ret = SDL_SemTryWait(VideoData.renderscreen_semaphore);
+
         if (ret == SDL_MUTEX_TIMEDOUT) {
             SDL_Delay(1);
             continue;
         }
+
         if (ret < 0) {
             mprintf("Semaphore Error\n");
             return -1;
@@ -186,6 +195,7 @@ int32_t RenderScreen(void* opaque) {
         SDL_RenderCopy(videoContext.renderer, videoContext.texture, NULL, NULL);
         SDL_RenderPresent(videoContext.renderer);
 
+        VideoData.last_rendered_id = renderContext.id;
         rendering = false;
     }
 
@@ -248,8 +258,8 @@ void initVideo() {
     VideoData.bytes_transferred = 0;
     StartTimer(&VideoData.frame_timer);
     VideoData.last_statistics_id = 1;
-    VideoData.last_rendered_id = 1;
-    VideoData.max_id = 1;
+    VideoData.last_rendered_id = 0;
+    VideoData.max_id = 0;
 
     for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
         receiving_frames[i].id = -1;
@@ -259,6 +269,8 @@ void initVideo() {
     VideoData.run_render_screen_thread = true;
     VideoData.render_screen_thread = SDL_CreateThread(RenderScreen, "RenderScreen", NULL);
 }
+
+int last_rendered_index = 0;
 
 void updateVideo() {
     // Get statistics from the last 3 seconds of data
@@ -315,17 +327,37 @@ void updateVideo() {
     }
 
     if (!rendering) {
-        if (VideoData.pending_ctx != NULL) {
-            //mprintf("Rendering %d\n", VideoData.pending_ctx->id);
-            VideoData.pending_ctx->rendered = true;
+        int next_render_id = VideoData.last_rendered_id + 1;
 
-            renderContext = *VideoData.pending_ctx;
-            rendering = true;
+        int index = next_render_id % RECV_FRAMES_BUFFER_SIZE;
 
-            //mprintf("Status: %f\n", GetTimer(renderContext.client_frame_timer));
-            SDL_SemPost(VideoData.renderscreen_semaphore);
+        struct FrameData* ctx = &receiving_frames[index];
 
-            VideoData.pending_ctx = NULL;
+        if (ctx->id == next_render_id) {
+            if (ctx->packets_received == ctx->num_packets) {
+                mprintf("Rendering %d\n", ctx->id);
+
+                renderContext = *ctx;
+                rendering = true;
+
+                //mprintf("Status: %f\n", GetTimer(renderContext.client_frame_timer));
+                SDL_SemPost(VideoData.renderscreen_semaphore);
+            }
+            else if ((GetTimer(ctx->last_packet_timer) > 12.0 / 1000.0 || ctx->num_times_nacked > 0) && GetTimer(ctx->last_nacked_timer) > 2.0 / 1000.0 && ctx->num_times_nacked < 4) {
+                mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
+                for (int i = 0; i < ctx->num_packets; i++) {
+                    mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
+                    //mprintf("NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
+                    if (!ctx->received_indicies[i] && (i % 2) == (ctx->num_times_nacked % 2)) {
+                       // nack(ctx->id, i);
+                    }
+                }
+                ctx->num_times_nacked++;
+                StartTimer(&ctx->last_nacked_timer);
+            }
+        }
+        else {
+
         }
     }
 }
@@ -343,6 +375,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     // Check if we have to initialize the frame buffer
     if (packet->id < ctx->id) {
         mprintf("Old packet received!\n");
+        return -1;
     }
     else if (packet->id > ctx->id) {
         if (rendering && renderContext.id == ctx->id) {
@@ -354,14 +387,18 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         ctx->packets_received = 0;
         ctx->num_packets = packet->num_indices;
         ctx->last_nacked_id = -1;
+        ctx->num_times_nacked = 0;
         ctx->rendered = false;
         ctx->frame_size = 0;
         memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
-        StartTimer(&ctx->client_frame_timer);
+        StartTimer(&ctx->last_nacked_timer);
+        StartTimer(&ctx->frame_creation_timer);
     }
     else {
        // mprintf("Already Started: %d/%d - %f\n", ctx->packets_received + 1, ctx->num_packets, GetTimer(ctx->client_frame_timer));
     }
+
+    StartTimer(&ctx->last_packet_timer);
 
     // If we already received this packet, we can skip
     if (ctx->received_indicies[packet->index]) {
@@ -369,16 +406,15 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         return 0;
     }
 
+    //mprintf("Received ID %d Index %d at time since creation %f\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer)); 
+
+    VideoData.max_id = max(VideoData.max_id, ctx->id);
+
     ctx->received_indicies[packet->index] = true;
     if (packet->index > 0) {
         for (int i = max(0, ctx->last_nacked_id + 1); i < packet->index; i++) {
             if (!ctx->received_indicies[i]) {
-                //mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", packet->id, i);
-                FractalClientMessage fmsg;
-                fmsg.type = MESSAGE_VIDEO_NACK;
-                fmsg.nack_data.id = packet->id;
-                fmsg.nack_data.index = i;
-                SendPacket(&fmsg, sizeof(fmsg));
+                nack(packet->id, i);
             }
         }
         ctx->last_nacked_id = max(ctx->last_nacked_id, packet->index - 1);
@@ -397,9 +433,9 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     // If we received all of the packets
     if (ctx->packets_received == ctx->num_packets) {
         VideoData.frames_received++;
-        //mprintf("Video Packet ID %d (Packets: %d) (Size: %d)\n", packet->id, packet->num_indices, packet->payload_size);
-
-        if (ctx->id > VideoData.max_id) {
+        mprintf("Received Video Packet ID %d (Packets: %d) (Size: %d)\n", packet->id, packet->num_indices, packet->payload_size);
+        /*
+        if (ctx->id == VideoData.last_rendered_id + 1) {
             VideoData.max_id = ctx->id;
             //mprintf("Received all packets for id %d, getting ready to render\n", packet.id);
 
@@ -415,11 +451,9 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
                 }
             }
 
-            VideoData.last_rendered_id = VideoData.max_id;
-
             VideoData.pending_ctx = ctx;
         }
-
+        */
     }
 
     return 0;
