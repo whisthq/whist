@@ -171,7 +171,8 @@ int32_t RenderScreen(void* opaque) {
             videoContext.uvPitch
         );
 
-        SetCursor(frame->cursor);
+        HCURSOR cursor = LoadCursor(NULL, frame->cursor);
+        SetCursor(cursor);
 
         SDL_RenderClear(videoContext.renderer);
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
