@@ -351,11 +351,9 @@ int main(int argc, char* argv[])
                     fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN;
                     break;
                 case SDL_MOUSEMOTION:
-                    if (server_width > -1 && server_height > -1) {
-                        fmsg.type = MESSAGE_MOUSE_MOTION;
-                        fmsg.mouseMotion.x = msg.motion.x * server_width / output_width;
-                        fmsg.mouseMotion.y = msg.motion.y * server_height / output_height;
-                    }
+                    fmsg.type = MESSAGE_MOUSE_MOTION;
+                    fmsg.mouseMotion.x = msg.motion.x * 1000000 / output_width;
+                    fmsg.mouseMotion.y = msg.motion.y * 1000000 / output_height;
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                 case SDL_MOUSEBUTTONUP:
