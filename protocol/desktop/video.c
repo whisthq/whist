@@ -209,6 +209,7 @@ int32_t RenderScreen(void* opaque) {
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
         SDL_RenderCopy(videoContext.renderer, videoContext.texture, NULL, NULL);
         SDL_RenderPresent(videoContext.renderer);
+        mprintf("Rendering %d (Age %f)\n", renderContext.id, GetTimer(renderContext.frame_creation_timer));
 
         VideoData.last_rendered_id = renderContext.id;
         rendering = false;
@@ -226,7 +227,7 @@ void initVideo() {
     size_t yPlaneSz, uvPlaneSz;
     int uvPitch;
 
-    renderer = SDL_CreateRenderer(window, -1, 0);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) {
         fprintf(stderr, "SDL: could not create renderer - exiting\n");
         exit(1);
@@ -350,7 +351,7 @@ void updateVideo() {
 
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
-                mprintf("Rendering %d\n", ctx->id);
+                mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
 
                 renderContext = *ctx;
                 rendering = true;
@@ -361,9 +362,9 @@ void updateVideo() {
             else if ((GetTimer(ctx->last_packet_timer) > 12.0 / 1000.0 || ctx->num_times_nacked > 0) && GetTimer(ctx->last_nacked_timer) > 2.0 / 1000.0 && ctx->num_times_nacked < 4) {
                 //mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
                 for (int i = 0; i < ctx->num_packets; i++) {
-                    mprintf("************NACKING PACKET %d %d, alive for %f MS\n", ctx->id, i, GetTimer(ctx->frame_creation_timer));
                     //mprintf("NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
-                    if (!ctx->received_indicies[i] && (i % 2) == (ctx->num_times_nacked % 2)) {
+                    if (!ctx->received_indicies[i]) {
+                        mprintf("************NACKING PACKET %d %d, alive for %f MS\n", ctx->id, i, GetTimer(ctx->frame_creation_timer));
                        nack(ctx->id, i);
                     }
                 }
