@@ -32,6 +32,7 @@ volatile static DesktopContext desktopContext = { 0 };
 volatile int server_width = DEFAULT_WIDTH;
 volatile int server_height = DEFAULT_HEIGHT;
 volatile bool update_device = true;
+volatile FractalCursorID last_cursor;
 
 char buf[LARGEST_FRAME_SIZE];
 
@@ -321,6 +322,10 @@ static int32_t SendVideo(void* opaque) {
             ReleaseScreen(device);
         }
     }
+
+    HCURSOR new_cursor = LoadCursor(NULL, IDC_ARROW);
+
+    SetSystemCursor(new_cursor, last_cursor);
 
     DestroyCaptureDevice(device);
     device = NULL;

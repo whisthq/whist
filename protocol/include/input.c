@@ -401,21 +401,21 @@ FractalStatus EnterWinString(enum FractalKeycode keycodes[100], int len) {
 
 void LoadCursors(FractalCursorTypes *types) {
   types->CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
-  types->CursorArrow = LoadCursor(NULL, IDC_ARROW);
-  types->CursorCross = LoadCursor(NULL, IDC_CROSS);
-  types->CursorHand = LoadCursor(NULL, IDC_HAND);
-  types->CursorHelp = LoadCursor(NULL, IDC_HELP);
-  types->CursorIBeam = LoadCursor(NULL, IDC_IBEAM);
-  types->CursorIcon = LoadCursor(NULL, IDC_ICON);
-  types->CursorNo = LoadCursor(NULL, IDC_NO);
-  types->CursorSize = LoadCursor(NULL, IDC_SIZE);
-  types->CursorSizeAll = LoadCursor(NULL, IDC_SIZEALL);
-  types->CursorSizeNESW = LoadCursor(NULL, IDC_SIZENESW);
-  types->CursorSizeNS = LoadCursor(NULL, IDC_SIZENS);
-  types->CursorSizeNWSE = LoadCursor(NULL, IDC_SIZENWSE);
-  types->CursorSizeWE = LoadCursor(NULL, IDC_SIZEWE);
-  types->CursorUpArrow = LoadCursor(NULL, IDC_UPARROW);
-  types->CursorWait = LoadCursor(NULL, IDC_WAIT);
+  types->CursorArrow       = LoadCursor(NULL, IDC_ARROW);
+  types->CursorCross       = LoadCursor(NULL, IDC_CROSS);
+  types->CursorHand        = LoadCursor(NULL, IDC_HAND);
+  types->CursorHelp        = LoadCursor(NULL, IDC_HELP);
+  types->CursorIBeam       = LoadCursor(NULL, IDC_IBEAM);
+  types->CursorIcon        = LoadCursor(NULL, IDC_ICON);
+  types->CursorNo          = LoadCursor(NULL, IDC_NO);
+  types->CursorSize        = LoadCursor(NULL, IDC_SIZE);
+  types->CursorSizeAll     = LoadCursor(NULL, IDC_SIZEALL);
+  types->CursorSizeNESW    = LoadCursor(NULL, IDC_SIZENESW);
+  types->CursorSizeNS      = LoadCursor(NULL, IDC_SIZENS);
+  types->CursorSizeNWSE    = LoadCursor(NULL, IDC_SIZENWSE);
+  types->CursorSizeWE      = LoadCursor(NULL, IDC_SIZEWE);
+  types->CursorUpArrow     = LoadCursor(NULL, IDC_UPARROW);
+  types->CursorWait        = LoadCursor(NULL, IDC_WAIT);
 }
 
 FractalCursorImage GetCursorImage(FractalCursorTypes *types, PCURSORINFO pci) {

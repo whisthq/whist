@@ -396,11 +396,12 @@ int main(int argc, char* argv[])
                     break;
                 case SDL_MOUSEMOTION:
                     if (server_width > -1 && server_height > -1) {
-                        fmsg.type = MESSAGE_MOUSE_MOTION;
-                        fmsg.mouseMotion.x = msg.motion.x * 1000000 / output_width;
-                        fmsg.mouseMotion.y = msg.motion.y * 1000000 / output_height;
-                        positionX = msg.motion.x * server_width / output_width;
-                        positionY = msg.motion.y * server_height / output_height;
+                        fmsg.type                 = MESSAGE_MOUSE_MOTION;
+                        fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
+                        fmsg.mouseMotion.x        = fmsg.mouseMotion.relative ? msg.motion.xrel : msg.motion.x * 1000000 / output_width;
+                        fmsg.mouseMotion.y        = fmsg.mouseMotion.relative ? msg.motion.yrel : msg.motion.y * 1000000 / output_height;
+                        positionX                 = msg.motion.x * server_width / output_width;
+                        positionY                 = msg.motion.y * server_height / output_height;
                     }
                     break;
                 case SDL_MOUSEBUTTONDOWN:
