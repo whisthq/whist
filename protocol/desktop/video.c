@@ -327,7 +327,7 @@ void updateVideo() {
 
     if (!rendering) {
         if (VideoData.pending_ctx != NULL) {
-            //mprintf("Rendering %d\n", VideoData.pending_ctx->id);
+            mprintf("Rendering %d\n", VideoData.pending_ctx->id);
             VideoData.pending_ctx->rendered = true;
 
             renderContext = *VideoData.pending_ctx;
@@ -408,7 +408,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
     // If we received all of the packets
     if (ctx->packets_received == ctx->num_packets) {
         VideoData.frames_received++;
-        //mprintf("Video Packet ID %d (Packets: %d) (Size: %d)\n", packet->id, packet->num_indices, packet->payload_size);
+        mprintf("Video Packet ID %d (Packets: %d) (Size: %d)\n", packet->id, packet->num_indices, packet->payload_size);
 
         if (ctx->id > VideoData.max_id) {
             VideoData.max_id = ctx->id;

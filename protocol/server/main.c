@@ -126,7 +126,6 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
         i++;
         curr_index += payload_size;
-        while (time > 0.0 && GetTimer(packet_timer) / time < 1.0 * curr_index / len);
     }
 
     return 0;
@@ -178,10 +177,6 @@ static int32_t SendVideo(void* opaque) {
 
     int consecutive_capture_screen_errors = 0;
 
-    clock ack_timer;
-    SendAck(&socketContext, 1);
-    StartTimer(&ack_timer);
-
     int defaultCounts = 1;
     HRESULT hr;
 
@@ -207,11 +202,6 @@ static int32_t SendVideo(void* opaque) {
                 desktopContext.ready = true;
             }
 
-        }
-
-        if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
-            SendAck(&socketContext, 1);
-            StartTimer(&ack_timer);
         }
 
         if (update_device) {
@@ -449,11 +439,6 @@ int main(int argc, char* argv[])
         clock last_ping;
         StartTimer(&last_ping);
 
-        clock ack_timer;
-        SendAck(&PacketReceiveContext, 5);
-        SendAck(&PacketSendContext, 5);
-        StartTimer(&ack_timer);
-
         clock totaltime;
         StartTimer(&totaltime);
 
@@ -462,11 +447,6 @@ int main(int argc, char* argv[])
 
         mprintf("Receiving packets...\n");
         while (connected) {
-            if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
-                SendAck(&PacketReceiveContext, 1);
-                StartTimer(&ack_timer);
-            }
-
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
                 connected = false;
@@ -557,6 +537,7 @@ int main(int argc, char* argv[])
                         //mprintf("NACKed video packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
                         ReplayPacket(&PacketSendContext, video_packet, len);
                     }
+
                     // If we were asked for an invalid index, just ignore it
                     else if (fmsg.nack_data.index < video_packet->num_indices) {
                         mprintf("NACKed video packet %d %d not found, ID %d %d was located instead.\n", fmsg.nack_data.id, fmsg.nack_data.index, video_packet->id, video_packet->index);

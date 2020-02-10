@@ -231,7 +231,6 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-
     char* server_ip = argv[1];
     output_width = GetSystemMetrics(SM_CXSCREEN);
     output_height = GetSystemMetrics(SM_CYSCREEN);
@@ -248,8 +247,6 @@ int main(int argc, char* argv[])
     initMultiThreadedPrintf(false);
 
     for (int try_amount = 0; try_amount < 3; try_amount++) {
-        send_packet_mutex = SDL_CreateMutex();
-
         // initialize the windows socket library if this is a windows client
 #if defined(_WIN32)
         WSADATA wsa;
@@ -263,17 +260,20 @@ int main(int argc, char* argv[])
         FractalClientMessage fmsg = { 0 };
 
         if (CreateUDPContext(&PacketSendContext, "C", server_ip, 10, 250) < 0) {
-            exit(1);
+            mprintf("Failed to connect to server\n");
+            continue;
         }
 
         struct SocketContext PacketReceiveContext = { 0 };
         if (CreateUDPContext(&PacketReceiveContext, "C", server_ip, 1, 250) < 0) {
-            exit(1);
+            mprintf("Failed finish connection to server\n");
+            continue;
         }
 
+        send_packet_mutex = SDL_CreateMutex();
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-            fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
-            exit(1);
+            mprintf("Could not initialize SDL - %s\n", SDL_GetError());
+            continue;
         }
 
         initVideo();
@@ -290,31 +290,14 @@ int main(int argc, char* argv[])
         clock last_dimension_update;
         StartTimer(&last_dimension_update);
 
-        clock ack_timer;
-        SendAck(&PacketReceiveContext, 1);
-        SDL_LockMutex(send_packet_mutex);
-        SendAck(&PacketSendContext, 1);
-        SDL_UnlockMutex(send_packet_mutex);
-        StartTimer(&ack_timer);
-
         bool shutting_down = false;
         bool connected = true;
 
         ping_id = 1;
-        ping_failures = 0;
+        ping_failures = -2;
 
         while (connected && !shutting_down)
         {
-            if (GetTimer(ack_timer) * 1000.0 > ACK_REFRESH_MS) {
-                SendAck(&PacketReceiveContext, 1);
-                SDL_LockMutex(send_packet_mutex);
-                if (SendAck(&PacketSendContext, 1) < 0) {
-                    mprintf("Could not send ACK!\n");
-                }
-                SDL_UnlockMutex(send_packet_mutex);
-                StartTimer(&ack_timer);
-            }
-
             if (needs_dimension_update && !tried_to_update_dimension && (server_width != output_width || server_height != output_height)) {
                 memset(&fmsg, 0, sizeof(fmsg));
                 fmsg.type = MESSAGE_DIMENSIONS;
