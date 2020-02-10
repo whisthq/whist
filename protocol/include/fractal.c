@@ -139,8 +139,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		return -1;
 	}
 
-	memset((char*)&context->addr, 0, sizeof(context->addr));
-	struct sockaddr_in stun_addr;
+	struct sockaddr_in stun_addr = { 0 };
 	stun_addr.sin_family = AF_INET;
 	stun_addr.sin_addr.s_addr = inet_addr(STUN_SERVER_IP);
 	stun_addr.sin_port = htons(PORT);
@@ -194,26 +193,19 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			mprintf("Failed to message STUN server, trying again...\n");
 		}
 		// Wait for response from STUN server
-	} while ((recv_size = recvfrom(context->s, &buf, sizeof(buf), 0, NULL, NULL)) < 0);
-
-	if (recv_size != sizeof(buf)) {
-		mprintf("Wrong buffer size! %d\n", recv_size);
-		return -1;
-	}
+	} while (recvfrom(context->s, &buf, sizeof(buf), 0, NULL, NULL) != sizeof(buf));
 
 	// Set destination address to the client that the STUN server has paired us with
+	memset((char*)&context->addr, 0, sizeof(context->addr));
+	context->addr.sin_family = AF_INET;
 	context->addr.sin_addr.s_addr = buf.host;
 	context->addr.sin_port = buf.port;
 
 	mprintf("Received packet from STUN server, connecting to %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
-	SDL_Delay(100);
 	if (sendto(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) < 0) {
-		mprintf("Could not open connection\n");
+		mprintf("Could not open connection %d\n", WSAGetLastError());
 	}
-	SDL_Delay(100);
-	recvfrom(context->s, NULL, 0, 0, NULL, NULL);
-	SDL_Delay(100);
 
 	// Set timeout, default 5 seconds
 	if (recvfrom_timeout_ms < 0) {
@@ -237,6 +229,8 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 #endif
 		setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
 	}
+
+	SDL_Delay(150);
 
 	// Great success!
 	return 0;
