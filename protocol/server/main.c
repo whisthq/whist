@@ -300,6 +300,7 @@ static int32_t SendVideo(void* opaque) {
                     frame->width = device->width;
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
+                    frame->cursor = GetCursor();
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
                     
                     //mprintf("Sent video packet %d (Size: %d)\n", id, encoder->packet.size);

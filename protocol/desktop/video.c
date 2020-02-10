@@ -171,6 +171,8 @@ int32_t RenderScreen(void* opaque) {
             videoContext.uvPitch
         );
 
+        SetCursor(frame->cursor);
+
         SDL_RenderClear(videoContext.renderer);
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
         SDL_RenderCopy(videoContext.renderer, videoContext.texture, NULL, NULL);
@@ -203,7 +205,7 @@ void initVideo() {
         SDL_WINDOWPOS_CENTERED,
         output_width,
         output_height,
-        is_fullscreen ? SDL_WINDOW_FULLSCREEN : NULL
+        is_fullscreen ? SDL_WINDOW_MAXIMIZED : NULL
     );
 
     if (!window) {
