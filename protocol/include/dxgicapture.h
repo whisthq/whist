@@ -27,7 +27,9 @@
 struct ScreenshotContainer {
   IDXGIResource *desktop_resource;
   ID3D11Texture2D *final_texture;
+  ID3D11Texture2D* staging_texture;
   DXGI_MAPPED_RECT mapped_rect;
+  D3D11_MAPPED_SUBRESOURCE mapped_subresource;
   IDXGISurface *surface;
 };
 
@@ -42,21 +44,22 @@ struct CaptureDevice {
   ID3D11Device *D3D11device;
   ID3D11DeviceContext *D3D11context;
   IDXGIOutputDuplication *duplication;
-  ID3D11Texture2D *staging_texture;
   DXGI_OUTDUPL_FRAME_INFO frame_info;
   DXGI_OUTDUPL_DESC duplication_desc;
   int counter;
   int width;
   int height;
+  char* frame_data;
+  struct ScreenshotContainer screenshot;
   bool did_use_map_desktop_surface;
   struct DisplayHardware *hardware;
 };
 
-int CreateCaptureDevice(struct CaptureDevice *device, int width, int height);
+int CreateCaptureDevice(struct CaptureDevice **device, int width, int height);
 
-HRESULT CaptureScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot);
+int CaptureScreen(struct CaptureDevice *device);
 
-void ReleaseScreen(struct CaptureDevice *device, struct ScreenshotContainer *screenshot);
+void ReleaseScreen(struct CaptureDevice *device);
 
 void DestroyCaptureDevice(struct CaptureDevice* device);
 

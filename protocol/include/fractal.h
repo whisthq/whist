@@ -739,8 +739,6 @@ FractalStatus EnterWinString(enum FractalKeycode keycodes[100], int len);
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int recvfrom_timeout_s, int stun_timeout_ms);
 
-int SendAck(struct SocketContext *context, int reps);
-
 #if defined(_WIN32)
 	#define clock LARGE_INTEGER
 #elif __APPLE__
