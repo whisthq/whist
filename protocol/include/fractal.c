@@ -229,6 +229,14 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 	return 0;
 }
 
+int recvp(struct SocketContext* context, void* buf, int len) {
+	return recvfrom(context->s, buf, len, 0, NULL, NULL);
+}
+
+int sendp(struct SocketContext* context, void* buf, int len) {
+	return sendto(context->s, buf, len, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr));
+}
+
 // Multithreaded printf Semaphores and Mutexes
 volatile static SDL_sem* multithreadedprintf_semaphore;
 volatile static SDL_mutex* multithreadedprintf_mutex;
@@ -266,10 +274,12 @@ void initMultiThreadedPrintf(bool use_logging) {
 }
 
 void destroyMultiThreadedPrintf() {
+	// Wait for any remaining printfs to execute
+	SDL_Delay(50);
+
 	run_multithreaded_printf = false;
-	for (int i = 0; i < 200; i++) {
-		SDL_SemPost(multithreadedprintf_semaphore);
-	}
+	SDL_SemPost(multithreadedprintf_semaphore);
+
 	SDL_WaitThread(mprintf_thread, NULL);
 	mprintf_thread = NULL;
 

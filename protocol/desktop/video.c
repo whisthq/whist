@@ -9,6 +9,7 @@ extern volatile int server_height;
 extern volatile double max_mbps;
 extern volatile bool update_mbps;
 
+extern volatile SDL_Window* window;
 extern volatile int output_width;
 extern volatile int output_height;
 
@@ -32,10 +33,9 @@ struct VideoData {
     bool run_render_screen_thread;
 
     SDL_sem* renderscreen_semaphore;
-} volatile VideoData;
+} VideoData;
 
 typedef struct SDLVideoContext {
-    SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* texture;
 
@@ -46,7 +46,7 @@ typedef struct SDLVideoContext {
     video_decoder_t* decoder;
     struct SwsContext* sws;
 } SDLVideoContext;
-volatile SDLVideoContext videoContext;
+SDLVideoContext videoContext;
 
 typedef struct FrameData {
     char* prev_frame;
@@ -93,12 +93,11 @@ void updateWidthAndHeight(int width, int height) {
     struct SwsContext* sws_ctx = NULL;
 
     enum AVPixelFormat input_fmt;
-    if (DECODE_TYPE == QSV_DECODE) {
+#if DECODE_TYPE == QSV_DECODE
         input_fmt = AV_PIX_FMT_NV12;
-    }
-    else {
+#else
         input_fmt = AV_PIX_FMT_YUV420P;
-    }
+#endif
 
     sws_ctx = sws_getContext(width, height,
         input_fmt, output_width, output_height,
@@ -140,7 +139,8 @@ int32_t RenderScreen(void* opaque) {
 
         //mprintf("Rendering ID %d\n", renderContext.id);
 
-        Frame* frame = renderContext.prev_frame;
+        // Cast to Frame* because this variable is not volatile in this section
+        Frame* frame = (Frame*)renderContext.prev_frame;
 
         if (sizeof(Frame) + frame->size != renderContext.frame_size) {
             mprintf("Incorrect Frame Size! %d instead of %d\n", sizeof(Frame) + frame->size, renderContext.frame_size);
@@ -203,32 +203,12 @@ int32_t RenderScreen(void* opaque) {
 // END VIDEO FUNCTIONS
 
 void initVideo() {
-    SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* texture;
 
     Uint8* yPlane, * uPlane, * vPlane;
     size_t yPlaneSz, uvPlaneSz;
     int uvPitch;
-
-    int full_width = GetSystemMetrics(SM_CXSCREEN);
-    int full_height = GetSystemMetrics(SM_CYSCREEN);
-
-    bool is_fullscreen = full_width == output_width && full_height == output_height;
-
-    window = SDL_CreateWindow(
-        "Fractal",
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        output_width,
-        output_height,
-        is_fullscreen ? SDL_WINDOW_FULLSCREEN : NULL
-    );
-
-    if (!window) {
-        fprintf(stderr, "SDL: could not create window - exiting\n");
-        exit(1);
-    }
 
     renderer = SDL_CreateRenderer(window, -1, 0);
     if (!renderer) {
@@ -264,7 +244,6 @@ void initVideo() {
 
     uvPitch = output_width / 2;
 
-    videoContext.window = window;
     videoContext.renderer = renderer;
     videoContext.texture = texture;
 
@@ -346,7 +325,7 @@ void updateVideo() {
 
     if (!rendering) {
         if (VideoData.pending_ctx != NULL) {
-            mprintf("Rendering %d\n", VideoData.pending_ctx->id);
+            //mprintf("Rendering %d\n", VideoData.pending_ctx->id);
             VideoData.pending_ctx->rendered = true;
 
             renderContext = *VideoData.pending_ctx;
@@ -360,11 +339,11 @@ void updateVideo() {
     }
 }
 
-int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
+int32_t ReceiveVideo(struct RTPPacket* packet) {
     //mprintf("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)\n", packet->id, packet->index, packet->num_indices, packet->payload_size);
 
     // Find frame in linked list that matches the id
-    VideoData.bytes_transferred += recv_size;
+    VideoData.bytes_transferred += packet->payload_size;
 
     int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
 
@@ -427,7 +406,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet, int recv_size) {
     // If we received all of the packets
     if (ctx->packets_received == ctx->num_packets) {
         VideoData.frames_received++;
-        mprintf("Video Packet ID %d (Packets: %d) (Size: %d)\n", packet->id, packet->num_indices, packet->payload_size);
+        //mprintf("Video Packet ID %d (Packets: %d) (Size: %d)\n", packet->id, packet->num_indices, packet->payload_size);
 
         if (ctx->id > VideoData.max_id) {
             VideoData.max_id = ctx->id;
@@ -459,10 +438,7 @@ void destroyVideo() {
     VideoData.run_render_screen_thread = false;
     SDL_WaitThread(VideoData.render_screen_thread, NULL);
     SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
-
-    SDL_DestroyTexture(videoContext.texture);
     SDL_DestroyRenderer(videoContext.renderer);
-    SDL_DestroyWindow(videoContext.window);
 
     free(videoContext.yPlane);
     free(videoContext.uPlane);

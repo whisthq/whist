@@ -744,6 +744,8 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len);
 FractalStatus EnterWinString(enum FractalKeycode keycodes[100], int len);
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int recvfrom_timeout_s, int stun_timeout_ms);
+int recvp(struct SocketContext* context, void* buf, int len);
+int sendp(struct SocketContext* context, void* buf, int len);
 
 #if defined(_WIN32)
 	#define clock LARGE_INTEGER

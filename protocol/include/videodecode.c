@@ -130,7 +130,7 @@ void destroy_video_decoder(video_decoder_t*decoder) {
 
 /// @brief decode a frame using the decoder decoder
 /// @details decode an encoded frame under YUV color format into RGB frame
-void *video_decoder_decode(video_decoder_t*decoder, char *buffer, int buffer_size) {
+void *video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size) {
   // init packet to prepare decoding
   // av_log_set_level(AV_LOG_ERROR);
   // av_log_set_callback(my_log_callback);

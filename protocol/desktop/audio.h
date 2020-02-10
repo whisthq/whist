@@ -6,7 +6,7 @@
 #include "main.h"
 
 void initAudio();
-int32_t ReceiveAudio(struct RTPPacket* packet, int recv_size);
+int32_t ReceiveAudio(struct RTPPacket* packet);
 void updateAudio();
 void destroyAudio();
 
