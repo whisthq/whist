@@ -297,12 +297,13 @@ static int32_t SendVideo(void* opaque) {
                     mprintf("Frame too large: %d\n", frame_size);
                 }
                 else {
-                    LPCSTR current_cursor = GetCurrentCursor(types);
+                    FractalCursorImage image = {0};
+                    image = GetCurrentCursor(types);
                     Frame* frame = buf;
                     frame->width = device->width;
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
-                    frame->cursor = current_cursor;
+                    frame->cursor = image;
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
                     
                     //mprintf("Sent video packet %d (Size: %d)\n", id, encoder->packet.size);
