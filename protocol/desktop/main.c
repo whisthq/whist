@@ -216,7 +216,7 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
     switch (fmsg.type) {
     case MESSAGE_PONG:
         if (ping_id == fmsg.ping_id) {
-            //mprintf("Latency: %f\n", GetTimer(latency_timer));
+            mprintf("Latency: %f\n", GetTimer(latency_timer));
             is_timing_latency = false;
             ping_failures = 0;
         }
