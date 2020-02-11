@@ -387,12 +387,13 @@ void updateVideo() {
             }
         }
         
-        if (!will_render && VideoData.max_id > VideoData.last_rendered_id + 4) {
+        /*
+        if (!will_render && VideoData.max_id > VideoData.last_rendered_id + 15) {
             VideoData.last_rendered_id++;
             mprintf("Way too far behind! Skipping ahead to %d!\n", VideoData.last_rendered_id);
             //SDL_Delay(15000);
             //exit(-1);
-        }
+        }*/
     }
 }
 
