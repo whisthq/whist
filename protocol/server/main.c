@@ -26,7 +26,7 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 20;
+volatile static int gop_size = 4;
 volatile static DesktopContext desktopContext = { 0 };
 
 volatile int server_width = DEFAULT_WIDTH;
@@ -47,6 +47,8 @@ struct RTPPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
 int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
 
 SDL_mutex* packet_mutex;
+
+struct SocketContext PacketSendContext = { 0 };
 
 static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet, int len) {
     if (len > sizeof(struct RTPPacket)) {
@@ -314,10 +316,11 @@ static int32_t SendVideo(void* opaque) {
                     frame->is_iframe = frames_since_first_iframe % gop_size == 0;
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
 
-                    mprintf("Sent video packet %d (Size: %d)\n", id, encoder->packet.size);
+                    mprintf("Sent video packet %d (Size: %d) %s\n", id, encoder->packet.size, frame->is_iframe ? "(I-frame)" : "");
                     if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
+                    frames_since_first_iframe++;
                     id++;
                     previous_frame_size = encoder->packet.size;
                     float server_frame_time = GetTimer(server_frame_timer);
@@ -355,6 +358,13 @@ static int32_t SendAudio(void* opaque) {
     wasapi_device* audio_device = (wasapi_device*)malloc(sizeof(struct wasapi_device));
     audio_device = CreateAudioDevice(audio_device);
     StartAudioDevice(audio_device);
+
+    FractalServerMessage fmsg;
+    fmsg.type = MESSAGE_AUDIO_FREQUENCY;
+    fmsg.frequency = audio_device->pwfx->nSamplesPerSec;
+    SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg, sizeof(fmsg), 1);
+
+    mprintf("Audio Frequency: %d\n", audio_device->pwfx->nSamplesPerSec);
 
     HRESULT hr = CoInitialize(NULL);
     DWORD dwWaitResult;
@@ -413,7 +423,6 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        struct SocketContext PacketSendContext = { 0 };
         if (CreateUDPContext(&PacketSendContext, "S", "", 1, 500) < 0) {
             mprintf("Failed to finish connection.\n");
             continue;

@@ -679,12 +679,14 @@ typedef struct FractalClientMessage {
 typedef enum FractalServerMessageType {
 	SMESSAGE_NONE = 0, ///< No Message
 	MESSAGE_PONG = 1,
+	MESSAGE_AUDIO_FREQUENCY = 2,
 } FractalServerMessageType;
 
 typedef struct FractalServerMessage {
 	FractalServerMessageType type;                     ///< Input message type.
 	union {
 		int ping_id;
+		int frequency;
 	};
 } FractalServerMessage;
 
