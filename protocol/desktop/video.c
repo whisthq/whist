@@ -14,7 +14,7 @@ extern volatile SDL_Window* window;
 extern volatile int output_width;
 extern volatile int output_height;
 
-extern volatile FractalCursorID last_cursor = CURSOR_ID_NORMAL;
+extern volatile FractalCursorID last_cursor = SDL_SYSTEM_CURSOR_ARROW;
 extern volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 
 extern volatile int32_t positionX;
@@ -186,6 +186,8 @@ int32_t RenderScreen(void* opaque) {
             }
             cursor = SDL_CreateSystemCursor(frame->cursor.cursor_id);
             SDL_SetCursor(cursor);
+
+            last_cursor = frame->cursor.cursor_id;
         }
 
         if(frame->cursor.cursor_state != cursor_state) {
