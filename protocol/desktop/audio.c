@@ -74,6 +74,7 @@ void destroyAudio() {
 
 void updateAudio() {
     if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
+        mprintf("Updating audio frequency to %d!\n", audio_frequency);
         decoder_frequency = audio_frequency;
         destroyAudio();
         initAudio();
