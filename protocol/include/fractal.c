@@ -326,12 +326,18 @@ void MultiThreadedPrintf(void* opaque) {
 		mprintf_queue_size = 0;
 		SDL_UnlockMutex(multithreadedprintf_mutex);
 
+        //int last_printf = -1;
 		for (int i = 0; i < cache_size; i++) {
 			if (mprintf_log_file && mprintf_queue_cache[i].log) {
 				fprintf(mprintf_log_file, "%s", mprintf_queue_cache[i].buf);
 				fflush(mprintf_log_file);
 			}
-			printf("%s", mprintf_queue_cache[i].buf);
+			//if (i + 6 < cache_size) {
+			//	printf("%s%s%s%s%s%s%s", mprintf_queue_cache[i].buf, mprintf_queue_cache[i+1].buf, mprintf_queue_cache[i+2].buf, mprintf_queue_cache[i+3].buf, mprintf_queue_cache[i+4].buf,  mprintf_queue_cache[i+5].buf,  mprintf_queue_cache[i+6].buf);
+			//    last_printf = i + 6;
+			//} else if (i > last_printf) {
+				printf("%s", mprintf_queue_cache[i].buf);
+			//}
 		}
 	}
 }

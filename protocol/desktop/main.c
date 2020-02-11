@@ -420,6 +420,8 @@ int main(int argc, char* argv[])
                 }
                 if (fmsg.type != 0) {
                     SendPacket(&fmsg, sizeof(fmsg));
+                } else {
+                    SDL_Delay(1);
                 }
             }
         }
