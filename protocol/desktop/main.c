@@ -216,7 +216,7 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
     switch (fmsg.type) {
     case MESSAGE_PONG:
         if (ping_id == fmsg.ping_id) {
-            //mprintf("Latency: %f\n", GetTimer(latency_timer));
+            mprintf("Latency: %f\n", GetTimer(latency_timer));
             is_timing_latency = false;
             ping_failures = 0;
         }
@@ -420,6 +420,8 @@ int main(int argc, char* argv[])
                 }
                 if (fmsg.type != 0) {
                     SendPacket(&fmsg, sizeof(fmsg));
+                } else {
+                    SDL_Delay(1);
                 }
             }
         }
@@ -443,6 +445,8 @@ int main(int argc, char* argv[])
         if (shutting_down) {
             break;
         }
+
+        SDL_Delay(750);
     }
 
     mprintf("Closing Client...\n");

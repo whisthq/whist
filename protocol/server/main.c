@@ -26,7 +26,7 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 3;
+volatile static int gop_size = 20;
 volatile static DesktopContext desktopContext = { 0 };
 
 volatile int server_width = DEFAULT_WIDTH;
@@ -491,11 +491,6 @@ int main(int argc, char* argv[])
                         last_mouse = fmsg;
                     }
                     status = ReplayUserInput(&fmsg, 1);
-                    POINT point1;
-                    POINT point2;
-                    GetCursorPos(&point1);
-                    GetPhysicalCursorPos(&point2);
-                    //mprintf("Cursor now at %ld x %ld, physically %ld x %ld\n", point1.x, point1.y, point2.x, point2.y);
                 }
                 else if (fmsg.type == MESSAGE_MBPS) {
                     max_mbps = fmsg.mbps;

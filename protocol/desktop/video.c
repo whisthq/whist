@@ -345,16 +345,13 @@ void updateVideo() {
     }
 
     if (!rendering) {
-        if (VideoData.max_id > VideoData.last_rendered_id + 15) {
-            VideoData.last_rendered_id = VideoData.max_id;
-        }
-
         int next_render_id = VideoData.last_rendered_id + 1;
 
         int index = next_render_id % RECV_FRAMES_BUFFER_SIZE;
 
         struct FrameData* ctx = &receiving_frames[index];
 
+        bool will_render = false;
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
                 mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
@@ -362,24 +359,40 @@ void updateVideo() {
                 renderContext = *ctx;
                 rendering = true;
 
+                will_render = true;
+
                 //mprintf("Status: %f\n", GetTimer(renderContext.client_frame_timer));
                 SDL_SemPost(VideoData.renderscreen_semaphore);
             }
-            else if ((GetTimer(ctx->last_packet_timer) > 12.0 / 1000.0 || ctx->num_times_nacked > 0) && GetTimer(ctx->last_nacked_timer) > 2.0 / 1000.0 && ctx->num_times_nacked < 4) {
+            else if ((GetTimer(ctx->last_packet_timer) > 15.0 / 1000.0) && GetTimer(ctx->last_nacked_timer) > 2.0 / 1000.0 && ctx->num_times_nacked < 4) {
+                if (ctx->num_times_nacked == -1) {
+                    ctx->num_times_nacked = 0;
+                    ctx->last_nacked_id = -1;
+                }
+                int num_nacked = 0;
                 //mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
-                for (int i = 0; i < ctx->num_packets; i++) {
+                for (int i = ctx->last_nacked_id + 1; i < ctx->num_packets && num_nacked < 3; i++) {
                     //mprintf("NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
                     if (!ctx->received_indicies[i]) {
-                        mprintf("************NACKING PACKET %d %d, alive for %f MS\n", ctx->id, i, GetTimer(ctx->frame_creation_timer));
-                       nack(ctx->id, i);
+                        num_nacked++;
+                        mprintf("************NACKING PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
+                        nack(ctx->id, i);
                     }
+                    ctx->last_nacked_id = i;
                 }
-                ctx->num_times_nacked++;
+                if (ctx->last_nacked_id == ctx->num_packets - 1) {
+                    ctx->last_nacked_id = -1;
+                    ctx->num_times_nacked++;
+                }
                 StartTimer(&ctx->last_nacked_timer);
             }
         }
-        else {
-
+        
+        if (!will_render && VideoData.max_id > VideoData.last_rendered_id + 4) {
+            VideoData.last_rendered_id++;
+            mprintf("Way too far behind! Skipping ahead to %d!\n", VideoData.last_rendered_id);
+            //SDL_Delay(15000);
+            //exit(-1);
         }
     }
 }
@@ -409,12 +422,13 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         ctx->packets_received = 0;
         ctx->num_packets = packet->num_indices;
         ctx->last_nacked_id = -1;
-        ctx->num_times_nacked = 0;
+        ctx->num_times_nacked = -1;
         ctx->rendered = false;
         ctx->frame_size = 0;
         memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
         StartTimer(&ctx->last_nacked_timer);
         StartTimer(&ctx->frame_creation_timer);
+        //mprintf("Initialized packet %d!\n", ctx->id);
     }
     else {
        // mprintf("Already Started: %d/%d - %f\n", ctx->packets_received + 1, ctx->num_packets, GetTimer(ctx->client_frame_timer));
@@ -434,12 +448,13 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
 
     ctx->received_indicies[packet->index] = true;
     if (packet->index > 0) {
-        for (int i = max(0, ctx->last_nacked_id + 1); i < packet->index; i++) {
+        int to_index = packet->index - 3;
+        for (int i = max(0, ctx->last_nacked_id + 1); i <= to_index; i++) {
             if (!ctx->received_indicies[i]) {
                 nack(packet->id, i);
             }
         }
-        ctx->last_nacked_id = max(ctx->last_nacked_id, packet->index - 1);
+        ctx->last_nacked_id = max(ctx->last_nacked_id, to_index);
     }
     ctx->packets_received++;
 
@@ -455,7 +470,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     // If we received all of the packets
     if (ctx->packets_received == ctx->num_packets) {
         VideoData.frames_received++;
-        mprintf("Received Video Packet ID %d (Packets: %d) (Size: %d)\n", ctx->id, ctx->num_packets, ctx->frame_size);
+        //mprintf("Received Video Packet ID %d (Packets: %d) (Size: %d)\n", ctx->id, ctx->num_packets, ctx->frame_size);
         /*
         if (ctx->id == VideoData.last_rendered_id + 1) {
             VideoData.max_id = ctx->id;
