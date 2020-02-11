@@ -360,6 +360,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     // Check if we have to initialize the frame buffer
     if (packet->id < ctx->id) {
         mprintf("Old packet received!\n");
+        return -1;
     }
     else if (packet->id > ctx->id) {
         if (rendering && renderContext.id == ctx->id) {
