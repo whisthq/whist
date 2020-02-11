@@ -428,18 +428,19 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         return 0;
     }
 
-    //mprintf("Received ID %d Index %d at time since creation %f\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer)); 
+    mprintf("Received ID %d Index %d at time since creation %f\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer)); 
 
     VideoData.max_id = max(VideoData.max_id, ctx->id);
 
     ctx->received_indicies[packet->index] = true;
     if (packet->index > 0) {
-        for (int i = max(0, ctx->last_nacked_id + 1); i < packet->index; i++) {
+        int to_index = packet->index - 3;
+        for (int i = max(0, ctx->last_nacked_id + 1); i <= to_index; i++) {
             if (!ctx->received_indicies[i]) {
                 nack(packet->id, i);
             }
         }
-        ctx->last_nacked_id = max(ctx->last_nacked_id, packet->index - 1);
+        ctx->last_nacked_id = max(ctx->last_nacked_id, to_index);
     }
     ctx->packets_received++;
 
