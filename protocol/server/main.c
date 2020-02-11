@@ -26,7 +26,7 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 50;
+volatile static int gop_size = 3;
 volatile static DesktopContext desktopContext = { 0 };
 
 volatile int server_width = DEFAULT_WIDTH;
@@ -146,7 +146,6 @@ static int32_t SendVideo(void* opaque) {
     mprintf("Desktop initialized\n");
 
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
-    int id = 1;
 
     // Init DXGI Device
     struct CaptureDevice* device = NULL;
@@ -188,6 +187,8 @@ static int32_t SendVideo(void* opaque) {
     clock world_timer;
     StartTimer(&world_timer);
 
+    int id = 1;
+    int frames_since_first_iframe = 0;
     update_device = true;
     while (connected) {
         if (!defaultFound) {
@@ -234,6 +235,7 @@ static int32_t SendVideo(void* opaque) {
             }
             encoder = create_video_encoder(device->width, device->height, device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
             update_encoder = false;
+            frames_since_first_iframe = 0;
         }
 
         int accumulated_frames = CaptureScreen(device);
@@ -302,16 +304,17 @@ static int32_t SendVideo(void* opaque) {
                     mprintf("Frame too large: %d\n", frame_size);
                 }
                 else {
-                    FractalCursorImage image = {0};
+                    FractalCursorImage image = { 0 };
                     image = GetCurrentCursor(types);
                     Frame* frame = buf;
                     frame->width = device->width;
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
                     frame->cursor = image;
+                    frame->is_iframe = frames_since_first_iframe % gop_size == 0;
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
-                    
-                    //mprintf("Sent video packet %d (Size: %d)\n", id, encoder->packet.size);
+
+                    mprintf("Sent video packet %d (Size: %d)\n", id, encoder->packet.size);
                     if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
@@ -492,7 +495,7 @@ int main(int argc, char* argv[])
                     POINT point2;
                     GetCursorPos(&point1);
                     GetPhysicalCursorPos(&point2);
-                    mprintf("Cursor now at %ld x %ld, physically %ld x %ld\n", point1.x, point1.y, point2.x, point2.y);
+                    //mprintf("Cursor now at %ld x %ld, physically %ld x %ld\n", point1.x, point1.y, point2.x, point2.y);
                 }
                 else if (fmsg.type == MESSAGE_MBPS) {
                     max_mbps = fmsg.mbps;

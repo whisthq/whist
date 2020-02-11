@@ -717,10 +717,11 @@ struct RTPPacket {
 #define MAX_PACKET_SIZE (sizeof(struct RTPPacket))
 
 typedef struct Frame {
+	FractalCursorImage cursor;
 	int width;
 	int height;
 	int size;
-	FractalCursorImage cursor;
+	bool is_iframe;
 	unsigned char compressed_frame[];
 } Frame;
 
