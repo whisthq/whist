@@ -19,6 +19,7 @@ extern volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 
 extern volatile int32_t positionX;
 extern volatile int32_t positionY;
+extern volatile SDL_Cursor* cursor = NULL;
 
 // START VIDEO VARIABLES
 
@@ -180,10 +181,11 @@ int32_t RenderScreen(void* opaque) {
 
 
         if(frame->cursor.cursor_id != last_cursor) {
-            HCURSOR new_cursor = LoadCursor(NULL, frame->cursor.cursor_type);
-
-            SetSystemCursor(new_cursor, last_cursor);
-            last_cursor = frame->cursor.cursor_id;
+            if(cursor) {
+                SDL_FreeCursor(cursor);
+            }
+            cursor = SDL_CreateSystemCursor(frame->cursor.cursor_id);
+            SDL_SetCursor(cursor);
         }
 
         if(frame->cursor.cursor_state != cursor_state) {
