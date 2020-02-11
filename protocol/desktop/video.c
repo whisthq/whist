@@ -343,6 +343,10 @@ void updateVideo() {
     }
 
     if (!rendering) {
+        if (VideoData.max_id > VideoData.last_rendered_id + 15) {
+            VideoData.last_rendered_id = VideoData.max_id;
+        }
+
         int next_render_id = VideoData.last_rendered_id + 1;
 
         int index = next_render_id % RECV_FRAMES_BUFFER_SIZE;

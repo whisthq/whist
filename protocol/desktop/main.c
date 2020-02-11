@@ -340,7 +340,7 @@ int main(int argc, char* argv[])
 
         StartTimer((clock*)&latency_timer);
         ping_id = 1;
-        ping_failures = -2;
+        ping_failures = -5;
 
         while (connected && !shutting_down)
         {
