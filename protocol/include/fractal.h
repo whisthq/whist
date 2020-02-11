@@ -560,7 +560,7 @@ typedef struct FractalCursorTypes {
 
 typedef struct FractalCursorImage {
   LPCSTR cursor_type;
-  FractalCursorID cursor_id;
+  SDL_SystemCursor cursor_id;
   FractalCursorState cursor_state;
 } FractalCursorImage;
 

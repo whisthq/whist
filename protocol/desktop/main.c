@@ -45,9 +45,6 @@ volatile int ping_failures;
 volatile int output_width;
 volatile int output_height;
 
-volatile int32_t positionX;
-volatile int32_t positionY;
-
 // Function Declarations
 
 SDL_mutex* send_packet_mutex;
@@ -340,7 +337,7 @@ int main(int argc, char* argv[])
 
         StartTimer((clock*)&latency_timer);
         ping_id = 1;
-        ping_failures = -2;
+        ping_failures = -5;
 
         while (connected && !shutting_down)
         {
@@ -402,8 +399,6 @@ int main(int argc, char* argv[])
                         fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
                         fmsg.mouseMotion.x        = fmsg.mouseMotion.relative ? msg.motion.xrel : msg.motion.x * 1000000 / output_width;
                         fmsg.mouseMotion.y        = fmsg.mouseMotion.relative ? msg.motion.yrel : msg.motion.y * 1000000 / output_height;
-                        positionX                 = msg.motion.x * server_width / output_width;
-                        positionY                 = msg.motion.y * server_height / output_height;
                     }
                     break;
                 case SDL_MOUSEBUTTONDOWN:

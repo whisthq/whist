@@ -316,8 +316,8 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 				Event[i].mi.dy = fmsg[i].mouseMotion.y * 0.9;
 				Event[i].mi.dwFlags = MOUSEEVENTF_MOVE;
 			} else {
-				Event[i].mi.dx = fmsg[i].mouseMotion.x * (double)65536 / 1000000;
-				Event[i].mi.dy = fmsg[i].mouseMotion.y * (double)65536 / 1000000;
+				Event[i].mi.dx = fmsg[i].mouseMotion.x * (double) 65536 / 1000000;
+				Event[i].mi.dy = fmsg[i].mouseMotion.y * (double) 65536 / 1000000;
 				Event[i].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
 			}
 			break;
@@ -371,31 +371,31 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 
 FractalStatus EnterWinString(enum FractalKeycode keycodes[100], int len) {
   // get screen width and height for mouse cursor
-  int i, index = 0;
-  enum FractalKeycode keycode;
-  INPUT Event[200];
+	int i, index = 0;
+	enum FractalKeycode keycode;
+	INPUT Event[200];
 
-  for(i = 0; i < len; i++) {
-	keycode = keycodes[i];
-	Event[index].ki.wVk = windows_keycodes[keycode];
-	Event[index].type = INPUT_KEYBOARD;
-	Event[index].ki.wScan = 0;
-	Event[index].ki.time = 0; // system supplies timestamp
-	Event[index].ki.dwFlags = 0;
+	for(i = 0; i < len; i++) {
+		keycode = keycodes[i];
+		Event[index].ki.wVk = windows_keycodes[keycode];
+		Event[index].type = INPUT_KEYBOARD;
+		Event[index].ki.wScan = 0;
+		Event[index].ki.time = 0; // system supplies timestamp
+		Event[index].ki.dwFlags = 0;
 
-	index++;
+		index++;
 
-	Event[index].ki.wVk = windows_keycodes[keycode];
-	Event[index].type = INPUT_KEYBOARD;
-	Event[index].ki.wScan = 0;
-	Event[index].ki.time = 0; // system supplies timestamp
-	Event[index].ki.dwFlags = KEYEVENTF_KEYUP;
+		Event[index].ki.wVk = windows_keycodes[keycode];
+		Event[index].type = INPUT_KEYBOARD;
+		Event[index].ki.wScan = 0;
+		Event[index].ki.time = 0; // system supplies timestamp
+		Event[index].ki.dwFlags = KEYEVENTF_KEYUP;
 
-	index++;
-  }
-  // send FMSG mapped to Windows event to Windows and return
-  SendInput(index, Event, sizeof(INPUT)); // 1 structure to send
- 
+		index++;
+	}
+	// send FMSG mapped to Windows event to Windows and return
+	SendInput(index, Event, sizeof(INPUT)); 
+
 	return FRACTAL_OK;
 }
 
@@ -420,62 +420,51 @@ void LoadCursors(FractalCursorTypes *types) {
 
 FractalCursorImage GetCursorImage(FractalCursorTypes *types, PCURSORINFO pci) {
 	HCURSOR cursor = pci->hCursor;
-
 	FractalCursorImage image = {0};
-	if(cursor == types->CursorAppStarting) {
-			image.cursor_type = IDC_APPSTARTING;
-			image.cursor_id   = CURSOR_ID_APPSTARTING;
-	} else if(cursor == types->CursorArrow) {
-			image.cursor_type = IDC_ARROW;
-			image.cursor_id   = CURSOR_ID_NORMAL;
+
+	if(cursor == types->CursorArrow) {
+		image.cursor_type = IDC_ARROW;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_ARROW;
 	} else if(cursor == types->CursorCross) {
-			image.cursor_type = IDC_CROSS;
-			image.cursor_id   = CURSOR_ID_CROSS;
+		image.cursor_type = IDC_CROSS;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_CROSSHAIR;
 	} else if(cursor == types->CursorHand) {
-			image.cursor_type = IDC_HAND;
-			image.cursor_id   = CURSOR_ID_HAND;
-	} else if(cursor == types->CursorHelp) {
-			image.cursor_type = IDC_HELP;
-			image.cursor_id   = CURSOR_ID_HELP;
+		image.cursor_type = IDC_HAND;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_HAND;
 	} else if(cursor == types->CursorIBeam) {
-			image.cursor_type = IDC_IBEAM;
-			image.cursor_id   = CURSOR_ID_IBEAM;
-	} else if(cursor == types->CursorIcon) {
-			image.cursor_type = IDC_ARROW;
-			image.cursor_id   = CURSOR_ID_NORMAL;
+		image.cursor_type = IDC_IBEAM;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_IBEAM;
 	} else if(cursor == types->CursorNo) {
-			image.cursor_type = IDC_NO;
-			image.cursor_id   = CURSOR_ID_NO;
-	} else if(cursor == types->CursorSize) {
-			image.cursor_type = IDC_ARROW;
-			image.cursor_id   = CURSOR_ID_NORMAL;
+		image.cursor_type = IDC_NO;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_NO;
 	} else if(cursor == types->CursorSizeAll) {
-			image.cursor_type = IDC_SIZEALL;
-			image.cursor_id   = CURSOR_ID_SIZEALL;
+		image.cursor_type = IDC_SIZEALL;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_SIZEALL;
 	} else if(cursor == types->CursorSizeNESW) {
-			image.cursor_type = IDC_SIZENESW;
-			image.cursor_id   = CURSOR_ID_SIZENESW;
+		image.cursor_type = IDC_SIZENESW;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_SIZENESW;
 	} else if(cursor == types->CursorSizeNS) {
-			image.cursor_type = IDC_SIZENS;
-			image.cursor_id   = CURSOR_ID_SIZENS;
+		image.cursor_type = IDC_SIZENS;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_SIZENS;
 	} else if(cursor == types->CursorSizeNWSE) {
-			image.cursor_type = IDC_SIZENWSE;
-			image.cursor_id   = CURSOR_ID_SIZENWSE;
+		image.cursor_type = IDC_SIZENWSE;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_SIZENWSE;
 	} else if(cursor == types->CursorSizeWE) {
-			image.cursor_type = IDC_SIZEWE;
-			image.cursor_id   = CURSOR_ID_SIZEWE;
-	} else if(cursor == types->CursorUpArrow) {
-			image.cursor_type = IDC_ARROW;
-			image.cursor_id   = CURSOR_ID_NORMAL;
+		image.cursor_type = IDC_SIZEWE;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_SIZEWE;
 	} else if(cursor == types->CursorWait) {
-			image.cursor_type = IDC_WAIT;
-			image.cursor_id   = CURSOR_ID_WAIT;
+		image.cursor_type = IDC_WAIT;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_WAITARROW;
+	} else {
+		image.cursor_type = IDC_ARROW;
+		image.cursor_id   = SDL_SYSTEM_CURSOR_ARROW;
 	}
+
 	return image;
 }
 
 FractalCursorImage GetCurrentCursor(FractalCursorTypes *types) {
-    PCURSORINFO pci = (PCURSORINFO)malloc(sizeof(CURSORINFO));
+    CURSORINFO *pci = (CURSORINFO *) malloc(sizeof(CURSORINFO));
     pci->cbSize = sizeof(CURSORINFO);
     GetCursorInfo(pci);
 
