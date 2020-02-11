@@ -443,6 +443,8 @@ int main(int argc, char* argv[])
         if (shutting_down) {
             break;
         }
+
+        SDL_Delay(750);
     }
 
     mprintf("Closing Client...\n");
