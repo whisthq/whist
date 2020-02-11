@@ -50,7 +50,7 @@ typedef struct SDLVideoContext {
 SDLVideoContext videoContext;
 
 typedef struct FrameData {
-    char* prev_frame;
+    byte* frame_buffer;
     int frame_size;
     int id;
     int packets_received;
@@ -150,7 +150,7 @@ int32_t RenderScreen(void* opaque) {
         //mprintf("Rendering ID %d\n", renderContext.id);
 
         // Cast to Frame* because this variable is not volatile in this section
-        Frame* frame = (Frame*)renderContext.prev_frame;
+        Frame* frame = (Frame*)renderContext.frame_buffer;
 
         if (sizeof(Frame) + frame->size != renderContext.frame_size) {
             mprintf("Incorrect Frame Size! %d instead of %d\n", sizeof(Frame) + frame->size, renderContext.frame_size);
@@ -211,7 +211,7 @@ int32_t RenderScreen(void* opaque) {
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
         SDL_RenderCopy(videoContext.renderer, videoContext.texture, NULL, NULL);
         SDL_RenderPresent(videoContext.renderer);
-        mprintf("Rendering %d (Age %f)\n", renderContext.id, GetTimer(renderContext.frame_creation_timer));
+        //mprintf("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size, GetTimer(renderContext.frame_creation_timer));
 
         VideoData.last_rendered_id = renderContext.id;
         rendering = false;
@@ -354,7 +354,7 @@ void updateVideo() {
         bool will_render = false;
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
-                mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
+                //mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
 
                 renderContext = *ctx;
                 rendering = true;
@@ -364,7 +364,7 @@ void updateVideo() {
                 //mprintf("Status: %f\n", GetTimer(renderContext.client_frame_timer));
                 SDL_SemPost(VideoData.renderscreen_semaphore);
             }
-            else if ((GetTimer(ctx->last_packet_timer) > 15.0 / 1000.0) && GetTimer(ctx->last_nacked_timer) > 2.0 / 1000.0 && ctx->num_times_nacked < 4) {
+            else if ((GetTimer(ctx->last_packet_timer) > 15.0 / 1000.0) && GetTimer(ctx->last_nacked_timer) > 1.0 / 1000.0 && ctx->num_times_nacked < 1) {
                 if (ctx->num_times_nacked == -1) {
                     ctx->num_times_nacked = 0;
                     ctx->last_nacked_id = -1;
@@ -372,7 +372,6 @@ void updateVideo() {
                 int num_nacked = 0;
                 //mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
                 for (int i = ctx->last_nacked_id + 1; i < ctx->num_packets && num_nacked < 3; i++) {
-                    //mprintf("NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
                     if (!ctx->received_indicies[i]) {
                         num_nacked++;
                         mprintf("************NACKING PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
@@ -418,7 +417,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
             return 0;
         }
         ctx->id = packet->id;
-        ctx->prev_frame = &frame_bufs[index];
+        ctx->frame_buffer = &frame_bufs[index];
         ctx->packets_received = 0;
         ctx->num_packets = packet->num_indices;
         ctx->last_nacked_id = -1;
@@ -464,12 +463,18 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         mprintf("Packet total payload is too large for buffer!\n");
         return -1;
     }
-    memcpy(ctx->prev_frame + place, packet->data, packet->payload_size);
+    memcpy(ctx->frame_buffer + place, packet->data, packet->payload_size);
     ctx->frame_size += packet->payload_size;
 
     // If we received all of the packets
     if (ctx->packets_received == ctx->num_packets) {
         VideoData.frames_received++;
+
+        // If it's an I-frame, then just skip right to it, if the id is ahead of the next to render id
+        if (((Frame*)ctx->frame_buffer)->is_iframe && ctx->id > VideoData.last_rendered_id + 1) {
+            mprintf("Skipping to i-frame %d!\n", ctx->id);
+            VideoData.last_rendered_id = ctx->id - 1;
+        }
         //mprintf("Received Video Packet ID %d (Packets: %d) (Size: %d)\n", ctx->id, ctx->num_packets, ctx->frame_size);
         /*
         if (ctx->id == VideoData.last_rendered_id + 1) {
