@@ -4,6 +4,8 @@
 
 // Global Variables
 extern volatile SDL_Window *window;
+extern volatile SDL_Cursor* cursor = NULL;
+
 extern volatile int server_width;
 extern volatile int server_height;
 // Keeping track of max mbps
@@ -16,10 +18,6 @@ extern volatile int output_height;
 
 extern volatile FractalCursorID last_cursor = SDL_SYSTEM_CURSOR_ARROW;
 extern volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
-
-extern volatile int32_t positionX;
-extern volatile int32_t positionY;
-extern volatile SDL_Cursor* cursor = NULL;
 
 // START VIDEO VARIABLES
 
