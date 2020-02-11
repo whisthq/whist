@@ -1,5 +1,7 @@
 #include "audio.h"
 
+extern int audio_frequency;
+
 // Hold information about audio data as the packets come in
 typedef struct audio_packet {
     int id;
@@ -31,6 +33,8 @@ int last_played_id = -1;
 
 bool triggered = false;
 
+int decoder_frequency = 48000;
+
 void initAudio() {
     StartTimer(&nack_timer);
 
@@ -42,7 +46,7 @@ void initAudio() {
     SDL_zero(wantedSpec);
     SDL_zero(audioSpec);
     wantedSpec.channels  = (Uint8)AudioData.audio_decoder->context->channels;
-    wantedSpec.freq      = 48000;
+    wantedSpec.freq      = decoder_frequency;
     mprintf("Freq: %d\n", wantedSpec.freq);
     wantedSpec.format    = AUDIO_F32SYS;
     wantedSpec.silence   = 0;
@@ -69,6 +73,12 @@ void destroyAudio() {
 }
 
 void updateAudio() {
+    if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
+        decoder_frequency = audio_frequency;
+        destroyAudio();
+        initAudio();
+    }
+
     bool still_more_audio_packets = true;
 
     // Catch up to most recent ID if nothing has played yet

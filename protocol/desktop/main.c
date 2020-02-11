@@ -26,6 +26,8 @@
 #include "video.h"
 #include "audio.h"
 
+int audio_frequency = -1;
+
 // Width and Height
 volatile int server_width = -1;
 volatile int server_height = -1;
@@ -223,6 +225,10 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
         else {
             mprintf("Old Ping ID found.\n");
         }
+        break;
+    case MESSAGE_AUDIO_FREQUENCY:
+        mprintf("Changing audio frequency to %d\n", fmsg.frequency);
+        audio_frequency = fmsg.frequency;
         break;
     default:
         mprintf("Unknown Server Message Received\n");
