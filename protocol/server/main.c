@@ -137,6 +137,8 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
 
 static int32_t SendVideo(void* opaque) {
+    SDL_Delay(150);
+
     mprintf("Initializing desktop...\n");
 
     char* desktop_name = InitDesktop();
@@ -205,7 +207,9 @@ static int32_t SendVideo(void* opaque) {
                 defaultFound = true;
                 desktopContext.ready = true;
             }
-
+            else {
+                mprintf("Default not yet found\n");
+            }
         }
 
         if (update_device) {
@@ -419,8 +423,6 @@ int main(int argc, char* argv[])
         max_mbps = START_MAX_MBPS;
 
         packet_mutex = SDL_CreateMutex();
-
-        SDL_Delay(250);
 
         SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
         SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
