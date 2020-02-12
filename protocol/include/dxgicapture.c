@@ -249,8 +249,11 @@ int CaptureScreen(struct CaptureDevice *device) {
     }
     else if (hr == DXGI_ERROR_ACCESS_LOST) {
         mprintf("CaptureScreen returned DXGI_ERROR_ACCESS_LOST! Recreating device\n");
-        DestroyCaptureDevice();
-        CreateCaptureDevice(device);
+        SDL_Delay(1);
+        int width = device->width;
+        int height = device->height;
+        DestroyCaptureDevice(device);
+        CreateCaptureDevice(device, width, height);
         return 0;
     }
     else {
