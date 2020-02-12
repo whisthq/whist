@@ -219,11 +219,6 @@ int CaptureScreen(struct CaptureDevice *device) {
   struct ScreenshotContainer* screenshot = &device->screenshot;
 
   hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
-  if (FAILED(hr)) {
-    mprintf("Failed to Release Frame! 0x%X %d\n", hr, GetLastError());
-    return -1;
-  }
- 
 
   if (screenshot->final_texture != NULL) {
      screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
@@ -268,20 +263,6 @@ int CaptureScreen(struct CaptureDevice *device) {
 
     // If MapDesktopSurface doesn't work, then do it manually
     if(hr == DXGI_ERROR_UNSUPPORTED) {
-        /*
-        mprintf("1\n");
-        screenshot->staging_texture = CreateTexture(device);
-        mprintf("2\n");
-        device->D3D11context->lpVtbl->CopyResource(device->D3D11context, screenshot->staging_texture, screenshot->final_texture);
-        mprintf("3\n");
-        hr = device->D3D11context->lpVtbl->Map(device->D3D11context, screenshot->staging_texture, 0, D3D11_MAP_READ, 0, &screenshot->mapped_subresource);
-        mprintf("4\n");
-        if (FAILED(hr)) {
-            mprintf("d3d context map Failed! 0x%X %d\n", hr, GetLastError());
-            return -1;
-        }
-        screenshot->frame_data = screenshot->mapped_subresource.pData;
-        */
         screenshot->staging_texture = CreateTexture(device);
         if (screenshot->staging_texture == NULL) {
             // Error already printed inside of CreateTexture
