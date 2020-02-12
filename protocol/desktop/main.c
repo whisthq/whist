@@ -58,25 +58,24 @@ struct SocketContext PacketSendContext;
 
 volatile bool connected = true;
 
+// UPDATER CODE - HANDLES ALL PERIODIC UPDATES
+struct UpdateData {
+    bool needs_dimension_update;
+    bool tried_to_update_dimension;
+    bool has_initialized_updated;
+} UpdateData;
+
+void initUpdate() {
+    UpdateData.needs_dimension_update = true;
+    UpdateData.tried_to_update_dimension = false;
+
+    StartTimer((clock*)&latency_timer);
+    ping_id = 1;
+    ping_failures = -2;
+}
+
 void update() {
     FractalClientMessage fmsg;
-
-    struct UpdateData {
-        bool needs_dimension_update;
-        bool tried_to_update_dimension;
-        bool has_initialized_updated;
-    } static UpdateData;
-
-    if (!UpdateData.has_initialized_updated) {
-
-        UpdateData.needs_dimension_update = true;
-        UpdateData.tried_to_update_dimension = false;
-
-        StartTimer((clock*)&latency_timer);
-        ping_id = 1;
-        ping_failures = -5;
-        UpdateData.has_initialized_updated = true;
-    }
 
     // Start update checks
     if (UpdateData.needs_dimension_update && !UpdateData.tried_to_update_dimension && (server_width != output_width || server_height != output_height)) {
@@ -129,6 +128,7 @@ void update() {
     }
     // End Ping
 }
+// END UPDATER CODE
 
 int SendPacket(void* data, int len) {
     clock send_timer;
@@ -192,6 +192,8 @@ static int32_t ReceivePackets(void* opaque) {
     /****
     End Timers
     ****/
+
+    initUpdate();
 
     for (int i = 0; run_receive_packets; i++) {
         update();
