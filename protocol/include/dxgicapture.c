@@ -152,9 +152,21 @@ int CreateCaptureDevice(struct CaptureDevice **pdevice, int width, int height) {
       ChangeDisplaySettings(&dm, 0);
   }
 
-  hardware->output->lpVtbl->QueryInterface(hardware->output, &IID_IDXGIOutput1, (void**)&output1);
-  output1->lpVtbl->DuplicateOutput(output1, device->D3D11device, &device->duplication);
-  hardware->output->lpVtbl->GetDesc(hardware->output, &hardware->final_output_desc);
+  hr = hardware->output->lpVtbl->QueryInterface(hardware->output, &IID_IDXGIOutput1, (void**)&output1);
+  if (FAILED(hr)) {
+      mprintf("Failed to query interface of output: 0x%X %d\n", hr, GetLastError());
+      return -1;
+  }
+  hr = output1->lpVtbl->DuplicateOutput(output1, device->D3D11device, &device->duplication);
+  if (FAILED(hr)) {
+      mprintf("Failed to duplicate output: 0x%X %d\n", hr, GetLastError());
+      return -1;
+  }
+  hr = hardware->output->lpVtbl->GetDesc(hardware->output, &hardware->final_output_desc);
+  if (FAILED(hr)) {
+      mprintf("Failed to getdesc of output: 0x%X %d\n", hr, GetLastError());
+      return -1;
+  }
 
   device->width = hardware->final_output_desc.DesktopCoordinates.right;
   device->height = hardware->final_output_desc.DesktopCoordinates.bottom;
