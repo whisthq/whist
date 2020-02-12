@@ -27,28 +27,32 @@ void swap_decoder(void *ptr, int level, const char *fmt, va_list vargs)
   vprintf(fmt, vargs);
 }
 
-static enum AVPixelFormat get_format(AVCodecContext *ctx,
-                                        const enum AVPixelFormat *pix_fmts)
+static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type)
 {
-    const enum AVPixelFormat *p;
-    for (p = pix_fmts; *p != -1; p++) {
-      // for apple devices, we use videotoolbox, else we use QSV
-      #if defined(__APPLE__)
-        if (*p == AV_PIX_FMT_VIDEOTOOLBOX) {
-          mprintf("Videotoolbox found\n");
-          return *p;
-        }
-      // QSV for windows and linux
-      #else
-        if (*p == AV_PIX_FMT_QSV) {
-           //mprintf("QSV found\n");
-           return *p;
-        }
-      #endif
+    int err = 0;
+
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type,
+                                      NULL, NULL, 0)) < 0) {
+        mprintf(stderr, "Failed to create specified HW device.\n");
+        return err;
     }
-    mprintf("Failed to get HW surface format.\n");
+    ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+
+    return err;
+}
+
+static enum AVPixelFormat get_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts) {
+    const enum AVPixelFormat *p;
+
+    for (p = pix_fmts; *p != -1; p++) {
+        if (*p == hw_pix_fmt)
+            return *p;
+    }
+
+    mprintf(stderr, "Failed to get HW surface format.\n");
     return AV_PIX_FMT_NONE;
 }
+
 
 void set_decoder(bool hardware) {
   if(hardware) {
@@ -88,6 +92,9 @@ video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width,
     mprintf("Using QSV decoder\n");
     decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
     decoder->context = avcodec_alloc_context3(decoder->codec);
+
+    hw_pix_fmt = AV_PIX_FMT_QSV;
+
     decoder->context->get_format  = get_format;
 
     av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_QSV, "auto", NULL, 0);
@@ -160,7 +167,7 @@ video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width,
         return decoder;
       }
 
-        decoder->context->get_format = get_hw_format;
+        decoder->context->get_format = get_format;
         av_opt_set(decoder->context->priv_data, "async_depth", "1", 0);
 
       if (hw_decoder_init(decoder->context, decoder->device_type) < 0) {

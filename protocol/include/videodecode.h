@@ -22,6 +22,7 @@ typedef struct {
 	AVFrame *hw_frame;
 	AVPacket packet;
 	DecodeType type;
+	enum AVHWDeviceType device_type;
 } video_decoder_t;
 
 /// @brief decides which decoder to use
