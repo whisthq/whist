@@ -158,7 +158,7 @@ static int32_t SendVideo(void* opaque) {
 
     // Init DXGI Device
     struct CaptureDevice rdevice;
-    struct CaptureDevice* device = &rdevice;
+    struct CaptureDevice* device = NULL;
 
     struct FractalCursorTypes *types = (struct FractalCursorTypes *) malloc(sizeof(struct FractalCursorTypes));
     memset(types, 0, sizeof(struct FractalCursorTypes));
@@ -208,12 +208,7 @@ static int32_t SendVideo(void* opaque) {
                 mprintf("Default found in capture loop\n");
                 desktopContext = OpenNewDesktop("default", true, true);
 
-                if (device) {
-                    DestroyCaptureDevice(device);
-                    device = NULL;
-                }
-
-                CreateCaptureDevice(&device, server_width, server_height);
+                update_device = true;
 
                 defaultFound = true;
                 desktopContext.ready = true;
@@ -229,9 +224,11 @@ static int32_t SendVideo(void* opaque) {
                 device = NULL;
             }
 
-            int result = CreateCaptureDevice(&device, server_width, server_height);
+            device = &rdevice;
+            int result = CreateCaptureDevice(device, server_width, server_height);
             if (result < 0) {
                 mprintf("Failed to create capture device\n");
+                device = NULL;
                 connected = false;
             }
 

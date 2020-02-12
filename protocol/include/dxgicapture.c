@@ -330,7 +330,7 @@ void DestroyCaptureDevice(struct CaptureDevice* device) {
 
     hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
-    ReleaseScreenshot(screenshot);
+    ReleaseScreenshot(&device->screenshot);
 
     if (device->duplication) {
         device->duplication->lpVtbl->Release(device->duplication);
