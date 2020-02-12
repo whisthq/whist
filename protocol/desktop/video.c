@@ -159,7 +159,7 @@ int32_t RenderScreen(void* opaque) {
         }
 
         if (frame->width != server_width || frame->height != server_height) {
-            mprintf("Updating server width and height! From %dx%d to %dx%d\n", server_width, server_height, frame->width, frame->height);
+            mprintf("Updating client rendering to match server's width and height! From %dx%d to %dx%d\n", server_width, server_height, frame->width, frame->height);
             updateWidthAndHeight(frame->width, frame->height);
         }
 

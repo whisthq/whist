@@ -56,8 +56,84 @@ static int32_t ReceiveMessage(struct RTPPacket* packet);
 
 struct SocketContext PacketSendContext;
 
+volatile bool connected = true;
+
+void update() {
+    FractalClientMessage fmsg;
+
+    struct UpdateData {
+        bool needs_dimension_update;
+        bool tried_to_update_dimension;
+        bool has_initialized_updated;
+    } static UpdateData;
+
+    if (!UpdateData.has_initialized_updated) {
+
+        UpdateData.needs_dimension_update = true;
+        UpdateData.tried_to_update_dimension = false;
+
+        StartTimer((clock*)&latency_timer);
+        ping_id = 1;
+        ping_failures = -5;
+        UpdateData.has_initialized_updated = true;
+    }
+
+    // Start update checks
+    if (UpdateData.needs_dimension_update && !UpdateData.tried_to_update_dimension && (server_width != output_width || server_height != output_height)) {
+        mprintf("Asking for server dimension to be %dx%d\n", output_width, output_height);
+        memset(&fmsg, 0, sizeof(fmsg));
+        fmsg.type = MESSAGE_DIMENSIONS;
+        fmsg.dimensions.width = output_width;
+        fmsg.dimensions.height = output_height;
+        SendPacket(&fmsg, sizeof(fmsg));
+        UpdateData.tried_to_update_dimension = true;
+    }
+
+    if (update_mbps) {
+        mprintf("Asking for server MBPS to be %f\n", max_mbps);
+        update_mbps = false;
+        memset(&fmsg, 0, sizeof(fmsg));
+        fmsg.type = MESSAGE_MBPS;
+        fmsg.mbps = max_mbps;
+        SendPacket(&fmsg, sizeof(fmsg));
+    }
+    // End update checks
+
+    // Start Ping
+    if (GetTimer(latency_timer) > 1.0) {
+        mprintf("Whoah, ping timer is way too old\n");
+    }
+
+    if (is_timing_latency && GetTimer(latency_timer) > 0.5) {
+        mprintf("Ping received no response: %d\n", ping_id);
+        is_timing_latency = false;
+        ping_failures++;
+        if (ping_failures == 3) {
+            mprintf("Server disconnected: 3 consecutive ping failures.\n");
+            connected = false;
+        }
+    }
+
+    if (!is_timing_latency && GetTimer(latency_timer) > 0.5) {
+        memset(&fmsg, 0, sizeof(fmsg));
+        ping_id++;
+        fmsg.type = MESSAGE_PING;
+        fmsg.ping_id = ping_id;
+        is_timing_latency = true;
+
+        StartTimer((clock*)&latency_timer);
+
+        mprintf("Ping! %d\n", ping_id);
+        SendPacket(&fmsg, sizeof(fmsg));
+        SendPacket(&fmsg, sizeof(fmsg));
+    }
+    // End Ping
+}
 
 int SendPacket(void* data, int len) {
+    clock send_timer;
+    StartTimer(&send_timer);
+
     if (len > MAX_PACKET_SIZE) {
         mprintf("Packet too large!\n");
         return -1;
@@ -71,6 +147,10 @@ int SendPacket(void* data, int len) {
         failed = true;
     }
     SDL_UnlockMutex(send_packet_mutex);
+
+    if (GetTimer(send_timer) > 3.0 / 1000.0) {
+        mprintf("WHOAH!!!!!!!!!!!!!!!!!!!!!! SendPacket took too long! %f\n", GetTimer(send_timer));
+    }
 
     return failed ? -1 : 0;
 }
@@ -114,6 +194,8 @@ static int32_t ReceivePackets(void* opaque) {
     ****/
 
     for (int i = 0; run_receive_packets; i++) {
+        update();
+
         //mprintf("Update\n");
         // Call as often as possible
         if (GetTimer(world_timer) > 5) {
@@ -337,64 +419,12 @@ int main(int argc, char* argv[])
         SDL_Thread* receive_packets_thread;
         receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
-        bool needs_dimension_update = true;
-        bool tried_to_update_dimension = false;
-        clock last_dimension_update;
-        StartTimer(&last_dimension_update);
-
         bool shutting_down = false;
-        bool connected = true;
-
-        StartTimer((clock*)&latency_timer);
-        ping_id = 1;
-        ping_failures = -5;
 
         while (connected && !shutting_down)
         {
-            if (needs_dimension_update && !tried_to_update_dimension && (server_width != output_width || server_height != output_height)) {
-                memset(&fmsg, 0, sizeof(fmsg));
-                fmsg.type = MESSAGE_DIMENSIONS;
-                fmsg.dimensions.width = output_width;
-                fmsg.dimensions.height = output_height;
-                SendPacket(&fmsg, sizeof(fmsg));
-                tried_to_update_dimension = true;
-            }
-
-            if (update_mbps) {
-                //mprintf("Updating MBPS: %f\n", max_mbps);
-                update_mbps = false;
-                memset(&fmsg, 0, sizeof(fmsg));
-                fmsg.type = MESSAGE_MBPS;
-                fmsg.mbps = max_mbps;
-                SendPacket(&fmsg, sizeof(fmsg));
-            }
-
-            if (is_timing_latency && GetTimer(latency_timer) > 0.5) {
-                mprintf("Ping received no response: %d\n", ping_id);
-                is_timing_latency = false;
-                ping_failures++;
-                if (ping_failures == 3) {
-                    mprintf("Server disconnected: 3 consecutive ping failures.\n");
-                    connected = false;
-                }
-            }
-
-            if (!is_timing_latency && GetTimer(latency_timer) > 0.5) {
-                memset(&fmsg, 0, sizeof(fmsg));
-                ping_id++;
-                fmsg.type = MESSAGE_PING;
-                fmsg.ping_id = ping_id;
-                is_timing_latency = true;
-
-                StartTimer((clock*)&latency_timer);
-
-                mprintf("Ping! %d\n", ping_id);
-                SendPacket(&fmsg, sizeof(fmsg));
-                SendPacket(&fmsg, sizeof(fmsg));
-            }
-
             memset(&fmsg, 0, sizeof(fmsg));
-            if (SDL_PollEvent(&msg)) {
+            if (SDL_WaitEvent(&msg)) {
                 switch (msg.type) {
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
@@ -428,10 +458,9 @@ int main(int argc, char* argv[])
                     shutting_down = true;
                     break;
                 }
+
                 if (fmsg.type != 0) {
                     SendPacket(&fmsg, sizeof(fmsg));
-                } else {
-                    SDL_Delay(1);
                 }
             }
         }
