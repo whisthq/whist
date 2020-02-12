@@ -218,7 +218,12 @@ int CaptureScreen(struct CaptureDevice *device) {
 
   struct ScreenshotContainer* screenshot = &device->screenshot;
 
-  device->duplication->lpVtbl->ReleaseFrame(device->duplication);
+  hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
+  if (FAILED(hr)) {
+    mprintf("Failed to Release Frame! 0x%X %d\n", hr, GetLastError());
+    return -1;
+  }
+ 
 
   if (screenshot->final_texture != NULL) {
      screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
