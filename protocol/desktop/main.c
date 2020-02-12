@@ -103,7 +103,7 @@ void update() {
         mprintf("Whoah, ping timer is way too old\n");
     }
 
-    if (is_timing_latency && GetTimer(latency_timer) > 0.5) {
+    if (is_timing_latency && GetTimer(latency_timer) > 0.6) {
         mprintf("Ping received no response: %d\n", ping_id);
         is_timing_latency = false;
         ping_failures++;
@@ -426,7 +426,7 @@ int main(int argc, char* argv[])
         while (connected && !shutting_down)
         {
             memset(&fmsg, 0, sizeof(fmsg));
-            if (SDL_WaitEvent(&msg)) {
+            if (SDL_PollEvent(&msg)) {
                 switch (msg.type) {
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
@@ -464,8 +464,13 @@ int main(int argc, char* argv[])
                 if (fmsg.type != 0) {
                     SendPacket(&fmsg, sizeof(fmsg));
                 }
+                else {
+                    SDL_Delay(1);
+                }
             }
         }
+
+        mprintf("Disconnecting...\n");
 
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
