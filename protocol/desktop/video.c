@@ -58,7 +58,7 @@ typedef struct FrameData {
     bool received_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
     bool rendered;
 
-    int last_nacked_id;
+    int last_nacked_index;
     int num_times_nacked;
     clock last_nacked_timer;
 
@@ -370,20 +370,20 @@ void updateVideo() {
             else if ((GetTimer(ctx->last_packet_timer) > 15.0 / 1000.0) && GetTimer(ctx->last_nacked_timer) > 1.0 / 1000.0 && ctx->num_times_nacked < 1) {
                 if (ctx->num_times_nacked == -1) {
                     ctx->num_times_nacked = 0;
-                    ctx->last_nacked_id = -1;
+                    ctx->last_nacked_index = -1;
                 }
                 int num_nacked = 0;
                 //mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
-                for (int i = ctx->last_nacked_id + 1; i < ctx->num_packets && num_nacked < 5; i++) {
+                for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 5; i++) {
                     if (!ctx->received_indicies[i]) {
                         num_nacked++;
                         mprintf("************NACKING PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
                         nack(ctx->id, i);
                     }
-                    ctx->last_nacked_id = i;
+                    ctx->last_nacked_index = i;
                 }
-                if (ctx->last_nacked_id == ctx->num_packets - 1) {
-                    ctx->last_nacked_id = -1;
+                if (ctx->last_nacked_index == ctx->num_packets - 1) {
+                    ctx->last_nacked_index = -1;
                     ctx->num_times_nacked++;
                 }
                 StartTimer(&ctx->last_nacked_timer);
@@ -424,7 +424,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         ctx->frame_buffer = &frame_bufs[index];
         ctx->packets_received = 0;
         ctx->num_packets = packet->num_indices;
-        ctx->last_nacked_id = -1;
+        ctx->last_nacked_index = -1;
         ctx->num_times_nacked = -1;
         ctx->rendered = false;
         ctx->frame_size = 0;
@@ -448,6 +448,8 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
             mprintf("NACK for Video ID %d, Index %d Received! But didn't need it.\n", packet->id, packet->index);
         }
 
+    } else if (ctx->last_nacked_index > packet->index || ctx->num_times_nacked > 0) {
+        mprintf("Already nacked %d %d even though is wasn't needed.\n", packet->id, packet->index);
     }
 
     // Already received
@@ -465,12 +467,12 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     ctx->received_indicies[packet->index] = true;
     if (packet->index > 0) {
         int to_index = packet->index - 3;
-        for (int i = max(0, ctx->last_nacked_id + 1); i <= to_index; i++) {
+        for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             if (!ctx->received_indicies[i]) {
                 nack(packet->id, i);
             }
         }
-        ctx->last_nacked_id = max(ctx->last_nacked_id, to_index);
+        ctx->last_nacked_index = max(ctx->last_nacked_index, to_index);
     }
     ctx->packets_received++;
 
