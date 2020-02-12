@@ -81,6 +81,8 @@ volatile bool rendering = false;
 struct FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
 char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
 
+bool has_rendered_yet = false;
+
 // END VIDEO VARIABLES
 
 // START VIDEO FUNCTIONS
@@ -214,6 +216,7 @@ int32_t RenderScreen(void* opaque) {
         //mprintf("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size, GetTimer(renderContext.frame_creation_timer));
 
         VideoData.last_rendered_id = renderContext.id;
+        has_rendered_yet = true;
         rendering = false;
     }
 
@@ -371,7 +374,7 @@ void updateVideo() {
                 }
                 int num_nacked = 0;
                 //mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
-                for (int i = ctx->last_nacked_id + 1; i < ctx->num_packets && num_nacked < 3; i++) {
+                for (int i = ctx->last_nacked_id + 1; i < ctx->num_packets && num_nacked < 1; i++) {
                     if (!ctx->received_indicies[i]) {
                         num_nacked++;
                         mprintf("************NACKING PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
@@ -511,4 +514,6 @@ void destroyVideo() {
     free(videoContext.yPlane);
     free(videoContext.uPlane);
     free(videoContext.vPlane);
+
+    has_rendered_yet = false;
 }

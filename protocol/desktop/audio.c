@@ -1,6 +1,7 @@
 #include "audio.h"
 
 extern int audio_frequency;
+extern bool has_rendered_yet;
 
 // Hold information about audio data as the packets come in
 typedef struct audio_packet {
@@ -11,8 +12,8 @@ typedef struct audio_packet {
     char data[MAX_PAYLOAD_SIZE];
 } audio_packet;
 
-#define AUDIO_QUEUE_LIMIT 50000
-#define TRIGGERED_AUDIO_QUEUE_LIMIT 30000
+#define AUDIO_QUEUE_LIMIT 40000
+#define TRIGGERED_AUDIO_QUEUE_LIMIT 25000
 #define MAX_NUM_AUDIO_FRAMES 10
 #define MAX_NUM_AUDIO_INDICES 10
 #define RECV_AUDIO_BUFFER_SIZE (MAX_NUM_AUDIO_FRAMES * MAX_NUM_AUDIO_INDICES)
@@ -83,7 +84,7 @@ void updateAudio() {
     bool still_more_audio_packets = true;
 
     // Catch up to most recent ID if nothing has played yet
-    if (last_played_id == -1 && most_recent_audio_id > 0) {
+    if (last_played_id == -1 && has_rendered_yet && most_recent_audio_id > 0) {
         last_played_id = most_recent_audio_id - 1;
         while (last_played_id % MAX_NUM_AUDIO_INDICES != MAX_NUM_AUDIO_INDICES - 1) {
             last_played_id++;
@@ -193,8 +194,7 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
         //mprintf("Already received audio packet: %d\n", audio_id);
     }
     else if (audio_id < audio_pkt->id || audio_id <= last_played_id) {
-        //mprintf("Old audio packet received: %d\n", audio_id);
-        //mprintf("Audio Packet ID %d\n last played %d\n", audio_pkt->id, last_played_id);
+        //mprintf("Old audio packet received: %d, last played id is %d\n", audio_id, last_played_id);
     }
     // audio_id > audio_pkt->id && audio_id > last_played_id
     else {
@@ -202,7 +202,7 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
         if (audio_pkt->id != -1) {
             int old_last_played_id = last_played_id;
 
-            if (last_played_id < audio_pkt->id) {
+            if (last_played_id < audio_pkt->id && last_played_id > 0) {
                 // We'll make it like we already played this packet
                 last_played_id = audio_pkt->id;
                 audio_pkt->id = -1;
@@ -217,7 +217,9 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
                 }
             }
 
-            mprintf("Audio packet being overwritten before being played! ID %d replaced with ID %d, when the Last Played ID was %d. Last Played ID is Now %d\n", audio_pkt->id, audio_id, old_last_played_id, last_played_id);
+            if (last_played_id > 0) {
+                mprintf("Audio packet being overwritten before being played! ID %d replaced with ID %d, when the Last Played ID was %d. Last Played ID is Now %d\n", audio_pkt->id, audio_id, old_last_played_id, last_played_id);
+            }
         }
 
         if (audio_pkt->nacked_for == audio_id) {
@@ -225,7 +227,7 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
         }
         audio_pkt->nacked_for = -1;
 
-        //mprintf("Receiving %d\n", audio_id);
+        //mprintf("Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n", audio_id, packet->payload_size, last_played_id + 1, SDL_GetQueuedAudioSize(AudioData.dev));
         audio_pkt->id = audio_id;
         most_recent_audio_id = max(audio_pkt->id, most_recent_audio_id);
         audio_pkt->size = packet->payload_size;
