@@ -1,6 +1,6 @@
 #include "video.h"
 
-#define DECODE_TYPE QSV_DECODE
+#define USE_HARDWARE true
 
 // Global Variables
 extern volatile SDL_Window *window;
@@ -18,6 +18,8 @@ extern volatile int output_height;
 
 extern volatile FractalCursorID last_cursor = SDL_SYSTEM_CURSOR_ARROW;
 extern volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
+
+volatile DecodeType type;
 
 // START VIDEO VARIABLES
 
@@ -101,13 +103,12 @@ void nack(int id, int index) {
 
 void updateWidthAndHeight(int width, int height) {
     struct SwsContext* sws_ctx = NULL;
+    enum AVPixelFormat input_fmt = AV_PIX_FMT_YUV420P;
 
-    enum AVPixelFormat input_fmt;
-#if DECODE_TYPE == QSV_DECODE
+    set_decoder(USE_HARDWARE);
+
+    if(type != DECODE_TYPE_SOFTWARE)
         input_fmt = AV_PIX_FMT_NV12;
-#else
-        input_fmt = AV_PIX_FMT_YUV420P;
-#endif
 
     sws_ctx = sws_getContext(width, height,
         input_fmt, output_width, output_height,
@@ -120,7 +121,7 @@ void updateWidthAndHeight(int width, int height) {
 
     videoContext.sws = sws_ctx;
 
-    video_decoder_t* decoder = create_video_decoder(width, height, output_width, output_height, DECODE_TYPE);
+    video_decoder_t* decoder = create_video_decoder(width, height, output_width, output_height, type);
     videoContext.decoder = decoder;
 
     server_width = width;

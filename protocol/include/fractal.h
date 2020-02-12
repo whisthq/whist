@@ -274,8 +274,12 @@ typedef enum EncodeType {
 } EncodeType;
 
 typedef enum DecodeType {
-	SOFTWARE_DECODE        = 0,
-	QSV_DECODE             = 1
+	DECODE_TYPE_NONE          = 0,
+	DECODE_TYPE_SOFTWARE      = 1,
+	DECODE_TYPE_QSV           = 2,
+	DECODE_TYPE_D3D11         = 3,
+	DECODE_TYPE_VIDEOTOOLBOX  = 4,
+	DECODE_TYPE_VAAPI         = 5
 } DecodeType;
 
 typedef enum FractalCursorID {
