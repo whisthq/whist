@@ -157,7 +157,8 @@ static int32_t SendVideo(void* opaque) {
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
 
     // Init DXGI Device
-    struct CaptureDevice* device = NULL;
+    struct CaptureDevice rdevice;
+    struct CaptureDevice* device = &rdevice;
 
     struct FractalCursorTypes *types = (struct FractalCursorTypes *) malloc(sizeof(struct FractalCursorTypes));
     memset(types, 0, sizeof(struct FractalCursorTypes));
