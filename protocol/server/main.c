@@ -56,6 +56,8 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
         return -1;
     }
 
+    packet->is_a_nack = true;
+
     SDL_LockMutex(packet_mutex);
     int sent_size = sendp(context, packet, len);
     SDL_UnlockMutex(packet_mutex);
@@ -116,6 +118,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
         packet->payload_size = payload_size;
         packet->id = id;
         packet->num_indices = num_indices;
+        packet->is_a_nack = false;
         int packet_size = sizeof(*packet) - sizeof(packet->data) + packet->payload_size;
         packet->hash = Hash((char*)packet + sizeof(packet->hash), packet_size - sizeof(packet->hash));
 

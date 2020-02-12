@@ -712,6 +712,7 @@ struct RTPPacket {
 	short index;
 	short num_indices;
 	short payload_size;
+	bool is_a_nack;
 	// data at the end of the struct, in the case of a truncated packet
 	uint8_t data[MAX_PAYLOAD_SIZE];
 };

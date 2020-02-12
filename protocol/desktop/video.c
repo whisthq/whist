@@ -279,7 +279,7 @@ void initVideo() {
     VideoData.bytes_transferred = 0;
     StartTimer(&VideoData.frame_timer);
     VideoData.last_statistics_id = 1;
-    VideoData.last_rendered_id = 0;
+    VideoData.last_rendered_id = -1;
     VideoData.max_id = 0;
 
     for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
@@ -347,7 +347,7 @@ void updateVideo() {
         StartTimer(&VideoData.frame_timer);
     }
 
-    if (!rendering) {
+    if (!rendering && VideoData.last_rendered_id >= 0) {
         int next_render_id = VideoData.last_rendered_id + 1;
 
         int index = next_render_id % RECV_FRAMES_BUFFER_SIZE;
@@ -374,7 +374,7 @@ void updateVideo() {
                 }
                 int num_nacked = 0;
                 //mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
-                for (int i = ctx->last_nacked_id + 1; i < ctx->num_packets && num_nacked < 1; i++) {
+                for (int i = ctx->last_nacked_id + 1; i < ctx->num_packets && num_nacked < 5; i++) {
                     if (!ctx->received_indicies[i]) {
                         num_nacked++;
                         mprintf("************NACKING PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
@@ -440,8 +440,21 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     StartTimer(&ctx->last_packet_timer);
 
     // If we already received this packet, we can skip
+    if (packet->is_a_nack) {
+        if (!ctx->received_indicies[packet->index]) {
+            mprintf("NACK for Video ID %d, Index %d Received!\n", packet->id, packet->index);
+        }
+        else {
+            mprintf("NACK for Video ID %d, Index %d Received! But didn't need it.\n", packet->id, packet->index);
+        }
+
+    }
+
+    // Already received
     if (ctx->received_indicies[packet->index]) {
-        //mprintf("NACK for Video ID %d, Index %d Received!\n", packet->id, packet->index);
+        if (!packet->is_a_nack) {
+            mprintf("Real packet received before the nack did.\n");
+        }
         return 0;
     }
 
@@ -473,13 +486,20 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     // If we received all of the packets
     if (ctx->packets_received == ctx->num_packets) {
         VideoData.frames_received++;
+        mprintf("Received Video Packet ID %d (Packets: %d) (Size: %d)\n", ctx->id, ctx->num_packets, ctx->frame_size);
 
         // If it's an I-frame, then just skip right to it, if the id is ahead of the next to render id
-        if (((Frame*)ctx->frame_buffer)->is_iframe && ctx->id > VideoData.last_rendered_id + 1) {
+        if (((Frame*)ctx->frame_buffer)->is_iframe && (ctx->id > VideoData.last_rendered_id + 1 || VideoData.last_rendered_id == -1)) {
             mprintf("Skipping to i-frame %d!\n", ctx->id);
+            for (int i = VideoData.last_rendered_id + 1; i < ctx->id; i++) {
+                int index = i % RECV_FRAMES_BUFFER_SIZE;
+                if (receiving_frames[index].id == i) {
+                    mprintf("Frame dropped with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
+                }
+            }
             VideoData.last_rendered_id = ctx->id - 1;
         }
-        //mprintf("Received Video Packet ID %d (Packets: %d) (Size: %d)\n", ctx->id, ctx->num_packets, ctx->frame_size);
+
         /*
         if (ctx->id == VideoData.last_rendered_id + 1) {
             VideoData.max_id = ctx->id;
