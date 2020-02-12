@@ -274,8 +274,8 @@ void destroySDL() {
 
 int main(int argc, char* argv[])
 {
-    if(argc < 2 || argc > 4) {
-        printf("Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT]");
+    if(argc < 2 || argc > 5) {
+        printf("Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]");
         return -1;
     }
 
@@ -287,8 +287,12 @@ int main(int argc, char* argv[])
         output_width = atoi(argv[2]);
     }
 
-    if(argc == 4) {
+    if(argc >= 4) {
         output_height = atoi(argv[3]);
+    }
+
+    if (argc == 5) {
+        max_mbps = atoi(argv[4]);
     }
 
     if (initSDL() < 0) {
@@ -384,7 +388,7 @@ int main(int argc, char* argv[])
 
                 StartTimer((clock*)&latency_timer);
 
-                //mprintf("Ping! %d\n", ping_id);
+                mprintf("Ping! %d\n", ping_id);
                 SendPacket(&fmsg, sizeof(fmsg));
                 SendPacket(&fmsg, sizeof(fmsg));
             }
