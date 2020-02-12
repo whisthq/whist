@@ -254,15 +254,15 @@ int CaptureScreen(struct CaptureDevice *device) {
   int accumulated_frames = device->frame_info.AccumulatedFrames;
 
     device->counter++;
-    hr = screenshot->desktop_resource->lpVtbl->QueryInterface(screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
-    if (FAILED(hr)) {
-        mprintf("Query Interface Failed!\n");
-        return -1;
-    }
     hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &screenshot->mapped_rect);
 
     // If MapDesktopSurface doesn't work, then do it manually
     if(hr == DXGI_ERROR_UNSUPPORTED) {
+        hr = screenshot->desktop_resource->lpVtbl->QueryInterface(screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
+        if (FAILED(hr)) {
+            mprintf("Query Interface Failed!\n");
+            return -1;
+        }
         screenshot->staging_texture = CreateTexture(device);
         if (screenshot->staging_texture == NULL) {
             // Error already printed inside of CreateTexture
