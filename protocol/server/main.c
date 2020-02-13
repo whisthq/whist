@@ -467,6 +467,12 @@ int main(int argc, char* argv[])
             // 1ms timeout
             if (recvp(&PacketReceiveContext, &fmsg, sizeof(fmsg)) > 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
+                    if (j >= 6) {
+                        mprintf("Too long of a keyboard combination!\n");
+                        active = 0;
+                        j = 0;
+                    }
+
                     if (active) {
                         fmsgs[j] = fmsg;
                         if (fmsg.keyboard.pressed) {
@@ -524,7 +530,7 @@ int main(int argc, char* argv[])
                     struct RTPPacket *audio_packet = &audio_buffer[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
                     int len = audio_buffer_packet_len[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
                     if (audio_packet->id == fmsg.nack_data.id) {
-                        //mprintf("NACKed audio packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
+                        mprintf("NACKed audio packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
                         ReplayPacket(&PacketSendContext, audio_packet, len);
                     }
                     // If we were asked for an invalid index, just ignore it
@@ -537,7 +543,7 @@ int main(int argc, char* argv[])
                     struct RTPPacket* video_packet = &video_buffer[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
                     int len = video_buffer_packet_len[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
                     if (video_packet->id == fmsg.nack_data.id) {
-                        //mprintf("NACKed video packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
+                        mprintf("NACKed video packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
                         ReplayPacket(&PacketSendContext, video_packet, len);
                     }
 
