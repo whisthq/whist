@@ -1,6 +1,6 @@
 #include "video.h"
 
-#define USE_HARDWARE false
+#define USE_HARDWARE true
 
 // Global Variables
 extern volatile SDL_Window *window;

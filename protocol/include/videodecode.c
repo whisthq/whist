@@ -84,14 +84,16 @@ video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width
     decoder->type = DECODE_TYPE_SOFTWARE;
   }
 
-  printf("Initializing avcodec\n");
   // init ffmpeg decoder for H264 software encoding
   avcodec_register_all();
-  printf("Done Initializing avcodec\n");
 
   if(decoder->type == DECODE_TYPE_SOFTWARE) {
     mprintf("Using software decoder\n");
     decoder->codec = avcodec_find_decoder_by_name("h264");
+    if (!decoder->codec) {
+      mprintf("Could not find video codec\n");
+      return NULL;
+    }
     decoder->context = avcodec_alloc_context3(decoder->codec);
 
     avcodec_open2(decoder->context, decoder->codec, NULL);
@@ -159,7 +161,7 @@ video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width
           return decoder;
       }
 
-      decoder->codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+      decoder->codec = avcodec_find_decoder_by_name("h264");
 
       /*
       for (int i = 0;; i++) {
