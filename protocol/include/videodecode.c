@@ -201,6 +201,15 @@ void destroy_video_decoder(video_decoder_t*decoder) {
       return;
     }
 
+  /* flush the decoder */
+  decoder->packet.data = NULL;
+  decoder->packet.size = 0;
+  av_packet_unref(&decoder->packet);
+  avcodec_free_context(&decoder->context);
+
+  // unref the hw context
+  av_buffer_unref(&hw_device_ctx);
+
   // free the ffmpeg contextes
   avcodec_close(decoder->context);
 
@@ -230,7 +239,7 @@ void *video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_siz
     decoder->packet.size = buffer_size;
     // decode the frame
     ret = avcodec_decode_video2(decoder->context, decoder->sw_frame, &success, &decoder->packet);
-    
+
     // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
 
     av_free_packet(&decoder->packet);
