@@ -113,6 +113,8 @@
 
 /*** DEFINITIONS END ***/
 
+int GetLastNetworkError();
+
 /*** ENUMERATIONS START ***/
 
 /// @brief Status codes indicating success, warning, or error.
@@ -542,28 +544,7 @@ typedef struct FractalCursor {
 	uint8_t __pad[1];
 } FractalCursor;
 
-
-typedef struct FractalCursorTypes {
-  HCURSOR CursorAppStarting;
-  HCURSOR CursorArrow;
-  HCURSOR CursorCross;
-  HCURSOR CursorHand;
-  HCURSOR CursorHelp;
-  HCURSOR CursorIBeam;
-  HCURSOR CursorIcon;
-  HCURSOR CursorNo;
-  HCURSOR CursorSize;
-  HCURSOR CursorSizeAll;
-  HCURSOR CursorSizeNESW;
-  HCURSOR CursorSizeNS;
-  HCURSOR CursorSizeNWSE;
-  HCURSOR CursorSizeWE;
-  HCURSOR CursorUpArrow;
-  HCURSOR CursorWait;
-} FractalCursorTypes;
-
 typedef struct FractalCursorImage {
-  LPCSTR cursor_type;
   SDL_SystemCursor cursor_id;
   FractalCursorState cursor_state;
 } FractalCursorImage;
@@ -757,13 +738,10 @@ int sendp(struct SocketContext* context, void* buf, int len);
 
 #if defined(_WIN32)
 	#define clock LARGE_INTEGER
-#elif __APPLE__
+#else
 	#define clock struct timeval
 
-
 	#define max fmax
-#else
-	#define clock int
 #endif
 
 void initMultiThreadedPrintf(bool use_logging);
@@ -777,6 +755,9 @@ double GetTimer(clock timer);
 uint32_t Hash(void* key, size_t len);
 
 void getClientResolution(unsigned int *width, unsigned int *height);
+
+int get_native_screen_width();
+int get_native_screen_height();
 
 /*** FRACTAL FUNCTIONS END ***/
 

@@ -13,6 +13,24 @@
 
 #include "fractal.h" // contains all the headers
 
+typedef struct FractalCursorTypes {
+    HCURSOR CursorAppStarting;
+    HCURSOR CursorArrow;
+    HCURSOR CursorCross;
+    HCURSOR CursorHand;
+    HCURSOR CursorHelp;
+    HCURSOR CursorIBeam;
+    HCURSOR CursorIcon;
+    HCURSOR CursorNo;
+    HCURSOR CursorSize;
+    HCURSOR CursorSizeAll;
+    HCURSOR CursorSizeNESW;
+    HCURSOR CursorSizeNS;
+    HCURSOR CursorSizeNWSE;
+    HCURSOR CursorSizeWE;
+    HCURSOR CursorUpArrow;
+    HCURSOR CursorWait;
+} FractalCursorTypes;
 
 FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len);
 
