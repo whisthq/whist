@@ -235,11 +235,7 @@ static int32_t ReceivePackets(void* opaque) {
             // ACK
         }
         else if (recv_size < 0) {
-            #if defined(_WIN32)
-              int error = WSAGetLastError();
-            #else
-              int error = errno;
-            #endif
+            int error = GetLastNetworkError();
 
             switch (error) {
             case WSAETIMEDOUT:
@@ -327,8 +323,8 @@ int initSDL() {
         return -1;
     }
 
-    int full_width = GetSystemMetrics(SM_CXSCREEN);
-    int full_height = GetSystemMetrics(SM_CYSCREEN);
+    int full_width = get_native_screen_width();
+    int full_height = get_native_screen_height();
 
     bool is_fullscreen = full_width == output_width && full_height == output_height;
 
@@ -364,8 +360,8 @@ int main(int argc, char* argv[])
     }
 
     char* server_ip = argv[1];
-    output_width = GetSystemMetrics(SM_CXSCREEN);
-    output_height = GetSystemMetrics(SM_CYSCREEN);
+    output_width = get_native_screen_width();
+    output_height = get_native_screen_height();
 
     if(argc >= 3) {
         output_width = atoi(argv[2]);

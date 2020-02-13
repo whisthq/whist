@@ -23,6 +23,35 @@
 
 /*** FRACTAL FUNCTIONS START ***/
 
+int GetLastNetworkError() {
+#if defined(_WIN32)
+  return WSAGetLastError();
+#else
+  return errno;
+#endif
+}
+
+int get_native_screen_width() {
+  static int width = -1;
+  if (width == -1) {
+    SDL_DisplayMode DM;
+    SDL_GetCurrentDisplayMode(0, &DM);
+    width = DM.w;
+  }
+  return width;
+}
+
+int get_native_screen_height() {
+  static int height = -1;
+  if (height == -1) {
+    SDL_DisplayMode DM;
+    SDL_GetCurrentDisplayMode(0, &DM);
+    height = DM.h;
+  }
+  return height;
+
+}
+
 /*
 /// @brief destroy the server sockets and threads, and WSA for windows
 /// @details if full=true, destroys everything, else only current connection
@@ -209,7 +238,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 	mprintf("Received packet from STUN server, connecting to %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
 	if (sendto(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) < 0) {
-		mprintf("Could not open connection %d\n", WSAGetLastError());
+		mprintf("Could not open connection %d\n", GetLastNetworkError());
 	}
 
 	// Set timeout, default 5 seconds
@@ -407,7 +436,7 @@ void StartTimer(clock* timer) {
 			set_frequency = true;
 		}
 	QueryPerformanceCounter(timer);
-	#elif __APPLE__
+	#else
 		// start timer
 		gettimeofday(timer, NULL);
 	#endif
@@ -418,7 +447,7 @@ double GetTimer(clock timer) {
 		LARGE_INTEGER end;
 		QueryPerformanceCounter(&end);
 		double ret = (double) (end.QuadPart - timer.QuadPart) / frequency.QuadPart;
-	#elif __APPLE__
+	#else
 		// stop timer
 		struct timeval t2;
 		gettimeofday(&t2, NULL);
@@ -467,18 +496,6 @@ uint32_t Hash(void* buf, size_t len)
 	hash ^= (hash >> 11);
 	hash += (hash << 15);
 	return hash;
-}
-
-
-void getClientResolution(unsigned int *width, unsigned int *height) {
-	#if defined (_WIN32)
-		width = (int) GetSystemMetrics(SM_CXSCREEN);
-		height = (int) GetSystemMetrics(SM_CYSCREEN);
-	#else // apple, prob need a different one for linux TODO
-		auto mainDisplayId = CGMainDisplayID();
-		width = CGDisplayPixelsWide(mainDisplayId);
-		height = CGDisplayPixelsHigh(mainDisplayId);
-	#endif
 }
 
 /*** FRACTAL FUNCTIONS END ***/

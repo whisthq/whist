@@ -15,7 +15,6 @@
 #include "videodecode.h" // header file for this file
 
 
-extern volatile DecodeType type = DECODE_TYPE_NONE;
 static enum AVPixelFormat hw_pix_fmt;
 static AVBufferRef *hw_device_ctx = NULL;
 /// @brief creates decoder decoder
@@ -53,7 +52,7 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx, const enum AVPixelForm
     return AV_PIX_FMT_NONE;
 }
 
-
+/*
 void set_decoder(bool hardware) {
   if(hardware) {
     #if defined(_WIN32)
@@ -67,16 +66,30 @@ void set_decoder(bool hardware) {
     type = DECODE_TYPE_SOFTWARE;
   }
 }
+*/
 
-video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width, int out_height, DecodeType type) {
-  video_decoder_t*decoder = (video_decoder_t*) malloc(sizeof(video_decoder_t));
+video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width, int out_height, bool use_hardware) {
+  video_decoder_t* decoder = (video_decoder_t*) malloc(sizeof(video_decoder_t));
   memset(decoder, 0, sizeof(video_decoder_t));
 
-  decoder->type = type;
+  if (use_hardware) {
+    #if defined(_WIN32)
+      decoder->type = DECODE_TYPE_QSV;
+    #elif __APPLE__
+      decoder->type = DECODE_TYPE_VIDEOTOOLBOX;
+    #else // linux
+      decoder->type = DECODE_TYPE_VAAPI;
+    #endif
+  } else {
+    decoder->type = DECODE_TYPE_SOFTWARE;
+  }
+
+  printf("Initializing avcodec\n");
   // init ffmpeg decoder for H264 software encoding
   avcodec_register_all();
+  printf("Done Initializing avcodec\n");
 
-  if(type == DECODE_TYPE_SOFTWARE) {
+  if(decoder->type == DECODE_TYPE_SOFTWARE) {
     mprintf("Using software decoder\n");
     decoder->codec = avcodec_find_decoder_by_name("h264");
     decoder->context = avcodec_alloc_context3(decoder->codec);
@@ -88,7 +101,7 @@ video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width,
     decoder->sw_frame->width  = in_width;
     decoder->sw_frame->height = in_height;
     decoder->sw_frame->pts = 0;
-  } else if(type == DECODE_TYPE_QSV) {
+  } else if(decoder->type == DECODE_TYPE_QSV) {
     mprintf("Using QSV decoder\n");
     decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
     decoder->context = avcodec_alloc_context3(decoder->codec);
@@ -148,8 +161,9 @@ video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width,
 
       decoder->codec = avcodec_find_decoder(AV_CODEC_ID_H264);
 
+      /*
       for (int i = 0;; i++) {
-          const AVCodecHWConfig *config = avcodec_get_hw_config(decoder->codec, i);
+          const AVCodecHWConfig *config = NULL;//avcodec_get_hw_config(decoder->codec, i);
           if (!config) {
               mprintf("Decoder %s does not support device type %s.\n",
                       decoder->codec->name, av_hwdevice_get_type_name(decoder->device_type));
@@ -161,6 +175,7 @@ video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width,
               break;
           }
       }
+      */
 
       if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
         mprintf("alloccontext3 failed w/ error code: %d\n", AVERROR(ENOMEM));
@@ -229,7 +244,7 @@ void *video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_siz
   // init packet to prepare decoding
   // av_log_set_level(AV_LOG_ERROR);
   // av_log_set_callback(swap_decoder);
-  if(type == DECODE_TYPE_QSV || type == DECODE_TYPE_SOFTWARE) {
+  if(decoder->type == DECODE_TYPE_QSV || decoder->type == DECODE_TYPE_SOFTWARE) {
     av_init_packet(&decoder->packet);
     int success = 0, ret = 0; // boolean for success or failure of decoding
 

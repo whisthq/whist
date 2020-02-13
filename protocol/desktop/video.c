@@ -1,10 +1,9 @@
 #include "video.h"
 
-#define USE_HARDWARE true
+#define USE_HARDWARE false
 
 // Global Variables
 extern volatile SDL_Window *window;
-extern volatile SDL_Cursor* cursor = NULL;
 
 extern volatile int server_width;
 extern volatile int server_height;
@@ -16,12 +15,11 @@ extern volatile SDL_Window* window;
 extern volatile int output_width;
 extern volatile int output_height;
 
-extern volatile FractalCursorID last_cursor = SDL_SYSTEM_CURSOR_ARROW;
-extern volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
-
-volatile DecodeType type;
-
 // START VIDEO VARIABLES
+volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
+volatile SDL_Cursor* cursor = NULL;
+volatile FractalCursorID last_cursor = SDL_SYSTEM_CURSOR_ARROW;
+volatile DecodeType type = DECODE_TYPE_SOFTWARE;
 
 struct VideoData {
     struct FrameData* pending_ctx;
@@ -52,7 +50,7 @@ typedef struct SDLVideoContext {
 SDLVideoContext videoContext;
 
 typedef struct FrameData {
-    byte* frame_buffer;
+    char* frame_buffer;
     int frame_size;
     int id;
     int packets_received;
@@ -105,10 +103,12 @@ void updateWidthAndHeight(int width, int height) {
     struct SwsContext* sws_ctx = NULL;
     enum AVPixelFormat input_fmt = AV_PIX_FMT_YUV420P;
 
-    set_decoder(USE_HARDWARE);
+    video_decoder_t* decoder = create_video_decoder(width, height, output_width, output_height, USE_HARDWARE);
+    videoContext.decoder = decoder;
 
-    if(type != DECODE_TYPE_SOFTWARE)
+    if(decoder->type != DECODE_TYPE_SOFTWARE) {
         input_fmt = AV_PIX_FMT_NV12;
+    }
 
     sws_ctx = sws_getContext(width, height,
         input_fmt, output_width, output_height,
@@ -118,11 +118,7 @@ void updateWidthAndHeight(int width, int height) {
         NULL,
         NULL
     );
-
     videoContext.sws = sws_ctx;
-
-    video_decoder_t* decoder = create_video_decoder(width, height, output_width, output_height, type);
-    videoContext.decoder = decoder;
 
     server_width = width;
     server_height = height;
