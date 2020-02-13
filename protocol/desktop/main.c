@@ -201,7 +201,8 @@ static int32_t ReceivePackets(void* opaque) {
         //mprintf("Update\n");
         // Call as often as possible
         if (GetTimer(world_timer) > 5) {
-            mprintf("\nworld_time: %f\n", GetTimer(world_timer));
+            mprintf("\n");
+            mprintf("world_time: %f\n", GetTimer(world_timer));
             mprintf("recvfrom_time: %f\n", recvfrom_time);
             mprintf("update_video_time: %f\n", update_video_time);
             mprintf("update_audio_time: %f\n", update_audio_time);
@@ -210,7 +211,8 @@ static int32_t ReceivePackets(void* opaque) {
             mprintf("max_video_time: %f\n", max_video_time);
             mprintf("audio_time: %f\n", audio_time);
             mprintf("max_audio_time: %f\n", max_audio_time);
-            mprintf("message_time: %f\n\n", message_time);
+            mprintf("message_time: %f\n", message_time);
+            mprintf("\n");
             StartTimer(&world_timer);
         }
 

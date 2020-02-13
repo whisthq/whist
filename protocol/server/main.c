@@ -447,7 +447,6 @@ int main(int argc, char* argv[])
 
         struct FractalClientMessage fmsgs[6];
         struct FractalClientMessage fmsg;
-        struct FractalClientMessage last_mouse = { 0 };
         int i = 0, j = 0, active = 0;
         FractalStatus status;
 
@@ -457,19 +456,11 @@ int main(int argc, char* argv[])
         clock totaltime;
         StartTimer(&totaltime);
 
-        clock mouse_update_timer;
-        StartTimer(&mouse_update_timer);
-
         mprintf("Receiving packets...\n");
         while (connected) {
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
                 connected = false;
-            }
-
-            if (last_mouse.type != 0 && GetTimer(mouse_update_timer) > 2.0 / 1000.0) {
-                //ReplayUserInput(&last_mouse, 1);
-                StartTimer(&mouse_update_timer);
             }
 
             memset(&fmsg, 0, sizeof(fmsg));
@@ -501,9 +492,6 @@ int main(int argc, char* argv[])
                     }
                 }
                 else if (fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
-                    if (fmsg.type == MESSAGE_MOUSE_MOTION) {
-                        last_mouse = fmsg;
-                    }
                     status = ReplayUserInput(&fmsg, 1);
                 }
                 else if (fmsg.type == MESSAGE_MBPS) {
@@ -537,7 +525,7 @@ int main(int argc, char* argv[])
                     int len = audio_buffer_packet_len[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
                     if (audio_packet->id == fmsg.nack_data.id) {
                         //mprintf("NACKed audio packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
-                    //    ReplayPacket(&PacketSendContext, audio_packet, len);
+                        ReplayPacket(&PacketSendContext, audio_packet, len);
                     }
                     // If we were asked for an invalid index, just ignore it
                     else if (fmsg.nack_data.index < audio_packet->num_indices) {
