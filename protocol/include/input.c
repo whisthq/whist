@@ -423,40 +423,28 @@ FractalCursorImage GetCursorImage(FractalCursorTypes *types, PCURSORINFO pci) {
 	FractalCursorImage image = {0};
 
 	if(cursor == types->CursorArrow) {
-		image.cursor_type = IDC_ARROW;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_ARROW;
 	} else if(cursor == types->CursorCross) {
-		image.cursor_type = IDC_CROSS;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_CROSSHAIR;
 	} else if(cursor == types->CursorHand) {
-		image.cursor_type = IDC_HAND;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_HAND;
 	} else if(cursor == types->CursorIBeam) {
-		image.cursor_type = IDC_IBEAM;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_IBEAM;
 	} else if(cursor == types->CursorNo) {
-		image.cursor_type = IDC_NO;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_NO;
 	} else if(cursor == types->CursorSizeAll) {
-		image.cursor_type = IDC_SIZEALL;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_SIZEALL;
 	} else if(cursor == types->CursorSizeNESW) {
-		image.cursor_type = IDC_SIZENESW;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_SIZENESW;
 	} else if(cursor == types->CursorSizeNS) {
-		image.cursor_type = IDC_SIZENS;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_SIZENS;
 	} else if(cursor == types->CursorSizeNWSE) {
-		image.cursor_type = IDC_SIZENWSE;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_SIZENWSE;
 	} else if(cursor == types->CursorSizeWE) {
-		image.cursor_type = IDC_SIZEWE;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_SIZEWE;
 	} else if(cursor == types->CursorWait) {
-		image.cursor_type = IDC_WAIT;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_WAITARROW;
 	} else {
-		image.cursor_type = IDC_ARROW;
 		image.cursor_id   = SDL_SYSTEM_CURSOR_ARROW;
 	}
 
