@@ -132,9 +132,6 @@ void updateAudio() {
 
             if (SDL_GetQueuedAudioSize(AudioData.dev) > (unsigned int)real_limit) {
                 mprintf("*******************\n");
-                mprintf("*******************\n");
-                mprintf("*******************\n");
-                mprintf("*******************\n");
                 mprintf("Audio queue full, skipping ID %d (Queued: %d)\n", next_to_play_id / MAX_NUM_AUDIO_INDICES, SDL_GetQueuedAudioSize(AudioData.dev));
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
@@ -148,7 +145,7 @@ void updateAudio() {
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     if (packet->size > 0) {
-                            mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
+                            //mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
                             if (SDL_QueueAudio(AudioData.dev, packet->data, packet->size) < 0) {
                                 mprintf("Could not play audio!\n");
                             }
@@ -254,7 +251,7 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
         memcpy(audio_pkt->data, packet->data, packet->payload_size);
 
         if (packet->index + 1 == packet->num_indices) {
-            mprintf("Audio Packet %d Received! Last Played: %d\n", packet->id, last_played_id / MAX_NUM_AUDIO_INDICES);
+            //mprintf("Audio Packet %d Received! Last Played: %d\n", packet->id, last_played_id / MAX_NUM_AUDIO_INDICES);
             for (int i = audio_id + 1; i % MAX_NUM_AUDIO_INDICES != 0; i++) {
                 //mprintf("Receiving %d\n", i);
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id = i;
