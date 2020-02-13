@@ -321,7 +321,7 @@ static int32_t SendVideo(void* opaque) {
                     frame->is_iframe = frames_since_first_iframe % gop_size == 0;
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
 
-                    mprintf("Sent video packet %d (Size: %d) %s\n", id, encoder->packet.size, frame->is_iframe ? "(I-frame)" : "");
+                    //mprintf("Sent video packet %d (Size: %d) %s\n", id, encoder->packet.size, frame->is_iframe ? "(I-frame)" : "");
                     if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
