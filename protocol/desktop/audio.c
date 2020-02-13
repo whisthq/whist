@@ -45,11 +45,11 @@ void initAudio() {
     // cast socket and SDL variables back to their data type for usage
     SDL_AudioSpec wantedSpec = { 0 }, audioSpec = { 0 };
 
-    AudioData.audio_decoder = create_audio_decoder();
+    //AudioData.audio_decoder = create_audio_decoder();
 
     SDL_zero(wantedSpec);
     SDL_zero(audioSpec);
-    wantedSpec.channels  = (Uint8)AudioData.audio_decoder->context->channels;
+    wantedSpec.channels  = 2;//(Uint8)AudioData.audio_decoder->context->channels;
     wantedSpec.freq      = decoder_frequency;
     mprintf("Freq: %d\n", wantedSpec.freq);
     wantedSpec.format    = AUDIO_F32SYS;
@@ -73,7 +73,7 @@ void initAudio() {
 
 void destroyAudio() {
     SDL_CloseAudioDevice(AudioData.dev);
-    destroy_audio_decoder(AudioData.audio_decoder);
+    //destroy_audio_decoder(AudioData.audio_decoder);
 }
 
 void updateAudio() {
