@@ -26,7 +26,7 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 8;
+volatile static int gop_size = 24;
 volatile static DesktopContext desktopContext = { 0 };
 
 volatile int server_width = DEFAULT_WIDTH;
@@ -157,6 +157,7 @@ static int32_t SendVideo(void* opaque) {
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
 
     // Init DXGI Device
+    struct CaptureDevice rdevice;
     struct CaptureDevice* device = NULL;
 
     struct FractalCursorTypes *types = (struct FractalCursorTypes *) malloc(sizeof(struct FractalCursorTypes));
@@ -207,12 +208,7 @@ static int32_t SendVideo(void* opaque) {
                 mprintf("Default found in capture loop\n");
                 desktopContext = OpenNewDesktop("default", true, true);
 
-                if (device) {
-                    DestroyCaptureDevice(device);
-                    device = NULL;
-                }
-
-                CreateCaptureDevice(&device, server_width, server_height);
+                update_device = true;
 
                 defaultFound = true;
                 desktopContext.ready = true;
@@ -228,9 +224,11 @@ static int32_t SendVideo(void* opaque) {
                 device = NULL;
             }
 
-            int result = CreateCaptureDevice(&device, server_width, server_height);
+            device = &rdevice;
+            int result = CreateCaptureDevice(device, server_width, server_height);
             if (result < 0) {
                 mprintf("Failed to create capture device\n");
+                device = NULL;
                 connected = false;
             }
 
@@ -323,7 +321,7 @@ static int32_t SendVideo(void* opaque) {
                     frame->is_iframe = frames_since_first_iframe % gop_size == 0;
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
 
-                    mprintf("Sent video packet %d (Size: %d) %s\n", id, encoder->packet.size, frame->is_iframe ? "(I-frame)" : "");
+                    //mprintf("Sent video packet %d (Size: %d) %s\n", id, encoder->packet.size, frame->is_iframe ? "(I-frame)" : "");
                     if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }

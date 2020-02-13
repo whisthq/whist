@@ -43,9 +43,7 @@ void PrintMemoryInfo()
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-int CreateCaptureDevice(struct CaptureDevice **pdevice, int width, int height) {
-    *pdevice = malloc(sizeof(struct CaptureDevice));
-  struct CaptureDevice* device = *pdevice;
+int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   memset(device, 0, sizeof(struct CaptureDevice));
 
   device->hardware = (struct DisplayHardware*) malloc(sizeof(struct DisplayHardware));
@@ -213,6 +211,28 @@ ID3D11Texture2D* CreateTexture(struct CaptureDevice *device) {
   return texture;
 }
 
+void ReleaseScreenshot(struct ScreenshotContainer* screenshot) {
+    if (screenshot->final_texture != NULL) {
+        screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
+        screenshot->final_texture = NULL;
+    }
+
+    if (screenshot->desktop_resource != NULL) {
+        screenshot->desktop_resource->lpVtbl->Release(screenshot->desktop_resource);
+        screenshot->desktop_resource = NULL;
+    }
+
+    if (screenshot->staging_texture != NULL) {
+        screenshot->staging_texture->lpVtbl->Release(screenshot->staging_texture);
+        screenshot->staging_texture = NULL;
+    }
+
+    if (screenshot->surface != NULL) {
+        screenshot->surface->lpVtbl->Release(screenshot->surface);
+        screenshot->surface = NULL;
+    }
+}
+
 int CaptureScreen(struct CaptureDevice *device) {
   HRESULT hr;
 
@@ -220,34 +240,25 @@ int CaptureScreen(struct CaptureDevice *device) {
 
   hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
-  if (screenshot->final_texture != NULL) {
-     screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
-     screenshot->final_texture = NULL;
-  }
-  
-  if (screenshot->desktop_resource != NULL) {
-     screenshot->desktop_resource->lpVtbl->Release(screenshot->desktop_resource);
-     screenshot->desktop_resource = NULL;
-  }
-
-  if (screenshot->staging_texture != NULL) {
-      screenshot->staging_texture->lpVtbl->Release(screenshot->staging_texture);
-      screenshot->staging_texture = NULL;
-  }
-
-  if (screenshot->surface != NULL) {
-      screenshot->surface->lpVtbl->Release(screenshot->surface);
-      screenshot->surface = NULL;
-  }
+  ReleaseScreenshot(screenshot);
 
   hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 1, &device->frame_info, &screenshot->desktop_resource);
   if(FAILED(hr)) {
-    if (hr != DXGI_ERROR_WAIT_TIMEOUT) {
-        mprintf("Failed to Acquire Next Frame! 0x%X %d\n", hr, GetLastError());
-        return -1;
+    if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
+        return 0;
+    }
+    else if (hr == DXGI_ERROR_ACCESS_LOST) {
+        mprintf("CaptureScreen returned DXGI_ERROR_ACCESS_LOST! Recreating device\n");
+        SDL_Delay(1);
+        int width = device->width;
+        int height = device->height;
+        DestroyCaptureDevice(device);
+        CreateCaptureDevice(device, width, height);
+        return 0;
     }
     else {
-        return 0;
+        mprintf("Failed to Acquire Next Frame! 0x%X %d\n", hr, GetLastError());
+        return -1;
     }
   }
 
@@ -315,12 +326,18 @@ void ReleaseScreen(struct CaptureDevice *device) {
 }
 
 void DestroyCaptureDevice(struct CaptureDevice* device) {
-    if (device->hardware) {
-        free(device->hardware);
-    }
+    HRESULT hr;
+
+    hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
+
+    ReleaseScreenshot(&device->screenshot);
+
     if (device->duplication) {
         device->duplication->lpVtbl->Release(device->duplication);
         device->duplication = NULL;
     }
-    free(device);
+    if (device->hardware) {
+        free(device->hardware);
+        device->hardware = NULL;
+    }
 }
