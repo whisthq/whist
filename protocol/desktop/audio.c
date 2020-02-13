@@ -15,7 +15,7 @@ typedef struct audio_packet {
 #define AUDIO_QUEUE_LIMIT 40000
 #define TRIGGERED_AUDIO_QUEUE_LIMIT 25000
 #define MAX_NUM_AUDIO_FRAMES 10
-#define MAX_NUM_AUDIO_INDICES 10
+#define MAX_NUM_AUDIO_INDICES 3
 #define RECV_AUDIO_BUFFER_SIZE (MAX_NUM_AUDIO_FRAMES * MAX_NUM_AUDIO_INDICES)
 audio_packet receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
@@ -35,6 +35,9 @@ int last_played_id = -1;
 bool triggered = false;
 
 int decoder_frequency = 48000;
+
+clock test_timer;
+double test_time;
 
 void initAudio() {
     StartTimer(&nack_timer);
@@ -155,6 +158,7 @@ void updateAudio() {
     }
 
     if (last_played_id > -1) {
+
         if (GetTimer(nack_timer) > 2.0 / 1000.0) {
             StartTimer(&nack_timer);
             last_nacked_id = last_played_id;
