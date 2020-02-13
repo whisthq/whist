@@ -234,7 +234,6 @@ void *video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_siz
     // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
 
     av_free_packet(&decoder->packet);
-    return NULL;
   } else {
     decoder->packet.data = buffer;
     decoder->packet.size = buffer_size;
@@ -253,4 +252,6 @@ void *video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_siz
         }
     }
   }
+
+  return NULL;
 }
