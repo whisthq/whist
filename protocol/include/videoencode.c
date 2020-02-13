@@ -47,7 +47,7 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 		encoder->context->gop_size        = gop_size;
 		encoder->context->pix_fmt = encoder_format;
 
-		av_opt_set_int(encoder->context->priv_data, "qp", 26, 0);
+		av_opt_set_int(encoder->context->priv_data, "crf", 24, 0);
 		//av_opt_set(encoder->context->priv_data, "preset", "veryfast", 0);
 		//av_opt_set(encoder->context->priv_data, "preset", "llhq", 0);
 		av_opt_set(encoder->context->priv_data, "zerolatency", "1", 0);
