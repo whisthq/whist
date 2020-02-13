@@ -26,7 +26,7 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 24;
+volatile static int gop_size = 48;
 volatile static DesktopContext desktopContext = { 0 };
 
 volatile int server_width = DEFAULT_WIDTH;
@@ -537,7 +537,7 @@ int main(int argc, char* argv[])
                     int len = audio_buffer_packet_len[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
                     if (audio_packet->id == fmsg.nack_data.id) {
                         //mprintf("NACKed audio packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
-                        ReplayPacket(&PacketSendContext, audio_packet, len);
+                    //    ReplayPacket(&PacketSendContext, audio_packet, len);
                     }
                     // If we were asked for an invalid index, just ignore it
                     else if (fmsg.nack_data.index < audio_packet->num_indices) {
