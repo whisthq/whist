@@ -18,10 +18,13 @@ audio_decoder_t *create_audio_decoder() {
     audio_decoder_t *decoder = (audio_decoder_t *) malloc(sizeof(audio_decoder_t));
     memset(decoder, 0, sizeof(audio_decoder_t));
 
-    decoder->codec = avcodec_find_decoder(AV_CODEC_ID_MP3-1);
+    decoder->codec = avcodec_find_decoder_by_name("mp3");
     if (!decoder->codec) {
         printf("Codec not found\n");
         exit(1);
+    }
+    else {
+        mprintf("Using codec %s\n", avcodec_get_name(decoder->codec->id));
     }
 
     decoder->context = avcodec_alloc_context3(decoder->codec);
