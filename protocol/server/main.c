@@ -26,7 +26,7 @@
 
 volatile static bool connected;
 volatile static double max_mbps;
-volatile static int gop_size = 24;
+volatile static int gop_size = 48;
 volatile static DesktopContext desktopContext = { 0 };
 
 volatile int server_width = DEFAULT_WIDTH;
@@ -447,7 +447,6 @@ int main(int argc, char* argv[])
 
         struct FractalClientMessage fmsgs[6];
         struct FractalClientMessage fmsg;
-        struct FractalClientMessage last_mouse = { 0 };
         int i = 0, j = 0, active = 0;
         FractalStatus status;
 
@@ -457,9 +456,6 @@ int main(int argc, char* argv[])
         clock totaltime;
         StartTimer(&totaltime);
 
-        clock mouse_update_timer;
-        StartTimer(&mouse_update_timer);
-
         mprintf("Receiving packets...\n");
         while (connected) {
             if (GetTimer(last_ping) > 3.0) {
@@ -467,15 +463,16 @@ int main(int argc, char* argv[])
                 connected = false;
             }
 
-            if (last_mouse.type != 0 && GetTimer(mouse_update_timer) > 2.0 / 1000.0) {
-                //ReplayUserInput(&last_mouse, 1);
-                StartTimer(&mouse_update_timer);
-            }
-
             memset(&fmsg, 0, sizeof(fmsg));
             // 1ms timeout
             if (recvp(&PacketReceiveContext, &fmsg, sizeof(fmsg)) > 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
+                    if (j >= 6) {
+                        mprintf("Too long of a keyboard combination!\n");
+                        active = 0;
+                        j = 0;
+                    }
+
                     if (active) {
                         fmsgs[j] = fmsg;
                         if (fmsg.keyboard.pressed) {
@@ -501,9 +498,6 @@ int main(int argc, char* argv[])
                     }
                 }
                 else if (fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
-                    if (fmsg.type == MESSAGE_MOUSE_MOTION) {
-                        last_mouse = fmsg;
-                    }
                     status = ReplayUserInput(&fmsg, 1);
                 }
                 else if (fmsg.type == MESSAGE_MBPS) {
@@ -536,7 +530,7 @@ int main(int argc, char* argv[])
                     struct RTPPacket *audio_packet = &audio_buffer[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
                     int len = audio_buffer_packet_len[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
                     if (audio_packet->id == fmsg.nack_data.id) {
-                        //mprintf("NACKed audio packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
+                        mprintf("NACKed audio packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
                         ReplayPacket(&PacketSendContext, audio_packet, len);
                     }
                     // If we were asked for an invalid index, just ignore it
@@ -549,7 +543,7 @@ int main(int argc, char* argv[])
                     struct RTPPacket* video_packet = &video_buffer[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
                     int len = video_buffer_packet_len[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
                     if (video_packet->id == fmsg.nack_data.id) {
-                        //mprintf("NACKed video packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
+                        mprintf("NACKed video packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
                         ReplayPacket(&PacketSendContext, video_packet, len);
                     }
 

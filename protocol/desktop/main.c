@@ -201,7 +201,8 @@ static int32_t ReceivePackets(void* opaque) {
         //mprintf("Update\n");
         // Call as often as possible
         if (GetTimer(world_timer) > 5) {
-            mprintf("\nworld_time: %f\n", GetTimer(world_timer));
+            mprintf("\n");
+            mprintf("world_time: %f\n", GetTimer(world_timer));
             mprintf("recvfrom_time: %f\n", recvfrom_time);
             mprintf("update_video_time: %f\n", update_video_time);
             mprintf("update_audio_time: %f\n", update_audio_time);
@@ -210,7 +211,8 @@ static int32_t ReceivePackets(void* opaque) {
             mprintf("max_video_time: %f\n", max_video_time);
             mprintf("audio_time: %f\n", audio_time);
             mprintf("max_audio_time: %f\n", max_audio_time);
-            mprintf("message_time: %f\n\n", message_time);
+            mprintf("message_time: %f\n", message_time);
+            mprintf("\n");
             StartTimer(&world_timer);
         }
 
@@ -317,6 +319,12 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
     return 0;
 }
 
+void clearSDL() {
+    SDL_Surface* surface = SDL_GetWindowSurface(window);
+    SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0, 0, 0));
+    SDL_UpdateWindowSurface(window);
+}
+
 int initSDL() {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
         mprintf("Could not initialize SDL - %s\n", SDL_GetError());
@@ -325,6 +333,14 @@ int initSDL() {
 
     int full_width = get_native_screen_width();
     int full_height = get_native_screen_height();
+
+    if (output_width < 0) {
+        output_width = full_width;
+    }
+
+    if (output_height < 0) {
+        output_height = full_height;
+    }
 
     bool is_fullscreen = full_width == output_width && full_height == output_height;
 
@@ -360,14 +376,14 @@ int main(int argc, char* argv[])
     }
 
     char* server_ip = argv[1];
-    output_width = get_native_screen_width();
-    output_height = get_native_screen_height();
+    output_width = -1;
+    output_height = -1;
 
-    if(argc >= 3) {
+    if (argc >= 3) {
         output_width = atoi(argv[2]);
     }
 
-    if(argc >= 4) {
+    if (argc >= 4) {
         output_height = atoi(argv[3]);
     }
 
@@ -376,7 +392,7 @@ int main(int argc, char* argv[])
     }
 
     if (initSDL() < 0) {
-        mprintf("Failed to initialized SDL\n");
+        printf("Failed to initialized SDL\n");
         return -1;
     }
 
@@ -384,6 +400,8 @@ int main(int argc, char* argv[])
     initMultiThreadedPrintf(false);
 
     for (int try_amount = 0; try_amount < 3; try_amount++) {
+        clearSDL();
+
         // initialize the windows socket library if this is a windows client
 #if defined(_WIN32)
         WSADATA wsa;
@@ -474,6 +492,8 @@ int main(int argc, char* argv[])
         // Destroy video and audio
         destroyVideo();
         destroyAudio();
+
+        clearSDL();
 
 #if defined(_WIN32)
         closesocket(PacketSendContext.s);
