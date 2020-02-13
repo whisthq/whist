@@ -488,11 +488,13 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
 
     // If we received all of the packets
     if (ctx->packets_received == ctx->num_packets) {
+        bool is_iframe = ((Frame*)ctx->frame_buffer)->is_iframe;
+
         VideoData.frames_received++;
-        mprintf("Received Video Packet ID %d (Packets: %d) (Size: %d)\n", ctx->id, ctx->num_packets, ctx->frame_size);
+        mprintf("Received Video Packet ID %d (Packets: %d) (Size: %d) %s\n", ctx->id, ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
 
         // If it's an I-frame, then just skip right to it, if the id is ahead of the next to render id
-        if (((Frame*)ctx->frame_buffer)->is_iframe && (ctx->id > VideoData.last_rendered_id + 1 || VideoData.last_rendered_id == -1)) {
+        if (is_iframe && (ctx->id > VideoData.last_rendered_id + 1 || VideoData.last_rendered_id == -1)) {
             mprintf("Skipping to i-frame %d!\n", ctx->id);
             for (int i = VideoData.last_rendered_id + 1; i < ctx->id; i++) {
                 int index = i % RECV_FRAMES_BUFFER_SIZE;
