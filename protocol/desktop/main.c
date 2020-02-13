@@ -317,6 +317,12 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
     return 0;
 }
 
+void clearSDL() {
+    SDL_Surface* surface = SDL_GetWindowSurface(window);
+    SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0, 0, 0));
+    SDL_UpdateWindowSurface(window);
+}
+
 int initSDL() {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
         mprintf("Could not initialize SDL - %s\n", SDL_GetError());
@@ -384,6 +390,8 @@ int main(int argc, char* argv[])
     initMultiThreadedPrintf(false);
 
     for (int try_amount = 0; try_amount < 3; try_amount++) {
+        clearSDL();
+
         // initialize the windows socket library if this is a windows client
 #if defined(_WIN32)
         WSADATA wsa;
@@ -474,6 +482,8 @@ int main(int argc, char* argv[])
         // Destroy video and audio
         destroyVideo();
         destroyAudio();
+
+        clearSDL();
 
 #if defined(_WIN32)
         closesocket(PacketSendContext.s);
