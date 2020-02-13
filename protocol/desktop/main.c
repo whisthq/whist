@@ -334,6 +334,14 @@ int initSDL() {
     int full_width = get_native_screen_width();
     int full_height = get_native_screen_height();
 
+    if (output_width < 0) {
+        output_width = full_width;
+    }
+
+    if (output_height < 0) {
+        output_height = full_height;
+    }
+
     bool is_fullscreen = full_width == output_width && full_height == output_height;
 
     window = SDL_CreateWindow(
@@ -368,14 +376,14 @@ int main(int argc, char* argv[])
     }
 
     char* server_ip = argv[1];
-    output_width = get_native_screen_width();
-    output_height = get_native_screen_height();
+    output_width = -1;
+    output_height = -1;
 
-    if(argc >= 3) {
+    if (argc >= 3) {
         output_width = atoi(argv[2]);
     }
 
-    if(argc >= 4) {
+    if (argc >= 4) {
         output_height = atoi(argv[3]);
     }
 
@@ -384,7 +392,7 @@ int main(int argc, char* argv[])
     }
 
     if (initSDL() < 0) {
-        mprintf("Failed to initialized SDL\n");
+        printf("Failed to initialized SDL\n");
         return -1;
     }
 
