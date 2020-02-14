@@ -250,7 +250,7 @@ int CaptureScreen(struct CaptureDevice *device) {
     else if (hr == DXGI_ERROR_ACCESS_LOST || hr == DXGI_ERROR_INVALID_CALL) {
         mprintf("CaptureScreen returned DXGI_ERROR_ACCESS_LOST or DXGI_ERROR_INVALID_CALL (0x%X)! Recreating device\n", hr);
         SDL_Delay(1);
-        return 0;
+        return -1;
     }
     else {
         mprintf("Failed to Acquire Next Frame! 0x%X %d\n", hr, GetLastError());
