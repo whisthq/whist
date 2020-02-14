@@ -198,7 +198,15 @@ static int32_t ReceivePackets(void* opaque) {
 
     double lastrecv = 0.0;
 
+    clock last_ack;
+    StartTimer(&last_ack);
+
     for (int i = 0; run_receive_packets; i++) {
+        if (GetTimer(last_ack) > 0.5) {
+            sendp(&socketContext, NULL, 0);
+            StartTimer(&last_ack);
+        }
+
         update();
 
         //mprintf("Update\n");

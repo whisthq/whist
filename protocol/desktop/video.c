@@ -477,7 +477,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         int to_index = packet->index - 3;
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             if (!ctx->received_indicies[i]) {
-                nack(packet->id, i);
+                //nack(packet->id, i);
             }
         }
         ctx->last_nacked_index = max(ctx->last_nacked_index, to_index);
