@@ -227,7 +227,11 @@ static int32_t ReceivePackets(void* opaque) {
 
         StartTimer(&recvfrom_timer);
         int recv_size = recvp(&socketContext, &packet, sizeof(packet));
-        recvfrom_time += GetTimer(recvfrom_timer);
+        double recvfrom_time = GetTimer(recvfrom_timer);
+        recvfrom_time += recvfrom_time;
+        if (recvfrom_time > 15.0 / 1000.0) {
+            mprintf("Took more than 15ms to receive something!! Took %dms!\n", recvfrom_time * 1000.0);
+        }
 
         //mprintf("Recv wait time: %f\n", GetTimer(recvfrom_timer));
 
