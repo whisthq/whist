@@ -196,6 +196,8 @@ static int32_t ReceivePackets(void* opaque) {
 
     initUpdate();
 
+    double lastrecv = 0.0;
+
     for (int i = 0; run_receive_packets; i++) {
         update();
 
@@ -227,10 +229,17 @@ static int32_t ReceivePackets(void* opaque) {
 
         StartTimer(&recvfrom_timer);
         int recv_size = recvp(&socketContext, &packet, sizeof(packet));
-        double recvfrom_time = GetTimer(recvfrom_timer);
-        recvfrom_time += recvfrom_time;
-        if (recvfrom_time > 15.0 / 1000.0) {
-            mprintf("Took more than 15ms to receive something!! Took %dms!\n", recvfrom_time * 1000.0);
+        double recvfrom_short_time = GetTimer(recvfrom_timer);
+
+        recvfrom_time += recvfrom_short_time;
+        lastrecv += recvfrom_short_time;
+
+        if (lastrecv > 15.0 / 1000.0) {
+            mprintf("Took more than 15ms to receive something!! Took %fms total! Last call was %fms\n", lastrecv * 1000.0, recvfrom_short_time * 1000.0);
+        }
+
+        if (recv_size > 0) {
+            lastrecv = 0.0;
         }
 
         //mprintf("Recv wait time: %f\n", GetTimer(recvfrom_timer));
