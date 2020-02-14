@@ -386,7 +386,7 @@ void updateVideo() {
                     if (!ctx->received_indicies[i]) {
                         num_nacked++;
                         mprintf("************NACKING PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
-                        nack(ctx->id, i);
+                        //nack(ctx->id, i);
                     }
                     ctx->last_nacked_index = i;
                 }
