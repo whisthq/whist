@@ -323,6 +323,7 @@ void clearSDL() {
     SDL_Surface* surface = SDL_GetWindowSurface(window);
     SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0, 0, 0));
     SDL_UpdateWindowSurface(window);
+    SDL_FreeSurface(surface);
 }
 
 int initSDL() {

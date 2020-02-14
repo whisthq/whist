@@ -231,7 +231,7 @@ void initVideo() {
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) {
-        fprintf(stderr, "SDL: could not create renderer - exiting\n");
+        fprintf(stderr, "SDL: could not create renderer - exiting: %s\n", SDL_GetError());
         exit(1);
     }
 
@@ -373,7 +373,7 @@ void updateVideo() {
         bool will_render = false;
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
-                //mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
+                mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
 
                 renderContext = *ctx;
                 rendering = true;
@@ -393,8 +393,8 @@ void updateVideo() {
                 for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 5; i++) {
                     if (!ctx->received_indicies[i]) {
                         num_nacked++;
-                        //mprintf("************NACKING PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
-                        //nack(ctx->id, i);
+                        mprintf("************NACKING PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
+                        nack(ctx->id, i);
                     }
                     ctx->last_nacked_index = i;
                 }
@@ -476,7 +476,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         return 0;
     }
 
-    //mprintf("Received ID %d Index %d at time since creation %f\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer)); 
+    mprintf("Received ID %d Index %d at time since creation %f\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer)); 
 
     VideoData.max_id = max(VideoData.max_id, ctx->id);
 
