@@ -248,7 +248,11 @@ static int32_t SendVideo(void* opaque) {
         int accumulated_frames = CaptureScreen(device);
         if (accumulated_frames < 0) {
             mprintf("Failed to capture screen\n");
-            connected = false;
+            int width = device->width;
+            int height = device->height;
+            DestroyCaptureDevice(device);
+            InitDesktop();
+            CreateCaptureDevice(device, width, height);
             continue;
         }
 

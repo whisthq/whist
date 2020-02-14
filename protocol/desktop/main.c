@@ -38,6 +38,7 @@ volatile bool update_mbps = false;
 
 // Global state variables
 volatile SDL_Window* window;
+volatile SDL_Renderer* renderer;
 volatile bool run_receive_packets = false;
 volatile bool is_timing_latency = false;
 volatile clock latency_timer;
@@ -195,7 +196,17 @@ static int32_t ReceivePackets(void* opaque) {
 
     initUpdate();
 
+    double lastrecv = 0.0;
+
+    clock last_ack;
+    StartTimer(&last_ack);
+
     for (int i = 0; run_receive_packets; i++) {
+        if (GetTimer(last_ack) > 0.5) {
+            sendp(&socketContext, NULL, 0);
+            StartTimer(&last_ack);
+        }
+
         update();
 
         //mprintf("Update\n");
@@ -226,7 +237,18 @@ static int32_t ReceivePackets(void* opaque) {
 
         StartTimer(&recvfrom_timer);
         int recv_size = recvp(&socketContext, &packet, sizeof(packet));
-        recvfrom_time += GetTimer(recvfrom_timer);
+        double recvfrom_short_time = GetTimer(recvfrom_timer);
+
+        recvfrom_time += recvfrom_short_time;
+        lastrecv += recvfrom_short_time;
+
+        if (lastrecv > 15.0 / 1000.0) {
+            mprintf("Took more than 15ms to receive something!! Took %fms total! Last call was %fms\n", lastrecv * 1000.0, recvfrom_short_time * 1000.0);
+        }
+
+        if (recv_size > 0) {
+            lastrecv = 0.0;
+        }
 
         //mprintf("Recv wait time: %f\n", GetTimer(recvfrom_timer));
 
@@ -320,14 +342,14 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
 }
 
 void clearSDL() {
-    SDL_Surface* surface = SDL_GetWindowSurface(window);
-    SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0, 0, 0));
-    SDL_UpdateWindowSurface(window);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
 }
 
 int initSDL() {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        mprintf("Could not initialize SDL - %s\n", SDL_GetError());
+        fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
         return -1;
     }
 
@@ -354,7 +376,13 @@ int initSDL() {
     );
 
     if (!window) {
-        mprintf("SDL: could not create window - exiting\n");
+        fprintf(stderr, "SDL: could not create window - exiting: %s\n", SDL_GetError());
+        return -1;
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
+    if (!renderer) {
+        fprintf(stderr, "SDL: could not create renderer - exiting: %s\n", SDL_GetError());
         return -1;
     }
 
@@ -362,8 +390,13 @@ int initSDL() {
 }
 
 void destroySDL() {
+    if (renderer) {
+        SDL_DestroyRenderer((SDL_Renderer*)renderer);
+        renderer = NULL;
+    }
     if (window) {
         SDL_DestroyWindow((SDL_Window*)window);
+        window = NULL;
     }
     SDL_Quit();
 }

@@ -4,6 +4,7 @@
 
 // Global Variables
 extern volatile SDL_Window *window;
+extern volatile SDL_Renderer* renderer;
 
 extern volatile int server_width;
 extern volatile int server_height;
@@ -37,7 +38,6 @@ struct VideoData {
 } VideoData;
 
 typedef struct SDLVideoContext {
-    SDL_Renderer* renderer;
     SDL_Texture* texture;
 
     Uint8* yPlane;
@@ -206,10 +206,10 @@ int32_t RenderScreen(void* opaque) {
             cursor_state = frame->cursor.cursor_state;
         }
 
-        SDL_RenderClear(videoContext.renderer);
+        SDL_RenderClear(renderer);
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
-        SDL_RenderCopy(videoContext.renderer, videoContext.texture, NULL, NULL);
-        SDL_RenderPresent(videoContext.renderer);
+        SDL_RenderCopy(renderer, videoContext.texture, NULL, NULL);
+        SDL_RenderPresent(renderer);
         //("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size, GetTimer(renderContext.frame_creation_timer));
 
         VideoData.last_rendered_id = renderContext.id;
@@ -222,18 +222,11 @@ int32_t RenderScreen(void* opaque) {
 // END VIDEO FUNCTIONS
 
 void initVideo() {
-    SDL_Renderer* renderer;
     SDL_Texture* texture;
 
     Uint8* yPlane, * uPlane, * vPlane;
     size_t yPlaneSz, uvPlaneSz;
     int uvPitch;
-
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
-    if (!renderer) {
-        fprintf(stderr, "SDL: could not create renderer - exiting\n");
-        exit(1);
-    }
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     // Allocate a place to put our YUV image on that screen
@@ -263,7 +256,6 @@ void initVideo() {
 
     uvPitch = output_width / 2;
 
-    videoContext.renderer = renderer;
     videoContext.texture = texture;
 
     videoContext.yPlane = yPlane;
@@ -390,10 +382,10 @@ void updateVideo() {
                 }
                 int num_nacked = 0;
                 //mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
-                for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 5; i++) {
+                for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 1; i++) {
                     if (!ctx->received_indicies[i]) {
                         num_nacked++;
-                        //mprintf("************NACKING PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
+                        mprintf("************NACKING PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
                         //nack(ctx->id, i);
                     }
                     ctx->last_nacked_index = i;
@@ -485,7 +477,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         int to_index = packet->index - 3;
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             if (!ctx->received_indicies[i]) {
-                nack(packet->id, i);
+                //nack(packet->id, i);
             }
         }
         ctx->last_nacked_index = max(ctx->last_nacked_index, to_index);
@@ -542,7 +534,6 @@ void destroyVideo() {
     VideoData.run_render_screen_thread = false;
     SDL_WaitThread(VideoData.render_screen_thread, NULL);
     SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
-    SDL_DestroyRenderer(videoContext.renderer);
 
     free(videoContext.yPlane);
     free(videoContext.uPlane);
