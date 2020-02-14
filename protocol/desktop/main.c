@@ -321,8 +321,9 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
 }
 
 void clearSDL() {
-    SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
 }
 
 int initSDL() {
