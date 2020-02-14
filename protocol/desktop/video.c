@@ -365,7 +365,7 @@ void updateVideo() {
         bool will_render = false;
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
-                mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
+                //mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
 
                 renderContext = *ctx;
                 rendering = true;
@@ -468,7 +468,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         return 0;
     }
 
-    mprintf("Received ID %d Index %d at time since creation %f\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer)); 
+    //mprintf("Received ID %d Index %d at time since creation %f\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer)); 
 
     VideoData.max_id = max(VideoData.max_id, ctx->id);
 

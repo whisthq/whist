@@ -145,7 +145,7 @@ void updateAudio() {
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     if (packet->size > 0) {
-                            //mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
+                            mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
                             if (SDL_QueueAudio(AudioData.dev, packet->data, packet->size) < 0) {
                                 mprintf("Could not play audio!\n");
                             }
@@ -240,11 +240,11 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
         }
 
         if (audio_pkt->nacked_for == audio_id) {
-            //mprintf("NACK for Audio ID %d, Index %d Received!\n", packet->id, packet->index);
+            mprintf("Packet for Audio ID %d, Index %d Received! But it was already NACK'ed!\n", packet->id, packet->index);
         }
         audio_pkt->nacked_for = -1;
 
-        //mprintf("Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n", audio_id, packet->payload_size, last_played_id + 1, SDL_GetQueuedAudioSize(AudioData.dev));
+        mprintf("Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n", audio_id, packet->payload_size, last_played_id + 1, SDL_GetQueuedAudioSize(AudioData.dev));
         audio_pkt->id = audio_id;
         most_recent_audio_id = max(audio_pkt->id, most_recent_audio_id);
         audio_pkt->size = packet->payload_size;
