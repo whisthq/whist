@@ -38,6 +38,7 @@ volatile bool update_mbps = false;
 
 // Global state variables
 volatile SDL_Window* window;
+volatile SDL_Renderer* renderer;
 volatile bool run_receive_packets = false;
 volatile bool is_timing_latency = false;
 volatile clock latency_timer;
@@ -323,12 +324,11 @@ void clearSDL() {
     SDL_Surface* surface = SDL_GetWindowSurface(window);
     SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0, 0, 0));
     SDL_UpdateWindowSurface(window);
-    SDL_FreeSurface(surface);
 }
 
 int initSDL() {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        mprintf("Could not initialize SDL - %s\n", SDL_GetError());
+        fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
         return -1;
     }
 
@@ -355,7 +355,13 @@ int initSDL() {
     );
 
     if (!window) {
-        mprintf("SDL: could not create window - exiting\n");
+        fprintf(stderr, "SDL: could not create window - exiting: %s\n", SDL_GetError());
+        return -1;
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
+    if (!renderer) {
+        fprintf(stderr, "SDL: could not create renderer - exiting: %s\n", SDL_GetError());
         return -1;
     }
 
@@ -363,8 +369,13 @@ int initSDL() {
 }
 
 void destroySDL() {
+    if (renderer) {
+        SDL_DestroyRenderer((SDL_Renderer*)renderer);
+        renderer = NULL;
+    }
     if (window) {
         SDL_DestroyWindow((SDL_Window*)window);
+        window = NULL;
     }
     SDL_Quit();
 }
