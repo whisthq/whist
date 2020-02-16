@@ -189,9 +189,10 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		mprintf("Invalid origin parameter. Specify 'S' or 'C'.");
 		return -1;
 	}
+
 	// Create UDP socket
 	context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (context->s < 0) { // Windows & Unix cases
+	if (context->s <= 0) { // Windows & Unix cases
 		mprintf("Could not create UDP socket\n");
 		return -1;
 	}
@@ -205,12 +206,14 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		if (sendp(context->s, NULL, 0) < 0) {
 			mprintf("Could not send message to server\n");
+			closesocket(context->s);
 			return -1;
 		}
 
 		set_timeout(context->s, stun_timeout_ms);
 		if (recvp(context->s, NULL, 0) < 0) {
 			mprintf("Did not receive response from server!\n");
+			closesocket(context->s);
 			return -1;
 		}
 
@@ -231,11 +234,13 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		set_timeout(context->s, stun_timeout_ms);
 		if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) < 0) {
 			mprintf("Did not receive response from client!\n");
+			closesocket(context->s);
 			return -1;
 		}
 
 		if (sendp(context->s, NULL, 0) < 0) {
 			mprintf("Could not send ack to client!\n");
+			closesocket(context->s);
 			return -1;
 		}
 
