@@ -67,7 +67,8 @@
 /*** DEFINITIONS START ***/
 
 #define STUN_SERVER_IP "3.233.46.94"
-#define PORT 48800 
+#define PORT_CLIENT_TO_SERVER 32262
+#define PORT_SERVER_TO_CLIENT 32263
 
 #define SERVER_IP "40.76.207.99"
 #define MAX_PAYLOAD_SIZE 1400
@@ -732,7 +733,7 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config);
 FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len);
 FractalStatus EnterWinString(enum FractalKeycode keycodes[100], int len);
 
-int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int recvfrom_timeout_s, int stun_timeout_ms);
+int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_s, int stun_timeout_ms);
 int recvp(struct SocketContext* context, void* buf, int len);
 int sendp(struct SocketContext* context, void* buf, int len);
 

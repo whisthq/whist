@@ -471,13 +471,13 @@ int main(int argc, char* argv[])
         SDL_Event msg;
         FractalClientMessage fmsg = { 0 };
 
-        if (CreateUDPContext(&PacketSendContext, "C", server_ip, 10, 500) < 0) {
+        if (CreateUDPContext(&PacketSendContext, "C", server_ip, PORT_CLIENT_TO_SERVER, 10, 500) < 0) {
             mprintf("Failed to connect to server\n");
             continue;
         }
 
         struct SocketContext PacketReceiveContext = { 0 };
-        if (CreateUDPContext(&PacketReceiveContext, "C", server_ip, 1, 500) < 0) {
+        if (CreateUDPContext(&PacketReceiveContext, "C", server_ip, PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             mprintf("Failed finish connection to server\n");
             continue;
         }

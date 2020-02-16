@@ -150,11 +150,39 @@ SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
 }
 */
 
-int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int recvfrom_timeout_ms, int stun_timeout_ms) {
-	SOCKET s;
-	struct sockaddr_in addr;
+void set_timeout(SOCKET s, int timeout_ms) {
+	if (timeout_ms < 0) {
+		u_long mode = 0;
+#if defined(_WIN32)
+		ioctlsocket(s, FIONBIO, &mode);
+#else
+		ioctl(s, FIONBIO, &mode);
+#endif
+	} else if (timeout_ms == 0) {
+		u_long mode = 1;
+#if defined(_WIN32)
+		ioctlsocket(s, FIONBIO, &mode);
+#else
+		ioctl(s, FIONBIO, &mode);
+#endif
+	} else {
+#if defined(_WIN32)
+		int read_timeout = timeout_ms;
+#else
+		struct timeval read_timeout;
+		read_timeout.tv_sec = 0;
+		read_timeout.tv_usec = timeout_ms * 1000;
+#endif
+
+		if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout)) < 0) {
+			mprintf("Failed to set timeout\n");
+			return -1;
+		}
+	}
+}
+
+int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
 	struct FractalDestination buf;
-	unsigned int slen = sizeof(context->addr);
 
 	// Function parameter checking
 	if (!(strcmp(origin, "C") == 0 || strcmp(origin, "S") == 0)) {
@@ -168,6 +196,57 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		return -1;
 	}
 
+	if (strcmp(origin, "C") == 0) {
+		context->addr.sin_family = AF_INET;
+		context->addr.sin_addr.s_addr = inet_addr(destination);
+		context->addr.sin_port = htons(port);
+
+		mprintf("Connecting to server...\n");
+
+		if (sendp(context->s, NULL, 0) < 0) {
+			mprintf("Could not send message to server\n");
+			return -1;
+		}
+
+		set_timeout(context->s, stun_timeout_ms);
+		if (recvp(context->s, NULL, 0) < 0) {
+			mprintf("Did not receive response from server!\n");
+			return -1;
+		}
+
+		mprintf("Connected on %s:%p!", destination, port);
+
+		set_timeout(context->s, recvfrom_timeout_ms);
+	}
+	else {
+		struct sockaddr_in origin_addr;
+		origin_addr.sin_family = AF_INET;
+		origin_addr.sin_addr.s_addr = inet_addr(destination);
+		origin_addr.sin_port = htons(port);
+
+		bind(context->s, (struct sockaddr*)(&origin_addr), sizeof(origin_addr));
+
+		mprintf("Waiting for client...\n");
+
+		set_timeout(context->s, stun_timeout_ms);
+		if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) < 0) {
+			mprintf("Did not receive response from client!\n");
+			return -1;
+		}
+
+		if (sendp(context->s, NULL, 0) < 0) {
+			mprintf("Could not send ack to client!\n");
+			return -1;
+		}
+
+		mprintf("Client received at %s:%p!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
+
+		set_timeout(context->s, recvfrom_timeout_ms);
+	}
+
+	return 0;
+
+	/*
 	struct sockaddr_in stun_addr = { 0 };
 	stun_addr.sin_family = AF_INET;
 	stun_addr.sin_addr.s_addr = inet_addr(STUN_SERVER_IP);
@@ -268,6 +347,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 	// Great success!
 	return 0;
+	*/
 }
 
 int recvp(struct SocketContext* context, void* buf, int len) {

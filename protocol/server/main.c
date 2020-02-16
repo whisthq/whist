@@ -427,12 +427,12 @@ int main(int argc, char* argv[])
 
     while (true) {
         struct SocketContext PacketReceiveContext = { 0 };
-        if (CreateUDPContext(&PacketReceiveContext, "S", "", 1, -1) < 0) {
+        if (CreateUDPContext(&PacketReceiveContext, "S", "", -1, 1, -1) < 0) {
             mprintf("Failed to start connection\n");
             continue;
         }
 
-        if (CreateUDPContext(&PacketSendContext, "S", "", 1, 500) < 0) {
+        if (CreateUDPContext(&PacketSendContext, "S", "", -1, 1, 500) < 0) {
             mprintf("Failed to finish connection.\n");
             continue;
         }
