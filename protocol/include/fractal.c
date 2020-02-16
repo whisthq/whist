@@ -247,115 +247,12 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			return -1;
 		}
 
-		mprintf("Client received at %s:%p!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
+		mprintf("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
 		set_timeout(context->s, recvfrom_timeout_ms);
 	}
 
 	return 0;
-
-	/*
-	struct sockaddr_in stun_addr = { 0 };
-	stun_addr.sin_family = AF_INET;
-	stun_addr.sin_addr.s_addr = inet_addr(STUN_SERVER_IP);
-	stun_addr.sin_port = htons(PORT);
-
-	// Point address to STUN server
-
-	// Create payload to send to STUN server
-#define DEST_BUF_LEN 20
-	char dest[DEST_BUF_LEN];
-	if (strlen(destination) + strlen(origin) + 1 > DEST_BUF_LEN) {
-		mprintf("Strings too long!\n");
-		return -1;
-	}
-	strcpy(dest, destination);
-	strcat(dest, origin);
-
-	if (stun_timeout_ms == 0) {
-		mprintf("STUN timeout can't be zero!\n");
-		return -1;
-	}
-
-	// Set timeout, will refresh STUN this often
-	const int stun_server_retry_ms = 50;
-#if defined(_WIN32)
-	int read_timeout = stun_server_retry_ms;
-#else
-	struct timeval read_timeout;
-	read_timeout.tv_sec = 0;
-	read_timeout.tv_usec = stun_server_retry_ms * 1000;
-#endif
-
-
-	if (setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout)) < 0) {
-		mprintf("Failed to set timeout\n");
-		return -1;
-	}
-
-	int recv_size;
-
-	// Wait for server to sync
-	if (strcmp(origin, "C") == 0) {
-		SDL_Delay(150);
-	}
-
-	// Connect to STUN server
-	mprintf("Connecting to STUN server...\n");
-	clock attempt_time;
-	StartTimer(&attempt_time);
-	do {
-		if (stun_timeout_ms > 0 && GetTimer(attempt_time)*1000.0 > stun_timeout_ms) {
-			mprintf("STUN server failed to respond!\n");
-			return -1;
-		}
-		// Refresh STUN
-		if (sendto(context->s, dest, strlen(dest), 0, (struct sockaddr*)(&stun_addr), sizeof(stun_addr)) < 0) {
-			mprintf("Failed to message STUN server, trying again...\n");
-		}
-		// Wait for response from STUN server
-	} while (recvfrom(context->s, &buf, sizeof(buf), 0, NULL, NULL) != sizeof(buf));
-
-	// Set destination address to the client that the STUN server has paired us with
-	memset((char*)&context->addr, 0, sizeof(context->addr));
-	context->addr.sin_family = AF_INET;
-	context->addr.sin_addr.s_addr = buf.host;
-	context->addr.sin_port = buf.port;
-
-	mprintf("Received packet from STUN server, connecting to %s:%d\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
-
-	if (sendto(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) < 0) {
-		mprintf("Could not open connection %d\n", GetLastNetworkError());
-	}
-
-	// Set timeout, default 5 seconds
-	if (recvfrom_timeout_ms < 0) {
-		recvfrom_timeout_ms = 5000;
-	}
-
-	if (recvfrom_timeout_ms == 0) {
-		u_long mode = 1;
-		#if defined(_WIN32)
-			ioctlsocket(context->s, FIONBIO, &mode);
-		#else
-			ioctl(context->s, FIONBIO, &mode);
-		#endif
-	}
-	else {
-#if defined(_WIN32)
-		read_timeout = recvfrom_timeout_ms;
-#else
-		read_timeout.tv_sec = 0;
-		read_timeout.tv_usec = recvfrom_timeout_ms * 1000;
-#endif
-		setsockopt(context->s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
-	}
-
-	SDL_Delay(150);
-
-	// Great success!
-	return 0;
-	*/
 }
 
 int recvp(struct SocketContext* context, void* buf, int len) {
