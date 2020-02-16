@@ -176,7 +176,7 @@ void set_timeout(SOCKET s, int timeout_ms) {
 
 		if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout)) < 0) {
 			mprintf("Failed to set timeout\n");
-			return -1;
+			return;
 		}
 	}
 }
@@ -224,7 +224,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		origin_addr.sin_port = htons(port);
-		
+
 		if (bind(context->s, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
 			mprintf("Failed to bind to port!\n");
 			closesocket(context->s);
