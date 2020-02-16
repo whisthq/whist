@@ -50,6 +50,7 @@
 	#pragma warning(disable: 4201)
 #else
 	#define SOCKET int
+	#define closesocket close
 
 	#if defined(__APPLE__)
 		// this one is apple specific
@@ -727,11 +728,6 @@ FractalStatus ServerDestroy(SOCKET sockets[], HANDLE threads[], bool full);
 /// @details initializes windows socket, creates and binds our listen socket
 SOCKET ServerInit(SOCKET listensocket, FractalConfig config);
 */
-
-/// @brief replays a user action taken on the client and sent to the server
-/// @details parses the FractalMessage struct and send input to Windows OS
-FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len);
-FractalStatus EnterWinString(enum FractalKeycode keycodes[100], int len);
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_s, int stun_timeout_ms);
 int recvp(struct SocketContext* context, void* buf, int len);

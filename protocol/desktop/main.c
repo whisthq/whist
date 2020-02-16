@@ -552,13 +552,10 @@ int main(int argc, char* argv[])
 
         clearSDL();
 
-#if defined(_WIN32)
         closesocket(PacketSendContext.s);
         closesocket(PacketReceiveContext.s);
+#if defined(_WIN32)
         WSACleanup();
-#else
-        close(PacketSendContext.s);
-        close(PacketReceiveContext.s);
 #endif
 
         if (shutting_down) {
