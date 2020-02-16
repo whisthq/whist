@@ -215,7 +215,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			return -1;
 		}
 
-		mprintf("Connected on %s:%p!", destination, port);
+		mprintf("Connected on %s:%d!\n", destination, port);
 
 		set_timeout(context->s, recvfrom_timeout_ms);
 	}
@@ -224,7 +224,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		origin_addr.sin_port = htons(port);
-
 		
 		if (bind(context->s, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
 			mprintf("Failed to bind to port!\n");
