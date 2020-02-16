@@ -182,8 +182,6 @@ void set_timeout(SOCKET s, int timeout_ms) {
 }
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
-	struct FractalDestination buf;
-
 	// Function parameter checking
 	if (!(strcmp(origin, "C") == 0 || strcmp(origin, "S") == 0)) {
 		mprintf("Invalid origin parameter. Specify 'S' or 'C'.");
@@ -204,14 +202,14 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		mprintf("Connecting to server...\n");
 
-		if (sendp(context->s, NULL, 0) < 0) {
+		if (sendp(context, NULL, 0) < 0) {
 			mprintf("Could not send message to server\n");
 			closesocket(context->s);
 			return -1;
 		}
 
 		set_timeout(context->s, stun_timeout_ms);
-		if (recvp(context->s, NULL, 0) < 0) {
+		if (recvp(context, NULL, 0) < 0) {
 			mprintf("Did not receive response from server!\n");
 			closesocket(context->s);
 			return -1;
@@ -224,21 +222,27 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 	else {
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
-		origin_addr.sin_addr.s_addr = inet_addr(destination);
+		origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		origin_addr.sin_port = htons(port);
 
-		bind(context->s, (struct sockaddr*)(&origin_addr), sizeof(origin_addr));
-
-		mprintf("Waiting for client...\n");
-
-		set_timeout(context->s, stun_timeout_ms);
-		if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr)) < 0) {
-			mprintf("Did not receive response from client!\n");
+		
+		if (bind(context->s, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
+			mprintf("Failed to bind to port!\n");
 			closesocket(context->s);
 			return -1;
 		}
 
-		if (sendp(context->s, NULL, 0) < 0) {
+		mprintf("Waiting for client to connect to %s:%d...\n", "localhost", port);
+
+		set_timeout(context->s, stun_timeout_ms);
+		int slen = sizeof(context->addr);
+		if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen) < 0) {
+			mprintf("Did not receive response from client! %d\n", GetLastNetworkError());
+			closesocket(context->s);
+			return -1;
+		}
+
+		if (sendp(context, NULL, 0) < 0) {
 			mprintf("Could not send ack to client!\n");
 			closesocket(context->s);
 			return -1;
