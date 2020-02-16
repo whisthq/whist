@@ -429,11 +429,13 @@ int main(int argc, char* argv[])
         struct SocketContext PacketReceiveContext = { 0 };
         if (CreateUDPContext(&PacketReceiveContext, "S", "0.0.0.0", PORT_CLIENT_TO_SERVER, 1, -1) < 0) {
             mprintf("Failed to start connection\n");
+            SDL_Delay(15);
             continue;
         }
 
-        if (CreateUDPContext(&PacketSendContext, "S", "0.0.0.0", PORT_CLIENT_TO_SERVER, 1, 500) < 0) {
+        if (CreateUDPContext(&PacketSendContext, "S", "0.0.0.0", PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             mprintf("Failed to finish connection.\n");
+            SDL_Delay(15);
             continue;
         }
 
