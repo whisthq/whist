@@ -12,8 +12,10 @@ typedef struct audio_packet {
     char data[MAX_PAYLOAD_SIZE];
 } audio_packet;
 
-#define AUDIO_QUEUE_LIMIT 40000
-#define TRIGGERED_AUDIO_QUEUE_LIMIT 25000
+#define LOG_AUDIO true
+
+#define AUDIO_QUEUE_LIMIT 35000
+#define TRIGGERED_AUDIO_QUEUE_LIMIT 16000
 
 #define MAX_NUM_AUDIO_FRAMES 5
 #define MAX_NUM_AUDIO_INDICES 3
@@ -78,6 +80,7 @@ void destroyAudio() {
 }
 
 void updateAudio() {
+    mprintf("Queue: %d\n", SDL_GetQueuedAudioSize(AudioData.dev));
     if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
         mprintf("Updating audio frequency to %d!\n", audio_frequency);
         decoder_frequency = audio_frequency;
@@ -145,7 +148,9 @@ void updateAudio() {
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     if (packet->size > 0) {
-                            //mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
+#if LOG_AUDIO
+                            mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
+#endif
                             if (SDL_QueueAudio(AudioData.dev, packet->data, packet->size) < 0) {
                                 mprintf("Could not play audio!\n");
                             }
@@ -244,7 +249,9 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
         }
         audio_pkt->nacked_for = -1;
 
-        //mprintf("Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n", audio_id, packet->payload_size, last_played_id + 1, SDL_GetQueuedAudioSize(AudioData.dev));
+#if LOG_AUDIO
+        mprintf("Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n", audio_id, packet->payload_size, last_played_id + 1, SDL_GetQueuedAudioSize(AudioData.dev));
+#endif
         audio_pkt->id = audio_id;
         most_recent_audio_id = max(audio_pkt->id, most_recent_audio_id);
         audio_pkt->size = packet->payload_size;

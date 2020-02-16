@@ -132,9 +132,6 @@ void update() {
 // END UPDATER CODE
 
 int SendPacket(void* data, int len) {
-    clock send_timer;
-    StartTimer(&send_timer);
-
     if (len > MAX_PACKET_SIZE) {
         mprintf("Packet too large!\n");
         return -1;
@@ -148,10 +145,6 @@ int SendPacket(void* data, int len) {
         failed = true;
     }
     SDL_UnlockMutex(send_packet_mutex);
-
-    if (GetTimer(send_timer) > 3.0 / 1000.0) {
-        mprintf("WHOAH!!!!!!!!!!!!!!!!!!!!!! SendPacket took too long! %f\n", GetTimer(send_timer));
-    }
 
     return failed ? -1 : 0;
 }
@@ -201,8 +194,14 @@ static int32_t ReceivePackets(void* opaque) {
     clock last_ack;
     StartTimer(&last_ack);
 
+    clock drop_test_timer;
+    int drop_time_ms = 250;
+    int drop_distance_sec = -1;
+    bool dropping = false;
+    StartTimer(&drop_test_timer);
+
     for (int i = 0; run_receive_packets; i++) {
-        if (GetTimer(last_ack) > 0.5) {
+        if (GetTimer(last_ack) > 5.0) {
             sendp(&socketContext, NULL, 0);
             StartTimer(&last_ack);
         }
@@ -236,7 +235,32 @@ static int32_t ReceivePackets(void* opaque) {
         update_audio_time += GetTimer(update_audio_timer);
 
         StartTimer(&recvfrom_timer);
-        int recv_size = recvp(&socketContext, &packet, sizeof(packet));
+
+        // START DROP EMULATION
+        if (dropping) {
+            if (drop_time_ms > 0 && GetTimer(drop_test_timer) * 1000.0 > drop_time_ms) {
+                dropping = false;
+                StartTimer(&drop_test_timer);
+            }
+        }
+        else {
+            if (drop_distance_sec > 0 && GetTimer(drop_test_timer) > drop_distance_sec) {
+                dropping = true;
+                StartTimer(&drop_test_timer);
+            }
+        }
+        // END DROP EMULATION
+
+        int recv_size;
+        if (dropping) {
+            SDL_Delay(1);
+            recv_size = 0;
+            mprintf("DROPPING\n");
+        }
+        else {
+            recv_size = recvp(&socketContext, &packet, sizeof(packet));
+        }
+
         double recvfrom_short_time = GetTimer(recvfrom_timer);
 
         recvfrom_time += recvfrom_short_time;

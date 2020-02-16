@@ -147,7 +147,7 @@ int32_t RenderScreen(void* opaque) {
             continue;
         }
 
-        mprintf("Rendering ID %d\n", renderContext.id);
+        //mprintf("Rendering ID %d\n", renderContext.id);
 
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)renderContext.frame_buffer;
@@ -351,7 +351,7 @@ void updateVideo() {
                     mprintf("Frame dropped with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
                 }
                 else {
-                    mprintf("Bad ID?\n");
+                    mprintf("Bad ID? %d instead of %d\n", receiving_frames[index].id, i);
                 }
             }
             VideoData.last_rendered_id = VideoData.most_recent_iframe - 1;
@@ -467,7 +467,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         return 0;
     }
 
-    mprintf("Received ID %d Index %d at time since creation %f %s\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer), packet->is_a_nack ? "(nack)" : ""); 
+    //mprintf("Received ID %d Index %d at time since creation %f %s\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer), packet->is_a_nack ? "(nack)" : ""); 
 
     VideoData.max_id = max(VideoData.max_id, ctx->id);
 
