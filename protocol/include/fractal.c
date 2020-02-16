@@ -191,7 +191,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 	// Create UDP socket
 	context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (context->s <= 0) { // Windows & Unix cases
-		mprintf("Could not create UDP socket\n");
+		mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
 		return -1;
 	}
 
@@ -203,14 +203,14 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		mprintf("Connecting to server...\n");
 
 		if (sendp(context, NULL, 0) < 0) {
-			mprintf("Could not send message to server\n");
+			mprintf("Could not send message to server %d\n", GetLastNetworkError());
 			closesocket(context->s);
 			return -1;
 		}
 
 		set_timeout(context->s, stun_timeout_ms);
 		if (recvp(context, NULL, 0) < 0) {
-			mprintf("Did not receive response from server!\n");
+			mprintf("Did not receive response from server! %d\n", GetLastNetworkError());
 			closesocket(context->s);
 			return -1;
 		}
@@ -226,7 +226,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		origin_addr.sin_port = htons(port);
 		
 		if (bind(context->s, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
-			mprintf("Failed to bind to port!\n");
+			mprintf("Failed to bind to port! %d\n", GetLastNetworkError());
 			closesocket(context->s);
 			return -1;
 		}
@@ -242,7 +242,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		}
 
 		if (sendp(context, NULL, 0) < 0) {
-			mprintf("Could not send ack to client!\n");
+			mprintf("Could not send ack to client! %d\n", GetLastNetworkError());
 			closesocket(context->s);
 			return -1;
 		}
