@@ -442,6 +442,8 @@ int main(int argc, char* argv[])
             continue;
         }
 
+        SDL_Delay(250);
+
         clock startup_time;
         StartTimer(&startup_time);
 
