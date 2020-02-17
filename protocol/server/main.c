@@ -433,6 +433,8 @@ int main(int argc, char* argv[])
             continue;
         }
 
+        SDL_Delay(250);
+
         if (CreateUDPContext(&PacketSendContext, "S", "0.0.0.0", PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             mprintf("Failed to finish connection.\n");
             closesocket(PacketReceiveContext.s);
