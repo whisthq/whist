@@ -479,7 +479,7 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        SDL_Delay(250);
+        SDL_Delay(150);
 
         struct SocketContext PacketReceiveContext = { 0 };
         if (CreateUDPContext(&PacketReceiveContext, "C", server_ip, PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
