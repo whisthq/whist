@@ -488,8 +488,6 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        SDL_Delay(250);
-
         // Initialize video and audio
         initVideo();
         initAudio();
