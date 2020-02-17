@@ -479,7 +479,7 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        SDL_Delay(100);
+        SDL_Delay(250);
 
         struct SocketContext PacketReceiveContext = { 0 };
         if (CreateUDPContext(&PacketReceiveContext, "C", server_ip, PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
@@ -487,6 +487,8 @@ int main(int argc, char* argv[])
             closesocket(PacketSendContext.s);
             continue;
         }
+
+        SDL_Delay(250);
 
         // Initialize video and audio
         initVideo();
