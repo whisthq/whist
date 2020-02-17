@@ -266,11 +266,10 @@ static int32_t ReceivePackets(void* opaque) {
         recvfrom_time += recvfrom_short_time;
         lastrecv += recvfrom_short_time;
 
-        if (lastrecv > 15.0 / 1000.0) {
-            mprintf("Took more than 15ms to receive something!! Took %fms total! Last call was %fms\n", lastrecv * 1000.0, recvfrom_short_time * 1000.0);
-        }
-
         if (recv_size > 0) {
+            if (lastrecv > 20.0 / 1000.0) {
+                mprintf("Took more than 20ms to receive something!! Took %fms total!\n", lastrecv * 1000.0);
+            }
             lastrecv = 0.0;
         }
 
@@ -331,6 +330,10 @@ static int32_t ReceivePackets(void* opaque) {
                 }
             }
         }
+    }
+
+    if (lastrecv > 20.0 / 1000.0) {
+        mprintf("Took more than 20ms to receive something!! Took %fms total!\n", lastrecv * 1000.0);
     }
 
     SDL_Delay(5);

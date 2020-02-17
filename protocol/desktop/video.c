@@ -21,6 +21,8 @@ volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* cursor = NULL;
 volatile FractalCursorID last_cursor = SDL_SYSTEM_CURSOR_ARROW;
 
+#define LOG_VIDEO false
+
 struct VideoData {
     struct FrameData* pending_ctx;
     int frames_received;
@@ -147,7 +149,9 @@ int32_t RenderScreen(void* opaque) {
             continue;
         }
 
-        //mprintf("Rendering ID %d\n", renderContext.id);
+#if LOG_VIDEO
+        mprintf("Rendering ID %d\n", renderContext.id);
+#endif
 
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)renderContext.frame_buffer;
@@ -211,7 +215,10 @@ int32_t RenderScreen(void* opaque) {
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
         SDL_RenderCopy(renderer, videoContext.texture, NULL, NULL);
         SDL_RenderPresent(renderer);
-        //("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size, GetTimer(renderContext.frame_creation_timer));
+
+#if LOG_VIDEO
+        mprintf("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size, GetTimer(renderContext.frame_creation_timer));
+#endif
 
         VideoData.last_rendered_id = renderContext.id;
         has_rendered_yet = true;
@@ -386,7 +393,7 @@ void updateVideo() {
                 for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 1; i++) {
                     if (!ctx->received_indicies[i]) {
                         num_nacked++;
-                        mprintf("************NACKING PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
+                        mprintf("************NACKING VIDEO PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
                         ctx->nacked_indicies[i] = true;
                         nack(ctx->id, i);
                     }
@@ -399,14 +406,6 @@ void updateVideo() {
                 StartTimer(&ctx->last_nacked_timer);
             }
         }
-        
-        /*
-        if (!will_render && VideoData.max_id > VideoData.last_rendered_id + 15) {
-            VideoData.last_rendered_id++;
-            mprintf("Way too far behind! Skipping ahead to %d!\n", VideoData.last_rendered_id);
-            //SDL_Delay(15000);
-            //exit(-1);
-        }*/
     }
 }
 
@@ -459,15 +458,20 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
             mprintf("NACK for Video ID %d, Index %d Received! But didn't need it.\n", packet->id, packet->index);
         }
     } else if (ctx->nacked_indicies[packet->index]) {
-        mprintf("Received the original %d %d, but we NACK'ed for it.\n", packet->id, packet->index);
+        mprintf("Received the original Video ID %d Index %d, but we had NACK'ed for it.\n", packet->id, packet->index);
     }
 
     // Already received
     if (ctx->received_indicies[packet->index]) {
+#if LOG_VIDEO
+        mprintf("Skipping duplicate Video ID %d Index %d at time since creation %f %s\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer), packet->is_a_nack ? "(nack)" : "");
+#endif
         return 0;
     }
 
-    //mprintf("Received ID %d Index %d at time since creation %f %s\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer), packet->is_a_nack ? "(nack)" : ""); 
+#if LOG_VIDEO
+    mprintf("Received Video ID %d Index %d at time since creation %f %s\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer), packet->is_a_nack ? "(nack)" : ""); 
+#endif
 
     VideoData.max_id = max(VideoData.max_id, ctx->id);
 
@@ -498,33 +502,15 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         bool is_iframe = ((Frame*)ctx->frame_buffer)->is_iframe;
 
         VideoData.frames_received++;
-        //mprintf("Received Video Packet ID %d (Packets: %d) (Size: %d) %s\n", ctx->id, ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
+
+#if LOG_VIDEO
+        mprintf("Received Video Frame ID %d (Packets: %d) (Size: %d) %s\n", ctx->id, ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
+#endif
 
         // If it's an I-frame, then just skip right to it, if the id is ahead of the next to render id
         if (is_iframe) {
             VideoData.most_recent_iframe = max(VideoData.most_recent_iframe, ctx->id);
         }
-
-        /*
-        if (ctx->id == VideoData.last_rendered_id + 1) {
-            VideoData.max_id = ctx->id;
-            //mprintf("Received all packets for id %d, getting ready to render\n", packet.id);
-
-            for (int i = VideoData.last_rendered_id + 1; i < VideoData.max_id; i++) {
-                int index = i % RECV_FRAMES_BUFFER_SIZE;
-                if (receiving_frames[index].id == i) {
-                    if (!receiving_frames[index].rendered) {
-                        mprintf("Frame dropped with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
-                    }
-                }
-                else {
-                    mprintf("Wrong ID?\n");
-                }
-            }
-
-            VideoData.pending_ctx = ctx;
-        }
-        */
     }
 
     return 0;

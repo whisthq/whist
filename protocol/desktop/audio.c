@@ -12,7 +12,7 @@ typedef struct audio_packet {
     char data[MAX_PAYLOAD_SIZE];
 } audio_packet;
 
-#define LOG_AUDIO true
+#define LOG_AUDIO false
 
 #define AUDIO_QUEUE_LIMIT 35000
 #define TRIGGERED_AUDIO_QUEUE_LIMIT 16000
@@ -80,7 +80,9 @@ void destroyAudio() {
 }
 
 void updateAudio() {
+#if LOG_AUDIO
     mprintf("Queue: %d\n", SDL_GetQueuedAudioSize(AudioData.dev));
+#endif
     if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
         mprintf("Updating audio frequency to %d!\n", audio_frequency);
         decoder_frequency = audio_frequency;

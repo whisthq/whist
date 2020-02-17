@@ -749,8 +749,6 @@ double GetTimer(clock timer);
 
 uint32_t Hash(void* key, size_t len);
 
-void getClientResolution(unsigned int *width, unsigned int *height);
-
 int get_native_screen_width();
 int get_native_screen_height();
 
