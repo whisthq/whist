@@ -67,7 +67,7 @@ const int windows_keycodes[265] = {
 	NULL, // 50 -> no SDL keycode at index 50
 	0xBA, // 51 -> Semicolon
 	0xDE, // 52 -> Apostrophe
-	0xDC, // 53 -> Backtick
+	VK_OEM_3, // 53 -> Backtick
 	0xBC, // 54 -> Comma
 	0xBE, // 55 -> Period
 	0xBF, // 56 -> Slash
