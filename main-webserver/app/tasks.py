@@ -26,10 +26,12 @@ def fetchAll(self, update):
     vm_names = []
     current_usernames = []
     current_names = []
+
     if update:
         current_vms = fetchUserVMs(None)
         current_usernames = [current_vm['vm_username'] for current_vm in current_vms]
         current_names = [current_vm['vm_name'] for current_vm in current_vms]
+
     for entry in azure_portal_vms:
         vm = getVM(entry.name)
         vm_ip = getIP(vm)
@@ -44,11 +46,14 @@ def fetchAll(self, update):
 
         if update:
             try:
-                updateRow(entry.os_profile.admin_username, entry.name, current_usernames, current_names)
+                if not entry.name in current_names:
+                    insertRow(entry.os_profile.admin_username, entry.name, current_usernames, current_names)
             except:
                 pass
 
     if update:
+        print("All VMs are " + [current_vm['vm_name'] for current_vm in current_vms])
         for current_vm in current_vms:
             deleteRow(current_vm['vm_username'], current_vm['vm_name'], vm_usernames, vm_names)
+
     return vms

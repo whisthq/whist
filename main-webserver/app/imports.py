@@ -1,4 +1,4 @@
-import os, random, string, time
+import os, random, string, time, sys, logging
 
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.resource import ResourceManagementClient
