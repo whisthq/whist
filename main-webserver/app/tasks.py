@@ -52,8 +52,8 @@ def fetchAll(self, update):
                 pass
 
     if update:
-        print("All VMs are " + [current_vm['vm_name'] for current_vm in current_vms])
         for current_vm in current_vms:
+            print(current_vm['vm_name'])
             deleteRow(current_vm['vm_username'], current_vm['vm_name'], vm_usernames, vm_names)
 
     return vms
