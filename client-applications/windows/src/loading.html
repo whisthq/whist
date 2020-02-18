@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Steady Readers</title>
+  <base href="./">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="loading.css" />
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body> 
+  <div class = "landing-header-left" style = "color: white; padding: 30px; padding-top: 35px">
+    <img src = "assets/logo.svg" width = "20" height = "20"/>
+    <span class = "logo-title">Fractal</span>
+  </div>
+  <div class="header">
+    <div class="centered-section">
+      <span class = "loading-title">Loading...</span>
+      <br/>
+      <div id="splash-progress-bar-status"> 
+        <div id="splash-progress-bar">  
+      </div> 
+    </div> 
+  </div>
+
+  <script> 
+  function update() { 
+    var element = document.getElementById("splash-progress-bar"); 
+    var width = 1; 
+    var identity = setInterval(scene, 30); 
+    function scene() { 
+      if (width >= 100) { 
+        var ipcRenderer = require('electron').ipcRenderer;
+        ipcRenderer.send('showMainWindow');
+        clearInterval(identity); 
+      } else { 
+        width++; 
+        element.style.width = width + '%'; 
+      } 
+    } 
+  } 
+  update();
+  </script> 
+</body>
+</html>
