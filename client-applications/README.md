@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Fractal Applications
 
 This repository contains the source code for the Fractal Cocal Applications which users can download on their local device (Desktop OSes, iOS, Android, etc.) to connect to their cloud computer and start the streaming protocol.
@@ -9,3 +10,6 @@ The following are left to implement:
 - Cross-Platform Desktop (Windows, MacOS, Linux Ubuntu)
 - iOS/iPadOS
 - Android/Chromebook
+=======
+# fractal-apps
+>>>>>>> 931789a4f4332bf3474915461cecaf6c4c3e4327
