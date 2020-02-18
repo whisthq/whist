@@ -5,8 +5,6 @@ from .helperFuncs import *
 def createVM(self, vm_size):
     _, compute_client, _ = createClients()
     vmName = genVMName()
-    print("VM NAME!!!")
-    print(vmName)
     nic = createNic(vmName, 0)
     if not nic: 
     	return jsonify({})

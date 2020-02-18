@@ -233,14 +233,14 @@ def resetPassword(username, password):
     with engine.connect() as conn:
         conn.execute(command, **params)
 
-def resetVMPassword(username, password):
+def resetVMPassword(username, password, vm_name):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     command = text("""
         UPDATE v_ms
-        SET "vmPassword" = :password
-        WHERE "vmUserName" = :userName
+        SET "vmPassword" = :password, "vmUserName" = :userName
+        WHERE "vmName" = :vm_name
         """)
-    params = {'userName': username, 'password': pwd_token}
+    params = {'userName': username, 'password': pwd_token, 'vm_name': vm_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
 

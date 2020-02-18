@@ -33,8 +33,8 @@ def user(action):
 		except Exception as e:
 			return jsonify({}), 403
 	elif action == 'reset':
-		username, password = body['username'], body['password']
-		resetVMPassword(username, password)
+		username, password, vm_name = body['username'], body['password'], body['vm_name']
+		resetVMPassword(username, password, vm_name)
 		return jsonify({'status': 200}), 200
 
 @account_bp.route('/account/<action>', methods = ['POST'])
