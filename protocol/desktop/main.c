@@ -467,6 +467,8 @@ int main(int argc, char* argv[])
     for (int try_amount = 0; try_amount < 3; try_amount++) {
         clearSDL();
 
+        SDL_Delay(200);
+
         // initialize the windows socket library if this is a windows client
 #if defined(_WIN32)
         WSADATA wsa;
