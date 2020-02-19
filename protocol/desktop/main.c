@@ -374,12 +374,12 @@ void clearSDL() {
     SDL_RenderPresent(renderer);
 }
 
-void SendCapturedKey( FractalKeycode key, KBDLLHOOKSTRUCT* pkbhs )
+void SendCapturedKey( FractalKeycode key, int type, int time)
 {
     SDL_Event e = { 0 };
-    e.type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
+    e.type = type;
     e.key.keysym.scancode = key;
-    e.key.timestamp = pkbhs->time;
+    e.key.timestamp = time;
     SDL_PushEvent( &e );
 }
 
@@ -401,38 +401,41 @@ LRESULT CALLBACK LowLevelKeyboardProc( INT nCode, WPARAM wParam, LPARAM lParam )
         BOOL bControlKeyDown = GetAsyncKeyState( VK_CONTROL ) >> ((sizeof( SHORT ) * 8) - 1);
         BOOL bAltKeyDown = pkbhs->flags & LLKHF_ALTDOWN;
 
+        int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
+        int time = pkbhs->time;
+
         // Disable WIN
         if( pkbhs->vkCode == VK_LWIN || pkbhs->vkCode == VK_RWIN )
         {
-            SendCapturedKey( KEY_LGUI, pkbhs );
+            SendCapturedKey( KEY_LGUI, type, time );
             return 1;
         }
 
         // Disable CTRL+ESC
         if( pkbhs->vkCode == VK_ESCAPE && bControlKeyDown )
         {
-            SendCapturedKey( KEY_ESCAPE, pkbhs );
+            SendCapturedKey( KEY_ESCAPE, type, time );
             return 1;
         }
 
         // Disable ALT+ESC
         if( pkbhs->vkCode == VK_ESCAPE && bAltKeyDown )
         {
-            SendCapturedKey( KEY_ESCAPE, pkbhs );
+            SendCapturedKey( KEY_ESCAPE, type, time );
             return 1;
         }
 
         // Disable ALT+TAB
         if( pkbhs->vkCode == VK_TAB && bAltKeyDown )
         {
-            SendCapturedKey( KEY_TAB, pkbhs );
+            SendCapturedKey( KEY_TAB, type, time );
             return 1;
         }
 
         // Disable ALT+F4
         if( pkbhs->vkCode == VK_F4 && bAltKeyDown )
         {
-            SendCapturedKey( KEY_F4, pkbhs );
+            SendCapturedKey( KEY_F4, type, time );
             return 1;
         }
 
