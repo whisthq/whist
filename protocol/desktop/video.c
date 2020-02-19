@@ -71,7 +71,7 @@ typedef struct FrameData {
 } FrameData;
 
 // mbps that currently works
-volatile double working_mbps = START_MAX_MBPS;
+volatile double working_mbps = MAXIMUM_MBPS;
 
 // Context of the frame that is currently being rendered
 volatile struct FrameData renderContext;
@@ -179,17 +179,6 @@ int32_t RenderScreen(void* opaque) {
             videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, pict.data,
             pict.linesize);
 
-        /*
-        SDL_DestroyTexture(videoContext.texture);
-
-        videoContext.texture = SDL_CreateTexture(
-            renderer,
-            SDL_PIXELFORMAT_YV12,
-            SDL_TEXTUREACCESS_STREAMING,
-            output_width,
-            output_height
-        );*/
-
         SDL_UpdateYUVTexture(
             videoContext.texture,
             NULL,
@@ -241,6 +230,13 @@ int32_t RenderScreen(void* opaque) {
 // END VIDEO FUNCTIONS
 
 void initVideo() {
+    // mbps that currently works
+    working_mbps = MAXIMUM_MBPS;
+
+    // True if RenderScreen is currently rendering a frame
+    rendering = false;
+    has_rendered_yet = false;
+
     SDL_Texture* texture;
 
     Uint8* yPlane, * uPlane, * vPlane;
@@ -347,6 +343,7 @@ void updateVideo() {
         else if (dropped_rate == 0.00) {
             working_mbps = max(max_mbps * 1.05, working_mbps);
             max_mbps = (max_mbps + working_mbps) / 2.0;
+            max_mbps = max( max_mbps, MAXIMUM_MBPS );
             update_mbps = true;
         }
 

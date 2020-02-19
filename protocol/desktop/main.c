@@ -33,7 +33,7 @@ volatile int server_width = -1;
 volatile int server_height = -1;
 
 // maximum mbps
-volatile double max_mbps = START_MAX_MBPS;
+volatile double max_mbps = MAXIMUM_MBPS;
 volatile bool update_mbps = false;
 
 // Global state variables
@@ -374,8 +374,81 @@ void clearSDL() {
     SDL_RenderPresent(renderer);
 }
 
+void SendCapturedKey( FractalKeycode key, KBDLLHOOKSTRUCT* pkbhs )
+{
+    SDL_Event e = { 0 };
+    e.type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
+    e.key.keysym.scancode = key;
+    e.key.timestamp = pkbhs->time;
+    SDL_PushEvent( &e );
+}
+
+#if defined(_WIN32)
+HHOOK mule;
+HHOOK g_hKeyboardHook;
+BOOL g_bFullscreen;
+LRESULT CALLBACK LowLevelKeyboardProc( INT nCode, WPARAM wParam, LPARAM lParam )
+{
+    // By returning a non-zero value from the hook procedure, the
+    // message does not get passed to the target window
+    KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)lParam;
+
+    switch( nCode )
+    {
+    case HC_ACTION:
+    {
+        // Check to see if the CTRL key is pressed
+        BOOL bControlKeyDown = GetAsyncKeyState( VK_CONTROL ) >> ((sizeof( SHORT ) * 8) - 1);
+        BOOL bAltKeyDown = pkbhs->flags & LLKHF_ALTDOWN;
+
+        // Disable WIN
+        if( pkbhs->vkCode == VK_LWIN || pkbhs->vkCode == VK_RWIN )
+        {
+            SendCapturedKey( KEY_LGUI, pkbhs );
+            return 1;
+        }
+
+        // Disable CTRL+ESC
+        if( pkbhs->vkCode == VK_ESCAPE && bControlKeyDown )
+        {
+            SendCapturedKey( KEY_ESCAPE, pkbhs );
+            return 1;
+        }
+
+        // Disable ALT+ESC
+        if( pkbhs->vkCode == VK_ESCAPE && bAltKeyDown )
+        {
+            SendCapturedKey( KEY_ESCAPE, pkbhs );
+            return 1;
+        }
+
+        // Disable ALT+TAB
+        if( pkbhs->vkCode == VK_TAB && bAltKeyDown )
+        {
+            SendCapturedKey( KEY_TAB, pkbhs );
+            return 1;
+        }
+
+        // Disable ALT+F4
+        if( pkbhs->vkCode == VK_F4 && bAltKeyDown )
+        {
+            SendCapturedKey( KEY_F4, pkbhs );
+            return 1;
+        }
+
+        break;
+    }
+    default:
+        break;
+    }
+    return CallNextHookEx( mule, nCode, wParam, lParam );
+}
+#endif
+
 int initSDL() {
-    SDL_SetHint( SDL_HINT_GRAB_KEYBOARD, "1" );
+#if defined(_WIN32)
+    g_hKeyboardHook = SetWindowsHookEx( WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle( NULL ), 0 );
+#endif
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
         fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
@@ -422,6 +495,11 @@ int initSDL() {
 }
 
 void destroySDL() {
+
+#if defined(_WIN32)
+    UnhookWindowsHookEx( g_hKeyboardHook );
+#endif
+
     if (renderer) {
         SDL_DestroyRenderer((SDL_Renderer*)renderer);
         renderer = NULL;
@@ -538,12 +616,10 @@ int main(int argc, char* argv[])
 
                     break;
                 case SDL_MOUSEMOTION:
-                    if (server_width > -1 && server_height > -1) {
-                        fmsg.type                 = MESSAGE_MOUSE_MOTION;
-                        fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
-                        fmsg.mouseMotion.x        = fmsg.mouseMotion.relative ? msg.motion.xrel : msg.motion.x * 1000000 / output_width;
-                        fmsg.mouseMotion.y        = fmsg.mouseMotion.relative ? msg.motion.yrel : msg.motion.y * 1000000 / output_height;
-                    }
+                    fmsg.type                 = MESSAGE_MOUSE_MOTION;
+                    fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
+                    fmsg.mouseMotion.x        = fmsg.mouseMotion.relative ? msg.motion.xrel : msg.motion.x * 1000000 / output_width;
+                    fmsg.mouseMotion.y        = fmsg.mouseMotion.relative ? msg.motion.yrel : msg.motion.y * 1000000 / output_height;
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                 case SDL_MOUSEBUTTONUP:
