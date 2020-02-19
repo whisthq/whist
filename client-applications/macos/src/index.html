@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="node_modules/font-awesome/css/font-awesome.css">
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <header id="titlebar">
+    </header>
+    <div class = "landing-background">
+    <div class = "landing-header">
+      <div class = "landing-header-left">
+        <img src = "assets/logo.svg" width = "20" height = "20"/>
+        <span class = "logo-title">Fractal</span>
+      </div>
+      <div class = "landing-header-right">
+        <span id = "forgot-button">Forgot Password?</span>
+        <button type = "button" class = "signup-button" id = "signup-button">Sign Up</button>
+      </div>
+    </div>
+    <div class = "login-container">
+      <div>
+        <img src = "assets/user.svg" width = "100" class = "input-icon"/>
+        <input type = "text" class = "input-box" placeholder = "Username" id = "username"/>
+      </div>
+      <div>
+        <img src = "assets/lock.svg" width = "100" class = "input-icon"/>
+        <input type = "password" class = "input-box" placeholder = "Password" id = "password"/>
+      </div>
+      <div>
+        <button type = "button" class = "login-button" id = "login-button">START</button>
+      </div>
+      <div class = "remember-me-container">
+        <input type = "checkbox" id = "remember-me"> Remember me
+      </div>
+      <div id = "warning" style = "font-size: 12px; max-width: 200px; margin: auto; margin-top: 20px; color: #D3D3D3">
+      </div>
+    </div>
+    <div class = "bottom-box">
+      <div id = "internet-speed"></div>
+      <div id = "location"></div>
+    </div>
+  </div>
+  <script>
+    // You can also require other files to run in this process
+    require('./renderer.js')
+  </script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  </body>
+</html>
