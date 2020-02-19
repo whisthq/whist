@@ -477,7 +477,7 @@ int initSDL() {
         SDL_WINDOWPOS_CENTERED,
         output_width,
         output_height,
-        (is_fullscreen ? SDL_WINDOW_FULLSCREEN : 0)
+        (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
     );
 
     //SDL_SetHint( SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1" );
