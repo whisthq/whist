@@ -179,6 +179,17 @@ int32_t RenderScreen(void* opaque) {
             videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, pict.data,
             pict.linesize);
 
+        /*
+        SDL_DestroyTexture(videoContext.texture);
+
+        videoContext.texture = SDL_CreateTexture(
+            renderer,
+            SDL_PIXELFORMAT_YV12,
+            SDL_TEXTUREACCESS_STREAMING,
+            output_width,
+            output_height
+        );*/
+
         SDL_UpdateYUVTexture(
             videoContext.texture,
             NULL,
@@ -521,6 +532,7 @@ void destroyVideo() {
     SDL_WaitThread(VideoData.render_screen_thread, NULL);
     SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
 
+    SDL_DestroyTexture(videoContext.texture);
     free(videoContext.yPlane);
     free(videoContext.uPlane);
     free(videoContext.vPlane);

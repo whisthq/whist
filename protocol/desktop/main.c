@@ -375,6 +375,8 @@ void clearSDL() {
 }
 
 int initSDL() {
+    SDL_SetHint( SDL_HINT_GRAB_KEYBOARD, "1" );
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
         fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
         return -1;
@@ -399,8 +401,11 @@ int initSDL() {
         SDL_WINDOWPOS_CENTERED,
         output_width,
         output_height,
-        is_fullscreen ? SDL_WINDOW_FULLSCREEN : 0
+        (is_fullscreen ? SDL_WINDOW_FULLSCREEN : 0) | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_INPUT_GRABBED
     );
+
+    //SDL_SetHint( SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1" );
+    //SDL_SetWindowGrab(window, true);
 
     if (!window) {
         fprintf(stderr, "SDL: could not create window - exiting: %s\n", SDL_GetError());
@@ -488,6 +493,12 @@ int main(int argc, char* argv[])
             continue;
         }
 
+        // Initialize variables
+        connected = true;
+        bool shutting_down = false;
+        bool alt_pressed = false;
+        bool ctrl_pressed = false;
+
         // Initialize video and audio
         initVideo();
         initAudio();
@@ -497,8 +508,6 @@ int main(int argc, char* argv[])
         run_receive_packets = true;
         SDL_Thread* receive_packets_thread;
         receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
-
-        bool shutting_down = false;
 
         while (connected && !shutting_down)
         {
@@ -511,6 +520,20 @@ int main(int argc, char* argv[])
                     fmsg.keyboard.code = (FractalKeycode)msg.key.keysym.scancode;
                     fmsg.keyboard.mod = msg.key.keysym.mod;
                     fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN;
+
+                    if (fmsg.keyboard.code == KEY_LALT) {
+                        alt_pressed = fmsg.keyboard.pressed;
+                    }
+                    if (fmsg.keyboard.code == KEY_LCTRL) {
+                        ctrl_pressed = fmsg.keyboard.pressed;
+                    }
+                    if (fmsg.keyboard.code == KEY_F4) {
+                        if (alt_pressed && ctrl_pressed) {
+                            mprintf("Quitting...\n");
+                            shutting_down = true;
+                        }
+                    }
+
                     break;
                 case SDL_MOUSEMOTION:
                     if (server_width > -1 && server_height > -1) {
@@ -531,9 +554,11 @@ int main(int argc, char* argv[])
                     fmsg.mouseWheel.x = msg.wheel.x;
                     fmsg.mouseWheel.y = msg.wheel.y;
                     break;
+                case SDL_CLIPBOARDUPDATE:
+                    mprintf("Clipboard!\n");
+                    break;
                 case SDL_QUIT:
-                    mprintf("Quitting...\n");
-                    fmsg.type = MESSAGE_QUIT;
+                    mprintf("Forcefully Quitting...\n");
                     shutting_down = true;
                     break;
                 }

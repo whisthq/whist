@@ -430,7 +430,6 @@ typedef enum FractalKeycode {
 	KEY_AUDIOPLAY   = 261, ///< 261
 	KEY_AUDIOMUTE   = 262, ///< 262
 	KEY_MEDIASELECT = 263, ///< 263
-	__KEY_MAKE_32   = 0x7FFFFFFF,
 } FractalKeycode;
 
 /// @brief Modifier keys applied to keyboard input.
@@ -445,7 +444,6 @@ typedef enum FractalKeymod {
 	MOD_RALT      = 0x0200, ///< `RIGHT ALT` is currently active.
 	MOD_NUM	      = 0x1000, ///< `NUMLOCK` is currently active.
 	MOD_CAPS      = 0x2000, ///< `CAPSLOCK` is currently active.
-	__MOD_MAKE_32 = 0x7FFFFFFF,
 } FractalKeymod;
 
 /// @brief Mouse button.
