@@ -57,7 +57,7 @@ LD_FLAGS = \
   /nologo
 
 # build all files into executable
-all: clean clear fractal.obj aes.obj webserver.obj videodecode.obj audiodecode.obj linkedlist.obj video.obj audio.obj main.obj
+all: fractal.obj aes.obj webserver.obj videodecode.obj audiodecode.obj linkedlist.obj video.obj audio.obj main.obj
   link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file

@@ -6,6 +6,11 @@
 #include "openssl/rand.h"
 #include "openssl/hmac.h"
 
+encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
+         unsigned char* iv, unsigned char* ciphertext );
+decrypt( unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
+         unsigned char* iv, unsigned char* plaintext );
+
 void handleErrors( void )
 {
     ERR_print_errors_fp( stderr );
