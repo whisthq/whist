@@ -3,6 +3,7 @@
 #include "openssl/conf.h"
 #include "openssl/evp.h"
 #include "openssl/err.h"
+#include "openssl/rand.h"
 
 void handleErrors( void )
 {
@@ -12,7 +13,7 @@ void handleErrors( void )
 
 void gen_iv( unsigned char* iv )
 {
-    strcpy( iv, "0123456789012345" );
+    int rc = RAND_bytes( iv, 16 );
 }
 
 int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct RTPPacket* encrypted_packet, unsigned char* private_key)

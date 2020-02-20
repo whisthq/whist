@@ -709,7 +709,7 @@ struct RTPPacket {
 	// hash at the beginning of the struct, which is the hash of the rest of the packet
 	uint32_t hash;
 	int cipher_len;
-	char iv[40];
+	char iv[16];
 	FractalPacketType type;
 	int id;
 	short index;
