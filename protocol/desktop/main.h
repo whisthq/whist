@@ -1,1 +1,1 @@
-int SendPacket(void* data, int len);
+int SendPacket(void* data, int len, bool encrypt);

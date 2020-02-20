@@ -94,12 +94,12 @@ void updateWidthAndHeight(int width, int height);
 int32_t RenderScreen(void* opaque);
 
 void nack(int id, int index) {
-    //mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", id, index);
+    mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", id, index);
     FractalClientMessage fmsg;
     fmsg.type = MESSAGE_VIDEO_NACK;
     fmsg.nack_data.id = id;
     fmsg.nack_data.index = index;
-    //SendPacket(&fmsg, sizeof(fmsg));
+    SendPacket(&fmsg, sizeof(fmsg), bool encrypt);
 }
 
 void updateWidthAndHeight(int width, int height) {
@@ -402,7 +402,7 @@ void updateVideo() {
                     if (!ctx->received_indicies[i]) {
                         num_nacked++;
                         mprintf("************NACKING VIDEO PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
-                        //ctx->nacked_indicies[i] = true;
+                        ctx->nacked_indicies[i] = true;
                         nack(ctx->id, i);
                     }
                     ctx->last_nacked_index = i;
@@ -489,7 +489,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             if (!ctx->received_indicies[i]) {
                 //ctx->nacked_indicies[i] = true;
-                nack(packet->id, i);
+                //nack(packet->id, i);
             }
         }
         ctx->last_nacked_index = max(ctx->last_nacked_index, to_index);

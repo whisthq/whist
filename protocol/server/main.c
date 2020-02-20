@@ -494,20 +494,26 @@ int main(int argc, char* argv[])
             memset(&fmsg, 0, sizeof(fmsg));
 
             // Get Packet
-            struct RTPPacket encrypted_packet;
-            int encrypted_len;
-            if( (encrypted_len = recvp( &PacketReceiveContext, &encrypted_packet, sizeof( encrypted_packet ) )) > 0 )
+            struct RTPPacket packet;
+            int len;
+            if( (len = recvp( &PacketReceiveContext, &packet, sizeof( packet ) )) > 0 )
             {
-                struct RTPPacket decrypted_packet;
-                int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
-                if( decrypt_len > 0 )
+                if( packet.cipher_len == -1 )
                 {
-                    if( decrypted_packet.payload_size != sizeof( fmsg ) )
+                    memcpy( &fmsg, packet.data, sizeof( fmsg ) );
+                } else
+                {
+                    struct RTPPacket decrypted_packet;
+                    int decrypt_len = decrypt_packet( &packet, len, &decrypted_packet, PRIVATE_KEY );
+                    if( decrypt_len > 0 )
                     {
-                        mprintf( "Packet is of the wrong size!\n" );
-                    } else
-                    {
-                        memcpy( &fmsg, decrypted_packet.data, sizeof( fmsg ) );
+                        if( decrypted_packet.payload_size != sizeof( fmsg ) )
+                        {
+                            mprintf( "Packet is of the wrong size!\n" );
+                        } else
+                        {
+                            memcpy( &fmsg, decrypted_packet.data, sizeof( fmsg ) );
+                        }
                     }
                 }
             }

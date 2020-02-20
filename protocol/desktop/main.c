@@ -36,7 +36,7 @@ volatile int output_height;
 // Function Declarations
 
 SDL_mutex* send_packet_mutex;
-int SendPacket(void* data, int len);
+int SendPacket(void* data, int len, bool encrypt);
 static int32_t ReceivePackets(void* opaque);
 static int32_t ReceiveMessage(struct RTPPacket* packet);
 
@@ -70,7 +70,7 @@ void update() {
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
-        SendPacket(&fmsg, sizeof(fmsg));
+        SendPacket(&fmsg, sizeof(fmsg), true);
         UpdateData.tried_to_update_dimension = true;
     }
 
@@ -80,7 +80,7 @@ void update() {
         memset(&fmsg, 0, sizeof(fmsg));
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_mbps;
-        SendPacket(&fmsg, sizeof(fmsg));
+        SendPacket(&fmsg, sizeof(fmsg), false);
     }
     // End update checks
 
@@ -109,14 +109,14 @@ void update() {
         StartTimer((clock*)&latency_timer);
 
         mprintf("Ping! %d\n", ping_id);
-        SendPacket(&fmsg, sizeof(fmsg));
-        SendPacket(&fmsg, sizeof(fmsg));
+        SendPacket(&fmsg, sizeof(fmsg), false);
+        SendPacket(&fmsg, sizeof(fmsg), false);
     }
     // End Ping
 }
 // END UPDATER CODE
 
-int SendPacket(void* data, int len) {
+int SendPacket(void* data, int len, bool encrypt) {
     if (len > MAX_PACKET_SIZE) {
         mprintf("Packet too large!\n");
         return -1;
@@ -130,11 +130,19 @@ int SendPacket(void* data, int len) {
 
     int packet_size = sizeof( packet ) - sizeof( packet.data ) + len;
 
-    struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, PRIVATE_KEY );
+    if( encrypt )
+    {
+        struct RTPPacket encrypted_packet;
+        int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, PRIVATE_KEY );
+        memcpy( &packet, &encrypted_packet, encrypt_len );
+        packet_size = encrypt_len;
+    } else
+    {
+        packet.cipher_len = -1;
+    }
 
     SDL_LockMutex(send_packet_mutex);
-    if (sendp(&PacketSendContext, &encrypted_packet, encrypt_len ) < 0) {
+    if (sendp(&PacketSendContext, &packet, packet_size ) < 0) {
         mprintf("Failed to send packet!\n");
         failed = true;
     }
@@ -686,7 +694,7 @@ int main(int argc, char* argv[])
                 }
 
                 if (fmsg.type != 0) {
-                    SendPacket(&fmsg, sizeof(fmsg));
+                    SendPacket(&fmsg, sizeof(fmsg), true);
                 }
                 else {
                     SDL_Delay(1);
