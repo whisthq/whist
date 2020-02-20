@@ -42,7 +42,8 @@ DYNAMIC_LIBS = \
 	../lib/ffmpeg/macos/libavutil.56.dylib \
 	../lib/ffmpeg/macos/libpostproc.55.dylib \
 	../lib/ffmpeg/macos/libswresample.3.dylib \
-	../lib/ffmpeg/macos/libswscale.5.dylib
+	../lib/ffmpeg/macos/libswscale.5.dylib \
+	../lib/openssl/macos/libcrypto.1.1.dylib
 
 # system libs to link against
 SHARED_LIBS = \
@@ -74,7 +75,8 @@ OBJS = \
 	linkedlist.o \
 	video.o \
 	audio.o \
-	main.o
+	main.o \
+	aes.o
 
 # static libs to link against
 STATIC_LIBS = ../lib/SDL2/$(PLATFORM)/libSDL2.a
@@ -111,6 +113,10 @@ audiodecode.o:
 # compile the linked list source file into object file
 linkedlist.o:
 	$(CC) -c ../include/linkedlist.c
+
+# compile the aes source file into object file
+aes.o:
+	$(CC) -c ../include/aes.c
 
 # compile the source main file into object file
 video.o:
