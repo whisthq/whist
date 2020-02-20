@@ -117,6 +117,8 @@ void update() {
 // END UPDATER CODE
 
 int SendPacket(void* data, int len, bool encrypt) {
+    encrypt = false;
+
     if (len > MAX_PACKET_SIZE) {
         mprintf("Packet too large!\n");
         return -1;
@@ -272,6 +274,7 @@ static int32_t ReceivePackets(void* opaque) {
                     memcpy( &packet, &encrypted_packet, recv_size );
                 } else
                 {
+                    mprintf( "Decryping\n" );
                     recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, PRIVATE_KEY );
                 }
             }
