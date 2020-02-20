@@ -20,7 +20,6 @@
 #pragma warning(disable: 4201)
 #endif
 
-
 /*** FRACTAL FUNCTIONS START ***/
 
 int GetLastNetworkError() {

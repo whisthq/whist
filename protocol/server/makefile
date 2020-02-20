@@ -75,7 +75,7 @@ LD_FLAGS = \
 
 
 # build all files into executable
-all: fractal.obj aes.obj videocapture.obj audiocapture.obj videoencode.obj audioencode.obj socket.obj wasapicapture.obj dxgicapture.obj desktop.obj input.obj main.obj
+all: clean fractal.obj aes.obj videocapture.obj audiocapture.obj videoencode.obj audioencode.obj socket.obj wasapicapture.obj dxgicapture.obj desktop.obj input.obj main.obj
 	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
