@@ -45,7 +45,7 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 		encoder->context->time_base.num   = 1;
 		encoder->context->time_base.den   = 30;
 		encoder->context->gop_size        = gop_size;
-		encoder->context->pix_fmt = encoder_format;
+		encoder->context->pix_fmt         = encoder_format;
 
 		//av_opt_set_int(encoder->context->priv_data, "preset", 0, 0);
 		av_opt_set_int(encoder->context->priv_data, "crf", 14, 0);
