@@ -60,11 +60,11 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     packet->is_a_nack = true;
     packet->cipher_len = -1;
 
-    //struct RTPPacket encrypted_packet;
-    //int encrypt_len = encrypt_packet( packet, len, &encrypted_packet, PRIVATE_KEY );
+    struct RTPPacket encrypted_packet;
+    int encrypt_len = encrypt_packet( packet, len, &encrypted_packet, PRIVATE_KEY );
 
     SDL_LockMutex(packet_mutex);
-    int sent_size = sendp(context, packet, len);
+    int sent_size = sendp(context, &encrypted_packet, encrypt_len);
     SDL_UnlockMutex(packet_mutex);
 
     if (sent_size < 0) {
@@ -89,7 +89,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
     int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
 
-    bool encrypt_by_packet = false;
+    bool encrypt_by_packet = true;
 
     while (curr_index < len) {
         if (i != 0 && i % 15 == 0) {

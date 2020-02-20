@@ -80,7 +80,7 @@ void update() {
         memset(&fmsg, 0, sizeof(fmsg));
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_mbps;
-        SendPacket(&fmsg, sizeof(fmsg), false);
+        SendPacket(&fmsg, sizeof(fmsg), true);
     }
     // End update checks
 
@@ -109,16 +109,14 @@ void update() {
         StartTimer((clock*)&latency_timer);
 
         mprintf("Ping! %d\n", ping_id);
-        SendPacket(&fmsg, sizeof(fmsg), false);
-        SendPacket(&fmsg, sizeof(fmsg), false);
+        SendPacket(&fmsg, sizeof(fmsg), true);
+        SendPacket(&fmsg, sizeof(fmsg), true);
     }
     // End Ping
 }
 // END UPDATER CODE
 
 int SendPacket(void* data, int len, bool encrypt) {
-    encrypt = false;
-
     if (len > MAX_PACKET_SIZE) {
         mprintf("Packet too large!\n");
         return -1;
