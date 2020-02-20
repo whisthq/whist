@@ -444,7 +444,7 @@ int main(int argc, char* argv[])
         StartTimer(&startup_time);
 
         connected = true;
-        max_mbps = START_MAX_MBPS;
+        max_mbps = MAXIMUM_MBPS;
 
         packet_mutex = SDL_CreateMutex();
 
