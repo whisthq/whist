@@ -6,9 +6,9 @@
 #include "openssl/rand.h"
 #include "openssl/hmac.h"
 
-encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
+aes_encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
          unsigned char* iv, unsigned char* ciphertext );
-decrypt( unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
+aes_decrypt( unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
          unsigned char* iv, unsigned char* plaintext );
 
 void handleErrors( void )
@@ -68,7 +68,7 @@ int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct R
     gen_iv( encrypted_packet->iv );
 
     char* cipher_buf = (char*)encrypted_packet + crypto_header_len;
-    int cipher_len = encrypt( plaintext_buf, plaintext_buf_len, private_key, encrypted_packet->iv, cipher_buf );
+    int cipher_len = aes_encrypt( plaintext_buf, plaintext_buf_len, private_key, encrypted_packet->iv, cipher_buf );
     encrypted_packet->cipher_len = cipher_len;
 
     int cipher_packet_len = cipher_len + crypto_header_len;
@@ -98,13 +98,13 @@ int decrypt_packet( struct RTPPacket* encrypted_packet, int packet_len, struct R
     char* cipher_buf = (char*)encrypted_packet + crypto_header_len;
     char* plaintext_buf = (char*)plaintext_packet + crypto_header_len;
 
-    int decrypt_len = decrypt( cipher_buf, encrypted_packet->cipher_len, private_key,
+    int decrypt_len = aes_decrypt( cipher_buf, encrypted_packet->cipher_len, private_key,
                                encrypted_packet->iv, plaintext_buf );
 
     return decrypt_len + crypto_header_len;
 }
 
-int encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
+int aes_encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
              unsigned char* iv, unsigned char* ciphertext )
 {
     EVP_CIPHER_CTX* ctx;
@@ -138,7 +138,7 @@ int encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
 }
 
 
-int decrypt( unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
+int aes_decrypt( unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
              unsigned char* iv, unsigned char* plaintext )
 {
     EVP_CIPHER_CTX* ctx;
