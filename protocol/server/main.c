@@ -577,7 +577,7 @@ int main(int argc, char* argv[])
                     struct RTPPacket* video_packet = &video_buffer[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
                     int len = video_buffer_packet_len[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
                     if (video_packet->id == fmsg.nack_data.id) {
-                        mprintf("NACKed video packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
+                        mprintf("NACKed video packet ID %d Index %d found of length %d. Relaying!\n", fmsg.nack_data.id, fmsg.nack_data.index, len);
                         ReplayPacket(&PacketSendContext, video_packet, len);
                     }
 
