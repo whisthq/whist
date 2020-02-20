@@ -3,22 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_WIN32)
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #include <process.h>
-    #include <windows.h>
-    #include <synchapi.h>
-    #pragma comment (lib, "ws2_32.lib")
-#else
-    #include <unistd.h>
-    #include <errno.h>
-
-    // adapt windows error codes
-    #define WSAETIMEDOUT ETIMEDOUT
-    #define WSAEWOULDBLOCK EWOULDBLOCK
-#endif
-
 #include "../include/fractal.h"
 #include "../include/webserver.h" // header file for webserver query functions
 #include "../include/linkedlist.h" // header file for audio decoder
