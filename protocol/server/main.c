@@ -88,12 +88,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
     int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
 
-    bool encrypt_by_packet = true;
-
-    if( type == PACKET_VIDEO )
-    {
-        encrypt_by_packet = false;
-    }
+    bool encrypt_by_packet = false;
 
     while (curr_index < len) {
         if (i != 0 && i % 15 == 0) {
