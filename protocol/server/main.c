@@ -88,6 +88,13 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
     int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
 
+    bool encrypt_by_packet = true;
+
+    if( type == PACKET_VIDEO )
+    {
+        encrypt_by_packet = false;
+    }
+
     while (curr_index < len) {
         if (i != 0 && i % 15 == 0) {
             SDL_Delay(1);
@@ -128,13 +135,21 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
         packet->num_indices = num_indices;
         packet->is_a_nack = false;
         int packet_size = sizeof(*packet) - sizeof(packet->data) + packet->payload_size;
+        *packet_len = packet_size;
 
-        struct RTPPacket encrypted_packet;
-        int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, PRIVATE_KEY );
+        if( encrypt_by_packet )
+        {
+            struct RTPPacket encrypted_packet;
+            int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, PRIVATE_KEY );
+            packet = &encrypted_packet;
+            packet_size = encrypt_len;
+        } else
+        {
+            packet->cipher_len = -1; 
+        }
 
         SDL_LockMutex(packet_mutex);
-        *packet_len = packet_size;
-        int sent_size = sendp(context, &encrypted_packet, encrypt_len);
+        int sent_size = sendp(context, packet, packet_size);
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
