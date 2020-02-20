@@ -86,7 +86,7 @@
 #define PORT_CLIENT_TO_SERVER 32262
 #define PORT_SERVER_TO_CLIENT 32263
 
-#define MAX_PAYLOAD_SIZE 1400
+#define MAX_PAYLOAD_SIZE 1350
 #define MAXIMUM_MBPS 30.0
 #define ACK_REFRESH_MS 50
 
@@ -709,7 +709,7 @@ struct RTPPacket {
 	// hash at the beginning of the struct, which is the hash of the rest of the packet
 	uint32_t hash;
 	int cipher_len;
-	char iv[128];
+	char iv[40];
 	FractalPacketType type;
 	int id;
 	short index;
@@ -717,7 +717,7 @@ struct RTPPacket {
 	short payload_size;
 	bool is_a_nack;
 	// data at the end of the struct, in the case of a truncated packet
-	uint8_t data[MAX_PAYLOAD_SIZE + 256];
+	uint8_t data[MAX_PAYLOAD_SIZE + 128];
 };
 
 #define MAX_PACKET_SIZE (sizeof(struct RTPPacket))
