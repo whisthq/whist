@@ -4,6 +4,7 @@
 #include "openssl/evp.h"
 #include "openssl/err.h"
 #include "openssl/rand.h"
+#include "openssl/hmac.h"
 
 void handleErrors( void )
 {
@@ -16,9 +17,26 @@ void gen_iv( unsigned char* iv )
     int rc = RAND_bytes( iv, 16 );
 }
 
-void hmac( char* buf, int len, char* key )
+void hmac( char* hash, char* buf, int len, char* key )
 {
+    HMAC_CTX* c = NULL;
 
+    if( (c = HMAC_CTX_new()) == NULL )
+        goto err;
+
+    if( !HMAC_Init_ex( c, key, 16, EVP_sha256(), NULL ) )
+        goto err;
+    if( !HMAC_Update( c, buf, len ) )
+        goto err;
+    if( !HMAC_Final( c, hash, 16 ) )
+        goto err;
+
+    HMAC_CTX_free( c );
+    return;
+
+err:
+    HMAC_CTX_free( c );
+    return;
 }
 
 int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct RTPPacket* encrypted_packet, unsigned char* private_key)
@@ -34,7 +52,9 @@ int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct R
     encrypted_packet->cipher_len = cipher_len;
 
     int cipher_packet_len = cipher_len + crypto_header_len;
-    encrypted_packet->hash = Hash( (char*)encrypted_packet + sizeof( encrypted_packet->hash ), cipher_packet_len - sizeof( encrypted_packet->hash ) );
+
+    hmac( encrypted_packet->hash, (char*)encrypted_packet + sizeof( encrypted_packet->hash ), cipher_packet_len - sizeof( encrypted_packet->hash ), PRIVATE_KEY );
+    //encrypted_packet->hash = Hash( (char*)encrypted_packet + sizeof( encrypted_packet->hash ), cipher_packet_len - sizeof( encrypted_packet->hash ) );
 
     return cipher_packet_len;
 }
@@ -43,11 +63,15 @@ int decrypt_packet( struct RTPPacket* encrypted_packet, int packet_len, struct R
 {
     int crypto_header_len = sizeof( plaintext_packet->hash ) + sizeof( plaintext_packet->cipher_len ) +  sizeof( plaintext_packet->iv );
 
-    int verify_hash = Hash( (char*)encrypted_packet + sizeof( encrypted_packet->hash ), packet_len - sizeof( encrypted_packet->hash ) );
-    if( encrypted_packet->hash != verify_hash )
-    {
-        return -1;
-    }
+    char hash[16];
+    hmac( hash, (char*)encrypted_packet + sizeof( encrypted_packet->hash ), packet_len - sizeof( encrypted_packet->hash ), PRIVATE_KEY );
+    //int verify_hash = Hash( (char*)encrypted_packet + sizeof( encrypted_packet->hash ), packet_len - sizeof( encrypted_packet->hash ) );
+    //if( encrypted_packet->hash != verify_hash )
+    //{
+    //    return -1;
+    //}
+    mprintf( "Hash: %d\n", Hash( hash, 16 ) );
+    mprintf( "Hash: %d\n", Hash( encrypted_packet->hash, 16 ) );
 
     char* cipher_buf = (char*)encrypted_packet + crypto_header_len;
     char* plaintext_buf = (char*)plaintext_packet + crypto_header_len;

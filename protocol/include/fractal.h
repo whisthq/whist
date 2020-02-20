@@ -707,7 +707,7 @@ typedef struct SocketContext
 // Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) + RTPPacket.payload_size
 struct RTPPacket {
 	// hash at the beginning of the struct, which is the hash of the rest of the packet
-	uint32_t hash;
+	char hash[16];
 	int cipher_len;
 	char iv[16];
 	FractalPacketType type;
