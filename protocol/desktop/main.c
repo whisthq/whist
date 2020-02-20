@@ -8,6 +8,7 @@
 #include "../include/linkedlist.h" // header file for audio decoder
 #include "../include/aes.h"
 
+#include "main.h"
 #include "video.h"
 #include "audio.h"
 
@@ -36,7 +37,6 @@ volatile int output_height;
 // Function Declarations
 
 SDL_mutex* send_packet_mutex;
-int SendPacket(void* data, int len, bool encrypt);
 static int32_t ReceivePackets(void* opaque);
 static int32_t ReceiveMessage(struct RTPPacket* packet);
 
@@ -70,7 +70,7 @@ void update() {
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
-        SendPacket(&fmsg, sizeof(fmsg), true);
+        SendPacket(&fmsg, sizeof(fmsg));
         UpdateData.tried_to_update_dimension = true;
     }
 
@@ -80,7 +80,7 @@ void update() {
         memset(&fmsg, 0, sizeof(fmsg));
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_mbps;
-        SendPacket(&fmsg, sizeof(fmsg), true);
+        SendPacket(&fmsg, sizeof(fmsg));
     }
     // End update checks
 
@@ -109,14 +109,14 @@ void update() {
         StartTimer((clock*)&latency_timer);
 
         mprintf("Ping! %d\n", ping_id);
-        SendPacket(&fmsg, sizeof(fmsg), true);
-        SendPacket(&fmsg, sizeof(fmsg), true);
+        SendPacket(&fmsg, sizeof(fmsg));
+        SendPacket(&fmsg, sizeof(fmsg));
     }
     // End Ping
 }
 // END UPDATER CODE
 
-int SendPacket(void* data, int len, bool encrypt) {
+int SendPacket(void* data, int len) {
     if (len > MAX_PACKET_SIZE) {
         mprintf("Packet too large!\n");
         return -1;
@@ -130,19 +130,11 @@ int SendPacket(void* data, int len, bool encrypt) {
 
     int packet_size = sizeof( packet ) - sizeof( packet.data ) + len;
 
-    if( encrypt )
-    {
-        struct RTPPacket encrypted_packet;
-        int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, PRIVATE_KEY );
-        memcpy( &packet, &encrypted_packet, encrypt_len );
-        packet_size = encrypt_len;
-    } else
-    {
-        packet.cipher_len = -1;
-    }
+    struct RTPPacket encrypted_packet;
+    int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, PRIVATE_KEY );
 
     SDL_LockMutex(send_packet_mutex);
-    if (sendp(&PacketSendContext, &packet, packet_size ) < 0) {
+    if (sendp(&PacketSendContext, &encrypted_packet, encrypt_len ) < 0) {
         mprintf("Failed to send packet!\n");
         failed = true;
     }
@@ -267,13 +259,7 @@ static int32_t ReceivePackets(void* opaque) {
 
             if( recv_size > 0 )
             {
-                if( encrypted_packet.cipher_len == -1 )
-                {
-                    memcpy( &packet, &encrypted_packet, recv_size );
-                } else
-                {
-                    recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, PRIVATE_KEY );
-                }
+                recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, PRIVATE_KEY );
             }
         }
 
@@ -544,46 +530,6 @@ int main(int argc, char* argv[])
         max_mbps = atoi(argv[5]);
     }
 
-    // START AES
-    /*
-    unsigned char* key = (unsigned char*)"0123456789012345";
-
-    struct RTPPacket test_packet;
-    struct RTPPacket encrypted_packet;
-    struct RTPPacket decrypted_packet;
-
-    printf( "Original Hash: %d\n", Hash( (char*)&test_packet + 300, 200 ) );
-
-    int encrypt_len = encrypt_packet( &test_packet, 600, &encrypted_packet, key);
-
-    printf( "Encrypted Hash: %d\n", Hash( &encrypted_packet, sizeof( test_packet ) ) );
-
-    int decrypt_len;
-    decrypt_len = decrypt_packet( &encrypted_packet, encrypt_len, &decrypted_packet, key );
-    printf( "Decrypt len: %d\n", decrypt_len );
-    printf( "Decrypted Hash: %d\n", Hash( (char*)&decrypted_packet + 300, 200 ) );
-
-    return 0;
-    unsigned char* iv = (unsigned char*)"0123456789012345";
-
-    unsigned char* plaintext =
-        (unsigned char*)"The quick brown fox jumps over the lazy dog";
-
-    unsigned char ciphertext[128];
-    unsigned char decryptedtext[128];
-
-    int decryptedtext_len, ciphertext_len;
-
-    ciphertext_len = encrypt( plaintext, strlen( (char*)plaintext ), key, iv,
-                              ciphertext );
-    printf( "Ciphertext is:\n" );
-    decryptedtext_len = decrypt( ciphertext, ciphertext_len, key, iv,
-                                 decryptedtext );
-    decryptedtext[decryptedtext_len] = '\0';
-    printf( "Decrypted text is:\n" );
-    printf( "%s\n", decryptedtext );
-    */
-
     // END AES
 
     if (initSDL() < 0) {
@@ -694,7 +640,7 @@ int main(int argc, char* argv[])
                 }
 
                 if (fmsg.type != 0) {
-                    SendPacket(&fmsg, sizeof(fmsg), true);
+                    SendPacket(&fmsg, sizeof(fmsg));
                 }
                 else {
                     SDL_Delay(1);

@@ -58,7 +58,6 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     }
 
     packet->is_a_nack = true;
-    packet->cipher_len = -1;
 
     struct RTPPacket encrypted_packet;
     int encrypt_len = encrypt_packet( packet, len, &encrypted_packet, PRIVATE_KEY );
@@ -88,8 +87,6 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
     StartTimer(&packet_timer);
 
     int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
-
-    bool encrypt_by_packet = true;
 
     while (curr_index < len) {
         if (i != 0 && i % 15 == 0) {
@@ -133,19 +130,11 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
         int packet_size = sizeof(*packet) - sizeof(packet->data) + packet->payload_size;
         *packet_len = packet_size;
 
-        if( encrypt_by_packet )
-        {
-            struct RTPPacket encrypted_packet;
-            int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, PRIVATE_KEY );
-            packet = &encrypted_packet;
-            packet_size = encrypt_len;
-        } else
-        {
-            packet->cipher_len = -1; 
-        }
+        struct RTPPacket encrypted_packet;
+        int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, PRIVATE_KEY );
 
         SDL_LockMutex(packet_mutex);
-        int sent_size = sendp(context, packet, packet_size);
+        int sent_size = sendp(context, &encrypted_packet, encrypt_len);
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
@@ -490,26 +479,20 @@ int main(int argc, char* argv[])
             memset(&fmsg, 0, sizeof(fmsg));
 
             // Get Packet
-            struct RTPPacket packet;
-            int len;
-            if( (len = recvp( &PacketReceiveContext, &packet, sizeof( packet ) )) > 0 )
+            struct RTPPacket encrypted_packet;
+            int encrypted_len;
+            if( (encrypted_len = recvp( &PacketReceiveContext, &encrypted_packet, sizeof( encrypted_packet ) )) > 0 )
             {
-                if( packet.cipher_len == -1 )
+                struct RTPPacket decrypted_packet;
+                int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
+                if( decrypt_len > 0 )
                 {
-                    memcpy( &fmsg, packet.data, sizeof( fmsg ) );
-                } else
-                {
-                    struct RTPPacket decrypted_packet;
-                    int decrypt_len = decrypt_packet( &packet, len, &decrypted_packet, PRIVATE_KEY );
-                    if( decrypt_len > 0 )
+                    if( decrypted_packet.payload_size != sizeof( fmsg ) )
                     {
-                        if( decrypted_packet.payload_size != sizeof( fmsg ) )
-                        {
-                            mprintf( "Packet is of the wrong size!\n" );
-                        } else
-                        {
-                            memcpy( &fmsg, decrypted_packet.data, sizeof( fmsg ) );
-                        }
+                        mprintf( "Packet is of the wrong size!\n" );
+                    } else
+                    {
+                        memcpy( &fmsg, decrypted_packet.data, sizeof( fmsg ) );
                     }
                 }
             }

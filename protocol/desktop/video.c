@@ -99,7 +99,7 @@ void nack(int id, int index) {
     fmsg.type = MESSAGE_VIDEO_NACK;
     fmsg.nack_data.id = id;
     fmsg.nack_data.index = index;
-    SendPacket(&fmsg, sizeof(fmsg), false);
+    SendPacket(&fmsg, sizeof(fmsg));
 }
 
 void updateWidthAndHeight(int width, int height) {

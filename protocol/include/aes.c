@@ -16,6 +16,11 @@ void gen_iv( unsigned char* iv )
     int rc = RAND_bytes( iv, 16 );
 }
 
+void hmac( char* buf, int len, char* key )
+{
+
+}
+
 int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct RTPPacket* encrypted_packet, unsigned char* private_key)
 {
     int crypto_header_len = sizeof( plaintext_packet->hash ) + sizeof(plaintext_packet->cipher_len ) +  sizeof( plaintext_packet->iv );
