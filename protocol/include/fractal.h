@@ -15,6 +15,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#if defined(_WIN32)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <process.h>
+#include <windows.h>
+#include <synchapi.h>
+#pragma comment (lib, "ws2_32.lib")
+#else
+#include <unistd.h>
+#include <errno.h>
+
+// adapt windows error codes
+#define WSAETIMEDOUT ETIMEDOUT
+#define WSAEWOULDBLOCK EWOULDBLOCK
+#endif
+
 #include "ffmpeg/libavcodec/avcodec.h"
 #include "ffmpeg/libavdevice/avdevice.h"
 #include "ffmpeg/libavfilter/avfilter.h"
@@ -78,6 +94,8 @@
 #define STARTING_BITRATE 4500
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
+
+#define PRIVATE_KEY "0123456789012345"
 
 #define WRITE_MPRINTF_TO_LOG true
 
@@ -690,6 +708,8 @@ typedef struct SocketContext
 struct RTPPacket {
 	// hash at the beginning of the struct, which is the hash of the rest of the packet
 	uint32_t hash;
+	int cipher_len;
+	char iv[128];
 	FractalPacketType type;
 	int id;
 	short index;
@@ -697,7 +717,7 @@ struct RTPPacket {
 	short payload_size;
 	bool is_a_nack;
 	// data at the end of the struct, in the case of a truncated packet
-	uint8_t data[MAX_PAYLOAD_SIZE];
+	uint8_t data[MAX_PAYLOAD_SIZE + 256];
 };
 
 #define MAX_PACKET_SIZE (sizeof(struct RTPPacket))

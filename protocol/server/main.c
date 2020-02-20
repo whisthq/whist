@@ -15,6 +15,7 @@
 #include "../include/dxgicapture.h"
 #include "../include/desktop.h"
 #include "../include/input.h"
+#include "../include/aes.h"
 
 #pragma comment (lib, "ws2_32.lib")
 
@@ -58,8 +59,11 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
 
     packet->is_a_nack = true;
 
+    struct RTPPacket encrypted_packet;
+    int encrypt_len = encrypt_packet( packet, len, &encrypted_packet, PRIVATE_KEY );
+
     SDL_LockMutex(packet_mutex);
-    int sent_size = sendp(context, packet, len);
+    int sent_size = sendp(context, &encrypted_packet, encrypt_len);
     SDL_UnlockMutex(packet_mutex);
 
     if (sent_size < 0) {
@@ -124,11 +128,14 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
         packet->num_indices = num_indices;
         packet->is_a_nack = false;
         int packet_size = sizeof(*packet) - sizeof(packet->data) + packet->payload_size;
-        packet->hash = Hash((char*)packet + sizeof(packet->hash), packet_size - sizeof(packet->hash));
+
+        struct RTPPacket encrypted_packet;
+        int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, PRIVATE_KEY );
+        //packet->hash = Hash((char*)packet + sizeof(packet->hash), packet_size - sizeof(packet->hash));
 
         SDL_LockMutex(packet_mutex);
         *packet_len = packet_size;
-        int sent_size = sendp(context, packet, packet_size);
+        int sent_size = sendp(context, &encrypted_packet, encrypt_len);
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
@@ -444,7 +451,7 @@ int main(int argc, char* argv[])
         StartTimer(&startup_time);
 
         connected = true;
-        max_mbps = START_MAX_MBPS;
+        max_mbps = MAXIMUM_MBPS;
 
         packet_mutex = SDL_CreateMutex();
 

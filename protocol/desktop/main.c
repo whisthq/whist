@@ -22,6 +22,7 @@
 #include "../include/fractal.h"
 #include "../include/webserver.h" // header file for webserver query functions
 #include "../include/linkedlist.h" // header file for audio decoder
+#include "../include/aes.h"
 
 #include "video.h"
 #include "audio.h"
@@ -258,7 +259,9 @@ static int32_t ReceivePackets(void* opaque) {
             mprintf("DROPPING\n");
         }
         else {
-            recv_size = recvp(&socketContext, &packet, sizeof(packet));
+            struct RTPPacket encrypted_packet;
+            int encrypted_len = recvp(&socketContext, &encrypted_packet, sizeof(encrypted_packet));
+            recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, PRIVATE_KEY );
         }
 
         double recvfrom_short_time = GetTimer(recvfrom_timer);
@@ -480,9 +483,6 @@ int initSDL() {
         (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
     );
 
-    //SDL_SetHint( SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1" );
-    //SDL_SetWindowGrab(window, true);
-
     if (!window) {
         fprintf(stderr, "SDL: could not create window - exiting: %s\n", SDL_GetError());
         return -1;
@@ -516,26 +516,71 @@ void destroySDL() {
 
 int main(int argc, char* argv[])
 {
-    if(argc < 2 || argc > 5) {
-        printf("Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]");
+    int num_required_args = 2;
+    int num_optional_args = 3;
+    if(argc - 1 < num_required_args || argc - 1 > num_required_args + num_optional_args ) {
+        printf("Usage: desktop [IP ADDRESS] [AES PRIVATE KEY] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]");
         return -1;
     }
 
     char* server_ip = argv[1];
+    char* aes_private_key = argv[2];
     output_width = -1;
     output_height = -1;
 
-    if (argc >= 3) {
-        output_width = atoi(argv[2]);
-    }
-
     if (argc >= 4) {
-        output_height = atoi(argv[3]);
+        output_width = atoi(argv[3]);
     }
 
-    if (argc == 5) {
-        max_mbps = atoi(argv[4]);
+    if (argc >= 5) {
+        output_height = atoi(argv[4]);
     }
+
+    if (argc == 6) {
+        max_mbps = atoi(argv[5]);
+    }
+
+    // START AES
+    /*
+    unsigned char* key = (unsigned char*)"0123456789012345";
+
+    struct RTPPacket test_packet;
+    struct RTPPacket encrypted_packet;
+    struct RTPPacket decrypted_packet;
+
+    printf( "Original Hash: %d\n", Hash( (char*)&test_packet + 300, 200 ) );
+
+    int encrypt_len = encrypt_packet( &test_packet, 600, &encrypted_packet, key);
+
+    printf( "Encrypted Hash: %d\n", Hash( &encrypted_packet, sizeof( test_packet ) ) );
+
+    int decrypt_len;
+    decrypt_len = decrypt_packet( &encrypted_packet, encrypt_len, &decrypted_packet, key );
+    printf( "Decrypt len: %d\n", decrypt_len );
+    printf( "Decrypted Hash: %d\n", Hash( (char*)&decrypted_packet + 300, 200 ) );
+
+    return 0;
+    unsigned char* iv = (unsigned char*)"0123456789012345";
+
+    unsigned char* plaintext =
+        (unsigned char*)"The quick brown fox jumps over the lazy dog";
+
+    unsigned char ciphertext[128];
+    unsigned char decryptedtext[128];
+
+    int decryptedtext_len, ciphertext_len;
+
+    ciphertext_len = encrypt( plaintext, strlen( (char*)plaintext ), key, iv,
+                              ciphertext );
+    printf( "Ciphertext is:\n" );
+    decryptedtext_len = decrypt( ciphertext, ciphertext_len, key, iv,
+                                 decryptedtext );
+    decryptedtext[decryptedtext_len] = '\0';
+    printf( "Decrypted text is:\n" );
+    printf( "%s\n", decryptedtext );
+    */
+
+    // END AES
 
     if (initSDL() < 0) {
         printf("Failed to initialized SDL\n");

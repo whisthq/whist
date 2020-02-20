@@ -16,7 +16,8 @@ STATIC_LIBS = \
   ../lib/ffmpeg/windows/postproc.lib \
   ../lib/ffmpeg/windows/swresample.lib \
   ../lib/ffmpeg/windows/swscale.lib \
-  ../lib/SDL2/windows/SDL2.lib
+  ../lib/SDL2/windows/SDL2.lib \
+  ../lib/openssl/windows/libcryptoMT.lib
   
 # compiler flags
 CFLAGS = \
@@ -27,7 +28,8 @@ CFLAGS = \
   /MP \
   -DWIN32_LEAN_AND_MEAN \
   -DUNICODE \
-  -DWIN32
+  -DWIN32 \
+  -I ../include
 
 # system libs to link against
 SHARED_LIBS = \
@@ -63,7 +65,8 @@ SHARED_LIBS = \
   msvcprt.lib \
   avrt.lib \
   d3dcompiler.lib \
-  dxguid.lib
+  dxguid.lib \
+  crypt32.lib
 
 # linking flags
 LD_FLAGS = \
@@ -72,12 +75,16 @@ LD_FLAGS = \
 
 
 # build all files into executable
-all: clean clear fractal.obj videocapture.obj audiocapture.obj videoencode.obj audioencode.obj socket.obj wasapicapture.obj dxgicapture.obj desktop.obj input.obj main.obj
+all: clean clear fractal.obj aes.obj videocapture.obj audiocapture.obj videoencode.obj audioencode.obj socket.obj wasapicapture.obj dxgicapture.obj desktop.obj input.obj main.obj
 	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
 fractal.obj: ../include/fractal.c
 	$(CC) /c ../include/fractal.c
+
+# compile the aes source file into object file
+aes.obj: ../include/aes.c
+  $(CC) /c $(CFLAGS) ../include/aes.c
 
 # compile the video capture source file into object file
 videocapture.obj: ../include/videocapture.c

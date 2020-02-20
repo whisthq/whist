@@ -370,7 +370,7 @@ void lprintf(const char* fmtStr, ...) {
 
 void real_mprintf(bool log, const char* fmtStr, va_list args) {
 	if (mprintf_thread == NULL) {
-		mprintf("initMultiThreadedPrintf has not been called!\n");
+		printf("initMultiThreadedPrintf has not been called!\n");
 		return;
 	}
 
