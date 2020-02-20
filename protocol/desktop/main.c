@@ -131,12 +131,7 @@ int SendPacket(void* data, int len) {
     int packet_size = sizeof( packet ) - sizeof( packet.data ) + len;
 
     struct RTPPacket encrypted_packet;
-    static float time = 0;
-    clock timer;
-    StartTimer( &timer );
     int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, PRIVATE_KEY );
-    time += GetTimer( timer );
-    mprintf( "Timer: %f\n", time );
 
     SDL_LockMutex(send_packet_mutex);
     if (sendp(&PacketSendContext, &encrypted_packet, encrypt_len ) < 0) {
@@ -259,12 +254,18 @@ static int32_t ReceivePackets(void* opaque) {
         else {
             struct RTPPacket encrypted_packet;
             int encrypted_len = recvp(&socketContext, &encrypted_packet, sizeof(encrypted_packet));
-            if( encrypted_len > 0 )
+
+            recv_size = encrypted_len;
+
+            if( recv_size > 0 )
             {
-                recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, PRIVATE_KEY );
-            } else
-            {
-                recv_size = encrypted_len;
+                if( encrypted_packet.cipher_len == -1 )
+                {
+                    memcpy( &packet, &encrypted_packet, recv_size );
+                } else
+                {
+                    recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, PRIVATE_KEY );
+                }
             }
         }
 

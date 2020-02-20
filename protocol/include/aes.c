@@ -87,7 +87,7 @@ int encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
      * Finalise the encryption. Further ciphertext bytes may be written at
      * this stage.
      */
-    if( 1 != EVP_EncryptFinal_ex( ctx, ciphertext + len, &len ) )
+    if( 1 != EVP_EncryptFinal_ex( ctx, ciphertext + ciphertext_len, &len ) )
         handleErrors();
     ciphertext_len += len;
 
@@ -97,18 +97,20 @@ int encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
     return ciphertext_len;
 }
 
+EVP_CIPHER_CTX* ctx = NULL;
+
 int decrypt( unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
              unsigned char* iv, unsigned char* plaintext )
 {
-    EVP_CIPHER_CTX* ctx;
 
     int len;
 
     int plaintext_len;
 
-    /* Create and initialise the context */
-    if( !(ctx = EVP_CIPHER_CTX_new()) )
-        handleErrors();
+    if (ctx == NULL)
+        /* Create and initialise the context */
+        if( !(ctx = EVP_CIPHER_CTX_new()) )
+            handleErrors();
 
     /*
      * Initialise the decryption operation. IMPORTANT - ensure you use a key
@@ -137,7 +139,7 @@ int decrypt( unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
     plaintext_len += len;
 
     /* Clean up */
-    EVP_CIPHER_CTX_free( ctx );
+    //EVP_CIPHER_CTX_free( ctx );
 
     return plaintext_len;
 }
