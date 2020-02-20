@@ -124,8 +124,17 @@ int SendPacket(void* data, int len) {
 
     bool failed = false;
 
+    struct RTPPacket packet = { 0 };
+    memcpy( packet.data, data, len );
+    packet.payload_size = len;
+
+    int packet_size = sizeof( packet ) - sizeof( packet.data ) + len;
+
+    struct RTPPacket encrypted_packet;
+    int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, PRIVATE_KEY );
+
     SDL_LockMutex(send_packet_mutex);
-    if (sendp(&PacketSendContext, data, len) < 0) {
+    if (sendp(&PacketSendContext, &encrypted_packet, encrypt_len ) < 0) {
         mprintf("Failed to send packet!\n");
         failed = true;
     }
@@ -245,7 +254,15 @@ static int32_t ReceivePackets(void* opaque) {
         else {
             struct RTPPacket encrypted_packet;
             int encrypted_len = recvp(&socketContext, &encrypted_packet, sizeof(encrypted_packet));
-            recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, PRIVATE_KEY );
+            mprintf( "Decrypt Packet! %d\n", encrypted_len );
+            if( encrypted_len > 0 )
+            {
+                recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, PRIVATE_KEY );
+            } else
+            {
+                recv_size = encrypted_len;
+            }
+            mprintf( "Recv Size: %d\n", recv_size );
         }
 
         double recvfrom_short_time = GetTimer(recvfrom_timer);
@@ -284,37 +301,28 @@ static int32_t ReceivePackets(void* opaque) {
             mprintf("Invalid packet size\nPayload Size: %d\nPacket Size: %d\nRecv_size: %d\n", packet_size, recv_size, packet.payload_size);
         }
         else {
-            StartTimer(&hash_timer);
-            uint32_t hash = 0;// Hash((char*)&packet + sizeof(packet.hash), packet_size - sizeof(packet.hash));
-            hash_time += GetTimer(hash_timer);
-
-            if (hash == packet.hash) {
-                mprintf("Incorrect Hash\n");
-            }
-            else {
-                //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
-                switch (packet.type) {
-                case PACKET_VIDEO:
-                    StartTimer(&video_timer);
-                    ReceiveVideo(&packet);
-                    video_time += GetTimer(video_timer);
-                    max_video_time = max(max_video_time, GetTimer(video_timer));
-                    break;
-                case PACKET_AUDIO:
-                    StartTimer(&audio_timer);
-                    ReceiveAudio(&packet);
-                    audio_time += GetTimer(audio_timer);
-                    max_audio_time = max(max_audio_time, GetTimer(audio_timer));
-                    break;
-                case PACKET_MESSAGE:
-                    StartTimer(&message_timer); 
-                    ReceiveMessage(&packet);
-                    message_time += GetTimer(message_timer);
-                    break;
-                default:
-                    mprintf("Unknown Packet\n");
-                    break;
-                }
+            //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
+            switch (packet.type) {
+            case PACKET_VIDEO:
+                StartTimer(&video_timer);
+                ReceiveVideo(&packet);
+                video_time += GetTimer(video_timer);
+                max_video_time = max(max_video_time, GetTimer(video_timer));
+                break;
+            case PACKET_AUDIO:
+                StartTimer(&audio_timer);
+                ReceiveAudio(&packet);
+                audio_time += GetTimer(audio_timer);
+                max_audio_time = max(max_audio_time, GetTimer(audio_timer));
+                break;
+            case PACKET_MESSAGE:
+                StartTimer(&message_timer); 
+                ReceiveMessage(&packet);
+                message_time += GetTimer(message_timer);
+                break;
+            default:
+                mprintf("Unknown Packet\n");
+                break;
             }
         }
     }

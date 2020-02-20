@@ -478,8 +478,28 @@ int main(int argc, char* argv[])
             }
 
             memset(&fmsg, 0, sizeof(fmsg));
-            // 1ms timeout
-            if (recvp(&PacketReceiveContext, &fmsg, sizeof(fmsg)) > 0) {
+
+            // Get Packet
+            struct RTPPacket encrypted_packet;
+            int encrypted_len;
+            if( (encrypted_len = recvp( &PacketReceiveContext, &encrypted_packet, sizeof( encrypted_packet ) )) > 0 )
+            {
+                struct RTPPacket decrypted_packet;
+                int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
+                if( decrypt_len > 0 )
+                {
+                    if( decrypted_packet.payload_size != sizeof( fmsg ) )
+                    {
+                        mprintf( "Packet is of the wrong size!\n" );
+                    } else
+                    {
+                        memcpy( &fmsg, decrypted_packet.data, sizeof( fmsg ) );
+                    }
+                }
+            }
+            // End Get Packet
+
+            if (fmsg.type != 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
                     if (j >= 6) {
                         mprintf("Too long of a keyboard combination!\n");
