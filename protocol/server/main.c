@@ -58,12 +58,13 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     }
 
     packet->is_a_nack = true;
+    packet->cipher_len = -1;
 
-    struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( packet, len, &encrypted_packet, PRIVATE_KEY );
+    //struct RTPPacket encrypted_packet;
+    //int encrypt_len = encrypt_packet( packet, len, &encrypted_packet, PRIVATE_KEY );
 
     SDL_LockMutex(packet_mutex);
-    int sent_size = sendp(context, &encrypted_packet, encrypt_len);
+    int sent_size = sendp(context, packet, len);
     SDL_UnlockMutex(packet_mutex);
 
     if (sent_size < 0) {
