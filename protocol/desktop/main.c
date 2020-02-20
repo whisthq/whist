@@ -540,7 +540,8 @@ int main(int argc, char* argv[])
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
 
-    for (int try_amount = 0; try_amount < 3; try_amount++) {
+    bool exiting = false;
+    for (int try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         clearSDL();
 
         SDL_Delay(200);
@@ -573,7 +574,6 @@ int main(int argc, char* argv[])
 
         // Initialize variables
         connected = true;
-        bool shutting_down = false;
         bool alt_pressed = false;
         bool ctrl_pressed = false;
 
@@ -587,7 +587,7 @@ int main(int argc, char* argv[])
         SDL_Thread* receive_packets_thread;
         receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
-        while (connected && !shutting_down)
+        while (connected && !exiting)
         {
             memset(&fmsg, 0, sizeof(fmsg));
             if (SDL_PollEvent(&msg)) {
@@ -608,7 +608,7 @@ int main(int argc, char* argv[])
                     if (fmsg.keyboard.code == KEY_F4) {
                         if (alt_pressed && ctrl_pressed) {
                             mprintf("Quitting...\n");
-                            shutting_down = true;
+                            exiting = true;
                         }
                     }
 
@@ -635,7 +635,7 @@ int main(int argc, char* argv[])
                     break;
                 case SDL_QUIT:
                     mprintf("Forcefully Quitting...\n");
-                    shutting_down = true;
+                    exiting = true;
                     break;
                 }
 
@@ -649,6 +649,16 @@ int main(int argc, char* argv[])
         }
 
         mprintf("Disconnecting...\n");
+
+        if( exiting )
+        {
+            fmsg.type = MESSAGE_QUIT;
+            SendPacket( &fmsg, sizeof( fmsg ) );
+        } else
+        {
+            // If we're gonna retry to connect, then let's wait a bit for the server to recover
+            SDL_Delay( 750 );
+        }
 
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
@@ -664,12 +674,6 @@ int main(int argc, char* argv[])
 #if defined(_WIN32)
         WSACleanup();
 #endif
-
-        if (shutting_down) {
-            break;
-        }
-
-        SDL_Delay(750);
     }
 
     mprintf("Closing Client...\n");
