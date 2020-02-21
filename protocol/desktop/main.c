@@ -535,8 +535,6 @@ int main(int argc, char* argv[])
         max_mbps = atoi(argv[5]);
     }
 
-    // END AES
-
     if (initSDL() < 0) {
         printf("Failed to initialized SDL\n");
         return -1;
@@ -544,6 +542,21 @@ int main(int argc, char* argv[])
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
+
+    // BEGIN TEST
+    /*
+    struct RTPPacket decrypted_packet;
+    int packet_len = 400;
+    decrypted_packet.payload_size = packet_len - (sizeof( decrypted_packet ) - sizeof( decrypted_packet.data ) - sizeof( decrypted_packet.overflow ));
+    struct RTPPacket encrypted_packet;
+    int enc_len = encrypt_packet( &decrypted_packet, packet_len, &encrypted_packet, PRIVATE_KEY );
+    printf( "Hash: %d\n", Hash( &decrypted_packet, packet_len ) );
+    decrypt_packet( &encrypted_packet, enc_len, &encrypted_packet, PRIVATE_KEY );
+    printf( "Hash: %d\n", Hash( &decrypted_packet, packet_len ) );
+    destroySDL();
+    return 0;
+    */
+    // END TEST
 
     exiting = false;
     for (int try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
