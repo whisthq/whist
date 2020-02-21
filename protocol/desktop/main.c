@@ -43,6 +43,7 @@ static int32_t ReceiveMessage(struct RTPPacket* packet);
 struct SocketContext PacketSendContext;
 
 volatile bool connected = true;
+volatile bool exiting = false;
 
 // UPDATER CODE - HANDLES ALL PERIODIC UPDATES
 struct UpdateData {
@@ -354,6 +355,10 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
         mprintf("Changing audio frequency to %d\n", fmsg.frequency);
         audio_frequency = fmsg.frequency;
         break;
+    case CMESSAGE_QUIT:
+        mprintf("Server signaled a quit!\n");
+        exiting = true;
+        break;
     default:
         mprintf("Unknown Server Message Received\n");
         return -1; 
@@ -540,7 +545,7 @@ int main(int argc, char* argv[])
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
 
-    bool exiting = false;
+    exiting = false;
     for (int try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         clearSDL();
 
@@ -652,7 +657,7 @@ int main(int argc, char* argv[])
 
         if( exiting )
         {
-            fmsg.type = MESSAGE_QUIT;
+            fmsg.type = CMESSAGE_QUIT;
             SendPacket( &fmsg, sizeof( fmsg ) );
         } else
         {

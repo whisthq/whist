@@ -653,7 +653,7 @@ typedef enum FractalClientMessageType {
 	MESSAGE_DIMENSIONS      = 8, ///< `dimensions.width` int and `dimensions.height` int is valid in FractClientMessage
 	MESSAGE_VIDEO_NACK      = 9,
 	MESSAGE_AUDIO_NACK      = 10,
-	MESSAGE_QUIT = 100,
+	CMESSAGE_QUIT = 100,
 } FractalClientMessageType;
 
 typedef struct FractalClientMessage {
@@ -681,6 +681,7 @@ typedef enum FractalServerMessageType {
 	SMESSAGE_NONE = 0, ///< No Message
 	MESSAGE_PONG = 1,
 	MESSAGE_AUDIO_FREQUENCY = 2,
+	SMESSAGE_QUIT = 3,
 } FractalServerMessageType;
 
 typedef struct FractalServerMessage {

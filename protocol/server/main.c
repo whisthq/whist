@@ -482,6 +482,11 @@ int main(int argc, char* argv[])
 
             if (GetTimer(last_exit_check) > 15.0 / 1000.0) {
                 if (PathFileExistsA("C:\\Program Files\\Fractal\\exit")) {
+                    FractalServerMessage fmsg_response = { 0 };
+                    fmsg_response.type = SMESSAGE_QUIT;
+                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), 1) < 0) {
+                        mprintf("Could not send Quit Message\n");
+                    }
                     connected = false;
                 }
                 StartTimer(&last_exit_check);
@@ -565,7 +570,7 @@ int main(int argc, char* argv[])
                     server_height = fmsg.dimensions.height;
                     update_device = true;
                 }
-                else if (fmsg.type == MESSAGE_QUIT) {
+                else if (fmsg.type == CMESSAGE_QUIT) {
                     mprintf("Client Quit\n");
                     connected = false;
                 }
