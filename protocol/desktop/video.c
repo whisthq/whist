@@ -359,7 +359,7 @@ void updateVideo() {
 
     if (!rendering && VideoData.last_rendered_id >= 0) {
         if (VideoData.most_recent_iframe - 1 > VideoData.last_rendered_id) {
-            mprintf("Skipping to i-frame %d!\n", VideoData.most_recent_iframe);
+            mprintf("Skipping from %d to i-frame %d!\n", VideoData.last_rendered_id, VideoData.most_recent_iframe);
             for (int i = VideoData.last_rendered_id + 1; i < VideoData.most_recent_iframe; i++) {
                 int index = i % RECV_FRAMES_BUFFER_SIZE;
                 if (receiving_frames[index].id == i) {
@@ -488,8 +488,8 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         int to_index = packet->index - 3;
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             if (!ctx->received_indicies[i]) {
-                ctx->nacked_indicies[i] = true;
-                nack(packet->id, i);
+                //ctx->nacked_indicies[i] = true;
+                //nack(packet->id, i);
             }
         }
         ctx->last_nacked_index = max(ctx->last_nacked_index, to_index);

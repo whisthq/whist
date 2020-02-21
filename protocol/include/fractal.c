@@ -20,7 +20,6 @@
 #pragma warning(disable: 4201)
 #endif
 
-
 /*** FRACTAL FUNCTIONS START ***/
 
 int GetLastNetworkError() {
@@ -49,106 +48,7 @@ int get_native_screen_height() {
     height = DM.h;
   }
   return height;
-
 }
-
-/*
-/// @brief destroy the server sockets and threads, and WSA for windows
-/// @details if full=true, destroys everything, else only current connection
-FractalStatus ServerDestroy(SOCKET sockets[], HANDLE threads[], bool full) {
-	int i; // counter
-	int num_threads = strlen(threads); // max number of threads we have
-	int num_sockets = strlen(sockets); // max number of sockets we have
-
-	// first we close the threads if they ever got started
-	for (i = 0; i < num_threads; i++) {
-		// if a thread was initialized, close it
-		if (threads[i] != 0) {
-			CloseHandle(threads[i]);
-		}
-	}
-
-	// if full == true, we destroy everything to close the app, else we only
-	// destroy the current connection, but leave listensocket on to listen for
-	// future connections without needing to manually restart the app
-	if (full) {
-		// then we close Windows socket library
-		WSACleanup();
-		i = 0; // set index to 0 to destroy all sockets
-	}
-	// keep the listensocket and windows socket library active
-	else {
-		i = 1; // set index to 1 to skip the listen socket when destroying
-	}
-
-	// then we can close the sockets that were opened
-	for (i; i < num_sockets; i++) {
-		// if a socket was opened, closed it
-		if (sockets[i] != 0) {
-			closesocket(sockets[i]);
-		}
-	}
-
-	// done
-	return FRACTAL_OK;
-}
-
-/// @brief initialize the listen socket (TCP path)
-/// @details initializes windows socket, creates and binds our listen socket
-SOCKET ServerInit(SOCKET listensocket, FractalConfig config) {
-	// socket variables
-	int bind_attempts = 0; 	// init counter to attempt multiple port bindings
-	WSADATA wsa; // windows socket library
-	struct sockaddr_in serverRECV; // serverRECV port parameters
-
-	// initialize Winsock (sockets library)
-	mprintf("Initialising Winsock...\n");
-	if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
-		mprintf("Failed. Error Code : %d.\n", WSAGetLastError());
-	}
-	mprintf("Winsock Initialised.\n");
-
-	// Creating our TCP (receiving) socket (need it first to initiate connection)
-	// AF_INET = IPv4
-	// SOCK_STREAM = TCP Socket
-	// 0 = protocol automatically detected
-	if ((listensocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
-		mprintf("Could not create listen TCP socket: %d.\n" , WSAGetLastError());
-		WSACleanup(); // close Windows socket library
-	}
-	mprintf("Listen TCP Socket created.\n");
-
-	// prepare the sockaddr_in structure for the listening socket
-	serverRECV.sin_family = AF_INET; // IPv4
-	serverRECV.sin_addr.s_addr = INADDR_ANY; // any IP
-	serverRECV.sin_port = htons(config.serverPortRECV); // initial default port
-
-	// bind our socket to this port. If it fails, increment port by one and retry
-	while (bind(listensocket, (struct sockaddr *) &serverRECV, sizeof(serverRECV)) == SOCKET_ERROR) {
-		// at most 50 attempts, after that we give up
-		if (bind_attempts == 50) {
-			mprintf("Cannot find an open port, abort.\n");
-			closesocket(listensocket); // close open socket
-			WSACleanup(); // close Windows socket library
-		}
-		// display failed attempt
-		mprintf("Bind attempt #%i failed with error code: %d.\n", bind_attempts, WSAGetLastError());
-
-		// increment port number and retry
-		bind_attempts += 1;
-		serverRECV.sin_port = htons(config.serverPortRECV + bind_attempts); // initial default port 48888
-	}
-	// successfully binded, we're good to go
-	mprintf("Bind done on port: %d.\n", ntohs(serverRECV.sin_port));
-
-	// this passive socket is always open to listen for an incoming connection
-	listen(listensocket, 1); // 1 maximum concurrent connection
-	mprintf("Waiting for an incoming connection...\n");
-
-	// done initializing, waiting for a connection
-	return listensocket;
-}
-*/
 
 void set_timeout(SOCKET s, int timeout_ms) {
 	if (timeout_ms < 0) {
@@ -370,7 +270,7 @@ void lprintf(const char* fmtStr, ...) {
 
 void real_mprintf(bool log, const char* fmtStr, va_list args) {
 	if (mprintf_thread == NULL) {
-		mprintf("initMultiThreadedPrintf has not been called!\n");
+		printf("initMultiThreadedPrintf has not been called!\n");
 		return;
 	}
 

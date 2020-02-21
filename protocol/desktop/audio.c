@@ -168,7 +168,7 @@ void updateAudio() {
 
     if (last_played_id > -1) {
 
-        if (GetTimer(nack_timer) > 2.0 / 1000.0) {
+        if (GetTimer(nack_timer) > 5.0 / 1000.0) {
             StartTimer(&nack_timer);
             last_nacked_id = last_played_id;
         }

@@ -18,7 +18,8 @@ STATIC_LIBS = \
   ../lib/ffmpeg/windows/swresample.lib \
   ../lib/ffmpeg/windows/swscale.lib \
   ../lib/SDL2/windows/SDL2.lib \
-  ../lib/mfx/windows/libmfx.lib
+  ../lib/mfx/windows/libmfx.lib \
+  ../lib/openssl/windows/libcryptoMT.lib
 
 # compiler flags
 CFLAGS = \
@@ -28,6 +29,7 @@ CFLAGS = \
   /MT \
   /MP \
   /DWIN32 \
+  -I ../include
 
 # system libs to link against
 SHARED_LIBS = \
@@ -46,7 +48,8 @@ SHARED_LIBS = \
   user32.lib \
   uuid.lib \
   version.lib \
-  ws2_32.lib
+  ws2_32.lib \
+  crypt32.lib
 
 # linking flags
 LD_FLAGS = \
@@ -54,12 +57,16 @@ LD_FLAGS = \
   /nologo
 
 # build all files into executable
-all: clean clear fractal.obj webserver.obj videodecode.obj audiodecode.obj linkedlist.obj video.obj audio.obj main.obj
+all: clean fractal.obj aes.obj webserver.obj videodecode.obj audiodecode.obj linkedlist.obj video.obj audio.obj main.obj
   link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
 fractal.obj: ../include/fractal.c
   $(CC) /c $(CFLAGS) ../include/fractal.c
+
+# compile the aes source file into object file
+aes.obj: ../include/aes.c
+  $(CC) /c $(CFLAGS) ../include/aes.c
 
 # compile the webserver source file into object file
 webserver.obj: ../include/webserver.c

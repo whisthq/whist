@@ -15,6 +15,7 @@
 #include "../include/dxgicapture.h"
 #include "../include/desktop.h"
 #include "../include/input.h"
+#include "../include/aes.h"
 
 #pragma comment (lib, "ws2_32.lib")
 
@@ -58,8 +59,11 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
 
     packet->is_a_nack = true;
 
+    struct RTPPacket encrypted_packet;
+    int encrypt_len = encrypt_packet( packet, len, &encrypted_packet, PRIVATE_KEY );
+
     SDL_LockMutex(packet_mutex);
-    int sent_size = sendp(context, packet, len);
+    int sent_size = sendp(context, &encrypted_packet, encrypt_len);
     SDL_UnlockMutex(packet_mutex);
 
     if (sent_size < 0) {
@@ -85,7 +89,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
     int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
 
     while (curr_index < len) {
-        if (i != 0 && i % 40 == 0) {
+        if (i != 0 && i % 15 == 0) {
             SDL_Delay(1);
         }
 
@@ -124,11 +128,13 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
         packet->num_indices = num_indices;
         packet->is_a_nack = false;
         int packet_size = sizeof(*packet) - sizeof(packet->data) + packet->payload_size;
-        packet->hash = Hash((char*)packet + sizeof(packet->hash), packet_size - sizeof(packet->hash));
+        *packet_len = packet_size;
+
+        struct RTPPacket encrypted_packet;
+        int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, PRIVATE_KEY );
 
         SDL_LockMutex(packet_mutex);
-        *packet_len = packet_size;
-        int sent_size = sendp(context, packet, packet_size);
+        int sent_size = sendp(context, &encrypted_packet, encrypt_len);
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
@@ -471,8 +477,28 @@ int main(int argc, char* argv[])
             }
 
             memset(&fmsg, 0, sizeof(fmsg));
-            // 1ms timeout
-            if (recvp(&PacketReceiveContext, &fmsg, sizeof(fmsg)) > 0) {
+
+            // Get Packet
+            struct RTPPacket encrypted_packet;
+            int encrypted_len;
+            if( (encrypted_len = recvp( &PacketReceiveContext, &encrypted_packet, sizeof( encrypted_packet ) )) > 0 )
+            {
+                struct RTPPacket decrypted_packet;
+                int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
+                if( decrypt_len > 0 )
+                {
+                    if( decrypted_packet.payload_size != sizeof( fmsg ) )
+                    {
+                        mprintf( "Packet is of the wrong size!\n" );
+                    } else
+                    {
+                        memcpy( &fmsg, decrypted_packet.data, sizeof( fmsg ) );
+                    }
+                }
+            }
+            // End Get Packet
+
+            if (fmsg.type != 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
                     if (j >= 6) {
                         mprintf("Too long of a keyboard combination!\n");
@@ -550,7 +576,7 @@ int main(int argc, char* argv[])
                     struct RTPPacket* video_packet = &video_buffer[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
                     int len = video_buffer_packet_len[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
                     if (video_packet->id == fmsg.nack_data.id) {
-                        mprintf("NACKed video packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
+                        mprintf("NACKed video packet ID %d Index %d found of length %d. Relaying!\n", fmsg.nack_data.id, fmsg.nack_data.index, len);
                         ReplayPacket(&PacketSendContext, video_packet, len);
                     }
 

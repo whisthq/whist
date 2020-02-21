@@ -3,26 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_WIN32)
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #include <process.h>
-    #include <windows.h>
-    #include <synchapi.h>
-    #pragma comment (lib, "ws2_32.lib")
-#else
-    #include <unistd.h>
-    #include <errno.h>
-
-    // adapt windows error codes
-    #define WSAETIMEDOUT ETIMEDOUT
-    #define WSAEWOULDBLOCK EWOULDBLOCK
-#endif
-
 #include "../include/fractal.h"
 #include "../include/webserver.h" // header file for webserver query functions
 #include "../include/linkedlist.h" // header file for audio decoder
+#include "../include/aes.h"
 
+#include "main.h"
 #include "video.h"
 #include "audio.h"
 
@@ -51,7 +37,6 @@ volatile int output_height;
 // Function Declarations
 
 SDL_mutex* send_packet_mutex;
-int SendPacket(void* data, int len);
 static int32_t ReceivePackets(void* opaque);
 static int32_t ReceiveMessage(struct RTPPacket* packet);
 
@@ -139,8 +124,17 @@ int SendPacket(void* data, int len) {
 
     bool failed = false;
 
+    struct RTPPacket packet = { 0 };
+    memcpy( packet.data, data, len );
+    packet.payload_size = len;
+
+    int packet_size = sizeof( packet ) - sizeof( packet.data ) + len;
+
+    struct RTPPacket encrypted_packet;
+    int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, PRIVATE_KEY );
+
     SDL_LockMutex(send_packet_mutex);
-    if (sendp(&PacketSendContext, data, len) < 0) {
+    if (sendp(&PacketSendContext, &encrypted_packet, encrypt_len ) < 0) {
         mprintf("Failed to send packet!\n");
         failed = true;
     }
@@ -258,7 +252,15 @@ static int32_t ReceivePackets(void* opaque) {
             mprintf("DROPPING\n");
         }
         else {
-            recv_size = recvp(&socketContext, &packet, sizeof(packet));
+            struct RTPPacket encrypted_packet;
+            int encrypted_len = recvp(&socketContext, &encrypted_packet, sizeof(encrypted_packet));
+
+            recv_size = encrypted_len;
+
+            if( recv_size > 0 )
+            {
+                recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, PRIVATE_KEY );
+            }
         }
 
         double recvfrom_short_time = GetTimer(recvfrom_timer);
@@ -297,37 +299,28 @@ static int32_t ReceivePackets(void* opaque) {
             mprintf("Invalid packet size\nPayload Size: %d\nPacket Size: %d\nRecv_size: %d\n", packet_size, recv_size, packet.payload_size);
         }
         else {
-            StartTimer(&hash_timer);
-            uint32_t hash = 0;// Hash((char*)&packet + sizeof(packet.hash), packet_size - sizeof(packet.hash));
-            hash_time += GetTimer(hash_timer);
-
-            if (hash == packet.hash) {
-                mprintf("Incorrect Hash\n");
-            }
-            else {
-                //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
-                switch (packet.type) {
-                case PACKET_VIDEO:
-                    StartTimer(&video_timer);
-                    ReceiveVideo(&packet);
-                    video_time += GetTimer(video_timer);
-                    max_video_time = max(max_video_time, GetTimer(video_timer));
-                    break;
-                case PACKET_AUDIO:
-                    StartTimer(&audio_timer);
-                    ReceiveAudio(&packet);
-                    audio_time += GetTimer(audio_timer);
-                    max_audio_time = max(max_audio_time, GetTimer(audio_timer));
-                    break;
-                case PACKET_MESSAGE:
-                    StartTimer(&message_timer); 
-                    ReceiveMessage(&packet);
-                    message_time += GetTimer(message_timer);
-                    break;
-                default:
-                    mprintf("Unknown Packet\n");
-                    break;
-                }
+            //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
+            switch (packet.type) {
+            case PACKET_VIDEO:
+                StartTimer(&video_timer);
+                ReceiveVideo(&packet);
+                video_time += GetTimer(video_timer);
+                max_video_time = max(max_video_time, GetTimer(video_timer));
+                break;
+            case PACKET_AUDIO:
+                StartTimer(&audio_timer);
+                ReceiveAudio(&packet);
+                audio_time += GetTimer(audio_timer);
+                max_audio_time = max(max_audio_time, GetTimer(audio_timer));
+                break;
+            case PACKET_MESSAGE:
+                StartTimer(&message_timer); 
+                ReceiveMessage(&packet);
+                message_time += GetTimer(message_timer);
+                break;
+            default:
+                mprintf("Unknown Packet\n");
+                break;
             }
         }
     }
@@ -480,9 +473,6 @@ int initSDL() {
         (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
     );
 
-    //SDL_SetHint( SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1" );
-    //SDL_SetWindowGrab(window, true);
-
     if (!window) {
         fprintf(stderr, "SDL: could not create window - exiting: %s\n", SDL_GetError());
         return -1;
@@ -516,26 +506,31 @@ void destroySDL() {
 
 int main(int argc, char* argv[])
 {
-    if(argc < 2 || argc > 5) {
-        printf("Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]");
+    int num_required_args = 2;
+    int num_optional_args = 3;
+    if(argc - 1 < num_required_args || argc - 1 > num_required_args + num_optional_args ) {
+        printf("Usage: desktop [IP ADDRESS] [AES PRIVATE KEY] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]");
         return -1;
     }
 
     char* server_ip = argv[1];
+    char* aes_private_key = argv[2];
     output_width = -1;
     output_height = -1;
 
-    if (argc >= 3) {
-        output_width = atoi(argv[2]);
-    }
-
     if (argc >= 4) {
-        output_height = atoi(argv[3]);
+        output_width = atoi(argv[3]);
     }
 
-    if (argc == 5) {
-        max_mbps = atoi(argv[4]);
+    if (argc >= 5) {
+        output_height = atoi(argv[4]);
     }
+
+    if (argc == 6) {
+        max_mbps = atoi(argv[5]);
+    }
+
+    // END AES
 
     if (initSDL() < 0) {
         printf("Failed to initialized SDL\n");
@@ -545,7 +540,8 @@ int main(int argc, char* argv[])
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
 
-    for (int try_amount = 0; try_amount < 3; try_amount++) {
+    bool exiting = false;
+    for (int try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         clearSDL();
 
         SDL_Delay(200);
@@ -578,7 +574,6 @@ int main(int argc, char* argv[])
 
         // Initialize variables
         connected = true;
-        bool shutting_down = false;
         bool alt_pressed = false;
         bool ctrl_pressed = false;
 
@@ -592,7 +587,7 @@ int main(int argc, char* argv[])
         SDL_Thread* receive_packets_thread;
         receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
-        while (connected && !shutting_down)
+        while (connected && !exiting)
         {
             memset(&fmsg, 0, sizeof(fmsg));
             if (SDL_PollEvent(&msg)) {
@@ -613,7 +608,7 @@ int main(int argc, char* argv[])
                     if (fmsg.keyboard.code == KEY_F4) {
                         if (alt_pressed && ctrl_pressed) {
                             mprintf("Quitting...\n");
-                            shutting_down = true;
+                            exiting = true;
                         }
                     }
 
@@ -640,7 +635,7 @@ int main(int argc, char* argv[])
                     break;
                 case SDL_QUIT:
                     mprintf("Forcefully Quitting...\n");
-                    shutting_down = true;
+                    exiting = true;
                     break;
                 }
 
@@ -654,6 +649,16 @@ int main(int argc, char* argv[])
         }
 
         mprintf("Disconnecting...\n");
+
+        if( exiting )
+        {
+            fmsg.type = MESSAGE_QUIT;
+            SendPacket( &fmsg, sizeof( fmsg ) );
+        } else
+        {
+            // If we're gonna retry to connect, then let's wait a bit for the server to recover
+            SDL_Delay( 750 );
+        }
 
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
@@ -669,12 +674,6 @@ int main(int argc, char* argv[])
 #if defined(_WIN32)
         WSACleanup();
 #endif
-
-        if (shutting_down) {
-            break;
-        }
-
-        SDL_Delay(750);
     }
 
     mprintf("Closing Client...\n");
