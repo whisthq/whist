@@ -66,7 +66,8 @@ SHARED_LIBS = \
   avrt.lib \
   d3dcompiler.lib \
   dxguid.lib \
-  crypt32.lib
+  crypt32.lib \
+  Shlwapi.lib
 
 # linking flags
 LD_FLAGS = \
