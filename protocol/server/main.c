@@ -6,6 +6,7 @@
 #include <ws2tcpip.h>
 #include <process.h>
 #include <windows.h>
+#include <shlwapi.h>
 
 #include "../include/fractal.h"
 #include "../include/videocapture.h"
@@ -469,11 +470,21 @@ int main(int argc, char* argv[])
         clock totaltime;
         StartTimer(&totaltime);
 
+        clock last_exit_check;
+        StartTimer(&last_exit_check);
+
         mprintf("Receiving packets...\n");
         while (connected) {
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
                 connected = false;
+            }
+
+            if (GetTimer(last_exit_check) > 15.0 / 1000.0) {
+                if (PathFileExistsA("C:\\Program Files\\Fractal\\exit")) {
+                    connected = false;
+                }
+                StartTimer(&last_exit_check);
             }
 
             memset(&fmsg, 0, sizeof(fmsg));
