@@ -355,7 +355,7 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
         mprintf("Changing audio frequency to %d\n", fmsg.frequency);
         audio_frequency = fmsg.frequency;
         break;
-    case CMESSAGE_QUIT:
+    case SMESSAGE_QUIT:
         mprintf("Server signaled a quit!\n");
         exiting = true;
         break;
