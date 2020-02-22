@@ -118,12 +118,10 @@ void update() {
 // END UPDATER CODE
 
 int SendPacket(void* data, int len) {
-    if (len > MAX_PACKET_SIZE) {
+    if (len > MAX_PAYLOAD_SIZE ) {
         mprintf("Packet too large!\n");
         return -1;
     }
-
-    bool failed = false;
 
     struct RTPPacket packet = { 0 };
     memcpy( packet.data, data, len );
@@ -133,7 +131,9 @@ int SendPacket(void* data, int len) {
 
     struct RTPPacket encrypted_packet;
     int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, PRIVATE_KEY );
+    mprintf( "Encrypted Hash: %d\n", Hash( &encrypted_packet, encrypt_len ) );
 
+    bool failed = false;
     SDL_LockMutex(send_packet_mutex);
     if (sendp(&PacketSendContext, &encrypted_packet, encrypt_len ) < 0) {
         mprintf("Failed to send packet!\n");
@@ -543,10 +543,16 @@ int main(int argc, char* argv[])
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
 
-    /*
+    
     // BEGIN TEST
+    /*
     struct RTPPacket decrypted_packet;
-    int packet_len = 400;
+    int packet_len = 1420 - sizeof( decrypted_packet.overflow );
+    srand( time(NULL) );
+    for( int i = 0; i < packet_len; i++ )
+    {
+        ((char*)&decrypted_packet)[i] = rand();
+    }
     decrypted_packet.payload_size = packet_len - (sizeof( decrypted_packet ) - sizeof( decrypted_packet.data ) - sizeof( decrypted_packet.overflow ));
     struct RTPPacket encrypted_packet;
     int enc_len = encrypt_packet( &decrypted_packet, packet_len, &encrypted_packet, PRIVATE_KEY );
@@ -560,8 +566,9 @@ int main(int argc, char* argv[])
     printf( "Hash: %d\n", Hash( &decrypted_packet, packet_len ) );
     destroySDL();
     return 0;
-    // END TEST
     */
+    // END TEST
+    
 
     exiting = false;
     for (int try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
