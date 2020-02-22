@@ -60,12 +60,12 @@ int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct R
 
 int decrypt_packet( struct RTPPacket* encrypted_packet, int packet_len, struct RTPPacket* plaintext_packet, unsigned char* private_key )
 {
-    if( packet_len < sizeof( *encrypted_packet ) - sizeof( encrypted_packet->data ) - sizeof( encrypted_packet->overflow ) )
+    if( packet_len < PACKET_HEADER_SIZE )
     {
         mprintf( "Packet is too small for metadata!\n" );
         return -1;
     }
-    if( packet_len > sizeof( *encrypted_packet ) )
+    if( packet_len > MAX_PACKET_SIZE )
     {
         mprintf( "Encrypted version of Packet is too large!\n" );
         return -1;
@@ -91,13 +91,14 @@ int decrypt_packet( struct RTPPacket* encrypted_packet, int packet_len, struct R
                                encrypted_packet->iv, plaintext_buf );
     decrypt_len += crypto_header_len;
 
-    if( sizeof( *plaintext_packet ) - sizeof ( plaintext_packet->overflow) - sizeof( plaintext_packet->data ) + plaintext_packet->payload_size != decrypt_len )
+    int expected_len = PACKET_HEADER_SIZE + plaintext_packet->payload_size;
+    if( expected_len != decrypt_len )
     {
-        mprintf( "Packet length is incorrect!\n" );
+        mprintf( "Packet length is incorrect! Expected %d with payload %d, but got %d\n", expected_len, plaintext_packet->payload_size, decrypt_len );
         return -1;
     }
 
-    if( decrypt_len > sizeof( *encrypted_packet ) - sizeof( encrypted_packet->overflow ) )
+    if( decrypt_len > PACKET_HEADER_SIZE + MAX_PAYLOAD_SIZE )
     {
         mprintf( "Decrypted version of Packet is too large!\n" );
         return -1;

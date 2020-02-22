@@ -127,11 +127,10 @@ int SendPacket(void* data, int len) {
     memcpy( packet.data, data, len );
     packet.payload_size = len;
 
-    int packet_size = sizeof( packet ) - sizeof( packet.data ) + len;
+    int packet_size = PACKET_HEADER_SIZE + len;
 
     struct RTPPacket encrypted_packet;
     int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, PRIVATE_KEY );
-    mprintf( "Encrypted Hash: %d\n", Hash( &encrypted_packet, encrypt_len ) );
 
     bool failed = false;
     SDL_LockMutex(send_packet_mutex);
@@ -261,6 +260,12 @@ static int32_t ReceivePackets(void* opaque) {
             if( recv_size > 0 )
             {
                 recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, PRIVATE_KEY );
+                if( recv_size < 0 )
+                {
+                    mprintf( "Failed to decrypt packet\n" );
+                    // Just pretend like it never happened
+                    recv_size = 0;
+                }
             }
         }
 
@@ -278,7 +283,6 @@ static int32_t ReceivePackets(void* opaque) {
 
         //mprintf("Recv wait time: %f\n", GetTimer(recvfrom_timer));
 
-        int packet_size = sizeof(packet) - sizeof(packet.data) + packet.payload_size;
         total_recvs++;
 
         if (recv_size == 0) {
@@ -295,9 +299,6 @@ static int32_t ReceivePackets(void* opaque) {
                 mprintf("Unexpected Packet Error: %d\n", error);
                 break;
             }
-        }
-        else if (packet.payload_size < 0 || packet_size != recv_size) {
-            mprintf("Invalid packet size\nPayload Size: %d\nPacket Size: %d\nRecv_size: %d\n", packet_size, recv_size, packet.payload_size);
         }
         else {
             //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);

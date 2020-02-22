@@ -724,6 +724,7 @@ struct RTPPacket {
 };
 
 #define MAX_PACKET_SIZE (sizeof(struct RTPPacket))
+#define PACKET_HEADER_SIZE (sizeof(struct RTPPacket) - MAX_PAYLOAD_SIZE - 16)
 
 typedef struct Frame {
 	FractalCursorImage cursor;
