@@ -708,7 +708,7 @@ typedef struct SocketContext
 // Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) + RTPPacket.payload_size
 struct RTPPacket {
 	// hash at the beginning of the struct, which is the hash of the rest of the packet
-	char hash[32];
+	char hash[16];
 	int cipher_len;
 	char iv[16];
 	FractalPacketType type;
@@ -720,7 +720,7 @@ struct RTPPacket {
 	// data at the end of the struct, in the case of a truncated packet
 	uint8_t data[MAX_PAYLOAD_SIZE];
 	// The encrypted packet could overflow
-	uint8_t overflow[128];
+	uint8_t overflow[16];
 };
 
 #define MAX_PACKET_SIZE (sizeof(struct RTPPacket))
