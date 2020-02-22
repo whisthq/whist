@@ -128,12 +128,12 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
         packet->id = id;
         packet->num_indices = num_indices;
         packet->is_a_nack = false;
-        int packet_size = sizeof(*packet) - sizeof(packet->data) + packet->payload_size;
+        int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
         *packet_len = packet_size;
 
         struct RTPPacket encrypted_packet;
         int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, PRIVATE_KEY );
-
+    
         SDL_LockMutex(packet_mutex);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
         SDL_UnlockMutex(packet_mutex);
