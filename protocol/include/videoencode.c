@@ -16,6 +16,13 @@
 
 static AVBufferRef *hw_device_ctx = NULL;
 
+void set_opt(encoder_t *encoder, char* option, char* value) {
+	int ret = av_opt_set(encoder->context->priv_data, option, value, 0);
+	if (ret < 0) {
+		mprintf("Could not av_opt_set %s to %s!", option, value);
+	}
+}
+
 /// @brief creates encoder encoder
 /// @details creates FFmpeg encoder
 encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate, int gop_size, EncodeType type) {
@@ -33,6 +40,7 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 	avcodec_register_all();
 
 	if(type == NVENC_ENCODE) {
+		mprintf("Initializing hardware encoder\n");
     	av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_CUDA, "CUDA", NULL, 0);
    		encoder->codec = avcodec_find_encoder_by_name("h264_nvenc");
 
@@ -42,17 +50,17 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 		encoder->context->width           = out_width;
 		encoder->context->height          = out_height;
 		encoder->context->bit_rate        = bitrate;
+		encoder->context->gop_size        = gop_size;
+		encoder->context->keyint_min      = 5;
 		encoder->context->time_base.num   = 1;
 		encoder->context->time_base.den   = 30;
-		encoder->context->gop_size        = gop_size;
 		encoder->context->pix_fmt         = encoder_format;
 
-		//av_opt_set_int(encoder->context->priv_data, "preset", 0, 0);
-		av_opt_set_int(encoder->context->priv_data, "crf", 14, 0);
-		//av_opt_set(encoder->context->priv_data, "preset", "llhq", 0);
-		av_opt_set(encoder->context->priv_data, "zerolatency", "1", 0);
-		av_opt_set(encoder->context->priv_data, "async_depth", "1", 0);
-		av_opt_set(encoder->context->priv_data, "delay", "0", 0);
+		set_opt(encoder, "nonref_p", "1");
+		set_opt(encoder, "preset", "llhq");
+		set_opt(encoder, "rc", "cbr_ld_hq");
+		set_opt(encoder, "zerolatency", "1");
+		set_opt(encoder, "delay", "0");
 
 		av_buffer_unref(&encoder->context->hw_frames_ctx);
 		encoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(hw_device_ctx);
@@ -88,6 +96,8 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 		encoder->hw_frame = av_frame_alloc();
 		av_hwframe_get_buffer(encoder->context->hw_frames_ctx, encoder->hw_frame, 0);
 	} else {
+		mprintf("Initializing software encoder\n");
+
    		encoder->codec = avcodec_find_encoder(AV_CODEC_ID_H264);
 
 		encoder->context = avcodec_alloc_context3(encoder->codec);

@@ -247,7 +247,7 @@ static int32_t SendVideo(void* opaque) {
             if (encoder) {
                 destroy_video_encoder(encoder);
             }
-            encoder = create_video_encoder(device->width, device->height, device->width, device->height, device->width * current_bitrate, gop_size, ENCODE_TYPE);
+            encoder = create_video_encoder(device->width, device->height, device->width, device->height, current_bitrate, gop_size, ENCODE_TYPE);
             update_encoder = false;
             frames_since_first_iframe = 0;
         }
@@ -333,6 +333,7 @@ static int32_t SendVideo(void* opaque) {
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
 
                     //mprintf("Sent video packet %d (Size: %d) %s\n", id, encoder->packet.size, frame->is_iframe ? "(I-frame)" : "");
+
                     if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
