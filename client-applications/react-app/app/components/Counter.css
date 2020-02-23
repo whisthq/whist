@@ -110,3 +110,9 @@
     transform: rotate(359deg);
   }
 }
+
+.blueGradient {
+  background: linear-gradient(258.84deg, #5ec3eb 0%, #d023eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

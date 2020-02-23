@@ -1,12 +1,16 @@
 import { Action } from 'redux';
-import { INCREMENT_COUNTER, DECREMENT_COUNTER } from '../actions/counter';
+import { STORE_USER_INFO } from '../actions/counter';
 
-export default function counter(state = 0, action: Action<string>) {
+const DEFAULT = {username: null, public_ip: null}
+
+export default function counter(state = DEFAULT, action: Action<string>) {
   switch (action.type) {
-    case INCREMENT_COUNTER:
-      return state + 1;
-    case DECREMENT_COUNTER:
-      return state - 1;
+    case STORE_USER_INFO:
+      return {
+      	...state,
+      	username: action.username,
+      	public_ip: action.public_ip
+      }
     default:
       return state;
   }

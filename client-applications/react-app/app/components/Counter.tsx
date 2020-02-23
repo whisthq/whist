@@ -14,6 +14,7 @@ import Spinner from "../../resources/images/spinner.svg";
 
 import { Offline, Online } from "react-detect-offline";
 import * as geolib from 'geolib';
+import Popup from "reactjs-popup"
 
 
 class Counter extends Component {
@@ -76,6 +77,14 @@ class Counter extends Component {
     })
   }
 
+  LaunchProtocol = (public_ip) => {
+    var child = require('child_process').spawn;
+    var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
+    var parameters = [public_ip]
+
+    child(path, parameters, {detached: true, stdio: 'ignore'});
+  }
+
   componentDidMount() {
     this.MeasureConnectionSpeed();
     this.MeasureDistance();
@@ -94,8 +103,20 @@ class Counter extends Component {
             <span className = {styles.logoTitle}>Fractal</span>
           </div>
           <div className = {styles.landingHeaderRight}>
-            <span className = {styles.headerButton}>Settings</span> 
-            <span className = {styles.headerButton}>Refer a Friend</span> 
+            <Popup trigger = {
+              <span className = {styles.headerButton}>Settings</span> 
+            } modal contentStyle = {{width: 300, borderRadius: 5, backgroundColor: "#111111", border: "none", height: 100, padding: 30, textAlign: "center"}}>
+              <div style = {{fontWeight: 'bold', fontSize: 20}} className = {styles.blueGradient}><strong>Coming Soon</strong></div>
+              <div style = {{fontSize: 12, color: "#D6D6D6", marginTop: 20}}>Toggle bandwidth consumption, image quality, and more.</div>
+            </Popup>
+            <Popup trigger = {
+            <span className = {styles.headerButton}>
+              Refer a Friend
+             </span> 
+            } modal contentStyle = {{width: 300, borderRadius: 5, backgroundColor: "#111111", border: "none", height: 100, padding: 30, textAlign: "center"}}>
+              <div style = {{fontWeight: 'bold', fontSize: 20}} className = {styles.blueGradient}><strong>Coming Soon</strong></div>
+              <div style = {{fontSize: 12, color: "#D6D6D6", marginTop: 20}}>Get rewarded when you refer a friend.</div>
+            </Popup>
             <Link to={routes.HOME}>
                <button type = "button" className = {styles.signupButton} id = "signup-button" style = {{marginLeft: 25, fontFamily: "Maven Pro", fontWeight: 'bold'}}>Sign Out</button>
             </Link>
@@ -110,12 +131,17 @@ class Counter extends Component {
             </div>
             <div style = {{display: 'flex', marginTop: 20}}>
               <div style = {{width: '50%', paddingRight: 20, textAlign: 'center'}}>
+                <Popup trigger = {
                 <div style = {{background: "linear-gradient(217.69deg, #363868 0%, rgba(30, 31, 66, 0.5) 101.4%)", borderRadius: 5, padding: 10, minHeight: 110, paddingTop: 30, paddingBottom: 0}}>
                   <img src = {Video} style = {{height: 40}}/>
                   <div style = {{marginTop: 20, fontSize: 14, fontWeight: 'bold'}}>
                     Ultra-Fast Video Upload
                   </div>
                 </div>
+                } modal contentStyle = {{width: 300, borderRadius: 5, backgroundColor: "#111111", border: "none", height: 100, padding: 30}}>
+                  <div style = {{fontWeight: 'bold', fontSize: 20}} className = {styles.blueGradient}><strong>Coming Soon</strong></div>
+                  <div style = {{fontSize: 12, color: "#D6D6D6", marginTop: 20}}>Uses proprietary compression algorithms to upload large video files in minutes.</div>
+                </Popup>
               </div>
               <div style = {{width: '50%', textAlign: 'center'}}>
                 <div style = {{background: "linear-gradient(133.09deg, rgba(73, 238, 228, 0.8) 1.86%, rgba(109, 151, 234, 0.8) 100%)", borderRadius: 5, padding: 10, minHeight: 110, paddingTop: 25, paddingBottom: 5}}>
@@ -162,6 +188,8 @@ class Counter extends Component {
                 <div>
                   <div style = {{width: `${ this.state.internetbar }px`, height: 6, borderRadius: "0px 3px 3px 0px", background: "linear-gradient(116.54deg, #5EC4EB 0%, #D75EEB 100%)"}}>
                   </div>
+                 <div style = {{background: "#3ce655", height: 8, width: 8, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 10, marginRight: 7}}>
+                 </div>
                   <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
                     Internet: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}>{this.state.internetspeed} Mbps</span>
                   </div>
@@ -186,6 +214,8 @@ class Counter extends Component {
                 <div>
                   <div style = {{width: `${ this.state.distancebar }px`, height: 6, borderRadius: "0px 3px 3px 0px", background: "linear-gradient(116.54deg, #5EC4EB 0%, #D75EEB 100%)"}}>
                   </div>
+                 <div style = {{background: "#3ce655", height: 8, width: 8, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 10, marginRight: 7}}>
+                 </div>
                   <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
                     Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
                   </div>
@@ -210,6 +240,8 @@ class Counter extends Component {
                 <div>
                   <div style = {{width: `${ this.state.corebar }px`, height: 6, borderRadius: "0px 3px 3px 0px", background: "linear-gradient(116.54deg, #5EC4EB 0%, #D75EEB 100%)"}}>
                   </div>
+                 <div style = {{background: "#3ce655", height: 8, width: 8, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 10, marginRight: 7}}>
+                 </div>
                   <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
                     CPU: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.cores} cores </span>
                   </div>
