@@ -1,0 +1,112 @@
+.container {
+  position: absolute;
+  text-align: center;
+  width: 100vw;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  font-family: 'Maven Pro';
+  margin: 0px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.container h2 {
+  font-size: 5rem;
+}
+
+.container a {
+  font-size: 1.4rem;
+}
+
+.landingHeader {
+    padding: 30px;
+    padding-top: 20px;
+    display: flex;
+}
+
+.landingHeaderLeft {
+    width: 40%;
+    text-align: left;
+}
+
+.landingHeaderRight{
+    width: 60%;
+    text-align: right;
+    font-size: 12px;
+    color: #D3D3D3;
+}
+
+.logoTitle {
+    font-family: 'Maven Pro';
+    position: relative;
+    bottom: 3px;
+    left: 10px;
+    font-weight: 'bold';
+    font-size: 20px;
+}
+
+.signupButton, .loginButton {
+    font-family: 'Maven Pro';
+    border: none;
+    background-color: #5EC4EB;
+    border-radius: 30px;
+    padding: 10px 30px;
+    color: white;
+    font-weight: 'bold';
+    margin-left: 10px;
+}
+
+.loginButton {
+    background: linear-gradient(258.54deg, #5ec3eb 0%, #d023eb 100%);
+    margin-left: 0px;
+    width: 275px;
+}
+
+.signupButton:hover, .loginButton:hover {
+    cursor: pointer;
+}
+
+.headerButton {
+  margin-left: 15px;
+  font-weight: bold;
+  color: #D1D1D1;
+}
+
+.headerButton:hover {
+  cursor: pointer;
+  color: #5EC4EB;
+}
+
+.faSpin {
+  position: relative;
+  top: 2px;
+  -webkit-animation: fa-spin 2s infinite linear;
+  animation: fa-spin 2s infinite linear;
+}
+.faPulse {
+  -webkit-animation: fa-spin 1s infinite steps(8);
+  animation: fa-spin 1s infinite steps(8);
+}
+
+@-webkit-keyframes faSpin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
+@keyframes faSpin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
