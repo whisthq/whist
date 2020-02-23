@@ -1,9 +1,11 @@
 import React, {Component} from 'react';
 import { Link } from 'react-router-dom';
+import { connect } from 'react-redux';
 import styles from './Counter.css';
 import routes from '../constants/routes.json';
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
+import { configureStore, history } from '../store/configureStore';
 
 import Titlebar from 'react-electron-titlebar';
 import Logo from "../../resources/images/logo.svg";
@@ -16,11 +18,13 @@ import { Offline, Online } from "react-detect-offline";
 import * as geolib from 'geolib';
 import Popup from "reactjs-popup"
 
+import { storeUserInfo } from "../actions/counter"
+
 
 class Counter extends Component {
   constructor(props) {
     super(props)
-    this.state = {username: '', internetspeed: 0, distance: 0, internetbar: 50, distancebar: 50, cores: 0, corebar: 40}
+    this.state = {isLoading: true, username: '', internetspeed: 0, distance: 0, internetbar: 50, distancebar: 50, cores: 0, corebar: 40}
   }
 
   MeasureConnectionSpeed = () => {
@@ -37,7 +41,7 @@ class Counter extends Component {
         var speedKbps = (speedBps / 1024).toFixed(2);
         var speedMbps = (speedKbps / 1024).toFixed(2);
         component.setState({internetspeed: speedMbps});
-        component.setState({internetbar: Math.min(Math.max(speedMbps, 50), 190)})
+        component.setState({internetbar: Math.min(Math.max(speedMbps, 50), 200)})
     }
     
     startTime = (new Date()).getTime();
@@ -59,8 +63,8 @@ class Counter extends Component {
         );
          dist = dist / 1609.34 + 1
          this.setState({distance: Math.round(dist)})
-         dist = 190 * (dist / 1000)
-         this.setState({distancebar: Math.min(Math.max(dist, 80), 190)})
+         dist = 200 * (dist / 1000)
+         this.setState({distancebar: Math.min(Math.max(dist, 80), 200)})
     })
     .catch(err => {
       console.log(err)
@@ -72,31 +76,150 @@ class Counter extends Component {
     si.cpu().then(data => {
       console.log(data.cores)
       this.setState({cores: data.cores})
-      console.log(Math.min(Math.max(40, 190 * (data.cores / 32)), 190))
-      this.setState({corebar: Math.min(Math.max(40, 190 * (data.cores / 32)), 190)})
+      console.log(Math.min(Math.max(40, 200 * (data.cores / 32)), 200))
+      this.setState({corebar: Math.min(Math.max(40, 200 * (data.cores / 32)), 200)})
     })
   }
 
-  LaunchProtocol = (public_ip) => {
+  LaunchProtocol = () => {
     var child = require('child_process').spawn;
     var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
-    var parameters = [public_ip]
+    console.log(path)
+    var parameters = [this.props.public_ip, 123]
 
     child(path, parameters, {detached: true, stdio: 'ignore'});
+  }
+
+  LogOut = () => {
+    this.props.dispatch(storeUserInfo(null, null))
+    history.push("/");
   }
 
   componentDidMount() {
     this.MeasureConnectionSpeed();
     this.MeasureDistance();
     this.MeasureCores();
+    this.setState({isLoading: false})
   }
 
   render() {
+    let internetBox;
+    let distanceBox;
+    let cpuBox;
+
+    if(this.state.internetspeed < 10) {
+      internetBox =  
+        <div>
+          <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+          </div>
+          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+            Internet: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}>{this.state.internetspeed} Mbps</span>
+          </div>
+          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+            Your Internet bandwidth is slow. Try closing streaming apps like Youtube, Netflix, or Spotify.
+          </div>
+        </div>
+    } else if(this.state.internetspeed < 20) {
+      internetBox = 
+        <div>
+          <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+          </div>
+          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+            Internet: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}>{this.state.internetspeed} Mbps</span>
+          </div>
+          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+            Expect a smooth streaming experience, although dips in Internet speed below 10 Mbps could cause low image quality.
+          </div>
+        </div>
+    } else {
+      internetBox =
+        <div>
+          <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+          </div>
+          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+            Internet: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}>{this.state.internetspeed} Mbps</span>
+          </div>
+          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+            Your Internet is fast enough to support high-quality streaming.
+          </div>
+        </div>
+    }
+
+    if(this.state.distance < 250) {
+      distanceBox = 
+        <div>
+         <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+         </div>
+          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
+          </div>
+          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+            You are close enough to your cloud PC to experience low-latency streaming.
+          </div>
+        </div>
+    } else if(this.state.distance < 500) {
+      distanceBox = 
+        <div>
+         <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+         </div>
+          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
+          </div>
+          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+            You may experience slightly higher latency due to your distance from your cloud PC.
+          </div>
+        </div>
+    } else {
+      distanceBox = 
+        <div>
+         <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+         </div>
+          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
+          </div>
+          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+            You may experience latency because you are far away from your cloud PC.
+          </div>
+        </div>   
+    }
+
+    if(this.state.cores < 4) {
+      cpuBox = 
+      <div>
+       <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+       </div>
+        <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+          CPU: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.cores} cores </span>
+        </div>
+        <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+          You need at least three logical CPU cores to run Fractal.
+        </div>
+      </div>
+    } else {
+      cpuBox = 
+      <div>
+       <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+       </div>
+        <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+          CPU: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.cores} cores </span>
+        </div>
+        <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+          Your CPU has enough cores to run Fractal.
+        </div>
+      </div>   
+    }
+
     return (
       <div className={styles.container} data-tid="container" style = {{fontFamily: "Maven Pro"}}>
         <div>
         <Titlebar backgroundColor="#000000"/>
         </div>
+        {
+        this.state.isLoading
+        ?
+        <div>
+        </div>
+        :
         <div className = {styles.landingHeader}>
           <div className = {styles.landingHeaderLeft}>
             <img src = {Logo} width = "20" height = "20"/>
@@ -117,14 +240,12 @@ class Counter extends Component {
               <div style = {{fontWeight: 'bold', fontSize: 20}} className = {styles.blueGradient}><strong>Coming Soon</strong></div>
               <div style = {{fontSize: 12, color: "#D6D6D6", marginTop: 20}}>Get rewarded when you refer a friend.</div>
             </Popup>
-            <Link to={routes.HOME}>
-               <button type = "button" className = {styles.signupButton} id = "signup-button" style = {{marginLeft: 25, fontFamily: "Maven Pro", fontWeight: 'bold'}}>Sign Out</button>
-            </Link>
+            <button onClick = {this.LogOut} type = "button" className = {styles.signupButton} id = "signup-button" style = {{marginLeft: 25, fontFamily: "Maven Pro", fontWeight: 'bold'}}>Sign Out</button>
           </div>
         </div>
         <div style = {{display: 'flex', padding: '20px 75px' }}>
-          <div style = {{width: '70%', textAlign: 'left', paddingRight: 20}}>
-            <div style = {{position: 'relative', backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.0), rgba(0,0,0,0.6)), url(" + Car + ")", width: "100%", height: 250, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center", borderRadius: 5}}>
+          <div style = {{width: '65%', textAlign: 'left', paddingRight: 20}}>
+            <div onClick = {this.LaunchProtocol} className = {styles.bigBox} style = {{position: 'relative', backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.0), rgba(0,0,0,0.6)), url(" + Car + ")", width: "100%", height: 250, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center", borderRadius: 5}}>
               <div style = {{position: 'absolute', bottom: 10, right: 15, fontWeight: 'bold', fontSize: 16}}>
                 Launch My Cloud PC
               </div>
@@ -132,7 +253,7 @@ class Counter extends Component {
             <div style = {{display: 'flex', marginTop: 20}}>
               <div style = {{width: '50%', paddingRight: 20, textAlign: 'center'}}>
                 <Popup trigger = {
-                <div style = {{background: "linear-gradient(217.69deg, #363868 0%, rgba(30, 31, 66, 0.5) 101.4%)", borderRadius: 5, padding: 10, minHeight: 110, paddingTop: 30, paddingBottom: 0}}>
+                <div className = {styles.bigBox} style = {{background: "linear-gradient(217.69deg, #363868 0%, rgba(30, 31, 66, 0.5) 101.4%)", borderRadius: 5, padding: 10, minHeight: 110, paddingTop: 30, paddingBottom: 0}}>
                   <img src = {Video} style = {{height: 40}}/>
                   <div style = {{marginTop: 20, fontSize: 14, fontWeight: 'bold'}}>
                     Ultra-Fast Video Upload
@@ -144,7 +265,7 @@ class Counter extends Component {
                 </Popup>
               </div>
               <div style = {{width: '50%', textAlign: 'center'}}>
-                <div style = {{background: "linear-gradient(133.09deg, rgba(73, 238, 228, 0.8) 1.86%, rgba(109, 151, 234, 0.8) 100%)", borderRadius: 5, padding: 10, minHeight: 110, paddingTop: 25, paddingBottom: 5}}>
+                <div className = {styles.bigBox} style = {{background: "linear-gradient(133.09deg, rgba(73, 238, 228, 0.8) 1.86%, rgba(109, 151, 234, 0.8) 100%)", borderRadius: 5, padding: 10, minHeight: 110, paddingTop: 25, paddingBottom: 5}}>
                   <img src = {Folder} style = {{height: 50}}/>
                   <div style = {{marginTop: 15, fontSize: 14, fontWeight: 'bold'}}>
                     File Upload
@@ -153,32 +274,32 @@ class Counter extends Component {
               </div>
             </div>
           </div>
-          <div style = {{width: '30%', textAlign: 'left', background: "linear-gradient(217.69deg, #363868 0%, rgba(30, 31, 66, 0.5) 101.4%)", borderRadius: 5, padding: 30, minHeight: 350}}>
+          <div className = {styles.statBox} style = {{width: '35%', textAlign: 'left', background: "linear-gradient(217.69deg, #363868 0%, rgba(30, 31, 66, 0.5) 101.4%)", borderRadius: 5, padding: 30, minHeight: 350}}>
             <div style = {{fontWeight: 'bold', fontSize: 20}}>
-              Welcome, Ming
+              Welcome, {this.props.username}
             </div>
             <div style = {{marginTop: 10, display: "inline-block"}}>
               <Online>
-                <div style = {{background: "#3ce655", height: 8, width: 8, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5}}>
+                <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 3.5}}>
                 </div>
-                <div style = {{display: "inline", float: "left", marginLeft: 5, fontSize: 13, color: "#D6D6D6"}}>
+                <div style = {{display: "inline", float: "left", marginLeft: 5, fontSize: 12, color: "#D6D6D6"}}>
                   Online
                 </div>
               </Online>
               <Offline>
-                <div style = {{background: "#cf3e2b", height: 8, width: 8, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5}}>
+                <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 3.5}}>
                 </div>
-                <div style = {{display: "inline", float: "left", marginLeft: 5, fontSize: 13, color: "#D6D6D6"}}>
+                <div style = {{display: "inline", float: "left", marginLeft: 5, fontSize: 12, color: "#D6D6D6"}}>
                   Offline
                 </div>
               </Offline>
             </div>
-            <div style = {{marginTop: 35}}>
+            <div style = {{marginTop: 45}}>
               {
                 this.state.internetspeed === 0
                 ?
                 <div>
-                  <div style = {{width: 190, height: 6, borderRadius: 3, background: "#999999"}}>
+                  <div style = {{width: 200, height: 4, borderRadius: "0px 2px 2px 0px", background: "#999999"}}>
                   </div>
                   <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
                     Checking Internet speed
@@ -186,16 +307,9 @@ class Counter extends Component {
                 </div>
                 :
                 <div>
-                  <div style = {{width: `${ this.state.internetbar }px`, height: 6, borderRadius: "0px 3px 3px 0px", background: "linear-gradient(116.54deg, #5EC4EB 0%, #D75EEB 100%)"}}>
+                  <div style = {{width: `${ this.state.internetbar }px`, height: 4, borderRadius: "0px 2px 2px 0px", background: "#5EC4EB"}}>
                   </div>
-                 <div style = {{background: "#3ce655", height: 8, width: 8, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 10, marginRight: 7}}>
-                 </div>
-                  <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
-                    Internet: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}>{this.state.internetspeed} Mbps</span>
-                  </div>
-                  <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
-                    Your Internet is fast enough to support latency-free streaming.
-                  </div>
+                  {internetBox}
                 </div>
               }
             </div>
@@ -204,7 +318,7 @@ class Counter extends Component {
                 this.state.distance === 0
                 ?
                 <div>
-                  <div style = {{width: 190, height: 6, borderRadius: 3, background: "#999999"}}>
+                  <div style = {{width: 200, height: 4, borderRadius: "0px 2px 2px 0px", background: "#999999"}}>
                   </div>
                   <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
                     Checking current location
@@ -212,16 +326,9 @@ class Counter extends Component {
                 </div>
                 :
                 <div>
-                  <div style = {{width: `${ this.state.distancebar }px`, height: 6, borderRadius: "0px 3px 3px 0px", background: "linear-gradient(116.54deg, #5EC4EB 0%, #D75EEB 100%)"}}>
+                  <div style = {{width: `${ this.state.distancebar }px`, height: 4, borderRadius: "0px 2px 2px 0px", background: "#5EC4EB"}}>
                   </div>
-                 <div style = {{background: "#3ce655", height: 8, width: 8, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 10, marginRight: 7}}>
-                 </div>
-                  <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
-                    Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
-                  </div>
-                  <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
-                    You are close enough to your cloud PC to experience low-latency streaming.
-                  </div>
+                  {distanceBox}
                 </div>
               }
             </div>
@@ -230,7 +337,7 @@ class Counter extends Component {
                 this.state.cores === 0
                 ?
                 <div>
-                  <div style = {{width: 190, height: 6, borderRadius: 3, background: "#999999"}}>
+                  <div style = {{width: 200, height: 4, borderRadius: "0px 2px 2px 0px", background: "#999999"}}>
                   </div>
                   <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
                     Scanning CPU
@@ -238,24 +345,26 @@ class Counter extends Component {
                 </div>
                 :
                 <div>
-                  <div style = {{width: `${ this.state.corebar }px`, height: 6, borderRadius: "0px 3px 3px 0px", background: "linear-gradient(116.54deg, #5EC4EB 0%, #D75EEB 100%)"}}>
+                  <div style = {{width: `${ this.state.corebar }px`, height: 4, borderRadius: "0px 2px 2px 0px", background: "#5EC4EB"}}>
                   </div>
-                 <div style = {{background: "#3ce655", height: 8, width: 8, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 10, marginRight: 7}}>
-                 </div>
-                  <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
-                    CPU: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.cores} cores </span>
-                  </div>
-                  <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
-                    Your CPU has enough cores to run Fractal.
-                  </div>
+                  {cpuBox}
                 </div>
               }
             </div>
           </div>
         </div>
+        }
       </div>
     );
   }
 }
 
-export default Counter;
+function mapStateToProps(state) {
+  console.log(state)
+  return { 
+    username: state.counter.username,
+    public_ip: state.counter.public_ip
+  }
+}
+
+export default  connect(mapStateToProps)(Counter);

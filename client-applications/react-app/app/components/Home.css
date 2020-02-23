@@ -1,3 +1,7 @@
+button {
+  outline: none;
+}
+
 .container {
   position: absolute;
   text-align: center;
@@ -50,15 +54,19 @@
 .signupButton, .loginButton {
     font-family: 'Maven Pro';
     border: none;
-    background-color: #5EC4EB;
+    border: solid 2px #5EC4EB;
+    background: none;
+    font-weight: bold;
     border-radius: 30px;
     padding: 10px 30px;
-    color: white;
+    color: #5EC4EB;
     font-weight: 'bold';
     margin-left: 10px;
 }
 
 .loginButton {
+    border: none;
+    color: white;
     background: linear-gradient(258.54deg, #5ec3eb 0%, #d023eb 100%);
     margin-left: 0px;
     width: 275px;
