@@ -220,6 +220,7 @@ class Counter extends Component {
         <div>
         </div>
         :
+        <div>
         <div className = {styles.landingHeader}>
           <div className = {styles.landingHeaderLeft}>
             <img src = {Logo} width = "20" height = "20"/>
@@ -265,12 +266,17 @@ class Counter extends Component {
                 </Popup>
               </div>
               <div style = {{width: '50%', textAlign: 'center'}}>
-                <div className = {styles.bigBox} style = {{background: "linear-gradient(133.09deg, rgba(73, 238, 228, 0.8) 1.86%, rgba(109, 151, 234, 0.8) 100%)", borderRadius: 5, padding: 10, minHeight: 110, paddingTop: 25, paddingBottom: 5}}>
-                  <img src = {Folder} style = {{height: 50}}/>
-                  <div style = {{marginTop: 15, fontSize: 14, fontWeight: 'bold'}}>
-                    File Upload
+                <Popup trigger = {
+                  <div className = {styles.bigBox} style = {{background: "linear-gradient(133.09deg, rgba(73, 238, 228, 0.8) 1.86%, rgba(109, 151, 234, 0.8) 100%)", borderRadius: 5, padding: 10, minHeight: 110, paddingTop: 25, paddingBottom: 5}}>
+                    <img src = {Folder} style = {{height: 50}}/>
+                    <div style = {{marginTop: 15, fontSize: 14, fontWeight: 'bold'}}>
+                      File Upload
+                    </div>
                   </div>
-                </div>
+                } modal contentStyle = {{width: 300, borderRadius: 5, backgroundColor: "#111111", border: "none", height: 100, padding: 30, textAlign: "center"}}>
+                  <div style = {{fontWeight: 'bold', fontSize: 20}} className = {styles.blueGradient}><strong>Coming Soon</strong></div>
+                  <div style = {{fontSize: 12, color: "#D6D6D6", marginTop: 20}}>Upload an entire disk to your cloud PC.</div>
+                </Popup>
               </div>
             </div>
           </div>
@@ -294,7 +300,7 @@ class Counter extends Component {
                 </div>
               </Offline>
             </div>
-            <div style = {{marginTop: 45}}>
+            <div style = {{marginTop: 40}}>
               {
                 this.state.internetspeed === 0
                 ?
@@ -352,6 +358,7 @@ class Counter extends Component {
               }
             </div>
           </div>
+        </div>
         </div>
         }
       </div>

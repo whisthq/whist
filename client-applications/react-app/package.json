@@ -1,8 +1,8 @@
 {
-  "name": "electron-react-boilerplate",
-  "productName": "ElectronReact",
+  "name": "Fractal",
+  "productName": "Fractal Dashboard",
   "version": "1.0.0",
-  "description": "Electron application boilerplate based on React, React Router, Webpack, React Hot Loader for rapid application development",
+  "description": "Fractal Cloud PC Dashboard",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
     "build-dll": "cross-env NODE_ENV=development webpack --config ./configs/webpack.config.renderer.dev.dll.babel.js --colors",
@@ -51,11 +51,12 @@
     ]
   },
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.develar.ElectronReact",
+    "productName": "Fractal",
+    "appId": "com.fractalcomputers",
     "files": [
       "dist/",
       "node_modules/",
+      "resources/",
       "app.html",
       "main.prod.js",
       "main.prod.js.map",
@@ -126,16 +127,7 @@
     "url": "https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues"
   },
   "keywords": [
-    "electron",
-    "boilerplate",
-    "react",
-    "redux",
-    "typescript",
-    "ts",
-    "sass",
-    "webpack",
-    "hot",
-    "reload"
+    "fractal"
   ],
   "homepage": "https://github.com/electron-react-boilerplate/electron-react-boilerplate#readme",
   "jest": {
@@ -215,7 +207,7 @@
     "css-loader": "^3.4.2",
     "detect-port": "^1.3.0",
     "electron": "7.1.13",
-    "electron-builder": "^22.2.0",
+    "electron-builder": "^22.3.2",
     "electron-devtools-installer": "^2.2.4",
     "electron-rebuild": "^1.10.0",
     "enzyme": "^3.11.0",
