@@ -57,10 +57,14 @@
       "dist/",
       "node_modules/",
       "resources/",
+      "fractal-protocol/",
       "app.html",
       "main.prod.js",
       "main.prod.js.map",
       "package.json"
+    ],
+    "extraFiles": [
+      "fractal-protocol/"
     ],
     "dmg": {
       "contents": [

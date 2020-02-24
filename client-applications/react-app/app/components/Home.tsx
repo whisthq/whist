@@ -11,7 +11,7 @@ import UserIcon from "../../resources/images/user.svg";
 import LockIcon from "../../resources/images/lock.svg";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner} from '@fortawesome/free-solid-svg-icons'
+import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
 
 import { storeUserInfo } from "../actions/counter"
 
@@ -20,6 +20,21 @@ class Home extends Component {
     super(props)
     this.state = {username: '', password: '', loggingIn: false, warning: false}
   }
+
+  CloseWindow = () => {
+    const remote = require('electron').remote
+    let win = remote.getCurrentWindow()
+
+    win.close()
+  }
+
+  MinimizeWindow = () => {
+    const remote = require('electron').remote
+    let win = remote.getCurrentWindow()
+
+    win.minimize()
+  }
+  
 
   UpdateUsername = (evt) => {
   	this.setState({
@@ -90,9 +105,14 @@ class Home extends Component {
   render() {
 	return (
 		<div className={styles.container} data-tid="container" style = {{backgroundImage: "url(" + Background + ")"}}>
-			<div>
-			  <Titlebar backgroundColor="#000000"/>
-			</div>
+	        <div style = {{textAlign: 'right', paddingTop: 10, paddingRight: 20}}>
+	          <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 6}}>
+	             <FontAwesomeIcon className = {styles.windowControl} icon={faWindowMinimize} style = {{color: '#999999', height: 10}}/>
+	          </div>
+	          <div onClick = {this.CloseWindow} style = {{display: 'inline'}}>
+	             <FontAwesomeIcon className = {styles.windowControl} icon={faTimes} style = {{color: '#999999', height: 16}}/>
+	          </div>
+	        </div>
 		    <div className = {styles.landingHeader}>
 		      <div className = {styles.landingHeaderLeft}>
 		        <img src = {Logo} width = "20" height = "20"/>
@@ -120,7 +140,7 @@ class Home extends Component {
 		      	this.state.loggingIn
 		      	?
 		      	<div>
-		      		<FontAwesomeIcon icon={faSpinner} spin style = {{color: "#5EC4EB", marginRight: 4}}/> Logging In
+		      		<FontAwesomeIcon icon={faSpinner} spin style = {{color: "#5EC4EB", marginRight: 4, width: 12}}/> Logging In
 		      	</div>
 		      	:
 		      	<div>
