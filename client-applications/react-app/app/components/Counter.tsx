@@ -18,6 +18,9 @@ import { Offline, Online } from "react-detect-offline";
 import * as geolib from 'geolib';
 import Popup from "reactjs-popup"
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
+
 import { storeUserInfo } from "../actions/counter"
 
 
@@ -112,10 +115,10 @@ class Counter extends Component {
         <div>
           <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
           </div>
-          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             Internet: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}>{this.state.internetspeed} Mbps</span>
           </div>
-          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
             Your Internet bandwidth is slow. Try closing streaming apps like Youtube, Netflix, or Spotify.
           </div>
         </div>
@@ -124,10 +127,10 @@ class Counter extends Component {
         <div>
           <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
           </div>
-          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             Internet: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}>{this.state.internetspeed} Mbps</span>
           </div>
-          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
             Expect a smooth streaming experience, although dips in Internet speed below 10 Mbps could cause low image quality.
           </div>
         </div>
@@ -136,10 +139,10 @@ class Counter extends Component {
         <div>
           <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
           </div>
-          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             Internet: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}>{this.state.internetspeed} Mbps</span>
           </div>
-          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
             Your Internet is fast enough to support high-quality streaming.
           </div>
         </div>
@@ -150,10 +153,10 @@ class Counter extends Component {
         <div>
          <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
          </div>
-          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
           </div>
-          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
             You are close enough to your cloud PC to experience low-latency streaming.
           </div>
         </div>
@@ -162,10 +165,10 @@ class Counter extends Component {
         <div>
          <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
          </div>
-          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
           </div>
-          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
             You may experience slightly higher latency due to your distance from your cloud PC.
           </div>
         </div>
@@ -174,10 +177,10 @@ class Counter extends Component {
         <div>
          <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
          </div>
-          <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
           </div>
-          <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
             You may experience latency because you are far away from your cloud PC.
           </div>
         </div>   
@@ -200,10 +203,10 @@ class Counter extends Component {
       <div>
        <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
        </div>
-        <div style = {{marginTop: 5, fontSize: 13, fontWeight: "bold"}}>
+        <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
           CPU: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.cores} cores </span>
         </div>
-        <div style = {{marginTop: 8, fontSize: 10, color: "#D6D6D6"}}>
+        <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
           Your CPU has enough cores to run Fractal.
         </div>
       </div>   
@@ -211,8 +214,13 @@ class Counter extends Component {
 
     return (
       <div className={styles.container} data-tid="container" style = {{fontFamily: "Maven Pro"}}>
-        <div>
-        <Titlebar backgroundColor="#000000"/>
+        <div style = {{textAlign: 'right', paddingTop: 10, paddingRight: 20}}>
+          <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 8}}>
+             <FontAwesomeIcon className = {styles.windowControl} icon={faWindowMinimize} style = {{color: '#999999', height: 10}}/>
+          </div>
+          <div onClick = {this.CloseWindow} style = {{display: 'inline'}}>
+             <FontAwesomeIcon className = {styles.windowControl} icon={faTimes} style = {{color: '#999999', height: 20}}/>
+          </div>
         </div>
         {
         this.state.isLoading

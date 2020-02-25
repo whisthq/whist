@@ -24,6 +24,11 @@ button {
 }
 
 
+.windowControl:hover {
+  cursor: pointer;
+  color: #5EC4EB !important;
+}
+
 .landingHeader {
     padding: 30px;
     padding-top: 20px;
