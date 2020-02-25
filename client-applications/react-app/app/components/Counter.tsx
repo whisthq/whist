@@ -23,11 +23,28 @@ import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-sv
 
 import { storeUserInfo } from "../actions/counter"
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
+
 
 class Counter extends Component {
   constructor(props) {
     super(props)
     this.state = {isLoading: true, username: '', internetspeed: 0, distance: 0, internetbar: 50, distancebar: 50, cores: 0, corebar: 40}
+  }
+
+  CloseWindow = () => {
+    const remote = require('electron').remote
+    let win = remote.getCurrentWindow()
+
+    win.close()
+  }
+
+  MinimizeWindow = () => {
+    const remote = require('electron').remote
+    let win = remote.getCurrentWindow()
+
+    win.minimize()
   }
 
   MeasureConnectionSpeed = () => {
@@ -77,17 +94,14 @@ class Counter extends Component {
   MeasureCores = () => {
     const si = require('systeminformation')
     si.cpu().then(data => {
-      console.log(data.cores)
       this.setState({cores: data.cores})
-      console.log(Math.min(Math.max(40, 200 * (data.cores / 32)), 200))
       this.setState({corebar: Math.min(Math.max(40, 200 * (data.cores / 32)), 200)})
     })
   }
 
   LaunchProtocol = () => {
-    var child = require('child_process').spawn;
+    var child = require('child_process').execFile;
     var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
-    console.log(path)
     var parameters = [this.props.public_ip, 123]
 
     child(path, parameters, {detached: true, stdio: 'ignore'});
@@ -215,11 +229,11 @@ class Counter extends Component {
     return (
       <div className={styles.container} data-tid="container" style = {{fontFamily: "Maven Pro"}}>
         <div style = {{textAlign: 'right', paddingTop: 10, paddingRight: 20}}>
-          <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 8}}>
+          <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 6}}>
              <FontAwesomeIcon className = {styles.windowControl} icon={faWindowMinimize} style = {{color: '#999999', height: 10}}/>
           </div>
           <div onClick = {this.CloseWindow} style = {{display: 'inline'}}>
-             <FontAwesomeIcon className = {styles.windowControl} icon={faTimes} style = {{color: '#999999', height: 20}}/>
+             <FontAwesomeIcon className = {styles.windowControl} icon={faTimes} style = {{color: '#999999', height: 16}}/>
           </div>
         </div>
         {
@@ -375,7 +389,6 @@ class Counter extends Component {
 }
 
 function mapStateToProps(state) {
-  console.log(state)
   return { 
     username: state.counter.username,
     public_ip: state.counter.public_ip

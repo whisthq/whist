@@ -1,7 +1,7 @@
 {
   "name": "Fractal",
   "productName": "Fractal Dashboard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Fractal Cloud PC Dashboard",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
@@ -16,7 +16,7 @@
     "lint-fix": "yarn --silent lint --fix; exit 0",
     "lint-styles": "stylelint --ignore-path .eslintignore '**/*.*(css|scss)' --syntax scss",
     "lint-styles-fix": "yarn --silent lint-styles --fix; exit 0",
-    "package": "yarn build && electron-builder build --publish never",
+    "package": "yarn build && electron-builder build --publish always",
     "package-all": "yarn build && electron-builder build -mwl",
     "package-ci": "yarn postinstall && yarn build && electron-builder --publish always",
     "package-linux": "yarn build && electron-builder build --linux",
@@ -57,10 +57,14 @@
       "dist/",
       "node_modules/",
       "resources/",
+      "fractal-protocol/",
       "app.html",
       "main.prod.js",
       "main.prod.js.map",
       "package.json"
+    ],
+    "extraFiles": [
+      "fractal-protocol/"
     ],
     "dmg": {
       "contents": [
@@ -272,7 +276,7 @@
     "core-js": "^3.6.4",
     "devtron": "^1.4.0",
     "electron-debug": "^3.0.1",
-    "electron-log": "^4.0.6",
+    "electron-log": "^4.0.7",
     "electron-updater": "^4.2.0",
     "geoip-lite": "^1.4.0",
     "geolib": "^3.2.1",

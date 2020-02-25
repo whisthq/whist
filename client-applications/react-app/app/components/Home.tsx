@@ -21,6 +21,21 @@ class Home extends Component {
     this.state = {username: '', password: '', loggingIn: false, warning: false}
   }
 
+  CloseWindow = () => {
+    const remote = require('electron').remote
+    let win = remote.getCurrentWindow()
+
+    win.close()
+  }
+
+  MinimizeWindow = () => {
+    const remote = require('electron').remote
+    let win = remote.getCurrentWindow()
+
+    win.minimize()
+  }
+  
+
   UpdateUsername = (evt) => {
   	this.setState({
   		username: evt.target.value
@@ -104,14 +119,14 @@ class Home extends Component {
   render() {
 	return (
 		<div className={styles.container} data-tid="container" style = {{backgroundImage: "url(" + Background + ")"}}>
-      <div style = {{textAlign: 'right', paddingTop: 10, paddingRight: 20}}>
-        <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 8}}>
-           <FontAwesomeIcon className = {styles.windowControl} icon={faWindowMinimize} style = {{color: '#999999', height: 10}}/>
-        </div>
-        <div onClick = {this.CloseWindow} style = {{display: 'inline'}}>
-           <FontAwesomeIcon className = {styles.windowControl} icon={faTimes} style = {{color: '#999999', height: 20}}/>
-        </div>
-      </div>
+	        <div style = {{textAlign: 'right', paddingTop: 10, paddingRight: 20}}>
+	          <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 6}}>
+	             <FontAwesomeIcon className = {styles.windowControl} icon={faWindowMinimize} style = {{color: '#999999', height: 10}}/>
+	          </div>
+	          <div onClick = {this.CloseWindow} style = {{display: 'inline'}}>
+	             <FontAwesomeIcon className = {styles.windowControl} icon={faTimes} style = {{color: '#999999', height: 16}}/>
+	          </div>
+	        </div>
 		    <div className = {styles.landingHeader}>
 		      <div className = {styles.landingHeaderLeft}>
 		        <img src = {Logo} width = "20" height = "20"/>
@@ -149,7 +164,7 @@ class Home extends Component {
 		      	this.state.warning
 		      	?
 		      	<div>
-		      		Invalid credentials. If you lost your password, you can reset it on the website.
+		      		Invalid credentials. If you lost your password, you can reset it on the website. TESTING RELEASE
 		      	</div>
 		      	:
 		      	<div>
