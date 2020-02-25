@@ -164,7 +164,7 @@ class Home extends Component {
 		      	this.state.warning
 		      	?
 		      	<div>
-		      		Invalid credentials. If you lost your password, you can reset it on the website. TESTING RELEASE
+		      		Invalid credentials. If you lost your password, you can reset it on the website!
 		      	</div>
 		      	:
 		      	<div>
