@@ -304,10 +304,5 @@
   },
   "browserslist": [
     "extends browserslist-config-erb"
-  ],
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  }
+  ]
 }
