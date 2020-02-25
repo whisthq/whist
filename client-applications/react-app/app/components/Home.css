@@ -2,6 +2,11 @@ button {
   outline: none;
 }
 
+.windowControl:hover {
+  cursor: pointer;
+  color: #5EC4EB !important;
+}
+
 .container {
   position: absolute;
   text-align: center;
