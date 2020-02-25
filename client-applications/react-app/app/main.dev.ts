@@ -14,6 +14,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 
+
 export default class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -47,6 +48,7 @@ const installExtensions = async () => {
 };
 
 const createWindow = async () => {
+  console.log("creating window")
   if (
     process.env.NODE_ENV === 'development' ||
     process.env.DEBUG_PROD === 'true'
