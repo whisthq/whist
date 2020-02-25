@@ -23,10 +23,6 @@ import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-sv
 
 import { storeUserInfo } from "../actions/counter"
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
-
-
 class Counter extends Component {
   constructor(props) {
     super(props)
