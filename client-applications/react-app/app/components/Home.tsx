@@ -96,6 +96,20 @@ class Home extends Component {
   	shell.openExternal('https://www.fractalcomputers.com/auth')
   }
 
+  CloseWindow = () => {
+    const remote = require('electron').remote
+    let win = remote.getCurrentWindow()
+
+    win.close()
+  }
+
+  MinimizeWindow = () => {
+    const remote = require('electron').remote
+    let win = remote.getCurrentWindow()
+
+    win.minimize()
+  }
+
   componentDidMount() {
   	if(this.props.username && this.props.public_ip) {
   		history.push('/counter')
@@ -150,7 +164,7 @@ class Home extends Component {
 		      	this.state.warning
 		      	?
 		      	<div>
-		      		Invalid credentials. If you lost your password, you can reset it on the website.
+		      		Invalid credentials. If you lost your password, you can reset it on the website!
 		      	</div>
 		      	:
 		      	<div>

@@ -1,7 +1,7 @@
 {
   "name": "Fractal",
   "productName": "Fractal Dashboard",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Fractal Cloud PC Dashboard",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
@@ -107,28 +107,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/electron-react-boilerplate/electron-react-boilerplate.git"
+    "url": "https://github.com/fractalcomputers/fractal-apps.git"
   },
   "author": {
-    "name": "Electron React Boilerplate Maintainers",
-    "email": "electronreactboilerplate@gmail.com",
-    "url": "https://electron-react-boilerplate.js.org"
+    "name": "Ming Ying",
+    "email": "ming@fractalcomputers.com",
+    "url": "https://www.fractalcomputers.com"
   },
   "contributors": [
     {
-      "name": "Vikram Rangaraj",
-      "email": "vikr01@icloud.com",
-      "url": "https://github.com/vikr01"
-    },
-    {
-      "name": "Amila Welihinda",
-      "email": "amilajack@gmail.com",
-      "url": "https://github.com/amilajack"
+      "name": "Philippe Noel",
+      "email": "phil@fractalcomputers.com"
     }
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues"
+    "url": "https://github.com/fractalcomputers/fractal-apps.git"
   },
   "keywords": [
     "fractal"
@@ -276,7 +270,7 @@
     "core-js": "^3.6.4",
     "devtron": "^1.4.0",
     "electron-debug": "^3.0.1",
-    "electron-log": "^4.0.6",
+    "electron-log": "^4.0.7",
     "electron-updater": "^4.2.0",
     "geoip-lite": "^1.4.0",
     "geolib": "^3.2.1",
