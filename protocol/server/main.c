@@ -44,7 +44,7 @@ struct RTPPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 
 #define AUDIO_BUFFER_SIZE 100
-#define MAX_NUM_AUDIO_INDICES 5
+#define MAX_NUM_AUDIO_INDICES 3
 struct RTPPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 

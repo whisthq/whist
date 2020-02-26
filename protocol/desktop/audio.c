@@ -12,13 +12,13 @@ typedef struct audio_packet {
     char data[MAX_PAYLOAD_SIZE];
 } audio_packet;
 
-#define LOG_AUDIO false
+#define LOG_AUDIO true
 
 #define AUDIO_QUEUE_LIMIT 35000
 #define TRIGGERED_AUDIO_QUEUE_LIMIT 16000
 
 #define MAX_NUM_AUDIO_FRAMES 5
-#define MAX_NUM_AUDIO_INDICES 5
+#define MAX_NUM_AUDIO_INDICES 3
 #define RECV_AUDIO_BUFFER_SIZE (MAX_NUM_AUDIO_FRAMES * MAX_NUM_AUDIO_INDICES)
 audio_packet receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
