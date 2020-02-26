@@ -44,9 +44,9 @@ struct RTPPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 
 #define AUDIO_BUFFER_SIZE 100
-#define MAX_AUDIO_INDEX 3
-struct RTPPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
-int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_AUDIO_INDEX];
+#define MAX_NUM_AUDIO_INDICES 5
+struct RTPPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
+int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 
 SDL_mutex* packet_mutex;
 
@@ -100,7 +100,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
         int* packet_len = &l_len;
         struct RTPPacket* packet = &l_packet;
         if (type == PACKET_AUDIO) {
-            if (i >= MAX_AUDIO_INDEX) {
+            if (i >= MAX_NUM_AUDIO_INDICES) {
                 mprintf("Audio index too long!\n");
                 return -1;
             }
