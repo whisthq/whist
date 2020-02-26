@@ -15,15 +15,6 @@ import log from 'electron-log';
 import MenuBuilder from './menu';
 import { dialog, Menu } from 'electron';
 
-
-export default class AppUpdater {
-  constructor() {
-    log.transports.file.level = 'info';
-    autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
-  }
-}
-
 let mainWindow: BrowserWindow | null = null;
 
 if (process.env.NODE_ENV === 'production') {
@@ -49,7 +40,6 @@ const installExtensions = async () => {
 };
 
 const createWindow = async () => {
-  console.log("creating window")
   if (
     process.env.NODE_ENV === 'development' ||
     process.env.DEBUG_PROD === 'true'
@@ -113,11 +103,7 @@ app.on('window-all-closed', () => {
 
 app.on('ready', createWindow);
 
-
 autoUpdater.autoDownload = false;
-let isSilent: boolean;
-let updateDownloaded = false;
-
 
 autoUpdater.on('error', (error) => {
     dialog.showMessageBox({
@@ -139,7 +125,6 @@ autoUpdater.on('update-downloaded', () => {
     title: 'Message',
     message: 'Update downloaded, restarting application...'
   });
-  updateDownloaded = true;
   autoUpdater.quitAndInstall();
 });
 

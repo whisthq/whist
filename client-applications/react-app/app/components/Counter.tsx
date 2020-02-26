@@ -26,10 +26,13 @@ import { storeUserInfo } from "../actions/counter"
 class Counter extends Component {
   constructor(props) {
     super(props)
-    this.state = {isLoading: true, username: '', internetspeed: 0, distance: 0, internetbar: 50, distancebar: 50, cores: 0, corebar: 40}
+    this.state = {isLoading: true, username: '', internetspeed: 0, distance: 0, internetbar: 50, distancebar: 50, cores: 0, corebar: 40, launched: false}
   }
 
   CloseWindow = () => {
+    if(this.state.launched) {
+      this.TrackActivity("logoff");
+    }
     const remote = require('electron').remote
     let win = remote.getCurrentWindow()
 
@@ -96,11 +99,34 @@ class Counter extends Component {
   }
 
   LaunchProtocol = () => {
-    var child = require('child_process').execFile;
+    var child = require('child_process').spawn;
     var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
     var parameters = [this.props.public_ip, 123]
 
+    this.TrackActivity("logon");
+    this.setState({launched: true});
     child(path, parameters, {detached: true, stdio: 'ignore'});
+  }
+
+  TrackActivity = (action) => {
+    console.log("Track activity")
+    console.log(action)
+    let component = this;
+    var url;
+    if(action === "logon") {
+      url = 'https://cube-celery-vm.herokuapp.com/tracker/logon';
+    } else {
+      url = 'https://cube-celery-vm.herokuapp.com/tracker/logoff';
+    }
+    const body = {
+        username: this.props.username
+    }
+
+    var xhr = new XMLHttpRequest();
+
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send(JSON.stringify(body));
   }
 
   LogOut = () => {

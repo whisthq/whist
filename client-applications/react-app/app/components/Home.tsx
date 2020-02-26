@@ -68,8 +68,9 @@ class Home extends Component {
             component.props.dispatch(storeUserInfo(data.username, data.public_ip))
             component.setState({loggingIn: false})
         } else {
+          console.log(JSON.parse(this.responseText))
         	console.log("Invalid credentials")
-            component.setState({loggingIn: false, warning: true})
+          component.setState({loggingIn: false, warning: true})
         }
     };
 
@@ -164,7 +165,7 @@ class Home extends Component {
 		      	this.state.warning
 		      	?
 		      	<div>
-		      		Invalid credentials. If you lost your password, you can reset it on the website?
+		      		Invalid credentials. If you lost your password, you can reset it on the website.
 		      	</div>
 		      	:
 		      	<div>
