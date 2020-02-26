@@ -290,7 +290,7 @@ def storePreOrder(address1, address2, zipCode, email, order):
     with engine.connect() as conn:
         conn.execute(command, **params)
 
-def addTimeTable(username, action):
+def addTimeTable(username, action, time):
     command = text("""
         INSERT INTO login_history("username", "timestamp", "action") 
         VALUES(:userName, :currentTime, :action)
