@@ -13,6 +13,7 @@ import { app, BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
+import { dialog, Menu } from 'electron';
 
 
 export default class AppUpdater {
@@ -95,12 +96,7 @@ const createWindow = async () => {
     mainWindow = null;
   });
 
-  // const menuBuilder = new MenuBuilder(mainWindow);
-  // menuBuilder.buildMenu();
-
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
-  new AppUpdater();
+  autoUpdater.checkForUpdates();
 };
 
 /**
@@ -116,6 +112,37 @@ app.on('window-all-closed', () => {
 });
 
 app.on('ready', createWindow);
+
+
+autoUpdater.autoDownload = false;
+let isSilent: boolean;
+let updateDownloaded = false;
+
+
+autoUpdater.on('error', (error) => {
+    dialog.showMessageBox({
+      title: 'Message',
+      message: 'Error in updating. Please contact ming@fractalcomputers.com for support'
+    });
+});
+
+autoUpdater.on('update-available', () => {
+   autoUpdater.downloadUpdate();
+  dialog.showMessageBox({
+    title: 'Message',
+    message: 'An update is available! Downloading update...'
+  });
+});
+
+autoUpdater.on('update-downloaded', () => {
+  dialog.showMessageBox({
+    title: 'Message',
+    message: 'Update downloaded, restarting application...'
+  });
+  updateDownloaded = true;
+  autoUpdater.quitAndInstall();
+});
+
 
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the

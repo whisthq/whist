@@ -1,7 +1,6 @@
 {
   "name": "Fractal",
   "productName": "Fractal Dashboard",
-  "version": "1.0.2",
   "description": "Fractal Cloud PC Dashboard",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
@@ -16,9 +15,9 @@
     "lint-fix": "yarn --silent lint --fix; exit 0",
     "lint-styles": "stylelint --ignore-path .eslintignore '**/*.*(css|scss)' --syntax scss",
     "lint-styles-fix": "yarn --silent lint-styles --fix; exit 0",
-    "package": "yarn build && electron-builder build --publish always",
+    "package": "yarn build && electron-builder build --publish never",
     "package-all": "yarn build && electron-builder build -mwl",
-    "package-ci": "yarn postinstall && yarn build && electron-builder --publish always",
+    "package-ci": "yarn postinstall && yarn build && electron-builder build --publish always",
     "package-linux": "yarn build && electron-builder build --linux",
     "package-win": "yarn build && electron-builder build --win --x64",
     "postinstall": "node -r @babel/register internals/scripts/CheckNativeDep.js && electron-builder install-app-deps && yarn build-dll && opencollective-postinstall",
@@ -53,6 +52,7 @@
   "build": {
     "productName": "Fractal",
     "appId": "com.fractalcomputers",
+    "artifactName": "Fractal.${ext}",
     "files": [
       "dist/",
       "node_modules/",
@@ -99,15 +99,10 @@
       "output": "release"
     },
     "publish": {
-      "provider": "github",
-      "owner": "electron-react-boilerplate",
-      "repo": "electron-react-boilerplate",
-      "private": false
+      "provider": "s3",
+      "bucket": "fractal-applications-release",
+      "region": "us-east-1"
     }
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/fractalcomputers/fractal-apps.git"
   },
   "author": {
     "name": "Ming Ying",
@@ -121,13 +116,9 @@
     }
   ],
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/fractalcomputers/fractal-apps.git"
-  },
   "keywords": [
     "fractal"
   ],
-  "homepage": "https://github.com/electron-react-boilerplate/electron-react-boilerplate#readme",
   "jest": {
     "testURL": "http://localhost/",
     "moduleNameMapper": {
