@@ -1,17 +1,21 @@
 import { createStore, applyMiddleware } from 'redux';
-import thunk from 'redux-thunk';
+import createSagaMiddleware from 'redux-saga'
 import { createHashHistory } from 'history';
 import { routerMiddleware } from 'connected-react-router';
 import createRootReducer from '../reducers';
 import { Store, counterStateType } from '../reducers/types';
+import rootSaga from '../sagas';
 
 const history = createHashHistory();
 const rootReducer = createRootReducer(history);
 const router = routerMiddleware(history);
-const enhancer = applyMiddleware(thunk, router);
+const sagaMiddleware = createSagaMiddleware()
+const enhancer = applyMiddleware(sagaMiddleware);
 
 function configureStore(initialState?: counterStateType): Store {
-  return createStore(rootReducer, initialState, enhancer);
+  const store = createStore(rootReducer, initialState, enhancer);
+  sagaMiddleware.run(rootSaga)
+  return store;
 }
 
 export default { configureStore, history };
