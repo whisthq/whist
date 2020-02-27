@@ -452,6 +452,8 @@ int main(int argc, char* argv[])
                     if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), 1) < 0) {
                         mprintf("Could not send Quit Message\n");
                     }
+                    // Give a bit of time to make sure no one is touching it
+                    SDL_Delay(50);
                     DeleteFileA("C:\\Program Files\\Fractal\\Exit\\exit");
                     connected = false;
                 }

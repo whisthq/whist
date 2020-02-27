@@ -49,16 +49,18 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 		encoder->context = avcodec_alloc_context3(encoder->codec);
 		encoder->context->width           = out_width;
 		encoder->context->height          = out_height;
-		encoder->context->bit_rate        = bitrate;
+		encoder->context->bit_rate        = 24000000;
 		encoder->context->gop_size        = gop_size;
+		encoder->context->rc_max_rate     = 35000000;
+		//encoder->context->qmax            = 24;
 		encoder->context->keyint_min      = 5;
 		encoder->context->time_base.num   = 1;
 		encoder->context->time_base.den   = 30;
 		encoder->context->pix_fmt         = encoder_format;
 
-		set_opt(encoder, "nonref_p", "1");
-		set_opt(encoder, "preset", "llhq");
-		set_opt(encoder, "rc", "cbr_ld_hq");
+		//set_opt(encoder, "nonref_p", "1");
+		set_opt(encoder, "preset", "llhp");
+		//set_opt(encoder, "rc", "cbr_ld_hq");
 		set_opt(encoder, "zerolatency", "1");
 		set_opt(encoder, "delay", "0");
 
