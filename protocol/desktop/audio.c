@@ -12,7 +12,7 @@ typedef struct audio_packet {
     char data[MAX_PAYLOAD_SIZE];
 } audio_packet;
 
-#define LOG_AUDIO true
+#define LOG_AUDIO false
 
 #define AUDIO_QUEUE_LIMIT 35000
 #define TRIGGERED_AUDIO_QUEUE_LIMIT 16000
