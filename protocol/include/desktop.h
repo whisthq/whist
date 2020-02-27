@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "fractal.h"
+#include "input.h"
 
 typedef struct DesktopContext {
     TCHAR desktop_name[1000];
@@ -39,7 +40,7 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread
 void OpenWindow();
 
 // @brief Calls the above functions; opens a windows station and desktop.
-char* InitDesktop();
+void InitDesktop();
 
 
 #endif // DESKTOP_H

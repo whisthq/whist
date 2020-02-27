@@ -64,27 +64,27 @@ void OpenWindow() {
     SetProcessWindowStation(hwinsta);
 }
 
-char* InitDesktop() {
+void InitDesktop() {
     DesktopContext lock_screen, logon_screen;
     char* out;
 
     OpenWindow();
     lock_screen = OpenNewDesktop(NULL, true, true);
 
-    mprintf("Desktop name is %s\n", lock_screen.desktop_name);
-
-    if (strcmp("Winlogon", lock_screen.desktop_name) == 0)
+    while (strcmp("Default", lock_screen.desktop_name) != 0)
     {
-        enum FractalKeycode keycodes[100] = {
+        mprintf("Desktop name is %s\n", lock_screen.desktop_name);
+        mprintf("Attempting to log into desktop...\n");
+
+        enum FractalKeycode keycodes[] = {
           KEY_SPACE, KEY_BACKSPACE, KEY_BACKSPACE
         };
 
         EnterWinString(keycodes, 3);
 
         Sleep(500);
-        // logon_screen = OpenNewDesktop(NULL, true);
 
-        enum FractalKeycode keycodes2[100] = {
+        enum FractalKeycode keycodes2[] = {
           KEY_P, KEY_A, KEY_S, KEY_S, KEY_W, KEY_O, KEY_R, KEY_D, KEY_1,
           KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_PERIOD, KEY_ENTER,
           KEY_ENTER
@@ -94,9 +94,6 @@ char* InitDesktop() {
 
         Sleep(500);
 
-        out = "Winlogon";
-        return out;
+        lock_screen = OpenNewDesktop(NULL, true, true);
     }
-    out = "Default";
-    return out;
 }

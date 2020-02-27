@@ -153,14 +153,6 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
 
 static int32_t SendVideo(void* opaque) {
-    SDL_Delay(150);
-
-    mprintf("Initializing desktop...\n");
-
-    char* desktop_name = InitDesktop();
-
-    mprintf("Desktop initialized\n");
-
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
 
     // Init DXGI Device
@@ -170,16 +162,6 @@ static int32_t SendVideo(void* opaque) {
     struct FractalCursorTypes *types = (struct FractalCursorTypes *) malloc(sizeof(struct FractalCursorTypes));
     memset(types, 0, sizeof(struct FractalCursorTypes));
     LoadCursors(types);
-
-    // Open desktop
-    bool defaultFound = (strcmp("Default", desktop_name) == 0);
-    if (!defaultFound) {
-        OpenNewDesktop(NULL, false, true);
-    }
-    else {
-        desktopContext.ready = true;
-        mprintf("DESKTOP INITIALY READY\n");
-    }
 
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
@@ -208,23 +190,6 @@ static int32_t SendVideo(void* opaque) {
     int frames_since_first_iframe = 0;
     update_device = true;
     while (connected) {
-        if (!defaultFound) {
-            desktopContext = OpenNewDesktop(NULL, true, false);
-
-            if (strcmp("Default", desktopContext.desktop_name) == 0) {
-                mprintf("Default found in capture loop\n");
-                desktopContext = OpenNewDesktop("default", true, true);
-
-                update_device = true;
-
-                defaultFound = true;
-                desktopContext.ready = true;
-            }
-            else {
-                mprintf("Default not yet found\n");
-            }
-        }
-
         if (update_device) {
             if (device) {
                 DestroyCaptureDevice(device);
@@ -360,15 +325,6 @@ static int32_t SendVideo(void* opaque) {
 }
 
 static int32_t SendAudio(void* opaque) {
-    while (!desktopContext.ready) {
-        Sleep(500);
-        mprintf("Audio looping...\n");
-    }
-
-    if (setCurrentInputDesktop(desktopContext.desktop_handle) == 0) {
-        mprintf("Audio thread set\n");
-    }
-
     struct SocketContext context = *(struct SocketContext*) opaque;
     int id = 1;
 
@@ -426,6 +382,8 @@ int main(int argc, char* argv[])
 {
     initMultiThreadedPrintf(true);
 
+    InitDesktop();
+
     // initialize the windows socket library if this is a windows client
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
@@ -447,6 +405,11 @@ int main(int argc, char* argv[])
             SDL_Delay(500);
             continue;
         }
+
+        InitDesktop();
+
+        // Give client time to setup before sending it with packets
+        SDL_Delay(250);
 
         clock startup_time;
         StartTimer(&startup_time);
@@ -606,6 +569,7 @@ int main(int argc, char* argv[])
                 }
             }
         }
+
         mprintf("Disconnected\n");
 
         SDL_WaitThread(send_video, NULL);

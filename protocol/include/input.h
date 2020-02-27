@@ -34,7 +34,7 @@ typedef struct FractalCursorTypes {
 
 FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len);
 
-FractalStatus EnterWinString(enum FractalKeycode keycodes[100], int len);
+FractalStatus EnterWinString(enum FractalKeycode *keycodes, int len);
 
 void LoadCursors(FractalCursorTypes *types);
 

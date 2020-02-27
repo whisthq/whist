@@ -369,7 +369,7 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 	return FRACTAL_OK;
 }
 
-FractalStatus EnterWinString(enum FractalKeycode keycodes[100], int len) {
+FractalStatus EnterWinString(enum FractalKeycode* keycodes, int len) {
   // get screen width and height for mouse cursor
 	int i, index = 0;
 	enum FractalKeycode keycode;
