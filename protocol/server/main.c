@@ -445,14 +445,14 @@ int main(int argc, char* argv[])
             }
 
             if (GetTimer(last_exit_check) > 15.0 / 1000.0) {
-                if (PathFileExistsA("C:\\Program Files\\Fractal\\exit")) {
+                if (PathFileExistsA("C:\\Program Files\\Fractal\\Exit\\exit")) {
                     mprintf("Exiting due to button press...\n");
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = SMESSAGE_QUIT;
                     if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), 1) < 0) {
                         mprintf("Could not send Quit Message\n");
                     }
-                    DeleteFileA("C:\\Program Files\\Fractal\\exit");
+                    DeleteFileA("C:\\Program Files\\Fractal\\Exit\\exit");
                     connected = false;
                 }
                 StartTimer(&last_exit_check);
