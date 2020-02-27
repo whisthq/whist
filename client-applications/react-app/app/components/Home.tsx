@@ -13,7 +13,7 @@ import LockIcon from "../../resources/images/lock.svg";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
 
-import { storeUserInfo } from "../actions/counter"
+import { storeUserInfo, loginUser } from "../actions/counter"
 
 class Home extends Component {
   constructor(props) {
@@ -49,40 +49,13 @@ class Home extends Component {
   }
 
   LoginUser = () => {
+    console.log("login trigger")
   	this.setState({loggingIn: true, warning: false});
-  	let component = this;
-    const url = 'https://cube-celery-vm.herokuapp.com/user/login';
-    const body = {
-        username: this.state.username,
-        password: this.state.password
-    }
-
-    var xhr = new XMLHttpRequest();
-
-    xhr.onreadystatechange = function () {
-        if (this.readyState != 4) return;
-
-        if (this.status == 200) {
-        	history.push("/counter");
-            var data = JSON.parse(this.responseText)
-            component.props.dispatch(storeUserInfo(data.username, data.public_ip))
-            component.setState({loggingIn: false})
-        } else {
-          console.log(JSON.parse(this.responseText))
-        	console.log("Invalid credentials")
-          component.setState({loggingIn: false, warning: true})
-        }
-    };
-
-    xhr.open("POST", url, true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.send(JSON.stringify(body));
+  	this.props.dispatch(loginUser(this.state.username, this.state.password))
   }
 
   LoginKeyPress = (event) => {
-  	console.log("Key pressed")
   	if(event.key === 'Enter') {
-  		console.log("Enter key pressed")
   		this.LoginUser()
   	}
   }
@@ -152,7 +125,7 @@ class Home extends Component {
 		      </div>
 		      <div style = {{fontSize: 12, color: "#D6D6D6", width: 250, margin: 'auto'}}>
 		      {
-		      	this.state.loggingIn
+		      	this.state.loggingIn && !this.props.warning
 		      	?
 		      	<div>
 		      		<FontAwesomeIcon icon={faSpinner} spin style = {{color: "#5EC4EB", marginRight: 4, width: 12}}/> Logging In
@@ -162,7 +135,7 @@ class Home extends Component {
 		      	</div>
 		      }
 		      {
-		      	this.state.warning
+		      	this.props.warning
 		      	?
 		      	<div>
 		      		Invalid credentials. If you lost your password, you can reset it on the website.
@@ -179,10 +152,10 @@ class Home extends Component {
 }
 
 function mapStateToProps(state) {
-  console.log(state)
   return { 
     username: state.counter.username,
-    public_ip: state.counter.public_ip
+    public_ip: state.counter.public_ip,
+    warning: state.counter.warning
   }
 }
 
