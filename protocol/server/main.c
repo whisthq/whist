@@ -89,9 +89,13 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
 
     int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
 
+    double max_delay = 5.0;
+    double delay_thusfar = 0.0;
+
     while (curr_index < len) {
-        if (i != 0 && i % 15 == 0) {
+        if (((double) curr_index - 10000) / len * max_delay > delay_thusfar) {
             SDL_Delay(1);
+            delay_thusfar += 1;
         }
 
         struct RTPPacket l_packet = { 0 };
