@@ -21,7 +21,7 @@ volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* cursor = NULL;
 volatile FractalCursorID last_cursor = SDL_SYSTEM_CURSOR_ARROW;
 
-#define LOG_VIDEO false
+#define LOG_VIDEO true
 
 struct VideoData {
     struct FrameData* pending_ctx;
@@ -364,6 +364,14 @@ void updateVideo() {
                 int index = i % RECV_FRAMES_BUFFER_SIZE;
                 if (receiving_frames[index].id == i) {
                     mprintf("Frame dropped with ID %d: %d/%d\n", i, receiving_frames[index].packets_received, receiving_frames[index].num_packets);
+
+                    for( int j = 0; j < receiving_frames[index].num_packets; j++ )
+                    {
+                        if( !receiving_frames[index].received_indicies[j] )
+                        {
+                            mprintf( "Did not receive ID %d, Index %d\n", i, j );
+                        }
+                    }
                 }
                 else {
                     mprintf("Bad ID? %d instead of %d\n", receiving_frames[index].id, i);
@@ -488,8 +496,8 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
         int to_index = packet->index - 3;
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             if (!ctx->received_indicies[i]) {
-                //ctx->nacked_indicies[i] = true;
-                //nack(packet->id, i);
+                ctx->nacked_indicies[i] = true;
+                nack(packet->id, i);
             }
         }
         ctx->last_nacked_index = max(ctx->last_nacked_index, to_index);
