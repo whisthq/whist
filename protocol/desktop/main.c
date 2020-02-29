@@ -44,6 +44,7 @@ struct SocketContext PacketSendContext;
 
 volatile bool connected = true;
 volatile bool exiting = false;
+volatile int try_amount;
 
 // UPDATER CODE - HANDLES ALL PERIODIC UPDATES
 struct UpdateData {
@@ -347,6 +348,7 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
             mprintf("Latency: %f\n", GetTimer(latency_timer));
             is_timing_latency = false;
             ping_failures = 0;
+            try_amount = 0;
         }
         else {
             mprintf("Old Ping ID found.\n");
@@ -572,7 +574,7 @@ int main(int argc, char* argv[])
     
 
     exiting = false;
-    for (int try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
+    for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         clearSDL();
 
         SDL_Delay(200);
