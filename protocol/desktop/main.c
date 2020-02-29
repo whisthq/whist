@@ -545,7 +545,6 @@ int main(int argc, char* argv[])
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
-
     
     // BEGIN TEST
     /*
@@ -577,7 +576,12 @@ int main(int argc, char* argv[])
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         clearSDL();
 
-        SDL_Delay(200);
+        // If this is a retry, wait a bit more for the server to recover
+        if( try_amount > 0 )
+        {
+
+            SDL_Delay( 1000 );
+        }
 
         // initialize the windows socket library if this is a windows client
 #if defined(_WIN32)
@@ -687,10 +691,6 @@ int main(int argc, char* argv[])
         {
             fmsg.type = CMESSAGE_QUIT;
             SendPacket( &fmsg, sizeof( fmsg ) );
-        } else
-        {
-            // If we're gonna retry to connect, then let's wait a bit for the server to recover
-            SDL_Delay( 750 );
         }
 
         run_receive_packets = false;
