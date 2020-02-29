@@ -21,7 +21,7 @@ volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* cursor = NULL;
 volatile FractalCursorID last_cursor = SDL_SYSTEM_CURSOR_ARROW;
 
-#define LOG_VIDEO true
+#define LOG_VIDEO false
 
 struct VideoData {
     struct FrameData* pending_ctx;
@@ -150,8 +150,12 @@ int32_t RenderScreen(void* opaque) {
         }
 
 #if LOG_VIDEO
-        mprintf("Rendering ID %d\n", renderContext.id);
+        mprintf("Rendering ID %d (Age %f)\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ));
 #endif
+        if( GetTimer( renderContext.frame_creation_timer ) > 50.0 / 1000.0 )
+        {
+            mprintf( "Late! Rendering ID %d (Age %f)\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ) );
+        }
 
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)renderContext.frame_buffer;
@@ -486,7 +490,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     }
 
 #if LOG_VIDEO
-    mprintf("Received Video ID %d Index %d at time since creation %f %s\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer), packet->is_a_nack ? "(nack)" : ""); 
+    //mprintf("Received Video ID %d Index %d at time since creation %f %s\n", packet->id, packet->index, GetTimer(ctx->frame_creation_timer), packet->is_a_nack ? "(nack)" : ""); 
 #endif
 
     VideoData.max_id = max(VideoData.max_id, ctx->id);
