@@ -18,7 +18,7 @@ import { storeUserInfo, loginUser } from "../actions/counter"
 class Home extends Component {
   constructor(props) {
     super(props)
-    this.state = {username: '', password: '', loggingIn: false, warning: false}
+    this.state = {username: '', password: '', loggingIn: false, warning: false, version: "1.0.0"}
   }
 
   CloseWindow = () => {
@@ -85,6 +85,8 @@ class Home extends Component {
   }
 
   componentDidMount() {
+    var appVersion = require('../package.json').version;
+    this.setState({version: appVersion})
   	if(this.props.username && this.props.public_ip) {
   		history.push('/counter')
   	}
@@ -93,6 +95,9 @@ class Home extends Component {
   render() {
 	return (
 		<div className={styles.container} data-tid="container" style = {{backgroundImage: "url(" + Background + ")"}}>
+      <div style = {{position: 'absolute', bottom: 15, right: 15, fontSize: 11, color: "#D1D1D1"}}>
+        Version: {this.state.version}
+      </div>
 	        <div style = {{textAlign: 'right', paddingTop: 10, paddingRight: 20}}>
 	          <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 6}}>
 	             <FontAwesomeIcon className = {styles.windowControl} icon={faWindowMinimize} style = {{color: '#999999', height: 10}}/>
@@ -138,7 +143,7 @@ class Home extends Component {
 		      	this.props.warning
 		      	?
 		      	<div>
-		      		Invalid credentials. If you lost your password, you can reset it on the website.
+		      		Invalid credentials. If you lost your password, you can reset it on the Fractal website.
 		      	</div>
 		      	:
 		      	<div>

@@ -17,6 +17,8 @@ import { dialog, Menu } from 'electron';
 
 let mainWindow: BrowserWindow | null = null;
 
+process.env.GOOGLE_API_KEY = 'AIzaSyA2FUwAOXKqIWMqKN5DNPBUaqYMOWdBADQ';
+
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
@@ -47,7 +49,7 @@ const createWindow = async () => {
   ) {
     await installExtensions();
   }
-
+  
   mainWindow = new BrowserWindow({
     show: false,
     width: 900,

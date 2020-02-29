@@ -45,6 +45,7 @@ export function calculateDistance(public_ip) {
 }
 
 export function storeDistance(distance) {
+	console.log("store distance action " + distance)
 	return {
 		type: STORE_DISTANCE,
 		distance

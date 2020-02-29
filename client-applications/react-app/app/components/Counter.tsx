@@ -6,6 +6,7 @@ import routes from '../constants/routes.json';
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 import { configureStore, history } from '../store/configureStore';
+import * as geolib from 'geolib';
 
 import Titlebar from 'react-electron-titlebar';
 import Logo from "../../resources/images/logo.svg";
@@ -20,7 +21,7 @@ import Popup from "reactjs-popup"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
 
-import { storeUserInfo, trackUserActivity } from "../actions/counter"
+import { storeUserInfo, trackUserActivity, storeDistance } from "../actions/counter"
 
 class Counter extends Component {
   constructor(props) {
@@ -75,6 +76,40 @@ class Counter extends Component {
     })
   }
 
+  CalculateDistance = (public_ip) => {
+    let component = this;
+    const iplocation = require("iplocation").default; 
+    var options = {
+      enableHighAccuracy: true,
+      timeout: 10000
+    }
+    var metersInMile = 1609.34;
+    var dist;
+
+    navigator.geolocation.getCurrentPosition(showPosition, showError, options);
+
+    function showPosition(position) {
+      iplocation(public_ip).then(function(res) {
+        dist = geolib.getDistance(
+        {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        },
+        {
+          latitude: res.latitude,
+          longitude: res.longitude,
+        });
+        dist = Math.round(dist / metersInMile)
+        component.setState({distance: dist, 
+          distancebar: Math.min(Math.max(220 * dist / 1000, 80), 220)})
+      })
+    }  
+
+    function showError(error) {
+      alert(error.message)
+    }
+  }
+
   LaunchProtocol = () => {
     var child = require('child_process').spawn;
     var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
@@ -98,6 +133,12 @@ class Counter extends Component {
     this.MeasureConnectionSpeed();
     this.MeasureCores();
     this.setState({isLoading: false})
+  }
+
+  componentDidUpdate(prevProps) {
+    if(this.props.public_ip != null && this.state.distance == 0) {
+      this.CalculateDistance(this.props.public_ip)
+    }
   }
 
   render() {
@@ -145,25 +186,25 @@ class Counter extends Component {
         </div>
     }
 
-    if(this.props.distance < 250) {
+    if(this.state.distance < 250) {
       distanceBox = 
         <div>
          <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
          </div>
           <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
-            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.props.distance} mi </span>
+            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
           </div>
           <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
             You are close enough to your cloud PC to experience low-latency streaming.
           </div>
         </div>
-    } else if(this.props.distance < 500) {
+    } else if(this.state.distance < 500) {
       distanceBox = 
         <div>
          <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
          </div>
           <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
-            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.props.distance} mi </span>
+            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
           </div>
           <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
             You may experience slightly higher latency due to your distance from your cloud PC.
@@ -175,7 +216,7 @@ class Counter extends Component {
          <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
          </div>
           <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
-            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.props.distance} mi </span>
+            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
           </div>
           <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
             You may experience latency because you are far away from your cloud PC.
@@ -331,7 +372,7 @@ class Counter extends Component {
             </div>
             <div style = {{marginTop: 35}}>
               {
-                this.props.distance === 0
+                this.state.distance === 0
                 ?
                 <div>
                   <div style = {{width: 220, height: `${ barHeight }px`, borderRadius: "0px 2px 2px 0px", background: "#111111"}}>
@@ -346,7 +387,7 @@ class Counter extends Component {
                 <div>
                   <div style = {{width: 220, height: `${ barHeight }px`, borderRadius: "0px 2px 2px 0px", background: "#111111", position: "absolute", zIndex: 0}}>
                   </div>
-                  <div style = {{width: `${ this.props.distancebar }px`, height: `${ barHeight }px`, borderRadius: "0px 2px 2px 0px", background: "#5EC4EB", position: "absolute", zIndex: 1}}>
+                  <div style = {{width: `${ this.state.distancebar }px`, height: `${ barHeight }px`, borderRadius: "0px 2px 2px 0px", background: "#5EC4EB", position: "absolute", zIndex: 1}}>
                   </div>
                   <div style = {{height: 10}}></div>
                   {distanceBox}
@@ -389,9 +430,7 @@ class Counter extends Component {
 function mapStateToProps(state) {
   return { 
     username: state.counter.username,
-    public_ip: state.counter.public_ip,
-    distance: state.counter.distance,
-    distancebar: Math.min(Math.max(220 * state.counter.distance / 1000, 80), 220)            
+    public_ip: state.counter.public_ip        
   }
 }
 
