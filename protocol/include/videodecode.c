@@ -68,13 +68,14 @@ void set_decoder(bool hardware) {
 }
 */
 
+
 video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width, int out_height, bool use_hardware) {
   video_decoder_t* decoder = (video_decoder_t*) malloc(sizeof(video_decoder_t));
   memset(decoder, 0, sizeof(video_decoder_t));
 
   if (use_hardware) {
     #if defined(_WIN32)
-      decoder->type = DECODE_TYPE_QSV;
+      decoder->type = DECODE_TYPE_D3D11;
     #elif __APPLE__
       decoder->type = DECODE_TYPE_VIDEOTOOLBOX;
     #else // linux
@@ -163,7 +164,7 @@ video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width
 
       decoder->codec = avcodec_find_decoder_by_name("h264");
 
-      /*
+      
       for (int i = 0;; i++) {
           const AVCodecHWConfig *config = NULL;//avcodec_get_hw_config(decoder->codec, i);
           if (!config) {
@@ -177,7 +178,7 @@ video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width
               break;
           }
       }
-      */
+      
 
       if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
         mprintf("alloccontext3 failed w/ error code: %d\n", AVERROR(ENOMEM));
