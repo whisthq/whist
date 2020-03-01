@@ -381,6 +381,24 @@ static int32_t SendAudio(void* opaque) {
     return 0;
 }
 
+void update() {
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+
+    ZeroMemory( &si, sizeof( si ) );
+    si.cb = sizeof( si );
+    ZeroMemory( &pi, sizeof( pi ) );
+
+    wchar_t cmdline[] = L"cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\"";
+
+    if( CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi ) )
+    {
+        mprintf( "Checking for updates...\n" );
+        WaitForSingleObject( pi.hProcess, INFINITE );
+        CloseHandle( pi.hProcess );
+        CloseHandle( pi.hThread );
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -397,9 +415,13 @@ int main(int argc, char* argv[])
 
     while (true) {
         struct SocketContext PacketReceiveContext = { 0 };
-        if (CreateUDPContext(&PacketReceiveContext, "S", "0.0.0.0", PORT_CLIENT_TO_SERVER, 1, -1) < 0) {
+        if (CreateUDPContext(&PacketReceiveContext, "S", "0.0.0.0", PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
             mprintf("Failed to start connection\n");
             SDL_Delay(500);
+
+            // Since we're just idling, let's try updating the server
+            update();
+
             continue;
         }
 
