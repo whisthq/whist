@@ -93,7 +93,7 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
     double delay_thusfar = 0.0;
 
     while (curr_index < len) {
-        if (((double) curr_index - 10000) / len * max_delay > delay_thusfar) {
+        if (((double) curr_index - 10000) / (len + 20000) * max_delay > delay_thusfar) {
             SDL_Delay(1);
             delay_thusfar += 1;
         }
