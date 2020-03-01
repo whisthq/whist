@@ -14,9 +14,9 @@ typedef struct audio_packet {
 
 #define LOG_AUDIO true
 
-#define AUDIO_QUEUE_LOWER_LIMIT 15000
+#define AUDIO_QUEUE_LOWER_LIMIT 18000
 #define AUDIO_QUEUE_UPPER_LIMIT 55000
-#define TARGET_AUDIO_QUEUE_LIMIT 30000
+#define TARGET_AUDIO_QUEUE_LIMIT 35000
 
 #define MAX_NUM_AUDIO_FRAMES 25
 #define MAX_NUM_AUDIO_INDICES 3
@@ -82,7 +82,7 @@ void destroyAudio() {
 
 void updateAudio() {
 #if LOG_AUDIO
-    mprintf("Queue: %d\n", SDL_GetQueuedAudioSize(AudioData.dev));
+    //mprintf("Queue: %d\n", SDL_GetQueuedAudioSize(AudioData.dev));
 #endif
     if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
         mprintf("Updating audio frequency to %d!\n", audio_frequency);
@@ -114,16 +114,20 @@ void updateAudio() {
     int bytes_until_can_play = (most_recent_audio_id - last_played_id) * MAX_PAYLOAD_SIZE + SDL_GetQueuedAudioSize( AudioData.dev );
     if( bytes_until_can_play < AUDIO_QUEUE_LOWER_LIMIT )
     {
-        mprintf( "Needs to catch up!\n" );
+        mprintf( "Audio size too low: %d. Needs to catch up!\n", bytes_until_can_play);
         gapping = true;
     }
 
-    if( gapping && bytes_until_can_play < TARGET_AUDIO_QUEUE_LIMIT )
+    if( gapping )
     {
-        return;
-    } else
-    {
-        gapping = false;
+        if( bytes_until_can_play < TARGET_AUDIO_QUEUE_LIMIT )
+        {
+            return;
+        } else
+        {
+            mprintf( "Done catching up!\n" );
+            gapping = false;
+        }
     }
 
     if (last_played_id == -1) {
