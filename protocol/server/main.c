@@ -453,10 +453,8 @@ int main(int argc, char* argv[])
         SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
         mprintf("Sending video and audio...\n");
 
-        struct FractalClientMessage fmsgs[6];
         struct FractalClientMessage fmsg;
-        int i = 0, j = 0, active = 0;
-        FractalStatus status;
+        int i = 0;
 
         clock last_ping;
         StartTimer(&last_ping);
@@ -514,38 +512,10 @@ int main(int argc, char* argv[])
 
             if (fmsg.type != 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
-                    if (j >= 6) {
-                        mprintf("Too long of a keyboard combination!\n");
-                        active = 0;
-                        j = 0;
-                    }
-
-                    if (active) {
-                        fmsgs[j] = fmsg;
-                        if (fmsg.keyboard.pressed) {
-                            if (fmsg.keyboard.code != fmsgs[j - 1].keyboard.code) {
-                                j++;
-                            }
-                        }
-                        else {
-                            status = ReplayUserInput(fmsgs, j + 1);
-                            active = 0;
-                            j = 0;
-                        }
-                    }
-                    else {
-                        fmsgs[0] = fmsg;
-                        if (fmsg.keyboard.pressed && (fmsg.keyboard.code >= 224 && fmsg.keyboard.code <= 231)) {
-                            active = 1;
-                            j++;
-                        }
-                        else {
-                            status = ReplayUserInput(fmsgs, 1);
-                        }
-                    }
+                    ReplayUserInput(&fmsg, 1);
                 }
                 else if (fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
-                    status = ReplayUserInput(&fmsg, 1);
+                    ReplayUserInput(&fmsg, 1);
                 }
                 else if (fmsg.type == MESSAGE_MBPS) {
                     max_mbps = fmsg.mbps;
