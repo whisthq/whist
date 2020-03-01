@@ -44,6 +44,7 @@ struct SocketContext PacketSendContext;
 
 volatile bool connected = true;
 volatile bool exiting = false;
+volatile int try_amount;
 
 // UPDATER CODE - HANDLES ALL PERIODIC UPDATES
 struct UpdateData {
@@ -347,6 +348,7 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
             mprintf("Latency: %f\n", GetTimer(latency_timer));
             is_timing_latency = false;
             ping_failures = 0;
+            try_amount = 0;
         }
         else {
             mprintf("Old Ping ID found.\n");
@@ -476,7 +478,7 @@ int initSDL() {
         SDL_WINDOWPOS_CENTERED,
         output_width,
         output_height,
-        (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
+        (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALWAYS_ON_TOP : 0)
     );
 
     if (!window) {
@@ -543,7 +545,6 @@ int main(int argc, char* argv[])
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
-
     
     // BEGIN TEST
     /*
@@ -572,10 +573,15 @@ int main(int argc, char* argv[])
     
 
     exiting = false;
-    for (int try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
+    for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         clearSDL();
 
-        SDL_Delay(200);
+        // If this is a retry, wait a bit more for the server to recover
+        if( try_amount > 0 )
+        {
+
+            SDL_Delay( 1000 );
+        }
 
         // initialize the windows socket library if this is a windows client
 #if defined(_WIN32)
@@ -685,10 +691,6 @@ int main(int argc, char* argv[])
         {
             fmsg.type = CMESSAGE_QUIT;
             SendPacket( &fmsg, sizeof( fmsg ) );
-        } else
-        {
-            // If we're gonna retry to connect, then let's wait a bit for the server to recover
-            SDL_Delay( 750 );
         }
 
         run_receive_packets = false;
