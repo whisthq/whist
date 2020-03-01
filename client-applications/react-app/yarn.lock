@@ -1501,6 +1501,24 @@
     url-parse "^1.1.7"
     webfontloader "^1.6.27"
 
+"@typeform/embed@^0.16.0":
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-0.16.0.tgz#9cab5dc0d36a2df6e0ecc30e2cf70b6047648b2a"
+  integrity sha512-BW6UvJniu6KK6ksTYxDABJKizzcNnYqI5RSr7qJSyJ+In/Y6VjxFUECiu3jQx5Ybvsnaz7EdDZfvlYy9hADdow==
+  dependencies:
+    classnames "^2.2.5"
+    core-js "^3.6.4"
+    create-emotion "^9.0.2"
+    create-emotion-styled "^9.0.1"
+    custom-event "^1.0.1"
+    is-url "^1.2.2"
+    preact "^8.2.7"
+    preact-compat "^3.15.0"
+    prop-types "^15.7.2"
+    scrollbar-width "^3.1.1"
+    spin.js "^2.3.2"
+    url-parse "^1.4.5"
+
 "@types/anymatch@*":
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/@types/anymatch/-/anymatch-1.3.1.tgz#336badc1beecb9dacc38bea2cf32adf627a8421a"
@@ -14913,7 +14931,7 @@ url-parse-lax@^3.0.0:
   dependencies:
     prepend-http "^2.0.0"
 
-url-parse@^1.1.7, url-parse@^1.4.3:
+url-parse@^1.1.7, url-parse@^1.4.3, url-parse@^1.4.5:
   version "1.4.7"
   resolved "https://registry.yarnpkg.com/url-parse/-/url-parse-1.4.7.tgz#a8a83535e8c00a316e403a5db4ac1b9b853ae278"
   integrity sha512-d3uaVyzDB9tQoSXFvuSUNFibTd9zxd2bkVrDRvF5TmvWWQwqE4lgYJ5m+x1DbecWkw+LK4RNl2CU1hHuOKPVlg==

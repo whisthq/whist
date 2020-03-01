@@ -17,7 +17,7 @@ import Spinner from "../../resources/images/spinner.svg";
 
 import { Offline, Online } from "react-detect-offline";
 import Popup from "reactjs-popup"
-import { ReactTypeformEmbed } from 'react-typeform-embed';
+import { ReactTypeformEmbed } from 'react-typeform-embed'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
@@ -104,7 +104,6 @@ class Counter extends Component {
     }  
 
     function showError(error) {
-      alert(error.message)
     }
   }
 

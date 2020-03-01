@@ -1,7 +1,7 @@
 {
   "name": "Fractal",
   "productName": "Fractal Dashboard",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Fractal Cloud PC Dashboard",
   "main": "./main.prod.js",
   "author": {
