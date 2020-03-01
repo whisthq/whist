@@ -381,7 +381,8 @@ static int32_t SendAudio(void* opaque) {
     return 0;
 }
 
-void update() {
+void runcmd( LPWSTR cmdline )
+{
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
 
@@ -389,15 +390,18 @@ void update() {
     si.cb = sizeof( si );
     ZeroMemory( &pi, sizeof( pi ) );
 
-    wchar_t cmdline[] = L"cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\"";
-
     if( CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi ) )
     {
-        mprintf( "Checking for updates...\n" );
         WaitForSingleObject( pi.hProcess, INFINITE );
         CloseHandle( pi.hProcess );
         CloseHandle( pi.hThread );
     }
+}
+
+void update() {
+    mprintf( "Checking for updates...\n" );
+    runcmd( L"powershell -command \"iwr -outf 'C:\\Program Files\\Fractal\\update.bat' https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\"" );
+    runcmd( L"cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\"" );
 }
 
 int main(int argc, char* argv[])
