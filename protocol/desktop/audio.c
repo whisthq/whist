@@ -12,7 +12,7 @@ typedef struct audio_packet {
     char data[MAX_PAYLOAD_SIZE];
 } audio_packet;
 
-#define LOG_AUDIO true
+#define LOG_AUDIO false
 
 #define AUDIO_QUEUE_LOWER_LIMIT 18000
 #define AUDIO_QUEUE_UPPER_LIMIT 55000
@@ -112,9 +112,9 @@ void updateAudio() {
     // Wait to delay
     static bool gapping = false;
     int bytes_until_can_play = (most_recent_audio_id - last_played_id) * MAX_PAYLOAD_SIZE + SDL_GetQueuedAudioSize( AudioData.dev );
-    if( bytes_until_can_play < AUDIO_QUEUE_LOWER_LIMIT )
+    if( !gapping && bytes_until_can_play < AUDIO_QUEUE_LOWER_LIMIT )
     {
-        mprintf( "Audio size too low: %d. Needs to catch up!\n", bytes_until_can_play);
+        mprintf( "Audio Queue too low: %d. Needs to catch up!\n", bytes_until_can_play);
         gapping = true;
     }
 
@@ -125,7 +125,7 @@ void updateAudio() {
             return;
         } else
         {
-            mprintf( "Done catching up!\n" );
+            mprintf( "Done catching up! Audio Queue: %d\n", bytes_until_can_play );
             gapping = false;
         }
     }
