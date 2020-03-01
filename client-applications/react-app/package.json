@@ -277,6 +277,7 @@
     "react-redux": "^7.2.0",
     "react-router": "^5.1.2",
     "react-router-dom": "^5.1.2",
+    "react-typeform-embed": "^0.2.1",
     "reactjs-popup": "^1.5.0",
     "redux": "^4.0.5",
     "redux-saga": "^1.1.3",

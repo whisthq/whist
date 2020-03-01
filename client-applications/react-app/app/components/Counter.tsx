@@ -17,6 +17,7 @@ import Spinner from "../../resources/images/spinner.svg";
 
 import { Offline, Online } from "react-detect-offline";
 import Popup from "reactjs-popup"
+import { ReactTypeformEmbed } from 'react-typeform-embed';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
@@ -26,13 +27,10 @@ import { storeUserInfo, trackUserActivity, storeDistance } from "../actions/coun
 class Counter extends Component {
   constructor(props) {
     super(props)
-    this.state = {isLoading: true, username: '', internetspeed: 0, distance: 0, internetbar: 50, distancebar: 50, cores: 0, corebar: 40, launched: false}
+    this.state = {isLoading: true, username: '', internetspeed: 0, distance: 0, internetbar: 50, distancebar: 50, cores: 0, corebar: 40, askFeedback: false}
   }
 
   CloseWindow = () => {
-    if(this.state.launched) {
-      this.TrackActivity(false);
-    }
     const remote = require('electron').remote
     let win = remote.getCurrentWindow()
 
@@ -116,12 +114,20 @@ class Counter extends Component {
     var parameters = [this.props.public_ip, 123]
 
     this.TrackActivity(true);
-    this.setState({launched: true});
-    child(path, parameters, {detached: true, stdio: 'ignore'});
+    const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
+
+    protocol.on('close', (code) => {
+      this.TrackActivity(false);
+      this.OpenForm();
+    })
   }
 
   TrackActivity = (action) => {
     this.props.dispatch(trackUserActivity(action))
+  }
+
+  OpenForm = () => {
+    this.typeformEmbed.typeform.open();
   }
 
   LogOut = () => {
@@ -267,6 +273,18 @@ class Counter extends Component {
         </div>
         :
         <div>
+        <ReactTypeformEmbed
+          popup
+          autoOpen={false}
+          url={"https://phil603142.typeform.com/to/MLxviK?name=" + this.props.username}
+          hideHeaders
+          hideFooter
+          buttonText="Give Feedback"
+          ref={tf => {
+            this.typeformEmbed = tf;
+          }}
+          style = {{zIndex: -100}}
+        />
         <div className = {styles.landingHeader}>
           <div className = {styles.landingHeaderLeft}>
             <img src = {Logo} width = "20" height = "20"/>
