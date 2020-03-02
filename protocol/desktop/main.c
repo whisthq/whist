@@ -68,21 +68,21 @@ void update() {
     // Start update checks
     if (UpdateData.needs_dimension_update && !UpdateData.tried_to_update_dimension && (server_width != output_width || server_height != output_height)) {
         mprintf("Asking for server dimension to be %dx%d\n", output_width, output_height);
-        memset(&fmsg, 0, sizeof(fmsg));
+        memset(&fmsg, 0, GetFmsgSize(&fmsg));
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
-        SendPacket(&fmsg, sizeof(fmsg));
+        SendPacket(&fmsg, GetFmsgSize(&fmsg));
         UpdateData.tried_to_update_dimension = true;
     }
 
     if (update_mbps) {
         mprintf("Asking for server MBPS to be %f\n", max_mbps);
         update_mbps = false;
-        memset(&fmsg, 0, sizeof(fmsg));
+        memset(&fmsg, 0, GetFmsgSize(&fmsg));
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_mbps;
-        SendPacket(&fmsg, sizeof(fmsg));
+        SendPacket(&fmsg, GetFmsgSize(&fmsg));
     }
     // End update checks
 
@@ -102,7 +102,7 @@ void update() {
     }
 
     if (!is_timing_latency && GetTimer(latency_timer) > 0.5) {
-        memset(&fmsg, 0, sizeof(fmsg));
+        memset(&fmsg, 0, GetFmsgSize(&fmsg));
         ping_id++;
         fmsg.type = MESSAGE_PING;
         fmsg.ping_id = ping_id;
@@ -111,8 +111,8 @@ void update() {
         StartTimer((clock*)&latency_timer);
 
         mprintf("Ping! %d\n", ping_id);
-        SendPacket(&fmsg, sizeof(fmsg));
-        SendPacket(&fmsg, sizeof(fmsg));
+        SendPacket(&fmsg, GetFmsgSize(&fmsg));
+        SendPacket(&fmsg, GetFmsgSize(&fmsg));
     }
     // End Ping
 }
@@ -626,7 +626,7 @@ int main(int argc, char* argv[])
 
         while (connected && !exiting)
         {
-            memset(&fmsg, 0, sizeof(fmsg));
+            memset(&fmsg, 0, GetFmsgSize(&fmsg));
             if (SDL_PollEvent(&msg)) {
                 switch (msg.type) {
                 case SDL_KEYDOWN:
@@ -652,7 +652,8 @@ int main(int argc, char* argv[])
                     fmsg.type = MESSAGE_KEYBOARD_STATE;
                     int num_keys;
                     Uint8 *state = SDL_GetKeyboardState( &num_keys );
-                    memcpy( fmsg.keyboard_state, state, max(256, num_keys) );
+                    fmsg.num_keycodes = max(NUM_KEYCODES, num_keys);
+                    memcpy( fmsg.keyboard_state, state, fmsg.num_keycodes );
 
                     break;
                 case SDL_MOUSEMOTION:
@@ -682,7 +683,7 @@ int main(int argc, char* argv[])
                 }
 
                 if (fmsg.type != 0) {
-                    SendPacket(&fmsg, sizeof(fmsg));
+                    SendPacket(&fmsg, GetFmsgSize(&fmsg));
                 }
                 else {
                     SDL_Delay(1);

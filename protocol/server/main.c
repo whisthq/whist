@@ -499,12 +499,12 @@ int main(int argc, char* argv[])
                 int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
                 if( decrypt_len > 0 )
                 {
-                    if( decrypted_packet.payload_size != sizeof( fmsg ) )
+                    if( decrypted_packet.payload_size != GetFmsgSize( &fmsg ) )
                     {
                         mprintf( "Packet is of the wrong size!: %d\n", decrypted_packet.payload_size );
                     } else
                     {
-                        memcpy( &fmsg, decrypted_packet.data, sizeof( fmsg ) );
+                        memcpy( &fmsg, decrypted_packet.data, GetFmsgSize( &fmsg ) );
                     }
                 }
             }
@@ -517,7 +517,7 @@ int main(int argc, char* argv[])
                 }
                 else if (fmsg.type == MESSAGE_KEYBOARD_STATE) {
                     mprintf("Replaying keyboard state\n");
-                    for (int sdl_keycode = 0; sdl_keycode < 256; sdl_keycode++) {
+                    for (int sdl_keycode = 0; sdl_keycode < fmsg.num_keycodes; sdl_keycode++) {
                         int windows_keycode = GetWindowsKeyCode(sdl_keycode);
 
                         if (windows_keycode) {

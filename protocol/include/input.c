@@ -13,7 +13,7 @@
 #if defined(_WIN32)
 // @brief Windows keycodes for replaying SDL user inputs on server
 // @details index is SDL keycode, value is Windows keycode
-const int windows_keycodes[265] = {
+const int windows_keycodes[NUM_KEYCODES] = {
 	NULL, // SDL keycodes start at index 4
 	NULL, // SDL keycodes start at index 4
 	NULL, // SDL keycodes start at index 4

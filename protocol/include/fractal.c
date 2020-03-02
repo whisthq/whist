@@ -22,6 +22,15 @@
 
 /*** FRACTAL FUNCTIONS START ***/
 
+int GetFmsgSize(struct FractalClientMessage* fmsg) {
+	if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
+		return sizeof(*fmsg);
+	}
+	else {
+		return sizeof(*fmsg) - sizeof(fmsg->keyboard_state) - sizeof(fmsg->num_keycodes);
+	}
+}
+
 int GetLastNetworkError() {
 #if defined(_WIN32)
   return WSAGetLastError();

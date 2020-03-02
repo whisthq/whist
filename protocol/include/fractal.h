@@ -81,6 +81,8 @@
 	#include <sys/time.h>
 #endif
 
+#define NUM_KEYCODES 265
+
 /*** DEFINITIONS START ***/
 
 #define PORT_CLIENT_TO_SERVER 32262
@@ -660,7 +662,6 @@ typedef enum FractalClientMessageType {
 typedef struct FractalClientMessage {
 	FractalClientMessageType type;                     ///< Input message type.
 	union {
-		char keyboard_state[256];                  ///< Keyboard state message.
 		FractalKeyboardMessage keyboard;           ///< Keyboard message.
 		FractalMouseButtonMessage mouseButton;     ///< Mouse button message.
 		FractalMouseWheelMessage mouseWheel;       ///< Mouse wheel message.
@@ -676,8 +677,11 @@ typedef struct FractalClientMessage {
 			int index;
 		} nack_data;
 	};
+	int num_keycodes;
+	char keyboard_state[NUM_KEYCODES];             ///< Keyboard state message.
 } FractalClientMessage;
 
+int GetFmsgSize(struct FractalClientMessage* fmsg);
 
 typedef enum FractalServerMessageType {
 	SMESSAGE_NONE = 0, ///< No Message
