@@ -11,8 +11,8 @@
 #include "input.h" // header file for this file
 
 #if defined(_WIN32)
-  // @brief Windows keycodes for replaying SDL user inputs on server
-  // @details index is SDL keycode, value is Windows keycode
+// @brief Windows keycodes for replaying SDL user inputs on server
+// @details index is SDL keycode, value is Windows keycode
 const int windows_keycodes[265] = {
 	NULL, // SDL keycodes start at index 4
 	NULL, // SDL keycodes start at index 4
@@ -280,6 +280,11 @@ const int windows_keycodes[265] = {
 	VK_LAUNCH_MEDIA_SELECT, // 263 -> Media Select
 	0x7FFFFFFF };
 #endif
+
+
+int GetWindowsKeyCode(int sdl_keycode) {
+	return windows_keycodes[sdl_keycode];
+}
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS

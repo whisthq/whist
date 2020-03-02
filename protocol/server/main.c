@@ -501,7 +501,7 @@ int main(int argc, char* argv[])
                 {
                     if( decrypted_packet.payload_size != sizeof( fmsg ) )
                     {
-                        mprintf( "Packet is of the wrong size!\n" );
+                        mprintf( "Packet is of the wrong size!: %d\n", decrypted_packet.payload_size );
                     } else
                     {
                         memcpy( &fmsg, decrypted_packet.data, sizeof( fmsg ) );
@@ -512,7 +512,35 @@ int main(int argc, char* argv[])
 
             if (fmsg.type != 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
+                    mprintf("Replaying keyboard\n");
                     ReplayUserInput(&fmsg, 1);
+                }
+                else if (fmsg.type == MESSAGE_KEYBOARD_STATE) {
+                    mprintf("Replaying keyboard state\n");
+                    for (int sdl_keycode = 0; sdl_keycode < 256; sdl_keycode++) {
+                        int windows_keycode = GetWindowsKeyCode(sdl_keycode);
+
+                        if (windows_keycode) {
+                            INPUT ip;
+                            ip.type = INPUT_KEYBOARD;
+                            ip.ki.wScan = 0; // hardware scan code for key
+                            ip.ki.time = 0;
+                            ip.ki.dwExtraInfo = 0;
+                            ip.ki.wVk = windows_keycode; // virtual-key code for the "a" key
+
+                            if (fmsg.keyboard_state[sdl_keycode] && !GetAsyncKeyState(windows_keycode)) {
+                                mprintf("Pressing %d\n", sdl_keycode);
+                                ip.ki.dwFlags = 0; // 0 for key press
+                                SendInput(1, &ip, sizeof(INPUT));
+                            }
+
+                            if (!fmsg.keyboard_state[sdl_keycode] && GetAsyncKeyState(windows_keycode)) {
+                                mprintf("Releasing %d\n", sdl_keycode);
+                                ip.ki.dwFlags = KEYEVENTF_KEYUP; // 0 for key press
+                                SendInput(1, &ip, sizeof(INPUT));
+                            }
+                        }
+                    }
                 }
                 else if (fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
                     ReplayUserInput(&fmsg, 1);
