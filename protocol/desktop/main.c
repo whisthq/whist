@@ -652,7 +652,8 @@ int main(int argc, char* argv[])
                     fmsg.type = MESSAGE_KEYBOARD_STATE;
                     int num_keys;
                     Uint8 *state = SDL_GetKeyboardState( &num_keys );
-                    fmsg.num_keycodes = max(NUM_KEYCODES, num_keys);
+                    fmsg.num_keycodes = min(NUM_KEYCODES, num_keys);
+                    mprintf( "Num Keycodes: %d\n", fmsg.num_keycodes );
                     memcpy( fmsg.keyboard_state, state, fmsg.num_keycodes );
 
                     break;
