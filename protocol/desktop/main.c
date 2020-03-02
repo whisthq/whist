@@ -650,7 +650,9 @@ int main(int argc, char* argv[])
                     }
 
                     fmsg.type = MESSAGE_KEYBOARD_STATE;
-                    SDL_GetKeyboardState( fmsg.keyboard_state );
+                    int num_keys;
+                    Uint8 *state = SDL_GetKeyboardState( &num_keys );
+                    memcpy( fmsg.keyboard_state, state, max(256, num_keys) );
 
                     break;
                 case SDL_MOUSEMOTION:
