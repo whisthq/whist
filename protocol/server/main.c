@@ -499,12 +499,11 @@ int main(int argc, char* argv[])
                 int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
                 if( decrypt_len > 0 )
                 {
-                    if( decrypted_packet.payload_size != GetFmsgSize( &fmsg ) )
+                    memcpy(&fmsg, decrypted_packet.data, max(sizeof(fmsg), decrypted_packet.payload_size));
+
+                    if( decrypted_packet.payload_size != GetFmsgSize(&fmsg) )
                     {
                         mprintf( "Packet is of the wrong size!: %d\n", decrypted_packet.payload_size );
-                    } else
-                    {
-                        memcpy( &fmsg, decrypted_packet.data, GetFmsgSize( &fmsg ) );
                     }
                 }
             }
@@ -512,11 +511,9 @@ int main(int argc, char* argv[])
 
             if (fmsg.type != 0) {
                 if (fmsg.type == MESSAGE_KEYBOARD) {
-                    mprintf("Replaying keyboard\n");
                     ReplayUserInput(&fmsg, 1);
                 }
                 else if (fmsg.type == MESSAGE_KEYBOARD_STATE) {
-                    mprintf("Replaying keyboard state\n");
                     for (int sdl_keycode = 0; sdl_keycode < fmsg.num_keycodes; sdl_keycode++) {
                         int windows_keycode = GetWindowsKeyCode(sdl_keycode);
 
@@ -529,14 +526,12 @@ int main(int argc, char* argv[])
                             ip.ki.wVk = windows_keycode; // virtual-key code for the "a" key
 
                             if (fmsg.keyboard_state[sdl_keycode] && !GetAsyncKeyState(windows_keycode)) {
-                                mprintf("Pressing %d\n", sdl_keycode);
-                                ip.ki.dwFlags = 0; // 0 for key press
+                                ip.ki.dwFlags = 0;
                                 SendInput(1, &ip, sizeof(INPUT));
                             }
 
                             if (!fmsg.keyboard_state[sdl_keycode] && GetAsyncKeyState(windows_keycode)) {
-                                mprintf("Releasing %d\n", sdl_keycode);
-                                ip.ki.dwFlags = KEYEVENTF_KEYUP; // 0 for key press
+                                ip.ki.dwFlags = KEYEVENTF_KEYUP;
                                 SendInput(1, &ip, sizeof(INPUT));
                             }
                         }
