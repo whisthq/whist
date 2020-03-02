@@ -649,6 +649,9 @@ int main(int argc, char* argv[])
                         }
                     }
 
+                    fmsg.type = MESSAGE_KEYBOARD_STATE;
+                    SDL_GetKeyboardState( fmsg.keyboard_state );
+
                     break;
                 case SDL_MOUSEMOTION:
                     fmsg.type                 = MESSAGE_MOUSE_MOTION;

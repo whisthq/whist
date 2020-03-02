@@ -653,12 +653,14 @@ typedef enum FractalClientMessageType {
 	MESSAGE_DIMENSIONS      = 8, ///< `dimensions.width` int and `dimensions.height` int is valid in FractClientMessage
 	MESSAGE_VIDEO_NACK      = 9,
 	MESSAGE_AUDIO_NACK      = 10,
+	MESSAGE_KEYBOARD_STATE  = 11,
 	CMESSAGE_QUIT = 100,
 } FractalClientMessageType;
 
 typedef struct FractalClientMessage {
 	FractalClientMessageType type;                     ///< Input message type.
 	union {
+		char keyboard_state[256];                  ///< Keyboard state message.
 		FractalKeyboardMessage keyboard;           ///< Keyboard message.
 		FractalMouseButtonMessage mouseButton;     ///< Mouse button message.
 		FractalMouseWheelMessage mouseWheel;       ///< Mouse wheel message.

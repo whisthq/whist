@@ -350,9 +350,6 @@ double GetTimer(clock timer) {
 	return ret;
 }
 
-
-
-
 uint32_t Hash(void* buf, size_t len)
 {
 	char* key = buf;
