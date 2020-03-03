@@ -68,21 +68,19 @@ void update() {
     // Start update checks
     if (UpdateData.needs_dimension_update && !UpdateData.tried_to_update_dimension && (server_width != output_width || server_height != output_height)) {
         mprintf("Asking for server dimension to be %dx%d\n", output_width, output_height);
-        memset(&fmsg, 0, GetFmsgSize(&fmsg));
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
-        SendPacket(&fmsg, GetFmsgSize(&fmsg));
+        SendFmsg( &fmsg );
         UpdateData.tried_to_update_dimension = true;
     }
 
     if (update_mbps) {
         mprintf("Asking for server MBPS to be %f\n", max_mbps);
         update_mbps = false;
-        memset(&fmsg, 0, GetFmsgSize(&fmsg));
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_mbps;
-        SendPacket(&fmsg, GetFmsgSize(&fmsg));
+        SendFmsg( &fmsg );
     }
     // End update checks
 
@@ -102,7 +100,6 @@ void update() {
     }
 
     if (!is_timing_latency && GetTimer(latency_timer) > 0.5) {
-        memset(&fmsg, 0, GetFmsgSize(&fmsg));
         ping_id++;
         fmsg.type = MESSAGE_PING;
         fmsg.ping_id = ping_id;
@@ -111,12 +108,17 @@ void update() {
         StartTimer((clock*)&latency_timer);
 
         mprintf("Ping! %d\n", ping_id);
-        SendPacket(&fmsg, GetFmsgSize(&fmsg));
-        SendPacket(&fmsg, GetFmsgSize(&fmsg));
+        SendFmsg( &fmsg );
+        SendFmsg( &fmsg );
     }
     // End Ping
 }
 // END UPDATER CODE
+
+int SendFmsg( struct FractalClientMessage* fmsg )
+{
+    return SendPacket( fmsg, GetFmsgSize( fmsg ) );
+}
 
 int SendPacket(void* data, int len) {
     if (len > MAX_PAYLOAD_SIZE ) {
@@ -626,7 +628,6 @@ int main(int argc, char* argv[])
 
         while (connected && !exiting)
         {
-            memset(&fmsg, 0, GetFmsgSize(&fmsg));
             if (SDL_PollEvent(&msg)) {
                 switch (msg.type) {
                 case SDL_KEYDOWN:
@@ -649,11 +650,29 @@ int main(int argc, char* argv[])
                         }
                     }
 
+                    SendFmsg( &fmsg );
+
+                    // Keep up to date
+
+                    if( fmsg.keyboard.code == KEY_TAB && alt_pressed )
+                    {
+                        mprintf( "ALT TAB!!\n" );
+                    }
+
                     fmsg.type = MESSAGE_KEYBOARD_STATE;
                     int num_keys;
                     Uint8 *state = SDL_GetKeyboardState( &num_keys );
-                    fmsg.num_keycodes = max(NUM_KEYCODES, num_keys);
+                    fmsg.num_keycodes = min(NUM_KEYCODES, num_keys);
                     memcpy( fmsg.keyboard_state, state, fmsg.num_keycodes );
+
+                    fmsg.keyboard_state[msg.key.keysym.scancode] = msg.key.type == SDL_KEYDOWN;
+
+                    mprintf( "Is pressing? %d\n", fmsg.keyboard_state[msg.key.keysym.scancode] );
+                    mprintf( "Should be pressed? %d\n", fmsg.keyboard.pressed );
+
+                    mprintf( "Tab: %d\nAlt: %d\n", fmsg.keyboard_state[KEY_TAB], fmsg.keyboard_state[KEY_LALT] );
+
+                    SendFmsg( &fmsg );
 
                     break;
                 case SDL_MOUSEMOTION:
@@ -683,7 +702,7 @@ int main(int argc, char* argv[])
                 }
 
                 if (fmsg.type != 0) {
-                    SendPacket(&fmsg, GetFmsgSize(&fmsg));
+                    SendFmsg( &fmsg );
                 }
                 else {
                     SDL_Delay(1);
@@ -696,7 +715,7 @@ int main(int argc, char* argv[])
         if( exiting )
         {
             fmsg.type = CMESSAGE_QUIT;
-            SendPacket( &fmsg, sizeof( fmsg ) );
+            SendFmsg( &fmsg );
         }
 
         run_receive_packets = false;
