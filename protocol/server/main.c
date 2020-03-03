@@ -466,6 +466,9 @@ int main(int argc, char* argv[])
         StartTimer(&last_exit_check);
 
         mprintf("Receiving packets...\n");
+
+        int last_input_id = -1;
+
         while (connected) {
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
@@ -505,12 +508,25 @@ int main(int argc, char* argv[])
                     {
                         mprintf( "Packet is of the wrong size!: %d\n", decrypted_packet.payload_size );
                         mprintf("Type: %d\n", fmsg.type);
+                        fmsg.type = 0;
+                    }
+
+                    if (fmsg.type == MESSAGE_KEYBOARD || fmsg.type == MESSAGE_KEYBOARD_STATE) {
+
+                        if (decrypted_packet.id > last_input_id) {
+                            decrypted_packet.id = last_input_id;
+                        }
+                        else {
+                            // Received keyboard input out of order, just ignore
+                            fmsg.type = 0;
+                        }
                     }
                 }
             }
             // End Get Packet
 
             if (fmsg.type != 0) {
+
                 if (fmsg.type == MESSAGE_KEYBOARD) {
                     ReplayUserInput(&fmsg, 1);
                 }
