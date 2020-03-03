@@ -120,6 +120,7 @@ int SendFmsg( struct FractalClientMessage* fmsg )
     return SendPacket( fmsg, GetFmsgSize( fmsg ) );
 }
 
+static int sent_packet_id = 1;
 int SendPacket(void* data, int len) {
     if (len > MAX_PAYLOAD_SIZE ) {
         mprintf("Packet too large!\n");
@@ -127,6 +128,10 @@ int SendPacket(void* data, int len) {
     }
 
     struct RTPPacket packet = { 0 };
+
+    packet.id = sent_packet_id;
+    sent_packet_id++;
+
     memcpy( packet.data, data, len );
     packet.payload_size = len;
 
