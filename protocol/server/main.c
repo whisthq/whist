@@ -533,19 +533,19 @@ int main(int argc, char* argv[])
                 else if (fmsg.type == MESSAGE_KEYBOARD_STATE) {
                     INPUT ip;
                     ip.type = INPUT_KEYBOARD;
-                    ip.ki.wScan = 0; // hardware scan code for key
+                    ip.ki.wVk = 0;
                     ip.ki.time = 0;
                     ip.ki.dwExtraInfo = 0;
 
                     for (int sdl_keycode = 0; sdl_keycode < fmsg.num_keycodes; sdl_keycode++) {
                         int windows_keycode = GetWindowsKeyCode(sdl_keycode);
-
+                        
                         if (windows_keycode) {
-                            ip.ki.wVk = windows_keycode; // virtual-key code for the "a" key
+                            ip.ki.wScan = MapVirtualKeyA(windows_keycode, MAPVK_VK_TO_VSC);
 
                             if (!fmsg.keyboard_state[sdl_keycode] && GetAsyncKeyState(windows_keycode)) {
                                 //mprintf("Releasing %d\n", sdl_keycode);
-                                ip.ki.dwFlags = KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP;
+                                ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
                                 SendInput(1, &ip, sizeof(INPUT));
                             }
                         }
@@ -555,11 +555,11 @@ int main(int argc, char* argv[])
                         int windows_keycode = GetWindowsKeyCode(sdl_keycode);
 
                         if (windows_keycode) {
-                            ip.ki.wVk = windows_keycode; // virtual-key code for the "a" key
+                            ip.ki.wScan = MapVirtualKeyA(windows_keycode, MAPVK_VK_TO_VSC);
 
                             if (fmsg.keyboard_state[sdl_keycode] && !GetAsyncKeyState(windows_keycode)) {
                                 //mprintf("Pressing %d\n", sdl_keycode);
-                                ip.ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
+                                ip.ki.dwFlags = KEYEVENTF_SCANCODE;
                                 SendInput(1, &ip, sizeof(INPUT));
                             }
                         }
