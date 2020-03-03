@@ -500,10 +500,11 @@ int main(int argc, char* argv[])
                 if( decrypt_len > 0 )
                 {
                     memcpy(&fmsg, decrypted_packet.data, max(sizeof(fmsg), decrypted_packet.payload_size));
-
+                    
                     if( decrypted_packet.payload_size != GetFmsgSize(&fmsg) )
                     {
                         mprintf( "Packet is of the wrong size!: %d\n", decrypted_packet.payload_size );
+                        mprintf("Type: %d\n", fmsg.type);
                     }
                 }
             }
@@ -514,24 +515,35 @@ int main(int argc, char* argv[])
                     ReplayUserInput(&fmsg, 1);
                 }
                 else if (fmsg.type == MESSAGE_KEYBOARD_STATE) {
+                    INPUT ip;
+                    ip.type = INPUT_KEYBOARD;
+                    ip.ki.wScan = 0; // hardware scan code for key
+                    ip.ki.time = 0;
+                    ip.ki.dwExtraInfo = 0;
+
                     for (int sdl_keycode = 0; sdl_keycode < fmsg.num_keycodes; sdl_keycode++) {
                         int windows_keycode = GetWindowsKeyCode(sdl_keycode);
 
                         if (windows_keycode) {
-                            INPUT ip;
-                            ip.type = INPUT_KEYBOARD;
-                            ip.ki.wScan = 0; // hardware scan code for key
-                            ip.ki.time = 0;
-                            ip.ki.dwExtraInfo = 0;
+                            ip.ki.wVk = windows_keycode; // virtual-key code for the "a" key
+
+                            if (!fmsg.keyboard_state[sdl_keycode] && GetAsyncKeyState(windows_keycode)) {
+                                //mprintf("Releasing %d\n", sdl_keycode);
+                                ip.ki.dwFlags = KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP;
+                                SendInput(1, &ip, sizeof(INPUT));
+                            }
+                        }
+                    }
+
+                    for (int sdl_keycode = 0; sdl_keycode < fmsg.num_keycodes; sdl_keycode++) {
+                        int windows_keycode = GetWindowsKeyCode(sdl_keycode);
+
+                        if (windows_keycode) {
                             ip.ki.wVk = windows_keycode; // virtual-key code for the "a" key
 
                             if (fmsg.keyboard_state[sdl_keycode] && !GetAsyncKeyState(windows_keycode)) {
-                                ip.ki.dwFlags = 0;
-                                SendInput(1, &ip, sizeof(INPUT));
-                            }
-
-                            if (!fmsg.keyboard_state[sdl_keycode] && GetAsyncKeyState(windows_keycode)) {
-                                ip.ki.dwFlags = KEYEVENTF_KEYUP;
+                                //mprintf("Pressing %d\n", sdl_keycode);
+                                ip.ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
                                 SendInput(1, &ip, sizeof(INPUT));
                             }
                         }
