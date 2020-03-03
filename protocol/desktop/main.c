@@ -412,10 +412,17 @@ LRESULT CALLBACK LowLevelKeyboardProc( INT nCode, WPARAM wParam, LPARAM lParam )
         int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
         int time = pkbhs->time;
 
-        // Disable WIN
-        if( pkbhs->vkCode == VK_LWIN || pkbhs->vkCode == VK_RWIN )
+        // Disable LWIN
+        if( pkbhs->vkCode == VK_LWIN )
         {
             SendCapturedKey( KEY_LGUI, type, time );
+            return 1;
+        }
+
+        // Disable RWIN
+        if( pkbhs->vkCode == VK_RWIN )
+        {
+            SendCapturedKey( KEY_RGUI, type, time );
             return 1;
         }
 
@@ -616,12 +623,8 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        // Initialize variables
-        connected = true;
-        bool alt_pressed = false;
-        bool ctrl_pressed = false;
-
         // Initialize video and audio
+        connected = true;
         initVideo();
         initAudio();
 
@@ -631,12 +634,42 @@ int main(int argc, char* argv[])
         SDL_Thread* receive_packets_thread;
         receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
+        clock keyboard_sync_timer;
+        StartTimer( &keyboard_sync_timer );
+
+        // Initialize variables
+        bool alt_pressed = false;
+        bool ctrl_pressed = false;
+        bool lgui_pressed = false;
+        bool rgui_pressed = false;
+
         while (connected && !exiting)
         {
+            // Update the keyboard state
+            if( GetTimer( keyboard_sync_timer ) > 50.0 / 1000.0 )
+            {
+                SDL_Delay( 5 );
+                fmsg.type = MESSAGE_KEYBOARD_STATE;
+
+                int num_keys;
+                Uint8* state = SDL_GetKeyboardState( &num_keys );
+                fmsg.num_keycodes = min( NUM_KEYCODES, num_keys );
+
+                state[KEY_LGUI] = lgui_pressed;
+                state[KEY_RGUI] = rgui_pressed;
+                memcpy( fmsg.keyboard_state, state, fmsg.num_keycodes );
+
+                SendFmsg( &fmsg );
+
+                StartTimer( &keyboard_sync_timer );
+            }
+
+            fmsg.type = 0;
             if (SDL_PollEvent(&msg)) {
                 switch (msg.type) {
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
+                    // Send a keyboard press for this event
                     fmsg.type = MESSAGE_KEYBOARD;
                     fmsg.keyboard.code = (FractalKeycode)msg.key.keysym.scancode;
                     fmsg.keyboard.mod = msg.key.keysym.mod;
@@ -648,38 +681,19 @@ int main(int argc, char* argv[])
                     if (fmsg.keyboard.code == KEY_LCTRL) {
                         ctrl_pressed = fmsg.keyboard.pressed;
                     }
-                    if (fmsg.keyboard.code == KEY_F4) {
-                        if (alt_pressed && ctrl_pressed) {
-                            mprintf("Quitting...\n");
-                            exiting = true;
-                        }
-                    }
-
-                    SendFmsg( &fmsg );
-
-                    // Keep up to date
-
-                    if( fmsg.keyboard.code == KEY_TAB && alt_pressed )
+                    if( fmsg.keyboard.code == KEY_LGUI )
                     {
-                        mprintf( "ALT TAB!!\n" );
+                        lgui_pressed = fmsg.keyboard.pressed;
+                    }
+                    if( fmsg.keyboard.code == KEY_RGUI )
+                    {
+                        rgui_pressed = fmsg.keyboard.pressed;
                     }
 
-                    fmsg.type = MESSAGE_KEYBOARD_STATE;
-                    int num_keys;
-                    Uint8 *state = SDL_GetKeyboardState( &num_keys );
-                    fmsg.num_keycodes = min(NUM_KEYCODES, num_keys);
-                    memcpy( fmsg.keyboard_state, state, fmsg.num_keycodes );
-
-                    fmsg.keyboard_state[msg.key.keysym.scancode] = msg.key.type == SDL_KEYDOWN;
-
-                    mprintf( "Is pressing? %d\n", (int)fmsg.keyboard_state[msg.key.keysym.scancode] );
-                    mprintf( "Should be pressed? %d\n", (int)fmsg.keyboard.pressed );
-
-                    mprintf( "Tab: %d\nAlt: %d\n", (int)fmsg.keyboard_state[KEY_TAB], (int)fmsg.keyboard_state[KEY_LALT] );
-
-                    //SendFmsg( &fmsg );
-
-                    mprintf( "*** Sending a keyboard state for %d!\n", msg.key.keysym.scancode );
+                    if ( ctrl_pressed && alt_pressed && fmsg.keyboard.code == KEY_F4) {
+                        mprintf("Quitting...\n");
+                        exiting = true;
+                    }
 
                     break;
                 case SDL_MOUSEMOTION:
