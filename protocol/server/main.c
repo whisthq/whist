@@ -531,6 +531,8 @@ int main(int argc, char* argv[])
                     ReplayUserInput(&fmsg, 1);
                 }
                 else if (fmsg.type == MESSAGE_KEYBOARD_STATE) {
+                    // Synchronize client and server keyboard state
+
                     INPUT ip;
                     ip.type = INPUT_KEYBOARD;
                     ip.ki.wVk = 0;
@@ -550,7 +552,7 @@ int main(int argc, char* argv[])
                             }
                         }
                     }
-
+                    
                     for (int sdl_keycode = 0; sdl_keycode < fmsg.num_keycodes; sdl_keycode++) {
                         int windows_keycode = GetWindowsKeyCode(sdl_keycode);
 
