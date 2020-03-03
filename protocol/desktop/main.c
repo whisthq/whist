@@ -672,12 +672,14 @@ int main(int argc, char* argv[])
 
                     fmsg.keyboard_state[msg.key.keysym.scancode] = msg.key.type == SDL_KEYDOWN;
 
-                    mprintf( "Is pressing? %d\n", fmsg.keyboard_state[msg.key.keysym.scancode] );
-                    mprintf( "Should be pressed? %d\n", fmsg.keyboard.pressed );
+                    mprintf( "Is pressing? %d\n", (int)fmsg.keyboard_state[msg.key.keysym.scancode] );
+                    mprintf( "Should be pressed? %d\n", (int)fmsg.keyboard.pressed );
 
-                    mprintf( "Tab: %d\nAlt: %d\n", fmsg.keyboard_state[KEY_TAB], fmsg.keyboard_state[KEY_LALT] );
+                    mprintf( "Tab: %d\nAlt: %d\n", (int)fmsg.keyboard_state[KEY_TAB], (int)fmsg.keyboard_state[KEY_LALT] );
 
-                    SendFmsg( &fmsg );
+                    //SendFmsg( &fmsg );
+
+                    mprintf( "*** Sending a keyboard state for %d!\n", msg.key.keysym.scancode );
 
                     break;
                 case SDL_MOUSEMOTION:
