@@ -105,18 +105,22 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 	}
 
 	if (strcmp(origin, "C") == 0) {
+		// Client connection protocol
+
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = inet_addr(destination);
 		context->addr.sin_port = htons(port);
 
 		mprintf("Connecting to server...\n");
 
+		// Send request
 		if (sendp(context, NULL, 0) < 0) {
 			mprintf("Could not send message to server %d\n", GetLastNetworkError());
 			closesocket(context->s);
 			return -1;
 		}
 
+		// Receive server's acknowledgement of connection
 		set_timeout(context->s, stun_timeout_ms);
 		if (recvp(context, NULL, 0) < 0) {
 			mprintf("Did not receive response from server! %d\n", GetLastNetworkError());
@@ -129,6 +133,8 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		set_timeout(context->s, recvfrom_timeout_ms);
 	}
 	else {
+		// Server connection protocol
+
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -142,6 +148,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		mprintf("Waiting for client to connect to %s:%d...\n", "localhost", port);
 
+		// Receive client's connection attempt
 		set_timeout(context->s, stun_timeout_ms);
 		int slen = sizeof(context->addr);
 		if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen) < 0) {
@@ -150,6 +157,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			return -1;
 		}
 
+		// Send acknowledgement
 		if (sendp(context, NULL, 0) < 0) {
 			mprintf("Could not send ack to client! %d\n", GetLastNetworkError());
 			closesocket(context->s);
@@ -313,10 +321,6 @@ void real_mprintf(bool log, const char* fmtStr, va_list args) {
 
 	va_end(args);
 }
-
-
-
-
 
 #if defined(_WIN32)
 LARGE_INTEGER frequency;

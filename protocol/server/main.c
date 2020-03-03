@@ -93,16 +93,20 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
     double delay_thusfar = 0.0;
 
     while (curr_index < len) {
+        // Delay distribution of packets as needed
         if (((double) curr_index - 10000) / (len + 20000) * max_delay > delay_thusfar) {
             SDL_Delay(1);
             delay_thusfar += 1;
         }
 
+        // local packet and len for when nack buffer isn't needed
         struct RTPPacket l_packet = { 0 };
         int l_len = 0;
 
         int* packet_len = &l_len;
         struct RTPPacket* packet = &l_packet;
+
+        // Based on packet type, the packet to one of the buffers to serve later nacks
         if (type == PACKET_AUDIO) {
             if (i >= MAX_NUM_AUDIO_INDICES) {
                 mprintf("Audio index too long!\n");
@@ -125,19 +129,24 @@ static int SendPacket(struct SocketContext* context, FractalPacketType type, uin
         }
         payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
 
-        memcpy(packet->data, data + curr_index, payload_size);
+        // Construct packet
         packet->type = type;
+        memcpy( packet->data, data + curr_index, payload_size );
         packet->index = i;
         packet->payload_size = payload_size;
         packet->id = id;
         packet->num_indices = num_indices;
         packet->is_a_nack = false;
         int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
+
+        // Save the len to nack buffer lens
         *packet_len = packet_size;
 
+        // Encrypt the packet
         struct RTPPacket encrypted_packet;
         int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, PRIVATE_KEY );
     
+        // Send it off
         SDL_LockMutex(packet_mutex);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
         SDL_UnlockMutex(packet_mutex);
@@ -194,6 +203,8 @@ static int32_t SendVideo(void* opaque) {
     int frames_since_first_iframe = 0;
     update_device = true;
     while (connected) {
+
+        // Update device with new parameters
         if (update_device) {
             if (device) {
                 DestroyCaptureDevice(device);
@@ -212,6 +223,7 @@ static int32_t SendVideo(void* opaque) {
             update_device = false;
         }
 
+        // Update encoder with new parameters
         if (update_encoder) {
             if (encoder) {
                 destroy_video_encoder(encoder);
@@ -222,6 +234,8 @@ static int32_t SendVideo(void* opaque) {
         }
 
         int accumulated_frames = CaptureScreen(device);
+
+        // If capture screen failed, we should try again
         if (accumulated_frames < 0) {
             mprintf("Failed to capture screen\n");
             int width = device->width;
@@ -277,6 +291,7 @@ static int32_t SendVideo(void* opaque) {
                         int new_bitrate = (int)(ratio_bitrate * current_bitrate);
                         if (abs(new_bitrate - current_bitrate) / new_bitrate > 0.05) {
                             mprintf("Updating bitrate from %d to %d\n", current_bitrate, new_bitrate);
+                            //TODO: Analyze bitrate handling with GOP size
                             //current_bitrate = new_bitrate;
                             //update_encoder = true;
 
@@ -291,18 +306,18 @@ static int32_t SendVideo(void* opaque) {
                     mprintf("Frame too large: %d\n", frame_size);
                 }
                 else {
-                    FractalCursorImage image = { 0 };
-                    image = GetCurrentCursor(types);
+                    // Create frame struct with compressed frame data and metadata
                     Frame* frame = buf;
                     frame->width = device->width;
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
-                    frame->cursor = image;
+                    frame->cursor = GetCurrentCursor( types );
                     frame->is_iframe = frames_since_first_iframe % gop_size == 0;
                     memcpy(frame->compressed_frame, encoder->packet.data, encoder->packet.size);
 
                     //mprintf("Sent video packet %d (Size: %d) %s\n", id, encoder->packet.size, frame->is_iframe ? "(I-frame)" : "");
 
+                    // Send video packet to client
                     if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
@@ -336,6 +351,7 @@ static int32_t SendAudio(void* opaque) {
     audio_device = CreateAudioDevice(audio_device);
     StartAudioDevice(audio_device);
 
+    // Tell the client what audio frequency we're using
     FractalServerMessage fmsg;
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
     fmsg.frequency = audio_device->pwfx->nSamplesPerSec;
@@ -353,6 +369,7 @@ static int32_t SendAudio(void* opaque) {
             SUCCEEDED(hr) && nNextPacketSize > 0;
             hr = audio_device->pAudioCaptureClient->lpVtbl->GetNextPacketSize(audio_device->pAudioCaptureClient, &nNextPacketSize)
             ) {
+            // Receive audio buffer
             audio_device->pAudioCaptureClient->lpVtbl->GetBuffer(
                 audio_device->pAudioCaptureClient,
                 &audio_device->pData, &nNumFramesToRead,
@@ -364,12 +381,14 @@ static int32_t SendAudio(void* opaque) {
                 mprintf("Audio buffer size too large!\n");
             }
             else if (audio_device->audioBufSize > 0) {
+                // Send buffer
                 if (SendPacket(&context, PACKET_AUDIO, audio_device->pData, audio_device->audioBufSize, id) < 0) {
                     mprintf("Could not send audio frame\n");
                 }
                 id++;
             }
 
+            // Free buffer
             audio_device->pAudioCaptureClient->lpVtbl->ReleaseBuffer(
                 audio_device->pAudioCaptureClient,
                 nNumFramesToRead);
@@ -476,6 +495,7 @@ int main(int argc, char* argv[])
             }
 
             if (GetTimer(last_exit_check) > 15.0 / 1000.0) {
+                // Exit file seen, time to exit
                 if (PathFileExistsA("C:\\Program Files\\Fractal\\Exit\\exit")) {
                     mprintf("Exiting due to button press...\n");
                     FractalServerMessage fmsg_response = { 0 };
@@ -498,12 +518,15 @@ int main(int argc, char* argv[])
             int encrypted_len;
             if( (encrypted_len = recvp( &PacketReceiveContext, &encrypted_packet, sizeof( encrypted_packet ) )) > 0 )
             {
+                // Decrypt using AES private key
+
                 struct RTPPacket decrypted_packet;
                 int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
                 if( decrypt_len > 0 )
                 {
                     memcpy(&fmsg, decrypted_packet.data, max(sizeof(fmsg), decrypted_packet.payload_size));
                     
+                    // Check to see if decrypted packet is of valid size
                     if( decrypted_packet.payload_size != GetFmsgSize(&fmsg) )
                     {
                         mprintf( "Packet is of the wrong size!: %d\n", decrypted_packet.payload_size );
@@ -511,6 +534,7 @@ int main(int argc, char* argv[])
                         fmsg.type = 0;
                     }
 
+                    // Make sure that keyboard events are played in order
                     if (fmsg.type == MESSAGE_KEYBOARD || fmsg.type == MESSAGE_KEYBOARD_STATE) {
 
                         if (decrypted_packet.id > last_input_id) {
@@ -576,6 +600,7 @@ int main(int argc, char* argv[])
                 else if (fmsg.type == MESSAGE_PING) {
                     mprintf("Ping Received - ID %d\n", fmsg.ping_id); 
 
+                    // Response to ping with pong
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = MESSAGE_PONG;
                     fmsg_response.ping_id = fmsg.ping_id;
@@ -585,6 +610,7 @@ int main(int argc, char* argv[])
                     }
                 }
                 else if (fmsg.type == MESSAGE_DIMENSIONS) {
+                    // Update local monitor dimensions
                     mprintf("Request to use dimensions %dx%d received\n", fmsg.dimensions.width, fmsg.dimensions.height);
                     //TODO: Check if dimensions are valid
                     server_width = fmsg.dimensions.width;
@@ -592,10 +618,13 @@ int main(int argc, char* argv[])
                     update_device = true;
                 }
                 else if (fmsg.type == CMESSAGE_QUIT) {
+                    // Client requested to exit, it's time to disconnect
                     mprintf("Client Quit\n");
                     connected = false;
                 }
                 else if (fmsg.type == MESSAGE_AUDIO_NACK) {
+                    // Audio nack received, relay the packet
+
                     //mprintf("Audio NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
                     struct RTPPacket *audio_packet = &audio_buffer[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
                     int len = audio_buffer_packet_len[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
@@ -609,6 +638,8 @@ int main(int argc, char* argv[])
                     }
                 }
                 else if (fmsg.type == MESSAGE_VIDEO_NACK) {
+                    // Video nack received, relay the packet
+
                     //mprintf("Video NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
                     struct RTPPacket* video_packet = &video_buffer[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
                     int len = video_buffer_packet_len[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];

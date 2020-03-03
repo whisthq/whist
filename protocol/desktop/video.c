@@ -194,7 +194,7 @@ int32_t RenderScreen(void* opaque) {
             videoContext.uvPitch
         );
 
-
+        // Set cursor to frame's desired cursor type
         if(frame->cursor.cursor_id != last_cursor) {
             if(cursor) {
                 SDL_FreeCursor(cursor);

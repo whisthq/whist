@@ -32,6 +32,7 @@ int setCurrentInputDesktop(HDESK currentInputDesktop) {
     return 0;
 }
 
+// Log into the desktop, and block until the login process finishes
 DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread) {
     DesktopContext context = { 0 };
     HDESK new_desktop;
