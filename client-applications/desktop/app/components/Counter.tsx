@@ -107,9 +107,22 @@ class Counter extends Component {
     }
   }
 
+
   LaunchProtocol = () => {
     var child = require('child_process').spawn;
-    var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
+
+    // check which OS we're on to properly launch the protocol
+    const os = require('os');
+    if (os.platform() == 'darwin') { // mac
+      var path = process.cwd() + "/fractal-protocol/desktop/./desktop"
+    }
+    else if (os.platform() == 'win32') { // windows
+      var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
+    }
+    else { // linux
+      var path = "TODO"
+    }
+
     var parameters = [this.props.public_ip, 123]
 
     if(this.props.isUser) {
@@ -124,6 +137,7 @@ class Counter extends Component {
       this.setState({askFeedback: true})
     })
   }
+
 
   TrackActivity = (action) => {
     this.props.dispatch(trackUserActivity(action))
