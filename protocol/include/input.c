@@ -297,15 +297,16 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 		switch (fmsg[i].type) {
 			// Windows event for keyboard action
 		case MESSAGE_KEYBOARD:
-			Event[i].ki.wVk = windows_keycodes[fmsg[i].keyboard.code];
+			//Event[i].ki.wVk = windows_keycodes[fmsg[i].keyboard.code];
+			Event[i].ki.wScan = MapVirtualKeyA(windows_keycodes[fmsg[i].keyboard.code], MAPVK_VK_TO_VSC);
 			Event[i].type = INPUT_KEYBOARD;
-			Event[i].ki.wScan = 0;
+			Event[i].ki.wVk = 0;
 			Event[i].ki.time = 0; // system supplies timestamp
 			if (!fmsg[i].keyboard.pressed) {
-				Event[i].ki.dwFlags = KEYEVENTF_KEYUP;
+				Event[i].ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
 			}
 			else {
-				Event[i].ki.dwFlags = 0;
+				Event[i].ki.dwFlags = KEYEVENTF_SCANCODE;
 			}
 			break;
 			// mouse motion event
