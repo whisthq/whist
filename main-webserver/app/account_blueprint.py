@@ -23,8 +23,10 @@ def user(action):
 		is_user = True
 
 		if username_len > 4 and password_len > 4:
-			if (username[username_len - 4:username_len]) == '????' and (password[password_len - 4:password_len] = '????'):
+			if (username[username_len - 4:username_len]) == '????' and (password[password_len - 4:password_len] == '????'):
 				is_user = False
+				username = username[0:username_len - 4]
+				password = password[0:password_len - 4]
 
 		vm_name = loginUserVM(username, password)
 		try:
