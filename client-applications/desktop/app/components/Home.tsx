@@ -128,6 +128,9 @@ class Home extends Component {
 		      <div style = {{marginBottom: 20}}>
 		        <button onClick = {() => this.LoginUser()} type = "button" className = {styles.loginButton} id = "login-button">START</button>
 		      </div>
+          <div className = {styles.rememberMeContainer}>
+            <input type = "checkbox" className = {styles.rememberMe}/> Remember me
+          </div>
 		      <div style = {{fontSize: 12, color: "#D6D6D6", width: 250, margin: 'auto'}}>
 		      {
 		      	this.state.loggingIn && !this.props.warning
