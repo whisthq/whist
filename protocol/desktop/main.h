@@ -1,4 +1,4 @@
-#include "fractal.h"
+#include "../include/fractal.h"
 
 int SendFmsg( struct FractalClientMessage* fmsg );
 int SendPacket(void* data, int len);

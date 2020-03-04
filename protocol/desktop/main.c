@@ -324,7 +324,7 @@ static int32_t ReceivePackets(void* opaque) {
                 max_audio_time = max(max_audio_time, GetTimer(audio_timer));
                 break;
             case PACKET_MESSAGE:
-                StartTimer(&message_timer); 
+                StartTimer(&message_timer);
                 ReceiveMessage(&packet);
                 message_time += GetTimer(message_timer);
                 break;
@@ -371,7 +371,7 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
         break;
     default:
         mprintf("Unknown Server Message Received\n");
-        return -1; 
+        return -1;
     }
     return 0;
 }
@@ -559,7 +559,7 @@ int main(int argc, char* argv[])
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
-    
+
     // BEGIN TEST
     /*
     struct RTPPacket decrypted_packet;
@@ -584,7 +584,7 @@ int main(int argc, char* argv[])
     return 0;
     */
     // END TEST
-    
+
 
     exiting = false;
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
@@ -653,7 +653,11 @@ int main(int argc, char* argv[])
 
                 int num_keys;
                 Uint8* state = SDL_GetKeyboardState( &num_keys );
+#if defined(_WIN32)
                 fmsg.num_keycodes = min( NUM_KEYCODES, num_keys );
+#else
+                fmsg.num_keycodes = fmin( NUM_KEYCODES, num_keys );
+#endif
 
                 state[KEY_LGUI] = lgui_pressed;
                 state[KEY_RGUI] = rgui_pressed;
