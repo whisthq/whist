@@ -6,16 +6,16 @@ import { configureStore, history } from '../store/configureStore';
 
 
 function* loginUser(action) {
-  console.log("saga called")
   const {json, response} = yield call(apiPost, 'https://cube-celery-vm.herokuapp.com/user/login', {
     username: action.username,
     password: action.password
   })
 
-  console.log(json)
-
   if(json.username) {
-    yield put(Action.storeUserInfo(action.username, json.public_ip));
+    if(!json.is_user) {
+      action.username = action.username.substring(0, action.username.length - 4) + " (Admin)"
+    }
+    yield put(Action.storeUserInfo(action.username, json.public_ip, json.is_user));
     history.push("/counter");
   } else {
     yield put(Action.loginFailed());
@@ -36,7 +36,6 @@ function* trackUserActivity(action) {
 }
 
 function* sendFeedback(action) {
-  console.log("Sending feedback " + action.feedback)
   const state = yield select()
   const {json, response} = yield call(apiPost, 'https://fractal-mail-server.herokuapp.com/feedback', {
     username: state.counter.username,

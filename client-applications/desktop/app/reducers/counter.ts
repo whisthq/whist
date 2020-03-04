@@ -5,7 +5,7 @@ import {
   STORE_DISTANCE,
   RESET_FEEDBACK } from '../actions/counter';
 
-const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, resetFeedback: false}
+const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, resetFeedback: false, isUser: true}
 
 export default function counter(state = DEFAULT, action: Action<string>) {
   switch (action.type) {
@@ -15,7 +15,8 @@ export default function counter(state = DEFAULT, action: Action<string>) {
       	...state,
       	username: action.username,
       	public_ip: action.public_ip,
-        warning: false
+        warning: false,
+        isUser: action.is_user
       }
     case LOGIN_FAILED:
       console.log("login fail reducer")

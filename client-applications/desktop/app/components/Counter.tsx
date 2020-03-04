@@ -112,11 +112,15 @@ class Counter extends Component {
     var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
     var parameters = [this.props.public_ip, 123]
 
-    this.TrackActivity(true);
+    if(this.props.isUser) {
+      this.TrackActivity(true);
+    }
     const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
 
     protocol.on('close', (code) => {
-      this.TrackActivity(false);
+      if(this.props.isUser) {
+        this.TrackActivity(false);
+      }
       this.setState({askFeedback: true})
     })
   }
@@ -555,7 +559,8 @@ function mapStateToProps(state) {
   return { 
     username: state.counter.username,
     public_ip: state.counter.public_ip, 
-    resetFeedback: state.counter.resetFeedback
+    resetFeedback: state.counter.resetFeedback,
+    isUser: state.counter.isUser
   }
 }
 

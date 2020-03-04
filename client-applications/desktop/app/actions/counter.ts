@@ -18,11 +18,12 @@ export function loginUser(username, password) {
 	}
 }
 
-export function storeUserInfo(username, public_ip) {
+export function storeUserInfo(username, public_ip, is_user) {
   return {
     type: STORE_USER_INFO,
     username,
-    public_ip
+    public_ip,
+    is_user
   };
 }
 
