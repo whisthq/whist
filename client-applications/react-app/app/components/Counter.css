@@ -24,9 +24,17 @@
 .container a {
   font-size: 1.4rem;
 }
+
 button {
   outline: none;
 }
+
+.feedbackBox ::placeholder {
+  font-size: 24;
+  color: #5EC4EB;
+  opacity: 0.5;
+  font-family: 'Maven Pro';
+};
 
 
 .windowControl:hover {
@@ -146,4 +154,21 @@ button {
 .bigBox:hover {
   cursor:pointer;
   transform: scale(1.02);
+}
+
+.feedbackButton {
+  border: none;
+  border-radius: 5px; 
+  padding: 10px;
+  background: #5EC4EB; 
+  color: #0B172B; 
+  margin-top: 20px; 
+  width: 80px; 
+  font-size: 16px; 
+  font-weight: bold;
+}
+
+.feedbackButton:hover {
+  cursor: pointer;
+  background-color: #72cbed;
 }

@@ -35,10 +35,21 @@ function* trackUserActivity(action) {
   }
 }
 
+function* sendFeedback(action) {
+  console.log("Sending feedback " + action.feedback)
+  const state = yield select()
+  const {json, response} = yield call(apiPost, 'https://fractal-mail-server.herokuapp.com/feedback', {
+    username: state.counter.username,
+    feedback: action.feedback
+  })
+  yield put(Action.resetFeedback(true))
+}
+
 
 export default function* rootSaga() {
  	yield all([
      takeEvery(Action.TRACK_USER_ACTIVITY, trackUserActivity),
-     takeEvery(Action.LOGIN_USER, loginUser)
+     takeEvery(Action.LOGIN_USER, loginUser),
+     takeEvery(Action.SEND_FEEDBACK, sendFeedback)
 	]);
 }
