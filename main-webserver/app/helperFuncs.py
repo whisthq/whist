@@ -295,8 +295,8 @@ def addTimeTable(username, action, time):
         INSERT INTO login_history("username", "timestamp", "action") 
         VALUES(:userName, :currentTime, :action)
         """)
-    if time:
-        params = {'userName': username, 'currentTime': dt.now().strftime('%m-%d-%Y, %H:%M:%S'), 'action': action}
+    
+    params = {'userName': username, 'currentTime': dt.now().strftime('%m-%d-%Y, %H:%M:%S'), 'action': action}
 
     with engine.connect() as conn:
         conn.execute(command, **params)

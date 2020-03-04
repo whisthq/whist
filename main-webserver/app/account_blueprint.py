@@ -33,7 +33,6 @@ def user(action):
 			if vm_name: 
 				payload = fetchVMCredentials(vm_name)
 				payload['is_user'] = is_user
-				# addTimeTable(username, 'logon')
 				return jsonify(payload), 200
 		except Exception as e:
 			print(e)
