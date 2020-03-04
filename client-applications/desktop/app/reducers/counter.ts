@@ -2,9 +2,10 @@ import { Action } from 'redux';
 import { 
   STORE_USER_INFO, 
   LOGIN_FAILED, 
-  STORE_DISTANCE } from '../actions/counter';
+  STORE_DISTANCE,
+  RESET_FEEDBACK } from '../actions/counter';
 
-const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0}
+const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, resetFeedback: false}
 
 export default function counter(state = DEFAULT, action: Action<string>) {
   switch (action.type) {
@@ -27,6 +28,12 @@ export default function counter(state = DEFAULT, action: Action<string>) {
       return {
         ...state,
         distance: action.distance
+      }
+    case RESET_FEEDBACK:
+      console.log("RESET FEEDBACK REDUCER")
+      return {
+        ...state,
+        resetFeedback: action.reset
       }
     default:
       return state;

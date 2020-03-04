@@ -1,4 +1,5 @@
 windows/node_modules
 windows/build
 macos/build
-react-app/node_modules
+desktop/node_modules
+desktop/release

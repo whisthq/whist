@@ -20,14 +20,14 @@ import Popup from "reactjs-popup"
 import { ReactTypeformEmbed } from 'react-typeform-embed'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faSpinner, faWindowMinimize, faTimes, faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 
-import { storeUserInfo, trackUserActivity, storeDistance } from "../actions/counter"
+import { storeUserInfo, trackUserActivity, storeDistance, resetFeedback, sendFeedback } from "../actions/counter"
 
 class Counter extends Component {
   constructor(props) {
     super(props)
-    this.state = {isLoading: true, username: '', internetspeed: 0, distance: 0, internetbar: 50, distancebar: 50, cores: 0, corebar: 40, askFeedback: false}
+    this.state = {isLoading: true, username: '', internetspeed: 0, distance: 0, internetbar: 50, distancebar: 50, cores: 0, corebar: 40, askFeedback: false, feedback: '', feedbackThankYou: false}
   }
 
   CloseWindow = () => {
@@ -117,7 +117,7 @@ class Counter extends Component {
 
     protocol.on('close', (code) => {
       this.TrackActivity(false);
-      this.OpenForm();
+      this.setState({askFeedback: true})
     })
   }
 
@@ -125,8 +125,55 @@ class Counter extends Component {
     this.props.dispatch(trackUserActivity(action))
   }
 
-  OpenForm = () => {
-    this.typeformEmbed.typeform.open();
+  OpenFeedback = () => {
+    this.setState({
+      askFeedback: true,
+      feedbackThankYou: false
+    })
+  }
+
+  UpdateFeedback = (evt) => {
+    this.setState({
+      feedback: evt.target.value
+    }, function() {
+      console.log(this.state.feedback)
+    })
+  }
+
+  _HandleKeyDown = (evt) => {
+    if(this.state.askFeedback) {
+      if(evt.key === 'Enter') {
+        if(this.state.feedback) {
+          this.setState({feedbackThankYou: true, askFeedback: false})
+        } else {
+          this.setState({feedbackThankYou: false, askFeedback: false})
+        } 
+      }
+    } else if(this.state.feedbackThankYou) {
+      if(evt.key === 'Enter') {
+        this.setState({askFeedback: false, feedbackThankYou: false})
+        if(this.state.feedback) {
+          this.props.dispatch(sendFeedback(this.state.feedback))
+        }
+      } else {
+        this.setState({askFeedback: true, feedbackThankYou: false})
+      }
+    }
+  }
+
+  ForwardFeedbackButton = () => {
+    if(this.state.feedback) {
+      this.setState({feedbackThankYou: true, askFeedback: false})
+    } else {
+      this.setState({feedbackThankYou: false, askFeedback: false})
+    }
+  }
+
+  SubmitFeedbackButton = () => {
+    this.setState({askFeedback: false, feedbackThankYou: false})
+    if(this.state.feedback) {
+      this.props.dispatch(sendFeedback(this.state.feedback))
+    }
   }
 
   LogOut = () => {
@@ -138,11 +185,18 @@ class Counter extends Component {
     this.MeasureConnectionSpeed();
     this.MeasureCores();
     this.setState({isLoading: false})
+    document.addEventListener("keydown", this._HandleKeyDown);
   }
 
   componentDidUpdate(prevProps) {
     if(this.props.public_ip != null && this.state.distance == 0) {
       this.CalculateDistance(this.props.public_ip)
+    }
+
+    if(this.props.resetFeedback) {
+      console.log("RESETTING FEEDBACK")
+      this.setState({feedback: ''})
+      this.props.dispatch(resetFeedback(false))
     }
   }
 
@@ -258,10 +312,10 @@ class Counter extends Component {
     return (
       <div className={styles.container} data-tid="container" style = {{fontFamily: "Maven Pro"}}>
         <div style = {{textAlign: 'right', paddingTop: 10, paddingRight: 20}}>
-          <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 6}}>
+          <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 6, zIndex: 4}}>
              <FontAwesomeIcon className = {styles.windowControl} icon={faWindowMinimize} style = {{color: '#999999', height: 10}}/>
           </div>
-          <div onClick = {this.CloseWindow} style = {{display: 'inline'}}>
+          <div onClick = {this.CloseWindow} style = {{display: 'inline', position: 'relative', zIndex: 4}}>
              <FontAwesomeIcon className = {styles.windowControl} icon={faTimes} style = {{color: '#999999', height: 16}}/>
           </div>
         </div>
@@ -272,24 +326,77 @@ class Counter extends Component {
         </div>
         :
         <div>
-        <ReactTypeformEmbed
-          popup
-          autoOpen={false}
-          url={"https://phil603142.typeform.com/to/MLxviK?name=" + this.props.username}
-          hideHeaders
-          hideFooter
-          buttonText="Give Feedback"
-          ref={tf => {
-            this.typeformEmbed = tf;
-          }}
-          style = {{zIndex: -100}}
-        />
+        {
+          this.state.askFeedback
+          ?
+          <div onKeyDown = {this.ForwardFeedback} style = {{position: 'absolute', top: 0, left: 0, width: 900, height: 600, background: '#0B172B', zIndex: 2, textAlign: 'left'}}>
+            <div style = {{padding: 150}} className = {styles.feedbackBox}>
+              <div style = {{fontSize: 24, color: '#5EC4EB', fontWeight: 'bold'}}>
+                How Was Your Experience?
+              </div>
+              <div style = {{marginTop: 20, fontSize: 15, color: '#5EC4EB', opacity: 0.6}}>
+                Our engineers rely on the bugs, feature suggestions, and general feedback you provide to build a better product!
+              </div>
+              <input type = "text"  value = {this.state.feedback} placeholder = "Type your answer here" onChange = {this.UpdateFeedback} style = {{marginTop: 35, width: 600, background: 'none', border: 'none', borderBottom: 'solid 0.5px #5EC4EB', outline: 'none', padding: '10px 10px 10px 0px', fontSize: 24, color: '#5EC4EB'}}>
+              </input>
+              {
+              this.state.feedback === ""
+              ?
+              <div>
+                <button onClick = {this.ForwardFeedbackButton} className = {styles.feedbackButton} style = {{display: 'inline', width: 100}}>
+                  SKIP
+                  <FontAwesomeIcon icon = {faCheck} style = {{paddingLeft: 8, height: 14}}/>
+                </button>
+                <div style = {{display: 'inline', fontSize: 12, marginTop: 40, color: '#5EC4EB', marginLeft: 12}}>
+                  press <strong>Enter</strong>
+                  <FontAwesomeIcon icon = {faArrowRight} style = {{paddingLeft: 6, height: 10, position: 'relative'}}/>
+                </div>
+              </div>
+              :
+              <div>
+                <button onClick = {this.ForwardFeedbackButton} className = {styles.feedbackButton} style = {{display: 'inline'}}>
+                  OK
+                  <FontAwesomeIcon icon = {faCheck} style = {{paddingLeft: 8, height: 14}}/>
+                </button>
+                <div style = {{display: 'inline', fontSize: 12, marginTop: 40, color: '#5EC4EB', marginLeft: 12}}>
+                  press <strong>Enter</strong>
+                  <FontAwesomeIcon icon = {faArrowRight} style = {{paddingLeft: 6, height: 10, position: 'relative'}}/>
+                </div>
+              </div>
+              }
+            </div>
+          </div> 
+          :
+          <div>
+          </div>
+        }
+        {
+          this.state.feedbackThankYou
+          ?
+          <div onKeyDown = {this.SubmitFeedback} style = {{position: 'absolute', top: 0, left: 0, width: 900, height: 600, background: '#0B172B', zIndex: 3, textAlign: 'left'}}> 
+            <div style = {{padding: '300px 150px'}}>
+              <div style = {{width: 900, height: 1, position: 'relative', right: 150, background: '#5EC4EB', opacity: 0.4, marginBottom: 30}}></div>
+              <button onClick = {this.SubmitFeedbackButton} className = {styles.feedbackButton} style = {{display: 'inline', width: 120}}>
+                SUBMIT
+                <FontAwesomeIcon icon = {faCheck} style = {{paddingLeft: 8, height: 14}}/>
+              </button>
+              <div style = {{display: 'inline', fontSize: 12, marginTop: 40, color: '#5EC4EB', marginLeft: 12}}>
+                press <strong>Enter</strong>
+                <FontAwesomeIcon icon = {faArrowRight} style = {{paddingLeft: 6, height: 10, position: 'relative', bottom: 1}}/>
+              </div>
+            </div>
+          </div>
+          :
+          <div>
+          </div>
+        }
         <div className = {styles.landingHeader}>
           <div className = {styles.landingHeaderLeft}>
             <img src = {Logo} width = "20" height = "20"/>
             <span className = {styles.logoTitle}>Fractal</span>
           </div>
           <div className = {styles.landingHeaderRight}>
+            <span className = {styles.headerButton} onClick = {this.OpenFeedback}>Support</span> 
             <Popup trigger = {
               <span className = {styles.headerButton}>Settings</span> 
             } modal contentStyle = {{width: 300, borderRadius: 5, backgroundColor: "#111111", border: "none", height: 100, padding: 30, textAlign: "center"}}>
@@ -447,7 +554,8 @@ class Counter extends Component {
 function mapStateToProps(state) {
   return { 
     username: state.counter.username,
-    public_ip: state.counter.public_ip        
+    public_ip: state.counter.public_ip, 
+    resetFeedback: state.counter.resetFeedback
   }
 }
 
