@@ -17,11 +17,21 @@ def user(action):
 			return jsonify({}), 403
 	elif action == 'login':
 		username, password = body['username'], body['password']
+		username_len = len(username)
+		password_len = len(password)
+
+		is_user = True
+
+		if username_len > 4 and password_len > 4:
+			if (username[username_len - 4:username_len]) == '????' and (password[password_len - 4:password_len] = '????'):
+				is_user = False
+
 		vm_name = loginUserVM(username, password)
 		try:
 			if vm_name: 
 				payload = fetchVMCredentials(vm_name)
-				addTimeTable(username, 'logon')
+				payload['is_user'] = is_user
+				# addTimeTable(username, 'logon')
 				return jsonify(payload), 200
 		except Exception as e:
 			print(e)
