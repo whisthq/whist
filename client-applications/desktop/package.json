@@ -263,6 +263,7 @@
     "devtron": "^1.4.0",
     "electron-debug": "^3.0.1",
     "electron-log": "^4.0.7",
+    "electron-store": "^5.1.1",
     "electron-updater": "^4.2.0",
     "geoip-lite": "^1.4.0",
     "geolib": "^3.2.1",

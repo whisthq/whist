@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import { connect, bindActionCreators } from 'react-redux';
 import { Link, useHistory } from 'react-router-dom';
 import { configureStore, history } from '../store/configureStore';
+
 import routes from '../constants/routes.json';
 import styles from './Home.css';
 import Titlebar from 'react-electron-titlebar';
@@ -9,6 +10,7 @@ import Background from '../../resources/images/background.jpg';
 import Logo from "../../resources/images/logo.svg";
 import UserIcon from "../../resources/images/user.svg";
 import LockIcon from "../../resources/images/lock.svg";
+
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
@@ -128,9 +130,6 @@ class Home extends Component {
 		      <div style = {{marginBottom: 20}}>
 		        <button onClick = {() => this.LoginUser()} type = "button" className = {styles.loginButton} id = "login-button">START</button>
 		      </div>
-          <div className = {styles.rememberMeContainer}>
-            <input type = "checkbox" className = {styles.rememberMe}/> Remember me
-          </div>
 		      <div style = {{fontSize: 12, color: "#D6D6D6", width: 250, margin: 'auto'}}>
 		      {
 		      	this.state.loggingIn && !this.props.warning
