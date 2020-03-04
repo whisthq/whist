@@ -1,5 +1,6 @@
 windows/node_modules
 windows/build
 macos/build
-desktop/node_modules
-desktop/release
+react-app/node_modules
+desktop/.fractal-protocol
+desktop/fractal-protocol
