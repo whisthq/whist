@@ -51,3 +51,6 @@ npm-debug.log.*
 
 # .env for MacOS notarizing credentials
 *.env
+
+# protocol git repo
+.fractal-protocol
