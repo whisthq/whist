@@ -466,6 +466,9 @@ int main(int argc, char* argv[])
         StartTimer(&last_exit_check);
 
         mprintf("Receiving packets...\n");
+
+        int last_input_id = -1;
+
         while (connected) {
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
@@ -499,20 +502,70 @@ int main(int argc, char* argv[])
                 int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
                 if( decrypt_len > 0 )
                 {
-                    if( decrypted_packet.payload_size != sizeof( fmsg ) )
+                    memcpy(&fmsg, decrypted_packet.data, max(sizeof(fmsg), decrypted_packet.payload_size));
+                    
+                    if( decrypted_packet.payload_size != GetFmsgSize(&fmsg) )
                     {
-                        mprintf( "Packet is of the wrong size!\n" );
-                    } else
-                    {
-                        memcpy( &fmsg, decrypted_packet.data, sizeof( fmsg ) );
+                        mprintf( "Packet is of the wrong size!: %d\n", decrypted_packet.payload_size );
+                        mprintf("Type: %d\n", fmsg.type);
+                        fmsg.type = 0;
+                    }
+
+                    if (fmsg.type == MESSAGE_KEYBOARD || fmsg.type == MESSAGE_KEYBOARD_STATE) {
+
+                        if (decrypted_packet.id > last_input_id) {
+                            decrypted_packet.id = last_input_id;
+                        }
+                        else {
+                            // Received keyboard input out of order, just ignore
+                            fmsg.type = 0;
+                        }
                     }
                 }
             }
             // End Get Packet
 
             if (fmsg.type != 0) {
+
                 if (fmsg.type == MESSAGE_KEYBOARD) {
                     ReplayUserInput(&fmsg, 1);
+                }
+                else if (fmsg.type == MESSAGE_KEYBOARD_STATE) {
+                    // Synchronize client and server keyboard state
+
+                    INPUT ip;
+                    ip.type = INPUT_KEYBOARD;
+                    ip.ki.wVk = 0;
+                    ip.ki.time = 0;
+                    ip.ki.dwExtraInfo = 0;
+
+                    for (int sdl_keycode = 0; sdl_keycode < fmsg.num_keycodes; sdl_keycode++) {
+                        int windows_keycode = GetWindowsKeyCode(sdl_keycode);
+                        
+                        if (windows_keycode) {
+                            ip.ki.wScan = MapVirtualKeyA(windows_keycode, MAPVK_VK_TO_VSC);
+
+                            if (!fmsg.keyboard_state[sdl_keycode] && GetAsyncKeyState(windows_keycode)) {
+                                //mprintf("Releasing %d\n", sdl_keycode);
+                                ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+                                SendInput(1, &ip, sizeof(INPUT));
+                            }
+                        }
+                    }
+                    
+                    for (int sdl_keycode = 0; sdl_keycode < fmsg.num_keycodes; sdl_keycode++) {
+                        int windows_keycode = GetWindowsKeyCode(sdl_keycode);
+
+                        if (windows_keycode) {
+                            ip.ki.wScan = MapVirtualKeyA(windows_keycode, MAPVK_VK_TO_VSC);
+
+                            if (fmsg.keyboard_state[sdl_keycode] && !GetAsyncKeyState(windows_keycode)) {
+                                //mprintf("Pressing %d\n", sdl_keycode);
+                                ip.ki.dwFlags = KEYEVENTF_SCANCODE;
+                                SendInput(1, &ip, sizeof(INPUT));
+                            }
+                        }
+                    }
                 }
                 else if (fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
                     ReplayUserInput(&fmsg, 1);

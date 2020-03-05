@@ -68,21 +68,19 @@ void update() {
     // Start update checks
     if (UpdateData.needs_dimension_update && !UpdateData.tried_to_update_dimension && (server_width != output_width || server_height != output_height)) {
         mprintf("Asking for server dimension to be %dx%d\n", output_width, output_height);
-        memset(&fmsg, 0, sizeof(fmsg));
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
-        SendPacket(&fmsg, sizeof(fmsg));
+        SendFmsg( &fmsg );
         UpdateData.tried_to_update_dimension = true;
     }
 
     if (update_mbps) {
         mprintf("Asking for server MBPS to be %f\n", max_mbps);
         update_mbps = false;
-        memset(&fmsg, 0, sizeof(fmsg));
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_mbps;
-        SendPacket(&fmsg, sizeof(fmsg));
+        SendFmsg( &fmsg );
     }
     // End update checks
 
@@ -102,7 +100,6 @@ void update() {
     }
 
     if (!is_timing_latency && GetTimer(latency_timer) > 0.5) {
-        memset(&fmsg, 0, sizeof(fmsg));
         ping_id++;
         fmsg.type = MESSAGE_PING;
         fmsg.ping_id = ping_id;
@@ -111,13 +108,19 @@ void update() {
         StartTimer((clock*)&latency_timer);
 
         mprintf("Ping! %d\n", ping_id);
-        SendPacket(&fmsg, sizeof(fmsg));
-        SendPacket(&fmsg, sizeof(fmsg));
+        SendFmsg( &fmsg );
+        SendFmsg( &fmsg );
     }
     // End Ping
 }
 // END UPDATER CODE
 
+int SendFmsg( struct FractalClientMessage* fmsg )
+{
+    return SendPacket( fmsg, GetFmsgSize( fmsg ) );
+}
+
+static int sent_packet_id = 1;
 int SendPacket(void* data, int len) {
     if (len > MAX_PAYLOAD_SIZE ) {
         mprintf("Packet too large!\n");
@@ -125,6 +128,10 @@ int SendPacket(void* data, int len) {
     }
 
     struct RTPPacket packet = { 0 };
+
+    packet.id = sent_packet_id;
+    sent_packet_id++;
+
     memcpy( packet.data, data, len );
     packet.payload_size = len;
 
@@ -405,10 +412,17 @@ LRESULT CALLBACK LowLevelKeyboardProc( INT nCode, WPARAM wParam, LPARAM lParam )
         int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
         int time = pkbhs->time;
 
-        // Disable WIN
-        if( pkbhs->vkCode == VK_LWIN || pkbhs->vkCode == VK_RWIN )
+        // Disable LWIN
+        if( pkbhs->vkCode == VK_LWIN )
         {
             SendCapturedKey( KEY_LGUI, type, time );
+            return 1;
+        }
+
+        // Disable RWIN
+        if( pkbhs->vkCode == VK_RWIN )
+        {
+            SendCapturedKey( KEY_RGUI, type, time );
             return 1;
         }
 
@@ -609,12 +623,8 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        // Initialize variables
-        connected = true;
-        bool alt_pressed = false;
-        bool ctrl_pressed = false;
-
         // Initialize video and audio
+        connected = true;
         initVideo();
         initAudio();
 
@@ -624,13 +634,42 @@ int main(int argc, char* argv[])
         SDL_Thread* receive_packets_thread;
         receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
+        clock keyboard_sync_timer;
+        StartTimer( &keyboard_sync_timer );
+
+        // Initialize variables
+        bool alt_pressed = false;
+        bool ctrl_pressed = false;
+        bool lgui_pressed = false;
+        bool rgui_pressed = false;
+
         while (connected && !exiting)
         {
-            memset(&fmsg, 0, sizeof(fmsg));
+            // Update the keyboard state
+            if( GetTimer( keyboard_sync_timer ) > 50.0 / 1000.0 )
+            {
+                SDL_Delay( 5 );
+                fmsg.type = MESSAGE_KEYBOARD_STATE;
+
+                int num_keys;
+                Uint8* state = SDL_GetKeyboardState( &num_keys );
+                fmsg.num_keycodes = min( NUM_KEYCODES, num_keys );
+
+                state[KEY_LGUI] = lgui_pressed;
+                state[KEY_RGUI] = rgui_pressed;
+                memcpy( fmsg.keyboard_state, state, fmsg.num_keycodes );
+
+                SendFmsg( &fmsg );
+
+                StartTimer( &keyboard_sync_timer );
+            }
+
+            fmsg.type = 0;
             if (SDL_PollEvent(&msg)) {
                 switch (msg.type) {
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
+                    // Send a keyboard press for this event
                     fmsg.type = MESSAGE_KEYBOARD;
                     fmsg.keyboard.code = (FractalKeycode)msg.key.keysym.scancode;
                     fmsg.keyboard.mod = msg.key.keysym.mod;
@@ -642,11 +681,18 @@ int main(int argc, char* argv[])
                     if (fmsg.keyboard.code == KEY_LCTRL) {
                         ctrl_pressed = fmsg.keyboard.pressed;
                     }
-                    if (fmsg.keyboard.code == KEY_F4) {
-                        if (alt_pressed && ctrl_pressed) {
-                            mprintf("Quitting...\n");
-                            exiting = true;
-                        }
+                    if( fmsg.keyboard.code == KEY_LGUI )
+                    {
+                        lgui_pressed = fmsg.keyboard.pressed;
+                    }
+                    if( fmsg.keyboard.code == KEY_RGUI )
+                    {
+                        rgui_pressed = fmsg.keyboard.pressed;
+                    }
+
+                    if ( ctrl_pressed && alt_pressed && fmsg.keyboard.code == KEY_F4) {
+                        mprintf("Quitting...\n");
+                        exiting = true;
                     }
 
                     break;
@@ -677,7 +723,7 @@ int main(int argc, char* argv[])
                 }
 
                 if (fmsg.type != 0) {
-                    SendPacket(&fmsg, sizeof(fmsg));
+                    SendFmsg( &fmsg );
                 }
                 else {
                     SDL_Delay(1);
@@ -690,7 +736,7 @@ int main(int argc, char* argv[])
         if( exiting )
         {
             fmsg.type = CMESSAGE_QUIT;
-            SendPacket( &fmsg, sizeof( fmsg ) );
+            SendFmsg( &fmsg );
         }
 
         run_receive_packets = false;

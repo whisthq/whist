@@ -209,7 +209,7 @@ void updateAudio() {
                 fmsg.nack_data.index = i % MAX_NUM_AUDIO_INDICES;
                 mprintf("Missing Audio Packet ID %d, Index %d. NACKing...\n", fmsg.nack_data.id, fmsg.nack_data.index);
                 i_packet->nacked_for = i;
-                SendPacket(&fmsg, sizeof(fmsg));
+                SendFmsg( &fmsg );
             }
             last_nacked_id = i;
         }

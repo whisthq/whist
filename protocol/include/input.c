@@ -11,9 +11,9 @@
 #include "input.h" // header file for this file
 
 #if defined(_WIN32)
-  // @brief Windows keycodes for replaying SDL user inputs on server
-  // @details index is SDL keycode, value is Windows keycode
-const int windows_keycodes[265] = {
+// @brief Windows keycodes for replaying SDL user inputs on server
+// @details index is SDL keycode, value is Windows keycode
+const int windows_keycodes[NUM_KEYCODES] = {
 	NULL, // SDL keycodes start at index 4
 	NULL, // SDL keycodes start at index 4
 	NULL, // SDL keycodes start at index 4
@@ -56,7 +56,7 @@ const int windows_keycodes[265] = {
 	0x30, // 39 -> 0
 	0x0D, // 40 -> Enter
 	0x1B, // 41 -> Escape
-	0x08, // 42 -> Backspace
+	VK_BACK, // 42 -> Backspace
 	0x09, // 43 -> Tab
 	0x20, // 44 -> Space
 	0xBD, // 45 -> Minus
@@ -132,7 +132,7 @@ const int windows_keycodes[265] = {
 	NULL, // 115 -> no SDL keycode at index 115
 	NULL, // 116 -> no SDL keycode at index 116
 	NULL, // 117 -> no SDL keycode at index 117
-	VK_MENU, // 118 -> Menu
+	NULL, // 118 -> Menu
 	NULL, // 119 -> no SDL keycode at index 119
 	NULL, // 120 -> no SDL keycode at index 120
 	NULL, // 121 -> no SDL keycode at index 121
@@ -240,11 +240,11 @@ const int windows_keycodes[265] = {
 	NULL,
 	VK_LCONTROL, // 224 -> Left Ctrl
 	VK_LSHIFT, // 225 -> Left Shift
-	VK_MENU, // 226 -> Left Alt
+	VK_LMENU, // 226 -> Left Alt
 	VK_LWIN, // 227 -> Left GUI (Windows Key)
 	VK_RCONTROL, // 228 -> Right Ctrl
 	VK_RSHIFT, // 229 -> Right Shift
-	VK_MENU, // 230 -> Right Alt
+	VK_RMENU, // 230 -> Right Alt
 	VK_RWIN, // 231 -> Right GUI (Windows Key)
 	NULL, // 232 -> no SDL keycode at index 232
 	NULL, // 233 -> no SDL keycode at index 233
@@ -280,6 +280,11 @@ const int windows_keycodes[265] = {
 	VK_LAUNCH_MEDIA_SELECT, // 263 -> Media Select
 	0x7FFFFFFF };
 #endif
+
+
+int GetWindowsKeyCode(int sdl_keycode) {
+	return windows_keycodes[sdl_keycode];
+}
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS

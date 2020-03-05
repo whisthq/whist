@@ -32,6 +32,8 @@ typedef struct FractalCursorTypes {
     HCURSOR CursorWait;
 } FractalCursorTypes;
 
+int GetWindowsKeyCode(int sdl_keycode);
+
 FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len);
 
 FractalStatus EnterWinString(enum FractalKeycode *keycodes, int len);
