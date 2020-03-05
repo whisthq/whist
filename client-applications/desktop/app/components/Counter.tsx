@@ -27,7 +27,7 @@ import { storeUserInfo, trackUserActivity, storeDistance, resetFeedback, sendFee
 class Counter extends Component {
   constructor(props) {
     super(props)
-    this.state = {isLoading: true, username: '', internetspeed: 0, distance: 0, internetbar: 50, distancebar: 50, cores: 0, corebar: 40, askFeedback: false, feedback: '', feedbackThankYou: false}
+    this.state = {isLoading: true, username: '', internetspeed: 0, distance: 0, internetbar: 50, distancebar: 50, cores: 0, corebar: 40, askFeedback: false, feedback: '', feedbackThankYou: false, launches: 0}
   }
 
   CloseWindow = () => {
@@ -109,33 +109,39 @@ class Counter extends Component {
 
 
   LaunchProtocol = () => {
-    var child = require('child_process').spawn;
+    if(this.state.launches == 0) {
+      var child      = require('child_process').spawn;
+      var appRootDir = require('electron').remote.app.getAppPath();
+      const os       = require('os');
 
-    // check which OS we're on to properly launch the protocol
-    const os = require('os');
-    if (os.platform() == 'darwin') { // mac
-      var path = process.cwd() + "/fractal-protocol/desktop/./desktop"
-    }
-    else if (os.platform() == 'win32') { // windows
-      var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
-    }
-    else { // linux
-      var path = "TODO"
-    }
-
-    var parameters = [this.props.public_ip, 123]
-
-    if(this.props.isUser) {
-      this.TrackActivity(true);
-    }
-    const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
-
-    protocol.on('close', (code) => {
-      if(this.props.isUser) {
-        this.TrackActivity(false);
+      // check which OS we're on to properly launch the protocol
+      if (os.platform() === 'darwin') { // mac
+        var path =  appRootDir + "/fractal-protocol/desktop/desktop"
+        path = path.replace('/Resources/app.asar','');
+        path = path.replace('/desktop/app', '/desktop')
       }
-      this.setState({askFeedback: true})
-    })
+      else if (os.platform() === 'win32') { // windows
+        var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
+      }
+      else { // linux
+        var path = "TODO"
+      }
+
+      var parameters = [this.props.public_ip, 123]
+
+      if(this.props.isUser) {
+        this.TrackActivity(true);
+      }
+      const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
+
+      this.setState({launches: this.state.launches + 1})
+      protocol.on('close', (code) => {
+        if(this.props.isUser) {
+          this.TrackActivity(false);
+        }
+        this.setState({askFeedback: true, launches: 0})
+      })
+    }
   }
 
 
@@ -329,6 +335,9 @@ class Counter extends Component {
 
     return (
       <div className={styles.container} data-tid="container" style = {{fontFamily: "Maven Pro"}}>
+        {
+        this.props.os === 'win32'
+        ?
         <div style = {{textAlign: 'right', paddingTop: 10, paddingRight: 20}}>
           <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 6, zIndex: 4}}>
              <FontAwesomeIcon className = {styles.windowControl} icon={faWindowMinimize} style = {{color: '#999999', height: 10}}/>
@@ -337,6 +346,9 @@ class Counter extends Component {
              <FontAwesomeIcon className = {styles.windowControl} icon={faTimes} style = {{color: '#999999', height: 16}}/>
           </div>
         </div>
+        :
+        <div style = {{marginTop: 10}}></div>
+        }
         {
         this.state.isLoading
         ?
@@ -574,7 +586,8 @@ function mapStateToProps(state) {
     username: state.counter.username,
     public_ip: state.counter.public_ip,
     resetFeedback: state.counter.resetFeedback,
-    isUser: state.counter.isUser
+    isUser: state.counter.isUser,
+    os: state.counter.os
   }
 }
 

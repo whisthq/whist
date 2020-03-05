@@ -50,26 +50,50 @@ const createWindow = async () => {
     await installExtensions();
   }
 
-  mainWindow = new BrowserWindow({
-    show: false,
-    width: 900,
-    height: 600,
-    frame: false,
-    center: true,
-    resizable: false,
-    webPreferences:
-      process.env.NODE_ENV === 'development' || process.env.E2E_BUILD === 'true'
-        ? {
-            nodeIntegration: true,
-            devTools: true
-          }
-        : {
-            preload: path.join(__dirname, 'dist/renderer.prod.js'),
-            devTools: false
-          }
-  });
+  const os = require('os')
+  if(os.platform() === 'win32') {
+    mainWindow = new BrowserWindow({
+      show: false,
+      width: 900,
+      height: 600,
+      frame: false,
+      center: true,
+      resizable: false,
+      webPreferences:
+        process.env.NODE_ENV === 'development' || process.env.E2E_BUILD === 'true'
+          ? {
+              nodeIntegration: true,
+              devTools: true
+            }
+          : {
+              preload: path.join(__dirname, 'dist/renderer.prod.js'),
+              devTools: false
+            }
+    });
+  } else {
+    mainWindow = new BrowserWindow({
+      show: false,
+      width: 900,
+      height: 600,
+      titleBarStyle: 'hidden',
+      center: true,
+      resizable: false,
+      maximizable: false,
+      webPreferences:
+        process.env.NODE_ENV === 'development' || process.env.E2E_BUILD === 'true'
+          ? {
+              nodeIntegration: true,
+              devTools: true
+            }
+          : {
+              preload: path.join(__dirname, 'dist/renderer.prod.js'),
+              devTools: false
+            }
+    });
+  }
 
-  mainWindow.loadURL(`file://${__dirname}/app.html`);
+    // mainWindow.webContents.openDevTools();
+    mainWindow.loadURL(`file://${__dirname}/app.html`);
 
   // @TODO: Use 'ready-to-show' event
   //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
@@ -108,12 +132,12 @@ app.on('ready', createWindow);
 
 autoUpdater.autoDownload = false;
 
-autoUpdater.on('error', (error) => {
-    dialog.showMessageBox({
-      title: 'Message',
-      message: 'Error in updating. Please contact ming@fractalcomputers.com for support'
-    });
-});
+// autoUpdater.on('error', (error) => {
+//     dialog.showMessageBox({
+//       title: 'Message',
+//       message: 'Error in updating. Please contact ming@fractalcomputers.com for support'
+//     });
+// });
 
 autoUpdater.on('update-available', () => {
    autoUpdater.downloadUpdate();
