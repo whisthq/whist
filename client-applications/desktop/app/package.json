@@ -1,8 +1,9 @@
 {
-  "name": "Fractal",
-  "productName": "Fractal Dashboard",
+  "name": "fractal",
+  "license": "MIT",
+  "productName": "Fractal Desktop Application",
+  "description": "Fractal Desktop Application",
   "version": "1.1.1",
-  "description": "Fractal Cloud PC Dashboard",
   "main": "./main.prod.js",
   "author": {
     "name": "Ming Ying",
@@ -12,6 +13,5 @@
     "electron-rebuild": "node -r ../internals/scripts/BabelRegister.js ../internals/scripts/ElectronRebuild.js",
     "postinstall": "yarn electron-rebuild"
   },
-  "license": "MIT",
   "dependencies": {}
 }

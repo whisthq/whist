@@ -1,7 +1,8 @@
 {
-  "name": "Fractal",
-  "productName": "Fractal Dashboard",
-  "description": "Fractal Cloud PC Dashboard",
+  "name": "fractal",
+  "license": "MIT",
+  "productName": "Fractal Desktop Application",
+  "description": "Fractal Desktop Application",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
     "build-dll": "cross-env NODE_ENV=development webpack --config ./configs/webpack.config.renderer.dev.dll.babel.js --colors",
@@ -83,7 +84,7 @@
       ]
     },
     "mac": {
-      "icon": "dist",
+      "icon": "build/logo.icns",
       "target": [
         "zip",
         "dmg"
@@ -130,7 +131,6 @@
       "email": "phil@fractalcomputers.com"
     }
   ],
-  "license": "MIT",
   "keywords": [
     "fractal"
   ],
