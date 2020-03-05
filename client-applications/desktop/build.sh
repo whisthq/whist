@@ -13,6 +13,6 @@ mkdir fractal-protocol
 cd fractal-protocol
 mkdir desktop
 cd ..
-cp .fractal-protocol/desktop/*.exe fractal-protocol/desktop
-cp .fractal-protocol/desktop/*.dll fractal-protocol/desktop
+cp .fractal-protocol/desktop/desktop fractal-protocol/desktop
+codesign -s "Fractal Computers, Inc." fractal-protoco/desktop/desktop
 yarn package

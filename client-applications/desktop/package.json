@@ -50,8 +50,9 @@
     ]
   },
   "build": {
+    "appId": "com.fractalcomputers.fractal",
     "productName": "Fractal",
-    "appId": "com.fractalcomputers",
+    "copyright": "Copyright © Fractal Computers, Inc.",
     "artifactName": "Fractal.${ext}",
     "files": [
       "dist/",
@@ -67,6 +68,7 @@
       "fractal-protocol/"
     ],
     "dmg": {
+      "sign": false,
       "contents": [
         {
           "x": 130,
@@ -80,6 +82,19 @@
         }
       ]
     },
+    "mac": {
+      "icon": "dist",
+      "target": [
+        "zip",
+        "dmg"
+      ],
+      "category": "Business",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "gatekeeperAssess": false
+    },
+    "afterSign": "build/notarize.js",
     "win": {
       "target": [
         "nsis"
@@ -198,6 +213,7 @@
     "electron": "7.1.13",
     "electron-builder": "^22.3.2",
     "electron-devtools-installer": "^2.2.4",
+    "electron-notarize": "^0.2.1",
     "electron-rebuild": "^1.10.0",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.2",
@@ -261,6 +277,7 @@
     "connected-react-router": "^6.6.1",
     "core-js": "^3.6.4",
     "devtron": "^1.4.0",
+    "dotenv": "^8.2.0",
     "electron-debug": "^3.0.1",
     "electron-log": "^4.0.7",
     "electron-store": "^5.1.1",

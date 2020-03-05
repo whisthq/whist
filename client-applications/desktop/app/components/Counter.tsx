@@ -46,7 +46,7 @@ class Counter extends Component {
 
   MeasureConnectionSpeed = () => {
     let component = this;
-    var imageAddr = "http://www.kenrockwell.com/contax/images/g2/examples/31120037-5mb.jpg"; 
+    var imageAddr = "http://www.kenrockwell.com/contax/images/g2/examples/31120037-5mb.jpg";
     var downloadSize = 4995374; //bytes
     var startTime, endTime;
     var download = new Image();
@@ -60,7 +60,7 @@ class Counter extends Component {
         component.setState({internetspeed: speedMbps});
         component.setState({internetbar: Math.min(Math.max(speedMbps, 50), 200)})
     }
-    
+
     startTime = (new Date()).getTime();
     var cacheBuster = "?nnn=" + startTime;
     download.src = imageAddr + cacheBuster;
@@ -76,7 +76,7 @@ class Counter extends Component {
 
   CalculateDistance = (public_ip) => {
     let component = this;
-    const iplocation = require("iplocation").default; 
+    const iplocation = require("iplocation").default;
     var options = {
       enableHighAccuracy: true,
       timeout: 10000
@@ -98,10 +98,10 @@ class Counter extends Component {
           longitude: res.longitude,
         });
         dist = Math.round(dist / metersInMile)
-        component.setState({distance: dist, 
+        component.setState({distance: dist,
           distancebar: Math.min(Math.max(220 * dist / 1000, 80), 220)})
       })
-    }  
+    }
 
     function showError(error) {
     }
@@ -165,7 +165,7 @@ class Counter extends Component {
           this.setState({feedbackThankYou: true, askFeedback: false})
         } else {
           this.setState({feedbackThankYou: false, askFeedback: false})
-        } 
+        }
       }
     } else if(this.state.feedbackThankYou) {
       if(evt.key === 'Enter') {
@@ -226,7 +226,7 @@ class Counter extends Component {
     const barHeight = 5
 
     if(this.state.internetspeed < 10) {
-      internetBox =  
+      internetBox =
         <div>
           <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
           </div>
@@ -238,7 +238,7 @@ class Counter extends Component {
           </div>
         </div>
     } else if(this.state.internetspeed < 20) {
-      internetBox = 
+      internetBox =
         <div>
           <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
           </div>
@@ -264,7 +264,7 @@ class Counter extends Component {
     }
 
     if(this.state.distance < 250) {
-      distanceBox = 
+      distanceBox =
         <div>
          <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
          </div>
@@ -276,7 +276,7 @@ class Counter extends Component {
           </div>
         </div>
     } else if(this.state.distance < 500) {
-      distanceBox = 
+      distanceBox =
         <div>
          <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
          </div>
@@ -288,7 +288,7 @@ class Counter extends Component {
           </div>
         </div>
     } else {
-      distanceBox = 
+      distanceBox =
         <div>
          <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
          </div>
@@ -298,11 +298,11 @@ class Counter extends Component {
           <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
             You may experience latency because you are far away from your cloud PC.
           </div>
-        </div>   
+        </div>
     }
 
     if(this.state.cores < 4) {
-      cpuBox = 
+      cpuBox =
       <div>
        <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
        </div>
@@ -314,7 +314,7 @@ class Counter extends Component {
         </div>
       </div>
     } else {
-      cpuBox = 
+      cpuBox =
       <div>
        <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
        </div>
@@ -324,7 +324,7 @@ class Counter extends Component {
         <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
           Your CPU has enough cores to run Fractal.
         </div>
-      </div>   
+      </div>
     }
 
     return (
@@ -383,7 +383,7 @@ class Counter extends Component {
               </div>
               }
             </div>
-          </div> 
+          </div>
           :
           <div>
           </div>
@@ -391,7 +391,7 @@ class Counter extends Component {
         {
           this.state.feedbackThankYou
           ?
-          <div onKeyDown = {this.SubmitFeedback} style = {{position: 'absolute', top: 0, left: 0, width: 900, height: 600, background: '#0B172B', zIndex: 3, textAlign: 'left'}}> 
+          <div onKeyDown = {this.SubmitFeedback} style = {{position: 'absolute', top: 0, left: 0, width: 900, height: 600, background: '#0B172B', zIndex: 3, textAlign: 'left'}}>
             <div style = {{padding: '300px 150px'}}>
               <div style = {{width: 900, height: 1, position: 'relative', right: 150, background: '#5EC4EB', opacity: 0.4, marginBottom: 30}}></div>
               <button onClick = {this.SubmitFeedbackButton} className = {styles.feedbackButton} style = {{display: 'inline', width: 120}}>
@@ -414,9 +414,9 @@ class Counter extends Component {
             <span className = {styles.logoTitle}>Fractal</span>
           </div>
           <div className = {styles.landingHeaderRight}>
-            <span className = {styles.headerButton} onClick = {this.OpenFeedback}>Support</span> 
+            <span className = {styles.headerButton} onClick = {this.OpenFeedback}>Support</span>
             <Popup trigger = {
-              <span className = {styles.headerButton}>Settings</span> 
+              <span className = {styles.headerButton}>Settings</span>
             } modal contentStyle = {{width: 300, borderRadius: 5, backgroundColor: "#111111", border: "none", height: 100, padding: 30, textAlign: "center"}}>
               <div style = {{fontWeight: 'bold', fontSize: 20}} className = {styles.blueGradient}><strong>Coming Soon</strong></div>
               <div style = {{fontSize: 12, color: "#D6D6D6", marginTop: 20}}>Toggle bandwidth consumption, image quality, and more.</div>
@@ -424,7 +424,7 @@ class Counter extends Component {
             <Popup trigger = {
             <span className = {styles.headerButton}>
               Refer a Friend
-             </span> 
+             </span>
             } modal contentStyle = {{width: 300, borderRadius: 5, backgroundColor: "#111111", border: "none", height: 100, padding: 30, textAlign: "center"}}>
               <div style = {{fontWeight: 'bold', fontSize: 20}} className = {styles.blueGradient}><strong>Coming Soon</strong></div>
               <div style = {{fontSize: 12, color: "#D6D6D6", marginTop: 20}}>Get rewarded when you refer a friend.</div>
@@ -570,9 +570,9 @@ class Counter extends Component {
 }
 
 function mapStateToProps(state) {
-  return { 
+  return {
     username: state.counter.username,
-    public_ip: state.counter.public_ip, 
+    public_ip: state.counter.public_ip,
     resetFeedback: state.counter.resetFeedback,
     isUser: state.counter.isUser
   }
