@@ -286,6 +286,63 @@ int GetWindowsKeyCode(int sdl_keycode) {
 	return windows_keycodes[sdl_keycode];
 }
 
+void updateKeyboardState( struct FractalClientMessage* fmsg )
+{
+	if( fmsg->type != MESSAGE_KEYBOARD_STATE )
+	{
+		mprintf( "updateKeyboardState requires fmsg.type to be MESSAGE_KEYBOARD_STATE\n" );
+		return;
+	}
+
+	INPUT ip;
+	ip.type = INPUT_KEYBOARD;
+	ip.ki.wVk = 0;
+	ip.ki.time = 0;
+	ip.ki.dwExtraInfo = 0;
+
+	for( int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++ )
+	{
+		int windows_keycode = GetWindowsKeyCode( sdl_keycode );
+
+		if( windows_keycode )
+		{
+			ip.ki.wScan = MapVirtualKeyA( windows_keycode, MAPVK_VK_TO_VSC_EX );
+			ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+			if( ip.ki.wScan >> 8 == 0xE0 )
+			{
+				ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+				ip.ki.wScan &= 0xFF;
+			}
+
+			if( !fmsg->keyboard_state[sdl_keycode] && GetAsyncKeyState( windows_keycode ) )
+			{
+				SendInput( 1, &ip, sizeof( INPUT ) );
+			}
+		}
+	}
+
+	for( int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++ )
+	{
+		int windows_keycode = GetWindowsKeyCode( sdl_keycode );
+
+		if( windows_keycode )
+		{
+			ip.ki.wScan = MapVirtualKeyA( windows_keycode, MAPVK_VK_TO_VSC );
+			ip.ki.dwFlags = KEYEVENTF_SCANCODE;
+			if( ip.ki.wScan >> 8 == 0xE0 )
+			{
+				ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+				ip.ki.wScan &= 0xFF;
+			}
+
+			if( fmsg->keyboard_state[sdl_keycode] && !GetAsyncKeyState( windows_keycode ) )
+			{
+				SendInput( 1, &ip, sizeof( INPUT ) );
+			}
+		}
+	}
+}
+
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
 FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
