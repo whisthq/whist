@@ -65,13 +65,13 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	0xDD, // 48 -> Right Bracket
 	0xE2, // 49 -> Backslash
 	NULL, // 50 -> no SDL keycode at index 50
-	0xBA, // 51 -> Semicolon
-	0xDE, // 52 -> Apostrophe
+	VK_OEM_1, // 51 -> Semicolon
+	VK_OEM_7, // 52 -> Apostrophe
 	VK_OEM_3, // 53 -> Backtick
-	0xBC, // 54 -> Comma
-	0xBE, // 55 -> Period
-	0xBF, // 56 -> Slash
-	0x14, // 57 -> Capslock
+	VK_OEM_COMMA, // 54 -> Comma
+	VK_OEM_PERIOD, // 55 -> Period
+	VK_OEM_2, // 56 -> Forward Slash
+	VK_CAPITAL, // 57 -> Capslock
 	0x70, // 58 -> F1
 	0x71, // 59 -> F2
 	0x72, // 60 -> F3
@@ -98,10 +98,10 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	0x28, // 81 -> Down
 	0x26, // 82 -> Up
 	0x90, // 83 -> Numlock
-	0x6F, // 84 -> Numeric Keypad Divide
-	0x6A, // 85 -> Numeric Keypad Multiply
+	VK_DIVIDE, // 84 -> Numeric Keypad Divide
+	VK_MULTIPLY, // 85 -> Numeric Keypad Multiply
 	0x6B, // 86 -> Numeric Keypad Minus
-	0x2E, // 87 -> Numeric Keypad Plus
+	VK_ADD, // 87 -> Numeric Keypad Plus
 	0x0D, // 88 -> Numeric Keypad Enter
 	0x61, // 89 -> Numeric Keypad 1
 	0x62, // 90 -> Numeric Keypad 2
@@ -113,7 +113,7 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	0x68, // 96 -> Numeric Keypad 8
 	0x69, // 97 -> Numeric Keypad 9
 	0x60, // 98 -> Numeric Keypad 0
-	0xBE, // 99 -> Numeric Keypad Period
+	VK_DECIMAL, // 99 -> Numeric Keypad Period
 	NULL, // 100 -> no SDL keycode at index 100
 	0x5D, // 101 -> Application
 	NULL, // 102 -> no SDL keycode at index 102
@@ -317,9 +317,11 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 			}
 
 			if (!fmsg[i].keyboard.pressed) {
+				mprintf( "Keyboard releasing %d\n", fmsg[i].keyboard.code );
 				Event[i].ki.dwFlags |= KEYEVENTF_KEYUP;
 			}
 			else {
+				mprintf( "Keyboard pressing %d\n", fmsg[i].keyboard.code );
 				Event[i].ki.dwFlags |= 0;
 			}
 
