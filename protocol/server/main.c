@@ -567,11 +567,15 @@ int main(int argc, char* argv[])
                         int windows_keycode = GetWindowsKeyCode(sdl_keycode);
                         
                         if (windows_keycode) {
-                            ip.ki.wScan = MapVirtualKeyA(windows_keycode, MAPVK_VK_TO_VSC);
+                            ip.ki.wScan = MapVirtualKeyA(windows_keycode, MAPVK_VK_TO_VSC_EX );
+                            ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+                            if( ip.ki.wScan >> 8 == 0xE0 )
+                            {
+                                ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+                                ip.ki.wScan &= 0xFF;
+                            }
 
                             if (!fmsg.keyboard_state[sdl_keycode] && GetAsyncKeyState(windows_keycode)) {
-                                //mprintf("Releasing %d\n", sdl_keycode);
-                                ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
                                 SendInput(1, &ip, sizeof(INPUT));
                             }
                         }
@@ -582,10 +586,14 @@ int main(int argc, char* argv[])
 
                         if (windows_keycode) {
                             ip.ki.wScan = MapVirtualKeyA(windows_keycode, MAPVK_VK_TO_VSC);
+                            ip.ki.dwFlags = KEYEVENTF_SCANCODE;
+                            if( ip.ki.wScan >> 8 == 0xE0 )
+                            {
+                                ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+                                ip.ki.wScan &= 0xFF;
+                            }
 
                             if (fmsg.keyboard_state[sdl_keycode] && !GetAsyncKeyState(windows_keycode)) {
-                                //mprintf("Pressing %d\n", sdl_keycode);
-                                ip.ki.dwFlags = KEYEVENTF_SCANCODE;
                                 SendInput(1, &ip, sizeof(INPUT));
                             }
                         }

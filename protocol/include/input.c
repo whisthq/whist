@@ -65,13 +65,13 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	0xDD, // 48 -> Right Bracket
 	0xE2, // 49 -> Backslash
 	NULL, // 50 -> no SDL keycode at index 50
-	0xBA, // 51 -> Semicolon
-	0xDE, // 52 -> Apostrophe
+	VK_OEM_1, // 51 -> Semicolon
+	VK_OEM_7, // 52 -> Apostrophe
 	VK_OEM_3, // 53 -> Backtick
-	0xBC, // 54 -> Comma
-	0xBE, // 55 -> Period
-	0xBF, // 56 -> Slash
-	0x14, // 57 -> Capslock
+	VK_OEM_COMMA, // 54 -> Comma
+	VK_OEM_PERIOD, // 55 -> Period
+	VK_OEM_2, // 56 -> Forward Slash
+	VK_CAPITAL, // 57 -> Capslock
 	0x70, // 58 -> F1
 	0x71, // 59 -> F2
 	0x72, // 60 -> F3
@@ -84,24 +84,24 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	0x79, // 67 -> F10
 	0x7A, // 68 -> F11
 	0x7B, // 69 -> F12
-	0x2C, // 70 -> Print Screen
-	0x91, // 71 -> Scroll Lock
-	0xB3, // 72 -> Pause
-	0x2D, // 73 -> Insert
-	0x24, // 74 -> Home
-	0x21, // 75 -> Pageup
-	0x2E, // 76 -> Delete
-	0x23, // 77 -> End
-	0x22, // 78 -> Pagedown
+	VK_SNAPSHOT, // 70 -> Print Screen
+	VK_SCROLL, // 71 -> Scroll Lock
+	VK_PAUSE, // 72 -> Pause
+	VK_INSERT, // 73 -> Insert
+	VK_HOME, // 74 -> Home
+	VK_PRIOR, // 75 -> Pageup
+	VK_DELETE, // 76 -> Delete
+	VK_END, // 77 -> End
+	VK_NEXT, // 78 -> Pagedown
 	0x27, // 79 -> Right
 	0x25, // 80 -> Left
 	0x28, // 81 -> Down
 	0x26, // 82 -> Up
 	0x90, // 83 -> Numlock
-	0x6F, // 84 -> Numeric Keypad Divide
-	0x6A, // 85 -> Numeric Keypad Multiply
+	VK_DIVIDE, // 84 -> Numeric Keypad Divide
+	VK_MULTIPLY, // 85 -> Numeric Keypad Multiply
 	0x6B, // 86 -> Numeric Keypad Minus
-	0x2E, // 87 -> Numeric Keypad Plus
+	VK_ADD, // 87 -> Numeric Keypad Plus
 	0x0D, // 88 -> Numeric Keypad Enter
 	0x61, // 89 -> Numeric Keypad 1
 	0x62, // 90 -> Numeric Keypad 2
@@ -113,7 +113,7 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	0x68, // 96 -> Numeric Keypad 8
 	0x69, // 97 -> Numeric Keypad 9
 	0x60, // 98 -> Numeric Keypad 0
-	0xBE, // 99 -> Numeric Keypad Period
+	VK_DECIMAL, // 99 -> Numeric Keypad Period
 	NULL, // 100 -> no SDL keycode at index 100
 	0x5D, // 101 -> Application
 	NULL, // 102 -> no SDL keycode at index 102
@@ -302,16 +302,27 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 		switch (fmsg[i].type) {
 			// Windows event for keyboard action
 		case MESSAGE_KEYBOARD:
-			Event[i].ki.wVk = windows_keycodes[fmsg[i].keyboard.code];
+			//Event[i].ki.wVk = windows_keycodes[fmsg[i].keyboard.code];
 			Event[i].type = INPUT_KEYBOARD;
-			Event[i].ki.wScan = 0;
 			Event[i].ki.time = 0; // system supplies timestamp
+
+			Event[i].ki.dwFlags = KEYEVENTF_SCANCODE;
+			Event[i].ki.wVk = 0;
+			Event[i].ki.wScan = MapVirtualKeyA( windows_keycodes[fmsg[i].keyboard.code], MAPVK_VK_TO_VSC_EX );
+
+			if( Event[i].ki.wScan >> 8 == 0xE0 )
+			{
+				Event[i].ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+				Event[i].ki.wScan &= 0xFF;
+			}
+
 			if (!fmsg[i].keyboard.pressed) {
-				Event[i].ki.dwFlags = KEYEVENTF_KEYUP;
+				Event[i].ki.dwFlags |= KEYEVENTF_KEYUP;
 			}
 			else {
-				Event[i].ki.dwFlags = 0;
+				Event[i].ki.dwFlags |= 0;
 			}
+
 			break;
 			// mouse motion event
 		case MESSAGE_MOUSE_MOTION:
