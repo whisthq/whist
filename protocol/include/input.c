@@ -84,15 +84,15 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	0x79, // 67 -> F10
 	0x7A, // 68 -> F11
 	0x7B, // 69 -> F12
-	0x2C, // 70 -> Print Screen
-	0x91, // 71 -> Scroll Lock
-	0xB3, // 72 -> Pause
-	0x2D, // 73 -> Insert
-	0x24, // 74 -> Home
-	0x21, // 75 -> Pageup
-	0x2E, // 76 -> Delete
-	0x23, // 77 -> End
-	0x22, // 78 -> Pagedown
+	VK_SNAPSHOT, // 70 -> Print Screen
+	VK_SCROLL, // 71 -> Scroll Lock
+	VK_PAUSE, // 72 -> Pause
+	VK_INSERT, // 73 -> Insert
+	VK_HOME, // 74 -> Home
+	VK_PRIOR, // 75 -> Pageup
+	VK_DELETE, // 76 -> Delete
+	VK_END, // 77 -> End
+	VK_NEXT, // 78 -> Pagedown
 	0x27, // 79 -> Right
 	0x25, // 80 -> Left
 	0x28, // 81 -> Down
