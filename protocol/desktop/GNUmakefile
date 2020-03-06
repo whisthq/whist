@@ -35,15 +35,14 @@ export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platf
 
 # dynamic libs to link against
 DYNAMIC_LIBS = \
-  ../lib/ffmpeg/macos/libavcodec.58.dylib \
+    ../lib/ffmpeg/macos/libavcodec.58.dylib \
 	../lib/ffmpeg/macos/libavdevice.58.dylib \
 	../lib/ffmpeg/macos/libavfilter.7.dylib \
 	../lib/ffmpeg/macos/libavformat.58.dylib \
 	../lib/ffmpeg/macos/libavutil.56.dylib \
 	../lib/ffmpeg/macos/libpostproc.55.dylib \
 	../lib/ffmpeg/macos/libswresample.3.dylib \
-	../lib/ffmpeg/macos/libswscale.5.dylib \
-	../lib/openssl/macos/libcrypto.1.1.dylib
+	../lib/ffmpeg/macos/libswscale.5.dylib
 
 # system libs to link against
 SHARED_LIBS = \
@@ -79,7 +78,9 @@ OBJS = \
 	aes.o
 
 # static libs to link against
-STATIC_LIBS = ../lib/SDL2/$(PLATFORM)/libSDL2.a
+STATIC_LIBS = \
+	../lib/SDL2/$(PLATFORM)/libSDL2.a \
+	../lib/openssl/$(PLATFORM)/libcrypto.a
 
 # compiler flags
 CFLAGS = \
