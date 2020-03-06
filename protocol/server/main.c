@@ -552,7 +552,6 @@ int main(int argc, char* argv[])
                             }
 
                             if (!fmsg.keyboard_state[sdl_keycode] && GetAsyncKeyState(windows_keycode)) {
-                                mprintf("Releasing %d\n", sdl_keycode);
                                 SendInput(1, &ip, sizeof(INPUT));
                             }
                         }
@@ -571,7 +570,6 @@ int main(int argc, char* argv[])
                             }
 
                             if (fmsg.keyboard_state[sdl_keycode] && !GetAsyncKeyState(windows_keycode)) {
-                                mprintf("Pressing %d\n", sdl_keycode);
                                 SendInput(1, &ip, sizeof(INPUT));
                             }
                         }

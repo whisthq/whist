@@ -317,11 +317,9 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 			}
 
 			if (!fmsg[i].keyboard.pressed) {
-				mprintf( "Keyboard releasing %d\n", fmsg[i].keyboard.code );
 				Event[i].ki.dwFlags |= KEYEVENTF_KEYUP;
 			}
 			else {
-				mprintf( "Keyboard pressing %d\n", fmsg[i].keyboard.code );
 				Event[i].ki.dwFlags |= 0;
 			}
 
