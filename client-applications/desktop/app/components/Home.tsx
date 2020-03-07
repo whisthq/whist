@@ -105,14 +105,9 @@ class Home extends Component {
       {
         this.props.os === 'win32'
         ?
-	        <div style = {{textAlign: 'right', paddingTop: 10, paddingRight: 20}}>
-	          <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 6}}>
-	             <FontAwesomeIcon className = {styles.windowControl} icon={faWindowMinimize} style = {{color: '#999999', height: 10}}/>
-	          </div>
-	          <div onClick = {this.CloseWindow} style = {{display: 'inline'}}>
-	             <FontAwesomeIcon className = {styles.windowControl} icon={faTimes} style = {{color: '#999999', height: 16}}/>
-	          </div>
-	        </div>
+        <div>
+          <Titlebar backgroundColor="#000000"/>
+        </div>
         :
         <div style = {{marginTop: 10}}></div>
       }

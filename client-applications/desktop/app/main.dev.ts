@@ -59,16 +59,9 @@ const createWindow = async () => {
       frame: false,
       center: true,
       resizable: false,
-      webPreferences:
-        process.env.NODE_ENV === 'development' || process.env.E2E_BUILD === 'true'
-          ? {
-              nodeIntegration: true,
-              devTools: true
-            }
-          : {
-              preload: path.join(__dirname, 'dist/renderer.prod.js'),
-              devTools: false
-            }
+      webPreferences: {
+        nodeIntegration: true
+      }
     });
   } else {
     mainWindow = new BrowserWindow({
@@ -79,16 +72,9 @@ const createWindow = async () => {
       center: true,
       resizable: false,
       maximizable: false,
-      webPreferences:
-        process.env.NODE_ENV === 'development' || process.env.E2E_BUILD === 'true'
-          ? {
-              nodeIntegration: true,
-              devTools: true
-            }
-          : {
-              preload: path.join(__dirname, 'dist/renderer.prod.js'),
-              devTools: false
-            }
+      webPreferences: {
+        nodeIntegration: true
+      }
     });
   }
 
