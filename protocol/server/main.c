@@ -9,10 +9,8 @@
 #include <shlwapi.h>
 
 #include "../include/fractal.h"
-#include "../include/videocapture.h"
 #include "../include/wasapicapture.h"
 #include "../include/videoencode.h"
-#include "../include/audioencode.h"
 #include "../include/dxgicapture.h"
 #include "../include/desktop.h"
 #include "../include/input.h"

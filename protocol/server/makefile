@@ -75,7 +75,7 @@ LD_FLAGS = \
   /nologo
 
 # build all files into executable
-all: clean fractal.obj aes.obj videoencode.obj audioencode.obj wasapicapture.obj dxgicapture.obj desktop.obj input.obj main.obj
+all: clean fractal.obj aes.obj videoencode.obj wasapicapture.obj dxgicapture.obj desktop.obj input.obj main.obj
 	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
@@ -89,10 +89,6 @@ aes.obj: ../include/aes.c
 # compile the video encoder source file into object file
 videoencode.obj: ../include/videoencode.c
 	$(CC) /c ../include/videoencode.c
-
-# compile the audio encoder source file into object file
-audioencode.obj: ../include/audioencode.c
-	$(CC) /c ../include/audioencode.c
 
 # compile the audio capture source file into object file
 wasapicapture.obj: ../include/wasapicapture.c
