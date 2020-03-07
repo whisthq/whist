@@ -538,11 +538,11 @@ int main(int argc, char* argv[])
     output_width = -1;
     output_height = -1;
 
-    if (argc >= 4) {
+    if (argc >= 4 && (atoi(argv[3]) > 0)) {
         output_width = atoi(argv[3]);
     }
 
-    if (argc >= 5) {
+    if (argc >= 5 && (atoi(argv[4]) > 0)) {
         output_height = atoi(argv[4]);
     }
 
