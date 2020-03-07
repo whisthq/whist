@@ -22,6 +22,5 @@ cp .fractal-protocol/lib/ffmpeg/macos/libavutil.56.dylib fractal-protocol/deskto
 cp .fractal-protocol/lib/ffmpeg/macos/libpostproc.55.dylib fractal-protocol/desktop
 cp .fractal-protocol/lib/ffmpeg/macos/libswresample.3.dylib fractal-protocol/desktop
 cp .fractal-protocol/lib/ffmpeg/macos/libswscale.5.dylib fractal-protocol/desktop
-cp .fractal-protocol/lib/openssl/macos/libcrypto.1.1.dylib fractal-protocol/desktop
 codesign -s "Fractal Computers, Inc." fractal-protocol/desktop/desktop
 yarn package
