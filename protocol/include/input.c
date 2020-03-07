@@ -357,8 +357,9 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 	for (i = 0; i < len; i++) {
 		// switch to fill in the Windows event depending on the FractalClientMessage type
 		switch (fmsg[i].type) {
-			// Windows event for keyboard action
 		case MESSAGE_KEYBOARD:
+			// Windows event for keyboard action
+
 			//Event[i].ki.wVk = windows_keycodes[fmsg[i].keyboard.code];
 			Event[i].type = INPUT_KEYBOARD;
 			Event[i].ki.time = 0; // system supplies timestamp
@@ -381,8 +382,8 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 			}
 
 			break;
-			// mouse motion event
 		case MESSAGE_MOUSE_MOTION:
+			// mouse motion event
 			Event[i].type = INPUT_MOUSE;
 			if(fmsg[i].mouseMotion.relative) {
 				Event[i].mi.dx = fmsg[i].mouseMotion.x * 0.9;
@@ -394,35 +395,48 @@ FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
 				Event[i].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
 			}
 			break;
-			// mouse button event
 		case MESSAGE_MOUSE_BUTTON:
+			// mouse button event
 			Event[i].type = INPUT_MOUSE;
 			Event[i].mi.dx = 0;
 			Event[i].mi.dy = 0;
+
 			// switch to parse button type
 			switch (fmsg[i].mouseButton.button) {
-				// leftclick
-			case 1:
+			case SDL_BUTTON_LEFT:
+				// left click
 				if (fmsg[i].mouseButton.pressed) {
 					Event[i].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
 				}
 				else {
 					Event[i].mi.dwFlags = MOUSEEVENTF_LEFTUP;
 				}
-				break; // inner switch
-			// right click
-			case 3:
+				break;
+			case SDL_BUTTON_MIDDLE:
+				// middle click
+				if( fmsg[i].mouseButton.pressed )
+				{
+					Event[i].mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
+				}
+				else {
+					Event[i].mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
+				}
+				break;
+			case SDL_BUTTON_RIGHT:
+				// right click
 				if (fmsg[i].mouseButton.pressed) {
 					Event[i].mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
 				}
 				else {
 					Event[i].mi.dwFlags = MOUSEEVENTF_RIGHTUP;
 				}
-				break; // inner switch
+				break;
 			}
+			// End emulating button click
+
 			break; // outer switch
-			  // mouse wheel event
 		case MESSAGE_MOUSE_WHEEL:
+			// mouse wheel event
 			Event[i].type = INPUT_MOUSE;
 			Event[i].mi.dwFlags = MOUSEEVENTF_WHEEL;
 			Event[i].mi.dx = 0;
