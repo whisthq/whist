@@ -1,14 +1,3 @@
-/*
- * This file contains the headers and definitions of the FFmpeg encoder functions
- * that encode the video frames.
-
- Protocol version: 1.0
- Last modification: 12/14/2019
-
- By: Philippe Noël
-
- Copyright Fractal Computers, Inc. 2019
-*/
 #ifndef VIDEO_ENCODE_H
 #define VIDEO_ENCODE_H
 

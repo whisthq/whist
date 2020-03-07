@@ -16,19 +16,19 @@
 #include <stdbool.h>
 
 #if defined(_WIN32)
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <process.h>
-#include <windows.h>
-#include <synchapi.h>
-#pragma comment (lib, "ws2_32.lib")
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
+	#include <process.h>
+	#include <windows.h>
+	#include <synchapi.h>
+	#pragma comment (lib, "ws2_32.lib")
 #else
-#include <unistd.h>
-#include <errno.h>
+	#include <unistd.h>
+	#include <errno.h>
 
-// adapt windows error codes
-#define WSAETIMEDOUT ETIMEDOUT
-#define WSAEWOULDBLOCK EWOULDBLOCK
+	// adapt windows error codes
+	#define WSAETIMEDOUT ETIMEDOUT
+	#define WSAEWOULDBLOCK EWOULDBLOCK
 #endif
 
 #include "ffmpeg/libavcodec/avcodec.h"
@@ -68,10 +68,6 @@
 	#define SOCKET int
 	#define closesocket close
 
-	#if defined(__APPLE__)
-		// this one is apple specific
-		#include <CoreGraphics/CGDisplayConfiguration.h>
-	#endif
 
 	#include <sys/socket.h>
 	#include <sys/types.h>
@@ -745,15 +741,6 @@ typedef struct Frame {
 
 /*** FRACTAL FUNCTIONS START ***/
 
-/*
-/// @brief destroy the server sockets and threads, and WSA for windows
-/// @details if full=true, destroys everything, else only current connection
-FractalStatus ServerDestroy(SOCKET sockets[], HANDLE threads[], bool full);
-
-/// @brief initialize the listen socket (TCP path)
-/// @details initializes windows socket, creates and binds our listen socket
-SOCKET ServerInit(SOCKET listensocket, FractalConfig config);
-*/
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_s, int stun_timeout_ms);
 int recvp(struct SocketContext* context, void* buf, int len);

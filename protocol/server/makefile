@@ -17,7 +17,7 @@ STATIC_LIBS = \
   ../lib/ffmpeg/windows/swresample.lib \
   ../lib/ffmpeg/windows/swscale.lib \
   ../lib/SDL2/windows/SDL2.lib \
-  ../lib/openssl/windows/libcryptoMT.lib
+  ../lib/openssl/windows/libcrypto.lib
   
 # compiler flags
 CFLAGS = \
@@ -74,9 +74,8 @@ LD_FLAGS = \
   /nodefaultlib \
   /nologo
 
-
 # build all files into executable
-all: clean fractal.obj aes.obj videocapture.obj audiocapture.obj videoencode.obj audioencode.obj socket.obj wasapicapture.obj dxgicapture.obj desktop.obj input.obj main.obj
+all: clean fractal.obj aes.obj videoencode.obj audioencode.obj wasapicapture.obj dxgicapture.obj desktop.obj input.obj main.obj
 	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
@@ -87,14 +86,6 @@ fractal.obj: ../include/fractal.c
 aes.obj: ../include/aes.c
   $(CC) /c $(CFLAGS) ../include/aes.c
 
-# compile the video capture source file into object file
-videocapture.obj: ../include/videocapture.c
-	$(CC) /c ../include/videocapture.c
-
-# compile the audio capture source file into object file
-audiocapture.obj: ../include/audiocapture.c
-	$(CC) /c ../include/audiocapture.c
-
 # compile the video encoder source file into object file
 videoencode.obj: ../include/videoencode.c
 	$(CC) /c ../include/videoencode.c
@@ -103,18 +94,19 @@ videoencode.obj: ../include/videoencode.c
 audioencode.obj: ../include/audioencode.c
 	$(CC) /c ../include/audioencode.c
 
-socket.obj: ../include/socket.c
-  $(CC) /c ../include/socket.c
-  
+# compile the audio capture source file into object file
 wasapicapture.obj: ../include/wasapicapture.c
   $(CC) /c ../include/wasapicapture.c
 
+# compile the video capture source file into object file
 dxgicapture.obj: ../include/dxgicapture.c
   $(CC) /c ../include/dxgicapture.c
 
+# compile the desktop setting source file into object file
 desktop.obj: ../include/desktop.c
   $(CC) /c ../include/desktop.c
 
+# compile the input handling source file into object file
 input.obj: ../include/input.c
   $(CC) /c ../include/input.c
 

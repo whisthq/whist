@@ -1,13 +1,13 @@
+*.o
 *.obj
 *.iml
 *.pyc
 .vs/
 .vscode/
+.vscode/settings.json
 .idea/
 *.exe
 *.pdb
 *.ilk
-*.o
 .DS_Store
 desktop/desktop
-

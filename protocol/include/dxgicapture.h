@@ -13,17 +13,6 @@
 
 #include "fractal.h" // contains all the headers
 
-/*
- * This file contains the implementation of DXGI screen capture.
-
- Protocol version: 1.0
- Last modification: 1/15/2020
-
- By: Ming Ying
-
- Copyright Fractal Computers, Inc. 2020
-*/
-
 struct ScreenshotContainer {
   IDXGIResource *desktop_resource;
   ID3D11Texture2D *final_texture;

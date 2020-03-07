@@ -2,24 +2,13 @@
 
 This repository contains the source code for the Fractal Protocol, which streams
 in real-time a desktop environment from a virtual machine (cloud computer) to a
-user's local client (Desktop OSes, iOS, Android, Cube/Slate (RPi), etc.). The
-protocol is designed to achieve as low latency as possible so to offer a fully
-fluid experience to users for any use, even the most demanding (watching videos,
-gaming, etc.).
+user's local client (Desktop OSes, iOS, Android, Cube/Slate (RPi), etc.) at ultra-low latency.
 
-This repository contains both the source code for the server, which runs
-exclusively on Windows 10, and for multiple clients (Windows, MacOS, Linux, iOS,
-Android, Web). The following are left to implement:
+The Protocol Server runs on Windows 10 virtual machines.
 
-- Server (Windows 10)
-- Windows Client
-- MacOS Client
-- Linux Client
-- iOS/iPadOS Client
-- Android Client
-- Web Client
+The Protocol Clients are divided into four categories:
+- Desktop (Windows, MacOS, Linux Ubuntu)
+- iOS/iPadOS
+- Android/Chromebook
+- Web
 
-In order to achieve low latency, a standard Remote Desktop Protocol (RDP) is not
-efficient enough for Fractal's needs. Our protocol is based on a light UDP stream
-with minimal headers (think RTP) and uses H.264/H.265 for encoding, sending
-user actions back via TCP from SDL2.

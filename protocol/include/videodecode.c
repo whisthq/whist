@@ -1,14 +1,3 @@
-/*
- * This file contains the implementation of the FFmpeg decoder functions
- * that decode the video frames.
-
- Protocol version: 1.0
- Last modification: 12/14/2019
-
- By: Philippe Noël
-
- Copyright Fractal Computers, Inc. 2019
-*/
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -17,8 +6,7 @@
 
 static enum AVPixelFormat hw_pix_fmt;
 static AVBufferRef *hw_device_ctx = NULL;
-/// @brief creates decoder decoder
-/// @details creates FFmpeg decoder
+
 
 void swap_decoder(void *ptr, int level, const char *fmt, va_list vargs)
 {
@@ -52,22 +40,6 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx, const enum AVPixelForm
     mprintf(stderr, "Failed to get HW surface format.\n");
     return AV_PIX_FMT_NONE;
 }
-
-/*
-void set_decoder(bool hardware) {
-  if(hardware) {
-    #if defined(_WIN32)
-      type = DECODE_TYPE_QSV;
-    #elif __APPLE__
-      type = DECODE_TYPE_VIDEOTOOLBOX;
-    #else // linux
-      type = DECODE_TYPE_VAAPI;
-    #endif
-  } else {
-    type = DECODE_TYPE_SOFTWARE;
-  }
-}
-*/
 
 
 video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width, int out_height, bool use_hardware) {
