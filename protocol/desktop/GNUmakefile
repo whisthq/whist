@@ -10,6 +10,7 @@ CC = gcc
 # specify platform
 PLATFORM = linux
 
+# dynamic libs to link against
 DYNAMIC_LIBS = \
     ../lib/ffmpeg/linux/libavcodec.so.58.100 \
 	../lib/ffmpeg/linux/libavdevice.so.58.8.100 \
@@ -18,7 +19,8 @@ DYNAMIC_LIBS = \
 	../lib/ffmpeg/linux/libavutil.so.56.31.100 \
 	../lib/ffmpeg/linux/libpostproc.so.55.5.100 \
 	../lib/ffmpeg/linux/libswresample.so.3.5.100 \
-	../lib/ffmpeg/linux/libswscale.so.5.5.100
+	../lib/ffmpeg/linux/libswscale.so.5.5.100 \
+	../lib/mfx/linux/libmfx.so.1.32
 
 # system libs to link against
 SHARED_LIBS = \
@@ -26,7 +28,6 @@ SHARED_LIBS = \
 	-ldl \
 	-lpthread
 endif
-
 
 ################## MACOS ##################
 ifeq ($(UNAME), Darwin)
@@ -67,26 +68,24 @@ SHARED_LIBS = \
 	-framework QuartzCore
 endif
 
-
 ################## COMMON ##################
 # executable name
 BIN_NAME = desktop
+
+# static libs to link against
+STATIC_LIBS = \
+	../lib/SDL2/$(PLATFORM)/libSDL2.a \
+	../lib/openssl/$(PLATFORM)/libcrypto.a
 
 # files to build into object files
 OBJS = \
 	fractal.o \
 	videodecode.o \
 	audiodecode.o \
-	linkedlist.o \
 	video.o \
 	audio.o \
 	main.o \
 	aes.o
-
-# static libs to link against
-STATIC_LIBS = \
-	../lib/SDL2/$(PLATFORM)/libSDL2.a \
-	../lib/openssl/$(PLATFORM)/libcrypto.a
 
 # compiler flags
 CFLAGS = \
@@ -113,23 +112,19 @@ videodecode.o:
 audiodecode.o:
 	$(CC) -c ../include/audiodecode.c
 
-# compile the linked list source file into object file
-linkedlist.o:
-	$(CC) -c ../include/linkedlist.c
-
 # compile the aes source file into object file
 aes.o:
 	$(CC) -c ../include/aes.c
 
-# compile the source main file into object file
+# compile the main video source file into object file
 video.o:
 	$(CC) -c video.c
 
-# compile the source main file into object file
+# compile the main audio source file into object file
 audio.o:
 	$(CC) -c audio.c
 
-# compile the source main file into object file
+# compile the main source file into object file
 main.o:
 	$(CC) -c main.c
 

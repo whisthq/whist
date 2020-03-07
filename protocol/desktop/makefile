@@ -19,7 +19,7 @@ STATIC_LIBS = \
   ../lib/ffmpeg/windows/swscale.lib \
   ../lib/SDL2/windows/SDL2.lib \
   ../lib/mfx/windows/libmfx.lib \
-  ../lib/openssl/windows/libcryptoMT.lib
+  ../lib/openssl/windows/libcrypto.lib
 
 # compiler flags
 CFLAGS = \
@@ -57,7 +57,7 @@ LD_FLAGS = \
   /nologo
 
 # build all files into executable
-all: clean fractal.obj aes.obj videodecode.obj audiodecode.obj linkedlist.obj video.obj audio.obj main.obj
+all: clean fractal.obj aes.obj videodecode.obj audiodecode.obj video.obj audio.obj main.obj
   link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
@@ -76,19 +76,15 @@ videodecode.obj: ../include/videodecode.c
 audiodecode.obj: ../include/audiodecode.c
   $(CC) /c $(CFLAGS) ../include/audiodecode.c
 
-# compile the linked list source file into object file
-linkedlist.obj: ../include/linkedlist.c
-  $(CC) /c $(CFLAGS) ../include/linkedlist.c
-
-# compile the source main file into object file
+# compile the main video source file into object file
 video.obj: video.c
   $(CC) /c $(CFLAGS) video.c
 
-# compile the source main file into object file
+# compile the main audio source file into object file
 audio.obj: audio.c
   $(CC) /c $(CFLAGS) audio.c
 
-# compile the source main file into object file
+# compile the main source file into object file
 main.obj: main.c
   $(CC) /c $(CFLAGS) main.c
 

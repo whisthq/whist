@@ -6,4 +6,8 @@ It should be easily built via `make` (on MacOS and Linux) or `nmake` (on Windows
 
 ## Running
 
-```client username password```
+```desktop [IP ADDRESS] [AES PRIVATE KEY] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```
+
+or (MacOS, Linux)
+
+```./desktop [IP ADDRESS] [AES PRIVATE KEY] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```
