@@ -57,7 +57,7 @@ LD_FLAGS = \
   /nologo
 
 # build all files into executable
-all: clean fractal.obj aes.obj webserver.obj videodecode.obj audiodecode.obj linkedlist.obj video.obj audio.obj main.obj
+all: clean fractal.obj aes.obj videodecode.obj audiodecode.obj linkedlist.obj video.obj audio.obj main.obj
   link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
@@ -67,10 +67,6 @@ fractal.obj: ../include/fractal.c
 # compile the aes source file into object file
 aes.obj: ../include/aes.c
   $(CC) /c $(CFLAGS) ../include/aes.c
-
-# compile the webserver source file into object file
-webserver.obj: ../include/webserver.c
-  $(CC) /c $(CFLAGS) ../include/webserver.c
 
 # compile the video decoder source file into object file
 videodecode.obj: ../include/videodecode.c

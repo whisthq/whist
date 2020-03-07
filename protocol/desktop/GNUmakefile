@@ -10,13 +10,20 @@ CC = gcc
 # specify platform
 PLATFORM = linux
 
+DYNAMIC_LIBS = \
+    ../lib/ffmpeg/linux/libavcodec.so.58.100 \
+	../lib/ffmpeg/linux/libavdevice.so.58.8.100 \
+	../lib/ffmpeg/linux/libavfilter.so.7.57.100 \
+	../lib/ffmpeg/linux/libavformat.so.58.29.100 \
+	../lib/ffmpeg/linux/libavutil.so.56.31.100 \
+	../lib/ffmpeg/linux/libpostproc.so.55.5.100 \
+	../lib/ffmpeg/linux/libswresample.so.3.5.100 \
+	../lib/ffmpeg/linux/libswscale.so.5.5.100
+
 # system libs to link against
 SHARED_LIBS = \
 	-lm \
 	-ldl \
-	-lswscale \
-	-lavutil \
-	-lavcodec \
 	-lpthread
 endif
 
@@ -68,7 +75,6 @@ BIN_NAME = desktop
 # files to build into object files
 OBJS = \
 	fractal.o \
-	webserver.o \
 	videodecode.o \
 	audiodecode.o \
 	linkedlist.o \
@@ -98,10 +104,6 @@ all: clean clear $(OBJS)
 # compile the main fractal header source file into object file
 fractal.o:
 	$(CC) -c ../include/fractal.c
-
-# compile the webserver source file into object file
-webserver.o:
-	$(CC) -c ../include/webserver.c
 
 # compile the video decoder source file into object file
 videodecode.o:

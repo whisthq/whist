@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "../include/fractal.h"
-#include "../include/webserver.h" // header file for webserver query functions
 #include "../include/linkedlist.h" // header file for audio decoder
 #include "../include/aes.h"
 
