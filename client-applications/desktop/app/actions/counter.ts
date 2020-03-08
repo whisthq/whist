@@ -9,6 +9,8 @@ export const STORE_DISTANCE      = "STORE_DISTANCE";
 export const SEND_FEEDBACK       = "SEND_FEEDBACK";
 export const RESET_FEEDBACK      = "RESET_FEEDBACK";
 export const SET_OS              = "SET_OS";
+export const ASK_FEEDBACK        = "ASK_FEEDBACK";
+export const CHANGE_WINDOW       = "CHANGE_WINDOW"
 
 export function loginUser(username, password) {
 	console.log("login action fired")
@@ -74,4 +76,18 @@ export function setOS(os) {
     type: SET_OS,
     os
   }
+}
+
+export function askFeedback(ask) {
+	return {
+		type: ASK_FEEDBACK,
+		ask
+	}
+}
+
+export function changeWindow(window) {
+	return {
+		type: CHANGE_WINDOW,
+		window
+	}
 }

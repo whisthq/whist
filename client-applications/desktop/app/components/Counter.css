@@ -172,3 +172,18 @@ button {
   cursor: pointer;
   background-color: #72cbed;
 }
+
+/* width */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #0F1123;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #5EC4EB;
+}
