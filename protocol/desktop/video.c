@@ -169,7 +169,12 @@ int32_t RenderScreen(void* opaque) {
             updateWidthAndHeight(frame->width, frame->height);
         }
 
-        video_decoder_decode(videoContext.decoder, frame->compressed_frame, frame->size);
+        if( !video_decoder_decode( videoContext.decoder, frame->compressed_frame, frame->size ) )
+        {
+            mprintf( "Failed to video_decoder_decode!\n" );
+            rendering = false;
+            continue;
+        }
 
         AVPicture pict;
         pict.data[0] = videoContext.yPlane;

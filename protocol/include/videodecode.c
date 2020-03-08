@@ -221,7 +221,7 @@ void destroy_video_decoder(video_decoder_t*decoder) {
 
 /// @brief decode a frame using the decoder decoder
 /// @details decode an encoded frame under YUV color format into RGB frame
-void *video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size) {
+bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size) {
   // init packet to prepare decoding
   // av_log_set_level(AV_LOG_ERROR);
   // av_log_set_callback(swap_decoder);
@@ -235,6 +235,11 @@ void *video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_siz
     decoder->packet.size = buffer_size;
     // decode the frame
     ret = avcodec_decode_video2(decoder->context, decoder->sw_frame, &success, &decoder->packet);
+    if( ret < 0 )
+    {
+        mprintf( "Failed to avcodec_decode_video2!\n" );
+        return false;
+    }
 
     // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
 
@@ -244,16 +249,19 @@ void *video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_siz
     decoder->packet.size = buffer_size;
 
     if(avcodec_send_packet(decoder->context, &decoder->packet) < 0) {
-      return NULL;
+        mprintf( "Failed to avcodec_send_packet!\n" );
+      return false;
     }
 
     if(avcodec_receive_frame(decoder->context, decoder->hw_frame) < 0) {
-      return NULL;
+        mprintf( "Failed to avcodec_receive_frame!\n" );
+      return false;
     }
 
     if (decoder->hw_frame->format == hw_pix_fmt) {
         if (av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0) < 0) {
-            return NULL;
+            mprintf( "Failed to av_hwframe_transfer_data!\n" );
+            return false;
         }
     }
   }

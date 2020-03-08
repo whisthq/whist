@@ -27,7 +27,7 @@ typedef struct {
 
 /// @brief creates encoder device
 /// @details creates FFmpeg encoder
-video_decoder_t*create_video_decoder(int in_width, int in_height, int out_width, int out_height, bool use_hardware);
+video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width, int out_height, bool use_hardware);
 
 /// @brief destroy decoder device
 /// @details frees FFmpeg decoder memory
@@ -35,6 +35,6 @@ void destroy_video_decoder(video_decoder_t*decoder);
 
 /// @brief decodes a frame using the decoder device
 /// @details decode an encoded frame under YUV color format into RGB frame
-void *video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size);
+bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size);
 
 #endif // ENCODE_H
