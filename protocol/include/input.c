@@ -10,7 +10,8 @@
 */
 #include "input.h" // header file for this file
 
-#if defined(_WIN32)
+#define USE_NUMPAD 0x1000
+
 // @brief Windows keycodes for replaying SDL user inputs on server
 // @details index is SDL keycode, value is Windows keycode
 const int windows_keycodes[NUM_KEYCODES] = {
@@ -54,7 +55,7 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	0x38, // 37 -> 8
 	0x39, // 38 -> 9
 	0x30, // 39 -> 0
-	0x0D, // 40 -> Enter
+	VK_RETURN, // 40 -> Enter
 	0x1B, // 41 -> Escape
 	VK_BACK, // 42 -> Backspace
 	0x09, // 43 -> Tab
@@ -72,18 +73,18 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	VK_OEM_PERIOD, // 55 -> Period
 	VK_OEM_2, // 56 -> Forward Slash
 	VK_CAPITAL, // 57 -> Capslock
-	0x70, // 58 -> F1
-	0x71, // 59 -> F2
-	0x72, // 60 -> F3
-	0x73, // 61 -> F4
-	0x74, // 62 -> F5
-	0x75, // 63 -> F6
-	0x76, // 64 -> F7
-	0x77, // 65 -> F8
-	0x78, // 66 -> F9
-	0x79, // 67 -> F10
-	0x7A, // 68 -> F11
-	0x7B, // 69 -> F12
+	VK_F1, // 58 -> F1
+	VK_F2, // 59 -> F2
+	VK_F3, // 60 -> F3
+	VK_F4, // 61 -> F4
+	VK_F5, // 62 -> F5
+	VK_F6, // 63 -> F6
+	VK_F7, // 64 -> F7
+	VK_F8, // 65 -> F8
+	VK_F9, // 66 -> F9
+	VK_F10, // 67 -> F10
+	VK_F11, // 68 -> F11
+	VK_F12, // 69 -> F12
 	VK_SNAPSHOT, // 70 -> Print Screen
 	VK_SCROLL, // 71 -> Scroll Lock
 	VK_PAUSE, // 72 -> Pause
@@ -93,16 +94,16 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	VK_DELETE, // 76 -> Delete
 	VK_END, // 77 -> End
 	VK_NEXT, // 78 -> Pagedown
-	0x27, // 79 -> Right
-	0x25, // 80 -> Left
-	0x28, // 81 -> Down
-	0x26, // 82 -> Up
-	0x90, // 83 -> Numlock
+	VK_RIGHT, // 79 -> Right
+	VK_LEFT, // 80 -> Left
+	VK_DOWN, // 81 -> Down
+	VK_UP, // 82 -> Up
+	VK_NUMLOCK, // 83 -> Numlock
 	VK_DIVIDE, // 84 -> Numeric Keypad Divide
 	VK_MULTIPLY, // 85 -> Numeric Keypad Multiply
-	0x6B, // 86 -> Numeric Keypad Minus
+	VK_SUBTRACT, // 86 -> Numeric Keypad Minus
 	VK_ADD, // 87 -> Numeric Keypad Plus
-	0x0D, // 88 -> Numeric Keypad Enter
+	VK_RETURN + USE_NUMPAD, // 88 -> Numeric Keypad Enter
 	0x61, // 89 -> Numeric Keypad 1
 	0x62, // 90 -> Numeric Keypad 2
 	0x63, // 91 -> Numeric Keypad 3
@@ -115,25 +116,25 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	0x60, // 98 -> Numeric Keypad 0
 	VK_DECIMAL, // 99 -> Numeric Keypad Period
 	NULL, // 100 -> no SDL keycode at index 100
-	0x5D, // 101 -> Application
+	VK_APPS, // 101 -> Application
 	NULL, // 102 -> no SDL keycode at index 102
 	NULL, // 103 -> no SDL keycode at index 103
-	0x7C, // 104 -> F13
-	0x7D, // 105 -> F14
-	0x7E, // 106 -> F15
-	0x7F, // 107 -> F16
-	0x80, // 108 -> F17
-	0x81, // 109 -> F18
-	0x82, // 110 -> F19
-	NULL, // 111 -> no SDL keycode at index 111
-	NULL, // 112 -> no SDL keycode at index 112
-	NULL, // 113 -> no SDL keycode at index 113
-	NULL, // 114 -> no SDL keycode at index 114
-	NULL, // 115 -> no SDL keycode at index 115
-	NULL, // 116 -> no SDL keycode at index 116
-	NULL, // 117 -> no SDL keycode at index 117
+	VK_F13, // 104 -> F13
+	VK_F14, // 105 -> F14
+	VK_F15, // 106 -> F15
+	VK_F16, // 107 -> F16
+	VK_F17, // 108 -> F17
+	VK_F18, // 109 -> F18
+	VK_F19, // 110 -> F19
+	VK_F20, // 111 -> F20
+	VK_F21, // 112 -> F21
+	VK_F22, // 113 -> F22
+	VK_F23, // 114 -> F23
+	VK_F24, // 115 -> F24
+	VK_EXECUTE, // 116 -> Execute
+	VK_HELP, // 117 -> Help
 	NULL, // 118 -> Menu
-	NULL, // 119 -> no SDL keycode at index 119
+	VK_SELECT, // 119 -> Select
 	NULL, // 120 -> no SDL keycode at index 120
 	NULL, // 121 -> no SDL keycode at index 121
 	NULL, // 122 -> no SDL keycode at index 122
@@ -271,15 +272,14 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	NULL, // 254 -> no SDL keycode at index 254
 	NULL, // 255 -> no SDL keycode at index 255
 	NULL, // 256 -> no SDL keycode at index 256
-	NULL, // 257 -> no SDL keycode at index 257
+	VK_MODECHANGE, // 257 -> ModeSwitch
 	VK_MEDIA_NEXT_TRACK, // 258 -> Audio/Media Next
 	VK_MEDIA_PREV_TRACK, // 259 -> Audio/Media Prev
 	VK_MEDIA_STOP, // 260 -> Audio/Media Stop
 	VK_MEDIA_PLAY_PAUSE, // 261 -> Audio/Media Play
 	VK_VOLUME_MUTE, // 262 -> Audio/Media Mute
-	VK_LAUNCH_MEDIA_SELECT, // 263 -> Media Select
-	0x7FFFFFFF };
-#endif
+	VK_LAUNCH_MEDIA_SELECT // 263 -> Media Select
+};
 
 
 int GetWindowsKeyCode(int sdl_keycode) {
@@ -306,9 +306,9 @@ void updateKeyboardState( struct FractalClientMessage* fmsg )
 
 		if( windows_keycode )
 		{
-			ip.ki.wScan = MapVirtualKeyA( windows_keycode, MAPVK_VK_TO_VSC_EX );
+			ip.ki.wScan = MapVirtualKeyA( windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX );
 			ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
-			if( ip.ki.wScan >> 8 == 0xE0 )
+			if( ip.ki.wScan >> 8 == 0xE0 || (windows_keycode & USE_NUMPAD))
 			{
 				ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
 				ip.ki.wScan &= 0xFF;
@@ -327,9 +327,9 @@ void updateKeyboardState( struct FractalClientMessage* fmsg )
 
 		if( windows_keycode )
 		{
-			ip.ki.wScan = MapVirtualKeyA( windows_keycode, MAPVK_VK_TO_VSC );
+			ip.ki.wScan = MapVirtualKeyA( windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC );
 			ip.ki.dwFlags = KEYEVENTF_SCANCODE;
-			if( ip.ki.wScan >> 8 == 0xE0 )
+			if( ip.ki.wScan >> 8 == 0xE0 || (windows_keycode & USE_NUMPAD) )
 			{
 				ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
 				ip.ki.wScan &= 0xFF;
