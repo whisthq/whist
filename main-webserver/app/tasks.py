@@ -40,6 +40,12 @@ def fetchAll(self, update):
             'username': entry.os_profile.admin_username,
             'ip': vm_ip
         }
+        
+        if entry.name in current_names:
+            for vm in current_vms:
+                if entry.name == vm['vm_name']:
+                    vm_info['username'] = vm['vm_username']
+
         vms['value'].append(vm_info)
         vm_usernames.append(entry.os_profile.admin_username)
         vm_names.append(entry.name)
