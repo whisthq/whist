@@ -266,5 +266,5 @@ bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size
     }
   }
 
-  return NULL;
+  return true;
 }
