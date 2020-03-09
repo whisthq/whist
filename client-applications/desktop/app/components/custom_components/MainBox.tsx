@@ -51,8 +51,8 @@ class MainBox extends Component {
           var path = "TODO"
         }
 
-        var screenWidth = this.state.windowMode ? window.screen.width : 0
-        var screenHeight = this.state.windowMode ? (window.screen.height - 70) : 0
+        var screenWidth = this.state.windowMode ? window.screen.width : window.screen.width
+        var screenHeight = this.state.windowMode ? (window.screen.height - 70) : window.screen.height
 
         var parameters = [this.props.public_ip, 123, screenWidth, screenHeight, this.state.mbps]
 
