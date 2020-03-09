@@ -145,15 +145,12 @@ button {
 
 
 .bigBox, .statBox {
-  -webkit-transition: ease-out 0.4s;
-  -moz-transition: ease-out 0.4s;
-  transition: ease-out 0.4s;
   box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.35);
 }
 
 .bigBox:hover {
   cursor:pointer;
-  transform: scale(1.02);
+  transform: scale(1.01);
 }
 
 .feedbackButton {

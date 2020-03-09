@@ -52,7 +52,7 @@ class MainBox extends Component {
         }
 
         var screenWidth = this.state.windowMode ? window.screen.width : 0
-        var screenHeight = this.state.windowMode ? (window.screen.height - 80) : 0
+        var screenHeight = this.state.windowMode ? (window.screen.height - 70) : 0
 
         var parameters = [this.props.public_ip, 123, screenWidth, screenHeight, this.state.mbps]
 
@@ -94,7 +94,9 @@ class MainBox extends Component {
 
     storage.get('settings', function(error, data) {
       if (error) throw error;
-      component.setState({mbps: data.mbps})
+      if(data.mbps) {
+        component.setState({mbps: data.mbps})
+      }
     });
 
     storage.get('window', function(error, data) {
