@@ -609,10 +609,6 @@ int main(int argc, char* argv[])
 
         if (CreateUDPContext(&PacketSendContext, "C", server_ip, PORT_CLIENT_TO_SERVER, 10, 500) < 0) {
             mprintf("Failed to connect to server\n");
-            if( try_amount == 0 )
-            {
-                exiting = true;
-            }
             continue;
         }
 
@@ -622,10 +618,6 @@ int main(int argc, char* argv[])
         if (CreateUDPContext(&PacketReceiveContext, "C", server_ip, PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             mprintf("Failed finish connection to server\n");
             closesocket(PacketSendContext.s);
-            if( try_amount == 0 )
-            {
-                exiting = true;
-            }
             continue;
         }
 
