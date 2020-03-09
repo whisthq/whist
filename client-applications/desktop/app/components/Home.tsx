@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import { connect, bindActionCreators } from 'react-redux';
 import { Link, useHistory } from 'react-router-dom';
 import { configureStore, history } from '../store/configureStore';
+
 import routes from '../constants/routes.json';
 import styles from './Home.css';
 import Titlebar from 'react-electron-titlebar';
@@ -10,10 +11,11 @@ import Logo from "../../resources/images/logo.svg";
 import UserIcon from "../../resources/images/user.svg";
 import LockIcon from "../../resources/images/lock.svg";
 
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
 
-import { storeUserInfo, loginUser } from "../actions/counter"
+import { storeUserInfo, loginUser, setOS } from "../actions/counter"
 
 class Home extends Component {
   constructor(props) {
@@ -34,7 +36,7 @@ class Home extends Component {
 
     win.minimize()
   }
-  
+
 
   UpdateUsername = (evt) => {
   	this.setState({
@@ -86,6 +88,8 @@ class Home extends Component {
 
   componentDidMount() {
     var appVersion = require('../package.json').version;
+    const os = require('os')
+    this.props.dispatch(setOS(os.platform()))
     this.setState({version: appVersion})
   	if(this.props.username && this.props.public_ip) {
   		history.push('/counter')
@@ -98,14 +102,15 @@ class Home extends Component {
       <div style = {{position: 'absolute', bottom: 15, right: 15, fontSize: 11, color: "#D1D1D1"}}>
         Version: {this.state.version}
       </div>
-	        <div style = {{textAlign: 'right', paddingTop: 10, paddingRight: 20}}>
-	          <div onClick = {this.MinimizeWindow} style = {{display: 'inline', paddingRight: 25, position: 'relative', bottom: 6}}>
-	             <FontAwesomeIcon className = {styles.windowControl} icon={faWindowMinimize} style = {{color: '#999999', height: 10}}/>
-	          </div>
-	          <div onClick = {this.CloseWindow} style = {{display: 'inline'}}>
-	             <FontAwesomeIcon className = {styles.windowControl} icon={faTimes} style = {{color: '#999999', height: 16}}/>
-	          </div>
-	        </div>
+      {
+        this.props.os === 'win32'
+        ?
+        <div>
+          <Titlebar backgroundColor="#000000"/>
+        </div>
+        :
+        <div style = {{marginTop: 10}}></div>
+      }
 		    <div className = {styles.landingHeader}>
 		      <div className = {styles.landingHeaderLeft}>
 		        <img src = {Logo} width = "20" height = "20"/>
@@ -157,10 +162,11 @@ class Home extends Component {
 }
 
 function mapStateToProps(state) {
-  return { 
+  return {
     username: state.counter.username,
     public_ip: state.counter.public_ip,
-    warning: state.counter.warning
+    warning: state.counter.warning,
+    os: state.counter.os
   }
 }
 

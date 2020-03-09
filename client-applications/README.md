@@ -6,7 +6,7 @@ The applications are divided into four categories:
 
 - Desktop (Windows, MacOS, Linux Ubuntu)
   - Windows is supported
-  - MacOS is supported
+  - Need to add support for MacOS
   - Need to add support for Linux 
   
 - iOS/iPadOS

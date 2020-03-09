@@ -1,7 +1,8 @@
 {
-  "name": "Fractal",
-  "productName": "Fractal Dashboard",
-  "description": "Fractal Cloud PC Dashboard",
+  "name": "fractal",
+  "license": "MIT",
+  "productName": "Fractal",
+  "description": "Fractal",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
     "build-dll": "cross-env NODE_ENV=development webpack --config ./configs/webpack.config.renderer.dev.dll.babel.js --colors",
@@ -50,8 +51,9 @@
     ]
   },
   "build": {
+    "appId": "com.fractalcomputers.fractal",
     "productName": "Fractal",
-    "appId": "com.fractalcomputers",
+    "copyright": "Copyright © Fractal Computers, Inc.",
     "artifactName": "Fractal.${ext}",
     "files": [
       "dist/",
@@ -67,6 +69,7 @@
       "fractal-protocol/"
     ],
     "dmg": {
+      "sign": false,
       "contents": [
         {
           "x": 130,
@@ -80,6 +83,19 @@
         }
       ]
     },
+    "mac": {
+      "icon": "build/logo.icns",
+      "target": [
+        "zip",
+        "dmg"
+      ],
+      "category": "Business",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "gatekeeperAssess": false
+    },
+    "afterSign": "build/notarize.js",
     "win": {
       "target": [
         "nsis"
@@ -115,7 +131,6 @@
       "email": "phil@fractalcomputers.com"
     }
   ],
-  "license": "MIT",
   "keywords": [
     "fractal"
   ],
@@ -198,6 +213,7 @@
     "electron": "7.1.13",
     "electron-builder": "^22.3.2",
     "electron-devtools-installer": "^2.2.4",
+    "electron-notarize": "^0.2.1",
     "electron-rebuild": "^1.10.0",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.2",
@@ -249,7 +265,7 @@
     "webpack-cli": "^3.3.10",
     "webpack-dev-server": "^3.10.1",
     "webpack-merge": "^4.2.2",
-    "yarn": "^1.21.1"
+    "yarn": "^1.22.1"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.12.1",
@@ -258,11 +274,17 @@
     "@fortawesome/react-fontawesome": "^0.1.8",
     "@hot-loader/react-dom": "^16.11.0",
     "@typeform/embed": "^0.16.0",
+    "app-root-dir": "^1.0.2",
+    "app-root-path": "^3.0.0",
     "connected-react-router": "^6.6.1",
     "core-js": "^3.6.4",
     "devtron": "^1.4.0",
+    "dotenv": "^8.2.0",
     "electron-debug": "^3.0.1",
+    "electron-json-storage": "^4.1.8",
     "electron-log": "^4.0.7",
+    "electron-store": "^5.1.1",
+    "electron-titlebar": "^0.0.3",
     "electron-updater": "^4.2.0",
     "geoip-lite": "^1.4.0",
     "geolib": "^3.2.1",
@@ -275,9 +297,12 @@
     "react-electron-titlebar": "^1.0.9",
     "react-geolocated": "^3.0.1",
     "react-hot-loader": "^4.12.19",
+    "react-input-slider": "^5.1.4",
     "react-redux": "^7.2.0",
     "react-router": "^5.1.2",
     "react-router-dom": "^5.1.2",
+    "react-toggle": "^4.1.1",
+    "react-toggle-button": "^2.2.0",
     "react-typeform-embed": "^0.2.1",
     "reactjs-popup": "^1.5.0",
     "redux": "^4.0.5",

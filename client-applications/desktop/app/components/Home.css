@@ -157,3 +157,17 @@ button {
 }
 
 
+.rememberMeContainer {
+  margin-top: 20px;
+  color: white;
+  font-size: 12px;
+}
+
+#remember-me {
+  background-color: rgba(0, 0, 0, 0.0);
+  border: solid 1px white;
+  margin-right: 5px;
+  position: relative;
+  top: 3px;
+}
+
