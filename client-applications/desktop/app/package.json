@@ -1,8 +1,8 @@
 {
   "name": "fractal",
   "license": "MIT",
-  "productName": "Fractal Desktop Application",
-  "description": "Fractal Desktop Application",
+  "productName": "Fractal",
+  "description": "Fractal",
   "version": "1.1.5",
   "main": "./main.prod.js",
   "author": {
