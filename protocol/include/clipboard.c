@@ -8,7 +8,6 @@ ClipboardData GetClipboard()
 
 	int cf_types[] = {
 		CF_TEXT,
-		CF_UNICODETEXT,
 		CF_DIBV5,
 	};
 
