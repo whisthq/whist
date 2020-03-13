@@ -116,6 +116,13 @@ void update() {
 
 int SendFmsg( struct FractalClientMessage* fmsg )
 {
+    if( fmsg->type == MESSAGE_CLIPBOARD )
+    {
+        for( int i = 0; i < fmsg->clipboard.size; i++ )
+        {
+            mprintf( "Char: %c\n", fmsg->clipboard.data[i] );
+        }
+    }
     return SendPacket( fmsg, GetFmsgSize( fmsg ) );
 }
 

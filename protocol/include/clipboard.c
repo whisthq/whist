@@ -40,6 +40,7 @@ ClipboardData GetClipboard()
 	}
 
 	ClipboardData cb;
+	cb.size = 0;
 
 	if( data && data_size < 800 )
 	{
@@ -52,6 +53,8 @@ ClipboardData GetClipboard()
 			cb.type = CLIPBOARD_TEXT;
 			// Read the contents of lptstr which just a pointer to the string.
 			mprintf( "CLIPBOARD STRING: %s\n", data );
+			mprintf( "CLIPBOARD STRING: %s\n", cb.data );
+			mprintf( "Len %d\n Strlen %d\n", data_size, strlen( data ) );
 			break;
 		case CF_DIBV5:
 			cb.type = CLIPBOARD_IMAGE;
