@@ -15,10 +15,9 @@ ClipboardData GetClipboard()
 		CF_DIBV5,
 	};
 
-	int data_size = -1;
 	int cf_type = -1;
 
-	for( int i = 0; i < sizeof( cf_types ) / sizeof( cf_types[0] ) && data_size == -1; i++ )
+	for( int i = 0; i < sizeof( cf_types ) / sizeof( cf_types[0] ) && cf_type == -1; i++ )
 	{
 		if( IsClipboardFormatAvailable( cf_types[i] ) )
 		{
@@ -28,9 +27,16 @@ ClipboardData GetClipboard()
 				LPTSTR lptstr = GlobalLock( hglb );
 				if( lptstr != NULL )
 				{
-					data_size = GlobalSize( hglb );
-					memcpy( cb.data, lptstr, data_size );
-					cf_type = cf_types[i];
+					int data_size = GlobalSize( hglb );
+					if( data_size < 800 )
+					{
+						cb.size = data_size;
+						memcpy( cb.data, lptstr, data_size );
+						cf_type = cf_types[i];
+					} else
+					{
+						mprintf( "Could not copy, clipboard too large! %d bytes\n", data_size );
+					}
 
 					// Don't forget to release the lock after you are done.
 					GlobalUnlock( hglb );
@@ -42,32 +48,25 @@ ClipboardData GetClipboard()
 		}
 	}
 
-	if( data_size > -1 )
+	if( cf_type > -1 )
 	{
-		if( data_size < 800 )
+		switch( cf_type )
 		{
-			cb.size = data_size;
+		case CF_TEXT:
+			cb.type = CLIPBOARD_TEXT;
+			// Read the contents of lptstr which just a pointer to the string.
+			mprintf( "CLIPBOARD STRING: %s\n", cb.data );
+			mprintf( "Len %d\n Strlen %d\n", cb.size, strlen( cb.data ) );
+			break;
+		case CF_DIBV5:
+			cb.type = CLIPBOARD_IMAGE;
+			mprintf( "Dib! Size: %d\n", cb.size );
 
-			switch( cf_type )
-			{
-			case CF_TEXT:
-				cb.type = CLIPBOARD_TEXT;
-				// Read the contents of lptstr which just a pointer to the string.
-				mprintf( "CLIPBOARD STRING: %s\n", cb.data );
-				mprintf( "Len %d\n Strlen %d\n", data_size, strlen( cb.data ) );
-				break;
-			case CF_DIBV5:
-				cb.type = CLIPBOARD_IMAGE;
-				mprintf( "Dib! Size: %d\n", data_size );
-
-				break;
-			default:
-				mprintf( "Clipboard type unknown: %d\n", cf_type );
-				break;
-			}
-		} else
-		{
-			mprintf( "Could not copy, clipboard too large! %d bytes\n", data_size );
+			break;
+		default:
+			cb.type = CLIPBOARD_NONE;
+			mprintf( "Clipboard type unknown: %d\n", cf_type );
+			break;
 		}
 	}
 

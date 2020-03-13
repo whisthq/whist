@@ -494,6 +494,7 @@ int main(int argc, char* argv[])
                 FractalServerMessage fmsg_response = { 0 };
                 fmsg_response.type = SMESSAGE_CLIPBOARD;
                 fmsg_response.clipboard = GetClipboard();
+                mprintf( "Received clipboard message! Sending to client\n" );
                 if( SendPacket( &PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof( fmsg_response ), 1 ) < 0 )
                 {
                     mprintf( "Could not send Clipboard Message\n" );
