@@ -116,12 +116,19 @@ void update() {
 
 int SendFmsg( struct FractalClientMessage* fmsg )
 {
+    if( fmsg->type == MESSAGE_CLIPBOARD )
+    {
+        for( int i = 0; i < fmsg->clipboard.size; i++ )
+        {
+            mprintf( "Char: %c\n", fmsg->clipboard.data[i] );
+        }
+    }
     return SendPacket( fmsg, GetFmsgSize( fmsg ) );
 }
 
 static int sent_packet_id = 1;
 int SendPacket(void* data, int len) {
-    if (len > MAX_PAYLOAD_SIZE ) {
+    if (len > MAX_PAYLOAD_SIZE) {
         mprintf("Packet too large!\n");
         return -1;
     }

@@ -677,6 +677,7 @@ typedef struct FractalClientMessage {
 		} nack_data;
 
 		ClipboardData clipboard;
+
 		struct
 		{
 			int num_keycodes;
