@@ -116,13 +116,6 @@ void update() {
 
 int SendFmsg( struct FractalClientMessage* fmsg )
 {
-    if( fmsg->type == MESSAGE_CLIPBOARD )
-    {
-        for( int i = 0; i < fmsg->clipboard.size; i++ )
-        {
-            mprintf( "Char: %c\n", fmsg->clipboard.data[i] );
-        }
-    }
     return SendPacket( fmsg, GetFmsgSize( fmsg ) );
 }
 
@@ -160,13 +153,11 @@ int SendPacket(void* data, int len) {
 void updateClipboard()
 {
     ClipboardData clipboard = GetClipboard();
-    if( clipboard.size )
-    {
-        FractalClientMessage fmsg;
-        fmsg.type = MESSAGE_CLIPBOARD;
-        memcpy( &fmsg.clipboard, &clipboard, sizeof(clipboard) );
-        SendFmsg( &fmsg );
-    }
+
+    FractalClientMessage fmsg;
+    fmsg.type = CMESSAGE_CLIPBOARD;
+    memcpy( &fmsg.clipboard, &clipboard, sizeof(clipboard) );
+    SendFmsg( &fmsg );
 }
 
 static int32_t ReceivePackets(void* opaque) {

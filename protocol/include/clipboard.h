@@ -17,4 +17,6 @@ typedef struct ClipboardData
 
 ClipboardData GetClipboard();
 
+void SetClipboard( ClipboardData* cb );
+
 #endif CLIPBOARD_H

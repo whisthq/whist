@@ -580,7 +580,7 @@ int main(int argc, char* argv[])
                     server_width = fmsg.dimensions.width;
                     server_height = fmsg.dimensions.height;
                     update_device = true;
-                } else if( fmsg.type == MESSAGE_CLIPBOARD )
+                } else if( fmsg.type == CMESSAGE_CLIPBOARD )
                 {
                     if( fmsg.clipboard.type == CLIPBOARD_TEXT )
                     {
