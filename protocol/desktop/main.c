@@ -128,7 +128,7 @@ int SendFmsg( struct FractalClientMessage* fmsg )
 
 static int sent_packet_id = 1;
 int SendPacket(void* data, int len) {
-    if (len > MAX_PAYLOAD_SIZE ) {
+    if (len > MAX_PAYLOAD_SIZE) {
         mprintf("Packet too large!\n");
         return -1;
     }
