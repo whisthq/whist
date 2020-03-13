@@ -24,11 +24,12 @@ volatile bool update_mbps = false;
 // Global state variables
 volatile SDL_Window* window;
 volatile SDL_Renderer* renderer;
-volatile bool run_receive_packets = false;
-volatile bool is_timing_latency = false;
+volatile bool run_receive_packets;
+volatile bool is_timing_latency;
 volatile clock latency_timer;
 volatile int ping_id;
 volatile int ping_failures;
+volatile bool ignore_next_clipboard_update;
 
 volatile int output_width;
 volatile int output_height;
@@ -359,6 +360,11 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
     }
     FractalServerMessage fmsg = *(FractalServerMessage*)packet->data;
     switch (fmsg.type) {
+    case SMESSAGE_CLIPBOARD:
+        mprintf( "Receive clipboard message from server!\n" );
+        SetClipboard( &fmsg.clipboard );
+        ignore_next_clipboard_update = true;
+        break;
     case MESSAGE_PONG:
         if (ping_id == fmsg.ping_id) {
             mprintf("Latency: %f\n", GetTimer(latency_timer));
@@ -633,6 +639,8 @@ int main(int argc, char* argv[])
         }
 
         // Initialize video and audio
+        is_timing_latency = false;
+        ignore_next_clipboard_update = false;
         connected = true;
         initVideo();
         initAudio();
@@ -729,12 +737,11 @@ int main(int argc, char* argv[])
                     fmsg.mouseWheel.y = msg.wheel.y;
                     break;
                 case SDL_CLIPBOARDUPDATE:
-                    mprintf( "**************************\n" );
-                    mprintf( "**************************\n" );
-                    mprintf( "**************************\n" );
-                    mprintf( "**************************\n" );
-                    mprintf("Clipboard!\n");
-                    updateClipboard();
+                    if( !ignore_next_clipboard_update )
+                    {
+                        mprintf( "Clipboard event found, sending to server!\n" );
+                        updateClipboard();
+                    }
                     break;
                 case SDL_QUIT:
                     mprintf("Forcefully Quitting...\n");
