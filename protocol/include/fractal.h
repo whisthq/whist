@@ -689,10 +689,11 @@ typedef struct FractalClientMessage {
 int GetFmsgSize(struct FractalClientMessage* fmsg);
 
 typedef enum FractalServerMessageType {
-	SMESSAGE_NONE = 0, ///< No Message
-	MESSAGE_PONG = 1,
-	MESSAGE_AUDIO_FREQUENCY = 2,
-	SMESSAGE_QUIT = 3,
+	SMESSAGE_NONE               = 0, ///< No Message
+	MESSAGE_PONG                = 1,
+	MESSAGE_AUDIO_FREQUENCY     = 2,
+	SMESSAGE_CLIPBOARD          = 3,
+	SMESSAGE_QUIT               = 100,
 } FractalServerMessageType;
 
 typedef struct FractalServerMessage {
