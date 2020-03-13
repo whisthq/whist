@@ -23,11 +23,13 @@
 /*** FRACTAL FUNCTIONS START ***/
 
 int GetFmsgSize(struct FractalClientMessage* fmsg) {
-	if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
-		return sizeof(*fmsg);
-	}
-	else {
-		return sizeof(*fmsg) - sizeof(fmsg->keyboard_state) - sizeof(fmsg->num_keycodes);
+	if( fmsg->type == MESSAGE_KEYBOARD_STATE )
+	{
+		return sizeof( *fmsg );
+	} else if( fmsg->type == MESSAGE_KEYBOARD_STATE ) {
+		return sizeof( *fmsg );
+	} else {
+		return sizeof(fmsg->type) + 40;
 	}
 }
 

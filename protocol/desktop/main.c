@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "../include/fractal.h"
+#include "../include/clipboard.h"
 #include "../include/aes.h"
 
 #include "main.h"
@@ -147,6 +148,18 @@ int SendPacket(void* data, int len) {
     SDL_UnlockMutex(send_packet_mutex);
 
     return failed ? -1 : 0;
+}
+
+void updateClipboard()
+{
+    ClipboardData clipboard = GetClipboard();
+    if( clipboard.size )
+    {
+        FractalClientMessage fmsg;
+        fmsg.type = MESSAGE_CLIPBOARD;
+        memcpy( &fmsg.clipboard, &clipboard, sizeof(clipboard) );
+        SendFmsg( &fmsg );
+    }
 }
 
 static int32_t ReceivePackets(void* opaque) {
@@ -641,6 +654,8 @@ int main(int argc, char* argv[])
         bool lgui_pressed = false;
         bool rgui_pressed = false;
 
+        updateClipboard();
+
         while (connected && !exiting)
         {
             // Update the keyboard state
@@ -721,6 +736,7 @@ int main(int argc, char* argv[])
                     mprintf( "**************************\n" );
                     mprintf( "**************************\n" );
                     mprintf("Clipboard!\n");
+                    updateClipboard();
                     break;
                 case SDL_QUIT:
                     mprintf("Forcefully Quitting...\n");

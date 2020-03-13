@@ -77,6 +77,8 @@
 	#include <sys/time.h>
 #endif
 
+#include "clipboard.h"
+
 #define NUM_KEYCODES 265
 
 /*** DEFINITIONS START ***/
@@ -652,7 +654,8 @@ typedef enum FractalClientMessageType {
 	MESSAGE_VIDEO_NACK      = 9,
 	MESSAGE_AUDIO_NACK      = 10,
 	MESSAGE_KEYBOARD_STATE  = 11,
-	CMESSAGE_QUIT = 100,
+	MESSAGE_CLIPBOARD       = 12,
+	CMESSAGE_QUIT           = 100,
 } FractalClientMessageType;
 
 typedef struct FractalClientMessage {
@@ -672,9 +675,14 @@ typedef struct FractalClientMessage {
 			int id;
 			int index;
 		} nack_data;
+
+		ClipboardData clipboard;
+		struct
+		{
+			int num_keycodes;
+			char keyboard_state[NUM_KEYCODES];             ///< Keyboard state message.
+		};
 	};
-	int num_keycodes;
-	char keyboard_state[NUM_KEYCODES];             ///< Keyboard state message.
 } FractalClientMessage;
 
 int GetFmsgSize(struct FractalClientMessage* fmsg);
