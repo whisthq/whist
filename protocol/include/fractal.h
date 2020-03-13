@@ -701,6 +701,7 @@ typedef struct FractalServerMessage {
 	union {
 		int ping_id;
 		int frequency;
+		ClipboardData clipboard;
 	};
 } FractalServerMessage;
 

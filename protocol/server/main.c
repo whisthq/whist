@@ -485,8 +485,22 @@ int main(int argc, char* argv[])
         mprintf("Receiving packets...\n");
 
         int last_input_id = -1;
+        int last_clipboard_sequence_number = GetClipboardSequenceNumber();
 
         while (connected) {
+            int new_clipboard_sequence_number = GetClipboardSequenceNumber();
+            if( new_clipboard_sequence_number > last_clipboard_sequence_number )
+            {
+                FractalServerMessage fmsg_response = { 0 };
+                fmsg_response.type = SMESSAGE_CLIPBOARD;
+                fmsg_response.clipboard = GetClipboard();
+                if( SendPacket( &PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof( fmsg_response ), 1 ) < 0 )
+                {
+                    mprintf( "Could not send Clipboard Message\n" );
+                }
+                last_clipboard_sequence_number = new_clipboard_sequence_number;
+            }
+
             if (GetTimer(last_ping) > 3.0) {
                 mprintf("Client connection dropped.\n");
                 connected = false;
@@ -583,6 +597,7 @@ int main(int argc, char* argv[])
                 } else if( fmsg.type == CMESSAGE_CLIPBOARD )
                 {
                     SetClipboard( &fmsg.clipboard );
+                    last_clipboard_sequence_number = GetClipboardSequenceNumber();
                 }
                 else if (fmsg.type == MESSAGE_AUDIO_NACK) {
                     // Audio nack received, relay the packet
