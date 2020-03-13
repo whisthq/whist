@@ -486,10 +486,10 @@ int main(int argc, char* argv[])
 
         int last_input_id = -1;
         int last_clipboard_sequence_number = GetClipboardSequenceNumber();
+        StartTrackingClipboardUpdates();
 
         while (connected) {
-            int new_clipboard_sequence_number = GetClipboardSequenceNumber();
-            if( new_clipboard_sequence_number > last_clipboard_sequence_number )
+            if( hasClipboardUpdated() )
             {
                 FractalServerMessage fmsg_response = { 0 };
                 fmsg_response.type = SMESSAGE_CLIPBOARD;
@@ -499,7 +499,6 @@ int main(int argc, char* argv[])
                 {
                     mprintf( "Could not send Clipboard Message\n" );
                 }
-                last_clipboard_sequence_number = new_clipboard_sequence_number;
             }
 
             if (GetTimer(last_ping) > 3.0) {
@@ -598,7 +597,6 @@ int main(int argc, char* argv[])
                 } else if( fmsg.type == CMESSAGE_CLIPBOARD )
                 {
                     SetClipboard( &fmsg.clipboard );
-                    last_clipboard_sequence_number = GetClipboardSequenceNumber();
                 }
                 else if (fmsg.type == MESSAGE_AUDIO_NACK) {
                     // Audio nack received, relay the packet

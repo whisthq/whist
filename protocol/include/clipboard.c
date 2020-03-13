@@ -1,6 +1,33 @@
 #include "clipboard.h"
 #include "fractal.h"
 
+#if defined(_WIN32)
+static int last_clipboard_sequence_number = -1;
+#endif
+
+void StartTrackingClipboardUpdates()
+{
+#if defined(_WIN32)
+	last_clipboard_sequence_number = GetClipboardSequenceNumber();
+#endif
+}
+
+bool hasClipboardUpdated()
+{
+	bool hasUpdated = false;
+
+#if defined(_WIN32)
+	int new_clipboard_sequence_number = GetClipboardSequenceNumber();
+	if( new_clipboard_sequence_number > last_clipboard_sequence_number )
+	{
+		hasUpdated = true;
+		last_clipboard_sequence_number = new_clipboard_sequence_number;
+	}
+#endif
+
+	return hasUpdated;
+}
+
 ClipboardData GetClipboard()
 {
 	ClipboardData cb;
@@ -30,7 +57,7 @@ ClipboardData GetClipboard()
 				LPTSTR lptstr = GlobalLock( hglb );
 				if( lptstr != NULL )
 				{
-					int data_size = GlobalSize( hglb );
+					int data_size = (int)GlobalSize( hglb );
 					if( data_size < 800 )
 					{
 						cb.size = data_size;
@@ -126,4 +153,6 @@ void SetClipboard( ClipboardData* cb )
 		CloseClipboard();
 	}
 #endif
+
+	hasClipboardUpdated();
 }

@@ -1,6 +1,8 @@
 #ifndef CLIPBOARD_H
 #define CLIPBOARD_H
 
+#include <stdbool.h>
+
 typedef enum ClipboardType
 {
 	CLIPBOARD_NONE,
@@ -18,5 +20,9 @@ typedef struct ClipboardData
 ClipboardData GetClipboard();
 
 void SetClipboard( ClipboardData* cb );
+
+void StartTrackingClipboardUpdates();
+
+bool hasClipboardUpdated();
 
 #endif CLIPBOARD_H

@@ -29,7 +29,6 @@ volatile bool is_timing_latency;
 volatile clock latency_timer;
 volatile int ping_id;
 volatile int ping_failures;
-volatile bool ignore_next_clipboard_update;
 
 volatile int output_width;
 volatile int output_height;
@@ -363,7 +362,6 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
     case SMESSAGE_CLIPBOARD:
         mprintf( "Receive clipboard message from server!\n" );
         SetClipboard( &fmsg.clipboard );
-        ignore_next_clipboard_update = true;
         break;
     case MESSAGE_PONG:
         if (ping_id == fmsg.ping_id) {
@@ -640,7 +638,6 @@ int main(int argc, char* argv[])
 
         // Initialize video and audio
         is_timing_latency = false;
-        ignore_next_clipboard_update = false;
         connected = true;
         initVideo();
         initAudio();
@@ -662,8 +659,16 @@ int main(int argc, char* argv[])
 
         updateClipboard();
 
+        StartTrackingClipboardUpdates();
+
         while (connected && !exiting)
         {
+            if( hasClipboardUpdated() )
+            {
+                mprintf( "Clipboard event found, sending to server!\n" );
+                updateClipboard();
+            }
+
             // Update the keyboard state
             if( GetTimer( keyboard_sync_timer ) > 50.0 / 1000.0 )
             {
@@ -736,13 +741,14 @@ int main(int argc, char* argv[])
                     fmsg.mouseWheel.x = msg.wheel.x;
                     fmsg.mouseWheel.y = msg.wheel.y;
                     break;
+                    /*
                 case SDL_CLIPBOARDUPDATE:
                     if( !ignore_next_clipboard_update )
                     {
                         mprintf( "Clipboard event found, sending to server!\n" );
                         updateClipboard();
                     }
-                    break;
+                    break;*/
                 case SDL_QUIT:
                     mprintf("Forcefully Quitting...\n");
                     exiting = true;
