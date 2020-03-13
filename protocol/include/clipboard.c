@@ -3,6 +3,10 @@
 
 ClipboardData GetClipboard()
 {
+	ClipboardData cb;
+	cb.size = 0;
+	cb.type = CLIPBOARD_NONE;
+
 #if defined(_WIN32)
 	if( !OpenClipboard( NULL ) ) return;
 
@@ -13,10 +17,9 @@ ClipboardData GetClipboard()
 	};
 
 	int data_size = -1;
-	char* data = NULL;
 	int cf_type = -1;
 
-	for( int i = 0; i < sizeof( cf_types ) / sizeof( cf_types[0] ) && data == NULL; i++ )
+	for( int i = 0; i < sizeof( cf_types ) / sizeof( cf_types[0] ) && data_size == -1; i++ )
 	{
 		if( IsClipboardFormatAvailable( cf_types[i] ) )
 		{
@@ -27,7 +30,7 @@ ClipboardData GetClipboard()
 				if( lptstr != NULL )
 				{
 					data_size = GlobalSize( hglb );
-					data = lptstr;
+					memcpy( cb.data, lptstr, data_size );
 					cf_type = cf_types[i];
 
 					// Don't forget to release the lock after you are done.
@@ -40,25 +43,19 @@ ClipboardData GetClipboard()
 		}
 	}
 
-	ClipboardData cb;
-	cb.size = 0;
-	cb.type = CLIPBOARD_NONE;
-
-	if( data )
+	if( data_size > -1 )
 	{
 		if( data_size < 800 )
 		{
 			cb.size = data_size;
-			memcpy( cb.data, data, data_size );
 
 			switch( cf_type )
 			{
 			case CF_TEXT:
 				cb.type = CLIPBOARD_TEXT;
 				// Read the contents of lptstr which just a pointer to the string.
-				mprintf( "CLIPBOARD STRING: %s\n", data );
 				mprintf( "CLIPBOARD STRING: %s\n", cb.data );
-				mprintf( "Len %d\n Strlen %d\n", data_size, strlen( data ) );
+				mprintf( "Len %d\n Strlen %d\n", data_size, strlen( cb.data ) );
 				break;
 			case CF_DIBV5:
 				cb.type = CLIPBOARD_IMAGE;
@@ -107,8 +104,11 @@ void SetClipboard( ClipboardData* cb )
 	{
 	case CLIPBOARD_TEXT:
 		cf_type = CF_TEXT;
+		mprintf( "SetClipboard to Text %s\n", cb->data );
 		break;
 	case CLIPBOARD_IMAGE:
+		cf_type = CF_DIBV5;
+		mprintf( "SetClipboard to Image with size %d\n", cb->size );
 		break;
 	default:
 		mprintf( "Unknown clipboard type!\n" );
