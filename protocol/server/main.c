@@ -582,18 +582,7 @@ int main(int argc, char* argv[])
                     update_device = true;
                 } else if( fmsg.type == CMESSAGE_CLIPBOARD )
                 {
-                    if( fmsg.clipboard.type == CLIPBOARD_TEXT )
-                    {
-                        mprintf( "RECEIVED CLIPBOARD TEXT: %s\n", fmsg.clipboard.data );
-                        for( int i = 0; i < fmsg.clipboard.size; i++ )
-                        {
-                            mprintf( "Char: %c\n", fmsg.clipboard.data[i] );
-                        }
-                        mprintf( "Received clipboard text of size: %d\n", fmsg.clipboard.size );
-                    } else if ( fmsg.clipboard.type == CLIPBOARD_IMAGE )
-                    {
-                        mprintf( "Received clipboard image of size: %d\n", fmsg.clipboard.size );
-                    }
+                    SetClipboard( &fmsg.clipboard );
                 }
                 else if (fmsg.type == MESSAGE_AUDIO_NACK) {
                     // Audio nack received, relay the packet
