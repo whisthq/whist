@@ -548,7 +548,6 @@ int main(int argc, char* argv[])
             // End Get Packet
 
             if (fmsg.type != 0) {
-
                 if (fmsg.type == MESSAGE_KEYBOARD) {
                     ReplayUserInput(&fmsg, 1);
                 }
@@ -581,11 +580,15 @@ int main(int argc, char* argv[])
                     server_width = fmsg.dimensions.width;
                     server_height = fmsg.dimensions.height;
                     update_device = true;
-                }
-                else if (fmsg.type == CMESSAGE_QUIT) {
-                    // Client requested to exit, it's time to disconnect
-                    mprintf("Client Quit\n");
-                    connected = false;
+                } else if( fmsg.type == MESSAGE_CLIPBOARD )
+                {
+                    if( fmsg.clipboard.type == CLIPBOARD_TEXT )
+                    {
+                        mprintf( "RECEIVED CLIPBOARD TEXT: %s\n", fmsg.clipboard.data );
+                    } else if ( fmsg.clipboard.type == CLIPBOARD_IMAGE )
+                    {
+                        mprintf( "Received clipboard image of size: %d\n", fmsg.clipboard.size );
+                    }
                 }
                 else if (fmsg.type == MESSAGE_AUDIO_NACK) {
                     // Audio nack received, relay the packet
@@ -617,6 +620,11 @@ int main(int argc, char* argv[])
                     else if (fmsg.nack_data.index < video_packet->num_indices) {
                         mprintf("NACKed video packet %d %d not found, ID %d %d was located instead.\n", fmsg.nack_data.id, fmsg.nack_data.index, video_packet->id, video_packet->index);
                     }
+                } else if(  fmsg.type == CMESSAGE_QUIT  )
+                {
+                    // Client requested to exit, it's time to disconnect
+                    mprintf( "Client Quit\n" );
+                    connected = false;
                 }
             }
         }
