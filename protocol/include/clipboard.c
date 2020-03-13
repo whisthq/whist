@@ -8,7 +8,10 @@ ClipboardData GetClipboard()
 	cb.type = CLIPBOARD_NONE;
 
 #if defined(_WIN32)
-	if( !OpenClipboard( NULL ) ) return;
+	if( !OpenClipboard( NULL ) )
+	{
+		return cb;
+	}
 
 	int cf_types[] = {
 		CF_TEXT,
