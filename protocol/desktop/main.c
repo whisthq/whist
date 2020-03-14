@@ -668,6 +668,9 @@ int main(int argc, char* argv[])
                 state[KEY_RGUI] = rgui_pressed;
                 memcpy( fmsg.keyboard_state, state, fmsg.num_keycodes );
 
+                fmsg.caps_lock = SDL_GetModState() & KMOD_CAPS;
+                fmsg.num_lock = SDL_GetModState() & KMOD_NUM;
+
                 SendFmsg( &fmsg );
 
                 StartTimer( &keyboard_sync_timer );

@@ -665,23 +665,35 @@ typedef struct FractalClientMessage {
 		FractalMouseButtonMessage mouseButton;     ///< Mouse button message.
 		FractalMouseWheelMessage mouseWheel;       ///< Mouse wheel message.
 		FractalMouseMotionMessage mouseMotion;     ///< Mouse motion message.
+
+		// MESSAGE_MBPS
 		double mbps;
+
+		// MESSAGE_PING
 		int ping_id;
+
+		// MESSAGE_DIMENSIONS
 		struct dimensions {
 			int width;
 			int height;
 		} dimensions;
+
+		// MESSAGE_VIDEO_NACK or MESSAGE_AUDIO_NACK
 		struct nack_data {
 			int id;
 			int index;
 		} nack_data;
 
+		// CMESSAGE_CLIPBOARD
 		ClipboardData clipboard;
 
+		// MESSAGE_KEYBOARD_STATE
 		struct
 		{
-			int num_keycodes;
-			char keyboard_state[NUM_KEYCODES];             ///< Keyboard state message.
+			short num_keycodes;
+			bool caps_lock;
+			bool num_lock;
+			char keyboard_state[NUM_KEYCODES];
 		};
 	};
 } FractalClientMessage;

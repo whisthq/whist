@@ -286,6 +286,35 @@ int GetWindowsKeyCode(int sdl_keycode) {
 	return windows_keycodes[sdl_keycode];
 }
 
+void SendKeyInput( int windows_keycode, int extraFlags )
+{
+	INPUT ip;
+	ip.type = INPUT_KEYBOARD;
+	ip.ki.wVk = 0;
+	ip.ki.time = 0;
+	ip.ki.dwExtraInfo = 0;
+
+	ip.ki.wScan = MapVirtualKeyA( windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX );
+	ip.ki.dwFlags = KEYEVENTF_SCANCODE | extraFlags;
+	if( ip.ki.wScan >> 8 == 0xE0 || (windows_keycode & USE_NUMPAD) )
+	{
+		ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+		ip.ki.wScan &= 0xFF;
+	}
+
+	SendInput( 1, &ip, sizeof( INPUT ) );
+}
+
+void KeyDown( int windows_keycode )
+{
+	SendKeyInput( windows_keycode, 0 );
+}
+
+void KeyUp( int windows_keycode )
+{
+	SendKeyInput( windows_keycode, KEYEVENTF_KEYUP );
+}
+
 void updateKeyboardState( struct FractalClientMessage* fmsg )
 {
 	if( fmsg->type != MESSAGE_KEYBOARD_STATE )
@@ -294,51 +323,104 @@ void updateKeyboardState( struct FractalClientMessage* fmsg )
 		return;
 	}
 
+	// Setup base input data
 	INPUT ip;
 	ip.type = INPUT_KEYBOARD;
 	ip.ki.wVk = 0;
 	ip.ki.time = 0;
 	ip.ki.dwExtraInfo = 0;
 
+	bool server_caps_lock = GetAsyncKeyState( VK_CAPITAL ) & 1;
+	bool server_num_lock = GetAsyncKeyState( VK_NUMLOCK ) & 1;
+
+	bool caps_lock_holding = false;
+	bool num_lock_holding = false;
+
+	int keypress_mask = 1 << 15;
+
+	// Depress all keys that are currently pressed but should not be pressed
 	for( int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++ )
 	{
 		int windows_keycode = GetWindowsKeyCode( sdl_keycode );
 
-		if( windows_keycode )
-		{
-			ip.ki.wScan = MapVirtualKeyA( windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX );
-			ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
-			if( ip.ki.wScan >> 8 == 0xE0 || (windows_keycode & USE_NUMPAD))
-			{
-				ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-				ip.ki.wScan &= 0xFF;
-			}
+		if( !windows_keycode )
+			continue;
 
-			if( !fmsg->keyboard_state[sdl_keycode] && GetAsyncKeyState( windows_keycode ) )
+		// If I should key up, then key up
+		if( !fmsg->keyboard_state[sdl_keycode] && (GetAsyncKeyState( windows_keycode ) & keypress_mask) )
+		{
+			KeyUp( windows_keycode );
+		}
+	}
+
+	// Press all keys that are not currently pressed but should be pressed
+	for( int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++ )
+	{
+		int windows_keycode = GetWindowsKeyCode( sdl_keycode );
+
+		if( !windows_keycode )
+			continue;
+
+		// Keep track of keyboard state for caps lock and num lock
+
+		if( windows_keycode == VK_CAPITAL )
+		{
+			caps_lock_holding = fmsg->keyboard_state[sdl_keycode];
+		}
+
+		if( windows_keycode == VK_NUMLOCK )
+		{
+			num_lock_holding = fmsg->keyboard_state[sdl_keycode];
+		}
+
+		// If I should key down, then key down
+		if( fmsg->keyboard_state[sdl_keycode] && !(GetAsyncKeyState( windows_keycode ) & keypress_mask) )
+		{
+			KeyDown( windows_keycode );
+
+			// In the process of swapping a toggle key
+			if( windows_keycode == VK_CAPITAL )
 			{
-				SendInput( 1, &ip, sizeof( INPUT ) );
+				server_caps_lock = !server_caps_lock;
+			}
+			if( windows_keycode == VK_NUMLOCK )
+			{
+				server_num_lock = !server_num_lock;
 			}
 		}
 	}
 
-	for( int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++ )
+	// If caps lock doesn't match, then send a correction
+	if( !!server_caps_lock != !!fmsg->caps_lock )
 	{
-		int windows_keycode = GetWindowsKeyCode( sdl_keycode );
-
-		if( windows_keycode )
+		mprintf( "Caps lock out of sync, updating!\n" );
+		// If I'm supposed to be holding it down, then just release and then repress
+		if( caps_lock_holding )
 		{
-			ip.ki.wScan = MapVirtualKeyA( windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC );
-			ip.ki.dwFlags = KEYEVENTF_SCANCODE;
-			if( ip.ki.wScan >> 8 == 0xE0 || (windows_keycode & USE_NUMPAD) )
-			{
-				ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-				ip.ki.wScan &= 0xFF;
-			}
+			KeyUp( VK_CAPITAL );
+			KeyDown( VK_CAPITAL );
+		} else
+		{
+			// Otherwise, just press and let go like a normal key press
+			KeyDown( VK_CAPITAL );
+			KeyUp( VK_CAPITAL );
+		}
+	}
 
-			if( fmsg->keyboard_state[sdl_keycode] && !GetAsyncKeyState( windows_keycode ) )
-			{
-				SendInput( 1, &ip, sizeof( INPUT ) );
-			}
+	// If num lock doesn't match, then send a correction
+	if( !!server_num_lock != !!fmsg->num_lock )
+	{
+		mprintf( "Num lock out of sync, updating!\n" );
+		// If I'm supposed to be holding it down, then just release and then repress
+		if( num_lock_holding )
+		{
+			KeyUp( VK_NUMLOCK );
+			KeyDown( VK_NUMLOCK );
+		} else
+		{
+			// Otherwise, just press and let go like a normal key press
+			KeyDown( VK_NUMLOCK );
+			KeyUp( VK_NUMLOCK );
 		}
 	}
 }
