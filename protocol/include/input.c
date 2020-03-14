@@ -330,8 +330,8 @@ void updateKeyboardState( struct FractalClientMessage* fmsg )
 	ip.ki.time = 0;
 	ip.ki.dwExtraInfo = 0;
 
-	bool server_caps_lock = GetAsyncKeyState( VK_CAPITAL ) & 1;
-	bool server_num_lock = GetAsyncKeyState( VK_NUMLOCK ) & 1;
+	bool server_caps_lock = GetKeyState( VK_CAPITAL ) & 1;
+	bool server_num_lock = GetKeyState( VK_NUMLOCK ) & 1;
 
 	bool caps_lock_holding = false;
 	bool num_lock_holding = false;
@@ -393,7 +393,7 @@ void updateKeyboardState( struct FractalClientMessage* fmsg )
 	// If caps lock doesn't match, then send a correction
 	if( !!server_caps_lock != !!fmsg->caps_lock )
 	{
-		mprintf( "Caps lock out of sync, updating!\n" );
+		mprintf( "Caps lock out of sync, updating! From %s to %s\n", server_caps_lock ? "caps" : "no caps", fmsg->caps_lock ? "caps" : "no caps" );
 		// If I'm supposed to be holding it down, then just release and then repress
 		if( caps_lock_holding )
 		{
@@ -410,7 +410,7 @@ void updateKeyboardState( struct FractalClientMessage* fmsg )
 	// If num lock doesn't match, then send a correction
 	if( !!server_num_lock != !!fmsg->num_lock )
 	{
-		mprintf( "Num lock out of sync, updating!\n" );
+		mprintf( "Num lock out of sync, updating! From %s to %s\n", server_num_lock ? "num lock" : "no num lock", fmsg->num_lock ? "num lock" : "no num lock" );
 		// If I'm supposed to be holding it down, then just release and then repress
 		if( num_lock_holding )
 		{
