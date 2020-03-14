@@ -154,5 +154,6 @@ void SetClipboard( ClipboardData* cb )
 	}
 #endif
 
+	// Update the status so that this specific update doesn't count
 	hasClipboardUpdated();
 }

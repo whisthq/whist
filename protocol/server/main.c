@@ -438,7 +438,6 @@ int main(int argc, char* argv[])
         struct SocketContext PacketReceiveContext = { 0 };
         if (CreateUDPContext(&PacketReceiveContext, "S", "0.0.0.0", PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
             mprintf("Failed to start connection\n");
-            SDL_Delay(500);
 
             // Since we're just idling, let's try updating the server
             update();
@@ -449,14 +448,13 @@ int main(int argc, char* argv[])
         if (CreateUDPContext(&PacketSendContext, "S", "0.0.0.0", PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             mprintf("Failed to finish connection.\n");
             closesocket(PacketReceiveContext.s);
-            SDL_Delay(500);
             continue;
         }
 
         InitDesktop();
 
         // Give client time to setup before sending it with packets
-        SDL_Delay(250);
+        SDL_Delay(150);
 
         clock startup_time;
         StartTimer(&startup_time);
@@ -466,8 +464,8 @@ int main(int argc, char* argv[])
 
         packet_mutex = SDL_CreateMutex();
 
-        SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
-        SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
+        SDL_Thread* send_video = SDL_CreateThread( SendVideo, "SendVideo", &PacketSendContext );
+        SDL_Thread* send_audio = SDL_CreateThread( SendAudio, "SendAudio", &PacketSendContext );
         mprintf("Sending video and audio...\n");
 
         struct FractalClientMessage fmsg;
@@ -485,10 +483,10 @@ int main(int argc, char* argv[])
         mprintf("Receiving packets...\n");
 
         int last_input_id = -1;
-        int last_clipboard_sequence_number = GetClipboardSequenceNumber();
         StartTrackingClipboardUpdates();
 
         while (connected) {
+            // If they clipboard as updated, we should send it over to the client
             if( hasClipboardUpdated() )
             {
                 FractalServerMessage fmsg_response = { 0 };
@@ -525,17 +523,19 @@ int main(int argc, char* argv[])
 
             memset(&fmsg, 0, sizeof(fmsg));
 
-            // Get Packet
+            // START Get Packet
             struct RTPPacket encrypted_packet;
             int encrypted_len;
             if( (encrypted_len = recvp( &PacketReceiveContext, &encrypted_packet, sizeof( encrypted_packet ) )) > 0 )
             {
                 // Decrypt using AES private key
-
                 struct RTPPacket decrypted_packet;
                 int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
+
+                // If decrypted successfully
                 if( decrypt_len > 0 )
                 {
+                    // Copy data into an fmsg
                     memcpy(&fmsg, decrypted_packet.data, max(sizeof(fmsg), decrypted_packet.payload_size));
                     
                     // Check to see if decrypted packet is of valid size
@@ -548,7 +548,7 @@ int main(int argc, char* argv[])
 
                     // Make sure that keyboard events are played in order
                     if (fmsg.type == MESSAGE_KEYBOARD || fmsg.type == MESSAGE_KEYBOARD_STATE) {
-
+                        // Check that id is in order
                         if (decrypted_packet.id > last_input_id) {
                             decrypted_packet.id = last_input_id;
                         }
@@ -559,20 +559,20 @@ int main(int argc, char* argv[])
                     }
                 }
             }
-            // End Get Packet
+            // END Get Packet
 
             if (fmsg.type != 0) {
-                if (fmsg.type == MESSAGE_KEYBOARD) {
+                if (fmsg.type == MESSAGE_KEYBOARD || fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
+                    // Replay user input (keyboard or mouse presses)
                     ReplayUserInput(&fmsg, 1);
                 }
-                else if (fmsg.type == MESSAGE_KEYBOARD_STATE) {
+                else if( fmsg.type == MESSAGE_KEYBOARD_STATE )
+                {
                     // Synchronize client and server keyboard state
                     updateKeyboardState( &fmsg );
                 }
-                else if (fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
-                    ReplayUserInput(&fmsg, 1);
-                }
                 else if (fmsg.type == MESSAGE_MBPS) {
+                    // Update mbps
                     max_mbps = fmsg.mbps;
                 }
                 else if (fmsg.type == MESSAGE_PING) {
@@ -596,6 +596,7 @@ int main(int argc, char* argv[])
                     update_device = true;
                 } else if( fmsg.type == CMESSAGE_CLIPBOARD )
                 {
+                    // Update clipboard with message
                     SetClipboard( &fmsg.clipboard );
                 }
                 else if (fmsg.type == MESSAGE_AUDIO_NACK) {

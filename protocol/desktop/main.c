@@ -389,12 +389,14 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
     return 0;
 }
 
+// Make the screen black
 void clearSDL() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
 }
 
+// Send a key to SDL event queue, presumably one that is captured and wouldn't naturally make it to the event queue by itself
 void SendCapturedKey( FractalKeycode key, int type, int time)
 {
     SDL_Event e = { 0 };
@@ -405,6 +407,8 @@ void SendCapturedKey( FractalKeycode key, int type, int time)
 }
 
 #if defined(_WIN32)
+// Function to capture keyboard strokes and block them if they encode special key combinations,
+// with intent to redirect them to SendCapturedKey so that the keys can still be streamed over to the host
 HHOOK mule;
 HHOOK g_hKeyboardHook;
 BOOL g_bFullscreen;
@@ -478,6 +482,7 @@ LRESULT CALLBACK LowLevelKeyboardProc( INT nCode, WPARAM wParam, LPARAM lParam )
 
 int initSDL() {
 #if defined(_WIN32)
+    // Hook onto windows keyboard to intercept windows special key combinations
     g_hKeyboardHook = SetWindowsHookEx( WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle( NULL ), 0 );
 #endif
 
@@ -523,7 +528,6 @@ int initSDL() {
 }
 
 void destroySDL() {
-
 #if defined(_WIN32)
     UnhookWindowsHookEx( g_hKeyboardHook );
 #endif
@@ -573,34 +577,9 @@ int main(int argc, char* argv[])
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(false);
 
-    // BEGIN TEST
-    /*
-    struct RTPPacket decrypted_packet;
-    int packet_len = 1420 - sizeof( decrypted_packet.overflow );
-    srand( time(NULL) );
-    for( int i = 0; i < packet_len; i++ )
-    {
-        ((char*)&decrypted_packet)[i] = rand();
-    }
-    decrypted_packet.payload_size = packet_len - (sizeof( decrypted_packet ) - sizeof( decrypted_packet.data ) - sizeof( decrypted_packet.overflow ));
-    struct RTPPacket encrypted_packet;
-    int enc_len = encrypt_packet( &decrypted_packet, packet_len, &encrypted_packet, PRIVATE_KEY );
-    printf( "Hash: %d\n", Hash( &decrypted_packet, packet_len ) );
-    printf( "Hash: %d\n", Hash( &encrypted_packet, packet_len ) );
-    //((char*)&encrypted_packet)[5] += 1;
-    ((char*)&decrypted_packet)[105] += 1;
-    printf( "Hash: %d\n", Hash( &decrypted_packet, packet_len ) );
-    int decrypt_len = decrypt_packet( &encrypted_packet, enc_len, &decrypted_packet, PRIVATE_KEY );
-    printf( "Len: %d\n", decrypt_len );
-    printf( "Hash: %d\n", Hash( &decrypted_packet, packet_len ) );
-    destroySDL();
-    return 0;
-    */
-    // END TEST
-
-
     exiting = false;
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
+        // Make the screen black
         clearSDL();
 
         // If this is a retry, wait a bit more for the server to recover
@@ -656,6 +635,8 @@ int main(int argc, char* argv[])
         bool ctrl_pressed = false;
         bool lgui_pressed = false;
         bool rgui_pressed = false;
+
+        SDL_Delay( 250 );
 
         updateClipboard();
 
@@ -741,14 +722,6 @@ int main(int argc, char* argv[])
                     fmsg.mouseWheel.x = msg.wheel.x;
                     fmsg.mouseWheel.y = msg.wheel.y;
                     break;
-                    /*
-                case SDL_CLIPBOARDUPDATE:
-                    if( !ignore_next_clipboard_update )
-                    {
-                        mprintf( "Clipboard event found, sending to server!\n" );
-                        updateClipboard();
-                    }
-                    break;*/
                 case SDL_QUIT:
                     mprintf("Forcefully Quitting...\n");
                     exiting = true;
