@@ -115,6 +115,9 @@ void update() {
 }
 // END UPDATER CODE
 
+int SendTCPPacket( void* data, int len );
+int SendPacket( void* data, int len );
+
 int SendFmsg( struct FractalClientMessage* fmsg )
 {
     if( fmsg->type == CMESSAGE_CLIPBOARD )
@@ -142,6 +145,7 @@ int SendTCPPacket( void* data, int len )
 
     packet->id = -1;
 
+    packet->type = PACKET_MESSAGE;
     memcpy( packet->data, data, len );
     packet->payload_size = len;
 
@@ -173,6 +177,7 @@ int SendPacket(void* data, int len) {
     packet.id = sent_packet_id;
     sent_packet_id++;
 
+    packet.type = PACKET_MESSAGE;
     memcpy( packet.data, data, len );
     packet.payload_size = len;
 
