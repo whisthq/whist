@@ -772,6 +772,9 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 int recvp(struct SocketContext* context, void* buf, int len);
 int sendp(struct SocketContext* context, void* buf, int len);
 
+void ClearReadingTCP();
+void* TryReadingTCPPacket( struct SocketContext* context );
+
 #if defined(_WIN32)
 	#define clock LARGE_INTEGER
 #else

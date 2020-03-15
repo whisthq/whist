@@ -40,6 +40,7 @@ static int32_t ReceivePackets(void* opaque);
 static int32_t ReceiveMessage(struct RTPPacket* packet);
 
 struct SocketContext PacketSendContext;
+struct SocketContext PacketTCPContext;
 
 volatile bool connected = true;
 volatile bool exiting = false;
@@ -116,7 +117,46 @@ void update() {
 
 int SendFmsg( struct FractalClientMessage* fmsg )
 {
-    return SendPacket( fmsg, GetFmsgSize( fmsg ) );
+    if( fmsg->type == CMESSAGE_CLIPBOARD )
+    {
+        return SendTCPPacket( fmsg, GetFmsgSize( fmsg ) );
+    } else
+    {
+        return SendPacket( fmsg, GetFmsgSize( fmsg ) );
+    }
+}
+
+#define LARGEST_PACKET 10000000
+char unbounded_packet[LARGEST_PACKET];
+char encrypted_unbounded_packet[LARGEST_PACKET + 16];
+
+int SendTCPPacket( void* data, int len )
+{
+    if( len > LARGEST_PACKET )
+    {
+        mprintf( "Packet too large!\n" );
+        return -1;
+    }
+
+    struct RTPPacket* packet = unbounded_packet;
+
+    packet->id = -1;
+
+    memcpy( packet->data, data, len );
+    packet->payload_size = len;
+
+    int packet_size = PACKET_HEADER_SIZE + len;
+
+    int encrypt_len = encrypt_packet( packet, packet_size, encrypted_unbounded_packet, PRIVATE_KEY );
+
+    bool failed = false;
+    if( sendp( &PacketTCPContext, encrypted_unbounded_packet, encrypt_len ) < 0 )
+    {
+        mprintf( "Failed to send packet!\n" );
+        failed = true;
+    }
+
+    return failed ? -1 : 0;
 }
 
 static int sent_packet_id = 1;
@@ -615,7 +655,6 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        struct SocketContext PacketTCPContext = { 0 };
         if( CreateTCPContext( &PacketTCPContext, "C", server_ip, PORT_SHARED_TCP, 1, 500 ) < 0 )
         {
             mprintf( "Failed finish connection to server\n" );
@@ -768,6 +807,8 @@ int main(int argc, char* argv[])
 
         closesocket(PacketSendContext.s);
         closesocket(PacketReceiveContext.s);
+        closesocket( PacketTCPContext.s );
+
 #if defined(_WIN32)
         WSACleanup();
 #endif

@@ -34,19 +34,19 @@ int hmac( char* hash, char* buf, int len, char* key )
     return hash_len;
 }
 
+#define CRYPTO_HEADER_LEN (sizeof( plaintext_packet->hash ) + sizeof(plaintext_packet->cipher_len ) + sizeof( plaintext_packet->iv ))
+
 int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct RTPPacket* encrypted_packet, unsigned char* private_key)
 {
-    int crypto_header_len = sizeof( plaintext_packet->hash ) + sizeof(plaintext_packet->cipher_len ) +  sizeof( plaintext_packet->iv );
-
-    char* plaintext_buf = (char*)plaintext_packet + crypto_header_len;
-    int plaintext_buf_len = packet_len - crypto_header_len;
+    char* plaintext_buf = (char*)plaintext_packet + CRYPTO_HEADER_LEN;
+    int plaintext_buf_len = packet_len - CRYPTO_HEADER_LEN;
     gen_iv( encrypted_packet->iv );
 
-    char* cipher_buf = (char*)encrypted_packet + crypto_header_len;
+    char* cipher_buf = (char*)encrypted_packet + CRYPTO_HEADER_LEN;
     int cipher_len = aes_encrypt( plaintext_buf, plaintext_buf_len, private_key, encrypted_packet->iv, cipher_buf );
     encrypted_packet->cipher_len = cipher_len;
 
-    int cipher_packet_len = cipher_len + crypto_header_len;
+    int cipher_packet_len = cipher_len + CRYPTO_HEADER_LEN;
 
     //mprintf( "HMAC: %d\n", Hash( encrypted_packet->hash, 16 ) );
     char hash[32];
@@ -60,18 +60,22 @@ int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct R
 
 int decrypt_packet( struct RTPPacket* encrypted_packet, int packet_len, struct RTPPacket* plaintext_packet, unsigned char* private_key )
 {
-    if( packet_len < PACKET_HEADER_SIZE )
-    {
-        mprintf( "Packet is too small for metadata!\n" );
-        return -1;
-    }
     if( packet_len > MAX_PACKET_SIZE )
     {
         mprintf( "Encrypted version of Packet is too large!\n" );
         return -1;
     }
+    int decrypt_len = decrypt_packet_n( encrypted_packet, packet_len, plaintext_packet, PACKET_HEADER_SIZE + MAX_PAYLOAD_SIZE, private_key );
+    return decrypt_len;
+}
 
-    int crypto_header_len = sizeof( plaintext_packet->hash ) + sizeof( plaintext_packet->cipher_len ) +  sizeof( plaintext_packet->iv );
+int decrypt_packet_n( struct RTPPacket* encrypted_packet, int packet_len, struct RTPPacket* plaintext_packet, int plaintext_len, unsigned char* private_key )
+{
+    if( packet_len < PACKET_HEADER_SIZE )
+    {
+        mprintf( "Packet is too small for metadata!\n" );
+        return -1;
+    }
 
     char hash[32];
     hmac( hash, (char*)encrypted_packet + sizeof( encrypted_packet->hash ), packet_len - sizeof( encrypted_packet->hash ), PRIVATE_KEY );
@@ -84,12 +88,12 @@ int decrypt_packet( struct RTPPacket* encrypted_packet, int packet_len, struct R
         }
     }
 
-    char* cipher_buf = (char*)encrypted_packet + crypto_header_len;
-    char* plaintext_buf = (char*)plaintext_packet + crypto_header_len;
+    char* cipher_buf = (char*)encrypted_packet + CRYPTO_HEADER_LEN;
+    char* plaintext_buf = (char*)plaintext_packet + CRYPTO_HEADER_LEN;
 
     int decrypt_len = aes_decrypt( cipher_buf, encrypted_packet->cipher_len, private_key,
                                encrypted_packet->iv, plaintext_buf );
-    decrypt_len += crypto_header_len;
+    decrypt_len += CRYPTO_HEADER_LEN;
 
     int expected_len = PACKET_HEADER_SIZE + plaintext_packet->payload_size;
     if( expected_len != decrypt_len )
@@ -98,7 +102,7 @@ int decrypt_packet( struct RTPPacket* encrypted_packet, int packet_len, struct R
         return -1;
     }
 
-    if( decrypt_len > PACKET_HEADER_SIZE + MAX_PAYLOAD_SIZE )
+    if( decrypt_len > plaintext_len )
     {
         mprintf( "Decrypted version of Packet is too large!\n" );
         return -1;

@@ -268,6 +268,65 @@ int sendp(struct SocketContext* context, void* buf, int len) {
 	return sendto( context->s, buf, len, 0, (struct sockaddr*)(&context->addr), sizeof( context->addr ) );
 }
 
+#define LARGEST_TCP_PACKET 10000000
+static int reading_packet_len = 0;
+static char reading_packet_buffer[LARGEST_TCP_PACKET];
+
+static char decrypted_packet_buffer[LARGEST_TCP_PACKET];
+
+void ClearReadingTCP()
+{
+	reading_packet_len = 0;
+}
+
+void* TryReadingTCPPacket( struct SocketContext* context )
+{
+	if( !context->is_tcp )
+	{
+		mprintf( "TryReadingTCPPacket received a context that is NOT TCP!\n" );
+		return NULL;
+	}
+
+#define TCP_SEGMENT_SIZE 1024
+
+	int len;
+
+	do
+	{
+		// Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't overflow LARGEST_TCP_PACKET
+		len = recvp( context, reading_packet_buffer + reading_packet_len, min(TCP_SEGMENT_SIZE, LARGEST_TCP_PACKET - reading_packet_len) );
+		reading_packet_len += len;
+
+		// If the previous recvp was maxed out, then try pulling some more from recvp
+	} while( len == TCP_SEGMENT_SIZE );
+
+	if( reading_packet_len > sizeof( int ) )
+	{
+		// The amount of bytes read (actual len), and the amount of bytes we're looking for (target len), respectively
+		int actual_len = reading_packet_len - sizeof( int );
+		int target_len = *((int*)reading_packet_buffer);
+
+		// If the target len is valid, and actual len > target len, then we're good to go
+		if( target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len )
+		{
+			// Decrypt it
+			int decrypted_len = decrypt_packet_n( reading_packet_buffer + sizeof( int ), actual_len, decrypted_packet_buffer, LARGEST_TCP_PACKET, PRIVATE_KEY );
+
+			// Move the rest of the read bytes to the beginning of the buffer to continue
+			for( int i = target_len; i < actual_len; i++ )
+			{
+				reading_packet_buffer[i - target_len] = reading_packet_buffer[i];
+			}
+			reading_packet_len = actual_len - target_len;
+
+			// Return the decrypted packet
+			return decrypted_packet_buffer;
+		}
+	}
+
+	return NULL;
+}
+
 // Multithreaded printf Semaphores and Mutexes
 volatile static SDL_sem* multithreadedprintf_semaphore;
 volatile static SDL_mutex* multithreadedprintf_mutex;

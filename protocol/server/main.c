@@ -495,7 +495,14 @@ int main(int argc, char* argv[])
         int last_input_id = -1;
         StartTrackingClipboardUpdates();
 
+        ClearReadingTCP();
         while (connected) {
+            char* tcp_buf = TryReadingTCPPacket( &PacketTCPContext );
+            if( tcp_buf )
+            {
+                mprintf( "Received TCP BUF!!!!\n" );
+            }
+
             // If they clipboard as updated, we should send it over to the client
             if( hasClipboardUpdated() )
             {
@@ -657,6 +664,7 @@ int main(int argc, char* argv[])
 
         closesocket(PacketReceiveContext.s);
         closesocket(PacketSendContext.s);
+        closesocket(PacketTCPContext.s);
     }
 
     WSACleanup();
