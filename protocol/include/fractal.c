@@ -261,7 +261,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 }
 
 int recvp(struct SocketContext* context, void* buf, int len) {
-	return recv( context->s, buf, len );
+	return recv( context->s, buf, len, 0 );
 }
 
 int sendp(struct SocketContext* context, void* buf, int len) {
