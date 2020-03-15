@@ -30,7 +30,10 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 
 	if(type == NVENC_ENCODE) {
 		mprintf("Initializing hardware encoder\n");
+		clock t;
+		StartTimer( &t );
     	av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_CUDA, "CUDA", NULL, 0);
+		mprintf( "Time to create encoder: %f\n", GetTimer( t ) );
    		encoder->codec = avcodec_find_encoder_by_name("h264_nvenc");
 
 		enum AVPixelFormat encoder_format = AV_PIX_FMT_CUDA;

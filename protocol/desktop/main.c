@@ -615,6 +615,15 @@ int main(int argc, char* argv[])
             continue;
         }
 
+        struct SocketContext PacketTCPContext = { 0 };
+        if( CreateTCPContext( &PacketTCPContext, "C", server_ip, PORT_SHARED_TCP, 1, 500 ) < 0 )
+        {
+            mprintf( "Failed finish connection to server\n" );
+            closesocket( PacketSendContext.s );
+            closesocket( PacketReceiveContext.s );
+            continue;
+        }
+
         // Initialize video and audio
         is_timing_latency = false;
         connected = true;

@@ -85,6 +85,7 @@
 
 #define PORT_CLIENT_TO_SERVER 32262
 #define PORT_SERVER_TO_CLIENT 32263
+#define PORT_SHARED_TCP 32264
 
 #define MAX_PAYLOAD_SIZE 1285
 #define MAXIMUM_MBPS 30.0
@@ -725,6 +726,7 @@ typedef struct FractalDestination
 
 typedef struct SocketContext
 {
+	bool is_tcp;
     SOCKET s;
     struct sockaddr_in addr;
     int ack;
@@ -766,6 +768,7 @@ typedef struct Frame {
 
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_s, int stun_timeout_ms);
+int CreateTCPContext( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_s, int stun_timeout_ms );
 int recvp(struct SocketContext* context, void* buf, int len);
 int sendp(struct SocketContext* context, void* buf, int len);
 

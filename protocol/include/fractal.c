@@ -92,7 +92,93 @@ void set_timeout(SOCKET s, int timeout_ms) {
 	}
 }
 
+int CreateTCPContext( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms )
+{
+	context->is_tcp = true;
+
+	// Function parameter checking
+	if( !(strcmp( origin, "C" ) == 0 || strcmp( origin, "S" ) == 0) )
+	{
+		mprintf( "Invalid origin parameter. Specify 'S' or 'C'." );
+		return -1;
+	}
+
+	// Create UDP socket
+	context->s = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
+	if( context->s <= 0 )
+	{ // Windows & Unix cases
+		mprintf( "Could not create UDP socket %d\n", GetLastNetworkError() );
+		return -1;
+	}
+
+	if( strcmp( origin, "C" ) == 0 )
+	{
+		// Client connection protocol
+
+		context->addr.sin_family = AF_INET;
+		context->addr.sin_addr.s_addr = inet_addr( destination );
+		context->addr.sin_port = htons( port );
+
+		mprintf( "Connecting to server...\n" );
+
+		// Connect to TCP server
+		if( connect( context->s, (struct sockaddr*)(&context->addr), sizeof( context->addr ) ) < 0 )
+		{
+			mprintf( "Could not send message to server %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		mprintf( "Connected on %s:%d!\n", destination, port );
+
+		set_timeout( context->s, recvfrom_timeout_ms );
+	} else
+	{
+		// Server connection protocol
+
+		struct sockaddr_in origin_addr;
+		origin_addr.sin_family = AF_INET;
+		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
+		origin_addr.sin_port = htons( port );
+
+		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
+		{
+			mprintf( "Failed to bind to port! %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		mprintf( "Waiting for client to connect to %s:%d...\n", "localhost", port );
+
+		// Receive client's connection attempt
+		set_timeout( context->s, stun_timeout_ms );
+		int slen = sizeof( context->addr );
+		if( listen( context->s, 3 ) < 0 )
+		{
+			mprintf( "Did not receive response from client! %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		// Send acknowledgement
+		if( accept( context, NULL, NULL, 0 ) < 0 )
+		{
+			mprintf( "Could not send ack to client! %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		mprintf( "Client received at %s:%d!\n", inet_ntoa( context->addr.sin_addr ), ntohs( context->addr.sin_port ) );
+
+		set_timeout( context->s, recvfrom_timeout_ms );
+	}
+
+	return 0;
+}
+
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
+	context->is_tcp = false;
+
 	// Function parameter checking
 	if (!(strcmp(origin, "C") == 0 || strcmp(origin, "S") == 0)) {
 		mprintf("Invalid origin parameter. Specify 'S' or 'C'.");
@@ -175,11 +261,11 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 }
 
 int recvp(struct SocketContext* context, void* buf, int len) {
-	return recvfrom(context->s, buf, len, 0, NULL, NULL);
+	return recv( context->s, buf, len );
 }
 
 int sendp(struct SocketContext* context, void* buf, int len) {
-	return sendto(context->s, buf, len, 0, (struct sockaddr*)(&context->addr), sizeof(context->addr));
+	return sendto( context->s, buf, len, 0, (struct sockaddr*)(&context->addr), sizeof( context->addr ) );
 }
 
 // Multithreaded printf Semaphores and Mutexes
