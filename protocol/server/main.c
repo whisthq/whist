@@ -50,7 +50,7 @@ SDL_mutex* packet_mutex;
 
 struct SocketContext PacketSendContext = { 0 };
 
-static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet, int len) {
+int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet, int len) {
     if (len > sizeof(struct RTPPacket)) {
         mprintf("Len too long!\n");
         return -1;
@@ -73,7 +73,38 @@ static int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     return 0;
 }
 
-static int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* data, int len, int id) {
+static char single_packet_buf[10000000];
+static char encrypted_single_packet_buf[10000000];
+int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_t* data, int len )
+{
+    struct RTPPacket* packet = single_packet_buf;
+
+    // Construct packet
+    packet->type = type;
+    memcpy( packet->data, data, len );
+    packet->index = 0;
+    packet->payload_size = len;
+    packet->id = -1;
+    packet->num_indices = 1;
+    packet->is_a_nack = false;
+    int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
+
+    // Encrypt the packet
+    struct RTPPacket encrypted_packet;
+    int encrypt_len = encrypt_packet( packet, packet_size, encrypted_single_packet_buf, PRIVATE_KEY );
+
+    // Send it off
+    int sent_size = sendp( context, encrypted_single_packet_buf, encrypt_len );
+
+    if( sent_size < 0 )
+    {
+        int error = WSAGetLastError();
+        mprintf( "Unexpected Packet Error: %d\n", error );
+        return -1;
+    }
+}
+
+int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* data, int len, int id) {
     if (id <= 0) {
         mprintf("IDs must be positive!\n");
         return -1;
@@ -517,8 +548,8 @@ int main(int argc, char* argv[])
                 fmsg_response->type = SMESSAGE_CLIPBOARD;
                 ClipboardData* cb = GetClipboard();
                 memcpy( &fmsg_response->clipboard, cb, sizeof( ClipboardData ) + cb->size );
-                mprintf( "Received clipboard message! Sending to client\n" );
-                if( SendPacket( &PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof( fmsg_response ) + cb->size, 1 ) < 0 )
+                mprintf( "Received clipboard trigger! Sending to client\n" );
+                if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE, fmsg_response, sizeof( FractalServerMessage ) + cb->size ) < 0 )
                 {
                     mprintf( "Could not send Clipboard Message\n" );
                 }
@@ -536,7 +567,7 @@ int main(int argc, char* argv[])
                     mprintf("Exiting due to button press...\n");
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = SMESSAGE_QUIT;
-                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), 1) < 0) {
+                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof( FractalServerMessage ), 1) < 0) {
                         mprintf("Could not send Quit Message\n");
                     }
                     // Give a bit of time to make sure no one is touching it
@@ -553,7 +584,7 @@ int main(int argc, char* argv[])
             {
                 struct RTPPacket* packet = tcp_buf;
                 fmsg = packet->data;
-                mprintf( "Received TCP BUF!!!!\n" );
+                mprintf( "Received TCP BUF!!!! Size %d\n", packet->payload_size );
                 mprintf( "Type: %d\n", fmsg->type );
             } else
             {

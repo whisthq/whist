@@ -357,8 +357,8 @@ static int32_t ReceivePackets(void* opaque) {
             int error = GetLastNetworkError();
 
             switch (error) {
-            case WSAETIMEDOUT:
-            case WSAEWOULDBLOCK:
+            case ETIMEDOUT:
+            case EWOULDBLOCK:
                 break;
             default:
                 mprintf("Unexpected Packet Error: %d\n", error);

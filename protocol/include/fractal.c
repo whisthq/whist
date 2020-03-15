@@ -114,6 +114,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 	if( strcmp( origin, "C" ) == 0 )
 	{
 		// Client connection protocol
+		context->is_server = false;
 
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = inet_addr( destination );
@@ -135,11 +136,22 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 	} else
 	{
 		// Server connection protocol
+		context->is_server = true;
 
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
 		origin_addr.sin_port = htons( port );
+
+		int opt = 1;
+		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
+						&opt, sizeof( opt ) ) < 0 )
+		{
+			mprintf( "Could not setsockopt SO_REUSEADDR\n" );
+			return -1;
+		}
+
+		mprintf( "HERE\n" );
 
 		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
 		{
@@ -147,8 +159,6 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			closesocket( context->s );
 			return -1;
 		}
-
-		mprintf( "Waiting for client to connect to %s:%d...\n", "localhost", port );
 
 		// Receive client's connection attempt
 		set_timeout( context->s, stun_timeout_ms );
@@ -169,6 +179,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			return -1;
 		}
 
+		closesocket( context->s );
 		context->s = new_socket;
 
 		mprintf( "Client received at %s:%d!\n", inet_ntoa( context->addr.sin_addr ), ntohs( context->addr.sin_port ) );
@@ -197,6 +208,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 	if (strcmp(origin, "C") == 0) {
 		// Client connection protocol
+		context->is_server = false;
 
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = inet_addr(destination);
@@ -225,6 +237,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 	}
 	else {
 		// Server connection protocol
+		context->is_server = true;
 
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
@@ -299,7 +312,21 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 		// Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't overflow LARGEST_TCP_PACKET
 		len = recvp( context, reading_packet_buffer + reading_packet_len, min(TCP_SEGMENT_SIZE, LARGEST_TCP_PACKET - reading_packet_len) );
 
-		if( len > 0 )
+		if( len < 0 )
+		{
+			int err = GetLastNetworkError();
+			if( err == ETIMEDOUT )
+			{
+			} else
+			{
+				mprintf( "Error %d\n", err );
+				closesocket( context->s );
+				if( CreateTCPContext( context, context->is_server ? "S" : "C", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port), 1, 500 ) < 0 )
+				{
+					mprintf( "Could not recovery TCP connection!\n" );
+				}
+			}
+		} else
 		{
 			reading_packet_len += len;
 		}
@@ -317,7 +344,7 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 		if( target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len )
 		{
 			// Decrypt it
-			int decrypted_len = decrypt_packet_n( reading_packet_buffer + sizeof( int ), actual_len, decrypted_packet_buffer, LARGEST_TCP_PACKET, PRIVATE_KEY );
+			int decrypted_len = decrypt_packet_n( reading_packet_buffer + sizeof( int ), target_len, decrypted_packet_buffer, LARGEST_TCP_PACKET, PRIVATE_KEY );
 
 			// Move the rest of the read bytes to the beginning of the buffer to continue
 			for( int i = target_len; i < actual_len; i++ )
@@ -326,8 +353,16 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 			}
 			reading_packet_len = actual_len - target_len;
 
-			// Return the decrypted packet
-			return decrypted_packet_buffer;
+			if( decrypted_len < 0 )
+			{
+				mprintf( "Could not decrypt TCP message\n" );
+				return NULL;
+			} else
+			{
+				// Return the decrypted packet
+				return decrypted_packet_buffer;
+			}
+
 		}
 	}
 

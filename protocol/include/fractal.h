@@ -22,13 +22,11 @@
 	#include <windows.h>
 	#include <synchapi.h>
 	#pragma comment (lib, "ws2_32.lib")
+	#define ETIMEDOUT WSAETIMEDOUT
+	#define EWOULDBLOCK WSAEWOULDBLOCK
 #else
 	#include <unistd.h>
 	#include <errno.h>
-
-	// adapt windows error codes
-	#define WSAETIMEDOUT ETIMEDOUT
-	#define WSAEWOULDBLOCK EWOULDBLOCK
 #endif
 
 #include "ffmpeg/libavcodec/avcodec.h"
@@ -726,6 +724,7 @@ typedef struct FractalDestination
 
 typedef struct SocketContext
 {
+	bool is_server;
 	bool is_tcp;
     SOCKET s;
     struct sockaddr_in addr;
