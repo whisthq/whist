@@ -602,7 +602,7 @@ int main(int argc, char* argv[])
             if (fmsg->type != 0) {
                 if (fmsg->type == MESSAGE_KEYBOARD || fmsg->type == MESSAGE_MOUSE_BUTTON || fmsg->type == MESSAGE_MOUSE_WHEEL || fmsg->type == MESSAGE_MOUSE_MOTION) {
                     // Replay user input (keyboard or mouse presses)
-                    ReplayUserInput(fmsg, 1);
+                    ReplayUserInput(fmsg);
                 }
                 else if( fmsg->type == MESSAGE_KEYBOARD_STATE )
                 {

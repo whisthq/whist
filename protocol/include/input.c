@@ -427,112 +427,108 @@ void updateKeyboardState( struct FractalClientMessage* fmsg )
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
-FractalStatus ReplayUserInput(struct FractalClientMessage fmsg[6], int len) {
+FractalStatus ReplayUserInput(struct FractalClientMessage* fmsg) {
 	// get screen width and height for mouse cursor
 	int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
 	int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
-	int i;
-	INPUT Event[6];
+	INPUT Event;
 
-	len = min(len, 6);
+	// switch to fill in the Windows event depending on the FractalClientMessage type
+	switch (fmsg->type) {
+	case MESSAGE_KEYBOARD:
+		// Windows event for keyboard action
 
-	for (i = 0; i < len; i++) {
-		// switch to fill in the Windows event depending on the FractalClientMessage type
-		switch (fmsg[i].type) {
-		case MESSAGE_KEYBOARD:
-			// Windows event for keyboard action
+		//Event.ki.wVk = windows_keycodes[fmsg->keyboard.code];
+		Event.type = INPUT_KEYBOARD;
+		Event.ki.time = 0; // system supplies timestamp
 
-			//Event[i].ki.wVk = windows_keycodes[fmsg[i].keyboard.code];
-			Event[i].type = INPUT_KEYBOARD;
-			Event[i].ki.time = 0; // system supplies timestamp
+		Event.ki.dwFlags = KEYEVENTF_SCANCODE;
+		Event.ki.wVk = 0;
+		Event.ki.wScan = MapVirtualKeyA( windows_keycodes[fmsg->keyboard.code], MAPVK_VK_TO_VSC_EX );
 
-			Event[i].ki.dwFlags = KEYEVENTF_SCANCODE;
-			Event[i].ki.wVk = 0;
-			Event[i].ki.wScan = MapVirtualKeyA( windows_keycodes[fmsg[i].keyboard.code], MAPVK_VK_TO_VSC_EX );
+		if( Event.ki.wScan >> 8 == 0xE0 )
+		{
+			Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+			Event.ki.wScan &= 0xFF;
+		}
 
-			if( Event[i].ki.wScan >> 8 == 0xE0 )
-			{
-				Event[i].ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-				Event[i].ki.wScan &= 0xFF;
-			}
+		if (!fmsg->keyboard.pressed) {
+			Event.ki.dwFlags |= KEYEVENTF_KEYUP;
+		}
+		else {
+			Event.ki.dwFlags |= 0;
+		}
 
-			if (!fmsg[i].keyboard.pressed) {
-				Event[i].ki.dwFlags |= KEYEVENTF_KEYUP;
+		break;
+	case MESSAGE_MOUSE_MOTION:
+		// mouse motion event
+		Event.type = INPUT_MOUSE;
+		if(fmsg->mouseMotion.relative) {
+			Event.mi.dx = fmsg->mouseMotion.x * 0.9;
+			Event.mi.dy = fmsg->mouseMotion.y * 0.9;
+			Event.mi.dwFlags = MOUSEEVENTF_MOVE;
+		} else {
+			Event.mi.dx = fmsg->mouseMotion.x * (double) 65536 / 1000000;
+			Event.mi.dy = fmsg->mouseMotion.y * (double) 65536 / 1000000;
+			Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+		}
+		break;
+	case MESSAGE_MOUSE_BUTTON:
+		// mouse button event
+		Event.type = INPUT_MOUSE;
+		Event.mi.dx = 0;
+		Event.mi.dy = 0;
+
+		// switch to parse button type
+		switch (fmsg->mouseButton.button) {
+		case SDL_BUTTON_LEFT:
+			// left click
+			if (fmsg->mouseButton.pressed) {
+				Event.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
 			}
 			else {
-				Event[i].ki.dwFlags |= 0;
-			}
-
-			break;
-		case MESSAGE_MOUSE_MOTION:
-			// mouse motion event
-			Event[i].type = INPUT_MOUSE;
-			if(fmsg[i].mouseMotion.relative) {
-				Event[i].mi.dx = fmsg[i].mouseMotion.x * 0.9;
-				Event[i].mi.dy = fmsg[i].mouseMotion.y * 0.9;
-				Event[i].mi.dwFlags = MOUSEEVENTF_MOVE;
-			} else {
-				Event[i].mi.dx = fmsg[i].mouseMotion.x * (double) 65536 / 1000000;
-				Event[i].mi.dy = fmsg[i].mouseMotion.y * (double) 65536 / 1000000;
-				Event[i].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+				Event.mi.dwFlags = MOUSEEVENTF_LEFTUP;
 			}
 			break;
-		case MESSAGE_MOUSE_BUTTON:
-			// mouse button event
-			Event[i].type = INPUT_MOUSE;
-			Event[i].mi.dx = 0;
-			Event[i].mi.dy = 0;
-
-			// switch to parse button type
-			switch (fmsg[i].mouseButton.button) {
-			case SDL_BUTTON_LEFT:
-				// left click
-				if (fmsg[i].mouseButton.pressed) {
-					Event[i].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-				}
-				else {
-					Event[i].mi.dwFlags = MOUSEEVENTF_LEFTUP;
-				}
-				break;
-			case SDL_BUTTON_MIDDLE:
-				// middle click
-				if( fmsg[i].mouseButton.pressed )
-				{
-					Event[i].mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
-				}
-				else {
-					Event[i].mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
-				}
-				break;
-			case SDL_BUTTON_RIGHT:
-				// right click
-				if (fmsg[i].mouseButton.pressed) {
-					Event[i].mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-				}
-				else {
-					Event[i].mi.dwFlags = MOUSEEVENTF_RIGHTUP;
-				}
-				break;
+		case SDL_BUTTON_MIDDLE:
+			// middle click
+			if( fmsg->mouseButton.pressed )
+			{
+				Event.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
 			}
-			// End emulating button click
-
-			break; // outer switch
-		case MESSAGE_MOUSE_WHEEL:
-			// mouse wheel event
-			Event[i].type = INPUT_MOUSE;
-			Event[i].mi.dwFlags = MOUSEEVENTF_WHEEL;
-			Event[i].mi.dx = 0;
-			Event[i].mi.dy = 0;
-			Event[i].mi.mouseData = fmsg[i].mouseWheel.y * 100;
+			else {
+				Event.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
+			}
 			break;
-			// TODO: add clipboard
+		case SDL_BUTTON_RIGHT:
+			// right click
+			if (fmsg->mouseButton.pressed) {
+				Event.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
+			}
+			else {
+				Event.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
+			}
+			break;
 		}
-	}
-	// send FMSG mapped to Windows event to Windows and return
-	int num_events_sent = SendInput(len, Event, sizeof(INPUT)); // 1 structure to send
+		// End emulating button click
 
-	if (len != num_events_sent) {
-		mprintf("SendInput did not send all events! %d/%d\n", num_events_sent, len);
+		break; // outer switch
+	case MESSAGE_MOUSE_WHEEL:
+		// mouse wheel event
+		Event.type = INPUT_MOUSE;
+		Event.mi.dwFlags = MOUSEEVENTF_WHEEL;
+		Event.mi.dx = 0;
+		Event.mi.dy = 0;
+		Event.mi.mouseData = fmsg->mouseWheel.y * 100;
+		break;
+		// TODO: add clipboard
+	}
+
+	// send FMSG mapped to Windows event to Windows and return
+	int num_events_sent = SendInput(1, &Event, sizeof(INPUT)); // 1 structure to send
+
+	if (1 != num_events_sent) {
+		mprintf("SendInput did not send event!\n");
 	}
 
 	return FRACTAL_OK;
