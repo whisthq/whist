@@ -85,7 +85,8 @@ OBJS = \
 	video.o \
 	audio.o \
 	main.o \
-	aes.o
+	aes.o \
+	clipboard.o
 
 # compiler flags
 CFLAGS = \
@@ -115,6 +116,10 @@ audiodecode.o:
 # compile the aes source file into object file
 aes.o:
 	$(CC) -c ../include/aes.c
+
+# compile the clipboard source file into object file
+clipboard.o:
+	$(CC) -c ../include/clipboard.c
 
 # compile the main video source file into object file
 video.o:
