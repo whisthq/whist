@@ -685,9 +685,6 @@ typedef struct FractalClientMessage {
 			int index;
 		} nack_data;
 
-		// CMESSAGE_CLIPBOARD
-		ClipboardData clipboard;
-
 		// MESSAGE_KEYBOARD_STATE
 		struct
 		{
@@ -697,6 +694,9 @@ typedef struct FractalClientMessage {
 			char keyboard_state[NUM_KEYCODES];
 		};
 	};
+
+	// CMESSAGE_CLIPBOARD
+	ClipboardData clipboard;
 } FractalClientMessage;
 
 int GetFmsgSize(struct FractalClientMessage* fmsg);
@@ -714,8 +714,8 @@ typedef struct FractalServerMessage {
 	union {
 		int ping_id;
 		int frequency;
-		ClipboardData clipboard;
 	};
+	ClipboardData clipboard;
 } FractalServerMessage;
 
 typedef struct FractalDestination

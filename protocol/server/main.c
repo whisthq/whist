@@ -506,14 +506,16 @@ int main(int argc, char* argv[])
             // If they clipboard as updated, we should send it over to the client
             if( hasClipboardUpdated() )
             {
-                FractalServerMessage fmsg_response = { 0 };
-                fmsg_response.type = SMESSAGE_CLIPBOARD;
-                fmsg_response.clipboard = GetClipboard();
+                FractalServerMessage* fmsg_response = malloc(10000000);
+                fmsg_response->type = SMESSAGE_CLIPBOARD;
+                ClipboardData* cb = GetClipboard();
+                memcpy( &fmsg_response->clipboard, cb, sizeof( ClipboardData ) + cb->size );
                 mprintf( "Received clipboard message! Sending to client\n" );
-                if( SendPacket( &PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof( fmsg_response ), 1 ) < 0 )
+                if( SendPacket( &PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof( fmsg_response ) + cb->size, 1 ) < 0 )
                 {
                     mprintf( "Could not send Clipboard Message\n" );
                 }
+                free( fmsg_response );
             }
 
             if (GetTimer(last_ping) > 3.0) {

@@ -5,6 +5,9 @@
 static int last_clipboard_sequence_number = -1;
 #endif
 
+static char clipboard_buf[9000000];
+static ClipboardData* cb;
+
 void StartTrackingClipboardUpdates()
 {
 #if defined(_WIN32)
@@ -28,11 +31,12 @@ bool hasClipboardUpdated()
 	return hasUpdated;
 }
 
-ClipboardData GetClipboard()
+ClipboardData* GetClipboard()
 {
-	ClipboardData cb;
-	cb.size = 0;
-	cb.type = CLIPBOARD_NONE;
+	cb = clipboard_buf;
+
+	cb->size = 0;
+	cb->type = CLIPBOARD_NONE;
 
 #if defined(_WIN32)
 	if( !OpenClipboard( NULL ) )
@@ -58,10 +62,10 @@ ClipboardData GetClipboard()
 				if( lptstr != NULL )
 				{
 					int data_size = (int)GlobalSize( hglb );
-					if( data_size < 800 )
+					if( data_size < sizeof( clipboard_buf ) )
 					{
-						cb.size = data_size;
-						memcpy( cb.data, lptstr, data_size );
+						cb->size = data_size;
+						memcpy( cb->data, lptstr, data_size );
 						cf_type = cf_types[i];
 					} else
 					{
@@ -83,18 +87,18 @@ ClipboardData GetClipboard()
 		switch( cf_type )
 		{
 		case CF_TEXT:
-			cb.type = CLIPBOARD_TEXT;
+			cb->type = CLIPBOARD_TEXT;
 			// Read the contents of lptstr which just a pointer to the string.
-			mprintf( "CLIPBOARD STRING: %s\n", cb.data );
-			mprintf( "Len %d\n Strlen %d\n", cb.size, strlen( cb.data ) );
+			mprintf( "CLIPBOARD STRING: %s\n", cb->data );
+			mprintf( "Len %d\n Strlen %d\n", cb->size, strlen( cb->data ) );
 			break;
 		case CF_DIBV5:
-			cb.type = CLIPBOARD_IMAGE;
-			mprintf( "Dib! Size: %d\n", cb.size );
+			cb->type = CLIPBOARD_IMAGE;
+			mprintf( "Dib! Size: %d\n", cb->size );
 
 			break;
 		default:
-			cb.type = CLIPBOARD_NONE;
+			cb->type = CLIPBOARD_NONE;
 			mprintf( "Clipboard type unknown: %d\n", cf_type );
 			break;
 		}

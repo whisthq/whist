@@ -128,7 +128,7 @@ int SendFmsg( struct FractalClientMessage* fmsg )
 
 #define LARGEST_PACKET 10000000
 char unbounded_packet[LARGEST_PACKET];
-char encrypted_unbounded_packet[LARGEST_PACKET + 16];
+char encrypted_unbounded_packet[sizeof(int) + LARGEST_PACKET + 16];
 
 int SendTCPPacket( void* data, int len )
 {
@@ -147,10 +147,12 @@ int SendTCPPacket( void* data, int len )
 
     int packet_size = PACKET_HEADER_SIZE + len;
 
-    int encrypt_len = encrypt_packet( packet, packet_size, encrypted_unbounded_packet, PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( packet, packet_size, sizeof(int) + encrypted_unbounded_packet, PRIVATE_KEY );
+    *((int*)encrypted_unbounded_packet) = encrypt_len;
 
+    mprintf( "Sending TCP Packet... %d\n", encrypt_len );
     bool failed = false;
-    if( sendp( &PacketTCPContext, encrypted_unbounded_packet, encrypt_len ) < 0 )
+    if( sendp( &PacketTCPContext, encrypted_unbounded_packet, sizeof(int) + encrypt_len ) < 0 )
     {
         mprintf( "Failed to send packet!\n" );
         failed = true;
@@ -192,12 +194,13 @@ int SendPacket(void* data, int len) {
 
 void updateClipboard()
 {
-    ClipboardData clipboard = GetClipboard();
+    ClipboardData* clipboard = GetClipboard();
 
-    FractalClientMessage fmsg;
-    fmsg.type = CMESSAGE_CLIPBOARD;
-    memcpy( &fmsg.clipboard, &clipboard, sizeof(clipboard) );
-    SendFmsg( &fmsg );
+    FractalClientMessage* fmsg = malloc(10000000);
+    fmsg->type = CMESSAGE_CLIPBOARD;
+    memcpy( &fmsg->clipboard, clipboard, sizeof(ClipboardData) + sizeof(clipboard->size) );
+    SendFmsg( fmsg );
+    free( fmsg );
 }
 
 static int32_t ReceivePackets(void* opaque) {
@@ -655,13 +658,16 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        if( CreateTCPContext( &PacketTCPContext, "C", server_ip, PORT_SHARED_TCP, 1, 500 ) < 0 )
+        if( CreateTCPContext(&PacketTCPContext, "C", server_ip, PORT_SHARED_TCP, 1, 500) < 0 )
         {
             mprintf( "Failed finish connection to server\n" );
             closesocket( PacketSendContext.s );
             closesocket( PacketReceiveContext.s );
             continue;
         }
+
+        //char test[] = "asdlfkmasdklfm";
+        //sendp( &PacketTCPContext, test, sizeof( test ) );
 
         // Initialize video and audio
         is_timing_latency = false;
@@ -807,7 +813,7 @@ int main(int argc, char* argv[])
 
         closesocket(PacketSendContext.s);
         closesocket(PacketReceiveContext.s);
-        closesocket( PacketTCPContext.s );
+        closesocket(PacketTCPContext.s);
 
 #if defined(_WIN32)
         WSACleanup();
