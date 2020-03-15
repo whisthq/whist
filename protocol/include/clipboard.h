@@ -14,10 +14,10 @@ typedef struct ClipboardData
 {
 	int size;
 	ClipboardType type;
-	char data[800];
+	char data[];
 } ClipboardData;
 
-ClipboardData GetClipboard();
+ClipboardData* GetClipboard();
 
 void SetClipboard( ClipboardData* cb );
 

@@ -27,7 +27,7 @@ int GetFmsgSize(struct FractalClientMessage* fmsg) {
 	{
 		return sizeof( *fmsg );
 	} else if( fmsg->type == CMESSAGE_CLIPBOARD ) {
-		return sizeof( *fmsg );
+		return sizeof( *fmsg ) + fmsg->clipboard.size;
 	} else {
 		return sizeof(fmsg->type) + 40;
 	}
