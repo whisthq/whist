@@ -461,6 +461,17 @@ int main(int argc, char* argv[])
             continue;
         }
 
+        /*
+        char buf[200];
+        int len = recvp( &PacketTCPContext, buf, sizeof( buf ) );
+        do
+        {
+            len = recvp( &PacketTCPContext, buf, sizeof( buf ) );
+            mprintf( "Len: %d\n", len );
+        } while( len < 0 );
+        mprintf( "Len: %d\nBuf: %s\n", len, buf );
+        */
+
         InitDesktop();
 
         // Give client time to setup before sending it with packets
@@ -478,7 +489,8 @@ int main(int argc, char* argv[])
         SDL_Thread* send_audio = SDL_CreateThread( SendAudio, "SendAudio", &PacketSendContext );
         mprintf("Sending video and audio...\n");
 
-        struct FractalClientMessage fmsg;
+        struct FractalClientMessage local_fmsg;
+        struct FractalClientMessage* fmsg;
         int i = 0;
 
         clock last_ping;
@@ -496,13 +508,8 @@ int main(int argc, char* argv[])
         StartTrackingClipboardUpdates();
 
         ClearReadingTCP();
-        while (connected) {
-            char* tcp_buf = TryReadingTCPPacket( &PacketTCPContext );
-            if( tcp_buf )
-            {
-                mprintf( "Received TCP BUF!!!!\n" );
-            }
 
+        while (connected) {
             // If they clipboard as updated, we should send it over to the client
             if( hasClipboardUpdated() )
             {
@@ -538,115 +545,128 @@ int main(int argc, char* argv[])
                 StartTimer(&last_exit_check);
             }
 
-            memset(&fmsg, 0, sizeof(fmsg));
-
             // START Get Packet
-            struct RTPPacket encrypted_packet;
-            int encrypted_len;
-            if( (encrypted_len = recvp( &PacketReceiveContext, &encrypted_packet, sizeof( encrypted_packet ) )) > 0 )
+            char* tcp_buf = TryReadingTCPPacket( &PacketTCPContext );
+            if( tcp_buf )
             {
-                // Decrypt using AES private key
-                struct RTPPacket decrypted_packet;
-                int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
+                struct RTPPacket* packet = tcp_buf;
+                fmsg = packet->data;
+                mprintf( "Received TCP BUF!!!!\n" );
+                mprintf( "Type: %d\n", fmsg->type );
+            } else
+            {
+                memset( &local_fmsg, 0, sizeof( local_fmsg ) );
 
-                // If decrypted successfully
-                if( decrypt_len > 0 )
+                fmsg = &local_fmsg;
+
+                struct RTPPacket encrypted_packet;
+                int encrypted_len;
+                if( (encrypted_len = recvp( &PacketReceiveContext, &encrypted_packet, sizeof( encrypted_packet ) )) > 0 )
                 {
-                    // Copy data into an fmsg
-                    memcpy(&fmsg, decrypted_packet.data, max(sizeof(fmsg), decrypted_packet.payload_size));
-                    
-                    // Check to see if decrypted packet is of valid size
-                    if( decrypted_packet.payload_size != GetFmsgSize(&fmsg) )
-                    {
-                        mprintf( "Packet is of the wrong size!: %d\n", decrypted_packet.payload_size );
-                        mprintf("Type: %d\n", fmsg.type);
-                        fmsg.type = 0;
-                    }
+                    // Decrypt using AES private key
+                    struct RTPPacket decrypted_packet;
+                    int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
 
-                    // Make sure that keyboard events are played in order
-                    if (fmsg.type == MESSAGE_KEYBOARD || fmsg.type == MESSAGE_KEYBOARD_STATE) {
-                        // Check that id is in order
-                        if (decrypted_packet.id > last_input_id) {
-                            decrypted_packet.id = last_input_id;
+                    // If decrypted successfully
+                    if( decrypt_len > 0 )
+                    {
+                        // Copy data into an fmsg
+                        memcpy(fmsg, decrypted_packet.data, max(sizeof(*fmsg), decrypted_packet.payload_size));
+                    
+                        // Check to see if decrypted packet is of valid size
+                        if( decrypted_packet.payload_size != GetFmsgSize(fmsg) )
+                        {
+                            mprintf( "Packet is of the wrong size!: %d\n", decrypted_packet.payload_size );
+                            mprintf("Type: %d\n", fmsg->type);
+                            fmsg->type = 0;
                         }
-                        else {
-                            // Received keyboard input out of order, just ignore
-                            fmsg.type = 0;
+
+                        // Make sure that keyboard events are played in order
+                        if (fmsg->type == MESSAGE_KEYBOARD || fmsg->type == MESSAGE_KEYBOARD_STATE) {
+                            // Check that id is in order
+                            if (decrypted_packet.id > last_input_id) {
+                                decrypted_packet.id = last_input_id;
+                            }
+                            else {
+                                // Received keyboard input out of order, just ignore
+                                fmsg->type = 0;
+                            }
                         }
                     }
                 }
             }
             // END Get Packet
 
-            if (fmsg.type != 0) {
-                if (fmsg.type == MESSAGE_KEYBOARD || fmsg.type == MESSAGE_MOUSE_BUTTON || fmsg.type == MESSAGE_MOUSE_WHEEL || fmsg.type == MESSAGE_MOUSE_MOTION) {
+            if (fmsg->type != 0) {
+                if (fmsg->type == MESSAGE_KEYBOARD || fmsg->type == MESSAGE_MOUSE_BUTTON || fmsg->type == MESSAGE_MOUSE_WHEEL || fmsg->type == MESSAGE_MOUSE_MOTION) {
                     // Replay user input (keyboard or mouse presses)
-                    ReplayUserInput(&fmsg, 1);
+                    ReplayUserInput(fmsg, 1);
                 }
-                else if( fmsg.type == MESSAGE_KEYBOARD_STATE )
+                else if( fmsg->type == MESSAGE_KEYBOARD_STATE )
                 {
                     // Synchronize client and server keyboard state
-                    updateKeyboardState( &fmsg );
+                    updateKeyboardState( fmsg );
                 }
-                else if (fmsg.type == MESSAGE_MBPS) {
+                else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
-                    max_mbps = fmsg.mbps;
+                    max_mbps = fmsg->mbps;
                 }
-                else if (fmsg.type == MESSAGE_PING) {
-                    mprintf("Ping Received - ID %d\n", fmsg.ping_id); 
+                else if (fmsg->type == MESSAGE_PING) {
+                    mprintf("Ping Received - ID %d\n", fmsg->ping_id); 
 
                     // Response to ping with pong
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = MESSAGE_PONG;
-                    fmsg_response.ping_id = fmsg.ping_id;
+                    fmsg_response.ping_id = fmsg->ping_id;
                     StartTimer(&last_ping);
                     if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), 1) < 0) {
                         mprintf("Could not send Pong\n");
                     }
                 }
-                else if (fmsg.type == MESSAGE_DIMENSIONS) {
+                else if (fmsg->type == MESSAGE_DIMENSIONS) {
                     // Update local monitor dimensions
-                    mprintf("Request to use dimensions %dx%d received\n", fmsg.dimensions.width, fmsg.dimensions.height);
+                    mprintf("Request to use dimensions %dx%d received\n", fmsg->dimensions.width, fmsg->dimensions.height);
                     //TODO: Check if dimensions are valid
-                    server_width = fmsg.dimensions.width;
-                    server_height = fmsg.dimensions.height;
+                    server_width = fmsg->dimensions.width;
+                    server_height = fmsg->dimensions.height;
                     update_device = true;
-                } else if( fmsg.type == CMESSAGE_CLIPBOARD )
+                } else if( fmsg->type == CMESSAGE_CLIPBOARD )
                 {
                     // Update clipboard with message
-                    SetClipboard( &fmsg.clipboard );
+                    mprintf( "Clipboard!\n" );
+                    SetClipboard( &fmsg->clipboard );
                 }
-                else if (fmsg.type == MESSAGE_AUDIO_NACK) {
+                else if (fmsg->type == MESSAGE_AUDIO_NACK) {
                     // Audio nack received, relay the packet
 
-                    //mprintf("Audio NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
-                    struct RTPPacket *audio_packet = &audio_buffer[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
-                    int len = audio_buffer_packet_len[fmsg.nack_data.id % AUDIO_BUFFER_SIZE][fmsg.nack_data.index];
-                    if (audio_packet->id == fmsg.nack_data.id) {
-                        mprintf("NACKed audio packet %d found of length %d. Relaying!\n", fmsg.nack_data.id, len);
+                    //mprintf("Audio NACK requested for: ID %d Index %d\n", fmsg->nack_data.id, fmsg->nack_data.index);
+                    struct RTPPacket *audio_packet = &audio_buffer[fmsg->nack_data.id % AUDIO_BUFFER_SIZE][fmsg->nack_data.index];
+                    int len = audio_buffer_packet_len[fmsg->nack_data.id % AUDIO_BUFFER_SIZE][fmsg->nack_data.index];
+                    if (audio_packet->id == fmsg->nack_data.id) {
+                        mprintf("NACKed audio packet %d found of length %d. Relaying!\n", fmsg->nack_data.id, len);
                         ReplayPacket(&PacketSendContext, audio_packet, len);
                     }
                     // If we were asked for an invalid index, just ignore it
-                    else if (fmsg.nack_data.index < audio_packet->num_indices) {
-                        mprintf("NACKed audio packet %d %d not found, ID %d %d was located instead.\n", fmsg.nack_data.id, fmsg.nack_data.index, audio_packet->id, audio_packet->index);
+                    else if (fmsg->nack_data.index < audio_packet->num_indices) {
+                        mprintf("NACKed audio packet %d %d not found, ID %d %d was located instead.\n", fmsg->nack_data.id, fmsg->nack_data.index, audio_packet->id, audio_packet->index);
                     }
                 }
-                else if (fmsg.type == MESSAGE_VIDEO_NACK) {
+                else if (fmsg->type == MESSAGE_VIDEO_NACK) {
                     // Video nack received, relay the packet
 
-                    //mprintf("Video NACK requested for: ID %d Index %d\n", fmsg.nack_data.id, fmsg.nack_data.index);
-                    struct RTPPacket* video_packet = &video_buffer[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
-                    int len = video_buffer_packet_len[fmsg.nack_data.id % VIDEO_BUFFER_SIZE][fmsg.nack_data.index];
-                    if (video_packet->id == fmsg.nack_data.id) {
-                        mprintf("NACKed video packet ID %d Index %d found of length %d. Relaying!\n", fmsg.nack_data.id, fmsg.nack_data.index, len);
+                    //mprintf("Video NACK requested for: ID %d Index %d\n", fmsg->nack_data.id, fmsg->nack_data.index);
+                    struct RTPPacket* video_packet = &video_buffer[fmsg->nack_data.id % VIDEO_BUFFER_SIZE][fmsg->nack_data.index];
+                    int len = video_buffer_packet_len[fmsg->nack_data.id % VIDEO_BUFFER_SIZE][fmsg->nack_data.index];
+                    if (video_packet->id == fmsg->nack_data.id) {
+                        mprintf("NACKed video packet ID %d Index %d found of length %d. Relaying!\n", fmsg->nack_data.id, fmsg->nack_data.index, len);
                         ReplayPacket(&PacketSendContext, video_packet, len);
                     }
 
                     // If we were asked for an invalid index, just ignore it
-                    else if (fmsg.nack_data.index < video_packet->num_indices) {
-                        mprintf("NACKed video packet %d %d not found, ID %d %d was located instead.\n", fmsg.nack_data.id, fmsg.nack_data.index, video_packet->id, video_packet->index);
+                    else if (fmsg->nack_data.index < video_packet->num_indices) {
+                        mprintf("NACKed video packet %d %d not found, ID %d %d was located instead.\n", fmsg->nack_data.id, fmsg->nack_data.index, video_packet->id, video_packet->index);
                     }
-                } else if(  fmsg.type == CMESSAGE_QUIT  )
+                } else if(  fmsg->type == CMESSAGE_QUIT  )
                 {
                     // Client requested to exit, it's time to disconnect
                     mprintf( "Client Quit\n" );

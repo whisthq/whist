@@ -124,7 +124,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		// Connect to TCP server
 		if( connect( context->s, (struct sockaddr*)(&context->addr), sizeof( context->addr ) ) < 0 )
 		{
-			mprintf( "Could not send message to server %d\n", GetLastNetworkError() );
+			mprintf( "Could not connect over TCP to server %d\n", GetLastNetworkError() );
 			closesocket( context->s );
 			return -1;
 		}
@@ -152,21 +152,24 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 
 		// Receive client's connection attempt
 		set_timeout( context->s, stun_timeout_ms );
-		int slen = sizeof( context->addr );
 		if( listen( context->s, 3 ) < 0 )
+		{
+			mprintf( "Could not listen(2)! %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		// Send acknowledgement
+		int slen = sizeof( context->addr );
+		int new_socket;
+		if( (new_socket = accept( context->s, (struct sockaddr*)(&context->addr), &slen)) < 0 )
 		{
 			mprintf( "Did not receive response from client! %d\n", GetLastNetworkError() );
 			closesocket( context->s );
 			return -1;
 		}
 
-		// Send acknowledgement
-		if( accept( context, NULL, NULL, 0 ) < 0 )
-		{
-			mprintf( "Could not send ack to client! %d\n", GetLastNetworkError() );
-			closesocket( context->s );
-			return -1;
-		}
+		context->s = new_socket;
 
 		mprintf( "Client received at %s:%d!\n", inet_ntoa( context->addr.sin_addr ), ntohs( context->addr.sin_port ) );
 
@@ -295,7 +298,11 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 	{
 		// Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't overflow LARGEST_TCP_PACKET
 		len = recvp( context, reading_packet_buffer + reading_packet_len, min(TCP_SEGMENT_SIZE, LARGEST_TCP_PACKET - reading_packet_len) );
-		reading_packet_len += len;
+
+		if( len > 0 )
+		{
+			reading_packet_len += len;
+		}
 
 		// If the previous recvp was maxed out, then try pulling some more from recvp
 	} while( len == TCP_SEGMENT_SIZE );
