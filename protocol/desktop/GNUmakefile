@@ -84,9 +84,9 @@ OBJS = \
 	audiodecode.o \
 	video.o \
 	audio.o \
-	main.o \
 	aes.o \
-	clipboard.o
+	clipboard.o \
+	main.o
 
 # compiler flags
 CFLAGS = \

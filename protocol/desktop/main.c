@@ -388,14 +388,6 @@ static int32_t ReceivePackets(void* opaque) {
             //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
             switch (packet.type) {
             case PACKET_VIDEO:
-                static int best_vid_id = -1;
-                if( packet.id > best_vid_id )
-                {
-                    best_vid_id = packet.id;
-                    mprintf( "vid: %d\n", best_vid_id );
-                }
-
-
                 StartTimer(&video_timer);
                 ReceiveVideo(&packet);
                 video_time += GetTimer(video_timer);
@@ -568,6 +560,9 @@ int initSDL() {
 
     int full_width = get_native_screen_width();
     int full_height = get_native_screen_height();
+
+    mprintf( "WIDTH: %d\n", full_width );
+    mprintf( "HEIGHT: %d\n", full_height );    
 
     if (output_width < 0) {
         output_width = full_width;
