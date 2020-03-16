@@ -143,6 +143,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
 		origin_addr.sin_port = htons( port );
 
+		// Reuse addr
 		int opt = 1;
 		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
 						&opt, sizeof( opt ) ) < 0 )
@@ -151,8 +152,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			return -1;
 		}
 
-		mprintf( "HERE\n" );
-
+		// Bind to port
 		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
 		{
 			mprintf( "Failed to bind to port! %d\n", GetLastNetworkError() );
@@ -160,7 +160,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			return -1;
 		}
 
-		// Receive client's connection attempt
+		// Set listen queue
 		set_timeout( context->s, stun_timeout_ms );
 		if( listen( context->s, 3 ) < 0 )
 		{
@@ -169,7 +169,22 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			return -1;
 		}
 
-		// Send acknowledgement
+		fd_set fd;
+		FD_ZERO( &fd );
+		FD_SET( context->s, &fd );
+
+		struct timeval tv;
+		tv.tv_sec = stun_timeout_ms / 1000;
+		tv.tv_usec = (stun_timeout_ms % 1000) * 1000;
+
+		if( select( 0, &fd, &fd, NULL, stun_timeout_ms > 0 ? &tv : NULL ) < 0 )
+		{
+			mprintf( "Could not select!\n" );
+			closesocket( context->s );
+			return -1;
+		}
+
+		// Accept connection from client
 		int slen = sizeof( context->addr );
 		SOCKET new_socket;
 		if( (new_socket = accept( context->s, (struct sockaddr*)(&context->addr), &slen)) < 0 )
@@ -319,12 +334,7 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 			{
 			} else
 			{
-				mprintf( "Error %d\n", err );
-				closesocket( context->s );
-				if( CreateTCPContext( context, context->is_server ? "S" : "C", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port), 1, 500 ) < 0 )
-				{
-					mprintf( "Could not recovery TCP connection!\n" );
-				}
+				//mprintf( "Error %d\n", err );
 			}
 		} else
 		{

@@ -94,7 +94,9 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_
     int encrypt_len = encrypt_packet( packet, packet_size, encrypted_single_packet_buf, PRIVATE_KEY );
 
     // Send it off
+    mprintf( "START SENDING\n" );
     int sent_size = sendp( context, encrypted_single_packet_buf, encrypt_len );
+    mprintf( "END SENDING\n" );
 
     if( sent_size < 0 )
     {
@@ -269,6 +271,11 @@ static int32_t SendVideo(void* opaque) {
             mprintf("Failed to capture screen\n");
             int width = device->width;
             int height = device->height;
+
+            // For now, just exit so that FractalService can restart it
+            mprintf( "Exiting...\n" );
+            exit( -1 );
+
             DestroyCaptureDevice(device);
             InitDesktop();
             CreateCaptureDevice(device, width, height);
@@ -283,12 +290,14 @@ static int32_t SendVideo(void* opaque) {
             if (accumulated_frames > 1) {
                 mprintf("Accumulated Frames: %d\n", accumulated_frames);
             }
+            mprintf( "Accumulated Frames: %d\n", accumulated_frames );
 
             consecutive_capture_screen_errors = 0;
 
             clock t;
             StartTimer(&t);
             video_encoder_encode(encoder, device->frame_data);
+            mprintf( "Encoding to size %d\n", encoder->packet.size );
             //mprintf("Encode Time: %f\n", GetTimer(t));
 
             bitrate_tested_frames++;
@@ -492,17 +501,6 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        /*
-        char buf[200];
-        int len = recvp( &PacketTCPContext, buf, sizeof( buf ) );
-        do
-        {
-            len = recvp( &PacketTCPContext, buf, sizeof( buf ) );
-            mprintf( "Len: %d\n", len );
-        } while( len < 0 );
-        mprintf( "Len: %d\nBuf: %s\n", len, buf );
-        */
-
         InitDesktop();
 
         // Give client time to setup before sending it with packets
@@ -552,6 +550,9 @@ int main(int argc, char* argv[])
                 if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE, fmsg_response, sizeof( FractalServerMessage ) + cb->size ) < 0 )
                 {
                     mprintf( "Could not send Clipboard Message\n" );
+                } else
+                {
+                    mprintf( "Send clipboard message!\n" );
                 }
                 free( fmsg_response );
             }
