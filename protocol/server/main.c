@@ -290,14 +290,12 @@ static int32_t SendVideo(void* opaque) {
             if (accumulated_frames > 1) {
                 mprintf("Accumulated Frames: %d\n", accumulated_frames);
             }
-            mprintf( "Accumulated Frames: %d\n", accumulated_frames );
 
             consecutive_capture_screen_errors = 0;
 
             clock t;
             StartTimer(&t);
             video_encoder_encode(encoder, device->frame_data);
-            mprintf( "Encoding to size %d\n", encoder->packet.size );
             //mprintf("Encode Time: %f\n", GetTimer(t));
 
             bitrate_tested_frames++;
