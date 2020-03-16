@@ -36,6 +36,7 @@ volatile int output_height;
 // Function Declarations
 
 SDL_mutex* send_packet_mutex;
+void updateClipboard();
 static int32_t ReceivePackets(void* opaque);
 static int32_t ReceiveMessage(struct RTPPacket* packet);
 
@@ -60,10 +61,27 @@ void initUpdate() {
     StartTimer((clock*)&latency_timer);
     ping_id = 1;
     ping_failures = -2;
+
+    updateClipboard();
+    StartTrackingClipboardUpdates();
 }
 
 void update() {
     FractalClientMessage fmsg;
+
+    // Check if TCP is up
+    int result = sendp( &PacketTCPContext, NULL, 0 );
+    if( result < 0 )
+    {
+        mprintf( "Lost TCP Connection (Error: %d)\n", GetLastNetworkError() );
+    }
+
+    // Check if clipboard has updated
+    if( hasClipboardUpdated() )
+    {
+        mprintf( "Clipboard event found, sending to server!\n" );
+        updateClipboard();
+    }
 
     // Start update checks
     if (UpdateData.needs_dimension_update && !UpdateData.tried_to_update_dimension && (server_width != output_width || server_height != output_height)) {
@@ -161,6 +179,7 @@ int SendTCPPacket( void* data, int len )
         mprintf( "Failed to send packet!\n" );
         failed = true;
     }
+    mprintf( "Successfully sent!\n" );
 
     return failed ? -1 : 0;
 }
@@ -259,7 +278,7 @@ static int32_t ReceivePackets(void* opaque) {
     bool dropping = false;
     StartTimer(&drop_test_timer);
 
-    for (int i = 0; run_receive_packets; i++) {
+    while (run_receive_packets) {
         if (GetTimer(last_ack) > 5.0) {
             sendp(&socketContext, NULL, 0);
             StartTimer(&last_ack);
@@ -542,6 +561,9 @@ int initSDL() {
     int full_width = get_native_screen_width();
     int full_height = get_native_screen_height();
 
+    mprintf( "WIDTH: %d\n", full_width );
+    mprintf( "HEIGHT: %d\n", full_height );    
+
     if (output_width < 0) {
         output_width = full_width;
     }
@@ -697,18 +719,8 @@ int main(int argc, char* argv[])
 
         SDL_Delay( 250 );
 
-        updateClipboard();
-
-        StartTrackingClipboardUpdates();
-
         while (connected && !exiting)
         {
-            if( hasClipboardUpdated() )
-            {
-                mprintf( "Clipboard event found, sending to server!\n" );
-                updateClipboard();
-            }
-
             // Update the keyboard state
             if( GetTimer( keyboard_sync_timer ) > 50.0 / 1000.0 )
             {
@@ -736,7 +748,7 @@ int main(int argc, char* argv[])
             }
 
             fmsg.type = 0;
-            if (SDL_PollEvent(&msg)) {
+            if ( SDL_PollEvent(&msg) ) {
                 switch (msg.type) {
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:

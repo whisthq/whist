@@ -186,7 +186,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 
 		// Accept connection from client
 		int slen = sizeof( context->addr );
-		int new_socket;
+		SOCKET new_socket;
 		if( (new_socket = accept( context->s, (struct sockaddr*)(&context->addr), &slen)) < 0 )
 		{
 			mprintf( "Did not receive response from client! %d\n", GetLastNetworkError() );
