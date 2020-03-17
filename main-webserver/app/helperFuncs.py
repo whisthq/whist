@@ -328,7 +328,9 @@ def fetchUserVMs(username):
         params = {}
         with engine.connect() as conn:
             vms_info = conn.execute(command, **params).fetchall()
-            out = [{'vm_username': vm_info[2], 'vm_name': vm_info[0]} for vm_info in vms_info]
+            out = [{'vm_username': vm_info[2], 
+                    'vm_name': vm_info[0], 
+                    'vm_password': jwt.decode(vm_info[1], os.getenv('SECRET_KEY'))['pwd']} for vm_info in vms_info]
             return out
 
 def deleteRow(username, vm_name, usernames, vm_names):

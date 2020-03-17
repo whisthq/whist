@@ -39,13 +39,15 @@ def fetchAll(self, update):
             'vm_name': entry.name,
             'username': entry.os_profile.admin_username,
             'ip': vm_ip,
-            'location': entry.location
+            'location': entry.location,
+            'password': os.getenv('VM_PASSWORD')
         }
         
         if entry.name in current_names:
             for vm in current_vms:
                 if entry.name == vm['vm_name']:
                     vm_info['username'] = vm['vm_username']
+                    vm_info['password'] = vm['vm_password']
 
         vms['value'].append(vm_info)
         vm_usernames.append(entry.os_profile.admin_username)
