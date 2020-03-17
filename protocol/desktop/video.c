@@ -176,11 +176,11 @@ int32_t RenderScreen(void* opaque) {
             continue;
         }
 
-        AVPicture pict;
+        AVPicture pict = { 0 };
         pict.data[0] = videoContext.yPlane;
         pict.data[1] = videoContext.uPlane;
         pict.data[2] = videoContext.vPlane;
-        pict.linesize[0] = output_width;
+        pict.linesize[0] = output_width; // need width to be a multiple of 32 to avoid misalignment warning
         pict.linesize[1] = videoContext.uvPitch;
         pict.linesize[2] = videoContext.uvPitch;
 
