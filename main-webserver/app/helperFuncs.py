@@ -365,5 +365,6 @@ def fetchLoginActivity():
         out = [{'username': activity[0], 
                 'timestamp': activity[1], 
                 'action': activity[2]} for activity in activities]
+        out.reverse()
         return out
 
