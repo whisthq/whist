@@ -36,6 +36,7 @@
 #include "ffmpeg/libavfilter/avfilter.h"
 #include "ffmpeg/libavformat/avformat.h"
 #include "ffmpeg/libavutil/avutil.h"
+#include "ffmpeg/libavutil/imgutils.h"
 #include "ffmpeg/libavfilter/buffersink.h"
 #include "ffmpeg/libavfilter/buffersrc.h"
 #include "ffmpeg/libswscale/swscale.h"

@@ -42,10 +42,9 @@ struct VideoData {
 typedef struct SDLVideoContext {
     SDL_Texture* texture;
 
-    Uint8* yPlane;
-    Uint8* uPlane;
-    Uint8* vPlane;
-    int uvPitch;
+    Uint8* data[4];
+    int linesize[4];
+
     video_decoder_t* decoder;
     struct SwsContext* sws;
 } SDLVideoContext;
@@ -176,27 +175,19 @@ int32_t RenderScreen(void* opaque) {
             continue;
         }
 
-        AVPicture pict;
-        pict.data[0] = videoContext.yPlane;
-        pict.data[1] = videoContext.uPlane;
-        pict.data[2] = videoContext.vPlane;
-        pict.linesize[0] = output_width;
-        pict.linesize[1] = videoContext.uvPitch;
-        pict.linesize[2] = videoContext.uvPitch;
-
         sws_scale(videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
-            videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, pict.data,
-            pict.linesize);
+            videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, videoContext.data,
+            videoContext.linesize);
 
         SDL_UpdateYUVTexture(
             videoContext.texture,
             NULL,
-            videoContext.yPlane,
+            videoContext.data[0],
             output_width,
-            videoContext.uPlane,
-            videoContext.uvPitch,
-            videoContext.vPlane,
-            videoContext.uvPitch
+            videoContext.data[1],
+            output_width / 2,
+            videoContext.data[2],
+            output_width / 2
         );
 
         // Set cursor to frame's desired cursor type
@@ -248,10 +239,6 @@ void initVideo() {
 
     SDL_Texture* texture;
 
-    Uint8* yPlane, * uPlane, * vPlane;
-    size_t yPlaneSz, uvPlaneSz;
-    int uvPitch;
-
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     // Allocate a place to put our YUV image on that screen
     texture = SDL_CreateTexture(
@@ -266,26 +253,9 @@ void initVideo() {
         exit(1);
     }
 
-    // set up YV12 pixel array (12 bits per pixel)
-    yPlaneSz = output_width * output_height;
-    uvPlaneSz = output_width * output_height / 4;
-    yPlane = (Uint8*)malloc(yPlaneSz);
-    uPlane = (Uint8*)malloc(uvPlaneSz);
-    vPlane = (Uint8*)malloc(uvPlaneSz);
-
-    if (!yPlane || !uPlane || !vPlane) {
-        fprintf(stderr, "Could not allocate pixel buffers - exiting\n");
-        exit(1);
-    }
-
-    uvPitch = output_width / 2;
-
     videoContext.texture = texture;
 
-    videoContext.yPlane = yPlane;
-    videoContext.uPlane = uPlane;
-    videoContext.vPlane = vPlane;
-    videoContext.uvPitch = uvPitch;
+    av_image_alloc( videoContext.data, videoContext.linesize, output_width, output_height, AV_PIX_FMT_YUV420P, 32 );
 
     VideoData.pending_ctx = NULL;
     VideoData.frames_received = 0;
@@ -547,9 +517,7 @@ void destroyVideo() {
     SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
 
     SDL_DestroyTexture(videoContext.texture);
-    free(videoContext.yPlane);
-    free(videoContext.uPlane);
-    free(videoContext.vPlane);
+    av_freep( videoContext.data );
 
     has_rendered_yet = false;
 }
