@@ -25,4 +25,4 @@ void StartTrackingClipboardUpdates();
 
 bool hasClipboardUpdated();
 
-#endif CLIPBOARD_H
+#endif // CLIPBOARD_H

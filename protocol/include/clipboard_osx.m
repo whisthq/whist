@@ -47,6 +47,11 @@ const char* ClipboardGetString() {
 	}
 }
 
+void ClipboardSetString(const char *str) {
+	[[NSPasteboard generalPasteboard] declareTypes: [NSArray arrayWithObject: NSPasteboardTypeString] owner:nil];
+	[[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str] forType: NSPasteboardTypeString];
+    return;
+}
 
 
 
@@ -60,12 +65,40 @@ const char* ClipboardGetString() {
 
 
 
-struct CGImage* ClipboardGetImage()
+const unsigned char* ClipboardGetImage()
 {
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSBitmapImageRep *rep = (NSBitmapImageRep*)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
 	if( rep ) {
-		return [rep CGImage]; // bitmap format
+        // convert to CGImage, this is a bitmap-like format
+        struct CGImage* cgimage = [rep CGImage];
+
+
+
+
+/*
+
+    int bgraDataLen = 0;
+    CGImageRef windowImage = CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow, windowId, kCGWindowImageBoundsIgnoreFraming);
+
+    CFDataRef bgraDataRef = CGDataProviderCopyData(CGImageGetDataProvider(windowImage));
+    bgraDataLen = CFDataGetLength(bgraDataRef);
+    *bgraData = new unsigned char[bgraDataLen]; //This is what I need
+    CFDataGetBytes(bgraDataRef, CFRangeMake(0, bgraDataLen), *bgraData);
+    CGImageRelease(windowImage);
+    CFRelease(bgraDataRef);
+
+*/
+
+        CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(cgimage));
+
+
+        const unsigned char *buffer =  CFDataGetBytePtr(pixelData);
+
+
+        return buffer;
+
+//		return [rep CGImage]; // bitmap format
     }
 	else {
 
@@ -73,6 +106,8 @@ struct CGImage* ClipboardGetImage()
 		return "COULDN'T GET IMAGE";
     }
 }
+
+
 
 
 
@@ -89,5 +124,35 @@ ImageSourceRef Clipboard::getImage()
 
 
 */
+
+
+
+
+
+
+
+
+
+
+/*
+
+void ClipboardSetImage( ImageSourceRef imageSource, ImageTarget::Options options )
+{
+
+
+	cocoa::ImageTargetCgImageRef target = cocoa::ImageTargetCgImage::createRef( imageSource, options );
+	imageSource->load( target );
+	target->finalize();
+	
+	NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithCGImage:target->getCgImage()] autorelease];
+	NSImage *image = [[NSImage alloc] initWithSize:[imageRep size]];
+	[image addRepresentation: imageRep];
+	[[NSPasteboard generalPasteboard] declareTypes: [NSArray arrayWithObject: NSTIFFPboardType] owner:nil];
+	[[NSPasteboard generalPasteboard] setData:[image TIFFRepresentation] forType:NSTIFFPboardType];	
+	[image release];
+    return;
+}
+*/
+
 
 // TODO add set

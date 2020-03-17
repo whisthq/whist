@@ -79,12 +79,12 @@ int audio_decoder_decode(audio_decoder_t *decoder, char *buffer, int buffer_size
 
   // copy the received packet back into the decoder AVPacket
   // memcpy(&decoder->packet.data, &buffer, buffer_size);
-	decoder->packet.data = buffer;
+	decoder->packet.data = (uint8_t *) buffer;
 	decoder->packet.size = buffer_size;
 
   // decode the frame
 	len = avcodec_decode_audio4(decoder->context, decoder->frame, &success, &decoder->packet);
-	av_free_packet(&decoder->packet);
+  av_packet_free(&decoder->packet);
   return len;
 }
 

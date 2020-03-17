@@ -6,9 +6,9 @@
 #include "openssl/rand.h"
 #include "openssl/hmac.h"
 
-aes_encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
+int aes_encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
          unsigned char* iv, unsigned char* ciphertext );
-aes_decrypt( unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
+int aes_decrypt( unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
          unsigned char* iv, unsigned char* plaintext );
 
 void handleErrors( void )
@@ -25,7 +25,7 @@ void gen_iv( unsigned char* iv )
 int hmac( char* hash, char* buf, int len, char* key )
 {
     int hash_len;
-    HMAC( EVP_sha256(), key, 16, buf, len, hash, &hash_len );
+    HMAC( EVP_sha256(), key, 16, (const unsigned char *) buf, len, (unsigned char *) hash, (unsigned int *) &hash_len );
     if( hash_len != 32 )
     {
         mprintf( "Incorrect hash length!\n" );
@@ -43,7 +43,7 @@ int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct R
     gen_iv( encrypted_packet->iv );
 
     char* cipher_buf = (char*)encrypted_packet + CRYPTO_HEADER_LEN;
-    int cipher_len = aes_encrypt( plaintext_buf, plaintext_buf_len, private_key, encrypted_packet->iv, cipher_buf );
+    int cipher_len = aes_encrypt( (unsigned char *) plaintext_buf, plaintext_buf_len, private_key, encrypted_packet->iv, (unsigned char *) cipher_buf );
     encrypted_packet->cipher_len = cipher_len;
 
     int cipher_packet_len = cipher_len + CRYPTO_HEADER_LEN;
@@ -91,8 +91,8 @@ int decrypt_packet_n( struct RTPPacket* encrypted_packet, int packet_len, struct
     char* cipher_buf = (char*)encrypted_packet + CRYPTO_HEADER_LEN;
     char* plaintext_buf = (char*)plaintext_packet + CRYPTO_HEADER_LEN;
 
-    int decrypt_len = aes_decrypt( cipher_buf, encrypted_packet->cipher_len, private_key,
-                               encrypted_packet->iv, plaintext_buf );
+    int decrypt_len = aes_decrypt( (unsigned char *) cipher_buf, encrypted_packet->cipher_len, private_key,
+                               encrypted_packet->iv, (unsigned char *) plaintext_buf );
     decrypt_len += CRYPTO_HEADER_LEN;
 
     int expected_len = PACKET_HEADER_SIZE + plaintext_packet->payload_size;

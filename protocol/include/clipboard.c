@@ -52,7 +52,7 @@ bool hasClipboardUpdated()
 
 ClipboardData* GetClipboard()
 {
-	cb = clipboard_buf;
+	cb = (ClipboardData *) clipboard_buf;
 
 	cb->size = 0;
 	cb->type = CLIPBOARD_NONE;
@@ -149,8 +149,8 @@ ClipboardData* GetClipboard()
 
 
 		// get the image
-		uint8_t* clipboard_image = ClipboardGetImage();
-		int data_size = (int) sizeof(clipboard_image);
+		const unsigned char* clipboard_image = ClipboardGetImage();
+		int data_size = (int) strlen((const char *) clipboard_image);
 		// copy the data
 		if (data_size < sizeof(clipboard_buf)) {
 			cb->size = data_size;
@@ -177,12 +177,12 @@ ClipboardData* GetClipboard()
 
 void SetClipboard( ClipboardData* cb )
 {
-#if defined(_WIN32)
 	if( cb->size == 0 || cb->type == CLIPBOARD_NONE )
 	{
 		return;
 	}
 
+#if defined(_WIN32)
 	HGLOBAL hMem = GlobalAlloc( GMEM_MOVEABLE, cb->size );
 	LPTSTR lptstr = GlobalLock( hMem );
 
@@ -222,19 +222,30 @@ void SetClipboard( ClipboardData* cb )
 		CloseClipboard();
 	}
 #elif __APPLE__
+	// check the type of the data
+	switch(cb->type) {
+		case CLIPBOARD_TEXT:
+		mprintf("SetClipboard to Text %s\n", cb->data);
+		void *clipboard_string;
+		memcpy(clipboard_string, cb->data, cb->size);
+		ClipboardSetString(clipboard_string);
+		break;
+	case CLIPBOARD_IMAGE:
+		mprintf("SetClipboard to Image with size %d\n", cb->size);
+
+
+	
+	
+		// TODO
 
 
 
 
 
-
-
-// TODO
-
-
-
-
-
+	default:
+		mprintf("No clipboard data to set!\n");
+		break;
+	}
 #else
 // TODO: LINUX UBUNTU/DEBIAN
 #endif
