@@ -25,7 +25,7 @@ bool ClipboardHasImage() {
 	return [pasteboard canReadObjectForClasses:classArray options:options];
 }
 
-const char* ClipboardGetString() {
+const char *ClipboardGetString() {
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
     NSDictionary *options = [NSDictionary dictionary];
@@ -47,69 +47,39 @@ const char* ClipboardGetString() {
 	}
 }
 
+OSXImage *ClipboardGetImage() {
+	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    NSBitmapImageRep *rep = (NSBitmapImageRep*)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
+	if( rep ) {
+        // get the data
+        NSData *data = [rep representationUsingType:NSBMPFileType properties:nil];
+
+        // create OSX image struct
+        OSXImage *clipboard_image = (OSXImage *) malloc(sizeof(OSXImage));
+        memset(clipboard_image, 0, sizeof(OSXImage));
+
+        // set fields and return
+        clipboard_image->size = [data length];
+        clipboard_image->data = [data bytes];
+        return clipboard_image;
+    }
+	else {
+        // no image in clipboard
+		return nil;
+    }
+}
+
+
+
+
+
+
+
 void ClipboardSetString(const char *str) {
 	[[NSPasteboard generalPasteboard] declareTypes: [NSArray arrayWithObject: NSPasteboardTypeString] owner:nil];
 	[[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str] forType: NSPasteboardTypeString];
     return;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-const unsigned char* ClipboardGetImage()
-{
-	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    NSBitmapImageRep *rep = (NSBitmapImageRep*)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
-	if( rep ) {
-        // convert to CGImage, this is a bitmap-like format
-        struct CGImage* cgimage = [rep CGImage];
-
-
-
-
-/*
-
-    int bgraDataLen = 0;
-    CGImageRef windowImage = CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow, windowId, kCGWindowImageBoundsIgnoreFraming);
-
-    CFDataRef bgraDataRef = CGDataProviderCopyData(CGImageGetDataProvider(windowImage));
-    bgraDataLen = CFDataGetLength(bgraDataRef);
-    *bgraData = new unsigned char[bgraDataLen]; //This is what I need
-    CFDataGetBytes(bgraDataRef, CFRangeMake(0, bgraDataLen), *bgraData);
-    CGImageRelease(windowImage);
-    CFRelease(bgraDataRef);
-
-*/
-
-        CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(cgimage));
-
-
-        const unsigned char *buffer =  CFDataGetBytePtr(pixelData);
-
-
-        return buffer;
-
-//		return [rep CGImage]; // bitmap format
-    }
-	else {
-
-
-		return "COULDN'T GET IMAGE";
-    }
-}
-
-
-
-
 
 /*
 ImageSourceRef Clipboard::getImage()

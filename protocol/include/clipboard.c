@@ -149,12 +149,36 @@ ClipboardData* GetClipboard()
 
 
 		// get the image
-		const unsigned char* clipboard_image = ClipboardGetImage();
-		int data_size = (int) strlen((const char *) clipboard_image);
+		OSXImage *clipboard_image = ClipboardGetImage();
+
+
+
+
+		// for(int i = 0; i < 300; i++) {
+		// 	printf("Proposed Width: %d\n", (*(int*)&cb->data[i]));
+		// }
+
+
+
+//		int width = CGImageGetWidth(clipboard_image);
+//		mprintf( "===========Width: %d\n", ((int)&cb->data[4]) );
+
+
+		int data_size = clipboard_image->size;
+		
+		//(int) strlen(clipboard_image);
+
+
 		// copy the data
 		if (data_size < sizeof(clipboard_buf)) {
 			cb->size = data_size;
-			memcpy(cb->data, clipboard_image, data_size);
+//			cb->size = data;
+			memcpy(cb->data, clipboard_image->data, data_size);
+
+
+			mprintf( "Width: %d\n", ((int)&cb->data[4]) );
+			mprintf( "Height: %d\n", ((int)&cb->data[8]) );
+
 			cb->type = CLIPBOARD_IMAGE;
 			mprintf( "Dib! Size: %d\n", cb->size );
 

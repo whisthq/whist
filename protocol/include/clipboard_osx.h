@@ -4,22 +4,23 @@
 #pragma once
 #include "fractal.h"
 
+typedef struct OSXImage
+{
+	int size;
+    unsigned char *data;
+} OSXImage;
+
 int GetClipboardChangecount();
 bool ClipboardHasString();
 bool ClipboardHasImage();
-const char* ClipboardGetString();
+const char *ClipboardGetString();
 void ClipboardSetString(const char *str);
+OSXImage *ClipboardGetImage();
 
 
 
 
 
-
-
-
-
-
-const unsigned char* ClipboardGetImage();
 
 
 
