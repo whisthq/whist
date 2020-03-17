@@ -19,7 +19,7 @@ extern volatile int output_height;
 // START VIDEO VARIABLES
 volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* cursor = NULL;
-volatile FractalCursorID last_cursor = SDL_SYSTEM_CURSOR_ARROW;
+volatile FractalCursorID last_cursor = (FractalCursorID) SDL_SYSTEM_CURSOR_ARROW;
 
 #define LOG_VIDEO false
 
