@@ -52,12 +52,14 @@ struct UpdateData {
     bool needs_dimension_update;
     bool tried_to_update_dimension;
     bool has_initialized_updated;
+    clock last_tcp_check_timer;
 } UpdateData;
 
 void initUpdate() {
     UpdateData.needs_dimension_update = true;
     UpdateData.tried_to_update_dimension = false;
 
+    StartTimer( &UpdateData.last_tcp_check_timer );
     StartTimer((clock*)&latency_timer);
     ping_id = 1;
     ping_failures = -2;
@@ -71,19 +73,29 @@ void update() {
     FractalClientMessage fmsg;
 
     // Check if TCP is up
-    int result = sendp( &PacketTCPContext, NULL, 0 );
+    /*int result = sendp( &PacketTCPContext, NULL, 0 );
     if( result < 0 )
     {
         mprintf( "Lost TCP Connection (Error: %d)\n", GetLastNetworkError() );
-    }
+    }*/
 
-    char* tcp_buf = TryReadingTCPPacket( &PacketTCPContext );
-    if( tcp_buf )
+    if( GetTimer( UpdateData.last_tcp_check_timer ) > 25 / 1000.0 )
     {
-        struct RTPPacket* packet = tcp_buf;
-        struct FractalServerMessage* fmsg_response = packet->data;
-        mprintf( "Received %d byte clipboard message from server!\n", packet->payload_size );
-        SetClipboard( &fmsg_response->clipboard );
+        int result = sendp( &PacketTCPContext, NULL, 0 );
+        if( result < 0 )
+        {
+            mprintf( "Lost TCP Connection (Error: %d)\n", GetLastNetworkError() );
+        }
+
+        char* tcp_buf = TryReadingTCPPacket( &PacketTCPContext );
+        if( tcp_buf )
+        {
+            struct RTPPacket* packet = tcp_buf;
+            struct FractalServerMessage* fmsg_response = packet->data;
+            mprintf( "Received %d byte clipboard message from server!\n", packet->payload_size );
+            SetClipboard( &fmsg_response->clipboard );
+        }
+        StartTimer( &UpdateData.last_tcp_check_timer );
     }
 
     // Check if clipboard has updated
