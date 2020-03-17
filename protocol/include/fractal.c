@@ -338,10 +338,7 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 			}
 		} else
 		{
-			mprintf( "%d Bytes READ OVER TCP!\n", len );
 			reading_packet_len += len;
-			if (len > 0)
-				mprintf( "Reading %d bytes from TCP!!!! Target: %d, Total Len: %d\n", len, *((int*)reading_packet_buffer), reading_packet_len );
 		}
 
 		// If the previous recvp was maxed out, then try pulling some more from recvp
@@ -356,8 +353,6 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 		// If the target len is valid, and actual len > target len, then we're good to go
 		if( target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len )
 		{
-			mprintf( "Trying to decrypt!\n" );
-
 			// Decrypt it
 			int decrypted_len = decrypt_packet_n( reading_packet_buffer + sizeof( int ), target_len, decrypted_packet_buffer, LARGEST_TCP_PACKET, PRIVATE_KEY );
 
@@ -375,12 +370,6 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 				return NULL;
 			} else
 			{
-				mprintf( "Correctly decrypted!\n" );
-				struct RTPPacket* p = decrypted_packet_buffer;
-				struct FractalClientMessage* fmsg = p->data;
-				mprintf( "Type: %d\n", fmsg->type );
-				mprintf( "Clipboard Type: %d\n", fmsg->clipboard.type );
-				mprintf( "Data: %s\n", fmsg->clipboard.data );
 				// Return the decrypted packet
 				return decrypted_packet_buffer;
 			}
