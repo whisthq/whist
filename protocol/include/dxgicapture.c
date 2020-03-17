@@ -95,7 +95,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
       return -1;
   }
   hardware->adapter = adapters[USE_GPU];
-
+            
   // GET ALL MONITORS
   for (int i = 0; i < num_adapters; i++) {
       for (int j = 0; hardware->adapter->lpVtbl->EnumOutputs(adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND; j++) {
@@ -128,27 +128,82 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   }
   hardware->output = outputs[USE_MONITOR];
 
-  hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
-    D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
+  UINT num = 0;
+  DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+  UINT flags = 0;
+  hr = hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num, 0 );
+  if( FAILED( hr ) )
+  {
+      mprintf( "hr: %X\n", hr );
+  }
+  mprintf( "hr: %d\n", hr );
+  mprintf( "Num: %d\n", num );
+  DXGI_MODE_DESC* pDescs = malloc(sizeof( DXGI_MODE_DESC ) * num);
+  hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num, pDescs );
+  for( int i = 0; i < num; i++ )
+  {
+      mprintf( "Possible Resolution: %dx%d\n", pDescs[i].Width, pDescs[i].Height );
+  }
+
+  DEVMODE dm;
+  memset( &dm, 0, sizeof( dm ) );
+  dm.dmSize = sizeof( dm );
+
+  if( 0 != EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &dm ) )
+  {
+      dm.dmPelsWidth = width;
+      dm.dmPelsHeight = height;
+      dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+
+      int ret = ChangeDisplaySettings( &dm, 0 );
+      mprintf( "ChangeDisplaySettingsCode: %d\n", ret );
+  } else
+  {
+      mprintf( "Failed to update DisplaySettings\n" );
+  }
+
+  //hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
+  //  D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
+
+  // CREATE SWAP CHAIN DESC
+  DXGI_SWAP_CHAIN_DESC swapChainDesc;
+  ZeroMemory( &swapChainDesc, sizeof( swapChainDesc ) );
+  swapChainDesc.BufferCount = 1;
+  swapChainDesc.BufferDesc.Width = 1920;
+  swapChainDesc.BufferDesc.Height = 1080;
+  swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
+  swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
+  swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+  swapChainDesc.OutputWindow = GetActiveWindow();
+  swapChainDesc.Windowed = true;
+  swapChainDesc.SampleDesc.Count = 1;
+  swapChainDesc.SampleDesc.Quality = 0;
+  // END CREATE SWAP CHAIN DESC
+
+  IDXGISwapChain* swapChain;
+
+  hr = D3D11CreateDevice(
+      hardware->adapter,
+      D3D_DRIVER_TYPE_UNKNOWN,
+      NULL,
+      NULL,
+      NULL,
+      0,
+      D3D11_SDK_VERSION,
+      //&swapChainDesc,
+      //&swapChain,
+      &device->D3D11device,
+      &FeatureLevel,
+      &device->D3D11context
+  );
+
   if (FAILED(hr)) {
       mprintf("Failed D3D11CreateDevice: 0x%X %d", hr, GetLastError());
       return -1;
   }
 
   IDXGIOutput1* output1;
-
-  DEVMODE dm;
-  memset(&dm, 0, sizeof(dm));
-  dm.dmSize = sizeof(dm);
-
-  if (0 != EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm))
-  {
-      dm.dmPelsWidth = width;
-      dm.dmPelsHeight = height;
-      dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
-
-      ChangeDisplaySettings(&dm, 0);
-  }
 
   hr = hardware->output->lpVtbl->QueryInterface(hardware->output, &IID_IDXGIOutput1, (void**)&output1);
   if (FAILED(hr)) {

@@ -339,6 +339,7 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 		} else
 		{
 			reading_packet_len += len;
+			mprintf( "Reading %d bytes from TCP!!!! Target: %d\n", len, *((int*)reading_packet_buffer) );
 		}
 
 		// If the previous recvp was maxed out, then try pulling some more from recvp
