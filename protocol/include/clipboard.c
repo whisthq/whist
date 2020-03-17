@@ -65,7 +65,7 @@ ClipboardData* GetClipboard()
 
 	int cf_types[] = {
 		CF_TEXT,
-		CF_DIBV5,
+		CF_DIB,
 	};
 
 	int cf_type = -1;
@@ -111,7 +111,7 @@ ClipboardData* GetClipboard()
 			mprintf( "CLIPBOARD STRING: %s\n", cb->data );
 			mprintf( "Len %d\n Strlen %d\n", cb->size, strlen( cb->data ) );
 			break;
-		case CF_DIBV5:
+		case CF_DIB:
 			cb->type = CLIPBOARD_IMAGE;
 			mprintf( "Dib! Size: %d\n", cb->size );
 
@@ -214,7 +214,7 @@ void SetClipboard( ClipboardData* cb )
 		mprintf( "SetClipboard to Text %s\n", cb->data );
 		break;
 	case CLIPBOARD_IMAGE:
-		cf_type = CF_DIBV5;
+		cf_type = CF_DIB;
 		mprintf( "SetClipboard to Image with size %d\n", cb->size );
 		break;
 	default:
