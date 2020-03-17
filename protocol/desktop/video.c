@@ -184,7 +184,7 @@ int32_t RenderScreen(void* opaque) {
         pict.linesize[1] = videoContext.uvPitch;
         pict.linesize[2] = videoContext.uvPitch;
 
-        sws_scale(videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
+        sws_scale(videoContext.sws, (uint8_t const* const*) videoContext.decoder->sw_frame->data,
             videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, pict.data,
             pict.linesize);
 
