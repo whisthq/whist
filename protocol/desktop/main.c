@@ -82,10 +82,8 @@ void update() {
     {
         struct RTPPacket* packet = tcp_buf;
         struct FractalServerMessage* fmsg_response = packet->data;
-        if( fmsg_response->clipboard.type == CLIPBOARD_TEXT )
-        {
-            mprintf( "CLIPBOARD TEXT!\n" );
-        }
+        mprintf( "Received %d byte clipboard message from server!\n", packet->payload_size );
+        SetClipboard( &fmsg_response->clipboard );
     }
 
     // Check if clipboard has updated

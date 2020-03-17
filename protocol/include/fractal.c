@@ -338,6 +338,7 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 			}
 		} else
 		{
+			mprintf( "%d Bytes READ OVER TCP!\n", len );
 			reading_packet_len += len;
 		}
 

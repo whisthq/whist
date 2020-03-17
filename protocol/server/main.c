@@ -586,7 +586,7 @@ int main(int argc, char* argv[])
                 struct RTPPacket* packet = tcp_buf;
                 fmsg = packet->data;
                 mprintf( "Received TCP BUF!!!! Size %d\n", packet->payload_size );
-                mprintf( "Type: %d\n", fmsg->type );
+                mprintf( "Received %d byte clipboard message from client.\n", packet->payload_size );
             } else
             {
                 memset( &local_fmsg, 0, sizeof( local_fmsg ) );
