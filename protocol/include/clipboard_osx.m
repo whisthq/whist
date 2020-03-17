@@ -54,9 +54,14 @@ OSXImage *ClipboardGetImage() {
         // get the data
         NSData *data = [rep representationUsingType:NSBMPFileType properties:nil];
 
+
+
+
         // create OSX image struct
         OSXImage *clipboard_image = (OSXImage *) malloc(sizeof(OSXImage));
         memset(clipboard_image, 0, sizeof(OSXImage));
+
+
 
         // set fields and return
         clipboard_image->size = [data length];
@@ -75,25 +80,17 @@ OSXImage *ClipboardGetImage() {
 
 
 
+
+
+
+
 void ClipboardSetString(const char *str) {
 	[[NSPasteboard generalPasteboard] declareTypes: [NSArray arrayWithObject: NSPasteboardTypeString] owner:nil];
 	[[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str] forType: NSPasteboardTypeString];
     return;
 }
 
-/*
-ImageSourceRef Clipboard::getImage()
-{
-	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    NSBitmapImageRep *rep = (NSBitmapImageRep*)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
-	if( rep )
-		return cocoa::ImageSourceCgImage::createRef( [rep CGImage] );
-	else
-		return ImageSourceRef();
-}
 
-
-*/
 
 
 

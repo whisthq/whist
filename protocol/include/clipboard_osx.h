@@ -14,7 +14,6 @@ int GetClipboardChangecount();
 bool ClipboardHasString();
 bool ClipboardHasImage();
 const char *ClipboardGetString();
-void ClipboardSetString(const char *str);
 OSXImage *ClipboardGetImage();
 
 
@@ -24,6 +23,7 @@ OSXImage *ClipboardGetImage();
 
 
 
+void ClipboardSetString(const char *str);
 
 
 void ClipboardSetImage();
