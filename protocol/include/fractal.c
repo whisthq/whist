@@ -355,7 +355,7 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 		if( target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len )
 		{
 			// Decrypt it
-			int decrypted_len = decrypt_packet_n( (struct RTPPacket *) reading_packet_buffer + sizeof( int ), target_len, (struct RTPPacket *) decrypted_packet_buffer, LARGEST_TCP_PACKET, (unsigned char *) PRIVATE_KEY );
+			int decrypted_len = decrypt_packet_n( (struct RTPPacket *) (reading_packet_buffer + sizeof( int )), target_len, (struct RTPPacket *) decrypted_packet_buffer, LARGEST_TCP_PACKET, (unsigned char *) PRIVATE_KEY );
 
 			// Move the rest of the read bytes to the beginning of the buffer to continue
 			int start_next_bytes = sizeof(int) + target_len;

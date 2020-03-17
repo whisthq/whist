@@ -50,7 +50,7 @@ int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct R
 
     //mprintf( "HMAC: %d\n", Hash( encrypted_packet->hash, 16 ) );
     char hash[32];
-    hmac( hash, (char*)encrypted_packet + sizeof( encrypted_packet->hash ), cipher_packet_len - sizeof( encrypted_packet->hash ), PRIVATE_KEY );
+    hmac( hash, (char*)encrypted_packet + sizeof( encrypted_packet->hash ), cipher_packet_len - sizeof( encrypted_packet->hash ), private_key );
     memcpy( encrypted_packet->hash, hash, 16 );
     //mprintf( "HMAC: %d\n", Hash( encrypted_packet->hash, 16 ) );
     //encrypted_packet->hash = Hash( (char*)encrypted_packet + sizeof( encrypted_packet->hash ), cipher_packet_len - sizeof( encrypted_packet->hash ) );
@@ -78,7 +78,7 @@ int decrypt_packet_n( struct RTPPacket* encrypted_packet, int packet_len, struct
     }
 
     char hash[32];
-    hmac( hash, (char*)encrypted_packet + sizeof( encrypted_packet->hash ), packet_len - sizeof( encrypted_packet->hash ), PRIVATE_KEY );
+    hmac( hash, (char*)encrypted_packet + sizeof( encrypted_packet->hash ), packet_len - sizeof( encrypted_packet->hash ), private_key );
     for( int i = 0; i < 16; i++ )
     {
         if( hash[i] != encrypted_packet->hash[i] )
