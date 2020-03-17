@@ -780,8 +780,6 @@ void* TryReadingTCPPacket( struct SocketContext* context );
 	#define clock LARGE_INTEGER
 #else
 	#define clock struct timeval
-
-	#define max fmax
 #endif
 
 void initMultiThreadedPrintf(bool use_logging);
