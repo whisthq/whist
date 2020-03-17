@@ -85,6 +85,7 @@ OBJS = \
 	video.o \
 	audio.o \
 	aes.o \
+	clipboard_osx.o \
 	clipboard.o \
 	main.o
 
@@ -117,7 +118,11 @@ audiodecode.o:
 aes.o:
 	$(CC) -c ../include/aes.c
 
-# compile the clipboard source file into object file
+# compile the MacOS clipboard source file into object file
+clipboard_osx.o:
+	$(CC) -c ../include/clipboard_osx.m
+
+# compile the general clipboard source file into object file
 clipboard.o:
 	$(CC) -c ../include/clipboard.c
 

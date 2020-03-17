@@ -1,10 +1,13 @@
 #include "clipboard.h"
 #include "fractal.h"
 
-#if defined(_WIN32)
-static int last_clipboard_sequence_number = -1;
+#if defined __APPLE__
+	#include "clipboard_osx.h"
+	bool clipboardHasImage;
+	bool clipboardHasString;
 #endif
 
+static int last_clipboard_sequence_number = -1;
 static char clipboard_buf[9000000];
 static ClipboardData* cb;
 
@@ -12,6 +15,12 @@ void StartTrackingClipboardUpdates()
 {
 #if defined(_WIN32)
 	last_clipboard_sequence_number = GetClipboardSequenceNumber();
+#elif __APPLE__
+	last_clipboard_sequence_number = -1; // to capture the first event
+	clipboardHasImage = false;
+	clipboardHasString = false;
+#else
+// TODO: LINUX UBUNTU/DEBIAN
 #endif
 }
 
@@ -26,8 +35,18 @@ bool hasClipboardUpdated()
 		hasUpdated = true;
 		last_clipboard_sequence_number = new_clipboard_sequence_number;
 	}
+#elif __APPLE__
+	int new_clipboard_sequence_number = GetClipboardChangecount();
+	if (new_clipboard_sequence_number > last_clipboard_sequence_number) {
+		// check if new clipboard is an image or a string
+		clipboardHasImage = ClipboardHasImage();
+		clipboardHasString = ClipboardHasString();
+		hasUpdated = (clipboardHasImage || clipboardHasString); // should be always set to true in here
+		last_clipboard_sequence_number = new_clipboard_sequence_number;
+	}
+#else
+// TODO: LINUX UBUNTU/DEBIAN
 #endif
-
 	return hasUpdated;
 }
 
@@ -105,8 +124,54 @@ ClipboardData* GetClipboard()
 	}
 
 	CloseClipboard();
-#endif
+#elif __APPLE__
+	if (clipboardHasString) {
+		// get the string
+		const char* clipboard_string = ClipboardGetString();
+		int data_size = strlen(clipboard_string) + 1; // for null terminator
+		// copy the data
+		if (data_size < sizeof(clipboard_buf)) {
+			cb->size = data_size;
+			memcpy(cb->data, clipboard_string, data_size);
+			cb->type = CLIPBOARD_TEXT;
+			mprintf( "CLIPBOARD STRING: %s\n", cb->data );
+			mprintf( "Len %d, Strlen %d\n", cb->size, strlen( cb->data ) );
+		}
+		else {
+			mprintf( "Could not copy, clipboard too large! %d bytes\n", data_size );
+		}
+	}
+	else if (clipboardHasImage) {
 
+
+
+
+
+
+		// get the image
+		uint8_t* clipboard_image = ClipboardGetImage();
+		int data_size = (int) sizeof(clipboard_image);
+		// copy the data
+		if (data_size < sizeof(clipboard_buf)) {
+			cb->size = data_size;
+			memcpy(cb->data, clipboard_image, data_size);
+			cb->type = CLIPBOARD_IMAGE;
+			mprintf( "Dib! Size: %d\n", cb->size );
+
+
+
+
+		}
+		else {
+			mprintf( "Could not copy, clipboard too large! %d bytes\n", data_size );
+		}
+	}
+	else {
+		mprintf("Nothing in the clipboard!\n");
+	}
+#else
+// TODO: LINUX UBUNTU/DEBIAN
+#endif
 	return cb;
 }
 
@@ -156,8 +221,23 @@ void SetClipboard( ClipboardData* cb )
 
 		CloseClipboard();
 	}
-#endif
+#elif __APPLE__
 
+
+
+
+
+
+
+// TODO
+
+
+
+
+
+#else
+// TODO: LINUX UBUNTU/DEBIAN
+#endif
 	// Update the status so that this specific update doesn't count
 	hasClipboardUpdated();
 }
