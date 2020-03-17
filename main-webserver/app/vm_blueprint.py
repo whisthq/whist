@@ -29,7 +29,8 @@ def status(task_id):
 def vm(action):
     if action == 'create':
         vm_size = request.get_json()['vm_size']
-        task = createVM.apply_async([vm_size])
+        location = request.get_json()['location']
+        task = createVM.apply_async([vm_size, location])
         if not task: 
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202

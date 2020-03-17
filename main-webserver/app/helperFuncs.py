@@ -13,7 +13,7 @@ def createClients():
     n = NetworkManagementClient(credentials, subscription_id)
     return r, c, n
 
-def createNic(name, tries):
+def createNic(name, location, tries):
     _, _, network_client = createClients()
     vnetName, subnetName, ipName, nicName = name + '_vnet', name + '_subnet', name + '_ip', name + '_nic'
     try:
@@ -21,7 +21,7 @@ def createNic(name, tries):
             os.getenv('VM_GROUP'),
             vnetName,
             {
-                'location': os.getenv('LOCATION'),
+                'location': location,
                 'address_space': {
                     'address_prefixes': ['10.0.0.0/16']
                 }
@@ -40,7 +40,7 @@ def createNic(name, tries):
 
         # Create public IP address
         public_ip_addess_params = {
-            'location': os.getenv('LOCATION'),
+            'location': location,
             'public_ip_allocation_method': 'Static'
         }
         creation_result = network_client.public_ip_addresses.create_or_update(
@@ -58,7 +58,7 @@ def createNic(name, tries):
             os.getenv('VM_GROUP'),
             nicName,
             {
-                'location': os.getenv('LOCATION'),
+                'location': location,
                 'ip_configurations': [{
                     'name': ipName,
                     'public_ip_address': public_ip_address,
@@ -84,7 +84,7 @@ def createNic(name, tries):
             return createNic(name, tries + 1)
         else: return None
 
-def createVMParameters(vmName, nic_id, vm_size):
+def createVMParameters(vmName, nic_id, vm_size, location):
     with engine.connect() as conn:
         oldUserNames = [cell[0] for cell in list(conn.execute('SELECT "vmUserName" FROM v_ms'))]
         userName = genHaiku(1)[0]
@@ -98,7 +98,7 @@ def createVMParameters(vmName, nic_id, vm_size):
             'version': 'latest'
         }
 
-        pwd = generatePassword()
+        pwd = os.getenv('VM_PASSWORD')
         pwd_token = jwt.encode({'pwd': pwd}, os.getenv('SECRET_KEY'))
 
         command = text("""
@@ -109,7 +109,7 @@ def createVMParameters(vmName, nic_id, vm_size):
         with engine.connect() as conn:
             conn.execute(command, **params)
             return {'params': {
-                'location': 'eastus',
+                'location': location,
                 'os_profile': {
                     'computer_name': vmName,
                     'admin_username': userName,

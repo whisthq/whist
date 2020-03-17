@@ -2,13 +2,13 @@ from app import *
 from .helperFuncs import *
 
 @celery.task(bind = True)
-def createVM(self, vm_size):
+def createVM(self, vm_size, location):
     _, compute_client, _ = createClients()
     vmName = genVMName()
-    nic = createNic(vmName, 0)
+    nic = createNic(vmName, location, 0)
     if not nic: 
     	return jsonify({})
-    vmParameters = createVMParameters(vmName, nic.id, vm_size)
+    vmParameters = createVMParameters(vmName, nic.id, vm_size, location)
     async_vm_creation = compute_client.virtual_machines.create_or_update(
         os.environ.get('VM_GROUP'), vmParameters['vmName'], vmParameters['params'])
     async_vm_creation.wait()
