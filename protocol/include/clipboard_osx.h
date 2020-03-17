@@ -1,7 +1,3 @@
-// header file for the MacOS clipboard functions
-// 
-// By: Philippe Noël
-//
 #ifndef CLIPBOARD_OSX_H
 #define CLIPBOARD_OSX_H
 
@@ -12,6 +8,7 @@ int GetClipboardChangecount();
 bool ClipboardHasString();
 bool ClipboardHasImage();
 const char* ClipboardGetString();
+void ClipboardSetString(const char *str);
 
 
 
@@ -22,10 +19,16 @@ const char* ClipboardGetString();
 
 
 
-struct CGImage* ClipboardGetImage();
+const unsigned char* ClipboardGetImage();
 
 
 
 
 
-#endif CLIPBOARD_OSX_H
+void ClipboardSetImage();
+
+
+
+
+
+#endif // CLIPBOARD_OSX_H

@@ -193,10 +193,10 @@ int32_t RenderScreen(void* opaque) {
         // Set cursor to frame's desired cursor type
         if(frame->cursor.cursor_id != last_cursor) {
             if(cursor) {
-                SDL_FreeCursor(cursor);
+                SDL_FreeCursor((SDL_Cursor *) cursor);
             }
             cursor = SDL_CreateSystemCursor(frame->cursor.cursor_id);
-            SDL_SetCursor(cursor);
+            SDL_SetCursor((SDL_Cursor *) cursor);
 
             last_cursor = frame->cursor.cursor_id;
         }
@@ -211,10 +211,10 @@ int32_t RenderScreen(void* opaque) {
             cursor_state = frame->cursor.cursor_state;
         }
 
-        SDL_RenderClear(renderer);
+        SDL_RenderClear((SDL_Renderer *) renderer);
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
-        SDL_RenderCopy(renderer, videoContext.texture, NULL, NULL);
-        SDL_RenderPresent(renderer);
+        SDL_RenderCopy((SDL_Renderer *) renderer, videoContext.texture, NULL, NULL);
+        SDL_RenderPresent((SDL_Renderer *) renderer);
 
 #if LOG_VIDEO
         mprintf("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size, GetTimer(renderContext.frame_creation_timer));
@@ -226,6 +226,7 @@ int32_t RenderScreen(void* opaque) {
     }
 
     SDL_Delay(5);
+    return 0;
 }
 // END VIDEO FUNCTIONS
 
@@ -239,10 +240,11 @@ void initVideo() {
 
     SDL_Texture* texture;
 
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawBlendMode((SDL_Renderer*) renderer, SDL_BLENDMODE_BLEND);
+
     // Allocate a place to put our YUV image on that screen
     texture = SDL_CreateTexture(
-        renderer,
+        (SDL_Renderer *) renderer,
         SDL_PIXELFORMAT_YV12,
         SDL_TEXTUREACCESS_STREAMING,
         output_width,

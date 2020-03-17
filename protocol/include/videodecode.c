@@ -20,7 +20,7 @@ static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type)
 
     if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type,
                                       NULL, NULL, 0)) < 0) {
-        mprintf(stderr, "Failed to create specified HW device.\n");
+        mprintf((const char *) stderr, "Failed to create specified HW device.\n");
         return err;
     }
     ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
@@ -37,7 +37,7 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx, const enum AVPixelForm
             return *p;
     }
 
-    mprintf(stderr, "Failed to get HW surface format.\n");
+    mprintf((const char *) stderr, "Failed to get HW surface format.\n");
     return AV_PIX_FMT_NONE;
 }
 
@@ -57,9 +57,6 @@ video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width
   } else {
     decoder->type = DECODE_TYPE_SOFTWARE;
   }
-
-  // init ffmpeg decoder for H264 software encoding
-  avcodec_register_all();
 
   if(decoder->type == DECODE_TYPE_SOFTWARE) {
     mprintf("Using software decoder\n");
@@ -242,8 +239,8 @@ bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size
     }
 
     // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
+    av_packet_free(&decoder->packet);
 
-    av_free_packet(&decoder->packet);
   } else {
     decoder->packet.data = buffer;
     decoder->packet.size = buffer_size;
