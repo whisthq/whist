@@ -129,7 +129,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   hardware->output = outputs[USE_MONITOR];
 
   UINT num = 0;
-  DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+  DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
   UINT flags = 0;
   hr = hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num, 0 );
   if( FAILED( hr ) )
@@ -139,12 +139,19 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   mprintf( "hr: %d\n", hr );
   mprintf( "Num: %d\n", num );
   DXGI_MODE_DESC* pDescs = malloc(sizeof( DXGI_MODE_DESC ) * num);
+  DXGI_MODE_DESC* finalDesc = NULL;
   hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num, pDescs );
   for( int i = 0; i < num; i++ )
   {
       mprintf( "Possible Resolution: %dx%d\n", pDescs[i].Width, pDescs[i].Height );
+      if( pDescs[i].Width == width && pDescs[i].Height == height )
+      {
+          mprintf( "Match found for %dx%d!\n", width, height );
+          finalDesc = &pDescs[i];
+      }
   }
 
+  /*
   DEVMODE dm;
   memset( &dm, 0, sizeof( dm ) );
   dm.dmSize = sizeof( dm );
@@ -161,6 +168,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   {
       mprintf( "Failed to update DisplaySettings\n" );
   }
+  */
 
   //hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
   //  D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
@@ -169,19 +177,31 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   DXGI_SWAP_CHAIN_DESC swapChainDesc;
   ZeroMemory( &swapChainDesc, sizeof( swapChainDesc ) );
   swapChainDesc.BufferCount = 1;
+
+
   swapChainDesc.BufferDesc.Width = 1920;
   swapChainDesc.BufferDesc.Height = 1080;
   swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
   swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
   swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
+  swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+  swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+
+  if( finalDesc )
+  {
+      mprintf( "USING FINAL DESC!\n" );
+      swapChainDesc.BufferDesc = *finalDesc;
+  }
+
+
   swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-  swapChainDesc.OutputWindow = GetActiveWindow();
-  swapChainDesc.Windowed = true;
+  swapChainDesc.OutputWindow = GetDesktopWindow();
+  swapChainDesc.Windowed = false;
   swapChainDesc.SampleDesc.Count = 1;
   swapChainDesc.SampleDesc.Quality = 0;
   // END CREATE SWAP CHAIN DESC
 
-  IDXGISwapChain* swapChain;
+  IDXGISwapChain* swapChain = NULL;
 
   hr = D3D11CreateDevice(
       hardware->adapter,
@@ -201,6 +221,11 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   if (FAILED(hr)) {
       mprintf("Failed D3D11CreateDevice: 0x%X %d", hr, GetLastError());
       return -1;
+  }
+
+  if( swapChain )
+  {
+      swapChain->lpVtbl->Release( swapChain );
   }
 
   IDXGIOutput1* output1;

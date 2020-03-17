@@ -91,12 +91,12 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_
 
     // Encrypt the packet
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( packet, packet_size, encrypted_single_packet_buf, PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( packet, packet_size, sizeof(int) + encrypted_single_packet_buf, PRIVATE_KEY );
+    *((int*)encrypted_single_packet_buf) = encrypt_len;
 
     // Send it off
-    mprintf( "START SENDING\n" );
-    int sent_size = sendp( context, encrypted_single_packet_buf, encrypt_len );
-    mprintf( "END SENDING\n" );
+    mprintf( "Sending %d bytes over TCP!\n", encrypt_len );
+    int sent_size = sendp( context, encrypted_single_packet_buf, sizeof(int) + encrypt_len );
 
     if( sent_size < 0 )
     {

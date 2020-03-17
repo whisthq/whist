@@ -339,7 +339,8 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 		} else
 		{
 			reading_packet_len += len;
-			mprintf( "Reading %d bytes from TCP!!!! Target: %d\n", len, *((int*)reading_packet_buffer) );
+			if (len > 0)
+				mprintf( "Reading %d bytes from TCP!!!! Target: %d, Total Len: %d\n", len, *((int*)reading_packet_buffer), reading_packet_len );
 		}
 
 		// If the previous recvp was maxed out, then try pulling some more from recvp
@@ -347,20 +348,23 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 
 	if( reading_packet_len > sizeof( int ) )
 	{
-		// The amount of bytes read (actual len), and the amount of bytes we're looking for (target len), respectively
+		// The amount of data bytes read (actual len), and the amount of bytes we're looking for (target len), respectively
 		int actual_len = reading_packet_len - sizeof( int );
 		int target_len = *((int*)reading_packet_buffer);
 
 		// If the target len is valid, and actual len > target len, then we're good to go
 		if( target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len )
 		{
+			mprintf( "Trying to decrypt!\n" );
+
 			// Decrypt it
 			int decrypted_len = decrypt_packet_n( reading_packet_buffer + sizeof( int ), target_len, decrypted_packet_buffer, LARGEST_TCP_PACKET, PRIVATE_KEY );
 
 			// Move the rest of the read bytes to the beginning of the buffer to continue
-			for( int i = target_len; i < actual_len; i++ )
+			int start_next_bytes = sizeof(int) + target_len;
+			for( int i = start_next_bytes; i < sizeof(int) + actual_len; i++ )
 			{
-				reading_packet_buffer[i - target_len] = reading_packet_buffer[i];
+				reading_packet_buffer[i - start_next_bytes] = reading_packet_buffer[i];
 			}
 			reading_packet_len = actual_len - target_len;
 
@@ -370,6 +374,12 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 				return NULL;
 			} else
 			{
+				mprintf( "Correctly decrypted!\n" );
+				struct RTPPacket* p = decrypted_packet_buffer;
+				struct FractalClientMessage* fmsg = p->data;
+				mprintf( "Type: %d\n", fmsg->type );
+				mprintf( "Clipboard Type: %d\n", fmsg->clipboard.type );
+				mprintf( "Data: %s\n", fmsg->clipboard.data );
 				// Return the decrypted packet
 				return decrypted_packet_buffer;
 			}
