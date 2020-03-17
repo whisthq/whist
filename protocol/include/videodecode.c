@@ -58,9 +58,6 @@ video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width
     decoder->type = DECODE_TYPE_SOFTWARE;
   }
 
-  // init ffmpeg decoder for H264 software encoding
-  avcodec_register_all();
-
   if(decoder->type == DECODE_TYPE_SOFTWARE) {
     mprintf("Using software decoder\n");
     decoder->codec = avcodec_find_decoder_by_name("h264");

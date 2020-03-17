@@ -63,7 +63,6 @@
 	#include <D3d11_1.h> 
 	#include <dxgi1_2.h>
 	#include <DXGITYPE.h>
-	#pragma warning(disable: 4201)
 #else
 	#define SOCKET int
 	#define closesocket close
@@ -796,10 +795,5 @@ int get_native_screen_width();
 int get_native_screen_height();
 
 /*** FRACTAL FUNCTIONS END ***/
-
-// renable Windows warning
-#if defined(_WIN32)
-	#pragma warning(default: 4201)
-#endif
 
 #endif // FRACTAL_H

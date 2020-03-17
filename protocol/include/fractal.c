@@ -15,9 +15,9 @@
 
 #include "fractal.h" // header file for this protocol, includes winsock
 
-// windows warnings
+// windows socklen
 #if defined(_WIN32)
-#pragma warning(disable: 4201)
+	#define socklen_t int
 #endif
 
 /*** FRACTAL FUNCTIONS START ***/
@@ -185,7 +185,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		}
 
 		// Accept connection from client
-		int slen = sizeof( context->addr );
+		socklen_t slen = sizeof( context->addr );
 		SOCKET new_socket;
 		if( (new_socket = accept( context->s, (struct sockaddr*)(&context->addr), &slen)) < 0 )
 		{
@@ -269,7 +269,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		// Receive client's connection attempt
 		set_timeout(context->s, stun_timeout_ms);
-		int slen = sizeof(context->addr);
+		socklen_t slen = sizeof(context->addr);
 		if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen) < 0) {
 			mprintf("Did not receive response from client! %d\n", GetLastNetworkError());
 			closesocket(context->s);
@@ -412,7 +412,7 @@ void initMultiThreadedPrintf(bool use_logging) {
 	run_multithreaded_printf = true;
 	multithreadedprintf_mutex = SDL_CreateMutex();
 	multithreadedprintf_semaphore = SDL_CreateSemaphore(0);
-	mprintf_thread = SDL_CreateThread(MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
+	mprintf_thread = SDL_CreateThread((SDL_ThreadFunction) MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
 	StartTimer(&mprintf_timer);
 }
 
@@ -421,7 +421,7 @@ void destroyMultiThreadedPrintf() {
 	SDL_Delay(50);
 
 	run_multithreaded_printf = false;
-	SDL_SemPost(multithreadedprintf_semaphore);
+	SDL_SemPost((SDL_sem *) multithreadedprintf_semaphore);
 
 	SDL_WaitThread(mprintf_thread, NULL);
 	mprintf_thread = NULL;
@@ -435,7 +435,7 @@ void destroyMultiThreadedPrintf() {
 void MultiThreadedPrintf(void* opaque) {
 	int produced_in_advance = 0;
 	while (true) {
-		SDL_SemWait(multithreadedprintf_semaphore);
+		SDL_SemWait((SDL_sem *) multithreadedprintf_semaphore);
 
 		if (!run_multithreaded_printf) {
 			break;
@@ -595,7 +595,3 @@ uint32_t Hash(void* buf, size_t len)
 
 /*** FRACTAL FUNCTIONS END ***/
 
-// renable Windows warning
-#if defined(_WIN32)
-#pragma warning(default: 4201)
-#endif
