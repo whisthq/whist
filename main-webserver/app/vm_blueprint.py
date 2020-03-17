@@ -60,6 +60,9 @@ def tracker(action):
         addTimeTable(username, 'logoff', time)
     elif action == 'clear':
         deleteTimeTable()
+    elif action == 'fetch':
+        activity = fetchLoginActivity()
+        return jsonify({'payload': activity}), 200
     return jsonify({}), 200
 
 @vm_bp.route('/info/<action>', methods = ['GET', 'POST'])

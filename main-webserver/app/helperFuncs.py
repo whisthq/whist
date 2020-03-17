@@ -355,3 +355,15 @@ def insertRow(username, vm_name, usernames, vm_names):
         with engine.connect() as conn:
             conn.execute(command, **params)
 
+def fetchLoginActivity():
+    command = text("""
+        SELECT * FROM login_history
+        """)
+    params = {}
+    with engine.connect() as conn:
+        activities = conn.execute(command, **params).fetchall()
+        out = [{'username': activity[0], 
+                'timestamp': activity[1], 
+                'action': activity[2]} for activity in activities]
+        return out
+
