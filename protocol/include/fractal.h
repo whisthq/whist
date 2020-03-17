@@ -42,11 +42,6 @@
 #include "ffmpeg/libavutil/hwcontext.h"
 #include "ffmpeg/libavutil/hwcontext_qsv.h"
 
-#if defined(__APPLE__)
-	#include "ffmpeg/libavutil/hwcontext_videotoolbox.h"
-	#include "ffmpeg/libavcodec/videotoolbox.h"
-#endif
-
 #define SDL_MAIN_HANDLED
 #include "../include/SDL2/SDL.h"
 #include "../include/SDL2/SDL_thread.h"

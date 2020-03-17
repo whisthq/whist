@@ -14,6 +14,7 @@
 #include <stdbool.h>
 
 #include "fractal.h" // header file for this protocol, includes winsock
+#include "aes.h"
 
 // windows socklen
 #if defined(_WIN32)
@@ -354,7 +355,7 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 		if( target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len )
 		{
 			// Decrypt it
-			int decrypted_len = decrypt_packet_n( reading_packet_buffer + sizeof( int ), target_len, decrypted_packet_buffer, LARGEST_TCP_PACKET, PRIVATE_KEY );
+			int decrypted_len = decrypt_packet_n( reading_packet_buffer + sizeof( int ), target_len, decrypted_packet_buffer, LARGEST_TCP_PACKET, (unsigned char *) PRIVATE_KEY );
 
 			// Move the rest of the read bytes to the beginning of the buffer to continue
 			int start_next_bytes = sizeof(int) + target_len;
@@ -443,19 +444,19 @@ void MultiThreadedPrintf(void* opaque) {
 
 		int cache_size = 0;
 
-		SDL_LockMutex(multithreadedprintf_mutex);
+		SDL_LockMutex((SDL_mutex *) multithreadedprintf_mutex);
 		cache_size = mprintf_queue_size;
 		for (int i = 0; i < mprintf_queue_size; i++) {
 			mprintf_queue_cache[i].log = mprintf_queue[mprintf_queue_index].log;
-			strcpy(mprintf_queue_cache[i].buf, mprintf_queue[mprintf_queue_index].buf);
+			strcpy((char *) mprintf_queue_cache[i].buf, (const char *) mprintf_queue[mprintf_queue_index].buf);
 			mprintf_queue_index++;
 			mprintf_queue_index %= MPRINTF_QUEUE_SIZE;
 			if (i != 0) {
-				SDL_SemWait(multithreadedprintf_semaphore);
+				SDL_SemWait((SDL_sem *) multithreadedprintf_semaphore);
 			}
 		}
 		mprintf_queue_size = 0;
-		SDL_UnlockMutex(multithreadedprintf_mutex);
+		SDL_UnlockMutex((SDL_mutex *) multithreadedprintf_mutex);
 
         //int last_printf = -1;
 		for (int i = 0; i < cache_size; i++) {
@@ -491,12 +492,12 @@ void real_mprintf(bool log, const char* fmtStr, va_list args) {
 		return;
 	}
 
-	SDL_LockMutex(multithreadedprintf_mutex);
+	SDL_LockMutex((SDL_mutex *) multithreadedprintf_mutex);
 	int index = (mprintf_queue_index + mprintf_queue_size) % MPRINTF_QUEUE_SIZE;
 	char* buf = NULL;
 	if (mprintf_queue_size < MPRINTF_QUEUE_SIZE - 2) {
 		mprintf_queue[index].log = log;
-		buf = mprintf_queue[index].buf;
+		buf = (char *) mprintf_queue[index].buf;
 		snprintf(buf, MPRINTF_BUF_SIZE, "%15.4f: ", GetTimer(mprintf_timer));
 		int len = strlen(buf);
 		vsnprintf(buf + len, MPRINTF_BUF_SIZE - len, fmtStr, args);
@@ -504,7 +505,7 @@ void real_mprintf(bool log, const char* fmtStr, va_list args) {
 	}
 	else if (mprintf_queue_size == MPRINTF_QUEUE_SIZE - 2) {
 		mprintf_queue[index].log = log;
-		buf = mprintf_queue[index].buf;
+		buf = (char *) mprintf_queue[index].buf;
 		strcpy(buf, "Buffer maxed out!!!\n");
 		mprintf_queue_size++;
 	}
@@ -515,9 +516,9 @@ void real_mprintf(bool log, const char* fmtStr, va_list args) {
 		buf[MPRINTF_BUF_SIZE - 3] = '.';
 		buf[MPRINTF_BUF_SIZE - 2] = '\n';
 		buf[MPRINTF_BUF_SIZE - 1] = '\0';
-		SDL_SemPost(multithreadedprintf_semaphore);
+		SDL_SemPost((SDL_sem *) multithreadedprintf_semaphore);
 	}
-	SDL_UnlockMutex(multithreadedprintf_mutex);
+	SDL_UnlockMutex((SDL_mutex *) multithreadedprintf_mutex);
 
 	va_end(args);
 }
