@@ -239,7 +239,7 @@ bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size
     }
 
     // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
-    av_packet_free(&decoder->packet);
+    av_packet_unref(&decoder->packet);
 
   } else {
     decoder->packet.data = buffer;

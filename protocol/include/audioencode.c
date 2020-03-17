@@ -224,7 +224,7 @@ void audio_encode_and_send(audio_capture_device *device, audio_encoder_t *encode
         avcodec_decode_audio4(device->dec_ctx, encoder->input_frame, &got_frame, &encoder->packet);
         encoder->input_frame->pts = av_frame_get_best_effort_timestamp(encoder->input_frame);
         if (got_frame) {
-            av_packet_free(&encoder->packet);
+            av_packet_unref(&encoder->packet);
             av_init_packet(&encoder->packet);
             /* push the audio data from decoded frame into the filtergraph */
             av_buffersrc_add_frame_flags(filter->buffersrc_ctx, encoder->input_frame, 0);
@@ -246,7 +246,7 @@ void audio_encode_and_send(audio_capture_device *device, audio_encoder_t *encode
     			    }
                 }
             }
-            av_packet_free(&encoder->packet);
+            av_packet_unref(&encoder->packet);
         }
     } else {
         /* discard non-wanted packets */

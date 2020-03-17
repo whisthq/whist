@@ -162,7 +162,7 @@ void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
     sws_scale(encoder->sws, in_data, in_linesize, 0, encoder->in_height, encoder->sw_frame->data, encoder->sw_frame->linesize);
         
   // init packet to prepare encoding
-	av_packet_free(&encoder->packet);
+	av_packet_unref(&encoder->packet);
 
 	av_init_packet(&encoder->packet);
 	int success = 0; // boolean for success or failure of encoding

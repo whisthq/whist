@@ -84,7 +84,7 @@ int audio_decoder_decode(audio_decoder_t *decoder, char *buffer, int buffer_size
 
   // decode the frame
 	len = avcodec_decode_audio4(decoder->context, decoder->frame, &success, &decoder->packet);
-  av_packet_free(&decoder->packet);
+    av_packet_unref(&decoder->packet);
   return len;
 }
 
