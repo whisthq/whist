@@ -235,6 +235,7 @@ int32_t RenderScreen(void* opaque) {
     }
 
     SDL_Delay(5);
+    return NULL;
 }
 // END VIDEO FUNCTIONS
 
@@ -252,7 +253,7 @@ void initVideo() {
     size_t yPlaneSz, uvPlaneSz;
     int uvPitch;
 
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawBlendMode((SDL_Renderer*) renderer, SDL_BLENDMODE_BLEND);
     // Allocate a place to put our YUV image on that screen
     texture = SDL_CreateTexture(
         renderer,

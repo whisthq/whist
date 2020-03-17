@@ -181,7 +181,7 @@ int SendTCPPacket( void* data, int len )
         return -1;
     }
 
-    struct RTPPacket* packet = unbounded_packet;
+    struct RTPPacket* packet = (struct RTPPacket*) unbounded_packet;
 
     packet->id = -1;
 
@@ -191,7 +191,7 @@ int SendTCPPacket( void* data, int len )
 
     int packet_size = PACKET_HEADER_SIZE + len;
 
-    int encrypt_len = encrypt_packet( packet, packet_size, sizeof(int) + encrypted_unbounded_packet, PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( packet, packet_size, sizeof(int) + encrypted_unbounded_packet, (unsigned char *) PRIVATE_KEY );
     *((int*)encrypted_unbounded_packet) = encrypt_len;
 
     mprintf( "Sending TCP Packet... %d\n", encrypt_len );
@@ -225,7 +225,7 @@ int SendPacket(void* data, int len) {
     int packet_size = PACKET_HEADER_SIZE + len;
 
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, (unsigned char *) PRIVATE_KEY );
 
     bool failed = false;
     SDL_LockMutex(send_packet_mutex);
@@ -365,7 +365,7 @@ static int32_t ReceivePackets(void* opaque) {
 
             if( recv_size > 0 )
             {
-                recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, PRIVATE_KEY );
+                recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, (unsigned char *) PRIVATE_KEY );
                 if( recv_size < 0 )
                 {
                     mprintf( "Failed to decrypt packet\n" );
@@ -480,9 +480,9 @@ static int32_t ReceiveMessage(struct RTPPacket* packet) {
 
 // Make the screen black
 void clearSDL() {
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
+    SDL_SetRenderDrawColor((SDL_Renderer*) renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear((SDL_Renderer*) renderer);
+    SDL_RenderPresent((SDL_Renderer*) renderer);
 }
 
 // Send a key to SDL event queue, presumably one that is captured and wouldn't naturally make it to the event queue by itself
@@ -490,7 +490,7 @@ void SendCapturedKey( FractalKeycode key, int type, int time)
 {
     SDL_Event e = { 0 };
     e.type = type;
-    e.key.keysym.scancode = key;
+    e.key.keysym.scancode = (SDL_Scancode) key;
     e.key.timestamp = time;
     SDL_PushEvent( &e );
 }
@@ -610,7 +610,7 @@ int initSDL() {
         return -1;
     }
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
+    renderer = SDL_CreateRenderer((SDL_Window*) window, -1, SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) {
         fprintf(stderr, "SDL: could not create renderer - exiting: %s\n", SDL_GetError());
         return -1;
@@ -750,7 +750,7 @@ int main(int argc, char* argv[])
                 fmsg.type = MESSAGE_KEYBOARD_STATE;
 
                 int num_keys;
-                Uint8* state = SDL_GetKeyboardState( &num_keys );
+                Uint8* state = (Uint8*) SDL_GetKeyboardState( &num_keys );
 #if defined(_WIN32)
                 fmsg.num_keycodes = min( NUM_KEYCODES, num_keys );
 #else
