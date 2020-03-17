@@ -48,15 +48,16 @@ def vm(action):
 @vm_bp.route('/tracker/<action>', methods = ['POST'])
 def tracker(action):
     body = request.get_json()
-    username = body['username']
     time = None
     try:
         time = body['time']
     except: 
         pass
     if action == 'logon':
+        username = body['username']
         addTimeTable(username, 'logon', time)
     elif action == 'logoff':
+        username = body['username']
         addTimeTable(username, 'logoff', time)
     elif action == 'clear':
         deleteTimeTable()
