@@ -1,0 +1,37 @@
+         0.0126: Connecting to server...
+         0.0128: Connected on 13.90.96.31:32262!
+         0.1639: Connecting to server...
+         0.1643: Connected on 13.90.96.31:32263!
+         0.1653: RenderScreen running on Thread 121688064
+         0.1653: Freq: 48000
+         0.3146: ReceivePackets running on Thread 123834368
+         0.3146: Asking for server dimension to be 1440x900
+         0.3205: Audio Queue too low: 0. Needs to catch up!
+         0.8152: Ping! 2
+         1.4162: Ping received no response: 2
+         1.4162: Ping! 3
+         2.0172: Ping received no response: 3
+         2.0172: Ping! 4
+         2.6182: Ping received no response: 4
+         2.6182: Ping! 5
+         3.1657: Asking for server MBPS to be 22.500000
+         3.2190: Ping received no response: 5
+         3.2190: Ping! 6
+         3.8193: Ping received no response: 6
+         3.8194: Server disconnected: 3 consecutive ping failures.
+         3.8194: Ping! 7
+         3.8196: Disconnecting...
+         3.8207: Took more than 20ms to receive something!! Took 3489.218000ms total!
+         3.9511: Trying to recover the server connection...
+         4.9517: Connecting to server...
+         4.9518: Connected on 13.90.96.31:32262!
+         5.1031: Connecting to server...
+         5.1032: Connected on 13.90.96.31:32263!
+         5.1051: RenderScreen running on Thread 116322304
+         5.1051: Freq: 48000
+         5.1329: ReceivePackets running on Thread 122224640
+         5.1329: Asking for server dimension to be 1440x900
+         5.3135: Forcefully Quitting...
+         5.3145: Disconnecting...
+         5.3152: Took more than 20ms to receive something!! Took 181.649000ms total!
+         5.4409: Closing Client...
