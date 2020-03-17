@@ -64,6 +64,7 @@ void initUpdate() {
 
     updateClipboard();
     StartTrackingClipboardUpdates();
+    ClearReadingTCP();
 }
 
 void update() {
@@ -74,6 +75,15 @@ void update() {
     if( result < 0 )
     {
         mprintf( "Lost TCP Connection (Error: %d)\n", GetLastNetworkError() );
+    }
+
+    char* tcp_buf = TryReadingTCPPacket( &PacketTCPContext );
+    if( tcp_buf )
+    {
+        struct RTPPacket* packet = tcp_buf;
+        struct FractalServerMessage* fmsg_response = packet->data;
+        mprintf( "Received %d byte clipboard message from server!\n", packet->payload_size );
+        SetClipboard( &fmsg_response->clipboard );
     }
 
     // Check if clipboard has updated
