@@ -38,7 +38,8 @@ def fetchAll(self, update):
         vm_info = {
             'vm_name': entry.name,
             'username': entry.os_profile.admin_username,
-            'ip': vm_ip
+            'ip': vm_ip,
+            'location': entry.location
         }
         
         if entry.name in current_names:
