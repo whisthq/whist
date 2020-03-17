@@ -242,16 +242,10 @@ int CaptureScreen(struct CaptureDevice *device) {
 
   ReleaseScreenshot(screenshot);
 
-  mprintf( "Checking for Acquire!\n" );
   hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 1, &device->frame_info, &screenshot->desktop_resource);
-  if( device->frame_info.AccumulatedFrames > 0 )
-  {
-      mprintf( "**** Frames!: %d\n", device->frame_info.AccumulatedFrames );
-  }
 
   if(FAILED(hr)) {
     if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
-        mprintf( "Timed out\n" );
         return 0;
     }
     else if (hr == DXGI_ERROR_ACCESS_LOST || hr == DXGI_ERROR_INVALID_CALL) {

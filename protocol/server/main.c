@@ -29,8 +29,8 @@ volatile static double max_mbps;
 volatile static int gop_size = 48;
 volatile static DesktopContext desktopContext = { 0 };
 
-volatile int server_width = DEFAULT_WIDTH;
-volatile int server_height = DEFAULT_HEIGHT;
+volatile int client_width = DEFAULT_WIDTH;
+volatile int client_height = DEFAULT_HEIGHT;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
 
@@ -243,12 +243,14 @@ static int32_t SendVideo(void* opaque) {
             }
 
             device = &rdevice;
-            int result = CreateCaptureDevice(device, server_width, server_height);
+            int result = CreateCaptureDevice(device, client_width, client_height);
             if (result < 0) {
                 mprintf("Failed to create capture device\n");
                 device = NULL;
                 connected = false;
             }
+
+            mprintf( "Created Capture Device of dimensions %dx%d\n", device->width, device->height );
 
             update_encoder = true;
             update_device = false;
@@ -290,14 +292,12 @@ static int32_t SendVideo(void* opaque) {
             if (accumulated_frames > 1) {
                 mprintf("Accumulated Frames: %d\n", accumulated_frames);
             }
-            mprintf( "Accumulated Frames: %d\n", accumulated_frames );
 
             consecutive_capture_screen_errors = 0;
 
             clock t;
             StartTimer(&t);
             video_encoder_encode(encoder, device->frame_data);
-            mprintf( "Encoding to size %d\n", encoder->packet.size );
             //mprintf("Encode Time: %f\n", GetTimer(t));
 
             bitrate_tested_frames++;
@@ -661,8 +661,8 @@ int main(int argc, char* argv[])
                     // Update local monitor dimensions
                     mprintf("Request to use dimensions %dx%d received\n", fmsg->dimensions.width, fmsg->dimensions.height);
                     //TODO: Check if dimensions are valid
-                    server_width = fmsg->dimensions.width;
-                    server_height = fmsg->dimensions.height;
+                    client_width = fmsg->dimensions.width;
+                    client_height = fmsg->dimensions.height;
                     update_device = true;
                 } else if( fmsg->type == CMESSAGE_CLIPBOARD )
                 {

@@ -427,18 +427,19 @@ void updateKeyboardState( struct FractalClientMessage* fmsg )
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
-FractalStatus ReplayUserInput(struct FractalClientMessage* fmsg) {
+FractalStatus ReplayUserInput( struct FractalClientMessage* fmsg )
+{
 	// get screen width and height for mouse cursor
-	int sWidth = GetSystemMetrics(SM_CXSCREEN) - 1;
-	int sHeight = GetSystemMetrics(SM_CYSCREEN) - 1;
-	INPUT Event;
+	int sWidth = GetSystemMetrics( SM_CXSCREEN ) - 1;
+	int sHeight = GetSystemMetrics( SM_CYSCREEN ) - 1;
+	INPUT Event = { 0 };
 
 	// switch to fill in the Windows event depending on the FractalClientMessage type
-	switch (fmsg->type) {
+	switch( fmsg->type )
+	{
 	case MESSAGE_KEYBOARD:
 		// Windows event for keyboard action
 
-		//Event.ki.wVk = windows_keycodes[fmsg->keyboard.code];
 		Event.type = INPUT_KEYBOARD;
 		Event.ki.time = 0; // system supplies timestamp
 
@@ -452,24 +453,26 @@ FractalStatus ReplayUserInput(struct FractalClientMessage* fmsg) {
 			Event.ki.wScan &= 0xFF;
 		}
 
-		if (!fmsg->keyboard.pressed) {
+		if( !fmsg->keyboard.pressed )
+		{
 			Event.ki.dwFlags |= KEYEVENTF_KEYUP;
-		}
-		else {
+		} else
+		{
 			Event.ki.dwFlags |= 0;
 		}
-
 		break;
 	case MESSAGE_MOUSE_MOTION:
 		// mouse motion event
 		Event.type = INPUT_MOUSE;
-		if(fmsg->mouseMotion.relative) {
+		if( fmsg->mouseMotion.relative )
+		{
 			Event.mi.dx = fmsg->mouseMotion.x * 0.9;
 			Event.mi.dy = fmsg->mouseMotion.y * 0.9;
 			Event.mi.dwFlags = MOUSEEVENTF_MOVE;
-		} else {
-			Event.mi.dx = fmsg->mouseMotion.x * (double) 65536 / 1000000;
-			Event.mi.dy = fmsg->mouseMotion.y * (double) 65536 / 1000000;
+		} else
+		{
+			Event.mi.dx = fmsg->mouseMotion.x * (double)65536 / 1000000;
+			Event.mi.dy = fmsg->mouseMotion.y * (double)65536 / 1000000;
 			Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
 		}
 		break;
@@ -479,33 +482,37 @@ FractalStatus ReplayUserInput(struct FractalClientMessage* fmsg) {
 		Event.mi.dx = 0;
 		Event.mi.dy = 0;
 
+		// Emulating button click
 		// switch to parse button type
-		switch (fmsg->mouseButton.button) {
+		switch( fmsg->mouseButton.button )
+		{
 		case SDL_BUTTON_LEFT:
 			// left click
-			if (fmsg->mouseButton.pressed) {
+			if( fmsg->mouseButton.pressed )
+			{
 				Event.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-			}
-			else {
+			} else
+			{
 				Event.mi.dwFlags = MOUSEEVENTF_LEFTUP;
 			}
-			break;
+		break;
 		case SDL_BUTTON_MIDDLE:
 			// middle click
 			if( fmsg->mouseButton.pressed )
 			{
 				Event.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
-			}
-			else {
+			} else
+			{
 				Event.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
 			}
 			break;
 		case SDL_BUTTON_RIGHT:
 			// right click
-			if (fmsg->mouseButton.pressed) {
+			if( fmsg->mouseButton.pressed )
+			{
 				Event.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-			}
-			else {
+			} else
+			{
 				Event.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
 			}
 			break;
@@ -525,10 +532,11 @@ FractalStatus ReplayUserInput(struct FractalClientMessage* fmsg) {
 	}
 
 	// send FMSG mapped to Windows event to Windows and return
-	int num_events_sent = SendInput(1, &Event, sizeof(INPUT)); // 1 structure to send
+	int num_events_sent = SendInput( 1, &Event, sizeof( INPUT ) ); // 1 structure to send
 
-	if (1 != num_events_sent) {
-		mprintf("SendInput did not send event!\n");
+	if( 1 != num_events_sent )
+	{
+		mprintf( "SendInput did not send all events! %d\n", num_events_sent );
 	}
 
 	return FRACTAL_OK;
