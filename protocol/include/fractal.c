@@ -393,7 +393,7 @@ FILE* mprintf_log_file = NULL;
 
 void initMultiThreadedPrintf(bool use_logging) {
 	if (use_logging) {
-		mprintf_log_file = fopen("C:\\log.txt", "a+");
+		mprintf_log_file = fopen("C:\\Program Files\\Fractal\\log.txt", "ab");
 	}
 
 	run_multithreaded_printf = true;
@@ -422,6 +422,7 @@ void destroyMultiThreadedPrintf() {
 void MultiThreadedPrintf(void* opaque) {
 	int produced_in_advance = 0;
 	while (true) {
+		// Wait until signaled by printf to begin running
 		SDL_SemWait((SDL_sem *) multithreadedprintf_semaphore);
 
 		if (!run_multithreaded_printf) {
@@ -430,6 +431,8 @@ void MultiThreadedPrintf(void* opaque) {
 
 		int cache_size = 0;
 
+		// Clear the queue into the cache,
+		// And then let go of the mutex so that printf can continue accumulating
 		SDL_LockMutex((SDL_mutex *) multithreadedprintf_mutex);
 		cache_size = mprintf_queue_size;
 		for (int i = 0; i < mprintf_queue_size; i++) {
@@ -444,11 +447,11 @@ void MultiThreadedPrintf(void* opaque) {
 		mprintf_queue_size = 0;
 		SDL_UnlockMutex((SDL_mutex *) multithreadedprintf_mutex);
 
+		// Print all of the data into the cache
         //int last_printf = -1;
 		for (int i = 0; i < cache_size; i++) {
 			if (mprintf_log_file && mprintf_queue_cache[i].log) {
 				fprintf(mprintf_log_file, "%s", mprintf_queue_cache[i].buf);
-				fflush(mprintf_log_file);
 			}
 			//if (i + 6 < cache_size) {
 			//	printf("%s%s%s%s%s%s%s", mprintf_queue_cache[i].buf, mprintf_queue_cache[i+1].buf, mprintf_queue_cache[i+2].buf, mprintf_queue_cache[i+3].buf, mprintf_queue_cache[i+4].buf,  mprintf_queue_cache[i+5].buf,  mprintf_queue_cache[i+6].buf);
@@ -456,6 +459,26 @@ void MultiThreadedPrintf(void* opaque) {
 			//} else if (i > last_printf) {
 				printf("%s", mprintf_queue_cache[i].buf);
 			//}
+		}
+		if( mprintf_log_file )
+		{
+			fflush( mprintf_log_file );
+		}
+
+		// If the log file is large enough, cache it
+		if( mprintf_log_file ) {
+			fseek( mprintf_log_file, 0L, SEEK_END );
+			int sz = ftell( mprintf_log_file );
+
+			// If it's larger than 5MB, start a new file and store the old one
+			if( sz > 5 * 1024 * 1024 )
+			{
+				fclose( mprintf_log_file );
+				DeleteFileA( L"C:\\Program Files\\Fractal\\log_prev.txt" );
+				MoveFile( L"C:\\Program Files\\Fractal\\log.txt", L"C:\\Program Files\\Fractal\\log_prev.txt" );
+				DeleteFileA( L"C:\\Program Files\\Fractal\\log.txt" );
+				mprintf_log_file = fopen( "C:\\Program Files\\Fractal\\log.txt", "ab" );
+			}
 		}
 	}
 }
