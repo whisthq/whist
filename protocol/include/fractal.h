@@ -1,14 +1,3 @@
-/*
- * This file contains the headers of the main functions used as part of the
- * streaming protocol.
-
- Protocol version: 1.0
- Last modification: 12/10/2019
-
- By: Philippe Noël
-
- Copyright Fractal Computers, Inc. 2019
-*/
 #ifndef FRACTAL_H
 #define FRACTAL_H
 
@@ -21,14 +10,30 @@
 	#include <process.h>
 	#include <windows.h>
 	#include <synchapi.h>
+	#include <initguid.h>
+	#include <mmdeviceapi.h>
+	#include <Audioclient.h>
+	#include <Functiondiscoverykeys_devpkey.h>
+	#include <avrt.h>
+	#include <winuser.h>
+	#include <D3D11.h>
+	#include <D3d11_1.h> 
+	#include <dxgi1_2.h>
+	#include <DXGITYPE.h>
 	#pragma comment (lib, "ws2_32.lib")
-//	#define ETIMEDOUT WSAETIMEDOUT
-//	#define EWOULDBLOCK WSAEWOULDBLOCK
 #else
 	#include <unistd.h>
 	#include <errno.h>
+	#include <sys/socket.h>
+	#include <sys/types.h>
+	#include <sys/ioctl.h>
+	#include <netinet/in.h>
+	#include <arpa/inet.h>
+	#include <sys/time.h>
 	#define max(a, b) (((a) > (b)) ? (a) : (b))
 	#define min(a, b) (((a) < (b)) ? (a) : (b))
+	#define SOCKET int
+	#define closesocket close
 #endif
 
 #include "ffmpeg/libavcodec/avcodec.h"
@@ -46,31 +51,6 @@
 #define SDL_MAIN_HANDLED
 #include "../include/SDL2/SDL.h"
 #include "../include/SDL2/SDL_thread.h"
-
-#if defined(_WIN32)
-	#include <initguid.h>
-	#include <mmdeviceapi.h>
-	#include <Audioclient.h>
-	#include <Functiondiscoverykeys_devpkey.h>
-	#include <avrt.h>
-	#include <windows.h>
-	#include <winuser.h>
-	#include <D3D11.h>
-	#include <D3d11_1.h> 
-	#include <dxgi1_2.h>
-	#include <DXGITYPE.h>
-#else
-	#define SOCKET int
-	#define closesocket close
-
-
-	#include <sys/socket.h>
-	#include <sys/types.h>
-	#include <sys/ioctl.h>
-	#include <netinet/in.h>
-	#include <arpa/inet.h>
-	#include <sys/time.h>
-#endif
 
 #include "clipboard.h"
 
@@ -95,194 +75,9 @@
 
 #define WRITE_MPRINTF_TO_LOG true
 
-/// @brief Default ports configurations to pass to FractalInit
-/// @details Picked from unassigned range from IANA.org
-/// Increment by one if these are taken, until a port is found available
-#define FRACTAL_DEFAULTS {  							 \
-  /* upnp          					 */ 1,         \
-	/* clientPort RECV (UDP)   */ 48800,     \
-  /* clientPort SEND (TCP)   */ 48900,     \
-  /* serverPort RECV (TCP)   */ 48900,     \
-	/* serverPort SEND (UDP)   */ 48800,     \
-}
-
-/// @brief Default server settings for streaming
-#define FRACTAL_SERVER_DEFAULTS {    \
-  /* resolutionX (pixels)   */ 0,    \
-  /* resolutionY (pixels)   */ 0,    \
-  /* refreshRate (fps)      */ 60,   \
-  /* encoderFPS  (fps)      */ 0,    \
-  /* encoderMaxBitrate      */ 10,   \
-  /* encoderH265            */ 0,    \
-}
-
-/// @brief Default client settings for receiving stream
-#define FRACTAL_CLIENT_DEFAULTS {    \
-  /* SoftwareDecoder        */ 0,    \
-  /* resolutionX (pixels)   */ 0,    \
-  /* resolutionY (pixels)   */ 0,    \
-  /* refreshRate (fps)      */ 60,   \
-  /* audioBuffer            */ 6,    \
-}
-
-/*** DEFINITIONS END ***/
-
 int GetLastNetworkError();
 
 /*** ENUMERATIONS START ***/
-
-/// @brief Status codes indicating success, warning, or error.
-/// @details Returned by most Fractal functions. FRACTAL_OK is '0',
-///	warnings are positive, errors are negative.
-typedef enum FractalStatus {
-	FRACTAL_OK                = 0,       ///< 0
-
-	DECODE_WRN_CONTINUE       = 1000,    ///< 1000
-	DECODE_WRN_ACCEPTED       = 1001,    ///< 1001
-	DECODE_WRN_REINIT         = 1003,    ///< 1003
-
-	NETWORK_WRN_TIMEOUT       = 2000,    ///< 2000
-
-	AUDIO_WRN_NO_DATA         = 6000,    ///< 6000
-
-	ERR_DEFAULT               = -1,      ///< -1
-
-	DECODE_ERR_INIT           = -10,     ///< -10
-	DECODE_ERR_LOAD           = -11,     ///< -11
-	DECODE_ERR_MAP            = -13,     ///< -13
-	DECODE_ERR_DECODE         = -14,     ///< -14
-	DECODE_ERR_CLEANUP        = -15,     ///< -15
-	DECODE_ERR_PARSE          = -16,     ///< -16
-	DECODE_ERR_NO_SUPPORT     = -17,     ///< -17
-	DECODE_ERR_PIXEL_FORMAT   = -18,     ///< -18
-	DECODE_ERR_BUFFER         = -19,     ///< -19
-	DECODE_ERR_RESOLUTION     = -20,     ///< -20
-
-	WS_ERR_CONNECT            = -6101,   ///< -6101
-	WS_ERR_POLL               = -3001,   ///< -3001
-	WS_ERR_READ               = -3002,   ///< -3002
-	WS_ERR_WRITE              = -3003,   ///< -3003
-	WS_ERR_CLOSE              = -6105,   ///< -6105
-	WS_ERR_PING               = -3005,   ///< -3005
-	WS_ERR_PONG_TIMEOUT       = -3006,   ///< -3006
-	WS_ERR_PONG               = -3007,   ///< -3007
-	WS_ERR_AUTH               = -3008,   ///< -3008
-	WS_ERR_GOING_AWAY         = -3009,   ///< -3009
-
-	NAT_ERR_PEER_PHASE        = -6023,   ///< -6023
-	NAT_ERR_STUN_PHASE        = -6024,   ///< -6024
-	NAT_ERR_NO_CANDIDATES     = -6033,   ///< -6033
-	NAT_ERR_JSON_ACTION       = -6111,   ///< -6111
-	NAT_ERR_NO_SOCKET         = -6112,   ///< -6112
-
-	OPENGL_ERR_CONTEXT        = -7000,   ///< -7000
-	OPENGL_ERR_SHARE          = -7001,   ///< -7001
-	OPENGL_ERR_PIXFORMAT      = -7002,   ///< -7002
-	OPENGL_ERR_CURRENT        = -7003,   ///< -7003
-	OPENGL_ERR_DC             = -7004,   ///< -7004
-	OPENGL_ERR_SHADER         = -7005,   ///< -7005
-	OPENGL_ERR_PROGRAM        = -7006,   ///< -7006
-	OPENGL_ERR_VERSION        = -7007,   ///< -7007
-	OPENGL_ERR_TEXTURE        = -7008,   ///< -7008
-
-	AUDIO_ERR_CAPTURE_INIT    = -9000,   ///< -9000
-	AUDIO_ERR_CAPTURE         = -9001,   ///< -9001
-	AUDIO_ERR_NETWORK         = -9002,   ///< -9002
-	AUDIO_ERR_FREE            = -9003,   ///< -9003
-
-	AUDIO_OPUS_ERR_INIT       = -10000,  ///< -10000
-	AUDIO_OPUS_ERR_DECODE     = -10001,  ///< -10001
-	AUDIO_OPUS_ERR_ENCODE     = -10002,  ///< -10002
-
-	NETWORK_ERR_BG_TIMEOUT    = -12007,  ///< -12007
-	NETWORK_ERR_BAD_PACKET    = -12008,  ///< -12008
-	NETWORK_ERR_BUFFER        = -12011,  ///< -12011
-	NETWORK_ERR_SHUTDOWN      = -12017,  ///< -12017
-	NETWORK_ERR_UNSUPPORTED   = -12018,  ///< -12018
-	NETWORK_ERR_INTERRUPTED   = -12019,  ///< -12019
-
-	SERVER_ERR_DISPLAY        = -13000,  ///< -13000
-	SERVER_ERR_RESOLUTION     = -13008,  ///< -13008
-	SERVER_ERR_MAX_RESOLUTION = -13009,  ///< -13009
-	SERVER_ERR_NO_USER        = -13011,  ///< -13011
-	SERVER_ERR_VIDEO_DONE     = -13013,  ///< -13013
-	SERVER_ERR_CLIENT_ABORT   = -13014,  ///< -13014
-	SERVER_ERR_CLIENT_GONE    = -13015,  ///< -13015
-
-	CAPTURE_ERR_INIT          = -14003,  ///< -14003
-	CAPTURE_ERR_TEXTURE       = -14004,  ///< -14004
-	CAPTURE_ERR_DESTROY				= -14005,  ///< -14005
-
-	ENCODE_ERR_INIT           = -15000,  ///< -15000
-	ENCODE_ERR_ENCODE         = -15002,  ///< -15002
-	ENCODE_ERR_BUFFER         = -15006,  ///< -15006
-	ENCODE_ERR_PROPERTIES     = -15100,  ///< -15100
-	ENCODE_ERR_LIBRARY        = -15101,  ///< -15101
-	ENCODE_ERR_SESSION        = -15007,  ///< -15007
-	ENCODE_ERR_SESSION1       = -15103,  ///< -15103
-	ENCODE_ERR_SESSION2       = -15104,  ///< -15104
-	ENCODE_ERR_OUTPUT_INIT    = -15105,  ///< -15105
-	ENCODE_ERR_TEXTURE        = -15106,  ///< -15106
-	ENCODE_ERR_OUTPUT         = -15107,  ///< -15107
-	ENCODE_ERR_UNSUPPORTED    = -15108,  ///< -15108
-	ENCODE_ERR_HANDLE         = -15109,  ///< -15109
-	ENCODE_ERR_CAPS           = -15110,  ///< -15110
-
-	UPNP_ERR                  = -19000,  ///< -19000
-
-	D3D_ERR_TEXTURE           = -22000,  ///< -22000
-	D3D_ERR_SHADER            = -22001,  ///< -22001
-	D3D_ERR_BUFFER            = -22002,  ///< -22002
-	D3D_ERR_LAYOUT            = -22003,  ///< -22003
-	D3D_ERR_DEVICE            = -22004,  ///< -22004
-	D3D_ERR_MT                = -22005,  ///< -22005
-	D3D_ERR_ADAPTER           = -22006,  ///< -22006
-	D3D_ERR_FACTORY           = -22007,  ///< -22007
-	D3D_ERR_OUTPUT            = -22008,  ///< -22008
-	D3D_ERR_CONTEXT           = -22009,  ///< -22009
-	D3D_ERR_OUTPUT1           = -22010,  ///< -22010
-	D3D_ERR_SWAP_CHAIN        = -22011,  ///< -22011
-	D3D_ERR_DRAW              = -22012,  ///< -22012
-	D3D_ERR_OUTPUT5           = -22013,  ///< -22013
-
-	H26X_ERR_NOT_FOUND        = -23000,  ///< -23000
-
-	AES_GCM_ERR_KEY_LEN       = -28000,  ///< -28000
-	AES_GCM_ERR_BUFFER        = -28004,  ///< -28004
-
-	SCTP_ERR_GLOBAL_INIT      = -32000,  ///< -32000
-	SCTP_ERR_WRITE            = -32001,  ///< -32001
-	SCTP_ERR_SOCKET           = -32002,  ///< -32002
-	SCTP_ERR_BIND             = -32003,  ///< -32003
-	SCTP_ERR_CONNECT          = -32004,  ///< -32004
-
-	DTLS_ERR_BIO_WRITE        = -33000,  ///< -33000
-	DTLS_ERR_BIO_READ         = -33001,  ///< -33001
-	DTLS_ERR_SSL              = -33002,  ///< -33002
-	DTLS_ERR_BUFFER           = -33003,  ///< -33003
-	DTLS_ERR_NO_DATA          = -33004,  ///< -33004
-	DTLS_ERR_CERT             = -33005,  ///< -33005
-
-	STUN_ERR_PACKET           = -34000,  ///< -34000
-	STUN_ERR_PARSE_HEADER     = -34001,  ///< -34001
-	STUN_ERR_PARSE_ADDRESS    = -34002,  ///< -34002
-
-	SO_ERR_OPEN               = -35000,  ///< -35000
-	SO_ERR_SYMBOL             = -35001,  ///< -35001
-
-	RESAMPLE_ERR_INIT         = -37000,  ///< -37000
-	RESAMPLE_ERR_RESAMPLE     = -37001,  ///< -37001
-
-	OPENSSL_ERR               = -600000, ///< `SSL_get_error` value will be subtracted from this value.
-
-	#if defined(_WIN32)
-	SOCKET_ERR                = -700000, ///< `WSAGetLastError` value will be subtracted from this value.
-	#else
-	SOCKET_ERR                = -800000, ///< `errno` value will be subtracted from this value.
-	#endif
-
-	__ERR_MAKE_32             = 0x7FFFFFFF,
-} FractalStatus;
 
 typedef enum EncodeType {
 	SOFTWARE_ENCODE        = 0,

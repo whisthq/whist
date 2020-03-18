@@ -47,21 +47,25 @@ const char *ClipboardGetString() {
 	}
 }
 
+
+
+
+
+
+
+
+
+
 OSXImage *ClipboardGetImage() {
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSBitmapImageRep *rep = (NSBitmapImageRep*)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
 	if( rep ) {
         // get the data
-        NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:nil];
-
-
-
+        NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
 
         // create OSX image struct
         OSXImage *clipboard_image = (OSXImage *) malloc(sizeof(OSXImage));
         memset(clipboard_image, 0, sizeof(OSXImage));
-
-
 
         // set fields and return
         clipboard_image->size = [data length];

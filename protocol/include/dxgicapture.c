@@ -1,14 +1,3 @@
-/*
- * This file contains the implementation of DXGI screen capture.
-
- Protocol version: 1.0
- Last modification: 1/15/2020
-
- By: Ming Ying
-
- Copyright Fractal Computers, Inc. 2020
-*/
-
 #include "dxgicapture.h"
 
 #include <windows.h>
@@ -157,7 +146,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
       HMONITOR hMonitor = output_desc.Monitor;
       MONITORINFOEX monitorInfo;
       monitorInfo.cbSize = sizeof( MONITORINFOEX );
-      GetMonitorInfo( hMonitor, &monitorInfo );
+      GetMonitorInfo( hMonitor, (LPMONITORINFO) &monitorInfo );
 
       DEVMODE dm;
       memset( &dm, 0, sizeof( dm ) );
@@ -181,10 +170,10 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   }
 
   hr = D3D11CreateDevice(
-      hardware->adapter,
+      (IDXGIAdapter *) hardware->adapter,
       D3D_DRIVER_TYPE_UNKNOWN,
       NULL,
-      NULL,
+      0,
       NULL,
       0,
       D3D11_SDK_VERSION,
@@ -205,7 +194,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
       mprintf("Failed to query interface of output: 0x%X %d\n", hr, GetLastError());
       return -1;
   }
-  hr = output1->lpVtbl->DuplicateOutput(output1, device->D3D11device, &device->duplication);
+  hr = output1->lpVtbl->DuplicateOutput(output1, (IUnknown *) device->D3D11device, &device->duplication);
   if (FAILED(hr)) {
       mprintf("Failed to duplicate output: 0x%X %d\n", hr, GetLastError());
       return -1;

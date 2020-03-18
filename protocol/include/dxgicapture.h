@@ -1,13 +1,3 @@
-/*
- * This file contains the headers and definitions of the DXGI screen capture functions.
-
- Protocol version: 1.0
- Last modification: 1/15/20
-
- By: Ming Ying
-
- Copyright Fractal Computers, Inc. 2019
-*/
 #ifndef DXGI_CAPTURE_H
 #define DXGI_CAPTURE_H
 
@@ -52,4 +42,4 @@ void ReleaseScreen(struct CaptureDevice *device);
 
 void DestroyCaptureDevice(struct CaptureDevice* device);
 
-#endif
+#endif // DXGI_CAPTURE_H
