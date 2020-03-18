@@ -474,9 +474,11 @@ void MultiThreadedPrintf(void* opaque) {
 			if( sz > 5 * 1024 * 1024 )
 			{
 				fclose( mprintf_log_file );
+#if defined(_WIN32)
 				DeleteFileA( L"C:\\Program Files\\Fractal\\log_prev.txt" );
 				MoveFile( L"C:\\Program Files\\Fractal\\log.txt", L"C:\\Program Files\\Fractal\\log_prev.txt" );
 				DeleteFileA( L"C:\\Program Files\\Fractal\\log.txt" );
+#endif
 				mprintf_log_file = fopen( "C:\\Program Files\\Fractal\\log.txt", "ab" );
 			}
 		}
