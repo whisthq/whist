@@ -164,10 +164,10 @@ int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* d
         // Construct packet
         packet->type = type;
         memcpy( packet->data, data + curr_index, payload_size );
-        packet->index = i;
+        packet->index = (short) i;
         packet->payload_size = payload_size;
         packet->id = id;
-        packet->num_indices = num_indices;
+        packet->num_indices = (short) num_indices;
         packet->is_a_nack = false;
         int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
 
@@ -226,7 +226,6 @@ static int32_t SendVideo(void* opaque) {
     int consecutive_capture_screen_errors = 0;
 
     int defaultCounts = 1;
-    HRESULT hr;
 
     clock world_timer;
     StartTimer(&world_timer);
@@ -462,7 +461,7 @@ void update() {
     runcmd( L"cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\"" );
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     initMultiThreadedPrintf(true);
 
@@ -521,7 +520,6 @@ int main(int argc, char* argv[])
 
         struct FractalClientMessage local_fmsg;
         struct FractalClientMessage* fmsg;
-        int i = 0;
 
         clock last_ping;
         StartTimer(&last_ping);

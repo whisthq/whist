@@ -28,7 +28,7 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread
         new_desktop = OpenInputDesktop(0, FALSE, GENERIC_ALL);
     }
     else {
-        new_desktop = OpenDesktop(desktop_name, 0, FALSE, GENERIC_ALL);
+        new_desktop = OpenDesktop((LPCWSTR) desktop_name, 0, FALSE, GENERIC_ALL);
     }
 
     if (set_thread) {
@@ -49,13 +49,12 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread
 }
 
 void OpenWindow() {
-    HWINSTA hwinsta = OpenWindowStation("winsta0", FALSE, GENERIC_ALL);
+    HWINSTA hwinsta = OpenWindowStation((LPCWSTR) "winsta0", FALSE, GENERIC_ALL);
     SetProcessWindowStation(hwinsta);
 }
 
 void InitDesktop() {
     DesktopContext lock_screen, logon_screen;
-    char* out;
 
     OpenWindow();
     lock_screen = OpenNewDesktop(NULL, true, true);
