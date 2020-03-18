@@ -9,7 +9,7 @@ wasapi_device *CreateAudioDevice(wasapi_device *audio_device) {
 
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL,  &IID_IMMDeviceEnumerator, (void**)&audio_device->pMMDeviceEnumerator);
     if (FAILED(hr)) {
-        mprintf(L"CoCreateInstance(IMMDeviceEnumerator) failed: hr = 0x%08x", hr);
+        mprintf("CoCreateInstance(IMMDeviceEnumerator) failed: hr = 0x%08x", hr);
         return NULL;
     }
 
@@ -22,13 +22,13 @@ wasapi_device *CreateAudioDevice(wasapi_device *audio_device) {
 
     hr = audio_device->device->lpVtbl->Activate(audio_device->device, &IID_IAudioClient3, CLSCTX_ALL, NULL, (void**)&audio_device->pAudioClient);
     if (FAILED(hr)) {
-        mprintf(L"IMMDevice::Activate(IAudioClient) failed: hr = 0x%08x", hr);
+        mprintf("IMMDevice::Activate(IAudioClient) failed: hr = 0x%08x", hr);
         return NULL;
     }
 
     hr = audio_device->pAudioClient->lpVtbl->GetDevicePeriod(audio_device->pAudioClient, &audio_device->hnsDefaultDevicePeriod, NULL);
     if (FAILED(hr)) {
-        mprintf(L"IAudioClient::GetDevicePeriod failed: hr = 0x%08x", hr);
+        mprintf("IAudioClient::GetDevicePeriod failed: hr = 0x%08x", hr);
         return NULL;
     }
 
@@ -36,20 +36,20 @@ wasapi_device *CreateAudioDevice(wasapi_device *audio_device) {
         audio_device->pAudioClient,
         &audio_device->pwfx);
     if (FAILED(hr)) {
-        mprintf(L"IAudioClient::GetMixFormat failed: hr = 0x%08x", hr);
+        mprintf("IAudioClient::GetMixFormat failed: hr = 0x%08x", hr);
         return NULL;
     }
 
     hr = audio_device->pAudioClient->lpVtbl->Initialize(audio_device->pAudioClient, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, audio_device->pwfx, 0);
     if (FAILED(hr)) {
-        mprintf(L"IAudioClient::Initialize failed: hr = 0x%08x", hr);
+        mprintf("IAudioClient::Initialize failed: hr = 0x%08x", hr);
         return NULL;
     }
 
     hr = audio_device->pAudioClient->lpVtbl->GetService(audio_device->pAudioClient, &IID_IAudioCaptureClient, (void**)&audio_device->pAudioCaptureClient);
 
     if (FAILED(hr)) {
-        mprintf(L"IAudioClient::GetService failed: hr = 0x%08x", hr);
+        mprintf("IAudioClient::GetService failed: hr = 0x%08x", hr);
         return NULL;
     }
 

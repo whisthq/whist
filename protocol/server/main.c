@@ -77,7 +77,7 @@ static char single_packet_buf[10000000];
 static char encrypted_single_packet_buf[10000000];
 int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_t* data, int len )
 {
-    struct RTPPacket* packet = single_packet_buf;
+    struct RTPPacket* packet = (struct RTPPacket *) single_packet_buf;
 
     // Construct packet
     packet->type = type;
@@ -345,7 +345,7 @@ static int32_t SendVideo(void* opaque) {
                 }
                 else {
                     // Create frame struct with compressed frame data and metadata
-                    Frame* frame = buf;
+                    Frame* frame = (Frame *) buf;
                     frame->width = device->width;
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
@@ -356,7 +356,7 @@ static int32_t SendVideo(void* opaque) {
                     //mprintf("Sent video packet %d (Size: %d) %s\n", id, encoder->packet.size, frame->is_iframe ? "(I-frame)" : "");
 
                     // Send video packet to client
-                    if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id) < 0) {
+                    if (SendPacket(&socketContext, PACKET_VIDEO, (uint8_t *) frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
                     frames_since_first_iframe++;
@@ -393,7 +393,7 @@ static int32_t SendAudio(void* opaque) {
     FractalServerMessage fmsg;
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
     fmsg.frequency = audio_device->pwfx->nSamplesPerSec;
-    SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg, sizeof(fmsg), 1);
+    SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t *) &fmsg, sizeof(fmsg), 1);
 
     mprintf("Audio Frequency: %d\n", audio_device->pwfx->nSamplesPerSec);
 
@@ -547,7 +547,7 @@ int main(int argc, char* argv[])
                 ClipboardData* cb = GetClipboard();
                 memcpy( &fmsg_response->clipboard, cb, sizeof( ClipboardData ) + cb->size );
                 mprintf( "Received clipboard trigger! Sending to client\n" );
-                if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE, fmsg_response, sizeof( FractalServerMessage ) + cb->size ) < 0 )
+                if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE, (uint8_t *) fmsg_response, sizeof( FractalServerMessage ) + cb->size ) < 0 )
                 {
                     mprintf( "Could not send Clipboard Message\n" );
                 } else
@@ -568,7 +568,7 @@ int main(int argc, char* argv[])
                     mprintf("Exiting due to button press...\n");
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = SMESSAGE_QUIT;
-                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof( FractalServerMessage ), 1) < 0) {
+                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t *) &fmsg_response, sizeof( FractalServerMessage ), 1) < 0) {
                         mprintf("Could not send Quit Message\n");
                     }
                     // Give a bit of time to make sure no one is touching it
@@ -584,7 +584,7 @@ int main(int argc, char* argv[])
             if( tcp_buf )
             {
                 struct RTPPacket* packet = tcp_buf;
-                fmsg = packet->data;
+                fmsg = (FractalClientMessage *) packet->data;
                 mprintf( "Received TCP BUF!!!! Size %d\n", packet->payload_size );
                 mprintf( "Received %d byte clipboard message from client.\n", packet->payload_size );
             } else
@@ -653,7 +653,7 @@ int main(int argc, char* argv[])
                     fmsg_response.type = MESSAGE_PONG;
                     fmsg_response.ping_id = fmsg->ping_id;
                     StartTimer(&last_ping);
-                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), 1) < 0) {
+                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t *) &fmsg_response, sizeof(fmsg_response), 1) < 0) {
                         mprintf("Could not send Pong\n");
                     }
                 }

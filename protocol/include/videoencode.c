@@ -174,4 +174,5 @@ void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
 	} else {
 		avcodec_encode_video2(encoder->context, &encoder->packet, encoder->sw_frame, &success);
 	}
+	return NULL;
 }

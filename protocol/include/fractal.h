@@ -22,8 +22,8 @@
 	#include <windows.h>
 	#include <synchapi.h>
 	#pragma comment (lib, "ws2_32.lib")
-	#define ETIMEDOUT WSAETIMEDOUT
-	#define EWOULDBLOCK WSAEWOULDBLOCK
+//	#define ETIMEDOUT WSAETIMEDOUT
+//	#define EWOULDBLOCK WSAEWOULDBLOCK
 #else
 	#include <unistd.h>
 	#include <errno.h>
