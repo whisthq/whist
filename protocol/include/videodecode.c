@@ -231,11 +231,14 @@ bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size
     decoder->packet.data = buffer;
     decoder->packet.size = buffer_size;
     // decode the frame
-    ret = avcodec_decode_video2(decoder->context, decoder->sw_frame, &success, &decoder->packet);
-    if( ret < 0 )
-    {
-        mprintf( "Failed to avcodec_decode_video2!\n" );
-        return false;
+    if(avcodec_send_packet(decoder->context, &decoder->packet) < 0) {
+      mprintf( "Failed to avcodec_send_packet!\n" );
+      return false;
+    }
+
+    if(avcodec_receive_frame(decoder->context, decoder->sw_frame) < 0) {
+      mprintf( "Failed to avcodec_receive_frame!\n" );
+      return false;
     }
 
     // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
