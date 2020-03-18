@@ -1,15 +1,3 @@
-/*
- * This file contains the implementation of the functions used as part of the
- * streaming protocol.
-
- Protocol version: 1.0
- Last modification: 12/14/2019
-
- By: Philippe Noël
-
- Copyright Fractal Computers, Inc. 2019
-*/
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -20,8 +8,6 @@
 #if defined(_WIN32)
 	#define socklen_t int
 #endif
-
-/*** FRACTAL FUNCTIONS START ***/
 
 int GetFmsgSize(struct FractalClientMessage* fmsg) {
 	if( fmsg->type == MESSAGE_KEYBOARD_STATE )
@@ -593,6 +579,3 @@ uint32_t Hash(void* buf, size_t len)
 	hash += (hash << 15);
 	return hash;
 }
-
-/*** FRACTAL FUNCTIONS END ***/
-

@@ -6,8 +6,8 @@
 #include "main.h"
 
 void initAudio();
-int32_t ReceiveAudio(struct RTPPacket* packet);
+int32_t ReceiveAudio(struct RTPPacket *packet);
 void updateAudio();
 void destroyAudio();
 
-#endif
+#endif // DESKTOP_AUDIO_H

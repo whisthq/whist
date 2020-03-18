@@ -584,7 +584,7 @@ int initSDL() {
     int full_height = get_native_screen_height();
 
     mprintf( "WIDTH: %d\n", full_width );
-    mprintf( "HEIGHT: %d\n", full_height );    
+    mprintf( "HEIGHT: %d\n", full_height );
 
     if (output_width < 0) {
         output_width = full_width;

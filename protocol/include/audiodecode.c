@@ -1,18 +1,7 @@
-/*
- * This file contains the implementation of the FFmpeg decoder functions
- * that decode the video frames.
-
- Protocol version: 1.0
- Last modification: 12/22/2019
-
- By: Ming Ying
-
- Copyright Fractal Computers, Inc. 2019
-*/
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "audiodecode.h" // header file for this file
+#include "audiodecode.h"
 
 audio_decoder_t *create_audio_decoder() {
     audio_decoder_t *decoder = (audio_decoder_t *) malloc(sizeof(audio_decoder_t));

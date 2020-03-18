@@ -1,3 +1,3 @@
-## Android Client
+## Android/Chromebook Client
 
 TBD.

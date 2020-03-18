@@ -1,14 +1,3 @@
-/*
- * This file contains the headers and definitions of the FFmpeg encoder functions
- * that encode the audio frames.
-
- Protocol version: 1.0
- Last modification: 12/14/2019
-
- By: Ming Ying
-
- Copyright Fractal Computers, Inc. 2019
-*/
 #ifndef AUDIO_ENCODE_H
 #define AUDIO_ENCODE_H
 
@@ -32,7 +21,6 @@ typedef struct
     AVPacket packet;
 } audio_encoder_t;
 
-
 int check_sample_fmt(AVCodec *codec, enum AVSampleFormat sample_fmt);
 int select_sample_rate(AVCodec *codec);
 int select_channel_layout(AVCodec *codec);
@@ -41,4 +29,4 @@ audio_filter *create_audio_filter(audio_capture_device *device, audio_encoder_t 
 audio_encoder_t *create_audio_encoder(int bit_rate); 
 void audio_encode_and_send(audio_capture_device *device, audio_encoder_t *encoder, audio_filter *filter, SocketContext context);
 
-#endif // ENCODE_H
+#endif // AUDIO_ENCODE_H

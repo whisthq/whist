@@ -1,14 +1,3 @@
-/*
- * This file contains the headers and definitions of the FFmpeg decoder functions
- * that decode the video frames.
-
- Protocol version: 1.0
- Last modification: 12/14/2019
-
- By: Philippe Noël
-
- Copyright Fractal Computers, Inc. 2019
-*/
 #ifndef VIDEO_DECODE_H
 #define VIDEO_DECODE_H
 
@@ -37,4 +26,4 @@ void destroy_video_decoder(video_decoder_t*decoder);
 /// @details decode an encoded frame under YUV color format into RGB frame
 bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size);
 
-#endif // ENCODE_H
+#endif // VIDEO_DECODE_H

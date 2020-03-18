@@ -1,4 +1,4 @@
-#ifndef WASAPICAPTURE_H  // include guard
+#ifndef WASAPICAPTURE_H
 #define WASAPICAPTURE_H
 
 #include "fractal.h" // contains all the headers
@@ -23,11 +23,10 @@ typedef struct wasapi_device {
     DWORD dwWaitResult;
 } wasapi_device;
 
-
 wasapi_device *CreateAudioDevice(wasapi_device *audio_device);
 
 void StartAudioDevice(wasapi_device *audio_device);
 
 void DestroyAudioDevice(wasapi_device *audio_device);
 
-#endif
+#endif // WASAPICAPTURE_H

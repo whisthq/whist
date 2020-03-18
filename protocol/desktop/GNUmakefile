@@ -11,8 +11,8 @@ CC = gcc
 PLATFORM = linux
 
 # dynamic libs to link against
-DYNAMIC_LIBS = 										\
-    ../lib/ffmpeg/linux/libavcodec.so.58.100 		\
+DYNAMIC_LIBS = 																	\
+	../lib/ffmpeg/linux/libavcodec.so.58.100 			\
 	../lib/ffmpeg/linux/libavdevice.so.58.8.100 	\
 	../lib/ffmpeg/linux/libavfilter.so.7.57.100 	\
 	../lib/ffmpeg/linux/libavformat.so.58.29.100 	\
@@ -24,8 +24,8 @@ DYNAMIC_LIBS = 										\
 
 # system libs to link against
 SHARED_LIBS = 	\
-	-lm 		\
-	-ldl 		\
+	-lm 					\
+	-ldl 					\
 	-lpthread
 endif
 
@@ -42,29 +42,29 @@ PLATFORM = macos
 export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 
 # dynamic libs to link against
-DYNAMIC_LIBS = 									\
-    ../lib/ffmpeg/macos/libavcodec.58.dylib 	\
+DYNAMIC_LIBS = 															\
+	../lib/ffmpeg/macos/libavcodec.58.dylib 	\
 	../lib/ffmpeg/macos/libavdevice.58.dylib 	\
 	../lib/ffmpeg/macos/libavfilter.7.dylib 	\
 	../lib/ffmpeg/macos/libavformat.58.dylib 	\
 	../lib/ffmpeg/macos/libavutil.56.dylib 		\
 	../lib/ffmpeg/macos/libpostproc.55.dylib 	\
-	../lib/ffmpeg/macos/libswresample.3.dylib 	\
+	../lib/ffmpeg/macos/libswresample.3.dylib \
 	../lib/ffmpeg/macos/libswscale.5.dylib
 
 # system libs to link against
-SHARED_LIBS = 					\
-	-liconv 					\
-	-framework OpenGL 			\
+SHARED_LIBS = 							\
+	-liconv 									\
+	-framework OpenGL 				\
 	-framework VideoToolbox 	\
-	-framework CoreMedia 		\
-	-framework CoreAudio 		\
+	-framework CoreMedia 			\
+	-framework CoreAudio 			\
 	-framework AudioToolbox 	\
-	-framework IOKit 			\
+	-framework IOKit 					\
 	-framework ForceFeedback 	\
-	-framework Carbon 			\
-	-framework AppKit 			\
-	-framework Metal 			\
+	-framework Carbon 				\
+	-framework AppKit 				\
+	-framework Metal 					\
 	-framework QuartzCore
 endif
 
@@ -73,29 +73,29 @@ endif
 BIN_NAME = desktop
 
 # static libs to link against
-STATIC_LIBS = 								\
+STATIC_LIBS = 													\
 	../lib/SDL2/$(PLATFORM)/libSDL2.a 		\
 	../lib/openssl/$(PLATFORM)/libcrypto.a
 
 # files to build into object files
-OBJS = 				\
-	fractal.o 		\
+OBJS = 						\
+	fractal.o 			\
 	videodecode.o 	\
 	audiodecode.o 	\
-	video.o 		\
-	audio.o 		\
-	aes.o 			\
+	video.o 				\
+	audio.o 				\
+	aes.o 					\
 	clipboard_osx.o \
-	clipboard.o 	\
+	clipboard.o 		\
 	main.o
 
 # compiler flags
-CFLAGS = 							\
-	-Wall 							\
-	-Wextra 						\
-	-Wno-unused-value 				\
+CFLAGS = 													\
+	-Wall 													\
+	-Wextra 												\
+	-Wno-unused-value 							\
 	-Wno-missing-field-initializers \
-	-O3 							\
+	-O3 														\
 	-I ../include
 
 # link all files into executable

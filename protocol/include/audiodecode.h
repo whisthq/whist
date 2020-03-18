@@ -1,14 +1,3 @@
-/*
- * This file contains the headers and definitions of the FFmpeg decoder functions
- * that decode the video frames.
-
- Protocol version: 1.0
- Last modification: 12/22/2019
-
- By: Ming Ying
-
- Copyright Fractal Computers, Inc. 2019
-*/
 #ifndef AUDIO_DECODE_H
 #define AUDIO_DECODE_H
 

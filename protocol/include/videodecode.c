@@ -3,10 +3,8 @@
 
 #include "videodecode.h" // header file for this file
 
-
 static enum AVPixelFormat hw_pix_fmt;
 static AVBufferRef *hw_device_ctx = NULL;
-
 
 void swap_decoder(const char *fmt, va_list vargs)
 {

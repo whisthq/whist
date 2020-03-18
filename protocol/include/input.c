@@ -1,13 +1,3 @@
-/*
- * This file contains functions to send keyboard/mouse input.
-
- Protocol version: 1.0
- Last modification: 2/10/2020
-
- By: Ming Ying
-
- Copyright Fractal Computers, Inc. 2019
-*/
 #include "input.h" // header file for this file
 
 #define USE_NUMPAD 0x1000
