@@ -257,7 +257,7 @@ void initVideo() {
 
     videoContext.texture = texture;
 
-    av_image_alloc( videoContext.data, videoContext.linesize, output_width, output_height, AV_PIX_FMT_YUV420P, 32 );
+    av_image_alloc( videoContext.data, videoContext.linesize, output_width, output_height, AV_PIX_FMT_YUV420P, 1 );
 
     VideoData.pending_ctx = NULL;
     VideoData.frames_received = 0;
