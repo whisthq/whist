@@ -90,8 +90,8 @@ void update() {
         char* tcp_buf = TryReadingTCPPacket( &PacketTCPContext );
         if( tcp_buf )
         {
-            struct RTPPacket* packet = tcp_buf;
-            struct FractalServerMessage* fmsg_response = packet->data;
+            struct RTPPacket* packet = (struct RTPPacket *) tcp_buf;
+            struct FractalServerMessage* fmsg_response = (struct FractalServerMessage *) packet->data;
             mprintf( "Received %d byte clipboard message from server!\n", packet->payload_size );
             SetClipboard( &fmsg_response->clipboard );
         }
@@ -191,7 +191,7 @@ int SendTCPPacket( void* data, int len )
 
     int packet_size = PACKET_HEADER_SIZE + len;
 
-    int encrypt_len = encrypt_packet( packet, packet_size, sizeof(int) + encrypted_unbounded_packet, (unsigned char *) PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( packet, packet_size, (struct RTPPacket *) (sizeof(int) + encrypted_unbounded_packet), (unsigned char *) PRIVATE_KEY );
     *((int*)encrypted_unbounded_packet) = encrypt_len;
 
     mprintf( "Sending TCP Packet... %d\n", encrypt_len );

@@ -184,7 +184,7 @@ void updateAudio() {
                 }
             }
 
-            last_played_id = last_played_id += MAX_NUM_AUDIO_INDICES;
+            last_played_id += MAX_NUM_AUDIO_INDICES;
         }
     }
 

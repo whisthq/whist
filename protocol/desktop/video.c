@@ -191,14 +191,14 @@ int32_t RenderScreen(void* opaque) {
         );
 
         // Set cursor to frame's desired cursor type
-        if(frame->cursor.cursor_id != last_cursor) {
+        if((volatile FractalCursorID) frame->cursor.cursor_id != last_cursor) {
             if(cursor) {
                 SDL_FreeCursor((SDL_Cursor *) cursor);
             }
             cursor = SDL_CreateSystemCursor(frame->cursor.cursor_id);
             SDL_SetCursor((SDL_Cursor *) cursor);
 
-            last_cursor = frame->cursor.cursor_id;
+            last_cursor = (FractalCursorID) frame->cursor.cursor_id;
         }
 
         if(frame->cursor.cursor_state != cursor_state) {
@@ -427,7 +427,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
             return 0;
         }
         ctx->id = packet->id;
-        ctx->frame_buffer = &frame_bufs[index];
+        ctx->frame_buffer = (char *) &frame_bufs[index];
         ctx->packets_received = 0;
         ctx->num_packets = packet->num_indices;
         ctx->last_nacked_index = -1;

@@ -40,10 +40,10 @@ int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct R
 {
     char* plaintext_buf = (char*)plaintext_packet + CRYPTO_HEADER_LEN;
     int plaintext_buf_len = packet_len - CRYPTO_HEADER_LEN;
-    gen_iv( encrypted_packet->iv );
+    gen_iv( (unsigned char *) encrypted_packet->iv );
 
     char* cipher_buf = (char*)encrypted_packet + CRYPTO_HEADER_LEN;
-    int cipher_len = aes_encrypt( (unsigned char *) plaintext_buf, plaintext_buf_len, private_key, encrypted_packet->iv, (unsigned char *) cipher_buf );
+    int cipher_len = aes_encrypt( (unsigned char *) plaintext_buf, plaintext_buf_len, private_key, (unsigned char *) encrypted_packet->iv, (unsigned char *) cipher_buf );
     encrypted_packet->cipher_len = cipher_len;
 
     int cipher_packet_len = cipher_len + CRYPTO_HEADER_LEN;
@@ -92,7 +92,7 @@ int decrypt_packet_n( struct RTPPacket* encrypted_packet, int packet_len, struct
     char* plaintext_buf = (char*)plaintext_packet + CRYPTO_HEADER_LEN;
 
     int decrypt_len = aes_decrypt( (unsigned char *) cipher_buf, encrypted_packet->cipher_len, private_key,
-                               encrypted_packet->iv, (unsigned char *) plaintext_buf );
+                               (unsigned char *) encrypted_packet->iv, (unsigned char *) plaintext_buf );
     decrypt_len += CRYPTO_HEADER_LEN;
 
     int expected_len = PACKET_HEADER_SIZE + plaintext_packet->payload_size;
