@@ -93,39 +93,39 @@ all: clean clear $(OBJS)
 
 # compile the main fractal header source file into object file
 fractal.obj:
-	$(CC) /c ../include/fractal.c
+	$(CC) /c $(CFLAGS) ../include/fractal.c
 
 # compile the main clipboard header source file into object file
 clipboard.obj:
-	$(CC) /c ../include/clipboard.c
+	$(CC) /c $(CFLAGS) ../include/clipboard.c
 
 # compile the aes source file into object file
 aes.obj:
-  $(CC) /c ../include/aes.c
+  $(CC) /c $(CFLAGS) ../include/aes.c
 
 # compile the video encoder source file into object file
 videoencode.obj:
-	$(CC) /c ../include/videoencode.c
+	$(CC) /c $(CFLAGS) ../include/videoencode.c
 
 # compile the audio capture source file into object file
 wasapicapture.obj:
-  $(CC) /c ../include/wasapicapture.c
+  $(CC) /c $(CFLAGS) ../include/wasapicapture.c
 
 # compile the video capture source file into object file
 dxgicapture.obj:
-  $(CC) /c ../include/dxgicapture.c
+  $(CC) /c $(CFLAGS) ../include/dxgicapture.c
 
 # compile the desktop setting source file into object file
 desktop.obj:
-  $(CC) /c ../include/desktop.c
+  $(CC) /c $(CFLAGS) ../include/desktop.c
 
 # compile the input handling source file into object file
 input.obj:
-  $(CC) /c ../include/input.c
+  $(CC) /c $(CFLAGS) ../include/input.c
 
 # compile the source main client file into object file
 main.obj:
-  $(CC) /c main.c
+  $(CC) /c $(CFLAGS) main.c
 
 # clean prior object files
 clean:

@@ -104,39 +104,39 @@ all: clean clear $(OBJS)
 
 # compile the main fractal header source file into object file
 fractal.o:
-	$(CC) -c ../include/fractal.c
+	$(CC) -c $(CFLAGS) ../include/fractal.c
 
 # compile the video decoder source file into object file
 videodecode.o:
-	$(CC) -c ../include/videodecode.c
+	$(CC) -c $(CFLAGS) ../include/videodecode.c
 
 # compile the audio decoder source file into object file
 audiodecode.o:
-	$(CC) -c ../include/audiodecode.c
+	$(CC) -c $(CFLAGS) ../include/audiodecode.c
 
 # compile the aes source file into object file
 aes.o:
-	$(CC) -c ../include/aes.c
+	$(CC) -c $(CFLAGS) ../include/aes.c
 
 # compile the MacOS clipboard source file into object file
 clipboard_osx.o:
-	$(CC) -c ../include/clipboard_osx.m
+	$(CC) -c $(CFLAGS) ../include/clipboard_osx.m
 
 # compile the general clipboard source file into object file
 clipboard.o:
-	$(CC) -c ../include/clipboard.c
+	$(CC) -c $(CFLAGS) ../include/clipboard.c
 
 # compile the main video source file into object file
 video.o:
-	$(CC) -c video.c
+	$(CC) -c $(CFLAGS) video.c
 
 # compile the main audio source file into object file
 audio.o:
-	$(CC) -c audio.c
+	$(CC) -c $(CFLAGS) audio.c
 
 # compile the main source file into object file
 main.o:
-	$(CC) -c main.c
+	$(CC) -c $(CFLAGS) main.c
 
 # clean prior object files
 clean:

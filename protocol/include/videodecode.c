@@ -8,7 +8,7 @@ static enum AVPixelFormat hw_pix_fmt;
 static AVBufferRef *hw_device_ctx = NULL;
 
 
-void swap_decoder(void *ptr, int level, const char *fmt, va_list vargs)
+void swap_decoder(const char *fmt, va_list vargs)
 {
   mprintf("Error found\n");
   vprintf(fmt, vargs);
