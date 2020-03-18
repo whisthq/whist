@@ -8,65 +8,65 @@ LINK = link.exe
 BIN_NAME = desktop.exe
 
 # files to build into object files
-OBJS =            	\
-	fractal.obj    	\
-	clipboard.obj   \
-	aes.obj         \
+OBJS = \
+	fractal.obj \
+	clipboard.obj \
+	aes.obj \
 	videodecode.obj \
 	audiodecode.obj \
-	video.obj       \
-	audio.obj       \
+	video.obj \
+	audio.obj \
 	main.obj
 
 # static libs to link against
-STATIC_LIBS =                           	\
-	../lib/ffmpeg/windows/avcodec.lib     	\
-	../lib/ffmpeg/windows/avdevice.lib    	\
-	../lib/ffmpeg/windows/avfilter.lib    	\
-	../lib/ffmpeg/windows/avformat.lib    	\
-	../lib/ffmpeg/windows/avutil.lib      	\
-	../lib/ffmpeg/windows/postproc.lib    	\
-	../lib/ffmpeg/windows/swresample.lib  	\
-	../lib/ffmpeg/windows/swscale.lib     	\
-	../lib/SDL2/windows/SDL2.lib          	\
-	../lib/mfx/windows/libmfx.lib         	\
+STATIC_LIBS = \
+	../lib/ffmpeg/windows/avcodec.lib \
+	../lib/ffmpeg/windows/avdevice.lib \
+	../lib/ffmpeg/windows/avfilter.lib \
+	../lib/ffmpeg/windows/avformat.lib \
+	../lib/ffmpeg/windows/avutil.lib \
+	../lib/ffmpeg/windows/postproc.lib \
+	../lib/ffmpeg/windows/swresample.lib \
+	../lib/ffmpeg/windows/swscale.lib \
+	../lib/SDL2/windows/SDL2.lib \
+	../lib/mfx/windows/libmfx.lib \
 	../lib/openssl/windows/libcrypto.lib
 
 # compiler flags
-CFLAGS =                	\
-	/nologo               	\
-	/W4                   	\
-	/O3                   	\
-	/MT                   	\
-	/MP                   	\
-	-DWIN32_LEAN_AND_MEAN 	\
-	-DUNICODE             	\
-	-DWIN32               	\
+CFLAGS = \
+	/nologo \
+	/W4 \
+	/O2i \
+	/MT \
+	/MP \
+	-DWIN32_LEAN_AND_MEAN \
+	-DUNICODE \
+	-DWIN32 \
 	-I ../include
 
 # system libs to link against
-SHARED_LIBS =       		\
-	libvcruntime.lib  	\
-	libucrt.lib       	\
-	libcmt.lib        	\
-	kernel32.lib      	\
-	gdi32.lib         	\
-	winmm.lib         	\
-	imm32.lib         	\
-	shell32.lib       	\
-	advapi32.lib      	\
-	ole32.lib         	\
-	oleaut32.lib      	\
-	opengl32.lib      	\
-	user32.lib        	\
-	uuid.lib          	\
-	version.lib       	\
-	ws2_32.lib        	\
+SHARED_LIBS = \
+	libvcruntime.lib \
+	libucrt.lib \
+	libcmt.lib \
+	kernel32.lib \
+	gdi32.lib \
+	winmm.lib \
+	imm32.lib \
+	shell32.lib \
+	advapi32.lib \
+	ole32.lib \
+	oleaut32.lib \
+	opengl32.lib \
+	user32.lib \
+	uuid.lib \
+	version.lib \
+	ws2_32.lib \
 	crypt32.lib
 
 # linking flags
-LD_FLAGS =      	\
-	/nodefaultlib 	\
+LD_FLAGS = \
+	/nodefaultlib \
 	/nologo
 
 # link all files into executable

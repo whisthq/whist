@@ -30,6 +30,10 @@
 #error missing -D__STDC_CONSTANT_MACROS / #define __STDC_CONSTANT_MACROS
 #endif
 
+#if defined(_WIN32)
+#pragma warning(disable: 4244)
+#endif
+
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -490,6 +494,10 @@ static av_always_inline av_const int av_parity_c(uint32_t v)
 #ifdef HAVE_AV_CONFIG_H
 #    include "internal.h"
 #endif /* HAVE_AV_CONFIG_H */
+
+#if defined(_WIN32)
+#pragma warning(default: 4244)
+#endif
 
 #endif /* AVUTIL_COMMON_H */
 
