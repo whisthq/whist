@@ -7,6 +7,17 @@ LINK = link.exe
 # specify bin name
 BIN_NAME = desktop.exe
 
+# files to build into object files
+OBJS = \
+  fractal.obj \
+  clipboard.obj \
+  aes.obj \
+  videodecode.obj \
+  audiodecode.obj \
+  video.obj \
+  audio.obj \
+  main.obj
+
 # static libs to link against
 STATIC_LIBS = \
   ../lib/ffmpeg/windows/avcodec.lib \
@@ -57,7 +68,7 @@ LD_FLAGS = \
   /nologo
 
 # build all files into executable
-all: clean fractal.obj clipboard.obj aes.obj videodecode.obj audiodecode.obj video.obj audio.obj main.obj
+all: clean clear $(OBJS)
   link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file

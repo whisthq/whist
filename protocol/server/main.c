@@ -91,7 +91,7 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_
 
     // Encrypt the packet
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( packet, packet_size, sizeof(int) + encrypted_single_packet_buf, PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( packet, packet_size, (struct RTPPacket *) (sizeof(int) + encrypted_single_packet_buf), PRIVATE_KEY );
     *((int*)encrypted_single_packet_buf) = encrypt_len;
 
     // Send it off
@@ -104,6 +104,7 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_
         mprintf( "Unexpected Packet Error: %d\n", error );
         return -1;
     }
+    return 0; // success
 }
 
 int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* data, int len, int id) {
@@ -583,7 +584,7 @@ int main(int argc, char* argv[])
             char* tcp_buf = TryReadingTCPPacket( &PacketTCPContext );
             if( tcp_buf )
             {
-                struct RTPPacket* packet = tcp_buf;
+                struct RTPPacket* packet = (struct RTPPacket *) tcp_buf;
                 fmsg = (FractalClientMessage *) packet->data;
                 mprintf( "Received TCP BUF!!!! Size %d\n", packet->payload_size );
                 mprintf( "Received %d byte clipboard message from client.\n", packet->payload_size );

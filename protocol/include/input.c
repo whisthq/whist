@@ -15,10 +15,10 @@
 // @brief Windows keycodes for replaying SDL user inputs on server
 // @details index is SDL keycode, value is Windows keycode
 const int windows_keycodes[NUM_KEYCODES] = {
-	NULL, // SDL keycodes start at index 4
-	NULL, // SDL keycodes start at index 4
-	NULL, // SDL keycodes start at index 4
-	NULL, // SDL keycodes start at index 4
+	0, // SDL keycodes start at index 4
+	0, // SDL keycodes start at index 4
+	0, // SDL keycodes start at index 4
+	0, // SDL keycodes start at index 4
 	0x41, // 4 -> A
 	0x42, // 5 -> B
 	0x43, // 6 -> C
@@ -65,7 +65,7 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	0xDB, // 47 -> Left Bracket
 	0xDD, // 48 -> Right Bracket
 	0xE2, // 49 -> Backslash
-	NULL, // 50 -> no SDL keycode at index 50
+	0, // 50 -> no SDL keycode at index 50
 	VK_OEM_1, // 51 -> Semicolon
 	VK_OEM_7, // 52 -> Apostrophe
 	VK_OEM_3, // 53 -> Backtick
@@ -115,10 +115,10 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	0x69, // 97 -> Numeric Keypad 9
 	0x60, // 98 -> Numeric Keypad 0
 	VK_DECIMAL, // 99 -> Numeric Keypad Period
-	NULL, // 100 -> no SDL keycode at index 100
+	0, // 100 -> no SDL keycode at index 100
 	VK_APPS, // 101 -> Application
-	NULL, // 102 -> no SDL keycode at index 102
-	NULL, // 103 -> no SDL keycode at index 103
+	0, // 102 -> no SDL keycode at index 102
+	0, // 103 -> no SDL keycode at index 103
 	VK_F13, // 104 -> F13
 	VK_F14, // 105 -> F14
 	VK_F15, // 106 -> F15
@@ -133,112 +133,112 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	VK_F24, // 115 -> F24
 	VK_EXECUTE, // 116 -> Execute
 	VK_HELP, // 117 -> Help
-	NULL, // 118 -> Menu
+	0, // 118 -> Menu
 	VK_SELECT, // 119 -> Select
-	NULL, // 120 -> no SDL keycode at index 120
-	NULL, // 121 -> no SDL keycode at index 121
-	NULL, // 122 -> no SDL keycode at index 122
-	NULL, // 123 -> no SDL keycode at index 123
-	NULL, // 124 -> no SDL keycode at index 124
-	NULL, // 125 -> no SDL keycode at index 125
-	NULL, // 126 -> no SDL keycode at index 126
+	0, // 120 -> no SDL keycode at index 120
+	0, // 121 -> no SDL keycode at index 121
+	0, // 122 -> no SDL keycode at index 122
+	0, // 123 -> no SDL keycode at index 123
+	0, // 124 -> no SDL keycode at index 124
+	0, // 125 -> no SDL keycode at index 125
+	0, // 126 -> no SDL keycode at index 126
 	VK_VOLUME_MUTE, // 127 -> Mute
 	VK_VOLUME_UP, // 128 -> Volume Up
 	VK_VOLUME_DOWN, // 129 -> Volume Down
-	NULL, // 130 -> no SDL keycode at index 130
-	NULL, // 131 -> no SDL keycode at index 131
-	NULL, // 132 -> no SDL keycode at index 132
-	NULL, // 133 -> no SDL keycode at index 133
-	NULL, // 134 -> no SDL keycode at index 134
-	NULL, // 135 -> no SDL keycode at index 135
-	NULL, // 136 -> no SDL keycode at index 136
-	NULL, // 137 -> no SDL keycode at index 137
-	NULL, // 138 -> no SDL keycode at index 138
-	NULL, // 139 -> no SDL keycode at index 139
-	NULL, // 140 -> no SDL keycode at index 140
-	NULL, // 141 -> no SDL keycode at index 141
-	NULL, // 142 -> no SDL keycode at index 142
-	NULL, // 143 -> no SDL keycode at index 143
-	NULL, // 144 -> no SDL keycode at index 144
-	NULL, // 145 -> no SDL keycode at index 145
-	NULL, // 146 -> no SDL keycode at index 146
-	NULL, // 147 -> no SDL keycode at index 147
-	NULL, // 148 -> no SDL keycode at index 148
-	NULL, // 149 -> no SDL keycode at index 149
-	NULL, // 150 -> no SDL keycode at index 150
-	NULL, // 151 -> no SDL keycode at index 151
-	NULL, // 152 -> no SDL keycode at index 152
-	NULL, // 153 -> no SDL keycode at index 153
-	NULL, // 154 -> no SDL keycode at index 154
-	NULL, // 155 -> no SDL keycode at index 155
-	NULL, // 156 -> no SDL keycode at index 156
-	NULL, // 157 -> no SDL keycode at index 157
-	NULL, // 158 -> no SDL keycode at index 158
-	NULL, // 159 -> no SDL keycode at index 159
-	NULL, // 160 -> no SDL keycode at index 160
-	NULL, // 161 -> no SDL keycode at index 161
-	NULL, // 162 -> no SDL keycode at index 162
-	NULL, // 163 -> no SDL keycode at index 163
-	NULL, // 164 -> no SDL keycode at index 164
-	NULL, // 165 -> no SDL keycode at index 165
-	NULL, // 166 -> no SDL keycode at index 166
-	NULL, // 167 -> no SDL keycode at index 167
-	NULL, // 168 -> no SDL keycode at index 168
-	NULL, // 169 -> no SDL keycode at index 169
-	NULL, // 170 -> no SDL keycode at index 170
-	NULL, // 171 -> no SDL keycode at index 171
-	NULL, // 172 -> no SDL keycode at index 172
-	NULL, // 173 -> no SDL keycode at index 173
-	NULL, // 174 -> no SDL keycode at index 174
-	NULL, // 175 -> no SDL keycode at index 175
-	NULL, // 176 -> no SDL keycode at index 176
-	NULL, // 177 -> no SDL keycode at index 177
-	NULL, // 178 -> no SDL keycode at index 178
-	NULL, // 179 -> no SDL keycode at index 179
-	NULL, // 180 -> no SDL keycode at index 180
-	NULL, // 181 -> no SDL keycode at index 181
-	NULL, // 182 -> no SDL keycode at index 182
-	NULL, // 183 -> no SDL keycode at index 183
-	NULL, // 184 -> no SDL keycode at index 184
-	NULL, // 185 -> no SDL keycode at index 185
-	NULL, // 186 -> no SDL keycode at index 186
-	NULL, // 187 -> no SDL keycode at index 187
-	NULL, // 188 -> no SDL keycode at index 188
-	NULL, // 189 -> no SDL keycode at index 189
-	NULL, // 190 -> no SDL keycode at index 190
-	NULL, // 191 -> no SDL keycode at index 191
-	NULL, // 192 -> no SDL keycode at index 192
-	NULL, // 193 -> no SDL keycode at index 193
-	NULL, // 194 -> no SDL keycode at index 194
-	NULL, // 195 -> no SDL keycode at index 195
-	NULL, // 196 -> no SDL keycode at index 196
-	NULL, // 197 -> no SDL keycode at index 197
-	NULL, // 198 -> no SDL keycode at index 198
-	NULL, // 199 -> no SDL keycode at index 199
-	NULL, // 200 -> no SDL keycode at index 200
-	NULL, // 201 -> no SDL keycode at index 201
-	NULL, // 202 -> no SDL keycode at index 202
-	NULL, // 203 -> no SDL keycode at index 203
-	NULL, // 204 -> no SDL keycode at index 204
-	NULL, // 205 -> no SDL keycode at index 205
-	NULL, // 206 -> no SDL keycode at index 206
-	NULL, // 207 -> no SDL keycode at index 207
-	NULL, // 208 -> no SDL keycode at index 208
-	NULL, // 209 -> no SDL keycode at index 209
-	NULL, // 210 -> no SDL keycode at index 210
-	NULL, // 211 -> no SDL keycode at index 212
-	NULL, // 213 -> no SDL keycode at index 213
-	NULL, // 214 -> no SDL keycode at index 214
-	NULL, // 215 -> no SDL keycode at index 215
-	NULL, // 216 -> no SDL keycode at index 216
-	NULL, // 217 -> no SDL keycode at index 217
-	NULL, // 218 -> no SDL keycode at index 218
-	NULL, // 219 -> no SDL keycode at index 219
-	NULL, // 220 -> no SDL keycode at index 220
-	NULL, // 221 -> no SDL keycode at index 221
-	NULL, // 222 -> no SDL keycode at index 222
-	NULL, // 223 -> no SDL keycode at index 223
-	NULL,
+	0, // 130 -> no SDL keycode at index 130
+	0, // 131 -> no SDL keycode at index 131
+	0, // 132 -> no SDL keycode at index 132
+	0, // 133 -> no SDL keycode at index 133
+	0, // 134 -> no SDL keycode at index 134
+	0, // 135 -> no SDL keycode at index 135
+	0, // 136 -> no SDL keycode at index 136
+	0, // 137 -> no SDL keycode at index 137
+	0, // 138 -> no SDL keycode at index 138
+	0, // 139 -> no SDL keycode at index 139
+	0, // 140 -> no SDL keycode at index 140
+	0, // 141 -> no SDL keycode at index 141
+	0, // 142 -> no SDL keycode at index 142
+	0, // 143 -> no SDL keycode at index 143
+	0, // 144 -> no SDL keycode at index 144
+	0, // 145 -> no SDL keycode at index 145
+	0, // 146 -> no SDL keycode at index 146
+	0, // 147 -> no SDL keycode at index 147
+	0, // 148 -> no SDL keycode at index 148
+	0, // 149 -> no SDL keycode at index 149
+	0, // 150 -> no SDL keycode at index 150
+	0, // 151 -> no SDL keycode at index 151
+	0, // 152 -> no SDL keycode at index 152
+	0, // 153 -> no SDL keycode at index 153
+	0, // 154 -> no SDL keycode at index 154
+	0, // 155 -> no SDL keycode at index 155
+	0, // 156 -> no SDL keycode at index 156
+	0, // 157 -> no SDL keycode at index 157
+	0, // 158 -> no SDL keycode at index 158
+	0, // 159 -> no SDL keycode at index 159
+	0, // 160 -> no SDL keycode at index 160
+	0, // 161 -> no SDL keycode at index 161
+	0, // 162 -> no SDL keycode at index 162
+	0, // 163 -> no SDL keycode at index 163
+	0, // 164 -> no SDL keycode at index 164
+	0, // 165 -> no SDL keycode at index 165
+	0, // 166 -> no SDL keycode at index 166
+	0, // 167 -> no SDL keycode at index 167
+	0, // 168 -> no SDL keycode at index 168
+	0, // 169 -> no SDL keycode at index 169
+	0, // 170 -> no SDL keycode at index 170
+	0, // 171 -> no SDL keycode at index 171
+	0, // 172 -> no SDL keycode at index 172
+	0, // 173 -> no SDL keycode at index 173
+	0, // 174 -> no SDL keycode at index 174
+	0, // 175 -> no SDL keycode at index 175
+	0, // 176 -> no SDL keycode at index 176
+	0, // 177 -> no SDL keycode at index 177
+	0, // 178 -> no SDL keycode at index 178
+	0, // 179 -> no SDL keycode at index 179
+	0, // 180 -> no SDL keycode at index 180
+	0, // 181 -> no SDL keycode at index 181
+	0, // 182 -> no SDL keycode at index 182
+	0, // 183 -> no SDL keycode at index 183
+	0, // 184 -> no SDL keycode at index 184
+	0, // 185 -> no SDL keycode at index 185
+	0, // 186 -> no SDL keycode at index 186
+	0, // 187 -> no SDL keycode at index 187
+	0, // 188 -> no SDL keycode at index 188
+	0, // 189 -> no SDL keycode at index 189
+	0, // 190 -> no SDL keycode at index 190
+	0, // 191 -> no SDL keycode at index 191
+	0, // 192 -> no SDL keycode at index 192
+	0, // 193 -> no SDL keycode at index 193
+	0, // 194 -> no SDL keycode at index 194
+	0, // 195 -> no SDL keycode at index 195
+	0, // 196 -> no SDL keycode at index 196
+	0, // 197 -> no SDL keycode at index 197
+	0, // 198 -> no SDL keycode at index 198
+	0, // 199 -> no SDL keycode at index 199
+	0, // 200 -> no SDL keycode at index 200
+	0, // 201 -> no SDL keycode at index 201
+	0, // 202 -> no SDL keycode at index 202
+	0, // 203 -> no SDL keycode at index 203
+	0, // 204 -> no SDL keycode at index 204
+	0, // 205 -> no SDL keycode at index 205
+	0, // 206 -> no SDL keycode at index 206
+	0, // 207 -> no SDL keycode at index 207
+	0, // 208 -> no SDL keycode at index 208
+	0, // 209 -> no SDL keycode at index 209
+	0, // 210 -> no SDL keycode at index 210
+	0, // 211 -> no SDL keycode at index 212
+	0, // 213 -> no SDL keycode at index 213
+	0, // 214 -> no SDL keycode at index 214
+	0, // 215 -> no SDL keycode at index 215
+	0, // 216 -> no SDL keycode at index 216
+	0, // 217 -> no SDL keycode at index 217
+	0, // 218 -> no SDL keycode at index 218
+	0, // 219 -> no SDL keycode at index 219
+	0, // 220 -> no SDL keycode at index 220
+	0, // 221 -> no SDL keycode at index 221
+	0, // 222 -> no SDL keycode at index 222
+	0, // 223 -> no SDL keycode at index 223
+	0,
 	VK_LCONTROL, // 224 -> Left Ctrl
 	VK_LSHIFT, // 225 -> Left Shift
 	VK_LMENU, // 226 -> Left Alt
@@ -247,31 +247,31 @@ const int windows_keycodes[NUM_KEYCODES] = {
 	VK_RSHIFT, // 229 -> Right Shift
 	VK_RMENU, // 230 -> Right Alt
 	VK_RWIN, // 231 -> Right GUI (Windows Key)
-	NULL, // 232 -> no SDL keycode at index 232
-	NULL, // 233 -> no SDL keycode at index 233
-	NULL, // 234 -> no SDL keycode at index 234
-	NULL, // 235 -> no SDL keycode at index 235
-	NULL, // 236 -> no SDL keycode at index 236
-	NULL, // 237 -> no SDL keycode at index 237
-	NULL, // 238 -> no SDL keycode at index 238
-	NULL, // 239 -> no SDL keycode at index 239
-	NULL, // 240 -> no SDL keycode at index 240
-	NULL, // 241 -> no SDL keycode at index 241
-	NULL, // 242 -> no SDL keycode at index 242
-	NULL, // 243 -> no SDL keycode at index 243
-	NULL, // 244 -> no SDL keycode at index 244
-	NULL, // 245 -> no SDL keycode at index 245
-	NULL, // 246 -> no SDL keycode at index 246
-	NULL, // 247 -> no SDL keycode at index 247
-	NULL, // 248 -> no SDL keycode at index 248
-	NULL, // 249 -> no SDL keycode at index 249
-	NULL, // 250 -> no SDL keycode at index 250
-	NULL, // 251 -> no SDL keycode at index 251
-	NULL, // 252 -> no SDL keycode at index 252
-	NULL, // 253 -> no SDL keycode at index 253
-	NULL, // 254 -> no SDL keycode at index 254
-	NULL, // 255 -> no SDL keycode at index 255
-	NULL, // 256 -> no SDL keycode at index 256
+	0, // 232 -> no SDL keycode at index 232
+	0, // 233 -> no SDL keycode at index 233
+	0, // 234 -> no SDL keycode at index 234
+	0, // 235 -> no SDL keycode at index 235
+	0, // 236 -> no SDL keycode at index 236
+	0, // 237 -> no SDL keycode at index 237
+	0, // 238 -> no SDL keycode at index 238
+	0, // 239 -> no SDL keycode at index 239
+	0, // 240 -> no SDL keycode at index 240
+	0, // 241 -> no SDL keycode at index 241
+	0, // 242 -> no SDL keycode at index 242
+	0, // 243 -> no SDL keycode at index 243
+	0, // 244 -> no SDL keycode at index 244
+	0, // 245 -> no SDL keycode at index 245
+	0, // 246 -> no SDL keycode at index 246
+	0, // 247 -> no SDL keycode at index 247
+	0, // 248 -> no SDL keycode at index 248
+	0, // 249 -> no SDL keycode at index 249
+	0, // 250 -> no SDL keycode at index 250
+	0, // 251 -> no SDL keycode at index 251
+	0, // 252 -> no SDL keycode at index 252
+	0, // 253 -> no SDL keycode at index 253
+	0, // 254 -> no SDL keycode at index 254
+	0, // 255 -> no SDL keycode at index 255
+	0, // 256 -> no SDL keycode at index 256
 	VK_MODECHANGE, // 257 -> ModeSwitch
 	VK_MEDIA_NEXT_TRACK, // 258 -> Audio/Media Next
 	VK_MEDIA_PREV_TRACK, // 259 -> Audio/Media Prev
