@@ -152,7 +152,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
       }
   }
 
-  if( finalDesc )
+  if( true )
   {
       HMONITOR hMonitor = output_desc.Monitor;
       MONITORINFOEX monitorInfo;

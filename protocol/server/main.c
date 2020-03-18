@@ -658,12 +658,15 @@ int main(int argc, char* argv[])
                     }
                 }
                 else if (fmsg->type == MESSAGE_DIMENSIONS) {
-                    // Update local monitor dimensions
                     mprintf("Request to use dimensions %dx%d received\n", fmsg->dimensions.width, fmsg->dimensions.height);
-                    //TODO: Check if dimensions are valid
-                    client_width = fmsg->dimensions.width;
-                    client_height = fmsg->dimensions.height;
-                    update_device = true;
+                    // Update knowledge of client monitor dimensions
+                    if( client_width != fmsg->dimensions.width || client_height != fmsg->dimensions.height )
+                    {
+                        client_width = fmsg->dimensions.width;
+                        client_height = fmsg->dimensions.height;
+                        // Update device if knowledge changed
+                        update_device = true;
+                    }
                 } else if( fmsg->type == CMESSAGE_CLIPBOARD )
                 {
                     // Update clipboard with message
