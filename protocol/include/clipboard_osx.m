@@ -47,6 +47,15 @@ const char *ClipboardGetString() {
 	}
 }
 
+
+
+
+
+
+
+
+
+
 OSXImage *ClipboardGetImage() {
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSBitmapImageRep *rep = (NSBitmapImageRep*)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
