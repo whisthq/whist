@@ -95,6 +95,7 @@ CFLAGS = 				\
 	-Wextra 			\
 	-Wno-unused-value 		\
 	-Wno-missing-field-initializers \
+	-Wno-missing-braces \
 	-O3 				\
 	-I ../include
 
