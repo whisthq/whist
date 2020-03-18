@@ -23,7 +23,7 @@ STATIC_LIBS = \
 CFLAGS = \
   /nologo \
   /W4 \
-  /Ofast \
+  /O2i \
   /MT \
   /MP \
   -DWIN32_LEAN_AND_MEAN \
@@ -79,39 +79,39 @@ all: clean fractal.obj clipboard.obj aes.obj videoencode.obj wasapicapture.obj d
 	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
-fractal.obj: ../include/fractal.c
+fractal.obj:
 	$(CC) /c ../include/fractal.c
 
 # compile the main clipboard header source file into object file
-clipboard.obj: ../include/clipboard.c
+clipboard.obj:
 	$(CC) /c ../include/clipboard.c
 
 # compile the aes source file into object file
-aes.obj: ../include/aes.c
-  $(CC) /c $(CFLAGS) ../include/aes.c
+aes.obj:
+  $(CC) /c ../include/aes.c
 
 # compile the video encoder source file into object file
-videoencode.obj: ../include/videoencode.c
+videoencode.obj:
 	$(CC) /c ../include/videoencode.c
 
 # compile the audio capture source file into object file
-wasapicapture.obj: ../include/wasapicapture.c
+wasapicapture.obj:
   $(CC) /c ../include/wasapicapture.c
 
 # compile the video capture source file into object file
-dxgicapture.obj: ../include/dxgicapture.c
+dxgicapture.obj:
   $(CC) /c ../include/dxgicapture.c
 
 # compile the desktop setting source file into object file
-desktop.obj: ../include/desktop.c
+desktop.obj:
   $(CC) /c ../include/desktop.c
 
 # compile the input handling source file into object file
-input.obj: ../include/input.c
+input.obj:
   $(CC) /c ../include/input.c
 
 # compile the source main client file into object file
-main.obj: main.c
+main.obj:
   $(CC) /c main.c
 
 # clean prior object files
