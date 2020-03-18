@@ -1,16 +1,3 @@
-/*
- * This file contains the headers of simple functions to set the Windows
- * desktop of a specific thread or process using WinAPI.
- *
- * Fractal Protocol version: 1.0
- *
- * Last modified: 01/26/2020
- *
- * By: Philippe Noël, Ming Ying
- *
- * Copyright Fractal Computers, Inc. 2019-2020
-**/
-
 #ifndef DESKTOP_H
 #define DESKTOP_H
 

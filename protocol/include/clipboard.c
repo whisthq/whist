@@ -236,7 +236,7 @@ void SetClipboard( ClipboardData* cb )
 	switch(cb->type) {
 		case CLIPBOARD_TEXT:
 		mprintf("SetClipboard to Text %s\n", cb->data);
-		void *clipboard_string;
+		void *clipboard_string = NULL;
 		memcpy(clipboard_string, cb->data, cb->size);
 		ClipboardSetString(clipboard_string);
 		break;

@@ -77,7 +77,7 @@ static char single_packet_buf[10000000];
 static char encrypted_single_packet_buf[10000000];
 int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_t* data, int len )
 {
-    struct RTPPacket* packet = single_packet_buf;
+    struct RTPPacket* packet = (struct RTPPacket *) single_packet_buf;
 
     // Construct packet
     packet->type = type;
@@ -91,7 +91,7 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_
 
     // Encrypt the packet
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( packet, packet_size, sizeof(int) + encrypted_single_packet_buf, PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( packet, packet_size, (struct RTPPacket *) (sizeof(int) + encrypted_single_packet_buf), PRIVATE_KEY );
     *((int*)encrypted_single_packet_buf) = encrypt_len;
 
     // Send it off
@@ -104,6 +104,7 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_
         mprintf( "Unexpected Packet Error: %d\n", error );
         return -1;
     }
+    return 0; // success
 }
 
 int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* data, int len, int id) {
@@ -237,6 +238,8 @@ static int32_t SendVideo(void* opaque) {
 
         // Update device with new parameters
         if (update_device) {
+            update_device = false;
+
             if (device) {
                 DestroyCaptureDevice(device);
                 device = NULL;
@@ -247,13 +250,15 @@ static int32_t SendVideo(void* opaque) {
             if (result < 0) {
                 mprintf("Failed to create capture device\n");
                 device = NULL;
-                connected = false;
+                update_device = true;
+
+                SDL_Delay( 500 );
+                continue;
             }
 
             mprintf( "Created Capture Device of dimensions %dx%d\n", device->width, device->height );
 
             update_encoder = true;
-            update_device = false;
         }
 
         // Update encoder with new parameters
@@ -271,16 +276,12 @@ static int32_t SendVideo(void* opaque) {
         // If capture screen failed, we should try again
         if (accumulated_frames < 0) {
             mprintf("Failed to capture screen\n");
-            int width = device->width;
-            int height = device->height;
-
-            // For now, just exit so that FractalService can restart it
-            mprintf( "Exiting...\n" );
-            exit( -1 );
 
             DestroyCaptureDevice(device);
-            InitDesktop();
-            CreateCaptureDevice(device, width, height);
+            device = NULL;
+            update_device = true;
+
+            SDL_Delay( 500 );
             continue;
         }
 
@@ -345,7 +346,7 @@ static int32_t SendVideo(void* opaque) {
                 }
                 else {
                     // Create frame struct with compressed frame data and metadata
-                    Frame* frame = buf;
+                    Frame* frame = (Frame *) buf;
                     frame->width = device->width;
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
@@ -356,7 +357,7 @@ static int32_t SendVideo(void* opaque) {
                     //mprintf("Sent video packet %d (Size: %d) %s\n", id, encoder->packet.size, frame->is_iframe ? "(I-frame)" : "");
 
                     // Send video packet to client
-                    if (SendPacket(&socketContext, PACKET_VIDEO, frame, frame_size, id) < 0) {
+                    if (SendPacket(&socketContext, PACKET_VIDEO, (uint8_t *) frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
                     frames_since_first_iframe++;
@@ -393,7 +394,7 @@ static int32_t SendAudio(void* opaque) {
     FractalServerMessage fmsg;
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
     fmsg.frequency = audio_device->pwfx->nSamplesPerSec;
-    SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg, sizeof(fmsg), 1);
+    SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t *) &fmsg, sizeof(fmsg), 1);
 
     mprintf("Audio Frequency: %d\n", audio_device->pwfx->nSamplesPerSec);
 
@@ -547,7 +548,7 @@ int main(int argc, char* argv[])
                 ClipboardData* cb = GetClipboard();
                 memcpy( &fmsg_response->clipboard, cb, sizeof( ClipboardData ) + cb->size );
                 mprintf( "Received clipboard trigger! Sending to client\n" );
-                if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE, fmsg_response, sizeof( FractalServerMessage ) + cb->size ) < 0 )
+                if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE, (uint8_t *) fmsg_response, sizeof( FractalServerMessage ) + cb->size ) < 0 )
                 {
                     mprintf( "Could not send Clipboard Message\n" );
                 } else
@@ -568,7 +569,7 @@ int main(int argc, char* argv[])
                     mprintf("Exiting due to button press...\n");
                     FractalServerMessage fmsg_response = { 0 };
                     fmsg_response.type = SMESSAGE_QUIT;
-                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof( FractalServerMessage ), 1) < 0) {
+                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t *) &fmsg_response, sizeof( FractalServerMessage ), 1) < 0) {
                         mprintf("Could not send Quit Message\n");
                     }
                     // Give a bit of time to make sure no one is touching it
@@ -583,8 +584,8 @@ int main(int argc, char* argv[])
             char* tcp_buf = TryReadingTCPPacket( &PacketTCPContext );
             if( tcp_buf )
             {
-                struct RTPPacket* packet = tcp_buf;
-                fmsg = packet->data;
+                struct RTPPacket* packet = (struct RTPPacket *) tcp_buf;
+                fmsg = (FractalClientMessage *) packet->data;
                 mprintf( "Received TCP BUF!!!! Size %d\n", packet->payload_size );
                 mprintf( "Received %d byte clipboard message from client.\n", packet->payload_size );
             } else
@@ -653,17 +654,20 @@ int main(int argc, char* argv[])
                     fmsg_response.type = MESSAGE_PONG;
                     fmsg_response.ping_id = fmsg->ping_id;
                     StartTimer(&last_ping);
-                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, &fmsg_response, sizeof(fmsg_response), 1) < 0) {
+                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t *) &fmsg_response, sizeof(fmsg_response), 1) < 0) {
                         mprintf("Could not send Pong\n");
                     }
                 }
                 else if (fmsg->type == MESSAGE_DIMENSIONS) {
-                    // Update local monitor dimensions
                     mprintf("Request to use dimensions %dx%d received\n", fmsg->dimensions.width, fmsg->dimensions.height);
-                    //TODO: Check if dimensions are valid
-                    client_width = fmsg->dimensions.width;
-                    client_height = fmsg->dimensions.height;
-                    update_device = true;
+                    // Update knowledge of client monitor dimensions
+                    if( client_width != fmsg->dimensions.width || client_height != fmsg->dimensions.height )
+                    {
+                        client_width = fmsg->dimensions.width;
+                        client_height = fmsg->dimensions.height;
+                        // Update device if knowledge changed
+                        update_device = true;
+                    }
                 } else if( fmsg->type == CMESSAGE_CLIPBOARD )
                 {
                     // Update clipboard with message

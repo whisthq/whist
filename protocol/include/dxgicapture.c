@@ -1,14 +1,3 @@
-/*
- * This file contains the implementation of DXGI screen capture.
-
- Protocol version: 1.0
- Last modification: 1/15/2020
-
- By: Ming Ying
-
- Copyright Fractal Computers, Inc. 2020
-*/
-
 #include "dxgicapture.h"
 
 #include <windows.h>
@@ -44,6 +33,7 @@ void PrintMemoryInfo()
 #define USE_MONITOR 0
 
 int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
+    mprintf( "Creating capture device for resolution %dx%d...\n", width, height );
   memset(device, 0, sizeof(struct CaptureDevice));
 
   device->hardware = (struct DisplayHardware*) malloc(sizeof(struct DisplayHardware));
@@ -62,7 +52,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
 #define MAX_NUM_ADAPTERS 10
 #define MAX_NUM_OUTPUTS 10
   IDXGIOutput *outputs[MAX_NUM_OUTPUTS];
-  IDXGIAdapter *adapters[MAX_NUM_ADAPTERS];
+  IDXGIAdapter1 *adapters[MAX_NUM_ADAPTERS];
   DXGI_OUTPUT_DESC output_desc;
 
   HRESULT hr = CreateDXGIFactory1(&IID_IDXGIFactory1, (void**)(&factory));
@@ -151,68 +141,42 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
       }
   }
 
-  /*
-  DEVMODE dm;
-  memset( &dm, 0, sizeof( dm ) );
-  dm.dmSize = sizeof( dm );
-
-  if( 0 != EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &dm ) )
+  if( true )
   {
-      dm.dmPelsWidth = width;
-      dm.dmPelsHeight = height;
-      dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+      HMONITOR hMonitor = output_desc.Monitor;
+      MONITORINFOEX monitorInfo;
+      monitorInfo.cbSize = sizeof( MONITORINFOEX );
+      GetMonitorInfo( hMonitor, (LPMONITORINFO) &monitorInfo );
 
-      int ret = ChangeDisplaySettings( &dm, 0 );
-      mprintf( "ChangeDisplaySettingsCode: %d\n", ret );
-  } else
-  {
-      mprintf( "Failed to update DisplaySettings\n" );
+      DEVMODE dm;
+      memset( &dm, 0, sizeof( dm ) );
+      dm.dmSize = sizeof( dm );
+      mprintf( "Device Name: %s\n", monitorInfo.szDevice );
+      if( 0 != EnumDisplaySettings( monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &dm ) )
+      {
+          if( dm.dmPelsWidth != width || dm.dmPelsHeight != height )
+          {
+              dm.dmPelsWidth = width;
+              dm.dmPelsHeight = height;
+              dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+
+              int ret = ChangeDisplaySettingsEx( monitorInfo.szDevice, &dm, NULL, CDS_SET_PRIMARY | CDS_UPDATEREGISTRY, 0 );
+              mprintf( "ChangeDisplaySettingsCode: %d\n", ret );
+          }
+      } else
+      {
+          mprintf( "Failed to update DisplaySettings\n" );
+      }
   }
-  */
-
-  //hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
-  //  D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
-
-  // CREATE SWAP CHAIN DESC
-  DXGI_SWAP_CHAIN_DESC swapChainDesc;
-  ZeroMemory( &swapChainDesc, sizeof( swapChainDesc ) );
-  swapChainDesc.BufferCount = 1;
-
-
-  swapChainDesc.BufferDesc.Width = 1920;
-  swapChainDesc.BufferDesc.Height = 1080;
-  swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-  swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
-  swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
-  swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-  swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-
-  if( finalDesc )
-  {
-      mprintf( "USING FINAL DESC!\n" );
-      swapChainDesc.BufferDesc = *finalDesc;
-  }
-
-
-  swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-  swapChainDesc.OutputWindow = GetDesktopWindow();
-  swapChainDesc.Windowed = false;
-  swapChainDesc.SampleDesc.Count = 1;
-  swapChainDesc.SampleDesc.Quality = 0;
-  // END CREATE SWAP CHAIN DESC
-
-  IDXGISwapChain* swapChain = NULL;
 
   hr = D3D11CreateDevice(
-      hardware->adapter,
+      (IDXGIAdapter *) hardware->adapter,
       D3D_DRIVER_TYPE_UNKNOWN,
       NULL,
-      NULL,
+      0,
       NULL,
       0,
       D3D11_SDK_VERSION,
-      //&swapChainDesc,
-      //&swapChain,
       &device->D3D11device,
       &FeatureLevel,
       &device->D3D11context
@@ -223,11 +187,6 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
       return -1;
   }
 
-  if( swapChain )
-  {
-      swapChain->lpVtbl->Release( swapChain );
-  }
-
   IDXGIOutput1* output1;
 
   hr = hardware->output->lpVtbl->QueryInterface(hardware->output, &IID_IDXGIOutput1, (void**)&output1);
@@ -235,7 +194,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
       mprintf("Failed to query interface of output: 0x%X %d\n", hr, GetLastError());
       return -1;
   }
-  hr = output1->lpVtbl->DuplicateOutput(output1, device->D3D11device, &device->duplication);
+  hr = output1->lpVtbl->DuplicateOutput(output1, (IUnknown *) device->D3D11device, &device->duplication);
   if (FAILED(hr)) {
       mprintf("Failed to duplicate output: 0x%X %d\n", hr, GetLastError());
       return -1;

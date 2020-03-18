@@ -1,14 +1,3 @@
-/*
- * This file contains the implementation of the FFmpeg encoder functions
- * that encode the audio frames.
-
- Protocol version: 1.0
- Last modification: 12/22/2019
-
- By: Ming Ying
-
- Copyright Fractal Computers, Inc. 2019
-*/
 #include <stdio.h>
 #include <stdlib.h>
 

@@ -1,15 +1,3 @@
-/*
- * This file contains the implementation of the functions used as part of the
- * streaming protocol.
-
- Protocol version: 1.0
- Last modification: 12/14/2019
-
- By: Philippe Noël
-
- Copyright Fractal Computers, Inc. 2019
-*/
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -20,8 +8,6 @@
 #if defined(_WIN32)
 	#define socklen_t int
 #endif
-
-/*** FRACTAL FUNCTIONS START ***/
 
 int GetFmsgSize(struct FractalClientMessage* fmsg) {
 	if( fmsg->type == MESSAGE_KEYBOARD_STATE )
@@ -86,7 +72,7 @@ void set_timeout(SOCKET s, int timeout_ms) {
 		read_timeout.tv_usec = timeout_ms * 1000;
 #endif
 
-		if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout)) < 0) {
+		if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *) &read_timeout, sizeof(read_timeout)) < 0) {
 			mprintf("Failed to set timeout\n");
 			return;
 		}
@@ -147,7 +133,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		// Reuse addr
 		int opt = 1;
 		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
-						&opt, sizeof( opt ) ) < 0 )
+						(const char *) &opt, sizeof( opt ) ) < 0 )
 		{
 			mprintf( "Could not setsockopt SO_REUSEADDR\n" );
 			return -1;
@@ -355,7 +341,7 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 		if( target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len )
 		{
 			// Decrypt it
-			int decrypted_len = decrypt_packet_n( (struct RTPPacket *) reading_packet_buffer + sizeof( int ), target_len, (struct RTPPacket *) decrypted_packet_buffer, LARGEST_TCP_PACKET, (unsigned char *) PRIVATE_KEY );
+			int decrypted_len = decrypt_packet_n( (struct RTPPacket *) (reading_packet_buffer + sizeof( int )), target_len, (struct RTPPacket *) decrypted_packet_buffer, LARGEST_TCP_PACKET, (unsigned char *) PRIVATE_KEY );
 
 			// Move the rest of the read bytes to the beginning of the buffer to continue
 			int start_next_bytes = sizeof(int) + target_len;
@@ -593,6 +579,3 @@ uint32_t Hash(void* buf, size_t len)
 	hash += (hash << 15);
 	return hash;
 }
-
-/*** FRACTAL FUNCTIONS END ***/
-

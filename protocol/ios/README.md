@@ -1,3 +1,3 @@
-## iOS Client
+## iOS/iPadOS Client
 
 TBD.

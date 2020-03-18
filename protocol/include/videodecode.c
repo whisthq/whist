@@ -3,12 +3,10 @@
 
 #include "videodecode.h" // header file for this file
 
-
 static enum AVPixelFormat hw_pix_fmt;
 static AVBufferRef *hw_device_ctx = NULL;
 
-
-void swap_decoder(void *ptr, int level, const char *fmt, va_list vargs)
+void swap_decoder(const char *fmt, va_list vargs)
 {
   mprintf("Error found\n");
   vprintf(fmt, vargs);
@@ -231,15 +229,18 @@ bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size
     decoder->packet.data = buffer;
     decoder->packet.size = buffer_size;
     // decode the frame
-    ret = avcodec_decode_video2(decoder->context, decoder->sw_frame, &success, &decoder->packet);
-    if( ret < 0 )
-    {
-        mprintf( "Failed to avcodec_decode_video2!\n" );
-        return false;
+    if(avcodec_send_packet(decoder->context, &decoder->packet) < 0) {
+      mprintf( "Failed to avcodec_send_packet!\n" );
+      return false;
+    }
+
+    if(avcodec_receive_frame(decoder->context, decoder->sw_frame) < 0) {
+      mprintf( "Failed to avcodec_receive_frame!\n" );
+      return false;
     }
 
     // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
-    av_packet_unref(&decoder->packet);
+    // av_packet_unref(&decoder->packet);
 
   } else {
     decoder->packet.data = buffer;
@@ -262,6 +263,7 @@ bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size
         }
     }
   }
+  av_packet_unref(&decoder->packet);
 
   return true;
 }
