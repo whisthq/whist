@@ -21,6 +21,10 @@
 	#include <dxgi1_2.h>
 	#include <DXGITYPE.h>
 	#pragma comment (lib, "ws2_32.lib")
+	#undef ETIMEDOUT
+	#define ETIMEDOUT WSAETIMEDOUT
+	#undef EWOULDBLOCK
+	#define EWOULDBLOCK WSAEWOULDBLOCK
 #else
 	#include <unistd.h>
 	#include <errno.h>

@@ -417,7 +417,7 @@ void updateKeyboardState( struct FractalClientMessage* fmsg )
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
-FractalStatus ReplayUserInput( struct FractalClientMessage* fmsg )
+void ReplayUserInput( struct FractalClientMessage* fmsg )
 {
 	// get screen width and height for mouse cursor
 	int sWidth = GetSystemMetrics( SM_CXSCREEN ) - 1;
@@ -528,11 +528,9 @@ FractalStatus ReplayUserInput( struct FractalClientMessage* fmsg )
 	{
 		mprintf( "SendInput did not send all events! %d\n", num_events_sent );
 	}
-
-	return FRACTAL_OK;
 }
 
-FractalStatus EnterWinString(enum FractalKeycode* keycodes, int len) {
+void EnterWinString(enum FractalKeycode* keycodes, int len) {
   // get screen width and height for mouse cursor
 	int i, index = 0;
 	enum FractalKeycode keycode;
@@ -556,10 +554,9 @@ FractalStatus EnterWinString(enum FractalKeycode* keycodes, int len) {
 
 		index++;
 	}
+
 	// send FMSG mapped to Windows event to Windows and return
 	SendInput(index, Event, sizeof(INPUT)); 
-
-	return FRACTAL_OK;
 }
 
 void LoadCursors(FractalCursorTypes *types) {

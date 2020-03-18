@@ -26,9 +26,9 @@ int GetWindowsKeyCode(int sdl_keycode);
 
 void updateKeyboardState( struct FractalClientMessage* fmsg );
 
-FractalStatus ReplayUserInput(struct FractalClientMessage* fmsg);
+void ReplayUserInput(struct FractalClientMessage* fmsg);
 
-FractalStatus EnterWinString(enum FractalKeycode *keycodes, int len);
+void EnterWinString(enum FractalKeycode *keycodes, int len);
 
 void LoadCursors(FractalCursorTypes *types);
 

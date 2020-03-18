@@ -39,11 +39,12 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread
         TCHAR szName[1000];
         DWORD dwLen;
         GetUserObjectInformation(new_desktop, UOI_NAME, szName, sizeof(szName), &dwLen);
-        memcpy(context.desktop_name, szName, strlen(szName));
+        memcpy(context.desktop_name, szName, dwLen);
     }
 
     context.desktop_handle = new_desktop;
     CloseDesktop(new_desktop);
+
     return context;
 }
 
@@ -59,7 +60,7 @@ void InitDesktop() {
     OpenWindow();
     lock_screen = OpenNewDesktop(NULL, true, true);
 
-    while (strcmp("Default", lock_screen.desktop_name) != 0)
+    while (strcmp(L"Default", lock_screen.desktop_name) != 0)
     {
         mprintf("Desktop name is %s\n", lock_screen.desktop_name);
         mprintf("Attempting to log into desktop...\n");
