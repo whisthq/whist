@@ -237,6 +237,8 @@ static int32_t SendVideo(void* opaque) {
 
         // Update device with new parameters
         if (update_device) {
+            update_device = false;
+
             if (device) {
                 DestroyCaptureDevice(device);
                 device = NULL;
@@ -247,13 +249,15 @@ static int32_t SendVideo(void* opaque) {
             if (result < 0) {
                 mprintf("Failed to create capture device\n");
                 device = NULL;
-                connected = false;
+                update_device = true;
+
+                SDL_Delay( 500 );
+                continue;
             }
 
             mprintf( "Created Capture Device of dimensions %dx%d\n", device->width, device->height );
 
             update_encoder = true;
-            update_device = false;
         }
 
         // Update encoder with new parameters
@@ -271,16 +275,12 @@ static int32_t SendVideo(void* opaque) {
         // If capture screen failed, we should try again
         if (accumulated_frames < 0) {
             mprintf("Failed to capture screen\n");
-            int width = device->width;
-            int height = device->height;
-
-            // For now, just exit so that FractalService can restart it
-            mprintf( "Exiting...\n" );
-            exit( -1 );
 
             DestroyCaptureDevice(device);
-            InitDesktop();
-            CreateCaptureDevice(device, width, height);
+            device = NULL;
+            update_device = true;
+
+            SDL_Delay( 500 );
             continue;
         }
 

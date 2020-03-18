@@ -44,6 +44,7 @@ void PrintMemoryInfo()
 #define USE_MONITOR 0
 
 int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
+    mprintf( "Creating capture device for resolution %dx%d...\n", width, height );
   memset(device, 0, sizeof(struct CaptureDevice));
 
   device->hardware = (struct DisplayHardware*) malloc(sizeof(struct DisplayHardware));
@@ -151,57 +152,33 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
       }
   }
 
-  /*
-  DEVMODE dm;
-  memset( &dm, 0, sizeof( dm ) );
-  dm.dmSize = sizeof( dm );
-
-  if( 0 != EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &dm ) )
-  {
-      dm.dmPelsWidth = width;
-      dm.dmPelsHeight = height;
-      dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
-
-      int ret = ChangeDisplaySettings( &dm, 0 );
-      mprintf( "ChangeDisplaySettingsCode: %d\n", ret );
-  } else
-  {
-      mprintf( "Failed to update DisplaySettings\n" );
-  }
-  */
-
-  //hr = D3D11CreateDevice(hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, NULL, 0,
-  //  D3D11_SDK_VERSION, &device->D3D11device, &FeatureLevel, &device->D3D11context);
-
-  // CREATE SWAP CHAIN DESC
-  DXGI_SWAP_CHAIN_DESC swapChainDesc;
-  ZeroMemory( &swapChainDesc, sizeof( swapChainDesc ) );
-  swapChainDesc.BufferCount = 1;
-
-
-  swapChainDesc.BufferDesc.Width = 1920;
-  swapChainDesc.BufferDesc.Height = 1080;
-  swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-  swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
-  swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
-  swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-  swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-
   if( finalDesc )
   {
-      mprintf( "USING FINAL DESC!\n" );
-      swapChainDesc.BufferDesc = *finalDesc;
+      HMONITOR hMonitor = output_desc.Monitor;
+      MONITORINFOEX monitorInfo;
+      monitorInfo.cbSize = sizeof( MONITORINFOEX );
+      GetMonitorInfo( hMonitor, &monitorInfo );
+
+      DEVMODE dm;
+      memset( &dm, 0, sizeof( dm ) );
+      dm.dmSize = sizeof( dm );
+      mprintf( "Device Name: %s\n", monitorInfo.szDevice );
+      if( 0 != EnumDisplaySettings( monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &dm ) )
+      {
+          if( dm.dmPelsWidth != width || dm.dmPelsHeight != height )
+          {
+              dm.dmPelsWidth = width;
+              dm.dmPelsHeight = height;
+              dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+
+              int ret = ChangeDisplaySettingsEx( monitorInfo.szDevice, &dm, NULL, CDS_SET_PRIMARY | CDS_UPDATEREGISTRY, 0 );
+              mprintf( "ChangeDisplaySettingsCode: %d\n", ret );
+          }
+      } else
+      {
+          mprintf( "Failed to update DisplaySettings\n" );
+      }
   }
-
-
-  swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-  swapChainDesc.OutputWindow = GetDesktopWindow();
-  swapChainDesc.Windowed = false;
-  swapChainDesc.SampleDesc.Count = 1;
-  swapChainDesc.SampleDesc.Quality = 0;
-  // END CREATE SWAP CHAIN DESC
-
-  IDXGISwapChain* swapChain = NULL;
 
   hr = D3D11CreateDevice(
       hardware->adapter,
@@ -211,8 +188,6 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
       NULL,
       0,
       D3D11_SDK_VERSION,
-      //&swapChainDesc,
-      //&swapChain,
       &device->D3D11device,
       &FeatureLevel,
       &device->D3D11context
@@ -221,11 +196,6 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   if (FAILED(hr)) {
       mprintf("Failed D3D11CreateDevice: 0x%X %d", hr, GetLastError());
       return -1;
-  }
-
-  if( swapChain )
-  {
-      swapChain->lpVtbl->Release( swapChain );
   }
 
   IDXGIOutput1* output1;
