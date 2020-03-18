@@ -12,20 +12,20 @@ PLATFORM = linux
 
 # dynamic libs to link against
 DYNAMIC_LIBS = 																	\
-	../lib/ffmpeg/linux/libavcodec.so.58.100 			\
+	../lib/ffmpeg/linux/libavcodec.so.58.100 	\
 	../lib/ffmpeg/linux/libavdevice.so.58.8.100 	\
 	../lib/ffmpeg/linux/libavfilter.so.7.57.100 	\
 	../lib/ffmpeg/linux/libavformat.so.58.29.100 	\
-	../lib/ffmpeg/linux/libavutil.so.56.31.100 		\
+	../lib/ffmpeg/linux/libavutil.so.56.31.100 	\
 	../lib/ffmpeg/linux/libpostproc.so.55.5.100 	\
 	../lib/ffmpeg/linux/libswresample.so.3.5.100 	\
-	../lib/ffmpeg/linux/libswscale.so.5.5.100 		\
+	../lib/ffmpeg/linux/libswscale.so.5.5.100 	\
 	../lib/mfx/linux/libmfx.so.1.32
 
 # system libs to link against
-SHARED_LIBS = 	\
-	-lm 					\
-	-ldl 					\
+SHARED_LIBS = 		\
+	-lm 		\
+	-ldl 		\
 	-lpthread
 endif
 
@@ -49,22 +49,22 @@ DYNAMIC_LIBS = 															\
 	../lib/ffmpeg/macos/libavformat.58.dylib 	\
 	../lib/ffmpeg/macos/libavutil.56.dylib 		\
 	../lib/ffmpeg/macos/libpostproc.55.dylib 	\
-	../lib/ffmpeg/macos/libswresample.3.dylib \
+	../lib/ffmpeg/macos/libswresample.3.dylib 	\
 	../lib/ffmpeg/macos/libswscale.5.dylib
 
 # system libs to link against
-SHARED_LIBS = 							\
-	-liconv 									\
-	-framework OpenGL 				\
+SHARED_LIBS = 				\
+	-liconv 			\
+	-framework OpenGL 		\
 	-framework VideoToolbox 	\
-	-framework CoreMedia 			\
-	-framework CoreAudio 			\
+	-framework CoreMedia 		\
+	-framework CoreAudio 		\
 	-framework AudioToolbox 	\
-	-framework IOKit 					\
+	-framework IOKit 		\
 	-framework ForceFeedback 	\
-	-framework Carbon 				\
-	-framework AppKit 				\
-	-framework Metal 					\
+	-framework Carbon 		\
+	-framework AppKit 		\
+	-framework Metal 		\
 	-framework QuartzCore
 endif
 
@@ -73,29 +73,29 @@ endif
 BIN_NAME = desktop
 
 # static libs to link against
-STATIC_LIBS = 													\
-	../lib/SDL2/$(PLATFORM)/libSDL2.a 		\
+STATIC_LIBS = 					\
+	../lib/SDL2/$(PLATFORM)/libSDL2.a 	\
 	../lib/openssl/$(PLATFORM)/libcrypto.a
 
 # files to build into object files
-OBJS = 						\
-	fractal.o 			\
-	videodecode.o 	\
-	audiodecode.o 	\
-	video.o 				\
-	audio.o 				\
-	aes.o 					\
-	clipboard_osx.o \
+OBJS = 				\
+	fractal.o 		\
+	videodecode.o 		\
+	audiodecode.o 		\
+	video.o 		\
+	audio.o 		\
+	aes.o 			\
+	clipboard_osx.o 	\
 	clipboard.o 		\
 	main.o
 
 # compiler flags
-CFLAGS = 													\
-	-Wall 													\
-	-Wextra 												\
-	-Wno-unused-value 							\
+CFLAGS = 				\
+	-Wall 				\
+	-Wextra 			\
+	-Wno-unused-value 		\
 	-Wno-missing-field-initializers \
-	-O3 														\
+	-O3 				\
 	-I ../include
 
 # link all files into executable
