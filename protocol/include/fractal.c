@@ -86,7 +86,7 @@ void set_timeout(SOCKET s, int timeout_ms) {
 		read_timeout.tv_usec = timeout_ms * 1000;
 #endif
 
-		if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout)) < 0) {
+		if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *) &read_timeout, sizeof(read_timeout)) < 0) {
 			mprintf("Failed to set timeout\n");
 			return;
 		}
@@ -147,7 +147,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		// Reuse addr
 		int opt = 1;
 		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
-						&opt, sizeof( opt ) ) < 0 )
+						(const char *) &opt, sizeof( opt ) ) < 0 )
 		{
 			mprintf( "Could not setsockopt SO_REUSEADDR\n" );
 			return -1;

@@ -61,35 +61,35 @@ all: clean fractal.obj clipboard.obj aes.obj videodecode.obj audiodecode.obj vid
   link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
-fractal.obj: ../include/fractal.c
+fractal.obj:
   $(CC) /c $(CFLAGS) ../include/fractal.c
 
 # compile the main clipboard source file into object file
-clipboard.obj: ../include/clipboard.c
+clipboard.obj:
   $(CC) /c $(CFLAGS) ../include/clipboard.c
 
 # compile the aes source file into object file
-aes.obj: ../include/aes.c
+aes.obj:
   $(CC) /c $(CFLAGS) ../include/aes.c
 
 # compile the video decoder source file into object file
-videodecode.obj: ../include/videodecode.c
+videodecode.obj:
   $(CC) /c $(CFLAGS) ../include/videodecode.c
 
 # compile the audio decoder source file into object file
-audiodecode.obj: ../include/audiodecode.c
+audiodecode.obj:
   $(CC) /c $(CFLAGS) ../include/audiodecode.c
 
 # compile the main video source file into object file
-video.obj: video.c
+video.obj:
   $(CC) /c $(CFLAGS) video.c
 
 # compile the main audio source file into object file
-audio.obj: audio.c
+audio.obj:
   $(CC) /c $(CFLAGS) audio.c
 
 # compile the main source file into object file
-main.obj: main.c
+main.obj:
   $(CC) /c $(CFLAGS) main.c
 
 # clean prior object files
