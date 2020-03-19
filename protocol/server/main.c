@@ -447,7 +447,17 @@ void runcmd( LPWSTR cmdline )
     si.cb = sizeof( si );
     ZeroMemory( &pi, sizeof( pi ) );
 
-    if( CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi ) )
+    char cmd_buf[1000];
+
+    if( strlen( cmdline ) + 1 > sizeof(cmd_buf) )
+    {
+        mprintf( "runcmd cmdline too long!\n" );
+        return;
+    }
+
+    memcpy( cmd_buf, cmdline, strlen( cmdline ) + 1 );
+
+    if( CreateProcessW( NULL, cmd_buf, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi ) )
     {
         WaitForSingleObject( pi.hProcess, INFINITE );
         CloseHandle( pi.hProcess );
@@ -457,8 +467,8 @@ void runcmd( LPWSTR cmdline )
 
 void update() {
     mprintf( "Checking for updates...\n" );
-    runcmd( L"powershell -command \"iwr -outf 'C:\\Program Files\\Fractal\\update.bat' https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\"" );
-    runcmd( L"cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\"" );
+    runcmd( "powershell -command \"iwr -outf 'C:\\Program Files\\Fractal\\update.bat' https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\"" );
+    runcmd( "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\"" );
 }
 
 int main()
