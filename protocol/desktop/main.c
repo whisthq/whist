@@ -645,7 +645,7 @@ int main(int argc, char* argv[])
     }
 
     char* server_ip = argv[1];
-    char* aes_private_key = argv[2];
+//    char* aes_private_key = argv[2]; TODO: need to make webserver exchange key instead of hardcode
     output_width = -1;
     output_height = -1;
 

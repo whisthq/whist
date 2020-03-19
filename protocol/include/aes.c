@@ -23,7 +23,7 @@ void handleErrors( void )
 
 void gen_iv( unsigned char* iv )
 {
-    int rc = RAND_bytes( iv, 16 );
+    RAND_bytes( iv, 16 );
 }
 
 int hmac( char* hash, char* buf, int len, char* key )
