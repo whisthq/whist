@@ -32,7 +32,7 @@ void PrintMemoryInfo()
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
+int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height) {
     mprintf( "Creating capture device for resolution %dx%d...\n", width, height );
   memset(device, 0, sizeof(struct CaptureDevice));
 
@@ -87,8 +87,8 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   hardware->adapter = adapters[USE_GPU];
             
   // GET ALL MONITORS
-  for (int i = 0; i < num_adapters; i++) {
-      for (int j = 0; hardware->adapter->lpVtbl->EnumOutputs(adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND; j++) {
+  for (i = 0; i < num_adapters; i++) {
+      for (j = 0; hardware->adapter->lpVtbl->EnumOutputs(adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND; j++) {
           //mprintf("Found monitor %d on adapter %lu\n", j, i);
           if (i == USE_GPU) {
               if (j == MAX_NUM_OUTPUTS) {
@@ -131,13 +131,13 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   DXGI_MODE_DESC* pDescs = malloc(sizeof( DXGI_MODE_DESC ) * num);
   DXGI_MODE_DESC* finalDesc = NULL;
   hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num, pDescs );
-  for( int i = 0; i < num; i++ )
+  for( UINT k = 0; k < num; k++ )
   {
-      mprintf( "Possible Resolution: %dx%d\n", pDescs[i].Width, pDescs[i].Height );
-      if( pDescs[i].Width == width && pDescs[i].Height == height )
+      mprintf( "Possible Resolution: %dx%d\n", pDescs[k].Width, pDescs[k].Height );
+      if( pDescs[k].Width == width && pDescs[k].Height == height )
       {
           mprintf( "Match found for %dx%d!\n", width, height );
-          finalDesc = &pDescs[i];
+          finalDesc = &pDescs[k];
       }
   }
 
@@ -339,7 +339,7 @@ int CaptureScreen(struct CaptureDevice *device) {
         device->did_use_map_desktop_surface = true;
     }
 
-    device->frame_data = screenshot->mapped_rect.pBits;
+    device->frame_data = (char *) screenshot->mapped_rect.pBits;
     return accumulated_frames;
 }
 

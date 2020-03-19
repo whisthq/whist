@@ -362,7 +362,7 @@ static int32_t SendVideo(void* opaque) {
                     frames_since_first_iframe++;
                     id++;
                     previous_frame_size = encoder->packet.size;
-                    float server_frame_time = GetTimer(server_frame_timer);
+                    double server_frame_time = GetTimer(server_frame_timer);
                     //mprintf("Server Frame Time for ID %d: %f\n", id, server_frame_time);
                 }
             }

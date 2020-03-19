@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS // stupid Windows warnings
 #include "desktop.h"
 
 void logToFile(char* msg, char* filename) {
