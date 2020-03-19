@@ -103,23 +103,26 @@ void nack(int id, int index) {
 
 void updateWidthAndHeight(int width, int height) {
     struct SwsContext* sws_ctx = NULL;
-    enum AVPixelFormat input_fmt = AV_PIX_FMT_YUV420P;
 
     video_decoder_t* decoder = create_video_decoder(width, height, output_width, output_height, USE_HARDWARE);
     videoContext.decoder = decoder;
 
+    enum AVPixelFormat input_fmt = AV_PIX_FMT_YUV420P;
     if(decoder->type != DECODE_TYPE_SOFTWARE) {
         input_fmt = AV_PIX_FMT_NV12;
     }
 
-    sws_ctx = sws_getContext(width, height,
-        input_fmt, output_width, output_height,
-        AV_PIX_FMT_YUV420P,
-        SWS_BILINEAR,
-        NULL,
-        NULL,
-        NULL
-    );
+    if( input_fmt != AV_PIX_FMT_YUV420P )
+    {
+        sws_ctx = sws_getContext( width, height,
+                                  input_fmt, output_width, output_height,
+                                  AV_PIX_FMT_YUV420P,
+                                  SWS_BILINEAR,
+                                  NULL,
+                                  NULL,
+                                  NULL
+        );
+    }
     videoContext.sws = sws_ctx;
 
     server_width = width;
@@ -174,20 +177,27 @@ int32_t RenderScreen(void* opaque) {
             rendering = false;
             continue;
         }
-
-        sws_scale(videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
-            videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, videoContext.data,
-            videoContext.linesize);
+          
+        if( videoContext.sws )
+        {
+            sws_scale( videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
+                       videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, videoContext.data,
+                       videoContext.linesize );
+        } else
+        {
+            memcpy( videoContext.data, videoContext.decoder->sw_frame->data, sizeof( videoContext.data ));
+            memcpy( videoContext.linesize, videoContext.decoder->sw_frame->linesize, sizeof( videoContext.linesize ) );
+        }
 
         SDL_UpdateYUVTexture(
             videoContext.texture,
             NULL,
             videoContext.data[0],
-            output_width,
+            videoContext.linesize[0],
             videoContext.data[1],
-            output_width / 2,
+            videoContext.linesize[1],
             videoContext.data[2],
-            output_width / 2
+            videoContext.linesize[2]
         );
 
         // Set cursor to frame's desired cursor type
