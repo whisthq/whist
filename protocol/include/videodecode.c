@@ -223,8 +223,6 @@ bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size
   av_init_packet( &decoder->packet );
 
   if(decoder->type == DECODE_TYPE_QSV || decoder->type == DECODE_TYPE_SOFTWARE) {
-    int success = 0, ret = 0; // boolean for success or failure of decoding
-
     // copy the received packet back into the decoder AVPacket
     // memcpy(&decoder->packet.data, &buffer, buffer_size);
     decoder->packet.data = buffer;
@@ -241,7 +239,6 @@ bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size
     }
 
     // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
-    // av_packet_unref(&decoder->packet);
 
   } else {
     decoder->packet.data = buffer;

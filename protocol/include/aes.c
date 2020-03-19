@@ -60,7 +60,7 @@ int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct R
 
 int decrypt_packet( struct RTPPacket* encrypted_packet, int packet_len, struct RTPPacket* plaintext_packet, unsigned char* private_key )
 {
-    if( packet_len > MAX_PACKET_SIZE )
+    if( (unsigned long) packet_len > MAX_PACKET_SIZE )
     {
         mprintf( "Encrypted version of Packet is too large!\n" );
         return -1;
@@ -71,7 +71,7 @@ int decrypt_packet( struct RTPPacket* encrypted_packet, int packet_len, struct R
 
 int decrypt_packet_n( struct RTPPacket* encrypted_packet, int packet_len, struct RTPPacket* plaintext_packet, int plaintext_len, unsigned char* private_key )
 {
-    if( packet_len < PACKET_HEADER_SIZE )
+    if( (unsigned long) packet_len < PACKET_HEADER_SIZE )
     {
         mprintf( "Packet is too small for metadata!\n" );
         return -1;
