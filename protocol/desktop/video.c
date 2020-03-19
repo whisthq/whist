@@ -191,7 +191,7 @@ int32_t RenderScreen(void* opaque) {
         );
 
         // Set cursor to frame's desired cursor type
-        if((volatile FractalCursorID) frame->cursor.cursor_id != last_cursor) {
+        if((FractalCursorID) frame->cursor.cursor_id != last_cursor) {
             if(cursor) {
                 SDL_FreeCursor((SDL_Cursor *) cursor);
             }
@@ -286,8 +286,8 @@ void updateVideo() {
 
         // Calculate statistics
         int expected_frames = VideoData.max_id - VideoData.last_statistics_id;
-        double fps = 1.0 * expected_frames / time;
-        double mbps = VideoData.bytes_transferred * 8.0 / 1024.0 / 1024.0 / time;
+        //double fps = 1.0 * expected_frames / time; // TODO: finish birate throttling alg
+        //double mbps = VideoData.bytes_transferred * 8.0 / 1024.0 / 1024.0 / time; // TODO bitrate throttle
         double receive_rate = expected_frames == 0 ? 1.0 : 1.0 * VideoData.frames_received / expected_frames;
         double dropped_rate = 1.0 - receive_rate;
 

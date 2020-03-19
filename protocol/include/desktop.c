@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS // stupid Windows warnings
 #include "desktop.h"
 
 void logToFile(char* msg, char* filename) {
@@ -28,7 +29,7 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread
         new_desktop = OpenInputDesktop(0, FALSE, GENERIC_ALL);
     }
     else {
-        new_desktop = OpenDesktop(desktop_name, 0, FALSE, GENERIC_ALL);
+        new_desktop = OpenDesktop((LPCWSTR) desktop_name, 0, FALSE, GENERIC_ALL);
     }
 
     if (set_thread) {
@@ -49,18 +50,17 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread
 }
 
 void OpenWindow() {
-    HWINSTA hwinsta = OpenWindowStation("winsta0", FALSE, GENERIC_ALL);
+    HWINSTA hwinsta = OpenWindowStation((LPCWSTR) "winsta0", FALSE, GENERIC_ALL);
     SetProcessWindowStation(hwinsta);
 }
 
 void InitDesktop() {
-    DesktopContext lock_screen, logon_screen;
-    char* out;
+    DesktopContext lock_screen;
 
     OpenWindow();
     lock_screen = OpenNewDesktop(NULL, true, true);
 
-    while (strcmp(L"Default", lock_screen.desktop_name) != 0)
+    while (strcmp((const char *) L"Default", (const char *) lock_screen.desktop_name) != 0)
     {
         mprintf("Desktop name is %s\n", lock_screen.desktop_name);
         mprintf("Attempting to log into desktop...\n");

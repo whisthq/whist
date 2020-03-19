@@ -79,6 +79,13 @@
 
 #define WRITE_MPRINTF_TO_LOG true
 
+#define MAX_PACKET_SIZE (sizeof(struct RTPPacket))
+#define PACKET_HEADER_SIZE (sizeof(struct RTPPacket) - MAX_PAYLOAD_SIZE - 16)
+
+#if defined(_WIN32)
+#pragma warning(disable : 4200)
+#endif
+
 int GetLastNetworkError();
 
 /*** ENUMERATIONS START ***/
@@ -544,9 +551,6 @@ struct RTPPacket {
 	// The encrypted packet could overflow
 	uint8_t overflow[16];
 };
-
-#define MAX_PACKET_SIZE (sizeof(struct RTPPacket))
-#define PACKET_HEADER_SIZE (sizeof(struct RTPPacket) - MAX_PAYLOAD_SIZE - 16)
 
 typedef struct Frame {
 	FractalCursorImage cursor;

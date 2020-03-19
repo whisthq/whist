@@ -645,7 +645,7 @@ int main(int argc, char* argv[])
     }
 
     char* server_ip = argv[1];
-    char* aes_private_key = argv[2];
+//    char* aes_private_key = argv[2]; TODO: need to make webserver exchange key instead of hardcode
     output_width = -1;
     output_height = -1;
 
@@ -707,6 +707,8 @@ int main(int argc, char* argv[])
             continue;
         }
 
+        SDL_Delay( 150 );
+
         if( CreateTCPContext(&PacketTCPContext, "C", server_ip, PORT_SHARED_TCP, 1, 500) < 0 )
         {
             mprintf( "Failed finish connection to server\n" );
@@ -752,7 +754,7 @@ int main(int argc, char* argv[])
                 int num_keys;
                 Uint8* state = (Uint8*) SDL_GetKeyboardState( &num_keys );
 #if defined(_WIN32)
-                fmsg.num_keycodes = min( NUM_KEYCODES, num_keys );
+                fmsg.num_keycodes = (short) min( NUM_KEYCODES, num_keys );
 #else
                 fmsg.num_keycodes = fmin( NUM_KEYCODES, num_keys );
 #endif

@@ -284,7 +284,7 @@ void SendKeyInput( int windows_keycode, int extraFlags )
 	ip.ki.time = 0;
 	ip.ki.dwExtraInfo = 0;
 
-	ip.ki.wScan = MapVirtualKeyA( windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX );
+	ip.ki.wScan = (WORD) MapVirtualKeyA( windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX );
 	ip.ki.dwFlags = KEYEVENTF_SCANCODE | extraFlags;
 	if( ip.ki.wScan >> 8 == 0xE0 || (windows_keycode & USE_NUMPAD) )
 	{
@@ -435,7 +435,7 @@ void ReplayUserInput( struct FractalClientMessage* fmsg )
 
 		Event.ki.dwFlags = KEYEVENTF_SCANCODE;
 		Event.ki.wVk = 0;
-		Event.ki.wScan = MapVirtualKeyA( windows_keycodes[fmsg->keyboard.code], MAPVK_VK_TO_VSC_EX );
+		Event.ki.wScan = (WORD) MapVirtualKeyA( windows_keycodes[fmsg->keyboard.code], MAPVK_VK_TO_VSC_EX );
 
 		if( Event.ki.wScan >> 8 == 0xE0 )
 		{
@@ -456,13 +456,13 @@ void ReplayUserInput( struct FractalClientMessage* fmsg )
 		Event.type = INPUT_MOUSE;
 		if( fmsg->mouseMotion.relative )
 		{
-			Event.mi.dx = fmsg->mouseMotion.x * 0.9;
-			Event.mi.dy = fmsg->mouseMotion.y * 0.9;
+			Event.mi.dx = (LONG) (fmsg->mouseMotion.x * 0.9);
+			Event.mi.dy = (LONG) (fmsg->mouseMotion.y * 0.9);
 			Event.mi.dwFlags = MOUSEEVENTF_MOVE;
 		} else
 		{
-			Event.mi.dx = fmsg->mouseMotion.x * (double)65536 / 1000000;
-			Event.mi.dy = fmsg->mouseMotion.y * (double)65536 / 1000000;
+			Event.mi.dx = (LONG) (fmsg->mouseMotion.x * (double)65536 / 1000000);
+			Event.mi.dy = (LONG) (fmsg->mouseMotion.y * (double)65536 / 1000000);
 			Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
 		}
 		break;
@@ -538,7 +538,7 @@ void EnterWinString(enum FractalKeycode* keycodes, int len) {
 
 	for(i = 0; i < len; i++) {
 		keycode = keycodes[i];
-		Event[index].ki.wVk = windows_keycodes[keycode];
+		Event[index].ki.wVk = (WORD) windows_keycodes[keycode];
 		Event[index].type = INPUT_KEYBOARD;
 		Event[index].ki.wScan = 0;
 		Event[index].ki.time = 0; // system supplies timestamp
@@ -546,7 +546,7 @@ void EnterWinString(enum FractalKeycode* keycodes, int len) {
 
 		index++;
 
-		Event[index].ki.wVk = windows_keycodes[keycode];
+		Event[index].ki.wVk = (WORD) windows_keycodes[keycode];
 		Event[index].type = INPUT_KEYBOARD;
 		Event[index].ki.wScan = 0;
 		Event[index].ki.time = 0; // system supplies timestamp

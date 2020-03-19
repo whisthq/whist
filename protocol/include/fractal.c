@@ -1,3 +1,9 @@
+// unportable Windows warnings, need to be at the very top
+#if defined(_WIN32)
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -105,7 +111,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = inet_addr( destination );
-		context->addr.sin_port = htons( port );
+		context->addr.sin_port = htons( (u_short) port );
 
 		mprintf( "Connecting to server...\n" );
 
@@ -128,7 +134,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-		origin_addr.sin_port = htons( port );
+		origin_addr.sin_port = htons( (u_short) port );
 
 		// Reuse addr
 		int opt = 1;
@@ -214,7 +220,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = inet_addr(destination);
-		context->addr.sin_port = htons(port);
+		context->addr.sin_port = htons((u_short) port);
 
 		mprintf("Connecting to server...\n");
 
@@ -244,7 +250,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-		origin_addr.sin_port = htons(port);
+		origin_addr.sin_port = htons((u_short) port);
 
 		if (bind(context->s, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
 			mprintf("Failed to bind to port! %d\n", GetLastNetworkError());
@@ -331,7 +337,7 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 		// If the previous recvp was maxed out, then try pulling some more from recvp
 	} while( len == TCP_SEGMENT_SIZE );
 
-	if( reading_packet_len > sizeof( int ) )
+	if( (unsigned long) reading_packet_len > sizeof( int ) )
 	{
 		// The amount of data bytes read (actual len), and the amount of bytes we're looking for (target len), respectively
 		int actual_len = reading_packet_len - sizeof( int );
@@ -345,7 +351,7 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 
 			// Move the rest of the read bytes to the beginning of the buffer to continue
 			int start_next_bytes = sizeof(int) + target_len;
-			for( int i = start_next_bytes; i < sizeof(int) + actual_len; i++ )
+			for( unsigned long i = start_next_bytes; i < sizeof(int) + actual_len; i++ )
 			{
 				reading_packet_buffer[i - start_next_bytes] = reading_packet_buffer[i];
 			}
@@ -475,9 +481,9 @@ void MultiThreadedPrintf(void* opaque) {
 			{
 				fclose( mprintf_log_file );
 #if defined(_WIN32)
-				DeleteFileA( L"C:\\Program Files\\Fractal\\log_prev.txt" );
+				DeleteFileA((LPCSTR) L"C:\\Program Files\\Fractal\\log_prev.txt" );
 				MoveFile( L"C:\\Program Files\\Fractal\\log.txt", L"C:\\Program Files\\Fractal\\log_prev.txt" );
-				DeleteFileA( L"C:\\Program Files\\Fractal\\log.txt" );
+				DeleteFileA((LPCSTR) L"C:\\Program Files\\Fractal\\log.txt" );
 #endif
 				mprintf_log_file = fopen( "C:\\Program Files\\Fractal\\log.txt", "ab" );
 			}
@@ -510,7 +516,7 @@ void real_mprintf(bool log, const char* fmtStr, va_list args) {
 		mprintf_queue[index].log = log;
 		buf = (char *) mprintf_queue[index].buf;
 		snprintf(buf, MPRINTF_BUF_SIZE, "%15.4f: ", GetTimer(mprintf_timer));
-		int len = strlen(buf);
+		int len = (int) strlen(buf);
 		vsnprintf(buf + len, MPRINTF_BUF_SIZE - len, fmtStr, args);
 		mprintf_queue_size++;
 	}
@@ -592,8 +598,8 @@ uint32_t Hash(void* buf, size_t len)
 		key += 8;
 	}
 
-	uint32_t hash = (pre_hash << 32) ^ pre_hash;
-	for (int i = 0; i < len; ++i)
+	uint32_t hash = (uint32_t) ((pre_hash << 32) ^ pre_hash);
+	for (size_t i = 0; i < len; ++i)
 	{
 		hash += key[i];
 		hash += (hash << 10);

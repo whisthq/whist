@@ -1,3 +1,7 @@
+#if defined(_WIN32)
+#pragma warning(disable: 4706) // assignment within conditional expression warning
+#endif
+
 #include "aes.h"
 
 #include "openssl/conf.h"
@@ -19,7 +23,7 @@ void handleErrors( void )
 
 void gen_iv( unsigned char* iv )
 {
-    int rc = RAND_bytes( iv, 16 );
+    RAND_bytes( iv, 16 );
 }
 
 int hmac( char* hash, char* buf, int len, char* key )
@@ -60,7 +64,7 @@ int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct R
 
 int decrypt_packet( struct RTPPacket* encrypted_packet, int packet_len, struct RTPPacket* plaintext_packet, unsigned char* private_key )
 {
-    if( packet_len > MAX_PACKET_SIZE )
+    if( (unsigned long) packet_len > MAX_PACKET_SIZE )
     {
         mprintf( "Encrypted version of Packet is too large!\n" );
         return -1;
@@ -71,7 +75,7 @@ int decrypt_packet( struct RTPPacket* encrypted_packet, int packet_len, struct R
 
 int decrypt_packet_n( struct RTPPacket* encrypted_packet, int packet_len, struct RTPPacket* plaintext_packet, int plaintext_len, unsigned char* private_key )
 {
-    if( packet_len < PACKET_HEADER_SIZE )
+    if( (unsigned long) packet_len < PACKET_HEADER_SIZE )
     {
         mprintf( "Packet is too small for metadata!\n" );
         return -1;
@@ -177,3 +181,7 @@ int aes_decrypt( unsigned char* ciphertext, int ciphertext_len, unsigned char* k
 
     return plaintext_len;
 }
+
+#if defined(_WIN32)
+#pragma warning(default: 4706)
+#endif

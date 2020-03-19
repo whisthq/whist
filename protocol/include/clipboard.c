@@ -130,7 +130,7 @@ ClipboardData* GetClipboard()
 		const char* clipboard_string = ClipboardGetString();
 		int data_size = strlen(clipboard_string) + 1; // for null terminator
 		// copy the data
-		if (data_size < sizeof(clipboard_buf)) {
+		if ((unsigned long) data_size < sizeof(clipboard_buf)) {
 			cb->size = data_size;
 			memcpy(cb->data, clipboard_string, data_size);
 			cb->type = CLIPBOARD_TEXT;
@@ -155,7 +155,7 @@ ClipboardData* GetClipboard()
 
 
 		// copy the data
-		if (data_size < sizeof(clipboard_buf)) {
+		if ((unsigned long) data_size < sizeof(clipboard_buf)) {
 			cb->size = data_size;
 //			cb->size = data;
 			memcpy(cb->data, clipboard_image->data + 14, data_size);

@@ -29,6 +29,10 @@
 #ifndef AVUTIL_RATIONAL_H
 #define AVUTIL_RATIONAL_H
 
+#if defined(_WIN32)
+#pragma warning(disable: 4204)
+#endif
+
 #include <stdint.h>
 #include <limits.h>
 #include "attributes.h"
@@ -210,5 +214,9 @@ uint32_t av_q2intfloat(AVRational q);
 /**
  * @}
  */
+
+#if defined(_WIN32)
+#pragma warning(default: 4204)
+#endif
 
 #endif /* AVUTIL_RATIONAL_H */

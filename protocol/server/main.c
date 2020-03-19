@@ -59,7 +59,7 @@ int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet, int le
     packet->is_a_nack = true;
 
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( packet, len, &encrypted_packet, PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( packet, len, &encrypted_packet, (unsigned char *) PRIVATE_KEY );
 
     SDL_LockMutex(packet_mutex);
     int sent_size = sendp(context, &encrypted_packet, encrypt_len);
@@ -91,7 +91,7 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_
 
     // Encrypt the packet
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( packet, packet_size, (struct RTPPacket *) (sizeof(int) + encrypted_single_packet_buf), PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( packet, packet_size, (struct RTPPacket *) (sizeof(int) + encrypted_single_packet_buf), (unsigned char *) PRIVATE_KEY );
     *((int*)encrypted_single_packet_buf) = encrypt_len;
 
     // Send it off
@@ -164,10 +164,10 @@ int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* d
         // Construct packet
         packet->type = type;
         memcpy( packet->data, data + curr_index, payload_size );
-        packet->index = i;
+        packet->index = (short) i;
         packet->payload_size = payload_size;
         packet->id = id;
-        packet->num_indices = num_indices;
+        packet->num_indices = (short) num_indices;
         packet->is_a_nack = false;
         int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
 
@@ -176,7 +176,7 @@ int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* d
 
         // Encrypt the packet
         struct RTPPacket encrypted_packet;
-        int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, PRIVATE_KEY );
+        int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, (unsigned char *) PRIVATE_KEY );
     
         // Send it off
         SDL_LockMutex(packet_mutex);
@@ -226,7 +226,6 @@ static int32_t SendVideo(void* opaque) {
     int consecutive_capture_screen_errors = 0;
 
     int defaultCounts = 1;
-    HRESULT hr;
 
     clock world_timer;
     StartTimer(&world_timer);
@@ -363,7 +362,7 @@ static int32_t SendVideo(void* opaque) {
                     frames_since_first_iframe++;
                     id++;
                     previous_frame_size = encoder->packet.size;
-                    float server_frame_time = GetTimer(server_frame_timer);
+                    double server_frame_time = GetTimer(server_frame_timer);
                     //mprintf("Server Frame Time for ID %d: %f\n", id, server_frame_time);
                 }
             }
@@ -462,7 +461,7 @@ void update() {
     runcmd( L"cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\"" );
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     initMultiThreadedPrintf(true);
 
@@ -521,7 +520,6 @@ int main(int argc, char* argv[])
 
         struct FractalClientMessage local_fmsg;
         struct FractalClientMessage* fmsg;
-        int i = 0;
 
         clock last_ping;
         StartTimer(&last_ping);
@@ -600,7 +598,7 @@ int main(int argc, char* argv[])
                 {
                     // Decrypt using AES private key
                     struct RTPPacket decrypted_packet;
-                    int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
+                    int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, (unsigned char *) PRIVATE_KEY );
 
                     // If decrypted successfully
                     if( decrypt_len > 0 )
