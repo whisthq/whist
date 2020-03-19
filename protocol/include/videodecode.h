@@ -16,7 +16,7 @@ typedef struct {
 
 /// @brief creates encoder device
 /// @details creates FFmpeg encoder
-video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width, int out_height, bool use_hardware);
+video_decoder_t* create_video_decoder(int width, int height, bool use_hardware);
 
 /// @brief destroy decoder device
 /// @details frees FFmpeg decoder memory

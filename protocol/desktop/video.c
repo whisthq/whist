@@ -105,7 +105,7 @@ void updateWidthAndHeight(int width, int height) {
     struct SwsContext* sws_ctx = NULL;
     enum AVPixelFormat input_fmt = AV_PIX_FMT_YUV420P;
 
-    video_decoder_t* decoder = create_video_decoder(width, height, output_width, output_height, USE_HARDWARE);
+    video_decoder_t* decoder = create_video_decoder(width, height, USE_HARDWARE);
     videoContext.decoder = decoder;
 
     if(decoder->type != DECODE_TYPE_SOFTWARE) {

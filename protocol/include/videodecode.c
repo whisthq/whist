@@ -44,7 +44,7 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx, const enum AVPixelForm
 }
 
 
-video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width, int out_height, bool use_hardware) {
+video_decoder_t* create_video_decoder(int width, int height, bool use_hardware) {
   video_decoder_t* decoder = (video_decoder_t*) malloc(sizeof(video_decoder_t));
   memset(decoder, 0, sizeof(video_decoder_t));
 
@@ -73,8 +73,8 @@ video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width
 
     decoder->sw_frame = (AVFrame *) av_frame_alloc();
     decoder->sw_frame->format = AV_PIX_FMT_YUV420P;
-    decoder->sw_frame->width  = in_width;
-    decoder->sw_frame->height = in_height;
+    decoder->sw_frame->width  = width;
+    decoder->sw_frame->height = height;
     decoder->sw_frame->pts = 0;
   } else if(decoder->type == DECODE_TYPE_QSV) {
     mprintf("Using QSV decoder\n");
@@ -99,8 +99,8 @@ video_decoder_t* create_video_decoder(int in_width, int in_height, int out_width
 
     frames_ctx->format = AV_PIX_FMT_QSV;
     frames_ctx->sw_format = AV_PIX_FMT_NV12;
-    frames_ctx->width = in_width;
-    frames_ctx->height = in_height;
+    frames_ctx->width = width;
+    frames_ctx->height = height;
     frames_ctx->initial_pool_size = 32;
     frames_hwctx->frame_type = MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
