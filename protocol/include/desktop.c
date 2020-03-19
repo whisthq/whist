@@ -2,7 +2,7 @@
 
 void logToFile(char* msg, char* filename) {
     FILE* fp;
-    fopen_s(&fp, filename, "a+");
+    fp = fopen(filename, "a+");
     fprintf(fp, msg);
     printf(msg);
     fclose(fp);

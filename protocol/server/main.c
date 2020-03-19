@@ -59,7 +59,7 @@ int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet, int le
     packet->is_a_nack = true;
 
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( packet, len, &encrypted_packet, PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( packet, len, &encrypted_packet, (unsigned char *) PRIVATE_KEY );
 
     SDL_LockMutex(packet_mutex);
     int sent_size = sendp(context, &encrypted_packet, encrypt_len);
@@ -91,7 +91,7 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_
 
     // Encrypt the packet
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( packet, packet_size, (struct RTPPacket *) (sizeof(int) + encrypted_single_packet_buf), PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( packet, packet_size, (struct RTPPacket *) (sizeof(int) + encrypted_single_packet_buf), (unsigned char *) PRIVATE_KEY );
     *((int*)encrypted_single_packet_buf) = encrypt_len;
 
     // Send it off
@@ -176,7 +176,7 @@ int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* d
 
         // Encrypt the packet
         struct RTPPacket encrypted_packet;
-        int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, PRIVATE_KEY );
+        int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet, (unsigned char *) PRIVATE_KEY );
     
         // Send it off
         SDL_LockMutex(packet_mutex);
@@ -598,7 +598,7 @@ int main()
                 {
                     // Decrypt using AES private key
                     struct RTPPacket decrypted_packet;
-                    int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, PRIVATE_KEY );
+                    int decrypt_len = decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet, (unsigned char *) PRIVATE_KEY );
 
                     // If decrypted successfully
                     if( decrypt_len > 0 )

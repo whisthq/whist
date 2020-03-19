@@ -1,3 +1,9 @@
+// unportable Windows warnings, need to be at the very top
+#if defined(_WIN32)
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -214,7 +220,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = inet_addr(destination);
-		context->addr.sin_port = htons(port);
+		context->addr.sin_port = htons((u_short) port);
 
 		mprintf("Connecting to server...\n");
 
@@ -244,7 +250,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-		origin_addr.sin_port = htons(port);
+		origin_addr.sin_port = htons((u_short) port);
 
 		if (bind(context->s, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
 			mprintf("Failed to bind to port! %d\n", GetLastNetworkError());
@@ -393,7 +399,7 @@ FILE* mprintf_log_file = NULL;
 
 void initMultiThreadedPrintf(bool use_logging) {
 	if (use_logging) {
-		fopen_s(&mprintf_log_file, "C:\\Program Files\\Fractal\\log.txt", "ab");
+		mprintf_log_file = fopen("C:\\Program Files\\Fractal\\log.txt", "ab");
 	}
 
 	run_multithreaded_printf = true;
@@ -479,7 +485,7 @@ void MultiThreadedPrintf(void* opaque) {
 				MoveFile( L"C:\\Program Files\\Fractal\\log.txt", L"C:\\Program Files\\Fractal\\log_prev.txt" );
 				DeleteFileA((LPCSTR) L"C:\\Program Files\\Fractal\\log.txt" );
 #endif
-				fopen_s(&mprintf_log_file, "C:\\Program Files\\Fractal\\log.txt", "ab" );
+				mprintf_log_file = fopen( "C:\\Program Files\\Fractal\\log.txt", "ab" );
 			}
 		}
 	}
