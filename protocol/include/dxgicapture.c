@@ -27,8 +27,6 @@ void PrintMemoryInfo()
     CloseHandle(hProcess);
 }
 
-#include "dxgicapture.h"
-
 #define USE_GPU 0
 #define USE_MONITOR 0
 
@@ -76,7 +74,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
     DXGI_ADAPTER_DESC1 desc;
     hardware->adapter = adapters[i];
     hr = hardware->adapter->lpVtbl->GetDesc1(hardware->adapter, &desc);
-    //mprintf("Adapter %d: %s\n", i, desc.Description);
+    mprintf("Adapter %d: %S\n", i, desc.Description);
   }
 
   // Set used GPU
@@ -89,7 +87,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   // GET ALL MONITORS
   for (int i = 0; i < num_adapters; i++) {
       for (int j = 0; hardware->adapter->lpVtbl->EnumOutputs(adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND; j++) {
-          //mprintf("Found monitor %d on adapter %lu\n", j, i);
+          mprintf("Found monitor %d on adapter %lu\n", j, i);
           if (i == USE_GPU) {
               if (j == MAX_NUM_OUTPUTS) {
                   mprintf("Too many adapters!\n");
