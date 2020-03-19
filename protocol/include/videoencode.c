@@ -26,8 +26,6 @@ encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int 
 	encoder->out_height = out_height;
 	encoder->type = type;
 
-	avcodec_register_all();
-
 	if(type == NVENC_ENCODE) {
 		mprintf("Initializing hardware encoder\n");
 		clock t;

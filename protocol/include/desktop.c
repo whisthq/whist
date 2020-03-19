@@ -2,7 +2,7 @@
 
 void logToFile(char* msg, char* filename) {
     FILE* fp;
-    fp = fopen(filename, "a+");
+    fopen_s(&fp, filename, "a+");
     fprintf(fp, msg);
     printf(msg);
     fclose(fp);
@@ -54,12 +54,12 @@ void OpenWindow() {
 }
 
 void InitDesktop() {
-    DesktopContext lock_screen, logon_screen;
+    DesktopContext lock_screen;
 
     OpenWindow();
     lock_screen = OpenNewDesktop(NULL, true, true);
 
-    while (strcmp(L"Default", lock_screen.desktop_name) != 0)
+    while (strcmp((const char *) L"Default", (const char *) lock_screen.desktop_name) != 0)
     {
         mprintf("Desktop name is %s\n", lock_screen.desktop_name);
         mprintf("Attempting to log into desktop...\n");
