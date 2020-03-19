@@ -1,3 +1,7 @@
+#if defined(_WIN32)
+#pragma warning(disable: 4706) // assignment within conditional warning
+#endif 
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -266,3 +270,7 @@ bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size
 
   return true;
 }
+
+#if defined(_WIN32)
+#pragma warning(default: 4706)
+#endif 

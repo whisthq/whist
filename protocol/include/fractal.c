@@ -105,7 +105,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = inet_addr( destination );
-		context->addr.sin_port = htons( port );
+		context->addr.sin_port = htons( (u_short) port );
 
 		mprintf( "Connecting to server...\n" );
 
@@ -128,7 +128,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-		origin_addr.sin_port = htons( port );
+		origin_addr.sin_port = htons( (u_short) port );
 
 		// Reuse addr
 		int opt = 1;
@@ -510,7 +510,7 @@ void real_mprintf(bool log, const char* fmtStr, va_list args) {
 		mprintf_queue[index].log = log;
 		buf = (char *) mprintf_queue[index].buf;
 		snprintf(buf, MPRINTF_BUF_SIZE, "%15.4f: ", GetTimer(mprintf_timer));
-		int len = strlen(buf);
+		int len = (int) strlen(buf);
 		vsnprintf(buf + len, MPRINTF_BUF_SIZE - len, fmtStr, args);
 		mprintf_queue_size++;
 	}
@@ -592,7 +592,7 @@ uint32_t Hash(void* buf, size_t len)
 		key += 8;
 	}
 
-	uint32_t hash = (pre_hash << 32) ^ pre_hash;
+	uint32_t hash = (uint32_t) ((pre_hash << 32) ^ pre_hash);
 	for (size_t i = 0; i < len; ++i)
 	{
 		hash += key[i];

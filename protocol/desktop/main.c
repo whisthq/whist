@@ -752,7 +752,7 @@ int main(int argc, char* argv[])
                 int num_keys;
                 Uint8* state = (Uint8*) SDL_GetKeyboardState( &num_keys );
 #if defined(_WIN32)
-                fmsg.num_keycodes = min( NUM_KEYCODES, num_keys );
+                fmsg.num_keycodes = (short) min( NUM_KEYCODES, num_keys );
 #else
                 fmsg.num_keycodes = fmin( NUM_KEYCODES, num_keys );
 #endif

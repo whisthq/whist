@@ -1,3 +1,7 @@
+#if defined(_WIN32)
+#pragma warning(disable: 4706) // assignment within conditional expression warning
+#endif
+
 #include "aes.h"
 
 #include "openssl/conf.h"
@@ -177,3 +181,7 @@ int aes_decrypt( unsigned char* ciphertext, int ciphertext_len, unsigned char* k
 
     return plaintext_len;
 }
+
+#if defined(_WIN32)
+#pragma warning(default: 4706)
+#endif
