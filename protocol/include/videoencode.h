@@ -27,6 +27,6 @@ void destroy_video_encoder(encoder_t *encoder);
 
 /// @brief encodes a frame using the encoder device
 /// @details encodes a RGB frame into encoded format as YUV color
-void *video_encoder_encode(encoder_t *encoder, void *rgb_pixels);
+void video_encoder_encode(encoder_t *encoder, void *rgb_pixels);
 
 #endif // ENCODE_H

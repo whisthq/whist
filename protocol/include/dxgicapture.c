@@ -314,6 +314,7 @@ int CaptureScreen(struct CaptureDevice *device) {
             // Error already printed inside of CreateTexture
             return -1;
         }
+
         device->D3D11context->lpVtbl->CopySubresourceRegion(device->D3D11context, (ID3D11Resource*)screenshot->staging_texture, 0, 0, 0, 0,
                                                 (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
 
@@ -322,7 +323,9 @@ int CaptureScreen(struct CaptureDevice *device) {
             mprintf("Query Interface Failed! 0x%X %d\n", hr, GetLastError());
             return -1;
         }
+
         hr = screenshot->surface->lpVtbl->Map(screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
+
         if (FAILED(hr)) {
             mprintf("Map Failed!\n");
             return -1;
