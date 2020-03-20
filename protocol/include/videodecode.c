@@ -208,7 +208,6 @@ video_decoder_t *create_video_decoder(int width, int height,
 #endif
         for (int i = 0;; ++i) {
             decoder->type = decoder_precedence[i];
-            mprintf("Video decoder: %d %d\n", i, decoder->type);
             res = try_setup_video_decoder(width, height, decoder);
             if (res < 0) {
                 mprintf("Video decoder: Failed, trying next decoder\n");
@@ -267,46 +266,6 @@ void destroy_video_decoder(video_decoder_t *decoder) {
 
 /// @brief decode a frame using the decoder decoder
 /// @details decode an encoded frame under YUV color format into RGB frame
-<<<<<<< HEAD
-bool video_decoder_decode(video_decoder_t *decoder, void *buffer,
-                          int buffer_size) {
-    // init packet to prepare decoding
-    // av_log_set_level(AV_LOG_ERROR);
-    // av_log_set_callback(swap_decoder);
-    av_init_packet(&decoder->packet);
-
-    if (decoder->type == DECODE_TYPE_QSV ||
-        decoder->type == DECODE_TYPE_SOFTWARE) {
-        int success = 0,
-            ret = 0;  // boolean for success or failure of decoding
-
-        // copy the received packet back into the decoder AVPacket
-        // memcpy(&decoder->packet.data, &buffer, buffer_size);
-        decoder->packet.data = buffer;
-        decoder->packet.size = buffer_size;
-        // decode the frame
-        if (avcodec_send_packet(decoder->context, &decoder->packet) < 0) {
-            mprintf("Failed to avcodec_send_packet!\n");
-            return false;
-        }
-
-        if (avcodec_receive_frame(decoder->context, decoder->sw_frame) < 0) {
-            mprintf("Failed to avcodec_receive_frame!\n");
-            return false;
-        }
-
-        // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame,
-        // 0); av_packet_unref(&decoder->packet);
-
-    } else {
-        decoder->packet.data = buffer;
-        decoder->packet.size = buffer_size;
-
-        if (avcodec_send_packet(decoder->context, &decoder->packet) < 0) {
-            mprintf("Failed to avcodec_send_packet!\n");
-            return false;
-        }
-=======
 bool video_decoder_decode(video_decoder_t *decoder, void *buffer,
                           int buffer_size) {
     static double total_time = 0.0;
@@ -340,40 +299,26 @@ bool video_decoder_decode(video_decoder_t *decoder, void *buffer,
 
         // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
 
-    } else {
+    } else if (decoder->type == DECODE_TYPE_VAAPI ||
+               decoder->type == DECODE_TYPE_D3D11 ||
+               decoder->type == DECODE_TYPE_VIDEOTOOLBOX) {
         // If frame was computed on the GPU
         if (avcodec_receive_frame(decoder->context, decoder->hw_frame) < 0) {
             mprintf("Failed to avcodec_receive_frame!\n");
             return false;
         }
->>>>>>> 27e4ab0987939d10824167103d3d4b8a0fedefbf
 
         if (avcodec_receive_frame(decoder->context, decoder->hw_frame) < 0) {
             mprintf("Failed to avcodec_receive_frame!\n");
             return false;
         }
-<<<<<<< HEAD
-
-        if (decoder->hw_frame->format == hw_pix_fmt) {
-            if (av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame,
-                                         0) < 0) {
-                mprintf("Failed to av_hwframe_transfer_data!\n");
-                return false;
-            }
-        }
-=======
-    }
-    else {
+    } else {
         mprintf("Incorrect hw frame format!\n");
         return false;
->>>>>>> 27e4ab0987939d10824167103d3d4b8a0fedefbf
     }
 
     av_packet_unref(&decoder->packet);
 
-<<<<<<< HEAD
-    return true;
-=======
     double time = GetTimer(t);
     // mprintf( "Decode Time: %f\n", time );
     if (time < 0.020) {
@@ -383,7 +328,6 @@ bool video_decoder_decode(video_decoder_t *decoder, void *buffer,
     }
 
     return true;
->>>>>>> 27e4ab0987939d10824167103d3d4b8a0fedefbf
 }
 
 #if defined(_WIN32)
