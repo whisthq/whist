@@ -611,3 +611,8 @@ uint32_t Hash(void* buf, size_t len)
 	hash += (hash << 15);
 	return hash;
 }
+
+
+#if defined(_WIN32)
+#pragma warning(default: 4100)
+#endif
