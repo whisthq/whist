@@ -8,11 +8,24 @@ def charge():
 	stripe.api_key = os.getenv('STRIPE_SECRET') 
 	body = request.get_json()
 	token = body['token']
-	amount = body['amount']
-	charge = stripe.Charge.create(
-		amount = amount,
-		currency = 'usd',
-		description = 'Fractal Instance',
-		source = token
+	email = body['email']
+
+	customers = fetchCustomers()
+	for customer in customers:
+		if email == customer['email']:
+			return jsonify({'status': 400}), 400
+
+
+	new_customer = stripe.Customer.create(
+	  email = email,
+	  source = token
 	)
+
+	stripe.Subscription.create(
+	  customer = new_customer['id'],
+	  items = [{"plan": "plan_GwV769WQdZOUJR"}]
+	)
+
+	insert_customer(email, new_customer['id'])
+
 	return jsonify({'status': 200}), 200

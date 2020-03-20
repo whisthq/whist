@@ -368,3 +368,25 @@ def fetchLoginActivity():
         out.reverse()
         return out
 
+def fetchCustomers():
+    command = text("""
+        SELECT * FROM customers
+        """)
+    params = {}
+    with engine.connect() as conn:
+        customers = conn.execute(command, **params).fetchall()
+        out = [{'email': customer[0], 
+                'id': customer[1]} for customer in customers]
+        return out
+
+def insertCustomer(email, customer_id):
+    command = text("""
+        INSERT INTO customers("email", "id") 
+        VALUES(:email, :id)
+        """)
+
+    params = {'email': email, 
+              'id': customer_id}
+
+    with engine.connect() as conn:
+        conn.execute(command, **params)
