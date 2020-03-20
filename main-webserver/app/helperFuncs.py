@@ -314,7 +314,7 @@ def deleteTimeTable():
 def fetchUserVMs(username):
     if(username):
         command = text("""
-            SELECT * FROM v_ms WHERE "username" = :username
+            SELECT * FROM v_ms WHERE "vmUserName" = :username
             """)
         params = {'username': username}
         with engine.connect() as conn:
