@@ -108,13 +108,11 @@ ClipboardData* GetClipboard()
 		case CF_TEXT:
 			cb->type = CLIPBOARD_TEXT;
 			// Read the contents of lptstr which just a pointer to the string.
-			mprintf( "CLIPBOARD STRING: %s\n", cb->data );
-			mprintf( "Len %d\n Strlen %d\n", cb->size, strlen( cb->data ) );
+			//mprintf( "CLIPBOARD STRING: %s\n", cb->data );
 			break;
 		case CF_DIB:
 			cb->type = CLIPBOARD_IMAGE;
-			mprintf( "Dib! Size: %d\n", cb->size );
-
+			//mprintf( "Clipboard bitmap received! Size: %d\n", cb->size );
 			break;
 		default:
 			cb->type = CLIPBOARD_NONE;
@@ -130,7 +128,7 @@ ClipboardData* GetClipboard()
 		const char* clipboard_string = ClipboardGetString();
 		int data_size = strlen(clipboard_string) + 1; // for null terminator
 		// copy the data
-		if (data_size < sizeof(clipboard_buf)) {
+		if ((unsigned long) data_size < sizeof(clipboard_buf)) {
 			cb->size = data_size;
 			memcpy(cb->data, clipboard_string, data_size);
 			cb->type = CLIPBOARD_TEXT;
@@ -155,7 +153,7 @@ ClipboardData* GetClipboard()
 
 
 		// copy the data
-		if (data_size < sizeof(clipboard_buf)) {
+		if ((unsigned long) data_size < sizeof(clipboard_buf)) {
 			cb->size = data_size;
 //			cb->size = data;
 			memcpy(cb->data, clipboard_image->data + 14, data_size);

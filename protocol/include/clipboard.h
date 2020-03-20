@@ -1,6 +1,10 @@
 #ifndef CLIPBOARD_H
 #define CLIPBOARD_H
 
+#if defined(_WIN32)
+#pragma warning(disable: 4200)
+#endif
+
 #include <stdbool.h>
 
 typedef enum ClipboardType
@@ -24,5 +28,9 @@ void SetClipboard( ClipboardData* cb );
 void StartTrackingClipboardUpdates();
 
 bool hasClipboardUpdated();
+
+#if defined(_WIN32)
+#pragma warning(default: 4200)
+#endif
 
 #endif // CLIPBOARD_H

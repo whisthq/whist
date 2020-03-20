@@ -102,24 +102,31 @@ void nack(int id, int index) {
 }
 
 void updateWidthAndHeight(int width, int height) {
-    struct SwsContext* sws_ctx = NULL;
-    enum AVPixelFormat input_fmt = AV_PIX_FMT_YUV420P;
-
-    video_decoder_t* decoder = create_video_decoder(width, height, output_width, output_height, USE_HARDWARE);
+    video_decoder_t* decoder = create_video_decoder(width, height, USE_HARDWARE);
     videoContext.decoder = decoder;
+    if( !decoder )
+    {
+        mprintf( "ERROR: Decoder could not be created!\n" );
+        exit( -1 );
+    }
 
+    enum AVPixelFormat input_fmt = AV_PIX_FMT_YUV420P;
     if(decoder->type != DECODE_TYPE_SOFTWARE) {
         input_fmt = AV_PIX_FMT_NV12;
     }
 
-    sws_ctx = sws_getContext(width, height,
-        input_fmt, output_width, output_height,
-        AV_PIX_FMT_YUV420P,
-        SWS_BILINEAR,
-        NULL,
-        NULL,
-        NULL
-    );
+    struct SwsContext* sws_ctx = NULL;
+    if( input_fmt != AV_PIX_FMT_YUV420P )
+    {
+        sws_ctx = sws_getContext( width, height,
+                                  input_fmt, output_width, output_height,
+                                  AV_PIX_FMT_YUV420P,
+                                  SWS_BILINEAR,
+                                  NULL,
+                                  NULL,
+                                  NULL
+        );
+    }
     videoContext.sws = sws_ctx;
 
     server_width = width;
@@ -174,24 +181,31 @@ int32_t RenderScreen(void* opaque) {
             rendering = false;
             continue;
         }
-
-        sws_scale(videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
-            videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, videoContext.data,
-            videoContext.linesize);
+          
+        if( videoContext.sws )
+        {
+            sws_scale( videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
+                       videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, videoContext.data,
+                       videoContext.linesize );
+        } else
+        {
+            memcpy( videoContext.data, videoContext.decoder->sw_frame->data, sizeof( videoContext.data ));
+            memcpy( videoContext.linesize, videoContext.decoder->sw_frame->linesize, sizeof( videoContext.linesize ) );
+        }
 
         SDL_UpdateYUVTexture(
             videoContext.texture,
             NULL,
             videoContext.data[0],
-            output_width,
+            videoContext.linesize[0],
             videoContext.data[1],
-            output_width / 2,
+            videoContext.linesize[1],
             videoContext.data[2],
-            output_width / 2
+            videoContext.linesize[2]
         );
 
         // Set cursor to frame's desired cursor type
-        if((volatile FractalCursorID) frame->cursor.cursor_id != last_cursor) {
+        if((FractalCursorID) frame->cursor.cursor_id != last_cursor) {
             if(cursor) {
                 SDL_FreeCursor((SDL_Cursor *) cursor);
             }
@@ -211,7 +225,6 @@ int32_t RenderScreen(void* opaque) {
             cursor_state = frame->cursor.cursor_state;
         }
 
-        SDL_RenderClear((SDL_Renderer *) renderer);
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
         SDL_RenderCopy((SDL_Renderer *) renderer, videoContext.texture, NULL, NULL);
         SDL_RenderPresent((SDL_Renderer *) renderer);
@@ -282,12 +295,12 @@ int last_rendered_index = 0;
 void updateVideo() {
     // Get statistics from the last 3 seconds of data
     if (GetTimer(VideoData.frame_timer) > 3) {
-        double time = GetTimer(VideoData.frame_timer);
+        // double time = GetTimer(VideoData.frame_timer);
 
         // Calculate statistics
         int expected_frames = VideoData.max_id - VideoData.last_statistics_id;
-        double fps = 1.0 * expected_frames / time;
-        double mbps = VideoData.bytes_transferred * 8.0 / 1024.0 / 1024.0 / time;
+        //double fps = 1.0 * expected_frames / time; // TODO: finish birate throttling alg
+        //double mbps = VideoData.bytes_transferred * 8.0 / 1024.0 / 1024.0 / time; // TODO bitrate throttle
         double receive_rate = expected_frames == 0 ? 1.0 : 1.0 * VideoData.frames_received / expected_frames;
         double dropped_rate = 1.0 - receive_rate;
 

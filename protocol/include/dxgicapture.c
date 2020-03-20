@@ -27,12 +27,10 @@ void PrintMemoryInfo()
     CloseHandle(hProcess);
 }
 
-#include "dxgicapture.h"
-
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
+int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height) {
     mprintf( "Creating capture device for resolution %dx%d...\n", width, height );
   memset(device, 0, sizeof(struct CaptureDevice));
 
@@ -76,7 +74,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
     DXGI_ADAPTER_DESC1 desc;
     hardware->adapter = adapters[i];
     hr = hardware->adapter->lpVtbl->GetDesc1(hardware->adapter, &desc);
-    //mprintf("Adapter %d: %s\n", i, desc.Description);
+    mprintf("Adapter %d: %S\n", i, desc.Description);
   }
 
   // Set used GPU
@@ -87,9 +85,9 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   hardware->adapter = adapters[USE_GPU];
             
   // GET ALL MONITORS
-  for (int i = 0; i < num_adapters; i++) {
-      for (int j = 0; hardware->adapter->lpVtbl->EnumOutputs(adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND; j++) {
-          //mprintf("Found monitor %d on adapter %lu\n", j, i);
+  for (i = 0; i < num_adapters; i++) {
+      for (j = 0; hardware->adapter->lpVtbl->EnumOutputs(adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND; j++) {
+          mprintf("Found monitor %d on adapter %lu\n", j, i);
           if (i == USE_GPU) {
               if (j == MAX_NUM_OUTPUTS) {
                   mprintf("Too many adapters!\n");
@@ -131,13 +129,13 @@ int CreateCaptureDevice(struct CaptureDevice *device, int width, int height) {
   DXGI_MODE_DESC* pDescs = malloc(sizeof( DXGI_MODE_DESC ) * num);
   DXGI_MODE_DESC* finalDesc = NULL;
   hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num, pDescs );
-  for( int i = 0; i < num; i++ )
+  for( UINT k = 0; k < num; k++ )
   {
-      mprintf( "Possible Resolution: %dx%d\n", pDescs[i].Width, pDescs[i].Height );
-      if( pDescs[i].Width == width && pDescs[i].Height == height )
+      mprintf( "Possible Resolution: %dx%d\n", pDescs[k].Width, pDescs[k].Height );
+      if( pDescs[k].Width == width && pDescs[k].Height == height )
       {
           mprintf( "Match found for %dx%d!\n", width, height );
-          finalDesc = &pDescs[i];
+          finalDesc = &pDescs[k];
       }
   }
 
@@ -316,6 +314,7 @@ int CaptureScreen(struct CaptureDevice *device) {
             // Error already printed inside of CreateTexture
             return -1;
         }
+
         device->D3D11context->lpVtbl->CopySubresourceRegion(device->D3D11context, (ID3D11Resource*)screenshot->staging_texture, 0, 0, 0, 0,
                                                 (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
 
@@ -324,7 +323,9 @@ int CaptureScreen(struct CaptureDevice *device) {
             mprintf("Query Interface Failed! 0x%X %d\n", hr, GetLastError());
             return -1;
         }
+
         hr = screenshot->surface->lpVtbl->Map(screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
+
         if (FAILED(hr)) {
             mprintf("Map Failed!\n");
             return -1;
@@ -339,7 +340,7 @@ int CaptureScreen(struct CaptureDevice *device) {
         device->did_use_map_desktop_surface = true;
     }
 
-    device->frame_data = screenshot->mapped_rect.pBits;
+    device->frame_data = (char *) screenshot->mapped_rect.pBits;
     return accumulated_frames;
 }
 

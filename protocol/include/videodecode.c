@@ -1,3 +1,8 @@
+#if defined(_WIN32)
+#pragma warning(disable : 4706)  // assignment within conditional warning
+#pragma warning(disable : 4100)  // unused parameter warning
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -39,8 +44,7 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx,
     return AV_PIX_FMT_NONE;
 }
 
-int try_setup_video_decoder(int in_width, int in_height, int out_width,
-                            int out_height, video_decoder_t *decoder) {
+int try_setup_video_decoder(int width, int height, video_decoder_t *decoder) {
     if (decoder->type == DECODE_TYPE_SOFTWARE) {
         mprintf("Trying software decoder\n");
         decoder->codec = avcodec_find_decoder_by_name("h264");
@@ -52,8 +56,8 @@ int try_setup_video_decoder(int in_width, int in_height, int out_width,
 
         decoder->sw_frame = (AVFrame *)av_frame_alloc();
         decoder->sw_frame->format = AV_PIX_FMT_YUV420P;
-        decoder->sw_frame->width = in_width;
-        decoder->sw_frame->height = in_height;
+        decoder->sw_frame->width = width;
+        decoder->sw_frame->height = height;
         decoder->sw_frame->pts = 0;
 
         if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
@@ -84,8 +88,8 @@ int try_setup_video_decoder(int in_width, int in_height, int out_width,
 
         frames_ctx->format = AV_PIX_FMT_QSV;
         frames_ctx->sw_format = AV_PIX_FMT_NV12;
-        frames_ctx->width = in_width;
-        frames_ctx->height = in_height;
+        frames_ctx->width = width;
+        frames_ctx->height = height;
         frames_ctx->initial_pool_size = 32;
         frames_hwctx->frame_type = MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
@@ -185,8 +189,7 @@ int try_setup_video_decoder(int in_width, int in_height, int out_width,
     return 0;
 }
 
-video_decoder_t *create_video_decoder(int in_width, int in_height,
-                                      int out_width, int out_height,
+video_decoder_t *create_video_decoder(int width, int height,
                                       bool use_hardware) {
     video_decoder_t *decoder =
         (video_decoder_t *)malloc(sizeof(video_decoder_t));
@@ -206,8 +209,7 @@ video_decoder_t *create_video_decoder(int in_width, int in_height,
         for (int i = 0;; ++i) {
             decoder->type = decoder_precedence[i];
             mprintf("Video decoder: %d %d\n", i, decoder->type);
-            res = try_setup_video_decoder(in_width, in_height, out_width,
-                                          out_height, decoder);
+            res = try_setup_video_decoder(width, height, decoder);
             if (res < 0) {
                 mprintf("Video decoder: Failed, trying next decoder\n");
             } else if (!res) {
@@ -221,8 +223,7 @@ video_decoder_t *create_video_decoder(int in_width, int in_height,
     } else {
         mprintf("Video Decoder: NO HARDWARE\n");
         decoder->type = DECODE_TYPE_SOFTWARE;
-        if (!try_setup_video_decoder(in_width, in_height, out_width, out_height,
-                                     decoder)) {
+        if (!try_setup_video_decoder(width, height, decoder)) {
             mprintf("Video decoder: Software decoder failed!\n");
             return NULL;
         } else {
@@ -266,6 +267,7 @@ void destroy_video_decoder(video_decoder_t *decoder) {
 
 /// @brief decode a frame using the decoder decoder
 /// @details decode an encoded frame under YUV color format into RGB frame
+<<<<<<< HEAD
 bool video_decoder_decode(video_decoder_t *decoder, void *buffer,
                           int buffer_size) {
     // init packet to prepare decoding
@@ -304,11 +306,53 @@ bool video_decoder_decode(video_decoder_t *decoder, void *buffer,
             mprintf("Failed to avcodec_send_packet!\n");
             return false;
         }
+=======
+bool video_decoder_decode(video_decoder_t *decoder, void *buffer,
+                          int buffer_size) {
+    static double total_time = 0.0;
+    static int num_times = 0;
+
+    clock t;
+    StartTimer(&t);
+
+    // init packet to prepare decoding
+    // av_log_set_level(AV_LOG_ERROR);
+    // av_log_set_callback(swap_decoder);
+    av_init_packet(&decoder->packet);
+
+    // copy the received packet back into the decoder AVPacket
+    // memcpy(&decoder->packet.data, &buffer, buffer_size);
+    decoder->packet.data = buffer;
+    decoder->packet.size = buffer_size;
+    // decode the frame
+    if (avcodec_send_packet(decoder->context, &decoder->packet) < 0) {
+        mprintf("Failed to avcodec_send_packet!\n");
+        return false;
+    }
+
+    // If frame was computed on the CPU
+    if (decoder->type == DECODE_TYPE_QSV ||
+        decoder->type == DECODE_TYPE_SOFTWARE) {
+        if (avcodec_receive_frame(decoder->context, decoder->sw_frame) < 0) {
+            mprintf("Failed to avcodec_receive_frame!\n");
+            return false;
+        }
+
+        // av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
+
+    } else {
+        // If frame was computed on the GPU
+        if (avcodec_receive_frame(decoder->context, decoder->hw_frame) < 0) {
+            mprintf("Failed to avcodec_receive_frame!\n");
+            return false;
+        }
+>>>>>>> 27e4ab0987939d10824167103d3d4b8a0fedefbf
 
         if (avcodec_receive_frame(decoder->context, decoder->hw_frame) < 0) {
             mprintf("Failed to avcodec_receive_frame!\n");
             return false;
         }
+<<<<<<< HEAD
 
         if (decoder->hw_frame->format == hw_pix_fmt) {
             if (av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame,
@@ -317,9 +361,32 @@ bool video_decoder_decode(video_decoder_t *decoder, void *buffer,
                 return false;
             }
         }
+=======
+    }
+    else {
+        mprintf("Incorrect hw frame format!\n");
+        return false;
+>>>>>>> 27e4ab0987939d10824167103d3d4b8a0fedefbf
     }
 
     av_packet_unref(&decoder->packet);
 
+<<<<<<< HEAD
     return true;
+=======
+    double time = GetTimer(t);
+    // mprintf( "Decode Time: %f\n", time );
+    if (time < 0.020) {
+        total_time += time;
+        num_times++;
+        //    mprintf( "Avg Decode Time: %f\n", total_time / num_times );
+    }
+
+    return true;
+>>>>>>> 27e4ab0987939d10824167103d3d4b8a0fedefbf
 }
+
+#if defined(_WIN32)
+#pragma warning(default : 4706)
+#pragma warning(default : 4100)
+#endif

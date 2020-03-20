@@ -76,6 +76,10 @@ void StartAudioDevice(wasapi_device *audio_device) {
         lTimeBetweenFires,
         NULL, NULL, FALSE
     );
+    if (bOK == 0) {
+        mprintf("Failed to SetWaitableTimer\n");
+        return;
+    }
 
     audio_device->pAudioClient->lpVtbl->Start(audio_device->pAudioClient);
 }
