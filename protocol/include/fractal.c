@@ -2,6 +2,7 @@
 #if defined(_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#pragma warning(disable: 4100) // unused parameter warning
 #endif
 
 #include <stdint.h>
@@ -609,3 +610,8 @@ uint32_t Hash(void* buf, size_t len)
 	hash += (hash << 15);
 	return hash;
 }
+
+
+#if defined(_WIN32)
+#pragma warning(default: 4100)
+#endif
