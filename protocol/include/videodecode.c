@@ -275,13 +275,14 @@ bool video_decoder_decode(video_decoder_t*decoder, void *buffer, int buffer_size
   av_packet_unref(&decoder->packet);
 
   double time = GetTimer( t );
-  mprintf( "Decode Time: %f\n", time );
+  //mprintf( "Decode Time: %f\n", time );
   if( time < 0.020 )
   {
       total_time += time;
       num_times++;
-      mprintf( "Avg Decode Time: %f\n", total_time / num_times );
+  //    mprintf( "Avg Decode Time: %f\n", total_time / num_times );
   }
+
   return true;
 }
 

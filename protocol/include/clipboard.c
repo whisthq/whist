@@ -108,12 +108,11 @@ ClipboardData* GetClipboard()
 		case CF_TEXT:
 			cb->type = CLIPBOARD_TEXT;
 			// Read the contents of lptstr which just a pointer to the string.
-			mprintf( "CLIPBOARD STRING: %s\n", cb->data );
-			mprintf( "Len %d\n Strlen %d\n", cb->size, strlen( cb->data ) );
+			//mprintf( "CLIPBOARD STRING: %s\n", cb->data );
 			break;
 		case CF_DIB:
 			cb->type = CLIPBOARD_IMAGE;
-			mprintf( "Dib! Size: %d\n", cb->size );
+			//mprintf( "Clipboard bitmap received! Size: %d\n", cb->size );
 			break;
 		default:
 			cb->type = CLIPBOARD_NONE;

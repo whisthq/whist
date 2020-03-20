@@ -225,7 +225,6 @@ int32_t RenderScreen(void* opaque) {
             cursor_state = frame->cursor.cursor_state;
         }
 
-        SDL_RenderClear((SDL_Renderer *) renderer);
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
         SDL_RenderCopy((SDL_Renderer *) renderer, videoContext.texture, NULL, NULL);
         SDL_RenderPresent((SDL_Renderer *) renderer);

@@ -498,6 +498,7 @@ void SendCapturedKey( FractalKeycode key, int type, int time)
 #if defined(_WIN32)
 // Function to capture keyboard strokes and block them if they encode special key combinations,
 // with intent to redirect them to SendCapturedKey so that the keys can still be streamed over to the host
+
 HHOOK mule;
 HHOOK g_hKeyboardHook;
 BOOL g_bFullscreen;
