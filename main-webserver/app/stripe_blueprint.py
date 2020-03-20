@@ -12,6 +12,7 @@ def payment(action):
 
 		token = body['token']
 		email = body['email']
+		location = body['location']
 
 		customers = fetchCustomers()
 		for customer in customers:
@@ -29,7 +30,7 @@ def payment(action):
 		  items = [{"plan": "plan_GwV769WQdZOUJR"}]
 		)
 
-		insertCustomer(email, new_customer['id'], new_subscription['id'])
+		insertCustomer(email, new_customer['id'], new_subscription['id'], location)
 
 		return jsonify({'status': 200}), 200
 
