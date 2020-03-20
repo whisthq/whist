@@ -1,6 +1,10 @@
 #include "clipboard.h"
 #include "fractal.h"
 
+#if defined(_WIN32)
+	#include "Shellapi.h"
+#endif
+
 #if defined __APPLE__
 	#include "clipboard_osx.h"
 	bool clipboardHasImage;
@@ -66,6 +70,7 @@ ClipboardData* GetClipboard()
 	int cf_types[] = {
 		CF_TEXT,
 		CF_DIB,
+		CF_HDROP,
 	};
 
 	int cf_type = -1;
@@ -114,6 +119,10 @@ ClipboardData* GetClipboard()
 		case CF_DIB:
 			cb->type = CLIPBOARD_IMAGE;
 			mprintf( "Dib! Size: %d\n", cb->size );
+			break;
+		case CF_HDROP:
+			mprintf( "Hdrop! Size: %d\n", cb->size );
+			HDROP hdrop = *(HDROP*)(cb->data);
 			break;
 		default:
 			cb->type = CLIPBOARD_NONE;
