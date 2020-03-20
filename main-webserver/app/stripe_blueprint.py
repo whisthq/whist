@@ -24,12 +24,12 @@ def payment(action):
 		  source = token
 		)
 
-		stripe.Subscription.create(
+		new_subscription = stripe.Subscription.create(
 		  customer = new_customer['id'],
 		  items = [{"plan": "plan_GwV769WQdZOUJR"}]
 		)
 
-		insertCustomer(email, new_customer['id'])
+		insertCustomer(email, new_customer['id'], new_subscription['id'])
 
 		return jsonify({'status': 200}), 200
 

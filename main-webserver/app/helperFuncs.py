@@ -379,14 +379,15 @@ def fetchCustomers():
                 'id': customer[1]} for customer in customers]
         return out
 
-def insertCustomer(email, customer_id):
+def insertCustomer(email, customer_id, subscription_id):
     command = text("""
-        INSERT INTO customers("email", "id") 
-        VALUES(:email, :id)
+        INSERT INTO customers("email", "id", "subscription") 
+        VALUES(:email, :id, :subscription)
         """)
 
     params = {'email': email, 
-              'id': customer_id}
+              'id': customer_id,
+              'subscription': subscription_id}
 
     with engine.connect() as conn:
         conn.execute(command, **params)
