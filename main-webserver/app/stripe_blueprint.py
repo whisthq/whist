@@ -27,7 +27,7 @@ def payment(action):
 
 		new_subscription = stripe.Subscription.create(
 		  customer = new_customer['id'],
-		  items = [{"plan": "plan_GwV769WQdZOUJR"}]
+		  items = [{"plan": "plan_Gwmtik1r6PD8Dw"}]
 		)
 
 		insertCustomer(email, new_customer['id'], new_subscription['id'], location)
