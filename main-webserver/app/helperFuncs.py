@@ -220,7 +220,11 @@ def registerUser(username, password):
         """)
     params = {'userName': username, 'password': pwd_token}
     with engine.connect() as conn:
-        conn.execute(command, **params)
+        try:
+            conn.execute(command, **params)
+            return 200
+        except:
+            return 400
 
 def resetPassword(username, password):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))

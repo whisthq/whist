@@ -57,8 +57,8 @@ def account(action):
 		return jsonify({'verified': verified}), 200
 	elif action == 'register':
 		username, password = body['username'], body['password']
-		registerUser(username, password)
-		return jsonify({'status': 200}), 200
+		status = registerUser(username, password)
+		return jsonify({'status': status}), status
 
 
 @account_bp.route('/form/<action>', methods = ['POST'])
