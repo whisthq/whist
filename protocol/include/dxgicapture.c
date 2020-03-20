@@ -116,56 +116,57 @@ int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height) {
   }
   hardware->output = outputs[USE_MONITOR];
 
-  UINT num = 0;
+  /*
+  UINT num_display_modes = 0;
   DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
   UINT flags = 0;
-  hr = hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num, 0 );
+  hr = hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num_display_modes, 0 );
   if( FAILED( hr ) )
   {
-      mprintf( "hr: %X\n", hr );
+      mprintf( "Could not GetDisplayModeList: %X\n", hr );
   }
-  mprintf( "hr: %d\n", hr );
-  mprintf( "Num: %d\n", num );
+
   DXGI_MODE_DESC* pDescs = malloc(sizeof( DXGI_MODE_DESC ) * num);
-  DXGI_MODE_DESC* finalDesc = NULL;
+  DXGI_MODE_DESC finalDesc = NULL;
+  bool matchFound = false;
   hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num, pDescs );
-  for( UINT k = 0; k < num; k++ )
+  for( UINT k = 0; k < num_display_modes; k++ )
   {
       mprintf( "Possible Resolution: %dx%d\n", pDescs[k].Width, pDescs[k].Height );
       if( pDescs[k].Width == width && pDescs[k].Height == height )
       {
           mprintf( "Match found for %dx%d!\n", width, height );
-          finalDesc = &pDescs[k];
+          memcpy( &finalDesc, &pDescs[k], sizeof( DXGI_MODE_DESC ) );
+          matchFound = true;
       }
   }
+  free( pDescs );
+  */
 
-  if( true )
-  {
-      HMONITOR hMonitor = output_desc.Monitor;
-      MONITORINFOEX monitorInfo;
-      monitorInfo.cbSize = sizeof( MONITORINFOEX );
-      GetMonitorInfo( hMonitor, (LPMONITORINFO) &monitorInfo );
+    HMONITOR hMonitor = output_desc.Monitor;
+    MONITORINFOEX monitorInfo;
+    monitorInfo.cbSize = sizeof( MONITORINFOEX );
+    GetMonitorInfo( hMonitor, (LPMONITORINFO) &monitorInfo );
 
-      DEVMODE dm;
-      memset( &dm, 0, sizeof( dm ) );
-      dm.dmSize = sizeof( dm );
-      mprintf( "Device Name: %s\n", monitorInfo.szDevice );
-      if( 0 != EnumDisplaySettings( monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &dm ) )
-      {
-          if( dm.dmPelsWidth != width || dm.dmPelsHeight != height )
-          {
-              dm.dmPelsWidth = width;
-              dm.dmPelsHeight = height;
-              dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+    DEVMODE dm;
+    memset( &dm, 0, sizeof( dm ) );
+    dm.dmSize = sizeof( dm );
+    mprintf( "Device Name: %s\n", monitorInfo.szDevice );
+    if( 0 != EnumDisplaySettings( monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &dm ) )
+    {
+        if( dm.dmPelsWidth != width || dm.dmPelsHeight != height )
+        {
+            dm.dmPelsWidth = width;
+            dm.dmPelsHeight = height;
+            dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
 
-              int ret = ChangeDisplaySettingsEx( monitorInfo.szDevice, &dm, NULL, CDS_SET_PRIMARY | CDS_UPDATEREGISTRY, 0 );
-              mprintf( "ChangeDisplaySettingsCode: %d\n", ret );
-          }
-      } else
-      {
-          mprintf( "Failed to update DisplaySettings\n" );
-      }
-  }
+            int ret = ChangeDisplaySettingsEx( monitorInfo.szDevice, &dm, NULL, CDS_SET_PRIMARY | CDS_UPDATEREGISTRY, 0 );
+            mprintf( "ChangeDisplaySettingsCode: %d\n", ret );
+        }
+    } else
+    {
+        mprintf( "Failed to update DisplaySettings\n" );
+    }
 
   hr = D3D11CreateDevice(
       (IDXGIAdapter *) hardware->adapter,

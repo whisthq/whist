@@ -134,6 +134,8 @@ void updateWidthAndHeight(int width, int height) {
 }
 
 int32_t RenderScreen(void* opaque) {
+    opaque;
+
     mprintf("RenderScreen running on Thread %d\n", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
@@ -225,7 +227,6 @@ int32_t RenderScreen(void* opaque) {
             cursor_state = frame->cursor.cursor_state;
         }
 
-        SDL_RenderClear((SDL_Renderer *) renderer);
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
         SDL_RenderCopy((SDL_Renderer *) renderer, videoContext.texture, NULL, NULL);
         SDL_RenderPresent((SDL_Renderer *) renderer);
@@ -296,7 +297,7 @@ int last_rendered_index = 0;
 void updateVideo() {
     // Get statistics from the last 3 seconds of data
     if (GetTimer(VideoData.frame_timer) > 3) {
-        double time = GetTimer(VideoData.frame_timer);
+        //double time = GetTimer(VideoData.frame_timer);
 
         // Calculate statistics
         int expected_frames = VideoData.max_id - VideoData.last_statistics_id;

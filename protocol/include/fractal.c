@@ -426,7 +426,8 @@ void destroyMultiThreadedPrintf() {
 }
 
 void MultiThreadedPrintf(void* opaque) {
-	int produced_in_advance = 0;
+	opaque;
+
 	while (true) {
 		// Wait until signaled by printf to begin running
 		SDL_SemWait((SDL_sem *) multithreadedprintf_semaphore);
@@ -610,3 +611,8 @@ uint32_t Hash(void* buf, size_t len)
 	hash += (hash << 15);
 	return hash;
 }
+
+
+#if defined(_WIN32)
+#pragma warning(default: 4100)
+#endif

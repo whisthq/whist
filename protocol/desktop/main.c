@@ -278,7 +278,6 @@ static int32_t ReceivePackets(void* opaque) {
     clock recvfrom_timer;
     clock update_video_timer;
     clock update_audio_timer;
-    clock hash_timer;
     clock video_timer;
     clock audio_timer;
     clock message_timer;
@@ -498,6 +497,7 @@ void SendCapturedKey( FractalKeycode key, int type, int time)
 #if defined(_WIN32)
 // Function to capture keyboard strokes and block them if they encode special key combinations,
 // with intent to redirect them to SendCapturedKey so that the keys can still be streamed over to the host
+
 HHOOK mule;
 HHOOK g_hKeyboardHook;
 BOOL g_bFullscreen;
@@ -582,9 +582,6 @@ int initSDL() {
 
     int full_width = get_native_screen_width();
     int full_height = get_native_screen_height();
-
-    mprintf( "WIDTH: %d\n", full_width );
-    mprintf( "HEIGHT: %d\n", full_height );
 
     if (output_width < 0) {
         output_width = full_width;
