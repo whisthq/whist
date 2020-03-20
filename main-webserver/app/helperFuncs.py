@@ -392,3 +392,11 @@ def insertCustomer(email, customer_id, subscription_id):
 
     with engine.connect() as conn:
         conn.execute(command, **params)
+
+def deleteCustomer(email):
+    command = text("""
+        DELETE FROM customers WHERE "email" = :email 
+        """)
+    params = {'email': email}
+    with engine.connect() as conn:
+        conn.execute(command, **params)

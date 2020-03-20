@@ -45,3 +45,16 @@ def payment(action):
 				return jsonify({'status': 200, 'subscription': payload}), 200
 
 		return jsonify({'status': 400}), 400
+
+	elif action == 'cancel':
+		body = request.get_json()
+
+		email = body['email']
+		customers = fetchCustomers()
+		for customer in customers:
+			if email == customer['email']:
+				subscription = customer['subscription']
+				payload = stripe.Subscription.delete(subscription)
+				deleteCustomer(email)
+				return jsonify({'status': 200}), 200
+		return jsonify({'status': 400}), 400
