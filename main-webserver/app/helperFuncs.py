@@ -376,7 +376,8 @@ def fetchCustomers():
     with engine.connect() as conn:
         customers = conn.execute(command, **params).fetchall()
         out = [{'email': customer[0], 
-                'id': customer[1]} for customer in customers]
+                'id': customer[1],
+                'subscription': customer[2]} for customer in customers]
         return out
 
 def insertCustomer(email, customer_id, subscription_id):

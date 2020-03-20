@@ -40,6 +40,8 @@ def payment(action):
 		customers = fetchCustomers()
 		for customer in customers:
 			if email == customer['email']:
-				return jsonify({'status': 200}), 200
+				subscription = customer['subscription']
+				payload = stripe.Subscription.retrieve(subscription)
+				return jsonify({'status': 200, 'subscription': payload}), 200
 
 		return jsonify({'status': 400}), 400
