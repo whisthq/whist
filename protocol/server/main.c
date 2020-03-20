@@ -90,7 +90,6 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_
     int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
 
     // Encrypt the packet
-    struct RTPPacket encrypted_packet;
     int encrypt_len = encrypt_packet( packet, packet_size, (struct RTPPacket *) (sizeof(int) + encrypted_single_packet_buf), (unsigned char *) PRIVATE_KEY );
     *((int*)encrypted_single_packet_buf) = encrypt_len;
 
@@ -225,7 +224,7 @@ static int32_t SendVideo(void* opaque) {
 
     int consecutive_capture_screen_errors = 0;
 
-    int defaultCounts = 1;
+//    int defaultCounts = 1;
 
     clock world_timer;
     StartTimer(&world_timer);
@@ -309,12 +308,12 @@ static int32_t SendVideo(void* opaque) {
                 if (previous_frame_size > 0) {
                     double frame_time = GetTimer(previous_frame_time);
                     StartTimer(&previous_frame_time);
-                    double mbps = previous_frame_size * 8.0 / 1024.0 / 1024.0 / frame_time;
+                    // double mbps = previous_frame_size * 8.0 / 1024.0 / 1024.0 / frame_time; TODO: bitrate throttling alg
                     // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime = max_mbps
                     // previousFrameSize * 8.0 / 1024.0 / 1024.0 / max_mbps = IdealTime
                     double transmit_time = previous_frame_size * 8.0 / 1024.0 / 1024.0 / max_mbps;
 
-                    double average_frame_size = 1.0 * bytes_tested_frames / bitrate_tested_frames;
+                    // double average_frame_size = 1.0 * bytes_tested_frames / bitrate_tested_frames;
                     double current_trasmit_time = previous_frame_size * 8.0 / 1024.0 / 1024.0 / max_mbps;
                     double current_fps = 1.0 / current_trasmit_time;
 
@@ -362,7 +361,7 @@ static int32_t SendVideo(void* opaque) {
                     frames_since_first_iframe++;
                     id++;
                     previous_frame_size = encoder->packet.size;
-                    double server_frame_time = GetTimer(server_frame_timer);
+                    // double server_frame_time = GetTimer(server_frame_timer);
                     //mprintf("Server Frame Time for ID %d: %f\n", id, server_frame_time);
                 }
             }
