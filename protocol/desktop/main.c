@@ -602,7 +602,7 @@ int initSDL() {
         SDL_WINDOWPOS_CENTERED,
         output_width,
         output_height,
-        (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALWAYS_ON_TOP : 0)
+        (is_fullscreen ? SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP : 0)
     );
 
     if (!window) {

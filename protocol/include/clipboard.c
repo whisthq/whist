@@ -114,7 +114,6 @@ ClipboardData* GetClipboard()
 		case CF_DIB:
 			cb->type = CLIPBOARD_IMAGE;
 			mprintf( "Dib! Size: %d\n", cb->size );
-
 			break;
 		default:
 			cb->type = CLIPBOARD_NONE;

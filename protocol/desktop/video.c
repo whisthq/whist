@@ -102,16 +102,20 @@ void nack(int id, int index) {
 }
 
 void updateWidthAndHeight(int width, int height) {
-    struct SwsContext* sws_ctx = NULL;
-
     video_decoder_t* decoder = create_video_decoder(width, height, USE_HARDWARE);
     videoContext.decoder = decoder;
+    if( !decoder )
+    {
+        mprintf( "ERROR: Decoder could not be created!\n" );
+        exit( -1 );
+    }
 
     enum AVPixelFormat input_fmt = AV_PIX_FMT_YUV420P;
     if(decoder->type != DECODE_TYPE_SOFTWARE) {
         input_fmt = AV_PIX_FMT_NV12;
     }
 
+    struct SwsContext* sws_ctx = NULL;
     if( input_fmt != AV_PIX_FMT_YUV420P )
     {
         sws_ctx = sws_getContext( width, height,
