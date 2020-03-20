@@ -4,7 +4,7 @@ from .helperFuncs import *
 stripe_bp = Blueprint('stripe_bp', __name__)
 
 @stripe_bp.route('/stripe/<action>', methods = ['POST'])
-def stripe(action):
+def payment(action):
 	stripe.api_key = os.getenv('STRIPE_SECRET') 
 
 	if action == 'charge':
