@@ -278,7 +278,6 @@ static int32_t ReceivePackets(void* opaque) {
     clock recvfrom_timer;
     clock update_video_timer;
     clock update_audio_timer;
-    clock hash_timer;
     clock video_timer;
     clock audio_timer;
     clock message_timer;

@@ -30,19 +30,22 @@ static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type)
     return err;
 }
 
-static enum AVPixelFormat get_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts) {
+enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat *pix_fmts) {
+    ctx;
+
     const enum AVPixelFormat *p;
 
     for (p = pix_fmts; *p != -1; p++) {
-        if (*p == hw_pix_fmt)
-            mprintf("Hardware format found\n");
+        if( *p == hw_pix_fmt )
+        {
+            mprintf( "Hardware format found\n" );
             return *p;
+        }
     }
 
-    mprintf((const char *) stderr, "Failed to get HW surface format.\n");
+    mprintf("Failed to get HW surface format.\n");
     return AV_PIX_FMT_NONE;
 }
-
 
 video_decoder_t* create_video_decoder(int width, int height, bool use_hardware) {
   video_decoder_t* decoder = (video_decoder_t*) malloc(sizeof(video_decoder_t));

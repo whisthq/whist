@@ -134,6 +134,8 @@ void updateWidthAndHeight(int width, int height) {
 }
 
 int32_t RenderScreen(void* opaque) {
+    opaque;
+
     mprintf("RenderScreen running on Thread %d\n", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
@@ -295,7 +297,7 @@ int last_rendered_index = 0;
 void updateVideo() {
     // Get statistics from the last 3 seconds of data
     if (GetTimer(VideoData.frame_timer) > 3) {
-        double time = GetTimer(VideoData.frame_timer);
+        //double time = GetTimer(VideoData.frame_timer);
 
         // Calculate statistics
         int expected_frames = VideoData.max_id - VideoData.last_statistics_id;

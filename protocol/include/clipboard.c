@@ -9,7 +9,6 @@
 
 static int last_clipboard_sequence_number = -1;
 static char clipboard_buf[9000000];
-static ClipboardData* cb;
 
 void StartTrackingClipboardUpdates()
 {
@@ -52,7 +51,7 @@ bool hasClipboardUpdated()
 
 ClipboardData* GetClipboard()
 {
-	cb = (ClipboardData *) clipboard_buf;
+	ClipboardData* cb = (ClipboardData *) clipboard_buf;
 
 	cb->size = 0;
 	cb->type = CLIPBOARD_NONE;

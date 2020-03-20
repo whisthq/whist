@@ -426,7 +426,8 @@ void destroyMultiThreadedPrintf() {
 }
 
 void MultiThreadedPrintf(void* opaque) {
-	int produced_in_advance = 0;
+	opaque;
+
 	while (true) {
 		// Wait until signaled by printf to begin running
 		SDL_SemWait((SDL_sem *) multithreadedprintf_semaphore);
