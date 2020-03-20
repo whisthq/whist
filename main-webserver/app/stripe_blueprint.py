@@ -26,6 +26,6 @@ def charge():
 	  items = [{"plan": "plan_GwV769WQdZOUJR"}]
 	)
 
-	insert_customer(email, new_customer['id'])
+	insertCustomer(email, new_customer['id'])
 
 	return jsonify({'status': 200}), 200
