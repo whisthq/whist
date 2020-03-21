@@ -474,51 +474,18 @@ static int32_t SendAudio(void* opaque) {
 }
 #endif
 
-#ifdef _WIN32
-void runcmd( LPWSTR cmdline )
-{
-    STARTUPINFOW si;
-    PROCESS_INFORMATION pi;
-
-    ZeroMemory( &si, sizeof( si ) );
-    si.cb = sizeof( si );
-    ZeroMemory( &pi, sizeof( pi ) );
-
-    char cmd_buf[1000];
-
-    if( strlen( (const char *) cmdline ) + 1 > sizeof(cmd_buf) )
-    {
-        mprintf( "runcmd cmdline too long!\n" );
-        return;
-    }
-
-    memcpy( cmd_buf, cmdline, strlen( (const char *) cmdline ) + 1 );
-
-    if( CreateProcessW( NULL, (LPWSTR) cmd_buf, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi ) )
-    {
-        WaitForSingleObject( pi.hProcess, INFINITE );
-        CloseHandle( pi.hProcess );
-        CloseHandle( pi.hThread );
-    }
-}
-#else
-void runcmd(const char* command) {
-    //TODO: rewrite the entire function for Unix
-}
-#endif
-
 void update() {
     mprintf( "Checking for updates...\n" );
     runcmd(
         #ifdef _WIN32
-            (LPWSTR) "powershell -command \"iwr -outf 'C:\\Program Files\\Fractal\\update.bat' https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\"" 
+            "powershell -command \"iwr -outf 'C:\\Program Files\\Fractal\\update.bat' https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\"" 
         #else
             "TODO: Linux command?"
         #endif
     );
     runcmd(
         #ifdef _WIN32
-            (LPWSTR) "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\""
+            "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\""
         #else
             "TODO: Linux command?"
         #endif

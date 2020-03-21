@@ -563,6 +563,7 @@ typedef struct Frame {
 
 /*** FRACTAL FUNCTIONS START ***/
 
+void runcmd( const char* cmdline );
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_s, int stun_timeout_ms);
 int CreateTCPContext( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_s, int stun_timeout_ms );
