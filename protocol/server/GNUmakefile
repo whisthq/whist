@@ -9,7 +9,7 @@ BIN_NAME = server
 
 # dynamic libs to link against
 DYNAMIC_LIBS = 																	\
-	../lib/ffmpeg/linux/libavcodec.so.58.100 	\
+	../lib/ffmpeg/linux/libavcodec.so.58.54.100 	\
 	../lib/ffmpeg/linux/libavdevice.so.58.8.100 	\
 	../lib/ffmpeg/linux/libavfilter.so.7.57.100 	\
 	../lib/ffmpeg/linux/libavformat.so.58.29.100 	\

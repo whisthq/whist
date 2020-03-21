@@ -2,21 +2,33 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <process.h>
 #include <windows.h>
 #include <shlwapi.h>
+#else
+//TODO: Linux headers
+#endif
+
 
 #include "../include/fractal.h"
+#ifdef _WIN32
 #include "../include/wasapicapture.h"
+#endif
 #include "../include/videoencode.h"
+#ifdef _WIN32
 #include "../include/dxgicapture.h"
 #include "../include/desktop.h"
 #include "../include/input.h"
+#endif
 #include "../include/aes.h"
 
+#ifdef _WIN32
 #pragma comment (lib, "ws2_32.lib")
+#endif
+//Linux shouldn't have this
 
 #define USE_GPU 0
 #define USE_MONITOR 0
@@ -24,11 +36,12 @@
 #define DEFAULT_WIDTH 1920
 #define DEFAULT_HEIGHT 1080
 
-volatile static bool connected;
-volatile static double max_mbps;
-volatile static int gop_size = 48;
-volatile static DesktopContext desktopContext = { 0 };
-
+static volatile bool connected;
+static volatile double max_mbps;
+static volatile int gop_size = 48;
+#ifdef _WIN32
+static volatile DesktopContext desktopContext = { 0 };
+#endif
 volatile int client_width = DEFAULT_WIDTH;
 volatile int client_height = DEFAULT_HEIGHT;
 volatile bool update_device = true;
@@ -99,8 +112,12 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type, uint8_
 
     if( sent_size < 0 )
     {
+        #ifdef _WIN32
         int error = WSAGetLastError();
         mprintf( "Unexpected Packet Error: %d\n", error );
+        #else
+        //TODO: Unix error handling
+        #endif
         return -1;
     }
     return 0; // success
@@ -183,8 +200,12 @@ int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* d
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
+            #ifdef _WIN32
             int error = WSAGetLastError();
             mprintf("Unexpected Packet Error: %d\n", error);
+            #else
+            //TODO: Linux version
+            #endif
             return -1;
         }
 
@@ -195,7 +216,7 @@ int SendPacket(struct SocketContext* context, FractalPacketType type, uint8_t* d
     return 0;
 }
 
-
+#ifdef _WIN32
 static int32_t SendVideo(void* opaque) {
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
 
@@ -369,17 +390,26 @@ static int32_t SendVideo(void* opaque) {
             ReleaseScreen(device);
         }
     }
-
+    #ifdef _WIN32
     HCURSOR new_cursor = LoadCursor(NULL, IDC_ARROW);
 
     SetSystemCursor(new_cursor, last_cursor);
-
+    #else
+    //TODO: Linux cursor instead
+    #endif
     DestroyCaptureDevice(device);
     device = NULL;
 
     return 0;
 }
+#else
+static int32_t SendVideo(void* opaque) {
+    //TODO: Linux version
+    return 0;
+}
+#endif
 
+#ifdef _WIN32
 static int32_t SendAudio(void* opaque) {
     struct SocketContext context = *(struct SocketContext*) opaque;
     int id = 1;
@@ -393,6 +423,7 @@ static int32_t SendAudio(void* opaque) {
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
     fmsg.frequency = audio_device->pwfx->nSamplesPerSec;
     SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t *) &fmsg, sizeof(fmsg), 1);
+
 
     mprintf("Audio Frequency: %d\n", audio_device->pwfx->nSamplesPerSec);
 
@@ -436,7 +467,14 @@ static int32_t SendAudio(void* opaque) {
     DestroyAudioDevice(audio_device);
     return 0;
 }
+#else
+static int32_t SendAudio(void* opaque) {
+    //TODO: The entire function must be remade, it relies heavily on windows API
+    return 0;
+}
+#endif
 
+#ifdef _WIN32
 void runcmd( LPWSTR cmdline )
 {
     STARTUPINFOW si;
@@ -463,25 +501,48 @@ void runcmd( LPWSTR cmdline )
         CloseHandle( pi.hThread );
     }
 }
+#else
+void runcmd(const char* command) {
+    //TODO: rewrite the entire function for Unix
+}
+#endif
 
 void update() {
     mprintf( "Checking for updates...\n" );
-    runcmd( (LPWSTR) "powershell -command \"iwr -outf 'C:\\Program Files\\Fractal\\update.bat' https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\"" );
-    runcmd( (LPWSTR) "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\"" );
+    runcmd(
+        #ifdef _WIN32
+            (LPWSTR) "powershell -command \"iwr -outf 'C:\\Program Files\\Fractal\\update.bat' https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\"" 
+        #else
+            "TODO: Linux command?"
+        #endif
+    );
+    runcmd(
+        #ifdef _WIN32
+            (LPWSTR) "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\""
+        #else
+            "TODO: Linux command?"
+        #endif
+   );
 }
 
 int main()
 {
     initMultiThreadedPrintf(true);
-
+    //TODO: Desktop operational for Unix as well
+    #ifdef _WIN32
     InitDesktop();
+    #endif
 
     // initialize the windows socket library if this is a windows client
+    #ifdef _WIN32
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
         return -1;
     }
+    #else
+    //TODO: Linux initialization
+    #endif
 
     while (true) {
         struct SocketContext PacketReceiveContext = { 0 };
@@ -509,9 +570,10 @@ int main()
             closesocket( PacketSendContext.s );
             continue;
         }
-
+        //TODO: Have it for Linux
+        #ifdef _WIN32
         InitDesktop();
-
+        #endif
         // Give client time to setup before sending it with packets
         SDL_Delay(150);
 
@@ -572,6 +634,7 @@ int main()
 
             if (GetTimer(last_exit_check) > 15.0 / 1000.0) {
                 // Exit file seen, time to exit
+                #ifdef _WIN32
                 if (PathFileExistsA("C:\\Program Files\\Fractal\\Exit\\exit")) {
                     mprintf("Exiting due to button press...\n");
                     FractalServerMessage fmsg_response = { 0 };
@@ -584,6 +647,9 @@ int main()
                     DeleteFileA("C:\\Program Files\\Fractal\\Exit\\exit");
                     connected = false;
                 }
+                #else
+                //TODO: Filesystem for Unix
+                #endif
                 StartTimer(&last_exit_check);
             }
 
@@ -641,13 +707,19 @@ int main()
 
             if (fmsg->type != 0) {
                 if (fmsg->type == MESSAGE_KEYBOARD || fmsg->type == MESSAGE_MOUSE_BUTTON || fmsg->type == MESSAGE_MOUSE_WHEEL || fmsg->type == MESSAGE_MOUSE_MOTION) {
+                    //TODO: Unix version missing
                     // Replay user input (keyboard or mouse presses)
+                    #ifdef _WIN32
                     ReplayUserInput(fmsg);
+                    #endif
                 }
                 else if( fmsg->type == MESSAGE_KEYBOARD_STATE )
                 {
+                    //TODO: Unix version missing
                     // Synchronize client and server keyboard state
+                    #ifdef _WIN32
                     updateKeyboardState( fmsg );
+                    #endif
                 }
                 else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
@@ -732,7 +804,9 @@ int main()
         closesocket(PacketTCPContext.s);
     }
 
+    #ifdef _WIN32
     WSACleanup();
+    #endif
 
     destroyMultiThreadedPrintf();
 
