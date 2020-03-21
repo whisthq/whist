@@ -15,9 +15,9 @@
 	#define socklen_t int
 #endif
 
-#ifdef _WIN32
 void runcmd( const char* cmdline )
 {
+#ifdef _WIN32
 	STARTUPINFOA si;
 	PROCESS_INFORMATION pi;
 
@@ -41,13 +41,10 @@ void runcmd( const char* cmdline )
 		CloseHandle( pi.hProcess );
 		CloseHandle( pi.hThread );
 	}
-}
 #else
-void runcmd( const char* command )
-{
 	//TODO: rewrite the entire function for Unix
-}
 #endif
+}
 
 int GetFmsgSize(struct FractalClientMessage* fmsg) {
 	if( fmsg->type == MESSAGE_KEYBOARD_STATE )
