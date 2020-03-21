@@ -173,7 +173,7 @@ ClipboardData* GetClipboard()
 			mprintf( "Height: %d\n", (*(int*)&cb->data[8]) );
 			// data type and length
 			cb->type = CLIPBOARD_IMAGE;
-			mprintf( "Dib! Size: %d\n", cb->size );
+			mprintf( "OSX Image! Size: %d\n", cb->size );
 			// now that the image is in Clipboard struct, we can free this struct
 			free(clipboard_image);
 		}
@@ -241,24 +241,20 @@ void SetClipboard( ClipboardData* cb )
 	switch(cb->type) {
 		case CLIPBOARD_TEXT:
 		mprintf("SetClipboard to Text: %s\n", cb->data);
-		// malloc some space for the image
-        char *clipboard_string = (char *) malloc(cb->size * sizeof(char));
-        memset(clipboard_string, 0, cb->size * sizeof(char));	
-		// copy the data and send to clipboard
-		memcpy(clipboard_string, cb->data, cb->size);
-		ClipboardSetString(clipboard_string);
-		free(clipboard_string); // done with the temp var
+		ClipboardSetString(cb->data);
 		break;
 	case CLIPBOARD_IMAGE:
 		mprintf("SetClipboard to Image with size %d\n", cb->size);
-
-
-
-
-	
-		// TODO
-
-
+		// fix the CGImage header back
+		char* data = malloc(cb->size + 14);
+		*((char*)(&data[0])) = 'B';
+		*((char*)(&data[1])) = 'M';
+		*((int*)(&data[2])) = cb->size + 14;
+		*((int*)(&data[10])) = 54;
+		memcpy(data+14, cb->data, cb->size);
+		// set the image and free the temp data
+		ClipboardSetImage(data, cb->size + 14);
+		free(data);
 		break;
 	default:
 		mprintf("No clipboard data to set!\n");
