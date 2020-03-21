@@ -94,6 +94,7 @@ CFLAGS = 				\
 	-Wall 				\
 	-Wextra 			\
 	-Wno-missing-braces \
+	-Wno-unused-value \
 	-Wno-unused-parameter \
 	-O3 				\
 	-I ../include

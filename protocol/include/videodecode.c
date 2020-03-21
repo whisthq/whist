@@ -238,7 +238,7 @@ video_decoder_t* create_video_decoder( int width, int height,
         int decoder_precedence[] = { DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,
                                     DECODE_TYPE_SOFTWARE };
 #endif
-        for( int i = 0; i < sizeof( decoder_precedence ) / sizeof( decoder_precedence[0] ); ++i )
+        for( unsigned long i = 0; i < sizeof( decoder_precedence ) / sizeof( decoder_precedence[0] ); ++i )
         {
             decoder->type = decoder_precedence[i];
             if( try_setup_video_decoder( width, height, decoder ) < 0 )

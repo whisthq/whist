@@ -156,35 +156,26 @@ ClipboardData* GetClipboard()
 		}
 	}
 	else if (clipboardHasImage) {
-		// get the image
-		OSXImage *clipboard_image = ClipboardGetImage();
+		// malloc some space for the image
+        OSXImage *clipboard_image = (OSXImage *) malloc(sizeof(OSXImage));
+        memset(clipboard_image, 0, sizeof(OSXImage));	
 
-
-
-
-
+		// get the image and its size
+		ClipboardGetImage(clipboard_image);
 		int data_size = clipboard_image->size + 14;
-
-		
-
 
 		// copy the data
 		if ((unsigned long) data_size < sizeof(clipboard_buf)) {
 			cb->size = data_size;
-//			cb->size = data;
 			memcpy(cb->data, clipboard_image->data + 14, data_size);
-
+			// dimensions for sanity check
 			mprintf( "Width: %d\n", (*(int*)&cb->data[4]) );
 			mprintf( "Height: %d\n", (*(int*)&cb->data[8]) );
-
+			// data type and length
 			cb->type = CLIPBOARD_IMAGE;
 			mprintf( "Dib! Size: %d\n", cb->size );
-
-
-
-			mprintf( "Width: %d\n", *((int*)&cb->data[4]) );
-			mprintf( "Height: %d\n", *((int*)&cb->data[8]) );
-
+			// now that the image is in Clipboard struct, we can free this struct
+			free(clipboard_image);
 		}
 		else {
 			mprintf( "Could not copy, clipboard too large! %d bytes\n", data_size );
@@ -225,7 +216,7 @@ void SetClipboard( ClipboardData* cb )
 	{
 	case CLIPBOARD_TEXT:
 		cf_type = CF_TEXT;
-		mprintf( "SetClipboard to Text %s\n", cb->data );
+		mprintf( "SetClipboard to Text: %s\n", cb->data );
 		break;
 	case CLIPBOARD_IMAGE:
 		cf_type = CF_DIB;
@@ -249,23 +240,26 @@ void SetClipboard( ClipboardData* cb )
 	// check the type of the data
 	switch(cb->type) {
 		case CLIPBOARD_TEXT:
-		mprintf("SetClipboard to Text %s\n", cb->data);
-		void *clipboard_string = NULL;
+		mprintf("SetClipboard to Text: %s\n", cb->data);
+		// malloc some space for the image
+        char *clipboard_string = (char *) malloc(cb->size * sizeof(char));
+        memset(clipboard_string, 0, cb->size * sizeof(char));	
+		// copy the data and send to clipboard
 		memcpy(clipboard_string, cb->data, cb->size);
 		ClipboardSetString(clipboard_string);
+		free(clipboard_string); // done with the temp var
 		break;
 	case CLIPBOARD_IMAGE:
 		mprintf("SetClipboard to Image with size %d\n", cb->size);
 
 
-	
+
+
 	
 		// TODO
 
 
-
-
-
+		break;
 	default:
 		mprintf("No clipboard data to set!\n");
 		break;
