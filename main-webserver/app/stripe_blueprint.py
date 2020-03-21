@@ -19,18 +19,23 @@ def payment(action):
 			if email == customer['email']:
 				return jsonify({'status': 400}), 400
 
+		try:
+			new_customer = stripe.Customer.create(
+			  email = email,
+			  source = token
+			)
 
-		new_customer = stripe.Customer.create(
-		  email = email,
-		  source = token
-		)
+			new_subscription = stripe.Subscription.create(
+			  customer = new_customer['id'],
+			  items = [{"plan": "plan_Gwmtik1r6PD8Dw"}]
+			)
+		except:
+			return jsonify({'status': 402}), 402
 
-		new_subscription = stripe.Subscription.create(
-		  customer = new_customer['id'],
-		  items = [{"plan": "plan_Gwmtik1r6PD8Dw"}]
-		)
-
-		insertCustomer(email, new_customer['id'], new_subscription['id'], location)
+		try:
+			insertCustomer(email, new_customer['id'], new_subscription['id'], location)
+		except:
+			return jsonify({'status': 409}), 409
 
 		return jsonify({'status': 200}), 200
 
