@@ -593,6 +593,7 @@ int initSDL() {
 
     bool is_fullscreen = full_width == output_width && full_height == output_height;
 
+#if defined(_WIN32)
     window = SDL_CreateWindow(
         "Fractal",
         SDL_WINDOWPOS_CENTERED,
@@ -601,6 +602,16 @@ int initSDL() {
         output_height,
         (is_fullscreen ? SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP : 0)
     );
+#else
+    window = SDL_CreateWindow(
+        "Fractal",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        output_width,
+        output_height,
+        (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALWAYS_ON_TOP : 0)
+    );
+#endif
 
     if (!window) {
         fprintf(stderr, "SDL: could not create window - exiting: %s\n", SDL_GetError());

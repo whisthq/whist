@@ -47,52 +47,40 @@ const char *ClipboardGetString() {
 	}
 }
 
-
-
-
-
-
-
-
-
-
-OSXImage *ClipboardGetImage() {
-	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    NSBitmapImageRep *rep = (NSBitmapImageRep*)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
-	if( rep ) {
-        // get the data
-        NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
-
-        // create OSX image struct
-        OSXImage *clipboard_image = (OSXImage *) malloc(sizeof(OSXImage));
-        memset(clipboard_image, 0, sizeof(OSXImage));
-
-        // set fields and return
-        clipboard_image->size = [data length];
-        clipboard_image->data = (unsigned char *) [data bytes];
-        return clipboard_image;
-    }
-	else {
-        // no image in clipboard
-		return nil;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
 void ClipboardSetString(const char *str) {
 	[[NSPasteboard generalPasteboard] declareTypes: [NSArray arrayWithObject: NSPasteboardTypeString] owner:nil];
 	[[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str] forType: NSPasteboardTypeString];
     return;
 }
+
+void ClipboardGetImage(OSXImage *clipboard_image) {
+	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    NSBitmapImageRep *rep = (NSBitmapImageRep*)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
+	if( rep ) {
+        // get the data
+        NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
+        // set fields and return
+        clipboard_image->size = [data length];
+        clipboard_image->data = (unsigned char *) [data bytes];
+        return;
+    }
+	else {
+        // no image in clipboard
+		return;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
