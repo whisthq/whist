@@ -3,6 +3,7 @@
 
 #if defined(_WIN32)
 	#include "Shellapi.h"
+	#include "shlobj_core.h"
 #endif
 
 #if defined __APPLE__
@@ -120,7 +121,14 @@ ClipboardData* GetClipboard()
 			break;
 		case CF_HDROP:
 			mprintf( "Hdrop! Size: %d\n", cb->size );
-			HDROP hdrop = *(HDROP*)(cb->data);
+			DROPFILES drop;
+			memcpy( &drop, cb->data, sizeof( drop ) );
+			WCHAR* filename = (WCHAR*)(cb->data + sizeof( drop ));
+			while( *filename != L'\0' )
+			{
+				mprintf( "FILENAME: %S\n", filename );
+				filename += wcslen( filename ) + 1;
+			}
 			break;
 		default:
 			cb->type = CLIPBOARD_NONE;
