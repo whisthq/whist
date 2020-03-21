@@ -15,6 +15,37 @@
 	#define socklen_t int
 #endif
 
+void runcmd( const char* cmdline )
+{
+#ifdef _WIN32
+	STARTUPINFOA si;
+	PROCESS_INFORMATION pi;
+
+	ZeroMemory( &si, sizeof( si ) );
+	si.cb = sizeof( si );
+	ZeroMemory( &pi, sizeof( pi ) );
+
+	char cmd_buf[1000];
+
+	if( strlen( (const char*)cmdline ) + 1 > sizeof( cmd_buf ) )
+	{
+		mprintf( "runcmd cmdline too long!\n" );
+		return;
+	}
+
+	memcpy( cmd_buf, cmdline, strlen( (const char*)cmdline ) + 1 );
+
+	if( CreateProcessA( NULL, (LPSTR)cmd_buf, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi ) )
+	{
+		WaitForSingleObject( pi.hProcess, INFINITE );
+		CloseHandle( pi.hProcess );
+		CloseHandle( pi.hThread );
+	}
+#else
+	//TODO: rewrite the entire function for Unix
+#endif
+}
+
 int GetFmsgSize(struct FractalClientMessage* fmsg) {
 	if( fmsg->type == MESSAGE_KEYBOARD_STATE )
 	{
