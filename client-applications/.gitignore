@@ -2,3 +2,5 @@ windows/node_modules
 windows/build
 macos/build
 react-app/node_modules
+desktop/.fractal-protocol
+desktop/fractal-protocol

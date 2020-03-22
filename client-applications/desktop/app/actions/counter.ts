@@ -6,6 +6,11 @@ export const LOGIN_USER          = "LOGIN_USER";
 export const LOGIN_FAILED        = "LOGIN_FAILED";
 export const CALCULATE_DISTANCE  = "CALCULATE_DISTANCE"
 export const STORE_DISTANCE      = "STORE_DISTANCE";
+export const SEND_FEEDBACK       = "SEND_FEEDBACK";
+export const RESET_FEEDBACK      = "RESET_FEEDBACK";
+export const SET_OS              = "SET_OS";
+export const ASK_FEEDBACK        = "ASK_FEEDBACK";
+export const CHANGE_WINDOW       = "CHANGE_WINDOW"
 
 export function loginUser(username, password) {
 	console.log("login action fired")
@@ -16,11 +21,12 @@ export function loginUser(username, password) {
 	}
 }
 
-export function storeUserInfo(username, public_ip) {
+export function storeUserInfo(username, public_ip, is_user) {
   return {
     type: STORE_USER_INFO,
     username,
-    public_ip
+    public_ip,
+    is_user
   };
 }
 
@@ -45,9 +51,43 @@ export function calculateDistance(public_ip) {
 }
 
 export function storeDistance(distance) {
-	console.log("store distance action " + distance)
 	return {
 		type: STORE_DISTANCE,
 		distance
+	}
+}
+
+export function sendFeedback(feedback) {
+	return {
+		type: SEND_FEEDBACK,
+		feedback
+	}
+}
+
+export function resetFeedback(reset) {
+	return {
+		type: RESET_FEEDBACK,
+		reset
+	}
+}
+
+export function setOS(os) {
+  return {
+    type: SET_OS,
+    os
+  }
+}
+
+export function askFeedback(ask) {
+	return {
+		type: ASK_FEEDBACK,
+		ask
+	}
+}
+
+export function changeWindow(window) {
+	return {
+		type: CHANGE_WINDOW,
+		window
 	}
 }
