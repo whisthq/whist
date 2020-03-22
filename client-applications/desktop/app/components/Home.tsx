@@ -51,7 +51,6 @@ class Home extends Component {
   }
 
   LoginUser = () => {
-    console.log("login trigger")
   	this.setState({loggingIn: true, warning: false});
   	this.props.dispatch(loginUser(this.state.username, this.state.password))
   }
