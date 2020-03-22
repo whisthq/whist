@@ -4,6 +4,13 @@ CC = cl.exe
 # specify linker
 LINK = link.exe
 
+# query arch
+ifeq ($(PROCESSOR_ARCHITECTURE), x86)
+	ARCH = 32
+else
+	ARCH = 64
+endif
+
 # specify executable name
 BIN_NAME = build/desktop.exe
 

@@ -4,6 +4,9 @@ CC = gcc
 # specify platform
 PLATFORM = linux
 
+# query arch
+ARCH = $(shell getconf LONG_BIT)
+
 # executable name
 BIN_NAME = server
 

@@ -1,6 +1,9 @@
 # shell
 UNAME = $(shell uname -s)
 
+# query arch
+ARCH = $(shell getconf LONG_BIT)
+
 ################## LINUX ##################
 ifeq ($(UNAME), Linux)
 

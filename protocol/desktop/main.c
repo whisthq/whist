@@ -246,7 +246,7 @@ void updateClipboard()
     if( clipboard->type == CLIPBOARD_FILES )
     {
         char prev[] = "unison -sshargs \"-l vm1 -i sshkey\" clipboard \"ssh://";
-        char* middle = server_ip;
+        char* middle = (char *) server_ip;
         char end[] = "/C:\\Program Files\\Fractal\\clipboard/\" -force clipboard -batch";
 
         char command[sizeof( prev ) + 100 + sizeof(end)];
@@ -715,7 +715,7 @@ int main(int argc, char* argv[])
         SDL_Event msg;
         FractalClientMessage fmsg = { 0 };
 
-        if (CreateUDPContext(&PacketSendContext, "C", server_ip, PORT_CLIENT_TO_SERVER, 10, 500) < 0) {
+        if (CreateUDPContext(&PacketSendContext, "C", (char *) server_ip, PORT_CLIENT_TO_SERVER, 10, 500) < 0) {
             mprintf("Failed to connect to server\n");
             continue;
         }
@@ -723,7 +723,7 @@ int main(int argc, char* argv[])
         SDL_Delay(150);
 
         struct SocketContext PacketReceiveContext = { 0 };
-        if (CreateUDPContext(&PacketReceiveContext, "C", server_ip, PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
+        if (CreateUDPContext(&PacketReceiveContext, "C", (char *) server_ip, PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             mprintf("Failed finish connection to server\n");
             closesocket(PacketSendContext.s);
             continue;
@@ -731,7 +731,7 @@ int main(int argc, char* argv[])
 
         SDL_Delay( 150 );
 
-        if( CreateTCPContext(&PacketTCPContext, "C", server_ip, PORT_SHARED_TCP, 1, 500) < 0 )
+        if( CreateTCPContext(&PacketTCPContext, "C", (char *) server_ip, PORT_SHARED_TCP, 1, 500) < 0 )
         {
             mprintf( "Failed finish connection to server\n" );
             closesocket( PacketSendContext.s );
