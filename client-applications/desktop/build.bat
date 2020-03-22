@@ -13,6 +13,5 @@ mkdir fractal-protocol
 cd fractal-protocol
 mkdir desktop
 cd ..
-copy .fractal-protocol\desktop\*.exe fractal-protocol\desktop
-copy .fractal-protocol\desktop\*.dll fractal-protocol\desktop
+copy .fractal-protocol\desktop\build64 fractal-protocol\desktop
 yarn package
