@@ -70,48 +70,13 @@ void ClipboardGetImage(OSXImage *clipboard_image) {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-void ClipboardSetImage( ImageSourceRef imageSource, ImageTarget::Options options )
-{
-
-
-	cocoa::ImageTargetCgImageRef target = cocoa::ImageTargetCgImage::createRef( imageSource, options );
-	imageSource->load( target );
-	target->finalize();
-	
-	NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithCGImage:target->getCgImage()] autorelease];
+void ClipboardSetImage(char *img, int len) {
+	NSData *imageData = [[[NSData alloc] initWithBytes:img length:len] autorelease];
+	NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithData:imageData] autorelease];
 	NSImage *image = [[NSImage alloc] initWithSize:[imageRep size]];
 	[image addRepresentation: imageRep];
-	[[NSPasteboard generalPasteboard] declareTypes: [NSArray arrayWithObject: NSTIFFPboardType] owner:nil];
-	[[NSPasteboard generalPasteboard] setData:[image TIFFRepresentation] forType:NSTIFFPboardType];	
+	[[NSPasteboard generalPasteboard] declareTypes: [NSArray arrayWithObject: NSPasteboardTypeTIFF] owner:nil];
+	[[NSPasteboard generalPasteboard] setData:[image TIFFRepresentation] forType:NSPasteboardTypeTIFF];	
 	[image release];
     return;
 }
-*/
-
-
-// TODO add set

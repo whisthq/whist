@@ -16,18 +16,6 @@ bool ClipboardHasImage();
 const char *ClipboardGetString();
 void ClipboardSetString(const char *str);
 void ClipboardGetImage(OSXImage *clipboard_image);
-
-
-
-
-
-
-
-
-void ClipboardSetImage();
-
-
-
-
+void ClipboardSetImage(char *img, int len);
 
 #endif // CLIPBOARD_OSX_H
