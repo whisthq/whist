@@ -237,6 +237,7 @@ ClipboardData* GetClipboard()
 	return cb;
 }
 
+#if defined(_WIN32)
 HGLOBAL getGlobalAlloc( void* buf, int len )
 {
 	HGLOBAL hMem = GlobalAlloc( GMEM_MOVEABLE, len );
@@ -253,6 +254,7 @@ HGLOBAL getGlobalAlloc( void* buf, int len )
 
 	return hMem;
 }
+#endif
 
 void SetClipboard( ClipboardData* cb )
 {

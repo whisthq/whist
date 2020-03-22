@@ -294,9 +294,9 @@ static int32_t SendVideo(void* opaque) {
             if (encoder) {
                 destroy_video_encoder(encoder);
             }
-            encoder = create_video_encoder(
-                device->width, device->height, device->width, device->height,
-                current_bitrate, gop_size);
+            encoder = create_video_encoder(device->width, device->height,
+                                           device->width, device->height,
+                                           current_bitrate, gop_size);
             update_encoder = false;
             frames_since_first_iframe = 0;
         }
@@ -329,7 +329,7 @@ static int32_t SendVideo(void* opaque) {
             clock t;
             StartTimer(&t);
             video_encoder_encode(encoder, device->frame_data);
-            // mprintf("Encode Time: %f\n", GetTimer(t));
+            mprintf("Encode Time: %f\n", GetTimer(t));
 
             bitrate_tested_frames++;
             bytes_tested_frames += encoder->packet.size;
@@ -766,10 +766,9 @@ int main() {
                     }
                 } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
                     // Update clipboard with message
-                    mprintf( "Clipboard! %d\n", fmsg->clipboard.type );
-                    SetClipboard( &fmsg->clipboard );
-                }
-                else if (fmsg->type == MESSAGE_AUDIO_NACK) {
+                    mprintf("Clipboard! %d\n", fmsg->clipboard.type);
+                    SetClipboard(&fmsg->clipboard);
+                } else if (fmsg->type == MESSAGE_AUDIO_NACK) {
                     // Audio nack received, relay the packet
 
                     // mprintf("Audio NACK requested for: ID %d Index %d\n",

@@ -19,6 +19,6 @@ GOTO loop1
 
 :after_loop
 
-cd build
+cd build64
 desktop %RESTVAR%
 cd ..

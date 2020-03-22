@@ -292,25 +292,39 @@ void destroy_video_encoder(encoder_t *encoder) {
 /// @details encode a RGB frame into encoded format as YUV color
 void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
     // define input data to encoder
-    memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
-    memset(encoder->sw_frame->linesize, 0, sizeof(encoder->sw_frame->linesize));
-    encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
-    encoder->sw_frame->linesize[0] = encoder->in_width * 4;
+    if (encoder->type == NVENC_ENCODE || encoder->type == QSV_ENCODE) {
+        memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
+        memset(encoder->sw_frame->linesize, 0,
+               sizeof(encoder->sw_frame->linesize));
+        encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
+        encoder->sw_frame->linesize[0] = encoder->in_width * 4;
 
-    // init packet to prepare encoding
-    av_packet_unref(&encoder->packet);
+        // init packet to prepare encoding
+        av_packet_unref(&encoder->packet);
 
-    av_init_packet(&encoder->packet);
-    int success = 0;  // boolean for success or failure of encoding
+        av_init_packet(&encoder->packet);
+        int success = 0;  // boolean for success or failure of encoding
 
-    // attempt to encode the frame
-    if (encoder->type == NVENC_ENCODE) {
         av_hwframe_transfer_data(encoder->hw_frame, encoder->sw_frame, 0);
-
         avcodec_encode_video2(encoder->context, &encoder->packet,
                               encoder->hw_frame, &success);
-    } else {
+    } else if (encoder->type == SOFTWARE_ENCODE) {
+        av_free_packet(&encoder->packet);
+        uint8_t *in_data[1] = {(uint8_t *)rgb_pixels};
+        int in_linesize[1] = {encoder->in_width * 4};
+
+        // scale to the encoder format
+        sws_scale(encoder->sws, in_data, in_linesize, 0, encoder->in_height,
+                  encoder->sw_frame->data, encoder->sw_frame->linesize);
+
+        // init packet to prepare encoding
+        av_init_packet(&encoder->packet);
+        int success = 0;  // boolean for success or failure of encoding
+
+        // attempt to encode the frame
         avcodec_encode_video2(encoder->context, &encoder->packet,
                               encoder->sw_frame, &success);
+    } else {
+        mprintf("Invalid encoder type\n");
     }
 }
