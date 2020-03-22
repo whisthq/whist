@@ -256,7 +256,7 @@ void updateClipboard()
         runcmd( command );
     }
 
-    FractalClientMessage* fmsg = malloc(10000000);
+    FractalClientMessage* fmsg = malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
     fmsg->type = CMESSAGE_CLIPBOARD;
     memcpy( &fmsg->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size );
     SendFmsg( fmsg );
