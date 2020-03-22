@@ -31,6 +31,7 @@ STATIC_LIBS = \
 	../lib/ffmpeg/windows/swresample.lib \
 	../lib/ffmpeg/windows/swscale.lib \
 	../lib/SDL2/windows/SDL2.lib \
+	../lib/mfx/windows/libmfx.lib \
 	../lib/openssl/windows/libcrypto.lib
 
 # compiler flags

@@ -62,7 +62,7 @@ SHARED_LIBS = \
 	uuid.lib \
 	version.lib \
 	ws2_32.lib \
-        shlwapi.lib \
+    shlwapi.lib \
 	crypt32.lib
 
 # linking flags
