@@ -286,6 +286,9 @@ void SetClipboard( ClipboardData* cb )
 	case CLIPBOARD_FILES:
 		mprintf( "SetClipboard to Files\n" );
 
+#define CLIPBOARD_DIRECTORY (L"C:\\Program Files\\Fractal\\clipboard\\")
+#define CLIPBOARD_DIRECTORY_SIZE (sizeof(CLIPBOARD_DIRECTORY) - sizeof(WCHAR))
+
 		WIN32_FIND_DATAW data;
 		HANDLE hFind = FindFirstFileW( L"C:\\Program Files\\Fractal\\clipboard\\*", &data );
 
@@ -314,6 +317,11 @@ void SetClipboard( ClipboardData* cb )
 				int len = wcslen( data.cFileName ) + 1;
 
 				mprintf( "FILENAME: %S\n", data.cFileName );
+
+				memcpy( file_ptr, CLIPBOARD_DIRECTORY, CLIPBOARD_DIRECTORY_SIZE );
+				file_ptr += CLIPBOARD_DIRECTORY_SIZE / sizeof( WCHAR );
+				total_len += CLIPBOARD_DIRECTORY_SIZE;
+
 				memcpy( file_ptr, data.cFileName, sizeof(WCHAR)*len );
 				file_ptr += len;
 
