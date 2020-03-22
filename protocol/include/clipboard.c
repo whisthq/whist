@@ -231,37 +231,98 @@ ClipboardData* GetClipboard()
 	return cb;
 }
 
+HGLOBAL getGlobalAlloc( void* buf, int len )
+{
+	HGLOBAL hMem = GlobalAlloc( GMEM_MOVEABLE, len );
+	LPTSTR lptstr = GlobalLock( hMem );
+
+	if( lptstr == NULL )
+	{
+		mprintf( "getGlobalAlloc GlobalLock failed! Size %d\n", len );
+		return hMem;
+	}
+
+	memcpy( lptstr, buf, len );
+	GlobalUnlock( hMem );
+
+	return hMem;
+}
+
 void SetClipboard( ClipboardData* cb )
 {
-	if( cb->size == 0 || cb->type == CLIPBOARD_NONE )
+	if( cb->type == CLIPBOARD_NONE )
 	{
 		return;
 	}
 
 #if defined(_WIN32)
-	HGLOBAL hMem = GlobalAlloc( GMEM_MOVEABLE, cb->size );
-	LPTSTR lptstr = GlobalLock( hMem );
-
-	if( lptstr == NULL )
-	{
-		mprintf( "SetClipboard GlobalLock failed!\n" );
-		return;
-	}
-
-	memcpy( lptstr, cb->data, cb->size );
-	GlobalUnlock( hMem );
-
 	int cf_type = -1;
+	HGLOBAL hMem;
 
 	switch( cb->type )
 	{
 	case CLIPBOARD_TEXT:
-		cf_type = CF_TEXT;
 		mprintf( "SetClipboard to Text: %s\n", cb->data );
+		if( cb->size > 0 )
+		{
+			cf_type = CF_TEXT;
+			hMem = getGlobalAlloc( cb->data, cb->size );
+		}
 		break;
 	case CLIPBOARD_IMAGE:
-		cf_type = CF_DIB;
 		mprintf( "SetClipboard to Image with size %d\n", cb->size );
+		if( cb->size > 0 )
+		{
+			cf_type = CF_DIB;
+			hMem = getGlobalAlloc( cb->data, cb->size );
+		}
+		break;
+	case CLIPBOARD_FILES:
+		mprintf( "SetClipboard to Files\n" );
+
+		WIN32_FIND_DATAW data;
+		HANDLE hFind = FindFirstFileW( L"C:\\Program Files\\Fractal\\clipboard\\*", &data );
+
+
+		DROPFILES* drop = (DROPFILES*)clipboard_buf;
+		memset( drop, 0, sizeof( DROPFILES ) );
+		WCHAR* file_ptr = (WCHAR*)(clipboard_buf + sizeof( DROPFILES ));
+		int total_len = sizeof( DROPFILES );
+		int num_files = 0;
+		drop->pFiles = total_len;
+		drop->fWide = true;
+		drop->fNC = false;
+
+		if( hFind != INVALID_HANDLE_VALUE )
+		{
+			WCHAR* ignore1 = L".";
+			WCHAR* ignore2 = L"..";
+
+			do
+			{
+				if( wcscmp( data.cFileName, ignore1 ) == 0 || wcscmp( data.cFileName, ignore2 ) == 0 )
+				{
+					continue;
+				}
+
+				int len = wcslen( data.cFileName ) + 1;
+
+				mprintf( "FILENAME: %S\n", data.cFileName );
+				memcpy( file_ptr, data.cFileName, sizeof(WCHAR)*len );
+				file_ptr += len;
+
+				num_files++;
+				total_len += sizeof( WCHAR )*len;
+			} while( FindNextFileW( hFind, &data ) );
+			FindClose( hFind );
+		}
+
+		*file_ptr = L'\0';
+		total_len += sizeof( L'\0' );
+
+		cf_type = CF_HDROP;
+		hMem = getGlobalAlloc( drop, total_len );
+
 		break;
 	default:
 		mprintf( "Unknown clipboard type!\n" );
@@ -277,6 +338,7 @@ void SetClipboard( ClipboardData* cb )
 
 		CloseClipboard();
 	}
+
 #elif __APPLE__
 	// check the type of the data
 	switch(cb->type) {

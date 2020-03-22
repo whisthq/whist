@@ -717,7 +717,7 @@ int main()
                 } else if( fmsg->type == CMESSAGE_CLIPBOARD )
                 {
                     // Update clipboard with message
-                    mprintf( "Clipboard!\n" );
+                    mprintf( "Clipboard! %d\n", fmsg->clipboard.type );
                     SetClipboard( &fmsg->clipboard );
                 }
                 else if (fmsg->type == MESSAGE_AUDIO_NACK) {
