@@ -12,7 +12,7 @@ else
 endif
 
 # specify executable name
-BIN_NAME = build/desktop.exe
+BIN_NAME = build$(ARCH)/desktop.exe
 
 # files to build into object files
 OBJS = \
@@ -27,17 +27,17 @@ OBJS = \
 
 # static libs to link against
 STATIC_LIBS = \
-	../lib/ffmpeg/windows/avcodec.lib \
-	../lib/ffmpeg/windows/avdevice.lib \
-	../lib/ffmpeg/windows/avfilter.lib \
-	../lib/ffmpeg/windows/avformat.lib \
-	../lib/ffmpeg/windows/avutil.lib \
-	../lib/ffmpeg/windows/postproc.lib \
-	../lib/ffmpeg/windows/swresample.lib \
-	../lib/ffmpeg/windows/swscale.lib \
-	../lib/SDL2/windows/SDL2.lib \
-	../lib/mfx/windows/libmfx.lib \
-	../lib/openssl/windows/libcrypto.lib
+	../lib/$(ARCH)/ffmpeg/windows/avcodec.lib \
+	../lib/$(ARCH)/ffmpeg/windows/avdevice.lib \
+	../lib/$(ARCH)/ffmpeg/windows/avfilter.lib \
+	../lib/$(ARCH)/ffmpeg/windows/avformat.lib \
+	../lib/$(ARCH)/ffmpeg/windows/avutil.lib \
+	../lib/$(ARCH)/ffmpeg/windows/postproc.lib \
+	../lib/$(ARCH)/ffmpeg/windows/swresample.lib \
+	../lib/$(ARCH)/ffmpeg/windows/swscale.lib \
+	../lib/$(ARCH)/SDL2/windows/SDL2.lib \
+	../lib/$(ARCH)/mfx/windows/libmfx.lib \
+	../lib/$(ARCH)/openssl/windows/libcrypto.lib
 
 # compiler flags
 CFLAGS = \
@@ -69,7 +69,7 @@ SHARED_LIBS = \
 	uuid.lib \
 	version.lib \
 	ws2_32.lib \
-        shlwapi.lib \
+    shlwapi.lib \
 	crypt32.lib
 
 # linking flags

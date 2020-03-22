@@ -14,21 +14,21 @@ CC = gcc
 PLATFORM = linux
 
 # dynamic libs to link against
-DYNAMIC_LIBS = 																	\
-	../lib/ffmpeg/linux/libavcodec.so.58.100 	\
-	../lib/ffmpeg/linux/libavdevice.so.58.8.100 	\
-	../lib/ffmpeg/linux/libavfilter.so.7.57.100 	\
-	../lib/ffmpeg/linux/libavformat.so.58.29.100 	\
-	../lib/ffmpeg/linux/libavutil.so.56.31.100 	\
-	../lib/ffmpeg/linux/libpostproc.so.55.5.100 	\
-	../lib/ffmpeg/linux/libswresample.so.3.5.100 	\
-	../lib/ffmpeg/linux/libswscale.so.5.5.100 	\
-	../lib/mfx/linux/libmfx.so.1.32
+DYNAMIC_LIBS = \
+	../lib/$(ARCH)/ffmpeg/linux/libavcodec.so.58.100 \
+	../lib/$(ARCH)/ffmpeg/linux/libavdevice.so.58.8.100 \
+	../lib/$(ARCH)/ffmpeg/linux/libavfilter.so.7.57.100 \
+	../lib/$(ARCH)/ffmpeg/linux/libavformat.so.58.29.100 \
+	../lib/$(ARCH)/ffmpeg/linux/libavutil.so.56.31.100 \
+	../lib/$(ARCH)/ffmpeg/linux/libpostproc.so.55.5.100 \
+	../lib/$(ARCH)/ffmpeg/linux/libswresample.so.3.5.100 \
+	../lib/$(ARCH)/ffmpeg/linux/libswscale.so.5.5.100 \
+	../lib/$(ARCH)/mfx/linux/libmfx.so.1.32
 
 # system libs to link against
-SHARED_LIBS = 		\
-	-lm 		\
-	-ldl 		\
+SHARED_LIBS = \
+	-lm \
+	-ldl \
 	-lpthread
 endif
 
@@ -45,61 +45,61 @@ PLATFORM = macos
 export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 
 # dynamic libs to link against
-DYNAMIC_LIBS = 															\
-	../lib/ffmpeg/macos/libavcodec.58.dylib 	\
-	../lib/ffmpeg/macos/libavdevice.58.dylib 	\
-	../lib/ffmpeg/macos/libavfilter.7.dylib 	\
-	../lib/ffmpeg/macos/libavformat.58.dylib 	\
-	../lib/ffmpeg/macos/libavutil.56.dylib 		\
-	../lib/ffmpeg/macos/libpostproc.55.dylib 	\
-	../lib/ffmpeg/macos/libswresample.3.dylib 	\
-	../lib/ffmpeg/macos/libswscale.5.dylib
+DYNAMIC_LIBS = \
+	../lib/64/ffmpeg/macos/libavcodec.dylib \
+	../lib/64/ffmpeg/macos/libavdevice.dylib \
+	../lib/64/ffmpeg/macos/libavfilter.dylib \
+	../lib/64/ffmpeg/macos/libavformat.dylib \
+	../lib/64/ffmpeg/macos/libavutil.dylib \
+	../lib/64/ffmpeg/macos/libpostproc.dylib \
+	../lib/64/ffmpeg/macos/libswresample.dylib \
+	../lib/64/ffmpeg/macos/libswscale.dylib
 
 # system libs to link against
-SHARED_LIBS = 				\
-	-liconv 			\
-	-framework OpenGL 		\
-	-framework VideoToolbox 	\
-	-framework CoreMedia 		\
-	-framework CoreAudio 		\
-	-framework AudioToolbox 	\
-	-framework IOKit 		\
-	-framework ForceFeedback 	\
-	-framework Carbon 		\
-	-framework AppKit 		\
-	-framework Metal 		\
+SHARED_LIBS = \
+	-liconv \
+	-framework OpenGL \
+	-framework VideoToolbox \
+	-framework CoreMedia \
+	-framework CoreAudio \
+	-framework AudioToolbox \
+	-framework IOKit \
+	-framework ForceFeedback \
+	-framework Carbon \
+	-framework AppKit \
+	-framework Metal \
 	-framework QuartzCore
 endif
 
 ################## COMMON ##################
 # executable name
-BIN_NAME = desktop
+BIN_NAME = build$(ARCH)/desktop
 
 # static libs to link against
-STATIC_LIBS = 					\
-	../lib/SDL2/$(PLATFORM)/libSDL2.a 	\
-	../lib/openssl/$(PLATFORM)/libcrypto.a
+STATIC_LIBS = \
+	../lib/$(ARCH)/SDL2/$(PLATFORM)/libSDL2.a \
+	../lib/$(ARCH)/openssl/$(PLATFORM)/libcrypto.a
 
 # files to build into object files
-OBJS = 				\
-	fractal.o 		\
-	videodecode.o 		\
-	audiodecode.o 		\
-	video.o 		\
-	audio.o 		\
-	aes.o 			\
-	clipboard_osx.o 	\
-	clipboard.o 		\
+OBJS = \
+	fractal.o \
+	videodecode.o \
+	audiodecode.o \
+	video.o \
+	audio.o \
+	aes.o \
+	clipboard_osx.o \
+	clipboard.o \
 	main.o
 
 # compiler flags
-CFLAGS = 				\
-	-Wall 				\
-	-Wextra 			\
+CFLAGS = \
+	-Wall \
+	-Wextra \
 	-Wno-missing-braces \
 	-Wno-unused-value \
 	-Wno-unused-parameter \
-	-O3 				\
+	-O3 \
 	-I ../include
 
 # link all files into executable
