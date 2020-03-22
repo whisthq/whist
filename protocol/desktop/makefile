@@ -5,7 +5,7 @@ CC = cl.exe
 LINK = link.exe
 
 # specify executable name
-BIN_NAME = desktop.exe
+BIN_NAME = build/desktop.exe
 
 # files to build into object files
 OBJS = \
@@ -62,6 +62,7 @@ SHARED_LIBS = \
 	uuid.lib \
 	version.lib \
 	ws2_32.lib \
+        shlwapi.lib \
 	crypt32.lib
 
 # linking flags

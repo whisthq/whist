@@ -11,7 +11,8 @@ typedef enum ClipboardType
 {
 	CLIPBOARD_NONE,
 	CLIPBOARD_TEXT,
-	CLIPBOARD_IMAGE
+	CLIPBOARD_IMAGE,
+	CLIPBOARD_FILES
 } ClipboardType;
 
 typedef struct ClipboardData
@@ -20,6 +21,12 @@ typedef struct ClipboardData
 	ClipboardType type;
 	char data[];
 } ClipboardData;
+
+typedef struct ClipboardFiles
+{
+	int size;
+	char* files[];
+} ClipboardFiles;
 
 ClipboardData* GetClipboard();
 

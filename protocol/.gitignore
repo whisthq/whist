@@ -10,5 +10,8 @@
 *.pdb
 *.ilk
 .DS_Store
-desktop/desktop
+desktop/build/clipboard
+desktop/build/desktop
+desktop/build/sshkey
+desktop/build/sshkey.pub
 server/server

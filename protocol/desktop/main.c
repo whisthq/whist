@@ -32,6 +32,7 @@ volatile int ping_failures;
 
 volatile int output_width;
 volatile int output_height;
+volatile char* server_ip;
 
 // Function Declarations
 
@@ -241,6 +242,19 @@ int SendPacket(void* data, int len) {
 void updateClipboard()
 {
     ClipboardData* clipboard = GetClipboard();
+
+    if( clipboard->type == CLIPBOARD_FILES )
+    {
+        char prev[] = "unison -sshargs \"-l vm1 -i sshkey\" clipboard \"ssh://";
+        char* middle = server_ip;
+        char end[] = "/C:\\Program Files\\Fractal\\clipboard/\" -force clipboard -batch";
+
+        char command[sizeof( prev ) + 100 + sizeof(end)];
+        memcpy( command, prev, strlen(prev) );
+        memcpy( command + strlen( prev ), middle, strlen( middle ) );
+        memcpy( command + strlen( prev ) + strlen(middle), end, strlen( end ) + 1 );
+        runcmd( command );
+    }
 
     FractalClientMessage* fmsg = malloc(10000000);
     fmsg->type = CMESSAGE_CLIPBOARD;
@@ -652,7 +666,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    char* server_ip = argv[1];
+    server_ip = argv[1];
 //    char* aes_private_key = argv[2]; TODO: need to make webserver exchange key instead of hardcode
     output_width = -1;
     output_height = -1;

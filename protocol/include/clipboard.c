@@ -2,6 +2,8 @@
 #include "fractal.h"
 
 #if defined(_WIN32)
+	#include "shlwapi.h"
+	#pragma comment (lib, "Shlwapi.lib")
 	#include "Shellapi.h"
 	#include "shlobj_core.h"
 #endif
@@ -122,13 +124,52 @@ ClipboardData* GetClipboard()
 		case CF_HDROP:
 			mprintf( "Hdrop! Size: %d\n", cb->size );
 			DROPFILES drop;
-			memcpy( &drop, cb->data, sizeof( drop ) );
+			//memcpy( &drop, cb->data, sizeof( drop ) );
+
+			// Begin copy to clipboard
 			WCHAR* filename = (WCHAR*)(cb->data + sizeof( drop ));
+			cb->type = CLIPBOARD_FILES;
+			cb->size = 0;
+
+			SHFILEOPSTRUCTA sh = { 0 };
+			sh.wFunc = FO_DELETE;
+			sh.fFlags = 0;
+			sh.fFlags |= FOF_SILENT;
+			sh.fFlags |= FOF_NOCONFIRMMKDIR;
+			sh.fFlags |= FOF_NOCONFIRMATION;
+			sh.fFlags |= FOF_WANTMAPPINGHANDLE;
+			sh.fFlags |= FOF_NOERRORUI;
+			sh.pFrom = "clipboard";
+
+			SHFileOperationA( &sh );
+
+			RemoveDirectoryW( L"clipboard" );
+			CreateDirectoryW( L"clipboard", NULL );
+
+			// Go through filenames
 			while( *filename != L'\0' )
 			{
+				WCHAR* fileending = PathFindFileNameW( filename );
+				DWORD fileattributes = GetFileAttributesW( filename );
+
+				WCHAR target_file[1000];
+				WCHAR* clipboard = L"clipboard\\";
+				int clipboard_len = wcslen( clipboard );
+				memcpy( target_file, clipboard, sizeof(WCHAR)*clipboard_len );
+				memcpy( target_file + clipboard_len, fileending, sizeof( WCHAR )*(wcslen( fileending ) + 1) );
+
+				if( !CreateSymbolicLinkW( target_file, filename, fileattributes & FILE_ATTRIBUTE_DIRECTORY ? SYMBOLIC_LINK_FLAG_DIRECTORY : 0 ) )
+				{
+					mprintf( "ERROR: %d\n", GetLastError() );
+				}
+
+				mprintf( "TARGET FILENAME: %S\n", target_file );
 				mprintf( "FILENAME: %S\n", filename );
+				mprintf( "FILENAME ENDING: %S\n", fileending );
+
 				filename += wcslen( filename ) + 1;
 			}
+
 			break;
 		default:
 			cb->type = CLIPBOARD_NONE;
