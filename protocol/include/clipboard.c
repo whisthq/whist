@@ -108,28 +108,31 @@ ClipboardData* GetClipboard()
 		}
 	}
 
-	if( cf_type > -1 )
+	if( cf_type == -1 )
+	{
+		mprintf( "Clipboard not found\n" );
+	} else
 	{
 		switch( cf_type )
 		{
 		case CF_TEXT:
-			cb->type = CLIPBOARD_TEXT;
 			// Read the contents of lptstr which just a pointer to the string.
 			//mprintf( "CLIPBOARD STRING: %s\n", cb->data );
+			cb->type = CLIPBOARD_TEXT;
 			break;
 		case CF_DIB:
-			cb->type = CLIPBOARD_IMAGE;
 			//mprintf( "Clipboard bitmap received! Size: %d\n", cb->size );
+			cb->type = CLIPBOARD_IMAGE;
 			break;
 		case CF_HDROP:
 			mprintf( "Hdrop! Size: %d\n", cb->size );
 			DROPFILES drop;
-			//memcpy( &drop, cb->data, sizeof( drop ) );
+			memcpy( &drop, cb->data, sizeof( DROPFILES ) );
+
+			mprintf( "Drop pFiles: %d\n", drop.pFiles );
 
 			// Begin copy to clipboard
 			WCHAR* filename = (WCHAR*)(cb->data + sizeof( drop ));
-			cb->type = CLIPBOARD_FILES;
-			cb->size = 0;
 
 			SHFILEOPSTRUCTA sh = { 0 };
 			sh.wFunc = FO_DELETE;
@@ -170,10 +173,13 @@ ClipboardData* GetClipboard()
 				filename += wcslen( filename ) + 1;
 			}
 
+			cb->type = CLIPBOARD_FILES;
+			cb->size = 0;
+
 			break;
 		default:
-			cb->type = CLIPBOARD_NONE;
 			mprintf( "Clipboard type unknown: %d\n", cf_type );
+			cb->type = CLIPBOARD_NONE;
 			break;
 		}
 	}
