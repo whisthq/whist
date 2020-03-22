@@ -20,5 +20,5 @@ GOTO loop1
 :after_loop
 
 cd build64
-desktop %RESTVAR%
+server %RESTVAR%
 cd ..

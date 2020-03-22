@@ -5,11 +5,11 @@ CC = cl.exe
 LINK = link.exe
 
 # query arch
-ifeq ($(PROCESSOR_ARCHITECTURE), x86)
-	ARCH = 32
-else
-	ARCH = 64
-endif
+!IF "$(PROCESSOR_ARCHITEW6432)" == ""
+ARCH = 32
+!ELSE
+ARCH = 64
+!ENDIF
 
 # specify executable name
 BIN_NAME = build$(ARCH)/server.exe
