@@ -173,6 +173,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
 		av_hwframe_transfer_data(encoder->hw_frame, encoder->sw_frame, 0);
 		avcodec_encode_video2(encoder->context, &encoder->packet, encoder->hw_frame, &success);
 	} else {
+		av_free_packet(&encoder->packet);
 		uint8_t *in_data[1] = {(uint8_t *) rgb_pixels};
 		int in_linesize[1] = {encoder->in_width * 4};
 
@@ -185,6 +186,5 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
 
 	  // attempt to encode the frame
 		avcodec_encode_video2(encoder->context, &encoder->packet, encoder->sw_frame, &success);
-		av_free_packet(&encoder->packet);
 	}
 }

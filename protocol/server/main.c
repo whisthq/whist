@@ -318,7 +318,7 @@ static int32_t SendVideo(void* opaque) {
             clock t;
             StartTimer(&t);
             video_encoder_encode(encoder, device->frame_data);
-            //mprintf("Encode Time: %f\n", GetTimer(t));
+            mprintf("Encode Time: %f\n", GetTimer(t));
 
             bitrate_tested_frames++;
             bytes_tested_frames += encoder->packet.size;
