@@ -302,7 +302,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			return -1;
 		}
 
-		if( recv_size != entry )
+		if( recv_size != sizeof(entry) )
 		{
 			mprintf( "STUN Response of incorrect size!\n" );
 			closesocket( context->s );

@@ -14,7 +14,7 @@
 	bool clipboardHasString;
 #endif
 
-//static int last_clipboard_sequence_number = -1; TODO: unused atm
+static int last_clipboard_sequence_number = -1;
 static char clipboard_buf[9000000];
 
 void StartTrackingClipboardUpdates()
