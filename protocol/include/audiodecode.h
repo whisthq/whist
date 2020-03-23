@@ -1,27 +1,35 @@
 #ifndef AUDIO_DECODE_H
 #define AUDIO_DECODE_H
 
-#include "fractal.h" // contains all the headers
+#include "ffmpeg/libavcodec/avcodec.h"
+#include "ffmpeg/libavdevice/avdevice.h"
+#include "ffmpeg/libavfilter/avfilter.h"
+#include "ffmpeg/libavfilter/buffersink.h"
+#include "ffmpeg/libavfilter/buffersrc.h"
+#include "ffmpeg/libavformat/avformat.h"
+#include "ffmpeg/libavutil/avutil.h"
+#include "ffmpeg/libswscale/swscale.h"
 
 // define decoder struct to pass as a type
-typedef struct 
-{
-    AVCodec *codec;
-    AVCodecContext *context;
-    AVFrame *frame;
+typedef struct {
+    AVCodec *pCodec;
+    AVCodecContext *pCodecCtx;
+    AVFormatContext *pFormatCtx;
+    AVFrame *pFrame;
     AVPacket packet;
+    uint8_t *out_buffer;
 } audio_decoder_t;
 
-/// @brief creates encoder device
-/// @details creates FFmpeg encoder
-audio_decoder_t *create_audio_decoder();
+audio_decoder_t *create_audio_decoder(int sample_rate);
 
-/// @brief destroy decoder device
-/// @details frees FFmpeg decoder memory
+int init_av_frame(audio_decoder_t *decoder);
+
+void audio_decoder_packet_readout(audio_encoder_t *decoder, uint8_t *data,
+                                  int len);
+
+int audio_decoder_decode_packet(audio_decoder_t *decoder,
+                                AVPacket *encoded_packet);
+
 void destroy_audio_decoder(audio_decoder_t *decoder);
 
-/// @brief decodes a frame using the decoder device
-/// @details decode an encoded frame under YUV color format into RGB frame
-int audio_decoder_decode(audio_decoder_t *decoder, char *buffer, int buffer_size);
-
-#endif // AUDIO_DECODE_H
+#endif  // DECODE_H
