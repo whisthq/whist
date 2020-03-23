@@ -168,7 +168,7 @@ int32_t RenderScreen(void* opaque) {
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)renderContext.frame_buffer;
 
-        if (sizeof(Frame) + frame->size != renderContext.frame_size) {
+        if ((int) (sizeof(Frame) + frame->size) != renderContext.frame_size) {
             mprintf("Incorrect Frame Size! %d instead of %d\n", sizeof(Frame) + frame->size, renderContext.frame_size);
         }
 
@@ -382,7 +382,7 @@ void updateVideo() {
 
         struct FrameData* ctx = &receiving_frames[index];
 
-        bool will_render = false;
+//        bool will_render = false; TODO: unused, still needed?
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
                 //mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
@@ -390,7 +390,7 @@ void updateVideo() {
                 renderContext = *ctx;
                 rendering = true;
 
-                will_render = true;
+                //will_render = true;
 
                 //mprintf("Status: %f\n", GetTimer(renderContext.client_frame_timer));
                 SDL_SemPost(VideoData.renderscreen_semaphore);

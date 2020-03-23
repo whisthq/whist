@@ -13,9 +13,20 @@ CC = gcc
 # specify platform
 PLATFORM = linux
 
+# files to build into object files
+OBJS = \
+	fractal.o \
+	videodecode.o \
+	audiodecode.o \
+	video.o \
+	audio.o \
+	aes.o \
+	clipboard.o \
+	main.o
+
 # dynamic libs to link against
 DYNAMIC_LIBS = \
-	../lib/$(ARCH)/ffmpeg/linux/libavcodec.so.58.100 \
+	../lib/$(ARCH)/ffmpeg/linux/libavcodec.so.58.54.100 \
 	../lib/$(ARCH)/ffmpeg/linux/libavdevice.so.58.8.100 \
 	../lib/$(ARCH)/ffmpeg/linux/libavfilter.so.7.57.100 \
 	../lib/$(ARCH)/ffmpeg/linux/libavformat.so.58.29.100 \
@@ -40,6 +51,18 @@ CC = clang
 
 # specify platform
 PLATFORM = macos
+
+# files to build into object files
+OBJS = \
+	fractal.o \
+	videodecode.o \
+	audiodecode.o \
+	video.o \
+	audio.o \
+	aes.o \
+	clipboard_osx.o \
+	clipboard.o \
+	main.o
 
 # Apple SDK
 export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
@@ -79,18 +102,6 @@ BIN_NAME = build$(ARCH)/desktop
 STATIC_LIBS = \
 	../lib/$(ARCH)/SDL2/$(PLATFORM)/libSDL2.a \
 	../lib/$(ARCH)/openssl/$(PLATFORM)/libcrypto.a
-
-# files to build into object files
-OBJS = \
-	fractal.o \
-	videodecode.o \
-	audiodecode.o \
-	video.o \
-	audio.o \
-	aes.o \
-	clipboard_osx.o \
-	clipboard.o \
-	main.o
 
 # compiler flags
 CFLAGS = \
