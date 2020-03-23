@@ -13,9 +13,20 @@ CC = gcc
 # specify platform
 PLATFORM = linux
 
+# files to build into object files
+OBJS = \
+	fractal.o \
+	videodecode.o \
+	audiodecode.o \
+	video.o \
+	audio.o \
+	aes.o \
+	clipboard.o \
+	main.o
+
 # dynamic libs to link against
 DYNAMIC_LIBS = \
-	../lib/$(ARCH)/ffmpeg/linux/libavcodec.so.58.100 \
+	../lib/$(ARCH)/ffmpeg/linux/libavcodec.so.58.54.100 \
 	../lib/$(ARCH)/ffmpeg/linux/libavdevice.so.58.8.100 \
 	../lib/$(ARCH)/ffmpeg/linux/libavfilter.so.7.57.100 \
 	../lib/$(ARCH)/ffmpeg/linux/libavformat.so.58.29.100 \
@@ -41,19 +52,31 @@ CC = clang
 # specify platform
 PLATFORM = macos
 
+# files to build into object files
+OBJS = \
+	fractal.o \
+	videodecode.o \
+	audiodecode.o \
+	video.o \
+	audio.o \
+	aes.o \
+	clipboard_osx.o \
+	clipboard.o \
+	main.o
+
 # Apple SDK
 export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 
 # dynamic libs to link against
 DYNAMIC_LIBS = \
-	../lib/64/ffmpeg/macos/libavcodec.dylib \
-	../lib/64/ffmpeg/macos/libavdevice.dylib \
-	../lib/64/ffmpeg/macos/libavfilter.dylib \
-	../lib/64/ffmpeg/macos/libavformat.dylib \
-	../lib/64/ffmpeg/macos/libavutil.dylib \
-	../lib/64/ffmpeg/macos/libpostproc.dylib \
-	../lib/64/ffmpeg/macos/libswresample.dylib \
-	../lib/64/ffmpeg/macos/libswscale.dylib
+	../lib/64/ffmpeg/macos/libavcodec.58.dylib \
+	../lib/64/ffmpeg/macos/libavdevice.58.dylib \
+	../lib/64/ffmpeg/macos/libavfilter.7.dylib \
+	../lib/64/ffmpeg/macos/libavformat.58.dylib \
+	../lib/64/ffmpeg/macos/libavutil.56.dylib \
+	../lib/64/ffmpeg/macos/libpostproc.55.dylib \
+	../lib/64/ffmpeg/macos/libswresample.3.dylib \
+	../lib/64/ffmpeg/macos/libswscale.5.dylib
 
 # system libs to link against
 SHARED_LIBS = \
@@ -79,18 +102,6 @@ BIN_NAME = build$(ARCH)/desktop
 STATIC_LIBS = \
 	../lib/$(ARCH)/SDL2/$(PLATFORM)/libSDL2.a \
 	../lib/$(ARCH)/openssl/$(PLATFORM)/libcrypto.a
-
-# files to build into object files
-OBJS = \
-	fractal.o \
-	videodecode.o \
-	audiodecode.o \
-	video.o \
-	audio.o \
-	aes.o \
-	clipboard_osx.o \
-	clipboard.o \
-	main.o
 
 # compiler flags
 CFLAGS = \

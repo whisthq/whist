@@ -420,8 +420,8 @@ void updateKeyboardState( struct FractalClientMessage* fmsg )
 void ReplayUserInput( struct FractalClientMessage* fmsg )
 {
 	// get screen width and height for mouse cursor
-	int sWidth = GetSystemMetrics( SM_CXSCREEN ) - 1;
-	int sHeight = GetSystemMetrics( SM_CYSCREEN ) - 1;
+	//int sWidth = GetSystemMetrics( SM_CXSCREEN ) - 1; is this still needed?
+	//int sHeight = GetSystemMetrics( SM_CYSCREEN ) - 1; ^^
 	INPUT Event = { 0 };
 
 	// switch to fill in the Windows event depending on the FractalClientMessage type

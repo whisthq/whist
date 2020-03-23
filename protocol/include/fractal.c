@@ -468,8 +468,8 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 }
 
 // Multithreaded printf Semaphores and Mutexes
-volatile static SDL_sem* multithreadedprintf_semaphore;
-volatile static SDL_mutex* multithreadedprintf_mutex;
+static volatile SDL_sem* multithreadedprintf_semaphore;
+static volatile SDL_mutex* multithreadedprintf_mutex;
 
 // Multithreaded printf queue
 #define MPRINTF_QUEUE_SIZE 1000
@@ -478,14 +478,14 @@ typedef struct mprintf_queue_item {
 	bool log;
 	char buf[MPRINTF_BUF_SIZE];
 } mprintf_queue_item;
-volatile static mprintf_queue_item mprintf_queue[MPRINTF_QUEUE_SIZE];
-volatile static mprintf_queue_item mprintf_queue_cache[MPRINTF_QUEUE_SIZE];
-volatile static int mprintf_queue_index = 0;
-volatile static int mprintf_queue_size = 0;
+static volatile mprintf_queue_item mprintf_queue[MPRINTF_QUEUE_SIZE];
+static volatile mprintf_queue_item mprintf_queue_cache[MPRINTF_QUEUE_SIZE];
+static volatile int mprintf_queue_index = 0;
+static volatile int mprintf_queue_size = 0;
 
 // Multithreaded printf global variables
 SDL_Thread* mprintf_thread = NULL;
-volatile static bool run_multithreaded_printf;
+static volatile bool run_multithreaded_printf;
 void MultiThreadedPrintf(void* opaque);
 void real_mprintf(bool log, const char* fmtStr, va_list args);
 clock mprintf_timer;

@@ -11,8 +11,6 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
 
     // setup the AVCodec and AVFormatContext
 
-    avcodec_register_all();
-
     decoder->pCodec = avcodec_find_decoder(AV_CODEC_ID_AAC);
     if (!decoder->pCodec) {
         fprintf(stderr, "AVCodec not found.\n");
@@ -76,7 +74,7 @@ void audio_decoder_packet_readout(audio_decoder_t *decoder, uint8_t *data,
     // convert
 
     if (swr_convert(decoder->pSwrContext, data_out, len,
-                    decoder->pFrame->extended_data, len) < 0) {
+                    (const uint8_t **) decoder->pFrame->extended_data, len) < 0) {
         fprintf(stderr, "Could not convert samples to output format.\n");
     }
 }
