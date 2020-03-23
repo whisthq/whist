@@ -15,6 +15,7 @@ import log from 'electron-log';
 import MenuBuilder from './menu';
 import { dialog, Menu } from 'electron';
 
+var updating = false;
 let mainWindow: BrowserWindow | null = null;
 
 process.env.GOOGLE_API_KEY = 'AIzaSyA2FUwAOXKqIWMqKN5DNPBUaqYMOWdBADQ';
@@ -78,8 +79,8 @@ const createWindow = async () => {
     });
   }
 
-    // mainWindow.webContents.openDevTools();
-    mainWindow.loadURL(`file://${__dirname}/app.html`);
+  // mainWindow.webContents.openDevTools();
+  mainWindow.loadURL(`file://${__dirname}/app.html`);
 
   // @TODO: Use 'ready-to-show' event
   //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
@@ -91,7 +92,8 @@ const createWindow = async () => {
       mainWindow.minimize();
     } else {
       mainWindow.show();
-      mainWindow.focus();
+      mainWindow.focus();  
+      mainWindow.webContents.send('update', updating);
     }
   });
 
@@ -115,35 +117,39 @@ app.on('window-all-closed', () => {
 });
 
 app.on('ready', createWindow);
-
-autoUpdater.autoDownload = false;
-
-// autoUpdater.on('error', (error) => {
-//     dialog.showMessageBox({
-//       title: 'Message',
-//       message: 'Error in updating. Please contact ming@fractalcomputers.com for support'
-//     });
-// });
-
-autoUpdater.on('update-available', () => {
-   autoUpdater.downloadUpdate();
-  dialog.showMessageBox({
-    title: 'Message',
-    message: 'An update is available! Downloading update...'
-  });
-});
-
-autoUpdater.on('update-downloaded', () => {
-  dialog.showMessageBox({
-    title: 'Message',
-    message: 'Update downloaded, restarting application...'
-  });
-  autoUpdater.quitAndInstall();
-});
-
-
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) createWindow();
+});
+
+autoUpdater.autoDownload = false;
+
+autoUpdater.on('update-available', () => {
+  updating = true;
+  mainWindow.webContents.send('update', updating);
+  autoUpdater.downloadUpdate();
+});
+
+autoUpdater.on('update-not-available', () => {
+  updating = false;
+  mainWindow.webContents.send('update', updating);
+});
+
+autoUpdater.on('error', (ev, err) => {
+  updating = false;
+  mainWindow.webContents.send('error', err);
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+    mainWindow.webContents.send('download-speed', progressObj.bytesPerSecond);
+    mainWindow.webContents.send('percent', progressObj.percent);
+    mainWindow.webContents.send('transferred', progressObj.transferred);
+    mainWindow.webContents.send('total', progressObj.total);
+})
+
+autoUpdater.on('update-downloaded', () => {
+  mainWindow.webContents.send('downloaded', true);
+  autoUpdater.quitAndInstall();
+  updating = false;
 });

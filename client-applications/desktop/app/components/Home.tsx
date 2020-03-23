@@ -13,14 +13,16 @@ import LockIcon from "../../resources/images/lock.svg";
 
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faCircleNotch, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
 
 import { storeUserInfo, loginUser, setOS } from "../actions/counter"
 
 class Home extends Component {
   constructor(props) {
     super(props)
-    this.state = {username: '', password: '', loggingIn: false, warning: false, version: "1.0.0"}
+    this.state = {username: '', password: '', loggingIn: false, warning: false, version: "1.0.0", updateScreen: false,
+                  percentageLeft: 300, percentageDownloaded: 0, downloadSpeed: 0, transferred: 0, total: 0, 
+                  downloadError: ''}
   }
 
   CloseWindow = () => {
@@ -86,6 +88,43 @@ class Home extends Component {
   }
 
   componentDidMount() {
+    const ipc = require('electron').ipcRenderer;
+    let component = this;
+
+    ipc.on('update', (event, update) => {
+      if(update) {
+        console.log("UPDATE FOUND, STARTING DOWNLOAD")
+        component.setState({updateScreen: true})
+      } else {
+        console.log("UPDATE NOT FOUND")
+      }
+    })
+
+    ipc.on('percent', (event, percent) => {
+      percent = percent * 3;
+      this.setState({percentageLeft: 300 - percent, percentageDownloaded: percent})
+    })
+
+    ipc.on('download-speed', (event, speed) => {
+      this.setState({downloadSpeed: Math.round(speed / 1000000)})
+    })
+
+    ipc.on('transferred', (event, transferred) => {
+      this.setState({transferred: Math.round(transferred / 1000000)})
+    })
+
+    ipc.on('total', (event, total) => {
+      this.setState({total: Math.round(total / 1000000)})
+    })
+
+    ipc.on('error', (event, error) => {
+      this.setState({downloadError: error})
+    })
+
+    ipc.on('downloaded', (event, downloaded) => {
+      console.log("UPDATE DOWNLOADED")
+    })
+
     var appVersion = require('../package.json').version;
     const os = require('os')
     this.props.dispatch(setOS(os.platform()))
@@ -120,6 +159,10 @@ class Home extends Component {
 		        <button type = "button" className = {styles.signupButton} id = "signup-button" onClick = {this.SignUp}>Sign Up</button>
 		      </div>
 		    </div>
+        {
+        !this.state.updateScreen
+        ?
+        <div>
 		    <div className = {styles.loginContainer}>
 		      <div>
 		        <img src = {UserIcon} width = "100" className = {styles.inputIcon}/>
@@ -137,7 +180,7 @@ class Home extends Component {
 		      	this.state.loggingIn && !this.props.warning
 		      	?
 		      	<div>
-		      		<FontAwesomeIcon icon={faSpinner} spin style = {{color: "#5EC4EB", marginRight: 4, width: 12}}/> Logging In
+		      		<FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "#5EC4EB", marginRight: 4, width: 12}}/> Logging In
 		      	</div>
 		      	:
 		      	<div>
@@ -155,6 +198,37 @@ class Home extends Component {
 		      }
 		      </div>
 		    </div>
+        </div>
+        :
+        <div  style = {{position: 'relative'}}>
+          <div style = {{paddingTop: 200, textAlign: 'center', color: 'white', width: 900}}>
+            <div style = {{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+              <div style = {{width: `${ this.state.percentageDownloaded }px`, height: 6, background: 'linear-gradient(258.54deg, #5ec3eb 0%, #d023eb 100%)'}}>
+              </div>
+              <div style = {{width: `${ this.state.percentageLeft }px`, height: 6, background: '#111111'}}>
+              </div>
+            </div>
+            {
+            this.state.downloadError === ''
+            ?
+            <div style = {{marginTop: 10, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+              <div style = {{color: "#D6D6D6"}}>
+                <FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "#5EC4EB", marginRight: 4, width: 12}}/>  Downloading Update ({this.state.downloadSpeed} Mbps)
+              </div>
+            </div>
+            :
+            <div style = {{marginTop: 10, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+              <div style = {{color: "#D6D6D6"}}>
+                {this.state.downloadError}
+              </div>
+            </div>
+            }  
+            <div style = {{color: "#C9C9C9", fontSize: 10, margin: 'auto', marginTop: 5}}>
+              {this.state.transferred} / {this.state.total} Bytes Downloaded
+            </div>
+          </div>
+        </div>
+        }
 		</div>
 	);
 	}
