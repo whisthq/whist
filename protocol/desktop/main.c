@@ -38,8 +38,9 @@ volatile char* server_ip;
 
 SDL_mutex* send_packet_mutex;
 void updateClipboard();
-static int32_t ReceivePackets(void* opaque);
-static int32_t ReceiveMessage(struct RTPPacket* packet);
+void UpdateClipboardThread( void* opaque );
+static int32_t ReceivePackets( void* opaque );
+static int32_t ReceiveMessage( struct RTPPacket* packet );
 
 struct SocketContext PacketSendContext;
 struct SocketContext PacketTCPContext;
@@ -49,28 +50,42 @@ volatile bool exiting = false;
 volatile int try_amount;
 
 // UPDATER CODE - HANDLES ALL PERIODIC UPDATES
-struct UpdateData {
+struct UpdateData
+{
     bool needs_dimension_update;
     bool tried_to_update_dimension;
     bool has_initialized_updated;
     clock last_tcp_check_timer;
-} UpdateData;
+    bool updating_clipboard;
+    bool pending_update_clipboard;
+    clock last_clipboard_update;
+    SDL_sem* clipboard_semaphore;
+} volatile UpdateData;
 
-void initUpdate() {
+void initUpdate()
+{
     UpdateData.needs_dimension_update = true;
     UpdateData.tried_to_update_dimension = false;
 
     StartTimer( &UpdateData.last_tcp_check_timer );
-    StartTimer((clock*)&latency_timer);
+    StartTimer( (clock*)&latency_timer );
     ping_id = 1;
     ping_failures = -2;
+
+    UpdateData.updating_clipboard = false;
+    UpdateData.pending_update_clipboard = false;
+    StartTimer( &UpdateData.last_clipboard_update );
+    UpdateData.clipboard_semaphore = SDL_CreateSemaphore( 0 );
+
+    SDL_CreateThread( UpdateClipboardThread, "UpdateClipboardThread", NULL );
 
     updateClipboard();
     StartTrackingClipboardUpdates();
     ClearReadingTCP();
 }
 
-void update() {
+void update()
+{
     FractalClientMessage fmsg;
 
     // Check if TCP is up
@@ -91,12 +106,17 @@ void update() {
         char* tcp_buf = TryReadingTCPPacket( &PacketTCPContext );
         if( tcp_buf )
         {
-            struct RTPPacket* packet = (struct RTPPacket *) tcp_buf;
-            struct FractalServerMessage* fmsg_response = (struct FractalServerMessage *) packet->data;
+            struct RTPPacket* packet = (struct RTPPacket*) tcp_buf;
+            struct FractalServerMessage* fmsg_response = (struct FractalServerMessage*) packet->data;
             mprintf( "Received %d byte clipboard message from server!\n", packet->payload_size );
             SetClipboard( &fmsg_response->clipboard );
         }
         StartTimer( &UpdateData.last_tcp_check_timer );
+    }
+
+    if( UpdateData.pending_update_clipboard )
+    {
+        updateClipboard();
     }
 
     // Check if clipboard has updated
@@ -107,8 +127,9 @@ void update() {
     }
 
     // Start update checks
-    if (UpdateData.needs_dimension_update && !UpdateData.tried_to_update_dimension && (server_width != output_width || server_height != output_height)) {
-        mprintf("Asking for server dimension to be %dx%d\n", output_width, output_height);
+    if( UpdateData.needs_dimension_update && !UpdateData.tried_to_update_dimension && (server_width != output_width || server_height != output_height) )
+    {
+        mprintf( "Asking for server dimension to be %dx%d\n", output_width, output_height );
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
@@ -116,8 +137,9 @@ void update() {
         UpdateData.tried_to_update_dimension = true;
     }
 
-    if (update_mbps) {
-        mprintf("Asking for server MBPS to be %f\n", max_mbps);
+    if( update_mbps )
+    {
+        mprintf( "Asking for server MBPS to be %f\n", max_mbps );
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_mbps;
@@ -126,29 +148,33 @@ void update() {
     // End update checks
 
     // Start Ping
-    if (GetTimer(latency_timer) > 1.0) {
-        mprintf("Whoah, ping timer is way too old\n");
+    if( GetTimer( latency_timer ) > 1.0 )
+    {
+        mprintf( "Whoah, ping timer is way too old\n" );
     }
 
-    if (is_timing_latency && GetTimer(latency_timer) > 0.6) {
-        mprintf("Ping received no response: %d\n", ping_id);
+    if( is_timing_latency && GetTimer( latency_timer ) > 0.6 )
+    {
+        mprintf( "Ping received no response: %d\n", ping_id );
         is_timing_latency = false;
         ping_failures++;
-        if (ping_failures == 3) {
-            mprintf("Server disconnected: 3 consecutive ping failures.\n");
+        if( ping_failures == 3 )
+        {
+            mprintf( "Server disconnected: 3 consecutive ping failures.\n" );
             connected = false;
         }
     }
 
-    if (!is_timing_latency && GetTimer(latency_timer) > 0.5) {
+    if( !is_timing_latency && GetTimer( latency_timer ) > 0.5 )
+    {
         ping_id++;
         fmsg.type = MESSAGE_PING;
         fmsg.ping_id = ping_id;
         is_timing_latency = true;
 
-        StartTimer((clock*)&latency_timer);
+        StartTimer( (clock*)&latency_timer );
 
-        mprintf("Ping! %d\n", ping_id);
+        mprintf( "Ping! %d\n", ping_id );
         SendFmsg( &fmsg );
         SendFmsg( &fmsg );
     }
@@ -172,7 +198,7 @@ int SendFmsg( struct FractalClientMessage* fmsg )
 
 #define LARGEST_PACKET 10000000
 char unbounded_packet[LARGEST_PACKET];
-char encrypted_unbounded_packet[sizeof(int) + LARGEST_PACKET + 16];
+char encrypted_unbounded_packet[sizeof( int ) + LARGEST_PACKET + 16];
 
 int SendTCPPacket( void* data, int len )
 {
@@ -192,12 +218,12 @@ int SendTCPPacket( void* data, int len )
 
     int packet_size = PACKET_HEADER_SIZE + len;
 
-    int encrypt_len = encrypt_packet( packet, packet_size, (struct RTPPacket *) (sizeof(int) + encrypted_unbounded_packet), (unsigned char *) PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( packet, packet_size, (struct RTPPacket*) (sizeof( int ) + encrypted_unbounded_packet), (unsigned char*)PRIVATE_KEY );
     *((int*)encrypted_unbounded_packet) = encrypt_len;
 
     mprintf( "Sending TCP Packet... %d\n", encrypt_len );
     bool failed = false;
-    if( sendp( &PacketTCPContext, encrypted_unbounded_packet, sizeof(int) + encrypt_len ) < 0 )
+    if( sendp( &PacketTCPContext, encrypted_unbounded_packet, sizeof( int ) + encrypt_len ) < 0 )
     {
         mprintf( "Failed to send packet!\n" );
         failed = true;
@@ -208,9 +234,11 @@ int SendTCPPacket( void* data, int len )
 }
 
 static int sent_packet_id = 1;
-int SendPacket(void* data, int len) {
-    if (len > MAX_PAYLOAD_SIZE) {
-        mprintf("Packet too large!\n");
+int SendPacket( void* data, int len )
+{
+    if( len > MAX_PAYLOAD_SIZE )
+    {
+        mprintf( "Packet too large!\n" );
         return -1;
     }
 
@@ -226,46 +254,80 @@ int SendPacket(void* data, int len) {
     int packet_size = PACKET_HEADER_SIZE + len;
 
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, (unsigned char *) PRIVATE_KEY );
+    int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet, (unsigned char*)PRIVATE_KEY );
 
     bool failed = false;
-    SDL_LockMutex(send_packet_mutex);
-    if (sendp(&PacketSendContext, &encrypted_packet, encrypt_len ) < 0) {
-        mprintf("Failed to send packet!\n");
+    SDL_LockMutex( send_packet_mutex );
+    if( sendp( &PacketSendContext, &encrypted_packet, encrypt_len ) < 0 )
+    {
+        mprintf( "Failed to send packet!\n" );
         failed = true;
     }
-    SDL_UnlockMutex(send_packet_mutex);
+    SDL_UnlockMutex( send_packet_mutex );
 
     return failed ? -1 : 0;
 }
 
-void updateClipboard()
+void UpdateClipboardThread( void* opaque )
 {
-    ClipboardData* clipboard = GetClipboard();
+    opaque;
 
-    if( clipboard->type == CLIPBOARD_FILES )
+    while( connected )
     {
-        char prev[] = "unison -sshargs \"-l vm1 -i sshkey\" clipboard \"ssh://";
-        char* middle = (char *) server_ip;
-        char end[] = "/C:\\Program Files\\Fractal\\clipboard/\" -force clipboard -batch";
+        SDL_SemWait( UpdateData.clipboard_semaphore );
 
-        char command[sizeof( prev ) + 100 + sizeof(end)];
-        memcpy( command, prev, strlen(prev) );
-        memcpy( command + strlen( prev ), middle, strlen( middle ) );
-        memcpy( command + strlen( prev ) + strlen(middle), end, strlen( end ) + 1 );
-        runcmd( command );
+        clock clipboard_time;
+        StartTimer( &clipboard_time );
+
+        ClipboardData* clipboard = GetClipboard();
+
+        if( clipboard->type == CLIPBOARD_FILES )
+        {
+            char prev[] = "unison -sshargs \"-l vm1 -i sshkey\" clipboard \"ssh://";
+            char* middle = (char*)server_ip;
+            char end[] = "/C:\\Program Files\\Fractal\\clipboard/\" -force clipboard -batch";
+
+            char command[sizeof( prev ) + 100 + sizeof( end )];
+            memcpy( command, prev, strlen( prev ) );
+            memcpy( command + strlen( prev ), middle, strlen( middle ) );
+            memcpy( command + strlen( prev ) + strlen( middle ), end, strlen( end ) + 1 );
+            runcmd( command );
+        }
+
+        FractalClientMessage* fmsg = malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) + clipboard->size );
+        fmsg->type = CMESSAGE_CLIPBOARD;
+        memcpy( &fmsg->clipboard, clipboard, sizeof( ClipboardData ) + clipboard->size );
+        SendFmsg( fmsg );
+        free( fmsg );
+
+        // If it hasn't been 500ms yet, then wait 500ms to prevent too much spam
+        const int spam_time_ms = 500;
+        if( GetTimer( clipboard_time ) < spam_time_ms / 1000.0 )
+        {
+            SDL_Delay( max( (int)(spam_time_ms - 1000*GetTimer( clipboard_time )), 1 ) );
+        }
+
+        UpdateData.updating_clipboard = false;
     }
-
-    FractalClientMessage* fmsg = malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
-    fmsg->type = CMESSAGE_CLIPBOARD;
-    memcpy( &fmsg->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size );
-    SendFmsg( fmsg );
-    free( fmsg );
 }
 
-static int32_t ReceivePackets(void* opaque) {
-    mprintf("ReceivePackets running on Thread %d\n", SDL_GetThreadID(NULL));
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
+void updateClipboard()
+{
+    if( UpdateData.updating_clipboard )
+    {
+        UpdateData.pending_update_clipboard = true;
+    } else
+    {
+        UpdateData.pending_update_clipboard = false;
+        UpdateData.updating_clipboard = true;
+        SDL_SemPost( UpdateData.clipboard_semaphore );
+    }
+}
+
+static int32_t ReceivePackets( void* opaque )
+{
+    mprintf( "ReceivePackets running on Thread %d\n", SDL_GetThreadID( NULL ) );
+    SDL_SetThreadPriority( SDL_THREAD_PRIORITY_HIGH );
 
     struct RTPPacket packet = { 0 };
     struct SocketContext socketContext = *(struct SocketContext*) opaque;
@@ -276,7 +338,7 @@ static int32_t ReceivePackets(void* opaque) {
     Timers
     ****/
     clock world_timer;
-    StartTimer(&world_timer);
+    StartTimer( &world_timer );
 
     double recvfrom_time = 0;
     double update_video_time = 0;
@@ -305,80 +367,87 @@ static int32_t ReceivePackets(void* opaque) {
     double lastrecv = 0.0;
 
     clock last_ack;
-    StartTimer(&last_ack);
+    StartTimer( &last_ack );
 
     clock drop_test_timer;
     int drop_time_ms = 250;
     int drop_distance_sec = -1;
     bool dropping = false;
-    StartTimer(&drop_test_timer);
+    StartTimer( &drop_test_timer );
 
-    while (run_receive_packets) {
-        if (GetTimer(last_ack) > 5.0) {
-            sendp(&socketContext, NULL, 0);
-            StartTimer(&last_ack);
+    while( run_receive_packets )
+    {
+        if( GetTimer( last_ack ) > 5.0 )
+        {
+            sendp( &socketContext, NULL, 0 );
+            StartTimer( &last_ack );
         }
 
         update();
 
         //mprintf("Update\n");
         // Call as often as possible
-        if (GetTimer(world_timer) > 5) {
-            mprintf("\n");
-            mprintf("world_time: %f\n", GetTimer(world_timer));
-            mprintf("recvfrom_time: %f\n", recvfrom_time);
-            mprintf("update_video_time: %f\n", update_video_time);
-            mprintf("update_audio_time: %f\n", update_audio_time);
-            mprintf("hash_time: %f\n", hash_time);
-            mprintf("video_time: %f\n", video_time);
-            mprintf("max_video_time: %f\n", max_video_time);
-            mprintf("audio_time: %f\n", audio_time);
-            mprintf("max_audio_time: %f\n", max_audio_time);
-            mprintf("message_time: %f\n", message_time);
-            mprintf("\n");
-            StartTimer(&world_timer);
+        if( GetTimer( world_timer ) > 5 )
+        {
+            mprintf( "\n" );
+            mprintf( "world_time: %f\n", GetTimer( world_timer ) );
+            mprintf( "recvfrom_time: %f\n", recvfrom_time );
+            mprintf( "update_video_time: %f\n", update_video_time );
+            mprintf( "update_audio_time: %f\n", update_audio_time );
+            mprintf( "hash_time: %f\n", hash_time );
+            mprintf( "video_time: %f\n", video_time );
+            mprintf( "max_video_time: %f\n", max_video_time );
+            mprintf( "audio_time: %f\n", audio_time );
+            mprintf( "max_audio_time: %f\n", max_audio_time );
+            mprintf( "message_time: %f\n", message_time );
+            mprintf( "\n" );
+            StartTimer( &world_timer );
         }
 
-        StartTimer(&update_video_timer);
+        StartTimer( &update_video_timer );
         updateVideo();
-        update_video_time += GetTimer(update_video_timer);
+        update_video_time += GetTimer( update_video_timer );
 
-        StartTimer(&update_audio_timer);
+        StartTimer( &update_audio_timer );
         updateAudio();
-        update_audio_time += GetTimer(update_audio_timer);
+        update_audio_time += GetTimer( update_audio_timer );
 
-        StartTimer(&recvfrom_timer);
+        StartTimer( &recvfrom_timer );
 
         // START DROP EMULATION
-        if (dropping) {
-            if (drop_time_ms > 0 && GetTimer(drop_test_timer) * 1000.0 > drop_time_ms) {
+        if( dropping )
+        {
+            if( drop_time_ms > 0 && GetTimer( drop_test_timer ) * 1000.0 > drop_time_ms )
+            {
                 dropping = false;
-                StartTimer(&drop_test_timer);
+                StartTimer( &drop_test_timer );
             }
-        }
-        else {
-            if (drop_distance_sec > 0 && GetTimer(drop_test_timer) > drop_distance_sec) {
+        } else
+        {
+            if( drop_distance_sec > 0 && GetTimer( drop_test_timer ) > drop_distance_sec )
+            {
                 dropping = true;
-                StartTimer(&drop_test_timer);
+                StartTimer( &drop_test_timer );
             }
         }
         // END DROP EMULATION
 
         int recv_size;
-        if (dropping) {
-            SDL_Delay(1);
+        if( dropping )
+        {
+            SDL_Delay( 1 );
             recv_size = 0;
-            mprintf("DROPPING\n");
-        }
-        else {
+            mprintf( "DROPPING\n" );
+        } else
+        {
             struct RTPPacket encrypted_packet;
-            int encrypted_len = recvp(&socketContext, &encrypted_packet, sizeof(encrypted_packet));
+            int encrypted_len = recvp( &socketContext, &encrypted_packet, sizeof( encrypted_packet ) );
 
             recv_size = encrypted_len;
 
             if( recv_size > 0 )
             {
-                recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, (unsigned char *) PRIVATE_KEY );
+                recv_size = decrypt_packet( &encrypted_packet, encrypted_len, &packet, (unsigned char*)PRIVATE_KEY );
                 if( recv_size < 0 )
                 {
                     mprintf( "Failed to decrypt packet\n" );
@@ -388,14 +457,16 @@ static int32_t ReceivePackets(void* opaque) {
             }
         }
 
-        double recvfrom_short_time = GetTimer(recvfrom_timer);
+        double recvfrom_short_time = GetTimer( recvfrom_timer );
 
         recvfrom_time += recvfrom_short_time;
         lastrecv += recvfrom_short_time;
 
-        if (recv_size > 0) {
-            if (lastrecv > 20.0 / 1000.0) {
-                mprintf("Took more than 20ms to receive something!! Took %fms total!\n", lastrecv * 1000.0);
+        if( recv_size > 0 )
+        {
+            if( lastrecv > 20.0 / 1000.0 )
+            {
+                mprintf( "Took more than 20ms to receive something!! Took %fms total!\n", lastrecv * 1000.0 );
             }
             lastrecv = 0.0;
         }
@@ -404,106 +475,115 @@ static int32_t ReceivePackets(void* opaque) {
 
         total_recvs++;
 
-        if (recv_size == 0) {
+        if( recv_size == 0 )
+        {
             // ACK
-        }
-        else if (recv_size < 0) {
+        } else if( recv_size < 0 )
+        {
             int error = GetLastNetworkError();
 
-            switch (error) {
+            switch( error )
+            {
             case ETIMEDOUT:
             case EWOULDBLOCK:
                 break;
             default:
-                mprintf("Unexpected Packet Error: %d\n", error);
+                mprintf( "Unexpected Packet Error: %d\n", error );
                 break;
             }
-        }
-        else {
+        } else
+        {
             //mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
-            switch (packet.type) {
+            switch( packet.type )
+            {
             case PACKET_VIDEO:
-                StartTimer(&video_timer);
-                ReceiveVideo(&packet);
-                video_time += GetTimer(video_timer);
-                max_video_time = max(max_video_time, GetTimer(video_timer));
+                StartTimer( &video_timer );
+                ReceiveVideo( &packet );
+                video_time += GetTimer( video_timer );
+                max_video_time = max( max_video_time, GetTimer( video_timer ) );
                 break;
             case PACKET_AUDIO:
-                StartTimer(&audio_timer);
-                ReceiveAudio(&packet);
-                audio_time += GetTimer(audio_timer);
-                max_audio_time = max(max_audio_time, GetTimer(audio_timer));
+                StartTimer( &audio_timer );
+                ReceiveAudio( &packet );
+                audio_time += GetTimer( audio_timer );
+                max_audio_time = max( max_audio_time, GetTimer( audio_timer ) );
                 break;
             case PACKET_MESSAGE:
-                StartTimer(&message_timer);
-                ReceiveMessage(&packet);
-                message_time += GetTimer(message_timer);
+                StartTimer( &message_timer );
+                ReceiveMessage( &packet );
+                message_time += GetTimer( message_timer );
                 break;
             default:
-                mprintf("Unknown Packet\n");
+                mprintf( "Unknown Packet\n" );
                 break;
             }
         }
     }
 
-    if (lastrecv > 20.0 / 1000.0) {
-        mprintf("Took more than 20ms to receive something!! Took %fms total!\n", lastrecv * 1000.0);
+    if( lastrecv > 20.0 / 1000.0 )
+    {
+        mprintf( "Took more than 20ms to receive something!! Took %fms total!\n", lastrecv * 1000.0 );
     }
 
-    SDL_Delay(5);
+    SDL_Delay( 5 );
 
     return 0;
 }
 
-static int32_t ReceiveMessage(struct RTPPacket* packet) {
-    if (packet->payload_size != sizeof(FractalServerMessage)) {
-        mprintf("Incorrect payload size for a server message!\n");
+static int32_t ReceiveMessage( struct RTPPacket* packet )
+{
+    if( packet->payload_size != sizeof( FractalServerMessage ) )
+    {
+        mprintf( "Incorrect payload size for a server message!\n" );
     }
     FractalServerMessage fmsg = *(FractalServerMessage*)packet->data;
-    switch (fmsg.type) {
+    switch( fmsg.type )
+    {
     case SMESSAGE_CLIPBOARD:
         mprintf( "Receive clipboard message from server!\n" );
         SetClipboard( &fmsg.clipboard );
         break;
     case MESSAGE_PONG:
-        if (ping_id == fmsg.ping_id) {
-            mprintf("Latency: %f\n", GetTimer(latency_timer));
+        if( ping_id == fmsg.ping_id )
+        {
+            mprintf( "Latency: %f\n", GetTimer( latency_timer ) );
             is_timing_latency = false;
             ping_failures = 0;
             try_amount = 0;
-        }
-        else {
-            mprintf("Old Ping ID found.\n");
+        } else
+        {
+            mprintf( "Old Ping ID found.\n" );
         }
         break;
     case MESSAGE_AUDIO_FREQUENCY:
-        mprintf("Changing audio frequency to %d\n", fmsg.frequency);
+        mprintf( "Changing audio frequency to %d\n", fmsg.frequency );
         audio_frequency = fmsg.frequency;
         break;
     case SMESSAGE_QUIT:
-        mprintf("Server signaled a quit!\n");
+        mprintf( "Server signaled a quit!\n" );
         exiting = true;
         break;
     default:
-        mprintf("Unknown Server Message Received\n");
+        mprintf( "Unknown Server Message Received\n" );
         return -1;
     }
     return 0;
 }
 
 // Make the screen black
-void clearSDL() {
-    SDL_SetRenderDrawColor((SDL_Renderer*) renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear((SDL_Renderer*) renderer);
-    SDL_RenderPresent((SDL_Renderer*) renderer);
+void clearSDL()
+{
+    SDL_SetRenderDrawColor( (SDL_Renderer*)renderer, 0, 0, 0, SDL_ALPHA_OPAQUE );
+    SDL_RenderClear( (SDL_Renderer*)renderer );
+    SDL_RenderPresent( (SDL_Renderer*)renderer );
 }
 
 // Send a key to SDL event queue, presumably one that is captured and wouldn't naturally make it to the event queue by itself
-void SendCapturedKey( FractalKeycode key, int type, int time)
+void SendCapturedKey( FractalKeycode key, int type, int time )
 {
     SDL_Event e = { 0 };
     e.type = type;
-    e.key.keysym.scancode = (SDL_Scancode) key;
+    e.key.keysym.scancode = (SDL_Scancode)key;
     e.key.timestamp = time;
     SDL_PushEvent( &e );
 }
@@ -583,25 +663,29 @@ LRESULT CALLBACK LowLevelKeyboardProc( INT nCode, WPARAM wParam, LPARAM lParam )
 }
 #endif
 
-int initSDL() {
+int initSDL()
+{
 #if defined(_WIN32)
     // Hook onto windows keyboard to intercept windows special key combinations
     g_hKeyboardHook = SetWindowsHookEx( WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle( NULL ), 0 );
 #endif
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+    if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER ) )
+    {
+        fprintf( stderr, "Could not initialize SDL - %s\n", SDL_GetError() );
         return -1;
     }
 
     int full_width = get_native_screen_width();
     int full_height = get_native_screen_height();
 
-    if (output_width < 0) {
+    if( output_width < 0 )
+    {
         output_width = full_width;
     }
 
-    if (output_height < 0) {
+    if( output_height < 0 )
+    {
         output_height = full_height;
     }
 
@@ -627,72 +711,83 @@ int initSDL() {
     );
 #endif
 
-    if (!window) {
-        fprintf(stderr, "SDL: could not create window - exiting: %s\n", SDL_GetError());
+    if( !window )
+    {
+        fprintf( stderr, "SDL: could not create window - exiting: %s\n", SDL_GetError() );
         return -1;
     }
 
-    renderer = SDL_CreateRenderer((SDL_Window*) window, -1, SDL_RENDERER_PRESENTVSYNC);
-    if (!renderer) {
-        fprintf(stderr, "SDL: could not create renderer - exiting: %s\n", SDL_GetError());
+    renderer = SDL_CreateRenderer( (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC );
+    if( !renderer )
+    {
+        fprintf( stderr, "SDL: could not create renderer - exiting: %s\n", SDL_GetError() );
         return -1;
     }
 
     return 0;
 }
 
-void destroySDL() {
+void destroySDL()
+{
 #if defined(_WIN32)
     UnhookWindowsHookEx( g_hKeyboardHook );
 #endif
 
-    if (renderer) {
-        SDL_DestroyRenderer((SDL_Renderer*)renderer);
+    if( renderer )
+    {
+        SDL_DestroyRenderer( (SDL_Renderer*)renderer );
         renderer = NULL;
     }
-    if (window) {
-        SDL_DestroyWindow((SDL_Window*)window);
+    if( window )
+    {
+        SDL_DestroyWindow( (SDL_Window*)window );
         window = NULL;
     }
     SDL_Quit();
 }
 
-int main(int argc, char* argv[])
+int main( int argc, char* argv[] )
 {
     int num_required_args = 2;
     int num_optional_args = 3;
-    if(argc - 1 < num_required_args || argc - 1 > num_required_args + num_optional_args ) {
-        printf("Usage: desktop [IP ADDRESS] [AES PRIVATE KEY] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]");
+    if( argc - 1 < num_required_args || argc - 1 > num_required_args + num_optional_args )
+    {
+        printf( "Usage: desktop [IP ADDRESS] [AES PRIVATE KEY] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]" );
         return -1;
     }
 
     server_ip = argv[1];
-//    char* aes_private_key = argv[2]; TODO: need to make webserver exchange key instead of hardcode
+    //    char* aes_private_key = argv[2]; TODO: need to make webserver exchange key instead of hardcode
     output_width = -1;
     output_height = -1;
 
-    if (argc >= 4 && (atoi(argv[3]) > 0)) {
-        output_width = atoi(argv[3]);
+    if( argc >= 4 && (atoi( argv[3] ) > 0) )
+    {
+        output_width = atoi( argv[3] );
     }
 
-    if (argc >= 5 && (atoi(argv[4]) > 0)) {
-        output_height = atoi(argv[4]);
+    if( argc >= 5 && (atoi( argv[4] ) > 0) )
+    {
+        output_height = atoi( argv[4] );
     }
 
-    if (argc == 6) {
-        max_mbps = atoi(argv[5]);
+    if( argc == 6 )
+    {
+        max_mbps = atoi( argv[5] );
     }
 
-    if (initSDL() < 0) {
-        printf("Failed to initialized SDL\n");
+    if( initSDL() < 0 )
+    {
+        printf( "Failed to initialized SDL\n" );
         return -1;
     }
 
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-    initMultiThreadedPrintf(false);
+    SDL_SetThreadPriority( SDL_THREAD_PRIORITY_HIGH );
+    initMultiThreadedPrintf( false );
 
     exiting = false;
-    for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
+    for( try_amount = 0; try_amount < 3 && !exiting; try_amount++ )
+    {
         // Make the screen black
         clearSDL();
 
@@ -706,8 +801,9 @@ int main(int argc, char* argv[])
         // initialize the windows socket library if this is a windows client
 #if defined(_WIN32)
         WSADATA wsa;
-        if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-            mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
+        if( WSAStartup( MAKEWORD( 2, 2 ), &wsa ) != 0 )
+        {
+            mprintf( "Failed to initialize Winsock with error code: %d.\n", WSAGetLastError() );
             return -1;
         }
 #endif
@@ -715,23 +811,25 @@ int main(int argc, char* argv[])
         SDL_Event msg;
         FractalClientMessage fmsg = { 0 };
 
-        if (CreateUDPContext(&PacketSendContext, "C", (char *) server_ip, PORT_CLIENT_TO_SERVER, 10, 500) < 0) {
-            mprintf("Failed to connect to server\n");
-            continue;
-        }
-
-        SDL_Delay(150);
-
-        struct SocketContext PacketReceiveContext = { 0 };
-        if (CreateUDPContext(&PacketReceiveContext, "C", (char *) server_ip, PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
-            mprintf("Failed finish connection to server\n");
-            closesocket(PacketSendContext.s);
+        if( CreateUDPContext( &PacketSendContext, "C", (char*)server_ip, PORT_CLIENT_TO_SERVER, 10, 500 ) < 0 )
+        {
+            mprintf( "Failed to connect to server\n" );
             continue;
         }
 
         SDL_Delay( 150 );
 
-        if( CreateTCPContext(&PacketTCPContext, "C", (char *) server_ip, PORT_SHARED_TCP, 1, 500) < 0 )
+        struct SocketContext PacketReceiveContext = { 0 };
+        if( CreateUDPContext( &PacketReceiveContext, "C", (char*)server_ip, PORT_SERVER_TO_CLIENT, 1, 500 ) < 0 )
+        {
+            mprintf( "Failed finish connection to server\n" );
+            closesocket( PacketSendContext.s );
+            continue;
+        }
+
+        SDL_Delay( 150 );
+
+        if( CreateTCPContext( &PacketTCPContext, "C", (char*)server_ip, PORT_SHARED_TCP, 1, 500 ) < 0 )
         {
             mprintf( "Failed finish connection to server\n" );
             closesocket( PacketSendContext.s );
@@ -752,7 +850,7 @@ int main(int argc, char* argv[])
         send_packet_mutex = SDL_CreateMutex();
         run_receive_packets = true;
         SDL_Thread* receive_packets_thread;
-        receive_packets_thread = SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
+        receive_packets_thread = SDL_CreateThread( ReceivePackets, "ReceivePackets", &PacketReceiveContext );
 
         clock keyboard_sync_timer;
         StartTimer( &keyboard_sync_timer );
@@ -765,7 +863,7 @@ int main(int argc, char* argv[])
 
         SDL_Delay( 250 );
 
-        while (connected && !exiting)
+        while( connected && !exiting )
         {
             // Update the keyboard state
             if( GetTimer( keyboard_sync_timer ) > 50.0 / 1000.0 )
@@ -774,9 +872,9 @@ int main(int argc, char* argv[])
                 fmsg.type = MESSAGE_KEYBOARD_STATE;
 
                 int num_keys;
-                Uint8* state = (Uint8*) SDL_GetKeyboardState( &num_keys );
+                Uint8* state = (Uint8*)SDL_GetKeyboardState( &num_keys );
 #if defined(_WIN32)
-                fmsg.num_keycodes = (short) min( NUM_KEYCODES, num_keys );
+                fmsg.num_keycodes = (short)min( NUM_KEYCODES, num_keys );
 #else
                 fmsg.num_keycodes = fmin( NUM_KEYCODES, num_keys );
 #endif
@@ -794,8 +892,10 @@ int main(int argc, char* argv[])
             }
 
             fmsg.type = 0;
-            if ( SDL_PollEvent(&msg) ) {
-                switch (msg.type) {
+            if( SDL_PollEvent( &msg ) )
+            {
+                switch( msg.type )
+                {
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
                     // Send a keyboard press for this event
@@ -804,10 +904,12 @@ int main(int argc, char* argv[])
                     fmsg.keyboard.mod = msg.key.keysym.mod;
                     fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN;
 
-                    if (fmsg.keyboard.code == KEY_LALT) {
+                    if( fmsg.keyboard.code == KEY_LALT )
+                    {
                         alt_pressed = fmsg.keyboard.pressed;
                     }
-                    if (fmsg.keyboard.code == KEY_LCTRL) {
+                    if( fmsg.keyboard.code == KEY_LCTRL )
+                    {
                         ctrl_pressed = fmsg.keyboard.pressed;
                     }
                     if( fmsg.keyboard.code == KEY_LGUI )
@@ -819,17 +921,18 @@ int main(int argc, char* argv[])
                         rgui_pressed = fmsg.keyboard.pressed;
                     }
 
-                    if ( ctrl_pressed && alt_pressed && fmsg.keyboard.code == KEY_F4) {
-                        mprintf("Quitting...\n");
+                    if( ctrl_pressed && alt_pressed && fmsg.keyboard.code == KEY_F4 )
+                    {
+                        mprintf( "Quitting...\n" );
                         exiting = true;
                     }
 
                     break;
                 case SDL_MOUSEMOTION:
-                    fmsg.type                 = MESSAGE_MOUSE_MOTION;
+                    fmsg.type = MESSAGE_MOUSE_MOTION;
                     fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
-                    fmsg.mouseMotion.x        = fmsg.mouseMotion.relative ? msg.motion.xrel : msg.motion.x * 1000000 / output_width;
-                    fmsg.mouseMotion.y        = fmsg.mouseMotion.relative ? msg.motion.yrel : msg.motion.y * 1000000 / output_height;
+                    fmsg.mouseMotion.x = fmsg.mouseMotion.relative ? msg.motion.xrel : msg.motion.x * 1000000 / output_width;
+                    fmsg.mouseMotion.y = fmsg.mouseMotion.relative ? msg.motion.yrel : msg.motion.y * 1000000 / output_height;
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                 case SDL_MOUSEBUTTONUP:
@@ -843,21 +946,22 @@ int main(int argc, char* argv[])
                     fmsg.mouseWheel.y = msg.wheel.y;
                     break;
                 case SDL_QUIT:
-                    mprintf("Forcefully Quitting...\n");
+                    mprintf( "Forcefully Quitting...\n" );
                     exiting = true;
                     break;
                 }
 
-                if (fmsg.type != 0) {
+                if( fmsg.type != 0 )
+                {
                     SendFmsg( &fmsg );
-                }
-                else {
-                    SDL_Delay(1);
+                } else
+                {
+                    SDL_Delay( 1 );
                 }
             }
         }
 
-        mprintf("Disconnecting...\n");
+        mprintf( "Disconnecting...\n" );
 
         if( exiting )
         {
@@ -866,7 +970,7 @@ int main(int argc, char* argv[])
         }
 
         run_receive_packets = false;
-        SDL_WaitThread(receive_packets_thread, NULL);
+        SDL_WaitThread( receive_packets_thread, NULL );
 
         // Destroy video and audio
         destroyVideo();
@@ -874,16 +978,16 @@ int main(int argc, char* argv[])
 
         clearSDL();
 
-        closesocket(PacketSendContext.s);
-        closesocket(PacketReceiveContext.s);
-        closesocket(PacketTCPContext.s);
+        closesocket( PacketSendContext.s );
+        closesocket( PacketReceiveContext.s );
+        closesocket( PacketTCPContext.s );
 
 #if defined(_WIN32)
         WSACleanup();
 #endif
     }
 
-    mprintf("Closing Client...\n");
+    mprintf( "Closing Client...\n" );
 
     destroyMultiThreadedPrintf();
     destroySDL();

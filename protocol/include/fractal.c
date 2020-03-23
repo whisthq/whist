@@ -229,6 +229,30 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 	return 0;
 }
 
+typedef struct
+{
+	int ip;
+	short private_port;
+	short public_port;
+} stun_entry_t;
+
+typedef enum stun_request_type
+{
+	ASK_INFO,
+	POST_INFO
+} stun_request_type_t;
+
+typedef struct
+{
+	stun_request_type_t type;
+	stun_entry_t entry;
+} stun_request_t;
+
+#define STUN_IP "54.159.130.32"
+#define STUN_PORT 48800
+
+#define USING_STUN true
+
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
 	context->is_tcp = false;
 
@@ -249,9 +273,48 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		// Client connection protocol
 		context->is_server = false;
 
-		context->addr.sin_family = AF_INET;
-		context->addr.sin_addr.s_addr = inet_addr(destination);
-		context->addr.sin_port = htons((u_short) port);
+
+#if USING_STUN
+		struct sockaddr_in stun_addr;
+		stun_addr.sin_family = AF_INET;
+		stun_addr.sin_addr.s_addr = inet_addr( STUN_IP );
+		stun_addr.sin_port = htons( STUN_PORT );
+
+		stun_request_t stun_request;
+		stun_request.type = ASK_INFO;
+		stun_request.entry.ip = inet_addr( destination );
+		stun_request.entry.public_port = htons( (u_short)port );
+
+		mprintf( "Sending request to STUN...\n" );
+		if( sendto( context->s, &stun_request, sizeof( stun_request ), 0, &stun_addr, sizeof( stun_addr ) ) < 0 )
+		{
+			mprintf( "Could not send message to STUN %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		stun_entry_t entry;
+		int recv_size;
+		if( (recv_size = recvp( context, &entry, sizeof( entry ) )) < 0 )
+		{
+			mprintf( "Could not receive message from STUN %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		if( recv_size != entry )
+		{
+			mprintf( "STUN Response of incorrect size!\n" );
+			closesocket( context->s );
+			return -1;
+		} else
+		{
+			mprintf( "Received STUN response!\n" );
+			context->addr.sin_family = AF_INET;
+			context->addr.sin_addr.s_addr = entry.ip;
+			context->addr.sin_port = entry.private_port;
+		}
+#endif
 
 		mprintf("Connecting to server...\n");
 
