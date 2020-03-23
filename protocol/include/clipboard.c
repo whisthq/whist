@@ -265,7 +265,7 @@ void SetClipboard( ClipboardData* cb )
 
 #if defined(_WIN32)
 	int cf_type = -1;
-	HGLOBAL hMem;
+	HGLOBAL hMem = NULL;
 
 	switch( cb->type )
 	{
