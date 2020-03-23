@@ -63,6 +63,7 @@ def account(action):
 		username, ip, location = body['username'], body['ip'], body['location']
 		insertComputer(username, ip, location)
 		return jsonify({'status': 200}), 200
+	return jsonify({'status': 400}), 400
 
 
 @account_bp.route('/mail/<action>', methods = ['POST'])
