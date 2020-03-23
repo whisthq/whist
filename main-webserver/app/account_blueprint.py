@@ -59,28 +59,10 @@ def account(action):
 		username, password = body['username'], body['password']
 		status = registerUser(username, password)
 		return jsonify({'status': status}), status
-
-
-@account_bp.route('/form/<action>', methods = ['POST'])
-def form(action):
-	body = request.get_json()
-	if action == 'store':
-		name, email, cubeType = body['name'], body['email'], body['cubeType']
-		storeForm(name, email, cubeType)
+	elif action == 'insertComputer':
+		username, ip, location = body['username'], body['ip'], body['location']
+		insertComputer(username, ip, location)
 		return jsonify({'status': 200}), 200
-
-@account_bp.route('/order', methods = ['POST'])
-def order():
-	body = request.get_json()
-	address1 = body['address1']
-	address2 = body['address2']
-	zipCode = body['zipcode']
-	name = body['name']
-	email = body['email']
-	password = body['password']
-	order = body['order']
-	storePreOrder(address1, address2, zipCode, email, order)
-	return jsonify({'status': 200}), 200
 
 
 @account_bp.route('/mail/<action>', methods = ['POST'])

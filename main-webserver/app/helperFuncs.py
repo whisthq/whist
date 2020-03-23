@@ -405,3 +405,16 @@ def deleteCustomer(email):
     params = {'email': email}
     with engine.connect() as conn:
         conn.execute(command, **params)
+
+def insertComputer(username, ip, location):
+    command = text("""
+        INSERT INTO studios("username", "ip", "location") 
+        VALUES(:username, :ip, :location)
+        """)
+
+    params = {'username': username, 
+              'ip': ip,
+              'location': location}
+
+    with engine.connect() as conn:
+        conn.execute(command, **params)
