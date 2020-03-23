@@ -295,7 +295,6 @@ static int32_t SendVideo(void* opaque) {
                 destroy_video_encoder(encoder);
             }
             encoder = create_video_encoder(device->width, device->height,
-                                           device->width, device->height,
                                            current_bitrate, gop_size);
             update_encoder = false;
             frames_since_first_iframe = 0;

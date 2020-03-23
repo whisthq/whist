@@ -10,8 +10,7 @@ typedef struct {
     AVFrame *sw_frame;
     AVFrame *hw_frame;
     void *frame_buffer;
-    int in_width, in_height;
-    int out_width, out_height;
+    int width, height;
     AVPacket packet;
     struct SwsContext *sws;
     EncodeType type;
@@ -19,8 +18,7 @@ typedef struct {
 
 /// @brief creates encoder device
 /// @details creates FFmpeg encoder
-encoder_t *create_video_encoder(int in_width, int in_height, int out_width,
-                                int out_height, int bitrate, int gop_size);
+encoder_t *create_video_encoder(int width, int height, int bitrate, int gop_size);
 
 /// @brief destroy encoder device
 /// @details frees FFmpeg encoder memory
