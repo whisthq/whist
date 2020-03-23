@@ -39,11 +39,6 @@ int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height) {
 
   struct DisplayHardware* hardware = device->hardware;
 
-  D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1,
-                                    D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_9_1 };
-  UINT NumFeatureLevels = ARRAYSIZE(FeatureLevels);
-  D3D_FEATURE_LEVEL FeatureLevel;
-
   int num_adapters = 0, num_outputs = 0, i = 0, j = 0;
   IDXGIFactory1 *factory;
 
@@ -177,7 +172,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height) {
       0,
       D3D11_SDK_VERSION,
       &device->D3D11device,
-      &FeatureLevel,
+      NULL, // implicit D3D Feature Array 11, 10.1, 10, 9
       &device->D3D11context
   );
 
