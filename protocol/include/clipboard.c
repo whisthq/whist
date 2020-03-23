@@ -157,7 +157,7 @@ ClipboardData* GetClipboard()
 
 				WCHAR target_file[1000];
 				WCHAR* clipboard = L"clipboard\\";
-				int clipboard_len = wcslen( clipboard );
+				int clipboard_len = (int) wcslen( clipboard );
 				memcpy( target_file, clipboard, sizeof(WCHAR)*clipboard_len );
 				memcpy( target_file + clipboard_len, fileending, sizeof( WCHAR )*(wcslen( fileending ) + 1) );
 
@@ -316,7 +316,7 @@ void SetClipboard( ClipboardData* cb )
 					continue;
 				}
 
-				int len = wcslen( data.cFileName ) + 1;
+				int len = (int) wcslen( data.cFileName ) + 1;
 
 				mprintf( "FILENAME: %S\n", data.cFileName );
 
