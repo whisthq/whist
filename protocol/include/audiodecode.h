@@ -8,6 +8,7 @@
 #include "ffmpeg/libavfilter/buffersrc.h"
 #include "ffmpeg/libavformat/avformat.h"
 #include "ffmpeg/libavutil/avutil.h"
+#include "ffmpeg/libswresample/swresample.h"
 #include "ffmpeg/libswscale/swscale.h"
 
 // define decoder struct to pass as a type
@@ -17,6 +18,7 @@ typedef struct {
     AVFormatContext *pFormatCtx;
     AVFrame *pFrame;
     AVPacket packet;
+    SwrContext *pSwrContext;
     uint8_t *out_buffer;
 } audio_decoder_t;
 
@@ -24,7 +26,7 @@ audio_decoder_t *create_audio_decoder(int sample_rate);
 
 int init_av_frame(audio_decoder_t *decoder);
 
-void audio_decoder_packet_readout(audio_encoder_t *decoder, uint8_t *data,
+void audio_decoder_packet_readout(audio_decoder_t *decoder, uint8_t *data,
                                   int len);
 
 int audio_decoder_decode_packet(audio_decoder_t *decoder,
