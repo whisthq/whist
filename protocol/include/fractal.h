@@ -71,7 +71,7 @@
 #define ACK_REFRESH_MS 50
 
 #define LARGEST_FRAME_SIZE 1000000
-#define STARTING_BITRATE 3800000
+#define STARTING_BITRATE 12800000
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
@@ -92,14 +92,15 @@ int GetLastNetworkError();
 
 typedef enum EncodeType {
 	SOFTWARE_ENCODE        = 0,
-	NVENC_ENCODE           = 1
+	NVENC_ENCODE           = 1,
+	QSV_ENCODE             = 2
 } EncodeType;
 
 typedef enum DecodeType {
 	DECODE_TYPE_NONE          = 0,
 	DECODE_TYPE_SOFTWARE      = 1,
 	DECODE_TYPE_HARDWARE      = 2,
-	DECODE_TYPE_QSV           = 3,
+	DECODE_TYPE_QSV           = 3
 } DecodeType;
 
 typedef enum FractalCursorID {

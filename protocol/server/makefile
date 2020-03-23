@@ -38,6 +38,7 @@ STATIC_LIBS = \
 	../lib/$(ARCH)/ffmpeg/windows/swresample.lib \
 	../lib/$(ARCH)/ffmpeg/windows/swscale.lib \
 	../lib/$(ARCH)/SDL2/windows/SDL2.lib \
+	../lib/$(ARCH)/mfx/windows/libmfx.lib \
 	../lib/$(ARCH)/openssl/windows/libcrypto.lib
 
 # compiler flags
