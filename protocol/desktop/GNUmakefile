@@ -46,14 +46,14 @@ export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platf
 
 # dynamic libs to link against
 DYNAMIC_LIBS = \
-	../lib/64/ffmpeg/macos/libavcodec.dylib \
-	../lib/64/ffmpeg/macos/libavdevice.dylib \
-	../lib/64/ffmpeg/macos/libavfilter.dylib \
-	../lib/64/ffmpeg/macos/libavformat.dylib \
-	../lib/64/ffmpeg/macos/libavutil.dylib \
-	../lib/64/ffmpeg/macos/libpostproc.dylib \
-	../lib/64/ffmpeg/macos/libswresample.dylib \
-	../lib/64/ffmpeg/macos/libswscale.dylib
+	../lib/64/ffmpeg/macos/libavcodec.58.dylib \
+	../lib/64/ffmpeg/macos/libavdevice.58.dylib \
+	../lib/64/ffmpeg/macos/libavfilter.7.dylib \
+	../lib/64/ffmpeg/macos/libavformat.58.dylib \
+	../lib/64/ffmpeg/macos/libavutil.56.dylib \
+	../lib/64/ffmpeg/macos/libpostproc.55.dylib \
+	../lib/64/ffmpeg/macos/libswresample.3.dylib \
+	../lib/64/ffmpeg/macos/libswscale.5.dylib
 
 # system libs to link against
 SHARED_LIBS = \
