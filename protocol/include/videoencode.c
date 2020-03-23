@@ -60,7 +60,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
 
         av_hwframe_ctx_init(encoder->context->hw_frames_ctx);
 
-        if (avcodec_open2(encoder->context, encoder->codec, NULL, NULL) < 0) {
+        if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
             mprintf("Failed to open video encoder context\n");
             return -1;
         }
@@ -137,7 +137,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
 
         av_hwframe_ctx_init(encoder->context->hw_frames_ctx);
 
-        if (avcodec_open2(encoder->context, encoder->codec, NULL, NULL) < 0) {
+        if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
             mprintf("Failed to open video encoder context\n");
             return -1;
         }
@@ -192,7 +192,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         av_opt_set(encoder->context->priv_data, "preset", "ultrafast", 0);
         av_opt_set(encoder->context->priv_data, "tune", "zerolatency", 0);
 
-        if (avcodec_open2(encoder->context, encoder->codec, NULL, NULL) < 0) {
+        if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
             mprintf("Failed to open context for stream\n");
             return -1;
         }
