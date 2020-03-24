@@ -279,7 +279,7 @@ void initVideo() {
     VideoData.bytes_transferred = 0;
     StartTimer(&VideoData.frame_timer);
     VideoData.last_statistics_id = 1;
-    VideoData.last_rendered_id = -1;
+    VideoData.last_rendered_id = 0;
     VideoData.max_id = 0;
     VideoData.most_recent_iframe = -1;
 

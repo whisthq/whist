@@ -629,6 +629,7 @@ void MultiThreadedPrintf(void* opaque) {
 void mprintf(const char* fmtStr, ...) {
 	va_list args;
 	va_start(args, fmtStr);
+
 	real_mprintf(WRITE_MPRINTF_TO_LOG, fmtStr, args);
 }
 
