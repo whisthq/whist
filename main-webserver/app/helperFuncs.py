@@ -464,3 +464,16 @@ def fetchComputers(username):
                 'id': computer[3]} for computer in computers]
         return out
     return None
+
+def changeComputerName(username, computer_id, nickname):
+    command = text("""
+        UPDATE studios
+        SET nickname = :nickname
+        WHERE
+           "username" = :username
+        AND
+            "id" = :id
+        """)
+    params = {'nickname': nickname, 'username': username, 'id': computer_id}
+    with engine.connect() as conn:
+        conn.execute(command, **params)

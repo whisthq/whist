@@ -88,6 +88,10 @@ def account(action):
 		computer_id, username = body['id'], body['username']
 		computers = checkComputer(computer_id, username)
 		return jsonify({'status': 200, 'computers': [computers]}), 200
+	elif action == 'changeComputerName':
+		username, nickname, computer_id = body['username'], body['nickname'], body['id']
+		changeComputerName(username, computer_id, nickname)
+		return jsonify({'status': 200}), 200
 	return jsonify({'status': 400}), 400
 
 
