@@ -345,16 +345,35 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		// Server connection protocol
 		context->is_server = true;
 
+#if USING_STUN
+		struct sockaddr_in stun_addr;
+		stun_addr.sin_family = AF_INET;
+		stun_addr.sin_addr.s_addr = inet_addr( STUN_IP );
+		stun_addr.sin_port = htons( STUN_PORT );
+
+		stun_request_t stun_request;
+		stun_request.type = POST_INFO;
+		stun_request.entry.public_port = htons( (u_short)port );
+
+		mprintf( "Sending request to STUN...\n" );
+		if( sendto( context->s, &stun_request, sizeof( stun_request ), 0, &stun_addr, sizeof( stun_addr ) ) < 0 )
+		{
+			mprintf( "Could not send message to STUN %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+#else
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
-		origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-		origin_addr.sin_port = htons((u_short) port);
+		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
+		origin_addr.sin_port = htons( (u_short)port );
 
 		if (bind(context->s, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
 			mprintf("Failed to bind to port! %d\n", GetLastNetworkError());
 			closesocket(context->s);
 			return -1;
 		}
+#endif
 
 		mprintf("Waiting for client to connect to %s:%d...\n", "localhost", port);
 
