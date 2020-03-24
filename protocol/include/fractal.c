@@ -268,6 +268,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
 		return -1;
 	}
+	set_timeout( context->s, stun_timeout_ms );
 
 	if (strcmp(origin, "C") == 0) {
 		// Client connection protocol
@@ -306,18 +307,22 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			mprintf( "STUN Response of incorrect size!\n" );
 			closesocket( context->s );
 			return -1;
+		} else if (entry.ip != stun_request.entry.ip || entry.public_port != stun_request.entry.public_port)
+		{
+			mprintf( "IP and/or Public Port is incorrect!" );
+			closesocket( context->s );
+			return -1;
 		} else
 		{
-			mprintf( "Received STUN response!\n" );
 			context->addr.sin_family = AF_INET;
 			context->addr.sin_addr.s_addr = entry.ip;
 			context->addr.sin_port = entry.private_port;
-			mprintf( "PORT: %d\n", ntohs( entry.private_port ) );
+			mprintf( "Received STUN response! Public %d is mapped to private %d\n", entry.public_port, entry.private_port );
 		}
 #else
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = inet_addr( destination );
-		context->addr.sin_port = htons( port );
+		context->addr.sin_port = htons( (u_short)port );
 #endif
 
 		mprintf("Connecting to server...\n");
@@ -330,7 +335,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		}
 
 		// Receive server's acknowledgement of connection
-		set_timeout(context->s, stun_timeout_ms);
 		if (recvp(context, NULL, 0) < 0) {
 			mprintf("Did not receive response from server! %d\n", GetLastNetworkError());
 			closesocket(context->s);
@@ -338,8 +342,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		}
 
 		mprintf("Connected on %s:%d!\n", destination, port);
-
-		set_timeout(context->s, recvfrom_timeout_ms);
 	}
 	else {
 		// Server connection protocol
@@ -394,9 +396,9 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		}
 
 		mprintf("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
-
-		set_timeout(context->s, recvfrom_timeout_ms);
 	}
+
+	set_timeout( context->s, recvfrom_timeout_ms );
 
 	return 0;
 }
