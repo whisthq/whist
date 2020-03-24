@@ -38,9 +38,9 @@ volatile char* server_ip;
 
 SDL_mutex* send_packet_mutex;
 void updateClipboard();
-void UpdateClipboardThread( void* opaque );
-static int32_t ReceivePackets( void* opaque );
-static int32_t ReceiveMessage( struct RTPPacket* packet );
+int UpdateClipboardThread( void* opaque );
+int ReceivePackets( void* opaque );
+int ReceiveMessage( struct RTPPacket* packet );
 
 struct SocketContext PacketSendContext;
 struct SocketContext PacketTCPContext;
@@ -60,6 +60,7 @@ struct UpdateData
     bool pending_update_clipboard;
     clock last_clipboard_update;
     SDL_sem* clipboard_semaphore;
+    ClipboardData* clipboard;
 } volatile UpdateData;
 
 void initUpdate()
@@ -67,14 +68,14 @@ void initUpdate()
     UpdateData.needs_dimension_update = true;
     UpdateData.tried_to_update_dimension = false;
 
-    StartTimer( &UpdateData.last_tcp_check_timer );
+    StartTimer( (clock*)&UpdateData.last_tcp_check_timer );
     StartTimer( (clock*)&latency_timer );
     ping_id = 1;
     ping_failures = -2;
 
     UpdateData.updating_clipboard = false;
     UpdateData.pending_update_clipboard = false;
-    StartTimer( &UpdateData.last_clipboard_update );
+    StartTimer( (clock*)&UpdateData.last_clipboard_update );
     UpdateData.clipboard_semaphore = SDL_CreateSemaphore( 0 );
 
     SDL_CreateThread( UpdateClipboardThread, "UpdateClipboardThread", NULL );
@@ -88,15 +89,9 @@ void update()
 {
     FractalClientMessage fmsg;
 
-    // Check if TCP is up
-    /*int result = sendp( &PacketTCPContext, NULL, 0 );
-    if( result < 0 )
-    {
-        mprintf( "Lost TCP Connection (Error: %d)\n", GetLastNetworkError() );
-    }*/
-
     if( GetTimer( UpdateData.last_tcp_check_timer ) > 25 / 1000.0 )
     {
+        // Check if TCP is up
         int result = sendp( &PacketTCPContext, NULL, 0 );
         if( result < 0 )
         {
@@ -111,7 +106,7 @@ void update()
             mprintf( "Received %d byte clipboard message from server!\n", packet->payload_size );
             SetClipboard( &fmsg_response->clipboard );
         }
-        StartTimer( &UpdateData.last_tcp_check_timer );
+        StartTimer( (clock*)&UpdateData.last_tcp_check_timer );
     }
 
     if( UpdateData.pending_update_clipboard )
@@ -268,7 +263,7 @@ int SendPacket( void* data, int len )
     return failed ? -1 : 0;
 }
 
-void UpdateClipboardThread( void* opaque )
+int UpdateClipboardThread( void* opaque )
 {
     opaque;
 
@@ -276,10 +271,10 @@ void UpdateClipboardThread( void* opaque )
     {
         SDL_SemWait( UpdateData.clipboard_semaphore );
 
+        ClipboardData* clipboard = UpdateData.clipboard;
+
         clock clipboard_time;
         StartTimer( &clipboard_time );
-
-        ClipboardData* clipboard = GetClipboard();
 
         if( clipboard->type == CLIPBOARD_FILES )
         {
@@ -307,8 +302,11 @@ void UpdateClipboardThread( void* opaque )
             SDL_Delay( max( (int)(spam_time_ms - 1000*GetTimer( clipboard_time )), 1 ) );
         }
 
+        mprintf( "Updated clipboard!\n" );
         UpdateData.updating_clipboard = false;
     }
+
+    return 0;
 }
 
 void updateClipboard()
@@ -318,13 +316,15 @@ void updateClipboard()
         UpdateData.pending_update_clipboard = true;
     } else
     {
+        mprintf( "Pushing update to clipboard\n" );
         UpdateData.pending_update_clipboard = false;
         UpdateData.updating_clipboard = true;
+        UpdateData.clipboard = GetClipboard();
         SDL_SemPost( UpdateData.clipboard_semaphore );
     }
 }
 
-static int32_t ReceivePackets( void* opaque )
+int ReceivePackets( void* opaque )
 {
     mprintf( "ReceivePackets running on Thread %d\n", SDL_GetThreadID( NULL ) );
     SDL_SetThreadPriority( SDL_THREAD_PRIORITY_HIGH );
@@ -530,7 +530,7 @@ static int32_t ReceivePackets( void* opaque )
     return 0;
 }
 
-static int32_t ReceiveMessage( struct RTPPacket* packet )
+int ReceiveMessage( struct RTPPacket* packet )
 {
     if( packet->payload_size != sizeof( FractalServerMessage ) )
     {
@@ -841,13 +841,13 @@ int main( int argc, char* argv[] )
         //sendp( &PacketTCPContext, test, sizeof( test ) );
 
         // Initialize video and audio
+        send_packet_mutex = SDL_CreateMutex();
         is_timing_latency = false;
         connected = true;
         initVideo();
         initAudio();
 
         // Create thread to receive all packets and handle them as needed
-        send_packet_mutex = SDL_CreateMutex();
         run_receive_packets = true;
         SDL_Thread* receive_packets_thread;
         receive_packets_thread = SDL_CreateThread( ReceivePackets, "ReceivePackets", &PacketReceiveContext );
