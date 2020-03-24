@@ -231,7 +231,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 
 typedef struct
 {
-	int ip;
+	unsigned int ip;
 	short private_port;
 	short public_port;
 } stun_entry_t;
@@ -273,7 +273,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		// Client connection protocol
 		context->is_server = false;
 
-
 #if USING_STUN
 		struct sockaddr_in stun_addr;
 		stun_addr.sin_family = AF_INET;
@@ -313,7 +312,12 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			context->addr.sin_family = AF_INET;
 			context->addr.sin_addr.s_addr = entry.ip;
 			context->addr.sin_port = entry.private_port;
+			mprintf( "PORT: %d\n", ntohs( entry.private_port ) );
 		}
+#else
+		context->addr.sin_family = AF_INET;
+		context->addr.sin_addr.s_addr = inet_addr( destination );
+		context->addr.sin_port = htons( port );
 #endif
 
 		mprintf("Connecting to server...\n");
