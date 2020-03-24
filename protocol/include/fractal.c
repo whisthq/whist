@@ -285,7 +285,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		stun_request.entry.ip = inet_addr( destination );
 		stun_request.entry.public_port = htons( (u_short)port );
 
-		mprintf( "Sending request to STUN...\n" );
+		mprintf( "Sending info request to STUN...\n" );
 		if( sendto( context->s, &stun_request, sizeof( stun_request ), 0, &stun_addr, sizeof( stun_addr ) ) < 0 )
 		{
 			mprintf( "Could not send message to STUN %d\n", GetLastNetworkError() );
@@ -309,15 +309,15 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			return -1;
 		} else if (entry.ip != stun_request.entry.ip || entry.public_port != stun_request.entry.public_port)
 		{
-			mprintf( "IP and/or Public Port is incorrect!" );
+			mprintf( "STUN Response IP and/or Public Port is incorrect!" );
 			closesocket( context->s );
 			return -1;
 		} else
 		{
+			mprintf( "Received STUN response! Public %d is mapped to private %d\n", ntohs( (u_short)entry.public_port ), ntohs( (u_short)entry.private_port ) );
 			context->addr.sin_family = AF_INET;
 			context->addr.sin_addr.s_addr = entry.ip;
 			context->addr.sin_port = entry.private_port;
-			mprintf( "Received STUN response! Public %d is mapped to private %d\n", ntohs( (u_short)entry.public_port ), ntohs( (u_short)entry.private_port) );
 		}
 #else
 		context->addr.sin_family = AF_INET;
@@ -341,7 +341,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			return -1;
 		}
 
-		mprintf("Connected on %s:%d!\n", destination, port);
+		mprintf("Connected to server on %s:%d!\n", destination, port);
 	}
 	else {
 		// Server connection protocol
@@ -357,7 +357,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		stun_request.type = POST_INFO;
 		stun_request.entry.public_port = htons( (u_short)port );
 
-		mprintf( "Sending request to STUN...\n" );
+		mprintf( "Sending stun entry to STUN...\n" );
 		if( sendto( context->s, &stun_request, sizeof( stun_request ), 0, &stun_addr, sizeof( stun_addr ) ) < 0 )
 		{
 			mprintf( "Could not send message to STUN %d\n", GetLastNetworkError() );
@@ -381,13 +381,19 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		// Receive client's connection attempt
 #if USING_STUN
+		// Update the STUN every 100ms
 		set_timeout(context->s, 100);
+
+		// But keep track of time to compare against stun_timeout_ms
+		clock recv_timer;
+		StartTimer( &recv_timer );
 #endif
 
 		socklen_t slen = sizeof(context->addr);
 		while (recvfrom(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen) < 0) {
 #if USING_STUN
-			if( GetLastNetworkError() == ETIMEDOUT )
+			// If we haven't spent too much time waiting, and our previous 100ms poll failed, then send another STUN update
+			if( GetTimer( recv_timer ) * 1000 < stun_timeout_ms && GetLastNetworkError() == ETIMEDOUT )
 			{
 				if( sendto( context->s, &stun_request, sizeof( stun_request ), 0, &stun_addr, sizeof( stun_addr ) ) < 0 )
 				{
