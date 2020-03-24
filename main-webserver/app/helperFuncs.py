@@ -406,18 +406,30 @@ def deleteCustomer(email):
     with engine.connect() as conn:
         conn.execute(command, **params)
 
-def insertComputer(username, ip, location):
+def checkComputer(computer_id):
     command = text("""
-        INSERT INTO studios("username", "ip", "location") 
-        VALUES(:username, :ip, :location)
+        SELECT * FROM studios WHERE "id" = :id
         """)
-
-    params = {'username': username, 
-              'ip': ip,
-              'location': location}
-
+    params = {'id': computer_id}
     with engine.connect() as conn:
-        conn.execute(command, **params)
+        computers = conn.execute(command, **params).fetchall()
+        return len(computers) > 0
+
+def insertComputer(username, location, nickname, computer_id):
+    exists = checkComputer(computer_id)
+    if not exists:
+        command = text("""
+            INSERT INTO studios("username", "location", "nickname", "id") 
+            VALUES(:username, :location, :nickname, :id)
+            """)
+
+        params = {'username': username, 
+                  'location': location,
+                  'nickname': nickname,
+                  'id': computer_id}
+
+        with engine.connect() as conn:
+            conn.execute(command, **params)
 
 def fetchComputers(username):
     command = text("""
@@ -427,8 +439,8 @@ def fetchComputers(username):
     with engine.connect() as conn:
         computers = conn.execute(command, **params).fetchall()
         out = [{'username': computer[0], 
-                'location': computer[2],
-                'nickname': computer[3],
-                'id': computer[4]} for computer in computers]
+                'location': computer[1],
+                'nickname': computer[2],
+                'id': computer[3]} for computer in computers]
         return out
     return None

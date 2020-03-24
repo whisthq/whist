@@ -60,13 +60,17 @@ def account(action):
 		status = registerUser(username, password)
 		return jsonify({'status': status}), status
 	elif action == 'insertComputer':
-		username, ip, location = body['username'], body['ip'], body['location']
-		insertComputer(username, ip, location)
+		username, location, nickname, computer_id = body['username'], body['location'], body['nickname'], body['id']
+		insertComputer(username, location, nickname, computer_id)
 		return jsonify({'status': 200}), 200
 	elif action == 'fetchComputers':
 		username = body['username']
 		computers = fetchComputers(username)
 		return jsonify({'status': 200, 'computers': computers}), 200
+	elif action == 'checkComputer':
+		computer_id = body['id']
+		found = checkComputer(computer_id)
+		return jsonify({'status': 200, 'found': found}), 200
 	return jsonify({'status': 400}), 400
 
 
