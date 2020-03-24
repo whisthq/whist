@@ -69,8 +69,8 @@ def account(action):
 		return jsonify({'status': 200, 'computers': computers}), 200
 	elif action == 'checkComputer':
 		computer_id = body['id']
-		found = checkComputer(computer_id)
-		return jsonify({'status': 200, 'found': found}), 200
+		computers = checkComputer(computer_id)
+		return jsonify({'status': 200, 'computers': computers}), 200
 	return jsonify({'status': 400}), 400
 
 

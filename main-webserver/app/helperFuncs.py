@@ -413,11 +413,15 @@ def checkComputer(computer_id):
     params = {'id': computer_id}
     with engine.connect() as conn:
         computers = conn.execute(command, **params).fetchall()
-        return len(computers) > 0
+        out = [{'username': computer[0], 
+                'location': computer[1],
+                'nickname': computer[2],
+                'id': computer[3]} for computer in computers]
+        return out
 
 def insertComputer(username, location, nickname, computer_id):
-    exists = checkComputer(computer_id)
-    if not exists:
+    computers = checkComputer(computer_id)
+    if not computers:
         command = text("""
             INSERT INTO studios("username", "location", "nickname", "id") 
             VALUES(:username, :location, :nickname, :id)
