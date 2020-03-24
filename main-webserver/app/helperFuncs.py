@@ -406,22 +406,38 @@ def deleteCustomer(email):
     with engine.connect() as conn:
         conn.execute(command, **params)
 
-def checkComputer(computer_id):
+def checkComputer(computer_id, username):
     command = text("""
-        SELECT * FROM studios WHERE "id" = :id
+        SELECT * FROM studios WHERE "id" = :id AND "username" = :username
         """)
-    params = {'id': computer_id}
+    params = {'id': computer_id, 'username': username}
     with engine.connect() as conn:
-        computers = conn.execute(command, **params).fetchall()
-        out = [{'username': computer[0], 
-                'location': computer[1],
-                'nickname': computer[2],
-                'id': computer[3]} for computer in computers]
+        computer = conn.execute(command, **params).fetchone()
+        if not computer:
+            computers = fetchComputers(username)
+            nicknames = [c['nickname'] for c in computers]
+            num = 1
+            proposed_nickname = "Computer No. " + str(num)
+            while proposed_nickname in nicknames:
+                num += 1
+                proposed_nickname = "Computer No. " + str(num)
+
+            return {'userName': None,
+                    'location': None,
+                    'nickname': proposed_nickname,
+                    'id': None,
+                    'found': False}
+
+        out = {'username': computer[0], 
+               'location': computer[1],
+               'nickname': computer[2],
+               'id': computer[3],
+               'found': True} 
         return out
 
 def insertComputer(username, location, nickname, computer_id):
-    computers = checkComputer(computer_id)
-    if not computers:
+    computer = checkComputer(computer_id, username)
+    if not computer['found']:
         command = text("""
             INSERT INTO studios("username", "location", "nickname", "id") 
             VALUES(:username, :location, :nickname, :id)

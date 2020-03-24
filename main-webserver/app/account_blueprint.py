@@ -66,11 +66,28 @@ def account(action):
 	elif action == 'fetchComputers':
 		username = body['username']
 		computers = fetchComputers(username)
+		i = 1
+		proposed_nickname = 'Computer No. ' + str(i)
+		nickname_exists = True
+		number_computers = len(computers)
+		computers_checked = 0
+
+		while nickname_exists:
+			computers_checked = 0
+			for computer in computers:
+				computers_checked += 1
+				if computer['nickname'] == proposed_nickname:
+					i += 1
+					proposed_nickname = 'Computer No. ' + str(i)
+					computers_checked = 0
+			if computers_checked == number_computers:
+				nickname_exists = False
+
 		return jsonify({'status': 200, 'computers': computers}), 200
 	elif action == 'checkComputer':
-		computer_id = body['id']
-		computers = checkComputer(computer_id)
-		return jsonify({'status': 200, 'computers': computers}), 200
+		computer_id, username = body['id'], body['username']
+		computers = checkComputer(computer_id, username)
+		return jsonify({'status': 200, 'computers': [computers]}), 200
 	return jsonify({'status': 400}), 400
 
 
