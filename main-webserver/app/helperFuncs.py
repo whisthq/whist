@@ -418,3 +418,17 @@ def insertComputer(username, ip, location):
 
     with engine.connect() as conn:
         conn.execute(command, **params)
+
+def fetchComputers(username):
+    command = text("""
+        SELECT * FROM studios WHERE "username" = :username
+        """)
+    params = {'username': username}
+    with engine.connect() as conn:
+        computers = conn.execute(command, **params).fetchall()
+        out = [{'username': computer[0], 
+                'location': computer[2],
+                'nickname': computer[3],
+                'id': computer[4]} for computer in computers]
+        return out
+    return None

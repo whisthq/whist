@@ -63,6 +63,10 @@ def account(action):
 		username, ip, location = body['username'], body['ip'], body['location']
 		insertComputer(username, ip, location)
 		return jsonify({'status': 200}), 200
+	elif action == 'fetchComputers':
+		username = body['username']
+		computers = fetchComputers(username)
+		return jsonify({'status': 200, 'computers': computers}), 200
 	return jsonify({'status': 400}), 400
 
 
