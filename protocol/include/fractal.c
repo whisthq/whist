@@ -317,7 +317,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			context->addr.sin_family = AF_INET;
 			context->addr.sin_addr.s_addr = entry.ip;
 			context->addr.sin_port = entry.private_port;
-			mprintf( "Received STUN response! Public %d is mapped to private %d\n", entry.public_port, entry.private_port );
+			mprintf( "Received STUN response! Public %d is mapped to private %d\n", ntohs( (u_short)entry.public_port ), ntohs( (u_short)entry.private_port) );
 		}
 #else
 		context->addr.sin_family = AF_INET;
