@@ -380,9 +380,24 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		mprintf("Waiting for client to connect to %s:%d...\n", "localhost", port);
 
 		// Receive client's connection attempt
-		set_timeout(context->s, stun_timeout_ms);
+#if USING_STUN
+		set_timeout(context->s, 100);
+#endif
+
 		socklen_t slen = sizeof(context->addr);
-		if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen) < 0) {
+		while (recvfrom(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen) < 0) {
+#if USING_STUN
+			if( GetLastNetworkError() == ETIMEDOUT )
+			{
+				if( sendto( context->s, &stun_request, sizeof( stun_request ), 0, &stun_addr, sizeof( stun_addr ) ) < 0 )
+				{
+					mprintf( "Could not send message to STUN %d\n", GetLastNetworkError() );
+					closesocket( context->s );
+					return -1;
+				}
+				continue;
+			}
+#endif
 			mprintf("Did not receive response from client! %d\n", GetLastNetworkError());
 			closesocket(context->s);
 			return -1;
