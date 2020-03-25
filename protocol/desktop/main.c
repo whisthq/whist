@@ -966,7 +966,13 @@ int main( int argc, char* argv[] )
         if( exiting )
         {
             fmsg.type = CMESSAGE_QUIT;
+            SDL_Delay( 50 );
             SendFmsg( &fmsg );
+            SDL_Delay( 50 );
+            SendFmsg( &fmsg );
+            SDL_Delay( 50 );
+            SendFmsg( &fmsg );
+            SDL_Delay( 50 );
         }
 
         run_receive_packets = false;

@@ -198,7 +198,8 @@ void updateAudio() {
         next_to_play_id = last_played_id + 1;
 
         // Find all pending audio packets and NACK them
-        for (int i = max(next_to_play_id, last_nacked_id + 1); i < most_recent_audio_id - 4; i++) {
+        int num_nacked = 0;
+        for (int i = max(next_to_play_id, last_nacked_id + 1); i < most_recent_audio_id - 4 && num_nacked < 1; i++) {
             int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
             audio_packet* i_packet = &receiving_audio[i_buffer_index];
             if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
@@ -210,6 +211,7 @@ void updateAudio() {
                 mprintf("Missing Audio Packet ID %d, Index %d. NACKing...\n", fmsg.nack_data.id, fmsg.nack_data.index);
                 i_packet->nacked_for = i;
                 SendFmsg( &fmsg );
+                num_nacked++;
             }
             last_nacked_id = i;
         }
