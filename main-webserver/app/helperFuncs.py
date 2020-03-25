@@ -81,7 +81,7 @@ def createNic(name, location, tries):
         if tries < 5:
             print(e)
             time.sleep(3)
-            return createNic(name, tries + 1)
+            return createNic(name, location, tries + 1)
         else: return None
 
 def createVMParameters(vmName, nic_id, vm_size, location):

@@ -38,7 +38,6 @@ def vm(action):
         vm_name = request.get_json()['vm_name']
         try:
             vm = getVM(vm_name)
-            print("test")
             ip = getIP(vm)
             return({'public_ip': ip}), 200
         except:
