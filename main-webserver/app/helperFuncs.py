@@ -261,7 +261,7 @@ def fetchVMCredentials(vm_name):
         """)
     params = {'vm_name': vm_name}
     with engine.connect() as conn:
-        vm_info = conn.execute(command, **params).fetchall()[0]
+        vm_info = conn.execute(command, **params).fetchone()
         vm_name, username = vm_info[0], vm_info[1]
         # Get public IP address
         vm = getVM(vm_name)

@@ -27,6 +27,7 @@ def user(action):
 				return jsonify(payload), 200
 		except Exception as e:
 			print(e)
+			
 		return jsonify({}), 401
 	elif action == 'fetchvms':
 		username = body['username']
