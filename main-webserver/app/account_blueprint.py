@@ -16,23 +16,14 @@ def user(action):
 		else:
 			return jsonify({}), 403
 	elif action == 'login':
-		username, password = body['username'], body['password']
+		username = body['username']
 		username_len = len(username)
-		password_len = len(password)
 
-		is_user = True
+		vm_name = loginUserVM(username)
 
-		if username_len > 4 and password_len > 4:
-			if (username[username_len - 4:username_len]) == '????' and (password[password_len - 4:password_len] == '????'):
-				is_user = False
-				username = username[0:username_len - 4]
-				password = password[0:password_len - 4]
-
-		vm_name = loginUserVM(username, password)
 		try:
 			if vm_name: 
 				payload = fetchVMCredentials(vm_name)
-				payload['is_user'] = is_user
 				return jsonify(payload), 200
 		except Exception as e:
 			print(e)
@@ -44,8 +35,8 @@ def user(action):
 		except Exception as e:
 			return jsonify({}), 403
 	elif action == 'reset':
-		username, password, vm_name = body['username'], body['password'], body['vm_name']
-		resetVMPassword(username, password, vm_name)
+		username, vm_name = body['username'], body['vm_name']
+		resetVMCredentials(username, vm_name)
 		return jsonify({'status': 200}), 200
 
 @account_bp.route('/account/<action>', methods = ['POST'])
@@ -54,7 +45,8 @@ def account(action):
 	if action == 'login':
 		username, password = body['username'], body['password']
 		verified = loginUser(username, password)
-		return jsonify({'verified': verified}), 200
+		is_user = password != os.getenv('ADMIN_PASSWORD')
+		return jsonify({'verified': verified, 'is_user': is_user}), 200
 	elif action == 'register':
 		username, password = body['username'], body['password']
 		status = registerUser(username, password)

@@ -180,7 +180,7 @@ def registerUserVM(username, vm_name):
     with engine.connect() as conn:
         conn.execute(command, **params)
 
-def loginUserVM(username, password):
+def loginUserVM(username):
     command = text("""
         SELECT * FROM v_ms WHERE "vmUserName" = :username
         """)
@@ -188,9 +188,7 @@ def loginUserVM(username, password):
     with engine.connect() as conn:
         user = conn.execute(command, **params).fetchall()
         if len(user) > 0:
-            decrypted_pwd = jwt.decode(user[0][1], os.getenv('SECRET_KEY'))['pwd']
-            if decrypted_pwd == password:
-                return user[0][0]
+            return user[0][0]
     return None
 
 def loginUser(username, password):
@@ -237,14 +235,13 @@ def resetPassword(username, password):
     with engine.connect() as conn:
         conn.execute(command, **params)
 
-def resetVMPassword(username, password, vm_name):
-    pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
+def resetVMCredentials(username, vm_name):
     command = text("""
         UPDATE v_ms
-        SET "vmPassword" = :password, "vmUserName" = :userName
+        SET "vmUserName" = :userName
         WHERE "vmName" = :vm_name
         """)
-    params = {'userName': username, 'password': pwd_token, 'vm_name': vm_name}
+    params = {'userName': username, 'vm_name': vm_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
 
@@ -256,15 +253,13 @@ def fetchVMCredentials(vm_name):
     params = {'vm_name': vm_name}
     with engine.connect() as conn:
         vm_info = conn.execute(command, **params).fetchall()[0]
-        vm_name, username, password = vm_info[0], vm_info[2], vm_info[1]
+        vm_name, username = vm_info[0], vm_info[1]
         # Get public IP address
         vm = getVM(vm_name)
         ip = getIP(vm)
         # Decode password
-        password = jwt.decode(password, os.getenv('SECRET_KEY'))
         return {'username': username,
                 'vm_name': vm_name,
-                'password': password['pwd'],
                 'public_ip': ip}
 
 def genVMName():
