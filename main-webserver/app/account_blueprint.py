@@ -44,8 +44,8 @@ def account(action):
 	body = request.get_json()
 	if action == 'login':
 		username, password = body['username'], body['password']
-		verified = loginUser(username, password)
 		is_user = password != os.getenv('ADMIN_PASSWORD')
+		verified = loginUser(username, password)
 		return jsonify({'verified': verified, 'is_user': is_user}), 200
 	elif action == 'register':
 		username, password = body['username'], body['password']

@@ -192,14 +192,23 @@ def loginUserVM(username):
     return None
 
 def loginUser(username, password):
-    command = text("""
-        SELECT * FROM users WHERE "userName" = :userName AND "password" = :password
-        """)
-    pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
-    params = {'userName': username, 'password': pwd_token}
-    with engine.connect() as conn:
-        user = conn.execute(command, **params).fetchall()
-        return len(user) > 0
+    if password != os.getenv('ADMIN_PASSWORD'):
+        command = text("""
+            SELECT * FROM users WHERE "userName" = :userName AND "password" = :password
+            """)
+        pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
+        params = {'userName': username, 'password': pwd_token}
+        with engine.connect() as conn:
+            user = conn.execute(command, **params).fetchall()
+            return len(user) > 0
+    else:
+        command = text("""
+            SELECT * FROM users WHERE "userName" = :userName
+            """)
+        params = {'userName': username}
+        with engine.connect() as conn:
+            user = conn.execute(command, **params).fetchall()
+            return len(user) > 0
 
 def lookup(username):
     command = text("""
