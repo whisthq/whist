@@ -108,10 +108,7 @@ class Home extends Component {
 
     ipc.on('update', (event, update) => {
       if(update) {
-        console.log("UPDATE FOUND, STARTING DOWNLOAD")
         component.setState({updateScreen: true})
-      } else {
-        console.log("UPDATE NOT FOUND")
       }
     })
 
@@ -247,7 +244,7 @@ class Home extends Component {
         </div>
         :
         <div  style = {{position: 'relative'}}>
-          <div style = {{paddingTop: 200, textAlign: 'center', color: 'white', width: 900}}>
+          <div style = {{paddingTop: 180, textAlign: 'center', color: 'white', width: 900}}>
             <div style = {{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
               <div style = {{width: `${ this.state.percentageDownloaded }px`, height: 6, background: 'linear-gradient(258.54deg, #5ec3eb 0%, #d023eb 100%)'}}>
               </div>
