@@ -98,14 +98,11 @@ def createVMParameters(vmName, nic_id, vm_size, location):
             'version': 'latest'
         }
 
-        pwd = os.getenv('VM_PASSWORD')
-        pwd_token = jwt.encode({'pwd': pwd}, os.getenv('SECRET_KEY'))
-
         command = text("""
-            INSERT INTO v_ms("vmName", "vmPassword", "vmUserName", "osDisk", "running") 
-            VALUES(:vmName, :vmPassword, :vmUserName, :osDisk, :running)
+            INSERT INTO v_ms("vmName", "vmUserName", "osDisk", "running") 
+            VALUES(:vmName, :vmUserName, :osDisk, :running)
             """)
-        params = {'vmName': vmName, 'vmPassword': pwd_token, 'vmUserName': userName, 'osDisk': None, 'running': False}
+        params = {'vmName': vmName, 'vmUserName': userName, 'osDisk': None, 'running': False}
         with engine.connect() as conn:
             conn.execute(command, **params)
             return {'params': {
@@ -113,7 +110,7 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                 'os_profile': {
                     'computer_name': vmName,
                     'admin_username': userName,
-                    'admin_password': pwd
+                    'admin_password': os.getenv('VM_PASSWORD')
                 },
                 'hardware_profile': {
                     'vm_size': vm_size
@@ -353,11 +350,10 @@ def deleteRow(username, vm_name, usernames, vm_names):
 def insertRow(username, vm_name, usernames, vm_names):
     if not (username in usernames and vm_name in vm_names):
         command = text("""
-            INSERT INTO v_ms("vmUserName", "vmPassword", "vmName") 
-            VALUES(:username, :password, :vm_name)
+            INSERT INTO v_ms("vmUserName", "vmName") 
+            VALUES(:username, :vm_name)
             """)
         params = {'username': username, 
-                  'password': jwt.encode({'pwd': os.getenv('VM_PASSWORD')}, os.getenv('SECRET_KEY')),
                   'vm_name': vm_name}
         with engine.connect() as conn:
             conn.execute(command, **params)
