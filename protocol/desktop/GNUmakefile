@@ -80,6 +80,7 @@ DYNAMIC_LIBS = \
 
 # system libs to link against
 SHARED_LIBS = \
+	-lobjc \
 	-liconv \
 	-framework OpenGL \
 	-framework VideoToolbox \
