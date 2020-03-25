@@ -2,6 +2,10 @@ button {
   outline: none;
 }
 
+.pointerOnHover:hover {
+  cursor: pointer;
+}
+
 .windowControl:hover {
   cursor: pointer;
   color: #5EC4EB !important;
@@ -83,7 +87,7 @@ button {
 
 .loginContainer {
     text-align: center;
-    margin-top: 90px;
+    margin-top: 50px;
 }
 
 .inputBox {
@@ -171,3 +175,6 @@ button {
   top: 3px;
 }
 
+.tabHeader:hover {
+  cursor: pointer;
+}

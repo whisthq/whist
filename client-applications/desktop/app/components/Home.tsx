@@ -2,6 +2,9 @@ import React, {Component} from 'react';
 import { connect, bindActionCreators } from 'react-redux';
 import { Link, useHistory } from 'react-router-dom';
 import { configureStore, history } from '../store/configureStore';
+import InputGroup from 'react-bootstrap/InputGroup'
+import FormControl from 'react-bootstrap/FormControl'
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 
 import routes from '../constants/routes.json';
 import styles from './Home.css';
@@ -15,14 +18,14 @@ import LockIcon from "../../resources/images/lock.svg";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircleNotch, faWindowMinimize, faTimes } from '@fortawesome/free-solid-svg-icons'
 
-import { storeUserInfo, loginUser, setOS } from "../actions/counter"
+import { loginUser, setOS, loginStudio } from "../actions/counter"
 
 class Home extends Component {
   constructor(props) {
     super(props)
     this.state = {username: '', password: '', loggingIn: false, warning: false, version: "1.0.0", updateScreen: false,
                   percentageLeft: 300, percentageDownloaded: 0, downloadSpeed: 0, transferred: 0, total: 0, 
-                  downloadError: ''}
+                  downloadError: '', studios: false}
   }
 
   CloseWindow = () => {
@@ -58,9 +61,12 @@ class Home extends Component {
   }
 
   LoginKeyPress = (event) => {
-  	if(event.key === 'Enter') {
+  	if(event.key === 'Enter' && !this.state.studios) {
   		this.LoginUser()
   	}
+    if(event.key === 'Enter' && this.state.studios) {
+      this.LoginStudio()
+    }
   }
 
   ForgotPassword = () => {
@@ -85,6 +91,15 @@ class Home extends Component {
     let win = remote.getCurrentWindow()
 
     win.minimize()
+  }
+
+  ToggleStudio = (isStudio) => {
+    this.setState({studios: isStudio})
+  }
+
+  LoginStudio = () => {
+    this.setState({loggingIn: true, warning: false});
+    this.props.dispatch(loginStudio(this.state.username, this.state.password))
   }
 
   componentDidMount() {
@@ -162,42 +177,73 @@ class Home extends Component {
         {
         !this.state.updateScreen
         ?
-        <div>
-		    <div className = {styles.loginContainer}>
-		      <div>
-		        <img src = {UserIcon} width = "100" className = {styles.inputIcon}/>
-		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdateUsername} type = "text" className = {styles.inputBox} placeholder = "Username" id = "username"/>
-		      </div>
-			  <div>
-		        <img src = {LockIcon} width = "100" className = {styles.inputIcon}/>
-		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdatePassword} type = "password" className = {styles.inputBox} placeholder = "Password" id = "password"/>
-		      </div>
-		      <div style = {{marginBottom: 20}}>
-		        <button onClick = {() => this.LoginUser()} type = "button" className = {styles.loginButton} id = "login-button">START</button>
-		      </div>
-		      <div style = {{fontSize: 12, color: "#D6D6D6", width: 250, margin: 'auto'}}>
-		      {
-		      	this.state.loggingIn && !this.props.warning
-		      	?
-		      	<div>
-		      		<FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "#5EC4EB", marginRight: 4, width: 12}}/> Logging In
-		      	</div>
-		      	:
-		      	<div>
-		      	</div>
-		      }
-		      {
-		      	this.props.warning
-		      	?
-		      	<div>
-		      		Invalid credentials. If you lost your password, you can reset it on the Fractal website.
-		      	</div>
-		      	:
-		      	<div>
-		      	</div>
-		      }
-		      </div>
-		    </div>
+        <div style = {{marginTop: 50}}>
+          {
+          this.state.studios
+          ?
+          <div style = {{margin: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+              <div className = {styles.tabHeader} onClick = {() => this.ToggleStudio(false)} style = {{color: '#DADADA', marginRight: 20, paddingBottom: 8, width: 90}}>Personal</div>
+              <div className = {styles.tabHeader} onClick = {() => this.ToggleStudio(true)} style = {{color: 'white', fontWeight: 'bold', marginLeft: 20, borderBottom: 'solid 3px #5EC4EB', paddingBottom: 8, width: 90}}>For Studios</div>
+          </div>
+          :
+          <div style = {{margin: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+              <div className = {styles.tabHeader} onClick = {() => this.ToggleStudio(false)} style = {{color: 'white', fontWeight: 'bold', marginRight: 20, borderBottom: 'solid 3px #5EC4EB', paddingBottom: 8, width: 90}}>Personal</div>
+              <div className = {styles.tabHeader} onClick = {() => this.ToggleStudio(true)} style = {{color: '#DADADA', marginLeft: 20, paddingBottom: 8, width: 90}}>For Studios</div>
+          </div>
+          }
+  		    <div className = {styles.loginContainer}>
+  		      <div>
+  		        <img src = {UserIcon} width = "100" className = {styles.inputIcon}/>
+  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdateUsername} type = "text" className = {styles.inputBox} placeholder = "Username" id = "username"/>
+  		      </div>
+  			  <div>
+  		        <img src = {LockIcon} width = "100" className = {styles.inputIcon}/>
+  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdatePassword} type = "password" className = {styles.inputBox} placeholder = "Password" id = "password"/>
+  		      </div>
+  		      <div style = {{marginBottom: 20}}>
+              {
+              !this.state.studios 
+              ?
+  		        <button onClick = {() => this.LoginUser()} type = "button" className = {styles.loginButton} id = "login-button">START</button>
+              :
+              <button type = "button" className = {styles.loginButton} id = "login-button" style = {{opacity: 0.5, background: 'linear-gradient(258.54deg, #5ec3eb 0%, #5ec3eb 100%)'}}>
+                START
+              </button>
+              }
+  		      </div>
+  		      <div style = {{fontSize: 12, color: "#D6D6D6", width: 250, margin: 'auto'}}>
+  		      {
+  		      	this.state.loggingIn && !this.props.warning
+  		      	?
+  		      	<div>
+  		      		<FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "#5EC4EB", marginRight: 4, width: 12}}/> Logging In
+  		      	</div>
+  		      	:
+  		      	<div>
+  		      	</div>
+  		      }
+  		      {
+  		      	this.props.warning
+  		      	?
+              (
+              this.state.studios 
+              ?
+  		      	<div>
+  		      		Invalid credentials. If you lost your password, you can reset it on the&nbsp;
+                <div onClick = {this.ForgotPassword} className = {styles.pointerOnHover} style = {{display: 'inline', fontWeight: 'bold'}}>Fractal website.</div>
+  		      	</div>
+              :
+              <div>
+                Invalid credentials. If you lost your password, you can reset it on the&nbsp;
+                <div onClick = {this.ForgotPassword} className = {styles.pointerOnHover} style = {{display: 'inline', fontWeight: 'bold'}}>Fractal website.</div>
+              </div>
+              )
+  		      	:
+  		      	<div>
+  		      	</div>
+  		      }
+  		      </div>
+  		    </div>
         </div>
         :
         <div  style = {{position: 'relative'}}>
