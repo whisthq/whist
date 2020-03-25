@@ -41,6 +41,7 @@ STATIC_LIBS = \
 
 # compiler flags
 CFLAGS = \
+        /DEBUG \
 	/nologo \
 	/W4 \
 	/O2i \
@@ -69,8 +70,10 @@ SHARED_LIBS = \
 	uuid.lib \
 	version.lib \
 	ws2_32.lib \
-    shlwapi.lib \
-	crypt32.lib
+        shlwapi.lib \
+	crypt32.lib \
+        d3d11.lib \
+        dxgi.lib
 
 # linking flags
 LD_FLAGS = \

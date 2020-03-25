@@ -7,7 +7,6 @@
 #include "openssl/conf.h"
 #include "openssl/evp.h"
 #include "openssl/err.h"
-#include "openssl/rand.h"
 #include "openssl/hmac.h"
 
 int aes_encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
@@ -23,7 +22,15 @@ void handleErrors( void )
 
 void gen_iv( unsigned char* iv )
 {
-    RAND_bytes( iv, 16 );
+    srand( time( NULL ) * rand() + rand() );
+    (void)rand();
+    (void)rand();
+    (void)rand();
+
+    for( int i = 0; i < 16; i++ )
+    {
+        iv[i] = rand();
+    }
 }
 
 int hmac( char* hash, char* buf, int len, char* key )

@@ -2,12 +2,15 @@
 *.obj
 *.iml
 *.pyc
+**/Debug/
+**/Release/
 .vs/
 .vscode/
 .vscode/settings.json
 .idea/
 *.pdb
 *.ilk
+*.user
 .DS_Store
 desktop/build32/clipboard
 desktop/build32/desktop
