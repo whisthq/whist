@@ -134,9 +134,9 @@ audiodecode.o:
 aes.o:
 	$(CC) -c $(CFLAGS) ../include/aes.c
 
-# compile the MacOS clipboard source file into object file
+# compile the MacOS clipboard source file into object file (Requires MacOS 10.14+)
 clipboard_osx.o:
-	$(CC) -c $(CFLAGS) ../include/clipboard_osx.m
+	$(CC) -c -mmacosx-version-min=10.14 $(CFLAGS) ../include/clipboard_osx.m
 
 # compile the general clipboard source file into object file
 clipboard.o:
