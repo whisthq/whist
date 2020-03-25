@@ -395,7 +395,7 @@ void updateVideo() {
                 //mprintf("Status: %f\n", GetTimer(renderContext.client_frame_timer));
                 SDL_SemPost(VideoData.renderscreen_semaphore);
             }
-            else if ((GetTimer(ctx->last_packet_timer) > 14.0 / 1000.0) && GetTimer(ctx->last_nacked_timer) > 2.0 / 1000.0 && ctx->num_times_nacked < 1) {
+            else if ((GetTimer(ctx->last_packet_timer) > 14.0 / 1000.0) && GetTimer(ctx->last_nacked_timer) > 4.0 / 1000.0 && ctx->num_times_nacked < 1) {
                 if (ctx->num_times_nacked == -1) {
                     ctx->num_times_nacked = 0;
                     ctx->last_nacked_index = -1;
@@ -489,7 +489,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
 
     ctx->received_indicies[packet->index] = true;
     if (packet->index > 0) {
-        int to_index = packet->index - 3;
+        int to_index = packet->index - 5;
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             if (!ctx->received_indicies[i]) {
                 ctx->nacked_indicies[i] = true;
