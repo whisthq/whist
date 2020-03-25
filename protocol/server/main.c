@@ -207,12 +207,8 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
-#ifdef _WIN32
-            int error = WSAGetLastError();
+            int error = GetLastNetworkError();
             mprintf("Unexpected Packet Error: %d\n", error);
-#else
-// TODO: Linux version
-#endif
             return -1;
         }
 
@@ -223,8 +219,9 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     return 0;
 }
 
-#ifdef _WIN32
 static int32_t SendVideo(void* opaque) {
+    SDL_Delay( 500 );
+
     struct SocketContext socketContext = *(struct SocketContext*)opaque;
 
     // Init DXGI Device
@@ -261,6 +258,7 @@ static int32_t SendVideo(void* opaque) {
     int id = 1;
     int frames_since_first_iframe = 0;
     update_device = true;
+
     while (connected) {
         // Update device with new parameters
         if (update_device) {
@@ -431,12 +429,6 @@ static int32_t SendVideo(void* opaque) {
 
     return 0;
 }
-#else
-static int32_t SendVideo(void* opaque) {
-    // TODO: Linux version
-    return 0;
-}
-#endif
 
 #ifdef _WIN32
 static int32_t SendAudio(void* opaque) {
