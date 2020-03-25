@@ -65,7 +65,7 @@ class Home extends Component {
   		this.LoginUser()
   	}
     if(event.key === 'Enter' && this.state.studios) {
-      this.LoginStudio()
+      // this.LoginStudio()
     }
   }
 
