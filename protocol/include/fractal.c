@@ -248,7 +248,7 @@ typedef struct
 	stun_entry_t entry;
 } stun_request_t;
 
-#define STUN_IP "54.159.130.32"
+#define STUN_IP "52.5.240.234"
 #define STUN_PORT 48800
 
 #define USING_STUN true
