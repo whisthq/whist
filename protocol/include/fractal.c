@@ -539,7 +539,7 @@ FILE* mprintf_log_file = NULL;
 
 void initMultiThreadedPrintf(bool use_logging) {
 	if (use_logging) {
-		mprintf_log_file = fopen("C:\\Program Files\\Fractal\\log.txt", "ab");
+		mprintf_log_file = fopen("log.txt", "ab");
 	}
 
 	run_multithreaded_printf = true;
@@ -622,11 +622,11 @@ void MultiThreadedPrintf(void* opaque) {
 			{
 				fclose( mprintf_log_file );
 #if defined(_WIN32)
-				DeleteFileA((LPCSTR) L"C:\\Program Files\\Fractal\\log_prev.txt" );
-				MoveFile( L"C:\\Program Files\\Fractal\\log.txt", L"C:\\Program Files\\Fractal\\log_prev.txt" );
-				DeleteFileA((LPCSTR) L"C:\\Program Files\\Fractal\\log.txt" );
+				DeleteFileW( L"log_prev.txt" );
+				MoveFileW( L"log.txt", L"log_prev.txt" );
+				DeleteFileW( L"log.txt" );
 #endif
-				mprintf_log_file = fopen( "C:\\Program Files\\Fractal\\log.txt", "ab" );
+				mprintf_log_file = fopen( "log.txt", "ab" );
 			}
 		}
 	}
