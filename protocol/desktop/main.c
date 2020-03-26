@@ -280,7 +280,7 @@ int UpdateClipboardThread( void* opaque )
         {
             char prev[] = "unison -sshargs \"-l vm1 -i sshkey\" clipboard \"ssh://";
             char* middle = (char*)server_ip;
-            char end[] = "/C:\\Program Files\\Fractal\\clipboard/\" -force clipboard -batch";
+            char end[] = "/C:\\Program Files\\Fractal\\clipboard/\" -force clipboard -confirmbigdel=false -batch";
 
             char command[sizeof( prev ) + 100 + sizeof( end )];
             memcpy( command, prev, strlen( prev ) );

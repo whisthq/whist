@@ -1,6 +1,93 @@
 #include "clipboard.h"
 #include "fractal.h"
 
+
+#define REPARSE_MOUNTPOINT_HEADER_SIZE 8
+
+typedef struct
+{
+	DWORD ReparseTag;
+	DWORD ReparseDataLength;
+	WORD Reserved;
+	WORD ReparseTargetLength;
+	WORD ReparseTargetMaximumLength;
+	WORD Reserved1;
+	WCHAR ReparseTarget[1];
+} REPARSE_MOUNTPOINT_DATA_BUFFER, * PREPARSE_MOUNTPOINT_DATA_BUFFER;
+
+#include <winioctl.h>
+
+bool CreateJunction( WCHAR* szJunction, WCHAR* szPath );
+
+bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
+{
+	BYTE buf[sizeof( REPARSE_MOUNTPOINT_DATA_BUFFER ) + MAX_PATH * sizeof( WCHAR )];
+	REPARSE_MOUNTPOINT_DATA_BUFFER* ReparseBuffer = buf;
+	WCHAR szTarget[MAX_PATH] = L"\\??\\";
+
+	wcscat( szTarget, szPath );
+	wcscat( szTarget, L"\\" );
+
+	if( !CreateDirectoryW( szJunction, NULL ) )
+	{
+		mprintf("Error: %d\n", GetLastError());
+		return false;
+	}
+
+	// Obtain SE_RESTORE_NAME privilege (required for opening a directory)
+	HANDLE hToken = NULL;
+	TOKEN_PRIVILEGES tp;
+	if( !OpenProcessToken( GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken ) )
+	{
+		mprintf( "Error: %d\n", GetLastError() );
+		return false;
+	}
+	if( !LookupPrivilegeValueW( NULL, L"SeRestorePrivilege", &tp.Privileges[0].Luid ) )
+	{
+		mprintf( "Error: %d\n", GetLastError() );
+		return false;
+	}
+	tp.PrivilegeCount = 1;
+	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+	if( !AdjustTokenPrivileges( hToken, FALSE, &tp, sizeof( TOKEN_PRIVILEGES ), NULL, NULL ) )
+	{
+		mprintf( "Error: %d\n", GetLastError() );
+		return false;
+	}
+	if( hToken ) CloseHandle( hToken );
+	// End Obtain SE_RESTORE_NAME privilege
+
+	HANDLE hDir = CreateFileW( szJunction, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL );
+	if( hDir == INVALID_HANDLE_VALUE )
+	{
+		mprintf( "Error: %d\n", GetLastError() );
+		return false;
+	}
+
+	memset( buf, 0, sizeof( buf ) );
+	ReparseBuffer->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+	int len = wcslen( szTarget );
+	wcscpy( ReparseBuffer->ReparseTarget, szTarget );
+	ReparseBuffer->ReparseTargetMaximumLength = len * sizeof( WCHAR );
+	ReparseBuffer->ReparseTargetLength = (len - 1) * sizeof( WCHAR );
+	ReparseBuffer->ReparseDataLength = ReparseBuffer->ReparseTargetLength + 12;
+
+	DWORD dwRet;
+	if( !DeviceIoControl( hDir, FSCTL_SET_REPARSE_POINT, ReparseBuffer, ReparseBuffer->ReparseDataLength+REPARSE_MOUNTPOINT_HEADER_SIZE, NULL, 0, &dwRet, NULL ) )
+	{
+		DWORD dr = GetLastError();
+		CloseHandle( hDir );
+		RemoveDirectoryW( szJunction );
+
+		mprintf( "Error: %d\n", GetLastError() );
+		return false;
+	}
+
+	CloseHandle( hDir );
+
+	return true;
+}
+
 #if defined(_WIN32)
 	#include "shlwapi.h"
 	#pragma comment (lib, "Shlwapi.lib")
@@ -155,16 +242,32 @@ ClipboardData* GetClipboard()
 				WCHAR* fileending = PathFindFileNameW( filename );
 				DWORD fileattributes = GetFileAttributesW( filename );
 
-				WCHAR target_file[1000];
-				WCHAR* clipboard = L"clipboard\\";
-				int clipboard_len = (int) wcslen( clipboard );
-				memcpy( target_file, clipboard, sizeof(WCHAR)*clipboard_len );
-				memcpy( target_file + clipboard_len, fileending, sizeof( WCHAR )*(wcslen( fileending ) + 1) );
+				WCHAR target_file[MAX_PATH*sizeof( WCHAR )] = L"clipboard\\";
+				wcsncat( target_file, fileending, sizeof(target_file) );
 
+				mprintf( "Target: %S\n", target_file );
+				mprintf( "Src: %S\n", filename );
+
+				if( fileattributes & FILE_ATTRIBUTE_DIRECTORY )
+				{
+					if( !CreateJunction( target_file, filename ) )
+					{
+						mprintf( "CreateJunction Error: %d\n", GetLastError() );
+					}
+				} else
+				{
+					if( !CreateHardLinkW( target_file, filename, 0 ) )
+					{
+						mprintf( "CreateHardLinkW Error: %d\n", GetLastError() );
+					}
+				}
+
+				/*
 				if( !CreateSymbolicLinkW( target_file, filename, fileattributes & FILE_ATTRIBUTE_DIRECTORY ? SYMBOLIC_LINK_FLAG_DIRECTORY : 0 ) )
 				{
 					mprintf( "ERROR: %d\n", GetLastError() );
 				}
+				*/
 
 				mprintf( "TARGET FILENAME: %S\n", target_file );
 				mprintf( "FILENAME: %S\n", filename );

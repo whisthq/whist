@@ -488,15 +488,17 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     VideoData.max_id = max(VideoData.max_id, ctx->id);
 
     ctx->received_indicies[packet->index] = true;
-    if (packet->index > 0) {
+    if (packet->index > 0 && GetTimer( ctx->last_nacked_timer ) > 1.0 / 1000) {
         int to_index = packet->index - 5;
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             if (!ctx->received_indicies[i]) {
                 ctx->nacked_indicies[i] = true;
                 nack(packet->id, i);
+                break;
             }
         }
         ctx->last_nacked_index = max(ctx->last_nacked_index, to_index);
+        StartTimer( &ctx->last_nacked_timer );
     }
     ctx->packets_received++;
 
