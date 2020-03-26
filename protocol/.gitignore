@@ -12,6 +12,7 @@
 *.ilk
 *.user
 .DS_Store
+version
 desktop/build32/clipboard
 desktop/build32/desktop
 desktop/build32/desktop.exe
