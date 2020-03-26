@@ -80,6 +80,7 @@ DYNAMIC_LIBS = \
 
 # system libs to link against
 SHARED_LIBS = \
+	-lobjc \
 	-liconv \
 	-framework OpenGL \
 	-framework VideoToolbox \
@@ -115,7 +116,7 @@ CFLAGS = \
 
 # link all files into executable
 all: clean clear $(OBJS)
-	$(CC) -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
+	$(CC) -mmacosx-version-min=10.14 -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
 fractal.o:
@@ -133,7 +134,7 @@ audiodecode.o:
 aes.o:
 	$(CC) -c $(CFLAGS) ../include/aes.c
 
-# compile the MacOS clipboard source file into object file
+# compile the MacOS clipboard source file into object file (Requires MacOS 10.14+)
 clipboard_osx.o:
 	$(CC) -c $(CFLAGS) ../include/clipboard_osx.m
 
