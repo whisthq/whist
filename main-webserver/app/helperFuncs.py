@@ -109,7 +109,7 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                 'location': location,
                 'os_profile': {
                     'computer_name': vmName,
-                    'admin_username': userName,
+                    'admin_username': os.getenv('VM_GROUP'),
                     'admin_password': os.getenv('VM_PASSWORD')
                 },
                 'hardware_profile': {
