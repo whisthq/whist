@@ -116,7 +116,7 @@ CFLAGS = \
 
 # link all files into executable
 all: clean clear $(OBJS)
-	$(CC) -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
+	$(CC) -mmacosx-version-min=10.14 -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
 fractal.o:
@@ -136,7 +136,7 @@ aes.o:
 
 # compile the MacOS clipboard source file into object file (Requires MacOS 10.14+)
 clipboard_osx.o:
-	$(CC) -c -mmacosx-version-min=10.14 $(CFLAGS) ../include/clipboard_osx.m
+	$(CC) -c $(CFLAGS) ../include/clipboard_osx.m
 
 # compile the general clipboard source file into object file
 clipboard.o:
