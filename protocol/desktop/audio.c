@@ -189,31 +189,30 @@ void updateAudio() {
     }
 
     if (last_played_id > -1) {
-
-        if (GetTimer(nack_timer) > 5.0 / 1000.0) {
-            StartTimer(&nack_timer);
-            last_nacked_id = last_played_id;
-        }
-
         next_to_play_id = last_played_id + 1;
 
         // Find all pending audio packets and NACK them
-        int num_nacked = 0;
-        for (int i = max(next_to_play_id, last_nacked_id + 1); i < most_recent_audio_id - 4 && num_nacked < 1; i++) {
-            int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
-            audio_packet* i_packet = &receiving_audio[i_buffer_index];
-            if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
-                i_packet->nacked_amount++;
-                FractalClientMessage fmsg;
-                fmsg.type = MESSAGE_AUDIO_NACK;
-                fmsg.nack_data.id = i / MAX_NUM_AUDIO_INDICES;
-                fmsg.nack_data.index = i % MAX_NUM_AUDIO_INDICES;
-                mprintf("Missing Audio Packet ID %d, Index %d. NACKing...\n", fmsg.nack_data.id, fmsg.nack_data.index);
-                i_packet->nacked_for = i;
-                SendFmsg( &fmsg );
-                num_nacked++;
+        if( GetTimer( nack_timer ) > 6.0 / 1000.0 )
+        {
+            int num_nacked = 0;
+            for (int i = max(next_to_play_id, last_nacked_id + 1); i < most_recent_audio_id - 4 && num_nacked < 1; i++) {
+                int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
+                audio_packet* i_packet = &receiving_audio[i_buffer_index];
+                if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
+                    i_packet->nacked_amount++;
+                    FractalClientMessage fmsg;
+                    fmsg.type = MESSAGE_AUDIO_NACK;
+                    fmsg.nack_data.id = i / MAX_NUM_AUDIO_INDICES;
+                    fmsg.nack_data.index = i % MAX_NUM_AUDIO_INDICES;
+                    mprintf("Missing Audio Packet ID %d, Index %d. NACKing...\n", fmsg.nack_data.id, fmsg.nack_data.index);
+                    i_packet->nacked_for = i;
+                    SendFmsg( &fmsg );
+                    num_nacked++;
+
+                    StartTimer( &nack_timer );
+                }
+                last_nacked_id = i;
             }
-            last_nacked_id = i;
         }
     }
 }
