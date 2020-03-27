@@ -184,13 +184,17 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->width = encoder->width;
         encoder->context->height = encoder->height;
         encoder->context->bit_rate = bitrate;
+        encoder->context->rc_max_rate = 2 * bitrate;
         encoder->context->time_base.num = 1;
         encoder->context->time_base.den = 30;
         encoder->context->gop_size = gop_size;
         encoder->context->pix_fmt = out_format;
 
-        av_opt_set(encoder->context->priv_data, "preset", "ultrafast", 0);
-        av_opt_set(encoder->context->priv_data, "tune", "zerolatency", 0);
+        set_opt( encoder, "nonref_p", "1" );
+        set_opt( encoder, "preset", "llhp" );
+        set_opt( encoder, "rc", "cbr_ld_hq" );
+        set_opt( encoder, "zerolatency", "1" );
+        set_opt( encoder, "delay", "0" );
 
         if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
             mprintf("Failed to open context for stream\n");
