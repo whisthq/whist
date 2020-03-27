@@ -35,6 +35,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->height = encoder->height;
         encoder->context->bit_rate = bitrate;
         encoder->context->rc_max_rate = bitrate;
+        encoder->context->rc_buffer_size = 8 * (bitrate / 8 / 30);
         encoder->context->gop_size = gop_size;
         encoder->context->keyint_min = 5;
         encoder->context->time_base.num = 1;
