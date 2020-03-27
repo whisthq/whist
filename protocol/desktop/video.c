@@ -77,6 +77,7 @@ volatile struct FrameData renderContext;
 
 // True if RenderScreen is currently rendering a frame
 volatile bool rendering = false;
+volatile bool skip_render = false;
 
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 250
@@ -184,27 +185,30 @@ int32_t RenderScreen(void* opaque) {
             continue;
         }
          
-        if( videoContext.sws )
+        if( !skip_render )
         {
-            sws_scale( videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
-                        videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, videoContext.data,
-                        videoContext.linesize );
-        } else
-        {
-            memcpy( videoContext.data, videoContext.decoder->sw_frame->data, sizeof( videoContext.data ) );
-            memcpy( videoContext.linesize, videoContext.decoder->sw_frame->linesize, sizeof( videoContext.linesize ) );
-        }
+            if( videoContext.sws )
+            {
+                sws_scale( videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
+                           videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, videoContext.data,
+                           videoContext.linesize );
+            } else
+            {
+                memcpy( videoContext.data, videoContext.decoder->sw_frame->data, sizeof( videoContext.data ) );
+                memcpy( videoContext.linesize, videoContext.decoder->sw_frame->linesize, sizeof( videoContext.linesize ) );
+            }
 
-        SDL_UpdateYUVTexture(
-            videoContext.texture,
-            NULL,
-            videoContext.data[0],
-            videoContext.linesize[0],
-            videoContext.data[1],
-            videoContext.linesize[1],
-            videoContext.data[2],
-            videoContext.linesize[2]
-        );
+            SDL_UpdateYUVTexture(
+                videoContext.texture,
+                NULL,
+                videoContext.data[0],
+                videoContext.linesize[0],
+                videoContext.data[1],
+                videoContext.linesize[1],
+                videoContext.data[2],
+                videoContext.linesize[2]
+            );
+        }
 
         // Set cursor to frame's desired cursor type
         if((FractalCursorID) frame->cursor.cursor_id != last_cursor) {
@@ -229,8 +233,11 @@ int32_t RenderScreen(void* opaque) {
 
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
 
-        SDL_RenderCopy( (SDL_Renderer*)renderer, videoContext.texture, NULL, NULL );
-        SDL_RenderPresent( (SDL_Renderer*)renderer );
+        if( !skip_render )
+        {
+            SDL_RenderCopy( (SDL_Renderer*)renderer, videoContext.texture, NULL, NULL );
+            SDL_RenderPresent( (SDL_Renderer*)renderer );
+        }
 
 #if LOG_VIDEO
         mprintf("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size, GetTimer(renderContext.frame_creation_timer));
@@ -391,6 +398,16 @@ void updateVideo() {
 
                 renderContext = *ctx;
                 rendering = true;
+
+                skip_render = false;
+                int after_render_id = next_render_id + 1;
+                int after_index = after_render_id % RECV_FRAMES_BUFFER_SIZE;
+                struct FrameData* after_ctx = &receiving_frames[after_index];
+                if( after_ctx->id == after_render_id && after_ctx->packets_received == after_ctx->num_packets )
+                {
+                    skip_render = true;
+                    mprintf( "Skip this render\n" );
+                }
 
                 //will_render = true;
 
