@@ -115,12 +115,8 @@ int SendTCPPacket(struct SocketContext* context, FractalPacketType type,
         sendp(context, encrypted_single_packet_buf, sizeof(int) + encrypt_len);
 
     if (sent_size < 0) {
-#ifdef _WIN32
-        int error = WSAGetLastError();
+        int error = GetLastNetworkError();
         mprintf("Unexpected Packet Error: %d\n", error);
-#else
-// TODO: Unix error handling
-#endif
         return -1;
     }
     return 0;  // success

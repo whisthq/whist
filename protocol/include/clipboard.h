@@ -36,6 +36,15 @@ void StartTrackingClipboardUpdates();
 
 bool hasClipboardUpdated();
 
+// CLIPBOARD THREAD
+
+typedef int SEND_FMSG( void* fmsg );
+
+void initUpdateClipboard( SEND_FMSG* send_fmsg, char* server_ip );
+void updateClipboard();
+bool pendingUpdateClipboard();
+void destroyUpdateClipboard();
+
 #if defined(_WIN32)
 #pragma warning(default: 4200)
 #endif

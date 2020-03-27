@@ -37,8 +37,6 @@ volatile char* server_ip;
 // Function Declarations
 
 SDL_mutex* send_packet_mutex;
-void updateClipboard();
-int UpdateClipboardThread( void* opaque );
 int ReceivePackets( void* opaque );
 int ReceiveMessage( struct RTPPacket* packet );
 
@@ -56,11 +54,6 @@ struct UpdateData
     bool tried_to_update_dimension;
     bool has_initialized_updated;
     clock last_tcp_check_timer;
-    bool updating_clipboard;
-    bool pending_update_clipboard;
-    clock last_clipboard_update;
-    SDL_sem* clipboard_semaphore;
-    ClipboardData* clipboard;
 } volatile UpdateData;
 
 void initUpdate()
@@ -73,16 +66,13 @@ void initUpdate()
     ping_id = 1;
     ping_failures = -2;
 
-    UpdateData.updating_clipboard = false;
-    UpdateData.pending_update_clipboard = false;
-    StartTimer( (clock*)&UpdateData.last_clipboard_update );
-    UpdateData.clipboard_semaphore = SDL_CreateSemaphore( 0 );
-
-    SDL_CreateThread( UpdateClipboardThread, "UpdateClipboardThread", NULL );
-
-    updateClipboard();
-    StartTrackingClipboardUpdates();
+    initUpdateClipboard( (SEND_FMSG*)&SendFmsg, server_ip );
     ClearReadingTCP();
+}
+
+void destroyUpdate()
+{
+    destroyUpdateClipboard();
 }
 
 void update()
@@ -109,7 +99,7 @@ void update()
         StartTimer( (clock*)&UpdateData.last_tcp_check_timer );
     }
 
-    if( UpdateData.pending_update_clipboard )
+    if( pendingUpdateClipboard() )
     {
         updateClipboard();
     }
@@ -261,67 +251,6 @@ int SendPacket( void* data, int len )
     SDL_UnlockMutex( send_packet_mutex );
 
     return failed ? -1 : 0;
-}
-
-int UpdateClipboardThread( void* opaque )
-{
-    opaque;
-
-    while( connected )
-    {
-        SDL_SemWait( UpdateData.clipboard_semaphore );
-
-        ClipboardData* clipboard = UpdateData.clipboard;
-
-        clock clipboard_time;
-        StartTimer( &clipboard_time );
-
-        if( clipboard->type == CLIPBOARD_FILES )
-        {
-            char prev[] = "unison -sshargs \"-l vm1 -i sshkey\" clipboard \"ssh://";
-            char* middle = (char*)server_ip;
-            char end[] = "/C:\\Program Files\\Fractal\\clipboard/\" -force clipboard -confirmbigdel=false -batch";
-
-            char command[sizeof( prev ) + 100 + sizeof( end )];
-            memcpy( command, prev, strlen( prev ) );
-            memcpy( command + strlen( prev ), middle, strlen( middle ) );
-            memcpy( command + strlen( prev ) + strlen( middle ), end, strlen( end ) + 1 );
-            runcmd( command );
-        }
-
-        FractalClientMessage* fmsg = malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) + clipboard->size );
-        fmsg->type = CMESSAGE_CLIPBOARD;
-        memcpy( &fmsg->clipboard, clipboard, sizeof( ClipboardData ) + clipboard->size );
-        SendFmsg( fmsg );
-        free( fmsg );
-
-        // If it hasn't been 500ms yet, then wait 500ms to prevent too much spam
-        const int spam_time_ms = 500;
-        if( GetTimer( clipboard_time ) < spam_time_ms / 1000.0 )
-        {
-            SDL_Delay( max( (int)(spam_time_ms - 1000*GetTimer( clipboard_time )), 1 ) );
-        }
-
-        mprintf( "Updated clipboard!\n" );
-        UpdateData.updating_clipboard = false;
-    }
-
-    return 0;
-}
-
-void updateClipboard()
-{
-    if( UpdateData.updating_clipboard )
-    {
-        UpdateData.pending_update_clipboard = true;
-    } else
-    {
-        mprintf( "Pushing update to clipboard\n" );
-        UpdateData.pending_update_clipboard = false;
-        UpdateData.updating_clipboard = true;
-        UpdateData.clipboard = GetClipboard();
-        SDL_SemPost( UpdateData.clipboard_semaphore );
-    }
 }
 
 int ReceivePackets( void* opaque )
@@ -526,6 +455,8 @@ int ReceivePackets( void* opaque )
     }
 
     SDL_Delay( 5 );
+
+    destroyUpdate();
 
     return 0;
 }

@@ -221,7 +221,7 @@ ClipboardData* GetClipboard()
 			// Begin copy to clipboard
 			WCHAR* filename = (WCHAR*)(cb->data + sizeof( drop ));
 
-			SHFILEOPSTRUCTA sh = { 0 };
+			SHFILEOPSTRUCTW sh = { 0 };
 			sh.wFunc = FO_DELETE;
 			sh.fFlags = 0;
 			sh.fFlags |= FOF_SILENT;
@@ -229,9 +229,46 @@ ClipboardData* GetClipboard()
 			sh.fFlags |= FOF_NOCONFIRMATION;
 			sh.fFlags |= FOF_WANTMAPPINGHANDLE;
 			sh.fFlags |= FOF_NOERRORUI;
-			sh.pFrom = "clipboard";
+			sh.pFrom = L"clipboard";
 
-			SHFileOperationA( &sh );
+			clock t;
+			StartTimer( &t );
+			//SHFileOperationW( &sh );
+
+			WIN32_FIND_DATAW data;
+			HANDLE hFind = FindFirstFileW( L"clipboard\\*", &data );
+			if( hFind != INVALID_HANDLE_VALUE )
+			{
+				WCHAR* ignore1 = L".";
+				WCHAR* ignore2 = L"..";
+
+				do
+				{
+					if( wcscmp( data.cFileName, ignore1 ) == 0 || wcscmp( data.cFileName, ignore2 ) == 0 )
+					{
+						continue;
+					}
+
+					char filename[MAX_PATH*sizeof( WCHAR )] = "";
+					wcscat( filename, L"clipboard\\" );
+					wcscat( filename, data.cFileName );
+
+					DWORD fileattributes = GetFileAttributesW( filename );
+					if( fileattributes == INVALID_FILE_ATTRIBUTES )
+					{
+						mprintf( "GetFileAttributesW Error: %d\n", GetLastError() );
+					}
+
+					if( fileattributes & FILE_ATTRIBUTE_DIRECTORY )
+					{
+						RemoveDirectoryW( filename );
+					} else
+					{
+						DeleteFileW( filename );
+					}
+				} while( FindNextFileW( hFind, &data ) );
+				FindClose( hFind );
+			}
 
 			RemoveDirectoryW( L"clipboard" );
 			CreateDirectoryW( L"clipboard", NULL );
@@ -275,6 +312,7 @@ ClipboardData* GetClipboard()
 
 				filename += wcslen( filename ) + 1;
 			}
+			mprintf( "Time: %f\n", GetTimer( t ) );
 
 			cb->type = CLIPBOARD_FILES;
 			cb->size = 0;
@@ -397,7 +435,6 @@ void SetClipboard( ClipboardData* cb )
 		WIN32_FIND_DATAW data;
 		HANDLE hFind = FindFirstFileW( L"C:\\Program Files\\Fractal\\clipboard\\*", &data );
 
-
 		DROPFILES* drop = (DROPFILES*)clipboard_buf;
 		memset( drop, 0, sizeof( DROPFILES ) );
 		WCHAR* file_ptr = (WCHAR*)(clipboard_buf + sizeof( DROPFILES ));
@@ -487,4 +524,114 @@ void SetClipboard( ClipboardData* cb )
 #endif
 	// Update the status so that this specific update doesn't count
 	hasClipboardUpdated();
+}
+
+// CLIPBOARD THREAD HANDLING
+
+int UpdateClipboardThread( void* opaque );
+
+bool updating_clipboard;
+bool pending_update_clipboard;
+clock last_clipboard_update;
+SDL_sem* clipboard_semaphore;
+ClipboardData* clipboard;
+SEND_FMSG* send_fmsg;
+SDL_Thread* thread;
+bool connected;
+char* server_ip;
+ClipboardData* clipboard;
+
+bool pendingUpdateClipboard()
+{
+	return pending_update_clipboard;
+}
+
+void initUpdateClipboard( SEND_FMSG* send_fmsg_local, char* server_ip_local )
+{
+	connected = true;
+
+	server_ip = server_ip_local;
+	send_fmsg = send_fmsg_local;
+
+	updating_clipboard = false;
+	pending_update_clipboard = false;
+	StartTimer( (clock*)&last_clipboard_update );
+	clipboard_semaphore = SDL_CreateSemaphore( 0 );
+
+	thread = SDL_CreateThread( UpdateClipboardThread, "UpdateClipboardThread", NULL );
+
+	updateClipboard();
+	StartTrackingClipboardUpdates();
+}
+
+void destroyUpdateClipboard()
+{
+	connected = false;
+	SDL_SemPost( clipboard_semaphore );
+}
+
+int UpdateClipboardThread( void* opaque )
+{
+	opaque;
+
+	while( connected )
+	{
+		SDL_SemWait( clipboard_semaphore );
+
+		if( !connected )
+		{
+			break;
+		}
+
+		//ClipboardData* clipboard = GetClipboard();
+
+		clock clipboard_time;
+		StartTimer( &clipboard_time );
+
+		if( clipboard->type == CLIPBOARD_FILES )
+		{
+			char prev[] = "unison -sshargs \"-l vm1 -i sshkey\" clipboard \"ssh://";
+			char* middle = (char*)server_ip;
+			char end[] = "/C:\\Program Files\\Fractal\\clipboard/\" -force clipboard -confirmbigdel=false -batch";
+
+			char command[sizeof( prev ) + 100 + sizeof( end )];
+			memcpy( command, prev, strlen( prev ) );
+			memcpy( command + strlen( prev ), middle, strlen( middle ) );
+			memcpy( command + strlen( prev ) + strlen( middle ), end, strlen( end ) + 1 );
+			runcmd( command );
+		}
+
+		FractalClientMessage* fmsg = malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) + clipboard->size );
+		fmsg->type = CMESSAGE_CLIPBOARD;
+		memcpy( &fmsg->clipboard, clipboard, sizeof( ClipboardData ) + clipboard->size );
+		send_fmsg( fmsg );
+		free( fmsg );
+
+		// If it hasn't been 500ms yet, then wait 500ms to prevent too much spam
+		const int spam_time_ms = 500;
+		if( GetTimer( clipboard_time ) < spam_time_ms / 1000.0 )
+		{
+			SDL_Delay( max( (int)(spam_time_ms - 1000*GetTimer( clipboard_time )), 1 ) );
+		}
+
+		mprintf( "Updated clipboard!\n" );
+		updating_clipboard = false;
+	}
+
+	return 0;
+}
+
+void updateClipboard()
+{
+	if( updating_clipboard )
+	{
+		pending_update_clipboard = true;
+	} else
+	{
+		mprintf( "Pushing update to clipboard\n" );
+		pending_update_clipboard = false;
+		updating_clipboard = true;
+		clipboard = GetClipboard();
+		SDL_SemPost( clipboard_semaphore );
+	}
 }
