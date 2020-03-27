@@ -160,7 +160,7 @@ int32_t RenderScreen(void* opaque) {
 #if LOG_VIDEO
         mprintf("Rendering ID %d (Age %f)\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ));
 #endif
-        if( GetTimer( renderContext.frame_creation_timer ) > 25.0 / 1000.0 )
+        if( GetTimer( renderContext.frame_creation_timer ) > 15.0 / 1000.0 )
         {
             mprintf( "Late! Rendering ID %d (Age %f) (Packets %d)\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ), renderContext.num_packets );
         }
