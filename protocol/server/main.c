@@ -138,12 +138,25 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     double max_delay = 5.0;
     double delay_thusfar = 0.0;
 
+    int average_frame_size = STARTING_BITRATE / 30 / MAX_PAYLOAD_SIZE / 8;
+    int num_breaks = num_indices / average_frame_size;
+    int break_point = num_breaks == 0 ? 0 : num_indices / num_breaks;
+
+    mprintf( "Avg: %d\n", (3*average_frame_size/2) );
+    mprintf( "Packets: %d\n", num_indices );
+
     while (curr_index < len) {
         // Delay distribution of packets as needed
+        /*
         if (((double)curr_index - 10000) / (len + 20000) * max_delay >
             delay_thusfar) {
             SDL_Delay(1);
             delay_thusfar += 1;
+        }*/
+        if( i > 0 && break_point > 0 && i % break_point == 0 && i < num_indices - break_point / 2 )
+        {
+            mprintf( "Delay\n" );
+            SDL_Delay( 8 );
         }
 
         // local packet and len for when nack buffer isn't needed
@@ -196,7 +209,7 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
 
         // Send it off
         SDL_LockMutex(packet_mutex);
-        int sent_size = sendp(context, &encrypted_packet, encrypt_len);
+        int sent_size = sendp( context, &encrypted_packet, encrypt_len );
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
