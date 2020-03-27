@@ -183,15 +183,15 @@ int32_t RenderScreen(void* opaque) {
             rendering = false;
             continue;
         }
-          
+         
         if( videoContext.sws )
         {
             sws_scale( videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
-                       videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, videoContext.data,
-                       videoContext.linesize );
+                        videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, videoContext.data,
+                        videoContext.linesize );
         } else
         {
-            memcpy( videoContext.data, videoContext.decoder->sw_frame->data, sizeof( videoContext.data ));
+            memcpy( videoContext.data, videoContext.decoder->sw_frame->data, sizeof( videoContext.data ) );
             memcpy( videoContext.linesize, videoContext.decoder->sw_frame->linesize, sizeof( videoContext.linesize ) );
         }
 
@@ -228,8 +228,9 @@ int32_t RenderScreen(void* opaque) {
         }
 
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
-        SDL_RenderCopy((SDL_Renderer *) renderer, videoContext.texture, NULL, NULL);
-        SDL_RenderPresent((SDL_Renderer *) renderer);
+
+        SDL_RenderCopy( (SDL_Renderer*)renderer, videoContext.texture, NULL, NULL );
+        SDL_RenderPresent( (SDL_Renderer*)renderer );
 
 #if LOG_VIDEO
         mprintf("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size, GetTimer(renderContext.frame_creation_timer));
@@ -385,7 +386,7 @@ void updateVideo() {
 //        bool will_render = false; TODO: unused, still needed?
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
-                mprintf( "Packets: %d\n", ctx->num_packets );
+                mprintf( "Packets: %d %s\n", ctx->num_packets, ((Frame*)ctx->frame_buffer)->is_iframe ? "(I-frame)" : "" );
                 //mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
 
                 renderContext = *ctx;
