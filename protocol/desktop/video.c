@@ -162,7 +162,7 @@ int32_t RenderScreen(void* opaque) {
 #endif
         if( GetTimer( renderContext.frame_creation_timer ) > 50.0 / 1000.0 )
         {
-            mprintf( "Late! Rendering ID %d (Age %f)\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ) );
+            mprintf( "Late! Rendering ID %d (Age %f) (Packets %d)\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ), renderContext.num_packets );
         }
 
         // Cast to Frame* because this variable is not volatile in this section
@@ -385,6 +385,7 @@ void updateVideo() {
 //        bool will_render = false; TODO: unused, still needed?
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
+                mprintf( "Packets: %d\n", ctx->num_packets );
                 //mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
 
                 renderContext = *ctx;
@@ -395,7 +396,7 @@ void updateVideo() {
                 //mprintf("Status: %f\n", GetTimer(renderContext.client_frame_timer));
                 SDL_SemPost(VideoData.renderscreen_semaphore);
             }
-            else if ((GetTimer(ctx->last_packet_timer) > 14.0 / 1000.0) && GetTimer(ctx->last_nacked_timer) > 4.0 / 1000.0 && ctx->num_times_nacked < 1) {
+            else if ((GetTimer(ctx->last_packet_timer) > 14.0 / 1000.0) && GetTimer(ctx->last_nacked_timer) > 8.0 / 1000.0 && ctx->num_times_nacked < 1) {
                 if (ctx->num_times_nacked == -1) {
                     ctx->num_times_nacked = 0;
                     ctx->last_nacked_index = -1;
@@ -488,7 +489,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     VideoData.max_id = max(VideoData.max_id, ctx->id);
 
     ctx->received_indicies[packet->index] = true;
-    if (packet->index > 0 && GetTimer( ctx->last_nacked_timer ) > 1.0 / 1000) {
+    if (packet->index > 0 && GetTimer( ctx->last_nacked_timer ) > 6.0 / 1000) {
         int to_index = packet->index - 5;
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
             if (!ctx->received_indicies[i]) {
