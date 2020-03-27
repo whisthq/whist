@@ -37,9 +37,6 @@
 static volatile bool connected;
 static volatile double max_mbps;
 static volatile int gop_size = 48;
-#ifdef _WIN32
-static volatile DesktopContext desktopContext = {0};
-#endif
 volatile int client_width = DEFAULT_WIDTH;
 volatile int client_height = DEFAULT_HEIGHT;
 volatile bool update_device = true;
@@ -515,6 +512,7 @@ void update() {
 
 int main() {
     initMultiThreadedPrintf(true);
+
 // TODO: Desktop operational for Unix as well
 #ifdef _WIN32
     InitDesktop();
@@ -528,8 +526,6 @@ int main() {
                 WSAGetLastError());
         return -1;
     }
-#else
-// TODO: Linux initialization
 #endif
 
     while (true) {
