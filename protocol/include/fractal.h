@@ -457,6 +457,7 @@ typedef enum FractalClientMessageType {
 	MESSAGE_AUDIO_NACK      = 10,
 	MESSAGE_KEYBOARD_STATE  = 11,
 	CMESSAGE_CLIPBOARD      = 12,
+	MESSAGE_IFRAME_REQUEST  = 13,
 	CMESSAGE_QUIT           = 100,
 } FractalClientMessageType;
 

@@ -33,6 +33,8 @@ struct VideoData {
     int max_id;
     int most_recent_iframe;
 
+    clock last_iframe_request_timer;
+
     SDL_Thread* render_screen_thread;
     bool run_render_screen_thread;
 
@@ -77,9 +79,10 @@ volatile struct FrameData renderContext;
 
 // True if RenderScreen is currently rendering a frame
 volatile bool rendering = false;
+volatile bool skip_render = false;
 
 // Hold information about frames as the packets come in
-#define RECV_FRAMES_BUFFER_SIZE 250
+#define RECV_FRAMES_BUFFER_SIZE 275
 struct FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
 char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
 
@@ -99,6 +102,21 @@ void nack(int id, int index) {
     fmsg.nack_data.id = id;
     fmsg.nack_data.index = index;
     SendFmsg( &fmsg );
+}
+
+bool requestIframe()
+{
+    if( GetTimer( VideoData.last_iframe_request_timer ) > 250.0 / 1000.0 )
+    {
+        FractalClientMessage fmsg;
+        fmsg.type = MESSAGE_IFRAME_REQUEST;
+        SendFmsg( &fmsg );
+        StartTimer( &VideoData.last_iframe_request_timer );
+        return true;
+    } else
+    {
+        return false;
+    }
 }
 
 void updateWidthAndHeight(int width, int height) {
@@ -157,16 +175,18 @@ int32_t RenderScreen(void* opaque) {
             continue;
         }
 
+        // Cast to Frame* because this variable is not volatile in this section
+        Frame* frame = (Frame*)renderContext.frame_buffer;
+
 #if LOG_VIDEO
         mprintf("Rendering ID %d (Age %f)\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ));
 #endif
-        if( GetTimer( renderContext.frame_creation_timer ) > 50.0 / 1000.0 )
-        {
-            mprintf( "Late! Rendering ID %d (Age %f) (Packets %d)\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ), renderContext.num_packets );
-        }
+        mprintf( "Rendering ID %d (Age %f) (Packets %d) %s\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ), renderContext.num_packets, frame->is_iframe ? "(I-Frame)" : "" );
 
-        // Cast to Frame* because this variable is not volatile in this section
-        Frame* frame = (Frame*)renderContext.frame_buffer;
+        if( GetTimer( renderContext.frame_creation_timer ) > 25.0 / 1000.0 )
+        {
+            mprintf( "Late! Rendering ID %d (Age %f) (Packets %d) %s\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ), renderContext.num_packets, frame->is_iframe ? "(I-Frame)" : "" );
+        }
 
         if ((int) (sizeof(Frame) + frame->size) != renderContext.frame_size) {
             mprintf("Incorrect Frame Size! %d instead of %d\n", sizeof(Frame) + frame->size, renderContext.frame_size);
@@ -184,27 +204,30 @@ int32_t RenderScreen(void* opaque) {
             continue;
         }
          
-        if( videoContext.sws )
+        if( !skip_render )
         {
-            sws_scale( videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
-                        videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, videoContext.data,
-                        videoContext.linesize );
-        } else
-        {
-            memcpy( videoContext.data, videoContext.decoder->sw_frame->data, sizeof( videoContext.data ) );
-            memcpy( videoContext.linesize, videoContext.decoder->sw_frame->linesize, sizeof( videoContext.linesize ) );
-        }
+            if( videoContext.sws )
+            {
+                sws_scale( videoContext.sws, (uint8_t const* const*)videoContext.decoder->sw_frame->data,
+                           videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->context->height, videoContext.data,
+                           videoContext.linesize );
+            } else
+            {
+                memcpy( videoContext.data, videoContext.decoder->sw_frame->data, sizeof( videoContext.data ) );
+                memcpy( videoContext.linesize, videoContext.decoder->sw_frame->linesize, sizeof( videoContext.linesize ) );
+            }
 
-        SDL_UpdateYUVTexture(
-            videoContext.texture,
-            NULL,
-            videoContext.data[0],
-            videoContext.linesize[0],
-            videoContext.data[1],
-            videoContext.linesize[1],
-            videoContext.data[2],
-            videoContext.linesize[2]
-        );
+            SDL_UpdateYUVTexture(
+                videoContext.texture,
+                NULL,
+                videoContext.data[0],
+                videoContext.linesize[0],
+                videoContext.data[1],
+                videoContext.linesize[1],
+                videoContext.data[2],
+                videoContext.linesize[2]
+            );
+        }
 
         // Set cursor to frame's desired cursor type
         if((FractalCursorID) frame->cursor.cursor_id != last_cursor) {
@@ -229,8 +252,11 @@ int32_t RenderScreen(void* opaque) {
 
         //mprintf("Client Frame Time for ID %d: %f\n", renderContext.id, GetTimer(renderContext.client_frame_timer));
 
-        SDL_RenderCopy( (SDL_Renderer*)renderer, videoContext.texture, NULL, NULL );
-        SDL_RenderPresent( (SDL_Renderer*)renderer );
+        if( !skip_render )
+        {
+            SDL_RenderCopy( (SDL_Renderer*)renderer, videoContext.texture, NULL, NULL );
+            SDL_RenderPresent( (SDL_Renderer*)renderer );
+        }
 
 #if LOG_VIDEO
         mprintf("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size, GetTimer(renderContext.frame_creation_timer));
@@ -283,6 +309,7 @@ void initVideo() {
     VideoData.last_rendered_id = 0;
     VideoData.max_id = 0;
     VideoData.most_recent_iframe = -1;
+    StartTimer( &VideoData.last_iframe_request_timer );
 
     for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
         receiving_frames[i].id = -1;
@@ -383,41 +410,75 @@ void updateVideo() {
 
         struct FrameData* ctx = &receiving_frames[index];
 
-//        bool will_render = false; TODO: unused, still needed?
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
-                mprintf( "Packets: %d %s\n", ctx->num_packets, ((Frame*)ctx->frame_buffer)->is_iframe ? "(I-frame)" : "" );
+                //mprintf( "Packets: %d %s\n", ctx->num_packets, ((Frame*)ctx->frame_buffer)->is_iframe ? "(I-frame)" : "" );
                 //mprintf("Rendering %d (Age %f)\n", ctx->id, GetTimer(ctx->frame_creation_timer));
 
                 renderContext = *ctx;
                 rendering = true;
 
-                //will_render = true;
+                skip_render = false;
+                int after_render_id = next_render_id + 1;
+                int after_index = after_render_id % RECV_FRAMES_BUFFER_SIZE;
+                struct FrameData* after_ctx = &receiving_frames[after_index];
+                if( after_ctx->id == after_render_id && after_ctx->packets_received == after_ctx->num_packets )
+                {
+                    skip_render = true;
+                    mprintf( "Skip this render\n" );
+                }
 
-                //mprintf("Status: %f\n", GetTimer(renderContext.client_frame_timer));
                 SDL_SemPost(VideoData.renderscreen_semaphore);
             }
-            else if ((GetTimer(ctx->last_packet_timer) > 14.0 / 1000.0) && GetTimer(ctx->last_nacked_timer) > 8.0 / 1000.0 && ctx->num_times_nacked < 1) {
-                if (ctx->num_times_nacked == -1) {
-                    ctx->num_times_nacked = 0;
-                    ctx->last_nacked_index = -1;
-                }
-                int num_nacked = 0;
-                //mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
-                for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 1; i++) {
-                    if (!ctx->received_indicies[i]) {
-                        num_nacked++;
-                        mprintf("************NACKING VIDEO PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
-                        ctx->nacked_indicies[i] = true;
-                        nack(ctx->id, i);
+            else
+            {
+                if( GetTimer( ctx->last_packet_timer ) > 96.0 / 1000.0 || VideoData.max_id > ctx->id + 3 )
+                {
+                    if( requestIframe() )
+                    {
+                        mprintf( "TOO FAR BEHIND! REQUEST FOR IFRAME!\n" );
                     }
-                    ctx->last_nacked_index = i;
                 }
-                if (ctx->last_nacked_index == ctx->num_packets - 1) {
-                    ctx->last_nacked_index = -1;
-                    ctx->num_times_nacked++;
+
+                if( (GetTimer( ctx->last_packet_timer ) > 6.0 / 1000.0) && GetTimer( ctx->last_nacked_timer ) > (8.0 + 8.0*ctx->num_times_nacked) / 1000.0 )
+                {
+                    if( ctx->num_times_nacked == -1 )
+                    {
+                        ctx->num_times_nacked = 0;
+                        ctx->last_nacked_index = -1;
+                    }
+                    int num_nacked = 0;
+                    //mprintf("************NACKING PACKET %d, alive for %f MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
+                    for( int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 1; i++ )
+                    {
+                        if( !ctx->received_indicies[i] )
+                        {
+                            num_nacked++;
+                            mprintf( "************NACKING VIDEO PACKET %d %d (/%d), alive for %f MS\n", ctx->id, i, ctx->num_packets, GetTimer( ctx->frame_creation_timer ) );
+                            ctx->nacked_indicies[i] = true;
+                            nack( ctx->id, i );
+                        }
+                        ctx->last_nacked_index = i;
+                    }
+                    if( ctx->last_nacked_index == ctx->num_packets - 1 )
+                    {
+                        ctx->last_nacked_index = -1;
+                        ctx->num_times_nacked++;
+                    }
+                    StartTimer( &ctx->last_nacked_timer );
                 }
-                StartTimer(&ctx->last_nacked_timer);
+            }
+        } else
+        {
+            // Next frame not received yet
+            struct FrameData* last_ctx = &receiving_frames[VideoData.last_rendered_id % RECV_FRAMES_BUFFER_SIZE];
+
+            if( last_ctx->id == VideoData.last_rendered_id && GetTimer(last_ctx->frame_creation_timer) > 250.0 / 1000.0 )
+            {
+                if( requestIframe() )
+                {
+                    mprintf( "Long time, no frames. Request iframe." );
+                }
             }
         }
     }

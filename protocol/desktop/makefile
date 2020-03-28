@@ -41,7 +41,6 @@ STATIC_LIBS = \
 
 # compiler flags
 CFLAGS = \
-        /DEBUG \
 	/nologo \
 	/W4 \
 	/O2i \
