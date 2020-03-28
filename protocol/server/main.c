@@ -144,18 +144,16 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     int break_resolution = 4;
     int average_frame_size = STARTING_IFRAME_BITRATE / FPS / MAX_PAYLOAD_SIZE / 8;
     int break_distance = average_frame_size / break_resolution;
-    mprintf( "Break: %d\n", break_distance );
     int num_breaks = num_indices / break_distance;
     if( num_breaks < 0 )
     {
         num_breaks = 0;
     }
-    mprintf( "Num Breaks: %d\n", num_breaks - 1 );
     int break_point = num_indices / (num_breaks + 1);
 
     if( type == PACKET_VIDEO )
     {
-        mprintf( "ID %d (Packets: %d)\n", id, num_indices );
+        mprintf( "Video ID %d (Packets: %d)\n", id, num_indices );
     }
 
     while (curr_index < len) {
@@ -345,7 +343,7 @@ static int32_t SendVideo(void* opaque) {
             }
             if( accumulated_frames == 0 )
             {
-                mprintf( "Sending current frame as iframe!\n" );
+                mprintf( "Sending current frame!\n" );
             }
 
             consecutive_capture_screen_errors = 0;
