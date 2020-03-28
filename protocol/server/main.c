@@ -441,11 +441,14 @@ static int32_t SendVideo(void* opaque) {
                     // "");
 
                     // Send video packet to client
-                    if ( !(id % 50 == 0 && id > 0) && SendPacket(&socketContext, PACKET_VIDEO,
+                    if ( SendPacket(&socketContext, PACKET_VIDEO,
                                    (uint8_t*)frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
+                    } else
+                    {
+                        // Only increment ID if the send succeeded
+                        id++;
                     }
-                    id++;
                     previous_frame_size = encoder->packet.size;
                     // double server_frame_time = GetTimer(server_frame_timer);
                     // mprintf("Server Frame Time for ID %d: %f\n", id,
