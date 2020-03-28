@@ -216,19 +216,42 @@ def lookup(username):
         user = conn.execute(command, **params).fetchall()
         return len(user) > 0
 
+def genUniqueCode():
+    with engine.connect() as conn:
+        old_codes = [cell[0] for cell in list(conn.execute('SELECT "code" FROM users'))]
+        new_code = generateCode()
+        while new_code in old_codes:
+             new_code = generateCode()
+        return new_code
+
+
 def registerUser(username, password):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
+    code = genUniqueCode()
     command = text("""
-        INSERT INTO users("userName", "password") 
-        VALUES(:userName, :password)
+        INSERT INTO users("userName", "password", "code") 
+        VALUES(:userName, :password, :code)
         """)
-    params = {'userName': username, 'password': pwd_token}
+    params = {'userName': username, 'password': pwd_token, 'code': code}
     with engine.connect() as conn:
         try:
             conn.execute(command, **params)
             return 200
         except:
             return 400
+
+def regenerateAllCodes():
+    with engine.connect() as conn:
+        for row in list(conn.execute('SELECT * FROM users')):
+            code = genUniqueCode()
+            command = text("""
+                UPDATE users 
+                SET "code" = :code
+                WHERE "userName" = :userName
+                """)            
+            params = {'code': code, 'userName': row[0]}
+            conn.execute(command, **params)
+
 
 def resetPassword(username, password):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
@@ -336,6 +359,18 @@ def fetchUserVMs(username):
             out = [{'vm_username': vm_info[1], 
                     'vm_name': vm_info[0]} for vm_info in vms_info]
             return out
+
+def fetchUserCode(username):
+    try:
+        command = text("""
+            SELECT * FROM users WHERE "userName" = :userName
+            """)
+        params = {'userName': username}
+        with engine.connect() as conn:
+            user = conn.execute(command, **params).fetchone()
+            return user[2]
+    except:
+        return None
 
 def deleteRow(username, vm_name, usernames, vm_names):
     if not (vm_name in vm_names):

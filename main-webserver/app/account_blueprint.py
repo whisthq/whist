@@ -85,6 +85,15 @@ def account(action):
 		username, nickname, computer_id = body['username'], body['nickname'], body['id']
 		changeComputerName(username, computer_id, nickname)
 		return jsonify({'status': 200}), 200
+	elif action == 'regenerateCodes':
+		regenerateAllCodes()
+		return jsonify({'status': 200}), 200
+	elif action == 'fetchCode':
+		code = fetchUserCode(body['username'])
+		if code:
+			return jsonify({'status': 200, 'code': code}), 200
+		else:
+			return jsonify({'status': 404, 'code': None}), 404
 	return jsonify({'status': 400}), 400
 
 

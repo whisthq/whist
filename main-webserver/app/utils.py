@@ -16,3 +16,10 @@ def generatePassword():
     c3 = ''.join([random.choice(lowerCase) for _ in range(0,5)]) + c2
     c4 = ''.join([random.choice(numbers) for _ in range(0,4)]) + c3
     return ''.join(random.sample(c4,len(c4)))
+
+def generateCode():
+    upperCase = string.ascii_uppercase
+    numbers = '1234567890'
+    c1 = ''.join([random.choice(numbers) for _ in range(0,3)])
+    c2 = ''.join([random.choice(upperCase) for _ in range(0,3)]) + '-' + c1
+    return c2
