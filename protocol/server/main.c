@@ -41,6 +41,7 @@ volatile int client_width = DEFAULT_WIDTH;
 volatile int client_height = DEFAULT_HEIGHT;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
+//volatile 
 
 char buf[LARGEST_FRAME_SIZE];
 
