@@ -374,13 +374,24 @@ def fetchUserCode(username):
 
 def deleteRow(username, vm_name, usernames, vm_names):
     if not (vm_name in vm_names):
-        print("Deleting VM " + vm_name)
         command = text("""
             DELETE FROM v_ms WHERE "vmName" = :vm_name 
             """)
         params = {'vm_name': vm_name}
         with engine.connect() as conn:
             conn.execute(command, **params)
+
+def deleteUser(username):
+    command = text("""
+        DELETE FROM users WHERE "userName" = :username 
+        """)
+    params = {'username': username}
+    with engine.connect() as conn:
+        try:
+            conn.execute(command, **params)
+            return 200
+        except:
+            return 404
 
 def insertRow(username, vm_name, usernames, vm_names):
     if not (username in usernames and vm_name in vm_names):

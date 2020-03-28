@@ -55,6 +55,9 @@ def account(action):
 	elif action == 'fetchUsers':
 		users = fetchAllUsers()
 		return jsonify({'status': 200, 'users': users}), 200
+	elif action == 'deleteUser':
+		status = deleteUser(body['username'])
+		return jsonify({'status': status}), status
 	elif action == 'insertComputer':
 		username, location, nickname, computer_id = body['username'], body['location'], body['nickname'], body['id']
 		insertComputer(username, location, nickname, computer_id)
