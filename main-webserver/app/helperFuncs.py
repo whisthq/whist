@@ -511,3 +511,15 @@ def changeComputerName(username, computer_id, nickname):
     params = {'nickname': nickname, 'username': username, 'id': computer_id}
     with engine.connect() as conn:
         conn.execute(command, **params)
+
+def fetchAllUsers():
+    command = text("""
+        SELECT * FROM users
+        """)
+    params = {}
+    with engine.connect() as conn:
+        users = conn.execute(command, **params).fetchall()
+        out = [{'username': user[0],
+               'code': user[2]} for user in users]
+        return out
+    return None
