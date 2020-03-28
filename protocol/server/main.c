@@ -337,7 +337,7 @@ static int32_t SendVideo(void* opaque) {
         StartTimer(&server_frame_timer);
 
         // Only if we have a frame to render
-        if (accumulated_frames > 0 || wants_iframe) {
+        if (accumulated_frames > 0 || wants_iframe || GetTimer( last_frame_capture ) > 1.0 / MIN_FPS) {
             StartTimer( &last_frame_capture );
 
             if (accumulated_frames > 1) {
