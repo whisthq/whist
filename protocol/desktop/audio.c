@@ -204,7 +204,7 @@ void updateAudio() {
                 fmsg.nack_data.index = i % MAX_NUM_AUDIO_INDICES;
                 //mprintf("Missing Audio Packet ID %d, Index %d. NACKing...\n", fmsg.nack_data.id, fmsg.nack_data.index);
                 i_packet->nacked_for = i;
-                //SendFmsg( &fmsg );
+                SendFmsg( &fmsg );
                 num_nacked++;
 
                 StartTimer( &nack_timer );
