@@ -473,11 +473,11 @@ void updateVideo() {
             // Next frame not received yet
             struct FrameData* last_ctx = &receiving_frames[VideoData.last_rendered_id % RECV_FRAMES_BUFFER_SIZE];
 
-            if( last_ctx->id == VideoData.last_rendered_id && GetTimer(last_ctx->frame_creation_timer) > 250.0 / 1000.0 )
+            if( last_ctx->id == VideoData.last_rendered_id && GetTimer(last_ctx->frame_creation_timer) > 350.0 / 1000.0 )
             {
                 if( requestIframe() )
                 {
-                    mprintf( "Long time, no frames. Request iframe." );
+                    mprintf( "Long time, no frames. Request iframe.\n" );
                 }
             }
         }
