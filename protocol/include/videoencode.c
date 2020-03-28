@@ -35,11 +35,11 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->height = encoder->height;
         encoder->context->bit_rate = bitrate;
         encoder->context->rc_max_rate = bitrate;
-        encoder->context->rc_buffer_size = 8 * (bitrate / 8 / 30);
+        encoder->context->rc_buffer_size = 6 * (bitrate / 60);
         encoder->context->gop_size = gop_size;
         encoder->context->keyint_min = 5;
         encoder->context->time_base.num = 1;
-        encoder->context->time_base.den = 30;
+        encoder->context->time_base.den = 60;
         encoder->context->pix_fmt = encoder_format;
 
         set_opt(encoder, "nonref_p", "1");
@@ -47,6 +47,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         set_opt(encoder, "rc", "cbr_ld_hq");
         set_opt(encoder, "zerolatency", "1");
         set_opt(encoder, "delay", "0");
+        //set_opt( encoder, "max-intra-rate", );
 
         av_buffer_unref(&encoder->context->hw_frames_ctx);
         encoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(hw_device_ctx);
@@ -116,7 +117,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->gop_size = gop_size;
         encoder->context->keyint_min = 5;
         encoder->context->time_base.num = 1;
-        encoder->context->time_base.den = 30;
+        encoder->context->time_base.den = 60;
         encoder->context->pix_fmt = encoder_format;
 
         set_opt(encoder, "nonref_p", "1");
@@ -187,7 +188,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->bit_rate = bitrate;
         encoder->context->rc_max_rate = bitrate;
         encoder->context->time_base.num = 1;
-        encoder->context->time_base.den = 30;
+        encoder->context->time_base.den = 60;
         encoder->context->gop_size = gop_size;
         encoder->context->pix_fmt = out_format;
 

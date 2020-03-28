@@ -36,7 +36,7 @@
 
 static volatile bool connected;
 static volatile double max_mbps;
-static volatile int gop_size = 48;
+static volatile int gop_size = 248;
 volatile int client_width = DEFAULT_WIDTH;
 volatile int client_height = DEFAULT_HEIGHT;
 volatile bool update_device = true;
@@ -138,23 +138,29 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     double max_delay = 5.0;
     double delay_thusfar = 0.0;
 
-    int average_frame_size = STARTING_BITRATE / 30 / MAX_PAYLOAD_SIZE / 8;
-    int num_breaks = (num_indices - average_frame_size / 2) / average_frame_size;
+    int break_resolution = 4;
+    int average_frame_size = STARTING_IFRAME_BITRATE / 60 / MAX_PAYLOAD_SIZE / 8;
+    int break_distance = average_frame_size / break_resolution;
+    mprintf( "Break: %d\n", break_distance );
+    int num_breaks = num_indices / break_distance;
     if( num_breaks < 0 )
     {
         num_breaks = 0;
     }
-    int break_point = num_breaks == 0 ? 0 : num_indices / num_breaks;
+    mprintf( "Num Breaks: %d\n", num_breaks - 1 );
+    int break_point = num_indices / (num_breaks + 1);
 
-    mprintf( "Avg: %d\n", (3*average_frame_size/2) );
-    mprintf( "Packets: %d\n", num_indices );
+    if( type == PACKET_VIDEO )
+    {
+        mprintf( "ID %d (Packets: %d)\n", id, num_indices );
+    }
 
     while (curr_index < len) {
         // Delay distribution of packets as needed
-        if( i > 0 && break_point > 0 && i % break_point == 0 && i < num_indices - break_point / 2 )
+        if( i > 0 && break_point > 0 && i % break_point == 0 && i < num_indices - 3 * break_point / 2 )
         {
             mprintf( "Delay\n" );
-            SDL_Delay( 12 );
+            SDL_Delay( 16 / break_resolution );
         }
 
         // local packet and len for when nack buffer isn't needed
