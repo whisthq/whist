@@ -34,6 +34,7 @@ struct VideoData {
     int most_recent_iframe;
 
     clock last_iframe_request_timer;
+    bool is_waiting_for_iframe;
 
     SDL_Thread* render_screen_thread;
     bool run_render_screen_thread;
@@ -96,6 +97,10 @@ void updateWidthAndHeight(int width, int height);
 int32_t RenderScreen(void* opaque);
 
 void nack(int id, int index) {
+    if( VideoData.is_waiting_for_iframe )
+    {
+        return;
+    }
     mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", id, index);
     FractalClientMessage fmsg;
     fmsg.type = MESSAGE_VIDEO_NACK;
@@ -112,6 +117,7 @@ bool requestIframe()
         fmsg.type = MESSAGE_IFRAME_REQUEST;
         SendFmsg( &fmsg );
         StartTimer( &VideoData.last_iframe_request_timer );
+        VideoData.is_waiting_for_iframe = true;
         return true;
     } else
     {
@@ -262,6 +268,11 @@ int32_t RenderScreen(void* opaque) {
         mprintf("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size, GetTimer(renderContext.frame_creation_timer));
 #endif
 
+        if( frame->is_iframe )
+        {
+            VideoData.is_waiting_for_iframe = false;
+        }
+
         VideoData.last_rendered_id = renderContext.id;
         has_rendered_yet = true;
         rendering = false;
@@ -275,6 +286,7 @@ int32_t RenderScreen(void* opaque) {
 void initVideo() {
     // mbps that currently works
     working_mbps = MAXIMUM_MBPS;
+    VideoData.is_waiting_for_iframe = false;
 
     // True if RenderScreen is currently rendering a frame
     rendering = false;
@@ -432,14 +444,6 @@ void updateVideo() {
             }
             else
             {
-                if( GetTimer( ctx->last_packet_timer ) > 96.0 / 1000.0 || VideoData.max_id > ctx->id + 3 )
-                {
-                    if( requestIframe() )
-                    {
-                        mprintf( "TOO FAR BEHIND! REQUEST FOR IFRAME!\n" );
-                    }
-                }
-
                 if( (GetTimer( ctx->last_packet_timer ) > 6.0 / 1000.0) && GetTimer( ctx->last_nacked_timer ) > (8.0 + 8.0*ctx->num_times_nacked) / 1000.0 )
                 {
                     if( ctx->num_times_nacked == -1 )
@@ -468,16 +472,17 @@ void updateVideo() {
                     StartTimer( &ctx->last_nacked_timer );
                 }
             }
-        } else
-        {
-            // Next frame not received yet
-            struct FrameData* last_ctx = &receiving_frames[VideoData.last_rendered_id % RECV_FRAMES_BUFFER_SIZE];
+        }
 
-            if( last_ctx->id == VideoData.last_rendered_id && GetTimer(last_ctx->frame_creation_timer) > 350.0 / 1000.0 )
+        if( !rendering )
+        {
+            struct FrameData* cur_ctx = &receiving_frames[VideoData.last_rendered_id % RECV_FRAMES_BUFFER_SIZE];
+
+            if( VideoData.max_id > VideoData.last_rendered_id + 3 || (cur_ctx->id == VideoData.last_rendered_id && GetTimer( cur_ctx->last_packet_timer ) > 96.0 / 1000.0) )
             {
                 if( requestIframe() )
                 {
-                    mprintf( "Long time, no frames. Request iframe.\n" );
+                    mprintf( "TOO FAR BEHIND! REQUEST FOR IFRAME!\n" );
                 }
             }
         }
