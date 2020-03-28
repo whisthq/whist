@@ -202,6 +202,8 @@ int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height) {
   device->width = hardware->final_output_desc.DesktopCoordinates.right;
   device->height = hardware->final_output_desc.DesktopCoordinates.bottom;
 
+  device->released = true;
+
   return 0;
 }
 
@@ -267,15 +269,16 @@ void ReleaseScreenshot(struct ScreenshotContainer* screenshot) {
 }
 
 int CaptureScreen(struct CaptureDevice *device) {
+    ReleaseScreen( device );
+
   HRESULT hr;
 
   struct ScreenshotContainer* screenshot = &device->screenshot;
 
   hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
-  ReleaseScreenshot(screenshot);
-
-  hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 1, &device->frame_info, &screenshot->desktop_resource);
+  IDXGIResource* desktop_resource;
+  hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 1, &device->frame_info, &desktop_resource);
 
   if(FAILED(hr)) {
     if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
@@ -291,6 +294,9 @@ int CaptureScreen(struct CaptureDevice *device) {
         return -1;
     }
   }
+
+  ReleaseScreenshot( screenshot );
+  screenshot->desktop_resource = desktop_resource;
 
   hr = screenshot->desktop_resource->lpVtbl->QueryInterface(screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
   if (FAILED(hr)) {
@@ -337,11 +343,16 @@ int CaptureScreen(struct CaptureDevice *device) {
     }
 
     device->frame_data = (char *) screenshot->mapped_rect.pBits;
+    device->released = false;
     return accumulated_frames;
 }
 
 
 void ReleaseScreen(struct CaptureDevice *device) {
+    if( device->released )
+    {
+        return;
+    }
     HRESULT hr;
   if (device->did_use_map_desktop_surface) {
     hr = device->duplication->lpVtbl->UnMapDesktopSurface(device->duplication);
@@ -356,6 +367,7 @@ void ReleaseScreen(struct CaptureDevice *device) {
           mprintf("Failed to unmap screenshot surface 0x%X %d\n", hr, GetLastError());
       }
   }
+  device->released = true;
 }
 
 void DestroyCaptureDevice(struct CaptureDevice* device) {

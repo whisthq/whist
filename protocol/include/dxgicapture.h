@@ -32,6 +32,7 @@ struct CaptureDevice {
   struct ScreenshotContainer screenshot;
   bool did_use_map_desktop_surface;
   struct DisplayHardware *hardware;
+  bool released;
 };
 
 int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height);

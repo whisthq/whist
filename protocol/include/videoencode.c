@@ -13,6 +13,8 @@ void set_opt(encoder_t *encoder, char *option, char *value) {
 }
 
 int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
+    int max_buffer = 4 * (bitrate / FPS);
+
     if (encoder->type == NVENC_ENCODE) {
         mprintf( "Trying Nvidia encoder\n" );
 
@@ -35,11 +37,11 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->height = encoder->height;
         encoder->context->bit_rate = bitrate;
         encoder->context->rc_max_rate = bitrate;
-        encoder->context->rc_buffer_size = 6 * (bitrate / 60);
+        encoder->context->rc_buffer_size = max_buffer;
         encoder->context->gop_size = gop_size;
         encoder->context->keyint_min = 5;
         encoder->context->time_base.num = 1;
-        encoder->context->time_base.den = 60;
+        encoder->context->time_base.den = FPS;
         encoder->context->pix_fmt = encoder_format;
 
         set_opt(encoder, "nonref_p", "1");
@@ -114,10 +116,11 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->height = encoder->height;
         encoder->context->bit_rate = bitrate;
         encoder->context->rc_max_rate = bitrate;
+        encoder->context->rc_buffer_size = max_buffer;
         encoder->context->gop_size = gop_size;
         encoder->context->keyint_min = 5;
         encoder->context->time_base.num = 1;
-        encoder->context->time_base.den = 60;
+        encoder->context->time_base.den = FPS;
         encoder->context->pix_fmt = encoder_format;
 
         set_opt(encoder, "nonref_p", "1");
@@ -187,8 +190,9 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->height = encoder->height;
         encoder->context->bit_rate = bitrate;
         encoder->context->rc_max_rate = bitrate;
+        encoder->context->rc_buffer_size = max_buffer;
         encoder->context->time_base.num = 1;
-        encoder->context->time_base.den = 60;
+        encoder->context->time_base.den = FPS;
         encoder->context->gop_size = gop_size;
         encoder->context->pix_fmt = out_format;
 

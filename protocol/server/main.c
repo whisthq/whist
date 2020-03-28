@@ -36,7 +36,7 @@
 
 static volatile bool connected;
 static volatile double max_mbps;
-static volatile int gop_size = 248;
+static volatile int gop_size = 9999;
 volatile int client_width = DEFAULT_WIDTH;
 volatile int client_height = DEFAULT_HEIGHT;
 volatile bool update_device = true;
@@ -142,7 +142,7 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     double delay_thusfar = 0.0;
 
     int break_resolution = 4;
-    int average_frame_size = STARTING_IFRAME_BITRATE / 60 / MAX_PAYLOAD_SIZE / 8;
+    int average_frame_size = STARTING_IFRAME_BITRATE / FPS / MAX_PAYLOAD_SIZE / 8;
     int break_distance = average_frame_size / break_resolution;
     mprintf( "Break: %d\n", break_distance );
     int num_breaks = num_indices / break_distance;
@@ -163,7 +163,7 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
         if( i > 0 && break_point > 0 && i % break_point == 0 && i < num_indices - 3 * break_point / 2 )
         {
             mprintf( "Delay\n" );
-            SDL_Delay( 16 / break_resolution );
+            SDL_Delay( (int)(1000.0 / FPS / break_resolution) );
         }
 
         // local packet and len for when nack buffer isn't needed
@@ -272,6 +272,9 @@ static int32_t SendVideo(void* opaque) {
     int frames_since_first_iframe = 0;
     update_device = true;
 
+    static clock last_frame_capture;
+    StartTimer( &last_frame_capture );
+
     while (connected) {
         // Update device with new parameters
         if (update_device) {
@@ -312,7 +315,11 @@ static int32_t SendVideo(void* opaque) {
             frames_since_first_iframe = 0;
         }
 
-        int accumulated_frames = CaptureScreen( device );
+        int accumulated_frames = 0;
+        if( GetTimer( last_frame_capture ) > 1.0 / FPS )
+        {
+            accumulated_frames = CaptureScreen( device );
+        }
 
         // If capture screen failed, we should try again
         if (accumulated_frames < 0) {
@@ -330,9 +337,15 @@ static int32_t SendVideo(void* opaque) {
         StartTimer(&server_frame_timer);
 
         // Only if we have a frame to render
-        if (accumulated_frames > 0) {
+        if (accumulated_frames > 0 || wants_iframe) {
+            StartTimer( &last_frame_capture );
+
             if (accumulated_frames > 1) {
                 mprintf("Accumulated Frames: %d\n", accumulated_frames);
+            }
+            if( accumulated_frames == 0 )
+            {
+                mprintf( "Sending current frame as iframe!\n" );
             }
 
             consecutive_capture_screen_errors = 0;
@@ -428,7 +441,7 @@ static int32_t SendVideo(void* opaque) {
                     // "");
 
                     // Send video packet to client
-                    if (SendPacket(&socketContext, PACKET_VIDEO,
+                    if ( !(id % 50 == 0 && id > 0) && SendPacket(&socketContext, PACKET_VIDEO,
                                    (uint8_t*)frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
@@ -442,8 +455,6 @@ static int32_t SendVideo(void* opaque) {
             {
                 mprintf( "Empty encoder packet" );
             }
-
-            ReleaseScreen( device );
         }
     }
 #ifdef _WIN32
@@ -847,6 +858,7 @@ int main() {
                             video_packet->id, video_packet->index );
                     }
                 } else if (fmsg->type == MESSAGE_IFRAME_REQUEST) {
+                    mprintf( "Request for i-frame found: Creating iframe\n" );
                     wants_iframe = true;
                 } else if (fmsg->type == CMESSAGE_QUIT) {
                     // Client requested to exit, it's time to disconnect
