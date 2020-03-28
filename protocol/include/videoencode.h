@@ -28,4 +28,7 @@ void destroy_video_encoder(encoder_t *encoder);
 /// @details encodes a RGB frame into encoded format as YUV color
 void video_encoder_encode(encoder_t *encoder, void *rgb_pixels);
 
+void video_encoder_set_iframe( encoder_t* encoder );
+void video_encoder_unset_iframe( encoder_t* encoder );
+
 #endif  // ENCODE_H

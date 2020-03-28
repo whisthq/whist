@@ -292,9 +292,21 @@ void destroy_video_encoder(encoder_t *encoder) {
     return;
 }
 
+void video_encoder_set_iframe( encoder_t* encoder )
+{
+    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
+}
+
+void video_encoder_unset_iframe( encoder_t* encoder )
+{
+    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
+}
+
 /// @brief encode a frame using the encoder encoder
 /// @details encode a RGB frame into encoded format as YUV color
 void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
+    int success = 0;  // boolean for success or failure of encoding
+
     // init packet to prepare encoding
     av_packet_unref( &encoder->packet );
     av_init_packet( &encoder->packet );
@@ -306,7 +318,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
 
         // convert to the encoder format
         sws_scale( encoder->sws, in_data, in_linesize, 0, encoder->height,
-                   encoder->sw_frame->data, encoder->sw_frame->linesize );
+                    encoder->sw_frame->data, encoder->sw_frame->linesize );
     } else
     {
         memset( encoder->sw_frame->data, 0, sizeof( encoder->sw_frame->data ) );
@@ -316,11 +328,12 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
         encoder->sw_frame->linesize[0] = encoder->width * 4;
     }
 
-    int success = 0;  // boolean for success or failure of encoding
-
     // define input data to encoder
     if (encoder->type == NVENC_ENCODE || encoder->type == QSV_ENCODE) {
         av_hwframe_transfer_data(encoder->hw_frame, encoder->sw_frame, 0);
+
+        encoder->hw_frame->pict_type = encoder->sw_frame->pict_type;
+
         avcodec_encode_video2(encoder->context, &encoder->packet,
                               encoder->hw_frame, &success);
     } else if (encoder->type == SOFTWARE_ENCODE) {

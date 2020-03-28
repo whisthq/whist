@@ -58,6 +58,8 @@ SDL_mutex* packet_mutex;
 
 struct SocketContext PacketSendContext = {0};
 
+volatile bool wants_iframe;
+
 int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
                  int len) {
     if (len > sizeof(struct RTPPacket)) {
@@ -304,6 +306,7 @@ static int32_t SendVideo(void* opaque) {
             }
             encoder = create_video_encoder(device->width, device->height,
                                            current_bitrate, gop_size);
+
             update_encoder = false;
             frames_since_first_iframe = 0;
         }
@@ -333,10 +336,23 @@ static int32_t SendVideo(void* opaque) {
 
             consecutive_capture_screen_errors = 0;
 
+            bool is_iframe = false;
+            if( wants_iframe )
+            {
+                video_encoder_set_iframe( encoder );
+                wants_iframe = false;
+                is_iframe = true;
+            }
+
             clock t;
-            StartTimer(&t);
+            StartTimer( &t );
+
             video_encoder_encode(encoder, device->frame_data);
-            mprintf("Encode Time: %f\n", GetTimer(t));
+            frames_since_first_iframe++;
+
+            video_encoder_unset_iframe( encoder );
+
+            mprintf("Encode Time: %f (%d) (%d)\n", GetTimer(t), frames_since_first_iframe % gop_size, encoder->packet.size);
 
             bitrate_tested_frames++;
             bytes_tested_frames += encoder->packet.size;
@@ -402,7 +418,7 @@ static int32_t SendVideo(void* opaque) {
                     frame->size = encoder->packet.size;
                     frame->cursor = GetCurrentCursor(types);
                     frame->is_iframe =
-                        frames_since_first_iframe % gop_size == 0;
+                        (frames_since_first_iframe % gop_size == 1) || is_iframe;
                     memcpy(frame->compressed_frame, encoder->packet.data,
                            encoder->packet.size);
 
@@ -415,13 +431,15 @@ static int32_t SendVideo(void* opaque) {
                                    (uint8_t*)frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     }
-                    frames_since_first_iframe++;
                     id++;
                     previous_frame_size = encoder->packet.size;
                     // double server_frame_time = GetTimer(server_frame_timer);
                     // mprintf("Server Frame Time for ID %d: %f\n", id,
                     // server_frame_time);
                 }
+            } else
+            {
+                mprintf( "Empty encoder packet" );
             }
 
             ReleaseScreen( device );
@@ -587,6 +605,7 @@ int main() {
 
         connected = true;
         max_mbps = MAXIMUM_MBPS;
+        wants_iframe = false;
 
         packet_mutex = SDL_CreateMutex();
 
@@ -795,34 +814,39 @@ int main() {
                             fmsg->nack_data.id, fmsg->nack_data.index,
                             audio_packet->id, audio_packet->index);
                     }
-                } else if (fmsg->type == MESSAGE_VIDEO_NACK) {
+                } else if( fmsg->type == MESSAGE_VIDEO_NACK )
+                {
                     // Video nack received, relay the packet
 
                     // mprintf("Video NACK requested for: ID %d Index %d\n",
                     // fmsg->nack_data.id, fmsg->nack_data.index);
                     struct RTPPacket* video_packet =
                         &video_buffer[fmsg->nack_data.id % VIDEO_BUFFER_SIZE]
-                                     [fmsg->nack_data.index];
+                        [fmsg->nack_data.index];
                     int len = video_buffer_packet_len[fmsg->nack_data.id %
-                                                      VIDEO_BUFFER_SIZE]
-                                                     [fmsg->nack_data.index];
-                    if (video_packet->id == fmsg->nack_data.id) {
+                        VIDEO_BUFFER_SIZE]
+                        [fmsg->nack_data.index];
+                    if( video_packet->id == fmsg->nack_data.id )
+                    {
                         mprintf(
                             "NACKed video packet ID %d Index %d found of "
                             "length %d. Relaying!\n",
-                            fmsg->nack_data.id, fmsg->nack_data.index, len);
-                        ReplayPacket(&PacketSendContext, video_packet, len);
+                            fmsg->nack_data.id, fmsg->nack_data.index, len );
+                        ReplayPacket( &PacketSendContext, video_packet, len );
                     }
 
                     // If we were asked for an invalid index, just ignore it
-                    else if (fmsg->nack_data.index <
-                             video_packet->num_indices) {
+                    else if( fmsg->nack_data.index <
+                             video_packet->num_indices )
+                    {
                         mprintf(
                             "NACKed video packet %d %d not found, ID %d %d was "
                             "located instead.\n",
                             fmsg->nack_data.id, fmsg->nack_data.index,
-                            video_packet->id, video_packet->index);
+                            video_packet->id, video_packet->index );
                     }
+                } else if (fmsg->type == MESSAGE_IFRAME_REQUEST) {
+                    wants_iframe = true;
                 } else if (fmsg->type == CMESSAGE_QUIT) {
                     // Client requested to exit, it's time to disconnect
                     mprintf("Client Quit\n");
