@@ -29,11 +29,17 @@ def payment(action):
 			)
 			customer_id = new_customer['id']
 			credits = getUserCredits(email)
+			print("NUMBER OF INITIAL CREDITS IS ")
+			print(credits)
 
-			if mapCodeToUser(code):
+			metadata = mapCodeToUser(code)
+			print("IS THE CODE VALID?")
+			print(metadata)
+			if metadata:
 				credits += 1
 
 			if credits == 0:
+				print("NO CREDITS")
 				new_subscription = stripe.Subscription.create(
 				  customer = new_customer['id'],
 				  items = [{"plan": os.getenv("PLAN_ID")}],
@@ -42,6 +48,8 @@ def payment(action):
 				)
 				subscription_id = new_subscription['id']
 			else:
+				print("YOU HAVE CREDITS")
+				print(credits)
 				new_subscription = stripe.Subscription.create(
 				  customer = new_customer['id'],
 				  items = [{"plan": os.getenv("PLAN_ID")}],
