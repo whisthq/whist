@@ -123,7 +123,7 @@ def payment(action):
 			        
 			    modified_subscription = stripe.Subscription.modify(
 			        new_subscription['id'],
-			        trial_end = shiftUnixByMonth(retreived_subscription['trial_end'], 1),
+			        trial_end = shiftUnixByMonth(new_subscription['trial_end'], 1),
 			        trial_from_plan = False
 			    )
 			else:
