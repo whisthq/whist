@@ -60,20 +60,23 @@ int CaptureScreen( struct CaptureDevice* device )
         XNextEvent( device->display, &ev );
         if( ev.type == device->event + XDamageNotify )
         {
-            if( !XShmGetImage( device->display,
-                               device->root,//RootWindow(device->display, 0),
-                               device->image,
-                               0,
-                               0,
-                               AllPlanes ) )
-            {
-                fprintf( stderr, "Error while capturing the screen" );
-                return -1;
-            }
             update = 1;
         }
-        XDamageSubtract( device->display, device->damage, None, None );
 
+    }
+    if( update )
+    {
+        XDamageSubtract( device->display, device->damage, None, None );
+        if( !XShmGetImage( device->display,
+                           device->root,
+                           device->image,
+                           0,
+                           0,
+                           AllPlanes ) )
+        {
+            fprintf( stderr, "Error while capturing the screen" );
+            return -1;
+        }
     }
     return update;
 }
