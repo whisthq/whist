@@ -139,3 +139,12 @@ def payment(action):
 		data = {'username': email}
 		requests.post(url = url, data = data) 
 
+
+@stripe_bp.route('/referral/<action>', methods = ['POST'])
+def referral(action):
+	if action == 'validate':
+		body = request.get_json()
+		code = body['code']
+		codes = fetchCodes()
+		verified = code in codes
+		return jsonify({'status': 200, 'verified': verified}), 200

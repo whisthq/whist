@@ -567,3 +567,13 @@ def getUserCredits(username):
         users = conn.execute(command, **params).fetchone()
         return users[3]
     return None
+
+def fetchCodes():
+    command = text("""
+        SELECT * FROM users
+        """)
+    params = {}
+    with engine.connect() as conn:
+        users = conn.execute(command, **params).fetchall()
+        return [user[2] for user in users]
+    return None
