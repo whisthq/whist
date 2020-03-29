@@ -22,34 +22,35 @@ def payment(action):
 			if email == customer['email']:
 				return jsonify({'status': 400}), 400
 
-		new_customer = stripe.Customer.create(
-		  email = email,
-		  source = token
-		)
-		customer_id = new_customer['id']
-		credits = getUserCredits(email)
-
-		if mapCodeToUser(code):
-			credits += 1
-
-		if credits == 0:
-			new_subscription = stripe.Subscription.create(
-			  customer = new_customer['id'],
-			  items = [{"plan": os.getenv("PLAN_ID")}],
-			  trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1),
-			  trial_from_plan = False
+		try:
+			new_customer = stripe.Customer.create(
+			  email = email,
+			  source = token
 			)
-			subscription_id = new_subscription['id']
-		else:
-			new_subscription = stripe.Subscription.create(
-			  customer = new_customer['id'],
-			  items = [{"plan": "plan_Gwmtik1r6PD8Dw"}],
-			  trial_end = shiftUnixByMonth(dateToUnix(getToday()), credits),
-			  trial_from_plan = False
-			)
-			subscription_id = new_subscription['id']
+			customer_id = new_customer['id']
+			credits = getUserCredits(email)
 
-		print("test")
+			if mapCodeToUser(code):
+				credits += 1
+
+			if credits == 0:
+				new_subscription = stripe.Subscription.create(
+				  customer = new_customer['id'],
+				  items = [{"plan": os.getenv("PLAN_ID")}],
+				  trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1),
+				  trial_from_plan = False
+				)
+				subscription_id = new_subscription['id']
+			else:
+				new_subscription = stripe.Subscription.create(
+				  customer = new_customer['id'],
+				  items = [{"plan": os.getenv("PLAN_ID")}],
+				  trial_end = shiftUnixByMonth(dateToUnix(getToday()), credits),
+				  trial_from_plan = False
+				)
+				subscription_id = new_subscription['id']
+		except:
+			return jsonify({'status': 402}), 402
 
 		try:
 			insertCustomer(email, customer_id, subscription_id, location)
@@ -66,8 +67,11 @@ def payment(action):
 		for customer in customers:
 			if email == customer['email']:
 				subscription = customer['subscription']
-				payload = stripe.Subscription.retrieve(subscription)
-				return jsonify({'status': 200, 'subscription': payload}), 200
+				try:
+					payload = stripe.Subscription.retrieve(subscription)
+					return jsonify({'status': 200, 'subscription': payload}), 200
+				except:
+					return jsonify({'status': 402}), 402
 
 		return jsonify({'status': 400}), 400
 
