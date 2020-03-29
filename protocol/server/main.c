@@ -141,10 +141,11 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     double max_delay = 5.0;
     double delay_thusfar = 0.0;
 
-    int break_resolution = 4;
-    int average_frame_size = STARTING_IFRAME_BITRATE / FPS / MAX_PAYLOAD_SIZE / 8;
-    int break_distance = average_frame_size / break_resolution;
-    int num_breaks = num_indices / break_distance;
+    int break_resolution = 2;
+    double num_indices_per_unit_latency = (AVERAGE_LATENCY_MS / 1000.0) * (STARTING_BURST_BITRATE / 8.0) / MAX_PAYLOAD_SIZE;
+    double break_distance = num_indices_per_unit_latency * (1.0 * break_resolution / AVERAGE_LATENCY_MS);
+
+    int num_breaks = (int)(num_indices / break_distance);
     if( num_breaks < 0 )
     {
         num_breaks = 0;
@@ -158,10 +159,10 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
 
     while (curr_index < len) {
         // Delay distribution of packets as needed
-        if( i > 0 && break_point > 0 && i % break_point == 0 && i < num_indices - 3 * break_point / 2 )
+        if( i > 0 && break_point > 0 && i % break_point == 0 && i < num_indices - break_point / 2 )
         {
             mprintf( "Delay\n" );
-            SDL_Delay( (int)(1000.0 / FPS / break_resolution) );
+            SDL_Delay( break_resolution );
         }
 
         // local packet and len for when nack buffer isn't needed
