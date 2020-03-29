@@ -541,9 +541,9 @@ def mapCodeToUser(code):
         """)
     params = {'code': code}
     with engine.connect() as conn:
-        users = conn.execute(command, **params).fetchall()
-        if users:
-            return jsonify({'email': users[0][0], 'creditsOutstanding': users[0][3]})
+        user = conn.execute(command, **params).fetchone()
+        if user:
+            return {'email': user[0], 'creditsOutstanding': user[3]}
     return None
 
 def changeUserCredits(username, credits):
