@@ -22,35 +22,32 @@ def payment(action):
 			if email == customer['email']:
 				return jsonify({'status': 400}), 400
 
-		try:
-			new_customer = stripe.Customer.create(
-			  email = email,
-			  source = token
+		new_customer = stripe.Customer.create(
+		  email = email,
+		  source = token
+		)
+		customer_id = new_customer['id']
+		credits = getUserCredits(email)
+
+		if mapCodeToUser(code):
+			credits += 1
+
+		if credits == 0:
+			new_subscription = stripe.Subscription.create(
+			  customer = new_customer['id'],
+			  items = [{"plan": "plan_Gwmtik1r6PD8Dw"}],
+			  trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1),
+			  trial_from_plan = False
 			)
-			customer_id = new_customer['id']
-			credits = getUserCredits(email)
-
-			if mapCodeToUser(code):
-				credits += 1
-
-			if credits == 0:
-				new_subscription = stripe.Subscription.create(
-				  customer = new_customer['id'],
-				  items = [{"plan": "plan_Gwmtik1r6PD8Dw"}],
-				  trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1),
-				  trial_from_plan = False
-				)
-				subscription_id = new_subscription['id']
-			else:
-				new_subscription = stripe.Subscription.create(
-				  customer = new_customer['id'],
-				  items = [{"plan": "plan_Gwmtik1r6PD8Dw"}],
-				  trial_end = shiftUnixByMonth(dateToUnix(getToday()), credits),
-				  trial_from_plan = False
-				)
-				subscription_id = new_subscription['id']
-		except:
-			return jsonify({'status': 402}), 402
+			subscription_id = new_subscription['id']
+		else:
+			new_subscription = stripe.Subscription.create(
+			  customer = new_customer['id'],
+			  items = [{"plan": "plan_Gwmtik1r6PD8Dw"}],
+			  trial_end = shiftUnixByMonth(dateToUnix(getToday()), credits),
+			  trial_from_plan = False
+			)
+			subscription_id = new_subscription['id']
 
 		try:
 			insertCustomer(email, customer_id, subscription_id, location)
