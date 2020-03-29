@@ -534,3 +534,36 @@ def fetchAllUsers():
                'code': user[2]} for user in users]
         return out
     return None
+
+def mapCodeToUser(code):
+    command = text("""
+        SELECT * FROM users WHERE "code" = :code
+        """)
+    params = {'code': code}
+    with engine.connect() as conn:
+        user = conn.execute(command, **params).fetchone()
+        if user:
+            return jsonify({'email': user[0], 'creditsOutstanding': user[3]})
+    return None
+
+def changeUserCredits(username, credits):
+    command = text("""
+        UPDATE users
+        SET creditsOutstanding = :credits
+        WHERE
+           "userName" = :username
+        """)
+    params = {'credits' : credits, 'username': username}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+
+def getUserCredits(username):
+    command = text("""
+        SELECT * FROM users
+        WHERE "userName" = :username
+        """)
+    params = {'username': username}
+    with engine.connect() as conn:
+        users = conn.execute(command, **params).fetchone()
+        return users[3]
+    return None

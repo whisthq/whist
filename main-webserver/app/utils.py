@@ -23,3 +23,20 @@ def generateCode():
     c1 = ''.join([random.choice(numbers) for _ in range(0,3)])
     c2 = ''.join([random.choice(upperCase) for _ in range(0,3)]) + '-' + c1
     return c2
+
+def unixToDate(utc):
+    return datetime.datetime.fromtimestamp(utc)
+
+def dateToUnix(date):
+    return round(date.timestamp())
+
+def getToday():
+    return datetime.datetime.now()
+
+def shiftUnixByMonth(utc, num_months):
+    date = unixToDate(utc)
+    return round(dateToUnix(date + relativedelta(months=num_months)))
+
+def shiftUnixByWeek(utc, num_weeks):
+    date = unixToDate(utc)
+    return round(dateToUnix(date + relativedelta(weeks=num_weeks)))
