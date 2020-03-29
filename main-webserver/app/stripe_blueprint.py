@@ -64,12 +64,14 @@ def payment(action):
 		body = request.get_json()
 
 		email = body['email']
+		credits = getUserCredits(email)
 		customers = fetchCustomers()
 		for customer in customers:
 			if email == customer['email']:
 				subscription = customer['subscription']
 				try:
 					payload = stripe.Subscription.retrieve(subscription)
+					payload['creditsOutstanding'] = credits
 					return jsonify({'status': 200, 'subscription': payload}), 200
 				except:
 					return jsonify({'status': 402}), 402
