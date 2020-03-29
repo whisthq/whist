@@ -149,8 +149,12 @@ def referral(action):
 	if action == 'validate':
 		body = request.get_json()
 		code = body['code']
+		code_username = None
 		username = body['username']
-		code_username = mapCodeToUser(code)['email']
+		
+		metadata = mapCodeToUser(code)
+		if metadata:
+			code_username = metadata['email']
 		if username == code_username:
 			return jsonify({'status': 200, 'verified': False}), 200
 		codes = fetchCodes()
