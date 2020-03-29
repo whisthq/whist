@@ -140,6 +140,8 @@ def payment(action):
 		data = {'username': email}
 		requests.post(url = url, data = data) 
 
+		return jsonify({'status': 200}), 200
+
 
 @stripe_bp.route('/referral/<action>', methods = ['POST'])
 def referral(action):
