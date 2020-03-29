@@ -28,25 +28,22 @@ export default function counter(state = DEFAULT, action: Action<string>) {
         ...state,
         public_ip: action.ip
       }
-    case STORE_IP:
+    case STORE_IS_USER:
       return {
         ...state,
         isUser: action.isUser
       }
     case LOGIN_FAILED:
-      console.log("login fail reducer")
       return {
         ...state,
-        warning: true
+        warning: action.warning
       }
     case STORE_DISTANCE:
-      console.log("store distance reducer")
       return {
         ...state,
         distance: action.distance
       }
     case RESET_FEEDBACK:
-      console.log("RESET FEEDBACK REDUCER")
       return {
         ...state,
         resetFeedback: action.reset

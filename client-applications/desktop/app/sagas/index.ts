@@ -20,24 +20,22 @@ function* loginUser(action) {
     yield put(Action.storeIsUser(json.is_user))
     history.push("/counter");
   } else {
-    yield put(Action.loginFailed());
+    yield put(Action.loginFailed(true));
   }
 }
 
 function* fetchVMs(action) {
-  console.log("FETCHING VMS")
   const state = yield select()
   const {json, response} = yield call(apiPost, 'https://cube-celery-vm.herokuapp.com/user/login', {
     username: action.username
   })
 
-  console.log(json)
   if(json && Object.keys(json).length > 0) {
     yield put(Action.storeIP(json.public_ip))
   } else {
     yield put(Action.storeIP(''))
   }
-  console.log("DONE")
+
   yield put(Action.fetchVMStatus(true))
 }
 
@@ -53,7 +51,7 @@ function* loginStudio(action) {
     yield put(Action.storeIP(''))
     history.push("/studios");
   } else {
-    yield put(Action.loginFailed());
+    yield put(Action.loginFailed(true));
   }
 }
 

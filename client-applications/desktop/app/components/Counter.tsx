@@ -15,6 +15,7 @@ import DistanceBox from "./custom_components/DistanceBox.tsx";
 import CPUBox from "./custom_components/CPUBox.tsx";
 import Typeform from "./custom_components/Typeform.tsx"
 import MainBox from "./custom_components/MainBox.tsx"
+import UpdateScreen from './custom_components/UpdateScreen.tsx'
 
 import { Offline, Online } from "react-detect-offline";
 import Popup from "reactjs-popup"
@@ -58,7 +59,10 @@ class Counter extends Component {
     this.props.dispatch(storeIP(''))
     this.props.dispatch(storeIsUser(true))
     this.props.dispatch(fetchVMStatus(false))
-    history.push("/");
+    const storage = require('electron-json-storage');
+    storage.set('credentials', {username: '', password: ''}, function(err) {
+      history.push("/");
+    })
   }
 
   componentDidMount() {
@@ -71,6 +75,7 @@ class Counter extends Component {
 
     return (
       <div className={styles.container} data-tid="container" style = {{fontFamily: "Maven Pro"}}>
+        <UpdateScreen/>
         {
         this.props.os === 'win32'
         ?

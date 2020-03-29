@@ -59,9 +59,10 @@ export function trackUserActivity(logon) {
 	}
 }
 
-export function loginFailed() {
+export function loginFailed(warning) {
 	return {
-		type: LOGIN_FAILED
+		type: LOGIN_FAILED,
+		warning
 	}
 }
 

@@ -121,6 +121,10 @@ class MainBox extends Component {
     });
   }
 
+  componentDidUpdate(prevProps) {
+    console.log(this.props)
+  }
+
   render() {
     if(this.props.currentWindow === 'main') {
       return (
@@ -218,8 +222,6 @@ class MainBox extends Component {
           </div>
         </div>
         {this.props.computers.map((value, index) => {
-          console.log("MY CURRENT ID IS " + this.props.id)
-          console.log("COMPUTER ID IS " + value.id)
           var defaultNickname = value.nickname
           return (
             <div style = {{padding: '30px 30px', borderBottom: 'solid 0.5px #161936'}}>
