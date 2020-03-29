@@ -549,7 +549,7 @@ def mapCodeToUser(code):
 def changeUserCredits(username, credits):
     command = text("""
         UPDATE users
-        SET creditsOutstanding = :credits
+        SET "creditsOutstanding" = :credits
         WHERE
            "userName" = :username
         """)
