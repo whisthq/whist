@@ -12,10 +12,8 @@
 // TODO: Linux headers
 #endif
 
+#include "../include/audiocapture.h"
 #include "../include/fractal.h"
-#ifdef _WIN32
-#include "../include/wasapicapture.h"
-#endif
 #include "../include/videoencode.h"
 #ifdef _WIN32
 #include "../include/desktop.h"
@@ -41,7 +39,7 @@ volatile int client_width = DEFAULT_WIDTH;
 volatile int client_height = DEFAULT_HEIGHT;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
-//volatile 
+// volatile
 
 char buf[LARGEST_FRAME_SIZE];
 
@@ -142,27 +140,28 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     double delay_thusfar = 0.0;
 
     int break_resolution = 2;
-    double num_indices_per_unit_latency = (AVERAGE_LATENCY_MS / 1000.0) * (STARTING_BURST_BITRATE / 8.0) / MAX_PAYLOAD_SIZE;
-    double break_distance = num_indices_per_unit_latency * (1.0 * break_resolution / AVERAGE_LATENCY_MS);
+    double num_indices_per_unit_latency = (AVERAGE_LATENCY_MS / 1000.0) *
+                                          (STARTING_BURST_BITRATE / 8.0) /
+                                          MAX_PAYLOAD_SIZE;
+    double break_distance = num_indices_per_unit_latency *
+                            (1.0 * break_resolution / AVERAGE_LATENCY_MS);
 
     int num_breaks = (int)(num_indices / break_distance);
-    if( num_breaks < 0 )
-    {
+    if (num_breaks < 0) {
         num_breaks = 0;
     }
     int break_point = num_indices / (num_breaks + 1);
 
-    if( type == PACKET_VIDEO )
-    {
-        mprintf( "Video ID %d (Packets: %d)\n", id, num_indices );
+    if (type == PACKET_VIDEO) {
+        mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
     }
 
     while (curr_index < len) {
         // Delay distribution of packets as needed
-        if( i > 0 && break_point > 0 && i % break_point == 0 && i < num_indices - break_point / 2 )
-        {
-            mprintf( "Delay\n" );
-            SDL_Delay( break_resolution );
+        if (i > 0 && break_point > 0 && i % break_point == 0 &&
+            i < num_indices - break_point / 2) {
+            mprintf("Delay\n");
+            SDL_Delay(break_resolution);
         }
 
         // local packet and len for when nack buffer isn't needed
@@ -215,7 +214,7 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
 
         // Send it off
         SDL_LockMutex(packet_mutex);
-        int sent_size = sendp( context, &encrypted_packet, encrypt_len );
+        int sent_size = sendp(context, &encrypted_packet, encrypt_len);
         SDL_UnlockMutex(packet_mutex);
 
         if (sent_size < 0) {
@@ -232,7 +231,7 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
 }
 
 static int32_t SendVideo(void* opaque) {
-    SDL_Delay( 500 );
+    SDL_Delay(500);
 
     struct SocketContext socketContext = *(struct SocketContext*)opaque;
 
@@ -272,7 +271,7 @@ static int32_t SendVideo(void* opaque) {
     update_device = true;
 
     static clock last_frame_capture;
-    StartTimer( &last_frame_capture );
+    StartTimer(&last_frame_capture);
 
     while (connected) {
         // Update device with new parameters
@@ -315,9 +314,8 @@ static int32_t SendVideo(void* opaque) {
         }
 
         int accumulated_frames = 0;
-        if( GetTimer( last_frame_capture ) > 1.0 / FPS )
-        {
-            accumulated_frames = CaptureScreen( device );
+        if (GetTimer(last_frame_capture) > 1.0 / FPS) {
+            accumulated_frames = CaptureScreen(device);
         }
 
         // If capture screen failed, we should try again
@@ -336,36 +334,36 @@ static int32_t SendVideo(void* opaque) {
         StartTimer(&server_frame_timer);
 
         // Only if we have a frame to render
-        if (accumulated_frames > 0 || wants_iframe || GetTimer( last_frame_capture ) > 1.0 / MIN_FPS) {
-            StartTimer( &last_frame_capture );
+        if (accumulated_frames > 0 || wants_iframe ||
+            GetTimer(last_frame_capture) > 1.0 / MIN_FPS) {
+            StartTimer(&last_frame_capture);
 
             if (accumulated_frames > 1) {
                 mprintf("Accumulated Frames: %d\n", accumulated_frames);
             }
-            if( accumulated_frames == 0 )
-            {
-                mprintf( "Sending current frame!\n" );
+            if (accumulated_frames == 0) {
+                mprintf("Sending current frame!\n");
             }
 
             consecutive_capture_screen_errors = 0;
 
             bool is_iframe = false;
-            if( wants_iframe )
-            {
-                video_encoder_set_iframe( encoder );
+            if (wants_iframe) {
+                video_encoder_set_iframe(encoder);
                 wants_iframe = false;
                 is_iframe = true;
             }
 
             clock t;
-            StartTimer( &t );
+            StartTimer(&t);
 
             video_encoder_encode(encoder, device->frame_data);
             frames_since_first_iframe++;
 
-            video_encoder_unset_iframe( encoder );
+            video_encoder_unset_iframe(encoder);
 
-            mprintf("Encode Time: %f (%d) (%d)\n", GetTimer(t), frames_since_first_iframe % gop_size, encoder->packet.size);
+            mprintf("Encode Time: %f (%d) (%d)\n", GetTimer(t),
+                    frames_since_first_iframe % gop_size, encoder->packet.size);
 
             bitrate_tested_frames++;
             bytes_tested_frames += encoder->packet.size;
@@ -431,7 +429,8 @@ static int32_t SendVideo(void* opaque) {
                     frame->size = encoder->packet.size;
                     frame->cursor = GetCurrentCursor(types);
                     frame->is_iframe =
-                        (frames_since_first_iframe % gop_size == 1) || is_iframe;
+                        (frames_since_first_iframe % gop_size == 1) ||
+                        is_iframe;
                     memcpy(frame->compressed_frame, encoder->packet.data,
                            encoder->packet.size);
 
@@ -440,11 +439,10 @@ static int32_t SendVideo(void* opaque) {
                     // "");
 
                     // Send video packet to client
-                    if ( SendPacket(&socketContext, PACKET_VIDEO,
+                    if (SendPacket(&socketContext, PACKET_VIDEO,
                                    (uint8_t*)frame, frame_size, id) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
-                    } else
-                    {
+                    } else {
                         // Only increment ID if the send succeeded
                         id++;
                     }
@@ -453,9 +451,8 @@ static int32_t SendVideo(void* opaque) {
                     // mprintf("Server Frame Time for ID %d: %f\n", id,
                     // server_frame_time);
                 }
-            } else
-            {
-                mprintf( "Empty encoder packet" );
+            } else {
+                mprintf("Empty encoder packet");
             }
         }
     }
@@ -472,72 +469,49 @@ static int32_t SendVideo(void* opaque) {
     return 0;
 }
 
-#ifdef _WIN32
 static int32_t SendAudio(void* opaque) {
     struct SocketContext context = *(struct SocketContext*)opaque;
     int id = 1;
 
-    wasapi_device* audio_device =
-        (wasapi_device*)malloc(sizeof(struct wasapi_device));
-    audio_device = CreateAudioDevice(audio_device);
-    StartAudioDevice(audio_device);
+    audio_device* device = (audio_device*)malloc(sizeof(struct audio_device));
+    device = CreateAudioDevice(device);
+    StartAudioDevice(device);
 
     // Tell the client what audio frequency we're using
     FractalServerMessage fmsg;
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
-    fmsg.frequency = audio_device->pwfx->nSamplesPerSec;
+    fmsg.frequency = device->sample_rate;
     SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t*)&fmsg,
                sizeof(fmsg), 1);
+    mprintf("Audio Frequency: %d\n", device->sample_rate);
 
-    mprintf("Audio Frequency: %d\n", audio_device->pwfx->nSamplesPerSec);
-
-    HRESULT hr = CoInitialize(NULL);
-    DWORD dwWaitResult;
-    UINT32 nNumFramesToRead, nNextPacketSize,
-        nBlockAlign = audio_device->pwfx->nBlockAlign;
-    DWORD dwFlags;
+    // setup
 
     while (connected) {
-        for (hr = audio_device->pAudioCaptureClient->lpVtbl->GetNextPacketSize(
-                 audio_device->pAudioCaptureClient, &nNextPacketSize);
-             SUCCEEDED(hr) && nNextPacketSize > 0;
-             hr = audio_device->pAudioCaptureClient->lpVtbl->GetNextPacketSize(
-                 audio_device->pAudioCaptureClient, &nNextPacketSize)) {
-            // Receive audio buffer
-            audio_device->pAudioCaptureClient->lpVtbl->GetBuffer(
-                audio_device->pAudioCaptureClient, &audio_device->pData,
-                &nNumFramesToRead, &dwFlags, NULL, NULL);
+        // for each available packet
+        for (GetNextPacket(device); PacketAvailable(device);
+             GetNextPacket(device)) {
+            GetBuffer(device);
 
-            audio_device->audioBufSize = nNumFramesToRead * nBlockAlign;
-
-            if (audio_device->audioBufSize > 10000) {
+            if (device->buffer_size > 10000) {
                 mprintf("Audio buffer size too large!\n");
-            } else if (audio_device->audioBufSize > 0) {
+            } else if (device->buffer_size > 0) {
                 // Send buffer
-                if (SendPacket(&context, PACKET_AUDIO, audio_device->pData,
-                               audio_device->audioBufSize, id) < 0) {
+                if (SendPacket(&context, PACKET_AUDIO, device->buffer,
+                               device->buffer_size, id) < 0) {
                     mprintf("Could not send audio frame\n");
                 }
                 id++;
             }
 
-            // Free buffer
-            audio_device->pAudioCaptureClient->lpVtbl->ReleaseBuffer(
-                audio_device->pAudioCaptureClient, nNumFramesToRead);
+            ReleaseBuffer(device);
         }
-        dwWaitResult = WaitForSingleObject(audio_device->hWakeUp, INFINITE);
+        WaitTimer(device);
     }
 
-    DestroyAudioDevice(audio_device);
+    DestroyAudioDevice(device);
     return 0;
 }
-#else
-static int32_t SendAudio(void* opaque) {
-    // TODO: The entire function must be remade, it relies heavily on windows
-    // API
-    return 0;
-}
-#endif
 
 void update() {
     mprintf("Checking for updates...\n");
@@ -828,39 +802,36 @@ int main() {
                             fmsg->nack_data.id, fmsg->nack_data.index,
                             audio_packet->id, audio_packet->index);
                     }
-                } else if( fmsg->type == MESSAGE_VIDEO_NACK )
-                {
+                } else if (fmsg->type == MESSAGE_VIDEO_NACK) {
                     // Video nack received, relay the packet
 
                     // mprintf("Video NACK requested for: ID %d Index %d\n",
                     // fmsg->nack_data.id, fmsg->nack_data.index);
                     struct RTPPacket* video_packet =
                         &video_buffer[fmsg->nack_data.id % VIDEO_BUFFER_SIZE]
-                        [fmsg->nack_data.index];
+                                     [fmsg->nack_data.index];
                     int len = video_buffer_packet_len[fmsg->nack_data.id %
-                        VIDEO_BUFFER_SIZE]
-                        [fmsg->nack_data.index];
-                    if( video_packet->id == fmsg->nack_data.id )
-                    {
+                                                      VIDEO_BUFFER_SIZE]
+                                                     [fmsg->nack_data.index];
+                    if (video_packet->id == fmsg->nack_data.id) {
                         mprintf(
                             "NACKed video packet ID %d Index %d found of "
                             "length %d. Relaying!\n",
-                            fmsg->nack_data.id, fmsg->nack_data.index, len );
-                        ReplayPacket( &PacketSendContext, video_packet, len );
+                            fmsg->nack_data.id, fmsg->nack_data.index, len);
+                        ReplayPacket(&PacketSendContext, video_packet, len);
                     }
 
                     // If we were asked for an invalid index, just ignore it
-                    else if( fmsg->nack_data.index <
-                             video_packet->num_indices )
-                    {
+                    else if (fmsg->nack_data.index <
+                             video_packet->num_indices) {
                         mprintf(
                             "NACKed video packet %d %d not found, ID %d %d was "
                             "located instead.\n",
                             fmsg->nack_data.id, fmsg->nack_data.index,
-                            video_packet->id, video_packet->index );
+                            video_packet->id, video_packet->index);
                     }
                 } else if (fmsg->type == MESSAGE_IFRAME_REQUEST) {
-                    mprintf( "Request for i-frame found: Creating iframe\n" );
+                    mprintf("Request for i-frame found: Creating iframe\n");
                     wants_iframe = true;
                 } else if (fmsg->type == CMESSAGE_QUIT) {
                     // Client requested to exit, it's time to disconnect
