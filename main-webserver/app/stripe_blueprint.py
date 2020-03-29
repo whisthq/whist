@@ -136,9 +136,10 @@ def payment(action):
 		else:
 			changeUserCredits(email, creditsOutstanding + 1)
 
-		url = "https://fractal-mail-server.herokuapp.com/referral"
+		headers = {'content-type': 'application/json'}
+		url = "https://fractal-mail-server.herokuapp.com/creditApplied"
 		data = {'username': email}
-		requests.post(url = url, data = data) 
+		requests.post(url = url, data = json.dumps(data), headers = headers) 
 
 		return jsonify({'status': 200}), 200
 
