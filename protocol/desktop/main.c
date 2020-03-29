@@ -79,7 +79,7 @@ void update()
 {
     FractalClientMessage fmsg;
 
-    if( GetTimer( UpdateData.last_tcp_check_timer ) > 25 / 1000.0 )
+    if( GetTimer( UpdateData.last_tcp_check_timer ) > 25.0 / 1000.0 )
     {
         // Check if TCP is up
         int result = sendp( &PacketTCPContext, NULL, 0 );
@@ -150,17 +150,27 @@ void update()
         }
     }
 
-    if( !is_timing_latency && GetTimer( latency_timer ) > 0.5 )
+    static int num_ping_tries = 0;
+    bool taking_a_bit = is_timing_latency && GetTimer( latency_timer ) > 0.21 * (1 + num_ping_tries);
+    bool awhile_since_last_ping = !is_timing_latency && GetTimer( latency_timer ) > 0.5;
+
+    if( awhile_since_last_ping || taking_a_bit )
     {
-        ping_id++;
+        if( is_timing_latency )
+        {
+            num_ping_tries++;
+        } else
+        {
+            ping_id++;
+            is_timing_latency = true;
+            StartTimer( (clock*)&latency_timer );
+            num_ping_tries = 0;
+        }
+
         fmsg.type = MESSAGE_PING;
         fmsg.ping_id = ping_id;
-        is_timing_latency = true;
-
-        StartTimer( (clock*)&latency_timer );
 
         mprintf( "Ping! %d\n", ping_id );
-        SendFmsg( &fmsg );
         SendFmsg( &fmsg );
     }
     // End Ping
