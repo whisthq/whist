@@ -1,6 +1,11 @@
 #include "clipboard.h"
 #include "fractal.h"
 
+#ifdef _WIN32
+#include "shlwapi.h"
+#pragma comment (lib, "Shlwapi.lib")
+#include "Shellapi.h"
+#include "shlobj_core.h"
 
 #define REPARSE_MOUNTPOINT_HEADER_SIZE 8
 
@@ -88,11 +93,6 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 	return true;
 }
 
-#if defined(_WIN32)
-	#include "shlwapi.h"
-	#pragma comment (lib, "Shlwapi.lib")
-	#include "Shellapi.h"
-	#include "shlobj_core.h"
 #endif
 
 #if defined __APPLE__
