@@ -29,17 +29,13 @@ def payment(action):
 			)
 			customer_id = new_customer['id']
 			credits = getUserCredits(email)
-			print("NUMBER OF INITIAL CREDITS IS ")
-			print(credits)
 
 			metadata = mapCodeToUser(code)
-			print("IS THE CODE VALID?")
 			print(metadata)
 			if metadata:
 				credits += 1
 
 			if credits == 0:
-				print("NO CREDITS")
 				new_subscription = stripe.Subscription.create(
 				  customer = new_customer['id'],
 				  items = [{"plan": os.getenv("PLAN_ID")}],
@@ -48,8 +44,6 @@ def payment(action):
 				)
 				subscription_id = new_subscription['id']
 			else:
-				print("YOU HAVE CREDITS")
-				print(credits)
 				new_subscription = stripe.Subscription.create(
 				  customer = new_customer['id'],
 				  items = [{"plan": os.getenv("PLAN_ID")}],
@@ -58,8 +52,8 @@ def payment(action):
 				)
 				changeUserCredits(email, 0)
 				subscription_id = new_subscription['id']
-		except:
-			return jsonify({'status': 402}), 402
+		except Exception as e:
+			return jsonify({'status': 402, 'error': str(e)}), 402
 
 		try:
 			insertCustomer(email, customer_id, subscription_id, location)
