@@ -35,7 +35,7 @@ def payment(action):
 		if credits == 0:
 			new_subscription = stripe.Subscription.create(
 			  customer = new_customer['id'],
-			  items = [{"plan": "plan_Gwmtik1r6PD8Dw"}],
+			  items = [{"plan": os.getenv("PLAN_ID")}],
 			  trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1),
 			  trial_from_plan = False
 			)
