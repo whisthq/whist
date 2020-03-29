@@ -48,6 +48,7 @@ def payment(action):
 				  trial_end = shiftUnixByMonth(dateToUnix(getToday()), credits),
 				  trial_from_plan = False
 				)
+				changeUserCredits(email, 0)
 				subscription_id = new_subscription['id']
 		except:
 			return jsonify({'status': 402}), 402
