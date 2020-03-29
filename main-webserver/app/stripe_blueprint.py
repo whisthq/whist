@@ -31,7 +31,6 @@ def payment(action):
 			credits = getUserCredits(email)
 
 			metadata = mapCodeToUser(code)
-			print(metadata)
 			if metadata:
 				credits += 1
 
