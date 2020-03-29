@@ -49,6 +49,8 @@ def payment(action):
 			)
 			subscription_id = new_subscription['id']
 
+		print("test")
+
 		try:
 			insertCustomer(email, customer_id, subscription_id, location)
 		except:
