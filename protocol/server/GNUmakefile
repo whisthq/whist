@@ -36,6 +36,7 @@ STATIC_LIBS = \
 # files to build into object files
 OBJS = \
 	fractal.o \
+        x11capture.o \
 	videoencode.o \
 	audioencode.o \
 	aes.o \
@@ -59,6 +60,10 @@ all: clean clear $(OBJS)
 # compile the main fractal header source file into object file
 fractal.o:
 	$(CC) -c $(CFLAGS) ../include/fractal.c
+
+# compile the main fractal header source file into object file
+x11capture.o:
+	$(CC) -c $(CFLAGS) ../include/x11capture.c
 
 # compile the video encoder source file into object file
 videoencode.o:

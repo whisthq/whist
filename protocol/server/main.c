@@ -12,12 +12,12 @@
 // TODO: Linux headers
 #endif
 
-#include "../include/audiocapture.h"
 #include "../include/fractal.h"
+#include "../include/audiocapture.h"
 #include "../include/videoencode.h"
+#include "../include/screencapture.h"
 #ifdef _WIN32
 #include "../include/desktop.h"
-#include "../include/dxgicapture.h"
 #include "../include/input.h"
 #endif
 #include "../include/aes.h"
