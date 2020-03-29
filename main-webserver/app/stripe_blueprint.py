@@ -71,10 +71,9 @@ def payment(action):
 				subscription = customer['subscription']
 				try:
 					payload = stripe.Subscription.retrieve(subscription)
-					payload['creditsOutstanding'] = credits
-					return jsonify({'status': 200, 'subscription': payload}), 200
+					return jsonify({'status': 200, 'subscription': payload, 'creditsOutstanding': credits}), 200
 				except:
-					return jsonify({'status': 402}), 402
+					return jsonify({'status': 402, 'creditsOutstanding': credits}), 402
 
 		return jsonify({'status': 400}), 400
 
