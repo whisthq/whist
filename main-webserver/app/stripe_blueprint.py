@@ -95,7 +95,7 @@ def payment(action):
 		body = request.get_json()
 
 		code = body['code']
-		metadata = mapCodeToUser(code)
+		metadata = mapCodeToUser(code).json()
 
 		if not metadata:
 			return jsonify({'status': 404}), 404
