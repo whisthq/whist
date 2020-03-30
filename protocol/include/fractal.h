@@ -25,6 +25,8 @@
 	#define ETIMEDOUT WSAETIMEDOUT
 	#undef EWOULDBLOCK
 	#define EWOULDBLOCK WSAEWOULDBLOCK
+	#undef EAGAIN
+	#define EAGAIN WSAEWOULDBLOCK
 #else
 	#include <unistd.h>
 	#include <errno.h>
