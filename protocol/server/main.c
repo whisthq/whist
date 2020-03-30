@@ -542,7 +542,6 @@ void update() {
 int main() {
     initMultiThreadedPrintf(true);
 
-// TODO: Desktop operational for Unix as well
 #ifdef _WIN32
     InitDesktop();
 #endif
@@ -587,7 +586,6 @@ int main() {
             closesocket(PacketSendContext.s);
             continue;
         }
-// TODO: Have it for Linux
 #ifdef _WIN32
         InitDesktop();
 #endif
