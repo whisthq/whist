@@ -12,13 +12,14 @@
 // TODO: Linux headers
 #endif
 
-#include "../include/fractal.h"
 #include "../include/audiocapture.h"
-#include "../include/videoencode.h"
+#include "../include/fractal.h"
+#include "../include/input.h"
 #include "../include/screencapture.h"
+#include "../include/videoencode.h"
+
 #ifdef _WIN32
 #include "../include/desktop.h"
-#include "../include/input.h"
 #endif
 #include "../include/aes.h"
 
@@ -58,6 +59,14 @@ SDL_mutex* packet_mutex;
 struct SocketContext PacketSendContext = {0};
 
 volatile bool wants_iframe;
+
+FractalCursorImage GetCurrentCursor() {
+    FractalCursorImage image = {0};
+    image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
+    return image;
+}
+
+void initCursors() { return; }
 
 int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
                  int len) {

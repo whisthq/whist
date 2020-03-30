@@ -87,14 +87,14 @@ int get_native_screen_height() {
 
 void set_timeout(SOCKET s, int timeout_ms) {
 	if (timeout_ms < 0) {
-		u_long mode = 0;
+		unsigned long mode = 0;
 #if defined(_WIN32)
 		ioctlsocket(s, FIONBIO, &mode);
 #else
 		ioctl(s, FIONBIO, &mode);
 #endif
 	} else if (timeout_ms == 0) {
-		u_long mode = 1;
+		unsigned long mode = 1;
 #if defined(_WIN32)
 		ioctlsocket(s, FIONBIO, &mode);
 #else
@@ -105,10 +105,9 @@ void set_timeout(SOCKET s, int timeout_ms) {
 		int read_timeout = timeout_ms;
 #else
 		struct timeval read_timeout;
-		read_timeout.tv_sec = 0;
-		read_timeout.tv_usec = timeout_ms * 1000;
+		read_timeout.tv_sec = timeout_ms / 1000;
+		read_timeout.tv_usec = (timeout_ms % 1000) * 1000;
 #endif
-
 		if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *) &read_timeout, sizeof(read_timeout)) < 0) {
 			mprintf("Failed to set timeout\n");
 			return;
@@ -251,7 +250,7 @@ typedef struct
 #define STUN_IP "52.5.240.234"
 #define STUN_PORT 48800
 
-#define USING_STUN true
+#define USING_STUN false
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
 	context->is_tcp = false;

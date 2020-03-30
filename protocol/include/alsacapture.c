@@ -11,7 +11,7 @@ audio_device *CreateAudioDevice(audio_device *device) {
     // open pcm device for stream capture
     res = snd_pcm_open(&device->handle, "default", SND_PCM_STREAM_CAPTURE, 0);
     if (res < 0) {
-        mprint("Failed to open PCM device: %s\n", snd_strerror(res));
+        mprintf("Failed to open PCM device: %s\n", snd_strerror(res));
         return NULL;
     }
 

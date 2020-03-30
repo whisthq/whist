@@ -10,8 +10,10 @@ ARCH = $(shell getconf LONG_BIT)
 # executable name
 BIN_NAME = build$(ARCH)/server
 
+DYNAMIC_LIBS =
+
 # dynamic libs to link against
-DYNAMIC_LIBS = \
+DYNAMIC2_LIBS = \
 	../lib/$(ARCH)/ffmpeg/linux/libavcodec.so.58.54.100 \
 	../lib/$(ARCH)/ffmpeg/linux/libavdevice.so.58.8.100 \
 	../lib/$(ARCH)/ffmpeg/linux/libavfilter.so.7.57.100 \
@@ -26,7 +28,20 @@ DYNAMIC_LIBS = \
 SHARED_LIBS = \
 	-lm \
 	-ldl \
-	-lpthread
+	-lpthread \
+	-lX11 \
+	-lXext \
+	-lasound \
+	-lXdamage \
+	-lavcodec \
+	-lavdevice \
+	-lavfilter \
+	-lavformat \
+	-lavutil \
+	-lpostproc \
+	-lswresample \
+	-lswscale \
+	-lmfx
 
 # static libs to link against
 STATIC_LIBS = \
@@ -38,6 +53,7 @@ OBJS = \
 	fractal.o \
         x11capture.o \
 	videoencode.o \
+	alsacapture.o \
 	audioencode.o \
 	aes.o \
 	clipboard.o \
@@ -80,6 +96,10 @@ aes.o:
 # compile the general clipboard source file into object file
 clipboard.o:
 	$(CC) -c $(CFLAGS) ../include/clipboard.c
+
+# compile the audio capture source file into object file
+alsacapture.o:
+	$(CC) -c $(CFLAGS) ../include/alsacapture.c
 
 # compile the main source file into object file
 main.o:
