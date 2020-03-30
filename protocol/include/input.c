@@ -272,6 +272,37 @@ const int windows_keycodes[NUM_KEYCODES] = {
 };
 
 
+typedef struct FractalCursorTypes
+{
+	HCURSOR CursorAppStarting;
+	HCURSOR CursorArrow;
+	HCURSOR CursorCross;
+	HCURSOR CursorHand;
+	HCURSOR CursorHelp;
+	HCURSOR CursorIBeam;
+	HCURSOR CursorIcon;
+	HCURSOR CursorNo;
+	HCURSOR CursorSize;
+	HCURSOR CursorSizeAll;
+	HCURSOR CursorSizeNESW;
+	HCURSOR CursorSizeNS;
+	HCURSOR CursorSizeNWSE;
+	HCURSOR CursorSizeWE;
+	HCURSOR CursorUpArrow;
+	HCURSOR CursorWait;
+} FractalCursorTypes;
+
+struct FractalCursorTypes l_types = { 0 };
+struct FractalCursorTypes* types = &l_types;
+
+FractalCursorImage GetCursorImage( PCURSORINFO pci );
+
+void LoadCursors();
+
+void initCursors() {
+	LoadCursors();
+}
+
 int GetWindowsKeyCode(int sdl_keycode) {
 	return windows_keycodes[sdl_keycode];
 }
@@ -559,7 +590,7 @@ void EnterWinString(enum FractalKeycode* keycodes, int len) {
 	SendInput(index, Event, sizeof(INPUT)); 
 }
 
-void LoadCursors(FractalCursorTypes *types) {
+void LoadCursors() {
   types->CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
   types->CursorArrow       = LoadCursor(NULL, IDC_ARROW);
   types->CursorCross       = LoadCursor(NULL, IDC_CROSS);
@@ -578,7 +609,7 @@ void LoadCursors(FractalCursorTypes *types) {
   types->CursorWait        = LoadCursor(NULL, IDC_WAIT);
 }
 
-FractalCursorImage GetCursorImage(FractalCursorTypes *types, PCURSORINFO pci) {
+FractalCursorImage GetCursorImage(PCURSORINFO pci) {
 	HCURSOR cursor = pci->hCursor;
 	FractalCursorImage image = {0};
 
@@ -611,15 +642,15 @@ FractalCursorImage GetCursorImage(FractalCursorTypes *types, PCURSORINFO pci) {
 	return image;
 }
 
-FractalCursorImage GetCurrentCursor(FractalCursorTypes *types) {
-    CURSORINFO *pci = (CURSORINFO *) malloc(sizeof(CURSORINFO));
-    pci->cbSize = sizeof(CURSORINFO);
-    GetCursorInfo(pci);
+FractalCursorImage GetCurrentCursor() {
+	CURSORINFO pci;
+    pci.cbSize = sizeof(CURSORINFO);
+    GetCursorInfo(&pci);
 
     FractalCursorImage image = {0};
-    image = GetCursorImage(types, pci);
+    image = GetCursorImage(types, &pci);
 
-    image.cursor_state = pci->flags;
+    image.cursor_state = pci.flags;
 
     return image;
 }

@@ -239,10 +239,7 @@ static int32_t SendVideo(void* opaque) {
     struct CaptureDevice rdevice;
     struct CaptureDevice* device = NULL;
 
-    struct FractalCursorTypes* types =
-        (struct FractalCursorTypes*)malloc(sizeof(struct FractalCursorTypes));
-    memset(types, 0, sizeof(struct FractalCursorTypes));
-    LoadCursors(types);
+    initCursors();
 
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
@@ -427,7 +424,7 @@ static int32_t SendVideo(void* opaque) {
                     frame->width = device->width;
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
-                    frame->cursor = GetCurrentCursor(types);
+                    frame->cursor = GetCurrentCursor();
                     frame->is_iframe =
                         (frames_since_first_iframe % gop_size == 1) ||
                         is_iframe;

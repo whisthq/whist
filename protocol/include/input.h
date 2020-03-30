@@ -3,25 +3,6 @@
 
 #include "fractal.h"
 
-typedef struct FractalCursorTypes {
-    HCURSOR CursorAppStarting;
-    HCURSOR CursorArrow;
-    HCURSOR CursorCross;
-    HCURSOR CursorHand;
-    HCURSOR CursorHelp;
-    HCURSOR CursorIBeam;
-    HCURSOR CursorIcon;
-    HCURSOR CursorNo;
-    HCURSOR CursorSize;
-    HCURSOR CursorSizeAll;
-    HCURSOR CursorSizeNESW;
-    HCURSOR CursorSizeNS;
-    HCURSOR CursorSizeNWSE;
-    HCURSOR CursorSizeWE;
-    HCURSOR CursorUpArrow;
-    HCURSOR CursorWait;
-} FractalCursorTypes;
-
 int GetWindowsKeyCode(int sdl_keycode);
 
 void updateKeyboardState( struct FractalClientMessage* fmsg );
@@ -30,10 +11,8 @@ void ReplayUserInput(struct FractalClientMessage* fmsg);
 
 void EnterWinString(enum FractalKeycode *keycodes, int len);
 
-void LoadCursors(FractalCursorTypes *types);
+void initCursors();
 
-FractalCursorImage GetCursorImage(FractalCursorTypes *types, PCURSORINFO pci);
-
-FractalCursorImage GetCurrentCursor(FractalCursorTypes *types);
+FractalCursorImage GetCurrentCursor();
 
 #endif // INPUT_H
