@@ -124,36 +124,6 @@ class Home extends Component {
 
     let component = this;
 
-    ipc.on('update', (event, update) => {
-      if(update) {
-        component.setState({updateScreen: true})
-      }
-    })
-
-    ipc.on('percent', (event, percent) => {
-      percent = percent * 3;
-      this.setState({percentageLeft: 300 - percent, percentageDownloaded: percent})
-    })
-
-    ipc.on('download-speed', (event, speed) => {
-      this.setState({downloadSpeed: (speed / 1000000).toFixed(2)})
-    })
-
-    ipc.on('transferred', (event, transferred) => {
-      this.setState({transferred: (transferred / 1000000).toFixed(2)})
-    })
-
-    ipc.on('total', (event, total) => {
-      this.setState({total: (total / 1000000).toFixed(2)})
-    })
-
-    ipc.on('error', (event, error) => {
-      this.setState({downloadError: error})
-    })
-
-    ipc.on('downloaded', (event, downloaded) => {
-    })
-
     var appVersion = require('../package.json').version;
     const os = require('os')
     this.props.dispatch(setOS(os.platform()))

@@ -3,7 +3,7 @@
   "license": "MIT",
   "productName": "Fractal",
   "description": "Fractal",
-  "version": "1.3.3",
+  "version": "1.3.6",
   "main": "./main.prod.js",
   "author": {
     "name": "Ming Ying",
