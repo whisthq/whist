@@ -481,6 +481,9 @@ static int32_t SendAudio(void* opaque) {
 
     audio_device* device = (audio_device*)malloc(sizeof(struct audio_device));
     device = CreateAudioDevice(device);
+    if (!device) {
+        return -1;
+    }
     StartAudioDevice(device);
 
     // Tell the client what audio frequency we're using
