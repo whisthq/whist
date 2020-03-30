@@ -280,9 +280,8 @@ static int32_t SendVideo(void* opaque) {
     StartTimer(&last_frame_capture);
 
     while (connected) {
-        if( client_width < 0 || client_height < 0 )
-        {
-            SDL_Delay( 5 );
+        if (client_width < 0 || client_height < 0) {
+            SDL_Delay(5);
             continue;
         }
 
@@ -487,7 +486,9 @@ static int32_t SendAudio(void* opaque) {
 
     audio_device* device = (audio_device*)malloc(sizeof(struct audio_device));
     device = CreateAudioDevice(device);
+    mprintf("Created audio device!\n");
     if (!device) {
+        mprintf("Failed to create audio device...\n");
         return -1;
     }
     StartAudioDevice(device);

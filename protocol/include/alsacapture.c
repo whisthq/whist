@@ -86,7 +86,7 @@ audio_device *CreateAudioDevice(audio_device *device) {
 }
 
 void StartAudioDevice(audio_device *device) {
-    device->dummy_state = false;
+    device->dummy_state = 0;
     return;
 }
 
@@ -98,12 +98,12 @@ void DestroyAudioDevice(audio_device *device) {
 }
 
 void GetNextPacket(audio_device *device) {
-    device->dummy_state = true;
+    device->dummy_state++;
     return;
 }
 
 // make it so the for loop only happens once for ALSA (unlike WASAPI)
-bool PacketAvailable(audio_device *device) { return !device->dummy_state; }
+bool PacketAvailable(audio_device *device) { return device->dummy_state < 2; }
 
 void GetBuffer(audio_device *device) {
     int res = snd_pcm_readi(device->handle, device->buffer, device->num_frames);

@@ -14,7 +14,7 @@ typedef struct audio_device {
     enum _snd_pcm_format sample_format;
     uint8_t *buffer;
     snd_pcm_hw_params_t *params;
-    bool dummy_state;
+    int dummy_state;
 } audio_device;
 
 #endif  // ALSA_CAPTURE_H
