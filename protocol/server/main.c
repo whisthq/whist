@@ -36,8 +36,8 @@
 static volatile bool connected;
 static volatile double max_mbps;
 static volatile int gop_size = 9999;
-volatile int client_width = DEFAULT_WIDTH;
-volatile int client_height = DEFAULT_HEIGHT;
+volatile int client_width = -1;
+volatile int client_height = -1;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
 // volatile
@@ -280,6 +280,12 @@ static int32_t SendVideo(void* opaque) {
     StartTimer(&last_frame_capture);
 
     while (connected) {
+        if( client_width < 0 || client_height < 0 )
+        {
+            SDL_Delay( 5 );
+            continue;
+        }
+
         // Update device with new parameters
         if (update_device) {
             update_device = false;
