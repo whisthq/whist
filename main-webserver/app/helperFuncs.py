@@ -577,3 +577,38 @@ def fetchCodes():
         users = conn.execute(command, **params).fetchall()
         return [user[2] for user in users]
     return None
+
+def userVMStatus(username):
+    has_paid = False
+    has_vm = False
+
+    command = text("""
+        SELECT * FROM customers
+        WHERE "email" = :username
+        """)
+    params = {'username': username}
+    with engine.connect() as conn:
+        user = conn.execute(command, **params).fetchone()
+        if user:
+            has_paid = True
+
+    command = text("""
+        SELECT * FROM v_ms
+        WHERE "vmUserName" = :username
+        """)
+    params = {'username': username}
+    with engine.connect() as conn:
+        user = conn.execute(command, **params).fetchone()
+        if user:
+            has_vm = True
+
+    if not has_paid and not has_vm:
+        return 'not_created'
+
+    if has_paid and not has_vm:
+        return 'is_creating'
+
+    if has_paid and has_vm:
+        return 'has_created'
+
+    return 'has_not_paid'

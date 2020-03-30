@@ -47,7 +47,8 @@ def account(action):
 		username, password = body['username'], body['password']
 		is_user = password != os.getenv('ADMIN_PASSWORD')
 		verified = loginUser(username, password)
-		return jsonify({'verified': verified, 'is_user': is_user}), 200
+		vm_status = userVMStatus(username)
+		return jsonify({'verified': verified, 'is_user': is_user, 'vm_status': vm_status}), 200
 	elif action == 'register':
 		username, password = body['username'], body['password']
 		status = registerUser(username, password)
