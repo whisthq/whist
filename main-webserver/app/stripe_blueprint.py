@@ -151,7 +151,7 @@ def referral(action):
 		code = body['code']
 		code_username = None
 		username = body['username']
-		
+
 		metadata = mapCodeToUser(code)
 		if metadata:
 			code_username = metadata['email']

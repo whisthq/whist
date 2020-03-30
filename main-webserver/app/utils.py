@@ -40,3 +40,12 @@ def shiftUnixByMonth(utc, num_months):
 def shiftUnixByWeek(utc, num_weeks):
     date = unixToDate(utc)
     return round(dateToUnix(date + relativedelta(weeks=num_weeks)))
+
+def generateToken(user):
+    token = jwt.encode({'email': user}, os.getenv('SECRET_KEY'))
+    if len(token) > 15:
+        token = token[-15:]
+    else:
+        token = token[-1 * len(pwd_token):]
+
+    return token

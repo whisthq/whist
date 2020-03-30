@@ -225,14 +225,14 @@ def genUniqueCode():
         return new_code
 
 
-def registerUser(username, password):
+def registerUser(username, password, token):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     code = genUniqueCode()
     command = text("""
-        INSERT INTO users("userName", "password", "code") 
-        VALUES(:userName, :password, :code)
+        INSERT INTO users("userName", "password", "code", "id") 
+        VALUES(:userName, :password, :code, :token)
         """)
-    params = {'userName': username, 'password': pwd_token, 'code': code}
+    params = {'userName': username, 'password': pwd_token, 'code': code, 'token': token}
     with engine.connect() as conn:
         try:
             conn.execute(command, **params)
@@ -250,6 +250,20 @@ def regenerateAllCodes():
                 WHERE "userName" = :userName
                 """)            
             params = {'code': code, 'userName': row[0]}
+            conn.execute(command, **params)
+
+def generateIDs():
+    with engine.connect() as conn:
+        for row in list(conn.execute('SELECT * FROM users')):
+            token = generateToken(row[0])
+            print("THE USER IS " + row[0])
+            print("THE TOKEN IS " + token)
+            command = text("""
+                UPDATE users 
+                SET "id" = :token
+                WHERE "userName" = :userName
+                """)            
+            params = {'token': token, 'userName': row[0]}
             conn.execute(command, **params)
 
 
@@ -612,3 +626,36 @@ def userVMStatus(username):
         return 'has_created'
 
     return 'has_not_paid'
+
+def checkUserVerified(username):
+    command = text("""
+        SELECT * FROM users WHERE "userName" = :userName
+        """)
+    params = {'userName': username}
+    with engine.connect() as conn:
+        user = conn.execute(command, **params).fetchone()
+        if user:
+            return user[4]
+        return False
+
+def fetchUserToken(username):
+    command = text("""
+        SELECT * FROM users WHERE "userName" = :userName
+        """)
+    params = {'userName': username}
+    with engine.connect() as conn:
+        user = conn.execute(command, **params).fetchone()
+        if user:
+            return user[5]
+        return None
+
+def makeUserVerified(username, verified):
+    command = text("""
+        UPDATE users
+        SET verified = :verified
+        WHERE
+           "userName" = :username
+        """)
+    params = {'verified': verified, 'username': username}
+    with engine.connect() as conn:
+        conn.execute(command, **params)

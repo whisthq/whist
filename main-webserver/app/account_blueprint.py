@@ -51,8 +51,24 @@ def account(action):
 		return jsonify({'verified': verified, 'is_user': is_user, 'vm_status': vm_status}), 200
 	elif action == 'register':
 		username, password = body['username'], body['password']
-		status = registerUser(username, password)
-		return jsonify({'status': status}), status
+		token = generateToken(username)
+		status = registerUser(username, password, token)
+		return jsonify({'status': status, 'token': token}), status
+	elif action == 'checkVerified':
+		username = body['username']
+		verified = checkUserVerified(username)
+		return jsonify({'status': 200, 'verified': verified}), 200
+	elif action == 'verifyUser':
+		username = body['username']
+		correct_token = fetchUserToken(username)
+		if body['token'] == correct_token:
+			makeUserVerified(username, True)
+			return jsonify({'status': 200, 'verified': True}), 200
+		else:
+			return jsonify({'status': 401, 'verified': False}), 401
+	elif action == 'generateIDs':
+		generateIDs()
+		return jsonify({'status': 200}), 200
 	elif action == 'fetchUsers':
 		users = fetchAllUsers()
 		return jsonify({'status': 200, 'users': users}), 200
