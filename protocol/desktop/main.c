@@ -514,8 +514,29 @@ int ReceiveMessage( struct RTPPacket* packet )
 // Make the screen black
 void clearSDL()
 {
+    static SDL_Texture* loading_screen_texture = NULL;
+    if( !loading_screen_texture )
+    {
+        SDL_Surface* loading_screen = SDL_LoadBMP( "loading_screen.bmp" );
+        loading_screen_texture = SDL_CreateTextureFromSurface( (SDL_Renderer*)renderer, loading_screen );
+        SDL_FreeSurface( loading_screen );
+    }
+
+    /*
     SDL_SetRenderDrawColor( (SDL_Renderer*)renderer, 0, 0, 0, SDL_ALPHA_OPAQUE );
     SDL_RenderClear( (SDL_Renderer*)renderer );
+    */
+
+    int w, h;
+    SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
+
+    SDL_Rect dstrect;
+    dstrect.x = output_width / 2 - w / 2;
+    dstrect.y = output_height / 2 - h / 2;
+    dstrect.w = w;
+    dstrect.h = h;
+
+    SDL_RenderCopy( (SDL_Renderer*)renderer, loading_screen_texture, NULL, &dstrect );
     SDL_RenderPresent( (SDL_Renderer*)renderer );
 }
 
