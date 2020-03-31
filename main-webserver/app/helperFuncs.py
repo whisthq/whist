@@ -545,7 +545,9 @@ def fetchAllUsers():
     with engine.connect() as conn:
         users = conn.execute(command, **params).fetchall()
         out = [{'username': user[0],
-               'code': user[2]} for user in users]
+               'code': user[2],
+               'creditsOutstanding': user[3],
+               'verified': user[4]} for user in users]
         return out
     return None
 
