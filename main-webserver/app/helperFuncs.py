@@ -661,3 +661,12 @@ def makeUserVerified(username, verified):
     params = {'verified': verified, 'username': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
+
+def storeFeedback(username, feedback):
+    command = text("""
+        INSERT INTO feedback("email", "feedback") 
+        VALUES(:email, :feedback)
+        """)
+    params = {'email': username, 'feedback': feedback}
+    with engine.connect() as conn:
+        conn.execute(command, **params)

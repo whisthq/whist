@@ -118,6 +118,9 @@ def account(action):
 			return jsonify({'status': 200, 'code': code}), 200
 		else:
 			return jsonify({'status': 404, 'code': None}), 404
+	elif action == 'feedback':
+		storeFeedback(body['username'], body['feedback'])
+		return jsonify({'status': 200}), 200
 	return jsonify({'status': 400}), 400
 
 
