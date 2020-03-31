@@ -25,7 +25,8 @@ OBJS = \
 	main.o
 
 # dynamic libs to link against
-DYNAMIC_LIBS = \
+DYNAMIC_LIBS =
+DYNAMIC_LIBS2 = \
 	../lib/$(ARCH)/ffmpeg/linux/libavcodec.so.58.54.100 \
 	../lib/$(ARCH)/ffmpeg/linux/libavdevice.so.58.8.100 \
 	../lib/$(ARCH)/ffmpeg/linux/libavfilter.so.7.57.100 \
@@ -40,7 +41,15 @@ DYNAMIC_LIBS = \
 SHARED_LIBS = \
 	-lm \
 	-ldl \
-	-lpthread
+	-lpthread \
+	-lavcodec \
+	-lavdevice \
+	-lavfilter \
+	-lavformat \
+	-lavutil \
+	-lpostproc \
+	-lswresample \
+	-lswscale 
 endif
 
 ################## MACOS ##################
@@ -116,7 +125,7 @@ CFLAGS = \
 
 # link all files into executable
 all: clean clear $(OBJS)
-	$(CC) -mmacosx-version-min=10.14 -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
+	$(CC) -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
 fractal.o:
