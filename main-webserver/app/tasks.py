@@ -27,6 +27,7 @@ def createVM(self, vm_size, location):
     async_vm_start = compute_client.virtual_machines.start(
         os.environ.get('VM_GROUP'), vmParameters['vmName'])
     async_vm_start.wait()
+
     return fetchVMCredentials(vmParameters['vmName'])
 
 @celery.task(bind = True)

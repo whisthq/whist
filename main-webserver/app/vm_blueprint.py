@@ -42,6 +42,17 @@ def vm(action):
             return({'public_ip': ip}), 200
         except:
             return({'public_ip': None}), 404
+    elif action == 'powershell':
+        body = request.get_json()
+        print(os.getenv('AZURE_CLIENT_SECRET'))
+        headers = {'content-type': 'application/json', 'Authorization': 'Bearer {}'.format(os.getenv('AZURE_CLIENT_SECRET'))}
+        url = "https://management.azure.com/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Compute/virtualMachines/{}/runCommand?api-version=2019-03-01".format(os.getenv('AZURE_SUBSCRIPTION_ID'), os.getenv('VM_GROUP'), os.getenv(body['vm_name']))
+        with open('app/powershell.txt', 'r') as file:
+            command = file.read()
+            data = {'commandId': 'RunPowerShellScript', 'script': command}
+            response = requests.post(url = url, data = json.dumps(data), headers = headers) 
+            response = response.json()
+            return jsonify({'status': 200, 'payload': response}), 200
     return jsonify({}), 400
 
 @vm_bp.route('/tracker/<action>', methods = ['POST'])

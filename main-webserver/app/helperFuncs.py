@@ -581,8 +581,9 @@ def getUserCredits(username):
     params = {'username': username}
     with engine.connect() as conn:
         users = conn.execute(command, **params).fetchone()
-        return users[3]
-    return None
+        if users:
+            return users[3]
+    return 0
 
 def fetchCodes():
     command = text("""
