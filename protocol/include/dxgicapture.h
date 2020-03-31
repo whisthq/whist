@@ -33,6 +33,9 @@ struct CaptureDevice {
   bool did_use_map_desktop_surface;
   struct DisplayHardware *hardware;
   bool released;
+
+  MONITORINFOEXW monitorInfo;
+  char* bitmap;
 };
 
 int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height);

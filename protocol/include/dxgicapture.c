@@ -4,6 +4,8 @@
 #include <psapi.h>
 #include <processthreadsapi.h>
 
+void GetBitmapScreenshot( struct CaptureDevice* device );
+
 void PrintMemoryInfo()
 {
     DWORD processID = GetCurrentProcessId();
@@ -139,15 +141,16 @@ int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height) {
   */
 
     HMONITOR hMonitor = output_desc.Monitor;
-    MONITORINFOEX monitorInfo;
-    monitorInfo.cbSize = sizeof( MONITORINFOEX );
-    GetMonitorInfo( hMonitor, (LPMONITORINFO) &monitorInfo );
+    MONITORINFOEXW monitorInfo;
+    monitorInfo.cbSize = sizeof( MONITORINFOEXW );
+    GetMonitorInfoW( hMonitor, (LPMONITORINFO) &monitorInfo );
+    device->monitorInfo = monitorInfo;
 
     DEVMODE dm;
     memset( &dm, 0, sizeof( dm ) );
     dm.dmSize = sizeof( dm );
     mprintf( "Device Name: %s\n", monitorInfo.szDevice );
-    if( 0 != EnumDisplaySettings( monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &dm ) )
+    if( 0 != EnumDisplaySettingsW( monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &dm ) )
     {
         if( dm.dmPelsWidth != width || dm.dmPelsHeight != height )
         {
@@ -155,7 +158,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height) {
             dm.dmPelsHeight = height;
             dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
 
-            int ret = ChangeDisplaySettingsEx( monitorInfo.szDevice, &dm, NULL, CDS_SET_PRIMARY | CDS_UPDATEREGISTRY, 0 );
+            int ret = ChangeDisplaySettingsExW( monitorInfo.szDevice, &dm, NULL, CDS_SET_PRIMARY | CDS_UPDATEREGISTRY, 0 );
             mprintf( "ChangeDisplaySettingsCode: %d\n", ret );
         }
     } else
@@ -204,7 +207,35 @@ int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height) {
 
   device->released = true;
 
+  GetBitmapScreenshot( device );
+
   return 0;
+}
+
+void GetBitmapScreenshot( struct CaptureDevice* device )
+{
+    HDC hScreenDC = CreateDCW( device->monitorInfo.szDevice, NULL, NULL, NULL );
+    HDC hMemoryDC = CreateCompatibleDC( hScreenDC );
+
+    HBITMAP hBitmap = CreateCompatibleBitmap( hScreenDC, device->width, device->height );
+    HBITMAP hOldBitmap = (HBITMAP)SelectObject( hMemoryDC, hBitmap );
+
+    BitBlt( hMemoryDC, 0, 0, device->width, device->height, hScreenDC, 0, 0, SRCCOPY );
+    hBitmap = (HBITMAP)SelectObject( hMemoryDC, hOldBitmap );
+
+    DeleteDC( hMemoryDC );
+    DeleteDC( hScreenDC );
+
+    int bitmap_size = 10000000;
+    if( !device->bitmap )
+    {
+        device->bitmap = malloc( bitmap_size );
+    }
+    GetBitmapBits( hBitmap, bitmap_size, device->bitmap );
+
+    DeleteObject( hBitmap );
+
+    device->frame_data = device->bitmap;
 }
 
 ID3D11Texture2D* CreateTexture(struct CaptureDevice *device) {
@@ -269,6 +300,7 @@ void ReleaseScreenshot(struct ScreenshotContainer* screenshot) {
 }
 
 int CaptureScreen(struct CaptureDevice *device) {
+
     ReleaseScreen( device );
 
   HRESULT hr;
@@ -299,17 +331,22 @@ int CaptureScreen(struct CaptureDevice *device) {
   screenshot->desktop_resource = desktop_resource;
 
   hr = screenshot->desktop_resource->lpVtbl->QueryInterface(screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
+
   if (FAILED(hr)) {
       mprintf("Query Interface Failed!\n");
       return -1;
   }
 
-  // If AccumulatedFrames == 0, then that means only the pointer has updated, but we should still udpate everything in that situation
-  // (Incase a program changed the mouse type, the frame will be compressed away anyway, and it makes sure that the screen doesn't get stuck blank during startup)
-    int accumulated_frames = max(1, device->frame_info.AccumulatedFrames);
+    int accumulated_frames = device->frame_info.AccumulatedFrames;
+
+    if( accumulated_frames > 0 && device->bitmap )
+    {
+        free( device->bitmap );
+        device->bitmap = NULL;
+    }
 
     device->counter++;
-    hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &screenshot->mapped_rect);
+    hr = DXGI_ERROR_UNSUPPORTED;// device->duplication->lpVtbl->MapDesktopSurface( device->duplication, &screenshot->mapped_rect );
 
     // If MapDesktopSurface doesn't work, then do it manually
     if(hr == DXGI_ERROR_UNSUPPORTED) {
@@ -336,15 +373,20 @@ int CaptureScreen(struct CaptureDevice *device) {
         }
         device->did_use_map_desktop_surface = false;
     }
-    else if (FAILED(hr)) {
-        mprintf("MapDesktopSurface Failed! 0x%X %d\n", hr, GetLastError());
+    else if( FAILED( hr ) )
+    {
+        mprintf( "MapDesktopSurface Failed! 0x%X %d\n", hr, GetLastError() );
         return -1;
     }
     else {
         device->did_use_map_desktop_surface = true;
     }
 
-    device->frame_data = (char *) screenshot->mapped_rect.pBits;
+    if( !device->bitmap )
+    {
+        device->frame_data = (char*)screenshot->mapped_rect.pBits;
+    }
+
     device->released = false;
     return accumulated_frames;
 }
