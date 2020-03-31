@@ -197,7 +197,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->pix_fmt = out_format;
 
         set_opt( encoder, "nonref_p", "1" );
-        set_opt( encoder, "preset", "llhp" );
+        set_opt( encoder, "preset", "fast" );
         set_opt( encoder, "rc", "cbr_ld_hq" );
         set_opt( encoder, "zerolatency", "1" );
         set_opt( encoder, "delay", "0" );
