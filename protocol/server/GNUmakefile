@@ -40,8 +40,7 @@ SHARED_LIBS = \
 	-lavutil \
 	-lpostproc \
 	-lswresample \
-	-lswscale \
-	-lmfx
+	-lswscale 
 
 # static libs to link against
 STATIC_LIBS = \

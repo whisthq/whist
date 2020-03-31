@@ -392,7 +392,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		while (recvfrom(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen) < 0) {
 #if USING_STUN
 			// If we haven't spent too much time waiting, and our previous 100ms poll failed, then send another STUN update
-			if( GetTimer( recv_timer ) * 1000 < stun_timeout_ms && GetLastNetworkError() == ETIMEDOUT )
+			if( GetTimer( recv_timer ) * 1000 < stun_timeout_ms && (GetLastNetworkError() == ETIMEDOUT || GetLastNetworkError() == EAGAIN) )
 			{
 				if( sendto( context->s, &stun_request, sizeof( stun_request ), 0, &stun_addr, sizeof( stun_addr ) ) < 0 )
 				{
@@ -462,7 +462,7 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 		if( len < 0 )
 		{
 			int err = GetLastNetworkError();
-			if( err == ETIMEDOUT )
+			if( err == ETIMEDOUT || err == EAGAIN )
 			{
 			} else
 			{
