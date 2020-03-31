@@ -303,6 +303,8 @@ void initCursors() {
 	LoadCursors();
 }
 
+int GetWindowsKeyCode( int sdl_keycode );
+
 int GetWindowsKeyCode(int sdl_keycode) {
 	return windows_keycodes[sdl_keycode];
 }
