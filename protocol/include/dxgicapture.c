@@ -304,7 +304,9 @@ int CaptureScreen(struct CaptureDevice *device) {
       return -1;
   }
 
-    int accumulated_frames = device->frame_info.AccumulatedFrames;
+  // If AccumulatedFrames == 0, then that means only the pointer has updated, but we should still udpate everything in that situation
+  // (Incase a program changed the mouse type, the frame will be compressed away anyway, and it makes sure that the screen doesn't get stuck blank during startup)
+    int accumulated_frames = max(1, device->frame_info.AccumulatedFrames);
 
     device->counter++;
     hr = device->duplication->lpVtbl->MapDesktopSurface(device->duplication, &screenshot->mapped_rect);
