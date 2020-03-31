@@ -194,6 +194,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->time_base.num = 1;
         encoder->context->time_base.den = FPS;
         encoder->context->gop_size = gop_size;
+        encoder->context->keyint_min = 5;
         encoder->context->pix_fmt = out_format;
 
         set_opt( encoder, "nonref_p", "1" );
@@ -228,6 +229,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
                                       AV_PIX_FMT_RGB32, encoder->width,
                                       encoder->height, out_format,
                                       SWS_BICUBIC, 0, 0, 0);
+
         if (!encoder->sws) {
             mprintf("Failed to initialize swsContext for video encoder\n");
             return -1;
@@ -299,11 +301,14 @@ void destroy_video_encoder(encoder_t *encoder) {
 void video_encoder_set_iframe( encoder_t* encoder )
 {
     encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
+    encoder->sw_frame->pts += encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
+    encoder->sw_frame->key_frame = 1;
 }
 
 void video_encoder_unset_iframe( encoder_t* encoder )
 {
     encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
+    encoder->sw_frame->key_frame = 0;
 }
 
 /// @brief encode a frame using the encoder encoder
@@ -341,6 +346,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
         avcodec_encode_video2(encoder->context, &encoder->packet,
                               encoder->hw_frame, &success);
     } else if (encoder->type == SOFTWARE_ENCODE) {
+        encoder->sw_frame->pts++;
         avcodec_encode_video2(encoder->context, &encoder->packet,
                               encoder->sw_frame, &success);
     } else {

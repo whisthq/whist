@@ -250,7 +250,7 @@ typedef struct
 #define STUN_IP "52.5.240.234"
 #define STUN_PORT 48800
 
-#define USING_STUN true
+#define USING_STUN false
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
 	context->is_tcp = false;
