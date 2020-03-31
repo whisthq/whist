@@ -65,21 +65,27 @@ audio_device *CreateAudioDevice(audio_device *device) {
     }
 
     // set frames per period
-    device->num_frames = 48;
+    device->num_frames = 120;
     res = snd_pcm_hw_params_set_period_size_near(device->handle, device->params,
                                                  &device->num_frames, 0);
 
     // write parameters according to our configuration space to device (can
     // restrict further if desired)
     res = snd_pcm_hw_params(device->handle, device->params);
+    // res = snd_pcm_set_params(
+    //     device->handle,
+    //     device->sample_format,
+    //     SND_PCM_ACCESS_RW_INTERLEAVED,
+    //     device->channels,
+    // )
     if (res < 0) {
         mprintf("Unable to set hw parameters. Error: %s\n", snd_strerror(res));
         return NULL;
     }
 
-    device->buffer_size = device->num_frames *
-                          (snd_pcm_format_width(device->sample_format) / 8) *
-                          device->channels;
+    device->frame_size =
+        (snd_pcm_format_width(device->sample_format) / 8) * device->channels;
+    device->buffer_size = device->num_frames * device->frame_size;
     device->buffer = (uint8_t *)malloc(device->buffer_size);
 
     return device;
@@ -109,14 +115,17 @@ void GetBuffer(audio_device *device) {
     int res = snd_pcm_readi(device->handle, device->buffer, device->num_frames);
     if (res == -EPIPE) {
         snd_pcm_recover(device->handle, res, 0);
+        device->buffer_size = 0;
     } else if (res < 0) {
         mprintf("Error from PCM read: %s\n", snd_strerror(res));
+        snd_pcm_recover(device->handle, res, 0);
+        device->buffer_size = 0;
     } else {
-        device->frames_available = res;
+        device->buffer_size = res * device->frame_size;
     }
 }
 
-void ReleaseBuffer(audio_device *device) { return; }
+void ReleaseBuffer(audio_device *device) { device->dummy_state = 0; }
 
 // ALSA is blocking, unlike WASAPI
 void WaitTimer(audio_device *device) { return; }
