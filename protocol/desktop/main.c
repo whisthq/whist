@@ -511,8 +511,15 @@ int ReceiveMessage( struct RTPPacket* packet )
     return 0;
 }
 
-// Make the screen black
 void clearSDL()
+{
+    SDL_SetRenderDrawColor( (SDL_Renderer*)renderer, 0, 0, 0, SDL_ALPHA_OPAQUE );
+    SDL_RenderClear( (SDL_Renderer*)renderer );
+    SDL_RenderPresent( (SDL_Renderer*)renderer );
+}
+
+// Make the screen black
+void loadingSDL()
 {
     static SDL_Texture* loading_screen_texture = NULL;
     if( !loading_screen_texture )
@@ -751,7 +758,7 @@ int main( int argc, char* argv[] )
     for( try_amount = 0; try_amount < 3 && !exiting; try_amount++ )
     {
         // Make the screen black
-        clearSDL();
+        loadingSDL();
 
         // If this is a retry, wait a bit more for the server to recover
         if( try_amount > 0 )
@@ -940,11 +947,11 @@ int main( int argc, char* argv[] )
         run_receive_packets = false;
         SDL_WaitThread( receive_packets_thread, NULL );
 
+        clearSDL();
+
         // Destroy video and audio
         destroyVideo();
         destroyAudio();
-
-        clearSDL();
 
         closesocket( PacketSendContext.s );
         closesocket( PacketReceiveContext.s );
