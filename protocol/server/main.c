@@ -60,13 +60,15 @@ struct SocketContext PacketSendContext = {0};
 
 volatile bool wants_iframe;
 
+#ifndef _WIN32
+void initCursors() { return; }
+
 FractalCursorImage GetCurrentCursor() {
     FractalCursorImage image = {0};
     image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
     return image;
 }
-
-void initCursors() { return; }
+#endif
 
 int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
                  int len) {
@@ -295,14 +297,12 @@ static int32_t SendVideo(void* opaque) {
             }
 
             device = &rdevice;
-            int result =
-                CreateCaptureDevice(device, client_width, client_height);
-            if (result < 0) {
+            if ( CreateCaptureDevice( device, client_width, client_height ) < 0) {
                 mprintf("Failed to create capture device\n");
                 device = NULL;
                 update_device = true;
 
-                SDL_Delay(500);
+                SDL_Delay(100);
                 continue;
             }
 
@@ -337,7 +337,7 @@ static int32_t SendVideo(void* opaque) {
             device = NULL;
             update_device = true;
 
-            SDL_Delay(500);
+            SDL_Delay(100);
             continue;
         }
 
@@ -347,6 +347,7 @@ static int32_t SendVideo(void* opaque) {
         // Only if we have a frame to render
         if (accumulated_frames > 0 || wants_iframe ||
             GetTimer(last_frame_capture) > 1.0 / MIN_FPS) {
+
             StartTimer(&last_frame_capture);
 
             if (accumulated_frames > 1) {
