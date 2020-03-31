@@ -521,7 +521,14 @@ void clearSDL()
 // Make the screen black
 void loadingSDL()
 {
+    static SDL_Texture* wallpaper_screen_texture = NULL;
     static SDL_Texture* loading_screen_texture = NULL;
+    if( !wallpaper_screen_texture )
+    {
+        SDL_Surface* loading_screen = SDL_LoadBMP( "wallpaper.bmp" );
+        wallpaper_screen_texture = SDL_CreateTextureFromSurface( (SDL_Renderer*)renderer, loading_screen );
+        SDL_FreeSurface( loading_screen );
+    }
     if( !loading_screen_texture )
     {
         SDL_Surface* loading_screen = SDL_LoadBMP( "loading_screen.bmp" );
@@ -535,15 +542,22 @@ void loadingSDL()
     */
 
     int w, h;
-    SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
-
     SDL_Rect dstrect;
+
+    SDL_QueryTexture( wallpaper_screen_texture, NULL, NULL, &w, &h );
     dstrect.x = output_width / 2 - w / 2;
     dstrect.y = output_height / 2 - h / 2;
     dstrect.w = w;
     dstrect.h = h;
+    SDL_RenderCopy( (SDL_Renderer*)renderer, wallpaper_screen_texture, NULL, NULL );
 
+    SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
+    dstrect.x = output_width / 2 - w / 2;
+    dstrect.y = output_height / 2 - h / 2;
+    dstrect.w = w;
+    dstrect.h = h;
     SDL_RenderCopy( (SDL_Renderer*)renderer, loading_screen_texture, NULL, &dstrect );
+
     SDL_RenderPresent( (SDL_Renderer*)renderer );
 }
 
