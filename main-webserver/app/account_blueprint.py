@@ -134,3 +134,13 @@ def mail(action):
 		username, password = body['username'], body['password']
 		resetPassword(username, password)
 		return jsonify({'status': 200}), 200
+
+
+@account_bp.route('/admin/<action>', methods = ['POST'])
+def admin(action):
+	body = request.get_json()
+	if action == 'login':
+		if body['username'] == os.getenv('DASHBOARD_USERNAME') and body['password'] == os.getenv('DASHBOARD_PASSWORD'):
+			return jsonify({'status': 200}), 200
+		return jsonify({'status': 401}), 401
+
