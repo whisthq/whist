@@ -218,8 +218,8 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 
 		// Print STUN response
 		struct in_addr a;
-		a.sin_addr.s_addr = entry.ip;
-		mprintf( "TCP STUN notified of desired request from %s:%d", inet_ntoa( a.sin_addr ), ntohs( entry.private_port ) );
+		a.s_addr = entry.ip;
+		mprintf( "TCP STUN notified of desired request from %s:%d", inet_ntoa( a ), ntohs( entry.private_port ) );
 #endif
 
 		context->addr.sin_family = AF_INET;
@@ -320,8 +320,8 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 
 		// Print STUN response
 		struct in_addr a;
-		a.sin_addr.s_addr = entry.ip;
-		mprintf( "TCP STUN notified of desired request from %s:%d", inet_ntoa( a.sin_addr ), ntohs( entry.private_port ) );
+		a.s_addr = entry.ip;
+		mprintf( "TCP STUN notified of desired request from %s:%d", inet_ntoa( a ), ntohs( entry.private_port ) );
 #else
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
