@@ -148,6 +148,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 	stun_addr.sin_family = AF_INET;
 	stun_addr.sin_addr.s_addr = inet_addr( STUN_IP );
 	stun_addr.sin_port = htons( STUN_PORT );
+	int opt;
 
 	// Function parameter checking
 	if( !(strcmp( origin, "C" ) == 0 || strcmp( origin, "S" ) == 0) )
@@ -177,10 +178,29 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		context->is_server = false;
 
 #if USING_STUN
+		// Reuse addr
+		opt = 1;
+		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
+			(const char*)&opt, sizeof( opt ) ) < 0 )
+		{
+			mprintf( "Could not setsockopt SO_REUSEADDR\n" );
+			return -1;
+		}
+
+		struct sockaddr_in origin_addr;
+
 		// Connect to TCP server
 		if( connect( context->s, (struct sockaddr*)(&stun_addr), sizeof( stun_addr ) ) < 0 )
 		{
 			mprintf( "Could not connect over TCP to server %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		int slen;
+		if( getsockname( context->s, (struct sockaddr*)&origin_addr, &slen ) < 0 )
+		{
+			mprintf( "Could not get sock name\n" );
 			closesocket( context->s );
 			return -1;
 		}
@@ -229,6 +249,31 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		a.s_addr = entry.ip;
 		mprintf( "TCP STUN responded that the TCP server is located at %s:%d\n", inet_ntoa( a ), ntohs( entry.private_port ) );
 
+		closesocket( context->s );
+		context->s = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
+		if( context->s <= 0 )
+		{ // Windows & Unix cases
+			mprintf( "Could not create UDP socket %d\n", GetLastNetworkError() );
+			return -1;
+		}
+
+		// Reuse addr
+		opt = 1;
+		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
+			(const char*)&opt, sizeof( opt ) ) < 0 )
+		{
+			mprintf( "Could not setsockopt SO_REUSEADDR\n" );
+			return -1;
+		}
+
+		// Bind to port
+		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
+		{
+			mprintf( "Failed to bind to port! %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = entry.ip;
 		context->addr.sin_port = entry.private_port;
@@ -259,7 +304,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		context->is_server = true;
 
 		// Reuse addr
-		int opt = 1;
+		opt = 1;
 		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
 			(const char*)&opt, sizeof( opt ) ) < 0 )
 		{
