@@ -9,6 +9,7 @@ typedef struct audio_device {
     snd_pcm_uframes_t num_frames;
     unsigned long frames_available;
     unsigned long buffer_size;
+    unsigned long frame_size;
     unsigned int channels;
     unsigned int sample_rate;
     enum _snd_pcm_format sample_format;
