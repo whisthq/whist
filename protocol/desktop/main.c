@@ -794,7 +794,6 @@ int main( int argc, char* argv[] )
         SDL_Event msg;
         FractalClientMessage fmsg = { 0 };
 
-        /*
         if( CreateUDPContext( &PacketSendContext, "C", (char*)server_ip, PORT_CLIENT_TO_SERVER, 10, 500 ) < 0 )
         {
             mprintf( "Failed to connect to server\n" );
@@ -802,10 +801,8 @@ int main( int argc, char* argv[] )
         }
 
         SDL_Delay( 150 );
-        */
 
         struct SocketContext PacketReceiveContext = { 0 };
-        /*
         if( CreateUDPContext( &PacketReceiveContext, "C", (char*)server_ip, PORT_SERVER_TO_CLIENT, 1, 500 ) < 0 )
         {
             mprintf( "Failed finish connection to server\n" );
@@ -814,7 +811,6 @@ int main( int argc, char* argv[] )
         }
 
         SDL_Delay( 150 );
-        */
 
         if( CreateTCPContext( &PacketTCPContext, "C", (char*)server_ip, PORT_SHARED_TCP, 1, 500 ) < 0 )
         {
@@ -823,9 +819,6 @@ int main( int argc, char* argv[] )
             closesocket( PacketReceiveContext.s );
             continue;
         }
-
-        //char test[] = "asdlfkmasdklfm";
-        //sendp( &PacketTCPContext, test, sizeof( test ) );
 
         // Initialize video and audio
         send_packet_mutex = SDL_CreateMutex();
