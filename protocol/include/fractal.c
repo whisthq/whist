@@ -231,8 +231,8 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 typedef struct
 {
 	unsigned int ip;
-	short private_port;
-	short public_port;
+	unsigned short private_port;
+	unsigned short public_port;
 } stun_entry_t;
 
 typedef enum stun_request_type
@@ -474,7 +474,10 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		// Check that confirmation matches STUN's claimed client
 		if( context->addr.sin_addr.s_addr != entry.ip || context->addr.sin_port != entry.private_port )
 		{
-			mprintf( "Connection did not match STUN's claimed client\n" );
+			mprintf( "Connection did not match STUN's claimed client, got %s:%d instead\n", inet_ntoa( context->addr.sin_addr ), ntohs( context->addr.sin_port ) );
+			context->addr.sin_addr.s_addr = entry.ip;
+			context->addr.sin_port = entry.private_port;
+			mprintf( "Should have been %s:%d!\n", inet_ntoa( context->addr.sin_addr ), ntohs( context->addr.sin_port ) );
 			closesocket( context->s );
 			return -1;
 		}
