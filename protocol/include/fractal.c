@@ -163,6 +163,65 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		// Client connection protocol
 		context->is_server = false;
 
+#if USING_STUN
+		struct sockaddr_in stun_addr;
+		stun_addr.sin_family = AF_INET;
+		stun_addr.sin_addr.s_addr = inet_addr( STUN_IP );
+		stun_addr.sin_port = htons( STUN_PORT );
+
+		// Connect to TCP server
+		if( connect( context->s, (struct sockaddr*)(&stun_addr), sizeof( stun_addr ) ) < 0 )
+		{
+			mprintf( "Could not connect over TCP to server %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		// Make STUN request
+		stun_request_t stun_request;
+		stun_request.type = ASK_INFO;
+		stun_request.entry.ip = inet_addr( destination );
+		stun_request.entry.public_port = htons( (u_short)port );
+
+		if( sendp( context, &stun_request, sizeof( stun_request ) ) < 0 )
+		{
+			mprintf( "Could not send STUN request to connected STUN server!\n" );
+			closesocket( context->s );
+			return -1;
+		}
+
+		// Receive STUN response
+		clock t;
+		StartTimer( &t );
+
+		int recv_size = 0;
+		stun_entry_t entry;
+
+		while( recv_size < sizeof( entry ) && GetTimer( t ) < stun_timeout_ms )
+		{
+			int single_recv_size;
+			if( (single_recv_size = recvp( context, ((char*)&entry) + recv_size, max(0, sizeof( entry ) - recv_size) )) < 0 )
+			{
+				mprintf( "Did not receive STUN response %d\n", GetLastNetworkError() );
+				closesocket( context->s );
+				return -1;
+			}
+			recv_size += single_recv_size;
+		}
+
+		if( recv_size != sizeof( entry ) )
+		{
+			mprintf( "TCP STUN Response packet of wrong size! %d\n", recv_size );
+			closesocket( context->s );
+			return -1;
+		}
+
+		// Print STUN response
+		struct in_addr a;
+		a.sin_addr.s_addr = entry.ip;
+		mprintf( "TCP STUN notified of desired request from %s:%d", inet_ntoa( a.sin_addr ), ntohs( entry.private_port ) );
+#endif
+
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = inet_addr( destination );
 		context->addr.sin_port = htons( (u_short) port );
@@ -185,19 +244,19 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		// Server connection protocol
 		context->is_server = true;
 
-		struct sockaddr_in origin_addr;
-		origin_addr.sin_family = AF_INET;
-		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-		origin_addr.sin_port = htons( (u_short) port );
-
 		// Reuse addr
 		int opt = 1;
 		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
-						(const char *) &opt, sizeof( opt ) ) < 0 )
+			(const char*)&opt, sizeof( opt ) ) < 0 )
 		{
 			mprintf( "Could not setsockopt SO_REUSEADDR\n" );
 			return -1;
 		}
+
+		struct sockaddr_in origin_addr;
+		origin_addr.sin_family = AF_INET;
+		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
+		origin_addr.sin_port = htons( (u_short)port );
 
 		// Bind to port
 		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
@@ -206,6 +265,77 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			closesocket( context->s );
 			return -1;
 		}
+
+#if USING_STUN
+		struct sockaddr_in stun_addr;
+		stun_addr.sin_family = AF_INET;
+		stun_addr.sin_addr.s_addr = inet_addr( STUN_IP );
+		stun_addr.sin_port = htons( STUN_PORT );
+
+		// Connect over TCP to STUN
+		if( connect( context->s, (struct sockaddr*)(&stun_addr), sizeof( stun_addr ) ) < 0 )
+		{
+			mprintf( "Could not connect over TCP to server %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		// Send STUN request
+		stun_request_t stun_request;
+		stun_request.type = POST_INFO;
+		stun_request.entry.public_port = htons( (u_short)port );
+
+		if( sendp( context, &stun_request, sizeof( stun_request ) ) < 0 )
+		{
+			mprintf( "Could not send STUN request to connected STUN server!\n" );
+			closesocket( context->s );
+			return -1;
+		}
+
+		// Receive STUN response
+		clock t;
+		StartTimer( &t );
+
+		int recv_size = 0;
+		stun_entry_t entry;
+
+		while( recv_size < sizeof(entry) && GetTimer(t) < stun_timeout_ms )
+		{
+			int single_recv_size;
+			if( (single_recv_size = recvp( context, ((char*)&entry) + recv_size, max( 0, sizeof( entry ) - recv_size ) )) < 0 )
+			{
+				mprintf( "Did not receive STUN response %d\n", GetLastNetworkError() );
+				closesocket( context->s );
+				return -1;
+			}
+			recv_size += single_recv_size;
+		}
+
+		if( recv_size != sizeof( entry ) )
+		{
+			mprintf( "TCP STUN Response packet of wrong size! %d\n", recv_size );
+			closesocket( context->s );
+			return -1;
+		}
+
+		// Print STUN response
+		struct in_addr a;
+		a.sin_addr.s_addr = entry.ip;
+		mprintf( "TCP STUN notified of desired request from %s:%d", inet_ntoa( a.sin_addr ), ntohs( entry.private_port ) );
+#else
+		struct sockaddr_in origin_addr;
+		origin_addr.sin_family = AF_INET;
+		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
+		origin_addr.sin_port = htons( (u_short) port );
+
+		// Bind to port
+		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
+		{
+			mprintf( "Failed to bind to port! %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+#endif
 
 		// Set listen queue
 		set_timeout( context->s, stun_timeout_ms );
