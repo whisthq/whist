@@ -137,7 +137,7 @@ typedef struct
 #define STUN_IP "52.22.246.213"
 #define STUN_PORT 48800
 
-#define USING_STUN false
+#define USING_STUN true
 
 int CreateTCPContext( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms )
 {
