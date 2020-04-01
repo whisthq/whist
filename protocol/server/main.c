@@ -71,7 +71,7 @@ FractalCursorImage GetCurrentCursor() {
 #endif
 
 int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
-                 int len) {
+                 size_t len) {
     if (len > sizeof(struct RTPPacket)) {
         mprintf("Len too long!\n");
         return -1;
@@ -147,8 +147,8 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     int num_indices =
         len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
 
-    double max_delay = 5.0;
-    double delay_thusfar = 0.0;
+    // double max_delay = 5.0;
+    // double delay_thusfar = 0.0;
 
     int break_resolution = 2;
     double num_indices_per_unit_latency = (AVERAGE_LATENCY_MS / 1000.0) *
@@ -267,7 +267,7 @@ static int32_t SendVideo(void* opaque) {
     StartTimer(&previous_frame_time);
     int previous_frame_size = 0;
 
-    int consecutive_capture_screen_errors = 0;
+    // int consecutive_capture_screen_errors = 0;
 
     //    int defaultCounts = 1;
 
@@ -357,7 +357,7 @@ static int32_t SendVideo(void* opaque) {
                 mprintf("Sending current frame!\n");
             }
 
-            consecutive_capture_screen_errors = 0;
+            // consecutive_capture_screen_errors = 0;
 
             bool is_iframe = false;
             if (wants_iframe) {
@@ -567,6 +567,11 @@ int main() {
     }
 #endif
 
+    if (sizeof(unsigned short) != 2) {
+        mprintf("Error: Unsigned short is length %d bytes instead of 2 bytes!\n", sizeof(unsigned short));
+        exit(-1);
+    }
+
     while (true) {
         struct SocketContext PacketReceiveContext = {0};
         struct SocketContext PacketTCPContext = {0};
@@ -717,7 +722,7 @@ int main() {
                         // Copy data into an fmsg
                         memcpy(
                             fmsg, decrypted_packet.data,
-                            max(sizeof(*fmsg), decrypted_packet.payload_size));
+                            max(sizeof(*fmsg), (size_t) decrypted_packet.payload_size));
 
                         // Check to see if decrypted packet is of valid size
                         if (decrypted_packet.payload_size !=

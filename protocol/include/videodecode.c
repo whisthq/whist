@@ -2,10 +2,10 @@
 #pragma warning(disable : 4706)  // assignment within conditional warning
 #endif
 
+#include "videodecode.h"  // header file for this file
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "videodecode.h"  // header file for this file
 
 #define SHOW_DECODER_LOGS false
 
