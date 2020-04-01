@@ -250,7 +250,7 @@ typedef struct
 #define STUN_IP "52.5.240.234"
 #define STUN_PORT 48800
 
-#define USING_STUN false
+#define USING_STUN true
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
 	context->is_tcp = false;
@@ -326,20 +326,34 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		mprintf("Connecting to server...\n");
 
-		// Send request
+		SDL_Delay( 150 );
+
+		// Open up the port
 		if (sendp(context, NULL, 0) < 0) {
 			mprintf("Could not send message to server %d\n", GetLastNetworkError());
 			closesocket(context->s);
 			return -1;
 		}
 
+		SDL_Delay( 150 );
+
+		// Send acknowledgement
+		if( sendp( context, NULL, 0 ) < 0 )
+		{
+			mprintf( "Could not send message to server %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
 		// Receive server's acknowledgement of connection
-		if (recvp(context, NULL, 0) < 0) {
+		int slen = sizeof(context->addr);
+		if (recvfrom(context->s, NULL, 0, 0, &context->addr, &slen) < 0 && recvfrom( context->s, NULL, 0, 0, &context->addr, &slen ) < 0 ) {
 			mprintf("Did not receive response from server! %d\n", GetLastNetworkError());
 			closesocket(context->s);
 			return -1;
 		}
 
+		mprintf( "Connected to server on %s:%d!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port) );
 		mprintf("Connected to server on %s:%d!\n", destination, port);
 	}
 	else {
