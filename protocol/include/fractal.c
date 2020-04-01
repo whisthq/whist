@@ -142,6 +142,12 @@ typedef struct
 int CreateTCPContext( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms )
 {
 	context->is_tcp = true;
+	
+	// Init stun_addr
+	struct sockaddr_in stun_addr;
+	stun_addr.sin_family = AF_INET;
+	stun_addr.sin_addr.s_addr = inet_addr( STUN_IP );
+	stun_addr.sin_port = htons( STUN_PORT );
 
 	// Function parameter checking
 	if( !(strcmp( origin, "C" ) == 0 || strcmp( origin, "S" ) == 0) )
@@ -164,11 +170,6 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		context->is_server = false;
 
 #if USING_STUN
-		struct sockaddr_in stun_addr;
-		stun_addr.sin_family = AF_INET;
-		stun_addr.sin_addr.s_addr = inet_addr( STUN_IP );
-		stun_addr.sin_port = htons( STUN_PORT );
-
 		// Connect to TCP server
 		if( connect( context->s, (struct sockaddr*)(&stun_addr), sizeof( stun_addr ) ) < 0 )
 		{
@@ -244,6 +245,13 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		// Server connection protocol
 		context->is_server = true;
 
+		// Tell the STUN to use TCP
+#if USING_STUN
+		SOCKET udp_s = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+		sendto( udp_s, NULL, 0, 0, &stun_addr, sizeof( stun_addr ) );
+		closesocket( udp_s );
+#endif
+
 		// Reuse addr
 		int opt = 1;
 		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
@@ -267,12 +275,8 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		}
 
 #if USING_STUN
-		struct sockaddr_in stun_addr;
-		stun_addr.sin_family = AF_INET;
-		stun_addr.sin_addr.s_addr = inet_addr( STUN_IP );
-		stun_addr.sin_port = htons( STUN_PORT );
-
 		// Connect over TCP to STUN
+		mprintf( "Connecting to STUN TCP...\n" );
 		if( connect( context->s, (struct sockaddr*)(&stun_addr), sizeof( stun_addr ) ) < 0 )
 		{
 			mprintf( "Could not connect over TCP to server %d\n", GetLastNetworkError() );
