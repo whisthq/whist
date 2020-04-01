@@ -28,9 +28,6 @@ def createVM(self, vm_size, location):
         os.environ.get('VM_GROUP'), vmParameters['vmName'])
     async_vm_start.wait()
 
-    body = request.get_json()
-    _, compute_client, _ = createClients()
-
     with open('app/powershell.txt', 'r') as file:
         command = file.read()
         run_command_parameters = {
