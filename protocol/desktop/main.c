@@ -794,21 +794,25 @@ int main( int argc, char* argv[] )
         SDL_Event msg;
         FractalClientMessage fmsg = { 0 };
 
+        /*
         if( CreateUDPContext( &PacketSendContext, "C", (char*)server_ip, PORT_CLIENT_TO_SERVER, 10, 500 ) < 0 )
         {
             mprintf( "Failed to connect to server\n" );
             continue;
         }
+        */
 
         SDL_Delay( 150 );
 
         struct SocketContext PacketReceiveContext = { 0 };
+        /*
         if( CreateUDPContext( &PacketReceiveContext, "C", (char*)server_ip, PORT_SERVER_TO_CLIENT, 1, 500 ) < 0 )
         {
             mprintf( "Failed finish connection to server\n" );
             closesocket( PacketSendContext.s );
             continue;
         }
+        */
 
         SDL_Delay( 150 );
 
