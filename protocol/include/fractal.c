@@ -583,8 +583,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			return -1;
 		}
 
-		mprintf( "Connected to server on %s:%d!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port) );
-		mprintf("Connected to server on %s:%d!\n", destination, port);
+		mprintf( "Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr), port, ntohs(context->addr.sin_port) );
 	}
 	else {
 		// Server connection protocol
