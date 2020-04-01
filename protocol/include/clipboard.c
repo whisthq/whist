@@ -95,13 +95,15 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 
 #endif
 
-#if defined __APPLE__
+#if defined (_WIN32)
+	static int last_clipboard_sequence_number = -1;
+#elif __APPLE__
 	#include "clipboard_osx.h"
 	bool clipboardHasImage;
 	bool clipboardHasString;
+	static int last_clipboard_sequence_number = -1;
 #endif
 
-static int last_clipboard_sequence_number = -1;
 static char clipboard_buf[9000000];
 
 void StartTrackingClipboardUpdates()

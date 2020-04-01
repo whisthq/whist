@@ -2,10 +2,10 @@
 #pragma warning(disable : 4706)  // assignment within conditional warning
 #endif
 
+#include "videodecode.h"  // header file for this file
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "videodecode.h"  // header file for this file
 
 #define SHOW_DECODER_LOGS false
 
@@ -70,8 +70,6 @@ enum AVPixelFormat match_vaapi(AVCodecContext* ctx,
 }
 
 int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
-    avcodec_register_all();
-
     if (decoder->type == DECODE_TYPE_SOFTWARE) {
         mprintf("Trying software decoder\n");
         decoder->codec = avcodec_find_decoder_by_name("h264");

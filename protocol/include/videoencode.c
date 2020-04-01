@@ -1,7 +1,7 @@
+#include "videoencode.h"  // header file for this file
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "videoencode.h"  // header file for this file
 
 static AVBufferRef *hw_device_ctx = NULL;
 
@@ -13,11 +13,10 @@ void set_opt(encoder_t *encoder, char *option, char *value) {
 }
 
 int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
-    avcodec_register_all();
     int max_buffer = 4 * (bitrate / FPS);
 
     if (encoder->type == NVENC_ENCODE) {
-        mprintf( "Trying Nvidia encoder\n" );
+        mprintf("Trying Nvidia encoder\n");
 
         enum AVPixelFormat out_format = AV_PIX_FMT_0RGB32;
 
@@ -50,7 +49,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         set_opt(encoder, "rc", "cbr_ld_hq");
         set_opt(encoder, "zerolatency", "1");
         set_opt(encoder, "delay", "0");
-        //set_opt( encoder, "max-intra-rate", );
+        // set_opt( encoder, "max-intra-rate", );
 
         av_buffer_unref(&encoder->context->hw_frames_ctx);
         encoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(hw_device_ctx);
@@ -77,8 +76,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->sw_frame->pts = 0;
 
         // set frame size and allocate memory for it
-        int frame_size = avpicture_get_size(out_format, encoder->width,
-                                            encoder->height);
+        int frame_size =
+            avpicture_get_size(out_format, encoder->width, encoder->height);
         encoder->frame_buffer = malloc(frame_size);
 
         // fill picture with empty frame buffer
@@ -155,8 +154,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->sw_frame->pts = 0;
 
         // set frame size and allocate memory for it
-        int frame_size = avpicture_get_size(out_format, encoder->width,
-                                            encoder->height);
+        int frame_size =
+            avpicture_get_size(out_format, encoder->width, encoder->height);
         encoder->frame_buffer = malloc(frame_size);
 
         // fill picture with empty frame buffer
@@ -165,10 +164,9 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
                        encoder->width, encoder->height);
 
         // set sws context for color format conversion
-        encoder->sws = sws_getContext(encoder->width, encoder->height,
-                                      AV_PIX_FMT_RGB32, encoder->width,
-                                      encoder->height, out_format,
-                                      SWS_BILINEAR, 0, 0, 0);
+        encoder->sws = sws_getContext(
+            encoder->width, encoder->height, AV_PIX_FMT_RGB32, encoder->width,
+            encoder->height, out_format, SWS_BILINEAR, 0, 0, 0);
         if (!encoder->sws) {
             mprintf("Failed to initialize swsContext for video encoder\n");
             return -1;
@@ -198,11 +196,11 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->keyint_min = 5;
         encoder->context->pix_fmt = out_format;
 
-        set_opt( encoder, "nonref_p", "1" );
-        set_opt( encoder, "preset", "fast" );
-        set_opt( encoder, "rc", "cbr_ld_hq" );
-        set_opt( encoder, "zerolatency", "1" );
-        set_opt( encoder, "delay", "0" );
+        set_opt(encoder, "nonref_p", "1");
+        set_opt(encoder, "preset", "fast");
+        set_opt(encoder, "rc", "cbr_ld_hq");
+        set_opt(encoder, "zerolatency", "1");
+        set_opt(encoder, "delay", "0");
 
         if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
             mprintf("Failed to open context for stream\n");
@@ -216,8 +214,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->sw_frame->pts = 0;
 
         // set frame size and allocate memory for it
-        int frame_size = avpicture_get_size(
-            out_format, encoder->width, encoder->height);
+        int frame_size =
+            avpicture_get_size(out_format, encoder->width, encoder->height);
         encoder->frame_buffer = malloc(frame_size);
 
         // fill picture with empty frame buffer
@@ -226,10 +224,9 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
                        encoder->width, encoder->height);
 
         // set sws context for color format conversion
-        encoder->sws = sws_getContext(encoder->width, encoder->height,
-                                      AV_PIX_FMT_RGB32, encoder->width,
-                                      encoder->height, out_format,
-                                      SWS_BICUBIC, 0, 0, 0);
+        encoder->sws = sws_getContext(
+            encoder->width, encoder->height, AV_PIX_FMT_RGB32, encoder->width,
+            encoder->height, out_format, SWS_BICUBIC, 0, 0, 0);
 
         if (!encoder->sws) {
             mprintf("Failed to initialize swsContext for video encoder\n");
@@ -240,13 +237,14 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         return -1;
     }
 
-    mprintf( "Video Encoder created!\n" );
+    mprintf("Video Encoder created!\n");
     return 0;
 }
 
 /// @brief creates encoder encoder
 /// @details creates FFmpeg encoder
-encoder_t *create_video_encoder(int width, int height, int bitrate, int gop_size) {
+encoder_t *create_video_encoder(int width, int height, int bitrate,
+                                int gop_size) {
     // set memory for the encoder
     encoder_t *encoder = (encoder_t *)malloc(sizeof(encoder_t));
     memset(encoder, 0, sizeof(encoder_t));
@@ -255,7 +253,7 @@ encoder_t *create_video_encoder(int width, int height, int bitrate, int gop_size
     encoder->width = width;
     encoder->height = height;
 
-    int encoder_precedence[] = { NVENC_ENCODE, QSV_ENCODE, SOFTWARE_ENCODE};
+    int encoder_precedence[] = {NVENC_ENCODE, QSV_ENCODE, SOFTWARE_ENCODE};
 
     for (unsigned long i = 0;
          i < sizeof(encoder_precedence) / sizeof(encoder_precedence[0]); ++i) {
@@ -282,9 +280,8 @@ void destroy_video_encoder(encoder_t *encoder) {
     }
 
     // free the ffmpeg contextes
-    if( encoder->sws )
-    {
-        sws_freeContext( encoder->sws );
+    if (encoder->sws) {
+        sws_freeContext(encoder->sws);
     }
     avcodec_close(encoder->context);
 
@@ -299,15 +296,15 @@ void destroy_video_encoder(encoder_t *encoder) {
     return;
 }
 
-void video_encoder_set_iframe( encoder_t* encoder )
-{
+void video_encoder_set_iframe(encoder_t *encoder) {
     encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
-    encoder->sw_frame->pts += encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
+    encoder->sw_frame->pts +=
+        encoder->context->gop_size -
+        (encoder->sw_frame->pts % encoder->context->gop_size);
     encoder->sw_frame->key_frame = 1;
 }
 
-void video_encoder_unset_iframe( encoder_t* encoder )
-{
+void video_encoder_unset_iframe(encoder_t *encoder) {
     encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
     encoder->sw_frame->key_frame = 0;
 }
@@ -318,23 +315,21 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
     int success = 0;  // boolean for success or failure of encoding
 
     // init packet to prepare encoding
-    av_packet_unref( &encoder->packet );
-    av_init_packet( &encoder->packet );
+    av_packet_unref(&encoder->packet);
+    av_init_packet(&encoder->packet);
 
-    if( encoder->sws )
-    {
-        uint8_t* in_data[1] = { (uint8_t*)rgb_pixels };
-        int in_linesize[1] = { encoder->width * 4 };
+    if (encoder->sws) {
+        uint8_t *in_data[1] = {(uint8_t *)rgb_pixels};
+        int in_linesize[1] = {encoder->width * 4};
 
         // convert to the encoder format
-        sws_scale( encoder->sws, in_data, in_linesize, 0, encoder->height,
-                    encoder->sw_frame->data, encoder->sw_frame->linesize );
-    } else
-    {
-        memset( encoder->sw_frame->data, 0, sizeof( encoder->sw_frame->data ) );
-        memset( encoder->sw_frame->linesize, 0,
-                sizeof( encoder->sw_frame->linesize ) );
-        encoder->sw_frame->data[0] = (uint8_t*)rgb_pixels;
+        sws_scale(encoder->sws, in_data, in_linesize, 0, encoder->height,
+                  encoder->sw_frame->data, encoder->sw_frame->linesize);
+    } else {
+        memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
+        memset(encoder->sw_frame->linesize, 0,
+               sizeof(encoder->sw_frame->linesize));
+        encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
         encoder->sw_frame->linesize[0] = encoder->width * 4;
     }
 
