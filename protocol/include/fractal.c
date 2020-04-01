@@ -270,7 +270,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-		origin_addr.sin_port = htons( (unsigned short)port );
+		origin_addr.sin_port = htons( (unsigned short)51010 );
 
 		// Bind to port
 		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
@@ -329,9 +329,18 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		}
 
 		// Print STUN response
-		struct in_addr a;
-		a.s_addr = entry.ip;
-		mprintf( "TCP STUN notified of desired request from %s:%d", inet_ntoa( a ), ntohs( entry.private_port ) );
+		struct sockaddr_in client_addr;
+		client_addr.sin_family = AF_INET;
+		client_addr.sin_addr.s_addr = entry.ip;
+		client_addr.sin_port = entry.private_port;
+		mprintf( "TCP STUN notified of desired request from %s:%d\n", inet_ntoa( client_addr.sin_addr ), ntohs( client_addr.sin_port ) );
+
+		/*
+		if( connect( context->s, (struct sockaddr*)(&client_addr), sizeof( client_addr ) ) < 0 )
+		{
+			mprintf( "Could not connect! (Expected)\n" );
+		}
+		*/
 
 		closesocket( context->s );
 
@@ -343,10 +352,18 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			return -1;
 		}
 
+		opt = 1;
+		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
+			(const char*)&opt, sizeof( opt ) ) < 0 )
+		{
+			mprintf( "Could not setsockopt SO_REUSEADDR\n" );
+			return -1;
+		}
+
 		origin_addr;
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-		origin_addr.sin_port = htons( (unsigned short) port );
+		origin_addr.sin_port = htons( (unsigned short)51010 );
 
 		// Bind to port
 		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
@@ -355,7 +372,20 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			closesocket( context->s );
 			return -1;
 		}
+
+		mprintf( "WAIT\n" );
+
+		if( connect( context->s, (struct sockaddr*)&client_addr, sizeof( client_addr ) ) < 0 )
+		{
+			mprintf( "Failed to connect! %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		context->addr = client_addr;
 #endif
+
+		/*
 
 		// Set listen queue
 		set_timeout( context->s, stun_timeout_ms );
@@ -395,6 +425,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 
 		closesocket( context->s );
 		context->s = new_socket;
+		*/
 
 		mprintf( "Client received at %s:%d!\n", inet_ntoa( context->addr.sin_addr ), ntohs( context->addr.sin_port ) );
 
