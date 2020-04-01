@@ -150,7 +150,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		return -1;
 	}
 
-	// Create UDP socket
+	// Create TCP socket
 	context->s = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
 	if( context->s <= 0 )
 	{ // Windows & Unix cases
@@ -322,8 +322,18 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		struct in_addr a;
 		a.s_addr = entry.ip;
 		mprintf( "TCP STUN notified of desired request from %s:%d", inet_ntoa( a ), ntohs( entry.private_port ) );
-#else
-		struct sockaddr_in origin_addr;
+
+		closesocket( context->s );
+
+		// Create TCP socket
+		context->s = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
+		if( context->s <= 0 )
+		{ // Windows & Unix cases
+			mprintf( "Could not create UDP socket %d\n", GetLastNetworkError() );
+			return -1;
+		}
+
+		origin_addr;
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
 		origin_addr.sin_port = htons( (u_short) port );
