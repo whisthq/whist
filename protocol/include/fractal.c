@@ -115,6 +115,30 @@ void set_timeout(SOCKET s, int timeout_ms) {
 	}
 }
 
+typedef struct
+{
+	unsigned int ip;
+	unsigned short private_port;
+	unsigned short public_port;
+} stun_entry_t;
+
+typedef enum stun_request_type
+{
+	ASK_INFO,
+	POST_INFO
+} stun_request_type_t;
+
+typedef struct
+{
+	stun_request_type_t type;
+	stun_entry_t entry;
+} stun_request_t;
+
+#define STUN_IP "52.5.240.234"
+#define STUN_PORT 48800
+
+#define USING_STUN true
+
 int CreateTCPContext( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms )
 {
 	context->is_tcp = true;
@@ -227,30 +251,6 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 
 	return 0;
 }
-
-typedef struct
-{
-	unsigned int ip;
-	unsigned short private_port;
-	unsigned short public_port;
-} stun_entry_t;
-
-typedef enum stun_request_type
-{
-	ASK_INFO,
-	POST_INFO
-} stun_request_type_t;
-
-typedef struct
-{
-	stun_request_type_t type;
-	stun_entry_t entry;
-} stun_request_t;
-
-#define STUN_IP "52.5.240.234"
-#define STUN_PORT 48800
-
-#define USING_STUN true
 
 int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
 	context->is_tcp = false;
