@@ -167,7 +167,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 	// Tell the STUN to use TCP
 #if USING_STUN
 	SOCKET udp_s = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
-	sendto( udp_s, NULL, 0, 0, &stun_addr, sizeof( stun_addr ) );
+	sendto( udp_s, NULL, 0, 0, (struct sockaddr*)&stun_addr, sizeof( stun_addr ) );
 	closesocket( udp_s );
 #endif
 
@@ -227,14 +227,20 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		// Print STUN response
 		struct in_addr a;
 		a.s_addr = entry.ip;
-		mprintf( "TCP STUN notified of desired request from %s:%d", inet_ntoa( a ), ntohs( entry.private_port ) );
-#endif
+		mprintf( "TCP STUN responded that the TCP server is located at %s:%d\n", inet_ntoa( a ), ntohs( entry.private_port ) );
 
+		context->addr.sin_family = AF_INET;
+		context->addr.sin_addr.s_addr = entry.ip;
+		context->addr.sin_port = entry.private_port;
+#else
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = inet_addr( destination );
 		context->addr.sin_port = htons( (unsigned short) port );
+#endif
 
 		mprintf( "Connecting to server...\n" );
+
+		SDL_Delay( 200 );
 
 		// Connect to TCP server
 		if( connect( context->s, (struct sockaddr*)(&context->addr), sizeof( context->addr ) ) < 0 )
