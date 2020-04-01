@@ -13,6 +13,7 @@ void set_opt(encoder_t *encoder, char *option, char *value) {
 }
 
 int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
+    avcodec_register_all();
     int max_buffer = 4 * (bitrate / FPS);
 
     if (encoder->type == NVENC_ENCODE) {
