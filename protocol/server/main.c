@@ -576,6 +576,7 @@ int main() {
         struct SocketContext PacketReceiveContext = {0};
         struct SocketContext PacketTCPContext = {0};
 
+        /*
         if (CreateUDPContext(&PacketReceiveContext, "S", "0.0.0.0",
                              PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
             mprintf("Failed to start connection\n");
@@ -594,6 +595,7 @@ int main() {
             closesocket(PacketReceiveContext.s);
             continue;
         }
+        */
 
         if (CreateTCPContext(&PacketTCPContext, "S", "0.0.0.0", PORT_SHARED_TCP,
                              1, 500) < 0) {
