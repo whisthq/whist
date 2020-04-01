@@ -402,11 +402,6 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			return -1;
 		}
 
-		origin_addr;
-		origin_addr.sin_family = AF_INET;
-		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-		origin_addr.sin_port = htons( (unsigned short)51010 );
-
 		// Bind to port
 		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
 		{
@@ -437,9 +432,6 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			closesocket( context->s );
 			return -1;
 		}
-#endif
-
-		/*
 
 		// Set listen queue
 		set_timeout( context->s, stun_timeout_ms );
@@ -479,7 +471,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 
 		closesocket( context->s );
 		context->s = new_socket;
-		*/
+#endif
 
 		mprintf( "Client received at %s:%d!\n", inet_ntoa( context->addr.sin_addr ), ntohs( context->addr.sin_port ) );
 
