@@ -42,7 +42,6 @@ def createVM(self, vm_size, location):
             run_command_parameters
         )
         result = poller.result()
-        print("POWERSHELL FINISHED RUNNING")
         print(result.value[0].message)
 
     return fetchVMCredentials(vmParameters['vmName'])
