@@ -164,6 +164,13 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		return -1;
 	}
 
+	// Tell the STUN to use TCP
+#if USING_STUN
+	SOCKET udp_s = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+	sendto( udp_s, NULL, 0, 0, &stun_addr, sizeof( stun_addr ) );
+	closesocket( udp_s );
+#endif
+
 	if( strcmp( origin, "C" ) == 0 )
 	{
 		// Client connection protocol
@@ -244,13 +251,6 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 	{
 		// Server connection protocol
 		context->is_server = true;
-
-		// Tell the STUN to use TCP
-#if USING_STUN
-		SOCKET udp_s = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
-		sendto( udp_s, NULL, 0, 0, &stun_addr, sizeof( stun_addr ) );
-		closesocket( udp_s );
-#endif
 
 		// Reuse addr
 		int opt = 1;
