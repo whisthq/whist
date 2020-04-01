@@ -361,6 +361,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		context->is_server = true;
 
 #if USING_STUN
+		// Tell the STUN to log our requested virtual port
 		struct sockaddr_in stun_addr;
 		stun_addr.sin_family = AF_INET;
 		stun_addr.sin_addr.s_addr = inet_addr( STUN_IP );
@@ -378,6 +379,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			return -1;
 		}
 #else
+		// Bind the server port to the advertized public port
 		struct sockaddr_in origin_addr;
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
@@ -403,7 +405,9 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 #endif
 
 		socklen_t slen = sizeof(context->addr);
-		while (recvfrom(context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen) < 0) {
+		stun_entry_t entry;
+		int recv_size;
+		while ((recv_size = recvfrom(context->s, &entry, sizeof( entry ), 0, (struct sockaddr*)(&context->addr), &slen)) < 0) {
 #if USING_STUN
 			// If we haven't spent too much time waiting, and our previous 100ms poll failed, then send another STUN update
 			if( GetTimer( recv_timer ) * 1000 < stun_timeout_ms && (GetLastNetworkError() == ETIMEDOUT || GetLastNetworkError() == EAGAIN) )
@@ -422,12 +426,62 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			return -1;
 		}
 
-		// Send acknowledgement
-		if (sendp(context, NULL, 0) < 0) {
-			mprintf("Could not send ack to client! %d\n", GetLastNetworkError());
-			closesocket(context->s);
+		set_timeout( context->s, 350 );
+
+#if USING_STUN
+		if( recv_size != sizeof( entry ) )
+		{
+			mprintf( "STUN response was not the size of an entry!\n" );
+			closesocket( context->s );
 			return -1;
 		}
+
+		// Setup addr to open up port
+		context->addr.sin_family = AF_INET;
+		context->addr.sin_addr.s_addr = entry.ip;
+		context->addr.sin_port = entry.private_port;
+
+		mprintf( "Received STUN response, client connection desired from %s:%d\n", inet_ntoa( context->addr.sin_addr ), ntohs( context->addr.sin_port ) );
+
+		SDL_Delay( 150 );
+
+		// Open up port to receive message
+		if( sendp( context, NULL, 0 ) < 0 )
+		{
+			mprintf( "Could not open up port!\n" );
+			closesocket( context->s );
+			return -1;
+		}
+
+		SDL_Delay( 150 );
+
+		// Send acknowledgement
+		if( sendp( context, NULL, 0 ) < 0 )
+		{
+			mprintf( "Could not open up port!\n" );
+			closesocket( context->s );
+			return -1;
+		}
+
+		// Wait for client to connect
+		if( recvfrom( context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen ) < 0 && recvfrom( context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen ) < 0 )
+		{
+			mprintf( "Did not receive client confirmation!\n" );
+			closesocket( context->s );
+			return -1;
+		}
+
+		// Check that confirmation matches STUN's claimed client
+		if( context->addr.sin_addr.s_addr != entry.ip || context->addr.sin_port != entry.private_port )
+		{
+			mprintf( "Connection did not match STUN's claimed client\n" );
+			closesocket( context->s );
+			return -1;
+		}
+#else
+		// Send acknowledgement of connection
+		sendp( context, NULL, 0 );
+#endif
 
 		mprintf("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 	}
