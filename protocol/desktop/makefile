@@ -49,7 +49,7 @@ CFLAGS = \
 	-DWIN32_LEAN_AND_MEAN \
 	-DUNICODE \
 	-DWIN32 \
-	-I ../include
+	-I ../include -I ../include/ffmpeg
 
 # system libs to link against
 SHARED_LIBS = \
