@@ -250,6 +250,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		mprintf( "TCP STUN responded that the TCP server is located at %s:%d\n", inet_ntoa( a ), ntohs( entry.private_port ) );
 
 		closesocket( context->s );
+
 		context->s = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
 		if( context->s <= 0 )
 		{ // Windows & Unix cases
