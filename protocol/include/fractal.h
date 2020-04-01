@@ -42,6 +42,7 @@
 	#define closesocket close
 #endif
 
+/*
 #include "ffmpeg/libavcodec/avcodec.h"
 #include "ffmpeg/libavdevice/avdevice.h"
 #include "ffmpeg/libavfilter/avfilter.h"
@@ -53,6 +54,18 @@
 #include "ffmpeg/libswscale/swscale.h"
 #include "ffmpeg/libavutil/hwcontext.h"
 #include "ffmpeg/libavutil/hwcontext_qsv.h"
+*/
+
+#include <libavcodec/avcodec.h>
+#include <libavdevice/avdevice.h>
+#include <libavfilter/avfilter.h>
+#include <libavutil/avutil.h>
+#include <libavutil/imgutils.h>
+#include <libavfilter/buffersink.h>
+#include <libavfilter/buffersrc.h>
+#include <libswscale/swscale.h>
+#include <libavutil/hwcontext.h>
+#include <libavutil/hwcontext_qsv.h>
 
 #define SDL_MAIN_HANDLED
 #include "../include/SDL2/SDL.h"

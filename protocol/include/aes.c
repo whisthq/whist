@@ -4,10 +4,10 @@
 
 #include "aes.h"
 
-#include "openssl/conf.h"
-#include "openssl/evp.h"
-#include "openssl/err.h"
-#include "openssl/hmac.h"
+#include <openssl/conf.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
+#include <openssl/hmac.h>
 
 int aes_encrypt( unsigned char* plaintext, int plaintext_len, unsigned char* key,
          unsigned char* iv, unsigned char* ciphertext );

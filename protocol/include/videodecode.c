@@ -70,11 +70,14 @@ enum AVPixelFormat match_vaapi(AVCodecContext* ctx,
 }
 
 int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
+    avcodec_register_all();
+
     if (decoder->type == DECODE_TYPE_SOFTWARE) {
         mprintf("Trying software decoder\n");
         decoder->codec = avcodec_find_decoder_by_name("h264");
         if (!decoder->codec) {
             mprintf("Could not find video codec\n");
+            exit(-1);
             return -1;
         }
         decoder->context = avcodec_alloc_context3(decoder->codec);
@@ -161,7 +164,7 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
             return -1;
         }
 
-        decoder->codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+        decoder->codec = avcodec_find_decoder_by_name("h264");
 
         if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
             mprintf("alloccontext3 failed w/ error code: %d\n",
