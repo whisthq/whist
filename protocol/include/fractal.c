@@ -197,7 +197,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			return -1;
 		}
 
-		int slen;
+		int slen = sizeof( origin_addr );
 		if( getsockname( context->s, (struct sockaddr*)&origin_addr, &slen ) < 0 )
 		{
 			mprintf( "Could not get sock name\n" );
@@ -313,17 +313,6 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		}
 
 		struct sockaddr_in origin_addr;
-		origin_addr.sin_family = AF_INET;
-		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-		origin_addr.sin_port = htons( (unsigned short)51010 );
-
-		// Bind to port
-		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
-		{
-			mprintf( "Failed to bind to port! %d\n", GetLastNetworkError() );
-			closesocket( context->s );
-			return -1;
-		}
 
 #if USING_STUN
 		// Connect over TCP to STUN
@@ -331,6 +320,14 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		if( connect( context->s, (struct sockaddr*)(&stun_addr), sizeof( stun_addr ) ) < 0 )
 		{
 			mprintf( "Could not connect over TCP to server %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		int slen = sizeof(origin_addr);
+		if( getsockname( context->s, (struct sockaddr*)&origin_addr, &slen ) < 0 )
+		{
+			mprintf( "Could not get sock name\n" );
 			closesocket( context->s );
 			return -1;
 		}
@@ -428,6 +425,18 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		}
 
 		context->addr = client_addr;
+#else
+		origin_addr.sin_family = AF_INET;
+		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
+		origin_addr.sin_port = htons( (unsigned short)51010 );
+
+		// Bind to port
+		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
+		{
+			mprintf( "Failed to bind to port! %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
 #endif
 
 		/*
