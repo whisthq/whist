@@ -42,20 +42,6 @@
 	#define closesocket close
 #endif
 
-/*
-#include "ffmpeg/libavcodec/avcodec.h"
-#include "ffmpeg/libavdevice/avdevice.h"
-#include "ffmpeg/libavfilter/avfilter.h"
-#include "ffmpeg/libavformat/avformat.h"
-#include "ffmpeg/libavutil/avutil.h"
-#include "ffmpeg/libavutil/imgutils.h"
-#include "ffmpeg/libavfilter/buffersink.h"
-#include "ffmpeg/libavfilter/buffersrc.h"
-#include "ffmpeg/libswscale/swscale.h"
-#include "ffmpeg/libavutil/hwcontext.h"
-#include "ffmpeg/libavutil/hwcontext_qsv.h"
-*/
-
 #include <libavcodec/avcodec.h>
 #include <libavdevice/avdevice.h>
 #include <libavfilter/avfilter.h>
@@ -80,6 +66,8 @@
 #define PORT_CLIENT_TO_SERVER 32262
 #define PORT_SERVER_TO_CLIENT 32263
 #define PORT_SHARED_TCP 32264
+
+#define USING_STUN true
 
 #define MAX_PAYLOAD_SIZE 1285
 #define MAXIMUM_MBPS 30.0
