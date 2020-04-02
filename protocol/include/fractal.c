@@ -554,8 +554,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		mprintf("Connecting to server...\n");
 
-		SDL_Delay( 150 );
-
 		// Open up the port
 		if (sendp(context, NULL, 0) < 0) {
 			mprintf("Could not send message to server %d\n", GetLastNetworkError());
@@ -575,7 +573,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		// Receive server's acknowledgement of connection
 		socklen_t slen = sizeof(context->addr);
-		if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *) &context->addr, &slen) < 0 && recvfrom( context->s, NULL, 0, 0, (struct sockaddr *)&context->addr, &slen ) < 0 ) {
+		if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *) &context->addr, &slen) < 0) {
 			mprintf("Did not receive response from server! %d\n", GetLastNetworkError());
 			closesocket(context->s);
 			return -1;
@@ -670,8 +668,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		mprintf( "Received STUN response, client connection desired from %s:%d\n", inet_ntoa( context->addr.sin_addr ), ntohs( context->addr.sin_port ) );
 
-		SDL_Delay( 150 );
-
 		// Open up port to receive message
 		if( sendp( context, NULL, 0 ) < 0 )
 		{
@@ -691,7 +687,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		}
 
 		// Wait for client to connect
-		if( recvfrom( context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen ) < 0 && recvfrom( context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen ) < 0 )
+		if( recvfrom( context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen ) < 0)
 		{
 			mprintf( "Did not receive client confirmation!\n" );
 			closesocket( context->s );
