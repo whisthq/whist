@@ -140,7 +140,7 @@ void updateWidthAndHeight(int width, int height) {
     }
 
     struct SwsContext* sws_ctx = NULL;
-    if( input_fmt != AV_PIX_FMT_YUV420P )
+    if( input_fmt != AV_PIX_FMT_YUV420P || width != output_width || height != output_height)
     {
         sws_ctx = sws_getContext( width, height,
                                   input_fmt, output_width, output_height,
