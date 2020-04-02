@@ -137,7 +137,7 @@ typedef struct
 #define STUN_IP "52.22.246.213"
 #define STUN_PORT 48800
 
-#define USING_STUN true
+#define USING_STUN false
 
 int CreateTCPContext( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms )
 {
@@ -424,7 +424,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 #else
 		origin_addr.sin_family = AF_INET;
 		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-		origin_addr.sin_port = htons( (unsigned short)51010 );
+		origin_addr.sin_port = htons( (unsigned short)port );
 
 		// Bind to port
 		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
