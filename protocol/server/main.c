@@ -297,7 +297,7 @@ static int32_t SendVideo(void* opaque) {
             }
 
             device = &rdevice;
-            if ( CreateCaptureDevice( device, client_width, client_height ) < 0) {
+            if (CreateCaptureDevice(device, client_width, client_height) < 0) {
                 mprintf("Failed to create capture device\n");
                 device = NULL;
                 update_device = true;
@@ -347,7 +347,6 @@ static int32_t SendVideo(void* opaque) {
         // Only if we have a frame to render
         if (accumulated_frames > 0 || wants_iframe ||
             GetTimer(last_frame_capture) > 1.0 / MIN_FPS) {
-
             StartTimer(&last_frame_capture);
 
             if (accumulated_frames > 1) {
@@ -568,7 +567,9 @@ int main() {
 #endif
 
     if (sizeof(unsigned short) != 2) {
-        mprintf("Error: Unsigned short is length %d bytes instead of 2 bytes!\n", sizeof(unsigned short));
+        mprintf(
+            "Error: Unsigned short is length %d bytes instead of 2 bytes!\n",
+            sizeof(unsigned short));
         exit(-1);
     }
 
@@ -718,9 +719,9 @@ int main() {
                     // If decrypted successfully
                     if (decrypt_len > 0) {
                         // Copy data into an fmsg
-                        memcpy(
-                            fmsg, decrypted_packet.data,
-                            max(sizeof(*fmsg), (size_t) decrypted_packet.payload_size));
+                        memcpy(fmsg, decrypted_packet.data,
+                               max(sizeof(*fmsg),
+                                   (size_t)decrypted_packet.payload_size));
 
                         // Check to see if decrypted packet is of valid size
                         if (decrypted_packet.payload_size !=
