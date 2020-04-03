@@ -99,8 +99,13 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 	static int last_clipboard_sequence_number = -1;
 #elif __APPLE__
 	#include "clipboard_osx.h"
+	#include "mac_utils.h"
+	#include <unistd.h>
+	#include <sys/syslimits.h>
+
 	bool clipboardHasImage;
 	bool clipboardHasString;
+	bool clipboardHasFiles;
 	static int last_clipboard_sequence_number = -1;
 #endif
 
@@ -114,6 +119,7 @@ void StartTrackingClipboardUpdates()
 	last_clipboard_sequence_number = -1; // to capture the first event
 	clipboardHasImage = false;
 	clipboardHasString = false;
+	clipboardHasFiles = false;
 #else
 // TODO: LINUX UBUNTU/DEBIAN
 #endif
@@ -136,7 +142,8 @@ bool hasClipboardUpdated()
 		// check if new clipboard is an image or a string
 		clipboardHasImage = ClipboardHasImage();
 		clipboardHasString = ClipboardHasString();
-		hasUpdated = (clipboardHasImage || clipboardHasString); // should be always set to true in here
+		clipboardHasFiles = ClipboardHasFiles();
+		hasUpdated = (clipboardHasImage || clipboardHasString || clipboardHasFiles); // should be always set to true in here
 		last_clipboard_sequence_number = new_clipboard_sequence_number;
 	}
 #else
@@ -329,7 +336,68 @@ ClipboardData* GetClipboard()
 
 	CloseClipboard();
 #elif __APPLE__
-	if (clipboardHasString) {
+// do clipboardHasFiles check first because it is more restrictive
+// otherwise gets multiple files confused with string and thinks both are true
+	if( clipboardHasFiles )
+	{
+		mprintf( "Getting files from clipboard\n" );
+
+		// allocate memory for filenames and paths
+		OSXFilenames* filenames[MAX_URLS];
+		for( size_t i = 0; i < MAX_URLS; i++ )
+		{
+			filenames[i] = (OSXFilenames*)malloc( sizeof( OSXFilenames ) );
+			filenames[i]->filename = (char*)malloc( PATH_MAX * sizeof( char ) );
+			filenames[i]->fullPath = (char*)malloc( PATH_MAX * sizeof( char ) );
+
+			// pad with null terminators
+			memset( filenames[i]->filename, '\0', PATH_MAX * sizeof( char ) );
+			memset( filenames[i]->fullPath, '\0', PATH_MAX * sizeof( char ) );
+		}
+
+		// populate filenames array with file URLs
+		ClipboardGetFiles( filenames );
+
+		// set clipboard data attributes to be returned
+		cb->type = CLIPBOARD_FILES;
+		cb->size = 0;
+
+		// delete clipboard directory and all its files
+		if( dir_exists( "./clipboard" ) > 0 )
+		{
+			mac_rm_rf( "./clipboard" );
+		}
+
+		// make new clipboard directory
+		mkdir( "./clipboard", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+
+
+		// make symlinks for all files in clipboard and store in directory
+		for( size_t i = 0; i < MAX_URLS; i++ )
+		{
+			// if there are no more file URLs in clipboard, exit loop
+			if( *filenames[i]->fullPath != '\0' )
+			{
+				char symlinkName[PATH_MAX] = "";
+				strcpy( symlinkName, "./clipboard/" );
+				strcat( symlinkName, filenames[i]->filename );
+				symlink( filenames[i]->fullPath, symlinkName );
+			} else
+			{
+				break;
+			}
+		}
+
+		// free heap memory
+		for( size_t i = 0; i < MAX_URLS; i++ )
+		{
+			free( filenames[i]->filename );
+			free( filenames[i]->fullPath );
+			free( filenames[i] );
+		}
+
+	} else if( clipboardHasString )
+	{
 		// get the string
 		const char* clipboard_string = ClipboardGetString();
 		int data_size = strlen(clipboard_string) + 1; // for null terminator
@@ -517,6 +585,30 @@ void SetClipboard( ClipboardData* cb )
 		ClipboardSetImage(data, cb->size + 14);
 		free(data);
 		break;
+	case CLIPBOARD_FILES:
+		mprintf( "SetClipboard to Files\n" );
+
+		// allocate memory to store filenames in clipboard
+		char* filenames[MAX_URLS];
+		for( size_t i = 0; i < MAX_URLS; i++ )
+		{
+			filenames[i] = (char*)malloc( PATH_MAX * sizeof( char ) );
+			memset( filenames[i], '\0', PATH_MAX * sizeof( char ) );
+		}
+
+		// populate filenames
+		get_filenames( "./clipboard", filenames );
+
+		// add files to clipboard
+		ClipboardSetFiles( filenames );
+
+		// free memory
+		for( size_t i = 0; i < MAX_URLS; i++ )
+		{
+			free( filenames[i] );
+		}
+
+		break;
 	default:
 		mprintf("No clipboard data to set!\n");
 		break;
@@ -592,15 +684,20 @@ int UpdateClipboardThread( void* opaque )
 
 		if( clipboard->type == CLIPBOARD_FILES )
 		{
-			char prev[] = "unison -sshargs \"-l vm1 -i sshkey\" clipboard \"ssh://";
-			char* middle = (char*)server_ip;
-			char end[] = "/C:\\Program Files\\Fractal\\clipboard/\" -force clipboard -confirmbigdel=false -batch";
+			char cmd[1000] = "";
+			strcat( cmd, "UNISON=./.unison; " );
 
-			char command[sizeof( prev ) + 100 + sizeof( end )];
-			memcpy( command, prev, strlen( prev ) );
-			memcpy( command + strlen( prev ), middle, strlen( middle ) );
-			memcpy( command + strlen( prev ) + strlen( middle ), end, strlen( end ) + 1 );
-			runcmd( command );
+#ifdef _WIN32
+			strcat( cmd, "unison " );
+#else
+			strcat( cmd, "./unison " );
+#endif
+
+			strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" clipboard \"ssh://" );
+			strcat( cmd, (char*)server_ip );
+			strcat( cmd, "/C:/Program Files/Fractal/clipboard/\" -force clipboard -follow \"Path *\" -ignorearchives -confirmbigdel=false -batch" );
+
+			runcmd( cmd );
 		}
 
 		FractalClientMessage* fmsg = malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) + clipboard->size );

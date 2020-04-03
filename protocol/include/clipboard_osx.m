@@ -5,6 +5,8 @@
 #include <AppKit/AppKit.h>
 #include "clipboard_osx.h"
 
+#define mprintf printf
+
 int GetClipboardChangecount() {
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSInteger changeCount = [pasteboard changeCount];
@@ -79,4 +81,58 @@ void ClipboardSetImage(char *img, int len) {
 	[[NSPasteboard generalPasteboard] setData:[image TIFFRepresentation] forType:NSPasteboardTypeTIFF];	
 	[image release];
     return;
+}
+
+bool ClipboardHasFiles() {
+	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    NSArray *classArray = [NSArray arrayWithObject:[NSURL class]];
+    NSDictionary *options = [NSDictionary dictionaryWithObject:
+		[NSNumber numberWithBool:YES] forKey:NSPasteboardURLReadingFileURLsOnlyKey];
+	return [pasteboard canReadObjectForClasses:classArray options:options];
+}
+
+void ClipboardGetFiles(OSXFilenames *filenames[]) {
+	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+	NSArray *classArray = [NSArray arrayWithObject:[NSURL class]];
+	
+	// only file URLs
+	NSDictionary *options = [NSDictionary dictionaryWithObject:
+		[NSNumber numberWithBool:YES] forKey:NSPasteboardURLReadingFileURLsOnlyKey];
+
+	if ([pasteboard canReadObjectForClasses:classArray options:options]) {
+		NSArray *fileURLs = [pasteboard readObjectsForClasses:classArray options:options];
+		for (NSUInteger i = 0; i < [fileURLs count]; i++){
+			strcpy(filenames[i]->fullPath, [fileURLs[i] fileSystemRepresentation]);
+			strcpy(filenames[i]->filename, [[fileURLs[i] lastPathComponent]UTF8String]);
+		}
+	}
+	else {
+        mprintf("Can't get Mac Clipboard Files data.\n");
+	}
+
+}
+
+void ClipboardSetFiles(char* filepaths[]) {
+	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+
+	// clear pasteboard
+	[pasteboard clearContents];
+
+	// create NSArray of NSURLs
+	NSMutableArray *mutableArrURLs = [NSMutableArray arrayWithCapacity:MAX_URLS];
+
+	// convert 
+	for (size_t i = 0; i < MAX_URLS; i++) {
+		if (*filepaths[i] != '\0') {
+			NSString *urlString = [NSString stringWithUTF8String:filepaths[i]];
+			NSURL* url = [[NSURL fileURLWithPath:urlString] absoluteURL];
+			if (url == nil) {
+				printf("Error in converting C string relative path to NSURL.\n");
+			}
+			[mutableArrURLs addObject:url];
+		} else {
+			break;
+		}
+  	}
+	[pasteboard writeObjects: mutableArrURLs];
 }
