@@ -87,6 +87,7 @@ def createNic(name, location, tries):
 def deleteResource(name):
     _, compute_client, network_client = createClients()
     vnetName, subnetName, ipName, nicName = name + '_vnet', name + '_subnet', name + '_ip', name + '_nic'
+    hr = 1
 
     try:
         async_vnet_delete = network_client.virtual_networks.delete(
@@ -97,7 +98,7 @@ def deleteResource(name):
         print("Vnet deleted")
     except Exception as e:
         print(e)
-        return -1
+        hr = -1
 
     try:
         async_subnet_delete = network_client.subnets.delete(
@@ -108,9 +109,8 @@ def deleteResource(name):
         async_subnet_delete.wait()
         print("Subnet deleted")
     except Exception as e:
-        return -1
         print(e)
-        return -1
+        hr = -1
 
     try:
         async_ip_delete = network_client.public_ip_addresses.delete(
@@ -121,7 +121,7 @@ def deleteResource(name):
         print("IP deleted")
     except Exception as e:
         print(e)
-        return -1
+        hr = -1
 
     try:
         async_nic_delete = network_client.network_interfaces.delete(
@@ -132,7 +132,7 @@ def deleteResource(name):
         print("NIC deleted")
     except Exception as e:
         print(e)
-        return -1
+        hr = -1
 
     # virtual_machine = getVM(name)
     # os_disk_name = virtual_machine.storage_profile.os_disk.name
@@ -145,9 +145,9 @@ def deleteResource(name):
         print("VM deleted")
     except Exception as e:
         print(e)
-        return -1
+        hr = -1
 
-    return 1
+    return hr
 
 
 def createVMParameters(vmName, nic_id, vm_size, location):
