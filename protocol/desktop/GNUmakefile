@@ -70,6 +70,7 @@ OBJS = \
 	audio.o \
 	aes.o \
 	clipboard_osx.o \
+	mac_utils.o \
 	clipboard.o \
 	main.o
 
@@ -153,6 +154,10 @@ aes.o:
 # compile the MacOS clipboard source file into object file (Requires MacOS 10.14+)
 clipboard_osx.o:
 	$(CC) -c $(CFLAGS) ../include/clipboard_osx.m
+
+# compile the MacOS utils source file into object file (Requires MacOS 10.14+)
+mac_utils.o:
+	$(CC) -c $(CFLAGS) ../include/mac_utils.c
 
 # compile the general clipboard source file into object file
 clipboard.o:

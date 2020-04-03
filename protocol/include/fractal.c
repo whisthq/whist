@@ -42,7 +42,7 @@ void runcmd( const char* cmdline )
 		CloseHandle( pi.hThread );
 	}
 #else
-	//TODO: rewrite the entire function for Unix
+	system( cmdline );
 #endif
 }
 
