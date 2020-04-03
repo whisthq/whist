@@ -1076,6 +1076,7 @@ void crash_handler(int sig) {
 
   SDL_UnlockMutex(crash_handler_mutex);
 
+  SDL_Delay(100);
   exit(-1);
 }
 #endif
