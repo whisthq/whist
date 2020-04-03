@@ -644,7 +644,7 @@ int main() {
 
         int last_input_id = -1;
         StartTrackingClipboardUpdates();
-
+        initInputPlayback();
         ClearReadingTCP();
 
         while (connected) {
@@ -869,7 +869,7 @@ int main() {
 
         SDL_WaitThread(send_video, NULL);
         SDL_WaitThread(send_audio, NULL);
-
+        stopInputPlayback();
         SDL_DestroyMutex(packet_mutex);
 
         closesocket(PacketReceiveContext.s);

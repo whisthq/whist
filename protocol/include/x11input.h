@@ -7,4 +7,8 @@
 
 void ReplayUserInput(struct FractalClientMessage* fmsg);
 
+void initInputPlayback();
+
+void stopInputPlayback();
+
 #endif  // X11_INPUT_H
