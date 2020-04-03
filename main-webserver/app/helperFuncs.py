@@ -90,6 +90,7 @@ def deleteResource(name):
     hr = 1
 
     try:
+        print("Deallocating VM...")
         async_vm_deallocate = compute_client.virtual_machines.deallocate(
             os.getenv('VM_GROUP'), name)
         async_vm_deallocate.wait()
