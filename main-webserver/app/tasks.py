@@ -71,11 +71,17 @@ def fetchAll(self, update):
     end = time.perf_counter()
     print("{} seconds to fetch from database".format(str(end - start)))
 
-    start = time.perf_counter()
     for entry in azure_portal_vms:
+        start = time.perf_counter()
         vm = getVM(entry.name)
+        end = time.perf_counter()
+        print("{} seconds to get VM".format(str(end - start)))
+        start = time.perf_counter()
         vm_ip = getIP(vm)
+        end = time.perf_counter()
+        print("{} seconds to get IP".format(str(end - start)))
         vm_info = {}
+        start = time.perf_counter()
         try:
             vm_info = {
                 'vm_name': entry.name,
@@ -90,6 +96,8 @@ def fetchAll(self, update):
                 'ip': vm_ip,
                 'location': entry.location
             }  
+        end = time.perf_counter()
+        print("{} seconds to update dict".format(str(end - start)))
 
         vms['value'].append(vm_info)
         vm_usernames.append(entry.os_profile.admin_username)
@@ -97,13 +105,11 @@ def fetchAll(self, update):
 
         if update:
             try:
+                print("Inserting into database")
                 if not entry.name in current_names:
                     insertRow(entry.os_profile.admin_username, entry.name, current_usernames, current_names)
             except:
                 pass
-
-    end = time.perf_counter()
-    print("{} seconds to update dict".format(str(end - start)))
 
     if update:
         for current_vm in current_vms:
