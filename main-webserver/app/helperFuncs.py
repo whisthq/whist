@@ -84,6 +84,72 @@ def createNic(name, location, tries):
             return createNic(name, location, tries + 1)
         else: return None
 
+def deleteResource(name):
+    _, compute_client, network_client = createClients()
+    vnetName, subnetName, ipName, nicName = name + '_vnet', name + '_subnet', name + '_ip', name + '_nic'
+
+    try:
+        async_vnet_delete = network_client.virtual_networks.delete(
+            os.getenv('VM_GROUP'),
+            vnetName
+        )
+        async_vnet_delete.wait()
+        print("Vnet deleted")
+    except Exception as e:
+        print(e)
+        return -1
+
+    try:
+        async_subnet_delete = network_client.subnets.delete(
+            os.getenv('VM_GROUP'),
+            vnetName,
+            subnetName
+        )
+        async_subnet_delete.wait()
+        print("Subnet deleted")
+    except Exception as e:
+        return -1
+        print(e)
+        return -1
+
+    try:
+        async_ip_delete = network_client.public_ip_addresses.delete(
+            os.getenv('VM_GROUP'),
+            ipName
+        )
+        async_ip_delete.wait()
+        print("IP deleted")
+    except Exception as e:
+        print(e)
+        return -1
+
+    try:
+        async_nic_delete = network_client.network_interfaces.delete(
+            os.getenv('VM_GROUP'),
+            nicName
+        )
+        async_nic_delete.wait()
+        print("NIC deleted")
+    except Exception as e:
+        print(e)
+        return -1
+
+    # virtual_machine = getVM(name)
+    # os_disk_name = virtual_machine.storage_profile.os_disk.name
+    # os_disk = compute_client.disks.get(os.getenv('VM_GROUP'), os_disk_name)
+
+    try:
+        async_vm_delete = compute_client.virtual_machines.delete(
+            os.getenv('VM_GROUP'), name)
+        async_vm_delete.wait()
+        print("VM deleted")
+    except Exception as e:
+        print(e)
+        return -1
+
+    return 1
+
+
 def createVMParameters(vmName, nic_id, vm_size, location):
     with engine.connect() as conn:
         oldUserNames = [cell[0] for cell in list(conn.execute('SELECT "vmUserName" FROM v_ms'))]

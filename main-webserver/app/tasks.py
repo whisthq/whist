@@ -96,3 +96,9 @@ def fetchAll(self, update):
             deleteRow(current_vm['vm_username'], current_vm['vm_name'], vm_usernames, vm_names)
 
     return vms
+
+
+@celery.task(bind = True)
+def deleteVMResources(self, name):
+    status = 200 if deleteResource(name) else 404
+    return {'status': status}
