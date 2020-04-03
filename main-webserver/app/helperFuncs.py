@@ -90,6 +90,19 @@ def deleteResource(name):
     hr = 1
 
     try:
+        async_vm_deallocate = compute_client.virtual_machines.deallocate(
+            os.getenv('VM_GROUP'), name)
+        async_vm_deallocate.wait()
+        
+        async_vm_delete = compute_client.virtual_machines.delete(
+            os.getenv('VM_GROUP'), name)
+        async_vm_delete.wait()
+        print("VM deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    try:
         async_vnet_delete = network_client.virtual_networks.delete(
             os.getenv('VM_GROUP'),
             vnetName
@@ -137,15 +150,6 @@ def deleteResource(name):
     # virtual_machine = getVM(name)
     # os_disk_name = virtual_machine.storage_profile.os_disk.name
     # os_disk = compute_client.disks.get(os.getenv('VM_GROUP'), os_disk_name)
-
-    try:
-        async_vm_delete = compute_client.virtual_machines.delete(
-            os.getenv('VM_GROUP'), name)
-        async_vm_delete.wait()
-        print("VM deleted")
-    except Exception as e:
-        print(e)
-        hr = -1
 
     return hr
 

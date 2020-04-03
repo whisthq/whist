@@ -89,7 +89,6 @@ def fetchAll(self, update):
         if update:
             try:
                 if not entry.name in current_names:
-                    print("Inserting into database")
                     insertRow(entry.os_profile.admin_username, entry.name, current_usernames, current_names)
             except:
                 pass
