@@ -93,7 +93,7 @@ def deleteResource(name):
         async_vm_deallocate = compute_client.virtual_machines.deallocate(
             os.getenv('VM_GROUP'), name)
         async_vm_deallocate.wait()
-        
+
         async_vm_delete = compute_client.virtual_machines.delete(
             os.getenv('VM_GROUP'), name)
         async_vm_delete.wait()
@@ -169,10 +169,10 @@ def createVMParameters(vmName, nic_id, vm_size, location):
         }
 
         command = text("""
-            INSERT INTO v_ms("vmName", "vmUserName", "osDisk", "running") 
-            VALUES(:vmName, :vmUserName, :osDisk, :running)
+            INSERT INTO v_ms("vmName", "vmUserName", "osDisk") 
+            VALUES(:vmName, :vmUserName, :osDisk)
             """)
-        params = {'vmName': vmName, 'vmUserName': userName, 'osDisk': None, 'running': False}
+        params = {'vmName': vmName, 'vmUserName': userName, 'osDisk': None}
         with engine.connect() as conn:
             conn.execute(command, **params)
             return {'params': {
@@ -444,7 +444,7 @@ def fetchUserVMs(username):
         params = {}
         with engine.connect() as conn:
             vms_info = conn.execute(command, **params).fetchall()
-            out = {vm_info[0]: vm_info[1] for vm_info in vms_info}
+            out = {vm_info[0]: {'username': vm_info[1], 'ip': vm_info[3]} for vm_info in vms_info}
             return out
 
 def fetchUserCode(username):
@@ -742,5 +742,16 @@ def storeFeedback(username, feedback):
         VALUES(:email, :feedback)
         """)
     params = {'email': username, 'feedback': feedback}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+
+def updateVMIP(vm_name, ip):
+    command = text("""
+        UPDATE v_ms
+        SET ip = :ip
+        WHERE
+           "vmName" = :vm_name
+        """)
+    params = {'ip': ip, 'vm_name': vm_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
