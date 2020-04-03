@@ -554,6 +554,7 @@ void update() {
 }
 
 int main() {
+    initBacktraceHandler();
     initMultiThreadedPrintf(true);
 
 #ifdef _WIN32
@@ -607,6 +608,7 @@ int main() {
             closesocket(PacketSendContext.s);
             continue;
         }
+
 #ifdef _WIN32
         InitDesktop();
 #endif

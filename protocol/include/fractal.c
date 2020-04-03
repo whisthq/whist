@@ -137,8 +137,6 @@ typedef struct
 #define STUN_IP "52.22.246.213"
 #define STUN_PORT 48800
 
-#define USING_STUN false
-
 int CreateTCPContext( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms )
 {
 	context->is_tcp = true;
@@ -148,6 +146,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 	stun_addr.sin_family = AF_INET;
 	stun_addr.sin_addr.s_addr = inet_addr( STUN_IP );
 	stun_addr.sin_port = htons( STUN_PORT );
+	int opt;
 
 	// Function parameter checking
 	if( !(strcmp( origin, "C" ) == 0 || strcmp( origin, "S" ) == 0) )
@@ -164,16 +163,42 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		return -1;
 	}
 
+	// Tell the STUN to use TCP
+#if USING_STUN
+	SOCKET udp_s = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+	sendto( udp_s, NULL, 0, 0, (struct sockaddr*)&stun_addr, sizeof( stun_addr ) );
+	closesocket( udp_s );
+#endif
+
 	if( strcmp( origin, "C" ) == 0 )
 	{
 		// Client connection protocol
 		context->is_server = false;
 
 #if USING_STUN
+		// Reuse addr
+		opt = 1;
+		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
+			(const char*)&opt, sizeof( opt ) ) < 0 )
+		{
+			mprintf( "Could not setsockopt SO_REUSEADDR\n" );
+			return -1;
+		}
+
+		struct sockaddr_in origin_addr;
+
 		// Connect to TCP server
 		if( connect( context->s, (struct sockaddr*)(&stun_addr), sizeof( stun_addr ) ) < 0 )
 		{
 			mprintf( "Could not connect over TCP to server %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		int slen = sizeof( origin_addr );
+		if( getsockname( context->s, (struct sockaddr*)&origin_addr, &slen ) < 0 )
+		{
+			mprintf( "Could not get sock name\n" );
 			closesocket( context->s );
 			return -1;
 		}
@@ -220,14 +245,46 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		// Print STUN response
 		struct in_addr a;
 		a.s_addr = entry.ip;
-		mprintf( "TCP STUN notified of desired request from %s:%d", inet_ntoa( a ), ntohs( entry.private_port ) );
-#endif
+		mprintf( "TCP STUN responded that the TCP server is located at %s:%d\n", inet_ntoa( a ), ntohs( entry.private_port ) );
 
+		closesocket( context->s );
+
+		context->s = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
+		if( context->s <= 0 )
+		{ // Windows & Unix cases
+			mprintf( "Could not create UDP socket %d\n", GetLastNetworkError() );
+			return -1;
+		}
+
+		// Reuse addr
+		opt = 1;
+		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
+			(const char*)&opt, sizeof( opt ) ) < 0 )
+		{
+			mprintf( "Could not setsockopt SO_REUSEADDR\n" );
+			return -1;
+		}
+
+		// Bind to port
+		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
+		{
+			mprintf( "Failed to bind to port! %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		context->addr.sin_family = AF_INET;
+		context->addr.sin_addr.s_addr = entry.ip;
+		context->addr.sin_port = entry.private_port;
+#else
 		context->addr.sin_family = AF_INET;
 		context->addr.sin_addr.s_addr = inet_addr( destination );
 		context->addr.sin_port = htons( (unsigned short) port );
+#endif
 
 		mprintf( "Connecting to server...\n" );
+
+		SDL_Delay( 200 );
 
 		// Connect to TCP server
 		if( connect( context->s, (struct sockaddr*)(&context->addr), sizeof( context->addr ) ) < 0 )
@@ -245,15 +302,8 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		// Server connection protocol
 		context->is_server = true;
 
-		// Tell the STUN to use TCP
-#if USING_STUN
-		SOCKET udp_s = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
-		sendto( udp_s, NULL, 0, 0, &stun_addr, sizeof( stun_addr ) );
-		closesocket( udp_s );
-#endif
-
 		// Reuse addr
-		int opt = 1;
+		opt = 1;
 		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
 			(const char*)&opt, sizeof( opt ) ) < 0 )
 		{
@@ -262,17 +312,6 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		}
 
 		struct sockaddr_in origin_addr;
-		origin_addr.sin_family = AF_INET;
-		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-		origin_addr.sin_port = htons( (unsigned short)port );
-
-		// Bind to port
-		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
-		{
-			mprintf( "Failed to bind to port! %d\n", GetLastNetworkError() );
-			closesocket( context->s );
-			return -1;
-		}
 
 #if USING_STUN
 		// Connect over TCP to STUN
@@ -280,6 +319,14 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		if( connect( context->s, (struct sockaddr*)(&stun_addr), sizeof( stun_addr ) ) < 0 )
 		{
 			mprintf( "Could not connect over TCP to server %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		int slen = sizeof(origin_addr);
+		if( getsockname( context->s, (struct sockaddr*)&origin_addr, &slen ) < 0 )
+		{
+			mprintf( "Could not get sock name\n" );
 			closesocket( context->s );
 			return -1;
 		}
@@ -323,9 +370,18 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		}
 
 		// Print STUN response
-		struct in_addr a;
-		a.s_addr = entry.ip;
-		mprintf( "TCP STUN notified of desired request from %s:%d", inet_ntoa( a ), ntohs( entry.private_port ) );
+		struct sockaddr_in client_addr;
+		client_addr.sin_family = AF_INET;
+		client_addr.sin_addr.s_addr = entry.ip;
+		client_addr.sin_port = entry.private_port;
+		mprintf( "TCP STUN notified of desired request from %s:%d\n", inet_ntoa( client_addr.sin_addr ), ntohs( client_addr.sin_port ) );
+
+		/*
+		if( connect( context->s, (struct sockaddr*)(&client_addr), sizeof( client_addr ) ) < 0 )
+		{
+			mprintf( "Could not connect! (Expected)\n" );
+		}
+		*/
 
 		closesocket( context->s );
 
@@ -337,10 +393,13 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			return -1;
 		}
 
-		origin_addr;
-		origin_addr.sin_family = AF_INET;
-		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-		origin_addr.sin_port = htons( (unsigned short) port );
+		opt = 1;
+		if( setsockopt( context->s, SOL_SOCKET, SO_REUSEADDR,
+			(const char*)&opt, sizeof( opt ) ) < 0 )
+		{
+			mprintf( "Could not setsockopt SO_REUSEADDR\n" );
+			return -1;
+		}
 
 		// Bind to port
 		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
@@ -349,7 +408,29 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			closesocket( context->s );
 			return -1;
 		}
-#endif
+
+		mprintf( "WAIT\n" );
+
+		if( connect( context->s, (struct sockaddr*)&client_addr, sizeof( client_addr ) ) < 0 )
+		{
+			mprintf( "Failed to connect! %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
+
+		context->addr = client_addr;
+#else
+		origin_addr.sin_family = AF_INET;
+		origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
+		origin_addr.sin_port = htons( (unsigned short)port );
+
+		// Bind to port
+		if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
+		{
+			mprintf( "Failed to bind to port! %d\n", GetLastNetworkError() );
+			closesocket( context->s );
+			return -1;
+		}
 
 		// Set listen queue
 		set_timeout( context->s, stun_timeout_ms );
@@ -389,6 +470,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 
 		closesocket( context->s );
 		context->s = new_socket;
+#endif
 
 		mprintf( "Client received at %s:%d!\n", inet_ntoa( context->addr.sin_addr ), ntohs( context->addr.sin_port ) );
 
@@ -472,8 +554,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		mprintf("Connecting to server...\n");
 
-		SDL_Delay( 150 );
-
 		// Open up the port
 		if (sendp(context, NULL, 0) < 0) {
 			mprintf("Could not send message to server %d\n", GetLastNetworkError());
@@ -493,14 +573,13 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		// Receive server's acknowledgement of connection
 		socklen_t slen = sizeof(context->addr);
-		if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *) &context->addr, &slen) < 0 && recvfrom( context->s, NULL, 0, 0, (struct sockaddr *)&context->addr, &slen ) < 0 ) {
+		if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *) &context->addr, &slen) < 0) {
 			mprintf("Did not receive response from server! %d\n", GetLastNetworkError());
 			closesocket(context->s);
 			return -1;
 		}
 
-		mprintf( "Connected to server on %s:%d!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port) );
-		mprintf("Connected to server on %s:%d!\n", destination, port);
+		mprintf( "Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr), port, ntohs(context->addr.sin_port) );
 	}
 	else {
 		// Server connection protocol
@@ -589,8 +668,6 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 
 		mprintf( "Received STUN response, client connection desired from %s:%d\n", inet_ntoa( context->addr.sin_addr ), ntohs( context->addr.sin_port ) );
 
-		SDL_Delay( 150 );
-
 		// Open up port to receive message
 		if( sendp( context, NULL, 0 ) < 0 )
 		{
@@ -610,7 +687,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		}
 
 		// Wait for client to connect
-		if( recvfrom( context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen ) < 0 && recvfrom( context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen ) < 0 )
+		if( recvfrom( context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen ) < 0)
 		{
 			mprintf( "Did not receive client confirmation!\n" );
 			closesocket( context->s );
@@ -970,7 +1047,48 @@ uint32_t Hash(void* buf, size_t len)
 	return hash;
 }
 
+#ifndef _WIN32
+#include <execinfo.h>
+#include <signal.h>
+
+SDL_mutex* crash_handler_mutex;
+
+void crash_handler(int sig) {
+  SDL_LockMutex(crash_handler_mutex);
+
+#define HANDLER_ARRAY_SIZE 100
+
+  void *array[HANDLER_ARRAY_SIZE];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, HANDLER_ARRAY_SIZE);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "\nError: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+
+  fprintf(stderr, "addr2line -e build64/server");
+  for(int i = 0; i < size; i++) {
+    fprintf(stderr, " %p", array[i]);
+  }
+  fprintf(stderr, "\n\n");
+
+  SDL_UnlockMutex(crash_handler_mutex);
+
+  SDL_Delay(100);
+  exit(-1);
+}
+#endif
+
+void initBacktraceHandler() {
+#ifndef _WIN32
+  crash_handler_mutex = SDL_CreateMutex();
+  signal(SIGSEGV, crash_handler);
+#endif
+}
 
 #if defined(_WIN32)
 #pragma warning(default: 4100)
 #endif
+

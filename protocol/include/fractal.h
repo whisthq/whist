@@ -42,20 +42,6 @@
 	#define closesocket close
 #endif
 
-/*
-#include "ffmpeg/libavcodec/avcodec.h"
-#include "ffmpeg/libavdevice/avdevice.h"
-#include "ffmpeg/libavfilter/avfilter.h"
-#include "ffmpeg/libavformat/avformat.h"
-#include "ffmpeg/libavutil/avutil.h"
-#include "ffmpeg/libavutil/imgutils.h"
-#include "ffmpeg/libavfilter/buffersink.h"
-#include "ffmpeg/libavfilter/buffersrc.h"
-#include "ffmpeg/libswscale/swscale.h"
-#include "ffmpeg/libavutil/hwcontext.h"
-#include "ffmpeg/libavutil/hwcontext_qsv.h"
-*/
-
 #include <libavcodec/avcodec.h>
 #include <libavdevice/avdevice.h>
 #include <libavfilter/avfilter.h>
@@ -81,6 +67,8 @@
 #define PORT_SERVER_TO_CLIENT 32263
 #define PORT_SHARED_TCP 32264
 
+#define USING_STUN true
+
 #define MAX_PAYLOAD_SIZE 1285
 #define MAXIMUM_MBPS 30.0
 #define ACK_REFRESH_MS 50
@@ -88,6 +76,8 @@
 #define LARGEST_FRAME_SIZE 1000000
 #define STARTING_BITRATE 15400000
 #define STARTING_BURST_BITRATE 31800000
+#define STARTING_BITRATE 4400000
+#define STARTING_BURST_BITRATE 50800000
 #define AVERAGE_LATENCY_MS 8
 #define FPS 50
 #define MIN_FPS 10
@@ -612,6 +602,8 @@ uint32_t Hash(void* key, size_t len);
 
 int get_native_screen_width();
 int get_native_screen_height();
+
+void initBacktraceHandler();
 
 /*** FRACTAL FUNCTIONS END ***/
 

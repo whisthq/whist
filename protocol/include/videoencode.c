@@ -196,11 +196,13 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->context->gop_size = gop_size;
         encoder->context->keyint_min = 5;
         encoder->context->pix_fmt = out_format;
+        encoder->context->max_b_frames = 0;
 
         set_opt(encoder, "nonref_p", "1");
         set_opt(encoder, "preset", "fast");
         set_opt(encoder, "rc", "cbr_ld_hq");
         set_opt(encoder, "zerolatency", "1");
+        set_opt( encoder, "tune", "zerolatency" );
         set_opt(encoder, "delay", "0");
 
         if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
@@ -254,7 +256,7 @@ encoder_t *create_video_encoder(int width, int height, int bitrate,
     encoder->width = width;
     encoder->height = height;
 
-    int encoder_precedence[] = {NVENC_ENCODE, QSV_ENCODE, SOFTWARE_ENCODE};
+    int encoder_precedence[] = { NVENC_ENCODE, QSV_ENCODE, SOFTWARE_ENCODE};
 
     for (unsigned long i = 0;
          i < sizeof(encoder_precedence) / sizeof(encoder_precedence[0]); ++i) {

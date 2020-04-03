@@ -10,8 +10,6 @@
 
 int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
 {
-    device->width = width;
-    device->height = height;
     device->display = XOpenDisplay( NULL );
     device->root = DefaultRootWindow( device->display );
     XWindowAttributes window_attributes;
@@ -20,11 +18,14 @@ int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
         fprintf( stderr, "Error while getting window attributes" );
         return -1;
     }
+    device->width = window_attributes.width;
+    device->height = window_attributes.height;
+
     Screen* screen = window_attributes.screen;
     device->image = XShmCreateImage( device->display,
                                      DefaultVisualOfScreen( screen ), //DefaultVisual(device->display, 0), // Use a correct visual. Omitted for brevity
                                      DefaultDepthOfScreen( screen ), //24,   // Determine correct depth from the visual. Omitted for brevity
-                                     ZPixmap, NULL, &device->segment, width, height );
+                                     ZPixmap, NULL, &device->segment, device->width, device->height );
 
 
     device->segment.shmid = shmget( IPC_PRIVATE,
