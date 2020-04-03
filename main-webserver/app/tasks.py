@@ -51,41 +51,27 @@ def createVM(self, vm_size, location):
 
 @celery.task(bind = True)
 def fetchAll(self, update):
-    start = time.perf_counter()
     _, compute_client, _ = createClients()
     vms = {'value': []}
     azure_portal_vms = compute_client.virtual_machines.list(os.getenv('VM_GROUP'))
     vm_usernames = []
     vm_names = []
-    current_usernames = []
-    current_names = []
-    end = time.perf_counter()
-    print("{} seconds to fetch from azure".format(str(end - start)))
+    current_vms = {}
 
-    start = time.perf_counter()
+
     if update:
         current_vms = fetchUserVMs(None)
-        current_usernames = [current_vm['vm_username'] for current_vm in current_vms]
-        current_names = [current_vm['vm_name'] for current_vm in current_vms]
-
-    end = time.perf_counter()
-    print("{} seconds to fetch from database".format(str(end - start)))
 
     for entry in azure_portal_vms:
-        start = time.perf_counter()
         vm = getVM(entry.name)
-        end = time.perf_counter()
-        print("{} seconds to get VM".format(str(end - start)))
-        start = time.perf_counter()
         vm_ip = getIP(vm)
-        end = time.perf_counter()
-        print("{} seconds to get IP".format(str(end - start)))
         vm_info = {}
+
         start = time.perf_counter()
         try:
             vm_info = {
                 'vm_name': entry.name,
-                'username': current_usernames[current_names.index(entry.name)],
+                'username': current_vms[entry.name],
                 'ip': vm_ip,
                 'location': entry.location
             }
@@ -105,16 +91,15 @@ def fetchAll(self, update):
 
         if update:
             try:
-                print("Inserting into database")
                 if not entry.name in current_names:
+                    print("Inserting into database")
                     insertRow(entry.os_profile.admin_username, entry.name, current_usernames, current_names)
             except:
                 pass
 
     if update:
-        for current_vm in current_vms:
-            print(current_vm['vm_name'])
-            deleteRow(current_vm['vm_username'], current_vm['vm_name'], vm_usernames, vm_names)
+        for vm_name, vm_username in current_vms.iter():
+            deleteRow(vm_username, vm_name, vm_usernames, vm_names)
 
     return vms
 
