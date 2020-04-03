@@ -685,18 +685,21 @@ int UpdateClipboardThread( void* opaque )
 		if( clipboard->type == CLIPBOARD_FILES )
 		{
 			char cmd[1000] = "";
+#ifndef _WIN32
 			strcat( cmd, "UNISON=./.unison; " );
+#endif
 
 #ifdef _WIN32
 			strcat( cmd, "unison " );
 #else
-			strcat( cmd, "./unison " );
+			strcat( cmd, "./unison -follow \"Path *\" " );
 #endif
 
 			strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" clipboard \"ssh://" );
 			strcat( cmd, (char*)server_ip );
-			strcat( cmd, "/C:/Program Files/Fractal/clipboard/\" -force clipboard -follow \"Path *\" -ignorearchives -confirmbigdel=false -batch" );
+			strcat( cmd, "/C:/Program Files/Fractal/clipboard/\" -force clipboard -ignorearchives -confirmbigdel=false -batch" );
 
+			mprintf( "COMMAND: %s\n", cmd );
 			runcmd( cmd );
 		}
 
