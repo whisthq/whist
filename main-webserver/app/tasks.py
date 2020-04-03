@@ -67,17 +67,21 @@ def fetchAll(self, update):
     for entry in azure_portal_vms:
         vm = getVM(entry.name)
         vm_ip = getIP(vm)
-        vm_info = {
-            'vm_name': entry.name,
-            'username': entry.os_profile.admin_username,
-            'ip': vm_ip,
-            'location': entry.location
-        }
-        
-        if entry.name in current_names:
-            for vm in current_vms:
-                if entry.name == vm['vm_name']:
-                    vm_info['username'] = vm['vm_username']
+        vm_info = {}
+        try:
+            vm_info = {
+                'vm_name': current_usernames[current_names.index(entry.name)],
+                'username': entry.os_profile.admin_username,
+                'ip': vm_ip,
+                'location': entry.location
+            }
+        except:
+            vm_info = {
+                'vm_name': entry.name,
+                'username': entry.os_profile.admin_username,
+                'ip': vm_ip,
+                'location': entry.location
+            }  
 
         vms['value'].append(vm_info)
         vm_usernames.append(entry.os_profile.admin_username)
