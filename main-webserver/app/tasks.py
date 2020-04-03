@@ -70,8 +70,8 @@ def fetchAll(self, update):
         vm_info = {}
         try:
             vm_info = {
-                'vm_name': current_usernames[current_names.index(entry.name)],
-                'username': entry.os_profile.admin_username,
+                'vm_name': entry.name,
+                'username': current_usernames[current_names.index(entry.name)],
                 'ip': vm_ip,
                 'location': entry.location
             }
