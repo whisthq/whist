@@ -31,6 +31,7 @@ SHARED_LIBS = \
 	-lpthread \
 	-lX11 \
 	-lXext \
+	-lXtst \
 	-lasound \
 	-lXdamage \
 	-lavcodec \
@@ -51,6 +52,7 @@ STATIC_LIBS = \
 OBJS = \
 	fractal.o \
         x11capture.o \
+		x11input.o \
 	videoencode.o \
 	alsacapture.o \
 	audioencode.o \
@@ -99,6 +101,10 @@ clipboard.o:
 # compile the audio capture source file into object file
 alsacapture.o:
 	$(CC) -c $(CFLAGS) ../include/alsacapture.c
+
+# compile the X11 input playback source file into object file
+x11input.o:
+	$(CC) -c $(CFLAGS) ../include/x11input.c
 
 # compile the main source file into object file
 main.o:

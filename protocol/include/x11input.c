@@ -276,33 +276,33 @@ const int x11_keysyms[NUM_KEYCODES] = {
     XF86XK_AudioMedia   // 263 -> Media Select
 };
 
-typedef struct FractalCursorTypes {
-    HCURSOR CursorAppStarting;
-    HCURSOR CursorArrow;
-    HCURSOR CursorCross;
-    HCURSOR CursorHand;
-    HCURSOR CursorHelp;
-    HCURSOR CursorIBeam;
-    HCURSOR CursorIcon;
-    HCURSOR CursorNo;
-    HCURSOR CursorSize;
-    HCURSOR CursorSizeAll;
-    HCURSOR CursorSizeNESW;
-    HCURSOR CursorSizeNS;
-    HCURSOR CursorSizeNWSE;
-    HCURSOR CursorSizeWE;
-    HCURSOR CursorUpArrow;
-    HCURSOR CursorWait;
-} FractalCursorTypes;
+// typedef struct FractalCursorTypes {
+//     HCURSOR CursorAppStarting;
+//     HCURSOR CursorArrow;
+//     HCURSOR CursorCross;
+//     HCURSOR CursorHand;
+//     HCURSOR CursorHelp;
+//     HCURSOR CursorIBeam;
+//     HCURSOR CursorIcon;
+//     HCURSOR CursorNo;
+//     HCURSOR CursorSize;
+//     HCURSOR CursorSizeAll;
+//     HCURSOR CursorSizeNESW;
+//     HCURSOR CursorSizeNS;
+//     HCURSOR CursorSizeNWSE;
+//     HCURSOR CursorSizeWE;
+//     HCURSOR CursorUpArrow;
+//     HCURSOR CursorWait;
+// } FractalCursorTypes;
 
-struct FractalCursorTypes l_types = {0};
-struct FractalCursorTypes* types = &l_types;
+// struct FractalCursorTypes l_types = {0};
+// struct FractalCursorTypes* types = &l_types;
 
-FractalCursorImage GetCursorImage(PCURSORINFO pci);
+// FractalCursorImage GetCursorImage(PCURSORINFO pci);
 
 void LoadCursors();
 
-void initCursors() { LoadCursors(); }
+// void initCursors() { LoadCursors(); }
 
 int GetX11KeySym(int sdl_keycode);
 
@@ -321,132 +321,118 @@ void stopInputPlayback() {
     disp = NULL;
 }
 
-void SendKeyInput(int x11_keysym, int extraFlags) {
+void SendKeyInput(int x11_keysym, int pressed) {
     KeyCode kcode = XKeysymToKeycode(disp, x11_keysym);
-
-    ip.type = INPUT_KEYBOARD;
-    ip.ki.wVk = 0;
-    ip.ki.time = 0;
-    ip.ki.dwExtraInfo = 0;
-
-    ip.ki.wScan =
-        (WORD)MapVirtualKeyA(windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX);
-    ip.ki.dwFlags = KEYEVENTF_SCANCODE | extraFlags;
-    if (ip.ki.wScan >> 8 == 0xE0 || (windows_keycode & USE_NUMPAD)) {
-        ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-        ip.ki.wScan &= 0xFF;
-    }
-
-    SendInput(1, &ip, sizeof(INPUT));
+    XTestFakeKeyEvent(disp, kcode, pressed, 0);
 }
 
-void KeyDown(int windows_keycode) { SendKeyInput(windows_keycode, 0); }
+void KeyDown(int x11_keysym) { SendKeyInput(x11_keysym, 1); }
 
-void KeyUp(int windows_keycode) {
-    SendKeyInput(windows_keycode, KEYEVENTF_KEYUP);
-}
+void KeyUp(int x11_keysym) { SendKeyInput(x11_keysym, 0); }
 
-void updateKeyboardState(struct FractalClientMessage* fmsg) {
-    if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
-        mprintf(
-            "updateKeyboardState requires fmsg.type to be "
-            "MESSAGE_KEYBOARD_STATE\n");
-        return;
-    }
+// void updateKeyboardState(struct FractalClientMessage* fmsg) {
+//     if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
+//         mprintf(
+//             "updateKeyboardState requires fmsg.type to be "
+//             "MESSAGE_KEYBOARD_STATE\n");
+//         return;
+//     }
 
-    // Setup base input data
-    INPUT ip;
-    ip.type = INPUT_KEYBOARD;
-    ip.ki.wVk = 0;
-    ip.ki.time = 0;
-    ip.ki.dwExtraInfo = 0;
+//     // Setup base input data
+//     INPUT ip;
+//     ip.type = INPUT_KEYBOARD;
+//     ip.ki.wVk = 0;
+//     ip.ki.time = 0;
+//     ip.ki.dwExtraInfo = 0;
 
-    bool server_caps_lock = GetKeyState(VK_CAPITAL) & 1;
-    bool server_num_lock = GetKeyState(VK_NUMLOCK) & 1;
+//     bool server_caps_lock = GetKeyState(VK_CAPITAL) & 1;
+//     bool server_num_lock = GetKeyState(VK_NUMLOCK) & 1;
 
-    bool caps_lock_holding = false;
-    bool num_lock_holding = false;
+//     bool caps_lock_holding = false;
+//     bool num_lock_holding = false;
 
-    int keypress_mask = 1 << 15;
+//     int keypress_mask = 1 << 15;
 
-    // Depress all keys that are currently pressed but should not be pressed
-    for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
-        int windows_keycode = GetWindowsKeyCode(sdl_keycode);
+//     // Depress all keys that are currently pressed but should not be pressed
+//     for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes;
+//     sdl_keycode++) {
+//         int windows_keycode = GetWindowsKeyCode(sdl_keycode);
 
-        if (!windows_keycode) continue;
+//         if (!windows_keycode) continue;
 
-        // If I should key up, then key up
-        if (!fmsg->keyboard_state[sdl_keycode] &&
-            (GetAsyncKeyState(windows_keycode) & keypress_mask)) {
-            KeyUp(windows_keycode);
-        }
-    }
+//         // If I should key up, then key up
+//         if (!fmsg->keyboard_state[sdl_keycode] &&
+//             (GetAsyncKeyState(windows_keycode) & keypress_mask)) {
+//             KeyUp(windows_keycode);
+//         }
+//     }
 
-    // Press all keys that are not currently pressed but should be pressed
-    for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
-        int windows_keycode = GetWindowsKeyCode(sdl_keycode);
+//     // Press all keys that are not currently pressed but should be pressed
+//     for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes;
+//     sdl_keycode++) {
+//         int windows_keycode = GetWindowsKeyCode(sdl_keycode);
 
-        if (!windows_keycode) continue;
+//         if (!windows_keycode) continue;
 
-        // Keep track of keyboard state for caps lock and num lock
+//         // Keep track of keyboard state for caps lock and num lock
 
-        if (windows_keycode == VK_CAPITAL) {
-            caps_lock_holding = fmsg->keyboard_state[sdl_keycode];
-        }
+//         if (windows_keycode == VK_CAPITAL) {
+//             caps_lock_holding = fmsg->keyboard_state[sdl_keycode];
+//         }
 
-        if (windows_keycode == VK_NUMLOCK) {
-            num_lock_holding = fmsg->keyboard_state[sdl_keycode];
-        }
+//         if (windows_keycode == VK_NUMLOCK) {
+//             num_lock_holding = fmsg->keyboard_state[sdl_keycode];
+//         }
 
-        // If I should key down, then key down
-        if (fmsg->keyboard_state[sdl_keycode] &&
-            !(GetAsyncKeyState(windows_keycode) & keypress_mask)) {
-            KeyDown(windows_keycode);
+//         // If I should key down, then key down
+//         if (fmsg->keyboard_state[sdl_keycode] &&
+//             !(GetAsyncKeyState(windows_keycode) & keypress_mask)) {
+//             KeyDown(windows_keycode);
 
-            // In the process of swapping a toggle key
-            if (windows_keycode == VK_CAPITAL) {
-                server_caps_lock = !server_caps_lock;
-            }
-            if (windows_keycode == VK_NUMLOCK) {
-                server_num_lock = !server_num_lock;
-            }
-        }
-    }
+//             // In the process of swapping a toggle key
+//             if (windows_keycode == VK_CAPITAL) {
+//                 server_caps_lock = !server_caps_lock;
+//             }
+//             if (windows_keycode == VK_NUMLOCK) {
+//                 server_num_lock = !server_num_lock;
+//             }
+//         }
+//     }
 
-    // If caps lock doesn't match, then send a correction
-    if (!!server_caps_lock != !!fmsg->caps_lock) {
-        mprintf("Caps lock out of sync, updating! From %s to %s\n",
-                server_caps_lock ? "caps" : "no caps",
-                fmsg->caps_lock ? "caps" : "no caps");
-        // If I'm supposed to be holding it down, then just release and then
-        // repress
-        if (caps_lock_holding) {
-            KeyUp(VK_CAPITAL);
-            KeyDown(VK_CAPITAL);
-        } else {
-            // Otherwise, just press and let go like a normal key press
-            KeyDown(VK_CAPITAL);
-            KeyUp(VK_CAPITAL);
-        }
-    }
+//     // If caps lock doesn't match, then send a correction
+//     if (!!server_caps_lock != !!fmsg->caps_lock) {
+//         mprintf("Caps lock out of sync, updating! From %s to %s\n",
+//                 server_caps_lock ? "caps" : "no caps",
+//                 fmsg->caps_lock ? "caps" : "no caps");
+//         // If I'm supposed to be holding it down, then just release and then
+//         // repress
+//         if (caps_lock_holding) {
+//             KeyUp(VK_CAPITAL);
+//             KeyDown(VK_CAPITAL);
+//         } else {
+//             // Otherwise, just press and let go like a normal key press
+//             KeyDown(VK_CAPITAL);
+//             KeyUp(VK_CAPITAL);
+//         }
+//     }
 
-    // If num lock doesn't match, then send a correction
-    if (!!server_num_lock != !!fmsg->num_lock) {
-        mprintf("Num lock out of sync, updating! From %s to %s\n",
-                server_num_lock ? "num lock" : "no num lock",
-                fmsg->num_lock ? "num lock" : "no num lock");
-        // If I'm supposed to be holding it down, then just release and then
-        // repress
-        if (num_lock_holding) {
-            KeyUp(VK_NUMLOCK);
-            KeyDown(VK_NUMLOCK);
-        } else {
-            // Otherwise, just press and let go like a normal key press
-            KeyDown(VK_NUMLOCK);
-            KeyUp(VK_NUMLOCK);
-        }
-    }
-}
+//     // If num lock doesn't match, then send a correction
+//     if (!!server_num_lock != !!fmsg->num_lock) {
+//         mprintf("Num lock out of sync, updating! From %s to %s\n",
+//                 server_num_lock ? "num lock" : "no num lock",
+//                 fmsg->num_lock ? "num lock" : "no num lock");
+//         // If I'm supposed to be holding it down, then just release and then
+//         // repress
+//         if (num_lock_holding) {
+//             KeyUp(VK_NUMLOCK);
+//             KeyDown(VK_NUMLOCK);
+//         } else {
+//             // Otherwise, just press and let go like a normal key press
+//             KeyDown(VK_NUMLOCK);
+//             KeyUp(VK_NUMLOCK);
+//         }
+//     }
+// }
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
@@ -454,195 +440,178 @@ void ReplayUserInput(struct FractalClientMessage* fmsg) {
     // get screen width and height for mouse cursor
     // int sWidth = GetSystemMetrics( SM_CXSCREEN ) - 1; is this still needed?
     // int sHeight = GetSystemMetrics( SM_CYSCREEN ) - 1; ^^
-    INPUT Event = {0};
 
     // switch to fill in the Windows event depending on the FractalClientMessage
     // type
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
-            // Windows event for keyboard action
+            // X11 event for keyboard action
+            SendKeyInput(x11_keysyms[fmsg->keyboard.code],
+                         fmsg->keyboard.pressed);
 
-            Event.type = INPUT_KEYBOARD;
-            Event.ki.time = 0;  // system supplies timestamp
-
-            Event.ki.dwFlags = KEYEVENTF_SCANCODE;
-            Event.ki.wVk = 0;
-            Event.ki.wScan = (WORD)MapVirtualKeyA(
-                windows_keycodes[fmsg->keyboard.code], MAPVK_VK_TO_VSC_EX);
-
-            if (Event.ki.wScan >> 8 == 0xE0) {
-                Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-                Event.ki.wScan &= 0xFF;
-            }
-
-            if (!fmsg->keyboard.pressed) {
-                Event.ki.dwFlags |= KEYEVENTF_KEYUP;
-            } else {
-                Event.ki.dwFlags |= 0;
-            }
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
-            Event.type = INPUT_MOUSE;
-            if (fmsg->mouseMotion.relative) {
-                Event.mi.dx = (LONG)(fmsg->mouseMotion.x * 0.9);
-                Event.mi.dy = (LONG)(fmsg->mouseMotion.y * 0.9);
-                Event.mi.dwFlags = MOUSEEVENTF_MOVE;
-            } else {
-                Event.mi.dx =
-                    (LONG)(fmsg->mouseMotion.x * (double)65536 / 1000000);
-                Event.mi.dy =
-                    (LONG)(fmsg->mouseMotion.y * (double)65536 / 1000000);
-                Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-            }
+            // Event.type = INPUT_MOUSE;
+            // if (fmsg->mouseMotion.relative) {
+            //     Event.mi.dx = (LONG)(fmsg->mouseMotion.x * 0.9);
+            //     Event.mi.dy = (LONG)(fmsg->mouseMotion.y * 0.9);
+            //     Event.mi.dwFlags = MOUSEEVENTF_MOVE;
+            // } else {
+            //     Event.mi.dx =
+            //         (LONG)(fmsg->mouseMotion.x * (double)65536 / 1000000);
+            //     Event.mi.dy =
+            //         (LONG)(fmsg->mouseMotion.y * (double)65536 / 1000000);
+            //     Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+            // }
             break;
         case MESSAGE_MOUSE_BUTTON:
             // mouse button event
-            Event.type = INPUT_MOUSE;
-            Event.mi.dx = 0;
-            Event.mi.dy = 0;
+            // Event.type = INPUT_MOUSE;
+            // Event.mi.dx = 0;
+            // Event.mi.dy = 0;
 
-            // Emulating button click
-            // switch to parse button type
-            switch (fmsg->mouseButton.button) {
-                case SDL_BUTTON_LEFT:
-                    // left click
-                    if (fmsg->mouseButton.pressed) {
-                        Event.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-                    } else {
-                        Event.mi.dwFlags = MOUSEEVENTF_LEFTUP;
-                    }
-                    break;
-                case SDL_BUTTON_MIDDLE:
-                    // middle click
-                    if (fmsg->mouseButton.pressed) {
-                        Event.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
-                    } else {
-                        Event.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
-                    }
-                    break;
-                case SDL_BUTTON_RIGHT:
-                    // right click
-                    if (fmsg->mouseButton.pressed) {
-                        Event.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-                    } else {
-                        Event.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
-                    }
-                    break;
-            }
+            // // Emulating button click
+            // // switch to parse button type
+            // switch (fmsg->mouseButton.button) {
+            //     case SDL_BUTTON_LEFT:
+            //         // left click
+            //         if (fmsg->mouseButton.pressed) {
+            //             Event.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+            //         } else {
+            //             Event.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+            //         }
+            //         break;
+            //     case SDL_BUTTON_MIDDLE:
+            //         // middle click
+            //         if (fmsg->mouseButton.pressed) {
+            //             Event.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
+            //         } else {
+            //             Event.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
+            //         }
+            //         break;
+            //     case SDL_BUTTON_RIGHT:
+            //         // right click
+            //         if (fmsg->mouseButton.pressed) {
+            //             Event.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
+            //         } else {
+            //             Event.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
+            //         }
+            //        break;
+            // }
             // End emulating button click
 
             break;  // outer switch
         case MESSAGE_MOUSE_WHEEL:
             // mouse wheel event
-            Event.type = INPUT_MOUSE;
-            Event.mi.dwFlags = MOUSEEVENTF_WHEEL;
-            Event.mi.dx = 0;
-            Event.mi.dy = 0;
-            Event.mi.mouseData = fmsg->mouseWheel.y * 100;
+            // Event.type = INPUT_MOUSE;
+            // Event.mi.dwFlags = MOUSEEVENTF_WHEEL;
+            // Event.mi.dx = 0;
+            // Event.mi.dy = 0;
+            // Event.mi.mouseData = fmsg->mouseWheel.y * 100;
             break;
             // TODO: add clipboard
     }
 
-    // send FMSG mapped to Windows event to Windows and return
-    int num_events_sent =
-        SendInput(1, &Event, sizeof(INPUT));  // 1 structure to send
+    // // send FMSG mapped to Windows event to Windows and return
+    // int num_events_sent =
+    //     SendInput(1, &Event, sizeof(INPUT));  // 1 structure to send
 
-    if (1 != num_events_sent) {
-        mprintf("SendInput did not send all events! %d\n", num_events_sent);
-    }
+    // if (1 != num_events_sent) {
+    //     mprintf("SendInput did not send all events! %d\n", num_events_sent);
+    // }
 }
 
-void EnterWinString(enum FractalKeycode* keycodes, int len) {
-    // get screen width and height for mouse cursor
-    int i, index = 0;
-    enum FractalKeycode keycode;
-    INPUT Event[200];
+// void EnterWinString(enum FractalKeycode* keycodes, int len) {
+//     // get screen width and height for mouse cursor
+//     int i, index = 0;
+//     enum FractalKeycode keycode;
+//     INPUT Event[200];
 
-    for (i = 0; i < len; i++) {
-        keycode = keycodes[i];
-        Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
-        Event[index].type = INPUT_KEYBOARD;
-        Event[index].ki.wScan = 0;
-        Event[index].ki.time = 0;  // system supplies timestamp
-        Event[index].ki.dwFlags = 0;
+//     for (i = 0; i < len; i++) {
+//         keycode = keycodes[i];
+//         Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
+//         Event[index].type = INPUT_KEYBOARD;
+//         Event[index].ki.wScan = 0;
+//         Event[index].ki.time = 0;  // system supplies timestamp
+//         Event[index].ki.dwFlags = 0;
 
-        index++;
+//         index++;
 
-        Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
-        Event[index].type = INPUT_KEYBOARD;
-        Event[index].ki.wScan = 0;
-        Event[index].ki.time = 0;  // system supplies timestamp
-        Event[index].ki.dwFlags = KEYEVENTF_KEYUP;
+//         Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
+//         Event[index].type = INPUT_KEYBOARD;
+//         Event[index].ki.wScan = 0;
+//         Event[index].ki.time = 0;  // system supplies timestamp
+//         Event[index].ki.dwFlags = KEYEVENTF_KEYUP;
 
-        index++;
-    }
+//         index++;
+//     }
 
-    // send FMSG mapped to Windows event to Windows and return
-    SendInput(index, Event, sizeof(INPUT));
-}
+//     // send FMSG mapped to Windows event to Windows and return
+//     SendInput(index, Event, sizeof(INPUT));
+// }
 
-void LoadCursors() {
-    types->CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
-    types->CursorArrow = LoadCursor(NULL, IDC_ARROW);
-    types->CursorCross = LoadCursor(NULL, IDC_CROSS);
-    types->CursorHand = LoadCursor(NULL, IDC_HAND);
-    types->CursorHelp = LoadCursor(NULL, IDC_HELP);
-    types->CursorIBeam = LoadCursor(NULL, IDC_IBEAM);
-    types->CursorIcon = LoadCursor(NULL, IDC_ICON);
-    types->CursorNo = LoadCursor(NULL, IDC_NO);
-    types->CursorSize = LoadCursor(NULL, IDC_SIZE);
-    types->CursorSizeAll = LoadCursor(NULL, IDC_SIZEALL);
-    types->CursorSizeNESW = LoadCursor(NULL, IDC_SIZENESW);
-    types->CursorSizeNS = LoadCursor(NULL, IDC_SIZENS);
-    types->CursorSizeNWSE = LoadCursor(NULL, IDC_SIZENWSE);
-    types->CursorSizeWE = LoadCursor(NULL, IDC_SIZEWE);
-    types->CursorUpArrow = LoadCursor(NULL, IDC_UPARROW);
-    types->CursorWait = LoadCursor(NULL, IDC_WAIT);
-}
+// void LoadCursors() {
+//     types->CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
+//     types->CursorArrow = LoadCursor(NULL, IDC_ARROW);
+//     types->CursorCross = LoadCursor(NULL, IDC_CROSS);
+//     types->CursorHand = LoadCursor(NULL, IDC_HAND);
+//     types->CursorHelp = LoadCursor(NULL, IDC_HELP);
+//     types->CursorIBeam = LoadCursor(NULL, IDC_IBEAM);
+//     types->CursorIcon = LoadCursor(NULL, IDC_ICON);
+//     types->CursorNo = LoadCursor(NULL, IDC_NO);
+//     types->CursorSize = LoadCursor(NULL, IDC_SIZE);
+//     types->CursorSizeAll = LoadCursor(NULL, IDC_SIZEALL);
+//     types->CursorSizeNESW = LoadCursor(NULL, IDC_SIZENESW);
+//     types->CursorSizeNS = LoadCursor(NULL, IDC_SIZENS);
+//     types->CursorSizeNWSE = LoadCursor(NULL, IDC_SIZENWSE);
+//     types->CursorSizeWE = LoadCursor(NULL, IDC_SIZEWE);
+//     types->CursorUpArrow = LoadCursor(NULL, IDC_UPARROW);
+//     types->CursorWait = LoadCursor(NULL, IDC_WAIT);
+// }
 
-FractalCursorImage GetCursorImage(PCURSORINFO pci) {
-    HCURSOR cursor = pci->hCursor;
-    FractalCursorImage image = {0};
+// FractalCursorImage GetCursorImage(PCURSORINFO pci) {
+//     HCURSOR cursor = pci->hCursor;
+//     FractalCursorImage image = {0};
 
-    if (cursor == types->CursorArrow) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
-    } else if (cursor == types->CursorCross) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_CROSSHAIR;
-    } else if (cursor == types->CursorHand) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_HAND;
-    } else if (cursor == types->CursorIBeam) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_IBEAM;
-    } else if (cursor == types->CursorNo) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_NO;
-    } else if (cursor == types->CursorSizeAll) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_SIZEALL;
-    } else if (cursor == types->CursorSizeNESW) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_SIZENESW;
-    } else if (cursor == types->CursorSizeNS) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_SIZENS;
-    } else if (cursor == types->CursorSizeNWSE) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_SIZENWSE;
-    } else if (cursor == types->CursorSizeWE) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_SIZEWE;
-    } else if (cursor == types->CursorWait) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_WAITARROW;
-    } else {
-        image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
-    }
+//     if (cursor == types->CursorArrow) {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
+//     } else if (cursor == types->CursorCross) {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_CROSSHAIR;
+//     } else if (cursor == types->CursorHand) {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_HAND;
+//     } else if (cursor == types->CursorIBeam) {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_IBEAM;
+//     } else if (cursor == types->CursorNo) {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_NO;
+//     } else if (cursor == types->CursorSizeAll) {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_SIZEALL;
+//     } else if (cursor == types->CursorSizeNESW) {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_SIZENESW;
+//     } else if (cursor == types->CursorSizeNS) {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_SIZENS;
+//     } else if (cursor == types->CursorSizeNWSE) {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_SIZENWSE;
+//     } else if (cursor == types->CursorSizeWE) {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_SIZEWE;
+//     } else if (cursor == types->CursorWait) {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_WAITARROW;
+//     } else {
+//         image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
+//     }
 
-    return image;
-}
+//     return image;
+// }
 
-FractalCursorImage GetCurrentCursor() {
-    CURSORINFO pci;
-    pci.cbSize = sizeof(CURSORINFO);
-    GetCursorInfo(&pci);
+// FractalCursorImage GetCurrentCursor() {
+//     CURSORINFO pci;
+//     pci.cbSize = sizeof(CURSORINFO);
+//     GetCursorInfo(&pci);
 
-    FractalCursorImage image = {0};
-    image = GetCursorImage(&pci);
+//     FractalCursorImage image = {0};
+//     image = GetCursorImage(&pci);
 
-    image.cursor_state = pci.flags;
+//     image.cursor_state = pci.flags;
 
-    return image;
-}
+//     return image;
+// }

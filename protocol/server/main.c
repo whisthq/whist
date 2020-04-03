@@ -14,7 +14,11 @@
 
 #include "../include/audiocapture.h"
 #include "../include/fractal.h"
+#ifdef _WIN32
 #include "../include/input.h"
+#else
+#include "../include/x11input.h"
+#endif
 #include "../include/screencapture.h"
 #include "../include/videoencode.h"
 
@@ -754,11 +758,10 @@ int main() {
                     fmsg->type == MESSAGE_MOUSE_BUTTON ||
                     fmsg->type == MESSAGE_MOUSE_WHEEL ||
                     fmsg->type == MESSAGE_MOUSE_MOTION) {
-// TODO: Unix version missing
-// Replay user input (keyboard or mouse presses)
-#ifdef _WIN32
+                    // TODO: Unix version missing
+                    // Replay user input (keyboard or mouse presses)
                     ReplayUserInput(fmsg);
-#endif
+
                 } else if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
 // TODO: Unix version missing
 // Synchronize client and server keyboard state
