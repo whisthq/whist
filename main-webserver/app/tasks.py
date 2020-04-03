@@ -51,6 +51,7 @@ def createVM(self, vm_size, location):
 
 @celery.task(bind = True)
 def fetchAll(self, update):
+    start = time.perf_counter()
     _, compute_client, _ = createClients()
     vms = {'value': []}
     azure_portal_vms = compute_client.virtual_machines.list(os.getenv('VM_GROUP'))
@@ -58,12 +59,19 @@ def fetchAll(self, update):
     vm_names = []
     current_usernames = []
     current_names = []
+    end = time.perf_counter()
+    print("{} seconds to fetch from azure".format(str(end - start)))
 
+    start = time.perf_counter()
     if update:
         current_vms = fetchUserVMs(None)
         current_usernames = [current_vm['vm_username'] for current_vm in current_vms]
         current_names = [current_vm['vm_name'] for current_vm in current_vms]
 
+    end = time.perf_counter()
+    print("{} seconds to fetch from database".format(str(end - start)))
+
+    start = time.perf_counter()
     for entry in azure_portal_vms:
         vm = getVM(entry.name)
         vm_ip = getIP(vm)
@@ -93,6 +101,9 @@ def fetchAll(self, update):
                     insertRow(entry.os_profile.admin_username, entry.name, current_usernames, current_names)
             except:
                 pass
+
+    end = time.perf_counter()
+    print("{} seconds to update dict".format(str(end - start)))
 
     if update:
         for current_vm in current_vms:
