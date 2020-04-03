@@ -67,7 +67,6 @@ def fetchAll(self, update):
         vm_ip = getIP(vm)
         vm_info = {}
 
-        start = time.perf_counter()
         try:
             vm_info = {
                 'vm_name': entry.name,
@@ -82,8 +81,6 @@ def fetchAll(self, update):
                 'ip': vm_ip,
                 'location': entry.location
             }  
-        end = time.perf_counter()
-        print("{} seconds to update dict".format(str(end - start)))
 
         vms['value'].append(vm_info)
         vm_usernames.append(entry.os_profile.admin_username)
