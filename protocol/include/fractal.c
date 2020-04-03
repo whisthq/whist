@@ -1082,8 +1082,8 @@ void crash_handler(int sig) {
 #endif
 
 void initBacktraceHandler() {
-  crash_handler_mutex = SDL_CreateMutex();
 #ifndef _WIN32
+  crash_handler_mutex = SDL_CreateMutex();
   signal(SIGSEGV, crash_handler);
 #endif
 }
