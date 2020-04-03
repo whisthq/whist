@@ -551,6 +551,7 @@ void update() {
 }
 
 int main() {
+    initBacktraceHandler();
     initMultiThreadedPrintf(true);
 
 #ifdef _WIN32

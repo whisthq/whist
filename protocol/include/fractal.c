@@ -1047,7 +1047,47 @@ uint32_t Hash(void* buf, size_t len)
 	return hash;
 }
 
+#ifndef _WIN32
+#include <execinfo.h>
+#include <signal.h>
+
+SDL_mutex* crash_handler_mutex;
+
+void crash_handler(int sig) {
+  SDL_LockMutex(crash_handler_mutex);
+
+#define HANDLER_ARRAY_SIZE 100
+
+  void *array[HANDLER_ARRAY_SIZE];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, HANDLER_ARRAY_SIZE);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "\nError: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+
+  fprintf(stderr, "addr2line -e build64/server");
+  for(int i = 0; i < size; i++) {
+    fprintf(stderr, " %p", array[i]);
+  }
+  fprintf(stderr, "\n\n");
+
+  SDL_UnlockMutex(crash_handler_mutex);
+
+  exit(-1);
+}
+#endif
+
+void initBacktraceHandler() {
+  crash_handler_mutex = SDL_CreateMutex();
+#ifndef _WIN32
+  signal(SIGSEGV, crash_handler);
+#endif
+}
 
 #if defined(_WIN32)
 #pragma warning(default: 4100)
 #endif
+

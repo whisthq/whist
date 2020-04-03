@@ -603,6 +603,8 @@ uint32_t Hash(void* key, size_t len);
 int get_native_screen_width();
 int get_native_screen_height();
 
+void initBacktraceHandler();
+
 /*** FRACTAL FUNCTIONS END ***/
 
 #endif // FRACTAL_H

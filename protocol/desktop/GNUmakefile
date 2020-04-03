@@ -115,6 +115,7 @@ STATIC_LIBS = \
 
 # compiler flags
 CFLAGS = \
+	-g -rdynamic \
 	-Wall \
 	-Wextra \
 	-Wno-missing-braces \

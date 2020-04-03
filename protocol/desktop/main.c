@@ -731,6 +731,8 @@ void destroySDL()
 
 int main( int argc, char* argv[] )
 {
+    initBacktraceHandler();
+
     int num_required_args = 2;
     int num_optional_args = 3;
     if( argc - 1 < num_required_args || argc - 1 > num_required_args + num_optional_args )

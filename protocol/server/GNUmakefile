@@ -40,7 +40,7 @@ SHARED_LIBS = \
 	-lavutil \
 	-lpostproc \
 	-lswresample \
-	-lswscale 
+	-lswscale
 
 # static libs to link against
 STATIC_LIBS = \
@@ -60,17 +60,24 @@ OBJS = \
 
 # compiler flags
 CFLAGS = \
+	-fno-pie \
+	-g \
 	-Wall \
 	-Wextra \
 	-Wno-missing-braces \
 	-Wno-unused-value \
 	-Wno-unused-parameter \
-	-O3 \
-	-I ../include
+	-I ../include \
+	-O0
+
+LDFLAGS = \
+	  -no-pie \
+	  -g -rdynamic \
+	  -O0
 
 # link all files into executable
 all: clean clear $(OBJS)
-	$(CC) -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
+	$(CC) $(LDFLAGS) -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
 fractal.o:
