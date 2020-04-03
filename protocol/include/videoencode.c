@@ -256,7 +256,7 @@ encoder_t *create_video_encoder(int width, int height, int bitrate,
     encoder->width = width;
     encoder->height = height;
 
-    int encoder_precedence[] = { SOFTWARE_ENCODE };// NVENC_ENCODE, QSV_ENCODE, SOFTWARE_ENCODE};
+    int encoder_precedence[] = { NVENC_ENCODE, QSV_ENCODE, SOFTWARE_ENCODE};
 
     for (unsigned long i = 0;
          i < sizeof(encoder_precedence) / sizeof(encoder_precedence[0]); ++i) {
