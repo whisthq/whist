@@ -192,10 +192,6 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                         'offer': vm_reference['offer'],
                         'sku': vm_reference['sku'],
                         'version': vm_reference['version']
-                    },
-                    'os_disk': {
-                        'os_type': 'Windows',
-                        'disk_size_gb': 25 
                     }
                 },
                 'network_profile': {
