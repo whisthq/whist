@@ -99,10 +99,10 @@ def createVMParameters(vmName, nic_id, vm_size, location):
         }
 
         command = text("""
-            INSERT INTO v_ms("vmName", "vmUserName", "osDisk", "running") 
-            VALUES(:vmName, :vmUserName, :osDisk, :running)
+            INSERT INTO v_ms("vmName", "vmUserName", "osDisk") 
+            VALUES(:vmName, :vmUserName, :osDisk)
             """)
-        params = {'vmName': vmName, 'vmUserName': userName, 'osDisk': None, 'running': False}
+        params = {'vmName': vmName, 'vmUserName': userName, 'osDisk': None}
         with engine.connect() as conn:
             conn.execute(command, **params)
             return {'params': {
