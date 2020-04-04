@@ -69,7 +69,8 @@ int get_native_screen_width() {
   static int width = -1;
   if (width == -1) {
     SDL_DisplayMode DM;
-    SDL_GetCurrentDisplayMode(0, &DM);
+    int res = SDL_GetCurrentDisplayMode(0, &DM);
+	if (res) mprintf ("SDL_GetCurrentDisplayMode failed: %s\n", SDL_GetError());
     width = DM.w;
   }
   return width;
@@ -79,7 +80,8 @@ int get_native_screen_height() {
   static int height = -1;
   if (height == -1) {
     SDL_DisplayMode DM;
-    SDL_GetCurrentDisplayMode(0, &DM);
+    int res = SDL_GetCurrentDisplayMode(0, &DM);
+	if (res) mprintf ("SDL_GetCurrentDisplayMode failed: %s\n", SDL_GetError());
     height = DM.h;
   }
   return height;

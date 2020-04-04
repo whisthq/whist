@@ -460,13 +460,38 @@ void ReplayUserInput(struct FractalClientMessage* fmsg) {
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
+            mprintf("MOUSE: x %d y %d r %d\n", fmsg->mouseMotion.x,
+                    fmsg->mouseMotion.y, fmsg->mouseMotion.relative);
             if (fmsg->mouseMotion.relative) {
+                // XEvent event;
+                // XQueryPointer(disp, RootWindow(disp, 0), &event.xbutton.root,
+                //               &event.xbutton.window, &event.xbutton.x_root,
+                //               &event.xbutton.y_root, &event.xbutton.x,
+                //               &event.xbutton.y, &event.xbutton.state);
+                // XTestFakeMotionEvent(disp, -1,
+                //                      event.xbutton.x + fmsg->mouseMotion.x,
+                //                      event.xbutton.y + fmsg->mouseMotion.y,
+                //                      0);
                 XTestFakeRelativeMotionEvent(disp, 0.9 * fmsg->mouseMotion.x,
                                              0.9 * fmsg->mouseMotion.y, 0);
-
             } else {
-                XTestFakeMotionEvent(disp, -1, fmsg->mouseMotion.x,
-                                     fmsg->mouseMotion.y, 0);
+                mprintf("%d %d\n", get_native_screen_width(),
+                        get_native_screen_height());
+                mprintf("RES FIX: x %d y %d\n",
+                        (int)(fmsg->mouseMotion.x *
+                              (int32_t)get_native_screen_width() /
+                              (int32_t)1000000),
+                        (int)(fmsg->mouseMotion.y *
+                              (int32_t)get_native_screen_height() /
+                              (int32_t)1000000));
+                XTestFakeMotionEvent(disp, -1,
+                                     (int)(fmsg->mouseMotion.x *
+                                           (int32_t)get_native_screen_width() /
+                                           (int32_t)1000000),
+                                     (int)(fmsg->mouseMotion.y *
+                                           (int32_t)get_native_screen_height() /
+                                           (int32_t)1000000),
+                                     0);
             }
             // Event.type = INPUT_MOUSE;
             // if (fmsg->mouseMotion.relative) {
@@ -500,7 +525,10 @@ void ReplayUserInput(struct FractalClientMessage* fmsg) {
             break;
             // TODO: add clipboard
     }
+    clock t;
+    StartTimer(&t);
     XFlush(disp);
+    mprintf("Time to flush input buffer: %f\n", GetTimer(t));
     // // send FMSG mapped to Windows event to Windows and return
     // int num_events_sent =
     //     SendInput(1, &Event, sizeof(INPUT));  // 1 structure to send
