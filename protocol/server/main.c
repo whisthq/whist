@@ -555,6 +555,9 @@ void update() {
 
 int main() {
     initBacktraceHandler();
+#ifndef _WIN32
+    runcmd( "chmod 600 sshkey" );
+#endif
     initMultiThreadedPrintf(true);
 
 #ifdef _WIN32
