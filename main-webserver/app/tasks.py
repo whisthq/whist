@@ -53,28 +53,42 @@ def fetchAll(self, update):
     azure_portal_vms = compute_client.virtual_machines.list(os.getenv('VM_GROUP'))
     vm_usernames = []
     vm_names = []
-    current_usernames = []
-    current_names = []
+    current_vms = {}
+
 
     if update:
         current_vms = fetchUserVMs(None)
-        current_usernames = [current_vm['vm_username'] for current_vm in current_vms]
-        current_names = [current_vm['vm_name'] for current_vm in current_vms]
 
     for entry in azure_portal_vms:
-        vm = getVM(entry.name)
-        vm_ip = getIP(vm)
-        vm_info = {
-            'vm_name': entry.name,
-            'username': entry.os_profile.admin_username,
-            'ip': vm_ip,
-            'location': entry.location
-        }
-        
-        if entry.name in current_names:
-            for vm in current_vms:
-                if entry.name == vm['vm_name']:
-                    vm_info['username'] = vm['vm_username']
+        vm_info = {}
+
+        try:
+            if current_vms[entry.name]['ip']:
+                vm_info = {
+                    'vm_name': entry.name,
+                    'username': current_vms[entry.name]['username'],
+                    'ip': current_vms[entry.name]['ip'],
+                    'location': entry.location
+                }
+            else:
+                vm = getVM(entry.name)
+                vm_ip = getIP(vm)
+                vm_info = {
+                    'vm_name': entry.name,
+                    'username': current_vms[entry.name]['username'],
+                    'ip': vm_ip,
+                    'location': entry.location
+                }
+                updateVMIP(entry.name, vm_ip)
+        except:
+            vm = getVM(entry.name)
+            vm_ip = getIP(vm)
+            vm_info = {
+                'vm_name': entry.name,
+                'username': entry.os_profile.admin_username,
+                'ip': vm_ip,
+                'location': entry.location
+            }  
 
         vms['value'].append(vm_info)
         vm_usernames.append(entry.os_profile.admin_username)
@@ -88,8 +102,13 @@ def fetchAll(self, update):
                 pass
 
     if update:
-        for current_vm in current_vms:
-            print(current_vm['vm_name'])
-            deleteRow(current_vm['vm_username'], current_vm['vm_name'], vm_usernames, vm_names)
+        for vm_name, vm_username in current_vms.items():
+            deleteRow(vm_username, vm_name, vm_usernames, vm_names)
 
     return vms
+
+
+@celery.task(bind = True)
+def deleteVMResources(self, name):
+    status = 200 if deleteResource(name) else 404
+    return {'status': status}

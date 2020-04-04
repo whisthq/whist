@@ -57,9 +57,9 @@ Enable-FractalFirewallRule
 Install-Unison
 Enable-SSHServer
 #Disable-HyperV
-#Disable-Lock
-#Disable-Logout
-#Disable-Shutdown
+Disable-Lock
+Disable-Logout
+Disable-Shutdown
 Add-AutoLogin $admin_username $admin_password
 
 # Install creative packages

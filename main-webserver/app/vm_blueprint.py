@@ -42,7 +42,10 @@ def vm(action):
             return({'public_ip': ip}), 200
         except:
             return({'public_ip': None}), 404
-
+    elif action == 'delete':
+        vm_name = request.get_json()['vm_name']
+        task = deleteVMResources.apply_async([vm_name])
+        return jsonify({'ID': task.id}), 202
     return jsonify({}), 400
 
 @vm_bp.route('/tracker/<action>', methods = ['POST'])

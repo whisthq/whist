@@ -84,6 +84,77 @@ def createNic(name, location, tries):
             return createNic(name, location, tries + 1)
         else: return None
 
+def deleteResource(name):
+    _, compute_client, network_client = createClients()
+    vnetName, subnetName, ipName, nicName = name + '_vnet', name + '_subnet', name + '_ip', name + '_nic'
+    hr = 1
+
+    try:
+        print("Deallocating VM...")
+        async_vm_deallocate = compute_client.virtual_machines.deallocate(
+            os.getenv('VM_GROUP'), name)
+        async_vm_deallocate.wait()
+
+        async_vm_delete = compute_client.virtual_machines.delete(
+            os.getenv('VM_GROUP'), name)
+        async_vm_delete.wait()
+        print("VM deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    try:
+        async_vnet_delete = network_client.virtual_networks.delete(
+            os.getenv('VM_GROUP'),
+            vnetName
+        )
+        async_vnet_delete.wait()
+        print("Vnet deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    try:
+        async_subnet_delete = network_client.subnets.delete(
+            os.getenv('VM_GROUP'),
+            vnetName,
+            subnetName
+        )
+        async_subnet_delete.wait()
+        print("Subnet deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    try:
+        async_ip_delete = network_client.public_ip_addresses.delete(
+            os.getenv('VM_GROUP'),
+            ipName
+        )
+        async_ip_delete.wait()
+        print("IP deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    try:
+        async_nic_delete = network_client.network_interfaces.delete(
+            os.getenv('VM_GROUP'),
+            nicName
+        )
+        async_nic_delete.wait()
+        print("NIC deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    # virtual_machine = getVM(name)
+    # os_disk_name = virtual_machine.storage_profile.os_disk.name
+    # os_disk = compute_client.disks.get(os.getenv('VM_GROUP'), os_disk_name)
+
+    return hr
+
+
 def createVMParameters(vmName, nic_id, vm_size, location):
     with engine.connect() as conn:
         oldUserNames = [cell[0] for cell in list(conn.execute('SELECT "vmUserName" FROM v_ms'))]
@@ -122,6 +193,10 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                         'sku': vm_reference['sku'],
                         'version': vm_reference['version']
                     },
+                    'os_disk': {
+                        'os_type': 'Windows',
+                        'disk_size_gb': 25 
+                    }
                 },
                 'network_profile': {
                     'network_interfaces': [{
@@ -370,8 +445,7 @@ def fetchUserVMs(username):
         params = {}
         with engine.connect() as conn:
             vms_info = conn.execute(command, **params).fetchall()
-            out = [{'vm_username': vm_info[1], 
-                    'vm_name': vm_info[0]} for vm_info in vms_info]
+            out = {vm_info[0]: {'username': vm_info[1], 'ip': vm_info[3]} for vm_info in vms_info}
             return out
 
 def fetchUserCode(username):
@@ -669,5 +743,16 @@ def storeFeedback(username, feedback):
         VALUES(:email, :feedback)
         """)
     params = {'email': username, 'feedback': feedback}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+
+def updateVMIP(vm_name, ip):
+    command = text("""
+        UPDATE v_ms
+        SET ip = :ip
+        WHERE
+           "vmName" = :vm_name
+        """)
+    params = {'ip': ip, 'vm_name': vm_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
