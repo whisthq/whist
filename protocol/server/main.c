@@ -61,7 +61,7 @@ struct SocketContext PacketSendContext = {0};
 volatile bool wants_iframe;
 
 #ifndef _WIN32
-void initCursors() { return; }
+void InitCursors() { return; }
 
 FractalCursorImage GetCurrentCursor() {
     FractalCursorImage image = {0};
@@ -250,7 +250,7 @@ static int32_t SendVideo(void* opaque) {
     struct CaptureDevice rdevice;
     struct CaptureDevice* device = NULL;
 
-    initCursors();
+    InitCursors();
 
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
@@ -770,7 +770,7 @@ int main() {
 // TODO: Unix version missing
 // Synchronize client and server keyboard state
 #ifdef _WIN32
-                    updateKeyboardState(fmsg);
+                    UpdateKeyboardState(fmsg);
 #endif
                 } else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
