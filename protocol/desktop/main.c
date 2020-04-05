@@ -683,6 +683,9 @@ void destroySDL() {
 
 int main(int argc, char* argv[]) {
     initBacktraceHandler();
+#ifndef _WIN32
+    runcmd( "chmod 600 sshkey" );
+#endif
 
     int num_required_args = 2;
     int num_optional_args = 3;

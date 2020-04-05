@@ -35,6 +35,8 @@ void runcmd( const char* cmdline )
 
 	memcpy( cmd_buf, cmdline, strlen( (const char*)cmdline ) + 1 );
 
+	SetEnvironmentVariable( "UNISON", "./.unison" );
+
 	if( CreateProcessA( NULL, (LPSTR)cmd_buf, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi ) )
 	{
 		WaitForSingleObject( pi.hProcess, INFINITE );
@@ -42,7 +44,7 @@ void runcmd( const char* cmdline )
 		CloseHandle( pi.hThread );
 	}
 #else
-	//TODO: rewrite the entire function for Unix
+	system( cmdline );
 #endif
 }
 
