@@ -24,7 +24,7 @@ OBJS = \
 	wasapicapture.obj \
 	dxgicapture.obj \
 	desktop.obj \
-	input.obj \
+	windowsinput.obj \
 	main.obj
 
 # static libs to link against
@@ -133,8 +133,8 @@ desktop.obj:
 	$(CC) /c $(CFLAGS) ../include/desktop.c
 
 # compile the input handling source file into object file
-input.obj:
-	$(CC) /c $(CFLAGS) ../include/input.c
+windowsinput.obj:
+	$(CC) /c $(CFLAGS) ../include/windowsinput.c
 
 # compile the source main client file into object file
 main.obj:
