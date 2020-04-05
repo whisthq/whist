@@ -113,8 +113,7 @@ def deleteResource(name):
             subnet_name = subnetName)  
         # Step 3, configure network interface parameters.  
         params = {'ip_configurations': [  
-                         {  
-                            'name': ipName，  
+                         {  'name': ipName,  
                             'subnet': {'id': subnet_obj.id},  
                             # None: Disassociate;  
                             'public_ip_address': None,  
@@ -147,7 +146,7 @@ def deleteResource(name):
     except Exception as e:
         print(e)
         hr = -1
-        
+
     try:
         async_nic_delete = network_client.network_interfaces.delete(
             os.getenv('VM_GROUP'),
