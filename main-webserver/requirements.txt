@@ -111,10 +111,10 @@ Jinja2==2.10.1
 kombu==3.0.37
 Mako==1.1.0
 MarkupSafe==1.1.1
-more-itertools==7.2.0
+more-itertools==5.0.0
 msrest==0.6.10
 msrestazure==0.6.2
-numpy==1.17.2
+numpy==1.16.6
 oauthlib==3.1.0
 psycopg2==2.8.4
 pyasn1==0.4.7

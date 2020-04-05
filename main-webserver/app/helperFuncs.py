@@ -1,21 +1,24 @@
 from .utils import *
 from app import engine
 
+
 def createClients():
     subscription_id = os.getenv('AZURE_SUBSCRIPTION_ID')
     credentials = ServicePrincipalCredentials(
-        client_id = os.getenv('AZURE_CLIENT_ID'),
-        secret = os.getenv('AZURE_CLIENT_SECRET'),
-        tenant = os.getenv('AZURE_TENANT_ID')
+        client_id=os.getenv('AZURE_CLIENT_ID'),
+        secret=os.getenv('AZURE_CLIENT_SECRET'),
+        tenant=os.getenv('AZURE_TENANT_ID')
     )
     r = ResourceManagementClient(credentials, subscription_id)
     c = ComputeManagementClient(credentials, subscription_id)
     n = NetworkManagementClient(credentials, subscription_id)
     return r, c, n
 
+
 def createNic(name, location, tries):
     _, _, network_client = createClients()
-    vnetName, subnetName, ipName, nicName = name + '_vnet', name + '_subnet', name + '_ip', name + '_nic'
+    vnetName, subnetName, ipName, nicName = name + \
+        '_vnet', name + '_subnet', name + '_ip', name + '_nic'
     try:
         async_vnet_creation = network_client.virtual_networks.create_or_update(
             os.getenv('VM_GROUP'),
@@ -29,7 +32,7 @@ def createNic(name, location, tries):
         )
         async_vnet_creation.wait()
 
-        #Create Subnet
+        # Create Subnet
         async_subnet_creation = network_client.subnets.create_or_update(
             os.getenv('VM_GROUP'),
             vnetName,
@@ -73,7 +76,8 @@ def createNic(name, location, tries):
             INSERT INTO v_nets("vnetName", "subnetName", "ipConfigName", "nicName") 
             VALUES(:vnetName, :subnetName, :ipConfigName, :nicName)
             """)
-        params = {'vnetName': vnetName, 'subnetName': subnetName, 'ipConfigName': ipName, 'nicName': nicName}
+        params = {'vnetName': vnetName, 'subnetName': subnetName,
+                  'ipConfigName': ipName, 'nicName': nicName}
         with engine.connect() as conn:
             conn.execute(command, **params)
         return async_nic_creation.result()
@@ -82,11 +86,14 @@ def createNic(name, location, tries):
             print(e)
             time.sleep(3)
             return createNic(name, location, tries + 1)
-        else: return None
+        else:
+            return None
+
 
 def createVMParameters(vmName, nic_id, vm_size, location):
     with engine.connect() as conn:
-        oldUserNames = [cell[0] for cell in list(conn.execute('SELECT "vmUserName" FROM v_ms'))]
+        oldUserNames = [cell[0] for cell in list(
+            conn.execute('SELECT "vmUserName" FROM v_ms'))]
         userName = genHaiku(1)[0]
         while userName in oldUserNames:
             userName = genHaiku(1)
@@ -102,7 +109,8 @@ def createVMParameters(vmName, nic_id, vm_size, location):
             INSERT INTO v_ms("vmName", "vmUserName", "osDisk", "running") 
             VALUES(:vmName, :vmUserName, :osDisk, :running)
             """)
-        params = {'vmName': vmName, 'vmUserName': userName, 'osDisk': None, 'running': False}
+        params = {'vmName': vmName, 'vmUserName': userName,
+                  'osDisk': None, 'running': False}
         with engine.connect() as conn:
             conn.execute(command, **params)
             return {'params': {
@@ -130,15 +138,18 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                 },
             }, 'vmName': vmName}
 
+
 def getVM(vm_name):
-    _, compute_client, _= createClients()
+    _, compute_client, _ = createClients()
     try:
         virtual_machine = compute_client.virtual_machines.get(
             os.environ.get('VM_GROUP'),
             vm_name
         )
         return virtual_machine
-    except: return None
+    except:
+        return None
+
 
 def singleValueQuery(value):
     command = text("""
@@ -148,6 +159,7 @@ def singleValueQuery(value):
     with engine.connect() as conn:
         exists = conn.execute(command, **params).fetchall()
         return True if exists else False
+
 
 def getIP(vm):
     _, _, network_client = createClients()
@@ -177,6 +189,7 @@ def registerUserVM(username, vm_name):
     with engine.connect() as conn:
         conn.execute(command, **params)
 
+
 def loginUserVM(username):
     command = text("""
         SELECT * FROM v_ms WHERE "vmUserName" = :username
@@ -187,6 +200,7 @@ def loginUserVM(username):
         if len(user) > 0:
             return user[0][0]
     return None
+
 
 def loginUser(username, password):
     if password != os.getenv('ADMIN_PASSWORD'):
@@ -207,6 +221,7 @@ def loginUser(username, password):
             user = conn.execute(command, **params).fetchall()
             return len(user) > 0
 
+
 def lookup(username):
     command = text("""
         SELECT * FROM users WHERE "userName" = :userName
@@ -216,12 +231,14 @@ def lookup(username):
         user = conn.execute(command, **params).fetchall()
         return len(user) > 0
 
+
 def genUniqueCode():
     with engine.connect() as conn:
-        old_codes = [cell[0] for cell in list(conn.execute('SELECT "code" FROM users'))]
+        old_codes = [cell[0]
+                     for cell in list(conn.execute('SELECT "code" FROM users'))]
         new_code = generateCode()
         while new_code in old_codes:
-             new_code = generateCode()
+            new_code = generateCode()
         return new_code
 
 
@@ -232,13 +249,15 @@ def registerUser(username, password, token):
         INSERT INTO users("userName", "password", "code", "id") 
         VALUES(:userName, :password, :code, :token)
         """)
-    params = {'userName': username, 'password': pwd_token, 'code': code, 'token': token}
+    params = {'userName': username, 'password': pwd_token,
+              'code': code, 'token': token}
     with engine.connect() as conn:
         try:
             conn.execute(command, **params)
             return 200
         except:
             return 400
+
 
 def regenerateAllCodes():
     with engine.connect() as conn:
@@ -248,9 +267,10 @@ def regenerateAllCodes():
                 UPDATE users 
                 SET "code" = :code
                 WHERE "userName" = :userName
-                """)            
+                """)
             params = {'code': code, 'userName': row[0]}
             conn.execute(command, **params)
+
 
 def generateIDs():
     with engine.connect() as conn:
@@ -262,7 +282,7 @@ def generateIDs():
                 UPDATE users 
                 SET "id" = :token
                 WHERE "userName" = :userName
-                """)            
+                """)
             params = {'token': token, 'userName': row[0]}
             conn.execute(command, **params)
 
@@ -277,6 +297,7 @@ def resetPassword(username, password):
     params = {'userName': username, 'password': pwd_token}
     with engine.connect() as conn:
         conn.execute(command, **params)
+
 
 def resetVMCredentials(username, vm_name):
     command = text("""
@@ -305,13 +326,16 @@ def fetchVMCredentials(vm_name):
                 'vm_name': vm_name,
                 'public_ip': ip}
 
+
 def genVMName():
     with engine.connect() as conn:
-        oldVMs = [cell[0] for cell in list(conn.execute('SELECT "vmName" FROM v_ms'))]
+        oldVMs = [cell[0]
+                  for cell in list(conn.execute('SELECT "vmName" FROM v_ms'))]
         vmName = genHaiku(1)[0]
         while vmName in oldVMs:
-             vmName = genHaiku(1)[0]
+            vmName = genHaiku(1)[0]
         return vmName
+
 
 def storeForm(name, email, cubeType):
     command = text("""
@@ -322,26 +346,30 @@ def storeForm(name, email, cubeType):
     with engine.connect() as conn:
         conn.execute(command, **params)
 
+
 def storePreOrder(address1, address2, zipCode, email, order):
     command = text("""
         INSERT INTO pre_order("address1", "address2", "zipcode", "email", "base", "enhanced", "power") 
         VALUES(:address1, :address2, :zipcode, :email, :base, :enhanced, :power)
         """)
-    params = {'address1': address1, 'address2': address2, 'zipcode': zipCode, 'email': email, 
+    params = {'address1': address1, 'address2': address2, 'zipcode': zipCode, 'email': email,
               'base': int(order['base']), 'enhanced': int(order['enhanced']), 'power': int(order['power'])}
     with engine.connect() as conn:
         conn.execute(command, **params)
+
 
 def addTimeTable(username, action, time):
     command = text("""
         INSERT INTO login_history("username", "timestamp", "action") 
         VALUES(:userName, :currentTime, :action)
         """)
-    
-    params = {'userName': username, 'currentTime': dt.now().strftime('%m-%d-%Y, %H:%M:%S'), 'action': action}
+
+    params = {'userName': username, 'currentTime': dt.now().strftime(
+        '%m-%d-%Y, %H:%M:%S'), 'action': action}
 
     with engine.connect() as conn:
         conn.execute(command, **params)
+
 
 def deleteTimeTable():
     command = text("""
@@ -361,7 +389,8 @@ def fetchUserVMs(username):
         params = {'username': username}
         with engine.connect() as conn:
             vms_info = conn.execute(command, **params).fetchall()
-            out = [{'vm_name': vm_info[0], 'vm_username': vm_info[1]} for vm_info in vms_info]
+            out = [{'vm_name': vm_info[0], 'vm_username': vm_info[1]}
+                   for vm_info in vms_info]
             return out
     else:
         command = text("""
@@ -370,9 +399,10 @@ def fetchUserVMs(username):
         params = {}
         with engine.connect() as conn:
             vms_info = conn.execute(command, **params).fetchall()
-            out = [{'vm_username': vm_info[1], 
+            out = [{'vm_username': vm_info[1],
                     'vm_name': vm_info[0]} for vm_info in vms_info]
             return out
+
 
 def fetchUserCode(username):
     try:
@@ -386,6 +416,7 @@ def fetchUserCode(username):
     except:
         return None
 
+
 def deleteRow(username, vm_name, usernames, vm_names):
     if not (vm_name in vm_names):
         command = text("""
@@ -394,6 +425,7 @@ def deleteRow(username, vm_name, usernames, vm_names):
         params = {'vm_name': vm_name}
         with engine.connect() as conn:
             conn.execute(command, **params)
+
 
 def deleteUser(username):
     command = text("""
@@ -407,16 +439,18 @@ def deleteUser(username):
         except:
             return 404
 
+
 def insertRow(username, vm_name, usernames, vm_names):
     if not (username in usernames and vm_name in vm_names):
         command = text("""
             INSERT INTO v_ms("vmUserName", "vmName") 
             VALUES(:username, :vm_name)
             """)
-        params = {'username': username, 
+        params = {'username': username,
                   'vm_name': vm_name}
         with engine.connect() as conn:
             conn.execute(command, **params)
+
 
 def fetchLoginActivity():
     command = text("""
@@ -425,11 +459,12 @@ def fetchLoginActivity():
     params = {}
     with engine.connect() as conn:
         activities = conn.execute(command, **params).fetchall()
-        out = [{'username': activity[0], 
-                'timestamp': activity[1], 
+        out = [{'username': activity[0],
+                'timestamp': activity[1],
                 'action': activity[2]} for activity in activities]
         out.reverse()
         return out
+
 
 def fetchCustomers():
     command = text("""
@@ -438,10 +473,13 @@ def fetchCustomers():
     params = {}
     with engine.connect() as conn:
         customers = conn.execute(command, **params).fetchall()
-        out = [{'email': customer[0], 
+        out = [{'email': customer[0],
                 'id': customer[1],
-                'subscription': customer[2]} for customer in customers]
+                'subscription': customer[2],
+                'location': customer[3]}
+               for customer in customers]
         return out
+
 
 def insertCustomer(email, customer_id, subscription_id, location):
     command = text("""
@@ -449,13 +487,14 @@ def insertCustomer(email, customer_id, subscription_id, location):
         VALUES(:email, :id, :subscription, :location)
         """)
 
-    params = {'email': email, 
+    params = {'email': email,
               'id': customer_id,
               'subscription': subscription_id,
               'location': location}
 
     with engine.connect() as conn:
         conn.execute(command, **params)
+
 
 def deleteCustomer(email):
     command = text("""
@@ -464,6 +503,7 @@ def deleteCustomer(email):
     params = {'email': email}
     with engine.connect() as conn:
         conn.execute(command, **params)
+
 
 def checkComputer(computer_id, username):
     command = text("""
@@ -487,12 +527,13 @@ def checkComputer(computer_id, username):
                     'id': None,
                     'found': False}
 
-        out = {'username': computer[0], 
+        out = {'username': computer[0],
                'location': computer[1],
                'nickname': computer[2],
                'id': computer[3],
-               'found': True} 
+               'found': True}
         return out
+
 
 def insertComputer(username, location, nickname, computer_id):
     computer = checkComputer(computer_id, username)
@@ -502,13 +543,14 @@ def insertComputer(username, location, nickname, computer_id):
             VALUES(:username, :location, :nickname, :id)
             """)
 
-        params = {'username': username, 
+        params = {'username': username,
                   'location': location,
                   'nickname': nickname,
                   'id': computer_id}
 
         with engine.connect() as conn:
             conn.execute(command, **params)
+
 
 def fetchComputers(username):
     command = text("""
@@ -517,12 +559,13 @@ def fetchComputers(username):
     params = {'username': username}
     with engine.connect() as conn:
         computers = conn.execute(command, **params).fetchall()
-        out = [{'username': computer[0], 
+        out = [{'username': computer[0],
                 'location': computer[1],
                 'nickname': computer[2],
                 'id': computer[3]} for computer in computers]
         return out
     return None
+
 
 def changeComputerName(username, computer_id, nickname):
     command = text("""
@@ -537,6 +580,7 @@ def changeComputerName(username, computer_id, nickname):
     with engine.connect() as conn:
         conn.execute(command, **params)
 
+
 def fetchAllUsers():
     command = text("""
         SELECT * FROM users
@@ -545,11 +589,12 @@ def fetchAllUsers():
     with engine.connect() as conn:
         users = conn.execute(command, **params).fetchall()
         out = [{'username': user[0],
-               'code': user[2],
-               'creditsOutstanding': user[3],
-               'verified': user[4]} for user in users]
+                'code': user[2],
+                'creditsOutstanding': user[3],
+                'verified': user[4]} for user in users]
         return out
     return None
+
 
 def mapCodeToUser(code):
     command = text("""
@@ -562,6 +607,7 @@ def mapCodeToUser(code):
             return {'email': user[0], 'creditsOutstanding': user[3]}
     return None
 
+
 def changeUserCredits(username, credits):
     command = text("""
         UPDATE users
@@ -569,9 +615,10 @@ def changeUserCredits(username, credits):
         WHERE
            "userName" = :username
         """)
-    params = {'credits' : credits, 'username': username}
+    params = {'credits': credits, 'username': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
+
 
 def getUserCredits(username):
     command = text("""
@@ -584,6 +631,7 @@ def getUserCredits(username):
         return users[3]
     return None
 
+
 def fetchCodes():
     command = text("""
         SELECT * FROM users
@@ -593,6 +641,7 @@ def fetchCodes():
         users = conn.execute(command, **params).fetchall()
         return [user[2] for user in users]
     return None
+
 
 def userVMStatus(username):
     has_paid = False
@@ -629,6 +678,7 @@ def userVMStatus(username):
 
     return 'has_not_paid'
 
+
 def checkUserVerified(username):
     command = text("""
         SELECT * FROM users WHERE "userName" = :userName
@@ -639,6 +689,7 @@ def checkUserVerified(username):
         if user:
             return user[4]
         return False
+
 
 def fetchUserToken(username):
     command = text("""
@@ -651,6 +702,7 @@ def fetchUserToken(username):
             return user[5]
         return None
 
+
 def makeUserVerified(username, verified):
     command = text("""
         UPDATE users
@@ -661,6 +713,7 @@ def makeUserVerified(username, verified):
     params = {'verified': verified, 'username': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
+
 
 def storeFeedback(username, feedback):
     command = text("""
