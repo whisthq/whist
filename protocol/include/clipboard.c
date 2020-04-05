@@ -1,6 +1,12 @@
 #include "clipboard.h"
 #include "fractal.h"
 
+#define LGET_CLIPBOARD L"get_clipboard"
+#define GET_CLIPBOARD "get_clipboard"
+
+#define LSET_CLIPBOARD L"set_clipboard"
+#define SET_CLIPBOARD "set_clipboard"
+
 #ifdef _WIN32
 #include "shlwapi.h"
 #pragma comment (lib, "Shlwapi.lib")
@@ -238,14 +244,14 @@ ClipboardData* GetClipboard()
 			sh.fFlags |= FOF_NOCONFIRMATION;
 			sh.fFlags |= FOF_WANTMAPPINGHANDLE;
 			sh.fFlags |= FOF_NOERRORUI;
-			sh.pFrom = L"clipboard";
+			sh.pFrom = LGET_CLIPBOARD;
 
 			clock t;
 			StartTimer( &t );
 			//SHFileOperationW( &sh );
 
 			WIN32_FIND_DATAW data;
-			HANDLE hFind = FindFirstFileW( L"clipboard\\*", &data );
+			HANDLE hFind = FindFirstFileW( LGET_CLIPBOARD L"\\*", &data );
 			if( hFind != INVALID_HANDLE_VALUE )
 			{
 				WCHAR* ignore1 = L".";
@@ -259,7 +265,7 @@ ClipboardData* GetClipboard()
 					}
 
 					char filename[MAX_PATH*sizeof( WCHAR )] = "";
-					wcscat( filename, L"clipboard\\" );
+					wcscat( filename, LGET_CLIPBOARD L"\\" );
 					wcscat( filename, data.cFileName );
 
 					DWORD fileattributes = GetFileAttributesW( filename );
@@ -279,8 +285,8 @@ ClipboardData* GetClipboard()
 				FindClose( hFind );
 			}
 
-			RemoveDirectoryW( L"clipboard" );
-			CreateDirectoryW( L"clipboard", NULL );
+			RemoveDirectoryW( LGET_CLIPBOARD );
+			CreateDirectoryW( LGET_CLIPBOARD, NULL );
 
 			// Go through filenames
 			while( *filename != L'\0' )
@@ -288,7 +294,7 @@ ClipboardData* GetClipboard()
 				WCHAR* fileending = PathFindFileNameW( filename );
 				DWORD fileattributes = GetFileAttributesW( filename );
 
-				WCHAR target_file[MAX_PATH*sizeof( WCHAR )] = L"clipboard\\";
+				WCHAR target_file[MAX_PATH*sizeof( WCHAR )] = LGET_CLIPBOARD L"\\";
 				wcsncat( target_file, fileending, sizeof(target_file) );
 
 				mprintf( "Target: %S\n", target_file );
@@ -363,13 +369,13 @@ ClipboardData* GetClipboard()
 		cb->size = 0;
 
 		// delete clipboard directory and all its files
-		if( dir_exists( "./clipboard" ) > 0 )
+		if( dir_exists( "./" GET_CLIPBOARD ) > 0 )
 		{
-			mac_rm_rf( "./clipboard" );
+			mac_rm_rf( "./" GET_CLIPBOARD );
 		}
 
 		// make new clipboard directory
-		mkdir( "./clipboard", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+		mkdir( "./" GET_CLIPBOARD, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 
 
 		// make symlinks for all files in clipboard and store in directory
@@ -379,7 +385,7 @@ ClipboardData* GetClipboard()
 			if( *filenames[i]->fullPath != '\0' )
 			{
 				char symlinkName[PATH_MAX] = "";
-				strcpy( symlinkName, "./clipboard/" );
+				strcpy( symlinkName, "./" GET_CLIPBOARD "/" );
 				strcat( symlinkName, filenames[i]->filename );
 				symlink( filenames[i]->fullPath, symlinkName );
 			} else
@@ -499,11 +505,11 @@ void SetClipboard( ClipboardData* cb )
 	case CLIPBOARD_FILES:
 		mprintf( "SetClipboard to Files\n" );
 
-#define CLIPBOARD_DIRECTORY (L"C:\\Program Files\\Fractal\\clipboard\\")
+#define CLIPBOARD_DIRECTORY (L"C:\\Program Files\\Fractal\\" LSET_CLIPBOARD "\\")
 #define CLIPBOARD_DIRECTORY_SIZE (sizeof(CLIPBOARD_DIRECTORY) - sizeof(WCHAR))
 
 		WIN32_FIND_DATAW data;
-		HANDLE hFind = FindFirstFileW( L"C:\\Program Files\\Fractal\\clipboard\\*", &data );
+		HANDLE hFind = FindFirstFileW( L"C:\\Program Files\\Fractal\\" LSET_CLIPBOARD "\\*", &data );
 
 		DROPFILES* drop = (DROPFILES*)clipboard_buf;
 		memset( drop, 0, sizeof( DROPFILES ) );
@@ -597,7 +603,7 @@ void SetClipboard( ClipboardData* cb )
 		}
 
 		// populate filenames
-		get_filenames( "./clipboard", filenames );
+		get_filenames( "./" SET_CLIPBOARD, filenames );
 
 		// add files to clipboard
 		ClipboardSetFiles( filenames );
@@ -695,9 +701,9 @@ int UpdateClipboardThread( void* opaque )
 			strcat( cmd, "./unison -follow \"Path *\" " );
 #endif
 
-			strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" clipboard \"ssh://" );
+			strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " GET_CLIPBOARD " \"ssh://" );
 			strcat( cmd, (char*)server_ip );
-			strcat( cmd, "/C:/Program Files/Fractal/clipboard/\" -force clipboard -ignorearchives -confirmbigdel=false -batch" );
+			strcat( cmd, "/C:/Program Files/Fractal/" SET_CLIPBOARD "/\" -force " GET_CLIPBOARD " -ignorearchives -confirmbigdel=false -batch" );
 
 			mprintf( "COMMAND: %s\n", cmd );
 			runcmd( cmd );
