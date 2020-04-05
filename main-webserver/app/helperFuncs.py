@@ -102,10 +102,18 @@ def deleteResource(name):
             os.getenv('VM_GROUP'), name)
         async_vm_deallocate.wait()
 
+        print("VM deallocated")
         async_vm_delete = compute_client.virtual_machines.delete(
             os.getenv('VM_GROUP'), name)
         async_vm_delete.wait()
         print("VM deleted")
+
+        virtual_machine = getVM(name)
+        os_disk_name = virtual_machine.storage_profile.os_disk.name
+        os_disk_delete = compute_client.disks.delete(os.getenv('VM_GROUP'), os_disk_name)
+        os_disk_delete.wait()
+
+        print("OS disk deleted")
     except Exception as e:
         print(e)
         hr = -1
@@ -155,10 +163,6 @@ def deleteResource(name):
         print(e)
         hr = -1
 
-    # virtual_machine = getVM(name)
-    # os_disk_name = virtual_machine.storage_profile.os_disk.name
-    # os_disk = compute_client.disks.get(os.getenv('VM_GROUP'), os_disk_name)
-
     return hr
 
 
@@ -200,6 +204,12 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                         'offer': vm_reference['offer'],
                         'sku': vm_reference['sku'],
                         'version': vm_reference['version']
+                    },
+                    'os_disk': {
+                        'os_type': 'Windows',
+                        'create_option': 'From_Image',
+                        'caching': 'Read_Only',
+                        'disk_size_gb': 25
                     }
                 },
                 'network_profile': {
