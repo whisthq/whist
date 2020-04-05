@@ -90,6 +90,78 @@ def createNic(name, location, tries):
             return None
 
 
+def deleteResource(name):
+    _, compute_client, network_client = createClients()
+    vnetName, subnetName, ipName, nicName = name + \
+        '_vnet', name + '_subnet', name + '_ip', name + '_nic'
+    hr = 1
+
+    try:
+        print("Deallocating VM...")
+        async_vm_deallocate = compute_client.virtual_machines.deallocate(
+            os.getenv('VM_GROUP'), name)
+        async_vm_deallocate.wait()
+
+        async_vm_delete = compute_client.virtual_machines.delete(
+            os.getenv('VM_GROUP'), name)
+        async_vm_delete.wait()
+        print("VM deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    try:
+        async_vnet_delete = network_client.virtual_networks.delete(
+            os.getenv('VM_GROUP'),
+            vnetName
+        )
+        async_vnet_delete.wait()
+        print("Vnet deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    try:
+        async_subnet_delete = network_client.subnets.delete(
+            os.getenv('VM_GROUP'),
+            vnetName,
+            subnetName
+        )
+        async_subnet_delete.wait()
+        print("Subnet deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    try:
+        async_ip_delete = network_client.public_ip_addresses.delete(
+            os.getenv('VM_GROUP'),
+            ipName
+        )
+        async_ip_delete.wait()
+        print("IP deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    try:
+        async_nic_delete = network_client.network_interfaces.delete(
+            os.getenv('VM_GROUP'),
+            nicName
+        )
+        async_nic_delete.wait()
+        print("NIC deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    # virtual_machine = getVM(name)
+    # os_disk_name = virtual_machine.storage_profile.os_disk.name
+    # os_disk = compute_client.disks.get(os.getenv('VM_GROUP'), os_disk_name)
+
+    return hr
+
+
 def createVMParameters(vmName, nic_id, vm_size, location):
     with engine.connect() as conn:
         oldUserNames = [cell[0] for cell in list(
@@ -106,11 +178,10 @@ def createVMParameters(vmName, nic_id, vm_size, location):
         }
 
         command = text("""
-            INSERT INTO v_ms("vmName", "vmUserName", "osDisk", "running") 
-            VALUES(:vmName, :vmUserName, :osDisk, :running)
+            INSERT INTO v_ms("vmName", "vmUserName", "osDisk") 
+            VALUES(:vmName, :vmUserName, :osDisk)
             """)
-        params = {'vmName': vmName, 'vmUserName': userName,
-                  'osDisk': None, 'running': False}
+        params = {'vmName': vmName, 'vmUserName': userName, 'osDisk': None}
         with engine.connect() as conn:
             conn.execute(command, **params)
             return {'params': {
@@ -129,7 +200,7 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                         'offer': vm_reference['offer'],
                         'sku': vm_reference['sku'],
                         'version': vm_reference['version']
-                    },
+                    }
                 },
                 'network_profile': {
                     'network_interfaces': [{
@@ -399,8 +470,8 @@ def fetchUserVMs(username):
         params = {}
         with engine.connect() as conn:
             vms_info = conn.execute(command, **params).fetchall()
-            out = [{'vm_username': vm_info[1],
-                    'vm_name': vm_info[0]} for vm_info in vms_info]
+            out = {vm_info[0]: {'username': vm_info[1], 'ip': vm_info[3]}
+                   for vm_info in vms_info}
             return out
 
 
@@ -628,8 +699,9 @@ def getUserCredits(username):
     params = {'username': username}
     with engine.connect() as conn:
         users = conn.execute(command, **params).fetchone()
-        return users[3]
-    return None
+        if users:
+            return users[3]
+    return 0
 
 
 def fetchCodes():
@@ -721,5 +793,17 @@ def storeFeedback(username, feedback):
         VALUES(:email, :feedback)
         """)
     params = {'email': username, 'feedback': feedback}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+
+
+def updateVMIP(vm_name, ip):
+    command = text("""
+        UPDATE v_ms
+        SET ip = :ip
+        WHERE
+           "vmName" = :vm_name
+        """)
+    params = {'ip': ip, 'vm_name': vm_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
