@@ -52,9 +52,9 @@ STATIC_LIBS = \
 OBJS = \
 	fractal.o \
         x11capture.o \
-		x11input.o \
 	videoencode.o \
 	alsacapture.o \
+	linuxinput.o \
 	audioencode.o \
 	aes.o \
 	clipboard.o \
@@ -109,9 +109,9 @@ clipboard.o:
 alsacapture.o:
 	$(CC) -c $(CFLAGS) ../include/alsacapture.c
 
-# compile the X11 input playback source file into object file
-x11input.o:
-	$(CC) -c $(CFLAGS) ../include/x11input.c
+# compile the input playback source file into object file
+linuxinput.o:
+	$(CC) -c $(CFLAGS) ../include/linuxinput.c
 
 # compile the main source file into object file
 main.o:

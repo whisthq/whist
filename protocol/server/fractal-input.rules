@@ -1,0 +1,3 @@
+SUBSYSTEM=="usb", ATTRS{idVendor}=="f4c1", MODE="0666"
+
+KERNEL=="uinput", MODE="0666", GROUP="fractal", OPTIONS+="static_node=uinput"

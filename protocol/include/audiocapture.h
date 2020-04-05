@@ -1,8 +1,6 @@
 #ifndef AUDIO_CAPTURE_H
 #define AUDIO_CAPTURE_H
 
-#include "fractal.h"  // contains all the headers
-
 #ifdef _WIN32
 #include "../include/wasapicapture.h"
 #else

@@ -14,11 +14,7 @@
 
 #include "../include/audiocapture.h"
 #include "../include/fractal.h"
-#ifdef _WIN32
 #include "../include/input.h"
-#else
-#include "../include/x11input.h"
-#endif
 #include "../include/screencapture.h"
 #include "../include/videoencode.h"
 
@@ -622,7 +618,6 @@ int main() {
         connected = true;
         max_mbps = MAXIMUM_MBPS;
         wants_iframe = false;
-        XInitThreads();
         packet_mutex = SDL_CreateMutex();
 
         SDL_Thread* send_video =
@@ -630,6 +625,12 @@ int main() {
         SDL_Thread* send_audio =
             SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
         mprintf("Sending video and audio...\n");
+
+        input_device* in_device = (input_device*)malloc(sizeof(input_device));
+        in_device = CreateInputDevice(in_device);
+        if (!in_device) {
+            mprintf("Failed to create input device for playback.\n");
+        }
 
         struct FractalClientMessage local_fmsg;
         struct FractalClientMessage* fmsg;
@@ -647,7 +648,6 @@ int main() {
 
         int last_input_id = -1;
         StartTrackingClipboardUpdates();
-        initInputPlayback();
         ClearReadingTCP();
 
         while (connected) {
@@ -761,9 +761,10 @@ int main() {
                     fmsg->type == MESSAGE_MOUSE_BUTTON ||
                     fmsg->type == MESSAGE_MOUSE_WHEEL ||
                     fmsg->type == MESSAGE_MOUSE_MOTION) {
-                    // TODO: Unix version missing
                     // Replay user input (keyboard or mouse presses)
-                    ReplayUserInput(fmsg);
+                    if (in_device) {
+                        ReplayUserInput(in_device, fmsg);
+                    }
 
                 } else if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
 // TODO: Unix version missing
@@ -870,9 +871,10 @@ int main() {
 
         mprintf("Disconnected\n");
 
+        DestroyInputDevice(in_device);
+
         SDL_WaitThread(send_video, NULL);
         SDL_WaitThread(send_audio, NULL);
-        stopInputPlayback();
         SDL_DestroyMutex(packet_mutex);
 
         closesocket(PacketReceiveContext.s);

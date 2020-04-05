@@ -79,6 +79,7 @@ int CaptureScreen( struct CaptureDevice* device )
             return -1;
         }
     }
+    XUnlockDisplay(device->display);
     return update;
 }
 
