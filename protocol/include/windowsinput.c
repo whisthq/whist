@@ -473,8 +473,8 @@ void ReplayUserInput(input_device* device, struct FractalClientMessage* fmsg) {
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
-            ("MOUSE: x %d y %d r %d\n", fmsg->mouseMotion.x,
-             fmsg->mouseMotion.y, fmsg->mouseMotion.relative);
+            mprintf("MOUSE: x %d y %d r %d\n", fmsg->mouseMotion.x,
+                    fmsg->mouseMotion.y, fmsg->mouseMotion.relative);
 
             Event.type = INPUT_MOUSE;
             if (fmsg->mouseMotion.relative) {
