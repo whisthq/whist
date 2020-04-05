@@ -461,7 +461,10 @@ input_device* CreateInputDevice(input_device* device) {
     ioctl(device->fd, UI_SET_RELBIT, REL_WHEEL);
     ioctl(device->fd, UI_SET_RELBIT, REL_HWHEEL);
 
-    // register absolute mouse motion events (todo)
+    // register absolute mouse motion events
+    ioctl(device->fd, UI_SET_EVBIT, EV_ABS);
+    ioctl(device->fd, UI_SET_ABSBIT, ABS_X);
+    ioctl(device->fd, UI_SET_ABSBIT, ABS_Y);
 
     // register sync event
     ioctl(device->fd, UI_SET_EVBIT, EV_SYN);
@@ -532,6 +535,14 @@ void ReplayUserInput(input_device* device, struct FractalClientMessage* fmsg) {
                 EmitInputEvent(device, EV_REL, REL_Y, fmsg->mouseMotion.y);
             } else {
                 mprintf("ABSOLUTE MOUSE\n");
+                EmitInputEvent(device, EV_ABS, ABS_X,
+                               (int)(fmsg->mouseMotion.x *
+                                     (int32_t)get_native_screen_width() /
+                                     (int32_t)1000000));
+                EmitInputEvent(device, EV_ABS, ABS_Y,
+                               (int)(fmsg->mouseMotion.y *
+                                     (int32_t)get_native_screen_height() /
+                                     (int32_t)1000000));
             }
             break;
         case MESSAGE_MOUSE_BUTTON:
@@ -550,6 +561,7 @@ void ReplayUserInput(input_device* device, struct FractalClientMessage* fmsg) {
             // TODO: add clipboard
     }
 
+    // sync the input event
     EmitInputEvent(device, EV_SYN, SYN_REPORT, 0);
 }
 
