@@ -101,19 +101,38 @@ def deleteResource(name):
         async_vm_deallocate = compute_client.virtual_machines.deallocate(
             os.getenv('VM_GROUP'), name)
         async_vm_deallocate.wait()
-
         print("VM deallocated")
-        async_vm_delete = compute_client.virtual_machines.delete(
-            os.getenv('VM_GROUP'), name)
-        async_vm_delete.wait()
-        print("VM deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
 
-        virtual_machine = getVM(name)
-        os_disk_name = virtual_machine.storage_profile.os_disk.name
-        os_disk_delete = compute_client.disks.delete(os.getenv('VM_GROUP'), os_disk_name)
-        os_disk_delete.wait()
+    try:
+        subnet_obj = network_client.subnets.get(
+            resource_group_name = os.getenv('VM_GROUP'), 
+            virtual_network_name = vnetName,  
+            subnet_name = subnetName)  
+        # Step 3, configure network interface parameters.  
+        params = {'ip_configurations': [  
+                         {  
+                            'name': ipName，  
+                            'subnet': {'id': subnet_obj.id},  
+                            # None: Disassociate;  
+                            'public_ip_address': None,  
+                         }]  
+                }  
+        # Step 4, use method create_or_update to update network interface configuration.  
+        async_ip_detach = network_client.network_interfaces.create_or_update(  
+           resource_group_name = os.getenv('VM_GROUP'),  
+           network_interface_name = nicName,  
+           parameters = params)  
+        async_ip_detach.wait()
 
-        print("OS disk deleted")
+        async_ip_delete = network_client.public_ip_addresses.delete(
+            os.getenv('VM_GROUP'),
+            ipName
+        )
+        async_ip_delete.wait()
+        print("IP deleted")
     except Exception as e:
         print(e)
         hr = -1
@@ -128,30 +147,7 @@ def deleteResource(name):
     except Exception as e:
         print(e)
         hr = -1
-
-    try:
-        async_subnet_delete = network_client.subnets.delete(
-            os.getenv('VM_GROUP'),
-            vnetName,
-            subnetName
-        )
-        async_subnet_delete.wait()
-        print("Subnet deleted")
-    except Exception as e:
-        print(e)
-        hr = -1
-
-    try:
-        async_ip_delete = network_client.public_ip_addresses.delete(
-            os.getenv('VM_GROUP'),
-            ipName
-        )
-        async_ip_delete.wait()
-        print("IP deleted")
-    except Exception as e:
-        print(e)
-        hr = -1
-
+        
     try:
         async_nic_delete = network_client.network_interfaces.delete(
             os.getenv('VM_GROUP'),
@@ -159,6 +155,21 @@ def deleteResource(name):
         )
         async_nic_delete.wait()
         print("NIC deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    try:
+        virtual_machine = getVM(name)
+        os_disk_name = virtual_machine.storage_profile.os_disk.name
+        os_disk_delete = compute_client.disks.delete(os.getenv('VM_GROUP'), os_disk_name)
+        os_disk_delete.wait()
+        print("OS disk deleted")
+
+        async_vm_delete = compute_client.virtual_machines.delete(
+            os.getenv('VM_GROUP'), name)
+        async_vm_delete.wait()
+        print("VM deleted")
     except Exception as e:
         print(e)
         hr = -1
