@@ -770,7 +770,7 @@ int main() {
 // TODO: Unix version missing
 // Synchronize client and server keyboard state
 #ifdef _WIN32
-                    UpdateKeyboardState(fmsg);
+                    UpdateKeyboardState(in_device, fmsg);
 #endif
                 } else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
