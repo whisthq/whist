@@ -207,9 +207,8 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                     },
                     'os_disk': {
                         'os_type': 'Windows',
-                        'create_option': 'Empty',
-                        'caching': 'ReadOnly',
-                        'disk_size_gb': 25
+                        'create_option': 'FromImage',
+                        'caching': 'ReadOnly'
                     }
                 },
                 'network_profile': {
