@@ -44,6 +44,10 @@ def createVM(self, vm_size, location):
         result = poller.result()
         print(result.value[0].message)
 
+    vm = getVM(vmParameters['vmName'])
+    vm_ip = getIP(vm)       
+    updateVMIP(vmParameters['vmName'], vm_ip)
+
     return fetchVMCredentials(vmParameters['vmName'])
 
 @celery.task(bind = True)
