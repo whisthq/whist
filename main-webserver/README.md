@@ -5,7 +5,7 @@ Webserver to handle interfacing with Fractal cloud computers hosted on Azure, an
 Hosted on Heroku: https://dashboard.heroku.com/apps/cube-celery-vm
 
 ## Setup
-### Local setup
+### Local setup (Windows)
 1. Set up the Heroku CLI on your computer
 2. Ceate a virtual environment for yourself by typing “virtualenv env” and then run the python executable listed in the install text, i.e. “env\Scripts\activate.” 
 3. Install everything by typing pip install -r requirements.txt. 
