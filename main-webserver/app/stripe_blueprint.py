@@ -72,8 +72,10 @@ def payment(action):
 				subscription = customer['subscription']
 				try:
 					payload = stripe.Subscription.retrieve(subscription)
-					return jsonify({'status': 200, 'subscription': payload, 'creditsOutstanding': credits}), 200
-				except:
+					updateTrialEnd(payload['id'], payload['trial_end'])
+					account_locked = not customer['paid'] and not payload['trial_end']
+					return jsonify({'status': 200, 'subscription': payload, 'creditsOutstanding': credits, 'account_locked': account_locked}), 200
+				except Exception as e:
 					return jsonify({'status': 402, 'creditsOutstanding': credits}), 402
 
 		return jsonify({'status': 402, 'creditsOutstanding': credits}), 402

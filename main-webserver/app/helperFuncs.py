@@ -566,7 +566,8 @@ def fetchCustomers():
         out = [{'email': customer[0],
                 'id': customer[1],
                 'subscription': customer[2],
-                'location': customer[3]}
+                'location': customer[3],
+                'paid': customer[5]}
                for customer in customers]
         return out
 
@@ -824,5 +825,16 @@ def updateVMIP(vm_name, ip):
            "vmName" = :vm_name
         """)
     params = {'ip': ip, 'vm_name': vm_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+
+def updateTrialEnd(subscription, trial_end):
+    command = text("""
+        UPDATE customers
+        SET trial_end = :trial_end
+        WHERE
+           "subscription" = :subscription
+        """)
+    params = {'subscription': subscription, 'trial_end': trial_end}
     with engine.connect() as conn:
         conn.execute(command, **params)
