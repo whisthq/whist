@@ -1073,7 +1073,7 @@ void crash_handler(int sig) {
   backtrace_symbols_fd(array, size, STDERR_FILENO);
 
   fprintf(stderr, "addr2line -e build64/server");
-  for(int i = 0; i < size; i++) {
+  for(size_t i = 0; i < size; i++) {
     fprintf(stderr, " %p", array[i]);
   }
   fprintf(stderr, "\n\n");

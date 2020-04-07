@@ -64,7 +64,7 @@ void initUpdate() {
     ping_id = 1;
     ping_failures = -2;
 
-    initUpdateClipboard((SEND_FMSG*)&SendFmsg, server_ip);
+    initUpdateClipboard((SEND_FMSG*)&SendFmsg, (char *) server_ip);
     ClearReadingTCP();
 }
 
