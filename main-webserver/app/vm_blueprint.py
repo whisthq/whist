@@ -56,8 +56,9 @@ def disk(action):
     if action == 'create':
         vm_name = request.get_json()['vm_name']
         disk_size = request.get_json()['disk_size']
+        username = request.get_json()['username']
         location = request.get_json()['location']
-        task = createDisk.apply_async([vm_name, disk_size, location])
+        task = createDisk.apply_async([vm_name, disk_size, username, location])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
