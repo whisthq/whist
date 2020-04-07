@@ -80,9 +80,9 @@ def payment(action):
 					return jsonify({'status': 200, 'subscription': payload, 'creditsOutstanding': credits, 'account_locked': account_locked, 'customer': customer}), 200
 				except Exception as e:
 					account_locked = not customer['paid'] and customer['trial_end'] < dateToUnix(getToday())
-					return jsonify({'status': 402, 'creditsOutstanding': credits, 'account_locked': account_locked, 'customer': customer}), 402
+					return jsonify({'status': 402, 'subscription': {}, 'creditsOutstanding': credits, 'account_locked': account_locked, 'customer': customer}), 402
 
-		return jsonify({'status': 402, 'creditsOutstanding': credits}), 402
+		return jsonify({'status': 402, 'subscription': {}, 'creditsOutstanding': credits, 'account_locked': False, 'customer': {}}), 402
 
 	elif action == 'cancel':
 		body = request.get_json()
