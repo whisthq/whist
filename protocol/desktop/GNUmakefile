@@ -116,7 +116,6 @@ STATIC_LIBS = \
 
 # compiler flags
 CFLAGS = \
-	-fno-pie \
 	-g \
 	-Wall \
 	-Wextra \
