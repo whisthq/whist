@@ -138,4 +138,4 @@ if ($productivity_install) {
 Write-Output "Cleaning up Utils script"
 Remove-Item -Path $utils_script_name -Confirm:$false
 
-Restart-Computer
+Restart-Computer -Force

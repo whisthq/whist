@@ -55,7 +55,7 @@ def payment(action):
 			return jsonify({'status': 402, 'error': str(e)}), 402
 
 		try:
-			insertCustomer(email, customer_id, subscription_id, location)
+			insertCustomer(email, customer_id, subscription_id, location, True)
 		except:
 			return jsonify({'status': 409}), 409
 
@@ -72,8 +72,10 @@ def payment(action):
 				subscription = customer['subscription']
 				try:
 					payload = stripe.Subscription.retrieve(subscription)
-					return jsonify({'status': 200, 'subscription': payload, 'creditsOutstanding': credits}), 200
-				except:
+					updateTrialEnd(payload['id'], payload['trial_end'])
+					account_locked = not customer['paid'] and not payload['trial_end']
+					return jsonify({'status': 200, 'subscription': payload, 'creditsOutstanding': credits, 'account_locked': account_locked}), 200
+				except Exception as e:
 					return jsonify({'status': 402, 'creditsOutstanding': credits}), 402
 
 		return jsonify({'status': 402, 'creditsOutstanding': credits}), 402
@@ -86,7 +88,11 @@ def payment(action):
 		for customer in customers:
 			if email == customer['email']:
 				subscription = customer['subscription']
-				payload = stripe.Subscription.delete(subscription)
+				try:
+					payload = stripe.Subscription.delete(subscription)
+				except Exception as e:
+					print(e)
+					pass
 				deleteCustomer(email)
 				return jsonify({'status': 200}), 200
 		return jsonify({'status': 400}), 400
@@ -143,6 +149,10 @@ def payment(action):
 
 		return jsonify({'status': 200}), 200
 
+	elif action == 'insert':
+		body = request.get_json()
+		insertCustomer(body['email'], None, None, body['location'], False)
+		return jsonify({'status': 200}), 200
 
 @stripe_bp.route('/referral/<action>', methods = ['POST'])
 def referral(action):

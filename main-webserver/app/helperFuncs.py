@@ -101,11 +101,37 @@ def deleteResource(name):
         async_vm_deallocate = compute_client.virtual_machines.deallocate(
             os.getenv('VM_GROUP'), name)
         async_vm_deallocate.wait()
+        print("VM deallocated")
+    except Exception as e:
+        print(e)
+        hr = -1
 
-        async_vm_delete = compute_client.virtual_machines.delete(
-            os.getenv('VM_GROUP'), name)
-        async_vm_delete.wait()
-        print("VM deleted")
+    try:
+        subnet_obj = network_client.subnets.get(
+            resource_group_name = os.getenv('VM_GROUP'), 
+            virtual_network_name = vnetName,  
+            subnet_name = subnetName)  
+        # Step 3, configure network interface parameters.  
+        params = {'ip_configurations': [  
+                         {  'name': ipName,  
+                            'subnet': {'id': subnet_obj.id},  
+                            # None: Disassociate;  
+                            'public_ip_address': None,  
+                         }]  
+                }  
+        # Step 4, use method create_or_update to update network interface configuration.  
+        async_ip_detach = network_client.network_interfaces.create_or_update(  
+           resource_group_name = os.getenv('VM_GROUP'),  
+           network_interface_name = nicName,  
+           parameters = params)  
+        async_ip_detach.wait()
+
+        async_ip_delete = network_client.public_ip_addresses.delete(
+            os.getenv('VM_GROUP'),
+            ipName
+        )
+        async_ip_delete.wait()
+        print("IP deleted")
     except Exception as e:
         print(e)
         hr = -1
@@ -122,29 +148,6 @@ def deleteResource(name):
         hr = -1
 
     try:
-        async_subnet_delete = network_client.subnets.delete(
-            os.getenv('VM_GROUP'),
-            vnetName,
-            subnetName
-        )
-        async_subnet_delete.wait()
-        print("Subnet deleted")
-    except Exception as e:
-        print(e)
-        hr = -1
-
-    try:
-        async_ip_delete = network_client.public_ip_addresses.delete(
-            os.getenv('VM_GROUP'),
-            ipName
-        )
-        async_ip_delete.wait()
-        print("IP deleted")
-    except Exception as e:
-        print(e)
-        hr = -1
-
-    try:
         async_nic_delete = network_client.network_interfaces.delete(
             os.getenv('VM_GROUP'),
             nicName
@@ -155,9 +158,20 @@ def deleteResource(name):
         print(e)
         hr = -1
 
-    # virtual_machine = getVM(name)
-    # os_disk_name = virtual_machine.storage_profile.os_disk.name
-    # os_disk = compute_client.disks.get(os.getenv('VM_GROUP'), os_disk_name)
+    try:
+        virtual_machine = getVM(name)
+        os_disk_name = virtual_machine.storage_profile.os_disk.name
+        os_disk_delete = compute_client.disks.delete(os.getenv('VM_GROUP'), os_disk_name)
+        os_disk_delete.wait()
+        print("OS disk deleted")
+
+        async_vm_delete = compute_client.virtual_machines.delete(
+            os.getenv('VM_GROUP'), name)
+        async_vm_delete.wait()
+        print("VM deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
 
     return hr
 
@@ -200,6 +214,11 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                         'offer': vm_reference['offer'],
                         'sku': vm_reference['sku'],
                         'version': vm_reference['version']
+                    },
+                    'os_disk': {
+                        'os_type': 'Windows',
+                        'create_option': 'FromImage',
+                        'caching': 'ReadOnly'
                     }
                 },
                 'network_profile': {
@@ -547,21 +566,23 @@ def fetchCustomers():
         out = [{'email': customer[0],
                 'id': customer[1],
                 'subscription': customer[2],
-                'location': customer[3]}
+                'location': customer[3],
+                'paid': customer[5]}
                for customer in customers]
         return out
 
 
-def insertCustomer(email, customer_id, subscription_id, location):
+def insertCustomer(email, customer_id, subscription_id, location, paid):
     command = text("""
-        INSERT INTO customers("email", "id", "subscription", "location") 
-        VALUES(:email, :id, :subscription, :location)
+        INSERT INTO customers("email", "id", "subscription", "location", "paid") 
+        VALUES(:email, :id, :subscription, :location, :paid)
         """)
 
     params = {'email': email,
               'id': customer_id,
               'subscription': subscription_id,
-              'location': location}
+              'location': location,
+              'paid': paid}
 
     with engine.connect() as conn:
         conn.execute(command, **params)
@@ -805,5 +826,16 @@ def updateVMIP(vm_name, ip):
            "vmName" = :vm_name
         """)
     params = {'ip': ip, 'vm_name': vm_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+
+def updateTrialEnd(subscription, trial_end):
+    command = text("""
+        UPDATE customers
+        SET trial_end = :trial_end
+        WHERE
+           "subscription" = :subscription
+        """)
+    params = {'subscription': subscription, 'trial_end': trial_end}
     with engine.connect() as conn:
         conn.execute(command, **params)
