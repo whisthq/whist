@@ -1,4 +1,4 @@
-# Fractal Webserver
+# Fractal Users & VM Webserver
 
 Webserver to handle interfacing with Fractal cloud computers hosted on Azure, and for interfacing with a variety of website functionalities. Runs Flask with Celery for asynchronous task handling.
 
