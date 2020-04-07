@@ -16,6 +16,7 @@ def payment(action):
 		email = body['email']
 		location = body['location']
 		code = body['code']
+		trial_end = 0
 
 		customers = fetchCustomers()
 		for customer in customers:
@@ -35,18 +36,20 @@ def payment(action):
 				credits += 1
 
 			if credits == 0:
+				trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1)
 				new_subscription = stripe.Subscription.create(
 				  customer = new_customer['id'],
 				  items = [{"plan": os.getenv("PLAN_ID")}],
-				  trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1),
+				  trial_end = trial_end,
 				  trial_from_plan = False
 				)
 				subscription_id = new_subscription['id']
 			else:
+				trial_end = shiftUnixByMonth(dateToUnix(getToday()), credits)
 				new_subscription = stripe.Subscription.create(
 				  customer = new_customer['id'],
 				  items = [{"plan": os.getenv("PLAN_ID")}],
-				  trial_end = shiftUnixByMonth(dateToUnix(getToday()), credits),
+				  trial_end = trial_end,
 				  trial_from_plan = False
 				)
 				changeUserCredits(email, 0)
@@ -55,7 +58,7 @@ def payment(action):
 			return jsonify({'status': 402, 'error': str(e)}), 402
 
 		try:
-			insertCustomer(email, customer_id, subscription_id, location, True)
+			insertCustomer(email, customer_id, subscription_id, location, trial_end, True)
 		except:
 			return jsonify({'status': 409}), 409
 
@@ -110,6 +113,7 @@ def payment(action):
 		email = metadata['email']
 		has_subscription = False
 		subscription_id = None
+		trial_end = 0
 
 		customers = fetchCustomers()
 		for customer in customers:
@@ -120,24 +124,30 @@ def payment(action):
 		if has_subscription:
 			new_subscription = stripe.Subscription.retrieve(subscription_id)
 			if new_subscription['trial_end']:
-			    if new_subscription['trial_end'] <= dateToUnix(getToday()):
-			        modified_subscription = stripe.Subscription.modify(
-			            new_subscription['id'],
-			            trial_end = shiftUnixByMonth(dateToUnix(getToday()), 1),
-			            trial_from_plan = False
-			        )
-			        
-			    modified_subscription = stripe.Subscription.modify(
-			        new_subscription['id'],
-			        trial_end = shiftUnixByMonth(new_subscription['trial_end'], 1),
-			        trial_from_plan = False
-			    )
+				if new_subscription['trial_end'] <= dateToUnix(getToday()):
+					trial_end = shiftUnixByMonth(dateToUnix(getToday()), 1)
+					modified_subscription = stripe.Subscription.modify(
+						new_subscription['id'],
+						trial_end = trial_end,
+						trial_from_plan = False
+					)
+					updateTrialEnd(new_subscription['id'], trial_end)
+				else:
+					trial_end = shiftUnixByMonth(new_subscription['trial_end'], 1)
+					modified_subscription = stripe.Subscription.modify(
+						new_subscription['id'],
+						trial_end = trial_end,
+						trial_from_plan = False
+					)
+					updateTrialEnd(new_subscription['id'], trial_end)
 			else:
-			    modified_subscription = stripe.Subscription.modify(
-			        new_subscription['id'],
-			        trial_end = shiftUnixByMonth(dateToUnix(getToday()), 1),
-			        trial_from_plan = False
-			    )
+				trial_end = shiftUnixByMonth(dateToUnix(getToday()), 1)
+				modified_subscription = stripe.Subscription.modify(
+					new_subscription['id'],
+					trial_end = trial_end,
+					trial_from_plan = False
+				)
+				updateTrialEnd(new_subscription['id'], trial_end)
 
 		else:
 			changeUserCredits(email, creditsOutstanding + 1)
@@ -151,7 +161,8 @@ def payment(action):
 
 	elif action == 'insert':
 		body = request.get_json()
-		insertCustomer(body['email'], None, None, body['location'], False)
+		trial_end =  shiftUnixByWeek(dateToUnix(getToday()), 1)
+		insertCustomer(body['email'], None, None, body['location'], trial_end, False)
 		return jsonify({'status': 200}), 200
 
 @stripe_bp.route('/referral/<action>', methods = ['POST'])

@@ -572,21 +572,47 @@ def fetchCustomers():
         return out
 
 
-def insertCustomer(email, customer_id, subscription_id, location, paid):
+def insertCustomer(email, customer_id, subscription_id, location, trial_end, paid):
     command = text("""
-        INSERT INTO customers("email", "id", "subscription", "location", "paid") 
-        VALUES(:email, :id, :subscription, :location, :paid)
+        SELECT * FROM customers WHERE "email" = :email
         """)
-
-    params = {'email': email,
-              'id': customer_id,
-              'subscription': subscription_id,
-              'location': location,
-              'paid': paid}
-
+    params = {'email': email}
     with engine.connect() as conn:
-        conn.execute(command, **params)
+        user = conn.execute(command, **params).fetchall()
+        
+        if len(user) == 0:
+            command = text("""
+                INSERT INTO customers("email", "id", "subscription", "location", "trial_end", "paid") 
+                VALUES(:email, :id, :subscription, :location, :trial_end, :paid)
+                """)
 
+            params = {'email': email,
+                      'id': customer_id,
+                      'subscription': subscription_id,
+                      'location': location,
+                      'trial_end': trial_end,
+                      'paid': paid}
+
+            conn.execute(command, **params)
+        else:
+            command = text("""
+                UPDATE customers 
+                SET "id" = :id, 
+                    "subscription" = :subscription, 
+                    "location" = :location, 
+                    "trial_end" = :trial_end,
+                    "paid" = :paid
+                WHERE "email" = :email
+                """)
+
+            params = {'email': email,
+                      'id': customer_id,
+                      'subscription': subscription_id,
+                      'location': location,
+                      'trial_end': trial_end,
+                      'paid': paid}
+
+            conn.execute(command, **params)
 
 def deleteCustomer(email):
     command = text("""
