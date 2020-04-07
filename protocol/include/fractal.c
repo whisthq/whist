@@ -199,7 +199,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			return -1;
 		}
 
-		int slen = sizeof( origin_addr );
+		socklen_t slen = sizeof( origin_addr );
 		if( getsockname( context->s, (struct sockaddr*)&origin_addr, &slen ) < 0 )
 		{
 			mprintf( "Could not get sock name\n" );
@@ -327,7 +327,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 			return -1;
 		}
 
-		int slen = sizeof(origin_addr);
+		socklen_t slen = sizeof(origin_addr);
 		if( getsockname( context->s, (struct sockaddr*)&origin_addr, &slen ) < 0 )
 		{
 			mprintf( "Could not get sock name\n" );
