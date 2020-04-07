@@ -572,16 +572,17 @@ def fetchCustomers():
         return out
 
 
-def insertCustomer(email, customer_id, subscription_id, location):
+def insertCustomer(email, customer_id, subscription_id, location, paid):
     command = text("""
-        INSERT INTO customers("email", "id", "subscription", "location") 
-        VALUES(:email, :id, :subscription, :location)
+        INSERT INTO customers("email", "id", "subscription", "location", "paid") 
+        VALUES(:email, :id, :subscription, :location, :paid)
         """)
 
     params = {'email': email,
               'id': customer_id,
               'subscription': subscription_id,
-              'location': location}
+              'location': location,
+              'paid': paid}
 
     with engine.connect() as conn:
         conn.execute(command, **params)
