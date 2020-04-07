@@ -56,7 +56,7 @@ def createVM(self, vm_size, location):
 @celery.task(bind=True)
 def createDisk(self, vm_Name, disk_size, location):
     _, compute_client, _ = createClients()
-    lunNum = 1
+    lunNum = 2
     disk_name = "newTestDisk"
 
     # Create managed data disk
