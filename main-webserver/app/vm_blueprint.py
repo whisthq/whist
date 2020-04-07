@@ -3,6 +3,7 @@ from .tasks import *
 
 vm_bp = Blueprint('vm_bp', __name__)
 
+
 @vm_bp.route('/status/<task_id>')
 def status(task_id):
     result = celery.AsyncResult(task_id)
@@ -15,7 +16,7 @@ def status(task_id):
     elif result.status == 'FAILURE':
         response = {
             'state': result.status,
-            'output': str(result.info) 
+            'output': str(result.info)
         }
         return make_response(jsonify(response), 200)
     else:
@@ -25,13 +26,14 @@ def status(task_id):
         }
         return make_response(jsonify(response), 200)
 
-@vm_bp.route('/vm/<action>', methods = ['POST'])
+
+@vm_bp.route('/vm/<action>', methods=['POST'])
 def vm(action):
     if action == 'create':
         vm_size = request.get_json()['vm_size']
         location = request.get_json()['location']
         task = createVM.apply_async([vm_size, location])
-        if not task: 
+        if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
     elif action == 'fetchip':
@@ -48,13 +50,37 @@ def vm(action):
         return jsonify({'ID': task.id}), 202
     return jsonify({}), 400
 
-@vm_bp.route('/tracker/<action>', methods = ['POST'])
+
+@vm_bp.route('/disk/<action>', methods=['POST'])
+def disk(action):
+    if action == 'create':
+        vm_name = request.get_json()['vm_name']
+        disk_size = request.get_json()['disk_size']
+        location = request.get_json()['location']
+        task = createDisk.apply_async([vm_name, disk_size, location])
+        if not task:
+            return jsonify({}), 400
+        return jsonify({'ID': task.id}), 202
+    elif action == 'detach':
+        vm_name = request.get_json()['vm_name']
+        disk_name = request.get_json()['disk_name']
+        task = detachDisk.apply_async([vm_name, disk_name])
+        if not task:
+            return jsonify({}), 400
+        return jsonify({'ID': task.id}), 202
+    # elif action == 'delete':
+    #     vm_name = request.get_json()['vm_name']
+    #     disk_name = request.get_json()['disk_name']
+    return jsonify({}), 400
+
+
+@vm_bp.route('/tracker/<action>', methods=['POST'])
 def tracker(action):
     body = request.get_json()
     time = None
     try:
         time = body['time']
-    except: 
+    except:
         pass
     if action == 'logon':
         username = body['username']
@@ -69,7 +95,8 @@ def tracker(action):
         return jsonify({'payload': activity}), 200
     return jsonify({}), 200
 
-@vm_bp.route('/info/<action>', methods = ['GET', 'POST'])
+
+@vm_bp.route('/info/<action>', methods=['GET', 'POST'])
 def info(action):
     body = request.get_json()
     if action == 'list_all' and request.method == 'GET':
@@ -84,4 +111,3 @@ def info(action):
         return jsonify({'ID': task.id}), 202
 
     return jsonify({}), 400
-
