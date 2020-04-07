@@ -552,7 +552,7 @@ void update() {
 int main() {
     initBacktraceHandler();
 #ifndef _WIN32
-    runcmd( "chmod 600 sshkey" );
+    runcmd("chmod 600 sshkey");
 #endif
     initMultiThreadedPrintf(true);
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
