@@ -28,6 +28,8 @@ typedef struct ClipboardFiles
 	char* files[];
 } ClipboardFiles;
 
+void initClipboard();
+
 ClipboardData* GetClipboard();
 
 void SetClipboard( ClipboardData* cb );

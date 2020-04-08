@@ -724,6 +724,8 @@ int main(int argc, char* argv[]) {
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(true);
 
+    initClipboard();
+
     exiting = false;
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         // Make the screen black

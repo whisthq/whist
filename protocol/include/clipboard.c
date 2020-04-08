@@ -36,6 +36,12 @@ char* set_clipboard_directory()
 #define SET_CLIPBOARD "set_clipboard"
 #endif
 
+void initClipboard()
+{
+	get_clipboard_directory();
+	set_clipboard_directory();
+}
+
 #ifdef _WIN32
 #include "shlwapi.h"
 #pragma comment (lib, "Shlwapi.lib")
@@ -83,6 +89,14 @@ WCHAR* lget_clipboard_directory()
 	WCHAR* cb_dir = lclipboard_directory();
 	wcscpy( path, cb_dir );
 	PathAppendW( path, L"get_clipboard" );
+	if( !PathFileExistsW( path ) )
+	{
+		if( !CreateDirectoryW( path, NULL ) )
+		{
+			mprintf( "Could not create directory: %S (Error %d)\n", path, GetLastError() );
+			return NULL;
+		}
+	}
 	return path;
 }
 
@@ -92,6 +106,14 @@ WCHAR* lset_clipboard_directory()
 	WCHAR* cb_dir = lclipboard_directory();
 	wcscpy( path, cb_dir );
 	PathAppendW( path, L"set_clipboard" );
+	if( !PathFileExistsW( path ) )
+	{
+		if( !CreateDirectoryW( path, NULL ) )
+		{
+			mprintf( "Could not create directory: %S (Error %d)\n", path, GetLastError() );
+			return NULL;
+		}
+	}
 	return path;
 }
 

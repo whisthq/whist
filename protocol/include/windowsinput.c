@@ -354,9 +354,6 @@ void UpdateKeyboardState(input_device_t* input_device,
     bool server_caps_lock = GetKeyState(VK_CAPITAL) & 1;
     bool server_num_lock = GetKeyState(VK_NUMLOCK) & 1;
 
-    mprintf( "NUM LOCK: %d\n", server_num_lock );
-    mprintf( "FMSG NUM LOCK: %d\n", server_num_lock );
-
     bool caps_lock_holding = false;
     bool num_lock_holding = false;
 
