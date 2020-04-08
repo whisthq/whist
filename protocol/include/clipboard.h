@@ -40,6 +40,8 @@ bool hasClipboardUpdated();
 
 typedef int SEND_FMSG( void* fmsg );
 
+bool isUpdatingClipboard();
+bool updateSetClipboard( ClipboardData* cb );
 void initUpdateClipboard( SEND_FMSG* send_fmsg, char* server_ip );
 void updateClipboard();
 bool pendingUpdateClipboard();

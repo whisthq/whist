@@ -35,7 +35,7 @@ void runcmd( const char* cmdline )
 
 	memcpy( cmd_buf, cmdline, strlen( (const char*)cmdline ) + 1 );
 
-	SetEnvironmentVariable((LPCWSTR) "UNISON", (LPCWSTR) "./.unison" );
+	SetEnvironmentVariableW((LPCWSTR) L"UNISON", (LPCWSTR) L"./.unison" );
 
 	if( CreateProcessA( NULL, (LPSTR)cmd_buf, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi ) )
 	{

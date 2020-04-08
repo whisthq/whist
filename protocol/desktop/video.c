@@ -185,9 +185,8 @@ int32_t RenderScreen(void* opaque) {
         Frame* frame = (Frame*)renderContext.frame_buffer;
 
 #if LOG_VIDEO
-        mprintf("Rendering ID %d (Age %f)\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ));
-#endif
         mprintf( "Rendering ID %d (Age %f) (Packets %d) %s\n", renderContext.id, GetTimer( renderContext.frame_creation_timer ), renderContext.num_packets, frame->is_iframe ? "(I-Frame)" : "" );
+#endif
 
         if( GetTimer( renderContext.frame_creation_timer ) > 25.0 / 1000.0 )
         {
