@@ -263,8 +263,8 @@ ClipboardData* GetClipboard()
 
 			WIN32_FIND_DATAW data;
 
-			char first_file_path[MAX_PATH];
-			wcscpy( first_file_path, LGET_CLIPBOARD );
+			WCHAR first_file_path[MAX_PATH] = L"";
+			wcscat( first_file_path, LGET_CLIPBOARD );
 			wcscat( first_file_path, L"\\*" );
 
 			HANDLE hFind = FindFirstFileW( first_file_path, &data );
@@ -280,7 +280,7 @@ ClipboardData* GetClipboard()
 						continue;
 					}
 
-					char filename[MAX_PATH*sizeof( WCHAR )] = L"";
+					WCHAR filename[MAX_PATH] = L"";
 					wcscat( (wchar_t*)filename, LGET_CLIPBOARD );
 					wcscat((wchar_t *) filename, L"\\" );
 					wcscat((wchar_t *) filename, data.cFileName );
@@ -311,7 +311,7 @@ ClipboardData* GetClipboard()
 				WCHAR* fileending = PathFindFileNameW( filename );
 				DWORD fileattributes = GetFileAttributesW( filename );
 
-				WCHAR target_file[MAX_PATH*sizeof( WCHAR )] = L"";
+				WCHAR target_file[MAX_PATH] = L"";
 				wcscat( target_file, LGET_CLIPBOARD );
 				wcscat( target_file, L"\\" );
 				wcsncat( target_file, fileending, sizeof(target_file) );
@@ -524,7 +524,7 @@ void SetClipboard( ClipboardData* cb )
 	case CLIPBOARD_FILES:
 		mprintf( "SetClipboard to Files\n" );
 
-		char first_file_path[MAX_PATH] = L"";
+		WCHAR first_file_path[MAX_PATH] = L"";
 		wcscat( first_file_path, LSET_CLIPBOARD );
 		wcscat( first_file_path, L"\\*" );
 
@@ -540,7 +540,7 @@ void SetClipboard( ClipboardData* cb )
 		drop->fWide = true;
 		drop->fNC = false;
 
-		char file_prefix[MAX_PATH] = L"";
+		WCHAR file_prefix[MAX_PATH] = L"";
 		wcscat( file_prefix, LSET_CLIPBOARD );
 		wcscat( file_prefix, L"\\" );
 
