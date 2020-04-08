@@ -35,12 +35,6 @@ def status(task_id):
         }
         return make_response(jsonify(response), 200)
 
-@vm_bp.route('/vm/shreya_test', methods=['POST'])
-@jwt_required
-def test_jwt():
-    body = request.get_json()
-    return jsonify({'val': body['val']}), 400
-
 # VM endpoint
 
 @vm_bp.route('/vm/create', methods = ['POST'])
