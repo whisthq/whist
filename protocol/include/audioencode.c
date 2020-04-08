@@ -195,7 +195,7 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
 
 void destroy_audio_encoder(audio_encoder_t* encoder) {
     if (encoder == NULL) {
-        printf("Cannot destroy null encoder.\n");
+        mprintf("Cannot destroy null encoder.\n");
         return;
     }
 

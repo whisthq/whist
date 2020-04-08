@@ -117,21 +117,19 @@ void GetBuffer(audio_device_t *audio_device) {
                             audio_device->num_frames);
     if (res == -EPIPE) {
         snd_pcm_recover(audio_device->handle, res, 0);
-        audio_device->buffer_size = 0;
+        audio_device->frames_available = 0;
     } else if (res < 0) {
         mprintf("Error from PCM read: %s\n", snd_strerror(res));
         snd_pcm_recover(audio_device->handle, res, 0);
-        audio_device->buffer_size = 0;
+        audio_device->frames_available = 0;
     } else {
         audio_device->frames_available = res;
-        audio_device->buffer_size =
-            audio_device->frames_available * audio_device->frame_size;
     }
+    audio_device->buffer_size =
+        audio_device->frames_available * audio_device->frame_size;
 }
 
-void ReleaseBuffer(audio_device_t *audio_device) {
-    audio_device->dummy_state = 0;
-}
+void ReleaseBuffer(audio_device_t *audio_device) { return; }
 
 // ALSA is blocking, unlike WASAPI
-void WaitTimer(audio_device_t *audio_device) { return; }
+void WaitTimer(audio_device_t *audio_device) { audio_device->dummy_state = 0; }

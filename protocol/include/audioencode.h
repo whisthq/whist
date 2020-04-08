@@ -1,6 +1,7 @@
 #ifndef AUDIO_ENCODE_H
 #define AUDIO_ENCODE_H
 
+#include "../include/fractal.h"
 #include "ffmpeg/libavcodec/avcodec.h"
 #include "ffmpeg/libavdevice/avdevice.h"
 #include "ffmpeg/libavfilter/avfilter.h"
