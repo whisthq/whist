@@ -23,7 +23,7 @@ def createVM(self, vm_size, location):
     }
 
     async_vm_powershell = compute_client.virtual_machine_extensions.create_or_update(os.environ.get('VM_GROUP'),
-                                                                                     vmParameters['vmName'], 'NvidiaGpuDriverWindows', extension_parameters)
+                            vmParameters['vmName'], 'NvidiaGpuDriverWindows', extension_parameters)
     async_vm_powershell.wait()
 
     async_vm_start = compute_client.virtual_machines.start(
