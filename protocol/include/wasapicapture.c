@@ -91,7 +91,7 @@ void StartAudioDevice(audio_device_t *audio_device) {
         return;
     }
 
-    audio_device->pAudioClient->lpVtbl->Start(device->pAudioClient);
+    audio_device->pAudioClient->lpVtbl->Start( audio_device->pAudioClient);
 }
 
 void DestroyAudioDevice(audio_device_t *audio_device) {

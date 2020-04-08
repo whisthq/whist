@@ -519,6 +519,8 @@ static int32_t SendAudio(void* opaque) {
             } else if (audio_device->buffer_size > 0) {
                 // add samples to encoder fifo
 
+                mprintf( "GET BUFFER: %d\n", audio_device->buffer_size );
+
                 audio_encoder_fifo_intake(audio_encoder, audio_device->buffer,
                                           audio_device->frames_available);
 
