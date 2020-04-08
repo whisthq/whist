@@ -468,12 +468,16 @@ void ReplayUserInput(input_device_t* input_device,
 
             switch( windows_keycodes[fmsg->keyboard.code] )
             {
-            case VK_LEFT: case VK_UP: case VK_RIGHT: case VK_DOWN: // arrow keys
-            case VK_PRIOR: case VK_NEXT: // page up and page down
-            case VK_END: case VK_HOME:
+            // List found here: https://docs.microsoft.com/en-us/windows/win32/inputdev/about-keyboard-input
+            case VK_RMENU: case VK_RCONTROL:
             case VK_INSERT: case VK_DELETE:
-            case VK_DIVIDE: // numpad slash
+            case VK_HOME: case VK_END:
+            case VK_PRIOR: case VK_NEXT: // page up and page down
+            case VK_LEFT: case VK_UP: case VK_RIGHT: case VK_DOWN: // arrow keys
             case VK_NUMLOCK:
+            case VK_PRINT:
+            case VK_DIVIDE: // numpad slash
+            case VK_RETURN + USE_NUMPAD:
                 Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
             }
 
