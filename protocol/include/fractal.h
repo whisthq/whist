@@ -9,7 +9,6 @@
 #include <D3D11.h>
 #include <D3d11_1.h>
 #include <DXGITYPE.h>
-#include <Functiondiscoverykeys_devpkey.h>
 #include <avrt.h>
 #include <dxgi1_2.h>
 #include <initguid.h>

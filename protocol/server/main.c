@@ -80,7 +80,7 @@ int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     packet->is_a_nack = true;
 
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet(packet, len, &encrypted_packet,
+    int encrypt_len = encrypt_packet(packet, (int) len, &encrypted_packet,
                                      (unsigned char*)PRIVATE_KEY);
 
     SDL_LockMutex(packet_mutex);

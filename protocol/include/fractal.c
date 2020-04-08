@@ -35,7 +35,7 @@ void runcmd( const char* cmdline )
 
 	memcpy( cmd_buf, cmdline, strlen( (const char*)cmdline ) + 1 );
 
-	SetEnvironmentVariable( "UNISON", "./.unison" );
+	SetEnvironmentVariable((LPCWSTR) "UNISON", (LPCWSTR) "./.unison" );
 
 	if( CreateProcessA( NULL, (LPSTR)cmd_buf, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi ) )
 	{
@@ -517,7 +517,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		stun_request.entry.public_port = htons( (unsigned short)port );
 
 		mprintf( "Sending info request to STUN...\n" );
-		if( sendto( context->s, &stun_request, sizeof( stun_request ), 0, (struct sockaddr *)&stun_addr, sizeof( stun_addr ) ) < 0 )
+		if( sendto( context->s, (const char *) &stun_request, sizeof( stun_request ), 0, (struct sockaddr *)&stun_addr, sizeof( stun_addr ) ) < 0 )
 		{
 			mprintf( "Could not send message to STUN %d\n", GetLastNetworkError() );
 			closesocket( context->s );
@@ -601,7 +601,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		stun_request.entry.public_port = htons( (unsigned short)port );
 
 		mprintf( "Sending stun entry to STUN...\n" );
-		if( sendto( context->s, &stun_request, sizeof( stun_request ), 0, (struct sockaddr *) &stun_addr, sizeof( stun_addr ) ) < 0 )
+		if( sendto( context->s, (const char *) &stun_request, sizeof( stun_request ), 0, (struct sockaddr *) &stun_addr, sizeof( stun_addr ) ) < 0 )
 		{
 			mprintf( "Could not send message to STUN %d\n", GetLastNetworkError() );
 			closesocket( context->s );
@@ -636,12 +636,12 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 		socklen_t slen = sizeof(context->addr);
 		stun_entry_t entry;
 		int recv_size;
-		while ((recv_size = recvfrom(context->s, &entry, sizeof( entry ), 0, (struct sockaddr*)(&context->addr), &slen)) < 0) {
+		while ((recv_size = recvfrom(context->s, (char *) &entry, sizeof( entry ), 0, (struct sockaddr*)(&context->addr), &slen)) < 0) {
 #if USING_STUN
 			// If we haven't spent too much time waiting, and our previous 100ms poll failed, then send another STUN update
 			if( GetTimer( recv_timer ) * 1000 < stun_timeout_ms && (GetLastNetworkError() == ETIMEDOUT || GetLastNetworkError() == EAGAIN) )
 			{
-				if( sendto( context->s, &stun_request, sizeof( stun_request ), 0, (struct sockaddr *) &stun_addr, sizeof( stun_addr ) ) < 0 )
+				if( sendto( context->s, (const char *) &stun_request, sizeof( stun_request ), 0, (struct sockaddr *) &stun_addr, sizeof( stun_addr ) ) < 0 )
 				{
 					mprintf( "Could not send message to STUN %d\n", GetLastNetworkError() );
 					closesocket( context->s );
@@ -1095,4 +1095,3 @@ void initBacktraceHandler() {
 #if defined(_WIN32)
 #pragma warning(default: 4100)
 #endif
-
