@@ -55,8 +55,8 @@ endif
 ################## MACOS ##################
 ifeq ($(UNAME), Darwin)
 
-# specify compiler
-CC = clang
+# specify compiler and minimum MacOS version support
+CC = clang -mmacosx-version-min=10.13
 
 # specify platform
 PLATFORM = macos
@@ -116,7 +116,6 @@ STATIC_LIBS = \
 
 # compiler flags
 CFLAGS = \
-	-fno-pie \
 	-g \
 	-Wall \
 	-Wextra \
@@ -128,8 +127,8 @@ CFLAGS = \
 	-O0
 
 LDFLAGS = \
-	  -no-pie \
-	  -g -rdynamic \
+	  -g \
+	  -rdynamic \
 	  -O0
 
 # link all files into executable

@@ -1,3 +1,7 @@
+#if defined(_WIN32)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "clipboard.h"
 #include "fractal.h"
 
@@ -33,7 +37,7 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath );
 bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 {
 	BYTE buf[sizeof( REPARSE_MOUNTPOINT_DATA_BUFFER ) + MAX_PATH * sizeof( WCHAR )];
-	REPARSE_MOUNTPOINT_DATA_BUFFER* ReparseBuffer = buf;
+	REPARSE_MOUNTPOINT_DATA_BUFFER* ReparseBuffer = (REPARSE_MOUNTPOINT_DATA_BUFFER*) buf;
 	WCHAR szTarget[MAX_PATH] = L"\\??\\";
 
 	wcscat( szTarget, szPath );
@@ -77,16 +81,15 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 
 	memset( buf, 0, sizeof( buf ) );
 	ReparseBuffer->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
-	int len = wcslen( szTarget );
+	int len = (int) wcslen( szTarget );
 	wcscpy( ReparseBuffer->ReparseTarget, szTarget );
-	ReparseBuffer->ReparseTargetMaximumLength = len * sizeof( WCHAR );
-	ReparseBuffer->ReparseTargetLength = (len - 1) * sizeof( WCHAR );
+	ReparseBuffer->ReparseTargetMaximumLength = (WORD) len * sizeof( WCHAR );
+	ReparseBuffer->ReparseTargetLength = (WORD) (len - 1) * sizeof( WCHAR );
 	ReparseBuffer->ReparseDataLength = ReparseBuffer->ReparseTargetLength + 12;
 
 	DWORD dwRet;
 	if( !DeviceIoControl( hDir, FSCTL_SET_REPARSE_POINT, ReparseBuffer, ReparseBuffer->ReparseDataLength+REPARSE_MOUNTPOINT_HEADER_SIZE, NULL, 0, &dwRet, NULL ) )
 	{
-		DWORD dr = GetLastError();
 		CloseHandle( hDir );
 		RemoveDirectoryW( szJunction );
 
@@ -265,10 +268,10 @@ ClipboardData* GetClipboard()
 					}
 
 					char filename[MAX_PATH*sizeof( WCHAR )] = "";
-					wcscat( filename, LGET_CLIPBOARD L"\\" );
-					wcscat( filename, data.cFileName );
+					wcscat((wchar_t *) filename, LGET_CLIPBOARD L"\\" );
+					wcscat((wchar_t *) filename, data.cFileName );
 
-					DWORD fileattributes = GetFileAttributesW( filename );
+					DWORD fileattributes = GetFileAttributesW((LPCWSTR) filename );
 					if( fileattributes == INVALID_FILE_ATTRIBUTES )
 					{
 						mprintf( "GetFileAttributesW Error: %d\n", GetLastError() );
@@ -276,10 +279,10 @@ ClipboardData* GetClipboard()
 
 					if( fileattributes & FILE_ATTRIBUTE_DIRECTORY )
 					{
-						RemoveDirectoryW( filename );
+						RemoveDirectoryW((LPCWSTR) filename );
 					} else
 					{
-						DeleteFileW( filename );
+						DeleteFileW((LPCWSTR) filename );
 					}
 				} while( FindNextFileW( hFind, &data ) );
 				FindClose( hFind );

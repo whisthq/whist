@@ -56,7 +56,7 @@ int CaptureScreen( struct CaptureDevice* device )
     while( XPending( device->display ) )
     {
 
-        XDamageNotifyEvent* dev;
+        // XDamageNotifyEvent* dev; unused, remove or is this needed and should be used?
         XEvent ev;
         XNextEvent( device->display, &ev );
         if( ev.type == device->event + XDamageNotify )

@@ -22,14 +22,14 @@ void handleErrors( void )
 
 void gen_iv( unsigned char* iv )
 {
-    srand( time( NULL ) * rand() + rand() );
+    srand( (unsigned int) time( NULL ) * rand() + rand() );
     (void)rand();
     (void)rand();
     (void)rand();
 
     for( int i = 0; i < 16; i++ )
     {
-        iv[i] = rand();
+        iv[i] = (unsigned char) rand();
     }
 }
 
