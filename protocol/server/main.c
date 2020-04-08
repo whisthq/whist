@@ -164,14 +164,13 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     int break_point = num_indices / (num_breaks + 1);
 
     if (type == PACKET_VIDEO) {
-        mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
+        //mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
     }
 
     while (curr_index < len) {
         // Delay distribution of packets as needed
         if (i > 0 && break_point > 0 && i % break_point == 0 &&
             i < num_indices - break_point / 2) {
-            mprintf("Delay\n");
             SDL_Delay(break_resolution);
         }
 
@@ -373,8 +372,8 @@ static int32_t SendVideo(void* opaque) {
 
             video_encoder_unset_iframe(encoder);
 
-            mprintf("Encode Time: %f (%d) (%d)\n", GetTimer(t),
-                    frames_since_first_iframe % gop_size, encoder->packet.size);
+            //mprintf("Encode Time: %f (%d) (%d)\n", GetTimer(t),
+            //        frames_since_first_iframe % gop_size, encoder->packet.size);
 
             bitrate_tested_frames++;
             bytes_tested_frames += encoder->packet.size;
@@ -551,9 +550,6 @@ void update() {
 
 int main() {
     initBacktraceHandler();
-#ifndef _WIN32
-    runcmd( "chmod 600 sshkey" );
-#endif
     initMultiThreadedPrintf(true);
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_Init(SDL_INIT_VIDEO);
