@@ -1,6 +1,9 @@
 #ifndef WASAPICAPTURE_H
 #define WASAPICAPTURE_H
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "fractal.h"  // contains all the headers
 
 DEFINE_GUID(CLSID_MMDeviceEnumerator, 0xBCDE0395, 0xE52F, 0x467C, 0x8E, 0x3D,
@@ -14,7 +17,7 @@ DEFINE_GUID(IID_IAudioClient3, 0x7ed4ee07, 0x8E67, 0x4CD4, 0x8C, 0x1A, 0x2B,
 DEFINE_GUID(IID_IAudioCaptureClient, 0xc8adbd64, 0xe71e, 0x48a0, 0xa4, 0xde,
             0x18, 0x5c, 0x39, 0x5c, 0xd3, 0x17);
 
-typedef struct audio_device {
+typedef struct audio_device_t {
     IMMDevice *device;
     IMMDeviceEnumerator *pMMDeviceEnumerator;
     IAudioClient3 *pAudioClient;
@@ -24,12 +27,12 @@ typedef struct audio_device {
     HANDLE hWakeUp;
     BYTE *buffer;
     LONG buffer_size;
-    UINT32 nNumFramesToRead;
+    UINT32 frames_available;
     DWORD dwWaitResult;
     DWORD dwFlags;
     UINT32 sample_rate;
     UINT32 nNextPacketSize;
     HRESULT hNextPacketResult;
-} audio_device;
+} audio_device_t;
 
 #endif  // WASAPICAPTURE_H

@@ -1,24 +1,22 @@
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "alsacapture.h"  // header file for this file
 
-audio_device *CreateAudioDevice(audio_device *device) {
-    memset(device, 0, sizeof(struct audio_device));
+audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
+    memset(audio_device, 0, sizeof(struct audio_device_t));
 
     int res;
 
     // open pcm device for stream capture
-    res = snd_pcm_open(&device->handle, "default", SND_PCM_STREAM_CAPTURE, 0);
+    res = snd_pcm_open(&audio_device->handle, "default", SND_PCM_STREAM_CAPTURE,
+                       0);
     if (res < 0) {
         mprintf("Failed to open PCM device: %s\n", snd_strerror(res));
         return NULL;
     }
 
     // allocate params context
-    snd_pcm_hw_params_alloca(&device->params);
+    snd_pcm_hw_params_alloca(&audio_device->params);
 
-    res = snd_pcm_hw_params_any(device->handle, device->params);
+    res = snd_pcm_hw_params_any(audio_device->handle, audio_device->params);
     if (res < 0) {
         mprintf("No available PCM hardware configurations.\n");
         return NULL;
@@ -26,106 +24,114 @@ audio_device *CreateAudioDevice(audio_device *device) {
 
     // set sample format
     // we should do format cascading selection here and similarly below
-    device->sample_format = SND_PCM_FORMAT_FLOAT_LE;
-    res = snd_pcm_hw_params_set_format(device->handle, device->params,
-                                       device->sample_format);
+    audio_device->sample_format = SND_PCM_FORMAT_FLOAT_LE;
+    res =
+        snd_pcm_hw_params_set_format(audio_device->handle, audio_device->params,
+                                     audio_device->sample_format);
 
     if (res < 0) {
         mprintf("PCM sample format 'enum _snd_pcm_format %d' unavailable.\n",
-                device->sample_format);
+                audio_device->sample_format);
         return NULL;
     }
 
     // number of channels
-    device->channels = 2;
-    res = snd_pcm_hw_params_set_channels_near(device->handle, device->params,
-                                              &device->channels);
+    audio_device->channels = 2;
+    res = snd_pcm_hw_params_set_channels_near(
+        audio_device->handle, audio_device->params, &audio_device->channels);
     if (res < 0) {
         mprintf("PCM cannot set format with num channels: %d\n",
-                device->channels);
+                audio_device->channels);
         return NULL;
     }
 
     // set device to read interleaved samples
-    res = snd_pcm_hw_params_set_access(device->handle, device->params,
-                                       SND_PCM_ACCESS_RW_INTERLEAVED);
+    res =
+        snd_pcm_hw_params_set_access(audio_device->handle, audio_device->params,
+                                     SND_PCM_ACCESS_RW_INTERLEAVED);
     if (res < 0) {
         mprintf("Unavailable PCM access type.\n");
         return NULL;
     }
 
     // set stream rate
-    device->sample_rate = 44100;
-    res = snd_pcm_hw_params_set_rate_near(device->handle, device->params,
-                                          &device->sample_rate, 0);
+    audio_device->sample_rate = 44100;
+    res = snd_pcm_hw_params_set_rate_near(audio_device->handle,
+                                          audio_device->params,
+                                          &audio_device->sample_rate, 0);
     if (res < 0) {
         mprintf("PCM cannot set format with sample rate: %d\n",
-                device->sample_rate);
+                audio_device->sample_rate);
         return NULL;
     }
 
     // set frames per period
-    device->num_frames = 120;
-    res = snd_pcm_hw_params_set_period_size_near(device->handle, device->params,
-                                                 &device->num_frames, 0);
+    audio_device->num_frames = 120;
+    res = snd_pcm_hw_params_set_period_size_near(audio_device->handle,
+                                                 audio_device->params,
+                                                 &audio_device->num_frames, 0);
 
     // write parameters according to our configuration space to device (can
     // restrict further if desired)
-    res = snd_pcm_hw_params(device->handle, device->params);
-    // res = snd_pcm_set_params(
-    //     device->handle,
-    //     device->sample_format,
-    //     SND_PCM_ACCESS_RW_INTERLEAVED,
-    //     device->channels,
-    // )
+    res = snd_pcm_hw_params(audio_device->handle, audio_device->params);
+
     if (res < 0) {
         mprintf("Unable to set hw parameters. Error: %s\n", snd_strerror(res));
         return NULL;
     }
 
-    device->frame_size =
-        (snd_pcm_format_width(device->sample_format) / 8) * device->channels;
-    device->buffer_size = device->num_frames * device->frame_size;
-    device->buffer = (uint8_t *)malloc(device->buffer_size);
+    audio_device->frame_size =
+        (snd_pcm_format_width(audio_device->sample_format) / 8) *
+        audio_device->channels;
+    audio_device->buffer_size =
+        audio_device->num_frames * audio_device->frame_size;
+    audio_device->buffer = (uint8_t *)malloc(audio_device->buffer_size);
 
-    return device;
+    return audio_device;
 }
 
-void StartAudioDevice(audio_device *device) {
-    device->dummy_state = 0;
+void StartAudioDevice(audio_device_t *audio_device) {
+    audio_device->dummy_state = 0;
     return;
 }
 
-void DestroyAudioDevice(audio_device *device) {
-    snd_pcm_drop(device->handle);
-    snd_pcm_close(device->handle);
-    free(device->buffer);
-    free(device);
+void DestroyAudioDevice(audio_device_t *audio_device) {
+    snd_pcm_drop(audio_device->handle);
+    snd_pcm_close(audio_device->handle);
+    free(audio_device->buffer);
+    free(audio_device);
 }
 
-void GetNextPacket(audio_device *device) {
-    device->dummy_state++;
+void GetNextPacket(audio_device_t *audio_device) {
+    audio_device->dummy_state++;
     return;
 }
 
 // make it so the for loop only happens once for ALSA (unlike WASAPI)
-bool PacketAvailable(audio_device *device) { return device->dummy_state < 2; }
+bool PacketAvailable(audio_device_t *audio_device) {
+    return audio_device->dummy_state < 2;
+}
 
-void GetBuffer(audio_device *device) {
-    int res = snd_pcm_readi(device->handle, device->buffer, device->num_frames);
+void GetBuffer(audio_device_t *audio_device) {
+    int res = snd_pcm_readi(audio_device->handle, audio_device->buffer,
+                            audio_device->num_frames);
     if (res == -EPIPE) {
-        snd_pcm_recover(device->handle, res, 0);
-        device->buffer_size = 0;
+        snd_pcm_recover(audio_device->handle, res, 0);
+        audio_device->buffer_size = 0;
     } else if (res < 0) {
         mprintf("Error from PCM read: %s\n", snd_strerror(res));
-        snd_pcm_recover(device->handle, res, 0);
-        device->buffer_size = 0;
+        snd_pcm_recover(audio_device->handle, res, 0);
+        audio_device->buffer_size = 0;
     } else {
-        device->buffer_size = res * device->frame_size;
+        audio_device->frames_available = res;
+        audio_device->buffer_size =
+            audio_device->frames_available * audio_device->frame_size;
     }
 }
 
-void ReleaseBuffer(audio_device *device) { device->dummy_state = 0; }
+void ReleaseBuffer(audio_device_t *audio_device) {
+    audio_device->dummy_state = 0;
+}
 
 // ALSA is blocking, unlike WASAPI
-void WaitTimer(audio_device *device) { return; }
+void WaitTimer(audio_device_t *audio_device) { return; }

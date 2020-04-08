@@ -7,13 +7,14 @@
 #include "../include/linuxinput.h"
 #endif
 
-input_device* CreateInputDevice(input_device* device);
+input_device_t* CreateInputDevice(input_device_t* input_device);
 
-void DestroyInputDevice(input_device* device);
+void DestroyInputDevice(input_device_t* input_device);
 
-void ReplayUserInput(input_device* device, struct FractalClientMessage* fmsg);
+void ReplayUserInput(input_device_t* input_device,
+                     struct FractalClientMessage* fmsg);
 
-void UpdateKeyboardState(input_device* device,
+void UpdateKeyboardState(input_device_t* input_device,
                          struct FractalClientMessage* fmsg);
 
 void InitCursors();

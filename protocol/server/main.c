@@ -13,6 +13,7 @@
 #endif
 
 #include "../include/audiocapture.h"
+#include "../include/audioencode.h"
 #include "../include/fractal.h"
 #include "../include/input.h"
 #include "../include/screencapture.h"
@@ -80,7 +81,7 @@ int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     packet->is_a_nack = true;
 
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet(packet, len, &encrypted_packet,
+    int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
                                      (unsigned char*)PRIVATE_KEY);
 
     SDL_LockMutex(packet_mutex);
@@ -483,48 +484,83 @@ static int32_t SendAudio(void* opaque) {
     struct SocketContext context = *(struct SocketContext*)opaque;
     int id = 1;
 
-    audio_device* device = (audio_device*)malloc(sizeof(struct audio_device));
-    device = CreateAudioDevice(device);
+    audio_device_t* audio_device =
+        (audio_device_t*)malloc(sizeof(struct audio_device_t));
+    audio_device = CreateAudioDevice(audio_device);
     mprintf("Created audio device!\n");
-    if (!device) {
+    if (!audio_device) {
         mprintf("Failed to create audio device...\n");
         return -1;
     }
-    StartAudioDevice(device);
+    StartAudioDevice(audio_device);
+    audio_encoder_t* audio_encoder =
+        create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
+    int res;
 
     // Tell the client what audio frequency we're using
+
     FractalServerMessage fmsg;
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
-    fmsg.frequency = device->sample_rate;
+    fmsg.frequency = audio_device->sample_rate;
     SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t*)&fmsg,
                sizeof(fmsg), 1);
-    mprintf("Audio Frequency: %d\n", device->sample_rate);
+    mprintf("Audio Frequency: %d\n", audio_device->sample_rate);
 
     // setup
 
     while (connected) {
         // for each available packet
-        for (GetNextPacket(device); PacketAvailable(device);
-             GetNextPacket(device)) {
-            GetBuffer(device);
+        for (GetNextPacket(audio_device); PacketAvailable(audio_device);
+             GetNextPacket(audio_device)) {
+            GetBuffer(audio_device);
 
-            if (device->buffer_size > 10000) {
+            if (audio_device->buffer_size > 10000) {
                 mprintf("Audio buffer size too large!\n");
-            } else if (device->buffer_size > 0) {
-                // Send buffer
-                if (SendPacket(&context, PACKET_AUDIO, device->buffer,
-                               device->buffer_size, id) < 0) {
-                    mprintf("Could not send audio frame\n");
+            } else if (audio_device->buffer_size > 0) {
+                // add samples to encoder fifo
+
+                audio_encoder_fifo_intake(audio_encoder, audio_device->buffer,
+                                          audio_device->frames_available);
+
+                // while fifo has enough samples for an aac frame, handle it
+
+                while (av_audio_fifo_size(audio_encoder->pFifo) >=
+                       audio_encoder->pCodecCtx->frame_size) {
+                    // create and encode a frame
+
+                    res = audio_encoder_encode_frame(audio_encoder);
+
+                    if (res < 0) {
+                        // bad boy error
+                        mprintf("error encoding packet\n");
+                        continue;
+                    } else if (res > 0) {
+                        // no data or need more data
+                        break;
+                    }
+
+                    // Send packet
+
+                    if (SendPacket(&context, PACKET_AUDIO,
+                                   audio_encoder->packet.data,
+                                   audio_encoder->packet.size, id) < 0) {
+                        mprintf("Could not send audio frame\n");
+                    }
+                    id++;
+
+                    // Free encoder packet
+
+                    av_packet_unref(&audio_encoder->packet);
                 }
-                id++;
             }
 
-            ReleaseBuffer(device);
+            ReleaseBuffer(audio_device);
         }
-        WaitTimer(device);
+        WaitTimer(audio_device);
     }
 
-    DestroyAudioDevice(device);
+    destroy_audio_encoder(audio_encoder);
+    DestroyAudioDevice(audio_device);
     return 0;
 }
 
@@ -625,9 +661,10 @@ int main() {
             SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
         mprintf("Sending video and audio...\n");
 
-        input_device* in_device = (input_device*)malloc(sizeof(input_device));
-        in_device = CreateInputDevice(in_device);
-        if (!in_device) {
+        input_device_t* input_device =
+            (input_device_t*)malloc(sizeof(input_device_t));
+        input_device = CreateInputDevice(input_device);
+        if (!input_device) {
             mprintf("Failed to create input device for playback.\n");
         }
 
@@ -761,15 +798,15 @@ int main() {
                     fmsg->type == MESSAGE_MOUSE_WHEEL ||
                     fmsg->type == MESSAGE_MOUSE_MOTION) {
                     // Replay user input (keyboard or mouse presses)
-                    if (in_device) {
-                        ReplayUserInput(in_device, fmsg);
+                    if (input_device) {
+                        ReplayUserInput(input_device, fmsg);
                     }
 
                 } else if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
 // TODO: Unix version missing
 // Synchronize client and server keyboard state
 #ifdef _WIN32
-                    UpdateKeyboardState(in_device, fmsg);
+                    UpdateKeyboardState(input_device, fmsg);
 #endif
                 } else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
@@ -870,7 +907,7 @@ int main() {
 
         mprintf("Disconnected\n");
 
-        DestroyInputDevice(in_device);
+        DestroyInputDevice(input_device);
 
         SDL_WaitThread(send_video, NULL);
         SDL_WaitThread(send_audio, NULL);

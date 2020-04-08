@@ -5,21 +5,20 @@
 #include <stdint.h>
 
 #if defined(_WIN32)
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <process.h>
-#include <windows.h>
-#include <synchapi.h>
-#include <initguid.h>
-#include <mmdeviceapi.h>
 #include <Audioclient.h>
-#include <Functiondiscoverykeys_devpkey.h>
-#include <avrt.h>
-#include <winuser.h>
 #include <D3D11.h>
 #include <D3d11_1.h>
-#include <dxgi1_2.h>
 #include <DXGITYPE.h>
+#include <avrt.h>
+#include <dxgi1_2.h>
+#include <initguid.h>
+#include <mmdeviceapi.h>
+#include <process.h>
+#include <synchapi.h>
+#include <windows.h>
+#include <winsock2.h>
+#include <winuser.h>
+#include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 #undef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
@@ -28,14 +27,14 @@
 #undef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
 #else
-#include <unistd.h>
-#include <errno.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define SOCKET int
@@ -75,6 +74,7 @@
 #define LARGEST_FRAME_SIZE 1000000
 #define STARTING_BITRATE 12400000
 #define STARTING_BURST_BITRATE 31800000
+#define AUDIO_BITRATE 128000
 #define AVERAGE_LATENCY_MS 8
 #define FPS 50
 #define MIN_FPS 10

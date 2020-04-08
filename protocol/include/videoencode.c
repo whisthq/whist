@@ -322,7 +322,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
     av_init_packet(&encoder->packet);
 
     if (encoder->sws) {
-        uint8_t *in_data[1] = {(uint8_t *)rgb_pixels};
+        uint8_t *in_data[1] = {(uint8_t *) rgb_pixels};
         int in_linesize[1] = {encoder->width * 4};
 
         // convert to the encoder format

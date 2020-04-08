@@ -3,7 +3,7 @@
 
 #include "fractal.h"
 
-typedef char input_device;
+typedef char input_device_t;
 
 void EnterWinString(enum FractalKeycode* keycodes, int len);
 
