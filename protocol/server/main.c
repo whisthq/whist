@@ -514,60 +514,63 @@ static int32_t SendAudio(void* opaque) {
         for (GetNextPacket(audio_device); PacketAvailable(audio_device);
              GetNextPacket(audio_device)) {
             GetBuffer(audio_device);
+            mprintf("sending audio frame %d with buffer size %d (ds %d)\n", id,
+                    audio_device->buffer_size, audio_device->dummy_state);
 
             if (audio_device->buffer_size > 10000) {
                 mprintf("Audio buffer size too large!\n");
             } else if (audio_device->buffer_size > 0) {
+#if USING_AUDIO_ENCODE_DECODE
+
+                // add samples to encoder fifo
+
+                audio_encoder_fifo_intake(audio_encoder, audio_device->buffer,
+                                          audio_device->frames_available);
+
+                // while fifo has enough samples for an aac frame, handle it
+                mprintf("audio fifo has size %d | dummy state %d\n",
+                        av_audio_fifo_size(audio_encoder->pFifo),
+                        audio_device->dummy_state);
+
+                while (av_audio_fifo_size(audio_encoder->pFifo) >=
+                       audio_encoder->pCodecCtx->frame_size) {
+                    // create and encode a frame
+
+                    res = audio_encoder_encode_frame(audio_encoder);
+
+                    if (res < 0) {
+                        // bad boy error
+                        mprintf("error encoding packet\n");
+                        continue;
+                    } else if (res > 0) {
+                        // no data or need more data
+                        break;
+                    }
+
+                    mprintf("we got a packet of size %d\n",
+                            audio_encoder->packet.size);
+
+                    // Send packet
+
+                    if (SendPacket(&context, PACKET_AUDIO,
+                                   audio_encoder->packet.data,
+                                   audio_encoder->packet.size, id) < 0) {
+                        mprintf("Could not send audio frame\n");
+                    }
+                    mprintf("sent audio frame %d\n", id);
+                    id++;
+
+                    // Free encoder packet
+
+                    av_packet_unref(&audio_encoder->packet);
+                }
+#else
                 if (SendPacket(&context, PACKET_AUDIO, audio_device->buffer,
                                audio_device->buffer_size, id) < 0) {
                     mprintf("Could not send audio frame\n");
                 }
-                mprintf("sent audio frame %d\n", id);
                 id++;
-
-                // // add samples to encoder fifo
-
-                // audio_encoder_fifo_intake(audio_encoder,
-                // audio_device->buffer,
-                //                           audio_device->frames_available);
-
-                // // while fifo has enough samples for an aac frame, handle it
-                // mprintf("audio fifo has size %d | dummy state %d\n",
-                //         av_audio_fifo_size(audio_encoder->pFifo),
-                //         audio_device->dummy_state);
-
-                // while (av_audio_fifo_size(audio_encoder->pFifo) >=
-                //        audio_encoder->pCodecCtx->frame_size) {
-                //     // create and encode a frame
-
-                //     res = audio_encoder_encode_frame(audio_encoder);
-
-                //     if (res < 0) {
-                //         // bad boy error
-                //         mprintf("error encoding packet\n");
-                //         continue;
-                //     } else if (res > 0) {
-                //         // no data or need more data
-                //         break;
-                //     }
-
-                //     mprintf("we got a packet of size %d\n",
-                //             audio_encoder->packet.size);
-
-                //     // Send packet
-
-                //     if (SendPacket(&context, PACKET_AUDIO,
-                //                    audio_encoder->packet.data,
-                //                    audio_encoder->packet.size, id) < 0) {
-                //         mprintf("Could not send audio frame\n");
-                //     }
-                //     mprintf("sent audio frame %d\n", id);
-                //     id++;
-
-                //     // Free encoder packet
-
-                //     av_packet_unref(&audio_encoder->packet);
-                // }
+#endif
             }
 
             ReleaseBuffer(audio_device);
@@ -575,7 +578,7 @@ static int32_t SendAudio(void* opaque) {
         WaitTimer(audio_device);
     }
 
-    destroy_audio_encoder(audio_encoder);
+    // destroy_audio_encoder(audio_encoder);
     DestroyAudioDevice(audio_device);
     return 0;
 }

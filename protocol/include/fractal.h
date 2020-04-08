@@ -66,6 +66,7 @@
 #define PORT_SHARED_TCP 32264
 
 #define USING_STUN false
+#define USING_AUDIO_ENCODE_DECODE true
 
 #define MAX_PAYLOAD_SIZE 1285
 #define MAXIMUM_MBPS 30.0

@@ -27,7 +27,7 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
         av_get_channel_layout_nb_channels(decoder->pCodecCtx->channel_layout);
 
     if (avcodec_open2(decoder->pCodecCtx, decoder->pCodec, NULL) < 0) {
-        printf("Could not open AVCodec.\n");
+        mprintf("Could not open AVCodec.\n");
         return NULL;
     }
 
@@ -90,7 +90,8 @@ void audio_decoder_packet_readout(audio_decoder_t *decoder, uint8_t *data) {
             decoder->pFrame->extended_data);
 
     if (swr_convert(decoder->pSwrContext, data_out, len,
-( const uint8_t** ) decoder->pFrame->extended_data, len) < 0) {
+                    (const uint8_t **)decoder->pFrame->extended_data,
+                    len) < 0) {
         mprintf("Could not convert samples to output format.\n");
     }
     mprintf("finished reading out packet\n");
@@ -157,7 +158,7 @@ void destroy_audio_decoder(audio_decoder_t *decoder) {
     av_frame_free(&decoder->pFrame);
 
     mprintf("av_freed frame\n");
-    //av_freep(decoder->pFrame);
+    // av_freep(decoder->pFrame);
     mprintf("really freed rame\n");
 
     // free swr
