@@ -6,15 +6,25 @@
 #include "fractal.h"
 
 #ifdef _WIN32
-#define LGET_CLIPBOARD L"C:\\get_clipboard"
-#define GET_CLIPBOARD "C:\\get_clipboard"
+WCHAR* lget_clipboard_directory();
+#endif
+char* get_clipboard_directory()
+{
+	char buf[MAX_PATH];
+	wcstombs( buf, lget_clipboard_directory(), sizeof( buf ) );
+	return buf;
+}
+
+#ifdef _WIN32
+#define LGET_CLIPBOARD (lget_clipboard_directory())
+#define GET_CLIPBOARD (get_clipboard_directory())
 #else
 #define GET_CLIPBOARD "get_clipboard"
 #endif
 
 #ifdef _WIN32
-#define LSET_CLIPBOARD L"C:\\set_clipboard"
-#define SET_CLIPBOARD "C:\\set_clipboard"
+#define LSET_CLIPBOARD L"C:\\Users\\set_clipboard"
+#define SET_CLIPBOARD "C:\\Users\\set_clipboard"
 #else
 #define SET_CLIPBOARD "set_clipboard"
 #endif
@@ -24,6 +34,42 @@
 #pragma comment (lib, "Shlwapi.lib")
 #include "Shellapi.h"
 #include "shlobj_core.h"
+#include "Knownfolders.h"
+
+WCHAR* lget_clipboard_directory()
+{
+	static WCHAR* directory = NULL;
+	if( directory == NULL )
+	{
+		static WCHAR szPath[MAX_PATH];
+		static WCHAR* path;
+		if( SUCCEEDED( SHGetKnownFolderPath( &FOLDERID_RoamingAppData,
+											 CSIDL_APPDATA | CSIDL_FLAG_CREATE,
+											 0,
+											 &path ) ) )
+		{
+			wcscpy( szPath, path );
+			CoTaskMemFree( path );
+			PathAppendW( szPath, L"FractalCache" );
+			if( !PathFileExistsW( szPath ) )
+			{
+				if( !CreateDirectoryW( szPath, NULL ) )
+				{
+					mprintf( "Could not create directory: %S (Error %d)\n", szPath, GetLastError() );
+					return NULL;
+				}
+			}
+		} else
+		{
+			mprintf( "Could not SHGetKnownFolderPath" );
+			return NULL;
+		}
+		PathAppendW( szPath, L"get_clipboard" );
+		directory = szPath;
+	}
+	mprintf( "Directory: %S\n", directory );
+	return directory;
+}
 
 #define REPARSE_MOUNTPOINT_HEADER_SIZE 8
 
@@ -303,7 +349,10 @@ ClipboardData* GetClipboard()
 			}
 
 			RemoveDirectoryW( LGET_CLIPBOARD );
-			CreateDirectoryW( LGET_CLIPBOARD, NULL );
+			if( !CreateDirectoryW( LGET_CLIPBOARD, NULL ) )
+			{
+				mprintf( "Could not create directory: %S (Error %d)\n", LGET_CLIPBOARD, GetLastError() );
+			}
 
 			// Go through filenames
 			while( *filename != L'\0' )
