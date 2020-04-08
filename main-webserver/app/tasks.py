@@ -59,7 +59,7 @@ def createDisk(self, vm_name, disk_size, username, location):
     disk_name = genDiskName()
 
     # Create managed data disk
-    print('\nCreate (empty) managed Data Disk')
+    print('\nCreate (empty) managed Data Disk: ' + disk_name)
     async_disk_creation = compute_client.disks.create_or_update(
         os.environ.get('VM_GROUP'),
         disk_name,
@@ -111,6 +111,9 @@ def createDisk(self, vm_name, disk_size, username, location):
             'command_id': 'RunPowerShellScript',
             'script': [
                 command
+            ],
+            'parameters': [
+                {'name': "disk_name", 'value': disk_name}
             ]
         }
         poller = compute_client.virtual_machines.run_command(
@@ -130,7 +133,7 @@ def createDisk(self, vm_name, disk_size, username, location):
 def detachDisk(self, vm_Name, disk_name):
     _, compute_client, _ = createClients()
     # Detach data disk
-    print('\nDetach Data Disk')
+    print('\nDetach Data Disk: ' + disk_name)
 
     virtual_machine = compute_client.virtual_machines.get(
         os.environ.get('VM_GROUP'),
