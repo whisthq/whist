@@ -149,6 +149,7 @@ def detachDisk(self, vm_Name, disk_name):
         virtual_machine
     )
     virtual_machine = async_vm_update.result()
+    print("Detach data disk sucessful")
 
 
 @celery.task(bind=True)
