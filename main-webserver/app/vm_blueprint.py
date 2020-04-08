@@ -3,7 +3,17 @@ from .tasks import *
 
 vm_bp = Blueprint('vm_bp', __name__)
 
+# To access jwt_required endpoints, must include
+# Authorization: Bearer <Access Token JWT>
+# in header of request
+
+# To access jwt_refresh_token_required endpoints, must include
+# Authorization: Bearer <Refresh Token JWT>
+# in header of request
+
+
 @vm_bp.route('/status/<task_id>')
+@jwt_required
 def status(task_id):
     result = celery.AsyncResult(task_id)
     if result.status == 'SUCCESS':
@@ -25,30 +35,50 @@ def status(task_id):
         }
         return make_response(jsonify(response), 200)
 
-@vm_bp.route('/vm/<action>', methods = ['POST'])
-def vm(action):
-    if action == 'create':
-        vm_size = request.get_json()['vm_size']
-        location = request.get_json()['location']
-        task = createVM.apply_async([vm_size, location])
-        if not task: 
-            return jsonify({}), 400
-        return jsonify({'ID': task.id}), 202
-    elif action == 'fetchip':
-        vm_name = request.get_json()['vm_name']
-        try:
-            vm = getVM(vm_name)
-            ip = getIP(vm)
-            return({'public_ip': ip}), 200
-        except:
-            return({'public_ip': None}), 404
-    elif action == 'delete':
-        vm_name = request.get_json()['vm_name']
-        task = deleteVMResources.apply_async([vm_name])
-        return jsonify({'ID': task.id}), 202
-    return jsonify({}), 400
+@vm_bp.route('/vm/shreya_test', methods=['POST'])
+@jwt_required
+def test_jwt():
+    body = request.get_json()
+    return jsonify({'val': body['val']}), 400
+
+# VM endpoint
+
+@vm_bp.route('/vm/create', methods = ['POST'])
+@jwt_required
+def vm_create():
+    body = request.get_json()
+    vm_size = body['vm_size']
+    location = body['location']
+    task = createVM.apply_async([vm_size, location])
+    if not task: 
+        return jsonify({}), 400
+    return jsonify({'ID': task.id}), 202
+
+@vm_bp.route('/vm/fetchip', methods = ['POST'])
+@jwt_required
+def vm_fetch_ip():
+    body = request.get_json()
+    vm_name = body['vm_name']
+    try:
+        vm = getVM(vm_name)
+        ip = getIP(vm)
+        return({'public_ip': ip}), 200
+    except:
+        return({'public_ip': None}), 404
+    
+@vm_bp.route('/vm/delete', methods = ['POST'])
+@jwt_required
+def vm_delete():
+    body = request.get_json()
+    vm_name = body['vm_name']
+    task = deleteVMResources.apply_async([vm_name])
+    return jsonify({'ID': task.id}), 202
+
+
+# TRACKER endpoint
 
 @vm_bp.route('/tracker/<action>', methods = ['POST'])
+@jwt_required
 def tracker(action):
     body = request.get_json()
     time = None
@@ -69,19 +99,21 @@ def tracker(action):
         return jsonify({'payload': activity}), 200
     return jsonify({}), 200
 
-@vm_bp.route('/info/<action>', methods = ['GET', 'POST'])
-def info(action):
-    body = request.get_json()
-    if action == 'list_all' and request.method == 'GET':
-        task = fetchAll.apply_async([False])
-        if not task:
-            return jsonify({}), 400
-        return jsonify({'ID': task.id}), 202
-    if action == 'update_db' and request.method == 'POST':
-        task = fetchAll.apply_async([True])
-        if not task:
-            return jsonify({}), 400
-        return jsonify({'ID': task.id}), 202
+# INFO endpoint
 
-    return jsonify({}), 400
+@vm_bp.route('/info/list_all', methods = ['GET'])
+@jwt_required
+def info_list_all():
+    task = fetchAll.apply_async([False]) # False = do not update db
+    if not task:
+        return jsonify({}), 400
+    return jsonify({'ID': task.id}), 202
+
+@vm_bp.route('/info/update_db', methods = ['POST'])
+@jwt_required
+def info_update_db():
+    task = fetchAll.apply_async([True]) # True = update db
+    if not task:
+        return jsonify({}), 400
+    return jsonify({'ID': task.id}), 202
 

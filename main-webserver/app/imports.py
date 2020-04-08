@@ -25,5 +25,6 @@ from flask_mail import Mail, Message
 from datetime import datetime as dt
 import stripe
 from multiprocessing.util import register_after_fork
+from flask_jwt_extended import *
 
 load_dotenv()

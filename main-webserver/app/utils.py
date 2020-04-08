@@ -49,3 +49,8 @@ def generateToken(user):
         token = token[-1 * len(pwd_token):]
 
     return token
+
+def getAccessTokens(user):
+    access_token = create_access_token(identity = user)
+    refresh_token = create_refresh_token(identity = user)
+    return (access_token, refresh_token)

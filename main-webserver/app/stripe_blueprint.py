@@ -3,160 +3,174 @@ from .helperFuncs import *
 
 stripe_bp = Blueprint('stripe_bp', __name__)
 
-@stripe_bp.route('/stripe/<action>', methods = ['POST'])
-def payment(action):
+# STRIPE endpoint
+
+@jwt_required
+@stripe_bp.route('/stripe/charge', methods = ['POST'])
+def payment_charge():
 	stripe.api_key = os.getenv('STRIPE_SECRET') 
 	customer_id = ''
 	subscription_id = ''
 
-	if action == 'charge':
-		body = request.get_json()
+	body = request.get_json()
+	token = body['token']
+	email = body['email']
+	location = body['location']
+	code = body['code']
 
-		token = body['token']
-		email = body['email']
-		location = body['location']
-		code = body['code']
+	customers = fetchCustomers()
+	for customer in customers:
+		if email == customer['email']:
+			return jsonify({'status': 400}), 400
 
-		customers = fetchCustomers()
-		for customer in customers:
-			if email == customer['email']:
-				return jsonify({'status': 400}), 400
-
-		try:
-			new_customer = stripe.Customer.create(
-			  email = email,
-			  source = token
-			)
-			customer_id = new_customer['id']
-			credits = getUserCredits(email)
-
-			metadata = mapCodeToUser(code)
-			if metadata:
-				credits += 1
-
-			if credits == 0:
-				new_subscription = stripe.Subscription.create(
-				  customer = new_customer['id'],
-				  items = [{"plan": os.getenv("PLAN_ID")}],
-				  trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1),
-				  trial_from_plan = False
-				)
-				subscription_id = new_subscription['id']
-			else:
-				new_subscription = stripe.Subscription.create(
-				  customer = new_customer['id'],
-				  items = [{"plan": os.getenv("PLAN_ID")}],
-				  trial_end = shiftUnixByMonth(dateToUnix(getToday()), credits),
-				  trial_from_plan = False
-				)
-				changeUserCredits(email, 0)
-				subscription_id = new_subscription['id']
-		except Exception as e:
-			return jsonify({'status': 402, 'error': str(e)}), 402
-
-		try:
-			insertCustomer(email, customer_id, subscription_id, location)
-		except:
-			return jsonify({'status': 409}), 409
-
-		return jsonify({'status': 200}), 200
-
-	elif action == 'retrieve':
-		body = request.get_json()
-
-		email = body['email']
+	try:
+		new_customer = stripe.Customer.create(
+			email = email,
+			source = token
+		)
+		customer_id = new_customer['id']
 		credits = getUserCredits(email)
-		customers = fetchCustomers()
-		for customer in customers:
-			if email == customer['email']:
-				subscription = customer['subscription']
-				try:
-					payload = stripe.Subscription.retrieve(subscription)
-					return jsonify({'status': 200, 'subscription': payload, 'creditsOutstanding': credits}), 200
-				except:
-					return jsonify({'status': 402, 'creditsOutstanding': credits}), 402
-
-		return jsonify({'status': 402, 'creditsOutstanding': credits}), 402
-
-	elif action == 'cancel':
-		body = request.get_json()
-
-		email = body['email']
-		customers = fetchCustomers()
-		for customer in customers:
-			if email == customer['email']:
-				subscription = customer['subscription']
-				payload = stripe.Subscription.delete(subscription)
-				deleteCustomer(email)
-				return jsonify({'status': 200}), 200
-		return jsonify({'status': 400}), 400
-
-	elif action == 'discount':
-		body = request.get_json()
-
-		code = body['code']
-		metadata = mapCodeToUser(code)
-
-		if not metadata:
-			return jsonify({'status': 404}), 404
-
-		creditsOutstanding = metadata['creditsOutstanding']
-		email = metadata['email']
-		has_subscription = False
-		subscription_id = None
-
-		customers = fetchCustomers()
-		for customer in customers:
-			if email == customer['email']:
-				has_subscription = True
-				subscription_id = customer['subscription']
-
-		if has_subscription:
-			new_subscription = stripe.Subscription.retrieve(subscription_id)
-			if new_subscription['trial_end']:
-			    if new_subscription['trial_end'] <= dateToUnix(getToday()):
-			        modified_subscription = stripe.Subscription.modify(
-			            new_subscription['id'],
-			            trial_end = shiftUnixByMonth(dateToUnix(getToday()), 1),
-			            trial_from_plan = False
-			        )
-			        
-			    modified_subscription = stripe.Subscription.modify(
-			        new_subscription['id'],
-			        trial_end = shiftUnixByMonth(new_subscription['trial_end'], 1),
-			        trial_from_plan = False
-			    )
-			else:
-			    modified_subscription = stripe.Subscription.modify(
-			        new_subscription['id'],
-			        trial_end = shiftUnixByMonth(dateToUnix(getToday()), 1),
-			        trial_from_plan = False
-			    )
-
-		else:
-			changeUserCredits(email, creditsOutstanding + 1)
-
-		headers = {'content-type': 'application/json'}
-		url = "https://fractal-mail-server.herokuapp.com/creditApplied"
-		data = {'username': email}
-		requests.post(url = url, data = json.dumps(data), headers = headers) 
-
-		return jsonify({'status': 200}), 200
-
-
-@stripe_bp.route('/referral/<action>', methods = ['POST'])
-def referral(action):
-	if action == 'validate':
-		body = request.get_json()
-		code = body['code']
-		code_username = None
-		username = body['username']
 
 		metadata = mapCodeToUser(code)
 		if metadata:
-			code_username = metadata['email']
-		if username == code_username:
-			return jsonify({'status': 200, 'verified': False}), 200
-		codes = fetchCodes()
-		verified = code in codes
-		return jsonify({'status': 200, 'verified': verified}), 200
+			credits += 1
+
+		if credits == 0:
+			new_subscription = stripe.Subscription.create(
+				customer = new_customer['id'],
+				items = [{"plan": os.getenv("PLAN_ID")}],
+				trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1),
+				trial_from_plan = False
+			)
+			subscription_id = new_subscription['id']
+		else:
+			new_subscription = stripe.Subscription.create(
+				customer = new_customer['id'],
+				items = [{"plan": os.getenv("PLAN_ID")}],
+				trial_end = shiftUnixByMonth(dateToUnix(getToday()), credits),
+				trial_from_plan = False
+			)
+			changeUserCredits(email, 0)
+			subscription_id = new_subscription['id']
+	except Exception as e:
+		return jsonify({'status': 402, 'error': str(e)}), 402
+
+	try:
+		insertCustomer(email, customer_id, subscription_id, location)
+	except:
+		return jsonify({'status': 409}), 409
+
+	return jsonify({'status': 200}), 200
+
+@jwt_required
+@stripe_bp.route('/stripe/retrieve', methods = ['POST'])
+def payment_retrieve():
+	stripe.api_key = os.getenv('STRIPE_SECRET') 
+	customer_id = ''
+	subscription_id = ''
+	body = request.get_json()
+
+	email = body['email']
+	credits = getUserCredits(email)
+	customers = fetchCustomers()
+	for customer in customers:
+		if email == customer['email']:
+			subscription = customer['subscription']
+			try:
+				payload = stripe.Subscription.retrieve(subscription)
+				return jsonify({'status': 200, 'subscription': payload, 'creditsOutstanding': credits}), 200
+			except:
+				return jsonify({'status': 402, 'creditsOutstanding': credits}), 402
+
+	return jsonify({'status': 402, 'creditsOutstanding': credits}), 402
+
+@jwt_required
+@stripe_bp.route('/stripe/cancel', methods = ['POST'])
+def payment_cancel():
+	stripe.api_key = os.getenv('STRIPE_SECRET') 
+	customer_id = ''
+	subscription_id = ''
+	body = request.get_json()
+
+	email = body['email']
+	customers = fetchCustomers()
+	for customer in customers:
+		if email == customer['email']:
+			subscription = customer['subscription']
+			payload = stripe.Subscription.delete(subscription)
+			deleteCustomer(email)
+			return jsonify({'status': 200}), 200
+	return jsonify({'status': 400}), 400
+
+@jwt_required
+@stripe_bp.route('/stripe/discount', methods = ['POST'])
+def payment_discount():
+	stripe.api_key = os.getenv('STRIPE_SECRET') 
+	subscription_id = ''
+	body = request.get_json()
+
+	code = body['code']
+	metadata = mapCodeToUser(code)
+
+	if not metadata:
+		return jsonify({'status': 404}), 404
+
+	creditsOutstanding = metadata['creditsOutstanding']
+	email = metadata['email']
+	has_subscription = False
+	subscription_id = None
+
+	customers = fetchCustomers()
+	for customer in customers:
+		if email == customer['email']:
+			has_subscription = True
+			subscription_id = customer['subscription']
+
+	if has_subscription:
+		new_subscription = stripe.Subscription.retrieve(subscription_id)
+		if new_subscription['trial_end']:
+			if new_subscription['trial_end'] <= dateToUnix(getToday()):
+				modified_subscription = stripe.Subscription.modify(
+					new_subscription['id'],
+					trial_end = shiftUnixByMonth(dateToUnix(getToday()), 1),
+					trial_from_plan = False
+				)
+				
+			modified_subscription = stripe.Subscription.modify(
+				new_subscription['id'],
+				trial_end = shiftUnixByMonth(new_subscription['trial_end'], 1),
+				trial_from_plan = False
+			)
+		else:
+			modified_subscription = stripe.Subscription.modify(
+				new_subscription['id'],
+				trial_end = shiftUnixByMonth(dateToUnix(getToday()), 1),
+				trial_from_plan = False
+			)
+
+	else:
+		changeUserCredits(email, creditsOutstanding + 1)
+
+	headers = {'content-type': 'application/json'}
+	url = "https://fractal-mail-server.herokuapp.com/creditApplied"
+	data = {'username': email}
+	requests.post(url = url, data = json.dumps(data), headers = headers) 
+
+	return jsonify({'status': 200}), 200
+
+@jwt_required
+@stripe_bp.route('/referral/validate', methods = ['POST'])
+def referral_validate():
+	body = request.get_json()
+	code = body['code']
+	code_username = None
+	username = body['username']
+
+	metadata = mapCodeToUser(code)
+	if metadata:
+		code_username = metadata['email']
+	if username == code_username:
+		return jsonify({'status': 200, 'verified': False}), 200
+	codes = fetchCodes()
+	verified = code in codes
+	return jsonify({'status': 200, 'verified': verified}), 200
