@@ -95,17 +95,16 @@ def createDisk(self, vm_name, disk_size, username, location):
                     'id': data_disk.id
                 }
             })
+            async_disk_attach = compute_client.virtual_machines.create_or_update(
+                os.environ.get('VM_GROUP'),
+                virtual_machine.name,
+                virtual_machine
+            )
             attachedDisk = True
         # TODO: Figure catch Client Exception specifically
-        except:
-            # except Exception:
+        except ClientException:
             lunNum += 1
 
-    async_disk_attach = compute_client.virtual_machines.create_or_update(
-        os.environ.get('VM_GROUP'),
-        virtual_machine.name,
-        virtual_machine
-    )
     async_disk_attach.wait()
 
     with open('app/scripts/diskCreate.txt', 'r') as file:
