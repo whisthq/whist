@@ -7,11 +7,18 @@
 
 #ifdef _WIN32
 WCHAR* lget_clipboard_directory();
+WCHAR* lset_clipboard_directory();
 #endif
 char* get_clipboard_directory()
 {
-	char buf[MAX_PATH];
+	static char buf[MAX_PATH];
 	wcstombs( buf, lget_clipboard_directory(), sizeof( buf ) );
+	return buf;
+}
+char* set_clipboard_directory()
+{
+	static char buf[MAX_PATH];
+	wcstombs( buf, lset_clipboard_directory(), sizeof( buf ) );
 	return buf;
 }
 
@@ -23,8 +30,8 @@ char* get_clipboard_directory()
 #endif
 
 #ifdef _WIN32
-#define LSET_CLIPBOARD L"C:\\Users\\set_clipboard"
-#define SET_CLIPBOARD "C:\\Users\\set_clipboard"
+#define LSET_CLIPBOARD (lset_clipboard_directory())
+#define SET_CLIPBOARD (set_clipboard_directory())
 #else
 #define SET_CLIPBOARD "set_clipboard"
 #endif
@@ -36,7 +43,7 @@ char* get_clipboard_directory()
 #include "shlobj_core.h"
 #include "Knownfolders.h"
 
-WCHAR* lget_clipboard_directory()
+WCHAR* lclipboard_directory()
 {
 	static WCHAR* directory = NULL;
 	if( directory == NULL )
@@ -64,11 +71,28 @@ WCHAR* lget_clipboard_directory()
 			mprintf( "Could not SHGetKnownFolderPath" );
 			return NULL;
 		}
-		PathAppendW( szPath, L"get_clipboard" );
 		directory = szPath;
 	}
 	mprintf( "Directory: %S\n", directory );
 	return directory;
+}
+
+WCHAR* lget_clipboard_directory()
+{
+	WCHAR path[MAX_PATH];
+	WCHAR* cb_dir = lclipboard_directory();
+	wcscpy( path, cb_dir );
+	PathAppendW( path, L"get_clipboard" );
+	return path;
+}
+
+WCHAR* lset_clipboard_directory()
+{
+	WCHAR path[MAX_PATH];
+	WCHAR* cb_dir = lclipboard_directory();
+	wcscpy( path, cb_dir );
+	PathAppendW( path, L"set_clipboard" );
+	return path;
 }
 
 #define REPARSE_MOUNTPOINT_HEADER_SIZE 8
