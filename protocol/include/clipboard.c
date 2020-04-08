@@ -56,8 +56,8 @@ WCHAR* lclipboard_directory()
 	{
 		static WCHAR szPath[MAX_PATH];
 		static WCHAR* path;
-		if( SUCCEEDED( SHGetKnownFolderPath( &FOLDERID_RoamingAppData,
-											 CSIDL_APPDATA | CSIDL_FLAG_CREATE,
+		if( SUCCEEDED( SHGetKnownFolderPath( &FOLDERID_ProgramData,
+											 CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE,
 											 0,
 											 &path ) ) )
 		{
@@ -114,6 +114,7 @@ WCHAR* lset_clipboard_directory()
 			return NULL;
 		}
 	}
+	mprintf( "SET PATH: %S\n", path );
 	return path;
 }
 
@@ -641,7 +642,7 @@ void SetClipboard( ClipboardData* cb )
 		wcscat( file_prefix, LSET_CLIPBOARD );
 		wcscat( file_prefix, L"\\" );
 
-		int file_prefix_len = wcslen( file_prefix ); // Including null terminator
+		int file_prefix_len = (int)wcslen( file_prefix );
 
 		if( hFind != INVALID_HANDLE_VALUE )
 		{
@@ -655,24 +656,26 @@ void SetClipboard( ClipboardData* cb )
 					continue;
 				}
 
-				memcpy( file_ptr, file_prefix, file_prefix_len );
+				memcpy( file_ptr, file_prefix, sizeof(WCHAR)*file_prefix_len );
 				// file_ptr moves in terms of WCHAR
 				file_ptr += file_prefix_len;
 				// total_len moves in terms of bytes
-				total_len += file_prefix_len * sizeof(WCHAR);
+				total_len += sizeof( WCHAR )*file_prefix_len;
 
-				int len = (int)wcslen( data.cFileName ) + 1;
+				int len = (int)wcslen( data.cFileName ) + 1; // Including null terminator
 
 				mprintf( "FILENAME: %S\n", data.cFileName );
 
 				memcpy( file_ptr, data.cFileName, sizeof(WCHAR)*len );
 				file_ptr += len;
+				total_len += sizeof( WCHAR )*len;
 
 				num_files++;
-				total_len += sizeof( WCHAR )*len;
 			} while( FindNextFileW( hFind, &data ) );
 			FindClose( hFind );
 		}
+
+		mprintf( "File: %S\n", (char*)drop + drop->pFiles );
 
 		*file_ptr = L'\0';
 		total_len += sizeof( L'\0' );
@@ -836,6 +839,10 @@ int UpdateClipboardThread( void* opaque )
 		if( updating_set_clipboard )
 		{
 			mprintf( "Trying to set clipboard!\n" );
+			ClipboardData cb;
+			cb.type = CLIPBOARD_TEXT;
+			cb.size = 0;
+			SetClipboard( &cb );
 			if( clipboard->type == CLIPBOARD_FILES )
 			{
 
