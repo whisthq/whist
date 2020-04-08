@@ -81,7 +81,7 @@ int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     packet->is_a_nack = true;
 
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet(packet, (int) len, &encrypted_packet,
+    int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
                                      (unsigned char*)PRIVATE_KEY);
 
     SDL_LockMutex(packet_mutex);
@@ -495,7 +495,7 @@ static int32_t SendAudio(void* opaque) {
     }
     StartAudioDevice(audio_device);
     audio_encoder_t* audio_encoder =
-        create_audio_encoder(128000, audio_device->sample_rate);
+        create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
     int res;
 
     // Tell the client what audio frequency we're using
