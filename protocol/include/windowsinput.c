@@ -354,6 +354,9 @@ void UpdateKeyboardState(input_device_t* input_device,
     bool server_caps_lock = GetKeyState(VK_CAPITAL) & 1;
     bool server_num_lock = GetKeyState(VK_NUMLOCK) & 1;
 
+    mprintf( "NUM LOCK: %d\n", server_num_lock );
+    mprintf( "FMSG NUM LOCK: %d\n", server_num_lock );
+
     bool caps_lock_holding = false;
     bool num_lock_holding = false;
 
@@ -453,6 +456,9 @@ void ReplayUserInput(input_device_t* input_device,
         case MESSAGE_KEYBOARD:
             // Windows event for keyboard action
 
+            mprintf( "SDL: %d\n", fmsg->keyboard.code );
+            mprintf( "Windows: %d\n", windows_keycodes[fmsg->keyboard.code] );
+
             Event.type = INPUT_KEYBOARD;
             Event.ki.time = 0;  // system supplies timestamp
 
@@ -462,6 +468,7 @@ void ReplayUserInput(input_device_t* input_device,
                 windows_keycodes[fmsg->keyboard.code], MAPVK_VK_TO_VSC_EX);
 
             if (Event.ki.wScan >> 8 == 0xE0) {
+                mprintf( "EXTENDED!\n" );
                 Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
                 Event.ki.wScan &= 0xFF;
             }

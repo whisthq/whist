@@ -27,6 +27,7 @@ typedef struct audio_device_t {
     HANDLE hWakeUp;
     BYTE *buffer;
     LONG buffer_size;
+    UINT32 nNumFramesToRead;
     UINT32 frames_available;
     DWORD dwWaitResult;
     DWORD dwFlags;
