@@ -456,21 +456,63 @@ void ReplayUserInput(input_device_t* input_device,
         case MESSAGE_KEYBOARD:
             // Windows event for keyboard action
 
-            mprintf( "SDL: %d\n", fmsg->keyboard.code );
-            mprintf( "Windows: %d\n", windows_keycodes[fmsg->keyboard.code] );
-
             Event.type = INPUT_KEYBOARD;
             Event.ki.time = 0;  // system supplies timestamp
 
+            HKL keyboard_layout = GetKeyboardLayout( 0 );
+
             Event.ki.dwFlags = KEYEVENTF_SCANCODE;
             Event.ki.wVk = 0;
-            Event.ki.wScan = (WORD)MapVirtualKeyA(
-                windows_keycodes[fmsg->keyboard.code], MAPVK_VK_TO_VSC_EX);
+            Event.ki.wScan = (WORD)MapVirtualKeyExA(
+                windows_keycodes[fmsg->keyboard.code], MAPVK_VK_TO_VSC_EX, keyboard_layout );
+
+            switch( windows_keycodes[fmsg->keyboard.code] )
+            {
+            case VK_LEFT: case VK_UP: case VK_RIGHT: case VK_DOWN: // arrow keys
+            case VK_PRIOR: case VK_NEXT: // page up and page down
+            case VK_END: case VK_HOME:
+            case VK_INSERT: case VK_DELETE:
+            case VK_DIVIDE: // numpad slash
+            case VK_NUMLOCK:
+                Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+            }
+
+            /* Print entire keyboard
+            for( int i = 0; i < 256; i++ )
+            {
+                char keyName[50];
+                if( GetKeyNameTextA( i << 16, keyName, sizeof( keyName ) ) != 0 )
+                {
+                    mprintf( "Code: %d\n", i );
+                    mprintf( "KEY: %s\n", keyName );
+                } else
+                {
+                    mprintf( "Code: %d\n", i );
+                    mprintf( "NoKey:\n" );
+                }
+            }
+            for( int i = 0; i < 256; i++ )
+            {
+                char keyName[50];
+                if( GetKeyNameTextA( (i << 16) + (1 << 24), keyName, sizeof( keyName ) ) != 0 )
+                {
+                    mprintf( "Code: %d\n", i + (1 << 24) );
+                    mprintf( "KEY: %s\n", keyName );
+                } else
+                {
+                    mprintf( "Code: %d\n", i + (1 << 24) );
+                    mprintf( "NoKey:\n" );
+                }
+            }*/
 
             if (Event.ki.wScan >> 8 == 0xE0) {
-                mprintf( "EXTENDED!\n" );
                 Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
                 Event.ki.wScan &= 0xFF;
+            }
+
+            if( Event.ki.wScan >> 8 == 0xE1 )
+            {
+                mprintf( "Weird Extended\n" );
             }
 
             if (!fmsg->keyboard.pressed) {
