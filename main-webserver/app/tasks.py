@@ -97,7 +97,7 @@ def createDisk(self, vm_name, disk_size, username, location):
             })
             attachedDisk = True
         # TODO: Figure catch Client Exception specifically
-        except ClientException:
+        except:
             # except Exception:
             lunNum += 1
 
