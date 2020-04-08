@@ -145,7 +145,7 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 
 	if( !CreateDirectoryW( szJunction, NULL ) )
 	{
-		mprintf("Error: %d\n", GetLastError());
+		mprintf("CreateDirectoryW Error: %d\n", GetLastError());
 		return false;
 	}
 
@@ -154,19 +154,19 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 	TOKEN_PRIVILEGES tp;
 	if( !OpenProcessToken( GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken ) )
 	{
-		mprintf( "Error: %d\n", GetLastError() );
+		mprintf( "OpenProcessToken Error: %d\n", GetLastError() );
 		return false;
 	}
 	if( !LookupPrivilegeValueW( NULL, L"SeRestorePrivilege", &tp.Privileges[0].Luid ) )
 	{
-		mprintf( "Error: %d\n", GetLastError() );
+		mprintf( "LookupPrivilegeValueW Error: %d\n", GetLastError() );
 		return false;
 	}
 	tp.PrivilegeCount = 1;
 	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 	if( !AdjustTokenPrivileges( hToken, FALSE, &tp, sizeof( TOKEN_PRIVILEGES ), NULL, NULL ) )
 	{
-		mprintf( "Error: %d\n", GetLastError() );
+		mprintf( "AdjustTokenPrivileges Error: %d\n", GetLastError() );
 		return false;
 	}
 	if( hToken ) CloseHandle( hToken );
@@ -175,7 +175,7 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 	HANDLE hDir = CreateFileW( szJunction, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL );
 	if( hDir == INVALID_HANDLE_VALUE )
 	{
-		mprintf( "Error: %d\n", GetLastError() );
+		mprintf( "CreateFileW Error: %d\n", GetLastError() );
 		return false;
 	}
 
@@ -193,7 +193,7 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 		CloseHandle( hDir );
 		RemoveDirectoryW( szJunction );
 
-		mprintf( "Error: %d\n", GetLastError() );
+		mprintf( "DeviceIoControl Error: %d\n", GetLastError() );
 		return false;
 	}
 
@@ -377,6 +377,8 @@ ClipboardData* GetClipboard()
 					wcscat((wchar_t *) filename, L"\\" );
 					wcscat((wchar_t *) filename, data.cFileName );
 
+					mprintf( "Deleting %S...\n", filename );
+
 					DWORD fileattributes = GetFileAttributesW((LPCWSTR) filename );
 					if( fileattributes == INVALID_FILE_ATTRIBUTES )
 					{
@@ -385,10 +387,16 @@ ClipboardData* GetClipboard()
 
 					if( fileattributes & FILE_ATTRIBUTE_DIRECTORY )
 					{
-						RemoveDirectoryW((LPCWSTR) filename );
+						if( !RemoveDirectoryW( (LPCWSTR)filename ) )
+						{
+							mprintf( "Delete Folder Error: %d\n", GetLastError() );
+						}
 					} else
 					{
-						DeleteFileW((LPCWSTR) filename );
+						if (!DeleteFileW((LPCWSTR) filename ))
+						{
+							mprintf( "Delete Folder Error: %d\n", GetLastError() );
+						}
 					}
 				} while( FindNextFileW( hFind, &data ) );
 				FindClose( hFind );
@@ -860,7 +868,7 @@ int UpdateClipboardThread( void* opaque )
 				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
 				strcat( cmd, "/" );
-				strcat( cmd, SET_CLIPBOARD );
+				strcat( cmd, "C:\\Users\\vm1\\AppData\\Roaming\\FractalCache\\set_clipboard" );
 				strcat( cmd, "/\" -force " );
 				strcat( cmd, GET_CLIPBOARD );
 				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
