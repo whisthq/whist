@@ -301,13 +301,13 @@ void InitCursors() { LoadCursors(); }
 
 int GetWindowsKeyCode(int sdl_keycode) { return windows_keycodes[sdl_keycode]; }
 
-input_device* CreateInputDevice(input_device* device) {
-    *device = 1;
-    return device;
+input_device_t* CreateInputDevice(input_device_t* input_device) {
+    *input_device = 1;
+    return input_device;
 }
 
-void DestroyInputDevice(input_device* device) {
-    free(device);
+void DestroyInputDevice(input_device_t* input_device) {
+    free(input_device);
     return;
 }
 
@@ -335,7 +335,7 @@ void KeyUp(int windows_keycode) {
     SendKeyInput(windows_keycode, KEYEVENTF_KEYUP);
 }
 
-void UpdateKeyboardState(input_device* device,
+void UpdateKeyboardState(input_device_t* input_device,
                          struct FractalClientMessage* fmsg) {
     if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
         mprintf(
@@ -440,7 +440,8 @@ void UpdateKeyboardState(input_device* device,
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
-void ReplayUserInput(input_device* device, struct FractalClientMessage* fmsg) {
+void ReplayUserInput(input_device_t* input_device,
+                     struct FractalClientMessage* fmsg) {
     // get screen width and height for mouse cursor
     // int sWidth = GetSystemMetrics( SM_CXSCREEN ) - 1; is this still needed?
     // int sHeight = GetSystemMetrics( SM_CYSCREEN ) - 1; ^^

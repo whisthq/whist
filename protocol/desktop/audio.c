@@ -47,20 +47,21 @@ void initAudio() {
     StartTimer(&nack_timer);
 
     // cast socket and SDL variables back to their data type for usage
-    SDL_AudioSpec wantedSpec = { 0 }, audioSpec = { 0 };
+    SDL_AudioSpec wantedSpec = {0}, audioSpec = {0};
 
-    //AudioData.audio_decoder = create_audio_decoder();
+    AudioData.audio_decoder = create_audio_decoder(decoder_frequency);
 
     SDL_zero(wantedSpec);
     SDL_zero(audioSpec);
-    wantedSpec.channels  = 2;//(Uint8)AudioData.audio_decoder->context->channels;
-    wantedSpec.freq      = decoder_frequency;
+    wantedSpec.channels = (Uint8)AudioData.audio_decoder->pCodecCtx->channels;
+    wantedSpec.freq = decoder_frequency;
     mprintf("Freq: %d\n", wantedSpec.freq);
-    wantedSpec.format    = AUDIO_F32SYS;
-    wantedSpec.silence   = 0;
-    wantedSpec.samples   = SDL_AUDIO_BUFFER_SIZE;
+    wantedSpec.format = AUDIO_F32SYS;
+    wantedSpec.silence = 0;
+    wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
 
-    AudioData.dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+    AudioData.dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec,
+                                        SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (AudioData.dev == 0) {
         mprintf("Failed to open audio\n");
         exit(1);
@@ -77,12 +78,12 @@ void initAudio() {
 
 void destroyAudio() {
     SDL_CloseAudioDevice(AudioData.dev);
-    //destroy_audio_decoder(AudioData.audio_decoder);
+    destroy_audio_decoder(AudioData.audio_decoder);
 }
 
 void updateAudio() {
 #if LOG_AUDIO
-    //mprintf("Queue: %d\n", SDL_GetQueuedAudioSize(AudioData.dev));
+    // mprintf("Queue: %d\n", SDL_GetQueuedAudioSize(AudioData.dev));
 #endif
     if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
         mprintf("Updating audio frequency to %d!\n", audio_frequency);
@@ -96,7 +97,8 @@ void updateAudio() {
     // Catch up to most recent ID if nothing has played yet
     if (last_played_id == -1 && has_rendered_yet && most_recent_audio_id > 0) {
         last_played_id = most_recent_audio_id - 1;
-        while (last_played_id % MAX_NUM_AUDIO_INDICES != MAX_NUM_AUDIO_INDICES - 1) {
+        while (last_played_id % MAX_NUM_AUDIO_INDICES !=
+               MAX_NUM_AUDIO_INDICES - 1) {
             last_played_id++;
         }
 
@@ -111,21 +113,21 @@ void updateAudio() {
 
     // Wait to delay
     static bool gapping = false;
-    int bytes_until_can_play = (most_recent_audio_id - last_played_id) * MAX_PAYLOAD_SIZE + SDL_GetQueuedAudioSize( AudioData.dev );
-    if( !gapping && bytes_until_can_play < AUDIO_QUEUE_LOWER_LIMIT )
-    {
-        mprintf( "Audio Queue too low: %d. Needs to catch up!\n", bytes_until_can_play);
+    int bytes_until_can_play =
+        (most_recent_audio_id - last_played_id) * MAX_PAYLOAD_SIZE +
+        SDL_GetQueuedAudioSize(AudioData.dev);
+    if (!gapping && bytes_until_can_play < AUDIO_QUEUE_LOWER_LIMIT) {
+        mprintf("Audio Queue too low: %d. Needs to catch up!\n",
+                bytes_until_can_play);
         gapping = true;
     }
 
-    if( gapping )
-    {
-        if( bytes_until_can_play < TARGET_AUDIO_QUEUE_LIMIT )
-        {
+    if (gapping) {
+        if (bytes_until_can_play < TARGET_AUDIO_QUEUE_LIMIT) {
             return;
-        } else
-        {
-            mprintf( "Done catching up! Audio Queue: %d\n", bytes_until_can_play );
+        } else {
+            mprintf("Done catching up! Audio Queue: %d\n",
+                    bytes_until_can_play);
             gapping = false;
         }
     }
@@ -143,9 +145,10 @@ void updateAudio() {
             mprintf("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!\n");
             return;
         }
-        
+
         bool valid = true;
-        for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
+        for (int i = next_to_play_id;
+             i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
             if (receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id != i) {
                 valid = false;
             }
@@ -155,32 +158,60 @@ void updateAudio() {
         if (valid) {
             still_more_audio_packets = true;
 
-            int real_limit = triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
+            int real_limit =
+                triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
 
-            if (SDL_GetQueuedAudioSize(AudioData.dev) > (unsigned int)real_limit) {
+            if (SDL_GetQueuedAudioSize(AudioData.dev) >
+                (unsigned int)real_limit) {
                 mprintf("*******************\n");
-                mprintf("Audio queue full, skipping ID %d (Queued: %d)\n", next_to_play_id / MAX_NUM_AUDIO_INDICES, SDL_GetQueuedAudioSize(AudioData.dev));
-                for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+                mprintf("Audio queue full, skipping ID %d (Queued: %d)\n",
+                        next_to_play_id / MAX_NUM_AUDIO_INDICES,
+                        SDL_GetQueuedAudioSize(AudioData.dev));
+                for (int i = next_to_play_id;
+                     i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
+                    audio_packet* packet =
+                        &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     packet->id = -1;
                     packet->nacked_amount = 0;
                 }
                 triggered = true;
-            }
-            else {
+            } else {
                 triggered = false;
-                for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    audio_packet* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
-                    if (packet->size > 0) {
-#if LOG_AUDIO
-                            mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id, packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
-#endif
-                            if (SDL_QueueAudio(AudioData.dev, packet->data, packet->size) < 0) {
-                                mprintf("Could not play audio!\n");
-                            }
-                    }
+                AVPacket encoded_packet;
+                int res;
+                av_init_packet(&encoded_packet);
+                encoded_packet.data = (uint8_t*)av_malloc(
+                    MAX_NUM_AUDIO_INDICES * MAX_PAYLOAD_SIZE);
+                encoded_packet.size = 0;
+
+                for (int i = next_to_play_id;
+                     i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
+                    audio_packet* packet =
+                        &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+                    memcpy(encoded_packet.data + encoded_packet.size,
+                           packet->data, packet->size);
+                    encoded_packet.size += packet->size;
                     packet->id = -1;
                     packet->nacked_amount = 0;
+                }
+                res = audio_decoder_decode_packet(AudioData.audio_decoder,
+                                                  &encoded_packet);
+                av_free(encoded_packet.data);
+                av_free_packet(&encoded_packet);
+                uint8_t data = 0;
+                if (res == 0) {
+                    uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+
+                    audio_decoder_packet_readout(AudioData.audio_decoder,
+                                                 &decoded_data);
+
+                    res = SDL_QueueAudio(AudioData.dev, &decoded_data,
+                                         audio_decoder_get_frame_data_size(
+                                             AudioData.audio_decoder));
+
+                    if (res < 0) {
+                        mprintf("Could not play audio!\n");
+                    }
                 }
             }
 
@@ -189,11 +220,11 @@ void updateAudio() {
     }
 
     // Find all pending audio packets and NACK them
-    if (last_played_id > -1 && GetTimer( nack_timer ) > 6.0 / 1000.0 )
-    {
+    if (last_played_id > -1 && GetTimer(nack_timer) > 6.0 / 1000.0) {
         int num_nacked = 0;
-        last_nacked_id = max( last_played_id, last_nacked_id );
-        for (int i = last_nacked_id + 1; i < most_recent_audio_id - 4 && num_nacked < 1; i++) {
+        last_nacked_id = max(last_played_id, last_nacked_id);
+        for (int i = last_nacked_id + 1;
+             i < most_recent_audio_id - 4 && num_nacked < 1; i++) {
             int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
             audio_packet* i_packet = &receiving_audio[i_buffer_index];
             if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
@@ -202,12 +233,13 @@ void updateAudio() {
                 fmsg.type = MESSAGE_AUDIO_NACK;
                 fmsg.nack_data.id = i / MAX_NUM_AUDIO_INDICES;
                 fmsg.nack_data.index = i % MAX_NUM_AUDIO_INDICES;
-                //mprintf("Missing Audio Packet ID %d, Index %d. NACKing...\n", fmsg.nack_data.id, fmsg.nack_data.index);
+                // mprintf("Missing Audio Packet ID %d, Index %d. NACKing...\n",
+                // fmsg.nack_data.id, fmsg.nack_data.index);
                 i_packet->nacked_for = i;
-                SendFmsg( &fmsg );
+                SendFmsg(&fmsg);
                 num_nacked++;
 
-                StartTimer( &nack_timer );
+                StartTimer(&nack_timer);
             }
             last_nacked_id = i;
         }
@@ -221,13 +253,14 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
     }
 
     int audio_id = packet->id * MAX_NUM_AUDIO_INDICES + packet->index;
-    audio_packet* audio_pkt = &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
+    audio_packet* audio_pkt =
+        &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
 
     if (audio_id == audio_pkt->id) {
-        //mprintf("Already received audio packet: %d\n", audio_id);
-    }
-    else if (audio_id < audio_pkt->id || audio_id <= last_played_id) {
-        //mprintf("Old audio packet received: %d, last played id is %d\n", audio_id, last_played_id);
+        // mprintf("Already received audio packet: %d\n", audio_id);
+    } else if (audio_id < audio_pkt->id || audio_id <= last_played_id) {
+        // mprintf("Old audio packet received: %d, last played id is %d\n",
+        // audio_id, last_played_id);
     }
     // audio_id > audio_pkt->id && audio_id > last_played_id
     else {
@@ -242,37 +275,55 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
                 audio_pkt->nacked_amount = 0;
 
                 // And we'll skip the whole frame
-                while (last_played_id % MAX_NUM_AUDIO_INDICES != MAX_NUM_AUDIO_INDICES - 1) {
+                while (last_played_id % MAX_NUM_AUDIO_INDICES !=
+                       MAX_NUM_AUDIO_INDICES - 1) {
                     // "Play" that packet
                     last_played_id++;
-                    receiving_audio[last_played_id % RECV_AUDIO_BUFFER_SIZE].id = -1;
-                    receiving_audio[last_played_id % RECV_AUDIO_BUFFER_SIZE].nacked_amount = 0;
+                    receiving_audio[last_played_id % RECV_AUDIO_BUFFER_SIZE]
+                        .id = -1;
+                    receiving_audio[last_played_id % RECV_AUDIO_BUFFER_SIZE]
+                        .nacked_amount = 0;
                 }
             }
 
             if (last_played_id > 0) {
-                mprintf("Audio packet being overwritten before being played! ID %d replaced with ID %d, when the Last Played ID was %d. Last Played ID is Now %d\n", audio_pkt->id, audio_id, old_last_played_id, last_played_id);
+                mprintf(
+                    "Audio packet being overwritten before being played! ID %d "
+                    "replaced with ID %d, when the Last Played ID was %d. Last "
+                    "Played ID is Now %d\n",
+                    audio_pkt->id, audio_id, old_last_played_id,
+                    last_played_id);
             }
         }
 
         if (packet->is_a_nack) {
             if (audio_pkt->nacked_for == audio_id) {
-                mprintf("NACK for Audio ID %d, Index %d Received!\n", packet->id, packet->index);
-            }
-            else if (audio_pkt->nacked_for == -1) {
-                mprintf("NACK for Audio ID %d, Index %d Received! But not needed.\n", packet->id, packet->index);
+                mprintf("NACK for Audio ID %d, Index %d Received!\n",
+                        packet->id, packet->index);
+            } else if (audio_pkt->nacked_for == -1) {
+                mprintf(
+                    "NACK for Audio ID %d, Index %d Received! But not "
+                    "needed.\n",
+                    packet->id, packet->index);
             } else {
-                mprintf("NACK for Audio ID %d, Index %d Received Wrongly!\n", packet->id, packet->index);
+                mprintf("NACK for Audio ID %d, Index %d Received Wrongly!\n",
+                        packet->id, packet->index);
             }
         }
 
         if (audio_pkt->nacked_for == audio_id) {
-            mprintf("Packet for Audio ID %d, Index %d Received! But it was already NACK'ed!\n", packet->id, packet->index);
+            mprintf(
+                "Packet for Audio ID %d, Index %d Received! But it was already "
+                "NACK'ed!\n",
+                packet->id, packet->index);
         }
         audio_pkt->nacked_for = -1;
 
 #if LOG_AUDIO
-        mprintf("Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n", audio_id, packet->payload_size, last_played_id + 1, SDL_GetQueuedAudioSize(AudioData.dev));
+        mprintf(
+            "Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n",
+            audio_id, packet->payload_size, last_played_id + 1,
+            SDL_GetQueuedAudioSize(AudioData.dev));
 #endif
         audio_pkt->id = audio_id;
         most_recent_audio_id = max(audio_pkt->id, most_recent_audio_id);
@@ -280,9 +331,10 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
         memcpy(audio_pkt->data, packet->data, packet->payload_size);
 
         if (packet->index + 1 == packet->num_indices) {
-            //mprintf("Audio Packet %d Received! Last Played: %d\n", packet->id, last_played_id / MAX_NUM_AUDIO_INDICES);
+            // mprintf("Audio Packet %d Received! Last Played: %d\n",
+            // packet->id, last_played_id / MAX_NUM_AUDIO_INDICES);
             for (int i = audio_id + 1; i % MAX_NUM_AUDIO_INDICES != 0; i++) {
-                //mprintf("Receiving %d\n", i);
+                // mprintf("Receiving %d\n", i);
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id = i;
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].size = 0;
             }

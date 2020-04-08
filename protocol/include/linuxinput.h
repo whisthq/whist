@@ -13,10 +13,10 @@
 
 #include "fractal.h"
 
-typedef struct input_device {
+typedef struct input_device_t {
     int fd_absmouse;
     int fd_relmouse;
     int fd_keyboard;
-} input_device;
+} input_device_t;
 
 #endif  // LINUX_INPUT_H

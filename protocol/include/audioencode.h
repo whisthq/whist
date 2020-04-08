@@ -22,6 +22,12 @@ typedef struct {
     int frame_count;
 } audio_encoder_t;
 
+typedef struct {
+    int pts;
+    int size;
+    uint8_t data[10];
+} encoded_audio_t;
+
 audio_encoder_t *create_audio_encoder(int bit_rate, int sample_rate);
 
 void audio_encoder_fifo_intake(audio_encoder_t *encoder, uint8_t *data,

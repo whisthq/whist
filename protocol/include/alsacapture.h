@@ -2,9 +2,12 @@
 #define ALSACAPTURE_H
 
 #include <alsa/asoundlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "fractal.h"
 
-typedef struct audio_device {
+typedef struct audio_device_t {
     snd_pcm_t *handle;
     snd_pcm_uframes_t num_frames;
     unsigned long frames_available;
@@ -16,6 +19,6 @@ typedef struct audio_device {
     uint8_t *buffer;
     snd_pcm_hw_params_t *params;
     int dummy_state;
-} audio_device;
+} audio_device_t;
 
 #endif  // ALSA_CAPTURE_H
