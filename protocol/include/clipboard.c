@@ -5,17 +5,117 @@
 #include "clipboard.h"
 #include "fractal.h"
 
-#define LGET_CLIPBOARD L"get_clipboard"
-#define GET_CLIPBOARD "get_clipboard"
+#ifdef _WIN32
+WCHAR* lget_clipboard_directory();
+WCHAR* lset_clipboard_directory();
+#endif
+char* get_clipboard_directory()
+{
+	static char buf[MAX_PATH];
+	wcstombs( buf, lget_clipboard_directory(), sizeof( buf ) );
+	return buf;
+}
+char* set_clipboard_directory()
+{
+	static char buf[MAX_PATH];
+	wcstombs( buf, lset_clipboard_directory(), sizeof( buf ) );
+	return buf;
+}
 
-#define LSET_CLIPBOARD L"set_clipboard"
-#define SET_CLIPBOARD "set_clipboard"
+#ifdef _WIN32
+#define LGET_CLIPBOARD (lget_clipboard_directory())
+#define GET_CLIPBOARD (get_clipboard_directory())
+#else
+#define GET_CLIPBOARD "./get_clipboard"
+#endif
+
+#ifdef _WIN32
+#define LSET_CLIPBOARD (lset_clipboard_directory())
+#define SET_CLIPBOARD (set_clipboard_directory())
+#else
+#define SET_CLIPBOARD "./set_clipboard"
+#endif
+
+void initClipboard()
+{
+	get_clipboard_directory();
+	set_clipboard_directory();
+}
 
 #ifdef _WIN32
 #include "shlwapi.h"
 #pragma comment (lib, "Shlwapi.lib")
 #include "Shellapi.h"
 #include "shlobj_core.h"
+#include "Knownfolders.h"
+
+WCHAR* lclipboard_directory()
+{
+	static WCHAR* directory = NULL;
+	if( directory == NULL )
+	{
+		static WCHAR szPath[MAX_PATH];
+		static WCHAR* path;
+		if( SUCCEEDED( SHGetKnownFolderPath( &FOLDERID_RoamingAppData,
+											 CSIDL_APPDATA | CSIDL_FLAG_CREATE,
+											 0,
+											 &path ) ) )
+		{
+			wcscpy( szPath, path );
+			CoTaskMemFree( path );
+			PathAppendW( szPath, L"FractalCache" );
+			if( !PathFileExistsW( szPath ) )
+			{
+				if( !CreateDirectoryW( szPath, NULL ) )
+				{
+					mprintf( "Could not create directory: %S (Error %d)\n", szPath, GetLastError() );
+					return NULL;
+				}
+			}
+		} else
+		{
+			mprintf( "Could not SHGetKnownFolderPath" );
+			return NULL;
+		}
+		directory = szPath;
+	}
+	mprintf( "Directory: %S\n", directory );
+	return directory;
+}
+
+WCHAR* lget_clipboard_directory()
+{
+	WCHAR path[MAX_PATH];
+	WCHAR* cb_dir = lclipboard_directory();
+	wcscpy( path, cb_dir );
+	PathAppendW( path, L"get_clipboard" );
+	if( !PathFileExistsW( path ) )
+	{
+		if( !CreateDirectoryW( path, NULL ) )
+		{
+			mprintf( "Could not create directory: %S (Error %d)\n", path, GetLastError() );
+			return NULL;
+		}
+	}
+	return path;
+}
+
+WCHAR* lset_clipboard_directory()
+{
+	WCHAR path[MAX_PATH];
+	WCHAR* cb_dir = lclipboard_directory();
+	wcscpy( path, cb_dir );
+	PathAppendW( path, L"set_clipboard" );
+	if( !PathFileExistsW( path ) )
+	{
+		if( !CreateDirectoryW( path, NULL ) )
+		{
+			mprintf( "Could not create directory: %S (Error %d)\n", path, GetLastError() );
+			return NULL;
+		}
+	}
+	return path;
+}
 
 #define REPARSE_MOUNTPOINT_HEADER_SIZE 8
 
@@ -45,7 +145,7 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 
 	if( !CreateDirectoryW( szJunction, NULL ) )
 	{
-		mprintf("Error: %d\n", GetLastError());
+		mprintf("CreateDirectoryW Error: %d\n", GetLastError());
 		return false;
 	}
 
@@ -54,19 +154,19 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 	TOKEN_PRIVILEGES tp;
 	if( !OpenProcessToken( GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken ) )
 	{
-		mprintf( "Error: %d\n", GetLastError() );
+		mprintf( "OpenProcessToken Error: %d\n", GetLastError() );
 		return false;
 	}
 	if( !LookupPrivilegeValueW( NULL, L"SeRestorePrivilege", &tp.Privileges[0].Luid ) )
 	{
-		mprintf( "Error: %d\n", GetLastError() );
+		mprintf( "LookupPrivilegeValueW Error: %d\n", GetLastError() );
 		return false;
 	}
 	tp.PrivilegeCount = 1;
 	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 	if( !AdjustTokenPrivileges( hToken, FALSE, &tp, sizeof( TOKEN_PRIVILEGES ), NULL, NULL ) )
 	{
-		mprintf( "Error: %d\n", GetLastError() );
+		mprintf( "AdjustTokenPrivileges Error: %d\n", GetLastError() );
 		return false;
 	}
 	if( hToken ) CloseHandle( hToken );
@@ -75,7 +175,7 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 	HANDLE hDir = CreateFileW( szJunction, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL );
 	if( hDir == INVALID_HANDLE_VALUE )
 	{
-		mprintf( "Error: %d\n", GetLastError() );
+		mprintf( "CreateFileW Error: %d\n", GetLastError() );
 		return false;
 	}
 
@@ -93,7 +193,7 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 		CloseHandle( hDir );
 		RemoveDirectoryW( szJunction );
 
-		mprintf( "Error: %d\n", GetLastError() );
+		mprintf( "DeviceIoControl Error: %d\n", GetLastError() );
 		return false;
 	}
 
@@ -254,7 +354,12 @@ ClipboardData* GetClipboard()
 			//SHFileOperationW( &sh );
 
 			WIN32_FIND_DATAW data;
-			HANDLE hFind = FindFirstFileW( LGET_CLIPBOARD L"\\*", &data );
+
+			WCHAR first_file_path[MAX_PATH] = L"";
+			wcscat( first_file_path, LGET_CLIPBOARD );
+			wcscat( first_file_path, L"\\*" );
+
+			HANDLE hFind = FindFirstFileW( first_file_path, &data );
 			if( hFind != INVALID_HANDLE_VALUE )
 			{
 				WCHAR* ignore1 = L".";
@@ -267,9 +372,12 @@ ClipboardData* GetClipboard()
 						continue;
 					}
 
-					char filename[MAX_PATH*sizeof( WCHAR )] = "";
-					wcscat((wchar_t *) filename, LGET_CLIPBOARD L"\\" );
+					WCHAR filename[MAX_PATH] = L"";
+					wcscat( (wchar_t*)filename, LGET_CLIPBOARD );
+					wcscat((wchar_t *) filename, L"\\" );
 					wcscat((wchar_t *) filename, data.cFileName );
+
+					mprintf( "Deleting %S...\n", filename );
 
 					DWORD fileattributes = GetFileAttributesW((LPCWSTR) filename );
 					if( fileattributes == INVALID_FILE_ATTRIBUTES )
@@ -279,17 +387,26 @@ ClipboardData* GetClipboard()
 
 					if( fileattributes & FILE_ATTRIBUTE_DIRECTORY )
 					{
-						RemoveDirectoryW((LPCWSTR) filename );
+						if( !RemoveDirectoryW( (LPCWSTR)filename ) )
+						{
+							mprintf( "Delete Folder Error: %d\n", GetLastError() );
+						}
 					} else
 					{
-						DeleteFileW((LPCWSTR) filename );
+						if (!DeleteFileW((LPCWSTR) filename ))
+						{
+							mprintf( "Delete Folder Error: %d\n", GetLastError() );
+						}
 					}
 				} while( FindNextFileW( hFind, &data ) );
 				FindClose( hFind );
 			}
 
 			RemoveDirectoryW( LGET_CLIPBOARD );
-			CreateDirectoryW( LGET_CLIPBOARD, NULL );
+			if( !CreateDirectoryW( LGET_CLIPBOARD, NULL ) )
+			{
+				mprintf( "Could not create directory: %S (Error %d)\n", LGET_CLIPBOARD, GetLastError() );
+			}
 
 			// Go through filenames
 			while( *filename != L'\0' )
@@ -297,7 +414,9 @@ ClipboardData* GetClipboard()
 				WCHAR* fileending = PathFindFileNameW( filename );
 				DWORD fileattributes = GetFileAttributesW( filename );
 
-				WCHAR target_file[MAX_PATH*sizeof( WCHAR )] = LGET_CLIPBOARD L"\\";
+				WCHAR target_file[MAX_PATH] = L"";
+				wcscat( target_file, LGET_CLIPBOARD );
+				wcscat( target_file, L"\\" );
 				wcsncat( target_file, fileending, sizeof(target_file) );
 
 				mprintf( "Target: %S\n", target_file );
@@ -316,13 +435,6 @@ ClipboardData* GetClipboard()
 						mprintf( "CreateHardLinkW Error: %d\n", GetLastError() );
 					}
 				}
-
-				/*
-				if( !CreateSymbolicLinkW( target_file, filename, fileattributes & FILE_ATTRIBUTE_DIRECTORY ? SYMBOLIC_LINK_FLAG_DIRECTORY : 0 ) )
-				{
-					mprintf( "ERROR: %d\n", GetLastError() );
-				}
-				*/
 
 				mprintf( "TARGET FILENAME: %S\n", target_file );
 				mprintf( "FILENAME: %S\n", filename );
@@ -372,13 +484,13 @@ ClipboardData* GetClipboard()
 		cb->size = 0;
 
 		// delete clipboard directory and all its files
-		if( dir_exists( "./" GET_CLIPBOARD ) > 0 )
+		if( dir_exists( GET_CLIPBOARD ) > 0 )
 		{
-			mac_rm_rf( "./" GET_CLIPBOARD );
+			mac_rm_rf( GET_CLIPBOARD );
 		}
 
 		// make new clipboard directory
-		mkdir( "./" GET_CLIPBOARD, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+		mkdir( GET_CLIPBOARD, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 
 
 		// make symlinks for all files in clipboard and store in directory
@@ -388,7 +500,8 @@ ClipboardData* GetClipboard()
 			if( *filenames[i]->fullPath != '\0' )
 			{
 				char symlinkName[PATH_MAX] = "";
-				strcpy( symlinkName, "./" GET_CLIPBOARD "/" );
+				strcat( symlinkName, GET_CLIPBOARD );
+				strcat( symlinkName, "/" );
 				strcat( symlinkName, filenames[i]->filename );
 				symlink( filenames[i]->fullPath, symlinkName );
 			} else
@@ -508,11 +621,12 @@ void SetClipboard( ClipboardData* cb )
 	case CLIPBOARD_FILES:
 		mprintf( "SetClipboard to Files\n" );
 
-#define CLIPBOARD_DIRECTORY (L"C:\\Program Files\\Fractal\\" LSET_CLIPBOARD "\\")
-#define CLIPBOARD_DIRECTORY_SIZE (sizeof(CLIPBOARD_DIRECTORY) - sizeof(WCHAR))
+		WCHAR first_file_path[MAX_PATH] = L"";
+		wcscat( first_file_path, LSET_CLIPBOARD );
+		wcscat( first_file_path, L"\\*" );
 
 		WIN32_FIND_DATAW data;
-		HANDLE hFind = FindFirstFileW( L"C:\\Program Files\\Fractal\\" LSET_CLIPBOARD "\\*", &data );
+		HANDLE hFind = FindFirstFileW( first_file_path, &data );
 
 		DROPFILES* drop = (DROPFILES*)clipboard_buf;
 		memset( drop, 0, sizeof( DROPFILES ) );
@@ -522,6 +636,12 @@ void SetClipboard( ClipboardData* cb )
 		drop->pFiles = total_len;
 		drop->fWide = true;
 		drop->fNC = false;
+
+		WCHAR file_prefix[MAX_PATH] = L"";
+		wcscat( file_prefix, LSET_CLIPBOARD );
+		wcscat( file_prefix, L"\\" );
+
+		int file_prefix_len = wcslen( file_prefix ) + 1; // Including null terminator
 
 		if( hFind != INVALID_HANDLE_VALUE )
 		{
@@ -539,9 +659,9 @@ void SetClipboard( ClipboardData* cb )
 
 				mprintf( "FILENAME: %S\n", data.cFileName );
 
-				memcpy( file_ptr, CLIPBOARD_DIRECTORY, CLIPBOARD_DIRECTORY_SIZE );
-				file_ptr += CLIPBOARD_DIRECTORY_SIZE / sizeof( WCHAR );
-				total_len += CLIPBOARD_DIRECTORY_SIZE;
+				memcpy( file_ptr, file_prefix, file_prefix_len );
+				file_ptr += file_prefix_len;
+				total_len += file_prefix_len * sizeof(WCHAR);
 
 				memcpy( file_ptr, data.cFileName, sizeof(WCHAR)*len );
 				file_ptr += len;
@@ -606,7 +726,7 @@ void SetClipboard( ClipboardData* cb )
 		}
 
 		// populate filenames
-		get_filenames( "./" SET_CLIPBOARD, filenames );
+		get_filenames( SET_CLIPBOARD, filenames );
 
 		// add files to clipboard
 		ClipboardSetFiles( filenames );
@@ -633,6 +753,7 @@ void SetClipboard( ClipboardData* cb )
 
 int UpdateClipboardThread( void* opaque );
 
+bool updating_set_clipboard;
 bool updating_clipboard;
 bool pending_update_clipboard;
 clock last_clipboard_update;
@@ -643,6 +764,28 @@ SDL_Thread* thread;
 bool connected;
 char* server_ip;
 ClipboardData* clipboard;
+
+bool isUpdatingClipboard()
+{
+	return updating_clipboard;
+}
+
+bool updateSetClipboard( ClipboardData* cb )
+{
+	if( updating_clipboard )
+	{
+		mprintf( "Tried to SetClipboard, but clipboard is updating\n" );
+		return false;
+	}
+
+	updating_clipboard = true;
+	updating_set_clipboard = true;
+	clipboard = cb;
+
+	SDL_SemPost( clipboard_semaphore );
+
+	return true;
+}
 
 bool pendingUpdateClipboard()
 {
@@ -688,41 +831,58 @@ int UpdateClipboardThread( void* opaque )
 
 		//ClipboardData* clipboard = GetClipboard();
 
-		clock clipboard_time;
-		StartTimer( &clipboard_time );
-
-		if( clipboard->type == CLIPBOARD_FILES )
+		if( updating_set_clipboard )
 		{
-			char cmd[1000] = "";
+			mprintf( "Trying to set clipboard!\n" );
+			if( clipboard->type == CLIPBOARD_FILES )
+			{
+
+			}
+			SetClipboard( clipboard );
+		} else
+		{
+			clock clipboard_time;
+			StartTimer( &clipboard_time );
+
+			if( clipboard->type == CLIPBOARD_FILES )
+			{
+				char cmd[1000] = "";
 #ifndef _WIN32
-			strcat( cmd, "UNISON=./.unison; " );
+				strcat( cmd, "UNISON=./.unison; " );
 #endif
 
 #ifdef _WIN32
-			strcat( cmd, "unison " );
+				strcat( cmd, "unison " );
 #else
-			strcat( cmd, "./unison -follow \"Path *\" " );
+				strcat( cmd, "./unison -follow \"Path *\" " );
 #endif
 
-			strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " GET_CLIPBOARD " \"ssh://" );
-			strcat( cmd, (char*)server_ip );
-			strcat( cmd, "/C:/Program Files/Fractal/" SET_CLIPBOARD "/\" -force " GET_CLIPBOARD " -ignorearchives -confirmbigdel=false -batch" );
+				strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " );
+				strcat( cmd, GET_CLIPBOARD );
+				strcat( cmd, " \"ssh://" );
+				strcat( cmd, (char*)server_ip );
+				strcat( cmd, "/" );
+				strcat( cmd, "C:\\Users\\vm1\\AppData\\Roaming\\FractalCache\\set_clipboard" );
+				strcat( cmd, "/\" -force " );
+				strcat( cmd, GET_CLIPBOARD );
+				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
 
-			mprintf( "COMMAND: %s\n", cmd );
-			runcmd( cmd );
-		}
+				mprintf( "COMMAND: %s\n", cmd );
+				runcmd( cmd );
+			}
 
-		FractalClientMessage* fmsg = malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) + clipboard->size );
-		fmsg->type = CMESSAGE_CLIPBOARD;
-		memcpy( &fmsg->clipboard, clipboard, sizeof( ClipboardData ) + clipboard->size );
-		send_fmsg( fmsg );
-		free( fmsg );
+			FractalClientMessage* fmsg = malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) + clipboard->size );
+			fmsg->type = CMESSAGE_CLIPBOARD;
+			memcpy( &fmsg->clipboard, clipboard, sizeof( ClipboardData ) + clipboard->size );
+			send_fmsg( fmsg );
+			free( fmsg );
 
-		// If it hasn't been 500ms yet, then wait 500ms to prevent too much spam
-		const int spam_time_ms = 500;
-		if( GetTimer( clipboard_time ) < spam_time_ms / 1000.0 )
-		{
-			SDL_Delay( max( (int)(spam_time_ms - 1000*GetTimer( clipboard_time )), 1 ) );
+			// If it hasn't been 500ms yet, then wait 500ms to prevent too much spam
+			const int spam_time_ms = 500;
+			if( GetTimer( clipboard_time ) < spam_time_ms / 1000.0 )
+			{
+				SDL_Delay( max( (int)(spam_time_ms - 1000*GetTimer( clipboard_time )), 1 ) );
+			}
 		}
 
 		mprintf( "Updated clipboard!\n" );
@@ -742,6 +902,7 @@ void updateClipboard()
 		mprintf( "Pushing update to clipboard\n" );
 		pending_update_clipboard = false;
 		updating_clipboard = true;
+		updating_set_clipboard = false;
 		clipboard = GetClipboard();
 		SDL_SemPost( clipboard_semaphore );
 	}

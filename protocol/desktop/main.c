@@ -73,7 +73,8 @@ void destroyUpdate() { destroyUpdateClipboard(); }
 void update() {
     FractalClientMessage fmsg;
 
-    if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0) {
+    // As long as the clipboard isn't actively being updated, then try to update it
+    if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 && !isUpdatingClipboard()) {
         // Check if TCP is up
         int result = sendp(&PacketTCPContext, NULL, 0);
         if (result < 0) {
@@ -87,7 +88,7 @@ void update() {
                 (struct FractalServerMessage*)packet->data;
             mprintf("Received %d byte clipboard message from server!\n",
                     packet->payload_size);
-            SetClipboard(&fmsg_response->clipboard);
+            updateSetClipboard(&fmsg_response->clipboard);
         }
         StartTimer((clock*)&UpdateData.last_tcp_check_timer);
     }
@@ -451,10 +452,6 @@ int ReceiveMessage(struct RTPPacket* packet) {
     }
     FractalServerMessage fmsg = *(FractalServerMessage*)packet->data;
     switch (fmsg.type) {
-        case SMESSAGE_CLIPBOARD:
-            mprintf("Receive clipboard message from server!\n");
-            SetClipboard(&fmsg.clipboard);
-            break;
         case MESSAGE_PONG:
             if (ping_id == fmsg.ping_id) {
                 mprintf("Latency: %f\n", GetTimer(latency_timer));
@@ -468,6 +465,10 @@ int ReceiveMessage(struct RTPPacket* packet) {
         case MESSAGE_AUDIO_FREQUENCY:
             mprintf("Changing audio frequency to %d\n", fmsg.frequency);
             audio_frequency = fmsg.frequency;
+            break;
+        case SMESSAGE_CLIPBOARD:
+            mprintf( "Receive clipboard message from server!\n" );
+            SetClipboard( &fmsg.clipboard );
             break;
         case SMESSAGE_QUIT:
             mprintf("Server signaled a quit!\n");
@@ -722,6 +723,8 @@ int main(int argc, char* argv[]) {
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     initMultiThreadedPrintf(true);
+
+    initClipboard();
 
     exiting = false;
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
