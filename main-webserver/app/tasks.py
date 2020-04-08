@@ -1,5 +1,6 @@
 from app import *
 from .helperFuncs import *
+from msrest.exceptions import ClientException
 
 
 @celery.task(bind=True)
@@ -23,7 +24,7 @@ def createVM(self, vm_size, location):
     }
 
     async_vm_powershell = compute_client.virtual_machine_extensions.create_or_update(os.environ.get('VM_GROUP'),
-                            vmParameters['vmName'], 'NvidiaGpuDriverWindows', extension_parameters)
+                                                                                     vmParameters['vmName'], 'NvidiaGpuDriverWindows', extension_parameters)
     async_vm_powershell.wait()
 
     async_vm_start = compute_client.virtual_machines.start(
@@ -59,7 +60,7 @@ def createDisk(self, vm_name, disk_size, username, location):
     disk_name = genDiskName()
 
     # Create managed data disk
-    print('\nCreate (empty) managed Data Disk')
+    print('\nCreate (empty) managed Data Disk: ' + disk_name)
     async_disk_creation = compute_client.disks.create_or_update(
         os.environ.get('VM_GROUP'),
         disk_name,
@@ -95,7 +96,9 @@ def createDisk(self, vm_name, disk_size, username, location):
                 }
             })
             attachedDisk = True
+        # TODO: Figure catch Client Exception specifically
         except ClientException:
+            # except Exception:
             lunNum += 1
 
     async_disk_attach = compute_client.virtual_machines.create_or_update(
@@ -111,6 +114,9 @@ def createDisk(self, vm_name, disk_size, username, location):
             'command_id': 'RunPowerShellScript',
             'script': [
                 command
+            ],
+            'parameters': [
+                {'name': "disk_name", 'value': disk_name}
             ]
         }
         poller = compute_client.virtual_machines.run_command(
@@ -130,7 +136,7 @@ def createDisk(self, vm_name, disk_size, username, location):
 def detachDisk(self, vm_Name, disk_name):
     _, compute_client, _ = createClients()
     # Detach data disk
-    print('\nDetach Data Disk')
+    print('\nDetach Data Disk: ' + disk_name)
 
     virtual_machine = compute_client.virtual_machines.get(
         os.environ.get('VM_GROUP'),
