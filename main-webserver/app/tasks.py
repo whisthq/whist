@@ -54,10 +54,9 @@ def createVM(self, vm_size, location):
 
 
 @celery.task(bind=True)
-def createDisk(self, vm_Name, disk_size, location):
+def createDisk(self, vm_name, disk_size, username, location):
     _, compute_client, _ = createClients()
-    lunNum = 1
-    disk_name = "newTestDisk"
+    disk_name = genDiskName()
 
     # Create managed data disk
     print('\nCreate (empty) managed Data Disk')
@@ -78,19 +77,27 @@ def createDisk(self, vm_Name, disk_size, location):
     print('\nGet Virtual Machine by Name')
     virtual_machine = compute_client.virtual_machines.get(
         os.environ.get('VM_GROUP'),
-        vm_Name
+        vm_name
     )
 
     # Attach data disk
     print('\nAttach Data Disk')
-    virtual_machine.storage_profile.data_disks.append({
-        'lun': lunNum,
-        'name': disk_name,
-        'create_option': DiskCreateOption.attach,
-        'managed_disk': {
-            'id': data_disk.id
-        }
-    })
+    lunNum = 0
+    attachedDisk = False
+    while not attachedDisk:
+        try:
+            virtual_machine.storage_profile.data_disks.append({
+                'lun': lunNum,
+                'name': disk_name,
+                'create_option': DiskCreateOption.attach,
+                'managed_disk': {
+                    'id': data_disk.id
+                }
+            })
+            attachedDisk = True
+        except ClientException:
+            lunNum += 1
+
     async_disk_attach = compute_client.virtual_machines.create_or_update(
         os.environ.get('VM_GROUP'),
         virtual_machine.name,
@@ -108,11 +115,13 @@ def createDisk(self, vm_Name, disk_size, location):
         }
         poller = compute_client.virtual_machines.run_command(
             os.environ.get('VM_GROUP'),
-            vm_Name,
+            vm_name,
             run_command_parameters
         )
         result = poller.result()
         print(result.value[0].message)
+
+    createDiskEntry(disk_name, vm_name, username, location)
 
     return disk_name
 

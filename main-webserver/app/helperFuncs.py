@@ -109,22 +109,22 @@ def deleteResource(name):
 
     try:
         subnet_obj = network_client.subnets.get(
-            resource_group_name = os.getenv('VM_GROUP'), 
-            virtual_network_name = vnetName,  
-            subnet_name = subnetName)  
-        # Step 3, configure network interface parameters.  
-        params = {'ip_configurations': [  
-                         {  'name': ipName,  
-                            'subnet': {'id': subnet_obj.id},  
-                            # None: Disassociate;  
-                            'public_ip_address': None,  
-                         }]  
-                }  
-        # Step 4, use method create_or_update to update network interface configuration.  
-        async_ip_detach = network_client.network_interfaces.create_or_update(  
-           resource_group_name = os.getenv('VM_GROUP'),  
-           network_interface_name = nicName,  
-           parameters = params)  
+            resource_group_name=os.getenv('VM_GROUP'),
+            virtual_network_name=vnetName,
+            subnet_name=subnetName)
+        # Step 3, configure network interface parameters.
+        params = {'ip_configurations': [
+            {'name': ipName,
+             'subnet': {'id': subnet_obj.id},
+             # None: Disassociate;
+             'public_ip_address': None,
+             }]
+        }
+        # Step 4, use method create_or_update to update network interface configuration.
+        async_ip_detach = network_client.network_interfaces.create_or_update(
+            resource_group_name=os.getenv('VM_GROUP'),
+            network_interface_name=nicName,
+            parameters=params)
         async_ip_detach.wait()
 
         async_ip_delete = network_client.public_ip_addresses.delete(
@@ -162,7 +162,8 @@ def deleteResource(name):
     try:
         virtual_machine = getVM(name)
         os_disk_name = virtual_machine.storage_profile.os_disk.name
-        os_disk_delete = compute_client.disks.delete(os.getenv('VM_GROUP'), os_disk_name)
+        os_disk_delete = compute_client.disks.delete(
+            os.getenv('VM_GROUP'), os_disk_name)
         os_disk_delete.wait()
         print("OS disk deleted")
 
@@ -229,6 +230,23 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                     }]
                 },
             }, 'vmName': vmName}
+
+
+def createDiskEntry(disk_name, vm_name, username, location):
+    with engine.connect() as conn:
+        command = text("""
+            INSERT INTO disks("diskname",  "vmname", "username", "location") 
+            VALUES(:diskname, :diskname, :username, :location)
+            """)
+        params = {
+            'diskname': disk_name,
+            'vmname': vm_name,
+            'username': username,
+            "location": location
+        }
+        with engine.connect() as conn:
+            conn.execute(command, **params)
+            conn.close()
 
 
 def getVM(vm_name):
@@ -441,6 +459,16 @@ def genVMName():
         return vmName
 
 
+def genDiskName():
+    with engine.connect() as conn:
+        oldDisks = [cell[0] for cell in list(
+            conn.execute('SELECT "diskname" FROM disks'))]
+        diskName = genHaiku(1)[0]
+        while diskName in oldDisks:
+            diskName = genHaiku(1)[0]
+        return diskName
+
+
 def storeForm(name, email, cubeType):
     command = text("""
         INSERT INTO form("fullname", "email", "cubetype") 
@@ -606,7 +634,7 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
     params = {'email': email}
     with engine.connect() as conn:
         user = conn.execute(command, **params).fetchall()
-        
+
         if len(user) == 0:
             command = text("""
                 INSERT INTO customers("email", "id", "subscription", "location", "trial_end", "paid") 
@@ -643,6 +671,7 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
             conn.execute(command, **params)
             conn.close()
 
+
 def deleteCustomer(email):
     command = text("""
         DELETE FROM customers WHERE "email" = :email 
@@ -651,6 +680,7 @@ def deleteCustomer(email):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
 
 def checkComputer(computer_id, username):
     command = text("""
@@ -899,6 +929,7 @@ def updateVMIP(vm_name, ip):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
 
 def updateTrialEnd(subscription, trial_end):
     command = text("""
