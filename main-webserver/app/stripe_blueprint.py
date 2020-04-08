@@ -17,11 +17,13 @@ def payment(action):
 		location = body['location']
 		code = body['code']
 		trial_end = 0
+		customer_exists = False
 
 		customers = fetchCustomers()
 		for customer in customers:
 			if email == customer['email']:
-				return jsonify({'status': 400}), 400
+				customer_exists = True
+				trial_end = customer['trial_end']
 
 		try:
 			new_customer = stripe.Customer.create(
@@ -36,7 +38,8 @@ def payment(action):
 				credits += 1
 
 			if credits == 0:
-				trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1)
+				if not customer_exists:
+					trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1)
 				new_subscription = stripe.Subscription.create(
 				  customer = new_customer['id'],
 				  items = [{"plan": os.getenv("PLAN_ID")}],
