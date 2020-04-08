@@ -647,7 +647,7 @@ void SetClipboard( ClipboardData* cb )
 		wcscat( file_prefix, LSET_CLIPBOARD );
 		wcscat( file_prefix, L"\\" );
 
-		int file_prefix_len = wcslen( file_prefix ) + 1; // Including null terminator
+		int file_prefix_len = wcslen( file_prefix ); // Including null terminator
 
 		if( hFind != INVALID_HANDLE_VALUE )
 		{
@@ -661,13 +661,15 @@ void SetClipboard( ClipboardData* cb )
 					continue;
 				}
 
-				int len = (int) wcslen( data.cFileName ) + 1;
+				memcpy( file_ptr, file_prefix, file_prefix_len );
+				// file_ptr moves in terms of WCHAR
+				file_ptr += file_prefix_len;
+				// total_len moves in terms of bytes
+				total_len += file_prefix_len * sizeof(WCHAR);
+
+				int len = (int)wcslen( data.cFileName ) + 1;
 
 				mprintf( "FILENAME: %S\n", data.cFileName );
-
-				memcpy( file_ptr, file_prefix, file_prefix_len );
-				file_ptr += file_prefix_len;
-				total_len += file_prefix_len * sizeof(WCHAR);
 
 				memcpy( file_ptr, data.cFileName, sizeof(WCHAR)*len );
 				file_ptr += len;
