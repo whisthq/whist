@@ -514,8 +514,6 @@ static int32_t SendAudio(void* opaque) {
         for (GetNextPacket(audio_device); PacketAvailable(audio_device);
              GetNextPacket(audio_device)) {
             GetBuffer(audio_device);
-            mprintf("sending audio frame %d with buffer size %d (ds %d)\n", id,
-                    audio_device->buffer_size, audio_device->dummy_state);
 
             if (audio_device->buffer_size > 10000) {
                 mprintf("Audio buffer size too large!\n");
@@ -528,10 +526,6 @@ static int32_t SendAudio(void* opaque) {
                                           audio_device->frames_available);
 
                 // while fifo has enough samples for an aac frame, handle it
-                mprintf("audio fifo has size %d | dummy state %d\n",
-                        av_audio_fifo_size(audio_encoder->pFifo),
-                        audio_device->dummy_state);
-
                 while (av_audio_fifo_size(audio_encoder->pFifo) >=
                        audio_encoder->pCodecCtx->frame_size) {
                     // create and encode a frame

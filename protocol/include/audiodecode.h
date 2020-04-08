@@ -3,6 +3,7 @@
 
 #define MAX_AUDIO_FRAME_SIZE 192000
 
+#include "../include/fractal.h"
 #include "ffmpeg/libavcodec/avcodec.h"
 #include "ffmpeg/libavdevice/avdevice.h"
 #include "ffmpeg/libavfilter/avfilter.h"
