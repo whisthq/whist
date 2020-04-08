@@ -566,24 +566,18 @@ void ReplayUserInput(input_device_t* input_device,
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
             // event for keyboard action
-            mprintf("KEYBOARD: code %d\n",
-                    GetLinuxKeyCode(fmsg->keyboard.code));
             EmitInputEvent(input_device->fd_keyboard, EV_KEY,
                            GetLinuxKeyCode(fmsg->keyboard.code),
                            fmsg->keyboard.pressed);
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
-            mprintf("MOUSE: x %d y %d r %d\n", fmsg->mouseMotion.x,
-                    fmsg->mouseMotion.y, fmsg->mouseMotion.relative);
             if (fmsg->mouseMotion.relative) {
-                mprintf("RELATIVE MOUSE\n");
                 EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_X,
                                fmsg->mouseMotion.x);
                 EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_Y,
                                fmsg->mouseMotion.y);
             } else {
-                mprintf("ABSOLUTE MOUSE\n");
                 EmitInputEvent(input_device->fd_absmouse, EV_ABS, ABS_X,
                                (int)(fmsg->mouseMotion.x *
                                      (int32_t)get_native_screen_width() /
@@ -598,8 +592,6 @@ void ReplayUserInput(input_device_t* input_device,
             break;
         case MESSAGE_MOUSE_BUTTON:
             // mouse button event
-            mprintf("MOUSE BUTTON: %x\n",
-                    GetLinuxMouseButton(fmsg->mouseButton.button));
             EmitInputEvent(input_device->fd_relmouse, EV_KEY,
                            GetLinuxMouseButton(fmsg->mouseButton.button),
                            fmsg->mouseButton.pressed);

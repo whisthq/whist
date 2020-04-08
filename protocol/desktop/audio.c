@@ -177,47 +177,72 @@ void updateAudio() {
                 triggered = true;
             } else {
                 triggered = false;
-                AVPacket encoded_packet;
-                int res;
-                av_init_packet(&encoded_packet);
-                encoded_packet.data = (uint8_t*)av_malloc(
-                    MAX_NUM_AUDIO_INDICES * MAX_PAYLOAD_SIZE);
-                encoded_packet.size = 0;
-
                 for (int i = next_to_play_id;
                      i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     audio_packet* packet =
                         &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
-                    memcpy(encoded_packet.data + encoded_packet.size,
-                           packet->data, packet->size);
-                    encoded_packet.size += packet->size;
+                    if (packet->size > 0) {
+#if LOG_AUDIO
+                        mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n",
+                                packet->id, packet->size,
+                                SDL_GetQueuedAudioSize(AudioData.dev));
+#endif
+                        if (SDL_QueueAudio(AudioData.dev, packet->data,
+                                           packet->size) < 0) {
+                            mprintf("Could not play audio!\n");
+                        }
+                    }
                     packet->id = -1;
                     packet->nacked_amount = 0;
-                }
-                res = audio_decoder_decode_packet(AudioData.audio_decoder,
-                                                  &encoded_packet);
-                av_free(encoded_packet.data);
-                av_free_packet(&encoded_packet);
-                uint8_t data = 0;
-                if (res == 0) {
-                    uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
-
-                    audio_decoder_packet_readout(AudioData.audio_decoder,
-                                                 &decoded_data);
-
-                    res = SDL_QueueAudio(AudioData.dev, &decoded_data,
-                                         audio_decoder_get_frame_data_size(
-                                             AudioData.audio_decoder));
-
-                    if (res < 0) {
-                        mprintf("Could not play audio!\n");
-                    }
                 }
             }
 
             last_played_id += MAX_NUM_AUDIO_INDICES;
         }
     }
+    //         } else {
+    //             triggered = false;
+    //             AVPacket encoded_packet;
+    //             int res;
+    //             av_init_packet(&encoded_packet);
+    //             encoded_packet.data = (uint8_t*)av_malloc(
+    //                 MAX_NUM_AUDIO_INDICES * MAX_PAYLOAD_SIZE);
+    //             encoded_packet.size = 0;
+
+    //             for (int i = next_to_play_id;
+    //                  i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
+    //                 audio_packet* packet =
+    //                     &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+    //                 memcpy(encoded_packet.data + encoded_packet.size,
+    //                        packet->data, packet->size);
+    //                 encoded_packet.size += packet->size;
+    //                 packet->id = -1;
+    //                 packet->nacked_amount = 0;
+    //             }
+    //             res = audio_decoder_decode_packet(AudioData.audio_decoder,
+    //                                               &encoded_packet);
+    //             av_free(encoded_packet.data);
+    //             av_free_packet(&encoded_packet);
+    //             uint8_t data = 0;
+    //             if (res == 0) {
+    //                 uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+
+    //                 audio_decoder_packet_readout(AudioData.audio_decoder,
+    //                                              &decoded_data);
+
+    //                 res = SDL_QueueAudio(AudioData.dev, &decoded_data,
+    //                                      audio_decoder_get_frame_data_size(
+    //                                          AudioData.audio_decoder));
+
+    //                 if (res < 0) {
+    //                     mprintf("Could not play audio!\n");
+    //                 }
+    //             }
+    //         }
+
+    //         last_played_id += MAX_NUM_AUDIO_INDICES;
+    //     }
+    // }
 
     // Find all pending audio packets and NACK them
     if (last_played_id > -1 && GetTimer(nack_timer) > 6.0 / 1000.0) {

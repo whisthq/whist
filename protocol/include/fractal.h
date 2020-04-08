@@ -65,7 +65,7 @@
 #define PORT_SERVER_TO_CLIENT 32263
 #define PORT_SHARED_TCP 32264
 
-#define USING_STUN true
+#define USING_STUN false
 
 #define MAX_PAYLOAD_SIZE 1285
 #define MAXIMUM_MBPS 30.0

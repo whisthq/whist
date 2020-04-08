@@ -91,7 +91,7 @@ void StartAudioDevice(audio_device_t *audio_device) {
         return;
     }
 
-    audio_device->pAudioClient->lpVtbl->Start(device->pAudioClient);
+    audio_device->pAudioClient->lpVtbl->Start(audio_device->pAudioClient);
 }
 
 void DestroyAudioDevice(audio_device_t *audio_device) {
@@ -127,7 +127,7 @@ void GetBuffer(audio_device_t *audio_device) {
 
 void ReleaseBuffer(audio_device_t *audio_device) {
     audio_device->pAudioCaptureClient->lpVtbl->ReleaseBuffer(
-        audio_device->pAudioCaptureClient, audio_device->nNumFramesToRead);
+        audio_device->pAudioCaptureClient, audio_device->frames_available);
 }
 
 void WaitTimer(audio_device_t *audio_device) {
