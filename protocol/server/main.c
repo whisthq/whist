@@ -164,9 +164,24 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     }
     int break_point = num_indices / (num_breaks + 1);
 
-    if (type == PACKET_VIDEO) {
+    /*
+    if (type == PACKET_AUDIO) {
+        static int ddata = 0;
+        static clock last_timer;
+        if( ddata == 0 )
+        {
+            StartTimer( &last_timer );
+        }
+        ddata += len;
+        GetTimer( last_timer );
+        if( GetTimer( last_timer ) > 5.0 )
+        {
+            mprintf( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / GetTimer( last_timer ) / 1024 );
+            ddata = 0;
+        }
         // mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
     }
+    */
 
     while (curr_index < len) {
         // Delay distribution of packets as needed
@@ -541,8 +556,8 @@ static int32_t SendAudio(void* opaque) {
                         break;
                     }
 
-                    mprintf("we got a packet of size %d\n",
-                            audio_encoder->packet.size);
+                   // mprintf("we got a packet of size %d\n",
+                   //         audio_encoder->packet.size);
 
                     // Send packet
 
@@ -551,7 +566,7 @@ static int32_t SendAudio(void* opaque) {
                                    audio_encoder->packet.size, id) < 0) {
                         mprintf("Could not send audio frame\n");
                     }
-                    mprintf("sent audio frame %d\n", id);
+                    //mprintf("sent audio frame %d\n", id);
                     id++;
 
                     // Free encoder packet
