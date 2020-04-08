@@ -74,19 +74,18 @@ def createDisk(self, vm_name, disk_size, username, location):
     )
     data_disk = async_disk_creation.result()
 
-    # Get the virtual machine by name
-    print('\nGet Virtual Machine by Name')
-    virtual_machine = compute_client.virtual_machines.get(
-        os.environ.get('VM_GROUP'),
-        vm_name
-    )
-
     # Attach data disk
     print('\nAttach Data Disk')
     lunNum = 1
     attachedDisk = False
     while not attachedDisk:
         try:
+            # Get the virtual machine by name
+            print('\nGet Virtual Machine by Name')
+            virtual_machine = compute_client.virtual_machines.get(
+                os.environ.get('VM_GROUP'),
+                vm_name
+            )
             virtual_machine.storage_profile.data_disks.append({
                 'lun': lunNum,
                 'name': disk_name,
