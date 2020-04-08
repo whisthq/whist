@@ -166,7 +166,12 @@ def payment(action):
 	elif action == 'insert':
 		body = request.get_json()
 		trial_end =  shiftUnixByWeek(dateToUnix(getToday()), 1)
-		insertCustomer(body['email'], None, None, body['location'], trial_end, False)
+		email = body['email']
+		credits = getUserCredits(email)
+		if credits > 0:
+			trial_end =  shiftUnixByMonth(dateToUnix(getToday()), credits)
+			changeUserCredits(email, 0)
+		insertCustomer(email, None, None, body['location'], trial_end, False)
 		return jsonify({'status': 200}), 200
 
 @stripe_bp.route('/referral/<action>', methods = ['POST'])
