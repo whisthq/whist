@@ -220,3 +220,13 @@ def fetchAll(self, update):
 def deleteVMResources(self, name):
     status = 200 if deleteResource(name) else 404
     return {'status': status}
+
+@celery.task(bind=True)
+def restartVM(self, vm_name):
+    _, compute_client, _ = createClients()
+
+    async_vm_restart = compute_client.virtual_machines.restart(
+        os.environ.get('VM_GROUP'), vm_name)
+    async_vm_restart.wait()
+
+    return {'status': 200}

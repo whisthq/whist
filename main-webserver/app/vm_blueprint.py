@@ -48,6 +48,10 @@ def vm(action):
         vm_name = request.get_json()['vm_name']
         task = deleteVMResources.apply_async([vm_name])
         return jsonify({'ID': task.id}), 202
+    elif action == 'restart':
+        vm_name = request.get_json()['vm_name']
+        task = restartVM.apply_async([vm_name])
+        return jsonify({'ID': task.id}), 202
     return jsonify({}), 400
 
 
