@@ -26,14 +26,14 @@ char* set_clipboard_directory()
 #define LGET_CLIPBOARD (lget_clipboard_directory())
 #define GET_CLIPBOARD (get_clipboard_directory())
 #else
-#define GET_CLIPBOARD "get_clipboard"
+#define GET_CLIPBOARD "./get_clipboard"
 #endif
 
 #ifdef _WIN32
 #define LSET_CLIPBOARD (lset_clipboard_directory())
 #define SET_CLIPBOARD (set_clipboard_directory())
 #else
-#define SET_CLIPBOARD "set_clipboard"
+#define SET_CLIPBOARD "./set_clipboard"
 #endif
 
 void initClipboard()
@@ -436,13 +436,6 @@ ClipboardData* GetClipboard()
 					}
 				}
 
-				/*
-				if( !CreateSymbolicLinkW( target_file, filename, fileattributes & FILE_ATTRIBUTE_DIRECTORY ? SYMBOLIC_LINK_FLAG_DIRECTORY : 0 ) )
-				{
-					mprintf( "ERROR: %d\n", GetLastError() );
-				}
-				*/
-
 				mprintf( "TARGET FILENAME: %S\n", target_file );
 				mprintf( "FILENAME: %S\n", filename );
 				mprintf( "FILENAME ENDING: %S\n", fileending );
@@ -491,13 +484,13 @@ ClipboardData* GetClipboard()
 		cb->size = 0;
 
 		// delete clipboard directory and all its files
-		if( dir_exists( "./" GET_CLIPBOARD ) > 0 )
+		if( dir_exists( GET_CLIPBOARD ) > 0 )
 		{
-			mac_rm_rf( "./" GET_CLIPBOARD );
+			mac_rm_rf( GET_CLIPBOARD );
 		}
 
 		// make new clipboard directory
-		mkdir( "./" GET_CLIPBOARD, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+		mkdir( GET_CLIPBOARD, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 
 
 		// make symlinks for all files in clipboard and store in directory
@@ -507,7 +500,8 @@ ClipboardData* GetClipboard()
 			if( *filenames[i]->fullPath != '\0' )
 			{
 				char symlinkName[PATH_MAX] = "";
-				strcpy( symlinkName, "./" GET_CLIPBOARD "/" );
+				strcat( symlinkName, GET_CLIPBOARD );
+				strcat( symlinkName, "/" );
 				strcat( symlinkName, filenames[i]->filename );
 				symlink( filenames[i]->fullPath, symlinkName );
 			} else
@@ -734,7 +728,7 @@ void SetClipboard( ClipboardData* cb )
 		}
 
 		// populate filenames
-		get_filenames( "./" SET_CLIPBOARD, filenames );
+		get_filenames( SET_CLIPBOARD, filenames );
 
 		// add files to clipboard
 		ClipboardSetFiles( filenames );
