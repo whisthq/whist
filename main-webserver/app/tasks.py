@@ -1,6 +1,6 @@
 from app import *
 from .helperFuncs import *
-from msrestazure.azure_exceptions import ClientException
+from msrest.exceptions import ClientException
 
 
 @celery.task(bind=True)
@@ -96,7 +96,9 @@ def createDisk(self, vm_name, disk_size, username, location):
                 }
             })
             attachedDisk = True
+        # TODO: Figure catch Client Exception specifically
         except ClientException:
+            # except Exception:
             lunNum += 1
 
     async_disk_attach = compute_client.virtual_machines.create_or_update(
