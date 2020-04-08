@@ -83,7 +83,7 @@ def createDisk(self, vm_name, disk_size, username, location):
 
     # Attach data disk
     print('\nAttach Data Disk')
-    lunNum = 0
+    lunNum = 1
     attachedDisk = False
     while not attachedDisk:
         try:
@@ -220,6 +220,7 @@ def fetchAll(self, update):
 def deleteVMResources(self, name):
     status = 200 if deleteResource(name) else 404
     return {'status': status}
+
 
 @celery.task(bind=True)
 def restartVM(self, vm_name):
