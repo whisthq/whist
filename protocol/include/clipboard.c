@@ -760,9 +760,15 @@ int UpdateClipboardThread( void* opaque )
 				strcat( cmd, "./unison -follow \"Path *\" " );
 #endif
 
-				strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " GET_CLIPBOARD " \"ssh://" );
+				strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " );
+				strcat( cmd, GET_CLIPBOARD );
+				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
-				strcat( cmd, "/C:/Program Files/Fractal/" SET_CLIPBOARD "/\" -force " GET_CLIPBOARD " -ignorearchives -confirmbigdel=false -batch" );
+				strcat( cmd, "/" );
+				strcat( cmd, SET_CLIPBOARD );
+				strcat( cmd, "/\" -force " );
+				strcat( cmd, GET_CLIPBOARD );
+				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
 
 				mprintf( "COMMAND: %s\n", cmd );
 				runcmd( cmd );
