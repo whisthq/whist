@@ -269,11 +269,13 @@ def updateVMStates(self):
 def syncDisks(self):
 	_, compute_client, _ = createClients()
 	disks = compute_client.disks.list(resource_group_name = os.environ.get('VM_GROUP'))
-	
+
 	for disk in disks:
 		disk_name = disk.name
 		disk_state = disk.disk_state
-		vm_name = disk.managed_by.split('/')[-1] if disk.managed_by.split('/')[-1] else ''
+		vm_name = disk.managed_by.split('/')[-1]
+		if not vm_name:
+			vm_name = ''
 		location = disk.location
 
 		updateDisk(disk_name, disk_state, vm_name, location)
