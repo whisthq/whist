@@ -1070,6 +1070,7 @@ def attachDiskToVM(disk_name, vm_name, lun):
 
 def swapOSDisk(disk_name, vm_name):
     try:
+        _, compute_client, _ = createClients()
         virtual_machine = getVM(vm_name)
         new_os_disk = compute_client.disks.get(os.getenv('VM_GROUP'), disk_name)
 
