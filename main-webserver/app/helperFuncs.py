@@ -942,3 +942,16 @@ def updateTrialEnd(subscription, trial_end):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+
+def updateVMState(vm_name, state):
+    command = text("""
+        UPDATE v_ms
+        SET state = :state
+        WHERE
+           "vmName" = :vm_name
+        """)
+    params = {'vm_name': vm_name, 'state': state}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()

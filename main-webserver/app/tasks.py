@@ -228,5 +228,39 @@ def restartVM(self, vm_name):
     async_vm_restart = compute_client.virtual_machines.restart(
         os.environ.get('VM_GROUP'), vm_name)
     async_vm_restart.wait()
+    return {'status': 200}
 
+@celery.task(bind=True)
+def updateVMStates(self):
+    _, compute_client, _ = createClients()
+    vms = compute_client.virtual_machines.list(resource_group_name = os.environ.get('VM_GROUP'))
+
+    # looping inside the list of virtual machines, to grab the state of each machine
+    for vm in vms:
+        state = ''
+        is_running = False
+        disk_attached = False
+        vm_state = compute_client.virtual_machines.instance_view(
+            resource_group_name = os.environ.get('VM_GROUP'), 
+            vm_name = vm.name)
+        if 'running' in vm_state.statuses[1].code:
+            is_running = True
+            
+        vm_info = compute_client.virtual_machines.get(os.environ.get('VM_GROUP'), vm.name)
+
+        for disk in vm_info.storage_profile.data_disks:
+            disk_attached = True
+            break
+            
+        if is_running and disk_attached:
+            state = 'RUNNING_UNAVAILABLE'
+        elif is_running and not disk_attached:
+            state = 'RUNNING_AVAILABLE'
+        elif not is_running and disk_attached:
+            state = 'NOT_RUNNING_UNAVAILABLE'
+        else:
+            state = 'NOT_RUNNING_AVAILABLE'
+        
+        updateVMState(vm.name, state)
+        
     return {'status': 200}
