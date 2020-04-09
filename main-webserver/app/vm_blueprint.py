@@ -81,7 +81,7 @@ def disk(action):
         return jsonify({'ID': task.id}), 202
     elif action == 'online':
         body = request.get_json()
-        changeDiskOnline(body['username'], body['online'])
+        changeDiskOnline([body['username'], body['online']])
         return jsonify({'status': 200}), 200
     elif action == 'attach':
         body = request.get_json()
