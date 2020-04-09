@@ -391,4 +391,4 @@ def swapSpecificDisk(self, disk_name, vm_name):
 
 	print('VM ' + vm_name + ' successfully restarted')
 
-	return {'status': 200}
+	return fetchVMCredentials(vm_name)
