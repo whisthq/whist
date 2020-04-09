@@ -225,8 +225,7 @@ def fetchAllVMs(self, update):
     return vms
 
 
-@celery.task(bind=True)
-def fetchAllDisks(self):
+def fetchAllDisks():
     disks = fetchUserDisks(None)
     print(disks)
     # TODO: The Azure checking functionality seen in fetchAllVms

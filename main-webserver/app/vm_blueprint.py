@@ -58,6 +58,7 @@ def vm(action):
 @vm_bp.route('/disk/<action>', methods=['POST'])
 def disk(action):
     if action == 'create':
+        print(request.get_json())
         disk_size = request.get_json()['disk_size']
         username = request.get_json()['username']
         location = request.get_json()['location']
@@ -115,11 +116,9 @@ def info(action):
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
-    if action == 'list_allDisks' and request.method == 'GET':
-        task = fetchAllDisks.apply_async()
-        if not task:
-            return jsonify({}), 400
-        return jsonify({'ID': task.id}), 202
+    if action == 'list_all_disks' and request.method == 'GET':
+        disks = fetchAllDisks()
+        return jsonify({'disks': disks}), 200
     if action == 'update_db' and request.method == 'POST':
         task = fetchAllVMs.apply_async([True])
         if not task:
