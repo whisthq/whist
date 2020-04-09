@@ -955,3 +955,34 @@ def updateVMState(vm_name, state):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+def updateDisk(disk_name, disk_state, vm_name, location):
+    command = text("""
+        SELECT * FROM disks WHERE "diskname" = :disk_name
+        """)
+    params = {'disk_name': disk_name}
+    with engine.connect() as conn:
+        disk = conn.execute(command, **params).fetchone()
+        if disk:
+            command = text("""
+                UPDATE disks
+                SET "attached" = :attached, "vmName" = :vm_name, "location" = :location
+                WHERE
+                   "diskname" = :disk_name
+            """)
+            params = {'attached': disk_state == 'Attached',
+                      'vm_name': vm_name,
+                      'location': location,
+                      'disk_name': disk_name}
+        else:
+            command = text("""
+                INSERT INTO disks("diskname", "attached", "vmName", "location") 
+                VALUES(:disk_name, :attached, :vm_name, :location)
+                """)
+            params = {'attached': disk_state == 'Attached',
+                      'vm_name': vm_name,
+                      'location': location,
+                      'disk_name': disk_name}
+                      
+        conn.execute(command, **params)
+        conn.close()

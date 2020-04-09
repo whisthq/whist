@@ -76,9 +76,9 @@ def disk(action):
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
-    # elif action == 'delete':
-    #     vm_name = request.get_json()['vm_name']
-    #     disk_name = request.get_json()['disk_name']
+    elif action == 'resync':
+        task = syncDisks.apply_async([])
+        return jsonify({'ID': task.id}), 202
     return jsonify({}), 400
 
 
