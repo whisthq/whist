@@ -58,7 +58,7 @@ WCHAR* lclipboard_directory()
 	if( directory == NULL )
 	{
 		static WCHAR szPath[MAX_PATH];
-		static WCHAR* path;
+		WCHAR* path;
 		if( SUCCEEDED( SHGetKnownFolderPath( &FOLDERID_ProgramData,
 											 CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE,
 											 0,
@@ -88,7 +88,7 @@ WCHAR* lclipboard_directory()
 
 WCHAR* lget_clipboard_directory()
 {
-	WCHAR path[MAX_PATH];
+	static WCHAR path[MAX_PATH];
 	WCHAR* cb_dir = lclipboard_directory();
 	wcscpy( path, cb_dir );
 	PathAppendW( path, L"get_clipboard" );
@@ -105,7 +105,7 @@ WCHAR* lget_clipboard_directory()
 
 WCHAR* lset_clipboard_directory()
 {
-	WCHAR path[MAX_PATH];
+	static WCHAR path[MAX_PATH];
 	WCHAR* cb_dir = lclipboard_directory();
 	wcscpy( path, cb_dir );
 	PathAppendW( path, L"set_clipboard" );
@@ -848,7 +848,32 @@ int UpdateClipboardThread( void* opaque )
 			SetClipboard( &cb );
 			if( clipboard->type == CLIPBOARD_FILES )
 			{
+				char cmd[1000] = "";
+#ifndef _WIN32
+				strcat( cmd, "UNISON=./.unison; " );
+#endif
 
+#ifdef _WIN32
+				strcat( cmd, "unison " );
+#else
+				strcat( cmd, "./unison -follow \"Path *\" " );
+#endif
+
+				strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " );
+				strcat( cmd, " \"ssh://" );
+				strcat( cmd, (char*)server_ip );
+				strcat( cmd, "/" );
+				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard" );
+				strcat( cmd, SET_CLIPBOARD );
+				strcat( cmd, "/\" -force " );
+				strcat( cmd, " \"ssh://" );
+				strcat( cmd, (char*)server_ip );
+				strcat( cmd, "/" );
+				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard" );
+				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
+
+				mprintf( "COMMAND: %s\n", cmd );
+				runcmd( cmd );
 			}
 			SetClipboard( clipboard );
 		} else
