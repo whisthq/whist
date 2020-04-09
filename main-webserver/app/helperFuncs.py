@@ -505,7 +505,7 @@ def addTimeTable(username, action, time):
         conn.execute(command, **params)
         conn.close()
 
-def changeDiskOnline(online):
+def changeDiskOnline(username, online):
     command = text("""
         UPDATE disks
         SET "online" = :online
