@@ -60,7 +60,7 @@ def createDisk(self, vm_name, disk_size, username, location):
     disk_name = genDiskName()
 
     # Create managed data disk
-    print('\nCreate (empty) managed Data Disk: ' + disk_name)
+    print('\nCreating (empty) managed Data Disk: ' + disk_name)
     async_disk_creation = compute_client.disks.create_or_update(
         os.environ.get('VM_GROUP'),
         disk_name,
@@ -74,14 +74,24 @@ def createDisk(self, vm_name, disk_size, username, location):
     )
     data_disk = async_disk_creation.result()
 
-    # Attach data disk
-    print('\nAttach Data Disk')
+    createDiskEntry(disk_name, vm_name, username, location)
+    print("Disk created")
+    attachDisk()
+
+    return disk_name
+
+
+@celery.task(bind=True)
+def attachDisk(self, vm_name, disk_name):
+    print('\nAttaching Data Disk')
+    _, compute_client, _ = createClients()
+    data_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
     lunNum = 1
     attachedDisk = False
     while not attachedDisk:
         try:
             # Get the virtual machine by name
-            print('\nGet Virtual Machine by Name')
+            print('Incrementing lun')
             virtual_machine = compute_client.virtual_machines.get(
                 os.environ.get('VM_GROUP'),
                 vm_name
@@ -100,34 +110,33 @@ def createDisk(self, vm_name, disk_size, username, location):
                 virtual_machine
             )
             attachedDisk = True
-        # TODO: Figure catch Client Exception specifically
         except ClientException:
             lunNum += 1
 
     async_disk_attach.wait()
 
-    with open('app/scripts/diskCreate.txt', 'r') as file:
-        command = file.read()
-        run_command_parameters = {
-            'command_id': 'RunPowerShellScript',
-            'script': [
-                command
-            ],
-            'parameters': [
-                {'name': "disk_name", 'value': disk_name}
-            ]
-        }
-        poller = compute_client.virtual_machines.run_command(
-            os.environ.get('VM_GROUP'),
-            vm_name,
-            run_command_parameters
-        )
-        result = poller.result()
-        print(result.value[0].message)
+    command = '''
+        Get-Disk | Where partitionstyle -eq 'raw' |
+            Initialize-Disk -PartitionStyle MBR -PassThru |
+            New-Partition -AssignDriveLetter -UseMaximumSize |
+            Format-Volume -FileSystem NTFS -NewFileSystemLabel "{disk_name}" -Confirm:$false
+        '''.format(disk_name=disk_name)
 
-    createDiskEntry(disk_name, vm_name, username, location)
+    run_command_parameters = {
+        'command_id': 'RunPowerShellScript',
+        'script': [
+            command
+        ]
+    }
+    poller = compute_client.virtual_machines.run_command(
+        os.environ.get('VM_GROUP'),
+        vm_name,
+        run_command_parameters
+    )
 
-    return disk_name
+    result = poller.result()
+    print("Disk attached to LUN#" + str(lunNum))
+    print(result.value[0].message)
 
 
 @celery.task(bind=True)
