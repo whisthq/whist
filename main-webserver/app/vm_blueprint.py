@@ -52,6 +52,9 @@ def vm(action):
         vm_name = request.get_json()['vm_name']
         task = restartVM.apply_async([vm_name])
         return jsonify({'ID': task.id}), 202
+    elif action == 'updateState':
+        task = updateVMStates.apply_async([])
+        return jsonify({'ID': task.id}), 202
     return jsonify({}), 400
 
 
@@ -80,10 +83,17 @@ def disk(action):
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
-    # elif action == 'delete':
-    #     vm_name = request.get_json()['vm_name']
-    #     disk_name = request.get_json()['disk_name']
-    return jsonify({}), 400
+    elif action == 'resync':
+        task = syncDisks.apply_async([])
+        return jsonify({'ID': task.id}), 202
+    elif action == 'online':
+        body = request.get_json()
+        changeDiskOnline([body['username'], body['online']])
+        return jsonify({'status': 200}), 200
+    elif action == 'attach':
+        body = request.get_json()
+        task = swapDisk.apply_async([body['disk_name']])
+        return jsonify({'ID': task.id}), 202
 
 
 @vm_bp.route('/tracker/<action>', methods=['POST'])
@@ -105,6 +115,9 @@ def tracker(action):
     elif action == 'fetch':
         activity = fetchLoginActivity()
         return jsonify({'payload': activity}), 200
+    elif action == 'fetchMostRecent':
+        activity = getMostRecentActivity(body['username'])
+        return jsonify({'payload': activity})
     return jsonify({}), 200
 
 

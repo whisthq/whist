@@ -144,7 +144,7 @@ def attachDisk(self, vm_name, disk_name):
 def detachDisk(self, vm_Name, disk_name):
     _, compute_client, _ = createClients()
     # Detach data disk
-    print('\nDetach Disk: ' + disk_name)
+    print('\nDetach Data Disk: ' + disk_name)
 
     virtual_machine = compute_client.virtual_machines.get(
         os.environ.get('VM_GROUP'),
@@ -159,11 +159,11 @@ def detachDisk(self, vm_Name, disk_name):
         virtual_machine
     )
     virtual_machine = async_vm_update.result()
-    print("Detach disk sucessful")
+    print("Detach data disk sucessful")
 
 
 @celery.task(bind=True)
-def fetchAllVMs(self, update):
+def fetchAll(self, update):
     _, compute_client, _ = createClients()
     vms = {'value': []}
     azure_portal_vms = compute_client.virtual_machines.list(
@@ -225,13 +225,6 @@ def fetchAllVMs(self, update):
     return vms
 
 
-def fetchAllDisks():
-    disks = fetchUserDisks(None)
-    print(disks)
-    # TODO: The Azure checking functionality seen in fetchAllVms
-    return disks
-
-
 @celery.task(bind=True)
 def deleteVMResources(self, name):
     status = 200 if deleteResource(name) else 404
@@ -245,5 +238,144 @@ def restartVM(self, vm_name):
     async_vm_restart = compute_client.virtual_machines.restart(
         os.environ.get('VM_GROUP'), vm_name)
     async_vm_restart.wait()
+    return {'status': 200}
 
+
+@celery.task(bind=True)
+def updateVMStates(self):
+    _, compute_client, _ = createClients()
+    vms = compute_client.virtual_machines.list(
+        resource_group_name=os.environ.get('VM_GROUP'))
+
+    # looping inside the list of virtual machines, to grab the state of each machine
+    for vm in vms:
+        state = ''
+        is_running = False
+        available = False
+        vm_state = compute_client.virtual_machines.instance_view(
+            resource_group_name=os.environ.get('VM_GROUP'),
+            vm_name=vm.name)
+        if 'running' in vm_state.statuses[1].code:
+            is_running = True
+
+        username = fetchVMCredentials(vm.name)['username']
+        if username:
+            most_recent_action = getMostRecentActivity(username.split('@')[0])
+            if not most_recent_action:
+                available = True
+            elif most_recent_action['action'] == 'logoff':
+                available = True
+
+        vm_info = compute_client.virtual_machines.get(
+            os.environ.get('VM_GROUP'), vm.name)
+        if len(vm_info.storage_profile.data_disks) == 0:
+            available = True
+
+        if is_running and available:
+            state = 'RUNNING_AVAILABLE'
+        elif is_running and not available:
+            state = 'RUNNING_UNAVAILABLE'
+        elif not is_running and available:
+            state = 'NOT_RUNNING_AVAILABLE'
+        else:
+            state = 'NOT_RUNNING_UNAVAILABLE'
+
+        updateVMState(vm.name, state)
+
+    return {'status': 200}
+
+
+def fetchAllDisks():
+    disks = fetchUserDisks(None)
+    print(disks)
+    # TODO: The Azure checking functionality seen in fetchAllVms
+    return disks
+
+
+@celery.task(bind=True)
+def syncDisks(self):
+    _, compute_client, _ = createClients()
+    disks = compute_client.disks.list(
+        resource_group_name=os.environ.get('VM_GROUP'))
+
+    for disk in disks:
+        disk_name = disk.name
+        disk_state = disk.disk_state
+        vm_name = disk.managed_by
+        if vm_name:
+            vm_name = vm_name.split('/')[-1]
+        else:
+            vm_name = ''
+        location = disk.location
+
+        updateDisk(disk_name, disk_state, vm_name, location)
+
+    return {'status': 200}
+
+
+@celery.task(bind=True)
+def swapDisk(self, disk_name):
+    _, compute_client, _ = createClients()
+    os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
+    vm_name = os_disk.managed_by
+    disk_state = os_disk.disk_state
+    location = os_disk.location
+
+    def swapDiskAndUpdate(disk_name, vm_name):
+        # Pick a VM, attach it to disk
+        hr = swapOSDisk(disk_name, vm_name)
+        if hr > 0:
+            updateDisk(disk_name, disk_state, vm_name, location)
+            associateVMWithDisk(vm_name, disk_name)
+            updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
+            print("Database updated.")
+            return 1
+        else:
+            return -1
+    # Disk is currently attached to a VM. Make sure the database reflects the current disk state,
+    # and restart the VM as a sanity check.
+    if vm_name:
+        vm_name = vm_name.split('/')[-1]
+        print("Disk already attached to VM " + vm_name)
+        updateDisk(disk_name, disk_state, vm_name, location)
+        associateVMWithDisk(vm_name, disk_name)
+        updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
+        print("Database updated. Restarting VM...")
+        async_vm_restart = compute_client.virtual_machines.restart(
+            os.environ.get('VM_GROUP'), vm_name)
+        async_vm_restart.wait()
+        print("VM restarted and ready to use")
+        return {'status': 200}
+    # Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
+    # (then reboot the VM), or wait until a VM becomes available.
+    else:
+        print("No VM attached to disk")
+        free_vm_found = False
+        while not free_vm_found:
+            print("No VM attached")
+            available_vms = fetchVMsByState('RUNNING_AVAILABLE')
+            if len(available_vms) > 0:
+                print('Found ' + str(len(available_vms)) + ' available VMs')
+                # Pick a VM, attach it to disk
+                vm_name = available_vms[0]['vm_name']
+                print('Selected VM ' + vm_name + ' to attach to disk')
+                hr = {'status': 200} if swapDiskAndUpdate(
+                    disk_name, vm_name) > 0 else {'status': 400}
+                free_vm_found = True
+                return hr
+            else:
+                # Look for VMs that are not running
+                print("Could not find a running and available VM")
+                deactivated_vms = fetchVMsByState(
+                    'NOT_RUNNING_AVAILABLE') + fetchVMsByState('NOT_RUNNING_UNAVAILABLE')
+                if len(deactivated_vms) > 0:
+                    vm_name = deactivated_vms[0]['vm_name']
+                    print("Found deactivated VM " + vm_name)
+                    hr = {'status': 200} if swapDiskAndUpdate(
+                        disk_name, vm_name) > 0 else {'status': 400}
+                    free_vm_found = True
+                    return hr
+                else:
+                    print("No VMs are available. Going to sleep...")
+                    time.sleep(30)
     return {'status': 200}
