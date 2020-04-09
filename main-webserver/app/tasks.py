@@ -300,12 +300,12 @@ def syncDisks(self):
 	return {'status': 200}
 
 @celery.task(bind=True)
-def attachDisk(self, disk_name):
+def swapDisk(self, disk_name):
 	_, compute_client, _ = createClients()
 	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
-	vm_name = disk.managed_by
-	disk_state = disk.disk_state
-	location = disk.location
+	vm_name = os_disk.managed_by
+	disk_state = os_disk.disk_state
+	location = os_disk.location
 
 	def swapDiskAndUpdate(disk_name, vm_name):
 		## Pick a VM, attach it to disk
