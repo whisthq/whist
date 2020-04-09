@@ -74,19 +74,18 @@ def createDisk(self, vm_name, disk_size, username, location):
     )
     data_disk = async_disk_creation.result()
 
-    # Get the virtual machine by name
-    print('\nGet Virtual Machine by Name')
-    virtual_machine = compute_client.virtual_machines.get(
-        os.environ.get('VM_GROUP'),
-        vm_name
-    )
-
     # Attach data disk
     print('\nAttach Data Disk')
-    lunNum = 0
+    lunNum = 1
     attachedDisk = False
     while not attachedDisk:
         try:
+            # Get the virtual machine by name
+            print('\nGet Virtual Machine by Name')
+            virtual_machine = compute_client.virtual_machines.get(
+                os.environ.get('VM_GROUP'),
+                vm_name
+            )
             virtual_machine.storage_profile.data_disks.append({
                 'lun': lunNum,
                 'name': disk_name,
@@ -95,17 +94,16 @@ def createDisk(self, vm_name, disk_size, username, location):
                     'id': data_disk.id
                 }
             })
+            async_disk_attach = compute_client.virtual_machines.create_or_update(
+                os.environ.get('VM_GROUP'),
+                virtual_machine.name,
+                virtual_machine
+            )
             attachedDisk = True
         # TODO: Figure catch Client Exception specifically
         except ClientException:
-            # except Exception:
             lunNum += 1
 
-    async_disk_attach = compute_client.virtual_machines.create_or_update(
-        os.environ.get('VM_GROUP'),
-        virtual_machine.name,
-        virtual_machine
-    )
     async_disk_attach.wait()
 
     with open('app/scripts/diskCreate.txt', 'r') as file:
@@ -151,6 +149,7 @@ def detachDisk(self, vm_Name, disk_name):
         virtual_machine
     )
     virtual_machine = async_vm_update.result()
+    print("Detach data disk sucessful")
 
 
 @celery.task(bind=True)
@@ -220,6 +219,7 @@ def fetchAll(self, update):
 def deleteVMResources(self, name):
     status = 200 if deleteResource(name) else 404
     return {'status': status}
+
 
 @celery.task(bind=True)
 def restartVM(self, vm_name):
