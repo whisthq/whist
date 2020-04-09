@@ -84,8 +84,12 @@ def disk(action):
         changeDiskOnline(body['username'], body['online'])
         return jsonify({'status': 200}), 200
     elif action == 'attach':
+        # Find all VMs that are available, pick one
+        # Make sure that it is available. If not pick another one. If all are exhausted, wait a bit and try again
 
-    return jsonify({}), 400
+        # Attach the disk to the VM, then restart the computer
+        # Return success once computer is restarted
+        return jsonify({}), 400
 
 
 @vm_bp.route('/tracker/<action>', methods=['POST'])

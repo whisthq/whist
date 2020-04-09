@@ -999,3 +999,14 @@ def updateDisk(disk_name, disk_state, vm_name, location):
 
         conn.execute(command, **params)
         conn.close()
+
+def fetchVMsByState(state):
+    command = text("""
+        SELECT * FROM v_ms WHERE "state" = :state
+        """)
+    params = {'state': state}
+
+    with engine.connect() as conn:
+        vms = conn.execute(command, **params).fetchall()
+        conn.close()
+        return vms
