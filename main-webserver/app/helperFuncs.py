@@ -1023,4 +1023,6 @@ def getMostRecentActivity(username):
 
     with engine.connect() as conn:
         activity = conn.execute(command, **params).fetchone()
-        return {'timestamp': activity[1], 'action': activity[2]}
+        if activity:
+            return {'timestamp': activity[1], 'action': activity[2]}
+        return {}
