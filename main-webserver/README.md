@@ -7,17 +7,18 @@ Hosted on Heroku: https://dashboard.heroku.com/apps/cube-celery-vm
 ## Setup
 ### Local setup (Windows)
 1. Set up the Heroku CLI on your computer
-2. Ceate a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate`.
-3. Install everything by typing `pip install -r requirements.txt`. 
+2. Check your python version by typing `python -V`. If you have python 3.6.X, you can create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate`. If you have Python >3.6 or Python <3.0, you will need to create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website. Find the directory where python.exe is installed. Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message. Activate it by typing `source venv\Scripts\activate`. You will need to type this last command every time to access your virtual environment.
+3. Install everything by typing `pip install -r requirements.txt`. Make sure you're in the virtual environment when doing this.
 4. Tell the local environment what the entry point is to the webserver by typing `set FLASK_APP=run.py`. 
 5. Import the environment variables into your computer by typing `heroku config -s >> .env`. 
-6. Type `flask run` to start the webserver on localhost
+6. Type `flask run` to start the webserver on localhost.
+7. If you plan on calling endpoints that require celery, you will want to view the celery task queue locally. To do this, open a new terminal, cd into the vm-webserver folder, and type `celery -A app.tasks worker --loglevel=info`.
 
 ### Run on Heroku
 **Staging**
 `https://git.heroku.com/cube-celery-staging.git`
 
-To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. To push to the staging server, first make sure you’re in the staging branch, then type `git add .`, then `git commit -m “COMMIT MESSAGE”`, then finally `git push staging staging:master`.
+To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. To push to the staging server, first make sure you’re in the staging branch, then type `git add .`, then `git commit -m “COMMIT MESSAGE”`, then finally `git push staging staging:master`. If you get a git pull error, git pull by typing `git pull staging master` to pull from Heroku or `git pull origin staging` to pull from Github.
 
 **Production**
 `https://git.heroku.com/cube-celery-vm.git`
