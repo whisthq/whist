@@ -257,7 +257,7 @@ def updateVMStates(self):
 			
 		username = fetchVMCredentials(vm.name)['username']
 		if username:
-			most_recent_action = getMostRecentActivity(username.split('@'))
+			most_recent_action = getMostRecentActivity(username.split('@')[0])
 			if not most_recent_action:
 				available = True
 			elif most_recent_action['action'] == 'logoff':
