@@ -235,8 +235,8 @@ def createVMParameters(vmName, nic_id, vm_size, location):
 def createDiskEntry(disk_name, vm_name, username, location):
     with engine.connect() as conn:
         command = text("""
-            INSERT INTO disks("diskname",  "vmname", "username", "location") 
-            VALUES(:diskname, :diskname, :username, :location)
+            INSERT INTO disks("diskname", "vmname", "username", "location") 
+            VALUES(:diskname, :vmname, :username, :location)
             """)
         params = {
             'diskname': disk_name,
@@ -551,6 +551,31 @@ def fetchUserVMs(username):
             vms_info = conn.execute(command, **params).fetchall()
             out = {vm_info[0]: {'username': vm_info[1], 'ip': vm_info[3]}
                    for vm_info in vms_info}
+            conn.close()
+            return out
+
+
+def fetchUserDisks(username):
+    if(username):
+        command = text("""
+            SELECT * FROM disks WHERE "username" = :username
+            """)
+        params = {'username': username}
+        with engine.connect() as conn:
+            disks_info = conn.execute(command, **params).fetchall()
+            out = [{'disk_name': disk_info[0], 'username': disk_info[1], 'location': disk_info[2], 'attached': disk_info[3], 'online': disk_info[4], 'vmName': disk_info[4]}
+                   for disk_info in disks_info]
+            conn.close()
+            return out
+    else:
+        command = text("""
+            SELECT * FROM disks
+            """)
+        params = {}
+        with engine.connect() as conn:
+            disks_info = conn.execute(command, **params).fetchall()
+            out = [{'diskName': disk_info[0], 'username': disk_info[1], 'location': disk_info[2], 'attached': disk_info[3], 'online': disk_info[4], 'vmName': disk_info[4]}
+                   for disk_info in disks_info]
             conn.close()
             return out
 

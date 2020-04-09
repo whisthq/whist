@@ -65,11 +65,18 @@ def vm(action):
 @vm_bp.route('/disk/<action>', methods=['POST'])
 def disk(action):
     if action == 'create':
-        vm_name = request.get_json()['vm_name']
+        print(request.get_json())
         disk_size = request.get_json()['disk_size']
         username = request.get_json()['username']
         location = request.get_json()['location']
-        task = createDisk.apply_async([vm_name, disk_size, username, location])
+        task = createDisk.apply_async([disk_size, username, location])
+        if not task:
+            return jsonify({}), 400
+        return jsonify({'ID': task.id}), 202
+    elif action == 'attach':
+        vm_name = request.get_json()['vm_name']
+        disk_name = request.get_json()['disk_name']
+        task = attachDisk.apply_async([vm_name, disk_name])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
@@ -122,12 +129,15 @@ def tracker(action):
 def info(action):
     body = request.get_json()
     if action == 'list_all' and request.method == 'GET':
-        task = fetchAll.apply_async([False])
+        task = fetchAllVMs.apply_async([False])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
+    if action == 'list_all_disks' and request.method == 'GET':
+        disks = fetchAllDisks()
+        return jsonify({'disks': disks}), 200
     if action == 'update_db' and request.method == 'POST':
-        task = fetchAll.apply_async([True])
+        task = fetchAllVMs.apply_async([True])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
