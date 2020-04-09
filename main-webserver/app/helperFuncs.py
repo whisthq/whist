@@ -1009,7 +1009,10 @@ def fetchVMsByState(state):
     with engine.connect() as conn:
         vms = conn.execute(command, **params).fetchall()
         conn.close()
-        return vms
+        return [{'vm_name': vm[0],
+                 'username': vm[1],
+                 'disk_name': vm[2],
+                 'ip': vm[3]} for vm in vms]
 
 def getMostRecentActivity(username):
     command = text("""
@@ -1026,3 +1029,63 @@ def getMostRecentActivity(username):
         if activity:
             return {'timestamp': activity[1], 'action': activity[2]}
         return {}
+
+def associateVMWithDisk(vm_name, disk_name):
+    command = text("""
+        UPDATE v_ms
+        SET "osDisk" = :disk_name
+        WHERE
+           "vmName" = :vm_name
+        """)
+    params = {'vm_name': vm_name, 'disk_name': disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+def attachDiskToVM(disk_name, vm_name, lun):
+    try:
+        _, compute_client, _ = createClients()
+        virtual_machine = getVM(vm_name)
+
+        data_disk = compute_client.disks.get(os.getenv('VM_GROUP'), disk_name)
+        virtual_machine.storage_profile.data_disks.append({
+            'lun': lun,
+            'name': disk_name,
+            'create_option': DiskCreateOption.attach,
+            'managed_disk': {
+                'id': data_disk.id
+            }
+        })
+
+        async_disk_attach = compute_client.virtual_machines.create_or_update(
+            os.getenv('VM_GROUP'),
+            virtual_machine.name,
+            virtual_machine
+        )
+        async_disk_attach.wait()
+        return 1
+    except Exception as e:
+        print(e)
+        return -1
+
+def swapOSDisk(disk_name, vm_name):
+    try:
+        virtual_machine = getVM(vm_name)
+        new_os_disk = compute_client.disks.get(os.getenv('VM_GROUP'), disk_name)
+
+        virtual_machine.storage_profile.os_disk.managed_disk.id = new_os_disk.id
+        virtual_machine.storage_profile.os_disk.name = new_os_disk.name
+
+        async_disk_attach = compute_client.virtual_machines.create_or_update(
+            os.getenv('VM_GROUP'), vm_name, virtual_machine
+        )
+        async_disk_attach.wait()
+
+        async_vm_restart = compute_client.virtual_machines.restart(
+            os.environ.get('VM_GROUP'), vm_name)
+        async_vm_restart.wait()
+        return 1
+    except Exception as e:
+        print(e)
+        return -1
+

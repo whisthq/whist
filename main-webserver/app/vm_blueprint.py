@@ -84,17 +84,9 @@ def disk(action):
         changeDiskOnline(body['username'], body['online'])
         return jsonify({'status': 200}), 200
     elif action == 'attach':
-        vms = fetchVMsByState('RUNNING_AVAILABLE')
-        if len(vms) == 0:
-            print("NO VMS AVAILABLE")
-        else:
-            vm_name = vms[0][0]
-        # Find all VMs that are available, pick one
-        # Make sure that it is available. If not pick another one. If all are exhausted, wait a bit and try again
-
-        # Attach the disk to the VM, then restart the computer
-        # Return success once computer is restarted
-        return jsonify({}), 400
+        body = request.get_json()
+        task = attachDisk.apply_async(body['disk_name'])
+        return jsonify({'ID': task.id}), 202
 
 
 @vm_bp.route('/tracker/<action>', methods=['POST'])

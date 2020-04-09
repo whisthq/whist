@@ -298,3 +298,57 @@ def syncDisks(self):
 		updateDisk(disk_name, disk_state, vm_name, location)
 
 	return {'status': 200}
+
+@celery.task(bind=True)
+def attachDisk(self, disk_name):
+	_, compute_client, _ = createClients()
+	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
+	vm_name = disk.managed_by
+	disk_state = disk.disk_state
+	location = disk.location
+
+	def swapDiskAndUpdate(disk_name, vm_name):
+		## Pick a VM, attach it to disk
+		hr = swapOSDisk(disk_name, vm_name)
+		if hr > 0:
+			updateDisk(disk_name, disk_state, vm_name, location)
+			associateVMWithDisk(vm_name, disk_name)
+			return 1
+		else:
+			return -1
+	## Disk is currently attached to a VM. Make sure the database reflects the current disk state,
+	## and restart the VM as a sanity check.
+	if vm_name:
+		vm_name = vm_name.split('/')[-1]
+		updateDisk(disk_name, disk_state, vm_name, location)
+		associateVMWithDisk(vm_name, disk_name)
+
+		async_vm_restart = compute_client.virtual_machines.restart(
+			os.environ.get('VM_GROUP'), vm_name)
+		async_vm_restart.wait()
+
+		return {'status': 200}
+	## Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
+	## (then reboot the VM), or wait until a VM becomes available.
+	else:
+		free_vm_found = False 
+		while not free_vm_found:
+			available_vms = fetchVMsByState('RUNNING_AVAILABLE')
+			if len(available_vms) > 0:
+				## Pick a VM, attach it to disk
+				vm_name = available_vms[0]['vm_name']
+				hr = {'status': 200} if swapDiskAndUpdate(disk_name, vm_name) > 0 else {'status': 400}
+				free_vm_found = True
+				return hr
+			else:
+				## Look for VMs that are not running
+				deactivated_vms = fetchVMsByState('NOT_RUNNING_AVAILABLE') + fetchVMsByState('NOT_RUNNING_UNAVAILABLE')
+				if len(deactivated_vms) > 0:
+					vm_name = deactivated_vms[0]['vm_name']
+					hr = {'status': 200} if swapDiskAndUpdate(disk_name, vm_name) > 0 else {'status': 400}
+					free_vm_found = True
+					return hr
+				else:
+					print("No VMs are available. Going to sleep...")
+					time.sleep(30)
+	return {'status': 200}
