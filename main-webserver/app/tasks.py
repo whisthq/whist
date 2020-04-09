@@ -344,38 +344,70 @@ def swapDisk(self, disk_name):
         async_vm_restart = compute_client.virtual_machines.restart(
             os.environ.get('VM_GROUP'), vm_name)
         async_vm_restart.wait()
+        time.sleep(10)
         print("VM restarted and ready to use")
-        return {'status': 200}
+        return fetchVMCredentials(vm_name)
     # Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
     # (then reboot the VM), or wait until a VM becomes available.
     else:
         print("No VM attached to disk")
         free_vm_found = False
         while not free_vm_found:
-            print("No VM attached")
+            print("No VM attached to " + disk_name)
             available_vms = fetchVMsByState('RUNNING_AVAILABLE')
             if len(available_vms) > 0:
                 print('Found ' + str(len(available_vms)) + ' available VMs')
                 # Pick a VM, attach it to disk
                 vm_name = available_vms[0]['vm_name']
-                print('Selected VM ' + vm_name + ' to attach to disk')
-                hr = {'status': 200} if swapDiskAndUpdate(
-                    disk_name, vm_name) > 0 else {'status': 400}
-                free_vm_found = True
-                return hr
+                print('Selected VM ' + vm_name +
+                      ' to attach to disk ' + disk_name)
+                if swapDiskAndUpdate(disk_name, vm_name) > 0:
+                    free_vm_found = True
+                    return fetchVMCredentials(vm_name)
+                return {'status': 400}
             else:
                 # Look for VMs that are not running
-                print("Could not find a running and available VM")
+                print(
+                    "Could not find a running and available VM to attach to disk " + disk_name)
                 deactivated_vms = fetchVMsByState(
                     'NOT_RUNNING_AVAILABLE') + fetchVMsByState('NOT_RUNNING_UNAVAILABLE')
                 if len(deactivated_vms) > 0:
                     vm_name = deactivated_vms[0]['vm_name']
                     print("Found deactivated VM " + vm_name)
-                    hr = {'status': 200} if swapDiskAndUpdate(
-                        disk_name, vm_name) > 0 else {'status': 400}
-                    free_vm_found = True
-                    return hr
+                    if swapDiskAndUpdate(disk_name, vm_name) > 0:
+                        free_vm_found = True
+                        return fetchVMCredentials(vm_name)
+                    return {'status': 400}
                 else:
                     print("No VMs are available. Going to sleep...")
                     time.sleep(30)
+    return {'status': 200}
+
+
+@celery.task(bind=True)
+def swapSpecificDisk(self, disk_name, vm_name):
+    new_os_disk = compute_client.disks.get(
+        os.environ.get('VM_GROUP'), disk_name)
+
+    vm = getVM(vm_name)
+    vm.storage_profile.os_disk.managed_disk.id = new_os_disk.id
+    vm.storage_profile.os_disk.name = new_os_disk.name
+
+    print('Swapping out disk ' + disk_name + ' on VM ' + vm_name)
+
+    async_disk_attach = compute_client.virtual_machines.create_or_update(
+        'Fractal', vm.name, vm
+    )
+    async_disk_attach.wait()
+
+    print('Disk swapped out. Restarting VM ' + vm_name)
+
+    async_vm_restart = compute_client.virtual_machines.restart(
+        'Fractal', vm.name)
+    async_vm_restart.wait()
+
+    time.sleep(10)
+
+    print('VM ' + vm_name + ' successfully restarted')
+
     return {'status': 200}

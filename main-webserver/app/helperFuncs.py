@@ -1111,6 +1111,7 @@ def swapOSDisk(disk_name, vm_name):
         async_vm_restart = compute_client.virtual_machines.restart(
             os.environ.get('VM_GROUP'), vm_name)
         async_vm_restart.wait()
+        time.sleep(10)
         print("VM restarted")
         return 1
     except Exception as e:

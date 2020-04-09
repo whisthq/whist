@@ -55,6 +55,10 @@ def vm(action):
     elif action == 'updateState':
         task = updateVMStates.apply_async([])
         return jsonify({'ID': task.id}), 202
+    elif action == 'diskSwap':
+        body = request.get_json()
+        task = swapSpecificDisk.apply_async([body['disk_name'], body['vm_name']])
+        return jsonify({'ID': task.id}), 202
     return jsonify({}), 400
 
 
