@@ -77,7 +77,6 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
         decoder->codec = avcodec_find_decoder_by_name("h264");
         if (!decoder->codec) {
             mprintf("Could not find video codec\n");
-            exit(-1);
             return -1;
         }
         decoder->context = avcodec_alloc_context3(decoder->codec);

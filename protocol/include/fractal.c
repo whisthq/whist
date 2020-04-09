@@ -225,7 +225,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		StartTimer( &t );
 
 		int recv_size = 0;
-		stun_entry_t entry;
+		stun_entry_t entry = {0};
 
 		while( recv_size < (int) sizeof( entry ) && GetTimer( t ) < stun_timeout_ms )
 		{
@@ -352,7 +352,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 		StartTimer( &t );
 
 		int recv_size = 0;
-		stun_entry_t entry;
+		stun_entry_t entry = {0};
 
 		while( recv_size < (int) sizeof(entry) && GetTimer(t) < stun_timeout_ms )
 		{
@@ -524,7 +524,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 			return -1;
 		}
 
-		stun_entry_t entry;
+		stun_entry_t entry = {0};
 		int recv_size;
 		if( (recv_size = recvp( context, &entry, sizeof( entry ) )) < 0 )
 		{
@@ -634,7 +634,7 @@ int CreateUDPContext(struct SocketContext* context, char* origin, char* destinat
 #endif
 
 		socklen_t slen = sizeof(context->addr);
-		stun_entry_t entry;
+		stun_entry_t entry = {0};
 		int recv_size;
 		while ((recv_size = recvfrom(context->s, (char *) &entry, sizeof( entry ), 0, (struct sockaddr*)(&context->addr), &slen)) < 0) {
 #if USING_STUN

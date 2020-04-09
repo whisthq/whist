@@ -108,8 +108,8 @@ void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data,
 
     // convert
 
-    if (swr_convert(encoder->pSwrContext, converted_data, len, &data, len) <
-        0) {
+    if (swr_convert(encoder->pSwrContext, converted_data, len,
+                    (const uint8_t**)&data, len) < 0) {
         mprintf("Could not convert samples to intake format.\n");
         return;
     }
@@ -149,7 +149,6 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
     if (av_audio_fifo_read(encoder->pFifo, (void**)encoder->pFrame->data, len) <
         len) {
         mprintf(
-            stderr,
             "Could not read all the requested data from the AVAudioFifo.\n");
         return -1;
     }

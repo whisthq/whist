@@ -337,6 +337,7 @@ void KeyUp(int windows_keycode) {
 
 void UpdateKeyboardState(input_device_t* input_device,
                          struct FractalClientMessage* fmsg) {
+    input_device;
     if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
         mprintf(
             "updateKeyboardState requires fmsg.type to be "
@@ -442,6 +443,7 @@ void UpdateKeyboardState(input_device_t* input_device,
 /// @details parses the FractalClientMessage struct and send input to Windows OS
 void ReplayUserInput(input_device_t* input_device,
                      struct FractalClientMessage* fmsg) {
+    input_device;
     // get screen width and height for mouse cursor
     // int sWidth = GetSystemMetrics( SM_CXSCREEN ) - 1; is this still needed?
     // int sHeight = GetSystemMetrics( SM_CYSCREEN ) - 1; ^^
@@ -456,33 +458,42 @@ void ReplayUserInput(input_device_t* input_device,
             Event.type = INPUT_KEYBOARD;
             Event.ki.time = 0;  // system supplies timestamp
 
-            HKL keyboard_layout = GetKeyboardLayout( 0 );
+            HKL keyboard_layout = GetKeyboardLayout(0);
 
             Event.ki.dwFlags = KEYEVENTF_SCANCODE;
             Event.ki.wVk = 0;
-            Event.ki.wScan = (WORD)MapVirtualKeyExA(
-                windows_keycodes[fmsg->keyboard.code], MAPVK_VK_TO_VSC_EX, keyboard_layout );
+            Event.ki.wScan =
+                (WORD)MapVirtualKeyExA(windows_keycodes[fmsg->keyboard.code],
+                                       MAPVK_VK_TO_VSC_EX, keyboard_layout);
 
-            switch( windows_keycodes[fmsg->keyboard.code] )
-            {
-            // List found here: https://docs.microsoft.com/en-us/windows/win32/inputdev/about-keyboard-input
-            case VK_RMENU: case VK_RCONTROL:
-            case VK_INSERT: case VK_DELETE:
-            case VK_HOME: case VK_END:
-            case VK_PRIOR: case VK_NEXT: // page up and page down
-            case VK_LEFT: case VK_UP: case VK_RIGHT: case VK_DOWN: // arrow keys
-            case VK_NUMLOCK:
-            case VK_PRINT:
-            case VK_DIVIDE: // numpad slash
-            case VK_RETURN + USE_NUMPAD:
-                Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+            switch (windows_keycodes[fmsg->keyboard.code]) {
+                // List found here:
+                // https://docs.microsoft.com/en-us/windows/win32/inputdev/about-keyboard-input
+                case VK_RMENU:
+                case VK_RCONTROL:
+                case VK_INSERT:
+                case VK_DELETE:
+                case VK_HOME:
+                case VK_END:
+                case VK_PRIOR:
+                case VK_NEXT:  // page up and page down
+                case VK_LEFT:
+                case VK_UP:
+                case VK_RIGHT:
+                case VK_DOWN:  // arrow keys
+                case VK_NUMLOCK:
+                case VK_PRINT:
+                case VK_DIVIDE:  // numpad slash
+                case VK_RETURN + USE_NUMPAD:
+                    Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
             }
 
             /* Print entire keyboard
             for( int i = 0; i < 256; i++ )
             {
                 char keyName[50];
-                if( GetKeyNameTextA( i << 16, keyName, sizeof( keyName ) ) != 0 )
+                if( GetKeyNameTextA( i << 16, keyName, sizeof( keyName ) ) != 0
+            )
                 {
                     mprintf( "Code: %d\n", i );
                     mprintf( "KEY: %s\n", keyName );
@@ -495,7 +506,8 @@ void ReplayUserInput(input_device_t* input_device,
             for( int i = 0; i < 256; i++ )
             {
                 char keyName[50];
-                if( GetKeyNameTextA( (i << 16) + (1 << 24), keyName, sizeof( keyName ) ) != 0 )
+                if( GetKeyNameTextA( (i << 16) + (1 << 24), keyName, sizeof(
+            keyName ) ) != 0 )
                 {
                     mprintf( "Code: %d\n", i + (1 << 24) );
                     mprintf( "KEY: %s\n", keyName );
@@ -511,9 +523,8 @@ void ReplayUserInput(input_device_t* input_device,
                 Event.ki.wScan &= 0xFF;
             }
 
-            if( Event.ki.wScan >> 8 == 0xE1 )
-            {
-                mprintf( "Weird Extended\n" );
+            if (Event.ki.wScan >> 8 == 0xE1) {
+                mprintf("Weird Extended\n");
             }
 
             if (!fmsg->keyboard.pressed) {
@@ -524,7 +535,7 @@ void ReplayUserInput(input_device_t* input_device,
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
-            //mprintf("MOUSE: x %d y %d r %d\n", fmsg->mouseMotion.x,
+            // mprintf("MOUSE: x %d y %d r %d\n", fmsg->mouseMotion.x,
             //        fmsg->mouseMotion.y, fmsg->mouseMotion.relative);
 
             Event.type = INPUT_MOUSE;

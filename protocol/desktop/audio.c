@@ -198,13 +198,13 @@ void updateAudio() {
                 res = audio_decoder_decode_packet(AudioData.audio_decoder,
                                                   &encoded_packet);
                 av_free(encoded_packet.data);
-                av_free_packet(&encoded_packet);
-                uint8_t data = 0;
+                av_packet_unref(&encoded_packet);
+
                 if (res == 0) {
                     uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
 
                     audio_decoder_packet_readout(AudioData.audio_decoder,
-                                                 &decoded_data);
+                                                 decoded_data);
 
                     res = SDL_QueueAudio(AudioData.dev, &decoded_data,
                                          audio_decoder_get_frame_data_size(

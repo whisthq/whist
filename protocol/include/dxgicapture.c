@@ -48,7 +48,7 @@ int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height) {
 #define MAX_NUM_OUTPUTS 10
   IDXGIOutput *outputs[MAX_NUM_OUTPUTS];
   IDXGIAdapter1 *adapters[MAX_NUM_ADAPTERS];
-  DXGI_OUTPUT_DESC output_desc;
+  DXGI_OUTPUT_DESC output_desc = {0};
 
   HRESULT hr = CreateDXGIFactory1(&IID_IDXGIFactory1, (void**)(&factory));
   if (FAILED(hr)) {
