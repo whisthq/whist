@@ -313,6 +313,7 @@ def swapDisk(self, disk_name):
 		if hr > 0:
 			updateDisk(disk_name, disk_state, vm_name, location)
 			associateVMWithDisk(vm_name, disk_name)
+			updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 			return 1
 		else:
 			return -1
@@ -322,6 +323,7 @@ def swapDisk(self, disk_name):
 		vm_name = vm_name.split('/')[-1]
 		updateDisk(disk_name, disk_state, vm_name, location)
 		associateVMWithDisk(vm_name, disk_name)
+		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 
 		async_vm_restart = compute_client.virtual_machines.restart(
 			os.environ.get('VM_GROUP'), vm_name)
