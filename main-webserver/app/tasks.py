@@ -273,8 +273,10 @@ def syncDisks(self):
 	for disk in disks:
 		disk_name = disk.name
 		disk_state = disk.disk_state
-		vm_name = disk.managed_by.split('/')[-1]
-		if not vm_name:
+		vm_name = disk.managed_by
+		if vm_name:
+			vm_name = vm_name.split('/')[-1]
+		else:
 			vm_name = ''
 		location = disk.location
 
