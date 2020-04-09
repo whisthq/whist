@@ -55,12 +55,12 @@ def createVM(self, vm_size, location):
 
 
 @celery.task(bind=True)
-def createDisk(self, vm_name, disk_size, username, location):
+def createDisk(self, disk_size, username, location):
     _, compute_client, _ = createClients()
     disk_name = genDiskName()
 
     # Create managed data disk
-    print('\nCreating (empty) managed Data Disk: ' + disk_name)
+    print('\nCreating (empty) managed Disk: ' + disk_name)
     async_disk_creation = compute_client.disks.create_or_update(
         os.environ.get('VM_GROUP'),
         disk_name,
@@ -74,6 +74,7 @@ def createDisk(self, vm_name, disk_size, username, location):
     )
     data_disk = async_disk_creation.result()
 
+    vm_name = ""
     createDiskEntry(disk_name, vm_name, username, location)
     print("Disk created")
     attachDisk()
@@ -83,7 +84,7 @@ def createDisk(self, vm_name, disk_size, username, location):
 
 @celery.task(bind=True)
 def attachDisk(self, vm_name, disk_name):
-    print('\nAttaching Data Disk')
+    print('\nAttaching Disk')
     _, compute_client, _ = createClients()
     data_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
     lunNum = 1
@@ -143,7 +144,7 @@ def attachDisk(self, vm_name, disk_name):
 def detachDisk(self, vm_Name, disk_name):
     _, compute_client, _ = createClients()
     # Detach data disk
-    print('\nDetach Data Disk: ' + disk_name)
+    print('\nDetach Disk: ' + disk_name)
 
     virtual_machine = compute_client.virtual_machines.get(
         os.environ.get('VM_GROUP'),
@@ -158,7 +159,7 @@ def detachDisk(self, vm_Name, disk_name):
         virtual_machine
     )
     virtual_machine = async_vm_update.result()
-    print("Detach data disk sucessful")
+    print("Detach disk sucessful")
 
 
 @celery.task(bind=True)
