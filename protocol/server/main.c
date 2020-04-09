@@ -176,8 +176,8 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
         GetTimer( last_timer );
         if( GetTimer( last_timer ) > 5.0 )
         {
-            mprintf( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / GetTimer( last_timer ) / 1024 );
-            ddata = 0;
+            mprintf( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / GetTimer(
+    last_timer ) / 1024 ); ddata = 0;
         }
         // mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
     }
@@ -556,8 +556,8 @@ static int32_t SendAudio(void* opaque) {
                         break;
                     }
 
-                   // mprintf("we got a packet of size %d\n",
-                   //         audio_encoder->packet.size);
+                    // mprintf("we got a packet of size %d\n",
+                    //         audio_encoder->packet.size);
 
                     // Send packet
 
@@ -566,7 +566,7 @@ static int32_t SendAudio(void* opaque) {
                                    audio_encoder->packet.size, id) < 0) {
                         mprintf("Could not send audio frame\n");
                     }
-                    //mprintf("sent audio frame %d\n", id);
+                    // mprintf("sent audio frame %d\n", id);
                     id++;
 
                     // Free encoder packet
@@ -631,13 +631,8 @@ int main() {
         return -1;
     }
 #endif
-
-    if (sizeof(unsigned short) != 2) {
-        mprintf(
-            "Error: Unsigned short is length %d bytes instead of 2 bytes!\n",
-            sizeof(unsigned short));
-        exit(-1);
-    }
+    static_assert(sizeof(unsigned short) == 2,
+                  "Error: Unsigned short is not length 2 bytes!\n");
 
     while (true) {
         struct SocketContext PacketReceiveContext = {0};

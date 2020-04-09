@@ -376,14 +376,14 @@ ClipboardData* GetClipboard()
 						continue;
 					}
 
-					WCHAR filename[MAX_PATH] = L"";
-					wcscat( (wchar_t*)filename, LGET_CLIPBOARD );
-					wcscat((wchar_t *) filename, L"\\" );
-					wcscat((wchar_t *) filename, data.cFileName );
+					WCHAR cur_filename[MAX_PATH] = L"";
+					wcscat( (wchar_t*)cur_filename, LGET_CLIPBOARD );
+					wcscat((wchar_t *) cur_filename, L"\\" );
+					wcscat((wchar_t *) cur_filename, data.cFileName );
 
-					mprintf( "Deleting %S...\n", filename );
+					mprintf( "Deleting %S...\n", cur_filename );
 
-					DWORD fileattributes = GetFileAttributesW((LPCWSTR) filename );
+					DWORD fileattributes = GetFileAttributesW((LPCWSTR) cur_filename );
 					if( fileattributes == INVALID_FILE_ATTRIBUTES )
 					{
 						mprintf( "GetFileAttributesW Error: %d\n", GetLastError() );
@@ -391,13 +391,13 @@ ClipboardData* GetClipboard()
 
 					if( fileattributes & FILE_ATTRIBUTE_DIRECTORY )
 					{
-						if( !RemoveDirectoryW( (LPCWSTR)filename ) )
+						if( !RemoveDirectoryW( (LPCWSTR)cur_filename ) )
 						{
 							mprintf( "Delete Folder Error: %d\n", GetLastError() );
 						}
 					} else
 					{
-						if (!DeleteFileW((LPCWSTR) filename ))
+						if (!DeleteFileW((LPCWSTR) cur_filename ))
 						{
 							mprintf( "Delete Folder Error: %d\n", GetLastError() );
 						}
