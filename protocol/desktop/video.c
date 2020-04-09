@@ -475,7 +475,7 @@ void updateVideo() {
 
         if( !rendering )
         {
-            struct FrameData* cur_ctx = &receiving_frames[VideoData.last_rendered_id % RECV_FRAMES_BUFFER_SIZE];
+            // struct FrameData* cur_ctx = &receiving_frames[VideoData.last_rendered_id % RECV_FRAMES_BUFFER_SIZE];
 
             if( VideoData.max_id > VideoData.last_rendered_id + 3 )// || (cur_ctx->id == VideoData.last_rendered_id && GetTimer( cur_ctx->last_packet_timer ) > 96.0 / 1000.0) )
             {

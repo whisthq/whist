@@ -449,7 +449,7 @@ input_device_t* CreateInputDevice(input_device_t* input_device) {
     _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_EVBIT, EV_KEY)
     int kcode;
     for (int i = 0; i < NUM_KEYCODES; ++i) {
-        if (kcode = GetLinuxKeyCode(i)) {
+        if ((kcode = GetLinuxKeyCode(i))) {
             _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_KEYBIT, kcode)
         }
     }
@@ -555,7 +555,7 @@ void EmitInputEvent(int fd, int type, int code, int val) {
     ie.time.tv_sec = 0;
     ie.time.tv_usec = 0;
 
-    int res = write(fd, &ie, sizeof(ie));
+    write(fd, &ie, sizeof(ie));
 }
 
 /// @brief replays a user action taken on the client and sent to the server
@@ -604,6 +604,9 @@ void ReplayUserInput(input_device_t* input_device,
                            fmsg->mouseWheel.y);
             break;
             // TODO: add clipboard
+        default:
+            // do nothing
+            break;
     }
 
     // only really needs EV_SYN for the fd that was just written
