@@ -233,11 +233,6 @@ def createVMParameters(vmName, nic_id, vm_size, location):
 
 
 def createDiskEntry(disk_name, vm_name, username, location):
-    print("disk_name " + disk_name)
-    print("vm_name " + vm_name)
-    print("username " + username)
-    print("location " + location)
-
     with engine.connect() as conn:
         command = text("""
             INSERT INTO disks("diskname", "vmname", "username", "location") 
