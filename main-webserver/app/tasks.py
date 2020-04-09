@@ -163,7 +163,7 @@ def detachDisk(self, vm_Name, disk_name):
 
 
 @celery.task(bind=True)
-def fetchAll(self, update):
+def fetchAllVMs(self, update):
     _, compute_client, _ = createClients()
     vms = {'value': []}
     azure_portal_vms = compute_client.virtual_machines.list(
@@ -223,6 +223,14 @@ def fetchAll(self, update):
             deleteRow(vm_username, vm_name, vm_usernames, vm_names)
 
     return vms
+
+
+@celery.task(bind=True)
+def fetchAllDisks(self):
+    disks = fetchUserDisks(None)
+    print(disks)
+    # TODO: The Azure checking functionality seen in fetchAllVms
+    return disks
 
 
 @celery.task(bind=True)

@@ -542,6 +542,31 @@ def fetchUserVMs(username):
             return out
 
 
+def fetchUserDisks(username):
+    if(username):
+        command = text("""
+            SELECT * FROM disks WHERE "username" = :username
+            """)
+        params = {'username': username}
+        with engine.connect() as conn:
+            disks_info = conn.execute(command, **params).fetchall()
+            out = [{'disk_name': disk_info[0], 'vm_name': disk_info[1], 'username': disk_info[2], 'location': disk_info[3]}
+                   for disk_info in disks_info]
+            conn.close()
+            return out
+    else:
+        command = text("""
+            SELECT * FROM disks
+            """)
+        params = {}
+        with engine.connect() as conn:
+            disks_info = conn.execute(command, **params).fetchall()
+            out = [{'disk_name': disk_info[0], 'vm_name': disk_info[1], 'username': disk_info[2], 'location': disk_info[3]}
+                   for disk_info in disks_info]
+            conn.close()
+            return out
+
+
 def fetchUserCode(username):
     try:
         command = text("""
