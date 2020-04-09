@@ -239,24 +239,30 @@ def updateVMStates(self):
 	for vm in vms:
 		state = ''
 		is_running = False
-		disk_attached = False
+		available = False
 		vm_state = compute_client.virtual_machines.instance_view(
 			resource_group_name = os.environ.get('VM_GROUP'), 
 			vm_name = vm.name)
 		if 'running' in vm_state.statuses[1].code:
 			is_running = True
 			
-		vm_info = compute_client.virtual_machines.get(os.environ.get('VM_GROUP'), vm.name)
+		username = fetchVMCredentials(vm.name)['username']
+		if username:
+			most_recent_action = getMostRecentActivity(username.split('@')[0])
+			if not most_recent_action:
+				available = True
+			elif most_recent_action == 'logoff':
+				available = True
 
-		for disk in vm_info.storage_profile.data_disks:
-			disk_attached = True
-			break
+		vm_info = compute_client.virtual_machines.get(os.environ.get('VM_GROUP'), vm.name)
+		if len(vm_info.storage_profile.data_disks) == 0:
+			available = True
 			
-		if is_running and disk_attached:
+		if is_running and available:
 			state = 'RUNNING_UNAVAILABLE'
-		elif is_running and not disk_attached:
+		elif is_running and not available:
 			state = 'RUNNING_AVAILABLE'
-		elif not is_running and disk_attached:
+		elif not is_running and available:
 			state = 'NOT_RUNNING_UNAVAILABLE'
 		else:
 			state = 'NOT_RUNNING_AVAILABLE'
