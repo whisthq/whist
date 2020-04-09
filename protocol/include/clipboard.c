@@ -863,13 +863,15 @@ int UpdateClipboardThread( void* opaque )
 				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
 				strcat( cmd, "/" );
-				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard" );
+				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
+				strcat( cmd, "\" " );
 				strcat( cmd, SET_CLIPBOARD );
-				strcat( cmd, "/\" -force " );
+				strcat( cmd, " -force " );
 				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
 				strcat( cmd, "/" );
-				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard" );
+				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
+				strcat( cmd, "\" " );
 				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
 
 				mprintf( "COMMAND: %s\n", cmd );
