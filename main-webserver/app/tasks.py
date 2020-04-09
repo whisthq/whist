@@ -268,13 +268,13 @@ def updateVMStates(self):
 			available = True
 			
 		if is_running and available:
-			state = 'RUNNING_UNAVAILABLE'
-		elif is_running and not available:
 			state = 'RUNNING_AVAILABLE'
+		elif is_running and not available:
+			state = 'RUNNING_UNAVAILABLE'
 		elif not is_running and available:
-			state = 'NOT_RUNNING_UNAVAILABLE'
-		else:
 			state = 'NOT_RUNNING_AVAILABLE'
+		else:
+			state = 'NOT_RUNNING_UNAVAILABLE'
 		
 		updateVMState(vm.name, state)
 		
