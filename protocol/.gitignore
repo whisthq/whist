@@ -13,8 +13,8 @@
 *.pdb
 *.ilk
 *.user
-*log.txt
-*log_prev.txt
+**/log.txt
+**/log_prev.txt
 .DS_Store
 version
 desktop/build32/clipboard
