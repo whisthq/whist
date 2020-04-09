@@ -314,6 +314,7 @@ def swapDisk(self, disk_name):
 			updateDisk(disk_name, disk_state, vm_name, location)
 			associateVMWithDisk(vm_name, disk_name)
 			updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
+			print("Database updated.")
 			return 1
 		else:
 			return -1
@@ -321,32 +322,39 @@ def swapDisk(self, disk_name):
 	## and restart the VM as a sanity check.
 	if vm_name:
 		vm_name = vm_name.split('/')[-1]
+		print("Disk already attached to VM " + vm_name)
 		updateDisk(disk_name, disk_state, vm_name, location)
 		associateVMWithDisk(vm_name, disk_name)
 		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
-
+		print("Database updated. Restarting VM...")
 		async_vm_restart = compute_client.virtual_machines.restart(
 			os.environ.get('VM_GROUP'), vm_name)
 		async_vm_restart.wait()
-
+		print("VM restarted and ready to use")
 		return {'status': 200}
 	## Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
 	## (then reboot the VM), or wait until a VM becomes available.
 	else:
+		print("No VM attached to disk")
 		free_vm_found = False 
 		while not free_vm_found:
+			print("No VM attached")
 			available_vms = fetchVMsByState('RUNNING_AVAILABLE')
 			if len(available_vms) > 0:
+				print('Found ' + str(len(available_vms)) + ' available VMs')
 				## Pick a VM, attach it to disk
 				vm_name = available_vms[0]['vm_name']
+				print('Selected VM ' + vm_name + ' to attach to disk')
 				hr = {'status': 200} if swapDiskAndUpdate(disk_name, vm_name) > 0 else {'status': 400}
 				free_vm_found = True
 				return hr
 			else:
 				## Look for VMs that are not running
+				print("Could not find a running and available VM")
 				deactivated_vms = fetchVMsByState('NOT_RUNNING_AVAILABLE') + fetchVMsByState('NOT_RUNNING_UNAVAILABLE')
 				if len(deactivated_vms) > 0:
 					vm_name = deactivated_vms[0]['vm_name']
+					print("Found deactivated VM " + vm_name)
 					hr = {'status': 200} if swapDiskAndUpdate(disk_name, vm_name) > 0 else {'status': 400}
 					free_vm_found = True
 					return hr

@@ -1077,14 +1077,16 @@ def swapOSDisk(disk_name, vm_name):
         virtual_machine.storage_profile.os_disk.managed_disk.id = new_os_disk.id
         virtual_machine.storage_profile.os_disk.name = new_os_disk.name
 
+        print("Attaching disk...")
         async_disk_attach = compute_client.virtual_machines.create_or_update(
             os.getenv('VM_GROUP'), vm_name, virtual_machine
         )
         async_disk_attach.wait()
-
+        print("Disk attached, restarting VM")
         async_vm_restart = compute_client.virtual_machines.restart(
             os.environ.get('VM_GROUP'), vm_name)
         async_vm_restart.wait()
+        print("VM restarted")
         return 1
     except Exception as e:
         print(e)
