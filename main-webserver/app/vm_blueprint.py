@@ -79,6 +79,9 @@ def disk(action):
     elif action == 'resync':
         task = syncDisks.apply_async([])
         return jsonify({'ID': task.id}), 202
+    elif action == 'online':
+        changeDiskOnline(request.get_json()['online'])
+        return jsonify({'status': 200}), 200
     return jsonify({}), 400
 
 

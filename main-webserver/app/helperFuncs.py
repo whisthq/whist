@@ -505,6 +505,19 @@ def addTimeTable(username, action, time):
         conn.execute(command, **params)
         conn.close()
 
+def changeDiskOnline(online):
+    command = text("""
+        UPDATE disks
+        SET "online" = :online
+        WHERE "username" = :username
+        """)
+
+    params = {'online': online,
+              'username': username}
+
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
 
 def deleteTimeTable():
     command = text("""
@@ -983,6 +996,6 @@ def updateDisk(disk_name, disk_state, vm_name, location):
                       'vm_name': vm_name,
                       'location': location,
                       'disk_name': disk_name}
-                      
+
         conn.execute(command, **params)
         conn.close()
