@@ -1010,3 +1010,17 @@ def fetchVMsByState(state):
         vms = conn.execute(command, **params).fetchall()
         conn.close()
         return vms
+
+def getMostRecentActivity(username):
+    command = text("""
+        SELECT *
+        FROM login_history
+        WHERE "username" = :username
+        ORDER BY timestamp DESC LIMIT 1
+        """)
+
+    params = {'username': username}
+
+    with engine.connect() as conn:
+        activity = conn.execute(command, **params).fetchone()
+        return {'timestamp': activity[1], 'action': activity[2]}
