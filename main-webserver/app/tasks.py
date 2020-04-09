@@ -386,6 +386,7 @@ def swapDisk(self, disk_name):
 
 @celery.task(bind=True)
 def swapSpecificDisk(self, disk_name, vm_name):
+	_, compute_client, _ = createClients()
 	new_os_disk = compute_client.disks.get(
 		os.environ.get('VM_GROUP'), disk_name)
 
