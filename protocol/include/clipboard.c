@@ -8,7 +8,7 @@
 #ifdef _WIN32
 WCHAR* lget_clipboard_directory();
 WCHAR* lset_clipboard_directory();
-#endif
+
 char* get_clipboard_directory()
 {
 	static char buf[MAX_PATH];
@@ -21,6 +21,7 @@ char* set_clipboard_directory()
 	wcstombs( buf, lset_clipboard_directory(), sizeof( buf ) );
 	return buf;
 }
+#endif
 
 #ifdef _WIN32
 #define LGET_CLIPBOARD (lget_clipboard_directory())
@@ -38,8 +39,10 @@ char* set_clipboard_directory()
 
 void initClipboard()
 {
+#ifdef _WIN32
 	get_clipboard_directory();
 	set_clipboard_directory();
+#endif
 }
 
 #ifdef _WIN32
