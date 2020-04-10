@@ -395,17 +395,30 @@ def swapSpecificDisk(self, disk_name, vm_name):
 	vm.storage_profile.os_disk.name = new_os_disk.name
 
 	print('Swapping out disk ' + disk_name + ' on VM ' + vm_name)
+	start = time.perf_counter()
 
 	async_disk_attach = compute_client.virtual_machines.create_or_update(
 		'Fractal', vm.name, vm
 	)
 	async_disk_attach.wait()
 
+	end = time.perf_counter()
+	print(f"Disk swapped out in {end - start:0.4f} seconds")
 	print('Disk swapped out. Restarting VM ' + vm_name)
 
+	start = time.perf_counter()
 	async_vm_restart = compute_client.virtual_machines.restart(
 		'Fractal', vm.name)
 	async_vm_restart.wait()
+	end = time.perf_counter()
+
+	print(f"VM restarted in {end - start:0.4f} seconds")
+
+
+	updateDisk(disk_name, new_os_disk.disk_state, vm_name, new_os_disk.location)
+	associateVMWithDisk(vm_name, disk_name)
+	updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
+	print("Database updated.")
 
 	time.sleep(10)
 
