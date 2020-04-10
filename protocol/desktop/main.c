@@ -23,7 +23,6 @@ volatile bool update_mbps = false;
 
 // Global state variables
 volatile SDL_Window* window;
-volatile SDL_Renderer* renderer;
 volatile bool run_receive_packets;
 volatile bool is_timing_latency;
 volatile clock latency_timer;
@@ -64,7 +63,7 @@ void initUpdate() {
     ping_id = 1;
     ping_failures = -2;
 
-    initUpdateClipboard((SEND_FMSG*)&SendFmsg, (char *) server_ip);
+    initUpdateClipboard((SEND_FMSG*)&SendFmsg, (char*)server_ip);
     ClearReadingTCP();
 }
 
@@ -73,8 +72,10 @@ void destroyUpdate() { destroyUpdateClipboard(); }
 void update() {
     FractalClientMessage fmsg;
 
-    // As long as the clipboard isn't actively being updated, then try to update it
-    if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 && !isUpdatingClipboard()) {
+    // As long as the clipboard isn't actively being updated, then try to update
+    // it
+    if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 &&
+        !isUpdatingClipboard()) {
         // Check if TCP is up
         int result = sendp(&PacketTCPContext, NULL, 0);
         if (result < 0) {
@@ -467,8 +468,8 @@ int ReceiveMessage(struct RTPPacket* packet) {
             audio_frequency = fmsg.frequency;
             break;
         case SMESSAGE_CLIPBOARD:
-            mprintf( "Receive clipboard message from server!\n" );
-            SetClipboard( &fmsg.clipboard );
+            mprintf("Receive clipboard message from server!\n");
+            SetClipboard(&fmsg.clipboard);
             break;
         case SMESSAGE_QUIT:
             mprintf("Server signaled a quit!\n");
@@ -479,56 +480,6 @@ int ReceiveMessage(struct RTPPacket* packet) {
             return -1;
     }
     return 0;
-}
-
-void clearSDL() {
-    SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear((SDL_Renderer*)renderer);
-    SDL_RenderPresent((SDL_Renderer*)renderer);
-}
-
-// Make the screen black
-void loadingSDL() {
-    static SDL_Texture* wallpaper_screen_texture = NULL;
-    static SDL_Texture* loading_screen_texture = NULL;
-    if (!wallpaper_screen_texture) {
-        SDL_Surface* loading_screen = SDL_LoadBMP("wallpaper.bmp");
-        wallpaper_screen_texture = SDL_CreateTextureFromSurface(
-            (SDL_Renderer*)renderer, loading_screen);
-        SDL_FreeSurface(loading_screen);
-    }
-    if (!loading_screen_texture) {
-        SDL_Surface* loading_screen = SDL_LoadBMP("loading_screen.bmp");
-        loading_screen_texture = SDL_CreateTextureFromSurface(
-            (SDL_Renderer*)renderer, loading_screen);
-        SDL_FreeSurface(loading_screen);
-    }
-
-    /*
-    SDL_SetRenderDrawColor( (SDL_Renderer*)renderer, 0, 0, 0, SDL_ALPHA_OPAQUE
-    ); SDL_RenderClear( (SDL_Renderer*)renderer );
-    */
-
-    int w, h;
-    SDL_Rect dstrect;
-
-    SDL_QueryTexture(wallpaper_screen_texture, NULL, NULL, &w, &h);
-    dstrect.x = output_width / 2 - w / 2;
-    dstrect.y = output_height / 2 - h / 2;
-    dstrect.w = w;
-    dstrect.h = h;
-    SDL_RenderCopy((SDL_Renderer*)renderer, wallpaper_screen_texture, NULL,
-                   NULL);
-
-    SDL_QueryTexture(loading_screen_texture, NULL, NULL, &w, &h);
-    dstrect.x = output_width / 2 - w / 2;
-    dstrect.y = output_height / 2 - h / 2;
-    dstrect.w = w;
-    dstrect.h = h;
-    SDL_RenderCopy((SDL_Renderer*)renderer, loading_screen_texture, NULL,
-                   &dstrect);
-
-    SDL_RenderPresent((SDL_Renderer*)renderer);
 }
 
 // Send a key to SDL event queue, presumably one that is captured and wouldn't
@@ -655,14 +606,6 @@ int initSDL() {
         return -1;
     }
 
-    renderer =
-        SDL_CreateRenderer((SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC);
-    if (!renderer) {
-        fprintf(stderr, "SDL: could not create renderer - exiting: %s\n",
-                SDL_GetError());
-        return -1;
-    }
-
     return 0;
 }
 
@@ -670,11 +613,6 @@ void destroySDL() {
 #if defined(_WIN32)
     UnhookWindowsHookEx(g_hKeyboardHook);
 #endif
-
-    if (renderer) {
-        SDL_DestroyRenderer((SDL_Renderer*)renderer);
-        renderer = NULL;
-    }
     if (window) {
         SDL_DestroyWindow((SDL_Window*)window);
         window = NULL;
@@ -685,7 +623,7 @@ void destroySDL() {
 int main(int argc, char* argv[]) {
     initBacktraceHandler();
 #ifndef _WIN32
-    runcmd( "chmod 600 sshkey" );
+    runcmd("chmod 600 sshkey");
 #endif
 
     int num_required_args = 2;
@@ -728,8 +666,7 @@ int main(int argc, char* argv[]) {
 
     exiting = false;
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
-        // Make the screen black
-        loadingSDL();
+        initVideo();
 
         // If this is a retry, wait a bit more for the server to recover
         if (try_amount > 0) {
@@ -780,7 +717,6 @@ int main(int argc, char* argv[]) {
         send_packet_mutex = SDL_CreateMutex();
         is_timing_latency = false;
         connected = true;
-        initVideo();
         initAudio();
 
         // Create thread to receive all packets and handle them as needed
@@ -911,8 +847,6 @@ int main(int argc, char* argv[]) {
 
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
-
-        clearSDL();
 
         // Destroy video and audio
         destroyVideo();
