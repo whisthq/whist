@@ -18,18 +18,8 @@ def user(action):
             return jsonify({}), 403
     elif action == 'login':
         username = body['username']
-        username_len = len(username)
-
-        vm_name = loginUserVM(username)
-
-        try:
-            if vm_name:
-                payload = fetchVMCredentials(vm_name)
-                return jsonify(payload), 200
-        except Exception as e:
-            print(e)
-
-        return jsonify({}), 401
+        payload = fetchUserDisks(username)
+        return jsonify({'payload': payload}), 200
     elif action == 'fetchvms':
         username = body['username']
         try:
