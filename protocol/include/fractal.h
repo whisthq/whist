@@ -557,6 +557,9 @@ typedef struct FractalClientMessage {
             bool num_lock;
             char keyboard_state[NUM_KEYCODES];
         };
+
+        // MESSAGE_IFRAME_REQUEST
+        bool reinitialize_encoder;
     };
 
     // CMESSAGE_CLIPBOARD

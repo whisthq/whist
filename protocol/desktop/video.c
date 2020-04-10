@@ -115,6 +115,12 @@ bool requestIframe()
     {
         FractalClientMessage fmsg;
         fmsg.type = MESSAGE_IFRAME_REQUEST;
+        if( VideoData.last_rendered_id == 0 )
+        {
+            fmsg.reinitialize_encoder = true;
+        } else {
+            fmsg.reinitialize_encoder = false;
+        }
         SendFmsg( &fmsg );
         StartTimer( &VideoData.last_iframe_request_timer );
         VideoData.is_waiting_for_iframe = true;

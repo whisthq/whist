@@ -6,8 +6,12 @@ It should be easily built via `make` (on MacOS with clang and Linux Ubuntu with 
 
 ## Running (Windows)
 
+In the /desktop directory, call
+
 ```desktop [IP ADDRESS] [AES PRIVATE KEY] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```
 
 ## Running (MacOS, Linux Ubuntu)
+
+In the /desktop directory, call
 
 ```./desktop [IP ADDRESS] [AES PRIVATE KEY] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```

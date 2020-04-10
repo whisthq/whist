@@ -60,6 +60,7 @@ SDL_mutex* packet_mutex;
 struct SocketContext PacketSendContext = {0};
 
 volatile bool wants_iframe;
+volatile bool update_encoder;
 
 #ifndef _WIN32
 void InitCursors() { return; }
@@ -270,8 +271,6 @@ static int32_t SendVideo(void* opaque) {
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
     encoder_t* encoder = NULL;
-
-    bool update_encoder = false;
 
     double worst_fps = 40.0;
     int ideal_bitrate = current_bitrate;
@@ -677,6 +676,7 @@ int main() {
         connected = true;
         max_mbps = MAXIMUM_MBPS;
         wants_iframe = false;
+        update_encoder = false;
         packet_mutex = SDL_CreateMutex();
 
         SDL_Thread* send_video =
@@ -920,7 +920,13 @@ int main() {
                     }
                 } else if (fmsg->type == MESSAGE_IFRAME_REQUEST) {
                     mprintf("Request for i-frame found: Creating iframe\n");
-                    wants_iframe = true;
+                    if( fmsg->reinitialize_encoder )
+                    {
+                        update_encoder = true;
+                    } else
+                    {
+                        wants_iframe = true;
+                    }
                 } else if (fmsg->type == CMESSAGE_QUIT) {
                     // Client requested to exit, it's time to disconnect
                     mprintf("Client Quit\n");

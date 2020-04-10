@@ -374,6 +374,11 @@ int ReceivePackets(void* opaque) {
             }
         }
 
+        if( packet.id == 1 && packet.index == 0 )
+        {
+            continue;
+        }
+
         double recvfrom_short_time = GetTimer(recvfrom_timer);
 
         recvfrom_time += recvfrom_short_time;
