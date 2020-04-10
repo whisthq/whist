@@ -492,14 +492,14 @@ def storePreOrder(address1, address2, zipCode, email, order):
         conn.close()
 
 
-def addTimeTable(username, action, time):
+def addTimeTable(username, action, time, is_user):
     command = text("""
-        INSERT INTO login_history("username", "timestamp", "action") 
-        VALUES(:userName, :currentTime, :action)
+        INSERT INTO login_history("username", "timestamp", "action", "is_user") 
+        VALUES(:userName, :currentTime, :action, :is_user)
         """)
 
     params = {'userName': username, 'currentTime': dt.now().strftime(
-        '%m-%d-%Y, %H:%M:%S'), 'action': action}
+        '%m-%d-%Y, %H:%M:%S'), 'action': action, 'is_user': is_user}
 
     with engine.connect() as conn:
         conn.execute(command, **params)

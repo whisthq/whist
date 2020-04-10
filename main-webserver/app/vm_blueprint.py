@@ -110,10 +110,12 @@ def tracker(action):
         pass
     if action == 'logon':
         username = body['username']
-        addTimeTable(username, 'logon', time)
+        is_user = body['is_user']
+        addTimeTable(username, 'logon', time, is_user)
     elif action == 'logoff':
         username = body['username']
-        addTimeTable(username, 'logoff', time)
+        is_user = body['is_user']
+        addTimeTable(username, 'logoff', time, is_user)
     elif action == 'clear':
         deleteTimeTable()
     elif action == 'fetch':
