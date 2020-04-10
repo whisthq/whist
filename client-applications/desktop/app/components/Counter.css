@@ -15,6 +15,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  -webkit-app-region: drag;
 }
 
 .container h2 {
@@ -34,7 +35,14 @@ button {
   color: #5EC4EB;
   opacity: 0.5;
   font-family: 'Maven Pro';
-};
+}
+
+.nicknameContainer ::placeholder {
+  font-size: 11;
+  color: white;
+  opacity: 0.4;
+  font-family: 'Maven Pro';
+}
 
 
 .windowControl:hover {
@@ -170,9 +178,13 @@ button {
   background-color: #72cbed;
 }
 
+.pointerOnHover:hover {
+  cursor: pointer;
+}
+
 /* width */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 0px;
 }
 
 /* Track */
@@ -183,4 +195,13 @@ button {
 /* Handle */
 ::-webkit-scrollbar-thumb {
   background: #5EC4EB;
+}
+
+.macTitleBar {
+  -webkit-app-region: drag;
+  margin-top: 22px;
+}
+
+.removeDrag {
+  -webkit-app-region: no-drag;
 }

@@ -1,40 +1,49 @@
 import { Action } from 'redux';
 import {
-  STORE_USER_INFO,
+  STORE_USERNAME,
+  STORE_IP,
+  STORE_IS_USER,
   LOGIN_FAILED,
   STORE_DISTANCE,
   RESET_FEEDBACK,
   SET_OS,
   ASK_FEEDBACK,
-  CHANGE_WINDOW } from '../actions/counter';
+  CHANGE_WINDOW,
+  STORE_IPINFO,
+  STORE_COMPUTERS,
+  FETCH_VM_STATUS } from '../actions/counter';
 
-const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, resetFeedback: false, isUser: true, os: '', askFeedback: false, window: 'main'}
+const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, resetFeedback: false, isUser: true, 
+                os: '', askFeedback: false, window: 'main', ipInfo: {}, computers: [], fetchStatus: false}
 
 export default function counter(state = DEFAULT, action: Action<string>) {
   switch (action.type) {
-    case STORE_USER_INFO:
-      console.log("store user info reducer")
+    case STORE_USERNAME:
       return {
       	...state,
       	username: action.username,
-      	public_ip: action.public_ip,
-        warning: false,
-        isUser: action.is_user
       }
-    case LOGIN_FAILED:
-      console.log("login fail reducer")
+    case STORE_IP:
       return {
         ...state,
-        warning: true
+        public_ip: action.ip
+      }
+    case STORE_IS_USER:
+      return {
+        ...state,
+        isUser: action.isUser
+      }
+    case LOGIN_FAILED:
+      return {
+        ...state,
+        warning: action.warning
       }
     case STORE_DISTANCE:
-      console.log("store distance reducer")
       return {
         ...state,
         distance: action.distance
       }
     case RESET_FEEDBACK:
-      console.log("RESET FEEDBACK REDUCER")
       return {
         ...state,
         resetFeedback: action.reset
@@ -53,6 +62,21 @@ export default function counter(state = DEFAULT, action: Action<string>) {
       return {
         ...state,
         window: action.window
+      }
+    case STORE_IPINFO:
+      return {
+        ...state,
+        ipInfo: action.payload
+      }
+    case STORE_COMPUTERS:
+      return {
+        ...state,
+        computers: action.payload
+      }
+    case FETCH_VM_STATUS:
+      return {
+        ...state,
+        fetchStatus: action.status
       }
     default:
       return state;

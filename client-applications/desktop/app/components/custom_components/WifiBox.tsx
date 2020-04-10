@@ -75,7 +75,7 @@ class WifiBox extends Component {
     }
 
     return (
-      <div style = {{marginTop: 35}}>
+      <div style = {{marginTop: 30}}>
         {
           this.state.internetspeed === 0
           ?

@@ -15,21 +15,22 @@ import DistanceBox from "./custom_components/DistanceBox.tsx";
 import CPUBox from "./custom_components/CPUBox.tsx";
 import Typeform from "./custom_components/Typeform.tsx"
 import MainBox from "./custom_components/MainBox.tsx"
-import UpdateScreen from './custom_components/UpdateScreen.tsx'
+import Window from "../../../resources/images/window.svg";
+import Speedometer from "../../../resources/images/speedometer.svg";
 
 import { Offline, Online } from "react-detect-offline";
 import Popup from "reactjs-popup"
 import { ReactTypeformEmbed } from 'react-typeform-embed'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner, faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import { faSpinner, faCheck, faArrowRight, faKeyboard, faDesktop } from '@fortawesome/free-solid-svg-icons'
 
-import { storeUsername, storeIP, storeIsUser, trackUserActivity, storeDistance, askFeedback, changeWindow, fetchVMs, fetchVMStatus } from "../actions/counter"
+import { storeUsername, storeIP, trackUserActivity, storeDistance, askFeedback, changeWindow, pingIPInfo } from "../actions/counter"
 
-class Counter extends Component {
+class Studios extends Component {
   constructor(props) {
     super(props)
-    this.state = {isLoading: true, username: '', launches: 0}
+    this.state = {isLoading: true, username: '', launches: 0, id: ''}
   }
 
   CloseWindow = () => {
@@ -59,15 +60,17 @@ class Counter extends Component {
     this.props.dispatch(storeIP(''))
     this.props.dispatch(storeIsUser(true))
     this.props.dispatch(fetchVMStatus(false))
-    const storage = require('electron-json-storage');
-    storage.set('credentials', {username: '', password: ''}, function(err) {
-      history.push("/");
-    })
+    history.push("/");
   }
 
   componentDidMount() {
-    this.props.dispatch(changeWindow('main'))
-    this.setState({isLoading: false})
+    var id = "0x123456789"
+    this.props.dispatch(changeWindow('studios'))
+    this.setState({isLoading: false, id: id})
+    this.props.dispatch(pingIPInfo(id))
+  }
+
+  componentDidUpdate(prevProps) {
   }
 
   render() {
@@ -75,9 +78,6 @@ class Counter extends Component {
 
     return (
       <div className={styles.container} data-tid="container" style = {{fontFamily: "Maven Pro"}}>
-      <div className={styles.removeDrag}>
-        <UpdateScreen/>
-        </div>
         {
         this.props.os === 'win32'
         ?
@@ -85,7 +85,7 @@ class Counter extends Component {
           <Titlebar backgroundColor="#000000"/>
         </div>
         :
-        <div className={styles.macTitleBar}/>
+        <div style = {{marginTop: 10}}></div>
         }
         {
         this.state.isLoading
@@ -93,7 +93,7 @@ class Counter extends Component {
         <div>
         </div>
         :
-        <div className={styles.removeDrag}>
+        <div>
         <Typeform/>
         <div className = {styles.landingHeader}>
           <div className = {styles.landingHeaderLeft}>
@@ -116,13 +116,13 @@ class Counter extends Component {
         </div>
         <div style = {{display: 'flex', padding: '20px 75px' }}>
           <div style = {{width: '65%', textAlign: 'left', paddingRight: 20}}>
-            <MainBox currentWindow = {this.props.currentWindow} default = "main"/>
+            <MainBox currentWindow = {this.props.currentWindow} default = "studios" id = {this.state.id}/>
           </div>
           {
-          this.props.currentWindow === 'main'
+          this.props.currentWindow === 'studios'
           ?
           <div className = {styles.statBox} style = {{width: '35%', textAlign: 'left', background: "linear-gradient(217.69deg, #363868 0%, rgba(30, 31, 66, 0.5) 101.4%)", borderRadius: 5, padding: 30, minHeight: 350}}>
-            <div style = {{fontWeight: 'bold', fontSize: 18}}>
+            <div style = {{fontWeight: 'bold', fontSize: 20}}>
               Welcome, {this.props.username}
             </div>
             <div style = {{marginTop: 10, display: "inline-block"}}>
@@ -164,8 +164,9 @@ function mapStateToProps(state) {
     public_ip: state.counter.public_ip,
     os: state.counter.os,
     askFeedback: state.counter.askFeedback,
-    currentWindow: state.counter.window
+    currentWindow: state.counter.window,
+    ipInfo: state.counter.ipInfo
   }
 }
 
-export default connect(mapStateToProps)(Counter);
+export default connect(mapStateToProps)(Studios);
