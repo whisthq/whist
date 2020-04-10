@@ -665,9 +665,9 @@ int main(int argc, char* argv[]) {
     initClipboard();
 
     exiting = false;
-    for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
-        initVideo();
+    initVideo();
 
+    for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         // If this is a retry, wait a bit more for the server to recover
         if (try_amount > 0) {
             mprintf("Trying to recover the server connection...\n");
@@ -849,7 +849,6 @@ int main(int argc, char* argv[]) {
         SDL_WaitThread(receive_packets_thread, NULL);
 
         // Destroy video and audio
-        destroyVideo();
         destroyAudio();
 
         closesocket(PacketSendContext.s);
@@ -861,6 +860,7 @@ int main(int argc, char* argv[]) {
 #endif
     }
 
+    destroyVideo();
     mprintf("Closing Client...\n");
 
     destroyMultiThreadedPrintf();
