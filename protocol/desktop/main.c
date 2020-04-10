@@ -64,7 +64,7 @@ void initUpdate() {
     ping_id = 1;
     ping_failures = -2;
 
-    initUpdateClipboard((SEND_FMSG*)&SendFmsg, (char *) server_ip);
+    initUpdateClipboard((SEND_FMSG*)&SendFmsg, (char*)server_ip);
     ClearReadingTCP();
 }
 
@@ -73,8 +73,10 @@ void destroyUpdate() { destroyUpdateClipboard(); }
 void update() {
     FractalClientMessage fmsg;
 
-    // As long as the clipboard isn't actively being updated, then try to update it
-    if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 && !isUpdatingClipboard()) {
+    // As long as the clipboard isn't actively being updated, then try to update
+    // it
+    if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 &&
+        !isUpdatingClipboard()) {
         // Check if TCP is up
         int result = sendp(&PacketTCPContext, NULL, 0);
         if (result < 0) {
@@ -467,8 +469,8 @@ int ReceiveMessage(struct RTPPacket* packet) {
             audio_frequency = fmsg.frequency;
             break;
         case SMESSAGE_CLIPBOARD:
-            mprintf( "Receive clipboard message from server!\n" );
-            SetClipboard( &fmsg.clipboard );
+            mprintf("Receive clipboard message from server!\n");
+            SetClipboard(&fmsg.clipboard);
             break;
         case SMESSAGE_QUIT:
             mprintf("Server signaled a quit!\n");
@@ -685,7 +687,7 @@ void destroySDL() {
 int main(int argc, char* argv[]) {
     initBacktraceHandler();
 #ifndef _WIN32
-    runcmd( "chmod 600 sshkey" );
+    runcmd("chmod 600 sshkey");
 #endif
 
     int num_required_args = 2;

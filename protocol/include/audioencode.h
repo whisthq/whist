@@ -2,16 +2,9 @@
 #define AUDIO_ENCODE_H
 
 #include "../include/fractal.h"
-#include "ffmpeg/libavcodec/avcodec.h"
-#include "ffmpeg/libavdevice/avdevice.h"
-#include "ffmpeg/libavfilter/avfilter.h"
-#include "ffmpeg/libavfilter/buffersink.h"
-#include "ffmpeg/libavfilter/buffersrc.h"
-#include "ffmpeg/libavformat/avformat.h"
-#include "ffmpeg/libavutil/audio_fifo.h"
-#include "ffmpeg/libavutil/avutil.h"
-#include "ffmpeg/libswresample/swresample.h"
-#include "ffmpeg/libswscale/swscale.h"
+#include <libavformat/avformat.h>
+#include <libavutil/audio_fifo.h>
+#include <libswresample/swresample.h>
 
 typedef struct {
     AVCodec *pCodec;

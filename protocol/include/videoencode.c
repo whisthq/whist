@@ -202,7 +202,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         set_opt(encoder, "preset", "fast");
         set_opt(encoder, "rc", "cbr_ld_hq");
         set_opt(encoder, "zerolatency", "1");
-        set_opt( encoder, "tune", "zerolatency" );
+        set_opt(encoder, "tune", "zerolatency");
         set_opt(encoder, "delay", "0");
 
         if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
@@ -256,7 +256,7 @@ encoder_t *create_video_encoder(int width, int height, int bitrate,
     encoder->width = width;
     encoder->height = height;
 
-    int encoder_precedence[] = { NVENC_ENCODE, QSV_ENCODE, SOFTWARE_ENCODE};
+    int encoder_precedence[] = {NVENC_ENCODE, QSV_ENCODE, SOFTWARE_ENCODE};
 
     for (unsigned long i = 0;
          i < sizeof(encoder_precedence) / sizeof(encoder_precedence[0]); ++i) {
@@ -322,7 +322,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
     av_init_packet(&encoder->packet);
 
     if (encoder->sws) {
-        uint8_t *in_data[1] = {(uint8_t *) rgb_pixels};
+        uint8_t *in_data[1] = {(uint8_t *)rgb_pixels};
         int in_linesize[1] = {encoder->width * 4};
 
         // convert to the encoder format
