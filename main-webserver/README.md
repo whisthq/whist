@@ -5,13 +5,14 @@ Webserver to handle interfacing with Fractal cloud computers hosted on Azure, an
 Hosted on Heroku: https://dashboard.heroku.com/apps/cube-celery-vm
 
 ## Setup
-### Local setup (Windows)
+### Local setup (Windows/MacOS)
 1. Set up the Heroku CLI on your computer
-2. Ceate a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate`.
-3. Install everything by typing `pip install -r requirements.txt`. 
-4. Tell the local environment what the entry point is to the webserver by typing `set FLASK_APP=run.py`. 
-5. Import the environment variables into your computer by typing `heroku config -s >> .env`. 
-6. Type `flask run` to start the webserver on localhost
+2. Git clone this repo and cd into it.
+3. Ceate a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text by running `source env\Scripts\activate` on Windows, or `source env/bin/activate` on MacOS.
+4. Install everything by typing `pip install -r requirements.txt`. 
+5. Tell the local environment what the entry point is to the webserver by typing `set FLASK_APP=run.py`. 
+6. Import the environment variables into your computer by typing `heroku config -s >> .env`. 
+7. Type `flask run` to start the webserver on localhost
 
 ### Run on Heroku
 **Staging**
