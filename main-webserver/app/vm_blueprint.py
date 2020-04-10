@@ -73,13 +73,13 @@ def disk(action):
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
-    elif action == 'attach':
-        vm_name = request.get_json()['vm_name']
-        disk_name = request.get_json()['disk_name']
-        task = attachDisk.apply_async([vm_name, disk_name])
-        if not task:
-            return jsonify({}), 400
-        return jsonify({'ID': task.id}), 202
+    # elif action == 'attach':
+    #     vm_name = request.get_json()['vm_name']
+    #     disk_name = request.get_json()['disk_name']
+    #     task = attachDisk.apply_async([vm_name, disk_name])
+    #     if not task:
+    #         return jsonify({}), 400
+    #     return jsonify({'ID': task.id}), 202
     elif action == 'detach':
         vm_name = request.get_json()['vm_name']
         disk_name = request.get_json()['disk_name']
