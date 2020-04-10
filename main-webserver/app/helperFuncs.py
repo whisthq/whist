@@ -1118,3 +1118,25 @@ def swapOSDisk(disk_name, vm_name):
         print(e)
         return -1
 
+def fetchAllDisks():
+    command = text("""
+        SELECT *
+        FROM disks
+        """)
+
+    params = {}
+
+    with engine.connect() as conn:
+        disks = conn.execute(command, **params).fetchall()
+        return [{'disk_name': disk[0]} for disk in disks] 
+
+def deleteDisk(disk_name):
+    command = text("""
+        DELETE FROM disks WHERE "diskname" = :disk_name 
+        """)
+    params = {'disk_name': disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
