@@ -27,7 +27,6 @@ int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
                                      DefaultDepthOfScreen( screen ), //24,   // Determine correct depth from the visual. Omitted for brevity
                                      ZPixmap, NULL, &device->segment, device->width, device->height );
 
-
     device->segment.shmid = shmget( IPC_PRIVATE,
                                     device->image->bytes_per_line * device->image->height,
                                     IPC_CREAT | 0777 );
