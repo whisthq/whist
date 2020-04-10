@@ -574,7 +574,7 @@ def fetchUserDisks(username):
         params = {}
         with engine.connect() as conn:
             disks_info = conn.execute(command, **params).fetchall()
-            out = [{'diskName': disk_info[0], 'username': disk_info[1], 'location': disk_info[2], 'attached': disk_info[3], 'online': disk_info[4], 'vmName': disk_info[4]}
+            out = [{'disk_name': disk_info[0], 'username': disk_info[1], 'location': disk_info[2], 'attached': disk_info[3], 'online': disk_info[4], 'vmName': disk_info[4]}
                    for disk_info in disks_info]
             conn.close()
             return out

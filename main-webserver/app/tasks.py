@@ -285,12 +285,6 @@ def updateVMStates(self):
 	return {'status': 200}
 
 
-def fetchAllDisks():
-	disks = fetchUserDisks(None)
-	print(disks)
-	# TODO: The Azure checking functionality seen in fetchAllVms
-	return disks
-
 
 @celery.task(bind=True)
 def syncDisks(self):
@@ -312,7 +306,7 @@ def syncDisks(self):
 
 		updateDisk(disk_name, disk_state, vm_name, location)
 
-	stored_disks = fetchAllDisks()
+	stored_disks = fetchUserDisks(None)
 	for stored_disk in stored_disks:
 		if not stored_disk['disk_name'] in disk_names:
 			deleteDisk(stored_disk['disk_name'])
