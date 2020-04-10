@@ -8,6 +8,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
     memset(encoder, 0, sizeof(audio_encoder_t));
 
     // setup the AVCodec and AVCodecCtx
+    avcodec_register_all();
 
     encoder->pCodec = avcodec_find_encoder(AV_CODEC_ID_AAC);
     if (!encoder->pCodec) {

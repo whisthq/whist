@@ -123,7 +123,6 @@ CFLAGS = \
 	-Wno-unused-value \
 	-Wno-unused-parameter \
 	-I ../include \
-	-I ../include/ffmpeg \
 	-O0
 
 LDFLAGS = \
