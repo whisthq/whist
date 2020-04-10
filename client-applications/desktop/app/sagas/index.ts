@@ -4,15 +4,17 @@ import { apiPost, apiGet } from '../utils/api.ts';
 import * as Action from '../actions/counter';
 import { configureStore, history } from '../store/configureStore';
 
+import { config } from '../constants/config.ts'
+
 
 function* loginUser(action) {
-  const {json, response} = yield call(apiPost, 'https://cube-celery-vm.herokuapp.com/account/login', {
+  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/account/login', {
     username: action.username,
     password: action.password
   })
 
   if(json && json.verified) {
-    yield put(Action.fetchVMs(action.username))
+    yield put(Action.fetchDisk(action.username))
 
     var email = action.username
     action.username = email.split('@')[0]
@@ -24,23 +26,23 @@ function* loginUser(action) {
   }
 }
 
-function* fetchVMs(action) {
+function* fetchDisk(action) {
   const state = yield select()
-  const {json, response} = yield call(apiPost, 'https://cube-celery-vm.herokuapp.com/user/login', {
+  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/user/login', {
     username: action.username
   })
 
-  if(json && Object.keys(json).length > 0) {
-    yield put(Action.storeIP(json.public_ip))
+  if(json && json.payload && Object.keys(json.payload).length > 0) {
+    yield put(Action.storeDiskName(json.payload[0].disk_name))
   } else {
-    yield put(Action.storeIP(''))
+    yield put(Action.storeDiskName(''))
   }
 
-  yield put(Action.fetchVMStatus(true))
+  yield put(Action.fetchDiskStatus(true))
 }
 
 function* loginStudio(action) {
-  const {json, response} = yield call(apiPost, 'https://cube-celery-vm.herokuapp.com/account/login', {
+  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/account/login', {
     username: action.username,
     password: action.password
   })
@@ -58,19 +60,21 @@ function* loginStudio(action) {
 function* trackUserActivity(action) {
   const state = yield select()
   if(action.logon) {
-    const {json, response} = yield call(apiPost, 'https://cube-celery-vm.herokuapp.com/tracker/logon', {
-      username: state.counter.username
+    const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/tracker/logon', {
+      username: state.counter.username,
+      is_user: state.counter.isUser
     })
   } else {
-    const {json, response} = yield call(apiPost, 'https://cube-celery-vm.herokuapp.com/tracker/logoff', {
-      username: state.counter.username
+    const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/tracker/logoff', {
+      username: state.counter.username,
+      is_user: state.counter.isUser
     })
   }
 }
 
 function* sendFeedback(action) {
   const state = yield select()
-  const {json, response} = yield call(apiPost, 'https://fractal-mail-server.herokuapp.com/feedback', {
+  const {json, response} = yield call(apiPost, config.url.MAIL_SERVER + '/feedback', {
     username: state.counter.username,
     feedback: action.feedback
   })
@@ -87,7 +91,7 @@ function* storeIPInfo(action) {
   const state = yield select()
   var location = action.payload.city + ", " + action.payload.region
 
-  const {json, response} = yield call(apiPost, 'https://cube-celery-vm.herokuapp.com/account/checkComputer', {
+  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/account/checkComputer', {
     id: action.id,
     username: state.counter.username
   })
@@ -101,7 +105,7 @@ function* storeIPInfo(action) {
     } else {
       console.log("ID NOT FOUND")
       console.log(json)
-      const {json1, response1} = yield call(apiPost, 'https://cube-celery-vm.herokuapp.com/account/insertComputer', {
+      const {json1, response1} = yield call(apiPost, config.url.PRIMARY_SERVER + '/account/insertComputer', {
         id: action.id,
         username: state.counter.username,
         location: location,
@@ -114,7 +118,7 @@ function* storeIPInfo(action) {
 
 function* fetchComputers(action) {
   const state = yield select()
-  const {json, response} = yield call(apiPost, 'https://cube-celery-vm.herokuapp.com/account/fetchComputers', {
+  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/account/fetchComputers', {
     username: state.counter.username
   })
   yield put(Action.storeComputers(json.computers))
@@ -130,6 +134,6 @@ export default function* rootSaga() {
      takeEvery(Action.PING_IPINFO, pingIPInfo),
      takeEvery(Action.STORE_IPINFO, storeIPInfo),
      takeEvery(Action.FETCH_COMPUTERS, fetchComputers),
-     takeEvery(Action.FETCH_VMS, fetchVMs)
+     takeEvery(Action.FETCH_DISK, fetchDisk)
   ])
 }

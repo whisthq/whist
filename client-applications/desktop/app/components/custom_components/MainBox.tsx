@@ -67,13 +67,13 @@ class MainBox extends Component {
 
         var parameters = [this.props.public_ip, 123, screenWidth, screenHeight, this.state.mbps]
 
-        if(this.props.isUser && this.state.launches == 1) {
+        if(this.state.launches == 1) {
           this.TrackActivity(true);
         }
         const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
 
         protocol.on('close', (code) => {
-          if(this.props.isUser && this.state.launches == 1) {
+          if(this.state.launches == 1) {
             this.TrackActivity(false);
           }
           this.setState({launches: 0})
@@ -133,7 +133,7 @@ class MainBox extends Component {
           this.props.fetchStatus
           ?
           (
-          this.props.public_ip != ''
+          this.props.disk != ''
           ?
           <div onClick = {this.LaunchProtocol} className = {styles.bigBox} style = {{position: 'relative', backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.0), rgba(0,0,0,0.6)), url(" + Car + ")", width: "100%", height: 250, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center", borderRadius: 5}}>
             <div style = {{position: 'absolute', bottom: 10, right: 15, fontWeight: 'bold', fontSize: 16}}>
@@ -370,7 +370,8 @@ function mapStateToProps(state) {
     public_ip: state.counter.public_ip,
     ipInfo: state.counter.ipInfo,
     computers: state.counter.computers,
-    fetchStatus: state.counter.fetchStatus
+    fetchStatus: state.counter.fetchStatus,
+    disk: state.counter.disk
   }
 }
 

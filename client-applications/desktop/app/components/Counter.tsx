@@ -24,7 +24,7 @@ import { ReactTypeformEmbed } from 'react-typeform-embed'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 
-import { storeUsername, storeIP, storeIsUser, trackUserActivity, storeDistance, askFeedback, changeWindow, fetchVMs, fetchVMStatus } from "../actions/counter"
+import { storeUsername, storeIP, storeIsUser, trackUserActivity, storeDistance, askFeedback, changeWindow, fetchDiskStatus } from "../actions/counter"
 
 class Counter extends Component {
   constructor(props) {
@@ -58,7 +58,8 @@ class Counter extends Component {
     this.props.dispatch(storeUsername(null))
     this.props.dispatch(storeIP(''))
     this.props.dispatch(storeIsUser(true))
-    this.props.dispatch(fetchVMStatus(false))
+    this.props.dispatch(fetchDiskStatus(false))
+    this.props.dispatch(storeDiskName(''))
     const storage = require('electron-json-storage');
     storage.set('credentials', {username: '', password: ''}, function(err) {
       history.push("/");
@@ -162,7 +163,8 @@ function mapStateToProps(state) {
     public_ip: state.counter.public_ip,
     os: state.counter.os,
     askFeedback: state.counter.askFeedback,
-    currentWindow: state.counter.window
+    currentWindow: state.counter.window,
+    disk: state.counter.disk
   }
 }
 

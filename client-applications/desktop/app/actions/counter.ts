@@ -18,8 +18,10 @@ export const PING_IPINFO	     = "PING_IPINFO"
 export const STORE_IPINFO        = "STORE_IPINFO"
 export const FETCH_COMPUTERS     = "FETCH_COMPUTERS"
 export const STORE_COMPUTERS     = "STORE_COMPUTERS"
-export const FETCH_VMS           = "FETCH_VMS"
-export const FETCH_VM_STATUS     = "FETCH_VM_STATUS"
+export const FETCH_DISK          = "FETCH_DISK"
+export const FETCH_DISK_STATUS   = "FETCH_DISK_STATUS"
+export const STORE_DISK_NAME     = "STORE_DISK_NAME"
+export const ATTACH_DISK         = "ATTACH_DISK"
 
 
 export function loginUser(username, password) {
@@ -151,16 +153,30 @@ export function storeComputers(payload) {
 	}
 }
 
-export function fetchVMs(username) {
+export function fetchDisk(username) {
 	return {
-		type: FETCH_VMS,
+		type: FETCH_DISK,
 		username
 	}
 }
 
-export function fetchVMStatus(status) {
+export function fetchDiskStatus(status) {
 	return {
-		type: FETCH_VM_STATUS,
+		type: FETCH_DISK_STATUS,
 		status
+	}
+}
+
+export function storeDiskName(disk) {
+	return {
+		type: STORE_DISK_NAME,
+		disk
+	}
+}
+
+export function attachDisk(state) {
+	return {
+		type: ATTACH_DISK,
+		state
 	}
 }
