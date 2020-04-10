@@ -12,17 +12,19 @@ Hosted on Heroku: https://dashboard.heroku.com/apps/cube-celery-vm
 4. Tell the local environment what the entry point is to the webserver by typing `set FLASK_APP=run.py`. 
 5. Import the environment variables into your computer by typing `heroku config -s >> .env`. 
 6. Type `flask run` to start the webserver on localhost.
-7. If you plan on calling endpoints that require celery, you will want to view the celery task queue locally. To do this, open a new terminal, cd into the vm-webserver folder, and type `celery -A app.tasks worker --loglevel=info`.
+7. [NOTE: Currently buggy]If you plan on calling endpoints that require celery, you will want to view the celery task queue locally. To do this, open a new terminal, cd into the vm-webserver folder, and type `celery -A app.tasks worker --loglevel=info`.
+8. Attach the staging branch to cube-celery-staging by typing `git checkout staging`, then `heroku git:remote --app cube-celery-staging -r staging`
+9. Attach the master branch to cube-celery-vm by typing `git checkout master`, then `heroku git:remote --app cube-celery-vm -r heroku`
 
 ### Run on Heroku
 **Staging**
 `https://git.heroku.com/cube-celery-staging.git`
 
-To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. To push to the staging server, first make sure you’re in the staging branch, then type `git add .`, then `git commit -m “COMMIT MESSAGE”`, then finally `git push staging staging:master`. If you get a git pull error, git pull by typing `git pull staging master` to pull from Heroku or `git pull origin staging` to pull from Github.
+To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. To push to the staging server, first make sure you’re in the staging branch, then type `git add .`, then `git commit -m “COMMIT MESSAGE”`, then finally `git push staging staging:master`. If you get a git pull error, git pull by typing `git pull staging master` to pull from Heroku or `git pull origin staging` to pull from Github. To view the server logs, type `heroku logs --tail --remote staging`.
 
 **Production**
 `https://git.heroku.com/cube-celery-vm.git`
 
 To push to the live server, git add and commit and type git push heroku master. (Obviously, DO NOT push to the production server until we’ve all agreed that staging is stable). 
 
-Test the webserver by running it on localhost and using Postman to send requests to the localhost address, and if that works, push to staging.
+Test the webserver by running it on localhost and using Postman to send requests to the localhost address, and if that works, push to staging. To view the server logs, type `heroku logs --tail --app cube-celery-vm`.
