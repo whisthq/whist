@@ -1,16 +1,27 @@
-import { GetState, Dispatch } from '../reducers/types';
+import { GetState, Dispatch } from '../reducers/types'
 
-export const STORE_USER_INFO     = "STORE_USER_INFO";
-export const TRACK_USER_ACTIVITY = "TRACK_USER_ACTIVITY";
-export const LOGIN_USER          = "LOGIN_USER";
-export const LOGIN_FAILED        = "LOGIN_FAILED";
+export const STORE_USERNAME      = "STORE_USERNAME"
+export const STORE_IP            = "STORE_IP"
+export const STORE_IS_USER       = "STORE_IS_USER"
+export const TRACK_USER_ACTIVITY = "TRACK_USER_ACTIVITY"
+export const LOGIN_USER          = "LOGIN_USER"
+export const LOGIN_FAILED        = "LOGIN_FAILED"
 export const CALCULATE_DISTANCE  = "CALCULATE_DISTANCE"
-export const STORE_DISTANCE      = "STORE_DISTANCE";
-export const SEND_FEEDBACK       = "SEND_FEEDBACK";
-export const RESET_FEEDBACK      = "RESET_FEEDBACK";
-export const SET_OS              = "SET_OS";
-export const ASK_FEEDBACK        = "ASK_FEEDBACK";
+export const STORE_DISTANCE      = "STORE_DISTANCE"
+export const SEND_FEEDBACK       = "SEND_FEEDBACK"
+export const RESET_FEEDBACK      = "RESET_FEEDBACK"
+export const SET_OS              = "SET_OS"
+export const ASK_FEEDBACK        = "ASK_FEEDBACK"
 export const CHANGE_WINDOW       = "CHANGE_WINDOW"
+export const LOGIN_STUDIO        = "LOGIN_STUDIO"
+export const PING_IPINFO	     = "PING_IPINFO"
+export const STORE_IPINFO        = "STORE_IPINFO"
+export const FETCH_COMPUTERS     = "FETCH_COMPUTERS"
+export const STORE_COMPUTERS     = "STORE_COMPUTERS"
+export const FETCH_VMS           = "FETCH_VMS"
+export const FETCH_VM_STATUS     = "FETCH_VM_STATUS"
+export const SEND_LOGS           = "SEND_LOGS"
+
 
 export function loginUser(username, password) {
 	console.log("login action fired")
@@ -21,12 +32,24 @@ export function loginUser(username, password) {
 	}
 }
 
-export function storeUserInfo(username, public_ip, is_user) {
+export function storeUsername(username) {
   return {
-    type: STORE_USER_INFO,
-    username,
-    public_ip,
-    is_user
+    type: STORE_USERNAME,
+    username
+  };
+}
+
+export function storeIP(ip) {
+  return {
+    type: STORE_IP,
+    ip
+  };
+}
+
+export function storeIsUser(isUser) {
+  return {
+    type: STORE_IS_USER,
+    isUser
   };
 }
 
@@ -37,9 +60,10 @@ export function trackUserActivity(logon) {
 	}
 }
 
-export function loginFailed() {
+export function loginFailed(warning) {
 	return {
-		type: LOGIN_FAILED
+		type: LOGIN_FAILED,
+		warning
 	}
 }
 
@@ -89,5 +113,62 @@ export function changeWindow(window) {
 	return {
 		type: CHANGE_WINDOW,
 		window
+	}
+}
+
+export function loginStudio(username, password) {
+	return {
+		type: LOGIN_STUDIO,
+		username, 
+		password
+	}
+}
+
+export function pingIPInfo(id) {
+	return {
+		type: PING_IPINFO,
+		id
+	}
+}
+
+export function storeIPInfo(payload, id) {
+	return {
+		type: STORE_IPINFO,
+		payload,
+		id
+	}
+}
+
+export function fetchComputers() {
+	return {
+		type: FETCH_COMPUTERS
+	}
+}
+
+export function storeComputers(payload) {
+	return {
+		type: STORE_COMPUTERS,
+		payload
+	}
+}
+
+export function fetchVMs(username) {
+	return {
+		type: FETCH_VMS,
+		username
+	}
+}
+
+export function fetchVMStatus(status) {
+	return {
+		type: FETCH_VM_STATUS,
+		status
+	}
+}
+
+export function sendLogs(logs) {
+	return {
+		type: SEND_LOGS,
+		logs
 	}
 }

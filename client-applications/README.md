@@ -1,12 +1,12 @@
 # Fractal Client Applications
 
-This repository contains the source code for the Fractal Clients Applications which users can download on their local device (Desktop OSes, iOS, Android, etc.) to connect to their cloud computer and start the streaming protocol, upload files, etc.
+This repository contains the source code for the Fractal Clients Applications which users can download on their local device (Desktop OSes, iOS, Android, etc.) to connect to their Fractal computer and start the streaming protocol, upload files, etc.
 
 The applications are divided into four categories:
 
 - Desktop (Windows, MacOS, Linux Ubuntu)
   - Windows is supported
-  - Need to add support for MacOS
+  - MacOS is supported
   - Need to add support for Linux 
   
 - iOS/iPadOS

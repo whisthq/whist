@@ -14,4 +14,4 @@ cd fractal-protocol
 mkdir desktop
 cd ..
 copy .fractal-protocol\desktop\build64 fractal-protocol\desktop
-yarn package
+yarn package-ci
