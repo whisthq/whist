@@ -342,12 +342,12 @@ def swapDisk(self, disk_name):
 		updateDisk(disk_name, disk_state, vm_name, location)
 		associateVMWithDisk(vm_name, disk_name)
 		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
-		print("Database updated. Restarting VM...")
-		async_vm_restart = compute_client.virtual_machines.restart(
-			os.environ.get('VM_GROUP'), vm_name)
-		async_vm_restart.wait()
-		time.sleep(10)
-		print("VM restarted and ready to use")
+		print("Database updated")
+		# async_vm_restart = compute_client.virtual_machines.restart(
+		# 	os.environ.get('VM_GROUP'), vm_name)
+		# async_vm_restart.wait()
+		# time.sleep(10)
+		# print("VM restarted and ready to use")
 		return fetchVMCredentials(vm_name)
 	# Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
 	# (then reboot the VM), or wait until a VM becomes available.
