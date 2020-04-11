@@ -343,10 +343,15 @@ def swapDisk(self, disk_name):
 		associateVMWithDisk(vm_name, disk_name)
 		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 		print("Database updated")
-		# async_vm_restart = compute_client.virtual_machines.restart(
-		# 	os.environ.get('VM_GROUP'), vm_name)
-		# async_vm_restart.wait()
-		# time.sleep(10)
+
+		# If the VM is powered off, start it
+		vm_state = compute_client.virtual_machines.instance_view(
+			resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
+		if not 'running' in vm_state.statuses[1].code:
+			async_vm_start = compute_client.virtual_machines.start(
+				os.environ.get('VM_GROUP'), vm_name)
+			async_vm_start.wait()
+			time.sleep(10)
 		# print("VM restarted and ready to use")
 		return fetchVMCredentials(vm_name)
 	# Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
@@ -356,7 +361,7 @@ def swapDisk(self, disk_name):
 		free_vm_found = False
 		while not free_vm_found:
 			print("No VM attached to " + disk_name)
-			available_vms = fetchVMsByState('RUNNING_AVAILABLE')
+			available_vms = fetchAttachableVMs('RUNNING_AVAILABLE', location)
 			if len(available_vms) > 0:
 				print('Found ' + str(len(available_vms)) + ' available VMs')
 				# Pick a VM, attach it to disk
@@ -371,8 +376,8 @@ def swapDisk(self, disk_name):
 				# Look for VMs that are not running
 				print(
 					"Could not find a running and available VM to attach to disk " + disk_name)
-				deactivated_vms = fetchVMsByState(
-					'NOT_RUNNING_AVAILABLE') + fetchVMsByState('NOT_RUNNING_UNAVAILABLE')
+				deactivated_vms = fetchAttachableVMs(
+					'NOT_RUNNING_AVAILABLE', location) + fetchAttachableVMs('NOT_RUNNING_UNAVAILABLE', location)
 				if len(deactivated_vms) > 0:
 					vm_name = deactivated_vms[0]['vm_name']
 					print("Found deactivated VM " + vm_name)
@@ -441,4 +446,9 @@ def updateVMTable(self):
 			print(e)
 			pass
 
+	return {'status': 200}
+
+@celery.task(bind=True)
+def test(self):
+	print("TEST IS RUN!!!")
 	return {'status': 200}

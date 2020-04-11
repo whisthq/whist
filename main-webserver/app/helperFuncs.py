@@ -1075,11 +1075,11 @@ def updateDisk(disk_name, disk_state, vm_name, location):
         conn.execute(command, **params)
         conn.close()
 
-def fetchVMsByState(state):
+def fetchAttachableVMs(state, location):
     command = text("""
-        SELECT * FROM v_ms WHERE "state" = :state
+        SELECT * FROM v_ms WHERE "state" = :state AND "location" = :location
         """)
-    params = {'state': state}
+    params = {'state': state, 'location': location}
 
     with engine.connect() as conn:
         vms = conn.execute(command, **params).fetchall()
@@ -1157,12 +1157,23 @@ def swapOSDisk(disk_name, vm_name):
             os.getenv('VM_GROUP'), vm_name, virtual_machine
         )
         async_disk_attach.wait()
-        print("Disk attached, restarting VM")
-        async_vm_restart = compute_client.virtual_machines.restart(
-            os.environ.get('VM_GROUP'), vm_name)
-        async_vm_restart.wait()
-        time.sleep(10)
-        print("VM restarted")
+        print("Disk attached")
+
+        vm_state = compute_client.virtual_machines.instance_view(
+            resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
+        if not 'running' in vm_state.statuses[1].code:
+            print("VM is powered off. Starting...")
+            async_vm_start = compute_client.virtual_machines.start(
+                os.environ.get('VM_GROUP'), vm_name)
+            async_vm_start.wait()
+            time.sleep(10)
+        else:
+            print("Restarting VM...")
+            async_vm_restart = compute_client.virtual_machines.restart(
+                os.environ.get('VM_GROUP'), vm_name)
+            async_vm_restart.wait()
+            time.sleep(10)
+            print("VM restarted")
         return 1
     except Exception as e:
         print(e)
