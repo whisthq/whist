@@ -334,6 +334,11 @@ def swapDisk(self, disk_name):
 			return 1
 		else:
 			return -1
+
+	def updateOldDisk(vm_name):
+		virtual_machine = getVM(vm_name)
+		old_disk = virtual_machine.storage_profile.os_disk
+		updateDisk(old_disk.name, old_disk.disk_state, '', old_disk.location)
 	# Disk is currently attached to a VM. Make sure the database reflects the current disk state,
 	# and restart the VM as a sanity check.
 	if vm_name:
@@ -373,9 +378,7 @@ def swapDisk(self, disk_name):
 					  ' to attach to disk ' + disk_name)
 				if swapDiskAndUpdate(disk_name, vm_name) > 0:
 					free_vm_found = True
-					virtual_machine = getVM(vm_name)
-					old_disk = virtual_machine.storage_profile.os_disk
-					updateDisk(old_disk.name, old_disk.disk_state, '', old_disk.location)
+					updateOldDisk(vm_name)
 					lockVM(vm_name, False)
 					return fetchVMCredentials(vm_name)
 				lockVM(vm_name, False)
@@ -392,6 +395,7 @@ def swapDisk(self, disk_name):
 					print("Found deactivated VM " + vm_name)
 					if swapDiskAndUpdate(disk_name, vm_name) > 0:
 						free_vm_found = True
+						updateOldDisk(vm_name)
 						lockVM(vm_name, False)
 						return fetchVMCredentials(vm_name)
 					lockVM(vm_name, False)
