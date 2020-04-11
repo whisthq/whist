@@ -147,6 +147,8 @@ def deleteResource(name):
             os.getenv('VM_GROUP'), name)
         async_vm_delete.wait()
         print("VM deleted")
+        deleteVMFromTable(name)
+        print("VM removed from database")
     except Exception as e:
         print(e)
         hr = -1
@@ -1121,13 +1123,13 @@ def swapdisk_name(disk_name, vm_name):
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_start.wait()
             time.sleep(10)
-        else:
-            print("Restarting VM...")
-            async_vm_restart = compute_client.virtual_machines.restart(
-                os.environ.get('VM_GROUP'), vm_name)
-            async_vm_restart.wait()
-            time.sleep(10)
-            print("VM restarted")
+        # else:
+        #     print("Restarting VM...")
+        #     async_vm_restart = compute_client.virtual_machines.restart(
+        #         os.environ.get('VM_GROUP'), vm_name)
+        #     async_vm_restart.wait()
+        #     time.sleep(10)
+        #     print("VM restarted")
         return 1
     except Exception as e:
         print(e)
@@ -1192,6 +1194,14 @@ def mapDiskToUser(disk_name):
         print("ERROR: No username found for disk " + disk_name)
         return None
 
+def deleteVMFromTable(vm_name):
+    command = text("""
+        DELETE FROM v_ms WHERE "vm_name" = :vm_name 
+        """)
+    params = {'vm_name': vm_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
 
 # def resetVMCredentials(username, vm_name):
 #     command = text("""

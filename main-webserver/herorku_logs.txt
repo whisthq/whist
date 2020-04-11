@@ -1,0 +1,1500 @@
+2020-04-11T20:36:28.533079+00:00 app[celery.1]: 2020-04-11 20:36:28,532 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.533080+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.533081+00:00 app[celery.1]: 
+2020-04-11T20:36:28.533172+00:00 app[celery.1]: [2020-04-11 20:36:28,532: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.533173+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.533178+00:00 app[celery.1]: 
+2020-04-11T20:36:28.533386+00:00 app[celery.1]: 2020-04-11 20:36:28,533 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:36:28.533478+00:00 app[celery.1]: [2020-04-11 20:36:28,533: INFO/ForkPoolWorker-7] {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:36:28.535810+00:00 app[celery.1]: 2020-04-11 20:36:28,535 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.535811+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.535812+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.535837+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.535838+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.535845+00:00 app[celery.1]: 
+2020-04-11T20:36:28.535906+00:00 app[celery.1]: [2020-04-11 20:36:28,535: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.535906+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.535907+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.535907+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.535907+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.535928+00:00 app[celery.1]: 
+2020-04-11T20:36:28.536151+00:00 app[celery.1]: 2020-04-11 20:36:28,535 INFO sqlalchemy.engine.base.Engine {'vm_name': '', 'location': 'eastus', 'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:36:28.536289+00:00 app[celery.1]: [2020-04-11 20:36:28,535: INFO/ForkPoolWorker-7] {'vm_name': '', 'location': 'eastus', 'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:36:28.537463+00:00 app[celery.1]: 2020-04-11 20:36:28,537 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.537623+00:00 app[celery.1]: [2020-04-11 20:36:28,537: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.539688+00:00 app[celery.1]: 2020-04-11 20:36:28,539 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.539689+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.539731+00:00 app[celery.1]: 
+2020-04-11T20:36:28.539851+00:00 app[celery.1]: [2020-04-11 20:36:28,539: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.539852+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.539892+00:00 app[celery.1]: 
+2020-04-11T20:36:28.540142+00:00 app[celery.1]: 2020-04-11 20:36:28,539 INFO sqlalchemy.engine.base.Engine {'disk_name': 'polishedwood608_OsDisk_1_0e1ab93dd05549bdb34531b9f31b224e'}
+2020-04-11T20:36:28.540243+00:00 app[celery.1]: [2020-04-11 20:36:28,539: INFO/ForkPoolWorker-7] {'disk_name': 'polishedwood608_OsDisk_1_0e1ab93dd05549bdb34531b9f31b224e'}
+2020-04-11T20:36:28.543479+00:00 app[celery.1]: 2020-04-11 20:36:28,543 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.543480+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.543481+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.543481+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.543482+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.543482+00:00 app[celery.1]: 
+2020-04-11T20:36:28.543487+00:00 app[celery.1]: [2020-04-11 20:36:28,543: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.543488+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.543488+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.543488+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.543488+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.543514+00:00 app[celery.1]: 
+2020-04-11T20:36:28.543735+00:00 app[celery.1]: 2020-04-11 20:36:28,543 INFO sqlalchemy.engine.base.Engine {'vm_name': 'polishedwood608', 'location': 'eastus', 'disk_name': 'polishedwood608_OsDisk_1_0e1ab93dd05549bdb34531b9f31b224e'}
+2020-04-11T20:36:28.543871+00:00 app[celery.1]: [2020-04-11 20:36:28,543: INFO/ForkPoolWorker-7] {'vm_name': 'polishedwood608', 'location': 'eastus', 'disk_name': 'polishedwood608_OsDisk_1_0e1ab93dd05549bdb34531b9f31b224e'}
+2020-04-11T20:36:28.553647+00:00 app[celery.1]: 2020-04-11 20:36:28,553 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.553753+00:00 app[celery.1]: [2020-04-11 20:36:28,553: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.561171+00:00 app[celery.1]: 2020-04-11 20:36:28,561 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.561172+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.561176+00:00 app[celery.1]: 
+2020-04-11T20:36:28.561272+00:00 app[celery.1]: [2020-04-11 20:36:28,561: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.561272+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.561276+00:00 app[celery.1]: 
+2020-04-11T20:36:28.561522+00:00 app[celery.1]: 2020-04-11 20:36:28,561 INFO sqlalchemy.engine.base.Engine {'disk_name': 'test-vm_OsDisk_1_a2e723be8e1049d2a06a0cfff2122762'}
+2020-04-11T20:36:28.562340+00:00 app[celery.1]: [2020-04-11 20:36:28,561: INFO/ForkPoolWorker-7] {'disk_name': 'test-vm_OsDisk_1_a2e723be8e1049d2a06a0cfff2122762'}
+2020-04-11T20:36:28.565116+00:00 app[celery.1]: 2020-04-11 20:36:28,564 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.565117+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.565118+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.565119+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.565119+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.565763+00:00 app[celery.1]: 
+2020-04-11T20:36:28.565885+00:00 app[celery.1]: [2020-04-11 20:36:28,564: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.565886+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.565886+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.565887+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.565887+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.566001+00:00 app[celery.1]: 
+2020-04-11T20:36:28.566263+00:00 app[celery.1]: 2020-04-11 20:36:28,566 INFO sqlalchemy.engine.base.Engine {'vm_name': 'test-vm', 'location': 'eastus', 'disk_name': 'test-vm_OsDisk_1_a2e723be8e1049d2a06a0cfff2122762'}
+2020-04-11T20:36:28.567097+00:00 app[celery.1]: [2020-04-11 20:36:28,566: INFO/ForkPoolWorker-7] {'vm_name': 'test-vm', 'location': 'eastus', 'disk_name': 'test-vm_OsDisk_1_a2e723be8e1049d2a06a0cfff2122762'}
+2020-04-11T20:36:28.568803+00:00 app[celery.1]: 2020-04-11 20:36:28,568 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.568898+00:00 app[celery.1]: [2020-04-11 20:36:28,568: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.571795+00:00 app[celery.1]: 2020-04-11 20:36:28,571 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.571796+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.571842+00:00 app[celery.1]: 
+2020-04-11T20:36:28.571958+00:00 app[celery.1]: [2020-04-11 20:36:28,571: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.571959+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.571999+00:00 app[celery.1]: 
+2020-04-11T20:36:28.572698+00:00 app[celery.1]: 2020-04-11 20:36:28,572 INFO sqlalchemy.engine.base.Engine {'disk_name': 'UbuntuDev_OsDisk_1_2338e55ba8574f5c8b62f0c3edb0d3fb'}
+2020-04-11T20:36:28.572846+00:00 app[celery.1]: [2020-04-11 20:36:28,572: INFO/ForkPoolWorker-7] {'disk_name': 'UbuntuDev_OsDisk_1_2338e55ba8574f5c8b62f0c3edb0d3fb'}
+2020-04-11T20:36:28.576836+00:00 app[celery.1]: 2020-04-11 20:36:28,576 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.576837+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.576838+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.576838+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.576839+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.576844+00:00 app[celery.1]: 
+2020-04-11T20:36:28.577275+00:00 app[celery.1]: [2020-04-11 20:36:28,576: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.577276+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.577276+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.577276+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.577277+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.577278+00:00 app[celery.1]: 
+2020-04-11T20:36:28.577458+00:00 app[celery.1]: 2020-04-11 20:36:28,577 INFO sqlalchemy.engine.base.Engine {'vm_name': 'UbuntuDev', 'location': 'eastus', 'disk_name': 'UbuntuDev_OsDisk_1_2338e55ba8574f5c8b62f0c3edb0d3fb'}
+2020-04-11T20:36:28.577788+00:00 app[celery.1]: [2020-04-11 20:36:28,577: INFO/ForkPoolWorker-7] {'vm_name': 'UbuntuDev', 'location': 'eastus', 'disk_name': 'UbuntuDev_OsDisk_1_2338e55ba8574f5c8b62f0c3edb0d3fb'}
+2020-04-11T20:36:28.579386+00:00 app[celery.1]: 2020-04-11 20:36:28,578 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.579387+00:00 app[celery.1]: [2020-04-11 20:36:28,578: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.584144+00:00 app[celery.1]: 2020-04-11 20:36:28,583 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.584173+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.584274+00:00 app[celery.1]: 
+2020-04-11T20:36:28.584398+00:00 app[celery.1]: [2020-04-11 20:36:28,583: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.584399+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.584438+00:00 app[celery.1]: 
+2020-04-11T20:36:28.584724+00:00 app[celery.1]: 2020-04-11 20:36:28,584 INFO sqlalchemy.engine.base.Engine {'disk_name': 'weatheredhat046_OsDisk_1_26a4712207304699b9988134560150c6'}
+2020-04-11T20:36:28.584864+00:00 app[celery.1]: [2020-04-11 20:36:28,584: INFO/ForkPoolWorker-7] {'disk_name': 'weatheredhat046_OsDisk_1_26a4712207304699b9988134560150c6'}
+2020-04-11T20:36:28.587540+00:00 app[celery.1]: 2020-04-11 20:36:28,587 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.587541+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.587542+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.587542+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.587543+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.587878+00:00 app[celery.1]: 
+2020-04-11T20:36:28.588000+00:00 app[celery.1]: [2020-04-11 20:36:28,587: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.588001+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.588001+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.588002+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.588002+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.588042+00:00 app[celery.1]: 
+2020-04-11T20:36:28.588278+00:00 app[celery.1]: 2020-04-11 20:36:28,588 INFO sqlalchemy.engine.base.Engine {'vm_name': 'weatheredhat046', 'location': 'eastus', 'disk_name': 'weatheredhat046_OsDisk_1_26a4712207304699b9988134560150c6'}
+2020-04-11T20:36:28.588404+00:00 app[celery.1]: [2020-04-11 20:36:28,588: INFO/ForkPoolWorker-7] {'vm_name': 'weatheredhat046', 'location': 'eastus', 'disk_name': 'weatheredhat046_OsDisk_1_26a4712207304699b9988134560150c6'}
+2020-04-11T20:36:28.589593+00:00 app[celery.1]: 2020-04-11 20:36:28,589 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.589716+00:00 app[celery.1]: [2020-04-11 20:36:28,589: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.594493+00:00 app[celery.1]: 2020-04-11 20:36:28,594 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.594493+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.594498+00:00 app[celery.1]: 
+2020-04-11T20:36:28.594559+00:00 app[celery.1]: [2020-04-11 20:36:28,594: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.594560+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.594562+00:00 app[celery.1]: 
+2020-04-11T20:36:28.594772+00:00 app[celery.1]: 2020-04-11 20:36:28,594 INFO sqlalchemy.engine.base.Engine {'disk_name': 'wildcell3792354_OsDisk_1_923f460c31e041de81e9039b5d02a48f'}
+2020-04-11T20:36:28.594839+00:00 app[celery.1]: [2020-04-11 20:36:28,594: INFO/ForkPoolWorker-7] {'disk_name': 'wildcell3792354_OsDisk_1_923f460c31e041de81e9039b5d02a48f'}
+2020-04-11T20:36:28.597021+00:00 app[celery.1]: 2020-04-11 20:36:28,596 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.597022+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.597023+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.597024+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.597024+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.597029+00:00 app[celery.1]: 
+2020-04-11T20:36:28.597118+00:00 app[celery.1]: [2020-04-11 20:36:28,596: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.597119+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.597119+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.597120+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.597120+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.597125+00:00 app[celery.1]: 
+2020-04-11T20:36:28.597287+00:00 app[celery.1]: 2020-04-11 20:36:28,597 INFO sqlalchemy.engine.base.Engine {'vm_name': 'wildcell3792354', 'location': 'eastus', 'disk_name': 'wildcell3792354_OsDisk_1_923f460c31e041de81e9039b5d02a48f'}
+2020-04-11T20:36:28.597395+00:00 app[celery.1]: [2020-04-11 20:36:28,597: INFO/ForkPoolWorker-7] {'vm_name': 'wildcell3792354', 'location': 'eastus', 'disk_name': 'wildcell3792354_OsDisk_1_923f460c31e041de81e9039b5d02a48f'}
+2020-04-11T20:36:28.598451+00:00 app[celery.1]: 2020-04-11 20:36:28,598 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.598519+00:00 app[celery.1]: [2020-04-11 20:36:28,598: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.604873+00:00 app[celery.1]: 2020-04-11 20:36:28,604 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.604874+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.604880+00:00 app[celery.1]: 
+2020-04-11T20:36:28.604969+00:00 app[celery.1]: [2020-04-11 20:36:28,604: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.604970+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.604975+00:00 app[celery.1]: 
+2020-04-11T20:36:28.605153+00:00 app[celery.1]: 2020-04-11 20:36:28,605 INFO sqlalchemy.engine.base.Engine {'disk_name': 'coldmoon4342908_OsDisk_1_745721fe3fa041ffaa31db859fef3d2b'}
+2020-04-11T20:36:28.605264+00:00 app[celery.1]: [2020-04-11 20:36:28,605: INFO/ForkPoolWorker-7] {'disk_name': 'coldmoon4342908_OsDisk_1_745721fe3fa041ffaa31db859fef3d2b'}
+2020-04-11T20:36:28.607653+00:00 app[celery.1]: 2020-04-11 20:36:28,607 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.607654+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.607655+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.607655+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.607656+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.607661+00:00 app[celery.1]: 
+2020-04-11T20:36:28.607750+00:00 app[celery.1]: [2020-04-11 20:36:28,607: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.607750+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.607751+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.607751+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.607751+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.607772+00:00 app[celery.1]: 
+2020-04-11T20:36:28.608590+00:00 app[celery.1]: 2020-04-11 20:36:28,607 INFO sqlalchemy.engine.base.Engine {'vm_name': 'coldmoon4342908', 'location': 'southcentralus', 'disk_name': 'coldmoon4342908_OsDisk_1_745721fe3fa041ffaa31db859fef3d2b'}
+2020-04-11T20:36:28.608719+00:00 app[celery.1]: [2020-04-11 20:36:28,607: INFO/ForkPoolWorker-7] {'vm_name': 'coldmoon4342908', 'location': 'southcentralus', 'disk_name': 'coldmoon4342908_OsDisk_1_745721fe3fa041ffaa31db859fef3d2b'}
+2020-04-11T20:36:28.609925+00:00 app[celery.1]: 2020-04-11 20:36:28,609 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.610014+00:00 app[celery.1]: [2020-04-11 20:36:28,609: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.612229+00:00 app[celery.1]: 2020-04-11 20:36:28,612 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.612230+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.612236+00:00 app[celery.1]: 
+2020-04-11T20:36:28.612338+00:00 app[celery.1]: [2020-04-11 20:36:28,612: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.612339+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.612343+00:00 app[celery.1]: 
+2020-04-11T20:36:28.612614+00:00 app[celery.1]: 2020-04-11 20:36:28,612 INFO sqlalchemy.engine.base.Engine {'disk_name': 'crimsondust4209_OsDisk_1_18e0f897de4a4d55957dae9a6b474e8b'}
+2020-04-11T20:36:28.612733+00:00 app[celery.1]: [2020-04-11 20:36:28,612: INFO/ForkPoolWorker-7] {'disk_name': 'crimsondust4209_OsDisk_1_18e0f897de4a4d55957dae9a6b474e8b'}
+2020-04-11T20:36:28.614965+00:00 app[celery.1]: 2020-04-11 20:36:28,614 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.614966+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.614967+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.614967+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.614968+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.614968+00:00 app[celery.1]: 
+2020-04-11T20:36:28.615028+00:00 app[celery.1]: [2020-04-11 20:36:28,614: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.615029+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.615029+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.615029+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.615030+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.615030+00:00 app[celery.1]: 
+2020-04-11T20:36:28.615183+00:00 app[celery.1]: 2020-04-11 20:36:28,615 INFO sqlalchemy.engine.base.Engine {'vm_name': '', 'location': 'southcentralus', 'disk_name': 'crimsondust4209_OsDisk_1_18e0f897de4a4d55957dae9a6b474e8b'}
+2020-04-11T20:36:28.615256+00:00 app[celery.1]: [2020-04-11 20:36:28,615: INFO/ForkPoolWorker-7] {'vm_name': '', 'location': 'southcentralus', 'disk_name': 'crimsondust4209_OsDisk_1_18e0f897de4a4d55957dae9a6b474e8b'}
+2020-04-11T20:36:28.616369+00:00 app[celery.1]: 2020-04-11 20:36:28,616 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.616437+00:00 app[celery.1]: [2020-04-11 20:36:28,616: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.618774+00:00 app[celery.1]: 2020-04-11 20:36:28,618 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.618774+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.618778+00:00 app[celery.1]: 
+2020-04-11T20:36:28.618879+00:00 app[celery.1]: [2020-04-11 20:36:28,618: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.618879+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.618901+00:00 app[celery.1]: 
+2020-04-11T20:36:28.619276+00:00 app[celery.1]: 2020-04-11 20:36:28,618 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo10_OsDisk_1_d60434c918604e3686855850fc47dd00'}
+2020-04-11T20:36:28.619397+00:00 app[celery.1]: [2020-04-11 20:36:28,618: INFO/ForkPoolWorker-7] {'disk_name': 'Demo10_OsDisk_1_d60434c918604e3686855850fc47dd00'}
+2020-04-11T20:36:28.621829+00:00 app[celery.1]: 2020-04-11 20:36:28,621 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.621831+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.621831+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.621831+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.621832+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.621832+00:00 app[celery.1]: 
+2020-04-11T20:36:28.621937+00:00 app[celery.1]: [2020-04-11 20:36:28,621: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.621938+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.621939+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.621939+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.621939+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.621944+00:00 app[celery.1]: 
+2020-04-11T20:36:28.622158+00:00 app[celery.1]: 2020-04-11 20:36:28,621 INFO sqlalchemy.engine.base.Engine {'vm_name': 'Demo10', 'location': 'southcentralus', 'disk_name': 'Demo10_OsDisk_1_d60434c918604e3686855850fc47dd00'}
+2020-04-11T20:36:28.622288+00:00 app[celery.1]: [2020-04-11 20:36:28,621: INFO/ForkPoolWorker-7] {'vm_name': 'Demo10', 'location': 'southcentralus', 'disk_name': 'Demo10_OsDisk_1_d60434c918604e3686855850fc47dd00'}
+2020-04-11T20:36:28.623408+00:00 app[celery.1]: 2020-04-11 20:36:28,623 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.623506+00:00 app[celery.1]: [2020-04-11 20:36:28,623: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.626343+00:00 app[celery.1]: 2020-04-11 20:36:28,626 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.626344+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.626895+00:00 app[celery.1]: 
+2020-04-11T20:36:28.627034+00:00 app[celery.1]: [2020-04-11 20:36:28,626: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.627034+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.627038+00:00 app[celery.1]: 
+2020-04-11T20:36:28.627257+00:00 app[celery.1]: 2020-04-11 20:36:28,627 INFO sqlalchemy.engine.base.Engine {'disk_name': 'softdust4168871_OsDisk_1_1a0c02a1de4941dca7e87c318ee5580f'}
+2020-04-11T20:36:28.627493+00:00 app[celery.1]: [2020-04-11 20:36:28,627: INFO/ForkPoolWorker-7] {'disk_name': 'softdust4168871_OsDisk_1_1a0c02a1de4941dca7e87c318ee5580f'}
+2020-04-11T20:36:28.630179+00:00 app[celery.1]: 2020-04-11 20:36:28,630 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.630180+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.630181+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.630181+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.630182+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.630187+00:00 app[celery.1]: 
+2020-04-11T20:36:28.630286+00:00 app[celery.1]: [2020-04-11 20:36:28,630: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.630287+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.630287+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.630288+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.630288+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.630293+00:00 app[celery.1]: 
+2020-04-11T20:36:28.630516+00:00 app[celery.1]: 2020-04-11 20:36:28,630 INFO sqlalchemy.engine.base.Engine {'vm_name': 'softdust4168871', 'location': 'southcentralus', 'disk_name': 'softdust4168871_OsDisk_1_1a0c02a1de4941dca7e87c318ee5580f'}
+2020-04-11T20:36:28.630649+00:00 app[celery.1]: [2020-04-11 20:36:28,630: INFO/ForkPoolWorker-7] {'vm_name': 'softdust4168871', 'location': 'southcentralus', 'disk_name': 'softdust4168871_OsDisk_1_1a0c02a1de4941dca7e87c318ee5580f'}
+2020-04-11T20:36:28.631668+00:00 app[celery.1]: 2020-04-11 20:36:28,631 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.631745+00:00 app[celery.1]: [2020-04-11 20:36:28,631: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.633651+00:00 app[celery.1]: 2020-04-11 20:36:28,633 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.633653+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.633653+00:00 app[celery.1]: 
+2020-04-11T20:36:28.633704+00:00 app[celery.1]: [2020-04-11 20:36:28,633: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.633704+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.633705+00:00 app[celery.1]: 
+2020-04-11T20:36:28.633845+00:00 app[celery.1]: 2020-04-11 20:36:28,633 INFO sqlalchemy.engine.base.Engine {'disk_name': 'autumnmountain2_OsDisk_1_cbd0423261274c7baf2a475ac80bc05f'}
+2020-04-11T20:36:28.633898+00:00 app[celery.1]: [2020-04-11 20:36:28,633: INFO/ForkPoolWorker-7] {'disk_name': 'autumnmountain2_OsDisk_1_cbd0423261274c7baf2a475ac80bc05f'}
+2020-04-11T20:36:28.636134+00:00 app[celery.1]: 2020-04-11 20:36:28,636 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.636135+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.636136+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.636137+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.636138+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.636143+00:00 app[celery.1]: 
+2020-04-11T20:36:28.636226+00:00 app[celery.1]: [2020-04-11 20:36:28,636: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.636227+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.636228+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.636229+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.636229+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.636229+00:00 app[celery.1]: 
+2020-04-11T20:36:28.636411+00:00 app[celery.1]: 2020-04-11 20:36:28,636 INFO sqlalchemy.engine.base.Engine {'vm_name': 'autumnmountain2', 'location': 'northeurope', 'disk_name': 'autumnmountain2_OsDisk_1_cbd0423261274c7baf2a475ac80bc05f'}
+2020-04-11T20:36:28.636533+00:00 app[celery.1]: [2020-04-11 20:36:28,636: INFO/ForkPoolWorker-7] {'vm_name': 'autumnmountain2', 'location': 'northeurope', 'disk_name': 'autumnmountain2_OsDisk_1_cbd0423261274c7baf2a475ac80bc05f'}
+2020-04-11T20:36:28.637647+00:00 app[celery.1]: 2020-04-11 20:36:28,637 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.637739+00:00 app[celery.1]: [2020-04-11 20:36:28,637: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.639749+00:00 app[celery.1]: 2020-04-11 20:36:28,639 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.639750+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.639756+00:00 app[celery.1]: 
+2020-04-11T20:36:28.639835+00:00 app[celery.1]: [2020-04-11 20:36:28,639: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.639836+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.639840+00:00 app[celery.1]: 
+2020-04-11T20:36:28.639998+00:00 app[celery.1]: 2020-04-11 20:36:28,639 INFO sqlalchemy.engine.base.Engine {'disk_name': 'wispythunder467_OsDisk_1_a2a793a14cca42148714c4e66d60de26'}
+2020-04-11T20:36:28.640088+00:00 app[celery.1]: [2020-04-11 20:36:28,639: INFO/ForkPoolWorker-7] {'disk_name': 'wispythunder467_OsDisk_1_a2a793a14cca42148714c4e66d60de26'}
+2020-04-11T20:36:28.642181+00:00 app[celery.1]: 2020-04-11 20:36:28,642 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.642182+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.642183+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.642183+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.642184+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.642190+00:00 app[celery.1]: 
+2020-04-11T20:36:28.642281+00:00 app[celery.1]: [2020-04-11 20:36:28,642: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.642282+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.642283+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.642283+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.642284+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.642634+00:00 app[celery.1]: 
+2020-04-11T20:36:28.642848+00:00 app[celery.1]: 2020-04-11 20:36:28,642 INFO sqlalchemy.engine.base.Engine {'vm_name': '', 'location': 'northeurope', 'disk_name': 'wispythunder467_OsDisk_1_a2a793a14cca42148714c4e66d60de26'}
+2020-04-11T20:36:28.642932+00:00 app[celery.1]: [2020-04-11 20:36:28,642: INFO/ForkPoolWorker-7] {'vm_name': '', 'location': 'northeurope', 'disk_name': 'wispythunder467_OsDisk_1_a2a793a14cca42148714c4e66d60de26'}
+2020-04-11T20:36:28.644062+00:00 app[celery.1]: 2020-04-11 20:36:28,643 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.644140+00:00 app[celery.1]: [2020-04-11 20:36:28,643: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.646728+00:00 app[celery.1]: 2020-04-11 20:36:28,646 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.646729+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.646778+00:00 app[celery.1]: 
+2020-04-11T20:36:28.647074+00:00 app[celery.1]: [2020-04-11 20:36:28,646: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.647075+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.647132+00:00 app[celery.1]: 
+2020-04-11T20:36:28.647408+00:00 app[celery.1]: 2020-04-11 20:36:28,647 INFO sqlalchemy.engine.base.Engine {'disk_name': 'morningthunder2_OsDisk_1_4517df6619e843f5b977ff7dcbc2aea8'}
+2020-04-11T20:36:28.647588+00:00 app[celery.1]: [2020-04-11 20:36:28,647: INFO/ForkPoolWorker-7] {'disk_name': 'morningthunder2_OsDisk_1_4517df6619e843f5b977ff7dcbc2aea8'}
+2020-04-11T20:36:28.649903+00:00 app[celery.1]: 2020-04-11 20:36:28,649 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.649904+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.649905+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.649905+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.649906+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.649911+00:00 app[celery.1]: 
+2020-04-11T20:36:28.649957+00:00 app[celery.1]: [2020-04-11 20:36:28,649: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.649957+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.649958+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.649958+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.649958+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.649958+00:00 app[celery.1]: 
+2020-04-11T20:36:28.650091+00:00 app[celery.1]: 2020-04-11 20:36:28,649 INFO sqlalchemy.engine.base.Engine {'vm_name': '', 'location': 'westus2', 'disk_name': 'morningthunder2_OsDisk_1_4517df6619e843f5b977ff7dcbc2aea8'}
+2020-04-11T20:36:28.650187+00:00 app[celery.1]: [2020-04-11 20:36:28,649: INFO/ForkPoolWorker-7] {'vm_name': '', 'location': 'westus2', 'disk_name': 'morningthunder2_OsDisk_1_4517df6619e843f5b977ff7dcbc2aea8'}
+2020-04-11T20:36:28.651484+00:00 app[celery.1]: 2020-04-11 20:36:28,651 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.651573+00:00 app[celery.1]: [2020-04-11 20:36:28,651: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.653440+00:00 app[celery.1]: 2020-04-11 20:36:28,653 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.653441+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.653445+00:00 app[celery.1]: 
+2020-04-11T20:36:28.653499+00:00 app[celery.1]: [2020-04-11 20:36:28,653: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.653499+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.653517+00:00 app[celery.1]: 
+2020-04-11T20:36:28.653641+00:00 app[celery.1]: 2020-04-11 20:36:28,653 INFO sqlalchemy.engine.base.Engine {'disk_name': 'WestCoastDemo_OsDisk_1_f4ee14c567c1437fa8a0cadd4294b688'}
+2020-04-11T20:36:28.653704+00:00 app[celery.1]: [2020-04-11 20:36:28,653: INFO/ForkPoolWorker-7] {'disk_name': 'WestCoastDemo_OsDisk_1_f4ee14c567c1437fa8a0cadd4294b688'}
+2020-04-11T20:36:28.656335+00:00 app[celery.1]: 2020-04-11 20:36:28,656 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.656336+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.656337+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.656337+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.656337+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.656341+00:00 app[celery.1]: 
+2020-04-11T20:36:28.656438+00:00 app[celery.1]: [2020-04-11 20:36:28,656: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.656439+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:36:28.656439+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:36:28.656439+00:00 app[celery.1]: WHERE
+2020-04-11T20:36:28.656440+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:36:28.656461+00:00 app[celery.1]: 
+2020-04-11T20:36:28.656729+00:00 app[celery.1]: 2020-04-11 20:36:28,656 INFO sqlalchemy.engine.base.Engine {'vm_name': '', 'location': 'westus2', 'disk_name': 'WestCoastDemo_OsDisk_1_f4ee14c567c1437fa8a0cadd4294b688'}
+2020-04-11T20:36:28.656955+00:00 app[celery.1]: [2020-04-11 20:36:28,656: INFO/ForkPoolWorker-7] {'vm_name': '', 'location': 'westus2', 'disk_name': 'WestCoastDemo_OsDisk_1_f4ee14c567c1437fa8a0cadd4294b688'}
+2020-04-11T20:36:28.658135+00:00 app[celery.1]: 2020-04-11 20:36:28,657 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:36:28.658182+00:00 app[celery.1]: [2020-04-11 20:36:28,657: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:36:28.660398+00:00 app[celery.1]: 2020-04-11 20:36:28,660 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:36:28.660398+00:00 app[celery.1]: SELECT * FROM disks
+2020-04-11T20:36:28.660402+00:00 app[celery.1]: 
+2020-04-11T20:36:28.660507+00:00 app[celery.1]: [2020-04-11 20:36:28,660: INFO/ForkPoolWorker-7]
+2020-04-11T20:36:28.660752+00:00 app[celery.1]: SELECT * FROM disks
+2020-04-11T20:36:28.660771+00:00 app[celery.1]: 
+2020-04-11T20:36:28.660772+00:00 app[celery.1]: 2020-04-11 20:36:28,660 INFO sqlalchemy.engine.base.Engine {}
+2020-04-11T20:36:28.660871+00:00 app[celery.1]: [2020-04-11 20:36:28,660: INFO/ForkPoolWorker-7] {}
+2020-04-11T20:37:56+00:00 app[heroku-redis]: source=HEROKU_REDIS_SILVER addon=redis-contoured-32447 sample#active-connections=15 sample#load-avg-1m=0 sample#load-avg-5m=0.005 sample#load-avg-15m=0 sample#read-iops=0 sample#write-iops=25 sample#memory-total=15664264kB sample#memory-free=11819328kB sample#memory-cached=2520840kB sample#memory-redis=2044384bytes sample#hit-rate=0.61201 sample#evicted-keys=0
+2020-04-11T20:40:26.509313+00:00 heroku[router]: at=info method=POST path="/account/login" host=cube-celery-staging.herokuapp.com request_id=280f2dc5-b507-428f-a120-350c9ae77b94 fwd="173.48.254.226" dyno=web.1 connect=1ms service=53ms status=200 bytes=283 protocol=https
+2020-04-11T20:40:26.555611+00:00 heroku[router]: at=info method=POST path="/user/login" host=cube-celery-staging.herokuapp.com request_id=6b667ff7-ad80-4d10-befe-d8aa6dcf67b2 fwd="173.48.254.226" dyno=web.1 connect=1ms service=7ms status=200 bytes=347 protocol=https
+2020-04-11T20:40:26.477641+00:00 app[web.1]: 2020-04-11 20:40:26,477 INFO sqlalchemy.engine.base.Engine select version()
+2020-04-11T20:40:26.477728+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:select version()
+2020-04-11T20:40:26.478867+00:00 app[web.1]: 2020-04-11 20:40:26,477 INFO sqlalchemy.engine.base.Engine {}
+2020-04-11T20:40:26.478927+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{}
+2020-04-11T20:40:26.481731+00:00 app[web.1]: 2020-04-11 20:40:26,481 INFO sqlalchemy.engine.base.Engine select current_schema()
+2020-04-11T20:40:26.481810+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:select current_schema()
+2020-04-11T20:40:26.482019+00:00 app[web.1]: 2020-04-11 20:40:26,481 INFO sqlalchemy.engine.base.Engine {}
+2020-04-11T20:40:26.482108+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{}
+2020-04-11T20:40:26.484423+00:00 app[web.1]: 2020-04-11 20:40:26,484 INFO sqlalchemy.engine.base.Engine SELECT CAST('test plain returns' AS VARCHAR(60)) AS anon_1
+2020-04-11T20:40:26.484506+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:SELECT CAST('test plain returns' AS VARCHAR(60)) AS anon_1
+2020-04-11T20:40:26.484678+00:00 app[web.1]: 2020-04-11 20:40:26,484 INFO sqlalchemy.engine.base.Engine {}
+2020-04-11T20:40:26.484750+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{}
+2020-04-11T20:40:26.485952+00:00 app[web.1]: 2020-04-11 20:40:26,485 INFO sqlalchemy.engine.base.Engine SELECT CAST('test unicode returns' AS VARCHAR(60)) AS anon_1
+2020-04-11T20:40:26.486009+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:SELECT CAST('test unicode returns' AS VARCHAR(60)) AS anon_1
+2020-04-11T20:40:26.486169+00:00 app[web.1]: 2020-04-11 20:40:26,486 INFO sqlalchemy.engine.base.Engine {}
+2020-04-11T20:40:26.486225+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{}
+2020-04-11T20:40:26.487008+00:00 app[web.1]: 2020-04-11 20:40:26,486 INFO sqlalchemy.engine.base.Engine show standard_conforming_strings
+2020-04-11T20:40:26.487058+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:show standard_conforming_strings
+2020-04-11T20:40:26.487235+00:00 app[web.1]: 2020-04-11 20:40:26,487 INFO sqlalchemy.engine.base.Engine {}
+2020-04-11T20:40:26.487343+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{}
+2020-04-11T20:40:26.492081+00:00 app[web.1]: 2020-04-11 20:40:26,491 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:40:26.492082+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:40:26.492086+00:00 app[web.1]: 
+2020-04-11T20:40:26.492165+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:40:26.492167+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:40:26.492168+00:00 app[web.1]: 
+2020-04-11T20:40:26.492345+00:00 app[web.1]: 2020-04-11 20:40:26,492 INFO sqlalchemy.engine.base.Engine {'userName': 'briangu33@gmail.com'}
+2020-04-11T20:40:26.492427+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'briangu33@gmail.com'}
+2020-04-11T20:40:26.496424+00:00 app[web.1]: 2020-04-11 20:40:26,496 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:40:26.496426+00:00 app[web.1]: SELECT * FROM customers
+2020-04-11T20:40:26.496426+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:40:26.496431+00:00 app[web.1]: 
+2020-04-11T20:40:26.496491+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:40:26.496492+00:00 app[web.1]: SELECT * FROM customers
+2020-04-11T20:40:26.496492+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:40:26.496495+00:00 app[web.1]: 
+2020-04-11T20:40:26.496684+00:00 app[web.1]: 2020-04-11 20:40:26,496 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:40:26.496759+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:40:26.499904+00:00 app[web.1]: 2020-04-11 20:40:26,499 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:40:26.499905+00:00 app[web.1]: SELECT * FROM v_ms
+2020-04-11T20:40:26.499906+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:40:26.499909+00:00 app[web.1]: 
+2020-04-11T20:40:26.499965+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:40:26.499966+00:00 app[web.1]: SELECT * FROM v_ms
+2020-04-11T20:40:26.499966+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:40:26.500087+00:00 app[web.1]: 
+2020-04-11T20:40:26.500291+00:00 app[web.1]: 2020-04-11 20:40:26,500 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:40:26.500366+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:40:26.503641+00:00 app[web.1]: 2020-04-11 20:40:26,503 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:40:26.503641+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:40:26.503645+00:00 app[web.1]: 
+2020-04-11T20:40:26.503704+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:40:26.503704+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:40:26.503725+00:00 app[web.1]: 
+2020-04-11T20:40:26.503906+00:00 app[web.1]: 2020-04-11 20:40:26,503 INFO sqlalchemy.engine.base.Engine {'userName': 'briangu33@gmail.com'}
+2020-04-11T20:40:26.503983+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'briangu33@gmail.com'}
+2020-04-11T20:40:26.550771+00:00 app[web.1]: 2020-04-11 20:40:26,550 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:40:26.550773+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:40:26.550786+00:00 app[web.1]: 
+2020-04-11T20:40:26.550820+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:40:26.550820+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:40:26.550839+00:00 app[web.1]: 
+2020-04-11T20:40:26.551041+00:00 app[web.1]: 2020-04-11 20:40:26,550 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:40:26.551121+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:39:40+00:00 app[heroku-redis]: source=HEROKU_REDIS_SILVER addon=redis-contoured-32447 sample#active-connections=10 sample#load-avg-1m=0.11 sample#load-avg-5m=0.05 sample#load-avg-15m=0.01 sample#read-iops=0 sample#write-iops=25.028 sample#memory-total=15664264kB sample#memory-free=11759476kB sample#memory-cached=2587172kB sample#memory-redis=1898944bytes sample#hit-rate=0.61174 sample#evicted-keys=0
+2020-04-11T20:40:31.086891+00:00 heroku[router]: at=info method=POST path="/disk/attach" host=cube-celery-staging.herokuapp.com request_id=a5515f96-6e9f-40b6-87ad-fb7e4a98723c fwd="173.48.254.226" dyno=web.1 connect=1ms service=8ms status=202 bytes=249 protocol=https
+2020-04-11T20:40:31.126759+00:00 heroku[router]: at=info method=GET path="/status/da9441a9-e52a-4feb-8788-dfcf180e2e17" host=cube-celery-staging.herokuapp.com request_id=7ca43213-ae05-40cb-ba8c-90708b4444e8 fwd="173.48.254.226" dyno=web.1 connect=1ms service=12ms status=200 bytes=211 protocol=https
+2020-04-11T20:40:31.078774+00:00 app[web.1]: Received disk attach request
+2020-04-11T20:40:31.078786+00:00 app[web.1]: {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:40:31.091789+00:00 app[celery.1]: [2020-04-11 20:40:31,091: WARNING/ForkPoolWorker-7] Swap disk task added to Redis queue
+2020-04-11T20:40:31.158137+00:00 heroku[router]: at=info method=GET path="/status/da9441a9-e52a-4feb-8788-dfcf180e2e17" host=cube-celery-staging.herokuapp.com request_id=8388897f-536c-44e9-a91a-89632d5203f3 fwd="173.48.254.226" dyno=web.1 connect=1ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:40:31.460624+00:00 app[celery.1]: [2020-04-11 20:40:31,460: WARNING/ForkPoolWorker-7] Disk already attached to VM Demo8
+2020-04-11T20:40:31.461444+00:00 app[celery.1]: 2020-04-11 20:40:31,461 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:40:31.461446+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:40:31.461452+00:00 app[celery.1]: 
+2020-04-11T20:40:31.461530+00:00 app[celery.1]: [2020-04-11 20:40:31,461: INFO/ForkPoolWorker-7]
+2020-04-11T20:40:31.461530+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:40:31.461534+00:00 app[celery.1]: 
+2020-04-11T20:40:31.461778+00:00 app[celery.1]: 2020-04-11 20:40:31,461 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:40:31.461848+00:00 app[celery.1]: [2020-04-11 20:40:31,461: INFO/ForkPoolWorker-7] {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:40:31.477976+00:00 app[celery.1]: 2020-04-11 20:40:31,477 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:40:31.477979+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:40:31.477980+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:40:31.477981+00:00 app[celery.1]: WHERE
+2020-04-11T20:40:31.477982+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:40:31.477989+00:00 app[celery.1]: 
+2020-04-11T20:40:31.478088+00:00 app[celery.1]: [2020-04-11 20:40:31,477: INFO/ForkPoolWorker-7]
+2020-04-11T20:40:31.478088+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:40:31.478089+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:40:31.478090+00:00 app[celery.1]: WHERE
+2020-04-11T20:40:31.478090+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:40:31.478094+00:00 app[celery.1]: 
+2020-04-11T20:40:31.478352+00:00 app[celery.1]: 2020-04-11 20:40:31,478 INFO sqlalchemy.engine.base.Engine {'vm_name': 'Demo8', 'location': 'eastus', 'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:40:31.478487+00:00 app[celery.1]: [2020-04-11 20:40:31,478: INFO/ForkPoolWorker-7] {'vm_name': 'Demo8', 'location': 'eastus', 'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:40:31.480211+00:00 app[celery.1]: 2020-04-11 20:40:31,480 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:40:31.480281+00:00 app[celery.1]: [2020-04-11 20:40:31,480: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:40:31.482440+00:00 app[celery.1]: 2020-04-11 20:40:31,482 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:40:31.482441+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:40:31.482442+00:00 app[celery.1]: 
+2020-04-11T20:40:31.482497+00:00 app[celery.1]: [2020-04-11 20:40:31,482: INFO/ForkPoolWorker-7]
+2020-04-11T20:40:31.482498+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:40:31.482499+00:00 app[celery.1]: 
+2020-04-11T20:40:31.482632+00:00 app[celery.1]: 2020-04-11 20:40:31,482 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:40:31.482689+00:00 app[celery.1]: [2020-04-11 20:40:31,482: INFO/ForkPoolWorker-7] {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:40:31.487144+00:00 app[celery.1]: 2020-04-11 20:40:31,487 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:40:31.487146+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:40:31.487148+00:00 app[celery.1]: SET "disk_name" = %(disk_name)s, "username" = %(username)s
+2020-04-11T20:40:31.487148+00:00 app[celery.1]: WHERE
+2020-04-11T20:40:31.487149+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:40:31.487150+00:00 app[celery.1]: 
+2020-04-11T20:40:31.487202+00:00 app[celery.1]: [2020-04-11 20:40:31,487: INFO/ForkPoolWorker-7]
+2020-04-11T20:40:31.487203+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:40:31.487204+00:00 app[celery.1]: SET "disk_name" = %(disk_name)s, "username" = %(username)s
+2020-04-11T20:40:31.487205+00:00 app[celery.1]: WHERE
+2020-04-11T20:40:31.487205+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:40:31.487206+00:00 app[celery.1]: 
+2020-04-11T20:40:31.487373+00:00 app[celery.1]: 2020-04-11 20:40:31,487 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2', 'username': 'briangu33@gmail.com', 'vm_name': 'Demo8'}
+2020-04-11T20:40:31.487427+00:00 app[celery.1]: [2020-04-11 20:40:31,487: INFO/ForkPoolWorker-7] {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2', 'username': 'briangu33@gmail.com', 'vm_name': 'Demo8'}
+2020-04-11T20:40:31.489965+00:00 app[celery.1]: 2020-04-11 20:40:31,489 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:40:31.490035+00:00 app[celery.1]: [2020-04-11 20:40:31,489: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:40:31.492100+00:00 app[celery.1]: 2020-04-11 20:40:31,491 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:40:31.492101+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:40:31.492101+00:00 app[celery.1]: SET state = %(state)s
+2020-04-11T20:40:31.492102+00:00 app[celery.1]: WHERE
+2020-04-11T20:40:31.492103+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:40:31.492107+00:00 app[celery.1]: 
+2020-04-11T20:40:31.492182+00:00 app[celery.1]: [2020-04-11 20:40:31,491: INFO/ForkPoolWorker-7]
+2020-04-11T20:40:31.492182+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:40:31.492183+00:00 app[celery.1]: SET state = %(state)s
+2020-04-11T20:40:31.492184+00:00 app[celery.1]: WHERE
+2020-04-11T20:40:31.492184+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:40:31.492188+00:00 app[celery.1]: 
+2020-04-11T20:40:31.492384+00:00 app[celery.1]: 2020-04-11 20:40:31,492 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:40:31.492535+00:00 app[celery.1]: [2020-04-11 20:40:31,492: INFO/ForkPoolWorker-7] {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:40:31.495452+00:00 app[celery.1]: 2020-04-11 20:40:31,494 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:40:31.495557+00:00 app[celery.1]: [2020-04-11 20:40:31,494: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:40:31.498299+00:00 app[celery.1]: [2020-04-11 20:40:31,497: WARNING/ForkPoolWorker-7] Database updated
+2020-04-11T20:40:31.645416+00:00 app[celery.1]: [2020-04-11 20:40:31,645: WARNING/ForkPoolWorker-7] {'additional_properties': {}, 'code': 'PowerState/running', 'level': <StatusLevelTypes.info: 'Info'>, 'display_status': 'VM running', 'message': None, 'time': None}
+2020-04-11T20:40:31.645514+00:00 app[celery.1]: [2020-04-11 20:40:31,645: WARNING/ForkPoolWorker-7] VM is started and ready to use
+2020-04-11T20:40:31.646013+00:00 app[celery.1]: 2020-04-11 20:40:31,645 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:40:31.646014+00:00 app[celery.1]: SELECT * FROM v_ms WHERE "vm_name" = %(vm_name)s
+2020-04-11T20:40:31.646017+00:00 app[celery.1]: 
+2020-04-11T20:40:31.646071+00:00 app[celery.1]: [2020-04-11 20:40:31,645: INFO/ForkPoolWorker-7]
+2020-04-11T20:40:31.646072+00:00 app[celery.1]: SELECT * FROM v_ms WHERE "vm_name" = %(vm_name)s
+2020-04-11T20:40:31.646073+00:00 app[celery.1]: 
+2020-04-11T20:40:31.646201+00:00 app[celery.1]: 2020-04-11 20:40:31,646 INFO sqlalchemy.engine.base.Engine {'vm_name': 'Demo8'}
+2020-04-11T20:40:31.646262+00:00 app[celery.1]: [2020-04-11 20:40:31,646: INFO/ForkPoolWorker-7] {'vm_name': 'Demo8'}
+2020-04-11T20:40:36.190103+00:00 heroku[router]: at=info method=GET path="/status/da9441a9-e52a-4feb-8788-dfcf180e2e17" host=cube-celery-staging.herokuapp.com request_id=999f8578-4e2d-4a56-ab2e-b6f7f3dc8ca4 fwd="173.48.254.226" dyno=web.1 connect=1ms service=6ms status=200 bytes=406 protocol=https
+2020-04-11T20:42:12+00:00 app[heroku-redis]: source=HEROKU_REDIS_SILVER addon=redis-contoured-32447 sample#active-connections=10 sample#load-avg-1m=0.035 sample#load-avg-5m=0.035 sample#load-avg-15m=0.01 sample#read-iops=0 sample#write-iops=25.205 sample#memory-total=15664264kB sample#memory-free=11737312kB sample#memory-cached=2608980kB sample#memory-redis=1899456bytes sample#hit-rate=0.61323 sample#evicted-keys=0
+2020-04-11T20:43:59.550307+00:00 heroku[router]: at=info method=POST path="/user/login" host=cube-celery-staging.herokuapp.com request_id=ab77b1a7-09ef-4872-a182-ec3b16c4e431 fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=347 protocol=https
+2020-04-11T20:43:59.506013+00:00 heroku[router]: at=info method=POST path="/account/login" host=cube-celery-staging.herokuapp.com request_id=cbf9712b-d84e-497e-9856-b660f635a6fd fwd="173.48.254.226" dyno=web.1 connect=0ms service=16ms status=200 bytes=283 protocol=https
+2020-04-11T20:43:59.491908+00:00 app[web.1]: 2020-04-11 20:43:59,491 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:43:59.491923+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:43:59.491931+00:00 app[web.1]: 
+2020-04-11T20:43:59.491932+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:43:59.491932+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:43:59.491933+00:00 app[web.1]: 
+2020-04-11T20:43:59.492115+00:00 app[web.1]: 2020-04-11 20:43:59,491 INFO sqlalchemy.engine.base.Engine {'userName': 'briangu33@gmail.com'}
+2020-04-11T20:43:59.492170+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'briangu33@gmail.com'}
+2020-04-11T20:43:59.495779+00:00 app[web.1]: 2020-04-11 20:43:59,495 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:43:59.495780+00:00 app[web.1]: SELECT * FROM customers
+2020-04-11T20:43:59.495781+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:43:59.495782+00:00 app[web.1]: 
+2020-04-11T20:43:59.495812+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:43:59.495813+00:00 app[web.1]: SELECT * FROM customers
+2020-04-11T20:43:59.495814+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:43:59.495814+00:00 app[web.1]: 
+2020-04-11T20:43:59.495932+00:00 app[web.1]: 2020-04-11 20:43:59,495 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:43:59.495977+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:43:59.498712+00:00 app[web.1]: 2020-04-11 20:43:59,498 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:43:59.498713+00:00 app[web.1]: SELECT * FROM v_ms
+2020-04-11T20:43:59.498714+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:43:59.498714+00:00 app[web.1]: 
+2020-04-11T20:43:59.498741+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:43:59.498742+00:00 app[web.1]: SELECT * FROM v_ms
+2020-04-11T20:43:59.498742+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:43:59.498743+00:00 app[web.1]: 
+2020-04-11T20:43:59.498869+00:00 app[web.1]: 2020-04-11 20:43:59,498 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:43:59.498922+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:43:59.501718+00:00 app[web.1]: 2020-04-11 20:43:59,501 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:43:59.501719+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:43:59.501722+00:00 app[web.1]: 
+2020-04-11T20:43:59.501765+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:43:59.501766+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:43:59.501768+00:00 app[web.1]: 
+2020-04-11T20:43:59.501887+00:00 app[web.1]: 2020-04-11 20:43:59,501 INFO sqlalchemy.engine.base.Engine {'userName': 'briangu33@gmail.com'}
+2020-04-11T20:43:59.501929+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'briangu33@gmail.com'}
+2020-04-11T20:43:59.545746+00:00 app[web.1]: 2020-04-11 20:43:59,545 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:43:59.545748+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:43:59.545755+00:00 app[web.1]: 
+2020-04-11T20:43:59.545757+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:43:59.545758+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:43:59.545786+00:00 app[web.1]: 
+2020-04-11T20:43:59.545912+00:00 app[web.1]: 2020-04-11 20:43:59,545 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:43:59.545974+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:44:01.998444+00:00 heroku[router]: at=info method=GET path="/status/1a98316b-09a4-4fbd-8788-a52f3a2cb8ed" host=cube-celery-staging.herokuapp.com request_id=370104d1-4509-4b2f-a4fc-767dd8dca1fe fwd="173.48.254.226" dyno=web.1 connect=1ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:44:02.035246+00:00 heroku[router]: at=info method=GET path="/status/1a98316b-09a4-4fbd-8788-a52f3a2cb8ed" host=cube-celery-staging.herokuapp.com request_id=a3db992e-eb4e-4100-a513-d9f2022b2d51 fwd="173.48.254.226" dyno=web.1 connect=1ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:44:01.946717+00:00 app[web.1]: Received disk attach request
+2020-04-11T20:44:01.946734+00:00 app[web.1]: {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:44:01.963972+00:00 app[celery.1]: [2020-04-11 20:44:01,963: WARNING/ForkPoolWorker-7] Swap disk task added to Redis queue
+2020-04-11T20:44:01.954637+00:00 heroku[router]: at=info method=POST path="/disk/attach" host=cube-celery-staging.herokuapp.com request_id=d1c388f2-3681-4bae-a72a-a8d0ff568c3d fwd="173.48.254.226" dyno=web.1 connect=1ms service=8ms status=202 bytes=249 protocol=https
+2020-04-11T20:44:02.434634+00:00 app[celery.1]: [2020-04-11 20:44:02,434: WARNING/ForkPoolWorker-7] Disk already attached to VM Demo8
+2020-04-11T20:44:02.437336+00:00 app[celery.1]: 2020-04-11 20:44:02,437 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:44:02.437337+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:44:02.437343+00:00 app[celery.1]: 
+2020-04-11T20:44:02.437444+00:00 app[celery.1]: [2020-04-11 20:44:02,437: INFO/ForkPoolWorker-7]
+2020-04-11T20:44:02.437445+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:44:02.437450+00:00 app[celery.1]: 
+2020-04-11T20:44:02.437694+00:00 app[celery.1]: 2020-04-11 20:44:02,437 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:44:02.437843+00:00 app[celery.1]: [2020-04-11 20:44:02,437: INFO/ForkPoolWorker-7] {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:44:02.442682+00:00 app[celery.1]: 2020-04-11 20:44:02,442 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:44:02.442684+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:44:02.442685+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:44:02.442686+00:00 app[celery.1]: WHERE
+2020-04-11T20:44:02.442687+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:44:02.442693+00:00 app[celery.1]: 
+2020-04-11T20:44:02.442816+00:00 app[celery.1]: [2020-04-11 20:44:02,442: INFO/ForkPoolWorker-7]
+2020-04-11T20:44:02.442817+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:44:02.442817+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:44:02.442817+00:00 app[celery.1]: WHERE
+2020-04-11T20:44:02.442818+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:44:02.442818+00:00 app[celery.1]: 
+2020-04-11T20:44:02.443036+00:00 app[celery.1]: 2020-04-11 20:44:02,442 INFO sqlalchemy.engine.base.Engine {'vm_name': 'Demo8', 'location': 'eastus', 'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:44:02.443176+00:00 app[celery.1]: [2020-04-11 20:44:02,442: INFO/ForkPoolWorker-7] {'vm_name': 'Demo8', 'location': 'eastus', 'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:44:02.444455+00:00 app[celery.1]: 2020-04-11 20:44:02,444 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:44:02.444935+00:00 app[celery.1]: [2020-04-11 20:44:02,444: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:44:02.447816+00:00 app[celery.1]: 2020-04-11 20:44:02,447 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:44:02.447817+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:44:02.447822+00:00 app[celery.1]: 
+2020-04-11T20:44:02.447940+00:00 app[celery.1]: [2020-04-11 20:44:02,447: INFO/ForkPoolWorker-7]
+2020-04-11T20:44:02.447941+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:44:02.447946+00:00 app[celery.1]: 
+2020-04-11T20:44:02.448229+00:00 app[celery.1]: 2020-04-11 20:44:02,447 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:44:02.448423+00:00 app[celery.1]: [2020-04-11 20:44:02,447: INFO/ForkPoolWorker-7] {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:44:02.458107+00:00 app[celery.1]: 2020-04-11 20:44:02,457 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:44:02.458110+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:44:02.458111+00:00 app[celery.1]: SET "disk_name" = %(disk_name)s, "username" = %(username)s
+2020-04-11T20:44:02.458112+00:00 app[celery.1]: WHERE
+2020-04-11T20:44:02.458112+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:44:02.458118+00:00 app[celery.1]: 
+2020-04-11T20:44:02.458316+00:00 app[celery.1]: [2020-04-11 20:44:02,457: INFO/ForkPoolWorker-7]
+2020-04-11T20:44:02.458317+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:44:02.458318+00:00 app[celery.1]: SET "disk_name" = %(disk_name)s, "username" = %(username)s
+2020-04-11T20:44:02.458318+00:00 app[celery.1]: WHERE
+2020-04-11T20:44:02.458319+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:44:02.458319+00:00 app[celery.1]: 
+2020-04-11T20:44:02.459104+00:00 app[celery.1]: 2020-04-11 20:44:02,458 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2', 'username': 'briangu33@gmail.com', 'vm_name': 'Demo8'}
+2020-04-11T20:44:02.459295+00:00 app[celery.1]: [2020-04-11 20:44:02,458: INFO/ForkPoolWorker-7] {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2', 'username': 'briangu33@gmail.com', 'vm_name': 'Demo8'}
+2020-04-11T20:44:02.469141+00:00 app[celery.1]: 2020-04-11 20:44:02,468 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:44:02.469254+00:00 app[celery.1]: [2020-04-11 20:44:02,468: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:44:02.478675+00:00 app[celery.1]: 2020-04-11 20:44:02,478 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:44:02.478677+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:44:02.478677+00:00 app[celery.1]: SET state = %(state)s
+2020-04-11T20:44:02.478679+00:00 app[celery.1]: WHERE
+2020-04-11T20:44:02.478679+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:44:02.478685+00:00 app[celery.1]: 
+2020-04-11T20:44:02.478786+00:00 app[celery.1]: [2020-04-11 20:44:02,478: INFO/ForkPoolWorker-7]
+2020-04-11T20:44:02.478787+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:44:02.478787+00:00 app[celery.1]: SET state = %(state)s
+2020-04-11T20:44:02.478788+00:00 app[celery.1]: WHERE
+2020-04-11T20:44:02.478788+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:44:02.478793+00:00 app[celery.1]: 
+2020-04-11T20:44:02.479049+00:00 app[celery.1]: 2020-04-11 20:44:02,478 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:44:02.479156+00:00 app[celery.1]: [2020-04-11 20:44:02,478: INFO/ForkPoolWorker-7] {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:44:02.492986+00:00 app[celery.1]: 2020-04-11 20:44:02,492 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:44:02.493100+00:00 app[celery.1]: [2020-04-11 20:44:02,492: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:44:02.495570+00:00 app[celery.1]: [2020-04-11 20:44:02,495: WARNING/ForkPoolWorker-7] Database updated
+2020-04-11T20:44:02.646586+00:00 app[celery.1]: [2020-04-11 20:44:02,646: WARNING/ForkPoolWorker-7] {'additional_properties': {}, 'code': 'PowerState/running', 'level': <StatusLevelTypes.info: 'Info'>, 'display_status': 'VM running', 'message': None, 'time': None}
+2020-04-11T20:44:02.646788+00:00 app[celery.1]: [2020-04-11 20:44:02,646: WARNING/ForkPoolWorker-7] VM is started and ready to use
+2020-04-11T20:44:02.647563+00:00 app[celery.1]: 2020-04-11 20:44:02,647 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:44:02.647564+00:00 app[celery.1]: SELECT * FROM v_ms WHERE "vm_name" = %(vm_name)s
+2020-04-11T20:44:02.647570+00:00 app[celery.1]: 
+2020-04-11T20:44:02.647658+00:00 app[celery.1]: [2020-04-11 20:44:02,647: INFO/ForkPoolWorker-7]
+2020-04-11T20:44:02.647659+00:00 app[celery.1]: SELECT * FROM v_ms WHERE "vm_name" = %(vm_name)s
+2020-04-11T20:44:02.647664+00:00 app[celery.1]: 
+2020-04-11T20:44:02.647889+00:00 app[celery.1]: 2020-04-11 20:44:02,647 INFO sqlalchemy.engine.base.Engine {'vm_name': 'Demo8'}
+2020-04-11T20:44:02.648001+00:00 app[celery.1]: [2020-04-11 20:44:02,647: INFO/ForkPoolWorker-7] {'vm_name': 'Demo8'}
+2020-04-11T20:44:07.087731+00:00 heroku[router]: at=info method=GET path="/status/1a98316b-09a4-4fbd-8788-a52f3a2cb8ed" host=cube-celery-staging.herokuapp.com request_id=ae2154f5-6108-445d-a369-9695d3e66eb0 fwd="173.48.254.226" dyno=web.1 connect=0ms service=3ms status=200 bytes=406 protocol=https
+2020-04-11T20:44:14.031752+00:00 app[web.1]: 2020-04-11 20:44:14,031 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:44:14.031775+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:44:14.031776+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:44:14.031782+00:00 app[web.1]: 
+2020-04-11T20:44:14.031782+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:44:14.031783+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:44:14.031783+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:44:14.031784+00:00 app[web.1]: 
+2020-04-11T20:44:14.031900+00:00 app[web.1]: 2020-04-11 20:44:14,031 INFO sqlalchemy.engine.base.Engine {'userName': 'briangu33@gmail.com', 'currentTime': '04-11-2020, 20:44:14', 'action': 'logon', 'is_user': False}
+2020-04-11T20:44:14.031948+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'briangu33@gmail.com', 'currentTime': '04-11-2020, 20:44:14', 'action': 'logon', 'is_user': False}
+2020-04-11T20:44:14.032847+00:00 app[web.1]: 2020-04-11 20:44:14,032 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:44:14.032878+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:44:14.050720+00:00 app[web.1]: 2020-04-11 20:44:14,050 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:44:14.050721+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:44:14.050722+00:00 app[web.1]: 
+2020-04-11T20:44:14.050757+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:44:14.050758+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:44:14.050762+00:00 app[web.1]: 
+2020-04-11T20:44:14.050922+00:00 app[web.1]: 2020-04-11 20:44:14,050 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:44:14.050979+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:44:14.054458+00:00 app[web.1]: 2020-04-11 20:44:14,054 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:44:14.054459+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:44:14.054459+00:00 app[web.1]: 
+2020-04-11T20:44:14.054487+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:44:14.054488+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:44:14.054488+00:00 app[web.1]: 
+2020-04-11T20:44:14.054633+00:00 app[web.1]: 2020-04-11 20:44:14,054 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:44:14.054698+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:44:14.195664+00:00 app[web.1]: Demo8
+2020-04-11T20:44:14.341447+00:00 heroku[router]: at=info method=POST path="/tracker/logon" host=cube-celery-staging.herokuapp.com request_id=c200e2d9-3536-47c2-b61e-1da29086e50d fwd="173.48.254.226" dyno=web.1 connect=0ms service=311ms status=200 bytes=199 protocol=https
+2020-04-11T20:44:14.333294+00:00 app[web.1]: RUNNING_UNAVAILABLE
+2020-04-11T20:44:14.335108+00:00 app[web.1]: 2020-04-11 20:44:14,334 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:44:14.335109+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:44:14.335109+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:44:14.335110+00:00 app[web.1]: WHERE
+2020-04-11T20:44:14.335111+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:44:14.335111+00:00 app[web.1]: 
+2020-04-11T20:44:14.335144+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:44:14.335145+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:44:14.335145+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:44:14.335146+00:00 app[web.1]: WHERE
+2020-04-11T20:44:14.335146+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:44:14.335173+00:00 app[web.1]: 
+2020-04-11T20:44:14.335393+00:00 app[web.1]: 2020-04-11 20:44:14,335 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:44:14.335486+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:44:14.336660+00:00 app[web.1]: 2020-04-11 20:44:14,336 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:44:14.336720+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:44:58+00:00 app[heroku-redis]: source=HEROKU_REDIS_SILVER addon=redis-contoured-32447 sample#active-connections=10 sample#load-avg-1m=0.09 sample#load-avg-5m=0.05 sample#load-avg-15m=0.015 sample#read-iops=0 sample#write-iops=23.871 sample#memory-total=15664264kB sample#memory-free=11922248kB sample#memory-cached=2425568kB sample#memory-redis=1899968bytes sample#hit-rate=0.61456 sample#evicted-keys=0
+2020-04-11T20:47:25+00:00 app[heroku-redis]: source=HEROKU_REDIS_SILVER addon=redis-contoured-32447 sample#active-connections=10 sample#load-avg-1m=0.05 sample#load-avg-5m=0.045 sample#load-avg-15m=0.015 sample#read-iops=0 sample#write-iops=24.182 sample#memory-total=15664264kB sample#memory-free=11880408kB sample#memory-cached=2466620kB sample#memory-redis=1899968bytes sample#hit-rate=0.61443 sample#evicted-keys=0
+2020-04-11T20:48:21.664005+00:00 heroku[router]: at=info method=POST path="/account/login" host=cube-celery-staging.herokuapp.com request_id=fab0e48d-0bd8-4892-8b07-933ff43f0709 fwd="173.48.254.226" dyno=web.1 connect=0ms service=14ms status=200 bytes=283 protocol=https
+2020-04-11T20:48:21.690854+00:00 heroku[router]: at=info method=POST path="/user/login" host=cube-celery-staging.herokuapp.com request_id=d7ba05c0-f5b2-4e45-90df-d0afad17bfd0 fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=347 protocol=https
+2020-04-11T20:48:21.651172+00:00 app[web.1]: 2020-04-11 20:48:21,651 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:21.651233+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:48:21.651242+00:00 app[web.1]: 
+2020-04-11T20:48:21.651243+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:48:21.651243+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:48:21.651244+00:00 app[web.1]: 
+2020-04-11T20:48:21.651390+00:00 app[web.1]: 2020-04-11 20:48:21,651 INFO sqlalchemy.engine.base.Engine {'userName': 'briangu33@gmail.com'}
+2020-04-11T20:48:21.651443+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'briangu33@gmail.com'}
+2020-04-11T20:48:21.654540+00:00 app[web.1]: 2020-04-11 20:48:21,654 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:21.654541+00:00 app[web.1]: SELECT * FROM customers
+2020-04-11T20:48:21.654541+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:48:21.654544+00:00 app[web.1]: 
+2020-04-11T20:48:21.654588+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:48:21.654589+00:00 app[web.1]: SELECT * FROM customers
+2020-04-11T20:48:21.654590+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:48:21.654590+00:00 app[web.1]: 
+2020-04-11T20:48:21.654700+00:00 app[web.1]: 2020-04-11 20:48:21,654 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:48:21.654758+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:48:21.657306+00:00 app[web.1]: 2020-04-11 20:48:21,657 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:21.657307+00:00 app[web.1]: SELECT * FROM v_ms
+2020-04-11T20:48:21.657307+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:48:21.657311+00:00 app[web.1]: 
+2020-04-11T20:48:21.657347+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:48:21.657347+00:00 app[web.1]: SELECT * FROM v_ms
+2020-04-11T20:48:21.657348+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:48:21.657348+00:00 app[web.1]: 
+2020-04-11T20:48:21.657483+00:00 app[web.1]: 2020-04-11 20:48:21,657 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:48:21.657541+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:48:21.659976+00:00 app[web.1]: 2020-04-11 20:48:21,659 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:21.659977+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:48:21.659978+00:00 app[web.1]: 
+2020-04-11T20:48:21.660030+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:48:21.660031+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:48:21.660031+00:00 app[web.1]: 
+2020-04-11T20:48:21.660172+00:00 app[web.1]: 2020-04-11 20:48:21,660 INFO sqlalchemy.engine.base.Engine {'userName': 'briangu33@gmail.com'}
+2020-04-11T20:48:21.660223+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'briangu33@gmail.com'}
+2020-04-11T20:48:21.687350+00:00 app[web.1]: 2020-04-11 20:48:21,687 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:21.687350+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:48:21.687354+00:00 app[web.1]: 
+2020-04-11T20:48:21.687388+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:48:21.687389+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:48:21.687406+00:00 app[web.1]: 
+2020-04-11T20:48:21.687530+00:00 app[web.1]: 2020-04-11 20:48:21,687 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:48:21.687601+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:48:42.194963+00:00 heroku[router]: at=info method=GET path="/status/2941e46c-c3e0-4fe8-b0a4-558a643fa298" host=cube-celery-staging.herokuapp.com request_id=475ac6f0-e57e-413d-b99c-df33e0d919c7 fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:48:42.225349+00:00 heroku[router]: at=info method=GET path="/status/2941e46c-c3e0-4fe8-b0a4-558a643fa298" host=cube-celery-staging.herokuapp.com request_id=bf8ef837-d203-4ee2-a3a3-4d465192c8d5 fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:48:42.156803+00:00 heroku[router]: at=info method=POST path="/disk/attach" host=cube-celery-staging.herokuapp.com request_id=a72bb878-142f-454b-9dd5-421b5b055355 fwd="173.48.254.226" dyno=web.1 connect=1ms service=7ms status=202 bytes=249 protocol=https
+2020-04-11T20:48:42.150313+00:00 app[web.1]: Received disk attach request
+2020-04-11T20:48:42.150361+00:00 app[web.1]: {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:48:42.164884+00:00 app[celery.1]: [2020-04-11 20:48:42,164: WARNING/ForkPoolWorker-7] Swap disk task added to Redis queue
+2020-04-11T20:48:42.576335+00:00 app[celery.1]: [2020-04-11 20:48:42,576: WARNING/ForkPoolWorker-7] Disk already attached to VM Demo8
+2020-04-11T20:48:42.576887+00:00 app[celery.1]: 2020-04-11 20:48:42,576 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:42.576888+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:48:42.576893+00:00 app[celery.1]: 
+2020-04-11T20:48:42.576942+00:00 app[celery.1]: [2020-04-11 20:48:42,576: INFO/ForkPoolWorker-7]
+2020-04-11T20:48:42.576942+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:48:42.576944+00:00 app[celery.1]: 
+2020-04-11T20:48:42.577078+00:00 app[celery.1]: 2020-04-11 20:48:42,576 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:48:42.577140+00:00 app[celery.1]: [2020-04-11 20:48:42,576: INFO/ForkPoolWorker-7] {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:48:42.579960+00:00 app[celery.1]: 2020-04-11 20:48:42,579 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:42.579961+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:48:42.579964+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:48:42.579964+00:00 app[celery.1]: WHERE
+2020-04-11T20:48:42.579965+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:48:42.579969+00:00 app[celery.1]: 
+2020-04-11T20:48:42.580067+00:00 app[celery.1]: [2020-04-11 20:48:42,579: INFO/ForkPoolWorker-7]
+2020-04-11T20:48:42.580068+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:48:42.580068+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:48:42.580069+00:00 app[celery.1]: WHERE
+2020-04-11T20:48:42.580069+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:48:42.580071+00:00 app[celery.1]: 
+2020-04-11T20:48:42.580248+00:00 app[celery.1]: 2020-04-11 20:48:42,580 INFO sqlalchemy.engine.base.Engine {'vm_name': 'Demo8', 'location': 'eastus', 'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:48:42.580368+00:00 app[celery.1]: [2020-04-11 20:48:42,580: INFO/ForkPoolWorker-7] {'vm_name': 'Demo8', 'location': 'eastus', 'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:48:42.581488+00:00 app[celery.1]: 2020-04-11 20:48:42,581 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:48:42.581564+00:00 app[celery.1]: [2020-04-11 20:48:42,581: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:48:42.583643+00:00 app[celery.1]: 2020-04-11 20:48:42,583 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:42.583644+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:48:42.583647+00:00 app[celery.1]: 
+2020-04-11T20:48:42.583751+00:00 app[celery.1]: [2020-04-11 20:48:42,583: INFO/ForkPoolWorker-7]
+2020-04-11T20:48:42.583752+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:48:42.583770+00:00 app[celery.1]: 
+2020-04-11T20:48:42.583964+00:00 app[celery.1]: 2020-04-11 20:48:42,583 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:48:42.584081+00:00 app[celery.1]: [2020-04-11 20:48:42,583: INFO/ForkPoolWorker-7] {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:48:42.587253+00:00 app[celery.1]: 2020-04-11 20:48:42,587 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:42.587254+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:48:42.587254+00:00 app[celery.1]: SET "disk_name" = %(disk_name)s, "username" = %(username)s
+2020-04-11T20:48:42.587255+00:00 app[celery.1]: WHERE
+2020-04-11T20:48:42.587255+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:48:42.587258+00:00 app[celery.1]: 
+2020-04-11T20:48:42.587368+00:00 app[celery.1]: [2020-04-11 20:48:42,587: INFO/ForkPoolWorker-7]
+2020-04-11T20:48:42.587369+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:48:42.587369+00:00 app[celery.1]: SET "disk_name" = %(disk_name)s, "username" = %(username)s
+2020-04-11T20:48:42.587369+00:00 app[celery.1]: WHERE
+2020-04-11T20:48:42.587370+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:48:42.587392+00:00 app[celery.1]: 
+2020-04-11T20:48:42.587605+00:00 app[celery.1]: 2020-04-11 20:48:42,587 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2', 'username': 'briangu33@gmail.com', 'vm_name': 'Demo8'}
+2020-04-11T20:48:42.587714+00:00 app[celery.1]: [2020-04-11 20:48:42,587: INFO/ForkPoolWorker-7] {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2', 'username': 'briangu33@gmail.com', 'vm_name': 'Demo8'}
+2020-04-11T20:48:42.589653+00:00 app[celery.1]: 2020-04-11 20:48:42,589 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:48:42.589747+00:00 app[celery.1]: [2020-04-11 20:48:42,589: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:48:42.591955+00:00 app[celery.1]: 2020-04-11 20:48:42,591 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:42.591956+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:48:42.591956+00:00 app[celery.1]: SET state = %(state)s
+2020-04-11T20:48:42.591957+00:00 app[celery.1]: WHERE
+2020-04-11T20:48:42.591957+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:48:42.591958+00:00 app[celery.1]: 
+2020-04-11T20:48:42.592048+00:00 app[celery.1]: [2020-04-11 20:48:42,591: INFO/ForkPoolWorker-7]
+2020-04-11T20:48:42.592050+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:48:42.592050+00:00 app[celery.1]: SET state = %(state)s
+2020-04-11T20:48:42.592050+00:00 app[celery.1]: WHERE
+2020-04-11T20:48:42.592051+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:48:42.592055+00:00 app[celery.1]: 
+2020-04-11T20:48:42.592267+00:00 app[celery.1]: 2020-04-11 20:48:42,592 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:48:42.592367+00:00 app[celery.1]: [2020-04-11 20:48:42,592: INFO/ForkPoolWorker-7] {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:48:42.594234+00:00 app[celery.1]: 2020-04-11 20:48:42,594 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:48:42.594336+00:00 app[celery.1]: [2020-04-11 20:48:42,594: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:48:42.595942+00:00 app[celery.1]: [2020-04-11 20:48:42,595: WARNING/ForkPoolWorker-7] Database updated
+2020-04-11T20:48:42.716717+00:00 app[celery.1]: [2020-04-11 20:48:42,716: WARNING/ForkPoolWorker-7] {'additional_properties': {}, 'code': 'PowerState/running', 'level': <StatusLevelTypes.info: 'Info'>, 'display_status': 'VM running', 'message': None, 'time': None}
+2020-04-11T20:48:42.716907+00:00 app[celery.1]: [2020-04-11 20:48:42,716: WARNING/ForkPoolWorker-7] VM is started and ready to use
+2020-04-11T20:48:42.717669+00:00 app[celery.1]: 2020-04-11 20:48:42,717 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:42.717669+00:00 app[celery.1]: SELECT * FROM v_ms WHERE "vm_name" = %(vm_name)s
+2020-04-11T20:48:42.717673+00:00 app[celery.1]: 
+2020-04-11T20:48:42.717764+00:00 app[celery.1]: [2020-04-11 20:48:42,717: INFO/ForkPoolWorker-7]
+2020-04-11T20:48:42.717765+00:00 app[celery.1]: SELECT * FROM v_ms WHERE "vm_name" = %(vm_name)s
+2020-04-11T20:48:42.717786+00:00 app[celery.1]: 
+2020-04-11T20:48:42.718007+00:00 app[celery.1]: 2020-04-11 20:48:42,717 INFO sqlalchemy.engine.base.Engine {'vm_name': 'Demo8'}
+2020-04-11T20:48:42.718128+00:00 app[celery.1]: [2020-04-11 20:48:42,717: INFO/ForkPoolWorker-7] {'vm_name': 'Demo8'}
+2020-04-11T20:48:47.267666+00:00 heroku[router]: at=info method=GET path="/status/2941e46c-c3e0-4fe8-b0a4-558a643fa298" host=cube-celery-staging.herokuapp.com request_id=023b832c-3700-48b8-a532-b94e0b814eb1 fwd="173.48.254.226" dyno=web.1 connect=0ms service=7ms status=200 bytes=406 protocol=https
+2020-04-11T20:48:55.839311+00:00 app[web.1]: 2020-04-11 20:48:55,839 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:55.839342+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:48:55.839343+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:48:55.839543+00:00 app[web.1]: 
+2020-04-11T20:48:55.839552+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:48:55.839566+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:48:55.839567+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:48:55.839568+00:00 app[web.1]: 
+2020-04-11T20:48:55.839573+00:00 app[web.1]: 2020-04-11 20:48:55,839 INFO sqlalchemy.engine.base.Engine {'userName': 'briangu33@gmail.com', 'currentTime': '04-11-2020, 20:48:55', 'action': 'logon', 'is_user': False}
+2020-04-11T20:48:55.840037+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'briangu33@gmail.com', 'currentTime': '04-11-2020, 20:48:55', 'action': 'logon', 'is_user': False}
+2020-04-11T20:48:55.840726+00:00 app[web.1]: 2020-04-11 20:48:55,840 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:48:55.840769+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:48:55.844678+00:00 app[web.1]: 2020-04-11 20:48:55,844 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:55.844679+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:48:55.844727+00:00 app[web.1]: 
+2020-04-11T20:48:55.845942+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:48:55.845943+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:48:55.845978+00:00 app[web.1]: 
+2020-04-11T20:48:55.846204+00:00 app[web.1]: 2020-04-11 20:48:55,846 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:48:55.846272+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:48:55.849594+00:00 app[web.1]: 2020-04-11 20:48:55,849 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:55.849595+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:48:55.849602+00:00 app[web.1]: 
+2020-04-11T20:48:55.849667+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:48:55.849667+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:48:55.849670+00:00 app[web.1]: 
+2020-04-11T20:48:55.849936+00:00 app[web.1]: 2020-04-11 20:48:55,849 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:48:55.849986+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:48:56.026236+00:00 app[web.1]: Demo8
+2020-04-11T20:48:56.151104+00:00 heroku[router]: at=info method=POST path="/tracker/logon" host=cube-celery-staging.herokuapp.com request_id=783d4fbc-5296-4efe-8442-23f31984d8b5 fwd="173.48.254.226" dyno=web.1 connect=0ms service=314ms status=200 bytes=199 protocol=https
+2020-04-11T20:48:56.142261+00:00 app[web.1]: RUNNING_UNAVAILABLE
+2020-04-11T20:48:56.144226+00:00 app[web.1]: 2020-04-11 20:48:56,144 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:48:56.144227+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:48:56.144227+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:48:56.144228+00:00 app[web.1]: WHERE
+2020-04-11T20:48:56.144228+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:48:56.144233+00:00 app[web.1]: 
+2020-04-11T20:48:56.144287+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:48:56.144287+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:48:56.144288+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:48:56.144288+00:00 app[web.1]: WHERE
+2020-04-11T20:48:56.144288+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:48:56.144289+00:00 app[web.1]: 
+2020-04-11T20:48:56.144484+00:00 app[web.1]: 2020-04-11 20:48:56,144 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:48:56.144565+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:48:56.145680+00:00 app[web.1]: 2020-04-11 20:48:56,145 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:48:56.145681+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:49:08.540941+00:00 app[web.1]: 2020-04-11 20:49:08,540 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:49:08.540953+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:49:08.540954+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:49:08.540980+00:00 app[web.1]: 
+2020-04-11T20:49:08.540981+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:49:08.540981+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:49:08.540984+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:49:08.540985+00:00 app[web.1]: 
+2020-04-11T20:49:08.541094+00:00 app[web.1]: 2020-04-11 20:49:08,540 INFO sqlalchemy.engine.base.Engine {'userName': 'briangu33@gmail.com', 'currentTime': '04-11-2020, 20:49:08', 'action': 'logoff', 'is_user': False}
+2020-04-11T20:49:08.541141+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'briangu33@gmail.com', 'currentTime': '04-11-2020, 20:49:08', 'action': 'logoff', 'is_user': False}
+2020-04-11T20:49:08.542441+00:00 app[web.1]: 2020-04-11 20:49:08,542 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:49:08.542479+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:49:08.545680+00:00 app[web.1]: 2020-04-11 20:49:08,545 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:49:08.545682+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:49:08.545682+00:00 app[web.1]: 
+2020-04-11T20:49:08.545687+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:49:08.545687+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:49:08.545688+00:00 app[web.1]: 
+2020-04-11T20:49:08.545803+00:00 app[web.1]: 2020-04-11 20:49:08,545 INFO sqlalchemy.engine.base.Engine {'username': 'briangu33@gmail.com'}
+2020-04-11T20:49:08.545842+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'briangu33@gmail.com'}
+2020-04-11T20:49:08.548749+00:00 app[web.1]: 2020-04-11 20:49:08,548 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:49:08.548750+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:49:08.548754+00:00 app[web.1]: 
+2020-04-11T20:49:08.548792+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:49:08.548792+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:49:08.548793+00:00 app[web.1]: 
+2020-04-11T20:49:08.548919+00:00 app[web.1]: 2020-04-11 20:49:08,548 INFO sqlalchemy.engine.base.Engine {'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:49:08.548959+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'disk_name': 'Demo6_OsDisk_1_ef6cad2cb28f4cbaaa4c066d07ba80c2'}
+2020-04-11T20:49:08.678383+00:00 app[web.1]: Demo8
+2020-04-11T20:49:08.775597+00:00 app[web.1]: RUNNING_AVAILABLE
+2020-04-11T20:49:08.777430+00:00 app[web.1]: 2020-04-11 20:49:08,777 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:49:08.777430+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:49:08.777431+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:49:08.777432+00:00 app[web.1]: WHERE
+2020-04-11T20:49:08.777432+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:49:08.777437+00:00 app[web.1]: 
+2020-04-11T20:49:08.777462+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:49:08.777462+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:49:08.777463+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:49:08.777463+00:00 app[web.1]: WHERE
+2020-04-11T20:49:08.777464+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:49:08.777464+00:00 app[web.1]: 
+2020-04-11T20:49:08.777592+00:00 app[web.1]: 2020-04-11 20:49:08,777 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_AVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:49:08.777638+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'state': 'RUNNING_AVAILABLE', 'vm_name': 'Demo8'}
+2020-04-11T20:49:08.778636+00:00 app[web.1]: 2020-04-11 20:49:08,778 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:49:08.778661+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:49:08.782675+00:00 heroku[router]: at=info method=POST path="/tracker/logoff" host=cube-celery-staging.herokuapp.com request_id=6163b0ac-2bb4-42f6-bd3f-14921bcaeef5 fwd="173.48.254.226" dyno=web.1 connect=0ms service=243ms status=200 bytes=199 protocol=https
+2020-04-11T20:49:39.901001+00:00 heroku[router]: at=info method=POST path="/account/login" host=cube-celery-staging.herokuapp.com request_id=8eba3169-92af-4a37-b7b2-ecd55c6dad23 fwd="173.48.254.226" dyno=web.1 connect=0ms service=19ms status=200 bytes=270 protocol=https
+2020-04-11T20:49:39.883909+00:00 app[web.1]: 2020-04-11 20:49:39,883 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:49:39.883918+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:49:39.883919+00:00 app[web.1]: 
+2020-04-11T20:49:39.883925+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:49:39.883925+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:49:39.883926+00:00 app[web.1]: 
+2020-04-11T20:49:39.884066+00:00 app[web.1]: 2020-04-11 20:49:39,883 INFO sqlalchemy.engine.base.Engine {'userName': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:49:39.884125+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:49:39.886926+00:00 app[web.1]: 2020-04-11 20:49:39,886 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:49:39.886927+00:00 app[web.1]: SELECT * FROM customers
+2020-04-11T20:49:39.886928+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:49:39.886969+00:00 app[web.1]: 
+2020-04-11T20:49:39.887016+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:49:39.887017+00:00 app[web.1]: SELECT * FROM customers
+2020-04-11T20:49:39.887018+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:49:39.887022+00:00 app[web.1]: 
+2020-04-11T20:49:39.887171+00:00 app[web.1]: 2020-04-11 20:49:39,887 INFO sqlalchemy.engine.base.Engine {'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:49:39.887230+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:49:39.889997+00:00 app[web.1]: 2020-04-11 20:49:39,889 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:49:39.889998+00:00 app[web.1]: SELECT * FROM v_ms
+2020-04-11T20:49:39.889999+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:49:39.890003+00:00 app[web.1]: 
+2020-04-11T20:49:39.890054+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:49:39.890055+00:00 app[web.1]: SELECT * FROM v_ms
+2020-04-11T20:49:39.890056+00:00 app[web.1]: WHERE "username" = %(username)s
+2020-04-11T20:49:39.890059+00:00 app[web.1]: 
+2020-04-11T20:49:39.890200+00:00 app[web.1]: 2020-04-11 20:49:39,890 INFO sqlalchemy.engine.base.Engine {'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:49:39.890306+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:49:39.892834+00:00 app[web.1]: 2020-04-11 20:49:39,892 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:49:39.892835+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:49:39.892839+00:00 app[web.1]: 
+2020-04-11T20:49:39.892891+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:49:39.892891+00:00 app[web.1]: SELECT * FROM users WHERE "username" = %(userName)s
+2020-04-11T20:49:39.892895+00:00 app[web.1]: 
+2020-04-11T20:49:39.893030+00:00 app[web.1]: 2020-04-11 20:49:39,892 INFO sqlalchemy.engine.base.Engine {'userName': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:49:39.893085+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:49:39.926972+00:00 app[web.1]: 2020-04-11 20:49:39,926 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:49:39.926973+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:49:39.927010+00:00 app[web.1]: 
+2020-04-11T20:49:39.927080+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:49:39.927081+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:49:39.927111+00:00 app[web.1]: 
+2020-04-11T20:49:39.927342+00:00 app[web.1]: 2020-04-11 20:49:39,927 INFO sqlalchemy.engine.base.Engine {'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:49:39.927430+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:49:39.931337+00:00 heroku[router]: at=info method=POST path="/user/login" host=cube-celery-staging.herokuapp.com request_id=2e690b88-cfa7-49a2-b3ba-ec57f1cee64c fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=365 protocol=https
+2020-04-11T20:49:41.908494+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=4916da6c-c139-49ce-bb21-8d7c5e4a65b6 fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:49:41.944105+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=05705b74-bace-42a3-8770-1d73549dd93a fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:49:41.876460+00:00 heroku[router]: at=info method=POST path="/disk/attach" host=cube-celery-staging.herokuapp.com request_id=d2cc71f1-1533-440a-bb17-e55ef4abb135 fwd="173.48.254.226" dyno=web.1 connect=0ms service=8ms status=202 bytes=249 protocol=https
+2020-04-11T20:49:41.869124+00:00 app[web.1]: Received disk attach request
+2020-04-11T20:49:41.869144+00:00 app[web.1]: {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:49:41.879345+00:00 app[celery.1]: [2020-04-11 20:49:41,879: WARNING/ForkPoolWorker-7] Swap disk task added to Redis queue
+2020-04-11T20:49:42.128964+00:00 app[celery.1]: [2020-04-11 20:49:42,128: WARNING/ForkPoolWorker-7] No VM attached to holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9
+2020-04-11T20:49:42.129852+00:00 app[celery.1]: 2020-04-11 20:49:42,129 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:49:42.129854+00:00 app[celery.1]: SELECT * FROM v_ms WHERE "state" = %(state)s AND "location" = %(location)s AND "lock" = %(lock)s
+2020-04-11T20:49:42.129858+00:00 app[celery.1]: 
+2020-04-11T20:49:42.129953+00:00 app[celery.1]: [2020-04-11 20:49:42,129: INFO/ForkPoolWorker-7]
+2020-04-11T20:49:42.129955+00:00 app[celery.1]: SELECT * FROM v_ms WHERE "state" = %(state)s AND "location" = %(location)s AND "lock" = %(lock)s
+2020-04-11T20:49:42.129997+00:00 app[celery.1]: 
+2020-04-11T20:49:42.130266+00:00 app[celery.1]: 2020-04-11 20:49:42,130 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_AVAILABLE', 'location': 'eastus', 'lock': False}
+2020-04-11T20:49:42.130368+00:00 app[celery.1]: [2020-04-11 20:49:42,130: INFO/ForkPoolWorker-7] {'state': 'RUNNING_AVAILABLE', 'location': 'eastus', 'lock': False}
+2020-04-11T20:49:42.135646+00:00 app[celery.1]: [2020-04-11 20:49:42,135: WARNING/ForkPoolWorker-7] Found 5 available VMs
+2020-04-11T20:49:42.137791+00:00 app[celery.1]: 2020-04-11 20:49:42,137 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:49:42.137793+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:49:42.137794+00:00 app[celery.1]: SET "lock" = %(lock)s
+2020-04-11T20:49:42.137794+00:00 app[celery.1]: WHERE
+2020-04-11T20:49:42.137795+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:49:42.137798+00:00 app[celery.1]: 
+2020-04-11T20:49:42.137951+00:00 app[celery.1]: [2020-04-11 20:49:42,137: INFO/ForkPoolWorker-7]
+2020-04-11T20:49:42.137952+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:49:42.137952+00:00 app[celery.1]: SET "lock" = %(lock)s
+2020-04-11T20:49:42.137953+00:00 app[celery.1]: WHERE
+2020-04-11T20:49:42.137953+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:49:42.137958+00:00 app[celery.1]: 
+2020-04-11T20:49:42.138151+00:00 app[celery.1]: 2020-04-11 20:49:42,137 INFO sqlalchemy.engine.base.Engine {'lock': True, 'vm_name': 'holythunder6595'}
+2020-04-11T20:49:42.138269+00:00 app[celery.1]: [2020-04-11 20:49:42,137: INFO/ForkPoolWorker-7] {'lock': True, 'vm_name': 'holythunder6595'}
+2020-04-11T20:49:42.140441+00:00 app[celery.1]: 2020-04-11 20:49:42,140 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:49:42.140544+00:00 app[celery.1]: [2020-04-11 20:49:42,140: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:49:42.142213+00:00 app[celery.1]: [2020-04-11 20:49:42,142: WARNING/ForkPoolWorker-7] Selected VM holythunder6595 to attach to disk holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9
+2020-04-11T20:49:42.636937+00:00 app[celery.1]: [2020-04-11 20:49:42,636: WARNING/ForkPoolWorker-7] Attaching disk...
+2020-04-11T20:49:46.973677+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=31269817-3936-4c71-bba7-2c55c231ca0e fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:49:52.001459+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=ea3bc36d-1002-4f7c-9ac8-c54e6bc80a6c fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:49:57.288365+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=c918dabc-ee5f-41a3-88ee-08211369fe77 fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:50:02.344688+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=100664b9-2c48-43cf-8a60-d4566ed3dceb fwd="173.48.254.226" dyno=web.1 connect=0ms service=7ms status=200 bytes=211 protocol=https
+2020-04-11T20:50:07.401446+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=7017eea7-d56c-4d1f-b29c-b6146d450117 fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:50:12.437202+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=4a2f7818-dbf8-4823-aad0-ce7c7f79627f fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:50:17.476469+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=2dfcc3bd-6d8a-418a-bf03-b4e20a0229f3 fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:50:22.518790+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=383dd9b6-88ae-4a76-bbe3-14107f2a81ea fwd="173.48.254.226" dyno=web.1 connect=0ms service=8ms status=200 bytes=211 protocol=https
+2020-04-11T20:49:55+00:00 app[heroku-redis]: source=HEROKU_REDIS_SILVER addon=redis-contoured-32447 sample#active-connections=10 sample#load-avg-1m=0.005 sample#load-avg-5m=0.025 sample#load-avg-15m=0.01 sample#read-iops=0 sample#write-iops=23.397 sample#memory-total=15664264kB sample#memory-free=11840744kB sample#memory-cached=2514788kB sample#memory-redis=1900832bytes sample#hit-rate=0.61977 sample#evicted-keys=0
+2020-04-11T20:50:27.554783+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=e883ac1d-a916-4342-82fe-a220f1b78254 fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:50:32.579432+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=1f45c879-62af-4f5d-995f-bef36552e7ee fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:50:37.617392+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=f6bcfae1-91bb-449d-8c91-3d28be911c1f fwd="173.48.254.226" dyno=web.1 connect=0ms service=9ms status=200 bytes=211 protocol=https
+2020-04-11T20:50:42.649566+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=b9a27675-b576-498c-a28a-82fa46205b0e fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:50:47.690758+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=16373177-1353-4965-ad65-fd15573b76f8 fwd="173.48.254.226" dyno=web.1 connect=0ms service=12ms status=200 bytes=211 protocol=https
+2020-04-11T20:50:52.735813+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=cc0832a6-2853-4b82-9f97-2c24e809b05c fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:50:57.766040+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=a57b1ba4-f45f-451e-a5ef-3aa85d8ff51b fwd="173.48.254.226" dyno=web.1 connect=0ms service=8ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:02.815160+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=afb4fd13-41b3-437b-9bdd-9feacd790551 fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:07.865122+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=9b941ecb-76ea-4156-b40a-0a5b1e6f4657 fwd="173.48.254.226" dyno=web.1 connect=0ms service=7ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:12.907457+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=6e2a037b-afeb-4ec8-a167-014c72967b4e fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:17.937906+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=c04d742e-b1f7-4bfe-be58-0dabdff5526a fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:22.967998+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=d0504aa2-1bfb-4788-9c4b-bcc0c5f37adb fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:27.997034+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=588f331c-2460-4127-9353-dd1e65ad5538 fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:33.025622+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=ce5e9bba-2b82-4170-881d-d4c262a8e1ea fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:38.071052+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=81816d49-4bbe-4757-99ed-97552cc12108 fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:43.111402+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=517360bf-45a7-4c8d-9d93-a3315c8c4782 fwd="173.48.254.226" dyno=web.1 connect=1ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:48.142915+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=cfdc182f-9037-457f-b376-40601dc365d2 fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:53.180258+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=c187aa88-0698-40a5-a9e1-64f76b6d713f fwd="173.48.254.226" dyno=web.1 connect=0ms service=12ms status=200 bytes=211 protocol=https
+2020-04-11T20:51:58.218293+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=3b7a2399-9978-4ba3-928c-1737fb72e2f7 fwd="173.48.254.226" dyno=web.1 connect=0ms service=7ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:03.249845+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=e27d0da1-7bd2-4e40-bb72-ea0cad32810e fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:08.304853+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=2b6c6de7-9fd5-4ba4-875c-38d62daf707b fwd="173.48.254.226" dyno=web.1 connect=0ms service=9ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:13.336717+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=6fdfa06f-478c-4aad-b1ce-aface53f4f9a fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:18.365781+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=4a252594-6033-409e-a398-39252bfcac3f fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:23.394877+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=1c90c6d0-b480-4d31-8c8d-5181d6cc1e7d fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:28.469333+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=e7dc713d-85cb-4889-bbc8-d2b63b777945 fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:33.503468+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=50e7be9e-5bf1-44ab-9af8-e9d2ca6f302d fwd="173.48.254.226" dyno=web.1 connect=0ms service=9ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:38.565668+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=ccf76ee5-e048-4b2c-9ee7-6c0b2768c457 fwd="173.48.254.226" dyno=web.1 connect=0ms service=7ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:43.601266+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=fc42b78a-8275-43f5-8928-443fb362dacf fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:44.497624+00:00 app[celery.1]: [2020-04-11 20:52:44,497: WARNING/ForkPoolWorker-7] Disk attached
+2020-04-11T20:52:44.615382+00:00 app[celery.1]: [2020-04-11 20:52:44,615: WARNING/ForkPoolWorker-7] Restarting VM...
+2020-04-11T20:52:27+00:00 app[heroku-redis]: source=HEROKU_REDIS_SILVER addon=redis-contoured-32447 sample#active-connections=10 sample#load-avg-1m=0.09 sample#load-avg-5m=0.045 sample#load-avg-15m=0.015 sample#read-iops=0 sample#write-iops=23.918 sample#memory-total=15664264kB sample#memory-free=11809892kB sample#memory-cached=2549776kB sample#memory-redis=1900832bytes sample#hit-rate=0.63489 sample#evicted-keys=0
+2020-04-11T20:52:48.656082+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=65ca9a3f-4f80-4fea-91b4-31fb22fcae48 fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:53.693549+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=c5de8b4d-bd58-4fb7-b518-d966d8dbb771 fwd="173.48.254.226" dyno=web.1 connect=0ms service=7ms status=200 bytes=211 protocol=https
+2020-04-11T20:52:58.730065+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=a2cae368-fb87-438f-99e4-1d055b062fe8 fwd="173.48.254.226" dyno=web.1 connect=0ms service=14ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:03.768488+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=a63ef818-1a63-4b84-8a90-ba1ac036f5ba fwd="173.48.254.226" dyno=web.1 connect=0ms service=11ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:08.804684+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=559c18c1-b500-431f-90ea-001447847fef fwd="173.48.254.226" dyno=web.1 connect=0ms service=12ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:13.835754+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=3ecd0cde-cb97-47cc-b0a7-5840c8417817 fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:18.874090+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=a66f0172-64b6-45c7-8bed-a28e12853df0 fwd="173.48.254.226" dyno=web.1 connect=0ms service=7ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:23.912583+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=e51ae97b-7e2a-4c33-ab40-c8445b627b5c fwd="173.48.254.226" dyno=web.1 connect=0ms service=14ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:28.950080+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=baf9bbc4-cd72-4948-b2d2-bf4c0053320a fwd="173.48.254.226" dyno=web.1 connect=0ms service=8ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:33.987801+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=e9a6cccd-aa5f-46fb-ac7c-42d9dde6399c fwd="173.48.254.226" dyno=web.1 connect=0ms service=6ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:39.038577+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=3d539454-6705-42ca-9678-bed2b76c4d87 fwd="173.48.254.226" dyno=web.1 connect=0ms service=26ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:44.076936+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=89bef123-1e93-4e90-95aa-12be904c6b49 fwd="173.48.254.226" dyno=web.1 connect=0ms service=13ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:49.135104+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=9365723b-928a-4777-981a-289487ac0f61 fwd="173.48.254.226" dyno=web.1 connect=0ms service=17ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:54.175062+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=ac88cac0-897c-49df-8e71-47d58453ed95 fwd="173.48.254.226" dyno=web.1 connect=1ms service=12ms status=200 bytes=211 protocol=https
+2020-04-11T20:53:55.052953+00:00 app[celery.1]: [2020-04-11 20:53:55,052: WARNING/ForkPoolWorker-7] VM restarted
+2020-04-11T20:53:55.053688+00:00 app[celery.1]: 2020-04-11 20:53:55,053 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:53:55.053688+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:53:55.053693+00:00 app[celery.1]: 
+2020-04-11T20:53:55.053763+00:00 app[celery.1]: [2020-04-11 20:53:55,053: INFO/ForkPoolWorker-7]
+2020-04-11T20:53:55.053763+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:53:55.053766+00:00 app[celery.1]: 
+2020-04-11T20:53:55.053916+00:00 app[celery.1]: 2020-04-11 20:53:55,053 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:53:55.054024+00:00 app[celery.1]: [2020-04-11 20:53:55,053: INFO/ForkPoolWorker-7] {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:53:55.056426+00:00 app[celery.1]: 2020-04-11 20:53:55,056 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:53:55.056428+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:53:55.056429+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:53:55.056429+00:00 app[celery.1]: WHERE
+2020-04-11T20:53:55.056431+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:53:55.056434+00:00 app[celery.1]: 
+2020-04-11T20:53:55.056504+00:00 app[celery.1]: [2020-04-11 20:53:55,056: INFO/ForkPoolWorker-7]
+2020-04-11T20:53:55.056505+00:00 app[celery.1]: UPDATE disks
+2020-04-11T20:53:55.056505+00:00 app[celery.1]: SET "vm_name" = %(vm_name)s, "location" = %(location)s
+2020-04-11T20:53:55.056506+00:00 app[celery.1]: WHERE
+2020-04-11T20:53:55.056506+00:00 app[celery.1]: "disk_name" = %(disk_name)s
+2020-04-11T20:53:55.056532+00:00 app[celery.1]: 
+2020-04-11T20:53:55.056671+00:00 app[celery.1]: 2020-04-11 20:53:55,056 INFO sqlalchemy.engine.base.Engine {'vm_name': 'holythunder6595', 'location': 'eastus', 'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:53:55.056741+00:00 app[celery.1]: [2020-04-11 20:53:55,056: INFO/ForkPoolWorker-7] {'vm_name': 'holythunder6595', 'location': 'eastus', 'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:53:55.057733+00:00 app[celery.1]: 2020-04-11 20:53:55,057 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:53:55.057789+00:00 app[celery.1]: [2020-04-11 20:53:55,057: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:53:55.059858+00:00 app[celery.1]: 2020-04-11 20:53:55,059 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:53:55.059859+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:53:55.059862+00:00 app[celery.1]: 
+2020-04-11T20:53:55.059964+00:00 app[celery.1]: [2020-04-11 20:53:55,059: INFO/ForkPoolWorker-7]
+2020-04-11T20:53:55.059965+00:00 app[celery.1]: SELECT * FROM disks WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:53:55.059968+00:00 app[celery.1]: 
+2020-04-11T20:53:55.060179+00:00 app[celery.1]: 2020-04-11 20:53:55,060 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:53:55.060305+00:00 app[celery.1]: [2020-04-11 20:53:55,060: INFO/ForkPoolWorker-7] {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:53:55.063040+00:00 app[celery.1]: 2020-04-11 20:53:55,062 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:53:55.063041+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:53:55.063041+00:00 app[celery.1]: SET "disk_name" = %(disk_name)s, "username" = %(username)s
+2020-04-11T20:53:55.063042+00:00 app[celery.1]: WHERE
+2020-04-11T20:53:55.063042+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:53:55.063045+00:00 app[celery.1]: 
+2020-04-11T20:53:55.063100+00:00 app[celery.1]: [2020-04-11 20:53:55,062: INFO/ForkPoolWorker-7]
+2020-04-11T20:53:55.063100+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:53:55.063101+00:00 app[celery.1]: SET "disk_name" = %(disk_name)s, "username" = %(username)s
+2020-04-11T20:53:55.063101+00:00 app[celery.1]: WHERE
+2020-04-11T20:53:55.063101+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:53:55.063103+00:00 app[celery.1]: 
+2020-04-11T20:53:55.063246+00:00 app[celery.1]: 2020-04-11 20:53:55,063 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9', 'username': 'vijayp+fractal@olimaventures.com', 'vm_name': 'holythunder6595'}
+2020-04-11T20:53:55.063321+00:00 app[celery.1]: [2020-04-11 20:53:55,063: INFO/ForkPoolWorker-7] {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9', 'username': 'vijayp+fractal@olimaventures.com', 'vm_name': 'holythunder6595'}
+2020-04-11T20:53:55.065073+00:00 app[celery.1]: 2020-04-11 20:53:55,064 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:53:55.065490+00:00 app[celery.1]: [2020-04-11 20:53:55,064: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:53:55.067570+00:00 app[celery.1]: 2020-04-11 20:53:55,067 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:53:55.067571+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:53:55.067572+00:00 app[celery.1]: SET state = %(state)s
+2020-04-11T20:53:55.067572+00:00 app[celery.1]: WHERE
+2020-04-11T20:53:55.067573+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:53:55.067576+00:00 app[celery.1]: 
+2020-04-11T20:53:55.067681+00:00 app[celery.1]: [2020-04-11 20:53:55,067: INFO/ForkPoolWorker-7]
+2020-04-11T20:53:55.067682+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:53:55.067682+00:00 app[celery.1]: SET state = %(state)s
+2020-04-11T20:53:55.067683+00:00 app[celery.1]: WHERE
+2020-04-11T20:53:55.067683+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:53:55.067712+00:00 app[celery.1]: 
+2020-04-11T20:53:55.067964+00:00 app[celery.1]: 2020-04-11 20:53:55,067 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:53:55.068041+00:00 app[celery.1]: [2020-04-11 20:53:55,067: INFO/ForkPoolWorker-7] {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:53:55.069719+00:00 app[celery.1]: 2020-04-11 20:53:55,069 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:53:55.069844+00:00 app[celery.1]: [2020-04-11 20:53:55,069: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:53:55.071584+00:00 app[celery.1]: [2020-04-11 20:53:55,071: WARNING/ForkPoolWorker-7] Database updated.
+2020-04-11T20:53:55.071980+00:00 app[celery.1]: 2020-04-11 20:53:55,071 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:53:55.071981+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:53:55.071982+00:00 app[celery.1]: SET "lock" = %(lock)s
+2020-04-11T20:53:55.071982+00:00 app[celery.1]: WHERE
+2020-04-11T20:53:55.071983+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:53:55.071983+00:00 app[celery.1]: 
+2020-04-11T20:53:55.072068+00:00 app[celery.1]: [2020-04-11 20:53:55,071: INFO/ForkPoolWorker-7]
+2020-04-11T20:53:55.072069+00:00 app[celery.1]: UPDATE v_ms
+2020-04-11T20:53:55.072069+00:00 app[celery.1]: SET "lock" = %(lock)s
+2020-04-11T20:53:55.072070+00:00 app[celery.1]: WHERE
+2020-04-11T20:53:55.072070+00:00 app[celery.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:53:55.072071+00:00 app[celery.1]: 
+2020-04-11T20:53:55.072222+00:00 app[celery.1]: 2020-04-11 20:53:55,072 INFO sqlalchemy.engine.base.Engine {'lock': False, 'vm_name': 'holythunder6595'}
+2020-04-11T20:53:55.072316+00:00 app[celery.1]: [2020-04-11 20:53:55,072: INFO/ForkPoolWorker-7] {'lock': False, 'vm_name': 'holythunder6595'}
+2020-04-11T20:53:55.074080+00:00 app[celery.1]: 2020-04-11 20:53:55,073 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:53:55.074140+00:00 app[celery.1]: [2020-04-11 20:53:55,073: INFO/ForkPoolWorker-7] COMMIT
+2020-04-11T20:53:55.076061+00:00 app[celery.1]: 2020-04-11 20:53:55,075 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:53:55.076062+00:00 app[celery.1]: SELECT * FROM v_ms WHERE "vm_name" = %(vm_name)s
+2020-04-11T20:53:55.076063+00:00 app[celery.1]: 
+2020-04-11T20:53:55.076136+00:00 app[celery.1]: [2020-04-11 20:53:55,075: INFO/ForkPoolWorker-7]
+2020-04-11T20:53:55.076137+00:00 app[celery.1]: SELECT * FROM v_ms WHERE "vm_name" = %(vm_name)s
+2020-04-11T20:53:55.076137+00:00 app[celery.1]: 
+2020-04-11T20:53:55.076282+00:00 app[celery.1]: 2020-04-11 20:53:55,076 INFO sqlalchemy.engine.base.Engine {'vm_name': 'holythunder6595'}
+2020-04-11T20:53:55.076372+00:00 app[celery.1]: [2020-04-11 20:53:55,076: INFO/ForkPoolWorker-7] {'vm_name': 'holythunder6595'}
+2020-04-11T20:53:59.206687+00:00 heroku[router]: at=info method=GET path="/status/a4c25c18-e954-4266-b082-e83b66e5b2c1" host=cube-celery-staging.herokuapp.com request_id=190b99fd-2dda-4557-8737-bc8b25f75c08 fwd="173.48.254.226" dyno=web.1 connect=0ms service=5ms status=200 bytes=439 protocol=https
+2020-04-11T20:54:06.279257+00:00 app[web.1]: 2020-04-11 20:54:06,279 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:06.279307+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:06.279308+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:06.279493+00:00 app[web.1]: 
+2020-04-11T20:54:06.279609+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:06.279610+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:06.279611+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:06.279645+00:00 app[web.1]: 
+2020-04-11T20:54:06.279976+00:00 app[web.1]: 2020-04-11 20:54:06,279 INFO sqlalchemy.engine.base.Engine {'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:06', 'action': 'logon', 'is_user': False}
+2020-04-11T20:54:06.280087+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:06', 'action': 'logon', 'is_user': False}
+2020-04-11T20:54:06.281397+00:00 app[web.1]: 2020-04-11 20:54:06,281 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:06.281495+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:54:06.285355+00:00 app[web.1]: 2020-04-11 20:54:06,285 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:06.285357+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:06.285423+00:00 app[web.1]: 
+2020-04-11T20:54:06.285499+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:06.285500+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:06.285554+00:00 app[web.1]: 
+2020-04-11T20:54:06.285824+00:00 app[web.1]: 2020-04-11 20:54:06,285 INFO sqlalchemy.engine.base.Engine {'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:06.285931+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:06.289665+00:00 app[web.1]: 2020-04-11 20:54:06,289 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:06.289667+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:06.289733+00:00 app[web.1]: 
+2020-04-11T20:54:06.289809+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:06.289809+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:06.289863+00:00 app[web.1]: 
+2020-04-11T20:54:06.290137+00:00 app[web.1]: 2020-04-11 20:54:06,289 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:06.290241+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:06.438490+00:00 app[web.1]: holythunder6595
+2020-04-11T20:54:06.649349+00:00 heroku[router]: at=info method=POST path="/tracker/logon" host=cube-celery-staging.herokuapp.com request_id=69f0edd7-3fdc-46c2-8e03-abc81a02c851 fwd="173.48.254.226" dyno=web.1 connect=2ms service=374ms status=200 bytes=199 protocol=https
+2020-04-11T20:54:06.637801+00:00 app[web.1]: RUNNING_UNAVAILABLE
+2020-04-11T20:54:06.640537+00:00 app[web.1]: 2020-04-11 20:54:06,640 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:06.640539+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:06.640540+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:06.640541+00:00 app[web.1]: WHERE
+2020-04-11T20:54:06.640542+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:06.640550+00:00 app[web.1]: 
+2020-04-11T20:54:06.640587+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:06.640589+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:06.640589+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:06.640590+00:00 app[web.1]: WHERE
+2020-04-11T20:54:06.640590+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:06.640917+00:00 app[web.1]: 
+2020-04-11T20:54:06.641186+00:00 app[web.1]: 2020-04-11 20:54:06,640 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:06.641275+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:06.642558+00:00 app[web.1]: 2020-04-11 20:54:06,642 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:06.642620+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:54:10.746566+00:00 app[web.1]: 2020-04-11 20:54:10,746 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:10.746608+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:10.746612+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:10.746623+00:00 app[web.1]: 
+2020-04-11T20:54:10.746624+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:10.746624+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:10.746625+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:10.746625+00:00 app[web.1]: 
+2020-04-11T20:54:10.746735+00:00 app[web.1]: 2020-04-11 20:54:10,746 INFO sqlalchemy.engine.base.Engine {'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:10', 'action': 'logoff', 'is_user': False}
+2020-04-11T20:54:10.746744+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:10', 'action': 'logoff', 'is_user': False}
+2020-04-11T20:54:10.747529+00:00 app[web.1]: 2020-04-11 20:54:10,747 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:10.747567+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:54:10.750274+00:00 app[web.1]: 2020-04-11 20:54:10,750 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:10.750274+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:10.750277+00:00 app[web.1]: 
+2020-04-11T20:54:10.750307+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:10.750308+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:10.750308+00:00 app[web.1]: 
+2020-04-11T20:54:10.750429+00:00 app[web.1]: 2020-04-11 20:54:10,750 INFO sqlalchemy.engine.base.Engine {'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:10.750463+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:10.753025+00:00 app[web.1]: 2020-04-11 20:54:10,752 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:10.753025+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:10.753028+00:00 app[web.1]: 
+2020-04-11T20:54:10.753059+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:10.753059+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:10.753059+00:00 app[web.1]: 
+2020-04-11T20:54:10.753172+00:00 app[web.1]: 2020-04-11 20:54:10,753 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:10.753214+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:10.908023+00:00 app[web.1]: holythunder6595
+2020-04-11T20:54:11.007719+00:00 heroku[router]: at=info method=POST path="/tracker/logoff" host=cube-celery-staging.herokuapp.com request_id=8c6caf3d-60b6-4dc1-8fb5-d92c199a02ab fwd="173.48.254.226" dyno=web.1 connect=0ms service=263ms status=200 bytes=199 protocol=https
+2020-04-11T20:54:11.000996+00:00 app[web.1]: RUNNING_AVAILABLE
+2020-04-11T20:54:11.002960+00:00 app[web.1]: 2020-04-11 20:54:11,002 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:11.002961+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:11.002961+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:11.002961+00:00 app[web.1]: WHERE
+2020-04-11T20:54:11.002962+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:11.002964+00:00 app[web.1]: 
+2020-04-11T20:54:11.003007+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:11.003007+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:11.003008+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:11.003008+00:00 app[web.1]: WHERE
+2020-04-11T20:54:11.003008+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:11.003008+00:00 app[web.1]: 
+2020-04-11T20:54:11.003127+00:00 app[web.1]: 2020-04-11 20:54:11,003 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_AVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:11.003172+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'state': 'RUNNING_AVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:11.004101+00:00 app[web.1]: 2020-04-11 20:54:11,004 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:11.004133+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:54:13.774445+00:00 app[web.1]: 2020-04-11 20:54:13,774 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:13.774457+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:13.774458+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:13.774545+00:00 app[web.1]: 
+2020-04-11T20:54:13.774605+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:13.774606+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:13.774607+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:13.774630+00:00 app[web.1]: 
+2020-04-11T20:54:13.774877+00:00 app[web.1]: 2020-04-11 20:54:13,774 INFO sqlalchemy.engine.base.Engine {'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:13', 'action': 'logon', 'is_user': False}
+2020-04-11T20:54:13.774994+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:13', 'action': 'logon', 'is_user': False}
+2020-04-11T20:54:13.776095+00:00 app[web.1]: 2020-04-11 20:54:13,775 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:13.776139+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:54:13.780001+00:00 app[web.1]: 2020-04-11 20:54:13,779 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:13.780003+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:13.780010+00:00 app[web.1]: 
+2020-04-11T20:54:13.780047+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:13.780047+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:13.780048+00:00 app[web.1]: 
+2020-04-11T20:54:13.780221+00:00 app[web.1]: 2020-04-11 20:54:13,780 INFO sqlalchemy.engine.base.Engine {'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:13.780275+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:13.785450+00:00 app[web.1]: 2020-04-11 20:54:13,785 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:13.785452+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:13.785499+00:00 app[web.1]: 
+2020-04-11T20:54:13.785574+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:13.785575+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:13.785608+00:00 app[web.1]: 
+2020-04-11T20:54:13.785822+00:00 app[web.1]: 2020-04-11 20:54:13,785 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:13.785908+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:13.934821+00:00 app[web.1]: holythunder6595
+2020-04-11T20:54:14.055296+00:00 heroku[router]: at=info method=POST path="/tracker/logon" host=cube-celery-staging.herokuapp.com request_id=7e2cfc42-f6de-4f68-9865-af26a08f2557 fwd="173.48.254.226" dyno=web.1 connect=1ms service=285ms status=200 bytes=199 protocol=https
+2020-04-11T20:54:14.047161+00:00 app[web.1]: RUNNING_UNAVAILABLE
+2020-04-11T20:54:14.049543+00:00 app[web.1]: 2020-04-11 20:54:14,049 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:14.049545+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:14.049546+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:14.049546+00:00 app[web.1]: WHERE
+2020-04-11T20:54:14.049547+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:14.049554+00:00 app[web.1]: 
+2020-04-11T20:54:14.049718+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:14.049719+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:14.049719+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:14.049720+00:00 app[web.1]: WHERE
+2020-04-11T20:54:14.049720+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:14.049720+00:00 app[web.1]: 
+2020-04-11T20:54:14.049871+00:00 app[web.1]: 2020-04-11 20:54:14,049 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:14.049913+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:14.050964+00:00 app[web.1]: 2020-04-11 20:54:14,050 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:14.051066+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:54:17.909729+00:00 app[web.1]: 2020-04-11 20:54:17,909 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:17.909738+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:17.909739+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:17.909746+00:00 app[web.1]: 
+2020-04-11T20:54:17.909768+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:17.909769+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:17.909774+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:17.909807+00:00 app[web.1]: 
+2020-04-11T20:54:17.910085+00:00 app[web.1]: 2020-04-11 20:54:17,909 INFO sqlalchemy.engine.base.Engine {'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:17', 'action': 'logoff', 'is_user': False}
+2020-04-11T20:54:17.910166+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:17', 'action': 'logoff', 'is_user': False}
+2020-04-11T20:54:17.911176+00:00 app[web.1]: 2020-04-11 20:54:17,911 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:17.911221+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:54:17.914899+00:00 app[web.1]: 2020-04-11 20:54:17,914 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:17.914900+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:17.914909+00:00 app[web.1]: 
+2020-04-11T20:54:17.914963+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:17.914964+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:17.914967+00:00 app[web.1]: 
+2020-04-11T20:54:17.915169+00:00 app[web.1]: 2020-04-11 20:54:17,915 INFO sqlalchemy.engine.base.Engine {'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:17.915238+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:17.918839+00:00 app[web.1]: 2020-04-11 20:54:17,918 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:17.918841+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:17.918842+00:00 app[web.1]: 
+2020-04-11T20:54:17.918894+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:17.918894+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:17.918897+00:00 app[web.1]: 
+2020-04-11T20:54:17.919109+00:00 app[web.1]: 2020-04-11 20:54:17,918 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:17.919183+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:18.078796+00:00 app[web.1]: holythunder6595
+2020-04-11T20:54:18.197177+00:00 heroku[router]: at=info method=POST path="/tracker/logoff" host=cube-celery-staging.herokuapp.com request_id=8ba2af77-ceba-4ee8-8acb-a2deef419558 fwd="173.48.254.226" dyno=web.1 connect=0ms service=291ms status=200 bytes=199 protocol=https
+2020-04-11T20:54:18.187076+00:00 app[web.1]: RUNNING_AVAILABLE
+2020-04-11T20:54:18.190509+00:00 app[web.1]: 2020-04-11 20:54:18,190 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:18.190512+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:18.190512+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:18.190513+00:00 app[web.1]: WHERE
+2020-04-11T20:54:18.190514+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:18.190573+00:00 app[web.1]: 
+2020-04-11T20:54:18.190635+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:18.190635+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:18.190636+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:18.190636+00:00 app[web.1]: WHERE
+2020-04-11T20:54:18.190636+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:18.190704+00:00 app[web.1]: 
+2020-04-11T20:54:18.190943+00:00 app[web.1]: 2020-04-11 20:54:18,190 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_AVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:18.191029+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'state': 'RUNNING_AVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:18.192272+00:00 app[web.1]: 2020-04-11 20:54:18,192 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:18.192354+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:54:21.189176+00:00 app[web.1]: 2020-04-11 20:54:21,188 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:21.189199+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:21.189199+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:21.189208+00:00 app[web.1]: 
+2020-04-11T20:54:21.189209+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:21.189210+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:21.189210+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:21.189210+00:00 app[web.1]: 
+2020-04-11T20:54:21.189389+00:00 app[web.1]: 2020-04-11 20:54:21,189 INFO sqlalchemy.engine.base.Engine {'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:21', 'action': 'logon', 'is_user': False}
+2020-04-11T20:54:21.189467+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:21', 'action': 'logon', 'is_user': False}
+2020-04-11T20:54:21.190402+00:00 app[web.1]: 2020-04-11 20:54:21,190 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:21.190435+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:54:21.193575+00:00 app[web.1]: 2020-04-11 20:54:21,193 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:21.193580+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:21.193588+00:00 app[web.1]: 
+2020-04-11T20:54:21.193617+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:21.193618+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:21.193618+00:00 app[web.1]: 
+2020-04-11T20:54:21.193768+00:00 app[web.1]: 2020-04-11 20:54:21,193 INFO sqlalchemy.engine.base.Engine {'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:21.193814+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:21.196861+00:00 app[web.1]: 2020-04-11 20:54:21,196 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:21.196863+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:21.196864+00:00 app[web.1]: 
+2020-04-11T20:54:21.196905+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:21.196906+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:21.196909+00:00 app[web.1]: 
+2020-04-11T20:54:21.197050+00:00 app[web.1]: 2020-04-11 20:54:21,196 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:21.197114+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:21.341478+00:00 app[web.1]: holythunder6595
+2020-04-11T20:54:21.452968+00:00 heroku[router]: at=info method=POST path="/tracker/logon" host=cube-celery-staging.herokuapp.com request_id=ba86705b-95a1-4029-b76c-5b02f8b856df fwd="173.48.254.226" dyno=web.1 connect=0ms service=267ms status=200 bytes=199 protocol=https
+2020-04-11T20:54:21.439897+00:00 app[web.1]: RUNNING_UNAVAILABLE
+2020-04-11T20:54:21.442227+00:00 app[web.1]: 2020-04-11 20:54:21,442 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:21.442228+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:21.442228+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:21.442229+00:00 app[web.1]: WHERE
+2020-04-11T20:54:21.442230+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:21.442270+00:00 app[web.1]: 
+2020-04-11T20:54:21.442341+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:21.442342+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:21.442343+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:21.442343+00:00 app[web.1]: WHERE
+2020-04-11T20:54:21.442343+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:21.442374+00:00 app[web.1]: 
+2020-04-11T20:54:21.442573+00:00 app[web.1]: 2020-04-11 20:54:21,442 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:21.442659+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:21.443743+00:00 app[web.1]: 2020-04-11 20:54:21,443 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:21.443744+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:54:25.540593+00:00 app[web.1]: 2020-04-11 20:54:25,540 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:25.540625+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:25.540627+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:25.540636+00:00 app[web.1]: 
+2020-04-11T20:54:25.540637+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:25.540638+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:54:25.540639+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:54:25.540639+00:00 app[web.1]: 
+2020-04-11T20:54:25.540853+00:00 app[web.1]: 2020-04-11 20:54:25,540 INFO sqlalchemy.engine.base.Engine {'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:25', 'action': 'logoff', 'is_user': False}
+2020-04-11T20:54:25.540925+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:54:25', 'action': 'logoff', 'is_user': False}
+2020-04-11T20:54:25.542024+00:00 app[web.1]: 2020-04-11 20:54:25,541 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:25.542081+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:54:25.546036+00:00 app[web.1]: 2020-04-11 20:54:25,545 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:25.546038+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:25.546044+00:00 app[web.1]: 
+2020-04-11T20:54:25.546103+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:25.546103+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:54:25.546107+00:00 app[web.1]: 
+2020-04-11T20:54:25.546328+00:00 app[web.1]: 2020-04-11 20:54:25,546 INFO sqlalchemy.engine.base.Engine {'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:25.546410+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:54:25.550090+00:00 app[web.1]: 2020-04-11 20:54:25,549 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:25.550092+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:25.550101+00:00 app[web.1]: 
+2020-04-11T20:54:25.550153+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:25.550153+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:54:25.550157+00:00 app[web.1]: 
+2020-04-11T20:54:25.550388+00:00 app[web.1]: 2020-04-11 20:54:25,550 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:25.550462+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:54:25.708757+00:00 app[web.1]: holythunder6595
+2020-04-11T20:54:25.878410+00:00 heroku[router]: at=info method=POST path="/tracker/logoff" host=cube-celery-staging.herokuapp.com request_id=57c2400c-09fd-4d48-b755-3bab496d2b9b fwd="173.48.254.226" dyno=web.1 connect=1ms service=341ms status=200 bytes=199 protocol=https
+2020-04-11T20:54:25.862560+00:00 app[web.1]: RUNNING_AVAILABLE
+2020-04-11T20:54:25.866725+00:00 app[web.1]: 2020-04-11 20:54:25,866 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:54:25.866726+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:25.866727+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:25.866728+00:00 app[web.1]: WHERE
+2020-04-11T20:54:25.866729+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:25.867133+00:00 app[web.1]: 
+2020-04-11T20:54:25.867293+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:54:25.867294+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:54:25.867294+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:54:25.867295+00:00 app[web.1]: WHERE
+2020-04-11T20:54:25.867295+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:54:25.867333+00:00 app[web.1]: 
+2020-04-11T20:54:25.868315+00:00 app[web.1]: 2020-04-11 20:54:25,867 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_AVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:25.868498+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'state': 'RUNNING_AVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:54:25.870278+00:00 app[web.1]: 2020-04-11 20:54:25,870 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:54:25.873490+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:55:11.937794+00:00 app[web.1]: 2020-04-11 20:55:11,937 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:55:11.937817+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:55:11.937818+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:55:11.937826+00:00 app[web.1]: 
+2020-04-11T20:55:11.937826+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:55:11.937827+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:55:11.937827+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:55:11.937830+00:00 app[web.1]: 
+2020-04-11T20:55:11.938023+00:00 app[web.1]: 2020-04-11 20:55:11,937 INFO sqlalchemy.engine.base.Engine {'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:55:11', 'action': 'logon', 'is_user': False}
+2020-04-11T20:55:11.938126+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:55:11', 'action': 'logon', 'is_user': False}
+2020-04-11T20:55:11.938950+00:00 app[web.1]: 2020-04-11 20:55:11,938 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:55:11.939014+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:55:11.942091+00:00 app[web.1]: 2020-04-11 20:55:11,941 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:55:11.942092+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:55:11.942128+00:00 app[web.1]: 
+2020-04-11T20:55:11.942193+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:55:11.942194+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:55:11.942224+00:00 app[web.1]: 
+2020-04-11T20:55:11.942451+00:00 app[web.1]: 2020-04-11 20:55:11,942 INFO sqlalchemy.engine.base.Engine {'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:55:11.942538+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:55:11.945410+00:00 app[web.1]: 2020-04-11 20:55:11,945 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:55:11.945411+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:55:11.945443+00:00 app[web.1]: 
+2020-04-11T20:55:11.945508+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:55:11.945509+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:55:11.945540+00:00 app[web.1]: 
+2020-04-11T20:55:11.945722+00:00 app[web.1]: 2020-04-11 20:55:11,945 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:55:11.945806+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:55:12.122091+00:00 app[web.1]: holythunder6595
+2020-04-11T20:55:12.342484+00:00 app[web.1]: RUNNING_UNAVAILABLE
+2020-04-11T20:55:12.344293+00:00 app[web.1]: 2020-04-11 20:55:12,344 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:55:12.344294+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:55:12.344295+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:55:12.344295+00:00 app[web.1]: WHERE
+2020-04-11T20:55:12.344296+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:55:12.344297+00:00 app[web.1]: 
+2020-04-11T20:55:12.344330+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:55:12.344331+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:55:12.344331+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:55:12.344332+00:00 app[web.1]: WHERE
+2020-04-11T20:55:12.344332+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:55:12.344333+00:00 app[web.1]: 
+2020-04-11T20:55:12.344463+00:00 app[web.1]: 2020-04-11 20:55:12,344 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:55:12.344503+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'state': 'RUNNING_UNAVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:55:12.345390+00:00 app[web.1]: 2020-04-11 20:55:12,345 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:55:12.345396+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:55:12.349020+00:00 heroku[router]: at=info method=POST path="/tracker/logon" host=cube-celery-staging.herokuapp.com request_id=6bd591a1-9cd1-47b1-bc0d-33b3b2bb2b88 fwd="173.48.254.226" dyno=web.1 connect=0ms service=414ms status=200 bytes=199 protocol=https
+2020-04-11T20:55:03+00:00 app[heroku-redis]: source=HEROKU_REDIS_SILVER addon=redis-contoured-32447 sample#active-connections=9 sample#load-avg-1m=0.03 sample#load-avg-5m=0.05 sample#load-avg-15m=0.02 sample#read-iops=0 sample#write-iops=23.59 sample#memory-total=15664264kB sample#memory-free=11857064kB sample#memory-cached=2502512kB sample#memory-redis=1880160bytes sample#hit-rate=0.64772 sample#evicted-keys=0
+2020-04-11T20:55:16.291914+00:00 app[web.1]: 2020-04-11 20:55:16,291 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:55:16.291924+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:55:16.291925+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:55:16.291930+00:00 app[web.1]: 
+2020-04-11T20:55:16.291960+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:55:16.291961+00:00 app[web.1]: INSERT INTO login_history("username", "timestamp", "action", "is_user")
+2020-04-11T20:55:16.291962+00:00 app[web.1]: VALUES(%(userName)s, %(currentTime)s, %(action)s, %(is_user)s)
+2020-04-11T20:55:16.291966+00:00 app[web.1]: 
+2020-04-11T20:55:16.292140+00:00 app[web.1]: 2020-04-11 20:55:16,291 INFO sqlalchemy.engine.base.Engine {'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:55:16', 'action': 'logoff', 'is_user': False}
+2020-04-11T20:55:16.292208+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'userName': 'vijayp+fractal@olimaventures.com', 'currentTime': '04-11-2020, 20:55:16', 'action': 'logoff', 'is_user': False}
+2020-04-11T20:55:16.293043+00:00 app[web.1]: 2020-04-11 20:55:16,292 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:55:16.293099+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:55:16.295830+00:00 app[web.1]: 2020-04-11 20:55:16,295 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:55:16.295831+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:55:16.295834+00:00 app[web.1]: 
+2020-04-11T20:55:16.295878+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:55:16.295879+00:00 app[web.1]: SELECT * FROM disks WHERE "username" = %(username)s
+2020-04-11T20:55:16.295881+00:00 app[web.1]: 
+2020-04-11T20:55:16.296047+00:00 app[web.1]: 2020-04-11 20:55:16,295 INFO sqlalchemy.engine.base.Engine {'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:55:16.296113+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'username': 'vijayp+fractal@olimaventures.com'}
+2020-04-11T20:55:16.298978+00:00 app[web.1]: 2020-04-11 20:55:16,298 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:55:16.298979+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:55:16.298981+00:00 app[web.1]: 
+2020-04-11T20:55:16.299029+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:55:16.299030+00:00 app[web.1]: SELECT * FROM v_ms WHERE "disk_name" = %(disk_name)s
+2020-04-11T20:55:16.299034+00:00 app[web.1]: 
+2020-04-11T20:55:16.299194+00:00 app[web.1]: 2020-04-11 20:55:16,299 INFO sqlalchemy.engine.base.Engine {'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:55:16.299261+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'disk_name': 'holythunder6595_OsDisk_1_0725f849abbf43fc8e8b81539df8cab9'}
+2020-04-11T20:55:16.459202+00:00 app[web.1]: holythunder6595
+2020-04-11T20:55:16.581138+00:00 heroku[router]: at=info method=POST path="/tracker/logoff" host=cube-celery-staging.herokuapp.com request_id=122c71bc-1eb1-44be-aa29-86e88edbd504 fwd="173.48.254.226" dyno=web.1 connect=0ms service=291ms status=200 bytes=199 protocol=https
+2020-04-11T20:55:16.573725+00:00 app[web.1]: RUNNING_AVAILABLE
+2020-04-11T20:55:16.575723+00:00 app[web.1]: 2020-04-11 20:55:16,575 INFO sqlalchemy.engine.base.Engine
+2020-04-11T20:55:16.575724+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:55:16.575725+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:55:16.575726+00:00 app[web.1]: WHERE
+2020-04-11T20:55:16.575726+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:55:16.575727+00:00 app[web.1]: 
+2020-04-11T20:55:16.575772+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:
+2020-04-11T20:55:16.575773+00:00 app[web.1]: UPDATE v_ms
+2020-04-11T20:55:16.575773+00:00 app[web.1]: SET state = %(state)s
+2020-04-11T20:55:16.575773+00:00 app[web.1]: WHERE
+2020-04-11T20:55:16.575774+00:00 app[web.1]: "vm_name" = %(vm_name)s
+2020-04-11T20:55:16.575774+00:00 app[web.1]: 
+2020-04-11T20:55:16.575945+00:00 app[web.1]: 2020-04-11 20:55:16,575 INFO sqlalchemy.engine.base.Engine {'state': 'RUNNING_AVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:55:16.576068+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:{'state': 'RUNNING_AVAILABLE', 'vm_name': 'holythunder6595'}
+2020-04-11T20:55:16.577088+00:00 app[web.1]: 2020-04-11 20:55:16,576 INFO sqlalchemy.engine.base.Engine COMMIT
+2020-04-11T20:55:16.577160+00:00 app[web.1]: INFO:sqlalchemy.engine.base.Engine:COMMIT
+2020-04-11T20:57:25+00:00 app[heroku-redis]: source=HEROKU_REDIS_SILVER addon=redis-contoured-32447 sample#active-connections=9 sample#load-avg-1m=0.055 sample#load-avg-5m=0.05 sample#load-avg-15m=0.025 sample#read-iops=0 sample#write-iops=24.55 sample#memory-total=15664264kB sample#memory-free=11821516kB sample#memory-cached=2538540kB sample#memory-redis=1880160bytes sample#hit-rate=0.64756 sample#evicted-keys=0
