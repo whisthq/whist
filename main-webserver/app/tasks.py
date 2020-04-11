@@ -373,6 +373,9 @@ def swapDisk(self, disk_name):
 					  ' to attach to disk ' + disk_name)
 				if swapDiskAndUpdate(disk_name, vm_name) > 0:
 					free_vm_found = True
+					virtual_machine = getVM(vm_name)
+					old_disk = virtual_machine.storage_profile.os_disk
+					updateDisk(old_disk.name, old_disk.disk_state, '', old_disk.location)
 					lockVM(vm_name, False)
 					return fetchVMCredentials(vm_name)
 				lockVM(vm_name, False)
@@ -447,8 +450,9 @@ def swapSpecificDisk(self, disk_name, vm_name):
 @celery.task(bind=True)
 def updateVMTable(self):
 	vms = fetchUserVMs(None)
-	for vm_name, _ in vms.items():
+	for vm in vms:
 		try:
+			vm_name = vm['vm_name']
 			vm = getVM(vm_name)
 			os_disk_name = vm.storage_profile.os_disk.name
 			username = mapDiskToUser(os_disk_name)

@@ -521,16 +521,13 @@ def addTimeTable(username, action, time, is_user):
             if vms:
                 _, compute_client, _ = createClients()
                 vm_name = vms[0]['vm_name']
-                print(vm_name)
                 vm_state = compute_client.virtual_machines.instance_view(
                     resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
                 if 'running' in vm_state.statuses[1].code:
                     state = 'RUNNING_AVAILABLE' if action == 'logoff' else 'RUNNING_UNAVAILABLE'
-                    print(state)
                     updateVMState(vms[0]['vm_name'], state)
                 else:
                     state = 'NOT_RUNNING_AVAILABLE' if action == 'logoff' else 'NOT_RUNNING_UNAVAILABLE'
-                    print(state)
                     updateVMState(vms[0]['vm_name'], state)  
             else:
                 print("CRITICAL ERROR: Could not find a VM currently attached to disk " + disk_name)
