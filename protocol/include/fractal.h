@@ -598,14 +598,19 @@ typedef struct SocketContext {
     int ack;
 } SocketContext;
 
+// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be replayed
+// TODO: INC integer that must not be used twice
+
 // Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) +
 // RTPPacket.payload_size
 struct RTPPacket {
     // hash at the beginning of the struct, which is the hash of the rest of the
     // packet
     char hash[16];
+    // hash is a signature for everything below this line
     int cipher_len;
     char iv[16];
+    // Everything below this line gets encrypted
     FractalPacketType type;
     int id;
     short index;

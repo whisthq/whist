@@ -17,7 +17,9 @@
 
 void runcmd( const char* cmdline )
 {
+	// Will run a command on the commandline, simple as that
 #ifdef _WIN32
+	// Windows makes this hard
 	STARTUPINFOA si;
 	PROCESS_INFORMATION pi;
 
@@ -44,6 +46,7 @@ void runcmd( const char* cmdline )
 		CloseHandle( pi.hThread );
 	}
 #else
+	// For Linux / MACOSX we make the system syscall
 	system( cmdline );
 #endif
 }
@@ -90,7 +93,12 @@ int get_native_screen_height() {
 }
 
 void set_timeout(SOCKET s, int timeout_ms) {
+	// Sets the timeout for SOCKET s to be timeout_ms in milliseconds
+	// Any recv calls will wait this long before timing out
+	// -1 means that it will block indefinitely until a packet is received
+	// 0 means that it will immediately return with whatever data is waiting in the buffer
 	if (timeout_ms < 0) {
+		mprintf( "WARNING: This socket will blocking indefinitely. You will not be able to recover if a packet is never received\n" );
 		unsigned long mode = 0;
 #if defined(_WIN32)
 		ioctlsocket(s, FIONBIO, &mode);
