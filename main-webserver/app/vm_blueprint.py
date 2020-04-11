@@ -153,7 +153,7 @@ def info(action):
     return jsonify({}), 400
 
 @vm_bp.route('/test', methods=['POST'])
-def test(action):
+def test():
     body = request.get_json()
     test.apply_async([])
     return jsonify({}), 200
