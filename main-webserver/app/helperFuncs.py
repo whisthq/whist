@@ -1200,14 +1200,14 @@ def mapDiskToVM(disk_name):
         vms = conn.execute(command, **params).fetchall()
         return [{'vm_name': vm[0], 'ip': vm[3], 'state': vm[4], 'location': vm[5]} for vm in vms]
 
-def updateVMLocation(vm_name, location):
+def updateVM(vm_name, location, disk_name):
     command = text("""
         UPDATE v_ms
-        SET location = :location
+        SET "location" = :location, "osDisk" = :disk_name
         WHERE
            "vmName" = :vm_name
         """)
-    params = {'location': location, 'vm_name': vm_name}
+    params = {'location': location, 'vm_name': vm_name, 'disk_name' = :disk_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close() 
