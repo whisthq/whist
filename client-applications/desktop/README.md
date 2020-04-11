@@ -39,7 +39,7 @@ This will enable you to get an executable that you can install to test your code
 
 Once you are ready to publish for auto-update to the Fractal users, you need to do a few things:
 
-1- Go into ```/desktop/package.json``` and update ```"buchet": ``` to the proper bucket for the operating system you are publishing for:
+1- Go into ```/desktop/package.json``` and update ```"bucket": ``` to the proper bucket for the operating system you are publishing for:
   - Windows: ```fractal-applications-release```
   - MacOS: ```fractal-mac-application-release```
   - Linux: ```fractal-linux-application-release```
