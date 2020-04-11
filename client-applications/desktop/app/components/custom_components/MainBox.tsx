@@ -15,12 +15,13 @@ import Window from "../../../resources/images/window.svg";
 import Speedometer from "../../../resources/images/speedometer.svg";
 import Car from "../../../resources/images/car.jpg";
 
-import { resetFeedback, sendFeedback, askFeedback, trackUserActivity, changeWindow } from "../../actions/counter"
+import { resetFeedback, sendFeedback, askFeedback, trackUserActivity, changeWindow, attachDisk } from "../../actions/counter"
 
 class MainBox extends Component {
   constructor(props) {
     super(props)
-    this.state = {launches: 0, windowMode: false, mbps: 50, nickname: '', editNickname: -1}
+    this.state = {launches: 0, windowMode: false, mbps: 50, nickname: '', editNickname: -1, diskAttaching: false,
+                  launched: false}
   }
 
   TrackActivity = (action) => {
@@ -43,43 +44,50 @@ class MainBox extends Component {
   }
 
   LaunchProtocol = () => {
-    if(this.state.launches == 0) {
-      this.setState({launches: this.state.launches + 1}, function() {
-        var child      = require('child_process').spawn;
-        var appRootDir = require('electron').remote.app.getAppPath();
-        const os       = require('os');
+    if(this.props.public_ip && this.props.public_ip != '') {
+      this.setState({launched: true})
+      if(this.state.launches == 0) {
+        this.setState({launches: 1}, function() {
+          var child      = require('child_process').spawn;
+          var appRootDir = require('electron').remote.app.getAppPath();
+          const os       = require('os');
 
-        // check which OS we're on to properly launch the protocol
-        if (os.platform() === 'darwin') { // mac
-          var path =  appRootDir + "/fractal-protocol/desktop/desktop"
-          path = path.replace('/Resources/app.asar','');
-          path = path.replace('/desktop/app', '/desktop')
-        }
-        else if (os.platform() === 'win32') { // windows
-          var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
-        }
-        else { // linux
-          var path = "TODO"
-        }
-
-        var screenWidth = this.state.windowMode ? window.screen.width : 0
-        var screenHeight = this.state.windowMode ? (window.screen.height - 70) : 0
-
-        var parameters = [this.props.public_ip, 123, screenWidth, screenHeight, this.state.mbps]
-
-        if(this.state.launches == 1) {
-          this.TrackActivity(true);
-        }
-        const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
-
-        protocol.on('close', (code) => {
-          if(this.state.launches == 1) {
-            this.TrackActivity(false);
+          // check which OS we're on to properly launch the protocol
+          if (os.platform() === 'darwin') { // mac
+            var path =  appRootDir + "/fractal-protocol/desktop/desktop"
+            path = path.replace('/Resources/app.asar','');
+            path = path.replace('/desktop/app', '/desktop')
           }
-          this.setState({launches: 0})
-          this.props.dispatch(askFeedback(true))
+          else if (os.platform() === 'win32') { // windows
+            var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
+          }
+          else { // linux
+            var path = "TODO"
+          }
+
+          var screenWidth = this.state.windowMode ? window.screen.width : 0
+          var screenHeight = this.state.windowMode ? (window.screen.height - 70) : 0
+
+          var parameters = [this.props.public_ip, 123, screenWidth, screenHeight, this.state.mbps]
+
+          if(this.state.launches == 1) {
+            this.TrackActivity(true);
+          }
+          const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
+
+          protocol.on('close', (code) => {
+            if(this.state.launches == 1) {
+              this.TrackActivity(false);
+            }
+            this.setState({launches: 0, launched: false})
+            this.props.dispatch(askFeedback(true))
+          })
         })
-      })
+      }
+    } else {
+      this.setState({launched: false})
+      this.setState({'diskAttaching': true})
+      this.props.dispatch(attachDisk())
     }
   }
 
@@ -122,7 +130,9 @@ class MainBox extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    console.log(this.props)
+    if(prevProps.public_ip != this.props.public_ip && this.state.diskAttaching) {
+      this.setState({diskAttaching: false})
+    }
   }
 
   render() {
@@ -135,11 +145,41 @@ class MainBox extends Component {
           (
           this.props.disk != ''
           ?
+          (
+          !this.state.diskAttaching
+          ?
+          (
+          this.state.launched
+          ?
+          <div style = {{boxShadow: '0px 4px 30px rgba(0, 0, 0, 0.35)', position: 'relative', backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(0,0,0,0.9)), url(" + Car + ")", width: "100%", height: 250, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center", borderRadius: 5}}>
+            <div style = {{textAlign: 'center', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontWeight: 'bold', fontSize: 20}}>
+              <div>
+                <FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "white", height: 30}}/>
+              </div>
+              <div style = {{marginTop: 10, color: '#CCCCCC', fontSize: 12, lineHeight: 1.4}}>
+                Streaming
+              </div>
+            </div>
+          </div>
+          :
           <div onClick = {this.LaunchProtocol} className = {styles.bigBox} style = {{position: 'relative', backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.0), rgba(0,0,0,0.6)), url(" + Car + ")", width: "100%", height: 250, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center", borderRadius: 5}}>
             <div style = {{position: 'absolute', bottom: 10, right: 15, fontWeight: 'bold', fontSize: 16}}>
               Launch My Cloud PC
             </div>
           </div>
+          )
+          :
+          <div style = {{boxShadow: '0px 4px 30px rgba(0, 0, 0, 0.35)', position: 'relative', backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(0,0,0,0.9)), url(" + Car + ")", width: "100%", height: 250, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center", borderRadius: 5}}>
+            <div style = {{textAlign: 'center', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontWeight: 'bold', fontSize: 20}}>
+              <div>
+                <FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "white", height: 30}}/>
+              </div>
+              <div style = {{marginTop: 10, color: '#CCCCCC', fontSize: 12, lineHeight: 1.4}}>
+                Booting your cloud PC (this could take a few minutes)
+              </div>
+            </div>
+          </div>
+          )
           :
           <div onClick = {this.OpenDashboard} className = {styles.pointerOnHover} style = {{boxShadow: '0px 4px 30px rgba(0, 0, 0, 0.35)', position: 'relative', backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(0,0,0,0.9)), url(" + Car + ")", width: "100%", height: 250, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center", borderRadius: 5}}>
             <div style = {{textAlign: 'center', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontWeight: 'bold', fontSize: 20}}>
@@ -364,6 +404,7 @@ class MainBox extends Component {
 }
 
 function mapStateToProps(state) {
+  console.log(state)
   return {
     username: state.counter.username,
     isUser: state.counter.isUser,

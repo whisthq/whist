@@ -24,7 +24,7 @@ import { ReactTypeformEmbed } from 'react-typeform-embed'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 
-import { storeUsername, storeIP, storeIsUser, trackUserActivity, storeDistance, askFeedback, changeWindow, fetchDiskStatus } from "../actions/counter"
+import { storeUsername, storeIP, storeIsUser, trackUserActivity, storeDistance, askFeedback, changeWindow, fetchDiskStatus, storeDiskName } from "../actions/counter"
 
 class Counter extends Component {
   constructor(props) {
@@ -62,6 +62,8 @@ class Counter extends Component {
     this.props.dispatch(storeDiskName(''))
     const storage = require('electron-json-storage');
     storage.set('credentials', {username: '', password: ''}, function(err) {
+      console.log("trying to go back")
+      console.log(err)
       history.push("/");
     })
   }
@@ -69,6 +71,15 @@ class Counter extends Component {
   componentDidMount() {
     this.props.dispatch(changeWindow('main'))
     this.setState({isLoading: false})
+    if(this.props.username && this.props.username != '') {
+      this.setState({username: this.props.username.split('@')[0]})
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    if(prevProps.username == '' && this.props.username != '' && this.state.username == '') {
+      this.setState({username: this.props.username.split('@')[0]})
+    }
   }
 
   render() {
@@ -122,7 +133,7 @@ class Counter extends Component {
           ?
           <div className = {styles.statBox} style = {{width: '35%', textAlign: 'left', background: "linear-gradient(217.69deg, #363868 0%, rgba(30, 31, 66, 0.5) 101.4%)", borderRadius: 5, padding: 30, minHeight: 350}}>
             <div style = {{fontWeight: 'bold', fontSize: 18}}>
-              Welcome, {this.props.username}
+              Welcome, {this.state.username}
             </div>
             <div style = {{marginTop: 10, display: "inline-block"}}>
               <Online>

@@ -22,6 +22,7 @@ export const FETCH_DISK          = "FETCH_DISK"
 export const FETCH_DISK_STATUS   = "FETCH_DISK_STATUS"
 export const STORE_DISK_NAME     = "STORE_DISK_NAME"
 export const ATTACH_DISK         = "ATTACH_DISK"
+export const FETCH_VM            = "FETCH_VM"
 
 
 export function loginUser(username, password) {
@@ -174,9 +175,15 @@ export function storeDiskName(disk) {
 	}
 }
 
-export function attachDisk(state) {
+export function attachDisk() {
 	return {
-		type: ATTACH_DISK,
-		state
+		type: ATTACH_DISK
+	}
+}
+
+export function fetchVM(id) {
+	return {
+		type: FETCH_VM,
+		id
 	}
 }

@@ -259,6 +259,7 @@ class Home extends Component {
 }
 
 function mapStateToProps(state) {
+  console.log(this.state)
   return {
     username: state.counter.username,
     public_ip: state.counter.public_ip,

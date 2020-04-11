@@ -17,7 +17,6 @@ function* loginUser(action) {
     yield put(Action.fetchDisk(action.username))
 
     var email = action.username
-    action.username = email.split('@')[0]
     yield put(Action.storeUsername(action.username))
     yield put(Action.storeIsUser(json.is_user))
     history.push("/counter");
@@ -124,6 +123,33 @@ function* fetchComputers(action) {
   yield put(Action.storeComputers(json.computers))
 }
 
+function* attachDisk(action) {
+  const state = yield select()
+  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/disk/attach', {
+    disk_name: state.counter.disk
+  })
+  console.log("INITIAL DISK ATTACH CALL MADE")
+  console.log(json)
+  if(json && json.ID) {
+    yield put(Action.fetchVM(json.ID))
+  }
+}
+
+function* fetchVM(action) {
+  var { json, response } = yield call(apiGet, (config.url.PRIMARY_SERVER + '/status/').concat(action.id))
+  console.log(json)
+  while (json.state === "PENDING" || json.state === "STARTED") {
+    console.log("PENDING")
+    var { json, response } = yield call(apiGet, (config.url.PRIMARY_SERVER + '/status/').concat(action.id))
+    yield delay(5000)
+  }
+  console.log("DISK ATTACHED")
+  console.log(json)
+  if(json && json.output && json.output.public_ip) {
+    yield put(Action.storeIP(json.output.public_ip))
+  }
+}
+
 
 export default function* rootSaga() {
  	yield all([
@@ -134,6 +160,8 @@ export default function* rootSaga() {
      takeEvery(Action.PING_IPINFO, pingIPInfo),
      takeEvery(Action.STORE_IPINFO, storeIPInfo),
      takeEvery(Action.FETCH_COMPUTERS, fetchComputers),
-     takeEvery(Action.FETCH_DISK, fetchDisk)
+     takeEvery(Action.FETCH_DISK, fetchDisk),
+     takeEvery(Action.ATTACH_DISK, attachDisk),
+     takeEvery(Action.FETCH_VM, fetchVM)
   ])
 }
