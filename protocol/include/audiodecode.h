@@ -4,15 +4,15 @@
 #define MAX_AUDIO_FRAME_SIZE 192000
 
 #include "../include/fractal.h"
-#include "ffmpeg/libavcodec/avcodec.h"
-#include "ffmpeg/libavdevice/avdevice.h"
-#include "ffmpeg/libavfilter/avfilter.h"
-#include "ffmpeg/libavfilter/buffersink.h"
-#include "ffmpeg/libavfilter/buffersrc.h"
-#include "ffmpeg/libavformat/avformat.h"
-#include "ffmpeg/libavutil/avutil.h"
-#include "ffmpeg/libswresample/swresample.h"
-#include "ffmpeg/libswscale/swscale.h"
+#include <libavcodec/avcodec.h>
+#include <libavdevice/avdevice.h>
+#include <libavfilter/avfilter.h>
+#include <libavfilter/buffersink.h>
+#include <libavfilter/buffersrc.h>
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libswresample/swresample.h>
+#include <libswscale/swscale.h>
 
 // define decoder struct to pass as a type
 typedef struct {

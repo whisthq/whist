@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #if defined(_WIN32)
+#pragma comment(lib, "ws2_32.lib")
 #include <Audioclient.h>
 #include <D3D11.h>
 #include <D3d11_1.h>
@@ -15,11 +16,10 @@
 #include <mmdeviceapi.h>
 #include <process.h>
 #include <synchapi.h>
-#include <windows.h>
 #include <winsock2.h>
-#include <winuser.h>
 #include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
+#include <windows.h>
+#include <winuser.h>
 #undef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
 #undef EWOULDBLOCK
@@ -666,6 +666,6 @@ int get_native_screen_height();
 
 void initBacktraceHandler();
 
-/*** FRACTAL FUNCTIONS END ***/
+/** FRACTAL FUNCTIONS END ***/
 
 #endif  // FRACTAL_H

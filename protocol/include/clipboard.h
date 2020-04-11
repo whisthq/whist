@@ -31,6 +31,7 @@ typedef struct ClipboardFiles
 #ifdef _WIN32
 	#define _CRT_SECURE_NO_WARNINGS
 	#include <windows.h>
+
 	WCHAR* lget_clipboard_directory();
 	WCHAR* lset_clipboard_directory();
 
