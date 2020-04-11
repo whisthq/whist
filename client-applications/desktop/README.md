@@ -47,5 +47,7 @@ Once you are ready to publish for auto-update to the Fractal users, you need to 
  2- Increment the version number in ```desktop/app/package.json``` by ```0.0.1```, unless it is a major release, in which case increment by ```0.1.0```
  
  3- Then, run ```./build.sh``` (MacOS) or ```build.bat``` (Windows) to publish. This will fetch the latest Fractal Protocol, upgrade yarn and run ```yarn package-ci``` to publish to the S3 bucket. 
-
+ 
+ 4- Push to this repository so that the most current production version number is kept track of!
+ 
 The production executables are hosted at: https://s3.console.aws.amazon.com/s3/buckets/fractal-applications-release/?region=us-east-1
