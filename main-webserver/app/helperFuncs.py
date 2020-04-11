@@ -239,8 +239,8 @@ def createVMParameters(vmName, nic_id, vm_size, location):
 def createDiskEntry(disk_name, vm_name, username, location):
     with engine.connect() as conn:
         command = text("""
-            INSERT INTO disks("diskname",  "vmname", "username", "location") 
-            VALUES(:diskname, :diskname, :username, :location)
+            INSERT INTO disks("diskname", "vmname", "username", "location") 
+            VALUES(:diskname, :vmname, :username, :location)
             """)
         params = {
             'diskname': disk_name,
@@ -496,19 +496,32 @@ def storePreOrder(address1, address2, zipCode, email, order):
         conn.close()
 
 
-def addTimeTable(username, action, time):
+def addTimeTable(username, action, time, is_user):
     command = text("""
-        INSERT INTO login_history("username", "timestamp", "action") 
-        VALUES(:userName, :currentTime, :action)
+        INSERT INTO login_history("username", "timestamp", "action", "is_user") 
+        VALUES(:userName, :currentTime, :action, :is_user)
         """)
 
     params = {'userName': username, 'currentTime': dt.now().strftime(
-        '%m-%d-%Y, %H:%M:%S'), 'action': action}
+        '%m-%d-%Y, %H:%M:%S'), 'action': action, 'is_user': is_user}
 
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
 
+def changeDiskOnline(username, online):
+    command = text("""
+        UPDATE disks
+        SET "online" = :online
+        WHERE "username" = :username
+        """)
+
+    params = {'online': online,
+              'username': username}
+
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
 
 def deleteTimeTable():
     command = text("""
@@ -542,6 +555,31 @@ def fetchUserVMs(username):
             vms_info = conn.execute(command, **params).fetchall()
             out = {vm_info[0]: {'username': vm_info[1], 'ip': vm_info[3]}
                    for vm_info in vms_info}
+            conn.close()
+            return out
+
+
+def fetchUserDisks(username):
+    if(username):
+        command = text("""
+            SELECT * FROM disks WHERE "username" = :username
+            """)
+        params = {'username': username}
+        with engine.connect() as conn:
+            disks_info = conn.execute(command, **params).fetchall()
+            out = [{'disk_name': disk_info[0], 'username': disk_info[1], 'location': disk_info[2], 'attached': disk_info[3], 'online': disk_info[4], 'vmName': disk_info[4]}
+                   for disk_info in disks_info]
+            conn.close()
+            return out
+    else:
+        command = text("""
+            SELECT * FROM disks
+            """)
+        params = {}
+        with engine.connect() as conn:
+            disks_info = conn.execute(command, **params).fetchall()
+            out = [{'disk_name': disk_info[0], 'username': disk_info[1], 'location': disk_info[2], 'attached': disk_info[3], 'online': disk_info[4], 'vmName': disk_info[4]}
+                   for disk_info in disks_info]
             conn.close()
             return out
 
@@ -946,3 +984,163 @@ def updateTrialEnd(subscription, trial_end):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+
+def updateVMState(vm_name, state):
+    command = text("""
+        UPDATE v_ms
+        SET state = :state
+        WHERE
+           "vmName" = :vm_name
+        """)
+    params = {'vm_name': vm_name, 'state': state}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+def updateDisk(disk_name, disk_state, vm_name, location):
+    command = text("""
+        SELECT * FROM disks WHERE "diskname" = :disk_name
+        """)
+    params = {'disk_name': disk_name}
+    with engine.connect() as conn:
+        disk = conn.execute(command, **params).fetchone()
+        if disk:
+            command = text("""
+                UPDATE disks
+                SET "attached" = :attached, "vmName" = :vm_name, "location" = :location
+                WHERE
+                   "diskname" = :disk_name
+            """)
+            params = {'attached': disk_state == 'Attached',
+                      'vm_name': vm_name,
+                      'location': location,
+                      'disk_name': disk_name}
+        else:
+            command = text("""
+                INSERT INTO disks("diskname", "attached", "vmName", "location") 
+                VALUES(:disk_name, :attached, :vm_name, :location)
+                """)
+            params = {'attached': disk_state == 'Attached',
+                      'vm_name': vm_name,
+                      'location': location,
+                      'disk_name': disk_name}
+
+        conn.execute(command, **params)
+        conn.close()
+
+def fetchVMsByState(state):
+    command = text("""
+        SELECT * FROM v_ms WHERE "state" = :state
+        """)
+    params = {'state': state}
+
+    with engine.connect() as conn:
+        vms = conn.execute(command, **params).fetchall()
+        conn.close()
+        return [{'vm_name': vm[0],
+                 'username': vm[1],
+                 'disk_name': vm[2],
+                 'ip': vm[3]} for vm in vms]
+
+def getMostRecentActivity(username):
+    command = text("""
+        SELECT *
+        FROM login_history
+        WHERE "username" = :username
+        ORDER BY timestamp DESC LIMIT 1
+        """)
+
+    params = {'username': username}
+
+    with engine.connect() as conn:
+        activity = conn.execute(command, **params).fetchone()
+        if activity:
+            return {'timestamp': activity[1], 'action': activity[2]}
+        return {}
+
+def associateVMWithDisk(vm_name, disk_name):
+    command = text("""
+        UPDATE v_ms
+        SET "osDisk" = :disk_name
+        WHERE
+           "vmName" = :vm_name
+        """)
+    params = {'vm_name': vm_name, 'disk_name': disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+def attachDiskToVM(disk_name, vm_name, lun):
+    try:
+        _, compute_client, _ = createClients()
+        virtual_machine = getVM(vm_name)
+
+        data_disk = compute_client.disks.get(os.getenv('VM_GROUP'), disk_name)
+        virtual_machine.storage_profile.data_disks.append({
+            'lun': lun,
+            'name': disk_name,
+            'create_option': DiskCreateOption.attach,
+            'managed_disk': {
+                'id': data_disk.id
+            }
+        })
+
+        async_disk_attach = compute_client.virtual_machines.create_or_update(
+            os.getenv('VM_GROUP'),
+            virtual_machine.name,
+            virtual_machine
+        )
+        async_disk_attach.wait()
+        return 1
+    except Exception as e:
+        print(e)
+        return -1
+
+def swapOSDisk(disk_name, vm_name):
+    try:
+        _, compute_client, _ = createClients()
+        virtual_machine = getVM(vm_name)
+        new_os_disk = compute_client.disks.get(os.getenv('VM_GROUP'), disk_name)
+
+        virtual_machine.storage_profile.os_disk.managed_disk.id = new_os_disk.id
+        virtual_machine.storage_profile.os_disk.name = new_os_disk.name
+
+        print("Attaching disk...")
+        async_disk_attach = compute_client.virtual_machines.create_or_update(
+            os.getenv('VM_GROUP'), vm_name, virtual_machine
+        )
+        async_disk_attach.wait()
+        print("Disk attached, restarting VM")
+        async_vm_restart = compute_client.virtual_machines.restart(
+            os.environ.get('VM_GROUP'), vm_name)
+        async_vm_restart.wait()
+        time.sleep(10)
+        print("VM restarted")
+        return 1
+    except Exception as e:
+        print(e)
+        return -1
+
+def fetchAllDisks():
+    command = text("""
+        SELECT *
+        FROM disks
+        """)
+
+    params = {}
+
+    with engine.connect() as conn:
+        disks = conn.execute(command, **params).fetchall()
+        return [{'disk_name': disk[0]} for disk in disks] 
+
+def deleteDisk(disk_name):
+    command = text("""
+        DELETE FROM disks WHERE "diskname" = :disk_name 
+        """)
+    params = {'disk_name': disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
