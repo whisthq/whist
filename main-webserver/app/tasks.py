@@ -347,12 +347,14 @@ def swapDisk(self, disk_name):
 		# If the VM is powered off, start it
 		vm_state = compute_client.virtual_machines.instance_view(
 			resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
+		print(vm_state.statuses[1])
 		if not 'running' in vm_state.statuses[1].code:
+			print('VM ' + vm_name + ' is powered off. Preparing to power on...')
 			async_vm_start = compute_client.virtual_machines.start(
 				os.environ.get('VM_GROUP'), vm_name)
 			async_vm_start.wait()
 			time.sleep(10)
-		# print("VM restarted and ready to use")
+		print('VM is started and ready to use')
 		return fetchVMCredentials(vm_name)
 	# Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
 	# (then reboot the VM), or wait until a VM becomes available.

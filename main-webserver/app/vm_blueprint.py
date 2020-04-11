@@ -151,9 +151,3 @@ def info(action):
         return jsonify({'ID': task.id}), 202
 
     return jsonify({}), 400
-
-@vm_bp.route('/test', methods=['POST'])
-def test():
-    body = request.get_json()
-    task = testCelery.apply_async([])
-    return jsonify({'ID': task.id}), 200
