@@ -155,5 +155,5 @@ def info(action):
 @vm_bp.route('/test', methods=['POST'])
 def test():
     body = request.get_json()
-    test.apply_async([])
+    testCelery.apply_async([])
     return jsonify({}), 200

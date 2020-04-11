@@ -449,6 +449,6 @@ def updateVMTable(self):
 	return {'status': 200}
 
 @celery.task(bind=True)
-def test(self):
+def testCelery(self):
 	print("TEST IS RUN!!!")
 	return {'status': 200}
