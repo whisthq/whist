@@ -1106,13 +1106,15 @@ def getMostRecentActivity(username):
         return {}
 
 def associateVMWithDisk(vm_name, disk_name):
+    username = mapDiskToUser(disk_name)
+    username = username if username else ''
     command = text("""
         UPDATE v_ms
-        SET "osDisk" = :disk_name
+        SET "osDisk" = :disk_name, "vmUserName" = :username
         WHERE
            "vmName" = :vm_name
         """)
-    params = {'vm_name': vm_name, 'disk_name': disk_name}
+    params = {'vm_name': vm_name, 'disk_name': disk_name, 'username': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
@@ -1248,4 +1250,5 @@ def mapDiskToUser(disk_name):
         disk = conn.execute(command, **params).fetchone()
         if disk:
             return disk[1]
+        print("ERROR: No username found for disk " + disk_name)
         return None
