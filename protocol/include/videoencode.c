@@ -16,6 +16,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
     avcodec_register_all();
     int max_buffer = 4 * (bitrate / FPS);
 
+    // TODO: If we end up using graphics card encoding, then we should pass it the image from DXGI WinApi screen capture,
+    // so that the uncompressed image doesn't ever hit the CPU or RAM
     if (encoder->type == NVENC_ENCODE) {
         mprintf("Trying Nvidia encoder\n");
 
@@ -246,6 +248,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
 
 /// @brief creates encoder encoder
 /// @details creates FFmpeg encoder
+// Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the next one when the previous one doesn't work
 encoder_t *create_video_encoder(int width, int height, int bitrate,
                                 int gop_size) {
     // set memory for the encoder
