@@ -8,9 +8,15 @@
 #include <sys/shm.h>
 #include <X11/extensions/Xdamage.h>
 
+#define USING_SHM false
+
 int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
 {
     device->display = XOpenDisplay( NULL );
+    if (!device->display) {
+       mprintf("ERROR: CreateCaptureDevice display did not open\n");
+       return -1;
+    }
     device->root = DefaultRootWindow( device->display );
     XWindowAttributes window_attributes;
     if( !XGetWindowAttributes( device->display, device->root, &window_attributes ) )
@@ -21,6 +27,12 @@ int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
     device->width = window_attributes.width;
     device->height = window_attributes.height;
 
+    int damage_event, damage_error;
+    XDamageQueryExtension( device->display, &damage_event, &damage_error );
+    device->damage = XDamageCreate( device->display, device->root, XDamageReportRawRectangles );
+    device->event = damage_event;
+
+#if USING_SHM
     Screen* screen = window_attributes.screen;
     device->image = XShmCreateImage( device->display,
                                      DefaultVisualOfScreen( screen ), //DefaultVisual(device->display, 0), // Use a correct visual. Omitted for brevity
@@ -42,15 +54,19 @@ int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
         return -1;
     }
     device->frame_data = device->image->data;
-    int damage_event, damage_error;
-    XDamageQueryExtension( device->display, &damage_event, &damage_error );
-    device->damage = XDamageCreate( device->display, device->root, XDamageReportRawRectangles );
-    device->event = damage_event;
+#else
+    CaptureScreen(device);
+#endif
+    
     return 0;
 }
 
 int CaptureScreen( struct CaptureDevice* device )
 {
+    static bool first = true;
+
+    XLockDisplay(device->display);
+
     int update = 0;
     while( XPending( device->display ) )
     {
@@ -62,11 +78,15 @@ int CaptureScreen( struct CaptureDevice* device )
         {
             update = 1;
         }
-
     }
-    if( update )
+
+    if( update || first )
     {
+	first = false;
+
         XDamageSubtract( device->display, device->damage, None, None );
+
+#if USING_SHM
         if( !XShmGetImage( device->display,
                            device->root,
                            device->image,
@@ -75,8 +95,16 @@ int CaptureScreen( struct CaptureDevice* device )
                            AllPlanes ) )
         {
             fprintf( stderr, "Error while capturing the screen" );
-            return -1;
+            update = -1;
         }
+#else
+	device->image = XGetImage(device->display, device->root, 0, 0, device->width, device->height, AllPlanes, ZPixmap);
+        device->frame_data = device->image->data;
+	if (!device->image) {
+            fprintf( stderr, "Error while capturing the screen" );
+            update = -1;
+	}
+#endif
     }
     XUnlockDisplay(device->display);
     return update;
