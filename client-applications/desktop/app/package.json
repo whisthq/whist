@@ -3,7 +3,7 @@
   "license": "MIT",
   "productName": "Fractal",
   "description": "Fractal",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "main": "./main.prod.js",
   "author": {
     "name": "Fractal Computers, Inc.",

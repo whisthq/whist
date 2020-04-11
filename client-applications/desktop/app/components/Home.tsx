@@ -24,7 +24,7 @@ class Home extends Component {
   constructor(props) {
     super(props)
     this.state = {username: '', password: '', loggingIn: false, warning: false, version: "1.0.0",
-                  studios: false, rememberMe: false}
+                  studios: false, rememberMe: false, lock: true}
   }
 
   CloseWindow = () => {
@@ -67,7 +67,7 @@ class Home extends Component {
   }
 
   LoginKeyPress = (event) => {
-  	if(event.key === 'Enter' && !this.state.studios) {
+  	if(event.key === 'Enter' && !this.state.studios && !this.state.lock) {
   		this.LoginUser()
   	}
     if(event.key === 'Enter' && this.state.studios) {
@@ -199,6 +199,14 @@ class Home extends Component {
   		        <img src = {LockIcon} width = "100" className = {styles.inputIcon}/>
   		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdatePassword} type = "password" className = {styles.inputBox} placeholder = "Password" id = "password"/>
   		      </div>
+            {
+            this.state.lock 
+            ?
+            <div style = {{width: 500, fontSize: 14, margin: 'auto', lineHeight: 1.5}}>
+              Fractal is currently undergoing a major update, and will be unavailable for the next 48 hours. We apologize for the inconvenience--please check
+              back in tomorrow!
+            </div>
+            :
   		      <div style = {{marginBottom: 20}}>
               {
               !this.state.studios
@@ -218,6 +226,7 @@ class Home extends Component {
               </button>
               }
   		      </div>
+            }
             <div style = {{marginTop: 25, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
               <label className = {styles.termsContainer}>
                 <input
