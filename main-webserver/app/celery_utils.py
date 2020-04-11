@@ -1,5 +1,5 @@
 def init_celery(celery, app):
-    celery.conf.update(task_track_started = True, accept_content = ['pickle', 'json'],
+    celery.conf.update(task_track_started = True, accept_content = ['json'],
     	result_accept_content = ['json'])
     TaskBase = celery.Task
     class ContextTask(TaskBase):
