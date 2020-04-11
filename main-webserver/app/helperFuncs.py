@@ -97,8 +97,12 @@ def deleteResource(name):
         '_vnet', name + '_subnet', name + '_ip', name + '_nic'
     hr = 1
 
+
+    print(vnetName)
+    print(nicName)
+
     try:
-        print("Deallocating VM...")
+        print("Attempting to deallocating VM...")
         async_vm_deallocate = compute_client.virtual_machines.deallocate(
             os.getenv('VM_GROUP'), name)
         async_vm_deallocate.wait()
