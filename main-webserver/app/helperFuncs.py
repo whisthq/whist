@@ -503,6 +503,27 @@ def addTimeTable(username, action, time, is_user):
 
     with engine.connect() as conn:
         conn.execute(command, **params)
+
+        disk = fetchUserDisks(username)
+        if disk:
+            disk_name = disk[0]['disk_name']
+            vms = mapDiskToVM(disk_name)
+            if vms:
+                _, compute_client, _ = createClients()
+                vm_name = vms[0]['vm_name']
+                vm_state = compute_client.virtual_machines.instance_view(
+                    resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+                if 'running' in vm_state.statuses[1].code:
+                    state = 'RUNNING_AVAILABLE' if action == 'logoff' else 'RUNNING_UNAVAILABLE'
+                    updateVMState(vms[0]['vm_name'], state)
+                else:
+                    state = 'NOT_RUNNING_AVAILABLE' if action == 'logoff' else 'NOT_RUNNING_UNAVAILABLE'
+                    updateVMState(vms[0]['vm_name'], state)  
+            else:
+                print("CRITICAL ERROR: Could not find a VM currently attached to disk " + disk_name)
+        else:
+            print("CRITICAL ERROR: Could not find disk in database attached to user " + username)
+
         conn.close()
 
 def changeDiskOnline(username, online):
@@ -1139,4 +1160,13 @@ def deleteDisk(disk_name):
         conn.execute(command, **params)
         conn.close()
 
+def mapDiskToVM(disk_name):
+    command = text("""
+        SELECT * FROM v_ms WHERE "osDisk" = :disk_name
+        """)
 
+    params = {'disk_name': disk_name}
+
+    with engine.connect() as conn:
+        vms = conn.execute(command, **params).fetchall()
+        return [{'vm_name': vm[0], 'ip': vm[3], 'state': vm[4], 'location': vm[5]} for vm in vms]
