@@ -355,11 +355,11 @@ def swapDisk(self, disk_name):
 			async_vm_start.wait()
 			time.sleep(10)
 		print('VM is started and ready to use')
-		return fetchVMCredentials(vm_name)
+		vm_credentials = fetchVMCredentials(vm_name)
+		return vm_credentials
 	# Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
 	# (then reboot the VM), or wait until a VM becomes available.
 	else:
-		print("No VM attached to disk")
 		free_vm_found = False
 		while not free_vm_found:
 			print("No VM attached to " + disk_name)
@@ -368,11 +368,14 @@ def swapDisk(self, disk_name):
 				print('Found ' + str(len(available_vms)) + ' available VMs')
 				# Pick a VM, attach it to disk
 				vm_name = available_vms[0]['vm_name']
+				lockVM(vm_name, True)
 				print('Selected VM ' + vm_name +
 					  ' to attach to disk ' + disk_name)
 				if swapDiskAndUpdate(disk_name, vm_name) > 0:
 					free_vm_found = True
+					lockVM(vm_name, False)
 					return fetchVMCredentials(vm_name)
+				lockVM(vm_name, False)
 				return {'status': 400}
 			else:
 				# Look for VMs that are not running
@@ -382,10 +385,13 @@ def swapDisk(self, disk_name):
 					'NOT_RUNNING_AVAILABLE', location) + fetchAttachableVMs('NOT_RUNNING_UNAVAILABLE', location)
 				if len(deactivated_vms) > 0:
 					vm_name = deactivated_vms[0]['vm_name']
+					lockVM(vm_name, True)
 					print("Found deactivated VM " + vm_name)
 					if swapDiskAndUpdate(disk_name, vm_name) > 0:
 						free_vm_found = True
+						lockVM(vm_name, False)
 						return fetchVMCredentials(vm_name)
+					lockVM(vm_name, False)
 					return {'status': 400}
 				else:
 					print("No VMs are available. Going to sleep...")
@@ -395,6 +401,8 @@ def swapDisk(self, disk_name):
 
 @celery.task(bind=True)
 def swapSpecificDisk(self, disk_name, vm_name):
+	lockVM(vm_name, True)
+
 	_, compute_client, _ = createClients()
 	new_os_disk = compute_client.disks.get(
 		os.environ.get('VM_GROUP'), disk_name)
@@ -433,6 +441,7 @@ def swapSpecificDisk(self, disk_name, vm_name):
 
 	print('VM ' + vm_name + ' successfully restarted')
 
+	lockVM(vm_name, False)
 	return fetchVMCredentials(vm_name)
 
 @celery.task(bind=True)

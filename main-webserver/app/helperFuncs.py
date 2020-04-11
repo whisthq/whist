@@ -1077,9 +1077,9 @@ def updateDisk(disk_name, disk_state, vm_name, location):
 
 def fetchAttachableVMs(state, location):
     command = text("""
-        SELECT * FROM v_ms WHERE "state" = :state AND "location" = :location
+        SELECT * FROM v_ms WHERE "state" = :state AND "location" = :location AND "lock" = :lock
         """)
-    params = {'state': state, 'location': location}
+    params = {'state': state, 'location': location, 'lock': False}
 
     with engine.connect() as conn:
         vms = conn.execute(command, **params).fetchall()
@@ -1116,6 +1116,19 @@ def associateVMWithDisk(vm_name, disk_name):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+def lockVM(vm_name, lock):
+    command = text("""
+        UPDATE v_ms
+        SET "lock" = :lock
+        WHERE
+           "vmName" = :vm_name
+        """)
+    params = {'vm_name': vm_name, 'lock': lock}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
 
 def attachDiskToVM(disk_name, vm_name, lun):
     try:
