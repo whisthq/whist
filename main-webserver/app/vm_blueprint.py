@@ -117,6 +117,7 @@ def tracker(action):
     elif action == 'logoff':
         username = body['username']
         is_user = body['is_user']
+        print(body)
         addTimeTable(username, 'logoff', time, is_user)
     elif action == 'clear':
         deleteTimeTable()
