@@ -626,32 +626,31 @@ int main(int argc, char* argv[]) {
     runcmd("chmod 600 sshkey");
 #endif
 
-    int num_required_args = 2;
+    int num_required_args = 1;
     int num_optional_args = 3;
     if (argc - 1 < num_required_args ||
         argc - 1 > num_required_args + num_optional_args) {
         printf(
-            "Usage: desktop [IP ADDRESS] [AES PRIVATE KEY] [[OPTIONAL] WIDTH] "
+            "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] "
             "[[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]");
         return -1;
     }
 
     server_ip = argv[1];
-    //    char* aes_private_key = argv[2]; TODO: need to make webserver exchange
-    //    key instead of hardcode
+
     output_width = -1;
     output_height = -1;
 
+    if (argc >= 3 && (atoi(argv[2]) > 0)) {
+        output_width = atoi(argv[2]);
+    }
+
     if (argc >= 4 && (atoi(argv[3]) > 0)) {
-        output_width = atoi(argv[3]);
+        output_height = atoi(argv[3]);
     }
 
-    if (argc >= 5 && (atoi(argv[4]) > 0)) {
-        output_height = atoi(argv[4]);
-    }
-
-    if (argc == 6) {
-        max_mbps = atoi(argv[5]);
+    if (argc == 5) {
+        max_mbps = atoi(argv[4]);
     }
 
     if (initSDL() < 0) {
@@ -665,9 +664,9 @@ int main(int argc, char* argv[]) {
     initClipboard();
 
     exiting = false;
-    for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
-        initVideo();
+    initVideo();
 
+    for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         // If this is a retry, wait a bit more for the server to recover
         if (try_amount > 0) {
             mprintf("Trying to recover the server connection...\n");
@@ -849,7 +848,6 @@ int main(int argc, char* argv[]) {
         SDL_WaitThread(receive_packets_thread, NULL);
 
         // Destroy video and audio
-        destroyVideo();
         destroyAudio();
 
         closesocket(PacketSendContext.s);
@@ -861,6 +859,7 @@ int main(int argc, char* argv[]) {
 #endif
     }
 
+    destroyVideo();
     mprintf("Closing Client...\n");
 
     destroyMultiThreadedPrintf();

@@ -42,17 +42,6 @@
 // send JSON post to query the database, authenticate the user and return the VM IP
 char* sendJSONPost( char* path, char* jsonObj )
 {
-    // initialize Winsock if this is a Windows client
-#if defined(_WIN32)
-    WSADATA wsa;
-    // initialize Winsock (sockets library)
-    if( WSAStartup( MAKEWORD( 2, 2 ), &wsa ) != 0 )
-    {
-        printf( "Failed. Error Code : %d.\n", WSAGetLastError() );
-        return "1";
-    }
-#endif
-
     // environment variables
     SOCKET Socket; // socket to send/receive POST request
     struct hostent* host; // address struct of the host webserver
@@ -117,7 +106,6 @@ char* sendJSONPost( char* path, char* jsonObj )
 #if defined(_WIN32)
   // close the socket
     closesocket( Socket );
-    WSACleanup(); // close Windows socket library
 #else
     close( Socket );
 #endif

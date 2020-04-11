@@ -152,10 +152,13 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     // double max_delay = 5.0;
     // double delay_thusfar = 0.0;
 
+    // Send some amount of packets every two milliseconds
     int break_resolution = 2;
+
     double num_indices_per_unit_latency = (AVERAGE_LATENCY_MS / 1000.0) *
                                           (STARTING_BURST_BITRATE / 8.0) /
                                           MAX_PAYLOAD_SIZE;
+
     double break_distance = num_indices_per_unit_latency *
                             (1.0 * break_resolution / AVERAGE_LATENCY_MS);
 
@@ -234,11 +237,11 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
         // Save the len to nack buffer lens
         *packet_len = packet_size;
 
-        // Encrypt the packet
+        // Encrypt the packet with AES
         struct RTPPacket encrypted_packet;
         int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
                                          (unsigned char*)PRIVATE_KEY);
-
+        
         // Send it off
         SDL_LockMutex(packet_mutex);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
@@ -338,6 +341,7 @@ static int32_t SendVideo(void* opaque) {
             frames_since_first_iframe = 0;
         }
 
+        // Accumulated_frames is equal to how many frames have passed since the last call to CaptureScreen
         int accumulated_frames = 0;
         if (GetTimer(last_frame_capture) > 1.0 / FPS) {
             accumulated_frames = CaptureScreen(device);
@@ -454,6 +458,7 @@ static int32_t SendVideo(void* opaque) {
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
                     frame->cursor = GetCurrentCursor();
+                    // True if this frame does not require previous frames to render
                     frame->is_iframe =
                         (frames_since_first_iframe % gop_size == 1) ||
                         is_iframe;
@@ -664,9 +669,6 @@ int main() {
             continue;
         }
 
-#ifdef _WIN32
-        InitDesktop();
-#endif
         // Give client time to setup before sending it with packets
         SDL_Delay(150);
 

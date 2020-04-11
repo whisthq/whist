@@ -1,11 +1,15 @@
 #include "dxgicapture.h"
 
 #include <windows.h>
-#include <psapi.h>
-#include <processthreadsapi.h>
+
+// To link IID_'s
+#pragma comment(lib, "dxguid.lib")
 
 void GetBitmapScreenshot( struct CaptureDevice* device );
 
+// Print Memory Info
+#include <psapi.h>
+#include <processthreadsapi.h>
 void PrintMemoryInfo()
 {
     DWORD processID = GetCurrentProcessId();
@@ -28,6 +32,7 @@ void PrintMemoryInfo()
 
     CloseHandle(hProcess);
 }
+// End Print Memory Info
 
 #define USE_GPU 0
 #define USE_MONITOR 0

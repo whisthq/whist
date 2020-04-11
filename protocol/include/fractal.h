@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #if defined(_WIN32)
+#pragma comment(lib, "ws2_32.lib")
 #include <Audioclient.h>
 #include <D3D11.h>
 #include <D3d11_1.h>
@@ -15,11 +16,10 @@
 #include <mmdeviceapi.h>
 #include <process.h>
 #include <synchapi.h>
-#include <windows.h>
 #include <winsock2.h>
-#include <winuser.h>
 #include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
+#include <windows.h>
+#include <winuser.h>
 #undef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
 #undef EWOULDBLOCK
@@ -598,14 +598,19 @@ typedef struct SocketContext {
     int ack;
 } SocketContext;
 
+// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be replayed
+// TODO: INC integer that must not be used twice
+
 // Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) +
 // RTPPacket.payload_size
 struct RTPPacket {
     // hash at the beginning of the struct, which is the hash of the rest of the
     // packet
     char hash[16];
+    // hash is a signature for everything below this line
     int cipher_len;
     char iv[16];
+    // Everything below this line gets encrypted
     FractalPacketType type;
     int id;
     short index;
@@ -666,6 +671,6 @@ int get_native_screen_height();
 
 void initBacktraceHandler();
 
-/*** FRACTAL FUNCTIONS END ***/
+/** FRACTAL FUNCTIONS END ***/
 
 #endif  // FRACTAL_H
