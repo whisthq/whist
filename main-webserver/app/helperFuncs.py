@@ -1207,7 +1207,7 @@ def updateVM(vm_name, location, disk_name, username):
         WHERE
            "vmName" = :vm_name
         """)
-    params = {'location': location, 'vm_name': vm_name, 'disk_name' = :disk_name, 'username': username}
+    params = {'location': location, 'vm_name': vm_name, 'disk_name': disk_name, 'username': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close() 
