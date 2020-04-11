@@ -212,9 +212,9 @@ def fetchAll(self, update):
 
 		if update:
 			try:
-				if not entry.name in current_names:
+				if not entry.name in vm_names:
 					insertRow(entry.os_profile.admin_username,
-							  entry.name, current_usernames, current_names)
+							  entry.name, current_usernames, vm_names)
 			except:
 				pass
 
@@ -245,7 +245,7 @@ def restartVM(self, vm_name):
 def updateVMStates(self):
 	_, compute_client, _ = createClients()
 	vms = compute_client.virtual_machines.list(
-		resource_group_name=os.environ.get('VM_GROUP'))
+		resource_group_name = os.environ.get('VM_GROUP'))
 
 	# looping inside the list of virtual machines, to grab the state of each machine
 	for vm in vms:
@@ -260,7 +260,7 @@ def updateVMStates(self):
 
 		username = fetchVMCredentials(vm.name)['username']
 		if username:
-			most_recent_action = getMostRecentActivity(username.split('@')[0])
+			most_recent_action = getMostRecentActivity(username)
 			if not most_recent_action:
 				available = True
 			elif most_recent_action['action'] == 'logoff':
@@ -428,3 +428,11 @@ def swapSpecificDisk(self, disk_name, vm_name):
 
 	return fetchVMCredentials(vm_name)
 
+@celery.task(bind=True)
+def updateVMTable(self):
+	vms = fetchUSerVMs(None)
+	for vm_name, _ in vms.items():
+		vm = getVM(vm_name)
+		updateVMLocation(vm_name, vm.location)
+
+	return {'status': 200}

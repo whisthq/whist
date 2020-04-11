@@ -59,6 +59,9 @@ def vm(action):
         body = request.get_json()
         task = swapSpecificDisk.apply_async([body['disk_name'], body['vm_name']])
         return jsonify({'ID': task.id}), 202
+    elif action == 'updateTable':
+        task = updateVMTable.apply_async([])
+        return jsonify({'ID': task.id}), 202
     return jsonify({}), 400
 
 
@@ -117,7 +120,7 @@ def tracker(action):
     elif action == 'logoff':
         username = body['username']
         is_user = body['is_user']
-        print(body)
+        print("test")
         addTimeTable(username, 'logoff', time, is_user)
     elif action == 'clear':
         deleteTimeTable()
