@@ -1,6 +1,6 @@
 adal==1.2.2
 alembic==1.2.1
-amqp==1.4.9
+amqp==2.5.2
 anyjson==0.3.3
 asn1crypto==0.24.0
 azure==4.0.0
@@ -86,9 +86,9 @@ azure-storage-common==1.4.2
 azure-storage-file==1.4.0
 azure-storage-queue==1.4.0
 Babel==2.7.0
-billiard==3.3.0.23
+billiard==3.6.3.0
 blinker==1.4
-celery==3.1.24
+celery==4.4.2
 certifi==2019.9.11
 cffi==1.12.3
 chardet==3.0.4
@@ -108,7 +108,7 @@ importlib-metadata==0.23
 isodate==0.6.0
 itsdangerous==1.1.0
 Jinja2==2.10.1
-kombu==3.0.37
+kombu==4.6.8
 Mako==1.1.0
 MarkupSafe==1.1.1
 more-itertools==5.0.0
@@ -116,7 +116,7 @@ msrest==0.6.10
 msrestazure==0.6.2
 numpy==1.16.6
 oauthlib==3.1.0
-psycopg2-binary==2.8.4
+psycopg2==2.8.4
 pyasn1==0.4.7
 pycparser==2.19
 PyJWT==1.7.1
@@ -125,7 +125,7 @@ python-dotenv==0.10.3
 python-editor==1.0.4
 python-jose==3.0.1
 pytz==2019.2
-redis==2.10.6
+redis==3.4.1
 requests==2.22.0
 requests-oauthlib==1.2.0
 rsa==4.0
