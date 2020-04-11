@@ -430,7 +430,7 @@ def swapSpecificDisk(self, disk_name, vm_name):
 
 @celery.task(bind=True)
 def updateVMTable(self):
-	vms = fetchUSerVMs(None)
+	vms = fetchUserVMs(None)
 	for vm_name, _ in vms.items():
 		vm = getVM(vm_name)
 		updateVMLocation(vm_name, vm.location)
