@@ -93,10 +93,6 @@ def disk(action):
     elif action == 'resync':
         task = syncDisks.apply_async([])
         return jsonify({'ID': task.id}), 202
-    elif action == 'online':
-        body = request.get_json()
-        changeDiskOnline([body['username'], body['online']])
-        return jsonify({'status': 200}), 200
     elif action == 'attach':
         body = request.get_json()
         print("Received disk attach request")
@@ -120,7 +116,6 @@ def tracker(action):
     elif action == 'logoff':
         username = body['username']
         is_user = body['is_user']
-        print("test")
         addTimeTable(username, 'logoff', time, is_user)
     elif action == 'clear':
         deleteTimeTable()

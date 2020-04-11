@@ -12,7 +12,7 @@ def user(action):
         vmExists = getVM(vm_name)
         vmInDatabase = singleValueQuery(vm_name)
         if vmExists and vmInDatabase:
-            registerUserVM(username, vm_name)
+            updateVMUsername(username, vm_name)
             return jsonify({}), 200
         else:
             return jsonify({}), 403
@@ -26,10 +26,10 @@ def user(action):
             return jsonify({'vms': fetchUserVMs(username)}), 200
         except Exception as e:
             return jsonify({}), 403
-    elif action == 'reset':
-        username, vm_name = body['username'], body['vm_name']
-        resetVMCredentials(username, vm_name)
-        return jsonify({'status': 200}), 200
+    # elif action == 'reset':
+    #     username, vm_name = body['username'], body['vm_name']
+    #     resetVMCredentials(username, vm_name)
+    #     return jsonify({'status': 200}), 200
 
 
 @account_bp.route('/account/<action>', methods=['POST'])
@@ -118,21 +118,6 @@ def account(action):
         storeFeedback(body['username'], body['feedback'])
         return jsonify({'status': 200}), 200
     return jsonify({'status': 400}), 400
-
-
-@account_bp.route('/mail/<action>', methods=['POST'])
-def mail(action):
-    body = request.get_json()
-    if action == 'forgot':
-        username = body['username']
-        verified = lookup(username)
-        if verified:
-            sendEmail(username)
-        return jsonify({'verified': verified}), 200
-    elif action == 'reset':
-        username, password = body['username'], body['password']
-        resetPassword(username, password)
-        return jsonify({'status': 200}), 200
 
 
 @account_bp.route('/admin/<action>', methods=['POST'])

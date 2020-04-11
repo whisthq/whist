@@ -12,7 +12,7 @@ def createVM(self, vm_size, location):
 		return jsonify({})
 	vmParameters = createVMParameters(vmName, nic.id, vm_size, location)
 	async_vm_creation = compute_client.virtual_machines.create_or_update(
-		os.environ.get('VM_GROUP'), vmParameters['vmName'], vmParameters['params'])
+		os.environ.get('VM_GROUP'), vmParameters['vm_name'], vmParameters['params'])
 	async_vm_creation.wait()
 
 	extension_parameters = {
@@ -24,11 +24,11 @@ def createVM(self, vm_size, location):
 	}
 
 	async_vm_powershell = compute_client.virtual_machine_extensions.create_or_update(os.environ.get('VM_GROUP'),
-							vmParameters['vmName'], 'NvidiaGpuDriverWindows', extension_parameters)
+							vmParameters['vm_name'], 'NvidiaGpuDriverWindows', extension_parameters)
 	async_vm_powershell.wait()
 
 	async_vm_start = compute_client.virtual_machines.start(
-		os.environ.get('VM_GROUP'), vmParameters['vmName'])
+		os.environ.get('VM_GROUP'), vmParameters['vm_name'])
 	async_vm_start.wait()
 
 	with open('app/scripts/vmCreate.txt', 'r') as file:
@@ -41,17 +41,17 @@ def createVM(self, vm_size, location):
 		}
 		poller = compute_client.virtual_machines.run_command(
 			os.environ.get('VM_GROUP'),
-			vmParameters['vmName'],
+			vmParameters['vm_name'],
 			run_command_parameters
 		)
 		result = poller.result()
 		print(result.value[0].message)
 
-	vm = getVM(vmParameters['vmName'])
+	vm = getVM(vmParameters['vm_name'])
 	vm_ip = getIP(vm)
-	updateVMIP(vmParameters['vmName'], vm_ip)
+	updateVMIP(vmParameters['vm_name'], vm_ip)
 
-	return fetchVMCredentials(vmParameters['vmName'])
+	return fetchVMCredentials(vmParameters['vm_name'])
 
 
 @celery.task(bind=True)
@@ -325,7 +325,7 @@ def swapDisk(self, disk_name):
 
 	def swapDiskAndUpdate(disk_name, vm_name):
 		# Pick a VM, attach it to disk
-		hr = swapOSDisk(disk_name, vm_name)
+		hr = swapdisk_name(disk_name, vm_name)
 		if hr > 0:
 			updateDisk(disk_name, disk_state, vm_name, location)
 			associateVMWithDisk(vm_name, disk_name)

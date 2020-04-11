@@ -49,3 +49,12 @@ def generateToken(user):
         token = token[-1 * len(pwd_token):]
 
     return token
+
+def cleanFetchedSQL(out):
+    if out:
+        is_list = isinstance(out, list)
+        if is_list:
+            return [dict(row) for row in out]
+        else:
+            return dict(out)
+    return None
