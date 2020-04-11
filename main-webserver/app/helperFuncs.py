@@ -1108,12 +1108,14 @@ def swapdisk_name(disk_name, vm_name):
         virtual_machine.storage_profile.os_disk.managed_disk.id = new_os_disk.id
         virtual_machine.storage_profile.os_disk.name = new_os_disk.name
 
-        print("Attaching disk...")
+        print("TASK: Attaching disk " + disk_name + " to " + vm_name)
+        start = time.perf_counter()
         async_disk_attach = compute_client.virtual_machines.create_or_update(
             os.getenv('VM_GROUP'), vm_name, virtual_machine
         )
         async_disk_attach.wait()
-        print("Disk attached")
+        end = time.perf_counter()
+        print("SUCCESS: Disk " + disk_name + " attached to " + vm_name + " in " + str(start-end) + " seconds")
 
         vm_state = compute_client.virtual_machines.instance_view(
             resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
@@ -1122,7 +1124,8 @@ def swapdisk_name(disk_name, vm_name):
             async_vm_start = compute_client.virtual_machines.start(
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_start.wait()
-            time.sleep(10)
+        
+        time.sleep(5)
         # else:
         #     print("Restarting VM...")
         #     async_vm_restart = compute_client.virtual_machines.restart(
@@ -1132,7 +1135,7 @@ def swapdisk_name(disk_name, vm_name):
         #     print("VM restarted")
         return 1
     except Exception as e:
-        print(e)
+        print("CRITICAL ERROR: " e)
         return -1
 
 def fetchAllDisks():
