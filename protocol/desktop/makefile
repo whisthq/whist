@@ -17,6 +17,7 @@ BIN_NAME = build$(ARCH)/desktop.exe
 # files to build into object files
 OBJS = \
 	fractal.obj \
+	clipboard_thread.obj \
 	win_clipboard.obj \
 	aes.obj \
 	videodecode.obj \
@@ -86,6 +87,10 @@ all: clean clear $(OBJS)
 # compile the main fractal header source file into object file
 fractal.obj:
 	$(CC) /c $(CFLAGS) ../include/fractal.c
+
+# compile the main clipboard source file into object file
+clipboard_thread.obj:
+	$(CC) /c $(CFLAGS) ../include/clipboard_thread.c
 
 # compile the main clipboard source file into object file
 win_clipboard.obj:

@@ -28,6 +28,26 @@ typedef struct ClipboardFiles
 	char* files[];
 } ClipboardFiles;
 
+#ifdef _WIN32
+	#define _CRT_SECURE_NO_WARNINGS
+	#include <windows.h>
+	WCHAR* lget_clipboard_directory();
+	WCHAR* lset_clipboard_directory();
+
+	char* get_clipboard_directory();
+	char* set_clipboard_directory();
+
+	#define LGET_CLIPBOARD (lget_clipboard_directory())
+	#define GET_CLIPBOARD (get_clipboard_directory())
+
+	#define LSET_CLIPBOARD (lset_clipboard_directory())
+	#define SET_CLIPBOARD (set_clipboard_directory())
+#else
+	#define GET_CLIPBOARD "./get_clipboard"
+	#define SET_CLIPBOARD "./set_clipboard"
+#endif
+
+
 void initClipboard();
 
 ClipboardData* GetClipboard();

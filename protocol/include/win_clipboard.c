@@ -6,9 +6,6 @@
 #include "fractal.h"
 
 #ifdef _WIN32
-WCHAR* lget_clipboard_directory();
-WCHAR* lset_clipboard_directory();
-
 char* get_clipboard_directory()
 {
 	static char buf[MAX_PATH];
@@ -23,26 +20,10 @@ char* set_clipboard_directory()
 }
 #endif
 
-#ifdef _WIN32
-#define LGET_CLIPBOARD (lget_clipboard_directory())
-#define GET_CLIPBOARD (get_clipboard_directory())
-#else
-#define GET_CLIPBOARD "./get_clipboard"
-#endif
-
-#ifdef _WIN32
-#define LSET_CLIPBOARD (lset_clipboard_directory())
-#define SET_CLIPBOARD (set_clipboard_directory())
-#else
-#define SET_CLIPBOARD "./set_clipboard"
-#endif
-
 void initClipboard()
 {
-#ifdef _WIN32
 	get_clipboard_directory();
 	set_clipboard_directory();
-#endif
 }
 
 #ifdef _WIN32
@@ -208,60 +189,25 @@ bool CreateJunction( WCHAR* szJunction, WCHAR* szPath )
 
 #endif
 
-#if defined (_WIN32)
-	static int last_clipboard_sequence_number = -1;
-#elif __APPLE__
-	#include "clipboard_osx.h"
-	#include "mac_utils.h"
-	#include <unistd.h>
-	#include <sys/syslimits.h>
-
-	bool clipboardHasImage;
-	bool clipboardHasString;
-	bool clipboardHasFiles;
-	static int last_clipboard_sequence_number = -1;
-#endif
+static int last_clipboard_sequence_number = -1;
 
 static char clipboard_buf[9000000];
 
 void StartTrackingClipboardUpdates()
 {
-#if defined(_WIN32)
 	last_clipboard_sequence_number = GetClipboardSequenceNumber();
-#elif __APPLE__
-	last_clipboard_sequence_number = -1; // to capture the first event
-	clipboardHasImage = false;
-	clipboardHasString = false;
-	clipboardHasFiles = false;
-#else
-// TODO: LINUX UBUNTU/DEBIAN
-#endif
 }
 
 bool hasClipboardUpdated()
 {
 	bool hasUpdated = false;
 
-#if defined(_WIN32)
 	int new_clipboard_sequence_number = GetClipboardSequenceNumber();
 	if( new_clipboard_sequence_number > last_clipboard_sequence_number )
 	{
 		hasUpdated = true;
 		last_clipboard_sequence_number = new_clipboard_sequence_number;
 	}
-#elif __APPLE__
-	int new_clipboard_sequence_number = GetClipboardChangecount();
-	if (new_clipboard_sequence_number > last_clipboard_sequence_number) {
-		// check if new clipboard is an image or a string
-		clipboardHasImage = ClipboardHasImage();
-		clipboardHasString = ClipboardHasString();
-		clipboardHasFiles = ClipboardHasFiles();
-		hasUpdated = (clipboardHasImage || clipboardHasString || clipboardHasFiles); // should be always set to true in here
-		last_clipboard_sequence_number = new_clipboard_sequence_number;
-	}
-#else
-// TODO: LINUX UBUNTU/DEBIAN
-#endif
 	return hasUpdated;
 }
 
@@ -272,7 +218,6 @@ ClipboardData* GetClipboard()
 	cb->size = 0;
 	cb->type = CLIPBOARD_NONE;
 
-#if defined(_WIN32)
 	if( !OpenClipboard( NULL ) )
 	{
 		return cb;
@@ -460,121 +405,9 @@ ClipboardData* GetClipboard()
 	}
 
 	CloseClipboard();
-#elif __APPLE__
-// do clipboardHasFiles check first because it is more restrictive
-// otherwise gets multiple files confused with string and thinks both are true
-	if( clipboardHasFiles )
-	{
-		mprintf( "Getting files from clipboard\n" );
-
-		// allocate memory for filenames and paths
-		OSXFilenames* filenames[MAX_URLS];
-		for( size_t i = 0; i < MAX_URLS; i++ )
-		{
-			filenames[i] = (OSXFilenames*)malloc( sizeof( OSXFilenames ) );
-			filenames[i]->filename = (char*)malloc( PATH_MAX * sizeof( char ) );
-			filenames[i]->fullPath = (char*)malloc( PATH_MAX * sizeof( char ) );
-
-			// pad with null terminators
-			memset( filenames[i]->filename, '\0', PATH_MAX * sizeof( char ) );
-			memset( filenames[i]->fullPath, '\0', PATH_MAX * sizeof( char ) );
-		}
-
-		// populate filenames array with file URLs
-		ClipboardGetFiles( filenames );
-
-		// set clipboard data attributes to be returned
-		cb->type = CLIPBOARD_FILES;
-		cb->size = 0;
-
-		// delete clipboard directory and all its files
-		if( dir_exists( GET_CLIPBOARD ) > 0 )
-		{
-			mac_rm_rf( GET_CLIPBOARD );
-		}
-
-		// make new clipboard directory
-		mkdir( GET_CLIPBOARD, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
-
-
-		// make symlinks for all files in clipboard and store in directory
-		for( size_t i = 0; i < MAX_URLS; i++ )
-		{
-			// if there are no more file URLs in clipboard, exit loop
-			if( *filenames[i]->fullPath != '\0' )
-			{
-				char symlinkName[PATH_MAX] = "";
-				strcat( symlinkName, GET_CLIPBOARD );
-				strcat( symlinkName, "/" );
-				strcat( symlinkName, filenames[i]->filename );
-				symlink( filenames[i]->fullPath, symlinkName );
-			} else
-			{
-				break;
-			}
-		}
-
-		// free heap memory
-		for( size_t i = 0; i < MAX_URLS; i++ )
-		{
-			free( filenames[i]->filename );
-			free( filenames[i]->fullPath );
-			free( filenames[i] );
-		}
-
-	} else if( clipboardHasString )
-	{
-		// get the string
-		const char* clipboard_string = ClipboardGetString();
-		int data_size = strlen(clipboard_string) + 1; // for null terminator
-		// copy the data
-		if ((unsigned long) data_size < sizeof(clipboard_buf)) {
-			cb->size = data_size;
-			memcpy(cb->data, clipboard_string, data_size);
-			cb->type = CLIPBOARD_TEXT;
-			mprintf( "CLIPBOARD STRING: %s\n", cb->data );
-			mprintf( "Len %d, Strlen %d\n", cb->size, strlen( cb->data ) );
-		}
-		else {
-			mprintf( "Could not copy, clipboard too large! %d bytes\n", data_size );
-		}
-	}
-	else if (clipboardHasImage) {
-		// malloc some space for the image
-        OSXImage *clipboard_image = (OSXImage *) malloc(sizeof(OSXImage));
-        memset(clipboard_image, 0, sizeof(OSXImage));	
-
-		// get the image and its size
-		ClipboardGetImage(clipboard_image);
-		int data_size = clipboard_image->size + 14;
-
-		// copy the data
-		if ((unsigned long) data_size < sizeof(clipboard_buf)) {
-			cb->size = data_size;
-			memcpy(cb->data, clipboard_image->data + 14, data_size);
-			// dimensions for sanity check
-			mprintf( "Width: %d\n", (*(int*)&cb->data[4]) );
-			mprintf( "Height: %d\n", (*(int*)&cb->data[8]) );
-			// data type and length
-			cb->type = CLIPBOARD_IMAGE;
-			mprintf( "OSX Image! Size: %d\n", cb->size );
-			// now that the image is in Clipboard struct, we can free this struct
-			free(clipboard_image);
-		}
-		else {
-			mprintf( "Could not copy, clipboard too large! %d bytes\n", data_size );
-		}
-	}
-	else {
-		mprintf("Nothing in the clipboard!\n");
-	}
-#else
-// TODO: LINUX UBUNTU/DEBIAN
-#endif
 	return cb;
 }
 
-#if defined(_WIN32)
 HGLOBAL getGlobalAlloc( void* buf, int len )
 {
 	HGLOBAL hMem = GlobalAlloc( GMEM_MOVEABLE, len );
@@ -591,7 +424,6 @@ HGLOBAL getGlobalAlloc( void* buf, int len )
 
 	return hMem;
 }
-#endif
 
 void SetClipboard( ClipboardData* cb )
 {
@@ -600,7 +432,6 @@ void SetClipboard( ClipboardData* cb )
 		return;
 	}
 
-#if defined(_WIN32)
 	int cf_type = -1;
 	HGLOBAL hMem = NULL;
 
@@ -702,247 +533,6 @@ void SetClipboard( ClipboardData* cb )
 		CloseClipboard();
 	}
 
-#elif __APPLE__
-	// check the type of the data
-	switch(cb->type) {
-		case CLIPBOARD_TEXT:
-		mprintf("SetClipboard to Text: %s\n", cb->data);
-		ClipboardSetString(cb->data);
-		break;
-	case CLIPBOARD_IMAGE:
-		mprintf("SetClipboard to Image with size %d\n", cb->size);
-		// fix the CGImage header back
-		char* data = malloc(cb->size + 14);
-		*((char*)(&data[0])) = 'B';
-		*((char*)(&data[1])) = 'M';
-		*((int*)(&data[2])) = cb->size + 14;
-		*((int*)(&data[10])) = 54;
-		memcpy(data+14, cb->data, cb->size);
-		// set the image and free the temp data
-		ClipboardSetImage(data, cb->size + 14);
-		free(data);
-		break;
-	case CLIPBOARD_FILES:
-		mprintf( "SetClipboard to Files\n" );
-
-		// allocate memory to store filenames in clipboard
-		char* filenames[MAX_URLS];
-		for( size_t i = 0; i < MAX_URLS; i++ )
-		{
-			filenames[i] = (char*)malloc( PATH_MAX * sizeof( char ) );
-			memset( filenames[i], '\0', PATH_MAX * sizeof( char ) );
-		}
-
-		// populate filenames
-		get_filenames( SET_CLIPBOARD, filenames );
-
-		// add files to clipboard
-		ClipboardSetFiles( filenames );
-
-		// free memory
-		for( size_t i = 0; i < MAX_URLS; i++ )
-		{
-			free( filenames[i] );
-		}
-
-		break;
-	default:
-		mprintf("No clipboard data to set!\n");
-		break;
-	}
-#else
-// TODO: LINUX UBUNTU/DEBIAN
-#endif
 	// Update the status so that this specific update doesn't count
 	hasClipboardUpdated();
-}
-
-// CLIPBOARD THREAD HANDLING
-
-int UpdateClipboardThread( void* opaque );
-
-bool updating_set_clipboard;
-bool updating_clipboard;
-bool pending_update_clipboard;
-clock last_clipboard_update;
-SDL_sem* clipboard_semaphore;
-ClipboardData* clipboard;
-SEND_FMSG* send_fmsg;
-SDL_Thread* thread;
-bool connected;
-char* server_ip;
-ClipboardData* clipboard;
-
-bool isUpdatingClipboard()
-{
-	return updating_clipboard;
-}
-
-bool updateSetClipboard( ClipboardData* cb )
-{
-	if( updating_clipboard )
-	{
-		mprintf( "Tried to SetClipboard, but clipboard is updating\n" );
-		return false;
-	}
-
-	updating_clipboard = true;
-	updating_set_clipboard = true;
-	clipboard = cb;
-
-	SDL_SemPost( clipboard_semaphore );
-
-	return true;
-}
-
-bool pendingUpdateClipboard()
-{
-	return pending_update_clipboard;
-}
-
-void initUpdateClipboard( SEND_FMSG* send_fmsg_local, char* server_ip_local )
-{
-	connected = true;
-
-	server_ip = server_ip_local;
-	send_fmsg = send_fmsg_local;
-
-	updating_clipboard = false;
-	pending_update_clipboard = false;
-	StartTimer( (clock*)&last_clipboard_update );
-	clipboard_semaphore = SDL_CreateSemaphore( 0 );
-
-	thread = SDL_CreateThread( UpdateClipboardThread, "UpdateClipboardThread", NULL );
-
-	updateClipboard();
-	StartTrackingClipboardUpdates();
-}
-
-void destroyUpdateClipboard()
-{
-	connected = false;
-	SDL_SemPost( clipboard_semaphore );
-}
-
-int UpdateClipboardThread( void* opaque )
-{
-	opaque;
-
-	while( connected )
-	{
-		SDL_SemWait( clipboard_semaphore );
-
-		if( !connected )
-		{
-			break;
-		}
-
-		//ClipboardData* clipboard = GetClipboard();
-
-		if( updating_set_clipboard )
-		{
-			mprintf( "Trying to set clipboard!\n" );
-			ClipboardData cb;
-			cb.type = CLIPBOARD_TEXT;
-			cb.size = 0;
-			SetClipboard( &cb );
-			if( clipboard->type == CLIPBOARD_FILES )
-			{
-				char cmd[1000] = "";
-#ifndef _WIN32
-				strcat( cmd, "UNISON=./.unison; " );
-#endif
-
-#ifdef _WIN32
-				strcat( cmd, "unison " );
-#else
-				strcat( cmd, "./unison -follow \"Path *\" " );
-#endif
-
-				strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " );
-				strcat( cmd, " \"ssh://" );
-				strcat( cmd, (char*)server_ip );
-				strcat( cmd, "/" );
-				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
-				strcat( cmd, "\" " );
-				strcat( cmd, SET_CLIPBOARD );
-				strcat( cmd, " -force " );
-				strcat( cmd, " \"ssh://" );
-				strcat( cmd, (char*)server_ip );
-				strcat( cmd, "/" );
-				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
-				strcat( cmd, "\" " );
-				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
-
-				mprintf( "COMMAND: %s\n", cmd );
-				runcmd( cmd );
-			}
-			SetClipboard( clipboard );
-		} else
-		{
-			clock clipboard_time;
-			StartTimer( &clipboard_time );
-
-			if( clipboard->type == CLIPBOARD_FILES )
-			{
-				char cmd[1000] = "";
-#ifndef _WIN32
-				strcat( cmd, "UNISON=./.unison; " );
-#endif
-
-#ifdef _WIN32
-				strcat( cmd, "unison " );
-#else
-				strcat( cmd, "./unison -follow \"Path *\" " );
-#endif
-
-				strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " );
-				strcat( cmd, GET_CLIPBOARD );
-				strcat( cmd, " \"ssh://" );
-				strcat( cmd, (char*)server_ip );
-				strcat( cmd, "/" );
-				strcat( cmd, "C:\\ProgramData\\FractalCache\\set_clipboard" );
-				strcat( cmd, "/\" -force " );
-				strcat( cmd, GET_CLIPBOARD );
-				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
-
-				mprintf( "COMMAND: %s\n", cmd );
-				runcmd( cmd );
-			}
-
-			FractalClientMessage* fmsg = malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) + clipboard->size );
-			fmsg->type = CMESSAGE_CLIPBOARD;
-			memcpy( &fmsg->clipboard, clipboard, sizeof( ClipboardData ) + clipboard->size );
-			send_fmsg( fmsg );
-			free( fmsg );
-
-			// If it hasn't been 500ms yet, then wait 500ms to prevent too much spam
-			const int spam_time_ms = 500;
-			if( GetTimer( clipboard_time ) < spam_time_ms / 1000.0 )
-			{
-				SDL_Delay( max( (int)(spam_time_ms - 1000*GetTimer( clipboard_time )), 1 ) );
-			}
-		}
-
-		mprintf( "Updated clipboard!\n" );
-		updating_clipboard = false;
-	}
-
-	return 0;
-}
-
-void updateClipboard()
-{
-	if( updating_clipboard )
-	{
-		pending_update_clipboard = true;
-	} else
-	{
-		mprintf( "Pushing update to clipboard\n" );
-		pending_update_clipboard = false;
-		updating_clipboard = true;
-		updating_set_clipboard = false;
-		clipboard = GetClipboard();
-		SDL_SemPost( clipboard_semaphore );
-	}
 }
