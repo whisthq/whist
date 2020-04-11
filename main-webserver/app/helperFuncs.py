@@ -97,26 +97,30 @@ def deleteResource(name):
         '_vnet', name + '_subnet', name + '_ip', name + '_nic'
     hr = 1
 
+    # get VM info based on name 
+    virtual_machine = getVM(name)
+    os_disk_name = virtual_machine.storage_profile.os_disk.name
 
-    print(vnetName)
-    print(nicName)
-
+    # step 1, deallocate the VM
     try:
-        print("Attempting to deallocating VM...")
+        print("Attempting to deallocating the VM...")
         async_vm_deallocate = compute_client.virtual_machines.deallocate(
             os.getenv('VM_GROUP'), name)
         async_vm_deallocate.wait()
+        time.sleep(60) # wait a whole minute to ensure it deallocated properly
         print("VM deallocated")
     except Exception as e:
         print(e)
         hr = -1
 
+    # step 2, detach the IP
     try:
+        print("Attempting to detach the IP...")
         subnet_obj = network_client.subnets.get(
             resource_group_name=os.getenv('VM_GROUP'),
             virtual_network_name=vnetName,
             subnet_name=subnetName)
-        # Step 3, configure network interface parameters.
+        # configure network interface parameters.
         params = {'ip_configurations': [
             {'name': ipName,
              'subnet': {'id': subnet_obj.id},
@@ -124,13 +128,31 @@ def deleteResource(name):
              'public_ip_address': None,
              }]
         }
-        # Step 4, use method create_or_update to update network interface configuration.
+        # use method create_or_update to update network interface configuration.
         async_ip_detach = network_client.network_interfaces.create_or_update(
             resource_group_name=os.getenv('VM_GROUP'),
             network_interface_name=nicName,
             parameters=params)
         async_ip_detach.wait()
+        print("IP detached")
+    except Exception as e:
+        print(e)
+        hr = -1
 
+    # step 3, delete the VM
+    try:
+        print("Attempting to delete the VM...")
+        async_vm_delete = compute_client.virtual_machines.delete(
+            os.getenv('VM_GROUP'), name)
+        async_vm_delete.wait()
+        print("VM deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    # step 4, delete the IP
+    try:
+        print("Attempting to delete the IP...")
         async_ip_delete = network_client.public_ip_addresses.delete(
             os.getenv('VM_GROUP'),
             ipName
@@ -141,18 +163,9 @@ def deleteResource(name):
         print(e)
         hr = -1
 
+    # step 4, delete the NIC
     try:
-        async_vnet_delete = network_client.virtual_networks.delete(
-            os.getenv('VM_GROUP'),
-            vnetName
-        )
-        async_vnet_delete.wait()
-        print("Vnet deleted")
-    except Exception as e:
-        print(e)
-        hr = -1
-
-    try:
+        print("Attempting to delete the NIC...")
         async_nic_delete = network_client.network_interfaces.delete(
             os.getenv('VM_GROUP'),
             nicName
@@ -163,21 +176,29 @@ def deleteResource(name):
         print(e)
         hr = -1
 
+    # step 5, delete the Vnet
     try:
-        virtual_machine = getVM(name)
-        os_disk_name = virtual_machine.storage_profile.os_disk.name
-        os_disk_delete = compute_client.disks.delete(
-            os.getenv('VM_GROUP'), os_disk_name)
-        os_disk_delete.wait()
-        print("OS disk deleted")
-
-        async_vm_delete = compute_client.virtual_machines.delete(
-            os.getenv('VM_GROUP'), name)
-        async_vm_delete.wait()
-        print("VM deleted")
+        print("Attempting to delete the Vnet...")
+        async_vnet_delete = network_client.virtual_networks.delete(
+            os.getenv('VM_GROUP'),
+            vnetName
+        )
+        async_vnet_delete.wait()
+        print("Vnet deleted")
     except Exception as e:
         print(e)
         hr = -1
+
+    # step 6, delete the OS disk -- not needed anymore (OS disk swapping)
+    # try:
+    #     print("Attempting to delete the OS disk...")
+    #     os_disk_delete = compute_client.disks.delete(
+    #         os.getenv('VM_GROUP'), os_disk_name)
+    #     os_disk_delete.wait()
+    #     print("OS disk deleted")
+    # except Exception as e:
+    #     print(e)
+    #     hr = -1
 
     return hr
 
