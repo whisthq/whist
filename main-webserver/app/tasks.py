@@ -435,7 +435,8 @@ def updateVMTable(self):
 		try:
 			vm = getVM(vm_name)
 			os_disk_name = vm.storage_profile.os_disk.name
-			updateVM(vm_name, vm.location, os_disk_name)
+			username = mapDiskToUser(os_disk_name)
+			updateVM(vm_name, vm.location, os_disk_name, username)
 		except Exception as e:
 			print(e)
 			pass
