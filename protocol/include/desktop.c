@@ -20,8 +20,7 @@ int setCurrentInputDesktop(HDESK currentInputDesktop) {
     return 0;
 }
 
-// Log into the desktop, and block until the login process finishes
-DesktopContext OpenNewDesktop(char* desktop_name, bool get_name,
+DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name,
                               bool set_thread) {
     DesktopContext context = {0};
     HDESK new_desktop;
@@ -29,7 +28,7 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name,
     if (desktop_name == NULL) {
         new_desktop = OpenInputDesktop(0, FALSE, GENERIC_ALL);
     } else {
-        new_desktop = OpenDesktop((LPCWSTR)desktop_name, 0, FALSE, GENERIC_ALL);
+        new_desktop = OpenDesktopW(desktop_name, 0, FALSE, GENERIC_ALL);
     }
 
     if (set_thread) {
@@ -39,7 +38,7 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name,
     if (get_name) {
         TCHAR szName[1000];
         DWORD dwLen;
-        GetUserObjectInformation(new_desktop, UOI_NAME, szName, sizeof(szName),
+        GetUserObjectInformationW(new_desktop, UOI_NAME, szName, sizeof(szName),
                                  &dwLen);
         memcpy(context.desktop_name, szName, dwLen);
     }
@@ -52,20 +51,28 @@ DesktopContext OpenNewDesktop(char* desktop_name, bool get_name,
 
 void OpenWindow() {
     HWINSTA hwinsta =
-        OpenWindowStation((LPCWSTR) "winsta0", FALSE, GENERIC_ALL);
+        OpenWindowStationW(L"WinSta0", FALSE, GENERIC_ALL);
     SetProcessWindowStation(hwinsta);
 }
 
+// Log into the desktop, and block until the login process finishes
 void InitDesktop() {
     DesktopContext lock_screen;
 
     OpenWindow();
     lock_screen = OpenNewDesktop(NULL, true, true);
 
-    while (strcmp((const char*)L"Default",
-                  (const char*)lock_screen.desktop_name) != 0) {
-        mprintf("Desktop name is %s\n", lock_screen.desktop_name);
+    int attempt = 0;
+    while (wcscmp(L"Default",
+                  lock_screen.desktop_name) != 0) {
+        mprintf("Desktop name is %S\n", lock_screen.desktop_name);
         mprintf("Attempting to log into desktop...\n");
+
+        if( attempt > 10 )
+        {
+            mprintf( "Attempted too many times! Giving up...\n" );
+            break;
+        }
 
         enum FractalKeycode keycodes[] = {FK_SPACE, FK_BACKSPACE, FK_BACKSPACE};
 
@@ -82,5 +89,7 @@ void InitDesktop() {
         Sleep(500);
 
         lock_screen = OpenNewDesktop(NULL, true, true);
+
+        attempt++;
     }
 }

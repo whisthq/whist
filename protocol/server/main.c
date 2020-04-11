@@ -669,9 +669,6 @@ int main() {
             continue;
         }
 
-#ifdef _WIN32
-        InitDesktop();
-#endif
         // Give client time to setup before sending it with packets
         SDL_Delay(150);
 
