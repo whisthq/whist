@@ -145,8 +145,8 @@ function* fetchVM(action) {
   }
   console.log("DISK ATTACHED")
   console.log(json)
-  if(json && json.output && json.output.public_ip) {
-    yield put(Action.storeIP(json.output.public_ip))
+  if(json && json.output && json.output.ip) {
+    yield put(Action.storeIP(json.output.ip))
   }
 }
 

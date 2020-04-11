@@ -77,7 +77,7 @@ class Counter extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if(prevProps.username == '' && this.props.username != '' && this.state.username == '') {
+    if(this.props.username && prevProps.username == '' && this.props.username != '' && this.state.username == '') {
       this.setState({username: this.props.username.split('@')[0]})
     }
   }
