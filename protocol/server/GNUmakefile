@@ -30,6 +30,7 @@ SHARED_LIBS = \
 	-ldl \
 	-lpthread \
 	-lX11 \
+        -lXfixes \
 	-lXext \
 	-lXtst \
 	-lasound \
@@ -57,7 +58,7 @@ OBJS = \
 	linuxinput.o \
 	audioencode.o \
 	aes.o \
-	clipboard.o \
+	x11_clipboard.o \
 	main.o
 
 # compiler flags
@@ -102,8 +103,8 @@ aes.o:
 	$(CC) -c $(CFLAGS) ../include/aes.c
 
 # compile the general clipboard source file into object file
-clipboard.o:
-	$(CC) -c $(CFLAGS) ../include/clipboard.c
+x11_clipboard.o:
+	$(CC) -c $(CFLAGS) ../include/x11_clipboard.c
 
 # compile the audio capture source file into object file
 alsacapture.o:
