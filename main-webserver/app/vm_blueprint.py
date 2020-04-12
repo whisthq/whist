@@ -123,7 +123,7 @@ def tracker(action):
 def info(action):
     body = request.get_json()
     if action == 'list_all' and request.method == 'GET':
-        task = fetchAllVMs.apply_async([False])
+        task = fetchAll.apply_async([False])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
@@ -131,7 +131,7 @@ def info(action):
         disks = fetchUserDisks(None)
         return jsonify({'disks': disks}), 200
     if action == 'update_db' and request.method == 'POST':
-        task = fetchAllVMs.apply_async([True])
+        task = fetchAll.apply_async([True])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202

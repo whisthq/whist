@@ -5,6 +5,8 @@ from msrest.exceptions import ClientException
 
 @celery.task(bind=True)
 def createVM(self, vm_size, location):
+	print("TASK: Create VM added to Redis queue")
+
 	_, compute_client, _ = createClients()
 	vmName = genVMName()
 	nic = createNic(vmName, location, 0)
@@ -32,6 +34,7 @@ def createVM(self, vm_size, location):
 	async_vm_start.wait()
 
 	with open('app/scripts/vmCreate.txt', 'r') as file:
+		print("TASK: Starting to run Powershell scripts")
 		command = file.read()
 		run_command_parameters = {
 			'command_id': 'RunPowerShellScript',
@@ -45,6 +48,7 @@ def createVM(self, vm_size, location):
 			run_command_parameters
 		)
 		result = poller.result()
+		print("SUCCESS: Powershell scripts finished running")
 		print(result.value[0].message)
 
 	vm = getVM(vmParameters['vm_name'])
