@@ -6,7 +6,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
 #include "fractal.h" // header file for this protocol, includes winsock
 #include "aes.h"
 
@@ -141,7 +140,7 @@ typedef struct
 #define STUN_IP "52.22.246.213"
 #define STUN_PORT 48800
 
-int CreateTCPContext( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms )
+int CreateTCPContext2( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms )
 {
 	context->is_tcp = true;
 
@@ -484,7 +483,7 @@ int CreateTCPContext( struct SocketContext* context, char* origin, char* destina
 	return 0;
 }
 
-int CreateUDPContext(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
+int CreateUDPContext2(struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
 	context->is_tcp = false;
 
 	// Function parameter checking
@@ -1499,7 +1498,7 @@ int CreateTCPClientContextStun( struct SocketContext* context, char* destination
     return 0;
 }
 
-int CreateTCPContext2( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
+int CreateTCPContext( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
 #ifdef USING_STUN
     if(origin[0] == 'C')
         return CreateTCPClientContextStun(context, destination, port, recvfrom_timeout_ms, stun_timeout_ms);
@@ -1865,7 +1864,7 @@ int CreateUDPClientContextStun(struct SocketContext* context, char* destination,
     return 0;
 }
 
-int CreateUDPContext2( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
+int CreateUDPContext( struct SocketContext* context, char* origin, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
 #ifdef USING_STUN
     if(origin[0] == 'C')
         return CreateUDPClientContextStun(context, destination, port, recvfrom_timeout_ms, stun_timeout_ms);
