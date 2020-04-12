@@ -353,7 +353,7 @@ def loginUser(username, password):
         with engine.connect() as conn:
             user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()
-            return len(user) > 0
+            return True if user else False
     else:
         command = text("""
             SELECT * FROM users WHERE "username" = :userName
@@ -362,7 +362,7 @@ def loginUser(username, password):
         with engine.connect() as conn:
             user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()
-            return len(user) > 0
+            return True if user else False
 
 
 def lookup(username):
@@ -373,7 +373,7 @@ def lookup(username):
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
-        return len(user) > 0
+        return True if user else False
 
 
 def genUniqueCode():
@@ -1133,7 +1133,7 @@ def swapdisk_name(disk_name, vm_name):
         )
         async_disk_attach.wait()
         end = time.perf_counter()
-        print("SUCCESS: Disk " + disk_name + " attached to " + vm_name + " in " + str(start-end) + " seconds")
+        print("SUCCESS: Disk " + disk_name + " attached to " + vm_name + " in " + str(start - end) + " seconds")
 
         vm_state = compute_client.virtual_machines.instance_view(
             resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
