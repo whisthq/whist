@@ -989,7 +989,7 @@ def updateVMState(vm_name, state):
         conn.execute(command, **params)
         conn.close()
 
-def updateDisk(disk_name, disk_state, vm_name, location):
+def updateDisk(disk_name, vm_name, location):
     command = text("""
         SELECT * FROM disks WHERE "disk_name" = :disk_name
         """)
@@ -997,23 +997,41 @@ def updateDisk(disk_name, disk_state, vm_name, location):
     with engine.connect() as conn:
         disk = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         if disk:
-            command = text("""
-                UPDATE disks
-                SET "vm_name" = :vm_name, "location" = :location
-                WHERE
-                   "disk_name" = :disk_name
-            """)
-            params = {'vm_name': vm_name,
-                      'location': location,
-                      'disk_name': disk_name}
-        else:
-            command = text("""
-                INSERT INTO disks("disk_name", "vm_name", "location") 
-                VALUES(:disk_name, :vm_name, :location)
+            if location:
+                command = text("""
+                    UPDATE disks
+                    SET "vm_name" = :vm_name, "location" = :location
+                    WHERE
+                       "disk_name" = :disk_name
                 """)
-            params = {'vm_name': vm_name,
-                      'location': location,
-                      'disk_name': disk_name}
+                params = {'vm_name': vm_name,
+                          'location': location,
+                          'disk_name': disk_name}
+            else:
+                command = text("""
+                    UPDATE disks
+                    SET "vm_name" = :vm_name
+                    WHERE
+                       "disk_name" = :disk_name
+                """)
+                params = {'vm_name': vm_name,
+                          'disk_name': disk_name}  
+        else:
+            if location:
+                command = text("""
+                    INSERT INTO disks("disk_name", "vm_name", "location") 
+                    VALUES(:disk_name, :vm_name, :location)
+                    """)
+                params = {'vm_name': vm_name,
+                          'location': location,
+                          'disk_name': disk_name}
+            else:
+                command = text("""
+                    INSERT INTO disks("disk_name", "vm_name") 
+                    VALUES(:disk_name, :vm_name)
+                    """)
+                params = {'vm_name': vm_name,
+                          'disk_name': disk_name}
 
         conn.execute(command, **params)
         conn.close()

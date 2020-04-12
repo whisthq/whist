@@ -304,7 +304,7 @@ def syncDisks(self):
 			vm_name = ''
 		location = disk.location
 
-		updateDisk(disk_name, disk_state, vm_name, location)
+		updateDisk(disk_name, vm_name, location)
 
 	stored_disks = fetchUserDisks(None)
 	for stored_disk in stored_disks:
@@ -320,14 +320,13 @@ def swapDisk(self, disk_name):
 	_, compute_client, _ = createClients()
 	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
 	vm_name = os_disk.managed_by
-	disk_state = os_disk.disk_state
 	location = os_disk.location
 
 	def swapDiskAndUpdate(disk_name, vm_name):
 		# Pick a VM, attach it to disk
 		hr = swapdisk_name(disk_name, vm_name)
 		if hr > 0:
-			updateDisk(disk_name, disk_state, vm_name, location)
+			updateDisk(disk_name, vm_name, location)
 			associateVMWithDisk(vm_name, disk_name)
 			updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 			print("Database updated.")
@@ -338,13 +337,13 @@ def swapDisk(self, disk_name):
 	def updateOldDisk(vm_name):
 		virtual_machine = getVM(vm_name)
 		old_disk = virtual_machine.storage_profile.os_disk
-		updateDisk(old_disk.name, old_disk.disk_state, '', old_disk.location)
+		updateDisk(old_disk.name, '', None)
 	# Disk is currently attached to a VM. Make sure the database reflects the current disk state,
 	# and restart the VM as a sanity check.
 	if vm_name:
 		vm_name = vm_name.split('/')[-1]
 		print("Disk already attached to VM " + vm_name)
-		updateDisk(disk_name, disk_state, vm_name, location)
+		updateDisk(disk_name, vm_name, location)
 		associateVMWithDisk(vm_name, disk_name)
 		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 		print("Database updated")
@@ -439,7 +438,7 @@ def swapSpecificDisk(self, disk_name, vm_name):
 	print(f"VM restarted in {end - start:0.4f} seconds")
 
 
-	updateDisk(disk_name, new_os_disk.disk_state, vm_name, new_os_disk.location)
+	updateDisk(disk_name, vm_name, None)
 	associateVMWithDisk(vm_name, disk_name)
 	updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 	print("Database updated.")
@@ -454,13 +453,19 @@ def swapSpecificDisk(self, disk_name, vm_name):
 @celery.task(bind=True)
 def updateVMTable(self):
 	vms = fetchUserVMs(None)
+	azure_portal_vms = [entry.name for entry in compute_client.virtual_machines.list(
+		os.getenv('VM_GROUP'))]
+
 	for vm in vms:
 		try:
-			vm_name = vm['vm_name']
-			vm = getVM(vm_name)
-			os_disk_name = vm.storage_profile.os_disk.name
-			username = mapDiskToUser(os_disk_name)
-			updateVM(vm_name, vm.location, os_disk_name, username)
+			if not vm['vm_name'] in azure_portal_vms:
+				deleteVMFromTable(vm['vm_name'])
+			else:
+				vm_name = vm['vm_name']
+				vm = getVM(vm_name)
+				os_disk_name = vm.storage_profile.os_disk.name
+				username = mapDiskToUser(os_disk_name)
+				updateVM(vm_name, vm.location, os_disk_name, username)
 		except Exception as e:
 			print(e)
 			pass
