@@ -80,6 +80,7 @@ def createNic(name, location, tries):
                   'ipConfigName': ipName, 'nicName': nicName}
         with engine.connect() as conn:
             conn.execute(command, **params)
+            conn.close()
         return async_nic_creation.result()
     except Exception as e:
         if tries < 5:
@@ -96,52 +97,63 @@ def deleteResource(name):
         '_vnet', name + '_subnet', name + '_ip', name + '_nic'
     hr = 1
 
+    # get VM info based on name 
+    virtual_machine = getVM(name)
+    os_disk_name = virtual_machine.storage_profile.os_disk.name
+
+    # step 1, deallocate the VM
     try:
-        print("Deallocating VM...")
+        print("Attempting to deallocate the VM...")
         async_vm_deallocate = compute_client.virtual_machines.deallocate(
             os.getenv('VM_GROUP'), name)
         async_vm_deallocate.wait()
-
+        time.sleep(60) # wait a whole minute to ensure it deallocated properly
         print("VM deallocated")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    # step 2, detach the IP
+    try:
+        print("Attempting to detach the IP...")
+        subnet_obj = network_client.subnets.get(
+            resource_group_name=os.getenv('VM_GROUP'),
+            virtual_network_name=vnetName,
+            location=virtual_machine.location,
+            subnet_name=subnetName)
+        # configure network interface parameters.
+        params = {'ip_configurations': [
+            {'name': ipName,
+             'subnet': {'id': subnet_obj.id},
+             # None: Disassociate;
+             'public_ip_address': None,
+             }]
+        }
+        # use method create_or_update to update network interface configuration.
+        async_ip_detach = network_client.network_interfaces.create_or_update(
+            resource_group_name=os.getenv('VM_GROUP'),
+            network_interface_name=nicName,
+            parameters=params)
+        async_ip_detach.wait()
+        print("IP detached")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    # step 3, delete the VM
+    try:
+        print("Attempting to delete the VM...")
         async_vm_delete = compute_client.virtual_machines.delete(
             os.getenv('VM_GROUP'), name)
         async_vm_delete.wait()
         print("VM deleted")
-
-        virtual_machine = getVM(name)
-        os_disk_name = virtual_machine.storage_profile.os_disk.name
-        os_disk_delete = compute_client.disks.delete(os.getenv('VM_GROUP'), os_disk_name)
-        os_disk_delete.wait()
-
-        print("OS disk deleted")
     except Exception as e:
         print(e)
         hr = -1
 
+    # step 4, delete the IP
     try:
-        async_vnet_delete = network_client.virtual_networks.delete(
-            os.getenv('VM_GROUP'),
-            vnetName
-        )
-        async_vnet_delete.wait()
-        print("Vnet deleted")
-    except Exception as e:
-        print(e)
-        hr = -1
-
-    try:
-        async_subnet_delete = network_client.subnets.delete(
-            os.getenv('VM_GROUP'),
-            vnetName,
-            subnetName
-        )
-        async_subnet_delete.wait()
-        print("Subnet deleted")
-    except Exception as e:
-        print(e)
-        hr = -1
-
-    try:
+        print("Attempting to delete the IP...")
         async_ip_delete = network_client.public_ip_addresses.delete(
             os.getenv('VM_GROUP'),
             ipName
@@ -152,7 +164,9 @@ def deleteResource(name):
         print(e)
         hr = -1
 
+    # step 4, delete the NIC
     try:
+        print("Attempting to delete the NIC...")
         async_nic_delete = network_client.network_interfaces.delete(
             os.getenv('VM_GROUP'),
             nicName
@@ -162,6 +176,30 @@ def deleteResource(name):
     except Exception as e:
         print(e)
         hr = -1
+
+    # step 5, delete the Vnet
+    try:
+        print("Attempting to delete the Vnet...")
+        async_vnet_delete = network_client.virtual_networks.delete(
+            os.getenv('VM_GROUP'),
+            vnetName
+        )
+        async_vnet_delete.wait()
+        print("Vnet deleted")
+    except Exception as e:
+        print(e)
+        hr = -1
+
+    # step 6, delete the OS disk -- not needed anymore (OS disk swapping)
+    # try:
+    #     print("Attempting to delete the OS disk...")
+    #     os_disk_delete = compute_client.disks.delete(
+    #         os.getenv('VM_GROUP'), os_disk_name)
+    #     os_disk_delete.wait()
+    #     print("OS disk deleted")
+    # except Exception as e:
+    #     print(e)
+    #     hr = -1
 
     return hr
 
@@ -188,6 +226,7 @@ def createVMParameters(vmName, nic_id, vm_size, location):
         params = {'vmName': vmName, 'vmUserName': userName, 'osDisk': None}
         with engine.connect() as conn:
             conn.execute(command, **params)
+            conn.close()
             return {'params': {
                 'location': location,
                 'os_profile': {
@@ -219,6 +258,23 @@ def createVMParameters(vmName, nic_id, vm_size, location):
             }, 'vmName': vmName}
 
 
+def createDiskEntry(disk_name, vm_name, username, location):
+    with engine.connect() as conn:
+        command = text("""
+            INSERT INTO disks("diskname", "vmname", "username", "location") 
+            VALUES(:diskname, :vmname, :username, :location)
+            """)
+        params = {
+            'diskname': disk_name,
+            'vmname': vm_name,
+            'username': username,
+            "location": location
+        }
+        with engine.connect() as conn:
+            conn.execute(command, **params)
+            conn.close()
+
+
 def getVM(vm_name):
     _, compute_client, _ = createClients()
     try:
@@ -238,6 +294,7 @@ def singleValueQuery(value):
     params = {'value': value}
     with engine.connect() as conn:
         exists = conn.execute(command, **params).fetchall()
+        conn.close()
         return True if exists else False
 
 
@@ -268,6 +325,7 @@ def registerUserVM(username, vm_name):
     params = {'username': username, 'vm_name': vm_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
 
 
 def loginUserVM(username):
@@ -277,6 +335,7 @@ def loginUserVM(username):
     params = {'username': username}
     with engine.connect() as conn:
         user = conn.execute(command, **params).fetchall()
+        conn.close()
         if len(user) > 0:
             return user[0][0]
     return None
@@ -291,6 +350,7 @@ def loginUser(username, password):
         params = {'userName': username, 'password': pwd_token}
         with engine.connect() as conn:
             user = conn.execute(command, **params).fetchall()
+            conn.close()
             return len(user) > 0
     else:
         command = text("""
@@ -299,6 +359,7 @@ def loginUser(username, password):
         params = {'userName': username}
         with engine.connect() as conn:
             user = conn.execute(command, **params).fetchall()
+            conn.close()
             return len(user) > 0
 
 
@@ -309,6 +370,7 @@ def lookup(username):
     params = {'userName': username}
     with engine.connect() as conn:
         user = conn.execute(command, **params).fetchall()
+        conn.close()
         return len(user) > 0
 
 
@@ -334,6 +396,7 @@ def registerUser(username, password, token):
     with engine.connect() as conn:
         try:
             conn.execute(command, **params)
+            conn.close()
             return 200
         except:
             return 400
@@ -350,6 +413,7 @@ def regenerateAllCodes():
                 """)
             params = {'code': code, 'userName': row[0]}
             conn.execute(command, **params)
+            conn.close()
 
 
 def generateIDs():
@@ -365,6 +429,7 @@ def generateIDs():
                 """)
             params = {'token': token, 'userName': row[0]}
             conn.execute(command, **params)
+            conn.close()
 
 
 def resetPassword(username, password):
@@ -377,6 +442,7 @@ def resetPassword(username, password):
     params = {'userName': username, 'password': pwd_token}
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
 
 
 def resetVMCredentials(username, vm_name):
@@ -388,6 +454,7 @@ def resetVMCredentials(username, vm_name):
     params = {'userName': username, 'vm_name': vm_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
 
 
 def fetchVMCredentials(vm_name):
@@ -402,6 +469,7 @@ def fetchVMCredentials(vm_name):
         vm = getVM(vm_name)
         ip = getIP(vm)
         # Decode password
+        conn.close()
         return {'username': username,
                 'vm_name': vm_name,
                 'public_ip': ip}
@@ -417,6 +485,16 @@ def genVMName():
         return vmName
 
 
+def genDiskName():
+    with engine.connect() as conn:
+        oldDisks = [cell[0] for cell in list(
+            conn.execute('SELECT "diskname" FROM disks'))]
+        diskName = genHaiku(1)[0]
+        while diskName in oldDisks:
+            diskName = genHaiku(1)[0]
+        return diskName
+
+
 def storeForm(name, email, cubeType):
     command = text("""
         INSERT INTO form("fullname", "email", "cubetype") 
@@ -425,6 +503,7 @@ def storeForm(name, email, cubeType):
     params = {'name': name, 'email': email, 'cubeType': cubeType}
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
 
 
 def storePreOrder(address1, address2, zipCode, email, order):
@@ -436,20 +515,56 @@ def storePreOrder(address1, address2, zipCode, email, order):
               'base': int(order['base']), 'enhanced': int(order['enhanced']), 'power': int(order['power'])}
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
 
 
-def addTimeTable(username, action, time):
+def addTimeTable(username, action, time, is_user):
     command = text("""
-        INSERT INTO login_history("username", "timestamp", "action") 
-        VALUES(:userName, :currentTime, :action)
+        INSERT INTO login_history("username", "timestamp", "action", "is_user") 
+        VALUES(:userName, :currentTime, :action, :is_user)
         """)
 
     params = {'userName': username, 'currentTime': dt.now().strftime(
-        '%m-%d-%Y, %H:%M:%S'), 'action': action}
+        '%m-%d-%Y, %H:%M:%S'), 'action': action, 'is_user': is_user}
 
     with engine.connect() as conn:
         conn.execute(command, **params)
 
+        disk = fetchUserDisks(username)
+        if disk:
+            disk_name = disk[0]['disk_name']
+            vms = mapDiskToVM(disk_name)
+            if vms:
+                _, compute_client, _ = createClients()
+                vm_name = vms[0]['vm_name']
+                vm_state = compute_client.virtual_machines.instance_view(
+                    resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+                if 'running' in vm_state.statuses[1].code:
+                    state = 'RUNNING_AVAILABLE' if action == 'logoff' else 'RUNNING_UNAVAILABLE'
+                    updateVMState(vms[0]['vm_name'], state)
+                else:
+                    state = 'NOT_RUNNING_AVAILABLE' if action == 'logoff' else 'NOT_RUNNING_UNAVAILABLE'
+                    updateVMState(vms[0]['vm_name'], state)  
+            else:
+                print("CRITICAL ERROR: Could not find a VM currently attached to disk " + disk_name)
+        else:
+            print("CRITICAL ERROR: Could not find disk in database attached to user " + username)
+
+        conn.close()
+
+def changeDiskOnline(username, online):
+    command = text("""
+        UPDATE disks
+        SET "online" = :online
+        WHERE "username" = :username
+        """)
+
+    params = {'online': online,
+              'username': username}
+
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
 
 def deleteTimeTable():
     command = text("""
@@ -459,6 +574,7 @@ def deleteTimeTable():
 
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
 
 
 def fetchUserVMs(username):
@@ -471,6 +587,7 @@ def fetchUserVMs(username):
             vms_info = conn.execute(command, **params).fetchall()
             out = [{'vm_name': vm_info[0], 'vm_username': vm_info[1]}
                    for vm_info in vms_info]
+            conn.close()
             return out
     else:
         command = text("""
@@ -481,6 +598,32 @@ def fetchUserVMs(username):
             vms_info = conn.execute(command, **params).fetchall()
             out = {vm_info[0]: {'username': vm_info[1], 'ip': vm_info[3]}
                    for vm_info in vms_info}
+            conn.close()
+            return out
+
+
+def fetchUserDisks(username):
+    if(username):
+        command = text("""
+            SELECT * FROM disks WHERE "username" = :username
+            """)
+        params = {'username': username}
+        with engine.connect() as conn:
+            disks_info = conn.execute(command, **params).fetchall()
+            out = [{'disk_name': disk_info[0], 'username': disk_info[1], 'location': disk_info[2], 'attached': disk_info[3], 'online': disk_info[4], 'vmName': disk_info[4]}
+                   for disk_info in disks_info]
+            conn.close()
+            return out
+    else:
+        command = text("""
+            SELECT * FROM disks
+            """)
+        params = {}
+        with engine.connect() as conn:
+            disks_info = conn.execute(command, **params).fetchall()
+            out = [{'disk_name': disk_info[0], 'username': disk_info[1], 'location': disk_info[2], 'attached': disk_info[3], 'online': disk_info[4], 'vmName': disk_info[4]}
+                   for disk_info in disks_info]
+            conn.close()
             return out
 
 
@@ -492,6 +635,7 @@ def fetchUserCode(username):
         params = {'userName': username}
         with engine.connect() as conn:
             user = conn.execute(command, **params).fetchone()
+            conn.close()
             return user[2]
     except:
         return None
@@ -505,6 +649,7 @@ def deleteRow(username, vm_name, usernames, vm_names):
         params = {'vm_name': vm_name}
         with engine.connect() as conn:
             conn.execute(command, **params)
+            conn.close()
 
 
 def deleteUser(username):
@@ -515,6 +660,7 @@ def deleteUser(username):
     with engine.connect() as conn:
         try:
             conn.execute(command, **params)
+            conn.close()
             return 200
         except:
             return 404
@@ -530,6 +676,7 @@ def insertRow(username, vm_name, usernames, vm_names):
                   'vm_name': vm_name}
         with engine.connect() as conn:
             conn.execute(command, **params)
+            conn.close()
 
 
 def fetchLoginActivity():
@@ -543,6 +690,7 @@ def fetchLoginActivity():
                 'timestamp': activity[1],
                 'action': activity[2]} for activity in activities]
         out.reverse()
+        conn.close()
         return out
 
 
@@ -556,24 +704,57 @@ def fetchCustomers():
         out = [{'email': customer[0],
                 'id': customer[1],
                 'subscription': customer[2],
-                'location': customer[3]}
+                'location': customer[3],
+                'trial_end': customer[4],
+                'paid': customer[5]}
                for customer in customers]
+        conn.close()
         return out
 
 
-def insertCustomer(email, customer_id, subscription_id, location):
+def insertCustomer(email, customer_id, subscription_id, location, trial_end, paid):
     command = text("""
-        INSERT INTO customers("email", "id", "subscription", "location") 
-        VALUES(:email, :id, :subscription, :location)
+        SELECT * FROM customers WHERE "email" = :email
         """)
-
-    params = {'email': email,
-              'id': customer_id,
-              'subscription': subscription_id,
-              'location': location}
-
+    params = {'email': email}
     with engine.connect() as conn:
-        conn.execute(command, **params)
+        user = conn.execute(command, **params).fetchall()
+
+        if len(user) == 0:
+            command = text("""
+                INSERT INTO customers("email", "id", "subscription", "location", "trial_end", "paid") 
+                VALUES(:email, :id, :subscription, :location, :trial_end, :paid)
+                """)
+
+            params = {'email': email,
+                      'id': customer_id,
+                      'subscription': subscription_id,
+                      'location': location,
+                      'trial_end': trial_end,
+                      'paid': paid}
+
+            conn.execute(command, **params)
+            conn.close()
+        else:
+            command = text("""
+                UPDATE customers 
+                SET "id" = :id, 
+                    "subscription" = :subscription, 
+                    "location" = :location, 
+                    "trial_end" = :trial_end,
+                    "paid" = :paid
+                WHERE "email" = :email
+                """)
+
+            params = {'email': email,
+                      'id': customer_id,
+                      'subscription': subscription_id,
+                      'location': location,
+                      'trial_end': trial_end,
+                      'paid': paid}
+
+            conn.execute(command, **params)
+            conn.close()
 
 
 def deleteCustomer(email):
@@ -583,6 +764,7 @@ def deleteCustomer(email):
     params = {'email': email}
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
 
 
 def checkComputer(computer_id, username):
@@ -612,6 +794,7 @@ def checkComputer(computer_id, username):
                'nickname': computer[2],
                'id': computer[3],
                'found': True}
+        conn.close()
         return out
 
 
@@ -630,6 +813,7 @@ def insertComputer(username, location, nickname, computer_id):
 
         with engine.connect() as conn:
             conn.execute(command, **params)
+            conn.close()
 
 
 def fetchComputers(username):
@@ -643,6 +827,7 @@ def fetchComputers(username):
                 'location': computer[1],
                 'nickname': computer[2],
                 'id': computer[3]} for computer in computers]
+        conn.close()
         return out
     return None
 
@@ -659,6 +844,7 @@ def changeComputerName(username, computer_id, nickname):
     params = {'nickname': nickname, 'username': username, 'id': computer_id}
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
 
 
 def fetchAllUsers():
@@ -672,6 +858,7 @@ def fetchAllUsers():
                 'code': user[2],
                 'creditsOutstanding': user[3],
                 'verified': user[4]} for user in users]
+        conn.close()
         return out
     return None
 
@@ -683,6 +870,7 @@ def mapCodeToUser(code):
     params = {'code': code}
     with engine.connect() as conn:
         user = conn.execute(command, **params).fetchone()
+        conn.close()
         if user:
             return {'email': user[0], 'creditsOutstanding': user[3]}
     return None
@@ -698,6 +886,7 @@ def changeUserCredits(username, credits):
     params = {'credits': credits, 'username': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
 
 
 def getUserCredits(username):
@@ -708,6 +897,7 @@ def getUserCredits(username):
     params = {'username': username}
     with engine.connect() as conn:
         users = conn.execute(command, **params).fetchone()
+        conn.close()
         if users:
             return users[3]
     return 0
@@ -720,6 +910,7 @@ def fetchCodes():
     params = {}
     with engine.connect() as conn:
         users = conn.execute(command, **params).fetchall()
+        conn.close()
         return [user[2] for user in users]
     return None
 
@@ -735,6 +926,7 @@ def userVMStatus(username):
     params = {'username': username}
     with engine.connect() as conn:
         user = conn.execute(command, **params).fetchone()
+        conn.close()
         if user:
             has_paid = True
 
@@ -745,6 +937,7 @@ def userVMStatus(username):
     params = {'username': username}
     with engine.connect() as conn:
         user = conn.execute(command, **params).fetchone()
+        conn.close()
         if user:
             has_vm = True
 
@@ -767,6 +960,7 @@ def checkUserVerified(username):
     params = {'userName': username}
     with engine.connect() as conn:
         user = conn.execute(command, **params).fetchone()
+        conn.close()
         if user:
             return user[4]
         return False
@@ -779,6 +973,7 @@ def fetchUserToken(username):
     params = {'userName': username}
     with engine.connect() as conn:
         user = conn.execute(command, **params).fetchone()
+        conn.close()
         if user:
             return user[5]
         return None
@@ -794,6 +989,7 @@ def makeUserVerified(username, verified):
     params = {'verified': verified, 'username': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
 
 
 def storeFeedback(username, feedback):
@@ -804,6 +1000,7 @@ def storeFeedback(username, feedback):
     params = {'email': username, 'feedback': feedback}
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
 
 
 def updateVMIP(vm_name, ip):
@@ -816,3 +1013,186 @@ def updateVMIP(vm_name, ip):
     params = {'ip': ip, 'vm_name': vm_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
+        conn.close()
+
+
+def updateTrialEnd(subscription, trial_end):
+    command = text("""
+        UPDATE customers
+        SET trial_end = :trial_end
+        WHERE
+           "subscription" = :subscription
+        """)
+    params = {'subscription': subscription, 'trial_end': trial_end}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
+def updateVMState(vm_name, state):
+    command = text("""
+        UPDATE v_ms
+        SET state = :state
+        WHERE
+           "vmName" = :vm_name
+        """)
+    params = {'vm_name': vm_name, 'state': state}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+def updateDisk(disk_name, disk_state, vm_name, location):
+    command = text("""
+        SELECT * FROM disks WHERE "diskname" = :disk_name
+        """)
+    params = {'disk_name': disk_name}
+    with engine.connect() as conn:
+        disk = conn.execute(command, **params).fetchone()
+        if disk:
+            command = text("""
+                UPDATE disks
+                SET "attached" = :attached, "vmName" = :vm_name, "location" = :location
+                WHERE
+                   "diskname" = :disk_name
+            """)
+            params = {'attached': disk_state == 'Attached',
+                      'vm_name': vm_name,
+                      'location': location,
+                      'disk_name': disk_name}
+        else:
+            command = text("""
+                INSERT INTO disks("diskname", "attached", "vmName", "location") 
+                VALUES(:disk_name, :attached, :vm_name, :location)
+                """)
+            params = {'attached': disk_state == 'Attached',
+                      'vm_name': vm_name,
+                      'location': location,
+                      'disk_name': disk_name}
+
+        conn.execute(command, **params)
+        conn.close()
+
+def fetchVMsByState(state):
+    command = text("""
+        SELECT * FROM v_ms WHERE "state" = :state
+        """)
+    params = {'state': state}
+
+    with engine.connect() as conn:
+        vms = conn.execute(command, **params).fetchall()
+        conn.close()
+        return [{'vm_name': vm[0],
+                 'username': vm[1],
+                 'disk_name': vm[2],
+                 'ip': vm[3]} for vm in vms]
+
+def getMostRecentActivity(username):
+    command = text("""
+        SELECT *
+        FROM login_history
+        WHERE "username" = :username
+        ORDER BY timestamp DESC LIMIT 1
+        """)
+
+    params = {'username': username}
+
+    with engine.connect() as conn:
+        activity = conn.execute(command, **params).fetchone()
+        if activity:
+            return {'timestamp': activity[1], 'action': activity[2]}
+        return {}
+
+def associateVMWithDisk(vm_name, disk_name):
+    command = text("""
+        UPDATE v_ms
+        SET "osDisk" = :disk_name
+        WHERE
+           "vmName" = :vm_name
+        """)
+    params = {'vm_name': vm_name, 'disk_name': disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+def attachDiskToVM(disk_name, vm_name, lun):
+    try:
+        _, compute_client, _ = createClients()
+        virtual_machine = getVM(vm_name)
+
+        data_disk = compute_client.disks.get(os.getenv('VM_GROUP'), disk_name)
+        virtual_machine.storage_profile.data_disks.append({
+            'lun': lun,
+            'name': disk_name,
+            'create_option': DiskCreateOption.attach,
+            'managed_disk': {
+                'id': data_disk.id
+            }
+        })
+
+        async_disk_attach = compute_client.virtual_machines.create_or_update(
+            os.getenv('VM_GROUP'),
+            virtual_machine.name,
+            virtual_machine
+        )
+        async_disk_attach.wait()
+        return 1
+    except Exception as e:
+        print(e)
+        return -1
+
+def swapOSDisk(disk_name, vm_name):
+    try:
+        _, compute_client, _ = createClients()
+        virtual_machine = getVM(vm_name)
+        new_os_disk = compute_client.disks.get(os.getenv('VM_GROUP'), disk_name)
+
+        virtual_machine.storage_profile.os_disk.managed_disk.id = new_os_disk.id
+        virtual_machine.storage_profile.os_disk.name = new_os_disk.name
+
+        print("Attaching disk...")
+        async_disk_attach = compute_client.virtual_machines.create_or_update(
+            os.getenv('VM_GROUP'), vm_name, virtual_machine
+        )
+        async_disk_attach.wait()
+        print("Disk attached, restarting VM")
+        async_vm_restart = compute_client.virtual_machines.restart(
+            os.environ.get('VM_GROUP'), vm_name)
+        async_vm_restart.wait()
+        time.sleep(10)
+        print("VM restarted")
+        return 1
+    except Exception as e:
+        print(e)
+        return -1
+
+def fetchAllDisks():
+    command = text("""
+        SELECT *
+        FROM disks
+        """)
+
+    params = {}
+
+    with engine.connect() as conn:
+        disks = conn.execute(command, **params).fetchall()
+        return [{'disk_name': disk[0]} for disk in disks] 
+
+def deleteDisk(disk_name):
+    command = text("""
+        DELETE FROM disks WHERE "diskname" = :disk_name 
+        """)
+    params = {'disk_name': disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+def mapDiskToVM(disk_name):
+    command = text("""
+        SELECT * FROM v_ms WHERE "osDisk" = :disk_name
+        """)
+
+    params = {'disk_name': disk_name}
+
+    with engine.connect() as conn:
+        vms = conn.execute(command, **params).fetchall()
+        return [{'vm_name': vm[0], 'ip': vm[3], 'state': vm[4], 'location': vm[5]} for vm in vms]

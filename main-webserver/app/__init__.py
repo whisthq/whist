@@ -14,9 +14,13 @@ engine = db.create_engine(
 	os.getenv('DATABASE_URL'), echo=True, pool_pre_ping = True)
 register_after_fork(engine, dispose_engine)
 app = create_app(celery = celery)
+# celery.conf.update(enable_utc=True, timezone='US_Eastern')
+# celery.conf['CELERY_TIMEZONE'] = 'US/Eastern'
+
 app.config['MAIL_SERVER'] = "ming@fractalcomputers.com"
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 jwtManager = JWTManager(app)
+app.config['TIME_ZONE'] = 'America/New_York'
 CORS(app)
