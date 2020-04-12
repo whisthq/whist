@@ -60,3 +60,8 @@ def cleanFetchedSQL(out):
         else:
             return dict(out)
     return None
+
+def getAccessTokens(user):
+    access_token = create_access_token(identity = user)
+    refresh_token = create_refresh_token(identity = user)
+    return (access_token, refresh_token)

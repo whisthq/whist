@@ -3,8 +3,17 @@ from .tasks import *
 
 vm_bp = Blueprint('vm_bp', __name__)
 
+# To access jwt_required endpoints, must include
+# Authorization: Bearer <Access Token JWT>
+# in header of request
+
+# To access jwt_refresh_token_required endpoints, must include
+# Authorization: Bearer <Refresh Token JWT>
+# in header of request
+
 
 @vm_bp.route('/status/<task_id>')
+@jwt_required
 def status(task_id):
     result = celery.AsyncResult(task_id)
     if result.status == 'SUCCESS':
@@ -28,6 +37,7 @@ def status(task_id):
 
 
 @vm_bp.route('/vm/<action>', methods=['POST'])
+@jwt_required
 def vm(action):
     if action == 'create':
         vm_size = request.get_json()['vm_size']
@@ -66,6 +76,7 @@ def vm(action):
 
 
 @vm_bp.route('/disk/<action>', methods=['POST'])
+@jwt_required
 def disk(action):
     if action == 'create':
         print(request.get_json())
@@ -92,7 +103,10 @@ def disk(action):
         return jsonify({'ID': task.id}), 202
 
 
-@vm_bp.route('/tracker/<action>', methods=['POST'])
+# TRACKER endpoint
+
+@vm_bp.route('/tracker/<action>', methods = ['POST'])
+@jwt_required
 def tracker(action):
     body = request.get_json()
     time = None
@@ -118,8 +132,10 @@ def tracker(action):
         return jsonify({'payload': activity})
     return jsonify({}), 200
 
+# INFO endpoint
 
 @vm_bp.route('/info/<action>', methods=['GET', 'POST'])
+@jwt_required
 def info(action):
     body = request.get_json()
     if action == 'list_all' and request.method == 'GET':

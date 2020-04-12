@@ -3,7 +3,10 @@ from .helperFuncs import *
 
 stripe_bp = Blueprint('stripe_bp', __name__)
 
+# STRIPE endpoint
+
 @stripe_bp.route('/stripe/<action>', methods = ['POST'])
+@jwt_required
 def payment(action):
 	stripe.api_key = os.getenv('STRIPE_SECRET') 
 	customer_id = ''
@@ -174,7 +177,10 @@ def payment(action):
 		insertCustomer(email, None, None, body['location'], trial_end, False)
 		return jsonify({'status': 200}), 200
 
+# REFERRAL endpoint
+
 @stripe_bp.route('/referral/<action>', methods = ['POST'])
+@jwt_required
 def referral(action):
 	if action == 'validate':
 		body = request.get_json()
