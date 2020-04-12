@@ -112,21 +112,22 @@ def deleteResource(name):
     except Exception as e:
         print(e)
         hr = -1
-
+  
     # step 2, detach the IP
     try:
         print("Attempting to detach the IP...")
         subnet_obj = network_client.subnets.get(
             resource_group_name=os.getenv('VM_GROUP'),
             virtual_network_name=vnetName,
-            location=virtual_machine.location,
             subnet_name=subnetName)
         # configure network interface parameters.
-        params = {'ip_configurations': [
-            {'name': ipName,
-             'subnet': {'id': subnet_obj.id},
-             # None: Disassociate;
-             'public_ip_address': None,
+        params = {
+            'location': virtual_machine.location,
+            'ip_configurations': [{
+                'name': ipName,
+                'subnet': {'id': subnet_obj.id},
+                # None: Disassociate;
+                'public_ip_address': None,
              }]
         }
         # use method create_or_update to update network interface configuration.
