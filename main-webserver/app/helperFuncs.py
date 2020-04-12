@@ -508,8 +508,11 @@ def addTimeTable(username, action, time, is_user):
         VALUES(:userName, :currentTime, :action, :is_user)
         """)
 
-    params = {'userName': username, 'currentTime': dt.now().strftime(
-        '%m-%d-%Y, %H:%M:%S'), 'action': action, 'is_user': is_user}
+    tz = pytz.timezone("US/Eastern")
+    aware = tz.localize(dt.now(), is_dst=None)
+    now = aware.strftime('%m-%d-%Y, %H:%M:%S')
+    params = {'userName': username, 'currentTime': now, 
+              'action': action, 'is_user': is_user}
 
     with engine.connect() as conn:
         conn.execute(command, **params)
@@ -1140,7 +1143,7 @@ def swapdisk_name(disk_name, vm_name):
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_start.wait()
         
-        time.sleep(5)
+        time.sleep(10)
         # else:
         #     print("Restarting VM...")
         #     async_vm_restart = compute_client.virtual_machines.restart(

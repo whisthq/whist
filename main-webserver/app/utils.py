@@ -31,7 +31,9 @@ def dateToUnix(date):
     return round(date.timestamp())
 
 def getToday():
-    return datetime.datetime.now()
+    tz = pytz.timezone("US/Eastern")
+    aware = tz.localize(datetime.datetime.now(), is_dst=None)
+    return aware
 
 def shiftUnixByMonth(utc, num_months):
     date = unixToDate(utc)

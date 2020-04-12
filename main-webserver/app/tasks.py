@@ -50,6 +50,7 @@ def createVM(self, vm_size, location):
 	vm = getVM(vmParameters['vm_name'])
 	vm_ip = getIP(vm)
 	updateVMIP(vmParameters['vm_name'], vm_ip)
+	updateVMState(vmParameters['vm_name'], 'RUNNING_AVAILABLE')
 
 	return fetchVMCredentials(vmParameters['vm_name'])
 
