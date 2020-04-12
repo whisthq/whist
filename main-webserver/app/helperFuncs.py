@@ -71,16 +71,7 @@ def createNic(name, location, tries):
                 }]
             }
         )
-
-        command = text("""
-            INSERT INTO v_nets("vnetName", "subnetName", "ipConfigName", "nicName") 
-            VALUES(:vnetName, :subnetName, :ipConfigName, :nicName)
-            """)
-        params = {'vnetName': vnetName, 'subnetName': subnetName,
-                  'ipConfigName': ipName, 'nicName': nicName}
-        with engine.connect() as conn:
-            conn.execute(command, **params)
-            conn.close()
+        
         return async_nic_creation.result()
     except Exception as e:
         if tries < 5:
