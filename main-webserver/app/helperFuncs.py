@@ -71,7 +71,7 @@ def createNic(name, location, tries):
                 }]
             }
         )
-        
+
         return async_nic_creation.result()
     except Exception as e:
         if tries < 5:
@@ -248,7 +248,7 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                         'id': nic_id,
                     }]
                 },
-            }, 'vmName': vmName}
+            }, 'vm_name': vmName}
 
 
 def createDiskEntry(disk_name, vm_name, username, location):
