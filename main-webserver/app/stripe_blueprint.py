@@ -5,8 +5,8 @@ stripe_bp = Blueprint('stripe_bp', __name__)
 
 # STRIPE endpoint
 
-@jwt_required
 @stripe_bp.route('/stripe/charge', methods = ['POST'])
+@jwt_required
 def payment_charge():
 	stripe.api_key = os.getenv('STRIPE_SECRET') 
 	customer_id = ''
@@ -62,8 +62,9 @@ def payment_charge():
 
 	return jsonify({'status': 200}), 200
 
-@jwt_required
+
 @stripe_bp.route('/stripe/retrieve', methods = ['POST'])
+@jwt_required
 def payment_retrieve():
 	stripe.api_key = os.getenv('STRIPE_SECRET') 
 	customer_id = ''
@@ -84,8 +85,8 @@ def payment_retrieve():
 
 	return jsonify({'status': 402, 'creditsOutstanding': credits}), 402
 
-@jwt_required
 @stripe_bp.route('/stripe/cancel', methods = ['POST'])
+@jwt_required
 def payment_cancel():
 	stripe.api_key = os.getenv('STRIPE_SECRET') 
 	customer_id = ''
@@ -102,8 +103,8 @@ def payment_cancel():
 			return jsonify({'status': 200}), 200
 	return jsonify({'status': 400}), 400
 
-@jwt_required
 @stripe_bp.route('/stripe/discount', methods = ['POST'])
+@jwt_required
 def payment_discount():
 	stripe.api_key = os.getenv('STRIPE_SECRET') 
 	subscription_id = ''
@@ -158,8 +159,8 @@ def payment_discount():
 
 	return jsonify({'status': 200}), 200
 
-@jwt_required
 @stripe_bp.route('/referral/validate', methods = ['POST'])
+@jwt_required
 def referral_validate():
 	body = request.get_json()
 	code = body['code']
