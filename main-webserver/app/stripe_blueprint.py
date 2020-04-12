@@ -21,7 +21,7 @@ def payment(action):
 
 		customers = fetchCustomers()
 		for customer in customers:
-			if email == customer['email']:
+			if email == customer['username']:
 				customer_exists = True
 				trial_end = customer['trial_end']
 
@@ -74,7 +74,7 @@ def payment(action):
 		credits = getUserCredits(email)
 		customers = fetchCustomers()
 		for customer in customers:
-			if email == customer['email']:
+			if email == customer['username']:
 				subscription = customer['subscription']
 				try:
 					payload = stripe.Subscription.retrieve(subscription)
@@ -93,7 +93,7 @@ def payment(action):
 		email = body['email']
 		customers = fetchCustomers()
 		for customer in customers:
-			if email == customer['email']:
+			if email == customer['username']:
 				subscription = customer['subscription']
 				try:
 					payload = stripe.Subscription.delete(subscription)
@@ -113,15 +113,15 @@ def payment(action):
 		if not metadata:
 			return jsonify({'status': 404}), 404
 
-		creditsOutstanding = metadata['creditsOutstanding']
-		email = metadata['email']
+		creditsOutstanding = metadata['credits_outstanding']
+		email = metadata['username']
 		has_subscription = False
 		subscription_id = None
 		trial_end = 0
 
 		customers = fetchCustomers()
 		for customer in customers:
-			if email == customer['email']:
+			if email == customer['username']:
 				has_subscription = True
 				subscription_id = customer['subscription']
 
@@ -184,7 +184,7 @@ def referral(action):
 
 		metadata = mapCodeToUser(code)
 		if metadata:
-			code_username = metadata['email']
+			code_username = metadata['username']
 		if username == code_username:
 			return jsonify({'status': 200, 'verified': False}), 200
 		codes = fetchCodes()

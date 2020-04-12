@@ -822,9 +822,7 @@ def mapCodeToUser(code):
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
-        if user:
-            return {'email': user[0], 'creditsOutstanding': user[3]}
-    return None
+        return user if user else None
 
 
 def changeUserCredits(username, credits):
