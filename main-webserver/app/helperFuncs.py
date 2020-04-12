@@ -1220,14 +1220,3 @@ def deleteVMFromTable(vm_name):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
-
-# def resetVMCredentials(username, vm_name):
-#     command = text("""
-#         UPDATE v_ms
-#         SET "username" = :userName
-#         WHERE "vm_name" = :vm_name
-#         """)
-#     params = {'userName': username, 'vm_name': vm_name}
-#     with engine.connect() as conn:
-#         conn.execute(command, **params)
-#         conn.close()

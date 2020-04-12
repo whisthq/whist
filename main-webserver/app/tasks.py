@@ -453,6 +453,7 @@ def swapSpecificDisk(self, disk_name, vm_name):
 @celery.task(bind=True)
 def updateVMTable(self):
 	vms = fetchUserVMs(None)
+	_, compute_client, network_client = createClients()
 	azure_portal_vms = [entry.name for entry in compute_client.virtual_machines.list(
 		os.getenv('VM_GROUP'))]
 
@@ -467,12 +468,7 @@ def updateVMTable(self):
 				username = mapDiskToUser(os_disk_name)
 				updateVM(vm_name, vm.location, os_disk_name, username)
 		except Exception as e:
-			print(e)
+			print("ERROR: " + e)
 			pass
 
-	return {'status': 200}
-
-@celery.task(bind=True)
-def testCelery(self):
-	print("TEST IS RUN!!!")
 	return {'status': 200}

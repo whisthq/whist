@@ -26,10 +26,6 @@ def user(action):
             return jsonify({'vms': fetchUserVMs(username)}), 200
         except Exception as e:
             return jsonify({}), 403
-    # elif action == 'reset':
-    #     username, vm_name = body['username'], body['vm_name']
-    #     resetVMCredentials(username, vm_name)
-    #     return jsonify({'status': 200}), 200
 
 
 @account_bp.route('/account/<action>', methods=['POST'])
