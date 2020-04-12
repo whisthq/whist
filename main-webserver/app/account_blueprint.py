@@ -43,16 +43,22 @@ def user_reset():
     return jsonify({'status': 200}), 200
 
 
+
 # ACCOUNT endpoint
 
 @account_bp.route('/account/login', methods=['POST'])
 def account_login():
+    print("is logging working?")
     body = request.get_json()
-    username, vm_name = body['username'], body['vm_name']
-    resetVMCredentials(username, vm_name)
+    username, password = body['username'], body['password']
+    is_user = password != os.getenv('ADMIN_PASSWORD')
+    verified = loginUser(username, password)
+    vm_status = userVMStatus(username)
+    token = fetchUserToken(username)
     access_token, refresh_token = getAccessTokens(username)
-    return jsonify({'status': 200, 'access_token': access_token, 'refresh_token': refresh_token}), 200
+    return jsonify({'verified': verified, 'is_user': is_user, 'vm_status': vm_status, 'token': token, 'access_token': access_token, 'refresh_token': refresh_token}), 200
 
+    
 @account_bp.route('/account/register', methods=['POST'])
 def account_register():
     body = request.get_json()
