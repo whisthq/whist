@@ -847,7 +847,7 @@ def getUserCredits(username):
         """)
     params = {'username': username}
     with engine.connect() as conn:
-        user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        users = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if users:
             return users['credits_outstanding']
