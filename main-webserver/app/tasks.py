@@ -42,6 +42,7 @@ def createVM(self, vm_size, location):
 				command
 			]
 		}
+		print(command)
 		poller = compute_client.virtual_machines.run_command(
 			os.environ.get('VM_GROUP'),
 			vmParameters['vm_name'],
