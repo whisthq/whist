@@ -560,6 +560,19 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam) {
 }
 #endif
 
+
+static int resizingEventWatcher(void* data, SDL_Event* event) {
+  if (event->type == SDL_WINDOWEVENT &&
+      event->window.event == SDL_WINDOWEVENT_RESIZED) {
+    SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
+    if (win == (SDL_Window*)data) {
+      notify_video(true);
+    }
+  }
+  return 0;
+}
+
+
 int initSDL() {
 #if defined(_WIN32)
     // Hook onto windows keyboard to intercept windows special key combinations
@@ -600,12 +613,13 @@ int initSDL() {
                                         : 0));
 #endif
 
+    SDL_AddEventWatch(resizingEventWatcher, window);
     if (!window) {
         fprintf(stderr, "SDL: could not create window - exiting: %s\n",
                 SDL_GetError());
         return -1;
     }
-
+	SDL_SetWindowResizable(window, true);
     return 0;
 }
 
@@ -619,6 +633,37 @@ void destroySDL() {
     }
     SDL_Quit();
 }
+
+
+
+void parse_window_event(SDL_Event* event) {
+	SDL_WindowEvent e = event->window;
+	switch (event->window.event) {
+        case SDL_WINDOWEVENT_RESIZED:
+            printf("Window %d resized to %dx%d\n",
+                    event->window.windowID, event->window.data1,
+                    event->window.data2);
+            break;
+        case SDL_WINDOWEVENT_SIZE_CHANGED:
+            notify_video(false);
+			output_width = event->window.data1;
+			output_height = event->window.data2;
+            break;
+        case SDL_WINDOWEVENT_MINIMIZED:
+            printf("Window %d minimized\n", event->window.windowID);
+            break;
+        case SDL_WINDOWEVENT_MAXIMIZED:
+            printf("Window %d maximized\n", event->window.windowID);
+            break;
+        case SDL_WINDOWEVENT_RESTORED:
+            printf("Window %d restored\n", event->window.windowID);
+            break;
+			default:
+			printf("WINDOW EVENT %d\n",event->window.event);
+			break;
+	}
+}
+
 
 int main(int argc, char* argv[]) {
     initBacktraceHandler();
@@ -764,6 +809,9 @@ int main(int argc, char* argv[]) {
             fmsg.type = 0;
             if (SDL_PollEvent(&msg)) {
                 switch (msg.type) {
+					case SDL_WINDOWEVENT:
+						parse_window_event(&msg);
+						break;
                     case SDL_KEYDOWN:
                     case SDL_KEYUP:
                         // Send a keyboard press for this event

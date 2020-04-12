@@ -212,7 +212,7 @@ video_decoder_t* create_video_decoder(int width, int height,
 
     if (use_hardware) {
 #if defined(_WIN32)
-        int decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,
+        int decoder_precedence[] = {/*DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,*/
                                     DECODE_TYPE_SOFTWARE};
 #elif __APPLE__
         int decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
