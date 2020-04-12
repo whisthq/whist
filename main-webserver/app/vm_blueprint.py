@@ -55,8 +55,9 @@ def vm(action):
         except:
             return({'public_ip': None}), 404
     elif action == 'delete':
-        vm_name = request.get_json()['vm_name']
-        task = deleteVMResources.apply_async([vm_name])
+        body = request.get_json()
+        vm_name, delete_disk = body['vm_name'], body['delete_disk']
+        task = deleteVMResources.apply_async([vm_name, delete_disk])
         return jsonify({'ID': task.id}), 202
     elif action == 'restart':
         vm_name = request.get_json()['vm_name']

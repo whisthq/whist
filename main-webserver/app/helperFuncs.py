@@ -82,7 +82,7 @@ def createNic(name, location, tries):
             return None
 
 
-def deleteResource(name):
+def deleteResource(name, delete_disk):
     _, compute_client, network_client = createClients()
     vnetName, subnetName, ipName, nicName = name + \
         '_vnet', name + '_subnet', name + '_ip', name + '_nic'
@@ -184,16 +184,17 @@ def deleteResource(name):
         print(e)
         hr = -1
 
-    # step 6, delete the OS disk -- not needed anymore (OS disk swapping)
-    # try:
-    #     print("Attempting to delete the OS disk...")
-    #     os_disk_delete = compute_client.disks.delete(
-    #         os.getenv('VM_GROUP'), os_disk_name)
-    #     os_disk_delete.wait()
-    #     print("OS disk deleted")
-    # except Exception as e:
-    #     print(e)
-    #     hr = -1
+    if delete_disk:
+        # step 6, delete the OS disk -- not needed anymore (OS disk swapping)
+        try:
+            print("Attempting to delete the OS disk...")
+            os_disk_delete = compute_client.disks.delete(
+                os.getenv('VM_GROUP'), os_disk_name)
+            os_disk_delete.wait()
+            print("OS disk deleted")
+        except Exception as e:
+            print(e)
+            hr = -1
 
     return hr
 

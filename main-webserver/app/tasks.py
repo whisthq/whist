@@ -232,8 +232,8 @@ def fetchAll(self, update):
 
 
 @celery.task(bind=True)
-def deleteVMResources(self, name):
-	status = 200 if deleteResource(name) else 404
+def deleteVMResources(self, name, delete_disk):
+	status = 200 if deleteResource(name, delete_disk) else 404
 	return {'status': status}
 
 
