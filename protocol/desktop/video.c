@@ -80,6 +80,7 @@ volatile struct FrameData renderContext;
 // True if RenderScreen is currently rendering a frame
 volatile bool rendering = false;
 volatile bool skip_render = false;
+volatile bool resizing = false;
 
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 275
@@ -173,6 +174,8 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             mprintf("Sem opened but rendering is not true!\n");
             continue;
         }
+		
+											
 
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)renderContext.frame_buffer;
@@ -210,7 +213,8 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             continue;
         }
 
-        if (!skip_render) {
+        if (!skip_render && !resizing) {
+					
             if (videoContext.sws) {
                 sws_scale(
                     videoContext.sws,
@@ -225,7 +229,6 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                        videoContext.decoder->sw_frame->linesize,
                        sizeof(videoContext.linesize));
             }
-
             SDL_UpdateYUVTexture(videoContext.texture, NULL,
                                  videoContext.data[0], videoContext.linesize[0],
                                  videoContext.data[1], videoContext.linesize[1],
@@ -257,9 +260,11 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         // mprintf("Client Frame Time for ID %d: %f\n", renderContext.id,
         // GetTimer(renderContext.client_frame_timer));
 
-        if (!skip_render) {
-            SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL,
-                           NULL);
+        if (!skip_render && !resizing) {
+			//printf("Before, %x\n", renderer);
+            SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL, NULL);
+            //SDL_RenderCopy((SDL_Renderer*)renderer, NULL, NULL, NULL);
+			//printf("After\n");
             // SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
             // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
             SDL_RenderPresent((SDL_Renderer*)renderer);
@@ -357,7 +362,6 @@ int initMultithreadedVideo(void* opaque) {
     SDL_Texture* texture;
 
     SDL_SetRenderDrawBlendMode((SDL_Renderer*)renderer, SDL_BLENDMODE_BLEND);
-
     // Allocate a place to put our YUV image on that screen
     texture = SDL_CreateTexture((SDL_Renderer*)renderer, SDL_PIXELFORMAT_YV12,
                                 SDL_TEXTUREACCESS_STREAMING, output_width,
@@ -390,7 +394,6 @@ int initMultithreadedVideo(void* opaque) {
     VideoData.run_render_screen_thread = true;
 
     RenderScreen(renderer);
-
     SDL_DestroyRenderer(renderer);
     return 0;
 }
@@ -705,4 +708,9 @@ void destroyVideo() {
     av_freep(videoContext.data);
 
     has_rendered_yet = false;
+}
+
+void notify_video(bool stop) {
+	resizing = stop;
+	printf("Stop video? %d.\n", stop);
 }

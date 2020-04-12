@@ -9,5 +9,6 @@ void initVideo();
 int32_t ReceiveVideo(struct RTPPacket *packet);
 void updateVideo();
 void destroyVideo();
+void notify_video(bool stop);
 
 #endif // DESKTOP_VIDEO_H
