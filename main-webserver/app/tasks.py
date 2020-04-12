@@ -5,6 +5,8 @@ from msrest.exceptions import ClientException
 
 @celery.task(bind=True)
 def createVM(self, vm_size, location):
+	print("TASK: Create VM added to Redis queue")
+
 	_, compute_client, _ = createClients()
 	vmName = genVMName()
 	nic = createNic(vmName, location, 0)
@@ -12,7 +14,7 @@ def createVM(self, vm_size, location):
 		return jsonify({})
 	vmParameters = createVMParameters(vmName, nic.id, vm_size, location)
 	async_vm_creation = compute_client.virtual_machines.create_or_update(
-		os.environ.get('VM_GROUP'), vmParameters['vmName'], vmParameters['params'])
+		os.environ.get('VM_GROUP'), vmParameters['vm_name'], vmParameters['params'])
 	async_vm_creation.wait()
 
 	extension_parameters = {
@@ -24,14 +26,15 @@ def createVM(self, vm_size, location):
 	}
 
 	async_vm_powershell = compute_client.virtual_machine_extensions.create_or_update(os.environ.get('VM_GROUP'),
-																					 vmParameters['vmName'], 'NvidiaGpuDriverWindows', extension_parameters)
+							vmParameters['vm_name'], 'NvidiaGpuDriverWindows', extension_parameters)
 	async_vm_powershell.wait()
 
 	async_vm_start = compute_client.virtual_machines.start(
-		os.environ.get('VM_GROUP'), vmParameters['vmName'])
+		os.environ.get('VM_GROUP'), vmParameters['vm_name'])
 	async_vm_start.wait()
 
 	with open('app/scripts/vmCreate.txt', 'r') as file:
+		print("TASK: Starting to run Powershell scripts")
 		command = file.read()
 		run_command_parameters = {
 			'command_id': 'RunPowerShellScript',
@@ -41,17 +44,19 @@ def createVM(self, vm_size, location):
 		}
 		poller = compute_client.virtual_machines.run_command(
 			os.environ.get('VM_GROUP'),
-			vmParameters['vmName'],
+			vmParameters['vm_name'],
 			run_command_parameters
 		)
 		result = poller.result()
+		print("SUCCESS: Powershell scripts finished running")
 		print(result.value[0].message)
 
-	vm = getVM(vmParameters['vmName'])
+	vm = getVM(vmParameters['vm_name'])
 	vm_ip = getIP(vm)
-	updateVMIP(vmParameters['vmName'], vm_ip)
+	updateVMIP(vmParameters['vm_name'], vm_ip)
+	updateVMState(vmParameters['vm_name'], 'RUNNING_AVAILABLE')
 
-	return fetchVMCredentials(vmParameters['vmName'])
+	return fetchVMCredentials(vmParameters['vm_name'])
 
 
 @celery.task(bind=True)
@@ -212,9 +217,9 @@ def fetchAll(self, update):
 
 		if update:
 			try:
-				if not entry.name in current_names:
+				if not entry.name in vm_names:
 					insertRow(entry.os_profile.admin_username,
-							  entry.name, current_usernames, current_names)
+							  entry.name, current_usernames, vm_names)
 			except:
 				pass
 
@@ -245,7 +250,7 @@ def restartVM(self, vm_name):
 def updateVMStates(self):
 	_, compute_client, _ = createClients()
 	vms = compute_client.virtual_machines.list(
-		resource_group_name=os.environ.get('VM_GROUP'))
+		resource_group_name = os.environ.get('VM_GROUP'))
 
 	# looping inside the list of virtual machines, to grab the state of each machine
 	for vm in vms:
@@ -260,7 +265,7 @@ def updateVMStates(self):
 
 		username = fetchVMCredentials(vm.name)['username']
 		if username:
-			most_recent_action = getMostRecentActivity(username.split('@')[0])
+			most_recent_action = getMostRecentActivity(username)
 			if not most_recent_action:
 				available = True
 			elif most_recent_action['action'] == 'logoff':
@@ -304,7 +309,7 @@ def syncDisks(self):
 			vm_name = ''
 		location = disk.location
 
-		updateDisk(disk_name, disk_state, vm_name, location)
+		updateDisk(disk_name, vm_name, location)
 
 	stored_disks = fetchUserDisks(None)
 	for stored_disk in stored_disks:
@@ -320,65 +325,84 @@ def swapDisk(self, disk_name):
 	_, compute_client, _ = createClients()
 	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
 	vm_name = os_disk.managed_by
-	disk_state = os_disk.disk_state
 	location = os_disk.location
 
 	def swapDiskAndUpdate(disk_name, vm_name):
 		# Pick a VM, attach it to disk
-		hr = swapOSDisk(disk_name, vm_name)
+		hr = swapdisk_name(disk_name, vm_name)
 		if hr > 0:
-			updateDisk(disk_name, disk_state, vm_name, location)
+			updateDisk(disk_name, vm_name, location)
 			associateVMWithDisk(vm_name, disk_name)
 			updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 			print("Database updated.")
 			return 1
 		else:
 			return -1
+
+	def updateOldDisk(vm_name):
+		virtual_machine = getVM(vm_name)
+		old_disk = virtual_machine.storage_profile.os_disk
+		updateDisk(old_disk.name, '', None)
 	# Disk is currently attached to a VM. Make sure the database reflects the current disk state,
 	# and restart the VM as a sanity check.
 	if vm_name:
 		vm_name = vm_name.split('/')[-1]
 		print("Disk already attached to VM " + vm_name)
-		updateDisk(disk_name, disk_state, vm_name, location)
+		updateDisk(disk_name, vm_name, location)
 		associateVMWithDisk(vm_name, disk_name)
 		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 		print("Database updated")
-		# async_vm_restart = compute_client.virtual_machines.restart(
-		# 	os.environ.get('VM_GROUP'), vm_name)
-		# async_vm_restart.wait()
-		# time.sleep(10)
-		# print("VM restarted and ready to use")
-		return fetchVMCredentials(vm_name)
+
+		# If the VM is powered off, start it
+		vm_state = compute_client.virtual_machines.instance_view(
+			resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
+		print(vm_state.statuses[1])
+		if not 'running' in vm_state.statuses[1].code:
+			print('VM ' + vm_name + ' is powered off. Preparing to power on...')
+			async_vm_start = compute_client.virtual_machines.start(
+				os.environ.get('VM_GROUP'), vm_name)
+			async_vm_start.wait()
+			time.sleep(10)
+		print('VM is started and ready to use')
+		vm_credentials = fetchVMCredentials(vm_name)
+		return vm_credentials
 	# Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
 	# (then reboot the VM), or wait until a VM becomes available.
 	else:
-		print("No VM attached to disk")
 		free_vm_found = False
 		while not free_vm_found:
 			print("No VM attached to " + disk_name)
-			available_vms = fetchVMsByState('RUNNING_AVAILABLE')
+			available_vms = fetchAttachableVMs('RUNNING_AVAILABLE', location)
 			if len(available_vms) > 0:
 				print('Found ' + str(len(available_vms)) + ' available VMs')
 				# Pick a VM, attach it to disk
 				vm_name = available_vms[0]['vm_name']
+				lockVM(vm_name, True)
 				print('Selected VM ' + vm_name +
 					  ' to attach to disk ' + disk_name)
 				if swapDiskAndUpdate(disk_name, vm_name) > 0:
 					free_vm_found = True
+					updateOldDisk(vm_name)
+					lockVM(vm_name, False)
 					return fetchVMCredentials(vm_name)
+				lockVM(vm_name, False)
 				return {'status': 400}
 			else:
 				# Look for VMs that are not running
 				print(
 					"Could not find a running and available VM to attach to disk " + disk_name)
-				deactivated_vms = fetchVMsByState(
-					'NOT_RUNNING_AVAILABLE') + fetchVMsByState('NOT_RUNNING_UNAVAILABLE')
+				deactivated_vms = fetchAttachableVMs(
+					'NOT_RUNNING_AVAILABLE', location) + fetchAttachableVMs('NOT_RUNNING_UNAVAILABLE', location)
 				if len(deactivated_vms) > 0:
 					vm_name = deactivated_vms[0]['vm_name']
+					lockVM(vm_name, True)
 					print("Found deactivated VM " + vm_name)
 					if swapDiskAndUpdate(disk_name, vm_name) > 0:
 						free_vm_found = True
+						updateOldDisk(vm_name)
+						lockVM(vm_name, False)
 						return fetchVMCredentials(vm_name)
+					lockVM(vm_name, False)
 					return {'status': 400}
 				else:
 					print("No VMs are available. Going to sleep...")
@@ -388,6 +412,8 @@ def swapDisk(self, disk_name):
 
 @celery.task(bind=True)
 def swapSpecificDisk(self, disk_name, vm_name):
+	lockVM(vm_name, True)
+
 	_, compute_client, _ = createClients()
 	new_os_disk = compute_client.disks.get(
 		os.environ.get('VM_GROUP'), disk_name)
@@ -405,8 +431,7 @@ def swapSpecificDisk(self, disk_name, vm_name):
 	async_disk_attach.wait()
 
 	end = time.perf_counter()
-	print(f"Disk swapped out in {end - start:0.4f} seconds")
-	print('Disk swapped out. Restarting VM ' + vm_name)
+	print(f"SUCCESS: Disk swapped out in {end - start:0.4f} seconds. Restarting " + vm_name)
 
 	start = time.perf_counter()
 	async_vm_restart = compute_client.virtual_machines.restart(
@@ -414,10 +439,10 @@ def swapSpecificDisk(self, disk_name, vm_name):
 	async_vm_restart.wait()
 	end = time.perf_counter()
 
-	print(f"VM restarted in {end - start:0.4f} seconds")
+	print(f"SUCCESS: VM restarted in {end - start:0.4f} seconds")
 
 
-	updateDisk(disk_name, new_os_disk.disk_state, vm_name, new_os_disk.location)
+	updateDisk(disk_name, vm_name, None)
 	associateVMWithDisk(vm_name, disk_name)
 	updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 	print("Database updated.")
@@ -426,5 +451,28 @@ def swapSpecificDisk(self, disk_name, vm_name):
 
 	print('VM ' + vm_name + ' successfully restarted')
 
+	lockVM(vm_name, False)
 	return fetchVMCredentials(vm_name)
 
+@celery.task(bind=True)
+def updateVMTable(self):
+	vms = fetchUserVMs(None)
+	_, compute_client, network_client = createClients()
+	azure_portal_vms = [entry.name for entry in compute_client.virtual_machines.list(
+		os.getenv('VM_GROUP'))]
+
+	for vm in vms:
+		try:
+			if not vm['vm_name'] in azure_portal_vms:
+				deleteVMFromTable(vm['vm_name'])
+			else:
+				vm_name = vm['vm_name']
+				vm = getVM(vm_name)
+				os_disk_name = vm.storage_profile.os_disk.name
+				username = mapDiskToUser(os_disk_name)
+				updateVM(vm_name, vm.location, os_disk_name, username)
+		except Exception as e:
+			print("ERROR: " + e)
+			pass
+
+	return {'status': 200}

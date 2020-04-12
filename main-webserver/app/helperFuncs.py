@@ -72,15 +72,6 @@ def createNic(name, location, tries):
             }
         )
 
-        command = text("""
-            INSERT INTO v_nets("vnetName", "subnetName", "ipConfigName", "nicName") 
-            VALUES(:vnetName, :subnetName, :ipConfigName, :nicName)
-            """)
-        params = {'vnetName': vnetName, 'subnetName': subnetName,
-                  'ipConfigName': ipName, 'nicName': nicName}
-        with engine.connect() as conn:
-            conn.execute(command, **params)
-            conn.close()
         return async_nic_creation.result()
     except Exception as e:
         if tries < 5:
@@ -148,6 +139,8 @@ def deleteResource(name):
             os.getenv('VM_GROUP'), name)
         async_vm_delete.wait()
         print("VM deleted")
+        deleteVMFromTable(name)
+        print("VM removed from database")
     except Exception as e:
         print(e)
         hr = -1
@@ -208,7 +201,7 @@ def deleteResource(name):
 def createVMParameters(vmName, nic_id, vm_size, location):
     with engine.connect() as conn:
         oldUserNames = [cell[0] for cell in list(
-            conn.execute('SELECT "vmUserName" FROM v_ms'))]
+            conn.execute('SELECT "username" FROM v_ms'))]
         userName = genHaiku(1)[0]
         while userName in oldUserNames:
             userName = genHaiku(1)
@@ -221,10 +214,10 @@ def createVMParameters(vmName, nic_id, vm_size, location):
         }
 
         command = text("""
-            INSERT INTO v_ms("vmName", "vmUserName", "osDisk") 
-            VALUES(:vmName, :vmUserName, :osDisk)
+            INSERT INTO v_ms("vm_name", "username", "disk_name") 
+            VALUES(:vmName, :username, :disk_name)
             """)
-        params = {'vmName': vmName, 'vmUserName': userName, 'osDisk': None}
+        params = {'vmName': vmName, 'username': userName, 'disk_name': None}
         with engine.connect() as conn:
             conn.execute(command, **params)
             conn.close()
@@ -256,13 +249,13 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                         'id': nic_id,
                     }]
                 },
-            }, 'vmName': vmName}
+            }, 'vm_name': vmName}
 
 
 def createDiskEntry(disk_name, vm_name, username, location):
     with engine.connect() as conn:
         command = text("""
-            INSERT INTO disks("diskname", "vmname", "username", "location") 
+            INSERT INTO disks("disk_name", "vm_name", "username", "location") 
             VALUES(:diskname, :vmname, :username, :location)
             """)
         params = {
@@ -290,11 +283,11 @@ def getVM(vm_name):
 
 def singleValueQuery(value):
     command = text("""
-        SELECT * FROM v_ms WHERE "vmName" = :value
+        SELECT * FROM v_ms WHERE "vm_name" = :value
         """)
     params = {'value': value}
     with engine.connect() as conn:
-        exists = conn.execute(command, **params).fetchall()
+        exists = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
         return True if exists else False
 
@@ -316,12 +309,12 @@ def getIP(vm):
     return public_ip.ip_address
 
 
-def registerUserVM(username, vm_name):
+def updateVMUsername(username, vm_name):
     command = text("""
         UPDATE v_ms
         SET username = :username
         WHERE
-           "vmName" = :vm_name
+           "vm_name" = :vm_name
         """)
     params = {'username': username, 'vm_name': vm_name}
     with engine.connect() as conn:
@@ -331,48 +324,48 @@ def registerUserVM(username, vm_name):
 
 def loginUserVM(username):
     command = text("""
-        SELECT * FROM v_ms WHERE "vmUserName" = :username
+        SELECT * FROM v_ms WHERE "username" = :username
         """)
     params = {'username': username}
     with engine.connect() as conn:
-        user = conn.execute(command, **params).fetchall()
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
         if len(user) > 0:
-            return user[0][0]
+            return user[0]['username']
     return None
 
 
 def loginUser(username, password):
     if password != os.getenv('ADMIN_PASSWORD'):
         command = text("""
-            SELECT * FROM users WHERE "userName" = :userName AND "password" = :password
+            SELECT * FROM users WHERE "username" = :userName AND "password" = :password
             """)
         pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
         params = {'userName': username, 'password': pwd_token}
         with engine.connect() as conn:
-            user = conn.execute(command, **params).fetchall()
+            user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()
-            return len(user) > 0
+            return True if user else False
     else:
         command = text("""
-            SELECT * FROM users WHERE "userName" = :userName
+            SELECT * FROM users WHERE "username" = :userName
             """)
         params = {'userName': username}
         with engine.connect() as conn:
-            user = conn.execute(command, **params).fetchall()
+            user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()
-            return len(user) > 0
+            return True if user else False
 
 
 def lookup(username):
     command = text("""
-        SELECT * FROM users WHERE "userName" = :userName
+        SELECT * FROM users WHERE "username" = :userName
         """)
     params = {'userName': username}
     with engine.connect() as conn:
-        user = conn.execute(command, **params).fetchall()
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
-        return len(user) > 0
+        return True if user else False
 
 
 def genUniqueCode():
@@ -389,7 +382,7 @@ def registerUser(username, password, token):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     code = genUniqueCode()
     command = text("""
-        INSERT INTO users("userName", "password", "code", "id") 
+        INSERT INTO users("username", "password", "code", "id") 
         VALUES(:userName, :password, :code, :token)
         """)
     params = {'userName': username, 'password': pwd_token,
@@ -410,7 +403,7 @@ def regenerateAllCodes():
             command = text("""
                 UPDATE users 
                 SET "code" = :code
-                WHERE "userName" = :userName
+                WHERE "username" = :userName
                 """)
             params = {'code': code, 'userName': row[0]}
             conn.execute(command, **params)
@@ -426,7 +419,7 @@ def generateIDs():
             command = text("""
                 UPDATE users 
                 SET "id" = :token
-                WHERE "userName" = :userName
+                WHERE "username" = :userName
                 """)
             params = {'token': token, 'userName': row[0]}
             conn.execute(command, **params)
@@ -438,7 +431,7 @@ def resetPassword(username, password):
     command = text("""
         UPDATE users 
         SET "password" = :password
-        WHERE "userName" = :userName
+        WHERE "username" = :userName
         """)
     params = {'userName': username, 'password': pwd_token}
     with engine.connect() as conn:
@@ -446,40 +439,22 @@ def resetPassword(username, password):
         conn.close()
 
 
-def resetVMCredentials(username, vm_name):
-    command = text("""
-        UPDATE v_ms
-        SET "vmUserName" = :userName
-        WHERE "vmName" = :vm_name
-        """)
-    params = {'userName': username, 'vm_name': vm_name}
-    with engine.connect() as conn:
-        conn.execute(command, **params)
-        conn.close()
-
-
 def fetchVMCredentials(vm_name):
     command = text("""
-        SELECT * FROM v_ms WHERE "vmName" = :vm_name
+        SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name}
     with engine.connect() as conn:
-        vm_info = conn.execute(command, **params).fetchone()
-        vm_name, username = vm_info[0], vm_info[1]
-        # Get public IP address
-        vm = getVM(vm_name)
-        ip = getIP(vm)
+        vm_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         # Decode password
         conn.close()
-        return {'username': username,
-                'vm_name': vm_name,
-                'public_ip': ip}
+        return vm_info
 
 
 def genVMName():
     with engine.connect() as conn:
         oldVMs = [cell[0]
-                  for cell in list(conn.execute('SELECT "vmName" FROM v_ms'))]
+                  for cell in list(conn.execute('SELECT "vm_name" FROM v_ms'))]
         vmName = genHaiku(1)[0]
         while vmName in oldVMs:
             vmName = genHaiku(1)[0]
@@ -489,7 +464,7 @@ def genVMName():
 def genDiskName():
     with engine.connect() as conn:
         oldDisks = [cell[0] for cell in list(
-            conn.execute('SELECT "diskname" FROM disks'))]
+            conn.execute('SELECT "disk_name" FROM disks'))]
         diskName = genHaiku(1)[0]
         while diskName in oldDisks:
             diskName = genHaiku(1)[0]
@@ -498,7 +473,7 @@ def genDiskName():
 
 def storeForm(name, email, cubeType):
     command = text("""
-        INSERT INTO form("fullname", "email", "cubetype") 
+        INSERT INTO form("fullname", "username", "cubetype") 
         VALUES(:name, :email, :cubeType)
         """)
     params = {'name': name, 'email': email, 'cubeType': cubeType}
@@ -509,7 +484,7 @@ def storeForm(name, email, cubeType):
 
 def storePreOrder(address1, address2, zipCode, email, order):
     command = text("""
-        INSERT INTO pre_order("address1", "address2", "zipcode", "email", "base", "enhanced", "power") 
+        INSERT INTO pre_order("address1", "address2", "zipcode", "username", "base", "enhanced", "power") 
         VALUES(:address1, :address2, :zipcode, :email, :base, :enhanced, :power)
         """)
     params = {'address1': address1, 'address2': address2, 'zipcode': zipCode, 'email': email,
@@ -525,8 +500,11 @@ def addTimeTable(username, action, time, is_user):
         VALUES(:userName, :currentTime, :action, :is_user)
         """)
 
-    params = {'userName': username, 'currentTime': dt.now().strftime(
-        '%m-%d-%Y, %H:%M:%S'), 'action': action, 'is_user': is_user}
+    tz = pytz.timezone("US/Eastern")
+    aware = tz.localize(dt.now(), is_dst=None)
+    now = aware.strftime('%m-%d-%Y, %H:%M:%S')
+    params = {'userName': username, 'currentTime': now, 
+              'action': action, 'is_user': is_user}
 
     with engine.connect() as conn:
         conn.execute(command, **params)
@@ -553,20 +531,6 @@ def addTimeTable(username, action, time, is_user):
 
         conn.close()
 
-def changeDiskOnline(username, online):
-    command = text("""
-        UPDATE disks
-        SET "online" = :online
-        WHERE "username" = :username
-        """)
-
-    params = {'online': online,
-              'username': username}
-
-    with engine.connect() as conn:
-        conn.execute(command, **params)
-        conn.close()
-
 def deleteTimeTable():
     command = text("""
         DELETE FROM login_history
@@ -581,26 +545,22 @@ def deleteTimeTable():
 def fetchUserVMs(username):
     if(username):
         command = text("""
-            SELECT * FROM v_ms WHERE "vmUserName" = :username
+            SELECT * FROM v_ms WHERE "username" = :username
             """)
         params = {'username': username}
         with engine.connect() as conn:
-            vms_info = conn.execute(command, **params).fetchall()
-            out = [{'vm_name': vm_info[0], 'vm_username': vm_info[1]}
-                   for vm_info in vms_info]
+            vms_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()
-            return out
+            return vms_info
     else:
         command = text("""
             SELECT * FROM v_ms
             """)
         params = {}
         with engine.connect() as conn:
-            vms_info = conn.execute(command, **params).fetchall()
-            out = {vm_info[0]: {'username': vm_info[1], 'ip': vm_info[3]}
-                   for vm_info in vms_info}
+            vms_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()
-            return out
+            return vms_info
 
 
 def fetchUserDisks(username):
@@ -610,34 +570,30 @@ def fetchUserDisks(username):
             """)
         params = {'username': username}
         with engine.connect() as conn:
-            disks_info = conn.execute(command, **params).fetchall()
-            out = [{'disk_name': disk_info[0], 'username': disk_info[1], 'location': disk_info[2], 'attached': disk_info[3], 'online': disk_info[4], 'vmName': disk_info[4]}
-                   for disk_info in disks_info]
+            disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()
-            return out
+            return disks_info
     else:
         command = text("""
             SELECT * FROM disks
             """)
         params = {}
         with engine.connect() as conn:
-            disks_info = conn.execute(command, **params).fetchall()
-            out = [{'disk_name': disk_info[0], 'username': disk_info[1], 'location': disk_info[2], 'attached': disk_info[3], 'online': disk_info[4], 'vmName': disk_info[4]}
-                   for disk_info in disks_info]
+            disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()
-            return out
+            return disks_info
 
 
 def fetchUserCode(username):
     try:
         command = text("""
-            SELECT * FROM users WHERE "userName" = :userName
+            SELECT * FROM users WHERE "username" = :userName
             """)
         params = {'userName': username}
         with engine.connect() as conn:
-            user = conn.execute(command, **params).fetchone()
+            user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
             conn.close()
-            return user[2]
+            return user['code']
     except:
         return None
 
@@ -645,7 +601,7 @@ def fetchUserCode(username):
 def deleteRow(username, vm_name, usernames, vm_names):
     if not (vm_name in vm_names):
         command = text("""
-            DELETE FROM v_ms WHERE "vmName" = :vm_name 
+            DELETE FROM v_ms WHERE "vm_name" = :vm_name 
             """)
         params = {'vm_name': vm_name}
         with engine.connect() as conn:
@@ -655,7 +611,7 @@ def deleteRow(username, vm_name, usernames, vm_names):
 
 def deleteUser(username):
     command = text("""
-        DELETE FROM users WHERE "userName" = :username 
+        DELETE FROM users WHERE "username" = :username 
         """)
     params = {'username': username}
     with engine.connect() as conn:
@@ -670,7 +626,7 @@ def deleteUser(username):
 def insertRow(username, vm_name, usernames, vm_names):
     if not (username in usernames and vm_name in vm_names):
         command = text("""
-            INSERT INTO v_ms("vmUserName", "vmName") 
+            INSERT INTO v_ms("username", "vm_name") 
             VALUES(:username, :vm_name)
             """)
         params = {'username': username,
@@ -686,13 +642,10 @@ def fetchLoginActivity():
         """)
     params = {}
     with engine.connect() as conn:
-        activities = conn.execute(command, **params).fetchall()
-        out = [{'username': activity[0],
-                'timestamp': activity[1],
-                'action': activity[2]} for activity in activities]
-        out.reverse()
+        activities = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        activities.reverse()
         conn.close()
-        return out
+        return activities
 
 
 def fetchCustomers():
@@ -701,29 +654,22 @@ def fetchCustomers():
         """)
     params = {}
     with engine.connect() as conn:
-        customers = conn.execute(command, **params).fetchall()
-        out = [{'email': customer[0],
-                'id': customer[1],
-                'subscription': customer[2],
-                'location': customer[3],
-                'trial_end': customer[4],
-                'paid': customer[5]}
-               for customer in customers]
+        customers = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
-        return out
+        return customers
 
 
 def insertCustomer(email, customer_id, subscription_id, location, trial_end, paid):
     command = text("""
-        SELECT * FROM customers WHERE "email" = :email
+        SELECT * FROM customers WHERE "username" = :email
         """)
     params = {'email': email}
     with engine.connect() as conn:
-        user = conn.execute(command, **params).fetchall()
+        customers = cleanFetchedSQL(conn.execute(command, **params).fetchall())
 
-        if len(user) == 0:
+        if len(customers) == 0:
             command = text("""
-                INSERT INTO customers("email", "id", "subscription", "location", "trial_end", "paid") 
+                INSERT INTO customers("username", "id", "subscription", "location", "trial_end", "paid") 
                 VALUES(:email, :id, :subscription, :location, :trial_end, :paid)
                 """)
 
@@ -744,7 +690,7 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
                     "location" = :location, 
                     "trial_end" = :trial_end,
                     "paid" = :paid
-                WHERE "email" = :email
+                WHERE "username" = :email
                 """)
 
             params = {'email': email,
@@ -760,7 +706,7 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
 
 def deleteCustomer(email):
     command = text("""
-        DELETE FROM customers WHERE "email" = :email 
+        DELETE FROM customers WHERE "username" = :email 
         """)
     params = {'email': email}
     with engine.connect() as conn:
@@ -774,7 +720,7 @@ def checkComputer(computer_id, username):
         """)
     params = {'id': computer_id, 'username': username}
     with engine.connect() as conn:
-        computer = conn.execute(command, **params).fetchone()
+        computer = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         if not computer:
             computers = fetchComputers(username)
             nicknames = [c['nickname'] for c in computers]
@@ -823,7 +769,7 @@ def fetchComputers(username):
         """)
     params = {'username': username}
     with engine.connect() as conn:
-        computers = conn.execute(command, **params).fetchall()
+        computers = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         out = [{'username': computer[0],
                 'location': computer[1],
                 'nickname': computer[2],
@@ -854,13 +800,9 @@ def fetchAllUsers():
         """)
     params = {}
     with engine.connect() as conn:
-        users = conn.execute(command, **params).fetchall()
-        out = [{'username': user[0],
-                'code': user[2],
-                'creditsOutstanding': user[3],
-                'verified': user[4]} for user in users]
+        users = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
-        return out
+        return users
     return None
 
 
@@ -870,19 +812,17 @@ def mapCodeToUser(code):
         """)
     params = {'code': code}
     with engine.connect() as conn:
-        user = conn.execute(command, **params).fetchone()
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
-        if user:
-            return {'email': user[0], 'creditsOutstanding': user[3]}
-    return None
+        return user if user else None
 
 
 def changeUserCredits(username, credits):
     command = text("""
         UPDATE users
-        SET "creditsOutstanding" = :credits
+        SET "credits_outstanding" = :credits
         WHERE
-           "userName" = :username
+           "username" = :username
         """)
     params = {'credits': credits, 'username': username}
     with engine.connect() as conn:
@@ -893,14 +833,14 @@ def changeUserCredits(username, credits):
 def getUserCredits(username):
     command = text("""
         SELECT * FROM users
-        WHERE "userName" = :username
+        WHERE "username" = :username
         """)
     params = {'username': username}
     with engine.connect() as conn:
-        users = conn.execute(command, **params).fetchone()
+        users = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if users:
-            return users[3]
+            return users['credits_outstanding']
     return 0
 
 
@@ -910,9 +850,9 @@ def fetchCodes():
         """)
     params = {}
     with engine.connect() as conn:
-        users = conn.execute(command, **params).fetchall()
+        users = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
-        return [user[2] for user in users]
+        return [user['code'] for user in users]
     return None
 
 
@@ -922,22 +862,22 @@ def userVMStatus(username):
 
     command = text("""
         SELECT * FROM customers
-        WHERE "email" = :username
+        WHERE "username" = :username
         """)
     params = {'username': username}
     with engine.connect() as conn:
-        user = conn.execute(command, **params).fetchone()
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if user:
             has_paid = True
 
     command = text("""
         SELECT * FROM v_ms
-        WHERE "vmUserName" = :username
+        WHERE "username" = :username
         """)
     params = {'username': username}
     with engine.connect() as conn:
-        user = conn.execute(command, **params).fetchone()
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if user:
             has_vm = True
@@ -956,27 +896,27 @@ def userVMStatus(username):
 
 def checkUserVerified(username):
     command = text("""
-        SELECT * FROM users WHERE "userName" = :userName
+        SELECT * FROM users WHERE "username" = :userName
         """)
     params = {'userName': username}
     with engine.connect() as conn:
-        user = conn.execute(command, **params).fetchone()
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if user:
-            return user[4]
+            return user['verified']
         return False
 
 
 def fetchUserToken(username):
     command = text("""
-        SELECT * FROM users WHERE "userName" = :userName
+        SELECT * FROM users WHERE "username" = :userName
         """)
     params = {'userName': username}
     with engine.connect() as conn:
-        user = conn.execute(command, **params).fetchone()
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if user:
-            return user[5]
+            return user['id']
         return None
 
 
@@ -985,7 +925,7 @@ def makeUserVerified(username, verified):
         UPDATE users
         SET verified = :verified
         WHERE
-           "userName" = :username
+           "username" = :username
         """)
     params = {'verified': verified, 'username': username}
     with engine.connect() as conn:
@@ -995,7 +935,7 @@ def makeUserVerified(username, verified):
 
 def storeFeedback(username, feedback):
     command = text("""
-        INSERT INTO feedback("email", "feedback") 
+        INSERT INTO feedback("username", "feedback") 
         VALUES(:email, :feedback)
         """)
     params = {'email': username, 'feedback': feedback}
@@ -1009,7 +949,7 @@ def updateVMIP(vm_name, ip):
         UPDATE v_ms
         SET ip = :ip
         WHERE
-           "vmName" = :vm_name
+           "vm_name" = :vm_name
         """)
     params = {'ip': ip, 'vm_name': vm_name}
     with engine.connect() as conn:
@@ -1035,57 +975,70 @@ def updateVMState(vm_name, state):
         UPDATE v_ms
         SET state = :state
         WHERE
-           "vmName" = :vm_name
+           "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name, 'state': state}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
 
-def updateDisk(disk_name, disk_state, vm_name, location):
+def updateDisk(disk_name, vm_name, location):
     command = text("""
-        SELECT * FROM disks WHERE "diskname" = :disk_name
+        SELECT * FROM disks WHERE "disk_name" = :disk_name
         """)
     params = {'disk_name': disk_name}
     with engine.connect() as conn:
-        disk = conn.execute(command, **params).fetchone()
+        disk = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         if disk:
-            command = text("""
-                UPDATE disks
-                SET "attached" = :attached, "vmName" = :vm_name, "location" = :location
-                WHERE
-                   "diskname" = :disk_name
-            """)
-            params = {'attached': disk_state == 'Attached',
-                      'vm_name': vm_name,
-                      'location': location,
-                      'disk_name': disk_name}
-        else:
-            command = text("""
-                INSERT INTO disks("diskname", "attached", "vmName", "location") 
-                VALUES(:disk_name, :attached, :vm_name, :location)
+            if location:
+                command = text("""
+                    UPDATE disks
+                    SET "vm_name" = :vm_name, "location" = :location
+                    WHERE
+                       "disk_name" = :disk_name
                 """)
-            params = {'attached': disk_state == 'Attached',
-                      'vm_name': vm_name,
-                      'location': location,
-                      'disk_name': disk_name}
+                params = {'vm_name': vm_name,
+                          'location': location,
+                          'disk_name': disk_name}
+            else:
+                command = text("""
+                    UPDATE disks
+                    SET "vm_name" = :vm_name
+                    WHERE
+                       "disk_name" = :disk_name
+                """)
+                params = {'vm_name': vm_name,
+                          'disk_name': disk_name}  
+        else:
+            if location:
+                command = text("""
+                    INSERT INTO disks("disk_name", "vm_name", "location") 
+                    VALUES(:disk_name, :vm_name, :location)
+                    """)
+                params = {'vm_name': vm_name,
+                          'location': location,
+                          'disk_name': disk_name}
+            else:
+                command = text("""
+                    INSERT INTO disks("disk_name", "vm_name") 
+                    VALUES(:disk_name, :vm_name)
+                    """)
+                params = {'vm_name': vm_name,
+                          'disk_name': disk_name}
 
         conn.execute(command, **params)
         conn.close()
 
-def fetchVMsByState(state):
+def fetchAttachableVMs(state, location):
     command = text("""
-        SELECT * FROM v_ms WHERE "state" = :state
+        SELECT * FROM v_ms WHERE "state" = :state AND "location" = :location AND "lock" = :lock
         """)
-    params = {'state': state}
+    params = {'state': state, 'location': location, 'lock': False}
 
     with engine.connect() as conn:
-        vms = conn.execute(command, **params).fetchall()
+        vms = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
-        return [{'vm_name': vm[0],
-                 'username': vm[1],
-                 'disk_name': vm[2],
-                 'ip': vm[3]} for vm in vms]
+        return vms
 
 def getMostRecentActivity(username):
     command = text("""
@@ -1098,22 +1051,35 @@ def getMostRecentActivity(username):
     params = {'username': username}
 
     with engine.connect() as conn:
-        activity = conn.execute(command, **params).fetchone()
-        if activity:
-            return {'timestamp': activity[1], 'action': activity[2]}
-        return {}
+        activity = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        return activity 
 
 def associateVMWithDisk(vm_name, disk_name):
+    username = mapDiskToUser(disk_name)
+    username = username if username else ''
     command = text("""
         UPDATE v_ms
-        SET "osDisk" = :disk_name
+        SET "disk_name" = :disk_name, "username" = :username
         WHERE
-           "vmName" = :vm_name
+           "vm_name" = :vm_name
         """)
-    params = {'vm_name': vm_name, 'disk_name': disk_name}
+    params = {'vm_name': vm_name, 'disk_name': disk_name, 'username': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+def lockVM(vm_name, lock):
+    command = text("""
+        UPDATE v_ms
+        SET "lock" = :lock
+        WHERE
+           "vm_name" = :vm_name
+        """)
+    params = {'vm_name': vm_name, 'lock': lock}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
 
 def attachDiskToVM(disk_name, vm_name, lun):
     try:
@@ -1141,7 +1107,7 @@ def attachDiskToVM(disk_name, vm_name, lun):
         print(e)
         return -1
 
-def swapOSDisk(disk_name, vm_name):
+def swapdisk_name(disk_name, vm_name):
     try:
         _, compute_client, _ = createClients()
         virtual_machine = getVM(vm_name)
@@ -1150,20 +1116,34 @@ def swapOSDisk(disk_name, vm_name):
         virtual_machine.storage_profile.os_disk.managed_disk.id = new_os_disk.id
         virtual_machine.storage_profile.os_disk.name = new_os_disk.name
 
-        print("Attaching disk...")
+        print("TASK: Attaching disk " + disk_name + " to " + vm_name)
+        start = time.perf_counter()
         async_disk_attach = compute_client.virtual_machines.create_or_update(
             os.getenv('VM_GROUP'), vm_name, virtual_machine
         )
         async_disk_attach.wait()
-        print("Disk attached, restarting VM")
-        async_vm_restart = compute_client.virtual_machines.restart(
-            os.environ.get('VM_GROUP'), vm_name)
-        async_vm_restart.wait()
+        end = time.perf_counter()
+        print("SUCCESS: Disk " + disk_name + " attached to " + vm_name + " in " + str(start - end) + " seconds")
+
+        vm_state = compute_client.virtual_machines.instance_view(
+            resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
+        if not 'running' in vm_state.statuses[1].code:
+            print("VM is powered off. Starting...")
+            async_vm_start = compute_client.virtual_machines.start(
+                os.environ.get('VM_GROUP'), vm_name)
+            async_vm_start.wait()
+        
         time.sleep(10)
-        print("VM restarted")
+        # else:
+        #     print("Restarting VM...")
+        #     async_vm_restart = compute_client.virtual_machines.restart(
+        #         os.environ.get('VM_GROUP'), vm_name)
+        #     async_vm_restart.wait()
+        #     time.sleep(10)
+        #     print("VM restarted")
         return 1
     except Exception as e:
-        print(e)
+        print("CRITICAL ERROR: " + e)
         return -1
 
 def fetchAllDisks():
@@ -1175,12 +1155,12 @@ def fetchAllDisks():
     params = {}
 
     with engine.connect() as conn:
-        disks = conn.execute(command, **params).fetchall()
-        return [{'disk_name': disk[0]} for disk in disks] 
+        disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        return disks
 
 def deleteDisk(disk_name):
     command = text("""
-        DELETE FROM disks WHERE "diskname" = :disk_name 
+        DELETE FROM disks WHERE "disk_name" = :disk_name 
         """)
     params = {'disk_name': disk_name}
     with engine.connect() as conn:
@@ -1189,11 +1169,47 @@ def deleteDisk(disk_name):
 
 def mapDiskToVM(disk_name):
     command = text("""
-        SELECT * FROM v_ms WHERE "osDisk" = :disk_name
+        SELECT * FROM v_ms WHERE "disk_name" = :disk_name
         """)
 
     params = {'disk_name': disk_name}
 
     with engine.connect() as conn:
-        vms = conn.execute(command, **params).fetchall()
-        return [{'vm_name': vm[0], 'ip': vm[3], 'state': vm[4], 'location': vm[5]} for vm in vms]
+        vms = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        return vms
+
+def updateVM(vm_name, location, disk_name, username):
+    command = text("""
+        UPDATE v_ms
+        SET "location" = :location, "disk_name" = :disk_name, "username" = :username
+        WHERE
+           "vm_name" = :vm_name
+        """)
+    params = {'location': location, 'vm_name': vm_name, 'disk_name': disk_name, 'username': username}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close() 
+
+
+def mapDiskToUser(disk_name):
+    command = text("""
+        SELECT * FROM disks WHERE "disk_name" = :disk_name
+        """)
+
+    params = {'disk_name': disk_name}
+
+    with engine.connect() as conn:
+        disk = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        if disk:
+            return disk['username']
+        print("ERROR: No username found for disk " + disk_name)
+        return None
+
+def deleteVMFromTable(vm_name):
+    command = text("""
+        DELETE FROM v_ms WHERE "vm_name" = :vm_name 
+        """)
+    params = {'vm_name': vm_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()

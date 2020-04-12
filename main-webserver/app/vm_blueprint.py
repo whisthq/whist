@@ -37,6 +37,7 @@ def status(task_id):
 
 
 @vm_bp.route('/vm/<action>', methods=['POST'])
+@jwt_required
 def vm(action):
     if action == 'create':
         vm_size = request.get_json()['vm_size']
@@ -68,6 +69,9 @@ def vm(action):
         body = request.get_json()
         task = swapSpecificDisk.apply_async([body['disk_name'], body['vm_name']])
         return jsonify({'ID': task.id}), 202
+    elif action == 'updateTable':
+        task = updateVMTable.apply_async([])
+        return jsonify({'ID': task.id}), 202
     return jsonify({}), 400
 
 
@@ -83,13 +87,10 @@ def disk(action):
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
-    # elif action == 'attach':
-    #     vm_name = request.get_json()['vm_name']
-    #     disk_name = request.get_json()['disk_name']
-    #     task = attachDisk.apply_async([vm_name, disk_name])
-    #     if not task:
-    #         return jsonify({}), 400
-    #     return jsonify({'ID': task.id}), 202
+    elif action == 'attach':
+        body = request.get_json()
+        task = swapDisk.apply_async([body['disk_name']])
+        return jsonify({'ID': task.id}), 202
     elif action == 'detach':
         vm_name = request.get_json()['vm_name']
         disk_name = request.get_json()['disk_name']
@@ -99,16 +100,6 @@ def disk(action):
         return jsonify({'ID': task.id}), 202
     elif action == 'resync':
         task = syncDisks.apply_async([])
-        return jsonify({'ID': task.id}), 202
-    elif action == 'online':
-        body = request.get_json()
-        changeDiskOnline([body['username'], body['online']])
-        return jsonify({'status': 200}), 200
-    elif action == 'attach':
-        body = request.get_json()
-        print("Received disk attach request")
-        print(body)
-        task = swapDisk.apply_async([body['disk_name']])
         return jsonify({'ID': task.id}), 202
 
 
@@ -130,7 +121,6 @@ def tracker(action):
     elif action == 'logoff':
         username = body['username']
         is_user = body['is_user']
-        print(body)
         addTimeTable(username, 'logoff', time, is_user)
     elif action == 'clear':
         deleteTimeTable()
@@ -149,7 +139,7 @@ def tracker(action):
 def info(action):
     body = request.get_json()
     if action == 'list_all' and request.method == 'GET':
-        task = fetchAllVMs.apply_async([False])
+        task = fetchAll.apply_async([False])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
@@ -157,7 +147,7 @@ def info(action):
         disks = fetchUserDisks(None)
         return jsonify({'disks': disks}), 200
     if action == 'update_db' and request.method == 'POST':
-        task = fetchAllVMs.apply_async([True])
+        task = fetchAll.apply_async([True])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202

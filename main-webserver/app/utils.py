@@ -31,7 +31,9 @@ def dateToUnix(date):
     return round(date.timestamp())
 
 def getToday():
-    return datetime.datetime.now()
+    tz = pytz.timezone("US/Eastern")
+    aware = tz.localize(datetime.datetime.now(), is_dst=None)
+    return aware
 
 def shiftUnixByMonth(utc, num_months):
     date = unixToDate(utc)
@@ -49,6 +51,15 @@ def generateToken(user):
         token = token[-1 * len(pwd_token):]
 
     return token
+
+def cleanFetchedSQL(out):
+    if out:
+        is_list = isinstance(out, list)
+        if is_list:
+            return [dict(row) for row in out]
+        else:
+            return dict(out)
+    return None
 
 def getAccessTokens(user):
     access_token = create_access_token(identity = user)

@@ -3,7 +3,6 @@ from .helperFuncs import *
 
 account_bp = Blueprint('account_bp', __name__)
 
-# USER endpoint
 
 @account_bp.route('/user/register', methods=['POST'])
 def user_register():
@@ -185,24 +184,6 @@ def account_feedback():
     body = request.get_json()
     storeFeedback(body['username'], body['feedback'])
     return jsonify({'status': 200}), 200
-
-
-# MAIL endpoint
-
-@account_bp.route('/mail/<action>', methods=['POST'])
-@jwt_required
-def mail(action):
-    body = request.get_json()
-    if action == 'forgot':
-        username = body['username']
-        verified = lookup(username)
-        if verified:
-            sendEmail(username)
-        return jsonify({'verified': verified}), 200
-    elif action == 'reset':
-        username, password = body['username'], body['password']
-        resetPassword(username, password)
-        return jsonify({'status': 200}), 200
 
 
 @account_bp.route('/admin/<action>', methods=['POST'])
