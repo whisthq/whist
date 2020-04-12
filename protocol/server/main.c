@@ -67,6 +67,7 @@ void InitCursors() { return; }
 
 FractalCursorImage GetCurrentCursor() {
     FractalCursorImage image = {0};
+    image.cursor_state = CURSOR_STATE_VISIBLE;
     image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
     return image;
 }
