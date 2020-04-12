@@ -8,20 +8,72 @@
 #include <sys/shm.h>
 #include <X11/extensions/Xdamage.h>
 
-int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
+#define USING_SHM true
+
+int handler(Display* d, XErrorEvent* a)
 {
-    device->display = XOpenDisplay( NULL );
-    device->root = DefaultRootWindow( device->display );
+  mprintf(stderr, "X11 Error: %d\n", a->error_code);
+  return 0;
+}
+
+bool is_same_wh(struct CaptureDevice* device) {
     XWindowAttributes window_attributes;
     if( !XGetWindowAttributes( device->display, device->root, &window_attributes ) )
     {
         fprintf( stderr, "Error while getting window attributes" );
         return -1;
     }
-    device->width = window_attributes.width;
-    device->height = window_attributes.height;
+    return device->width == window_attributes.width && device->height == window_attributes.height;
+}
 
+int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
+{
+    device->display = XOpenDisplay( NULL );
+    if (!device->display) {
+       mprintf("ERROR: CreateCaptureDevice display did not open\n");
+       return -1;
+    }
+    device->root = DefaultRootWindow( device->display );
+
+    if (width <= 0 || height <= 0) {
+      mprintf("Nonsensicle width/height of %d/%d\n", width, height);
+      return -1;
+    }
+    device->width = width & ~0xF;
+    device->height = height;
+
+    if (!is_same_wh(device)) {
+      system("xrandr --delmode default Fractal");
+      system("xrandr --rmmode Fractal");
+
+      char cmd[1000];
+      sprintf(cmd, "xrandr --newmode Fractal $(cvt -r %d %d 60 | sed -n \"2p\" | cut -d' ' -f3-)", width, height);
+      system(cmd);
+
+      system("xrandr --addmode default Fractal");
+      system("xrandr --output default --mode Fractal");
+      
+      // If it's still not the correct dimensions
+      if (!is_same_wh(device)) {
+        mprintf("Error! Could not force monitor to a given width/height");
+        return -1;
+      }
+    }
+
+    int damage_event, damage_error;
+    XDamageQueryExtension( device->display, &damage_event, &damage_error );
+    device->damage = XDamageCreate( device->display, device->root, XDamageReportRawRectangles );
+    device->event = damage_event;
+
+#if USING_SHM
+    XWindowAttributes window_attributes;
+    if( !XGetWindowAttributes( device->display, device->root, &window_attributes ) )
+    {
+        fprintf( stderr, "Error while getting window attributes" );
+        return -1;
+    }
     Screen* screen = window_attributes.screen;
+
     device->image = XShmCreateImage( device->display,
                                      DefaultVisualOfScreen( screen ), //DefaultVisual(device->display, 0), // Use a correct visual. Omitted for brevity
                                      DefaultDepthOfScreen( screen ), //24,   // Determine correct depth from the visual. Omitted for brevity
@@ -42,15 +94,20 @@ int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
         return -1;
     }
     device->frame_data = device->image->data;
-    int damage_event, damage_error;
-    XDamageQueryExtension( device->display, &damage_event, &damage_error );
-    device->damage = XDamageCreate( device->display, device->root, XDamageReportRawRectangles );
-    device->event = damage_event;
+#else
+    device->image = NULL;
+    CaptureScreen(device);
+#endif
+    
     return 0;
 }
 
 int CaptureScreen( struct CaptureDevice* device )
 {
+    static bool first = true;
+
+    XLockDisplay(device->display);
+
     int update = 0;
     while( XPending( device->display ) )
     {
@@ -62,21 +119,44 @@ int CaptureScreen( struct CaptureDevice* device )
         {
             update = 1;
         }
-
     }
-    if( update )
+
+    if( update || first )
     {
+	first = false;
+
         XDamageSubtract( device->display, device->damage, None, None );
-        if( !XShmGetImage( device->display,
-                           device->root,
-                           device->image,
-                           0,
-                           0,
-                           AllPlanes ) )
-        {
+
+	if (!is_same_wh(device)) {
+	  mprintf("Wrong width/height!\n");
+	  update = -1;
+	} else {
+          XErrorHandler prev_handler = XSetErrorHandler(handler);
+#if USING_SHM
+          if( !XShmGetImage( device->display,
+                             device->root,
+                             device->image,
+                             0,
+                             0,
+                             AllPlanes ) )
+          {
             fprintf( stderr, "Error while capturing the screen" );
-            return -1;
-        }
+            update = -1;
+          }
+#else
+	  if (device->image) {
+	    XFree(device->image);
+	  }
+	  device->image = XGetImage(device->display, device->root, 0, 0, device->width, device->height, AllPlanes, ZPixmap);
+	  if (!device->image) {
+            mprintf( "Error while capturing the screen" );
+            update = -1;
+	  } else {
+            device->frame_data = device->image->data;
+	  }
+#endif
+          XSetErrorHandler(prev_handler);
+	}
     }
     XUnlockDisplay(device->display);
     return update;
@@ -89,6 +169,9 @@ void ReleaseScreen( struct CaptureDevice* device )
 
 void DestroyCaptureDevice( struct CaptureDevice* device )
 {
-    XFree( device->image );
+    if (device->image) {
+      XFree( device->image );
+    }
     XCloseDisplay( device->display );
 }
+
