@@ -203,3 +203,10 @@ def token_refresh():
 	access_token, refresh_token = getAccessTokens(username)
 	return jsonify({'status': 200, 'username': username, 'access_token': access_token, 'refresh_token': refresh_token}), 200
 
+@jwt.expired_token_loader
+def my_expired_token_callback(expired_token):
+    token_type = expired_token['type']
+    return jsonify({
+        'status': 401,
+        'msg': 'The {} token has expired'.format(token_type)
+    }), 401
