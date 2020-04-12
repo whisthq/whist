@@ -1,16 +1,10 @@
 #ifndef AUDIO_ENCODE_H
 #define AUDIO_ENCODE_H
 
-#include "ffmpeg/libavcodec/avcodec.h"
-#include "ffmpeg/libavdevice/avdevice.h"
-#include "ffmpeg/libavfilter/avfilter.h"
-#include "ffmpeg/libavfilter/buffersink.h"
-#include "ffmpeg/libavfilter/buffersrc.h"
-#include "ffmpeg/libavformat/avformat.h"
-#include "ffmpeg/libavutil/audio_fifo.h"
-#include "ffmpeg/libavutil/avutil.h"
-#include "ffmpeg/libswresample/swresample.h"
-#include "ffmpeg/libswscale/swscale.h"
+#include "../include/fractal.h"
+#include <libavformat/avformat.h>
+#include <libavutil/audio_fifo.h>
+#include <libswresample/swresample.h>
 
 typedef struct {
     AVCodec *pCodec;
@@ -21,6 +15,12 @@ typedef struct {
     SwrContext *pSwrContext;
     int frame_count;
 } audio_encoder_t;
+
+typedef struct {
+    int pts;
+    int size;
+    uint8_t data[10];
+} encoded_audio_t;
 
 audio_encoder_t *create_audio_encoder(int bit_rate, int sample_rate);
 

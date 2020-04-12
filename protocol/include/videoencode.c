@@ -16,6 +16,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
     avcodec_register_all();
     int max_buffer = 4 * (bitrate / FPS);
 
+    // TODO: If we end up using graphics card encoding, then we should pass it the image from DXGI WinApi screen capture,
+    // so that the uncompressed image doesn't ever hit the CPU or RAM
     if (encoder->type == NVENC_ENCODE) {
         mprintf("Trying Nvidia encoder\n");
 
@@ -202,7 +204,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         set_opt(encoder, "preset", "fast");
         set_opt(encoder, "rc", "cbr_ld_hq");
         set_opt(encoder, "zerolatency", "1");
-        set_opt( encoder, "tune", "zerolatency" );
+        set_opt(encoder, "tune", "zerolatency");
         set_opt(encoder, "delay", "0");
 
         if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
@@ -246,6 +248,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
 
 /// @brief creates encoder encoder
 /// @details creates FFmpeg encoder
+// Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the next one when the previous one doesn't work
 encoder_t *create_video_encoder(int width, int height, int bitrate,
                                 int gop_size) {
     // set memory for the encoder
@@ -256,7 +259,7 @@ encoder_t *create_video_encoder(int width, int height, int bitrate,
     encoder->width = width;
     encoder->height = height;
 
-    int encoder_precedence[] = { NVENC_ENCODE, QSV_ENCODE, SOFTWARE_ENCODE};
+    int encoder_precedence[] = {NVENC_ENCODE, QSV_ENCODE, SOFTWARE_ENCODE};
 
     for (unsigned long i = 0;
          i < sizeof(encoder_precedence) / sizeof(encoder_precedence[0]); ++i) {

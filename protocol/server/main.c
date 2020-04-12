@@ -13,12 +13,9 @@
 #endif
 
 #include "../include/audiocapture.h"
+#include "../include/audioencode.h"
 #include "../include/fractal.h"
-#ifdef _WIN32
 #include "../include/input.h"
-#else
-#include "../include/x11input.h"
-#endif
 #include "../include/screencapture.h"
 #include "../include/videoencode.h"
 
@@ -63,12 +60,14 @@ SDL_mutex* packet_mutex;
 struct SocketContext PacketSendContext = {0};
 
 volatile bool wants_iframe;
+volatile bool update_encoder;
 
 #ifndef _WIN32
-void initCursors() { return; }
+void InitCursors() { return; }
 
 FractalCursorImage GetCurrentCursor() {
     FractalCursorImage image = {0};
+    image.cursor_state = CURSOR_STATE_VISIBLE;
     image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
     return image;
 }
@@ -84,7 +83,7 @@ int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     packet->is_a_nack = true;
 
     struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet(packet, len, &encrypted_packet,
+    int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
                                      (unsigned char*)PRIVATE_KEY);
 
     SDL_LockMutex(packet_mutex);
@@ -154,10 +153,13 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     // double max_delay = 5.0;
     // double delay_thusfar = 0.0;
 
+    // Send some amount of packets every two milliseconds
     int break_resolution = 2;
+
     double num_indices_per_unit_latency = (AVERAGE_LATENCY_MS / 1000.0) *
                                           (STARTING_BURST_BITRATE / 8.0) /
                                           MAX_PAYLOAD_SIZE;
+
     double break_distance = num_indices_per_unit_latency *
                             (1.0 * break_resolution / AVERAGE_LATENCY_MS);
 
@@ -167,15 +169,29 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     }
     int break_point = num_indices / (num_breaks + 1);
 
-    if (type == PACKET_VIDEO) {
-        mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
+    /*
+    if (type == PACKET_AUDIO) {
+        static int ddata = 0;
+        static clock last_timer;
+        if( ddata == 0 )
+        {
+            StartTimer( &last_timer );
+        }
+        ddata += len;
+        GetTimer( last_timer );
+        if( GetTimer( last_timer ) > 5.0 )
+        {
+            mprintf( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / GetTimer(
+    last_timer ) / 1024 ); ddata = 0;
+        }
+        // mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
     }
+    */
 
     while (curr_index < len) {
         // Delay distribution of packets as needed
         if (i > 0 && break_point > 0 && i % break_point == 0 &&
             i < num_indices - break_point / 2) {
-            mprintf("Delay\n");
             SDL_Delay(break_resolution);
         }
 
@@ -222,11 +238,11 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
         // Save the len to nack buffer lens
         *packet_len = packet_size;
 
-        // Encrypt the packet
+        // Encrypt the packet with AES
         struct RTPPacket encrypted_packet;
         int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
                                          (unsigned char*)PRIVATE_KEY);
-
+        
         // Send it off
         SDL_LockMutex(packet_mutex);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
@@ -254,13 +270,11 @@ static int32_t SendVideo(void* opaque) {
     struct CaptureDevice rdevice;
     struct CaptureDevice* device = NULL;
 
-    initCursors();
+    InitCursors();
 
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
     encoder_t* encoder = NULL;
-
-    bool update_encoder = false;
 
     double worst_fps = 40.0;
     int ideal_bitrate = current_bitrate;
@@ -328,6 +342,7 @@ static int32_t SendVideo(void* opaque) {
             frames_since_first_iframe = 0;
         }
 
+        // Accumulated_frames is equal to how many frames have passed since the last call to CaptureScreen
         int accumulated_frames = 0;
         if (GetTimer(last_frame_capture) > 1.0 / FPS) {
             accumulated_frames = CaptureScreen(device);
@@ -377,8 +392,9 @@ static int32_t SendVideo(void* opaque) {
 
             video_encoder_unset_iframe(encoder);
 
-            mprintf("Encode Time: %f (%d) (%d)\n", GetTimer(t),
-                    frames_since_first_iframe % gop_size, encoder->packet.size);
+            // mprintf("Encode Time: %f (%d) (%d)\n", GetTimer(t),
+            //        frames_since_first_iframe % gop_size,
+            //        encoder->packet.size);
 
             bitrate_tested_frames++;
             bytes_tested_frames += encoder->packet.size;
@@ -443,6 +459,7 @@ static int32_t SendVideo(void* opaque) {
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
                     frame->cursor = GetCurrentCursor();
+                    // True if this frame does not require previous frames to render
                     frame->is_iframe =
                         (frames_since_first_iframe % gop_size == 1) ||
                         is_iframe;
@@ -488,48 +505,95 @@ static int32_t SendAudio(void* opaque) {
     struct SocketContext context = *(struct SocketContext*)opaque;
     int id = 1;
 
-    audio_device* device = (audio_device*)malloc(sizeof(struct audio_device));
-    device = CreateAudioDevice(device);
+    audio_device_t* audio_device =
+        (audio_device_t*)malloc(sizeof(struct audio_device_t));
+    audio_device = CreateAudioDevice(audio_device);
     mprintf("Created audio device!\n");
-    if (!device) {
+    if (!audio_device) {
         mprintf("Failed to create audio device...\n");
         return -1;
     }
-    StartAudioDevice(device);
+    StartAudioDevice(audio_device);
+    audio_encoder_t* audio_encoder =
+        create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
+    int res;
 
     // Tell the client what audio frequency we're using
+
     FractalServerMessage fmsg;
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
-    fmsg.frequency = device->sample_rate;
+    fmsg.frequency = audio_device->sample_rate;
     SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t*)&fmsg,
                sizeof(fmsg), 1);
-    mprintf("Audio Frequency: %d\n", device->sample_rate);
+    mprintf("Audio Frequency: %d\n", audio_device->sample_rate);
 
     // setup
 
     while (connected) {
         // for each available packet
-        for (GetNextPacket(device); PacketAvailable(device);
-             GetNextPacket(device)) {
-            GetBuffer(device);
+        for (GetNextPacket(audio_device); PacketAvailable(audio_device);
+             GetNextPacket(audio_device)) {
+            GetBuffer(audio_device);
 
-            if (device->buffer_size > 10000) {
+            if (audio_device->buffer_size > 10000) {
                 mprintf("Audio buffer size too large!\n");
-            } else if (device->buffer_size > 0) {
-                // Send buffer
-                if (SendPacket(&context, PACKET_AUDIO, device->buffer,
-                               device->buffer_size, id) < 0) {
+            } else if (audio_device->buffer_size > 0) {
+#if USING_AUDIO_ENCODE_DECODE
+
+                // add samples to encoder fifo
+
+                audio_encoder_fifo_intake(audio_encoder, audio_device->buffer,
+                                          audio_device->frames_available);
+
+                // while fifo has enough samples for an aac frame, handle it
+                while (av_audio_fifo_size(audio_encoder->pFifo) >=
+                       audio_encoder->pCodecCtx->frame_size) {
+                    // create and encode a frame
+
+                    res = audio_encoder_encode_frame(audio_encoder);
+
+                    if (res < 0) {
+                        // bad boy error
+                        mprintf("error encoding packet\n");
+                        continue;
+                    } else if (res > 0) {
+                        // no data or need more data
+                        break;
+                    }
+
+                    // mprintf("we got a packet of size %d\n",
+                    //         audio_encoder->packet.size);
+
+                    // Send packet
+
+                    if (SendPacket(&context, PACKET_AUDIO,
+                                   audio_encoder->packet.data,
+                                   audio_encoder->packet.size, id) < 0) {
+                        mprintf("Could not send audio frame\n");
+                    }
+                    // mprintf("sent audio frame %d\n", id);
+                    id++;
+
+                    // Free encoder packet
+
+                    av_packet_unref(&audio_encoder->packet);
+                }
+#else
+                if (SendPacket(&context, PACKET_AUDIO, audio_device->buffer,
+                               audio_device->buffer_size, id) < 0) {
                     mprintf("Could not send audio frame\n");
                 }
                 id++;
+#endif
             }
 
-            ReleaseBuffer(device);
+            ReleaseBuffer(audio_device);
         }
-        WaitTimer(device);
+        WaitTimer(audio_device);
     }
 
-    DestroyAudioDevice(device);
+    // destroy_audio_encoder(audio_encoder);
+    DestroyAudioDevice(audio_device);
     return 0;
 }
 
@@ -555,11 +619,10 @@ void update() {
 
 int main() {
     initBacktraceHandler();
-#ifndef _WIN32
-    runcmd( "chmod 600 sshkey" );
-#endif
     initMultiThreadedPrintf(true);
-
+    initClipboard();
+    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
+    SDL_Init(SDL_INIT_VIDEO);
 #ifdef _WIN32
     InitDesktop();
 #endif
@@ -573,13 +636,8 @@ int main() {
         return -1;
     }
 #endif
-
-    if (sizeof(unsigned short) != 2) {
-        mprintf(
-            "Error: Unsigned short is length %d bytes instead of 2 bytes!\n",
-            sizeof(unsigned short));
-        exit(-1);
-    }
+    static_assert(sizeof(unsigned short) == 2,
+                  "Error: Unsigned short is not length 2 bytes!\n");
 
     while (true) {
         struct SocketContext PacketReceiveContext = {0};
@@ -612,9 +670,6 @@ int main() {
             continue;
         }
 
-#ifdef _WIN32
-        InitDesktop();
-#endif
         // Give client time to setup before sending it with packets
         SDL_Delay(150);
 
@@ -624,7 +679,7 @@ int main() {
         connected = true;
         max_mbps = MAXIMUM_MBPS;
         wants_iframe = false;
-
+        update_encoder = false;
         packet_mutex = SDL_CreateMutex();
 
         SDL_Thread* send_video =
@@ -632,6 +687,13 @@ int main() {
         SDL_Thread* send_audio =
             SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
         mprintf("Sending video and audio...\n");
+
+        input_device_t* input_device =
+            (input_device_t*)malloc(sizeof(input_device_t));
+        input_device = CreateInputDevice(input_device);
+        if (!input_device) {
+            mprintf("Failed to create input device for playback.\n");
+        }
 
         struct FractalClientMessage local_fmsg;
         struct FractalClientMessage* fmsg;
@@ -649,7 +711,6 @@ int main() {
 
         int last_input_id = -1;
         StartTrackingClipboardUpdates();
-        initInputPlayback();
         ClearReadingTCP();
 
         while (connected) {
@@ -763,15 +824,16 @@ int main() {
                     fmsg->type == MESSAGE_MOUSE_BUTTON ||
                     fmsg->type == MESSAGE_MOUSE_WHEEL ||
                     fmsg->type == MESSAGE_MOUSE_MOTION) {
-                    // TODO: Unix version missing
                     // Replay user input (keyboard or mouse presses)
-                    ReplayUserInput(fmsg);
+                    if (input_device) {
+                        ReplayUserInput(input_device, fmsg);
+                    }
 
                 } else if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
 // TODO: Unix version missing
 // Synchronize client and server keyboard state
 #ifdef _WIN32
-                    updateKeyboardState(fmsg);
+                    UpdateKeyboardState(input_device, fmsg);
 #endif
                 } else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
@@ -861,7 +923,13 @@ int main() {
                     }
                 } else if (fmsg->type == MESSAGE_IFRAME_REQUEST) {
                     mprintf("Request for i-frame found: Creating iframe\n");
-                    wants_iframe = true;
+                    if( fmsg->reinitialize_encoder )
+                    {
+                        update_encoder = true;
+                    } else
+                    {
+                        wants_iframe = true;
+                    }
                 } else if (fmsg->type == CMESSAGE_QUIT) {
                     // Client requested to exit, it's time to disconnect
                     mprintf("Client Quit\n");
@@ -872,9 +940,10 @@ int main() {
 
         mprintf("Disconnected\n");
 
+        DestroyInputDevice(input_device);
+
         SDL_WaitThread(send_video, NULL);
         SDL_WaitThread(send_audio, NULL);
-        stopInputPlayback();
         SDL_DestroyMutex(packet_mutex);
 
         closesocket(PacketReceiveContext.s);

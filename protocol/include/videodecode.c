@@ -23,7 +23,7 @@ int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
 
     if ((err = av_hwdevice_ctx_create(&ctx->hw_device_ctx, type, NULL, NULL,
                                       0)) < 0) {
-        mprintf("Failed to create specified HW device.\n");
+        mprintf("Failed to create specified HW device. Error %d: %s\n", err, av_err2str(err));
         return err;
     }
 
@@ -77,7 +77,6 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
         decoder->codec = avcodec_find_decoder_by_name("h264");
         if (!decoder->codec) {
             mprintf("Could not find video codec\n");
-            exit(-1);
             return -1;
         }
         decoder->context = avcodec_alloc_context3(decoder->codec);
@@ -176,6 +175,7 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
         av_opt_set(decoder->context->priv_data, "async_depth", "1", 0);
 
         if (hw_decoder_init(decoder->context, decoder->device_type) < 0) {
+            mprintf("Failed to init hardware deocder\n");
             return -1;
         }
 

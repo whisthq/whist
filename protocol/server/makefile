@@ -17,14 +17,14 @@ BIN_NAME = build$(ARCH)/server.exe
 # files to build into object files
 OBJS = \
 	fractal.obj \
-	clipboard.obj \
+	win_clipboard.obj \
 	aes.obj \
 	videoencode.obj \
 	audioencode.obj \
 	wasapicapture.obj \
 	dxgicapture.obj \
 	desktop.obj \
-	input.obj \
+	windowsinput.obj \
 	main.obj
 
 # static libs to link against
@@ -105,8 +105,8 @@ fractal.obj:
 	$(CC) /c $(CFLAGS) ../include/fractal.c
 
 # compile the main clipboard header source file into object file
-clipboard.obj:
-	$(CC) /c $(CFLAGS) ../include/clipboard.c
+win_clipboard.obj:
+	$(CC) /c $(CFLAGS) ../include/win_clipboard.c
 
 # compile the aes source file into object file
 aes.obj:
@@ -133,8 +133,8 @@ desktop.obj:
 	$(CC) /c $(CFLAGS) ../include/desktop.c
 
 # compile the input handling source file into object file
-input.obj:
-	$(CC) /c $(CFLAGS) ../include/input.c
+windowsinput.obj:
+	$(CC) /c $(CFLAGS) ../include/windowsinput.c
 
 # compile the source main client file into object file
 main.obj:

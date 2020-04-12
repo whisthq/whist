@@ -22,14 +22,14 @@ void handleErrors( void )
 
 void gen_iv( unsigned char* iv )
 {
-    srand( time( NULL ) * rand() + rand() );
+    srand( (unsigned int) time( NULL ) * rand() + rand() );
     (void)rand();
     (void)rand();
     (void)rand();
 
     for( int i = 0; i < 16; i++ )
     {
-        iv[i] = rand();
+        iv[i] = (unsigned char) rand();
     }
 }
 
@@ -51,6 +51,8 @@ int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct R
 {
     char* plaintext_buf = (char*)plaintext_packet + CRYPTO_HEADER_LEN;
     int plaintext_buf_len = packet_len - CRYPTO_HEADER_LEN;
+    // A unique random number so that all packets are encrypted uniquely
+    // (Same plaintext twice gives unique encrypted packets)
     gen_iv( (unsigned char *) encrypted_packet->iv );
 
     char* cipher_buf = (char*)encrypted_packet + CRYPTO_HEADER_LEN;
@@ -61,7 +63,9 @@ int encrypt_packet( struct RTPPacket* plaintext_packet, int packet_len, struct R
 
     //mprintf( "HMAC: %d\n", Hash( encrypted_packet->hash, 16 ) );
     char hash[32];
+    // Sign the packet with 32 bytes
     hmac( hash, (char*)encrypted_packet + sizeof( encrypted_packet->hash ), cipher_packet_len - sizeof( encrypted_packet->hash ), (char *) private_key );
+    // Only use 16 bytes bc we don't need that long of a signature
     memcpy( encrypted_packet->hash, hash, 16 );
     //mprintf( "HMAC: %d\n", Hash( encrypted_packet->hash, 16 ) );
     //encrypted_packet->hash = Hash( (char*)encrypted_packet + sizeof( encrypted_packet->hash ), cipher_packet_len - sizeof( encrypted_packet->hash ) );

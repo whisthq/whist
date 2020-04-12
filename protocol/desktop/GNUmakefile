@@ -21,7 +21,8 @@ OBJS = \
 	video.o \
 	audio.o \
 	aes.o \
-	clipboard.o \
+	clipboard_thread.o \
+	x11_clipboard.o \
 	main.o
 
 # dynamic libs to link against
@@ -49,14 +50,17 @@ SHARED_LIBS = \
 	-lavutil \
 	-lpostproc \
 	-lswresample \
-	-lswscale 
+	-lswscale \
+	-lX11 \
+	-lXfixes
+
 endif
 
 ################## MACOS ##################
 ifeq ($(UNAME), Darwin)
 
-# specify compiler
-CC = clang
+# specify compiler and minimum MacOS version support
+CC = clang -mmacosx-version-min=10.13
 
 # specify platform
 PLATFORM = macos
@@ -116,7 +120,6 @@ STATIC_LIBS = \
 
 # compiler flags
 CFLAGS = \
-	-fno-pie \
 	-g \
 	-Wall \
 	-Wextra \
@@ -124,12 +127,11 @@ CFLAGS = \
 	-Wno-unused-value \
 	-Wno-unused-parameter \
 	-I ../include \
-	-I ../include/ffmpeg \
 	-O0
 
 LDFLAGS = \
-	  -no-pie \
-	  -g -rdynamic \
+	  -g \
+	  -rdynamic \
 	  -O0
 
 # link all files into executable
@@ -161,8 +163,12 @@ mac_utils.o:
 	$(CC) -c $(CFLAGS) ../include/mac_utils.c
 
 # compile the general clipboard source file into object file
-clipboard.o:
-	$(CC) -c $(CFLAGS) ../include/clipboard.c
+clipboard_thread.o:
+	$(CC) -c $(CFLAGS) ../include/clipboard_thread.c
+
+# compile the general clipboard source file into object file
+x11_clipboard.o:
+	$(CC) -c $(CFLAGS) ../include/x11_clipboard.c
 
 # compile the main video source file into object file
 video.o:

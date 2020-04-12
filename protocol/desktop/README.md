@@ -2,12 +2,16 @@
 
 This code launches a desktop (Windows, MacOS, Linux Ubuntu) into a client initiating a connection to their cloud virtual machine for interactive usage over the network.
 
-It should be easily built via `make` (on MacOS with clang and Linux with gcc) or `nmake` (on Windows with Visual Studio Desktop Development Extension). Tested with `Visual Studio Community Edition 2019`.
+It should be easily built via `make` (on MacOS with clang and Linux Ubuntu with gcc) or `nmake` (on Windows with Visual Studio Desktop Development Extension). Tested with `Visual Studio Community Edition 2019`.
 
-## Running
+## Running (Windows)
+
+In the /desktop directory, call
 
 ```desktop [IP ADDRESS] [AES PRIVATE KEY] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```
 
-or (MacOS, Linux)
+## Running (MacOS, Linux Ubuntu)
+
+In the /desktop directory, call
 
 ```./desktop [IP ADDRESS] [AES PRIVATE KEY] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```

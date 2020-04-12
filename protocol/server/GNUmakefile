@@ -30,6 +30,7 @@ SHARED_LIBS = \
 	-ldl \
 	-lpthread \
 	-lX11 \
+        -lXfixes \
 	-lXext \
 	-lXtst \
 	-lasound \
@@ -52,12 +53,12 @@ STATIC_LIBS = \
 OBJS = \
 	fractal.o \
         x11capture.o \
-		x11input.o \
 	videoencode.o \
 	alsacapture.o \
+	linuxinput.o \
 	audioencode.o \
 	aes.o \
-	clipboard.o \
+	x11_clipboard.o \
 	main.o
 
 # compiler flags
@@ -102,16 +103,16 @@ aes.o:
 	$(CC) -c $(CFLAGS) ../include/aes.c
 
 # compile the general clipboard source file into object file
-clipboard.o:
-	$(CC) -c $(CFLAGS) ../include/clipboard.c
+x11_clipboard.o:
+	$(CC) -c $(CFLAGS) ../include/x11_clipboard.c
 
 # compile the audio capture source file into object file
 alsacapture.o:
 	$(CC) -c $(CFLAGS) ../include/alsacapture.c
 
-# compile the X11 input playback source file into object file
-x11input.o:
-	$(CC) -c $(CFLAGS) ../include/x11input.c
+# compile the input playback source file into object file
+linuxinput.o:
+	$(CC) -c $(CFLAGS) ../include/linuxinput.c
 
 # compile the main source file into object file
 main.o:
