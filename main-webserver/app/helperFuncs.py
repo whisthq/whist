@@ -859,7 +859,7 @@ def fetchCodes():
 
 def userVMStatus(username):
     has_paid = False
-    has_vm = False
+    has_disk = False
 
     command = text("""
         SELECT * FROM customers
@@ -873,23 +873,24 @@ def userVMStatus(username):
             has_paid = True
 
     command = text("""
-        SELECT * FROM v_ms
+        SELECT * FROM disks
         WHERE "username" = :username
         """)
+
     params = {'username': username}
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if user:
-            has_vm = True
+            has_disk = True
 
-    if not has_paid and not has_vm:
+    if not has_paid and not has_disk:
         return 'not_created'
 
-    if has_paid and not has_vm:
+    if has_paid and not has_disk:
         return 'is_creating'
 
-    if has_paid and has_vm:
+    if has_paid and has_disk:
         return 'has_created'
 
     return 'has_not_paid'
