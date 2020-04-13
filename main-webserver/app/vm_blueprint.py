@@ -13,7 +13,6 @@ vm_bp = Blueprint('vm_bp', __name__)
 
 
 @vm_bp.route('/status/<task_id>')
-@jwt_required
 def status(task_id):
     result = celery.AsyncResult(task_id)
     if result.status == 'SUCCESS':
@@ -37,7 +36,6 @@ def status(task_id):
 
 
 @vm_bp.route('/vm/<action>', methods=['POST'])
-@jwt_required
 def vm(action):
     if action == 'create':
         vm_size = request.get_json()['vm_size']
@@ -72,6 +70,10 @@ def vm(action):
         return jsonify({'ID': task.id}), 202
     elif action == 'updateTable':
         task = updateVMTable.apply_async([])
+        return jsonify({'ID': task.id}), 202
+    elif action == 'powershell':
+        body = request.get_json()
+        task = runPowershell.apply_async([body['vm_name']])
         return jsonify({'ID': task.id}), 202
     return jsonify({}), 400
 

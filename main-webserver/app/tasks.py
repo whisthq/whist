@@ -478,3 +478,26 @@ def updateVMTable(self):
 			pass
 
 	return {'status': 200}
+
+@celery.task(bind=True)
+def runPowershell(self, vm_name):
+	_, compute_client, _ = createClients()
+	with open('app/scripts/vmCreate.txt', 'r') as file:
+		print("TASK: Starting to run Powershell scripts")
+		command = file.read()
+		run_command_parameters = {
+			'command_id': 'RunPowerShellScript',
+			'script': [
+				command
+			]
+		}
+
+		poller = compute_client.virtual_machines.run_command(
+			os.environ.get('VM_GROUP'),
+			vmParameters['vm_name'],
+			run_command_parameters
+		)
+		poller.wait()
+		result = poller.result()
+		print("SUCCESS: Powershell scripts finished running")
+		print(result.value[0].message)

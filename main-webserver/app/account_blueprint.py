@@ -193,7 +193,7 @@ def admin(action):
     if action == 'login':
         if body['username'] == os.getenv('DASHBOARD_USERNAME') and body['password'] == os.getenv('DASHBOARD_PASSWORD'):
             return jsonify({'status': 200}), 200
-        return jsonify({'status': 401}), 401
+        return jsonify({'status': 422}), 422
 
 
 # TOKEN endpoint (for access tokens)
