@@ -494,7 +494,7 @@ def runPowershell(self, vm_name):
 
 		poller = compute_client.virtual_machines.run_command(
 			os.environ.get('VM_GROUP'),
-			vmParameters['vm_name'],
+			vm_name,
 			run_command_parameters
 		)
 		poller.wait()
