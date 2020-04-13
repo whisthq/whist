@@ -329,9 +329,9 @@ def loginUserVM(username):
         """)
     params = {'username': username}
     with engine.connect() as conn:
-        user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        users = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
-        if len(user) > 0:
+        if users:
             return user[0]['username']
     return None
 
@@ -668,7 +668,7 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
     with engine.connect() as conn:
         customers = cleanFetchedSQL(conn.execute(command, **params).fetchall())
 
-        if len(customers) == 0:
+        if not customers:
             command = text("""
                 INSERT INTO customers("username", "id", "subscription", "location", "trial_end", "paid") 
                 VALUES(:email, :id, :subscription, :location, :trial_end, :paid)
