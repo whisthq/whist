@@ -19,7 +19,10 @@ static char clipboard_buf[9000000];
 
 void StartTrackingClipboardUpdates()
 {
-	last_clipboard_sequence_number = GetClipboardSequenceNumber();
+	last_clipboard_sequence_number = -1; // to capture the first event
+	clipboardHasImage = false;
+	clipboardHasString = false;
+	clipboardHasFiles = false;
 }
 
 bool hasClipboardUpdated()
