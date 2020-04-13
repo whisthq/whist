@@ -34,6 +34,12 @@ def user_fetchvms():
     except Exception as e:
         return jsonify({}), 403
 
+@account_bp.route('/user/fetchdisks', methods=['POST'])
+def user_fetchdisks():
+    body = request.get_json()
+    disks = fetchUserDisks(body['username'])
+    return jsonify({'disks': disks, 'status': 200}), 200
+
 @account_bp.route('/user/reset', methods=['POST'])
 @jwt_required
 def user_reset():
@@ -168,7 +174,6 @@ def account_regenerate_codes():
     return jsonify({'status': 200}), 200
 
 @account_bp.route('/account/fetchCode', methods=['POST'])
-@jwt_required
 def account_fetch_code():
     body = request.get_json()
     code = fetchUserCode(body['username'])
