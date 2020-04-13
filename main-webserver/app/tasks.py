@@ -375,18 +375,22 @@ def swapDisk(self, disk_name):
 	# and restart the VM as a sanity check.
 	if vm_name:
 		vm_name = vm_name.split('/')[-1]
-		print("Disk already attached to VM " + vm_name)
+		print("NOTIFICATION: Disk " + disk_name +  " already attached to VM " + vm_name)
+
 		updateDisk(disk_name, vm_name, location)
 		associateVMWithDisk(vm_name, disk_name)
 		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
-		print("Database updated")
+		
+		print("SUCCESS: Database updated with disk " + disk_name + " and " + vm_name)
 
 		# If the VM is powered off, start it
 		vm_state = compute_client.virtual_machines.instance_view(
 			resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
+
 		print(vm_state.statuses[1])
+
 		if not 'running' in vm_state.statuses[1].code:
-			print('VM ' + vm_name + ' is powered off. Preparing to power on...')
+			print('NOTIFICATION: VM ' + vm_name + ' is powered off. Preparing to power on...')
 			async_vm_start = compute_client.virtual_machines.start(
 				os.environ.get('VM_GROUP'), vm_name)
 			async_vm_start.wait()

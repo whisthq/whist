@@ -69,7 +69,6 @@ def account_register():
     return jsonify({'status': status, 'token': token, 'access_token': access_token, 'refresh_token': refresh_token}), status
 
 @account_bp.route('/account/checkVerified', methods=['POST'])
-@jwt_required
 def account_check_verified():
     body = request.get_json()
     username = body['username']
