@@ -112,7 +112,6 @@ def disk(action):
         return jsonify({'ID': task.id}), 202
     elif action == 'update':
         body = request.get_json()
-        updateDisk(body['disk_name'], '', body['location'])
         assignUserToDisk(body['disk_name'], body['username'])
         return jsonify({'status': 200}), 200
 
