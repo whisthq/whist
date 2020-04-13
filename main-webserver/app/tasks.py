@@ -95,15 +95,15 @@ def createDiskFromImage(self, username, location):
 	disk_name = genDiskName()
 
 	async_disk_creation = compute_client.disks.create_or_update(
-	    'Fractal',
-	    disk_name,
-	    {
-	        'location': location,
-	        'creation_data': {
-	            'create_option': DiskCreateOption.copy,
-	            'source_resource_id': disk_image.id
-	        }
-	    }
+		'Fractal',
+		disk_name,
+		{
+			'location': location,
+			'creation_data': {
+				'create_option': DiskCreateOption.copy,
+				'source_resource_id': disk_image.id
+			}
+		}
 	)
 
 	async_disk_creation.wait()
@@ -532,4 +532,18 @@ def runPowershell(self, vm_name):
 		print("SUCCESS: Powershell scripts finished running")
 		print(result.value[0].message)
 
+	return {'status': 200}
+
+@celery.task(bind=True)
+def deleteDisk(self, disks):
+	for disk in disks:
+		try:
+			print("Attempting to delete the OS disk...")
+			os_disk_delete = compute_client.disks.delete(
+				os.getenv('VM_GROUP'), disk['disk_name'])
+			os_disk_delete.wait()
+			print("OS disk deleted")
+		except Exception as e:
+			print(e)
+	
 	return {'status': 200}

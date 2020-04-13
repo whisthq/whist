@@ -114,7 +114,13 @@ def disk(action):
         body = request.get_json()
         assignUserToDisk(body['disk_name'], body['username'])
         return jsonify({'status': 200}), 200
-        
+    elif action == 'delete':
+        body = request.get_json()
+        username = body['username']
+        disks = fetchUserDisks(username)
+        task = deleteDisk.apply_async([disks])
+        return jsonify({'ID': task.id}), 202
+
 # TRACKER endpoint
 
 @vm_bp.route('/tracker/<action>', methods = ['POST'])
