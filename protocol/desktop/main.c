@@ -658,7 +658,7 @@ void parse_window_event(SDL_Event* event) {
         case SDL_WINDOWEVENT_RESTORED:
             printf("Window %d restored\n", event->window.windowID);
             break;
-			default:
+		default:
 			printf("WINDOW EVENT %d\n",event->window.event);
 			break;
 	}
