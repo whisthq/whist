@@ -497,7 +497,9 @@ def runPowershell(self, vm_name):
 			vm_name,
 			run_command_parameters
 		)
-		poller.wait()
+		# poller.wait()
 		result = poller.result()
 		print("SUCCESS: Powershell scripts finished running")
 		print(result.value[0].message)
+
+	return {'status': 200}
