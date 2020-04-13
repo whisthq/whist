@@ -82,10 +82,10 @@ def vm(action):
 @jwt_required
 def disk(action):
     if action == 'create':
-        print(request.get_json())
-        disk_size = request.get_json()['disk_size']
-        username = request.get_json()['username']
-        location = request.get_json()['location']
+        body = request.get_json()
+        disk_size = body['disk_size']
+        username = body['username']
+        location = body['location']
         task = createDisk.apply_async([disk_size, username, location])
         if not task:
             return jsonify({}), 400
@@ -104,7 +104,11 @@ def disk(action):
     elif action == 'resync':
         task = syncDisks.apply_async([])
         return jsonify({'ID': task.id}), 202
-
+    elif action == 'update':
+        body = request.get_json()
+        updateDisk(body['disk_name'], '', body['location'])
+        attachUserToDisk(body['disk_name'], body['username'])
+        return jsonify({'status': 200}), 200
 
 # TRACKER endpoint
 

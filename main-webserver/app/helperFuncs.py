@@ -1030,6 +1030,15 @@ def updateDisk(disk_name, vm_name, location):
         conn.execute(command, **params)
         conn.close()
 
+def attachUserToDisk(disk_name, username):
+    command = text("""
+        UPDATE disks SET "username" = :username WHERE "disk_name" = :disk_name
+        """)
+    params = {'username': username, 'disk_name': disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
 def fetchAttachableVMs(state, location):
     command = text("""
         SELECT * FROM v_ms WHERE "state" = :state AND "location" = :location AND "lock" = :lock
