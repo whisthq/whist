@@ -114,7 +114,10 @@ def disk(action):
         body = request.get_json()
         assignUserToDisk(body['disk_name'], body['username'])
         return jsonify({'status': 200}), 200
-
+    elif action == 'fetch':
+        body = request.get_json()
+        disks = fetchUserDisks(body['username'])
+        return jsonify({'disks': disks, 'status': 200}), 200
 # TRACKER endpoint
 
 @vm_bp.route('/tracker/<action>', methods = ['POST'])
