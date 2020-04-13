@@ -112,7 +112,7 @@ def createDiskFromImage(self, username, location):
 	updateDisk(disk_name, '', location)
 	assignUserToDisk(disk_name, username)
 
-	return {'status': 200}
+	return {'disk_name': disk_name, 'location': location}
 
 
 @celery.task(bind=True)
