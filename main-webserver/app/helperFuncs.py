@@ -1030,7 +1030,7 @@ def updateDisk(disk_name, vm_name, location):
         conn.execute(command, **params)
         conn.close()
 
-def attachUserToDisk(disk_name, username):
+def assignUserToDisk(disk_name, username):
     command = text("""
         UPDATE disks SET "username" = :username WHERE "disk_name" = :disk_name
         """)

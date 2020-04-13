@@ -81,15 +81,18 @@ def vm(action):
 @vm_bp.route('/disk/<action>', methods=['POST'])
 @jwt_required
 def disk(action):
-    if action == 'create':
+    if action == 'createEmpty':
         body = request.get_json()
         disk_size = body['disk_size']
         username = body['username']
         location = body['location']
-        task = createDisk.apply_async([disk_size, username, location])
+        task = createEmptyDisk.apply_async([disk_size, username, location])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
+    elif action == 'createFromImage':
+        body = request.get_json()
+        task = createDiskFromImage.apply_async([username, location])
     elif action == 'attach':
         body = request.get_json()
         task = swapDisk.apply_async([body['disk_name']])
@@ -107,7 +110,7 @@ def disk(action):
     elif action == 'update':
         body = request.get_json()
         updateDisk(body['disk_name'], '', body['location'])
-        attachUserToDisk(body['disk_name'], body['username'])
+        assignUserToDisk(body['disk_name'], body['username'])
         return jsonify({'status': 200}), 200
 
 # TRACKER endpoint

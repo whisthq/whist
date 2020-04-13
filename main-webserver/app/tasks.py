@@ -62,7 +62,7 @@ def createVM(self, vm_size, location):
 
 
 @celery.task(bind=True)
-def createDisk(self, disk_size, username, location):
+def createEmptyDisk(self, disk_size, username, location):
 	_, compute_client, _ = createClients()
 	disk_name = genDiskName()
 
@@ -87,6 +87,32 @@ def createDisk(self, disk_size, username, location):
 	attachDisk()
 
 	return disk_name
+
+@celery.task(bind=True)
+def createDiskFromImage(self, username, location):
+	_, compute_client, _ = createClients()
+	disk_image = compute_client.disks.get('Fractal', 'Fractal_Disk')
+	disk_name = genDiskName()
+
+	async_disk_creation = compute_client.disks.create_or_update(
+	    'Fractal',
+	    disk_name,
+	    {
+	        'location': location,
+	        'creation_data': {
+	            'create_option': DiskCreateOption.copy,
+	            'source_resource_id': disk_image.id
+	        }
+	    }
+	)
+
+	async_disk_creation.wait()
+	new_disk = async_disk_creation.result()
+
+	updateDisk(disk_name, '', location)
+	assignUserToDisk(disk_name, username)
+
+	return {'status': 200}
 
 
 @celery.task(bind=True)
