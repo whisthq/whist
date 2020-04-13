@@ -93,6 +93,9 @@ def disk(action):
     elif action == 'createFromImage':
         body = request.get_json()
         task = createDiskFromImage.apply_async([username, location])
+        if not task:
+            return jsonify({}), 400
+        return jsonify({'ID': task.id}), 202
     elif action == 'attach':
         body = request.get_json()
         task = swapDisk.apply_async([body['disk_name']])
