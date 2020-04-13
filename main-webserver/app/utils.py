@@ -62,6 +62,6 @@ def cleanFetchedSQL(out):
     return None
 
 def getAccessTokens(user):
-    access_token = create_access_token(identity = user)
-    refresh_token = create_refresh_token(identity = user)
+    create_access_token(identity = user, expires_delta = datetime.timedelta(seconds=5))
+    refresh_token = create_refresh_token(identity = user, expires_delta=False)
     return (access_token, refresh_token)
