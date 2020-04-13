@@ -536,6 +536,7 @@ def runPowershell(self, vm_name):
 
 @celery.task(bind=True)
 def deleteDisk(self, disks):
+	_, compute_client, _ = createClients()
 	for disk in disks:
 		try:
 			print("Attempting to delete the OS disk...")
