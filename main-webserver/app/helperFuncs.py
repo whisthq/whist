@@ -1169,7 +1169,7 @@ def fetchAllDisks():
         disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         return disks
 
-def deleteDisk(disk_name):
+def deleteDiskFromTable(disk_name):
     command = text("""
         DELETE FROM disks WHERE "disk_name" = :disk_name 
         """)

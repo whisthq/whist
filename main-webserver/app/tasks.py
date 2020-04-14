@@ -342,7 +342,7 @@ def syncDisks(self):
 	stored_disks = fetchUserDisks(None)
 	for stored_disk in stored_disks:
 		if not stored_disk['disk_name'] in disk_names:
-			deleteDisk(stored_disk['disk_name'])
+			deleteDiskFromTable(stored_disk['disk_name'])
 
 	return {'status': 200}
 
@@ -540,7 +540,7 @@ def deleteDisk(self, disk_name):
 		os_disk_delete = compute_client.disks.delete(
 			os.getenv('VM_GROUP'), disk_name)
 		os_disk_delete.wait()
-		deleteDisk(disk_name)
+		deleteDiskFromTable(disk_name)
 		print("OS disk deleted")
 	except Exception as e:
 		print('ERROR: ' + str(e))
