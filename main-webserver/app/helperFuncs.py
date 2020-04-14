@@ -1224,3 +1224,15 @@ def deleteVMFromTable(vm_name):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+def updateDiskState(disk_name, state):
+    command = text("""
+        UPDATE disks
+        SET state = :state
+        WHERE
+           "disk_name" = :disk_name
+        """)
+    params = {'state': state, 'disk_name': disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
