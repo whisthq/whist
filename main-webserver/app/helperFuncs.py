@@ -564,16 +564,26 @@ def fetchUserVMs(username):
             return vms_info
 
 
-def fetchUserDisks(username):
-    if(username):
-        command = text("""
-            SELECT * FROM disks WHERE "username" = :username AND "state" = :state
-            """)
-        params = {'username': username, 'state': 'ACTIVE'}
-        with engine.connect() as conn:
-            disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-            conn.close()
-            return disks_info
+def fetchUserDisks(username, show_all = False):
+    if username:
+        if not show_all:
+            command = text("""
+                SELECT * FROM disks WHERE "username" = :username AND "state" = :state
+                """)
+            params = {'username': username, 'state': 'ACTIVE'}
+            with engine.connect() as conn:
+                disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return disks_info
+        else:
+            command = text("""
+                SELECT * FROM disks WHERE "username" = :username
+                """)
+            params = {'username': username}
+            with engine.connect() as conn:
+                disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return disks_info
     else:
         command = text("""
             SELECT * FROM disks

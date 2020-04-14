@@ -117,7 +117,7 @@ def disk(action):
     elif action == 'delete':
         body = request.get_json()
         username = body['username']
-        disks = fetchUserDisks(username)
+        disks = fetchUserDisks(username, True)
         task_id = None
         print(disks)
         if disks:

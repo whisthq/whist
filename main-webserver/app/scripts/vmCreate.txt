@@ -26,6 +26,9 @@ $utils_script_url = "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils
 GetPowerShellScript $utils_script_name $utils_script_url
 Import-Module "$utils_script_name"
 
+# Make sure we're in the proper directory (mostly for running from webservers)
+cd C:\
+
 # Run all the basic commands to setup a Fractal cloud computer
 Update-Windows
 Update-Firewall
@@ -39,23 +42,23 @@ Enable-MouseKeys
 Set-MousePrecision
 Set-Time
 Disable-NetworkWindow
-Show-FileExtensions
 Install-7Zip
 #Install-Spotify
 Install-GoogleChrome
 Install-NvidiaTeslaPublicDrivers
 Disable-TCC
 Set-OptimalGPUSettings
+Install-PoshSSH
 Set-FractalDirectory
 Install-FractalService
 Install-FractalServer
-Install-Unison
-Install-FractalExitScript $false # false -> hardcoded paths (only works on Fractal VMs)
+Install-FractalExitScript
 Install-FractalAutoUpdate
-Install-FractalWallpaper
 Enable-FractalFirewallRule
 Install-Unison
 Enable-SSHServer
+Show-FileExtensions
+Install-FractalWallpaper
 #Disable-HyperV
 #Disable-Lock
 #Disable-Logout
