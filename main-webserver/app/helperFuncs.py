@@ -567,9 +567,9 @@ def fetchUserVMs(username):
 def fetchUserDisks(username):
     if(username):
         command = text("""
-            SELECT * FROM disks WHERE "username" = :username
+            SELECT * FROM disks WHERE "username" = :username AND "state" != :state
             """)
-        params = {'username': username}
+        params = {'username': username, 'state': 'TO_BE_DELETED'}
         with engine.connect() as conn:
             disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()

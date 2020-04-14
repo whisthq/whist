@@ -517,9 +517,7 @@ def runPowershell(self, vm_name):
 		command = file.read()
 		run_command_parameters = {
 			'command_id': 'RunPowerShellScript',
-			'script': [
-				command
-			]
+			'script': [command]
 		}
 
 		poller = compute_client.virtual_machines.run_command(
