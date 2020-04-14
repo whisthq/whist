@@ -23,6 +23,8 @@ export const FETCH_DISK_STATUS   = "FETCH_DISK_STATUS"
 export const STORE_DISK_NAME     = "STORE_DISK_NAME"
 export const ATTACH_DISK         = "ATTACH_DISK"
 export const FETCH_VM            = "FETCH_VM"
+export const STORE_JWT           = "STORE_JWT"
+export const CREATE_DISK         = "CREATE_DISK"
 
 
 export function loginUser(username, password) {
@@ -185,5 +187,19 @@ export function fetchVM(id) {
 	return {
 		type: FETCH_VM,
 		id
+	}
+}
+
+export function storeJWT(access_token, refresh_token) {
+	return {
+		type: STORE_JWT,
+		access_token,
+		refresh_token
+	}
+}
+
+export function createDisk() {
+	return {
+		type: CREATE_DISK
 	}
 }

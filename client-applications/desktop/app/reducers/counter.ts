@@ -3,7 +3,7 @@ import * as MainAction from '../actions/counter';
 
 const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, resetFeedback: false, isUser: true, 
                 os: '', askFeedback: false, window: 'main', ipInfo: {}, computers: [], fetchStatus: false, disk: '',
-                attachState: 'NOT_REQUESTED'}
+                attachState: 'NOT_REQUESTED', access_token: '', refresh_token: ''}
 
 export default function counter(state = DEFAULT, action: Action<string>) {
   switch (action.type) {
@@ -76,6 +76,12 @@ export default function counter(state = DEFAULT, action: Action<string>) {
       return {
         ...state,
         attachState: action.state
+      }
+    case MainAction.STORE_JWT:
+      return {
+        ...state,
+        access_token: action.access_token,
+        refresh_token: action.refresh_token
       }
     default:
       return state;
