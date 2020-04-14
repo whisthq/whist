@@ -540,13 +540,14 @@ def deleteDisk(self, disks):
 			try:
 				print("Attempting to delete the OS disk...")
 				print(disk)
+				print(disk['disk_name'])
 				os_disk_delete = compute_client.disks.delete(
 					os.getenv('VM_GROUP'), disk['disk_name'])
 				os_disk_delete.wait()
 				deleteDisk(disk['disk_name'])
 				print("OS disk deleted")
 			except Exception as e:
-				print('ERROR: ' + e)
+				print('ERROR: ' + str(e))
 				updateDiskState(disk['disk_name'], 'TO_BE_DELETED')
 		
 		return {'status': 200}
