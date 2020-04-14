@@ -539,7 +539,7 @@ def deleteDisk(self, disks):
 		for disk in disks:
 			try:
 				print("Attempting to delete the OS disk...")
-				print(disk)
+				disk = eval(disk)
 				print(disk['disk_name'])
 				os_disk_delete = compute_client.disks.delete(
 					os.getenv('VM_GROUP'), disk['disk_name'])
