@@ -118,8 +118,13 @@ def disk(action):
         body = request.get_json()
         username = body['username']
         disks = fetchUserDisks(username)
-        task = deleteDisk.apply_async([disks])
-        return jsonify({'ID': task.id}), 202
+        task_id = None
+        print(disks)
+        if disks:
+            for disk in disks:
+                task = deleteDisk.apply_async([disk['disk_name']])
+                task_id = task.id
+        return jsonify({'ID': task_id}), 202
 
 # TRACKER endpoint
 

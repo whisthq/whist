@@ -533,21 +533,17 @@ def runPowershell(self, vm_name):
 	return {'status': 200}
 
 @celery.task(bind=True)
-def deleteDisk(self, disks):
+def deleteDisk(self, disk_name):
 	_, compute_client, _ = createClients()
-	if disks:
-		for disk in disks:
-			try:
-				print("Attempting to delete the OS disk...")
-				disk = eval(disk)
-				print(disk['disk_name'])
-				os_disk_delete = compute_client.disks.delete(
-					os.getenv('VM_GROUP'), disk['disk_name'])
-				os_disk_delete.wait()
-				deleteDisk(disk['disk_name'])
-				print("OS disk deleted")
-			except Exception as e:
-				print('ERROR: ' + str(e))
-				updateDiskState(disk['disk_name'], 'TO_BE_DELETED')
+	try:
+		print("Attempting to delete the OS disk...")
+		os_disk_delete = compute_client.disks.delete(
+			os.getenv('VM_GROUP'), disk_name)
+		os_disk_delete.wait()
+		deleteDisk(disk_name)
+		print("OS disk deleted")
+	except Exception as e:
+		print('ERROR: ' + str(e))
+		updateDiskState(disk_name, 'TO_BE_DELETED')
 		
 		return {'status': 200}
