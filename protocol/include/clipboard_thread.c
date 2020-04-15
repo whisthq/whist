@@ -99,15 +99,15 @@ int UpdateClipboardThread( void* opaque )
 #ifdef _WIN32
 				strcat( cmd, "unison " );
 #else
-				strcat( cmd, "./unison -follow \"Path *\" " );
+				strcat( cmd, "./unison " );
 #endif
 
-				strcat( cmd, "-ui text -sshargs \"-l " );
+				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-l " );
 				strcat( cmd, username );
 				strcat( cmd, " -i sshkey\" " );
 				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
-				//strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
+				strcat( cmd, "/" );
 				strcat( cmd, filename );
 				strcat( cmd, "/get_clipboard/" );
 				strcat( cmd, "\" " );
@@ -115,8 +115,8 @@ int UpdateClipboardThread( void* opaque )
 				strcat( cmd, " -force " );
 				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
+				strcat( cmd, "/" );
 				strcat( cmd, filename );
-				//strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
 				strcat( cmd, "/get_clipboard/" );
 				strcat( cmd, "\" " );
 				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
@@ -140,15 +140,18 @@ int UpdateClipboardThread( void* opaque )
 #ifdef _WIN32
 				strcat( cmd, "unison " );
 #else
-				strcat( cmd, "./unison -follow \"Path *\" " );
+				strcat( cmd, "./unison " );
 #endif
 
-				strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " );
+				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-l " );
+				strcat( cmd, username );
+				strcat( cmd, " -i sshkey\" " );
 				strcat( cmd, GET_CLIPBOARD );
 				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
 				strcat( cmd, "/" );
-				strcat( cmd, "C:\\ProgramData\\FractalCache\\set_clipboard" );
+				strcat( cmd, filename );
+				strcat( cmd, "/set_clipboard" );
 				strcat( cmd, "/\" -force " );
 				strcat( cmd, GET_CLIPBOARD );
 				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
