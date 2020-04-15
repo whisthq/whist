@@ -197,8 +197,7 @@ void SetClipboard(ClipboardData* cb) {
     // Construct path as "\nfile:///path/to/fractal/set_clipboard/"
     char path[PATH_MAX] = "\nfile://";
     int substr = strlen(path);
-    getcwd(path + substr, PATH_MAX - substr);
-    strcat(path, SET_CLIPBOARD);
+    realpath(SET_CLIPBOARD, path + substr);
     strcat(path, "/");
     // subpath is an index that points to the end of the string
     int subpath = strlen(path);
