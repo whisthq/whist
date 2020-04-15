@@ -681,6 +681,7 @@ void parse_window_event(SDL_Event* event) {
 	}
 }
 
+#define HOST_PUBLIC_KEY "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOT1KV+I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/Zt86r9dOzEcfrhxa+MnVQhNE8="
 
 int main(int argc, char* argv[]) {
     initBacktraceHandler();
@@ -714,6 +715,10 @@ int main(int argc, char* argv[]) {
     if (argc == 5) {
         max_mbps = atoi(argv[4]);
     }
+
+    FILE* ssh_key_host = fopen( "ssh_host_ecdsa_key.pub", "w" );
+    fprintf( ssh_key_host, "%s %s\n", server_ip, HOST_PUBLIC_KEY );
+    fclose( ssh_key_host );
 
     if (initSDL() < 0) {
         printf("Failed to initialized SDL\n");

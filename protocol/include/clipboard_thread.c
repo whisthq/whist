@@ -103,7 +103,7 @@ int UpdateClipboardThread( void* opaque )
 				strcat( cmd, "./linux_unison " );
 #endif
 
-				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-l " );
+				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l " );
 				strcat( cmd, username );
 				strcat( cmd, " -i sshkey\" " );
 				strcat( cmd, " \"ssh://" );
@@ -146,7 +146,7 @@ int UpdateClipboardThread( void* opaque )
 				strcat( cmd, "./linux_unison " );
 #endif
 
-				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-l " );
+				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l " );
 				strcat( cmd, username );
 				strcat( cmd, " -i sshkey\" " );
 				strcat( cmd, GET_CLIPBOARD );
