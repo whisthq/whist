@@ -99,7 +99,7 @@ int UpdateClipboardThread( void* opaque )
 #ifdef _WIN32
 				strcat( cmd, "unison " );
 #elif __APPLE__
-				strcat( cmd, "./unison " );
+				strcat( cmd, "./mac_unison " );
 #else // Linux
 				strcat( cmd, "./linux_unison " );
 #endif
@@ -142,7 +142,7 @@ int UpdateClipboardThread( void* opaque )
 #ifdef _WIN32
 				strcat( cmd, "unison " );
 #elif __APPLE__
-				strcat( cmd, "./unison " );
+				strcat( cmd, "./mac_unison " );
 #else // Linux
 				strcat( cmd, "./linux_unison " );
 #endif
