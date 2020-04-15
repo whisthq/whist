@@ -99,12 +99,12 @@ void update() {
         StartTimer((clock*)&UpdateData.last_tcp_check_timer);
     }
 
-    if (pendingUpdateClipboard()) {
+    if (pendingUpdateClipboard() && received_server_init_message ) {
         updateClipboard();
     }
 
     // Check if clipboard has updated
-    if (hasClipboardUpdated()) {
+    if (hasClipboardUpdated() && received_server_init_message ) {
         mprintf("Clipboard event found, sending to server!\n");
         updateClipboard();
     }

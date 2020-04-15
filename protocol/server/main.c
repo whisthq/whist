@@ -678,17 +678,17 @@ int main() {
         msg_init_whole->type = MESSAGE_INIT;
         FractalServerMessageInit* msg_init = msg_init_whole->init_msg;
 #ifdef _WIN32
-	msg_init->filename[0] = '\0';
+	    msg_init->filename[0] = '\0';
         strcat( msg_init->filename, "/C:\\Program Files\\Fractal" );
-	char* username = "vm1";
+	    char* username = "vm1";
 #else // Linux
         char* cwd = getcwd(NULL, 0);
         memcpy( msg_init->filename, cwd, strlen(cwd) + 1);
         free( cwd );
-	char* username = "Fractal";
+	    char* username = "Fractal";
 #endif
         memcpy( msg_init->username, username, strlen(username) + 1 );
-	mprintf("SIZE: %d\n", sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit));
+	    mprintf("SIZE: %d\n", sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit));
         if( SendPacket( &PacketSendContext, PACKET_MESSAGE,
             (uint8_t*)msg_init_whole,
                            sizeof( FractalServerMessage ) + sizeof( FractalServerMessageInit ), 1 ) < 0 )
@@ -696,7 +696,7 @@ int main() {
             mprintf( "Could not send server init message!\n" );
             return -1;
         }
-	free(msg_init_whole);
+	    free(msg_init_whole);
 
         clock startup_time;
         StartTimer(&startup_time);
