@@ -351,15 +351,14 @@ ClipboardData* GetClipboard()
 				FindClose( hFind );
 			}
 
-			if( !RemoveDirectoryW( LGET_CLIPBOARD ) )
-			{
-				mprintf( "Could not remove directory: %S (Error %d)\n", LGET_CLIPBOARD, GetLastError() );
-				break;
-			}
 			if( !CreateDirectoryW( LGET_CLIPBOARD, NULL ) )
 			{
-				mprintf( "Could not create directory: %S (Error %d)\n", LGET_CLIPBOARD, GetLastError() );
-				break;
+				int err = GetLastError();
+				if( err != ERROR_ALREADY_EXISTS )
+				{
+					mprintf( "Could not create directory: %S (Error %d)\n", LGET_CLIPBOARD, GetLastError() );
+					break;
+				}
 			}
 
 			// Go through filenames
