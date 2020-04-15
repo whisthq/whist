@@ -592,7 +592,7 @@ typedef struct FractalServerMessage {
     union
     {
         ClipboardData clipboard;
-        char init_msg[];
+        char init_msg[0];
     };
 } FractalServerMessage;
 

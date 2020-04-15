@@ -9,6 +9,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
+#include <unistd.h>
 // TODO: Linux headers
 #endif
 
@@ -671,24 +672,26 @@ int main() {
         }
 
         FractalServerMessage* msg_init_whole = malloc(sizeof( FractalServerMessage) + sizeof( FractalServerMessageInit));
-        msg_init_whole.type = MESSAGE_INIT;
-        FractalServerMessageInit* msg_init = msg_init_whole.init_msg;
+        msg_init_whole->type = MESSAGE_INIT;
+        FractalServerMessageInit* msg_init = msg_init_whole->init_msg;
 #ifdef _WIN32
-        memcpy( msg_init->filename, "C:\\Program Files\\Fractal" );
-        memcpy( msg_init->username, "vm1" );
+        memcpy( msg_init->filename, "/C:\\Program Files\\Fractal" );
+	char* username = "vm1";
 #else // Linux
-        char* cwd = get_current_dir_name();
-        memcpy( msg_init->filename, cwd );
+        char* cwd = getcwd(NULL, 0);
+        memcpy( msg_init->filename, cwd, strlen(cwd) + 1);
         free( cwd );
-        memcpy( msg_init->username, "Fractal" );
+	char* username = "Fractal";
 #endif
-        if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE,
-            (uint8_t*)&msg_init_whole,
-                           sizeof( FractalServerMessage ) + sizeof( FractalServerMessageInit ) ) < 0 )
+        memcpy( msg_init->username, username, strlen(username) + 1 );
+        if( SendPacket( &PacketSendContext, PACKET_MESSAGE,
+            (uint8_t*)msg_init_whole,
+                           sizeof( FractalServerMessage ) + sizeof( FractalServerMessageInit ), 1 ) < 0 )
         {
             mprintf( "Could not send server init message!\n" );
             return -1;
         }
+	free(msg_init_whole);
 
         // Give client time to setup before sending it with packets
         SDL_Delay(150);
