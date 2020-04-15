@@ -355,6 +355,7 @@ ClipboardData* GetClipboard()
 			if( !CreateDirectoryW( LGET_CLIPBOARD, NULL ) )
 			{
 				mprintf( "Could not create directory: %S (Error %d)\n", LGET_CLIPBOARD, GetLastError() );
+				break;
 			}
 
 			// Go through filenames
