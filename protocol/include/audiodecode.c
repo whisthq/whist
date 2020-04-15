@@ -79,23 +79,25 @@ void audio_decoder_packet_readout(audio_decoder_t *decoder, uint8_t *data) {
     // convert samples from the AVFrame and return
 
     // initialize
-    mprintf("reading out packet\n");
+    //mprintf("reading out packet\n");
 
     uint8_t **data_out = &data;
     int len = decoder->pFrame->nb_samples;
-    mprintf("DECODED FRAME LEN: %d\n", len);
+    //mprintf("DECODED FRAME LEN: %d\n", len);
     // convert
 
+    /*
     mprintf("swrcontext: %p || frame: %p || frame_data: %p\n",
             decoder->pSwrContext, decoder->pFrame,
             decoder->pFrame->extended_data);
+*/
 
     if (swr_convert(decoder->pSwrContext, data_out, len,
                     (const uint8_t **)decoder->pFrame->extended_data,
                     len) < 0) {
         mprintf("Could not convert samples to output format.\n");
     }
-    mprintf("finished reading out packet\n");
+    //mprintf("finished reading out packet\n");
 }
 
 int audio_decoder_get_frame_data_size(audio_decoder_t *decoder) {
@@ -107,7 +109,7 @@ int audio_decoder_get_frame_data_size(audio_decoder_t *decoder) {
 int audio_decoder_decode_packet(audio_decoder_t *decoder,
                                 AVPacket *encoded_packet) {
     // decode a single packet of encoded data
-    mprintf("decoding packet!\n");
+    //mprintf("decoding packet!\n");
     // initialize output frame
 
     if (init_av_frame(decoder)) {
@@ -138,7 +140,7 @@ int audio_decoder_decode_packet(audio_decoder_t *decoder,
     } else {
         // printf("Succeeded to decode frame of size:%5d\n",
         // decoder->pFrame->nb_samples);
-        mprintf("finished decoding packet!\n");
+        //mprintf("finished decoding packet!\n");
         return 0;
     }
 }

@@ -382,10 +382,12 @@ int ReceivePackets(void* opaque) {
 
         if (recv_size > 0) {
             if (lastrecv > 20.0 / 1000.0) {
+                /*
                 mprintf(
                     "Took more than 20ms to receive something!! Took %fms "
                     "total!\n",
                     lastrecv * 1000.0);
+                */
             }
             lastrecv = 0.0;
         }
@@ -470,6 +472,10 @@ int ReceiveMessage(struct RTPPacket* packet) {
         case SMESSAGE_CLIPBOARD:
             mprintf("Receive clipboard message from server!\n");
             SetClipboard(&fmsg.clipboard);
+            break;
+        case MESSAGE_INIT:
+            FractalServerMessageInit* msg_init = fmsg.init_msg;
+            mprintf( "FILENAME: %s\n", msg_init->filename );
             break;
         case SMESSAGE_QUIT:
             mprintf("Server signaled a quit!\n");

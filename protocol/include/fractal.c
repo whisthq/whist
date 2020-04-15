@@ -766,8 +766,9 @@ void* TryReadingTCPPacket( struct SocketContext* context )
 			{
 				//mprintf( "Error %d\n", err );
 			}
-		} else
+		} else if (len > 0)
 		{
+			mprintf( "READ LEN: %d\n", len );
 			reading_packet_len += len;
 		}
 

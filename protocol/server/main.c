@@ -670,6 +670,26 @@ int main() {
             continue;
         }
 
+        FractalServerMessage* msg_init_whole = malloc(sizeof( FractalServerMessage) + sizeof( FractalServerMessageInit));
+        msg_init_whole.type = MESSAGE_INIT;
+        FractalServerMessageInit* msg_init = msg_init_whole.init_msg;
+#ifdef _WIN32
+        memcpy( msg_init->filename, "C:\\Program Files\\Fractal" );
+        memcpy( msg_init->username, "vm1" );
+#else // Linux
+        char* cwd = get_current_dir_name();
+        memcpy( msg_init->filename, cwd );
+        free( cwd );
+        memcpy( msg_init->username, "Fractal" );
+#endif
+        if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE,
+            (uint8_t*)&msg_init_whole,
+                           sizeof( FractalServerMessage ) + sizeof( FractalServerMessageInit ) ) < 0 )
+        {
+            mprintf( "Could not send server init message!\n" );
+            return -1;
+        }
+
         // Give client time to setup before sending it with packets
         SDL_Delay(150);
 

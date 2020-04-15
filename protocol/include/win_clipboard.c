@@ -411,6 +411,11 @@ ClipboardData* GetClipboard()
 HGLOBAL getGlobalAlloc( void* buf, int len )
 {
 	HGLOBAL hMem = GlobalAlloc( GMEM_MOVEABLE, len );
+	if( !hMem )
+	{
+		mprintf( "GlobalAlloc failed!\n" );
+		return hMem;
+	}
 	LPTSTR lptstr = GlobalLock( hMem );
 
 	if( lptstr == NULL )
