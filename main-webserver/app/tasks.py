@@ -90,27 +90,10 @@ def createEmptyDisk(self, disk_size, username, location):
 
 @celery.task(bind=True)
 def createDiskFromImage(self, username, location):
-	_, compute_client, _ = createClients()
-	disk_image = compute_client.disks.get('Fractal', 'Fractal_Disk')
-	disk_name = genDiskName()
+	hr = -1
 
-	async_disk_creation = compute_client.disks.create_or_update(
-		'Fractal',
-		disk_name,
-		{
-			'location': location,
-			'creation_data': {
-				'create_option': DiskCreateOption.copy,
-				'source_resource_id': disk_image.id
-			}
-		}
-	)
-
-	async_disk_creation.wait()
-	new_disk = async_disk_creation.result()
-
-	updateDisk(disk_name, '', location)
-	assignUserToDisk(disk_name, username)
+	while hr == -1:
+		hr = createDiskFromImageHelper(username, location)
 
 	return {'disk_name': disk_name, 'location': location}
 

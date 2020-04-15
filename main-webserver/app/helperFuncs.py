@@ -1246,3 +1246,34 @@ def updateDiskState(disk_name, state):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+def createDiskFromImageHelper(username, location):
+    try:
+        _, compute_client, _ = createClients()
+
+        disk_image = compute_client.disks.get('Fractal', 'Fractal_Disk')
+        disk_name = genDiskName()
+
+        async_disk_creation = compute_client.disks.create_or_update(
+            'Fractal',
+            disk_name,
+            {
+                'location': location,
+                'creation_data': {
+                    'create_option': DiskCreateOption.copy,
+                    'source_resource_id': disk_image.id
+                }
+            }
+        )
+
+        async_disk_creation.wait()
+        new_disk = async_disk_creation.result()
+
+        updateDisk(disk_name, '', location)
+        assignUserToDisk(disk_name, username)
+
+        return 1
+    except Exception as e:
+        print('CRITICAL ERROR: ' + str(e))
+        time.sleep(30)
+        return -1
