@@ -98,8 +98,10 @@ int UpdateClipboardThread( void* opaque )
 
 #ifdef _WIN32
 				strcat( cmd, "unison " );
-#else
+#elif __APPLE__
 				strcat( cmd, "./unison " );
+#else // Linux
+				strcat( cmd, "./linux_unison " );
 #endif
 
 				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-l " );
@@ -139,8 +141,10 @@ int UpdateClipboardThread( void* opaque )
 
 #ifdef _WIN32
 				strcat( cmd, "unison " );
-#else
+#elif __APPLE__
 				strcat( cmd, "./unison " );
+#else // Linux
+				strcat( cmd, "./linux_unison " );
 #endif
 
 				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-l " );
