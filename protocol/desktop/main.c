@@ -38,6 +38,7 @@ volatile char* server_ip;
 SDL_mutex* send_packet_mutex;
 int ReceivePackets(void* opaque);
 int ReceiveMessage(struct RTPPacket* packet);
+bool received_server_init_message;
 
 struct SocketContext PacketSendContext;
 struct SocketContext PacketTCPContext;
@@ -454,12 +455,13 @@ int ReceivePackets(void* opaque) {
 }
 
 int ReceiveMessage(struct RTPPacket* packet) {
+    FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
     if (!(packet->payload_size == sizeof(FractalServerMessage)
-           || (packet->type == MESSAGE_INIT && packet->payload_size == sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit))
+           || (fmsg->type == MESSAGE_INIT && packet->payload_size == sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit))
     )) {
         mprintf("Incorrect payload size for a server message!\n");
+        return -1;
     }
-    FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
     switch (fmsg->type) {
         case MESSAGE_PONG:
             if (ping_id == fmsg->ping_id) {
@@ -480,9 +482,11 @@ int ReceiveMessage(struct RTPPacket* packet) {
             SetClipboard(&fmsg->clipboard);
             break;
         case MESSAGE_INIT:
+            mprintf( "Received init message!\n" );
             FractalServerMessageInit* msg_init = (FractalServerMessageInit*)fmsg->init_msg;
             memcpy( filename, msg_init->filename, min(sizeof( filename ), sizeof(msg_init->filename)) );
             memcpy( username, msg_init->username, min( sizeof( username ), sizeof( msg_init->username ) ) );
+            received_server_init_message = true;
             break;
         case SMESSAGE_QUIT:
             mprintf("Server signaled a quit!\n");
@@ -779,6 +783,7 @@ int main(int argc, char* argv[]) {
         // Create thread to receive all packets and handle them as needed
         run_receive_packets = true;
         SDL_Thread* receive_packets_thread;
+        received_server_init_message = false;
         receive_packets_thread = SDL_CreateThread(
             ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
@@ -792,6 +797,19 @@ int main(int argc, char* argv[]) {
         bool rgui_pressed = false;
 
         SDL_Delay(250);
+
+        clock waiting_for_init_timer;
+        StartTimer( &waiting_for_init_timer );
+        while( !received_server_init_message )
+        {
+            if( GetTimer( waiting_for_init_timer ) > 250 / 1000.0 )
+            {
+                mprintf( "Took too long for init timer!\n" );
+                exiting = true;
+                break;
+            }
+            SDL_Delay( 25 );
+        }
 
         while (connected && !exiting) {
             // Update the keyboard state
