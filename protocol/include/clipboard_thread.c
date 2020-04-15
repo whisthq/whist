@@ -87,9 +87,6 @@ int UpdateClipboardThread( void* opaque )
 		{
 			mprintf( "Trying to set clipboard!\n" );
 			ClipboardData cb;
-			cb.type = CLIPBOARD_TEXT;
-			cb.size = 0;
-			SetClipboard( &cb );
 			if( clipboard->type == CLIPBOARD_FILES )
 			{
 				char cmd[1000] = "";

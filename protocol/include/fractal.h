@@ -573,8 +573,15 @@ typedef enum FractalServerMessageType {
     MESSAGE_PONG = 1,
     MESSAGE_AUDIO_FREQUENCY = 2,
     SMESSAGE_CLIPBOARD = 3,
+    MESSAGE_INIT = 4,
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
+
+typedef struct FractalServerMessageInit
+{
+    char filename[300];
+    char username[50];
+} FractalServerMessageInit;
 
 typedef struct FractalServerMessage {
     FractalServerMessageType type;  ///< Input message type.
@@ -582,7 +589,11 @@ typedef struct FractalServerMessage {
         int ping_id;
         int frequency;
     };
-    ClipboardData clipboard;
+    union
+    {
+        ClipboardData clipboard;
+        char init_msg[];
+    };
 } FractalServerMessage;
 
 typedef struct FractalDestination {
