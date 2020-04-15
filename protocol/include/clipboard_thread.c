@@ -5,6 +5,8 @@
 
 int UpdateClipboardThread( void* opaque );
 
+extern char filename[300];
+extern char username[50];
 bool updating_set_clipboard;
 bool updating_clipboard;
 bool pending_update_clipboard;
@@ -100,18 +102,22 @@ int UpdateClipboardThread( void* opaque )
 				strcat( cmd, "./unison -follow \"Path *\" " );
 #endif
 
-				strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " );
+				strcat( cmd, "-ui text -sshargs \"-l " );
+				strcat( cmd, username );
+				strcat( cmd, " -i sshkey\" " );
 				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
-				strcat( cmd, "/" );
-				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
+				//strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
+				strcat( cmd, filename );
+				strcat( cmd, "/get_clipboard/" );
 				strcat( cmd, "\" " );
 				strcat( cmd, SET_CLIPBOARD );
 				strcat( cmd, " -force " );
 				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
-				strcat( cmd, "/" );
-				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
+				strcat( cmd, filename );
+				//strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
+				strcat( cmd, "/get_clipboard/" );
 				strcat( cmd, "\" " );
 				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
 

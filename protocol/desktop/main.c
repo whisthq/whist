@@ -46,6 +46,10 @@ volatile bool connected = true;
 volatile bool exiting = false;
 volatile int try_amount;
 
+// Data
+char filename[300];
+char username[50];
+
 // UPDATER CODE - HANDLES ALL PERIODIC UPDATES
 struct UpdateData {
     bool needs_dimension_update;
@@ -450,13 +454,15 @@ int ReceivePackets(void* opaque) {
 }
 
 int ReceiveMessage(struct RTPPacket* packet) {
-    if (packet->payload_size != sizeof(FractalServerMessage)) {
+    if (!(packet->payload_size == sizeof(FractalServerMessage)
+           || (packet->type == MESSAGE_INIT && packet->payload_size == sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit))
+    )) {
         mprintf("Incorrect payload size for a server message!\n");
     }
-    FractalServerMessage fmsg = *(FractalServerMessage*)packet->data;
-    switch (fmsg.type) {
+    FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
+    switch (fmsg->type) {
         case MESSAGE_PONG:
-            if (ping_id == fmsg.ping_id) {
+            if (ping_id == fmsg->ping_id) {
                 mprintf("Latency: %f\n", GetTimer(latency_timer));
                 is_timing_latency = false;
                 ping_failures = 0;
@@ -466,16 +472,17 @@ int ReceiveMessage(struct RTPPacket* packet) {
             }
             break;
         case MESSAGE_AUDIO_FREQUENCY:
-            mprintf("Changing audio frequency to %d\n", fmsg.frequency);
-            audio_frequency = fmsg.frequency;
+            mprintf("Changing audio frequency to %d\n", fmsg->frequency);
+            audio_frequency = fmsg->frequency;
             break;
         case SMESSAGE_CLIPBOARD:
             mprintf("Receive clipboard message from server!\n");
-            SetClipboard(&fmsg.clipboard);
+            SetClipboard(&fmsg->clipboard);
             break;
         case MESSAGE_INIT:
-            FractalServerMessageInit* msg_init = fmsg.init_msg;
-            mprintf( "FILENAME: %s\n", msg_init->filename );
+            FractalServerMessageInit* msg_init = (FractalServerMessageInit*)fmsg->init_msg;
+            memcpy( filename, msg_init->filename, min(sizeof( filename ), sizeof(msg_init->filename)) );
+            memcpy( username, msg_init->username, min( sizeof( username ), sizeof( msg_init->username ) ) );
             break;
         case SMESSAGE_QUIT:
             mprintf("Server signaled a quit!\n");
