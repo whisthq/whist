@@ -28,4 +28,4 @@ const development = {
 	}
 };
 
-export const config = process.env.NODE_ENV === 'development' ? staging : staging;
+export const config = process.env.NODE_ENV === 'development' ? staging : production;
