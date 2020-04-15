@@ -1272,8 +1272,8 @@ def createDiskFromImageHelper(username, location):
         updateDisk(disk_name, '', location)
         assignUserToDisk(disk_name, username)
 
-        return 1
+        return {'status': 200, 'disk_name': disk_name}
     except Exception as e:
         print('CRITICAL ERROR: ' + str(e))
         time.sleep(30)
-        return -1
+        return {'status': 400, 'disk_name': None}

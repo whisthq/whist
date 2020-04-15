@@ -90,10 +90,13 @@ def createEmptyDisk(self, disk_size, username, location):
 
 @celery.task(bind=True)
 def createDiskFromImage(self, username, location):
-	hr = -1
+	hr = 400
+	disk_name = None
 
-	while hr == -1:
-		hr = createDiskFromImageHelper(username, location)
+	while hr == 400:
+		payload = createDiskFromImageHelper(username, location)
+		hr = payload['status']
+		disk_name = payload['disk_name']
 
 	return {'disk_name': disk_name, 'location': location}
 
