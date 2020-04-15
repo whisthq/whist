@@ -42,13 +42,13 @@ def createVM(self, vm_size, location):
 				command
 			]
 		}
-		print(command)
+
 		poller = compute_client.virtual_machines.run_command(
 			os.environ.get('VM_GROUP'),
 			vmParameters['vm_name'],
 			run_command_parameters
 		)
-		poller.wait()
+
 		result = poller.result()
 		print("SUCCESS: Powershell scripts finished running")
 		print(result.value[0].message)
