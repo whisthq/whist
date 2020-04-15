@@ -679,7 +679,7 @@ int main() {
         FractalServerMessageInit* msg_init = msg_init_whole->init_msg;
 #ifdef _WIN32
 	    msg_init->filename[0] = '\0';
-        strcat( msg_init->filename, "C:\\Program Files\\Fractal" );
+        strcat( msg_init->filename, "C:\\ProgramData\\FractalCache" );
 	    char* username = "vm1";
 #else // Linux
         char* cwd = getcwd(NULL, 0);
