@@ -92,6 +92,9 @@ bool get_clipboard_files(ClipboardData* cb) {
     if (!get_clipboard_data(property_atom, cb, 0)) {
       return false;
     }
+    // Add null terminator
+    cb->data[cb->size] = '\0';
+    cb->size++;
 
     char command[100] = "rm -rf ";
     strcat(command, GET_CLIPBOARD);
@@ -105,11 +108,12 @@ bool get_clipboard_files(ClipboardData* cb) {
 
     while (file != NULL) {
       char file_prefix[] = "file://";
-      if (memcmp(file, "file://", sizeof(file_prefix) - 1) == 0) {
+      if (memcmp(file, file_prefix, sizeof(file_prefix) - 1) == 0) {
         char final_filename[1000] = "";
         strcat(final_filename, GET_CLIPBOARD);
         strcat(final_filename, "/");
         strcat(final_filename, basename(file));
+	printf("NAME: %s %s %s\n", final_filename, file, basename(file));
         symlink(file + sizeof(file_prefix) - 1, final_filename);
       } else {
         mprintf("Not a file: %s\n", file);
@@ -129,7 +133,6 @@ ClipboardData* GetClipboard() {
   ClipboardData* cb = (ClipboardData*)cb_buf;
   cb->type = CLIPBOARD_NONE;
   cb->size = 0;
-  return cb;
   get_clipboard_files(cb) || get_clipboard_picture(cb) ||
       get_clipboard_string(cb);
 
@@ -140,7 +143,6 @@ ClipboardData* GetClipboard() {
 }
 
 void SetClipboard(ClipboardData* cb) {
-  return;
   static FILE* inp = NULL;
 
   //
