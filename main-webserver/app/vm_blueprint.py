@@ -58,9 +58,13 @@ def vm(action):
         task = deleteVMResources.apply_async([vm_name, delete_disk])
         return jsonify({'ID': task.id}), 202
     elif action == 'restart':
-        vm_name = request.get_json()['vm_name']
-        task = restartVM.apply_async([vm_name])
-        return jsonify({'ID': task.id}), 202
+        username = request.get_json()['username']
+        vm = fetchUserVMs(username)
+        if vm:
+            vm_name = vm[0]['vm_name']
+            task = restartVM.apply_async([vm_name])
+            return jsonify({'ID': task.id}), 202
+        return jsonify({'ID': None}), 404
     elif action == 'updateState':
         task = updateVMStates.apply_async([])
         return jsonify({'ID': task.id}), 202
