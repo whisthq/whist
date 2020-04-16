@@ -4,10 +4,12 @@ import * as MainAction from '../actions/counter';
 const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, resetFeedback: false, isUser: true, 
                 os: '', askFeedback: false, window: 'main', ipInfo: {}, computers: [], fetchStatus: false, disk: '',
                 attachState: 'NOT_REQUESTED', access_token: '', refresh_token: '', attach_attempts: 0,
-                account_locked: false}
+                account_locked: false, promo_code: '', restart_status: 0, restart_attempts: 0, location: ''}
 
 export default function counter(state = DEFAULT, action: Action<string>) {
   switch (action.type) {
+    case MainAction.LOGOUT:
+      return DEFAULT
     case MainAction.STORE_USERNAME:
       return {
       	...state,
@@ -72,7 +74,8 @@ export default function counter(state = DEFAULT, action: Action<string>) {
     case MainAction.STORE_DISK_NAME:
       return {
         ...state,
-        disk: action.disk
+        disk: action.disk,
+        location: action.location
       }
     case MainAction.ATTACH_DISK:
       return {
@@ -89,6 +92,17 @@ export default function counter(state = DEFAULT, action: Action<string>) {
       return {
         ...state,
         account_locked: action.account_locked
+      }
+    case MainAction.STORE_PROMO_CODE:
+      return {
+        ...state,
+        promo_code: action.code
+      }
+    case MainAction.VM_RESTARTED:
+      return {
+        ...state,
+        restart_status: action.status,
+        restart_attempts: state.restart_attempts + 1
       }
     default:
       return state;

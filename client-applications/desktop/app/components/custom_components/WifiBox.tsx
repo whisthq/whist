@@ -1,4 +1,6 @@
 import React, { Component } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons'
 
 class WifiBox extends Component {
   constructor(props) {
@@ -39,61 +41,54 @@ class WifiBox extends Component {
     if(this.state.internetspeed < 10) {
       internetBox =
         <div>
-          <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+          <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
           </div>
-          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
-            Internet: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}>{this.state.internetspeed} Mbps</span>
+          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+            {this.state.internetspeed} Mbps Internet
           </div>
-          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 12, color: "#333333", lineHeight: 1.4, paddingLeft: 20}}>
             Your Internet bandwidth is slow. Try closing streaming apps like Youtube, Netflix, or Spotify.
           </div>
         </div>
     } else if(this.state.internetspeed < 20) {
       internetBox =
         <div>
-          <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+          <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
           </div>
-          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
-            Internet: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}>{this.state.internetspeed} Mbps</span>
+          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+            {this.state.internetspeed} Mbps Internet
           </div>
-          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 12, color: "#333333", lineHeight: 1.4, paddingLeft: 20}}>
             Expect a smooth streaming experience, although dips in Internet speed below 10 Mbps could cause low image quality.
           </div>
         </div>
     } else {
       internetBox =
         <div>
-          <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+          <div style = {{background: "none", border: "solid 1px #14a329", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
           </div>
-          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
-            Internet: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}>{this.state.internetspeed} Mbps</span>
+          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+            {this.state.internetspeed} Mbps Internet
           </div>
-          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 12, color: "#333333", lineHeight: 1.4, paddingLeft: 20}}>
             Your Internet is fast enough to support high-quality streaming.
           </div>
         </div>
     }
 
     return (
-      <div style = {{marginTop: 30}}>
+      <div style = {{marginTop: 15}}>
         {
           this.state.internetspeed === 0
           ?
-          <div>
-            <div style = {{width: 220, height: `${ this.props.barHeight }px`, borderRadius: "0px 2px 2px 0px", background: "#111111"}}>
-            </div>
-            <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
-              <div style = {{background: "none", border: "solid 1px #5EC4EB", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 3, marginRight: 7}}>
-              </div>
+          <div style = {{marginTop: 25, position: 'relative', right: 5}}>
+            <FontAwesomeIcon icon = {faCircleNotch} spin style = {{color: "#5EC4EB", height: 10, display: 'inline', marginRight: 9}}/>
+            <div style = {{marginTop: 8, fontSize: 12, color: "#333333", display: 'inline'}}>
               Checking Internet speed
             </div>
           </div>
           :
           <div>
-            <div style = {{width: 220, height: `${ this.props.barHeight }px`, borderRadius: "0px 2px 2px 0px", background: "#111111", position: "absolute", zIndex: 0}}>
-            </div>
-            <div style = {{width: `${ this.state.internetbar }px`, height: `${ this.props.barHeight }px`, borderRadius: "0px 2px 2px 0px", background: "#5EC4EB", position: "absolute", zIndex: 1}}>
-            </div>
             <div style = {{height: 10}}></div>
             {internetBox}
           </div>

@@ -27,9 +27,21 @@ function* loginUser(action) {
     yield put(Action.storeUsername(action.username))
     yield put(Action.storeIsUser(json.is_user))
     yield put(Action.storeJWT(json.access_token, json.refresh_token))
+    yield call(getPromoCode, action)
     history.push("/counter");
   } else {
     yield put(Action.loginFailed(true));
+  }
+}
+
+function* getPromoCode(action) {
+  const state = yield select()
+  const { json, response } = yield call(apiPost, config.url.PRIMARY_SERVER + '/account/fetchCode', {
+    username: action.username
+  }, '')
+
+  if (json && json.status === 200) {
+    yield put(Action.storePromoCode(json.code))
   }
 }
 
@@ -55,9 +67,11 @@ function* fetchDisk(action) {
   }
 
   if(json && json.payload && Object.keys(json.payload).length > 0) {
-    yield put(Action.storeDiskName(json.payload[0].disk_name))
+    console.log("disk fetched")
+    console.log(json.payload)
+    yield put(Action.storeDiskName(json.payload[0].disk_name, json.payload[0].location))
   } else {
-    yield put(Action.storeDiskName(''))
+    yield put(Action.storeDiskName('', ''))
   }
 
   yield put(Action.fetchDiskStatus(true))
@@ -177,15 +191,10 @@ function* attachDisk(action) {
     disk_name: state.counter.disk
   }, state.counter.access_token)
 
-  console.log(json)
-
   if(json && json.status && json.status === 401) {
-    console.log("TOKEN EXPIRED")
     yield call(refreshAccess)
     yield call(attachDisk, action)
   }
-
-  console.log("TOKEN IS VALID")
 
   if(json && json.ID) {
     yield put(Action.fetchVM(json.ID))
@@ -205,6 +214,40 @@ function* fetchVM(action) {
   }
 }
 
+function* restartPC(action) {
+  const state = yield select()
+  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/vm/restart', {
+    username: state.counter.username
+  }, state.counter.access_token)
+
+  if(json && json.status && json.status === 401) {
+    yield call(restartPC)
+    yield call(restartPC, action)
+  }
+
+  if(json && json.ID) {
+    yield call(getRestartStatus, json.ID)
+  } else {
+    yield put(Action.vmRestarted(400))
+  }
+}
+
+function* getRestartStatus(id) {
+  const state = yield select()
+  var { json, response } = yield call(apiGet, (config.url.PRIMARY_SERVER + '/status/').concat(id), state.counter.access_token)
+
+  while (json.state === "PENDING" || json.state === "STARTED") {
+    var { json, response } = yield call(apiGet, (config.url.PRIMARY_SERVER + '/status/').concat(id), state.counter.access_token)
+    yield delay(5000)
+  }
+
+  console.log("VM RESTARTED")
+  console.log(json)
+
+  if(json && json.output) {
+    yield put(Action.vmRestarted(200))
+  }
+}
 
 export default function* rootSaga() {
  	yield all([
@@ -217,6 +260,7 @@ export default function* rootSaga() {
      takeEvery(Action.FETCH_COMPUTERS, fetchComputers),
      takeEvery(Action.FETCH_DISK, fetchDisk),
      takeEvery(Action.ATTACH_DISK, attachDisk),
-     takeEvery(Action.FETCH_VM, fetchVM)
+     takeEvery(Action.FETCH_VM, fetchVM),
+     takeEvery(Action.RESTART_PC, restartPC)
   ])
 }

@@ -170,7 +170,7 @@ class Home extends Component {
 		      </div>
 		      <div className = {styles.landingHeaderRight}>
 		        <span id = "forgotButton" onClick = {this.ForgotPassword}>Forgot Password?</span>
-		        <button type = "button" className = {styles.signupButton} id = "signup-button" onClick = {this.SignUp}>Sign Up</button>
+		        <button type = "button" className = {styles.signupButton}  style = {{borderRadius: 5, marginLeft: 15}} id = "signup-button" onClick = {this.SignUp}>Sign Up</button>
 		      </div>
 		    </div>
         <div style = {{marginTop: 50}}>
@@ -190,11 +190,11 @@ class Home extends Component {
   		    <div className = {styles.loginContainer}>
   		      <div>
   		        <img src = {UserIcon} width = "100" className = {styles.inputIcon}/>
-  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdateUsername} type = "text" className = {styles.inputBox} placeholder = "Username" id = "username"/>
+  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdateUsername} type = "text" className = {styles.inputBox} style = {{borderRadius: 5}} placeholder = "Username" id = "username"/>
   		      </div>
   			  <div>
   		        <img src = {LockIcon} width = "100" className = {styles.inputIcon}/>
-  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdatePassword} type = "password" className = {styles.inputBox} placeholder = "Password" id = "password"/>
+  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdatePassword} type = "password" className = {styles.inputBox} style = {{borderRadius: 5}} placeholder = "Password" id = "password"/>
   		      </div>
   		      <div style = {{marginBottom: 20}}>
               {
@@ -210,7 +210,7 @@ class Home extends Component {
   		        <button onClick = {() => this.LoginUser()} type = "button" className = {styles.loginButton} id = "login-button">START</button>
               )
               :
-              <button type = "button" className = {styles.loginButton} id = "login-button" style = {{opacity: 0.5, background: 'linear-gradient(258.54deg, #5ec3eb 0%, #5ec3eb 100%)'}}>
+              <button type = "button" className = {styles.loginButton} id = "login-button" style = {{opacity: 0.5, background: 'linear-gradient(258.54deg, #5ec3eb 0%, #5ec3eb 100%)', borderRadius: 5}}>
                 START
               </button>
               }

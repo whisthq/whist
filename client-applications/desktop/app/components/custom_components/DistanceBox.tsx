@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
 import * as geolib from 'geolib';
+import { connect } from 'react-redux';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons'
 
 class DistanceBox extends Component {
   constructor(props) {
@@ -8,6 +11,8 @@ class DistanceBox extends Component {
   }
 
   CalculateDistance = (public_ip) => {
+    console.log("Calculating distance")
+    console.log(public_ip)
     let component = this;
     const iplocation = require("iplocation").default;
     var options = {
@@ -37,6 +42,7 @@ class DistanceBox extends Component {
     }
 
     function showError(error) {
+      console.log(error)
     }
   }
 
@@ -45,7 +51,9 @@ class DistanceBox extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if(this.props.public_ip != null && this.state.distance == 0) {
+    console.log("distance box update!")
+    console.log(this.props)
+    if(this.props.public_ip != '' && this.state.distance == 0) {
       this.CalculateDistance(this.props.public_ip)
     }
   }
@@ -57,61 +65,54 @@ class DistanceBox extends Component {
     if(this.state.distance < 250) {
       distanceBox =
         <div>
-         <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+         <div style = {{background: "none", border: "solid 1px #14a329", height: 6, width: 6, borderRadius: 4, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
          </div>
-          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
-            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
+          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+            {this.state.distance} Mi. Cloud PC Distance
           </div>
-          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 12, color: "#333333", paddingLeft: 20, lineHeight: 1.4}}>
             You are close enough to your cloud PC to experience low-latency streaming.
           </div>
         </div>
     } else if(this.state.distance < 500) {
       distanceBox =
         <div>
-         <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+         <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 4, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
          </div>
-          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
-            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
+          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+            {this.state.distance} Mi. Cloud PC Distance
           </div>
-          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 12, color: "#333333", paddingLeft: 20, lineHeight: 1.4}}>
             You may experience slightly higher latency due to your distance from your cloud PC.
           </div>
         </div>
     } else {
       distanceBox =
         <div>
-         <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 3, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 7}}>
+         <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 4, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
          </div>
-          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
-            Cloud PC Distance: <span style = {{color: "#5EC4EB", fontWeight: "bold"}}> {this.state.distance} mi </span>
+          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+            {this.state.distance} Mi. Cloud PC Distance
           </div>
-          <div style = {{marginTop: 8, fontSize: 11, color: "#D6D6D6"}}>
+          <div style = {{marginTop: 8, fontSize: 12, color: "#333333", paddingLeft: 20, lineHeight: 1.4}}>
             You may experience latency because you are far away from your cloud PC.
           </div>
         </div>
     }
 
     return (
-      <div style = {{marginTop: 35}}>
+      <div style = {{marginTop: 15}}>
         {
           this.state.distance === 0
           ?
-          <div>
-            <div style = {{width: 220, height: `${ this.props.barHeight }px`, borderRadius: "0px 2px 2px 0px", background: "#111111"}}>
-            </div>
-            <div style = {{marginTop: 8, fontSize: 11, color: "white"}}>
-              <div style = {{background: "none", border: "solid 1px #5EC4EB", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 3, marginRight: 7}}>
-              </div>
+          <div style = {{marginTop: 25, position: 'relative', right: 5}}>
+            <FontAwesomeIcon icon = {faCircleNotch} spin style = {{color: "#5EC4EB", height: 10, display: 'inline', marginRight: 9}}/>
+            <div style = {{marginTop: 8, fontSize: 12, color: "#333333", display: 'inline'}}>
               Checking current location
             </div>
           </div>
           :
           <div>
-            <div style = {{width: 220, height: `${ this.props.barHeight }px`, borderRadius: "0px 2px 2px 0px", background: "#111111", position: "absolute", zIndex: 0}}>
-            </div>
-            <div style = {{width: `${ this.state.distancebar }px`, height: `${ this.props.barHeight }px`, borderRadius: "0px 2px 2px 0px", background: "#5EC4EB", position: "absolute", zIndex: 1}}>
-            </div>
             <div style = {{height: 10}}></div>
             {distanceBox}
           </div>

@@ -1,5 +1,6 @@
 import { GetState, Dispatch } from '../reducers/types'
 
+export const LOGOUT              = "LOGOUT"
 export const STORE_USERNAME      = "STORE_USERNAME"
 export const STORE_IP            = "STORE_IP"
 export const STORE_IS_USER       = "STORE_IS_USER"
@@ -26,7 +27,9 @@ export const FETCH_VM            = "FETCH_VM"
 export const STORE_JWT           = "STORE_JWT"
 export const CREATE_DISK         = "CREATE_DISK"
 export const STORE_PAYMENT_INFO  = "STORE_PAYMENT_INFO"
-
+export const STORE_PROMO_CODE    = "STORE_PROMO_CODE"
+export const RESTART_PC          = "RESTART_PC"
+export const VM_RESTARTED        = "VM_RESTARTED"
 
 export function loginUser(username, password) {
 	console.log("login action fired")
@@ -171,10 +174,10 @@ export function fetchDiskStatus(status) {
 	}
 }
 
-export function storeDiskName(disk) {
+export function storeDiskName(disk, location) {
 	return {
 		type: STORE_DISK_NAME,
-		disk
+		disk, location
 	}
 }
 
@@ -209,5 +212,32 @@ export function storePaymentInfo(account_locked) {
 	return {
 		type: STORE_PAYMENT_INFO,
 		account_locked
+	}
+}
+
+export function storePromoCode(code) {
+	return {
+		type: STORE_PROMO_CODE,
+		code
+	}
+}
+
+export function logout() {
+	return {
+		type: LOGOUT
+	}
+}
+
+export function restartPC() {
+	return {
+		type: RESTART_PC
+	}
+}
+
+export function vmRestarted(status) {
+	console.log("VM STATUS IS NOW")
+	console.log(status)
+	return {
+		type: VM_RESTARTED
 	}
 }

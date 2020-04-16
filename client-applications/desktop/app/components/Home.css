@@ -66,7 +66,7 @@ button {
     border: solid 2px #5EC4EB;
     background: none;
     font-weight: bold;
-    border-radius: 30px;
+    border-radius: 5px;
     padding: 10px 30px;
     color: #5EC4EB;
     font-weight: 'bold';
@@ -93,7 +93,7 @@ button {
 .inputBox {
     width: 175px;
     background-color: rgba(20, 20, 20, 0.7);
-    padding: 10px 50px;
+    padding: 15px 50px;
     border-radius: 30px;
     margin-bottom: 20px;
     border: none;
@@ -104,10 +104,10 @@ button {
 
 .inputIcon {
     position: absolute;
-    margin-top: 10px;
+    margin-top: 17px;
     margin-left: 20px;
-    width: 15px;
-    height: 15px;
+    width: 12px;
+    height: 12px;
 }
 
 .bottomBox {
