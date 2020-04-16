@@ -15,7 +15,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  -webkit-app-region: drag;
+  background-color: #EEEEEE;
 }
 
 .container h2 {
@@ -51,9 +51,9 @@ button {
 }
 
 .landingHeader {
-    padding: 30px;
-    padding-top: 20px;
+    padding: 30px 50px;
     display: flex;
+    color: #333333;
 }
 
 .landingHeaderLeft {
@@ -80,14 +80,14 @@ button {
 .signupButton, .loginButton {
     font-family: 'Maven Pro';
     border: none;
-    border: solid 2px #5EC4EB;
-    background: none;
+    background: rgba(94, 195, 235, 0.2);
     font-weight: bold;
-    border-radius: 30px;
+    border-radius: 5px;
     padding: 10px 30px;
-    color: #5EC4EB;
+    color: #1ba8e0;
     font-weight: 'bold';
     margin-left: 10px;
+    font-size: 14px;
 }
 
 .loginButton {
@@ -105,7 +105,8 @@ button {
 .headerButton {
   margin-left: 15px;
   font-weight: bold;
-  color: #D1D1D1;
+  color: #111111;
+  font-size: 14px;
 }
 
 .headerButton:hover {
@@ -153,7 +154,7 @@ button {
 
 
 .bigBox, .statBox {
-  box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.20);
 }
 
 .bigBox:hover {
@@ -195,13 +196,4 @@ button {
 /* Handle */
 ::-webkit-scrollbar-thumb {
   background: #5EC4EB;
-}
-
-.macTitleBar {
-  -webkit-app-region: drag;
-  margin-top: 22px;
-}
-
-.removeDrag {
-  -webkit-app-region: no-drag;
 }

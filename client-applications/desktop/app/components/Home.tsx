@@ -23,8 +23,8 @@ import { loginUser, setOS, loginStudio, loginFailed } from "../actions/counter"
 class Home extends Component {
   constructor(props) {
     super(props)
-    this.state = {username: '', password: '', loggingIn: false, warning: false, version: "1.0.0",
-                  studios: false, rememberMe: false, lock: true}
+    this.state = {username: '', password: '', loggingIn: false, warning: false, version: "1.0.0", 
+                  studios: false, rememberMe: false}
   }
 
   CloseWindow = () => {
@@ -67,7 +67,7 @@ class Home extends Component {
   }
 
   LoginKeyPress = (event) => {
-  	if(event.key === 'Enter' && !this.state.studios && !this.state.lock) {
+  	if(event.key === 'Enter' && !this.state.studios) {
   		this.LoginUser()
   	}
     if(event.key === 'Enter' && this.state.studios) {
@@ -150,11 +150,9 @@ class Home extends Component {
   render() {
 	return (
 		<div className={styles.container} data-tid="container" style = {{backgroundImage: "url(" + Background + ")"}}>
-      <div className={styles.removeDrag}>
       <UpdateScreen/>
       <div style = {{position: 'absolute', bottom: 15, right: 15, fontSize: 11, color: "#D1D1D1"}}>
         Version: {this.state.version}
-      </div>
       </div>
       {
         this.props.os === 'win32'
@@ -163,9 +161,8 @@ class Home extends Component {
           <Titlebar backgroundColor="#000000"/>
         </div>
         :
-        <div className={styles.macTitleBar}/>
+        <div style = {{marginTop: 10}}></div>
       }
-      <div className={styles.removeDrag}>
 		    <div className = {styles.landingHeader}>
 		      <div className = {styles.landingHeaderLeft}>
 		        <img src = {Logo} width = "20" height = "20"/>
@@ -173,7 +170,7 @@ class Home extends Component {
 		      </div>
 		      <div className = {styles.landingHeaderRight}>
 		        <span id = "forgotButton" onClick = {this.ForgotPassword}>Forgot Password?</span>
-		        <button type = "button" className = {styles.signupButton} id = "signup-button" onClick = {this.SignUp}>Sign Up</button>
+		        <button type = "button" className = {styles.signupButton}  style = {{borderRadius: 5, marginLeft: 15}} id = "signup-button" onClick = {this.SignUp}>Sign Up</button>
 		      </div>
 		    </div>
         <div style = {{marginTop: 50}}>
@@ -193,47 +190,38 @@ class Home extends Component {
   		    <div className = {styles.loginContainer}>
   		      <div>
   		        <img src = {UserIcon} width = "100" className = {styles.inputIcon}/>
-  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdateUsername} type = "text" className = {styles.inputBox} placeholder = "Username" id = "username"/>
+  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdateUsername} type = "text" className = {styles.inputBox} style = {{borderRadius: 5}} placeholder = "Username" id = "username"/>
   		      </div>
   			  <div>
   		        <img src = {LockIcon} width = "100" className = {styles.inputIcon}/>
-  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdatePassword} type = "password" className = {styles.inputBox} placeholder = "Password" id = "password"/>
+  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdatePassword} type = "password" className = {styles.inputBox} style = {{borderRadius: 5}} placeholder = "Password" id = "password"/>
   		      </div>
-            {
-            this.state.lock 
-            ?
-            <div style = {{width: 500, fontSize: 14, margin: 'auto', lineHeight: 1.5}}>
-              Fractal is currently undergoing a major update, and will be unavailable for the next 48 hours. We apologize for the inconvenience--please check
-              back in tomorrow!
-            </div>
-            :
   		      <div style = {{marginBottom: 20}}>
               {
-              !this.state.studios
+              !this.state.studios 
               ?
               (
               this.state.loggingIn && !this.props.warning
               ?
               <button type = "button" className = {styles.loginButton} id = "login-button" style = {{opacity: 0.6, textAlign: 'center'}}>
-                <FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "white", width: 12, marginRight: 5, position: 'relative', top: 0.5}}/> Processing
+                <FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "white", width: 12, marginRight: 5, position: 'relative', top: 0.5}}/> Processing 
               </button>
               :
   		        <button onClick = {() => this.LoginUser()} type = "button" className = {styles.loginButton} id = "login-button">START</button>
               )
               :
-              <button type = "button" className = {styles.loginButton} id = "login-button" style = {{opacity: 0.5, background: 'linear-gradient(258.54deg, #5ec3eb 0%, #5ec3eb 100%)'}}>
+              <button type = "button" className = {styles.loginButton} id = "login-button" style = {{opacity: 0.5, background: 'linear-gradient(258.54deg, #5ec3eb 0%, #5ec3eb 100%)', borderRadius: 5}}>
                 START
               </button>
               }
   		      </div>
-            }
             <div style = {{marginTop: 25, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
               <label className = {styles.termsContainer}>
                 <input
                   type="checkbox"
                   onChange={this.changeRememberMe}
                   onKeyPress = {this.LoginKeyPress}
-                  />
+                  /> 
                 <span className = {styles.checkmark}></span>
               </label>
 
@@ -246,7 +234,7 @@ class Home extends Component {
   		      	this.props.warning
   		      	?
               (
-              this.state.studios
+              this.state.studios 
               ?
   		      	<div>
   		      		Invalid credentials. If you lost your password, you can reset it on the&nbsp;
@@ -265,13 +253,13 @@ class Home extends Component {
   		      </div>
   		    </div>
         </div>
-        </div>
 		</div>
 	);
 	}
 }
 
 function mapStateToProps(state) {
+  console.log(this.state)
   return {
     username: state.counter.username,
     public_ip: state.counter.public_ip,

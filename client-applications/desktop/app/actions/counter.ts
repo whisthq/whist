@@ -1,5 +1,6 @@
 import { GetState, Dispatch } from '../reducers/types'
 
+export const LOGOUT              = "LOGOUT"
 export const STORE_USERNAME      = "STORE_USERNAME"
 export const STORE_IP            = "STORE_IP"
 export const STORE_IS_USER       = "STORE_IS_USER"
@@ -18,10 +19,17 @@ export const PING_IPINFO	     = "PING_IPINFO"
 export const STORE_IPINFO        = "STORE_IPINFO"
 export const FETCH_COMPUTERS     = "FETCH_COMPUTERS"
 export const STORE_COMPUTERS     = "STORE_COMPUTERS"
-export const FETCH_VMS           = "FETCH_VMS"
-export const FETCH_VM_STATUS     = "FETCH_VM_STATUS"
-export const SEND_LOGS           = "SEND_LOGS"
-
+export const FETCH_DISK          = "FETCH_DISK"
+export const FETCH_DISK_STATUS   = "FETCH_DISK_STATUS"
+export const STORE_DISK_NAME     = "STORE_DISK_NAME"
+export const ATTACH_DISK         = "ATTACH_DISK"
+export const FETCH_VM            = "FETCH_VM"
+export const STORE_JWT           = "STORE_JWT"
+export const CREATE_DISK         = "CREATE_DISK"
+export const STORE_PAYMENT_INFO  = "STORE_PAYMENT_INFO"
+export const STORE_PROMO_CODE    = "STORE_PROMO_CODE"
+export const RESTART_PC          = "RESTART_PC"
+export const VM_RESTARTED        = "VM_RESTARTED"
 
 export function loginUser(username, password) {
 	console.log("login action fired")
@@ -152,23 +160,84 @@ export function storeComputers(payload) {
 	}
 }
 
-export function fetchVMs(username) {
+export function fetchDisk(username) {
 	return {
-		type: FETCH_VMS,
+		type: FETCH_DISK,
 		username
 	}
 }
 
-export function fetchVMStatus(status) {
+export function fetchDiskStatus(status) {
 	return {
-		type: FETCH_VM_STATUS,
+		type: FETCH_DISK_STATUS,
 		status
 	}
 }
 
-export function sendLogs(logs) {
+export function storeDiskName(disk, location) {
 	return {
-		type: SEND_LOGS,
-		logs
+		type: STORE_DISK_NAME,
+		disk, location
+	}
+}
+
+export function attachDisk() {
+	return {
+		type: ATTACH_DISK
+	}
+}
+
+export function fetchVM(id) {
+	return {
+		type: FETCH_VM,
+		id
+	}
+}
+
+export function storeJWT(access_token, refresh_token) {
+	return {
+		type: STORE_JWT,
+		access_token,
+		refresh_token
+	}
+}
+
+export function createDisk() {
+	return {
+		type: CREATE_DISK
+	}
+}
+
+export function storePaymentInfo(account_locked) {
+	return {
+		type: STORE_PAYMENT_INFO,
+		account_locked
+	}
+}
+
+export function storePromoCode(code) {
+	return {
+		type: STORE_PROMO_CODE,
+		code
+	}
+}
+
+export function logout() {
+	return {
+		type: LOGOUT
+	}
+}
+
+export function restartPC() {
+	return {
+		type: RESTART_PC
+	}
+}
+
+export function vmRestarted(status) {
+	console.log("VM STATUS IS NOW")
+	console.log(status)
+	return {
+		type: VM_RESTARTED
 	}
 }

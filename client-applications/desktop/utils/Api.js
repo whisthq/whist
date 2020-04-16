@@ -1,11 +1,12 @@
-export function apiPost(endpoint, body) {
-	// var base_url = 'https://cube-vm-server.herokuapp.com/form/store'
-	// var full_url = `${base_url}${endpoint}`
-	return fetch(endpoint, {
+export function apiPost(endpoint, body, token) {
+  // var base_url = 'https://cube-vm-server.herokuapp.com/form/store'
+  // var full_url = `${base_url}${endpoint}`
+  return fetch(endpoint, {
         method: 'POST',
         mode: 'cors',
         headers: {
             'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
             // 'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: JSON.stringify(body)
@@ -14,7 +15,7 @@ export function apiPost(endpoint, body) {
       })
 }
 
-export function apiGet(endpoint) {
+export function apiGet(endpoint, token) {
   // var base_url = 'https://cube-vm-server.herokuapp.com/form/store'
   // var full_url = `${base_url}${endpoint}`
   return fetch(endpoint, {
@@ -22,6 +23,7 @@ export function apiGet(endpoint) {
         mode: 'cors',
         headers: {
             'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
             // 'Content-Type': 'application/x-www-form-urlencoded',
         }
       }).then(response => {

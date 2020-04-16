@@ -127,14 +127,14 @@ class Studios extends Component {
             </div>
             <div style = {{marginTop: 10, display: "inline-block"}}>
               <Online>
-                <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 3.5}}>
+                <div style = {{background: "none", border: "solid 1px #14a329", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 3.5}}>
                 </div>
                 <div style = {{display: "inline", float: "left", marginLeft: 5, fontSize: 12, color: "#D6D6D6"}}>
                   Online
                 </div>
               </Online>
               <Offline>
-                <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 3.5}}>
+                <div style = {{background: "none", border: "solid 1px #14a329", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 3.5}}>
                 </div>
                 <div style = {{display: "inline", float: "left", marginLeft: 5, fontSize: 12, color: "#D6D6D6"}}>
                   Offline

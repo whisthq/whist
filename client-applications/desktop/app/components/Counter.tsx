@@ -24,12 +24,13 @@ import { ReactTypeformEmbed } from 'react-typeform-embed'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 
-import { storeUsername, storeIP, storeIsUser, trackUserActivity, storeDistance, askFeedback, changeWindow, fetchVMs, fetchVMStatus } from "../actions/counter"
+import { storeUsername, storeIP, storeIsUser, trackUserActivity, storeDistance, askFeedback, changeWindow, fetchDiskStatus, 
+  storeDiskName, logout } from "../actions/counter"
 
 class Counter extends Component {
   constructor(props) {
     super(props)
-    this.state = {isLoading: true, username: '', launches: 0}
+    this.state = {isLoading: true, username: '', launches: 0, showTitlebar: true, location_ip: ''}
   }
 
   CloseWindow = () => {
@@ -47,6 +48,7 @@ class Counter extends Component {
   }
 
   OpenFeedback = () => {
+    this.setState({showTitlebar: false})
     this.props.dispatch(askFeedback(true))
   }
 
@@ -55,10 +57,7 @@ class Counter extends Component {
   }
 
   LogOut = () => {
-    this.props.dispatch(storeUsername(null))
-    this.props.dispatch(storeIP(''))
-    this.props.dispatch(storeIsUser(true))
-    this.props.dispatch(fetchVMStatus(false))
+    this.props.dispatch(logout())
     const storage = require('electron-json-storage');
     storage.set('credentials', {username: '', password: ''}, function(err) {
       history.push("/");
@@ -68,6 +67,28 @@ class Counter extends Component {
   componentDidMount() {
     this.props.dispatch(changeWindow('main'))
     this.setState({isLoading: false})
+    if(this.props.username && this.props.username != '') {
+      this.setState({username: this.props.username.split('@')[0]})
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    console.log("COUNTER STATE UPDATE")
+    console.log(this.props)
+    if(this.props.username && prevProps.username == '' && this.props.username != '' && this.state.username == '') {
+      this.setState({username: this.props.username.split('@')[0]})
+    }
+    if(prevProps.askFeedback && !this.props.askFeedback && !this.state.showTitlebar) {
+      this.setState({showTitlebar: true})
+    }
+    if(this.props.location != '' && this.state.location_ip == '') {
+      if(this.props.location == 'eastus') {
+        console.log("EAST US IP UPDATE")
+        this.setState({location_ip: '40.76.207.99'})
+      } else {
+        this.setState({location_ip: '104.215.96.85'})
+      }
+    }
   }
 
   render() {
@@ -75,14 +96,22 @@ class Counter extends Component {
 
     return (
       <div className={styles.container} data-tid="container" style = {{fontFamily: "Maven Pro"}}>
-      <div className={styles.removeDrag}>
         <UpdateScreen/>
-        </div>
         {
         this.props.os === 'win32'
         ?
-        <div>
-          <Titlebar backgroundColor="#000000"/>
+        <div style = {{marginBottom: 20}}>
+          {
+          this.state.showTitlebar
+          ?
+          <div style = {{backgroundColor: '#EEEEEE', width: 30, height: 28, position: 'absolute', top: 0, right: 125, zIndex: 100}}>
+          </div>
+          :
+          <div></div>
+          }
+          <div style = {{backgroundColor: ' rgb(94, 195, 235)', width: 150, position: 'absolute', top: 0, right: 0}}>
+            <Titlebar/>
+          </div>
         </div>
         :
         <div className={styles.macTitleBar}/>
@@ -98,7 +127,7 @@ class Counter extends Component {
         <div className = {styles.landingHeader}>
           <div className = {styles.landingHeaderLeft}>
             <img src = {Logo} width = "20" height = "20"/>
-            <span className = {styles.logoTitle}>Fractal</span>
+            <span className = {styles.logoTitle} style = {{color: '#111111', fontWeight: 'bold'}}>Fractal</span>
           </div>
           <div className = {styles.landingHeaderRight}>
             <span className = {styles.headerButton} onClick = {this.OpenFeedback}>Support</span>
@@ -107,44 +136,41 @@ class Counter extends Component {
             <span className = {styles.headerButton}>
               Refer a Friend
              </span>
-            } modal contentStyle = {{width: 300, borderRadius: 5, backgroundColor: "#111111", border: "none", height: 100, padding: 30, textAlign: "center"}}>
-              <div style = {{fontWeight: 'bold', fontSize: 20}} className = {styles.blueGradient}><strong>Coming Soon</strong></div>
-              <div style = {{fontSize: 12, color: "#D6D6D6", marginTop: 20}}>Get rewarded when you refer a friend.</div>
+            } modal contentStyle = {{width: 350, color: "#111111", borderRadius: 5, backgroundColor: "white", border: "none", height: 150, padding: 30, textAlign: "center"}}>
+              <div style = {{fontWeight: 'bold', fontSize: 16}}>Your Referral Code</div>
+              <div style = {{fontSize: 36, marginTop: 20}} className = {styles.blueGradient}>{this.props.promo_code}</div>
+              <div style = {{maxWidth: 275, margin: 'auto', marginTop: 25, fontSize: 14, lineHeight: 1.4}}>Share it with a friend and get a free month when they create a cloud PC.</div>
             </Popup>
             <button onClick = {this.LogOut} type = "button" className = {styles.signupButton} id = "signup-button" style = {{marginLeft: 25, fontFamily: "Maven Pro", fontWeight: 'bold'}}>Sign Out</button>
           </div>
         </div>
-        <div style = {{display: 'flex', padding: '20px 75px' }}>
+        <div style = {{display: 'flex', padding: '20px 50px' }}>
           <div style = {{width: '65%', textAlign: 'left', paddingRight: 20}}>
             <MainBox currentWindow = {this.props.currentWindow} default = "main"/>
           </div>
           {
           this.props.currentWindow === 'main'
           ?
-          <div className = {styles.statBox} style = {{width: '35%', textAlign: 'left', background: "linear-gradient(217.69deg, #363868 0%, rgba(30, 31, 66, 0.5) 101.4%)", borderRadius: 5, padding: 30, minHeight: 350}}>
-            <div style = {{fontWeight: 'bold', fontSize: 18}}>
-              Welcome, {this.props.username}
+          <div className = {styles.statBox} style = {{width: '35%', textAlign: 'left', background: "white", borderRadius: 5, padding: 30, paddingBottom: 25, minHeight: 350, color: "#111111"}}>
+            <div style = {{fontWeight: 'bold', fontSize: 20}}>
+              Welcome, {this.state.username}
             </div>
             <div style = {{marginTop: 10, display: "inline-block"}}>
               <Online>
-                <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 3.5}}>
-                </div>
-                <div style = {{display: "inline", float: "left", marginLeft: 5, fontSize: 12, color: "#D6D6D6"}}>
+                <div style = {{display: "inline", float: "left", fontSize: 12, color: "#14a329"}}>
                   Online
                 </div>
               </Online>
               <Offline>
-                <div style = {{background: "none", border: "solid 1px #3ce655", height: 6, width: 6, borderRadius: 3, display: "inline", float: "left", position: 'relative', top: 3.5}}>
-                </div>
-                <div style = {{display: "inline", float: "left", marginLeft: 5, fontSize: 12, color: "#D6D6D6"}}>
+                <div style = {{display: "inline", float: "left", fontSize: 12, color: "#333333"}}>
                   Offline
                 </div>
               </Offline>
             </div>
 
             <WifiBox barHeight = {barHeight}/>
-            <DistanceBox barHeight = {barHeight} public_ip = {this.props.public_ip}/>
             <CPUBox barHeight = {barHeight}/>
+            <DistanceBox barHeight = {barHeight} public_ip = {this.state.location_ip}/>
 
           </div>
           :
@@ -164,7 +190,10 @@ function mapStateToProps(state) {
     public_ip: state.counter.public_ip,
     os: state.counter.os,
     askFeedback: state.counter.askFeedback,
-    currentWindow: state.counter.window
+    currentWindow: state.counter.window,
+    disk: state.counter.disk,
+    promo_code: state.counter.promo_code,
+    location: state.counter.location
   }
 }
 

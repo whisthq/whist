@@ -1,82 +1,108 @@
 import { Action } from 'redux';
-import {
-  STORE_USERNAME,
-  STORE_IP,
-  STORE_IS_USER,
-  LOGIN_FAILED,
-  STORE_DISTANCE,
-  RESET_FEEDBACK,
-  SET_OS,
-  ASK_FEEDBACK,
-  CHANGE_WINDOW,
-  STORE_IPINFO,
-  STORE_COMPUTERS,
-  FETCH_VM_STATUS } from '../actions/counter';
+import * as MainAction from '../actions/counter';
 
 const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, resetFeedback: false, isUser: true, 
-                os: '', askFeedback: false, window: 'main', ipInfo: {}, computers: [], fetchStatus: false}
+                os: '', askFeedback: false, window: 'main', ipInfo: {}, computers: [], fetchStatus: false, disk: '',
+                attachState: 'NOT_REQUESTED', access_token: '', refresh_token: '', attach_attempts: 0,
+                account_locked: false, promo_code: '', restart_status: 0, restart_attempts: 0, location: ''}
 
 export default function counter(state = DEFAULT, action: Action<string>) {
   switch (action.type) {
-    case STORE_USERNAME:
+    case MainAction.LOGOUT:
+      return DEFAULT
+    case MainAction.STORE_USERNAME:
       return {
       	...state,
       	username: action.username,
       }
-    case STORE_IP:
+    case MainAction.STORE_IP:
       return {
         ...state,
-        public_ip: action.ip
+        public_ip: action.ip,
+        attach_attempts: state.attach_attempts + 1
       }
-    case STORE_IS_USER:
+    case MainAction.STORE_IS_USER:
       return {
         ...state,
         isUser: action.isUser
       }
-    case LOGIN_FAILED:
+    case MainAction.LOGIN_FAILED:
       return {
         ...state,
         warning: action.warning
       }
-    case STORE_DISTANCE:
+    case MainAction.STORE_DISTANCE:
       return {
         ...state,
         distance: action.distance
       }
-    case RESET_FEEDBACK:
+    case MainAction.RESET_FEEDBACK:
       return {
         ...state,
         resetFeedback: action.reset
       }
-    case SET_OS:
+    case MainAction.SET_OS:
       return {
         ...state,
         os: action.os
       }
-    case ASK_FEEDBACK:
+    case MainAction.ASK_FEEDBACK:
       return {
         ...state,
         askFeedback: action.ask
       }
-    case CHANGE_WINDOW:
+    case MainAction.CHANGE_WINDOW:
       return {
         ...state,
         window: action.window
       }
-    case STORE_IPINFO:
+    case MainAction.STORE_IPINFO:
       return {
         ...state,
         ipInfo: action.payload
       }
-    case STORE_COMPUTERS:
+    case MainAction.STORE_COMPUTERS:
       return {
         ...state,
         computers: action.payload
       }
-    case FETCH_VM_STATUS:
+    case MainAction.FETCH_DISK_STATUS:
       return {
         ...state,
         fetchStatus: action.status
+      }
+    case MainAction.STORE_DISK_NAME:
+      return {
+        ...state,
+        disk: action.disk,
+        location: action.location
+      }
+    case MainAction.ATTACH_DISK:
+      return {
+        ...state,
+        attachState: action.state
+      }
+    case MainAction.STORE_JWT:
+      return {
+        ...state,
+        access_token: action.access_token,
+        refresh_token: action.refresh_token
+      }
+    case MainAction.STORE_PAYMENT_INFO:
+      return {
+        ...state,
+        account_locked: action.account_locked
+      }
+    case MainAction.STORE_PROMO_CODE:
+      return {
+        ...state,
+        promo_code: action.code
+      }
+    case MainAction.VM_RESTARTED:
+      return {
+        ...state,
+        restart_status: action.status,
+        restart_attempts: state.restart_attempts + 1
       }
     default:
       return state;
