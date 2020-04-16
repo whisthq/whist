@@ -8,13 +8,11 @@ import { config } from '../constants/config.ts'
 
 
 function* refreshAccess(action) {
-  console.log("REFERESHING TOKEN")
   const state = yield select()
   const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/token/refresh', {}, state.counter.refresh_token) 
   if(json) {
     yield put(Action.storeJWT(json.access_token, json.refresh_token))
   }
-  console.log("DONE REFRESHING")
 }
 
 function* loginUser(action) {
@@ -25,14 +23,23 @@ function* loginUser(action) {
 
   if(json && json.verified) {
     yield put(Action.fetchDisk(action.username))
-
-    var email = action.username
+    yield call(fetchPaymentInfo, action)
     yield put(Action.storeUsername(action.username))
     yield put(Action.storeIsUser(json.is_user))
     yield put(Action.storeJWT(json.access_token, json.refresh_token))
     history.push("/counter");
   } else {
     yield put(Action.loginFailed(true));
+  }
+}
+
+function* fetchPaymentInfo(action) {
+  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/stripe/retrieve', {
+    email: action.username 
+  })
+
+  if(json && json.account_locked) {
+    yield put(Action.storePaymentInfo(json.account_locked))
   }
 }
 
@@ -43,12 +50,9 @@ function* fetchDisk(action) {
   }, state.counter.access_token)
 
   if(json && json.status && json.status === 401) {
-    console.log("TOKEN EXPIRED")
     yield call(refreshAccess)
     yield call(fetchDisk, action)
   }
-
-  console.log("TOKEN VALID FETCH DISK")
 
   if(json && json.payload && Object.keys(json.payload).length > 0) {
     yield put(Action.storeDiskName(json.payload[0].disk_name))

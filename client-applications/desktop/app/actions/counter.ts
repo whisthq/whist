@@ -25,6 +25,7 @@ export const ATTACH_DISK         = "ATTACH_DISK"
 export const FETCH_VM            = "FETCH_VM"
 export const STORE_JWT           = "STORE_JWT"
 export const CREATE_DISK         = "CREATE_DISK"
+export const STORE_PAYMENT_INFO  = "STORE_PAYMENT_INFO"
 
 
 export function loginUser(username, password) {
@@ -201,5 +202,12 @@ export function storeJWT(access_token, refresh_token) {
 export function createDisk() {
 	return {
 		type: CREATE_DISK
+	}
+}
+
+export function storePaymentInfo(account_locked) {
+	return {
+		type: STORE_PAYMENT_INFO,
+		account_locked
 	}
 }

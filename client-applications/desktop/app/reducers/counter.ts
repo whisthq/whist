@@ -3,7 +3,8 @@ import * as MainAction from '../actions/counter';
 
 const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, resetFeedback: false, isUser: true, 
                 os: '', askFeedback: false, window: 'main', ipInfo: {}, computers: [], fetchStatus: false, disk: '',
-                attachState: 'NOT_REQUESTED', access_token: '', refresh_token: ''}
+                attachState: 'NOT_REQUESTED', access_token: '', refresh_token: '', attach_attempts: 0,
+                account_locked: false}
 
 export default function counter(state = DEFAULT, action: Action<string>) {
   switch (action.type) {
@@ -15,7 +16,8 @@ export default function counter(state = DEFAULT, action: Action<string>) {
     case MainAction.STORE_IP:
       return {
         ...state,
-        public_ip: action.ip
+        public_ip: action.ip,
+        attach_attempts: state.attach_attempts + 1
       }
     case MainAction.STORE_IS_USER:
       return {
@@ -82,6 +84,11 @@ export default function counter(state = DEFAULT, action: Action<string>) {
         ...state,
         access_token: action.access_token,
         refresh_token: action.refresh_token
+      }
+    case MainAction.STORE_PAYMENT_INFO:
+      return {
+        ...state,
+        account_locked: action.account_locked
       }
     default:
       return state;

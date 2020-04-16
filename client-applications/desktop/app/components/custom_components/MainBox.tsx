@@ -21,7 +21,7 @@ class MainBox extends Component {
   constructor(props) {
     super(props)
     this.state = {launches: 0, windowMode: false, mbps: 50, nickname: '', editNickname: -1, diskAttaching: false,
-                  launched: false}
+                  launched: false, reattached: false}
   }
 
   TrackActivity = (action) => {
@@ -44,7 +44,7 @@ class MainBox extends Component {
   }
 
   LaunchProtocol = () => {
-    if(this.props.public_ip && this.props.public_ip != '') {
+    if(this.state.reattached && this.props.public_ip && this.props.public_ip != '') {
       this.setState({launched: true})
       if(this.state.launches == 0) {
         this.setState({launches: 1}, function() {
@@ -79,14 +79,14 @@ class MainBox extends Component {
             if(this.state.launches == 1) {
               this.TrackActivity(false);
             }
-            this.setState({launches: 0, launched: false})
+            this.setState({launches: 0, launched: false, reattached: false, diskAttaching: false})
             this.props.dispatch(askFeedback(true))
           })
         })
       }
     } else {
       this.setState({launched: false})
-      this.setState({'diskAttaching': true})
+      this.setState({diskAttaching: true})
       this.props.dispatch(attachDisk())
     }
   }
@@ -130,8 +130,8 @@ class MainBox extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if(prevProps.public_ip != this.props.public_ip && this.state.diskAttaching) {
-      this.setState({diskAttaching: false})
+    if(prevProps.attach_attempts != this.props.attach_attempts && this.state.diskAttaching) {
+      this.setState({diskAttaching: false, reattached: true})
     }
   }
 
@@ -140,6 +140,20 @@ class MainBox extends Component {
       return (
         <div>
           {
+          this.props.account_locked
+          ?
+          <div onClick = {this.OpenDashboard} className = {styles.pointerOnHover} style = {{boxShadow: '0px 4px 30px rgba(0, 0, 0, 0.35)', position: 'relative', backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(0,0,0,0.9)), url(" + Car + ")", width: "100%", height: 250, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center", borderRadius: 5}}>
+            <div style = {{textAlign: 'center', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontWeight: 'bold', fontSize: 20}}>
+              <div style = {{marginTop: 30, marginBottom: 20, width: 350}}>
+                Oops! Your Free Trial Has Expired
+              </div>
+              <div style = {{marginTop: 10, color: '#CCCCCC', fontSize: 12, lineHeight: 1.4}}>
+                Please provide your payment details in order to access your cloud PC.
+              </div>
+            </div>
+          </div>
+          :
+          (
           this.props.fetchStatus
           ?
           (
@@ -206,6 +220,7 @@ class MainBox extends Component {
               </div>
             </div>
           </div>
+          )
           }
           <div style = {{display: 'flex', marginTop: 20}}>
             <div style = {{width: '50%', paddingRight: 20, textAlign: 'center'}}>
@@ -412,7 +427,9 @@ function mapStateToProps(state) {
     ipInfo: state.counter.ipInfo,
     computers: state.counter.computers,
     fetchStatus: state.counter.fetchStatus,
-    disk: state.counter.disk
+    disk: state.counter.disk,
+    attach_attempts: state.counter.attach_attempts,
+    account_locked: state.counter.account_locked
   }
 }
 
