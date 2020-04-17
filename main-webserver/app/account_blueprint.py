@@ -112,6 +112,7 @@ def account_fetch_users():
 @account_bp.route('/account/delete', methods=['POST'])
 @jwt_required
 def account_delete():
+    body = request.get_json()
     status = deleteUser(body['username'])
     return jsonify({'status': status}), status
     
@@ -198,8 +199,12 @@ def account_feedback():
 @account_bp.route('/admin/<action>', methods=['POST'])
 def admin(action):
     body = request.get_json()
+    print(body)
+    print(os.getenv('DASHBOARD_USERNAME'))
+    print(os.getenv('DASHBOARD_PASSWORD'))
     if action == 'login':
         if body['username'] == os.getenv('DASHBOARD_USERNAME') and body['password'] == os.getenv('DASHBOARD_PASSWORD'):
+            print("EQUAL")
             return jsonify({'status': 200}), 200
         return jsonify({'status': 422}), 422
 
