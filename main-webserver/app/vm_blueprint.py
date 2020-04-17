@@ -79,6 +79,10 @@ def vm(action):
         body = request.get_json()
         task = runPowershell.apply_async([body['vm_name']])
         return jsonify({'ID': task.id}), 202
+    elif action == 'fetchall':
+        body = request.get_json()
+        vms = fetchUserVMs(None)
+        return jsonify({'payload': vms, 'status': 200}), 200
     return jsonify({}), 400
 
 
