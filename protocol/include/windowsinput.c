@@ -302,7 +302,7 @@ void InitCursors() { LoadCursors(); }
 int GetWindowsKeyCode(int sdl_keycode) { return windows_keycodes[sdl_keycode]; }
 
 input_device_t* CreateInputDevice(input_device_t* input_device) {
-    *input_device = 1;
+    input_device = malloc(sizeof(char));
     return input_device;
 }
 
