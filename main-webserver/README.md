@@ -32,3 +32,8 @@ To push to the Github production/staging repo, run `git add .`, `git commit -m "
 To push to the live server, git add and commit and type git push heroku master. (Obviously, DO NOT push to the production server until we’ve all agreed that staging is stable). 
 
 Test the webserver by running it on localhost and using Postman to send requests to the localhost address, and if that works, push to staging. To view the server logs, type `heroku logs --tail --app cube-celery-vm`.
+
+**Database Scheme**
+Access the SQL database here: https://pgweb-demo.herokuapp.com/
+
+Select Scheme, and for the server URL scheme, copy the DATABASE_URL config var found on the Heroku instance.
