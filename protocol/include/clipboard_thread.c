@@ -1,5 +1,6 @@
 #include "clipboard.h"
 #include "fractal.h"
+#include <stdio.h>
 
 // CLIPBOARD THREAD HANDLING
 
@@ -91,18 +92,31 @@ int UpdateClipboardThread( void* opaque )
 			if( clipboard->type == CLIPBOARD_FILES )
 			{
 				char cmd[1000] = "";
+
 #ifndef _WIN32
-				strcat( cmd, "UNISON=./.unison; " );
+				char* prefix = "UNISON=./.unison;";
+#else
+				char* prefix = "";
 #endif
 
 #ifdef _WIN32
-				strcat( cmd, "unison " );
+				char* exc = "unison";
 #elif __APPLE__
-				strcat( cmd, "./mac_unison " );
+				char* exc = "./mac_unison";
 #else // Linux
-				strcat( cmd, "./linux_unison " );
+				char* exc = "./linux_unison";
 #endif
 
+				sprintf( cmd,
+						 "%s %s -follow \"Path *\" -ui text -ignorearchives -confirmbigdel=false -batch \
+						 -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l %s -i sshkey\" \
+                         \"ssh://%s/%s/get_clipboard/\" \
+                         %s \
+                         -force \"ssh://%s/%s/get_clipboard/\"",
+						 prefix, exc, username, server_ip, filename, SET_CLIPBOARD, server_ip, filename
+				);
+
+				/*
 				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l " );
 				strcat( cmd, username );
 				strcat( cmd, " -i sshkey\" " );
@@ -121,6 +135,7 @@ int UpdateClipboardThread( void* opaque )
 				strcat( cmd, "/get_clipboard/" );
 				strcat( cmd, "\" " );
 				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
+				*/
 
 				mprintf( "COMMAND: %s\n", cmd );
 				runcmd( cmd );
