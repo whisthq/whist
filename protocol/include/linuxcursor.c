@@ -18,9 +18,21 @@ FractalCursorImage GetCurrentCursor() {
         image.cursor_bmp_height = ci->height;
         image.cursor_bmp_hot_x = ci->xhot;
         image.cursor_bmp_hot_y = ci->yhot;
+
         for (int k = 0; k < ci->width * ci->height; ++k) {
             // we need to do this in case ci->pixels uses 8 bytes per pixel
-            image.cursor_bmp[k] = (uint32_t)ci->pixels[k];
+            uint32_t argb = (uint32_t)ci->pixels[k];
+            // unsigned int a, r, g, b;
+            // a = (argb & 0xff000000) >> 24;
+            // if (!a) continue;
+            // r = (argb & 0x00ff0000) >> 16;
+            // g = (argb & 0x0000ff00) >> 8;
+            // b = (argb & 0x000000ff);
+            // r = min((255 * r) / a, 255);
+            // g = min((255 * g) / a, 255);
+            // b = min((255 * b) / a, 255);
+            // argb = (a << 24) + (r << 16) + (g << 8) + b;
+            image.cursor_bmp[k] = argb;
         }
 
         if (memcmp(image.cursor_bmp, last_cursor,
