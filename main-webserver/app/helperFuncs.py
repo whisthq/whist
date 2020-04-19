@@ -1261,8 +1261,10 @@ def createDiskFromImageHelper(username, location, vm_size):
         _, compute_client, _ = createClients()
 
         disk_image = compute_client.disks.get('Fractal', 'Fractal_Disk')
+        print('SUCCESS: Disk found in Fractal resource pool')
         disk_name = genDiskName()
 
+        print('NOTIFICATION: Preparing to clone Fractal_Disk')
         async_disk_creation = compute_client.disks.create_or_update(
             'Fractal',
             disk_name,
@@ -1274,8 +1276,9 @@ def createDiskFromImageHelper(username, location, vm_size):
                 }
             }
         )
-
+        print('NOTIFICATION: Disk clone command sent. Waiting on disk to create')
         async_disk_creation.wait()
+        print('SUCCESS: Disk successfully cloned to ' + disk_image)
         new_disk = async_disk_creation.result()
 
         updateDisk(disk_name, '', location)
