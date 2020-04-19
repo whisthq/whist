@@ -1156,7 +1156,7 @@ def swapdisk_name(disk_name, vm_name):
         )
         async_disk_attach.wait()
         end = time.perf_counter()
-        print("SUCCESS: Disk " + disk_name + " attached to " + vm_name + " in " + str(start - end) + " seconds")
+        print("SUCCESS: Disk " + disk_name + " attached to " + vm_name + " in " + str(end - start) + " seconds")
 
         vm_state = compute_client.virtual_machines.instance_view(
             resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)

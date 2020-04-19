@@ -412,8 +412,8 @@ def swapDisk(self, disk_name):
 				print(
 					"Could not find a running and available VM to attach to disk " + disk_name)
 				deactivated_vms = fetchAttachableVMs(
-					'NOT_RUNNING_AVAILABLE', location) + fetchAttachableVMs('NOT_RUNNING_UNAVAILABLE', location)
-				if len(deactivated_vms) > 0:
+					'NOT_RUNNING_AVAILABLE', location)
+				if deactivated_vms:
 					vm_name = deactivated_vms[0]['vm_name']
 					lockVM(vm_name, True)
 					print("Found deactivated VM " + vm_name)
