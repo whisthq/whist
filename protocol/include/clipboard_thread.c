@@ -55,6 +55,7 @@ void initUpdateClipboard( SEND_FMSG* send_fmsg_local, char* server_ip_local )
 	send_fmsg = send_fmsg_local;
 
 	updating_clipboard = false;
+	pending_update_clipboard = false;
 	StartTimer( (clock*)&last_clipboard_update );
 	clipboard_semaphore = SDL_CreateSemaphore( 0 );
 
@@ -89,53 +90,36 @@ int UpdateClipboardThread( void* opaque )
 		{
 			mprintf( "Trying to set clipboard!\n" );
 			ClipboardData cb;
+			cb.type = CLIPBOARD_TEXT;
+			cb.size = 0;
+			SetClipboard( &cb );
 			if( clipboard->type == CLIPBOARD_FILES )
 			{
 				char cmd[1000] = "";
-
 #ifndef _WIN32
-				char* prefix = "UNISON=./.unison;";
-#else
-				char* prefix = "";
+				strcat( cmd, "UNISON=./.unison; " );
 #endif
 
 #ifdef _WIN32
-				char* exc = "unison";
-#elif __APPLE__
-				char* exc = "./mac_unison";
-#else // Linux
-				char* exc = "./linux_unison";
+				strcat( cmd, "unison " );
+#else
+				strcat( cmd, "./unison -follow \"Path *\" " );
 #endif
 
-				sprintf( cmd,
-						 "%s %s -follow \"Path *\" -ui text -ignorearchives -confirmbigdel=false -batch \
-						 -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l %s -i sshkey\" \
-                         \"ssh://%s/%s/get_clipboard/\" \
-                         %s \
-                         -force \"ssh://%s/%s/get_clipboard/\"",
-						 prefix, exc, username, server_ip, filename, SET_CLIPBOARD, server_ip, filename
-				);
-
-				/*
-				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l " );
-				strcat( cmd, username );
-				strcat( cmd, " -i sshkey\" " );
+				strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " );
 				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
 				strcat( cmd, "/" );
-				strcat( cmd, filename );
-				strcat( cmd, "/get_clipboard/" );
+				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
 				strcat( cmd, "\" " );
 				strcat( cmd, SET_CLIPBOARD );
 				strcat( cmd, " -force " );
 				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
 				strcat( cmd, "/" );
-				strcat( cmd, filename );
-				strcat( cmd, "/get_clipboard/" );
+				strcat( cmd, "C:\\ProgramData\\FractalCache\\get_clipboard/" );
 				strcat( cmd, "\" " );
 				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
-				*/
 
 				mprintf( "COMMAND: %s\n", cmd );
 				runcmd( cmd );
@@ -155,21 +139,16 @@ int UpdateClipboardThread( void* opaque )
 
 #ifdef _WIN32
 				strcat( cmd, "unison " );
-#elif __APPLE__
-				strcat( cmd, "./mac_unison " );
-#else // Linux
-				strcat( cmd, "./linux_unison " );
+#else
+				strcat( cmd, "./unison -follow \"Path *\" " );
 #endif
 
-				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l " );
-				strcat( cmd, username );
-				strcat( cmd, " -i sshkey\" " );
+				strcat( cmd, "-ui text -sshargs \"-l vm1 -i sshkey\" " );
 				strcat( cmd, GET_CLIPBOARD );
 				strcat( cmd, " \"ssh://" );
 				strcat( cmd, (char*)server_ip );
 				strcat( cmd, "/" );
-				strcat( cmd, filename );
-				strcat( cmd, "/set_clipboard" );
+				strcat( cmd, "C:\\ProgramData\\FractalCache\\set_clipboard" );
 				strcat( cmd, "/\" -force " );
 				strcat( cmd, GET_CLIPBOARD );
 				strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
