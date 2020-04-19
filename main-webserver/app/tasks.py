@@ -57,6 +57,8 @@ def createVM(self, vm_size, location):
 	vm_ip = getIP(vm)
 	updateVMIP(vmParameters['vm_name'], vm_ip)
 	updateVMState(vmParameters['vm_name'], 'RUNNING_AVAILABLE')
+	updateVMLocation(vmParameters['vm_name'], location)
+
 
 	return fetchVMCredentials(vmParameters['vm_name'])
 
@@ -391,7 +393,7 @@ def swapDisk(self, disk_name):
 		while not free_vm_found:
 			print("No VM attached to " + disk_name)
 			available_vms = fetchAttachableVMs('RUNNING_AVAILABLE', location)
-			if len(available_vms) > 0:
+			if available_vms:
 				print('Found ' + str(len(available_vms)) + ' available VMs')
 				# Pick a VM, attach it to disk
 				vm_name = available_vms[0]['vm_name']

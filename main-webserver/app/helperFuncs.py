@@ -994,6 +994,18 @@ def updateVMState(vm_name, state):
         conn.execute(command, **params)
         conn.close()
 
+def updateVMLocation(vm_name, location):
+    command = text("""
+        UPDATE v_ms
+        SET location = :location
+        WHERE
+           "vm_name" = :vm_name
+        """)
+    params = {'vm_name': vm_name, 'location': location}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
 def updateDisk(disk_name, vm_name, location):
     command = text("""
         SELECT * FROM disks WHERE "disk_name" = :disk_name
@@ -1261,8 +1273,13 @@ def createDiskFromImageHelper(username, location, vm_size):
     _, compute_client, _ = createClients()
 
     try:
+        ORIGINAL_DISK = 'Fractal_Disk_Eastus'
+        if location == 'southcentralus':
+            ORIGINAL_DISK = 'Fractal_Disk_Southcentralus'
+        elif location == 'northcentralus':
+            ORIGINAL_DISK = 'Fractal_Disk_Northcentralus'
 
-        disk_image = compute_client.disks.get('Fractal', 'Fractal_Disk')
+        disk_image = compute_client.disks.get('Fractal', ORIGINAL_DISK)
         print('SUCCESS: Disk found in Fractal resource pool')
         print('NOTIFICATION: Preparing to create disk {} with location {} under {} attached to a {} VM'.format(
             disk_name, location, username, vm_size))
@@ -1289,7 +1306,7 @@ def createDiskFromImageHelper(username, location, vm_size):
         return {'status': 200, 'disk_name': disk_name}
     except Exception as e:
         print('CRITICAL ERROR: ' + str(e))
-        
+
         print("Attempting to delete the disk {}".format(disk_name))
         os_disk_delete = compute_client.disks.delete(
             os.getenv('VM_GROUP'), disk_name)
