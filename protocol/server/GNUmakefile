@@ -56,6 +56,7 @@ OBJS = \
 	videoencode.o \
 	alsacapture.o \
 	linuxinput.o \
+	linuxcursor.o \
 	audioencode.o \
 	aes.o \
 	x11_clipboard.o \
@@ -113,6 +114,10 @@ alsacapture.o:
 # compile the input playback source file into object file
 linuxinput.o:
 	$(CC) -c $(CFLAGS) ../include/linuxinput.c
+
+# compile the cursor management source file into object file
+linuxcursor.o:
+	$(CC) -c $(CFLAGS) ../include/linuxcursor.c
 
 # compile the main source file into object file
 main.o:

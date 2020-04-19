@@ -15,6 +15,7 @@
 
 #include "../include/audiocapture.h"
 #include "../include/audioencode.h"
+#include "../include/cursor.h"
 #include "../include/fractal.h"
 #include "../include/input.h"
 #include "../include/screencapture.h"
@@ -62,17 +63,6 @@ struct SocketContext PacketSendContext = {0};
 
 volatile bool wants_iframe;
 volatile bool update_encoder;
-
-#ifndef _WIN32
-void InitCursors() { return; }
-
-FractalCursorImage GetCurrentCursor() {
-    FractalCursorImage image = {0};
-    image.cursor_state = CURSOR_STATE_VISIBLE;
-    image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
-    return image;
-}
-#endif
 
 int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
                  size_t len) {
@@ -243,7 +233,7 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
         struct RTPPacket encrypted_packet;
         int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
                                          (unsigned char*)PRIVATE_KEY);
-        
+
         // Send it off
         SDL_LockMutex(packet_mutex);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
@@ -343,7 +333,8 @@ static int32_t SendVideo(void* opaque) {
             frames_since_first_iframe = 0;
         }
 
-        // Accumulated_frames is equal to how many frames have passed since the last call to CaptureScreen
+        // Accumulated_frames is equal to how many frames have passed since the
+        // last call to CaptureScreen
         int accumulated_frames = 0;
         if (GetTimer(last_frame_capture) > 1.0 / FPS) {
             accumulated_frames = CaptureScreen(device);
@@ -460,7 +451,8 @@ static int32_t SendVideo(void* opaque) {
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
                     frame->cursor = GetCurrentCursor();
-                    // True if this frame does not require previous frames to render
+                    // True if this frame does not require previous frames to
+                    // render
                     frame->is_iframe =
                         (frames_since_first_iframe % gop_size == 1) ||
                         is_iframe;
@@ -674,29 +666,31 @@ int main() {
         // Give client time to setup before sending it with packets
         SDL_Delay(150);
 
-        FractalServerMessage* msg_init_whole = malloc(sizeof( FractalServerMessage) + sizeof( FractalServerMessageInit));
+        FractalServerMessage* msg_init_whole = malloc(
+            sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit));
         msg_init_whole->type = MESSAGE_INIT;
         FractalServerMessageInit* msg_init = msg_init_whole->init_msg;
 #ifdef _WIN32
-	    msg_init->filename[0] = '\0';
-        strcat( msg_init->filename, "C:\\ProgramData\\FractalCache" );
-	    char* username = "vm1";
-#else // Linux
+        msg_init->filename[0] = '\0';
+        strcat(msg_init->filename, "C:\\ProgramData\\FractalCache");
+        char* username = "vm1";
+#else  // Linux
         char* cwd = getcwd(NULL, 0);
-        memcpy( msg_init->filename, cwd, strlen(cwd) + 1);
-        free( cwd );
-	    char* username = "Fractal";
+        memcpy(msg_init->filename, cwd, strlen(cwd) + 1);
+        free(cwd);
+        char* username = "Fractal";
 #endif
-        memcpy( msg_init->username, username, strlen(username) + 1 );
-	    mprintf("SIZE: %d\n", sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit));
-        if( SendPacket( &PacketSendContext, PACKET_MESSAGE,
-            (uint8_t*)msg_init_whole,
-                           sizeof( FractalServerMessage ) + sizeof( FractalServerMessageInit ), 1 ) < 0 )
-        {
-            mprintf( "Could not send server init message!\n" );
+        memcpy(msg_init->username, username, strlen(username) + 1);
+        mprintf("SIZE: %d\n", sizeof(FractalServerMessage) +
+                                  sizeof(FractalServerMessageInit));
+        if (SendPacket(
+                &PacketSendContext, PACKET_MESSAGE, (uint8_t*)msg_init_whole,
+                sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit),
+                1) < 0) {
+            mprintf("Could not send server init message!\n");
             return -1;
         }
-	    free(msg_init_whole);
+        free(msg_init_whole);
 
         clock startup_time;
         StartTimer(&startup_time);
@@ -889,7 +883,8 @@ int main() {
                     }
                 } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
                     // Update clipboard with message
-                    mprintf("Received Clipboard Data! %d\n", fmsg->clipboard.type);
+                    mprintf("Received Clipboard Data! %d\n",
+                            fmsg->clipboard.type);
                     SetClipboard(&fmsg->clipboard);
                 } else if (fmsg->type == MESSAGE_AUDIO_NACK) {
                     // Audio nack received, relay the packet
@@ -948,11 +943,9 @@ int main() {
                     }
                 } else if (fmsg->type == MESSAGE_IFRAME_REQUEST) {
                     mprintf("Request for i-frame found: Creating iframe\n");
-                    if( fmsg->reinitialize_encoder )
-                    {
+                    if (fmsg->reinitialize_encoder) {
                         update_encoder = true;
-                    } else
-                    {
+                    } else {
                         wants_iframe = true;
                     }
                 } else if (fmsg->type == CMESSAGE_QUIT) {

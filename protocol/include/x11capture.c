@@ -16,14 +16,21 @@ int handler(Display* d, XErrorEvent* a)
   return 0;
 }
 
-bool is_same_wh(struct CaptureDevice* device) {
+void get_wh(struct CaptureDevice* device, int* w, int* h) {
     XWindowAttributes window_attributes;
     if( !XGetWindowAttributes( device->display, device->root, &window_attributes ) )
     {
         fprintf( stderr, "Error while getting window attributes" );
         return -1;
     }
-    return device->width == window_attributes.width && device->height == window_attributes.height;
+    *w = window_attributes.width;
+    *h = window_attributes.height;
+}
+
+bool is_same_wh(struct CaptureDevice* device) {
+    int w, h;
+    get_wh(device, &w, &h);
+    return device->width == w && device->height == h;
 }
 
 int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
@@ -55,8 +62,8 @@ int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
       
       // If it's still not the correct dimensions
       if (!is_same_wh(device)) {
-        mprintf("Error! Could not force monitor to a given width/height");
-        return -1;
+        mprintf("Could not force monitor to a given width/height\n");
+        get_wh(device, &device->width, &device->height);
       }
     }
 

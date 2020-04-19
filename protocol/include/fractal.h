@@ -65,7 +65,7 @@
 #define PORT_SERVER_TO_CLIENT 32263
 #define PORT_SHARED_TCP 32264
 
-#define USING_STUN true
+#define USING_STUN false
 #define USING_AUDIO_ENCODE_DECODE true
 
 #define MAX_PAYLOAD_SIZE 1285
@@ -81,6 +81,8 @@
 #define MIN_FPS 10
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
+#define MAX_CURSOR_WIDTH 32
+#define MAX_CURSOR_HEIGHT 32
 
 #define PRIVATE_KEY \
     "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
@@ -400,6 +402,11 @@ typedef struct FractalCursor {
 typedef struct FractalCursorImage {
     SDL_SystemCursor cursor_id;
     FractalCursorState cursor_state;
+    unsigned short cursor_bmp_width;
+    unsigned short cursor_bmp_height;
+    unsigned short cursor_bmp_hot_x;
+    unsigned short cursor_bmp_hot_y;
+    uint32_t cursor_bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
 } FractalCursorImage;
 
 /// @brief Latency performance metrics.
