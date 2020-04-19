@@ -20,6 +20,7 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <winuser.h>
+#include "shellscalingapi.h"
 #undef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
 #undef EWOULDBLOCK
