@@ -73,7 +73,8 @@ SHARED_LIBS = \
         shlwapi.lib \
 	crypt32.lib \
         d3d11.lib \
-        dxgi.lib
+        dxgi.lib \
+    shcore.lib
 
 # linking flags
 LD_FLAGS = \
