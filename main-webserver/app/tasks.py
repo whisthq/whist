@@ -535,3 +535,12 @@ def deleteDisk(self, disk_name):
 		updateDiskState(disk_name, 'TO_BE_DELETED')
 		
 		return {'status': 200}
+
+@celery.task(bind=True)
+def deallocateVM(self, vm_name):
+	_, compute_client, _ = createClients()
+
+	async_vm_deallocate = compute_client.virtual_machines.deallocate(
+		os.environ.get('VM_GROUP'), vm_name)
+	async_vm_deallocate.wait()
+	return {'status': 200}
