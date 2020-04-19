@@ -1247,7 +1247,16 @@ def updateDiskState(disk_name, state):
         conn.execute(command, **params)
         conn.close()
 
-def createDiskFromImageHelper(username, location):
+def assignVMSizeToDisk(disk_name, vm_size):
+    command = text("""
+        UPDATE disks SET "vm_size" = :vm_size WHERE "disk_name" = :disk_name
+        """)
+    params = {'vm_size': vm_size, 'disk_name': disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+def createDiskFromImageHelper(username, location, vm_size):
     try:
         _, compute_client, _ = createClients()
 
@@ -1271,6 +1280,7 @@ def createDiskFromImageHelper(username, location):
 
         updateDisk(disk_name, '', location)
         assignUserToDisk(disk_name, username)
+        assignVMSizeToDisk(disk_name, vm_size)
 
         return {'status': 200, 'disk_name': disk_name}
     except Exception as e:

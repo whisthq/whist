@@ -19,6 +19,13 @@ def payment(action):
 		email = body['email']
 		location = body['location']
 		code = body['code']
+		plan = body['plan']
+		PLAN_ID = os.getenv('MONTHLY_PLAN_ID')
+		if plan == 'unlimited':
+			PLAN_ID = os.getenv('UNLIMITED_PLAN_ID')
+		elif plan == 'hourly':
+			PLAN_ID = os.getenv('HOURLY_PLAN_ID')
+
 		trial_end = 0
 		customer_exists = False
 
@@ -45,7 +52,7 @@ def payment(action):
 					trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1)
 				new_subscription = stripe.Subscription.create(
 				  customer = new_customer['id'],
-				  items = [{"plan": os.getenv("PLAN_ID")}],
+				  items = [{"plan": PLAN_ID}],
 				  trial_end = trial_end,
 				  trial_from_plan = False
 				)
@@ -54,7 +61,7 @@ def payment(action):
 				trial_end = shiftUnixByMonth(dateToUnix(getToday()), credits)
 				new_subscription = stripe.Subscription.create(
 				  customer = new_customer['id'],
-				  items = [{"plan": os.getenv("PLAN_ID")}],
+				  items = [{"plan": PLAN_ID}],
 				  trial_end = trial_end,
 				  trial_from_plan = False
 				)
