@@ -382,7 +382,7 @@ def swapDisk(self, disk_name):
 			async_vm_start = compute_client.virtual_machines.start(
 				os.environ.get('VM_GROUP'), vm_name)
 			async_vm_start.wait()
-			time.sleep(10)
+			time.sleep(20)
 		print('VM is started and ready to use')
 		vm_credentials = fetchVMCredentials(vm_name)
 		return vm_credentials

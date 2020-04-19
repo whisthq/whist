@@ -1160,20 +1160,20 @@ def swapdisk_name(disk_name, vm_name):
 
         vm_state = compute_client.virtual_machines.instance_view(
             resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
+
         if not 'running' in vm_state.statuses[1].code:
             print("VM is powered off. Starting...")
             async_vm_start = compute_client.virtual_machines.start(
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_start.wait()
         
-        time.sleep(10)
-        # else:
-        #     print("Restarting VM...")
-        #     async_vm_restart = compute_client.virtual_machines.restart(
-        #         os.environ.get('VM_GROUP'), vm_name)
-        #     async_vm_restart.wait()
-        #     time.sleep(10)
-        #     print("VM restarted")
+        else:
+            print("Restarting VM...")
+            async_vm_restart = compute_client.virtual_machines.restart(
+                os.environ.get('VM_GROUP'), vm_name)
+            async_vm_restart.wait()
+            time.sleep(10)
+            print("VM restarted")
         return 1
     except Exception as e:
         print("CRITICAL ERROR: " + e)
