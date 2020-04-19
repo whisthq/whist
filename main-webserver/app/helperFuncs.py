@@ -1279,7 +1279,7 @@ def createDiskFromImageHelper(username, location, vm_size):
         )
         print('NOTIFICATION: Disk clone command sent. Waiting on disk to create')
         async_disk_creation.wait()
-        print('SUCCESS: Disk successfully cloned to ' + disk_image)
+        print('SUCCESS: Disk successfully cloned to {}'.format(disk_name))
         new_disk = async_disk_creation.result()
 
         updateDisk(disk_name, '', location)
