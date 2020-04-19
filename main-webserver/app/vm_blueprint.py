@@ -100,6 +100,7 @@ def disk(action):
         return jsonify({'ID': task.id}), 202
     elif action == 'createFromImage':
         body = request.get_json()
+        print(body)
         task = createDiskFromImage.apply_async([body['username'], body['location'], body['vm_size']])
         if not task:
             return jsonify({}), 400

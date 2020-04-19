@@ -469,7 +469,7 @@ def genDiskName():
         diskName = genHaiku(1)[0]
         while diskName in oldDisks:
             diskName = genHaiku(1)[0]
-        return diskName
+        return str(diskName)
 
 
 def storeForm(name, email, cubeType):
@@ -1264,7 +1264,8 @@ def createDiskFromImageHelper(username, location, vm_size):
         print('SUCCESS: Disk found in Fractal resource pool')
         disk_name = genDiskName()
 
-        print('NOTIFICATION: Preparing to clone Fractal_Disk')
+        print('NOTIFICATION: Preparing to create disk {} with location {} under {} attached to a {} VM'.format(
+            disk_name, location, username, vm_size))
         async_disk_creation = compute_client.disks.create_or_update(
             'Fractal',
             disk_name,
