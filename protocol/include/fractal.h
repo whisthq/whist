@@ -16,10 +16,10 @@
 #include <mmdeviceapi.h>
 #include <process.h>
 #include <synchapi.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
 #include <windows.h>
+#include <winsock2.h>
 #include <winuser.h>
+#include <ws2tcpip.h>
 #undef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
 #undef EWOULDBLOCK
@@ -65,7 +65,7 @@
 #define PORT_SERVER_TO_CLIENT 32263
 #define PORT_SHARED_TCP 32264
 
-#define USING_STUN false
+#define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
 
 #define MAX_PAYLOAD_SIZE 1285
@@ -402,6 +402,7 @@ typedef struct FractalCursor {
 typedef struct FractalCursorImage {
     SDL_SystemCursor cursor_id;
     FractalCursorState cursor_state;
+    bool cursor_use_bmp;
     unsigned short cursor_bmp_width;
     unsigned short cursor_bmp_height;
     unsigned short cursor_bmp_hot_x;
@@ -584,8 +585,7 @@ typedef enum FractalServerMessageType {
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
-typedef struct FractalServerMessageInit
-{
+typedef struct FractalServerMessageInit {
     char filename[300];
     char username[50];
 } FractalServerMessageInit;
@@ -596,8 +596,7 @@ typedef struct FractalServerMessage {
         int ping_id;
         int frequency;
     };
-    union
-    {
+    union {
         ClipboardData clipboard;
         char init_msg[0];
     };
@@ -616,7 +615,8 @@ typedef struct SocketContext {
     int ack;
 } SocketContext;
 
-// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be replayed
+// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
+// replayed
 // TODO: INC integer that must not be used twice
 
 // Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) +

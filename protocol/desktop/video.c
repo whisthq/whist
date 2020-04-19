@@ -245,12 +245,12 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         // Set cursor to frame's desired cursor type
-        if ((FractalCursorID)frame->cursor.cursor_id != last_cursor) {
+        if ((FractalCursorID)frame->cursor.cursor_id != last_cursor ||
+            frame->cursor.cursor_use_bmp) {
             if (cursor) {
                 SDL_FreeCursor((SDL_Cursor*)cursor);
             }
-            if (frame->cursor.cursor_bmp_width &&
-                frame->cursor.cursor_bmp_height) {
+            if (frame->cursor.cursor_use_bmp) {
                 // use bitmap data to set cursor
 
                 SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(

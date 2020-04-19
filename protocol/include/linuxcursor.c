@@ -2,6 +2,8 @@
 
 static Display* disp;
 
+static uint32_t last_cursor[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT] = {0};
+
 void InitCursors() { disp = XOpenDisplay(NULL); }
 
 FractalCursorImage GetCurrentCursor() {
@@ -20,6 +22,16 @@ FractalCursorImage GetCurrentCursor() {
             // we need to do this in case ci->pixels uses 8 bytes per pixel
             image.cursor_bmp[k] = (uint32_t)ci->pixels[k];
         }
+
+        if (memcmp(image.cursor_bmp, last_cursor,
+                   sizeof(uint32_t) * MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT)) {
+            image.cursor_use_bmp = true;
+            memcpy(last_cursor, image.cursor_bmp,
+                   sizeof(uint32_t) * MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT);
+        } else {
+            image.cursor_use_bmp = false;
+        }
+
         XFree(ci);
     }
 
