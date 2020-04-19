@@ -1,6 +1,6 @@
 param (
     [string]        $admin_username = "Fractal",
-    [SecureString]  $admin_password = (convertto-securestring "password1234567." -asplaintext -force),
+    [SecureString]  $admin_password = (ConvertTo-SecureString "password1234567." -AsPlainText -Force),
     [switch]        $creative_install       = $false,
     [switch]        $datascience_install    = $false,
     [switch]        $gaming_install         = $false,
@@ -20,14 +20,18 @@ function GetPowerShellScript ($script_name, $script_url) {
     $webClient.DownloadFile($script_url, $script_name)
 }
 
-# Download utils PowerShell script with helper functions and import it
+# Download utils PowerShell script with helper functions and import it, and download cloud-1.ps1
 $utils_script_name = "C:\utils.psm1"
 $utils_script_url = "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.psm1"
+$cloud1_name = "C:\cloud-1.ps1"
+$cloud1_url = "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/cloud-1.ps1"
 GetPowerShellScript $utils_script_name $utils_script_url
+GetPowerShellScript $cloud1_name $cloud1_url
 Import-Module "$utils_script_name"
 
-# Make sure we're in the proper directory (mostly for running from webservers)
+# Make sure we're in the proper directory (mostly for running from webservers) and define credentials for user
 cd C:\
+$credentials = New-Object System.Management.Automation.PSCredential $admin_username, $admin_password
 
 # Run all the basic commands to setup a Fractal cloud computer
 Update-Windows
@@ -36,7 +40,7 @@ Install-Chocolatey
 Install-DotNetFramework # Requires a reboot to finish install
 Install-DirectX
 Install-VisualRedist
-Install-VirtualAudio
+Install-VirtualAudio $credentials
 Enable-Audio
 Enable-MouseKeys
 Set-MousePrecision
@@ -49,6 +53,8 @@ Install-NvidiaTeslaPublicDrivers
 Disable-TCC
 Set-OptimalGPUSettings
 Install-PoshSSH
+Show-FileExtensions $credentials
+Install-FractalWallpaper $credentials
 Set-FractalDirectory
 Install-FractalService
 Install-FractalServer
@@ -57,8 +63,6 @@ Install-FractalAutoUpdate
 Enable-FractalFirewallRule
 Install-Unison
 Enable-SSHServer
-Show-FileExtensions
-Install-FractalWallpaper
 #Disable-HyperV
 #Disable-Lock
 #Disable-Logout
@@ -138,6 +142,7 @@ if ($productivity_install) {
 }
 
 # Clean PowerShell install script and restart
-Write-Output "Cleaning up Utils script"
+Write-Output "Cleaning up Utils script and Cloud-1.ps1 script"
 Remove-Item -Path $utils_script_name -Confirm:$false
+Remove-Item -Path $cloud1_name -Confirm:$false
 Restart-Computer -Force
