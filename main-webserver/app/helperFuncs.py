@@ -1257,13 +1257,13 @@ def assignVMSizeToDisk(disk_name, vm_size):
         conn.close()
 
 def createDiskFromImageHelper(username, location, vm_size):
+    disk_name = genDiskName()
+    _, compute_client, _ = createClients()
+
     try:
-        _, compute_client, _ = createClients()
 
         disk_image = compute_client.disks.get('Fractal', 'Fractal_Disk')
         print('SUCCESS: Disk found in Fractal resource pool')
-        disk_name = genDiskName()
-
         print('NOTIFICATION: Preparing to create disk {} with location {} under {} attached to a {} VM'.format(
             disk_name, location, username, vm_size))
         async_disk_creation = compute_client.disks.create_or_update(
@@ -1289,5 +1289,12 @@ def createDiskFromImageHelper(username, location, vm_size):
         return {'status': 200, 'disk_name': disk_name}
     except Exception as e:
         print('CRITICAL ERROR: ' + str(e))
+        
+        print("Attempting to delete the disk {}".format(disk_name))
+        os_disk_delete = compute_client.disks.delete(
+            os.getenv('VM_GROUP'), disk_name)
+        os_disk_delete.wait()
+        print("Disk {} deleted".format(disk_name))
+
         time.sleep(30)
         return {'status': 400, 'disk_name': None}
