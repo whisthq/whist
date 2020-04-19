@@ -22,17 +22,10 @@ volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
 
 #define LOG_VIDEO false
 
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define CURSORIMAGE_A 0xff000000
 #define CURSORIMAGE_R 0x00ff0000
 #define CURSORIMAGE_G 0x0000ff00
 #define CURSORIMAGE_B 0x000000ff
-#else
-#define CURSORIMAGE_B 0xff000000
-#define CURSORIMAGE_G 0x00ff0000
-#define CURSORIMAGE_R 0x0000ff00
-#define CURSORIMAGE_A 0x000000ff
-#endif
 
 struct VideoData {
     struct FrameData* pending_ctx;
