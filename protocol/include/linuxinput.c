@@ -551,11 +551,11 @@ void ReplayUserInput(input_device_t* input_device,
                 EmitInputEvent(input_device->fd_absmouse, EV_ABS, ABS_X,
                                (int)(fmsg->mouseMotion.x *
                                      (int32_t)get_native_screen_width() /
-                                     (int32_t)1000000));
+                                     (int32_t)MOUSE_SCALING_FACTOR));
                 EmitInputEvent(input_device->fd_absmouse, EV_ABS, ABS_Y,
                                (int)(fmsg->mouseMotion.y *
                                      (int32_t)get_native_screen_height() /
-                                     (int32_t)1000000));
+                                     (int32_t)MOUSE_SCALING_FACTOR));
                 EmitInputEvent(input_device->fd_absmouse, EV_KEY, BTN_TOOL_PEN,
                                1);
             }

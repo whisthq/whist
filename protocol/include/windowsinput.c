@@ -517,9 +517,9 @@ void ReplayUserInput(input_device_t* input_device,
                 Event.mi.dwFlags = MOUSEEVENTF_MOVE;
             } else {
                 Event.mi.dx =
-                    (LONG)(fmsg->mouseMotion.x * (double)65536 / 1000000);
+                    (LONG)(fmsg->mouseMotion.x * (double)65536 / MOUSE_SCALING_FACTOR);
                 Event.mi.dy =
-                    (LONG)(fmsg->mouseMotion.y * (double)65536 / 1000000);
+                    (LONG)(fmsg->mouseMotion.y * (double)65536 / MOUSE_SCALING_FACTOR);
                 Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
             }
             break;

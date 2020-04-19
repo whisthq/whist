@@ -883,11 +883,11 @@ int main(int argc, char* argv[]) {
                         fmsg.mouseMotion.x =
                             fmsg.mouseMotion.relative
                                 ? msg.motion.xrel
-                                : msg.motion.x * 1000000 / output_width;
+                                : msg.motion.x * MOUSE_SCALING_FACTOR / output_width;
                         fmsg.mouseMotion.y =
                             fmsg.mouseMotion.relative
                                 ? msg.motion.yrel
-                                : msg.motion.y * 1000000 / output_height;
+                                : msg.motion.y * MOUSE_SCALING_FACTOR / output_height;
                         break;
                     case SDL_MOUSEBUTTONDOWN:
                     case SDL_MOUSEBUTTONUP:
