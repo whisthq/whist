@@ -675,7 +675,6 @@ def fetchCustomers():
         conn.close()
         return customers
 
-
 def insertCustomer(email, customer_id, subscription_id, location, trial_end, paid):
     command = text("""
         SELECT * FROM customers WHERE "username" = :email
@@ -683,7 +682,8 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
     params = {'email': email}
     with engine.connect() as conn:
         customers = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-
+        location = customers[0]['location']
+        
         if not customers:
             command = text("""
                 INSERT INTO customers("username", "id", "subscription", "location", "trial_end", "paid") 
@@ -1410,6 +1410,7 @@ def spinLock(vm_name):
 
     if not locked:
         print('NOTIFICATION: VM {} is unlocked'.format(vm_name))
+        return 1
 
     while locked:
         print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))

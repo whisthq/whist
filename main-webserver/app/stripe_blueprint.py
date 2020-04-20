@@ -17,7 +17,6 @@ def payment(action):
 
 		token = body['token']
 		email = body['email']
-		location = body['location']
 		code = body['code']
 		plan = body['plan']
 		PLAN_ID = os.getenv('MONTHLY_PLAN_ID')
@@ -71,7 +70,7 @@ def payment(action):
 			return jsonify({'status': 402, 'error': str(e)}), 402
 
 		try:
-			insertCustomer(email, customer_id, subscription_id, location, trial_end, True)
+			insertCustomer(email, customer_id, subscription_id, '', trial_end, True)
 		except:
 			return jsonify({'status': 409}), 409
 
