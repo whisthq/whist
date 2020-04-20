@@ -110,6 +110,7 @@ bool has_rendered_yet = false;
 
 void updateWidthAndHeight(int width, int height);
 int32_t RenderScreen(SDL_Renderer* renderer);
+void loadingSDL( SDL_Renderer* renderer, int loading_index );
 
 void nack(int id, int index) {
     if (VideoData.is_waiting_for_iframe) {
@@ -172,13 +173,25 @@ void updateWidthAndHeight(int width, int height) {
 int32_t RenderScreen(SDL_Renderer* renderer) {
     mprintf("RenderScreen running on Thread %d\n", SDL_GetThreadID(NULL));
 
+    int loading_index = 0;
+
+    // present the loading screen
+    loadingSDL( renderer, loading_index );
+
     while (VideoData.run_render_screen_thread) {
         int ret = SDL_SemTryWait(VideoData.renderscreen_semaphore);
 
         if (ret == SDL_MUTEX_TIMEDOUT) {
+            if( loading_index >= 0 )
+            {
+                loading_index++;
+                loadingSDL( renderer, loading_index );
+            }
             SDL_Delay(1);
             continue;
         }
+
+        loading_index = -1;
 
         if (ret < 0) {
             mprintf("Semaphore Error\n");
@@ -321,34 +334,36 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 }
 
 // Make the screen black
-void loadingSDL(SDL_Renderer* renderer) {
+void loadingSDL(SDL_Renderer* renderer, int loading_index) {
     static SDL_Texture* loading_screen_texture = NULL;
 
-    int gif_frame_index = 0;
-    int frame_name_size = 24;
+    int gif_frame_index = loading_index % 83;
 
     while (true) {
+        printf( "TEST!\n" );
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
 
-        char frame_name[frame_name_size];
+        char frame_name[24];
         if (gif_frame_index < 10) {
-            snprintf(frame_name, frame_name_size, "../loading/frame_0%d.bmp", gif_frame_index);
+            snprintf(frame_name, sizeof( frame_name ), "../loading/frame_0%d.bmp", gif_frame_index);
         }
         else {
-            snprintf(frame_name, frame_name_size, "../loading/frame_%d.bmp", gif_frame_index);
+            snprintf(frame_name, sizeof( frame_name ), "../loading/frame_%d.bmp", gif_frame_index);
         }
 
         SDL_Surface* loading_screen = SDL_LoadBMP(frame_name);
+        printf( "LOADING SCREEN: %p\n", loading_screen );
         loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
         SDL_FreeSurface(loading_screen);
 
-        int w = 200;
-        int h = 200;
+        int w, h;
         SDL_Rect dstrect;
 
-        dstrect.x = output_width - w / 2;
-        dstrect.y = output_height - h / 2;
+        SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
+
+        dstrect.x = output_width / 2 - w / 2;
+        dstrect.y = output_height / 2 - h / 2;
         dstrect.w = w;
         dstrect.h = h;
         SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
@@ -357,6 +372,7 @@ void loadingSDL(SDL_Renderer* renderer) {
         SDL_Delay(30); // sleep 30 ms
         gif_frame_index += 1;
         gif_frame_index %= 83; // number of loading frames
+        break;
     }
 }
 
@@ -377,9 +393,6 @@ int initMultithreadedVideo(void* opaque) {
                 SDL_GetError());
         return -1;
     }
-
-    // present the loading screen
-    loadingSDL(renderer);
 
     // mbps that currently works
     working_mbps = STARTING_BITRATE;
