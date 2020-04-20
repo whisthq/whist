@@ -683,6 +683,7 @@ int main() {
         memcpy(msg_init->username, username, strlen(username) + 1);
         mprintf("SIZE: %d\n", sizeof(FractalServerMessage) +
                                   sizeof(FractalServerMessageInit));
+        packet_mutex = SDL_CreateMutex();
         if (SendPacket(
                 &PacketSendContext, PACKET_MESSAGE, (uint8_t*)msg_init_whole,
                 sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit),
@@ -699,7 +700,6 @@ int main() {
         max_mbps = STARTING_BITRATE;
         wants_iframe = false;
         update_encoder = false;
-        packet_mutex = SDL_CreateMutex();
 
         SDL_Thread* send_video =
             SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
