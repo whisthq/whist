@@ -18,7 +18,7 @@ volatile int server_width = -1;
 volatile int server_height = -1;
 
 // maximum mbps
-volatile int max_mbps = MAXIMUM_MBPS;
+volatile int max_mbps = STARTING_BITRATE;
 volatile bool update_mbps = false;
 
 // Global state variables
