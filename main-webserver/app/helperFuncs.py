@@ -1113,6 +1113,18 @@ def lockVM(vm_name, lock):
         conn.execute(command, **params)
         conn.close()
 
+def checkLock(vm_name):
+    command = text("""
+        SELECT * FROM v_ms WHERE "vm_name" = :vm_name
+        """)
+    params = {'vm_name': vm_name}
+
+    with engine.connect() as conn:
+        vm = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        if vm:
+            return vm['lock']
+        return None
 
 def attachDiskToVM(disk_name, vm_name, lun):
     try:

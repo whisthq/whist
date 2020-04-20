@@ -348,6 +348,8 @@ def swapDisk(self, disk_name):
 	_, compute_client, _ = createClients()
 	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
 	vm_name = os_disk.managed_by
+	vm_attached = True if vm_name else False
+	original_vm_name = None
 	location = os_disk.location
 
 	def swapDiskAndUpdate(disk_name, vm_name):
@@ -368,34 +370,44 @@ def swapDisk(self, disk_name):
 		updateDisk(old_disk.name, '', None)
 	# Disk is currently attached to a VM. Make sure the database reflects the current disk state,
 	# and restart the VM as a sanity check.
-	if vm_name:
+	if vm_attached:
 		vm_name = vm_name.split('/')[-1]
 		print("NOTIFICATION: Disk " + disk_name +  " already attached to VM " + vm_name)
 
-		updateDisk(disk_name, vm_name, location)
-		associateVMWithDisk(vm_name, disk_name)
-		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
-		
-		print("SUCCESS: Database updated with disk " + disk_name + " and " + vm_name)
+		locked = checkLock(vm_name)
+		if not locked:
+			print('NOTIFICATION: VM {} is unlocked and ready for use'.format(vm_name))
+			lockVM(vm_name, True)
 
-		# If the VM is powered off, start it
-		vm_state = compute_client.virtual_machines.instance_view(
-			resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
+			updateDisk(disk_name, vm_name, location)
+			associateVMWithDisk(vm_name, disk_name)
+			updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
+			
+			print("NOTIFICATION: Database updated with disk " + disk_name + " and " + vm_name)
 
-		print(vm_state.statuses[1])
+			# If the VM is powered off, start it
+			vm_state = compute_client.virtual_machines.instance_view(
+				resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
 
-		if not 'running' in vm_state.statuses[1].code:
-			print('NOTIFICATION: VM ' + vm_name + ' is powered off. Preparing to power on...')
-			async_vm_start = compute_client.virtual_machines.start(
-				os.environ.get('VM_GROUP'), vm_name)
-			async_vm_start.wait()
-			time.sleep(20)
-		print('VM is started and ready to use')
-		vm_credentials = fetchVMCredentials(vm_name)
-		return vm_credentials
+			print(vm_state.statuses[1])
+
+			if not 'running' in vm_state.statuses[1].code:
+				print('NOTIFICATION: VM ' + vm_name + ' is powered off. Preparing to power on...')
+				async_vm_start = compute_client.virtual_machines.start(
+					os.environ.get('VM_GROUP'), vm_name)
+				async_vm_start.wait()
+				time.sleep(20)
+			print('SUCCESS: VM is started and ready to use')
+			vm_credentials = fetchVMCredentials(vm_name)
+
+			lockVM(vm_name, False)
+			return vm_credentials
+		else:
+			print('NOTIFICATION: VM {} is currently locked. Looking for another VM.'.format(vm_name))
+			original_vm_name = vm_name
 	# Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
 	# (then reboot the VM), or wait until a VM becomes available.
-	else:
+	if not vm_attached or original_vm_name:
 		free_vm_found = False
 		while not free_vm_found:
 			print("No VM attached to " + disk_name)
@@ -408,6 +420,8 @@ def swapDisk(self, disk_name):
 				print('Selected VM ' + vm_name +
 					  ' to attach to disk ' + disk_name)
 				if swapDiskAndUpdate(disk_name, vm_name) > 0:
+					if original_vm_name:
+						associateVMWithDisk(original_vm_name, '')
 					free_vm_found = True
 					updateOldDisk(vm_name)
 					lockVM(vm_name, False)
@@ -417,14 +431,16 @@ def swapDisk(self, disk_name):
 			else:
 				# Look for VMs that are not running
 				print(
-					"Could not find a running and available VM to attach to disk " + disk_name)
+					"NOTIFICATION: Could not find a running and available VM to attach to disk " + disk_name)
 				deactivated_vms = fetchAttachableVMs(
 					'NOT_RUNNING_AVAILABLE', location)
 				if deactivated_vms:
 					vm_name = deactivated_vms[0]['vm_name']
 					lockVM(vm_name, True)
-					print("Found deactivated VM " + vm_name)
+					print("NOTIFICATION: Found deactivated VM " + vm_name)
 					if swapDiskAndUpdate(disk_name, vm_name) > 0:
+						if original_vm_name:
+							associateVMWithDisk(original_vm_name, '')
 						free_vm_found = True
 						updateOldDisk(vm_name)
 						lockVM(vm_name, False)
@@ -432,7 +448,7 @@ def swapDisk(self, disk_name):
 					lockVM(vm_name, False)
 					return {'status': 400}
 				else:
-					print("No VMs are available. Going to sleep...")
+					print("NOTIFICATION: No VMs are available. Going to sleep...")
 					time.sleep(30)
 	return {'status': 200}
 
