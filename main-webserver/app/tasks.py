@@ -261,6 +261,13 @@ def restartVM(self, vm_name):
 	async_vm_restart.wait()
 	return {'status': 200}
 
+@celery.task(bind=True)
+def startVM(self, vm_name):
+	_, compute_client, _ = createClients()
+
+	fractalVMStart(vm_name)
+	return {'status': 200}
+
 
 @celery.task(bind=True)
 def updateVMStates(self):

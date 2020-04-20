@@ -65,6 +65,10 @@ def vm(action):
             task = restartVM.apply_async([vm_name])
             return jsonify({'ID': task.id}), 202
         return jsonify({'ID': None}), 404
+    elif action == 'start':
+        vm_name = request.get_json()['vm_name']
+        task = startVM.apply_async([vm_name])
+        return jsonify({'ID': task.id}), 202
     elif action == 'deallocate':
         vm_name = request.get_json()['vm_name']
         task = deallocateVM.apply_async([vm_name])

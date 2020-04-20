@@ -1161,14 +1161,16 @@ def swapdisk_name(disk_name, vm_name):
         vm_state = compute_client.virtual_machines.instance_view(
             resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
 
+        print(vm_state.statuses[1])
+
         if not 'running' in vm_state.statuses[1].code:
-            print("VM is powered off. Starting...")
+            print("Starting VM {}".format(vm_name))
             async_vm_start = compute_client.virtual_machines.start(
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_start.wait()
         
         else:
-            print("Restarting VM...")
+            print("Restarting VM {}".format(vm_name))
             async_vm_restart = compute_client.virtual_machines.restart(
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_restart.wait()
@@ -1315,3 +1317,91 @@ def createDiskFromImageHelper(username, location, vm_size):
 
         time.sleep(30)
         return {'status': 400, 'disk_name': None}
+
+
+def sendVMStartCommand(vm_name):
+    _, compute_client, _ = createClients()
+
+    try:
+        power_state = 'PowerState/deallocated'
+        vm_state = compute_client.virtual_machines.instance_view(
+            resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+
+        try:
+            power_state = vm_state.statuses[1].code
+        except Exception as e:
+            print('CRITICAL ERROR: ' + str(e))
+            print(vm_state.statuses)
+            pass
+
+        if not 'running' in power_state:
+            print("Starting VM {}".format(vm_name))
+            async_vm_start = compute_client.virtual_machines.start(
+                os.environ.get('VM_GROUP'), vm_name)
+            async_vm_start.wait()
+        else:
+            print("Restarting VM {}".format(vm_name))
+            async_vm_restart = compute_client.virtual_machines.restart(
+                os.environ.get('VM_GROUP'), vm_name)
+            async_vm_restart.wait()
+            print("VM restarted")
+
+        return 1
+    except Exception as e:
+        print('CRITICAL ERROR: ' + str(e))
+        return -1
+
+def fractalVMStart(vm_name):
+    _, compute_client, _ = createClients()
+
+    started = False
+    start_attempts = 0
+
+    # We will try to start/restart the VM and wait for it three times in total before giving up
+    while not started and start_attempts < 3:
+        start_command_tries = 0
+
+        #First, send a basic start or restart command. Try six times, if it fails, give up
+        while sendVMStartCommand(vm_name) < 0 and start_command_tries < 6:
+            time.sleep(10)
+            start_command_tries += 1
+
+        if start_command_tries >= 6:
+            return -1
+
+        wake_retries = 0
+
+        # After the VM has been started/restarted, query the state. Try 12 times for the state to be running. If it is not running,
+        # give up and go to the top of the while loop to send another start/restart command
+        vm_state = compute_client.virtual_machines.instance_view(
+            resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+
+        # Success! VM is running and ready to use
+        if 'running' in vm_state.statuses[1].code:
+            started = True
+            return 1
+
+        while not 'running' in vm_state.statuses[1].code and wake_retries < 12:
+            print('VM state is currently {}, sleeping for 5 seconds and querying state again'.format(vm_state.statuses[1].code))
+            time.sleep(5)
+            vm_state = compute_client.virtual_machines.instance_view(
+                resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+
+            # Success! VM is running and ready to use
+            if 'running' in vm_state.statuses[1].code:
+                started = True
+                return 1
+
+            wake_retries += 1
+
+        start_attempts += 1
+
+    return -1
+
+
+
+
+
+
+
+
