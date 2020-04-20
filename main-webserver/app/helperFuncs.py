@@ -682,8 +682,7 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
     params = {'email': email}
     with engine.connect() as conn:
         customers = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-        location = customers[0]['location']
-        
+
         if not customers:
             command = text("""
                 INSERT INTO customers("username", "id", "subscription", "location", "trial_end", "paid") 
@@ -700,6 +699,7 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
             conn.execute(command, **params)
             conn.close()
         else:
+            location = customers[0]['location']
             command = text("""
                 UPDATE customers 
                 SET "id" = :id, 
