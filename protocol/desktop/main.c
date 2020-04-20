@@ -729,7 +729,11 @@ int main(int argc, char* argv[]) {
     }
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-    initMultiThreadedPrintf(true);
+#ifdef _WIN32
+    initMultiThreadedPrintf("C:\\ProgramData\\FractalCache");
+#else
+    initMultiThreadedPrintf( "." );
+#endif
 
     initClipboard();
 

@@ -857,6 +857,8 @@ clock mprintf_timer;
 FILE *mprintf_log_file = NULL;
 char* log_directory = NULL;
 
+#include <stdio.h>
+
 void initMultiThreadedPrintf(char* log_dir) {
     if ( log_dir ) {
         log_directory = log_dir;
@@ -864,9 +866,11 @@ void initMultiThreadedPrintf(char* log_dir) {
         strcat( f, log_directory );
         strcat( f, "/log.txt" );
 #if defined(_WIN32)
-        _mkdir( f );
+        printf( "FILE: %s\n", f );
+        CreateDirectoryA( log_directory, 0 );
+        printf( "FILE: %s\n", f );
 #else
-        mkdir( f, 0755 );
+        mkdir( log_directory, 0755 );
 #endif
         mprintf_log_file = fopen( f, "ab");
     }
