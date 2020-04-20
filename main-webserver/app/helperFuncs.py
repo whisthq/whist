@@ -1375,6 +1375,9 @@ def fractalVMStart(vm_name):
         if 'running' in vm_state.statuses[1].code:
             print('SUCCESS: Running found in status of VM {}'.format(vm_name))
             started = True
+
+            time.sleep(10)
+            
             return 1
 
         while not 'running' in vm_state.statuses[1].code and wake_retries < 12:
@@ -1387,6 +1390,9 @@ def fractalVMStart(vm_name):
             if 'running' in vm_state.statuses[1].code:
                 print('SUCCESS: Running found in status of VM {}'.format(vm_name))
                 started = True
+
+                time.sleep(10)
+
                 return 1
 
             wake_retries += 1
