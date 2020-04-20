@@ -1348,7 +1348,7 @@ def sendVMStartCommand(vm_name, needs_restart):
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_restart.wait()
             time.sleep(10)
-            print("VM {} restarted",format(vm_name))
+            print("VM {} restarted".format(vm_name))
 
         return 1
     except Exception as e:
@@ -1405,9 +1405,5 @@ def fractalVMStart(vm_name, needs_restart = False):
     return -1
 
 
-
-
-
-
-
-
+def spinLock(vm_name):
+    
