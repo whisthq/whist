@@ -427,12 +427,6 @@ def swapDisk(self, disk_name):
 		
 		print("NOTIFICATION: Database updated with disk " + disk_name + " and " + vm_name)
 
-		# If the VM is powered off, start it
-		vm_state = compute_client.virtual_machines.instance_view(
-			resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
-
-		print(vm_state.statuses[1])
-
 		if fractalVMStart(vm_name) > 0:
 			print('SUCCESS: VM is started and ready to use')
 		else:
