@@ -281,6 +281,9 @@ def restartVM(self, vm_name):
 	async_vm_restart.wait()
 
 	lockVM(vm_name, False)
+
+	print('SUCCESS: {} restarted'.format(vm_name))
+
 	return {'status': 200}
 
 @celery.task(bind=True)
@@ -298,6 +301,9 @@ def startVM(self, vm_name):
 	fractalVMStart(vm_name)
 
 	lockVM(vm_name, False)
+
+	print('SUCCESS: {} started'.format(vm_name))
+
 	return {'status': 200}
 
 
@@ -589,8 +595,10 @@ def deleteDisk(self, disk_name):
 	except Exception as e:
 		print('ERROR: ' + str(e))
 		updateDiskState(disk_name, 'TO_BE_DELETED')
-		
-		return {'status': 200}
+	
+	print('SUCCESS: {} deleted'.format(disk_name))
+
+	return {'status': 200}
 
 @celery.task(bind=True)
 def deallocateVM(self, vm_name):
@@ -603,4 +611,7 @@ def deallocateVM(self, vm_name):
 	async_vm_deallocate.wait()
 
 	lockVM(vm_name, False)
+
+	print('SUCCESS: {} deallocated'.format(vm_name))
+
 	return {'status': 200}

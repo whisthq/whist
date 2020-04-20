@@ -1170,25 +1170,7 @@ def swapdisk_name(disk_name, vm_name):
         end = time.perf_counter()
         print("SUCCESS: Disk " + disk_name + " attached to " + vm_name + " in " + str(end - start) + " seconds")
 
-        vm_state = compute_client.virtual_machines.instance_view(
-            resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
-
-        print(vm_state.statuses[1])
-
-        if not 'running' in vm_state.statuses[1].code:
-            print("Starting VM {}".format(vm_name))
-            async_vm_start = compute_client.virtual_machines.start(
-                os.environ.get('VM_GROUP'), vm_name)
-            async_vm_start.wait()
-        
-        else:
-            print("Restarting VM {}".format(vm_name))
-            async_vm_restart = compute_client.virtual_machines.restart(
-                os.environ.get('VM_GROUP'), vm_name)
-            async_vm_restart.wait()
-            time.sleep(10)
-            print("VM restarted")
-        return 1
+        return fractalVMStart(vm_name)
     except Exception as e:
         print("CRITICAL ERROR: " + str(e))
         return -1
