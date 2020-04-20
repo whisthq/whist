@@ -866,9 +866,7 @@ void initMultiThreadedPrintf(char* log_dir) {
         strcat( f, log_directory );
         strcat( f, "/log.txt" );
 #if defined(_WIN32)
-        printf( "FILE: %s\n", f );
         CreateDirectoryA( log_directory, 0 );
-        printf( "FILE: %s\n", f );
 #else
         mkdir( log_directory, 0755 );
 #endif
