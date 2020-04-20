@@ -1170,7 +1170,7 @@ def swapdisk_name(disk_name, vm_name):
         end = time.perf_counter()
         print("SUCCESS: Disk " + disk_name + " attached to " + vm_name + " in " + str(end - start) + " seconds")
 
-        return fractalVMStart(vm_name)
+        return fractalVMStart(vm_name, True)
     except Exception as e:
         print("CRITICAL ERROR: " + str(e))
         return -1
@@ -1313,7 +1313,7 @@ def createDiskFromImageHelper(username, location, vm_size):
         return {'status': 400, 'disk_name': None}
 
 
-def sendVMStartCommand(vm_name):
+def sendVMStartCommand(vm_name, needs_restart = False):
     _, compute_client, _ = createClients()
 
     try:
@@ -1328,13 +1328,14 @@ def sendVMStartCommand(vm_name):
             print(vm_state.statuses)
             pass
 
-        if not 'running' in power_state:
+        if 'stop' in power_state or 'dealloc' in power_state:
             print("Starting VM {}".format(vm_name))
             async_vm_start = compute_client.virtual_machines.start(
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_start.wait()
             print("VM {} started".format(vm_name))
-        else:
+        
+        if needs_restart:
             print("Restarting VM {}".format(vm_name))
             async_vm_restart = compute_client.virtual_machines.restart(
                 os.environ.get('VM_GROUP'), vm_name)
@@ -1377,7 +1378,7 @@ def fractalVMStart(vm_name):
             started = True
 
             time.sleep(10)
-            
+
             return 1
 
         while not 'running' in vm_state.statuses[1].code and wake_retries < 12:
