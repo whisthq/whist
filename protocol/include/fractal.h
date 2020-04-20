@@ -679,7 +679,7 @@ void* TryReadingTCPPacket(struct SocketContext* context);
 #define clock struct timeval
 #endif
 
-void initMultiThreadedPrintf(bool use_logging);
+void initMultiThreadedPrintf(char* log_directory);
 void destroyMultiThreadedPrintf();
 void mprintf(const char* fmtStr, ...);
 void lprintf(const char* fmtStr, ...);

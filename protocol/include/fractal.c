@@ -855,10 +855,20 @@ int MultiThreadedPrintf(void *opaque);
 void real_mprintf(bool log, const char *fmtStr, va_list args);
 clock mprintf_timer;
 FILE *mprintf_log_file = NULL;
+char* log_directory = NULL;
 
-void initMultiThreadedPrintf(bool use_logging) {
-    if (use_logging) {
-        mprintf_log_file = fopen("log.txt", "ab");
+void initMultiThreadedPrintf(char* log_dir) {
+    if ( log_dir ) {
+        log_directory = log_dir;
+        char f[1000] = "";
+        strcat( f, log_directory );
+        strcat( f, "/log.txt" );
+#if defined(_WIN32)
+        _mkdir( f );
+#else
+        mkdir( f, 0755 );
+#endif
+        mprintf_log_file = fopen( f, "ab");
     }
 
     run_multithreaded_printf = true;
@@ -943,12 +953,23 @@ int MultiThreadedPrintf(void *opaque) {
             // If it's larger than 5MB, start a new file and store the old one
             if (sz > 5 * 1024 * 1024) {
                 fclose(mprintf_log_file);
+
+                char f[1000] = "";
+                strcat( f, log_directory );
+                strcat( f, "/log.txt" );
+                char fp[1000] = "";
+                strcat( fp, log_directory );
+                strcat( fp, "/log_prev.txt" );
 #if defined(_WIN32)
-                DeleteFileW(L"log_prev.txt");
-                MoveFileW(L"log.txt", L"log_prev.txt");
-                DeleteFileW(L"log.txt");
+                WCHAR wf[1000];
+                WCHAR wfp[1000];
+                mbstowcs( wf, f, sizeof(wf) );
+                mbstowcs( wfp, fp, sizeof( wfp ) );
+                DeleteFileW(wfp);
+                MoveFileW(wf, wfp);
+                DeleteFileW(wf);
 #endif
-                mprintf_log_file = fopen("log.txt", "ab");
+                mprintf_log_file = fopen(f, "ab");
             }
         }
     }
