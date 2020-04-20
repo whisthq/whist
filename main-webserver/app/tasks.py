@@ -253,6 +253,7 @@ def deleteVMResources(self, vm_name, delete_disk):
 	while locked:
 		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
 		time.sleep(5)
+		locked = checkLock(vm_name)
 		
 	lockVM(vm_name, True)
 
@@ -269,6 +270,7 @@ def restartVM(self, vm_name):
 	while locked:
 		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
 		time.sleep(5)
+		locked = checkLock(vm_name)
 
 	lockVM(vm_name, True)
 
@@ -288,6 +290,7 @@ def startVM(self, vm_name):
 	while locked:
 		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
 		time.sleep(5)
+		locked = checkLock(vm_name)
 
 	lockVM(vm_name, True)
 
@@ -407,6 +410,7 @@ def swapDisk(self, disk_name):
 		while locked:
 			print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
 			time.sleep(5)
+			locked = checkLock(vm_name)
 
 		print('NOTIFICATION: VM {} is unlocked and ready for use'.format(vm_name))
 		lockVM(vm_name, True)
@@ -482,6 +486,7 @@ def swapSpecificDisk(self, disk_name, vm_name):
 	while locked:
 		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
 		time.sleep(5)
+		locked = checkLock(vm_name)
 
 	lockVM(vm_name, True)
 
