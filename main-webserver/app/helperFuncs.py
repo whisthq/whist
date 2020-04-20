@@ -1190,7 +1190,7 @@ def swapdisk_name(disk_name, vm_name):
             print("VM restarted")
         return 1
     except Exception as e:
-        print("CRITICAL ERROR: " + e)
+        print("CRITICAL ERROR: " + str(e))
         return -1
 
 def fetchAllDisks():

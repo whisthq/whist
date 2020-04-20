@@ -247,25 +247,36 @@ def fetchAll(self, update):
 
 
 @celery.task(bind=True)
-def deleteVMResources(self, name, delete_disk):
-	status = 200 if deleteResource(name, delete_disk) else 404
+def deleteVMResources(self, vm_name, delete_disk):
+	lockVM(vm_name, True)
+
+	status = 200 if deleteResource(vm_name, delete_disk) else 404
+
+	lockVM(vm_name, False)
 	return {'status': status}
 
 
 @celery.task(bind=True)
 def restartVM(self, vm_name):
+	lockVM(vm_name, True)
+
 	_, compute_client, _ = createClients()
 
 	async_vm_restart = compute_client.virtual_machines.restart(
 		os.environ.get('VM_GROUP'), vm_name)
 	async_vm_restart.wait()
+
+	lockVM(vm_name, False)
 	return {'status': 200}
 
 @celery.task(bind=True)
 def startVM(self, vm_name):
-	_, compute_client, _ = createClients()
+	lockVM(vm_name, True)
 
+	_, compute_client, _ = createClients()
 	fractalVMStart(vm_name)
+
+	lockVM(vm_name, False)
 	return {'status': 200}
 
 
@@ -391,15 +402,12 @@ def swapDisk(self, disk_name):
 
 			print(vm_state.statuses[1])
 
-			if not 'running' in vm_state.statuses[1].code:
-				print('NOTIFICATION: VM ' + vm_name + ' is powered off. Preparing to power on...')
-				async_vm_start = compute_client.virtual_machines.start(
-					os.environ.get('VM_GROUP'), vm_name)
-				async_vm_start.wait()
-				time.sleep(20)
-			print('SUCCESS: VM is started and ready to use')
+			if fractalVMStart(vm_name) > 0:
+				print('SUCCESS: VM is started and ready to use')
+			else:
+				print('CRITICAL ERROR: Could not start VM {}'.format(vm_name))
+				
 			vm_credentials = fetchVMCredentials(vm_name)
-
 			lockVM(vm_name, False)
 			return vm_credentials
 		else:
@@ -561,9 +569,13 @@ def deleteDisk(self, disk_name):
 
 @celery.task(bind=True)
 def deallocateVM(self, vm_name):
+	lockVM(vm_name, True)
+
 	_, compute_client, _ = createClients()
 
 	async_vm_deallocate = compute_client.virtual_machines.deallocate(
 		os.environ.get('VM_GROUP'), vm_name)
 	async_vm_deallocate.wait()
+
+	lockVM(vm_name, False)
 	return {'status': 200}
