@@ -54,7 +54,6 @@ def user_reset():
 
 @account_bp.route('/account/login', methods=['POST'])
 def account_login():
-    print("is logging working?")
     body = request.get_json()
     username, password = body['username'], body['password']
     is_user = password != os.getenv('ADMIN_PASSWORD')
@@ -62,7 +61,12 @@ def account_login():
     vm_status = userVMStatus(username)
     token = fetchUserToken(username)
     access_token, refresh_token = getAccessTokens(username)
-    return jsonify({'verified': verified, 'is_user': is_user, 'vm_status': vm_status, 'token': token, 'access_token': access_token, 'refresh_token': refresh_token}), 200
+    return jsonify({'verified': verified,
+     'is_user': is_user, 
+     'vm_status': vm_status, 
+     'token': token, 
+     'access_token': access_token, 
+     'refresh_token': refresh_token}), 200
 
     
 @account_bp.route('/account/register', methods=['POST'])
@@ -108,6 +112,7 @@ def account_fetch_users():
 @account_bp.route('/account/delete', methods=['POST'])
 @jwt_required
 def account_delete():
+    body = request.get_json()
     status = deleteUser(body['username'])
     return jsonify({'status': status}), status
     
@@ -194,8 +199,12 @@ def account_feedback():
 @account_bp.route('/admin/<action>', methods=['POST'])
 def admin(action):
     body = request.get_json()
+    print(body)
+    print(os.getenv('DASHBOARD_USERNAME'))
+    print(os.getenv('DASHBOARD_PASSWORD'))
     if action == 'login':
         if body['username'] == os.getenv('DASHBOARD_USERNAME') and body['password'] == os.getenv('DASHBOARD_PASSWORD'):
+            print("EQUAL")
             return jsonify({'status': 200}), 200
         return jsonify({'status': 422}), 422
 

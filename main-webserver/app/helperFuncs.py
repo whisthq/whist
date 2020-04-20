@@ -469,7 +469,7 @@ def genDiskName():
         diskName = genHaiku(1)[0]
         while diskName in oldDisks:
             diskName = genHaiku(1)[0]
-        return diskName
+        return str(diskName)
 
 
 def storeForm(name, email, cubeType):
@@ -517,6 +517,12 @@ def addTimeTable(username, action, time, is_user):
             if vms:
                 _, compute_client, _ = createClients()
                 vm_name = vms[0]['vm_name']
+
+                if action == 'logoff':
+                    lockVM(vm_name, False)
+                elif action == 'logon':
+                    lockVM(vm_name, True)
+
                 vm_state = compute_client.virtual_machines.instance_view(
                     resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
                 if 'running' in vm_state.statuses[1].code:
@@ -669,7 +675,6 @@ def fetchCustomers():
         conn.close()
         return customers
 
-
 def insertCustomer(email, customer_id, subscription_id, location, trial_end, paid):
     command = text("""
         SELECT * FROM customers WHERE "username" = :email
@@ -694,6 +699,7 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
             conn.execute(command, **params)
             conn.close()
         else:
+            location = customers[0]['location']
             command = text("""
                 UPDATE customers 
                 SET "id" = :id, 
@@ -994,6 +1000,18 @@ def updateVMState(vm_name, state):
         conn.execute(command, **params)
         conn.close()
 
+def updateVMLocation(vm_name, location):
+    command = text("""
+        UPDATE v_ms
+        SET location = :location
+        WHERE
+           "vm_name" = :vm_name
+        """)
+    params = {'vm_name': vm_name, 'location': location}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
 def updateDisk(disk_name, vm_name, location):
     command = text("""
         SELECT * FROM disks WHERE "disk_name" = :disk_name
@@ -1101,6 +1119,18 @@ def lockVM(vm_name, lock):
         conn.execute(command, **params)
         conn.close()
 
+def checkLock(vm_name):
+    command = text("""
+        SELECT * FROM v_ms WHERE "vm_name" = :vm_name
+        """)
+    params = {'vm_name': vm_name}
+
+    with engine.connect() as conn:
+        vm = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        if vm:
+            return vm['lock']
+        return None
 
 def attachDiskToVM(disk_name, vm_name, lun):
     try:
@@ -1144,27 +1174,11 @@ def swapdisk_name(disk_name, vm_name):
         )
         async_disk_attach.wait()
         end = time.perf_counter()
-        print("SUCCESS: Disk " + disk_name + " attached to " + vm_name + " in " + str(start - end) + " seconds")
+        print("SUCCESS: Disk " + disk_name + " attached to " + vm_name + " in " + str(end - start) + " seconds")
 
-        vm_state = compute_client.virtual_machines.instance_view(
-            resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
-        if not 'running' in vm_state.statuses[1].code:
-            print("VM is powered off. Starting...")
-            async_vm_start = compute_client.virtual_machines.start(
-                os.environ.get('VM_GROUP'), vm_name)
-            async_vm_start.wait()
-        
-        time.sleep(10)
-        # else:
-        #     print("Restarting VM...")
-        #     async_vm_restart = compute_client.virtual_machines.restart(
-        #         os.environ.get('VM_GROUP'), vm_name)
-        #     async_vm_restart.wait()
-        #     time.sleep(10)
-        #     print("VM restarted")
-        return 1
+        return fractalVMStart(vm_name, True)
     except Exception as e:
-        print("CRITICAL ERROR: " + e)
+        print("CRITICAL ERROR: " + str(e))
         return -1
 
 def fetchAllDisks():
@@ -1247,13 +1261,30 @@ def updateDiskState(disk_name, state):
         conn.execute(command, **params)
         conn.close()
 
-def createDiskFromImageHelper(username, location):
+def assignVMSizeToDisk(disk_name, vm_size):
+    command = text("""
+        UPDATE disks SET "vm_size" = :vm_size WHERE "disk_name" = :disk_name
+        """)
+    params = {'vm_size': vm_size, 'disk_name': disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+def createDiskFromImageHelper(username, location, vm_size):
+    disk_name = genDiskName()
+    _, compute_client, _ = createClients()
+
     try:
-        _, compute_client, _ = createClients()
+        ORIGINAL_DISK = 'Fractal_Disk_Eastus'
+        if location == 'southcentralus':
+            ORIGINAL_DISK = 'Fractal_Disk_Southcentralus'
+        elif location == 'northcentralus':
+            ORIGINAL_DISK = 'Fractal_Disk_Northcentralus'
 
-        disk_image = compute_client.disks.get('Fractal', 'Fractal_Disk')
-        disk_name = genDiskName()
-
+        disk_image = compute_client.disks.get('Fractal', ORIGINAL_DISK)
+        print('SUCCESS: Disk found in Fractal resource pool')
+        print('NOTIFICATION: Preparing to create disk {} with location {} under {} attached to a {} VM'.format(
+            disk_name, location, username, vm_size))
         async_disk_creation = compute_client.disks.create_or_update(
             'Fractal',
             disk_name,
@@ -1265,15 +1296,125 @@ def createDiskFromImageHelper(username, location):
                 }
             }
         )
-
+        print('NOTIFICATION: Disk clone command sent. Waiting on disk to create')
         async_disk_creation.wait()
+        print('SUCCESS: Disk successfully cloned to {}'.format(disk_name))
         new_disk = async_disk_creation.result()
 
         updateDisk(disk_name, '', location)
         assignUserToDisk(disk_name, username)
+        assignVMSizeToDisk(disk_name, vm_size)
 
         return {'status': 200, 'disk_name': disk_name}
     except Exception as e:
         print('CRITICAL ERROR: ' + str(e))
+
+        print("Attempting to delete the disk {}".format(disk_name))
+        os_disk_delete = compute_client.disks.delete(
+            os.getenv('VM_GROUP'), disk_name)
+        os_disk_delete.wait()
+        print("Disk {} deleted".format(disk_name))
+
         time.sleep(30)
         return {'status': 400, 'disk_name': None}
+
+
+def sendVMStartCommand(vm_name, needs_restart):
+    _, compute_client, _ = createClients()
+
+    try:
+        power_state = 'PowerState/deallocated'
+        vm_state = compute_client.virtual_machines.instance_view(
+            resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+
+        try:
+            power_state = vm_state.statuses[1].code
+        except Exception as e:
+            print('CRITICAL ERROR: ' + str(e))
+            print(vm_state.statuses)
+            pass
+
+        if 'stop' in power_state or 'dealloc' in power_state:
+            print("Starting VM {}".format(vm_name))
+            async_vm_start = compute_client.virtual_machines.start(
+                os.environ.get('VM_GROUP'), vm_name)
+            async_vm_start.wait()
+            time.sleep(10)
+            print("VM {} started".format(vm_name))
+        
+        if needs_restart:
+            print("Restarting VM {}".format(vm_name))
+            async_vm_restart = compute_client.virtual_machines.restart(
+                os.environ.get('VM_GROUP'), vm_name)
+            async_vm_restart.wait()
+            time.sleep(10)
+            print("VM {} restarted".format(vm_name))
+
+        return 1
+    except Exception as e:
+        print('CRITICAL ERROR: ' + str(e))
+        return -1
+
+def fractalVMStart(vm_name, needs_restart = False):
+    _, compute_client, _ = createClients()
+
+    started = False
+    start_attempts = 0
+
+    # We will try to start/restart the VM and wait for it three times in total before giving up
+    while not started and start_attempts < 3:
+        start_command_tries = 0
+
+        #First, send a basic start or restart command. Try six times, if it fails, give up
+        while sendVMStartCommand(vm_name, needs_restart) < 0 and start_command_tries < 6:
+            time.sleep(10)
+            start_command_tries += 1
+
+        if start_command_tries >= 6:
+            return -1
+
+        wake_retries = 0
+
+        # After the VM has been started/restarted, query the state. Try 12 times for the state to be running. If it is not running,
+        # give up and go to the top of the while loop to send another start/restart command
+        vm_state = compute_client.virtual_machines.instance_view(
+            resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+
+        # Success! VM is running and ready to use
+        if 'running' in vm_state.statuses[1].code:
+            print('SUCCESS: Running found in status of VM {}'.format(vm_name))
+            started = True
+            return 1
+
+        while not 'running' in vm_state.statuses[1].code and wake_retries < 12:
+            print('VM state is currently {}, sleeping for 5 seconds and querying state again'.format(vm_state.statuses[1].code))
+            time.sleep(5)
+            vm_state = compute_client.virtual_machines.instance_view(
+                resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+
+            # Success! VM is running and ready to use
+            if 'running' in vm_state.statuses[1].code:
+                print('SUCCESS: Running found in status of VM {}'.format(vm_name))
+                started = True
+                return 1
+
+            wake_retries += 1
+
+        start_attempts += 1
+
+    return -1
+
+
+def spinLock(vm_name):
+    locked = checkLock(vm_name)
+
+    if not locked:
+        print('NOTIFICATION: VM {} is unlocked'.format(vm_name))
+        return 1
+
+    while locked:
+        print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
+        time.sleep(5)
+        locked = checkLock(vm_name)
+
+    return 1

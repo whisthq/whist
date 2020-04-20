@@ -58,8 +58,20 @@ def vm(action):
         task = deleteVMResources.apply_async([vm_name, delete_disk])
         return jsonify({'ID': task.id}), 202
     elif action == 'restart':
+        username = request.get_json()['username']
+        vm = fetchUserVMs(username)
+        if vm:
+            vm_name = vm[0]['vm_name']
+            task = restartVM.apply_async([vm_name])
+            return jsonify({'ID': task.id}), 202
+        return jsonify({'ID': None}), 404
+    elif action == 'start':
         vm_name = request.get_json()['vm_name']
-        task = restartVM.apply_async([vm_name])
+        task = startVM.apply_async([vm_name])
+        return jsonify({'ID': task.id}), 202
+    elif action == 'deallocate':
+        vm_name = request.get_json()['vm_name']
+        task = deallocateVM.apply_async([vm_name])
         return jsonify({'ID': task.id}), 202
     elif action == 'updateState':
         task = updateVMStates.apply_async([])
@@ -75,6 +87,10 @@ def vm(action):
         body = request.get_json()
         task = runPowershell.apply_async([body['vm_name']])
         return jsonify({'ID': task.id}), 202
+    elif action == 'fetchall':
+        body = request.get_json()
+        vms = fetchUserVMs(None)
+        return jsonify({'payload': vms, 'status': 200}), 200
     return jsonify({}), 400
 
 
@@ -92,7 +108,8 @@ def disk(action):
         return jsonify({'ID': task.id}), 202
     elif action == 'createFromImage':
         body = request.get_json()
-        task = createDiskFromImage.apply_async([body['username'], body['location']])
+        print(body)
+        task = createDiskFromImage.apply_async([body['username'], body['location'], body['vm_size']])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
@@ -145,6 +162,10 @@ def tracker(action):
         username = body['username']
         is_user = body['is_user']
         addTimeTable(username, 'logoff', time, is_user)
+    elif action == 'startup':
+        username = body['username']
+        is_user = body['is_user']
+        addTimeTable(username, 'startup', time, is_user)
     elif action == 'clear':
         deleteTimeTable()
     elif action == 'fetch':
