@@ -252,6 +252,19 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     return 0;
 }
 
+bool pending_encoder;
+bool encoder_finished;
+encoder_t* encoder_factory_result = NULL;
+int encoder_factory_w;
+int encoder_factory_h;
+int encoder_factory_current_bitrate;
+static int32_t EncoderFactory( void* opaque )
+{
+    encoder_factory_result = create_video_encoder( encoder_factory_w, encoder_factory_h,
+                                                   encoder_factory_current_bitrate, gop_size );
+    encoder_finished = true;
+}
+
 static int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
@@ -290,6 +303,9 @@ static int32_t SendVideo(void* opaque) {
     static clock last_frame_capture;
     StartTimer(&last_frame_capture);
 
+    pending_encoder = false;
+    encoder_finished = false;
+
     while (connected) {
         if (client_width < 0 || client_height < 0) {
             SDL_Delay(5);
@@ -323,14 +339,38 @@ static int32_t SendVideo(void* opaque) {
 
         // Update encoder with new parameters
         if (update_encoder) {
-            if (encoder) {
-                destroy_video_encoder(encoder);
+            if( pending_encoder )
+            {
+                if( encoder_finished )
+                {
+                    if( encoder )
+                    {
+                        destroy_video_encoder( encoder );
+                    }
+                    encoder = encoder_factory_result;
+                    frames_since_first_iframe = 0;
+                    pending_encoder = false;
+                    update_encoder = false;
+                }
+            } else
+            {
+                pending_encoder = true;
+                encoder_finished = false;
+                encoder_factory_w = device->width;
+                encoder_factory_h = device->height;
+                encoder_factory_current_bitrate = current_bitrate;
+                if( encoder == NULL )
+                {
+                    EncoderFactory( NULL );
+                    encoder = encoder_factory_result;
+                    frames_since_first_iframe = 0;
+                    pending_encoder = false;
+                    update_encoder = false;
+                } else
+                {
+                    SDL_CreateThread( EncoderFactory, "EncoderFactory", NULL );
+                }
             }
-            encoder = create_video_encoder(device->width, device->height,
-                                           current_bitrate, gop_size);
-
-            update_encoder = false;
-            frames_since_first_iframe = 0;
         }
 
         // Accumulated_frames is equal to how many frames have passed since the
