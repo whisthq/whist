@@ -24,6 +24,11 @@ volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
 
 #define BITRATE_BUCKET_SIZE 500000
 
+#define CURSORIMAGE_A 0xff000000
+#define CURSORIMAGE_R 0x00ff0000
+#define CURSORIMAGE_G 0x0000ff00
+#define CURSORIMAGE_B 0x000000ff
+
 struct VideoData {
     struct FrameData* pending_ctx;
     int frames_received;
@@ -123,14 +128,13 @@ bool requestIframe() {
     if (GetTimer(VideoData.last_iframe_request_timer) > 250.0 / 1000.0) {
         FractalClientMessage fmsg;
         fmsg.type = MESSAGE_IFRAME_REQUEST;
-        if( VideoData.last_rendered_id == 0 )
-        {
+        if (VideoData.last_rendered_id == 0) {
             fmsg.reinitialize_encoder = true;
         } else {
             fmsg.reinitialize_encoder = false;
         }
-        SendFmsg( &fmsg );
-        StartTimer( &VideoData.last_iframe_request_timer );
+        SendFmsg(&fmsg);
+        StartTimer(&VideoData.last_iframe_request_timer);
         VideoData.is_waiting_for_iframe = true;
         return true;
     } else {
@@ -185,8 +189,6 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             mprintf("Sem opened but rendering is not true!\n");
             continue;
         }
-		
-											
 
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)renderContext.frame_buffer;
@@ -225,7 +227,6 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         if (!skip_render && !resizing) {
-					
             if (videoContext.sws) {
                 sws_scale(
                     videoContext.sws,
@@ -248,11 +249,29 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         // Set cursor to frame's desired cursor type
-        if ((FractalCursorID)frame->cursor.cursor_id != last_cursor) {
+        if ((FractalCursorID)frame->cursor.cursor_id != last_cursor ||
+            frame->cursor.cursor_use_bmp) {
             if (cursor) {
                 SDL_FreeCursor((SDL_Cursor*)cursor);
             }
-            cursor = SDL_CreateSystemCursor(frame->cursor.cursor_id);
+            if (frame->cursor.cursor_use_bmp) {
+                // use bitmap data to set cursor
+
+                SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
+                    frame->cursor.cursor_bmp, frame->cursor.cursor_bmp_width,
+                    frame->cursor.cursor_bmp_height, sizeof(uint32_t) * 8,
+                    sizeof(uint32_t) * frame->cursor.cursor_bmp_width,
+                    CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B, CURSORIMAGE_A);
+                // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
+                // pre-alpha multplied
+                cursor = SDL_CreateColorCursor(cursor_surface,
+                                               frame->cursor.cursor_bmp_hot_x,
+                                               frame->cursor.cursor_bmp_hot_y);
+                SDL_FreeSurface(cursor_surface);
+            } else {
+                // use cursor id to set cursor
+                cursor = SDL_CreateSystemCursor(frame->cursor.cursor_id);
+            }
             SDL_SetCursor((SDL_Cursor*)cursor);
 
             last_cursor = (FractalCursorID)frame->cursor.cursor_id;
@@ -272,10 +291,11 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         // GetTimer(renderContext.client_frame_timer));
 
         if (!skip_render && !resizing) {
-			//printf("Before, %x\n", renderer);
-            SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL, NULL);
-            //SDL_RenderCopy((SDL_Renderer*)renderer, NULL, NULL, NULL);
-			//printf("After\n");
+            // printf("Before, %x\n", renderer);
+            SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL,
+                           NULL);
+            // SDL_RenderCopy((SDL_Renderer*)renderer, NULL, NULL, NULL);
+            // printf("After\n");
             // SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
             // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
             SDL_RenderPresent((SDL_Renderer*)renderer);
@@ -316,11 +336,6 @@ void loadingSDL(SDL_Renderer* renderer) {
             SDL_CreateTextureFromSurface(renderer, loading_screen);
         SDL_FreeSurface(loading_screen);
     }
-
-    /*
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE
-    ); SDL_RenderClear(renderer );
-    */
 
     int w, h;
     SDL_Rect dstrect;
@@ -742,6 +757,6 @@ void destroyVideo() {
 }
 
 void notify_video(bool stop) {
-	resizing = stop;
-	printf("Stop video? %d.\n", stop);
+    resizing = stop;
+    printf("Stop video? %d.\n", stop);
 }

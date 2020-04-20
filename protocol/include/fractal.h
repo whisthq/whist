@@ -16,11 +16,11 @@
 #include <mmdeviceapi.h>
 #include <process.h>
 #include <synchapi.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
 #include <windows.h>
+#include <winsock2.h>
 #include <winuser.h>
 #include "shellscalingapi.h"
+#include <ws2tcpip.h>
 #undef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
 #undef EWOULDBLOCK
@@ -84,6 +84,8 @@
 #define MIN_FPS 10
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
+#define MAX_CURSOR_WIDTH 32
+#define MAX_CURSOR_HEIGHT 32
 
 #define PRIVATE_KEY \
     "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
@@ -405,6 +407,12 @@ typedef struct FractalCursor {
 typedef struct FractalCursorImage {
     SDL_SystemCursor cursor_id;
     FractalCursorState cursor_state;
+    bool cursor_use_bmp;
+    unsigned short cursor_bmp_width;
+    unsigned short cursor_bmp_height;
+    unsigned short cursor_bmp_hot_x;
+    unsigned short cursor_bmp_hot_y;
+    uint32_t cursor_bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
 } FractalCursorImage;
 
 /// @brief Latency performance metrics.
@@ -582,8 +590,7 @@ typedef enum FractalServerMessageType {
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
-typedef struct FractalServerMessageInit
-{
+typedef struct FractalServerMessageInit {
     char filename[300];
     char username[50];
 } FractalServerMessageInit;
@@ -594,8 +601,7 @@ typedef struct FractalServerMessage {
         int ping_id;
         int frequency;
     };
-    union
-    {
+    union {
         ClipboardData clipboard;
         char init_msg[0];
     };
@@ -614,7 +620,8 @@ typedef struct SocketContext {
     int ack;
 } SocketContext;
 
-// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be replayed
+// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
+// replayed
 // TODO: INC integer that must not be used twice
 
 // Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) +

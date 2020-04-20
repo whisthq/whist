@@ -279,34 +279,6 @@ const int linux_mouse_buttons[6] = {
     BTN_4        // 5 -> Extra Mouse Button 2
 };
 
-// typedef struct FractalCursorTypes {
-//     HCURSOR CursorAppStarting;
-//     HCURSOR CursorArrow;
-//     HCURSOR CursorCross;
-//     HCURSOR CursorHand;
-//     HCURSOR CursorHelp;
-//     HCURSOR CursorIBeam;
-//     HCURSOR CursorIcon;
-//     HCURSOR CursorNo;
-//     HCURSOR CursorSize;
-//     HCURSOR CursorSizeAll;
-//     HCURSOR CursorSizeNESW;
-//     HCURSOR CursorSizeNS;
-//     HCURSOR CursorSizeNWSE;
-//     HCURSOR CursorSizeWE;
-//     HCURSOR CursorUpArrow;
-//     HCURSOR CursorWait;
-// } FractalCursorTypes;
-
-// struct FractalCursorTypes l_types = {0};
-// struct FractalCursorTypes* types = &l_types;
-
-// FractalCursorImage GetCursorImage(PCURSORINFO pci);
-
-void LoadCursors();
-
-// void initCursors() { LoadCursors(); }
-
 int GetLinuxKeyCode(int sdl_keycode) { return linux_keycodes[sdl_keycode]; }
 
 int GetLinuxMouseButton(FractalMouseButton fractal_code) {
@@ -486,8 +458,6 @@ input_device_t* CreateInputDevice(input_device_t* input_device) {
     // config devices
 
     struct uinput_setup usetup = {0};
-    mprintf("tingy @ %p, data looks like %d %d %d\n", &usetup, usetup.id.vendor,
-            usetup.id.product, usetup.id.version);
     usetup.id.bustype = BUS_USB;
     usetup.id.vendor = 0xf4c1;
     usetup.id.version = 1;
@@ -615,97 +585,3 @@ void ReplayUserInput(input_device_t* input_device,
     EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     EmitInputEvent(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
 }
-
-// void EnterWinString(enum FractalKeycode* keycodes, int len) {
-//     // get screen width and height for mouse cursor
-//     int i, index = 0;
-//     enum FractalKeycode keycode;
-//     INPUT Event[200];
-
-//     for (i = 0; i < len; i++) {
-//         keycode = keycodes[i];
-//         Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
-//         Event[index].type = INPUT_KEYBOARD;
-//         Event[index].ki.wScan = 0;
-//         Event[index].ki.time = 0;  // system supplies timestamp
-//         Event[index].ki.dwFlags = 0;
-
-//         index++;
-
-//         Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
-//         Event[index].type = INPUT_KEYBOARD;
-//         Event[index].ki.wScan = 0;
-//         Event[index].ki.time = 0;  // system supplies timestamp
-//         Event[index].ki.dwFlags = KEYEVENTF_KEYUP;
-
-//         index++;
-//     }
-
-//     // send FMSG mapped to Windows event to Windows and return
-//     SendInput(index, Event, sizeof(INPUT));
-// }
-
-// void LoadCursors() {
-//     types->CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
-//     types->CursorArrow = LoadCursor(NULL, IDC_ARROW);
-//     types->CursorCross = LoadCursor(NULL, IDC_CROSS);
-//     types->CursorHand = LoadCursor(NULL, IDC_HAND);
-//     types->CursorHelp = LoadCursor(NULL, IDC_HELP);
-//     types->CursorIBeam = LoadCursor(NULL, IDC_IBEAM);
-//     types->CursorIcon = LoadCursor(NULL, IDC_ICON);
-//     types->CursorNo = LoadCursor(NULL, IDC_NO);
-//     types->CursorSize = LoadCursor(NULL, IDC_SIZE);
-//     types->CursorSizeAll = LoadCursor(NULL, IDC_SIZEALL);
-//     types->CursorSizeNESW = LoadCursor(NULL, IDC_SIZENESW);
-//     types->CursorSizeNS = LoadCursor(NULL, IDC_SIZENS);
-//     types->CursorSizeNWSE = LoadCursor(NULL, IDC_SIZENWSE);
-//     types->CursorSizeWE = LoadCursor(NULL, IDC_SIZEWE);
-//     types->CursorUpArrow = LoadCursor(NULL, IDC_UPARROW);
-//     types->CursorWait = LoadCursor(NULL, IDC_WAIT);
-// }
-
-// FractalCursorImage GetCursorImage(PCURSORINFO pci) {
-//     HCURSOR cursor = pci->hCursor;
-//     FractalCursorImage image = {0};
-
-//     if (cursor == types->CursorArrow) {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
-//     } else if (cursor == types->CursorCross) {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_CROSSHAIR;
-//     } else if (cursor == types->CursorHand) {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_HAND;
-//     } else if (cursor == types->CursorIBeam) {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_IBEAM;
-//     } else if (cursor == types->CursorNo) {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_NO;
-//     } else if (cursor == types->CursorSizeAll) {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_SIZEALL;
-//     } else if (cursor == types->CursorSizeNESW) {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_SIZENESW;
-//     } else if (cursor == types->CursorSizeNS) {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_SIZENS;
-//     } else if (cursor == types->CursorSizeNWSE) {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_SIZENWSE;
-//     } else if (cursor == types->CursorSizeWE) {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_SIZEWE;
-//     } else if (cursor == types->CursorWait) {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_WAITARROW;
-//     } else {
-//         image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
-//     }
-
-//     return image;
-// }
-
-// FractalCursorImage GetCurrentCursor() {
-//     CURSORINFO pci;
-//     pci.cbSize = sizeof(CURSORINFO);
-//     GetCursorInfo(&pci);
-
-//     FractalCursorImage image = {0};
-//     image = GetCursorImage(&pci);
-
-//     image.cursor_state = pci.flags;
-
-//     return image;
-// }

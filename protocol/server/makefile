@@ -25,6 +25,7 @@ OBJS = \
 	dxgicapture.obj \
 	desktop.obj \
 	windowsinput.obj \
+	windowscursor.obj \
 	main.obj
 
 # static libs to link against
@@ -135,6 +136,10 @@ desktop.obj:
 # compile the input handling source file into object file
 windowsinput.obj:
 	$(CC) /c $(CFLAGS) ../include/windowsinput.c
+
+# compile the cursor management source file into object file
+windowscursor.obj:
+	$(CC) /c $(CFLAGS) ../include/windowscursor.c
 
 # compile the source main client file into object file
 main.obj:
