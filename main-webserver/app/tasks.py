@@ -248,6 +248,12 @@ def fetchAll(self, update):
 
 @celery.task(bind=True)
 def deleteVMResources(self, vm_name, delete_disk):
+	locked = checkLock(vm_name)
+
+	while locked:
+		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
+		time.sleep(5)
+		
 	lockVM(vm_name, True)
 
 	status = 200 if deleteResource(vm_name, delete_disk) else 404
@@ -258,6 +264,12 @@ def deleteVMResources(self, vm_name, delete_disk):
 
 @celery.task(bind=True)
 def restartVM(self, vm_name):
+	locked = checkLock(vm_name)
+
+	while locked:
+		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
+		time.sleep(5)
+
 	lockVM(vm_name, True)
 
 	_, compute_client, _ = createClients()
@@ -271,6 +283,12 @@ def restartVM(self, vm_name):
 
 @celery.task(bind=True)
 def startVM(self, vm_name):
+	locked = checkLock(vm_name)
+
+	while locked:
+		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
+		time.sleep(5)
+
 	lockVM(vm_name, True)
 
 	_, compute_client, _ = createClients()
@@ -360,7 +378,6 @@ def swapDisk(self, disk_name):
 	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
 	vm_name = os_disk.managed_by
 	vm_attached = True if vm_name else False
-	original_vm_name = None
 	location = os_disk.location
 
 	def swapDiskAndUpdate(disk_name, vm_name):
@@ -386,33 +403,34 @@ def swapDisk(self, disk_name):
 		print("NOTIFICATION: Disk " + disk_name +  " already attached to VM " + vm_name)
 
 		locked = checkLock(vm_name)
-		if not locked:
-			print('NOTIFICATION: VM {} is unlocked and ready for use'.format(vm_name))
-			lockVM(vm_name, True)
 
-			updateDisk(disk_name, vm_name, location)
-			associateVMWithDisk(vm_name, disk_name)
-			updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
-			
-			print("NOTIFICATION: Database updated with disk " + disk_name + " and " + vm_name)
+		while locked:
+			print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
+			time.sleep(5)
 
-			# If the VM is powered off, start it
-			vm_state = compute_client.virtual_machines.instance_view(
-				resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
+		print('NOTIFICATION: VM {} is unlocked and ready for use'.format(vm_name))
+		lockVM(vm_name, True)
 
-			print(vm_state.statuses[1])
+		updateDisk(disk_name, vm_name, location)
+		associateVMWithDisk(vm_name, disk_name)
+		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
+		
+		print("NOTIFICATION: Database updated with disk " + disk_name + " and " + vm_name)
 
-			if fractalVMStart(vm_name) > 0:
-				print('SUCCESS: VM is started and ready to use')
-			else:
-				print('CRITICAL ERROR: Could not start VM {}'.format(vm_name))
-				
-			vm_credentials = fetchVMCredentials(vm_name)
-			lockVM(vm_name, False)
-			return vm_credentials
+		# If the VM is powered off, start it
+		vm_state = compute_client.virtual_machines.instance_view(
+			resource_group_name = os.environ.get('VM_GROUP'), vm_name = vm_name)
+
+		print(vm_state.statuses[1])
+
+		if fractalVMStart(vm_name) > 0:
+			print('SUCCESS: VM is started and ready to use')
 		else:
-			print('NOTIFICATION: VM {} is currently locked. Looking for another VM.'.format(vm_name))
-			original_vm_name = vm_name
+			print('CRITICAL ERROR: Could not start VM {}'.format(vm_name))
+			
+		vm_credentials = fetchVMCredentials(vm_name)
+		lockVM(vm_name, False)
+		return vm_credentials
 	# Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
 	# (then reboot the VM), or wait until a VM becomes available.
 	if not vm_attached or original_vm_name:
@@ -428,8 +446,6 @@ def swapDisk(self, disk_name):
 				print('Selected VM ' + vm_name +
 					  ' to attach to disk ' + disk_name)
 				if swapDiskAndUpdate(disk_name, vm_name) > 0:
-					if original_vm_name:
-						associateVMWithDisk(original_vm_name, '')
 					free_vm_found = True
 					updateOldDisk(vm_name)
 					lockVM(vm_name, False)
@@ -447,8 +463,6 @@ def swapDisk(self, disk_name):
 					lockVM(vm_name, True)
 					print("NOTIFICATION: Found deactivated VM " + vm_name)
 					if swapDiskAndUpdate(disk_name, vm_name) > 0:
-						if original_vm_name:
-							associateVMWithDisk(original_vm_name, '')
 						free_vm_found = True
 						updateOldDisk(vm_name)
 						lockVM(vm_name, False)
@@ -463,6 +477,12 @@ def swapDisk(self, disk_name):
 
 @celery.task(bind=True)
 def swapSpecificDisk(self, disk_name, vm_name):
+	locked = checkLock(vm_name)
+
+	while locked:
+		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
+		time.sleep(5)
+
 	lockVM(vm_name, True)
 
 	_, compute_client, _ = createClients()
