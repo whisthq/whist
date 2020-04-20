@@ -1,5 +1,5 @@
 #include "video.h"
-
+#include <stdio.h>
 #define USE_HARDWARE true
 
 // Global Variables
@@ -322,38 +322,42 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
 // Make the screen black
 void loadingSDL(SDL_Renderer* renderer) {
-    static SDL_Texture* wallpaper_screen_texture = NULL;
     static SDL_Texture* loading_screen_texture = NULL;
-    if (!wallpaper_screen_texture) {
-        SDL_Surface* loading_screen = SDL_LoadBMP("wallpaper.bmp");
-        wallpaper_screen_texture =
-            SDL_CreateTextureFromSurface(renderer, loading_screen);
+
+    int gif_frame_index = 0;
+    int frame_name_size = 24;
+
+    while (true) {
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(renderer);
+
+        char frame_name[frame_name_size];
+        if (gif_frame_index < 10) {
+            snprintf(frame_name, frame_name_size, "../loading/frame_0%d.bmp", gif_frame_index);
+        }
+        else {
+            snprintf(frame_name, frame_name_size, "../loading/frame_%d.bmp", gif_frame_index);
+        }
+
+        SDL_Surface* loading_screen = SDL_LoadBMP(frame_name);
+        loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
         SDL_FreeSurface(loading_screen);
+
+        int w = 200;
+        int h = 200;
+        SDL_Rect dstrect;
+
+        dstrect.x = output_width - w / 2;
+        dstrect.y = output_height - h / 2;
+        dstrect.w = w;
+        dstrect.h = h;
+        SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
+        SDL_RenderPresent(renderer);
+
+        SDL_Delay(30); // sleep 30 ms
+        gif_frame_index += 1;
+        gif_frame_index %= 83; // number of loading frames
     }
-    if (!loading_screen_texture) {
-        SDL_Surface* loading_screen = SDL_LoadBMP("loading_screen.bmp");
-        loading_screen_texture =
-            SDL_CreateTextureFromSurface(renderer, loading_screen);
-        SDL_FreeSurface(loading_screen);
-    }
-
-    int w, h;
-    SDL_Rect dstrect;
-
-    SDL_QueryTexture(wallpaper_screen_texture, NULL, NULL, &w, &h);
-    dstrect.x = output_width / 2 - w / 2;
-    dstrect.y = output_height / 2 - h / 2;
-    dstrect.w = w;
-    dstrect.h = h;
-    SDL_RenderCopy(renderer, wallpaper_screen_texture, NULL, NULL);
-
-    SDL_QueryTexture(loading_screen_texture, NULL, NULL, &w, &h);
-    dstrect.x = output_width / 2 - w / 2;
-    dstrect.y = output_height / 2 - h / 2;
-    dstrect.w = w;
-    dstrect.h = h;
-    SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
-    SDL_RenderPresent(renderer);
 }
 
 void clearSDL(SDL_Renderer* renderer) {

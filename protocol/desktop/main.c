@@ -625,7 +625,7 @@ int initSDL() {
     window =
         SDL_CreateWindow("Fractal", SDL_WINDOWPOS_CENTERED,
                          SDL_WINDOWPOS_CENTERED, output_width, output_height,
-                         (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP |
+                         (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALLOW_HIGHDPI |
                                               SDL_WINDOW_ALWAYS_ON_TOP
                                         : 0));
 #endif
