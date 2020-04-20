@@ -1097,7 +1097,6 @@ void initBacktraceHandler() {
 #pragma warning(default: 4100)
 #endif
 
-
 int CreateTCPServerContext( struct SocketContext* context, char* destination, int port, int recvfrom_timeout_ms, int stun_timeout_ms ) {
     context->is_tcp = true;
 

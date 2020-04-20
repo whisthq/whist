@@ -25,18 +25,8 @@ OBJS = \
 	x11_clipboard.o \
 	main.o
 
-# dynamic libs to link against
+# dynamic libs to link against (using system libs for Linux)
 DYNAMIC_LIBS =
-DYNAMIC_LIBS2 = \
-	../lib/$(ARCH)/ffmpeg/linux/libavcodec.so.58.54.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavdevice.so.58.8.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavfilter.so.7.57.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavformat.so.58.29.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavutil.so.56.31.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libpostproc.so.55.5.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libswresample.so.3.5.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libswscale.so.5.5.100 \
-	../lib/$(ARCH)/mfx/linux/libmfx.so.1.32
 
 # system libs to link against
 SHARED_LIBS = \
@@ -53,7 +43,6 @@ SHARED_LIBS = \
 	-lswscale \
 	-lX11 \
 	-lXfixes
-
 endif
 
 ################## MACOS ##################
@@ -75,11 +64,15 @@ OBJS = \
 	aes.o \
 	clipboard_osx.o \
 	mac_utils.o \
-	clipboard.o \
+	mac_clipboard.o \
+	clipboard_thread.o \
 	main.o
 
-# Apple SDK
-export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+# Apple SDK (standard MacOSX or MacOSX10.15 is ideal - use 10.14 if Xcode bug)
+# export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk
+# export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk
+# export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
 
 # dynamic libs to link against
 DYNAMIC_LIBS = \
@@ -127,6 +120,7 @@ CFLAGS = \
 	-Wno-unused-value \
 	-Wno-unused-parameter \
 	-I ../include \
+	-I ../include/ffmpeg \
 	-O0
 
 LDFLAGS = \
@@ -165,6 +159,10 @@ mac_utils.o:
 # compile the general clipboard source file into object file
 clipboard_thread.o:
 	$(CC) -c $(CFLAGS) ../include/clipboard_thread.c
+
+# compile the general mac clipboard file into object file
+mac_clipboard.o:
+	$(CC) -c $(CFLAGS) ../include/mac_clipboard.c
 
 # compile the general clipboard source file into object file
 x11_clipboard.o:
