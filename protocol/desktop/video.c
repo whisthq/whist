@@ -480,7 +480,7 @@ void updateVideo() {
         // mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 *
         // dropped_rate);
 
-        printf( "MBPS: %d %f\n", VideoData.target_mbps, nack_per_second );
+        mprintf( "MBPS: %d %f\n", VideoData.target_mbps, nack_per_second );
 
         // Adjust mbps based on dropped packets
         if ( nack_per_second > 50 ) {
@@ -510,12 +510,12 @@ void updateVideo() {
             update_mbps = true;
         }
 
-        printf( "MBPS2: %d\n", VideoData.target_mbps );
+        mprintf( "MBPS2: %d\n", VideoData.target_mbps );
 
         VideoData.bucket = VideoData.target_mbps / BITRATE_BUCKET_SIZE;
         max_mbps = VideoData.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
 
-        printf( "MBPS3: %d\n", max_mbps );
+        mprintf( "MBPS3: %d\n", max_mbps );
         VideoData.num_nacked = 0;
 
         VideoData.bytes_transferred = 0;
