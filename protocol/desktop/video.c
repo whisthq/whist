@@ -8,7 +8,7 @@ extern volatile SDL_Window* window;
 extern volatile int server_width;
 extern volatile int server_height;
 // Keeping track of max mbps
-extern volatile double max_mbps;
+extern volatile int max_mbps;
 extern volatile bool update_mbps;
 
 extern volatile SDL_Window* window;
@@ -39,6 +39,8 @@ struct VideoData {
     bool run_render_screen_thread;
 
     SDL_sem* renderscreen_semaphore;
+
+    int num_nacked;
 } VideoData;
 
 typedef struct SDLVideoContext {
@@ -52,6 +54,8 @@ typedef struct SDLVideoContext {
 } SDLVideoContext;
 SDLVideoContext videoContext;
 
+#define BITRATE_BUCKET_SIZE 500000
+
 typedef struct FrameData {
     char* frame_buffer;
     int frame_size;
@@ -64,6 +68,11 @@ typedef struct FrameData {
 
     int last_nacked_index;
     int num_times_nacked;
+
+    int bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
+    int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
+    double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
+
     clock last_nacked_timer;
 
     clock last_packet_timer;
@@ -72,7 +81,7 @@ typedef struct FrameData {
 } FrameData;
 
 // mbps that currently works
-volatile double working_mbps = MAXIMUM_MBPS;
+volatile int working_mbps;
 
 // Context of the frame that is currently being rendered
 volatile struct FrameData renderContext;
@@ -100,6 +109,7 @@ void nack(int id, int index) {
     if (VideoData.is_waiting_for_iframe) {
         return;
     }
+    num_nacked++;
     mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", id, index);
     FractalClientMessage fmsg;
     fmsg.type = MESSAGE_VIDEO_NACK;
@@ -352,7 +362,7 @@ int initMultithreadedVideo(void* opaque) {
     loadingSDL(renderer);
 
     // mbps that currently works
-    working_mbps = MAXIMUM_MBPS;
+    working_mbps = STARTING_BITRATE;
     VideoData.is_waiting_for_iframe = false;
 
     // True if RenderScreen is currently rendering a frame
@@ -384,6 +394,7 @@ int initMultithreadedVideo(void* opaque) {
     VideoData.last_rendered_id = 0;
     VideoData.max_id = 0;
     VideoData.most_recent_iframe = -1;
+    VideoData.num_nacked = 0;
     StartTimer(&VideoData.last_iframe_request_timer);
 
     for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
@@ -409,9 +420,10 @@ int last_rendered_index = 0;
 void updateVideo() {
     // Get statistics from the last 3 seconds of data
     if (GetTimer(VideoData.frame_timer) > 3) {
-        // double time = GetTimer(VideoData.frame_timer);
+        double time = GetTimer(VideoData.frame_timer);
 
         // Calculate statistics
+        /*
         int expected_frames = VideoData.max_id - VideoData.last_statistics_id;
         // double fps = 1.0 * expected_frames / time; // TODO: finish birate
         // throttling alg double mbps = VideoData.bytes_transferred * 8.0 /
@@ -421,6 +433,11 @@ void updateVideo() {
                 ? 1.0
                 : 1.0 * VideoData.frames_received / expected_frames;
         double dropped_rate = 1.0 - receive_rate;
+        */
+
+        double nack_per_second = VideoData.num_nacked / time;
+        VideoData.nack_by_bitrate[VideoData.bucket] += VideoData.num_nacked;
+        VideoData.seconds_by_bitrate[VideoData.bucket] += time;
 
         // Print statistics
 
@@ -428,32 +445,36 @@ void updateVideo() {
         // dropped_rate);
 
         // Adjust mbps based on dropped packets
-        if (dropped_rate > 0.4) {
+        if ( nack_per_second > 50 ) {
             max_mbps = max_mbps * 0.75;
             working_mbps = max_mbps;
             update_mbps = true;
-        } else if (dropped_rate > 0.2) {
+        } else if ( nack_per_second > 25 ) {
             max_mbps = max_mbps * 0.83;
             working_mbps = max_mbps;
             update_mbps = true;
-        } else if (dropped_rate > 0.1) {
+        } else if ( nack_per_second > 12 ) {
             max_mbps = max_mbps * 0.9;
             working_mbps = max_mbps;
             update_mbps = true;
-        } else if (dropped_rate > 0.05) {
+        } else if ( nack_per_second > 4) {
             max_mbps = max_mbps * 0.95;
             working_mbps = max_mbps;
             update_mbps = true;
-        } else if (dropped_rate > 0.00) {
+        } else if ( nack_per_second > 0.1 ) {
             max_mbps = max_mbps * 0.98;
             working_mbps = max_mbps;
             update_mbps = true;
-        } else if (dropped_rate == 0.00) {
+        } else {
             working_mbps = max(max_mbps * 1.05, working_mbps);
             max_mbps = (max_mbps + working_mbps) / 2.0;
-            max_mbps = max(max_mbps, MAXIMUM_MBPS);
+            max_mbps = min(max_mbps, MAXIMUM_MBPS);
             update_mbps = true;
         }
+
+        VideoData.bucket = max_mbps / BITRATE_BUCKET_SIZE;
+        max_mbps = VideoData.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
+        VideoData.num_nacked = 0;
 
         VideoData.bytes_transferred = 0;
         VideoData.frames_received = 0;

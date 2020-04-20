@@ -18,7 +18,7 @@ volatile int server_width = -1;
 volatile int server_height = -1;
 
 // maximum mbps
-volatile double max_mbps = MAXIMUM_MBPS;
+volatile int max_mbps = MAXIMUM_MBPS;
 volatile bool update_mbps = false;
 
 // Global state variables
@@ -126,7 +126,7 @@ void update() {
         mprintf("Asking for server MBPS to be %f\n", max_mbps);
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
-        fmsg.mbps = max_mbps;
+        fmsg.mbps = max_mbps / 1024.0 / 1024.0;
         SendFmsg(&fmsg);
     }
     // End update checks
