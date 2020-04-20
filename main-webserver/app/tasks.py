@@ -604,6 +604,8 @@ def deallocateVM(self, vm_name):
 		os.environ.get('VM_GROUP'), vm_name)
 	async_vm_deallocate.wait()
 
+	updateVMState(vm_name, 'NOT_RUNNING_AVAILABLE')
+
 	lockVM(vm_name, False)
 
 	print('SUCCESS: {} deallocated'.format(vm_name))

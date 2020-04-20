@@ -517,6 +517,12 @@ def addTimeTable(username, action, time, is_user):
             if vms:
                 _, compute_client, _ = createClients()
                 vm_name = vms[0]['vm_name']
+
+                if action == 'logoff':
+                    lockVM(vm_name, False)
+                elif action == 'logon':
+                    lockVM(vm_name, True)
+
                 vm_state = compute_client.virtual_machines.instance_view(
                     resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
                 if 'running' in vm_state.statuses[1].code:
@@ -1313,7 +1319,7 @@ def createDiskFromImageHelper(username, location, vm_size):
         return {'status': 400, 'disk_name': None}
 
 
-def sendVMStartCommand(vm_name, needs_restart = False):
+def sendVMStartCommand(vm_name, needs_restart):
     _, compute_client, _ = createClients()
 
     try:
@@ -1333,6 +1339,7 @@ def sendVMStartCommand(vm_name, needs_restart = False):
             async_vm_start = compute_client.virtual_machines.start(
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_start.wait()
+            time.sleep(10)
             print("VM {} started".format(vm_name))
         
         if needs_restart:
@@ -1340,6 +1347,7 @@ def sendVMStartCommand(vm_name, needs_restart = False):
             async_vm_restart = compute_client.virtual_machines.restart(
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_restart.wait()
+            time.sleep(10)
             print("VM {} restarted",format(vm_name))
 
         return 1
@@ -1347,7 +1355,7 @@ def sendVMStartCommand(vm_name, needs_restart = False):
         print('CRITICAL ERROR: ' + str(e))
         return -1
 
-def fractalVMStart(vm_name):
+def fractalVMStart(vm_name, needs_restart = False):
     _, compute_client, _ = createClients()
 
     started = False
@@ -1358,7 +1366,7 @@ def fractalVMStart(vm_name):
         start_command_tries = 0
 
         #First, send a basic start or restart command. Try six times, if it fails, give up
-        while sendVMStartCommand(vm_name) < 0 and start_command_tries < 6:
+        while sendVMStartCommand(vm_name, needs_restart) < 0 and start_command_tries < 6:
             time.sleep(10)
             start_command_tries += 1
 
@@ -1376,9 +1384,6 @@ def fractalVMStart(vm_name):
         if 'running' in vm_state.statuses[1].code:
             print('SUCCESS: Running found in status of VM {}'.format(vm_name))
             started = True
-
-            time.sleep(10)
-
             return 1
 
         while not 'running' in vm_state.statuses[1].code and wake_retries < 12:
@@ -1391,9 +1396,6 @@ def fractalVMStart(vm_name):
             if 'running' in vm_state.statuses[1].code:
                 print('SUCCESS: Running found in status of VM {}'.format(vm_name))
                 started = True
-
-                time.sleep(10)
-
                 return 1
 
             wake_retries += 1

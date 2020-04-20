@@ -162,6 +162,10 @@ def tracker(action):
         username = body['username']
         is_user = body['is_user']
         addTimeTable(username, 'logoff', time, is_user)
+    elif action == 'startup':
+        username = body['username']
+        is_user = body['is_user']
+        addTimeTable(username, 'startup', time, is_user)
     elif action == 'clear':
         deleteTimeTable()
     elif action == 'fetch':
