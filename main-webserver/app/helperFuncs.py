@@ -1339,12 +1339,13 @@ def sendVMStartCommand(vm_name):
             async_vm_start = compute_client.virtual_machines.start(
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_start.wait()
+            print("VM {} started".format(vm_name))
         else:
             print("Restarting VM {}".format(vm_name))
             async_vm_restart = compute_client.virtual_machines.restart(
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_restart.wait()
-            print("VM restarted")
+            print("VM {} restarted",format(vm_name))
 
         return 1
     except Exception as e:
@@ -1378,6 +1379,7 @@ def fractalVMStart(vm_name):
 
         # Success! VM is running and ready to use
         if 'running' in vm_state.statuses[1].code:
+            print('SUCCESS: Running found in status of VM {}'.format(vm_name))
             started = True
             return 1
 
@@ -1389,6 +1391,7 @@ def fractalVMStart(vm_name):
 
             # Success! VM is running and ready to use
             if 'running' in vm_state.statuses[1].code:
+                print('SUCCESS: Running found in status of VM {}'.format(vm_name))
                 started = True
                 return 1
 
