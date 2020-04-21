@@ -23,7 +23,7 @@ import numpy as np
 from jose import jwt
 from flask_cors import CORS
 from flask_mail import Mail, Message
-from datetime import datetime as dt
+from datetime import timedelta, datetime as dt
 import stripe
 from multiprocessing.util import register_after_fork
 from flask_jwt_extended import *
