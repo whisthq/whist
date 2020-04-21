@@ -602,6 +602,8 @@ def deallocateVM(self, vm_name):
 
 	_, compute_client, _ = createClients()
 
+	print('NOTIFICATION: Starting to deallocate {}'.format(vm_name))
+
 	async_vm_deallocate = compute_client.virtual_machines.deallocate(
 		os.environ.get('VM_GROUP'), vm_name)
 	async_vm_deallocate.wait()
