@@ -971,7 +971,7 @@ int MultiThreadedPrintf(void *opaque) {
             mprintf_history_len += chars_written;
 
             // Shift buffer over if too large;
-            if( mprintf_history_len > sizeof( mprintf_history ) - sizeof( mprintf_queue_cache[i].buf ) - 10 )
+            if( (unsigned long) mprintf_history_len > sizeof( mprintf_history ) - sizeof( mprintf_queue_cache[i].buf ) - 10 )
             {
                 int new_len = sizeof( mprintf_history ) / 3;
                 for( int i = 0; i < new_len; i++ )
