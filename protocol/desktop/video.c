@@ -15,10 +15,9 @@ extern volatile SDL_Window* window;
 extern volatile int server_width;
 extern volatile int server_height;
 // Keeping track of max mbps
-extern volatile int max_mbps;
+extern volatile double max_mbps;
 extern volatile bool update_mbps;
 
-extern volatile SDL_Window* window;
 extern volatile int output_width;
 extern volatile int output_height;
 
@@ -54,9 +53,9 @@ struct VideoData {
 
     SDL_sem* renderscreen_semaphore;
 
-    int target_mbps;
+    double target_mbps;
     int num_nacked;
-    int bucket;// = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
+    int bucket; // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
     double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
 } VideoData;
@@ -94,7 +93,7 @@ typedef struct FrameData {
 } FrameData;
 
 // mbps that currently works
-volatile int working_mbps;
+volatile double working_mbps;
 
 // Context of the frame that is currently being rendered
 volatile struct FrameData renderContext;
@@ -526,7 +525,7 @@ void updateVideo() {
 
         mprintf( "MBPS2: %d\n", VideoData.target_mbps );
 
-        VideoData.bucket = VideoData.target_mbps / BITRATE_BUCKET_SIZE;
+        VideoData.bucket = (int) VideoData.target_mbps / BITRATE_BUCKET_SIZE;
         max_mbps = VideoData.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
 
         mprintf( "MBPS3: %d\n", max_mbps );
