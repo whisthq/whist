@@ -1,3 +1,8 @@
+/*
+ * Clipboard getting and setting functions on Linux Ubuntu.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include <assert.h>
 #include "clipboard.h"
 

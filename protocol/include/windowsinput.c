@@ -1,4 +1,9 @@
-#include "windowsinput.h"  // header file for this file
+/*
+ * User input processing on Windows.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#include "windowsinput.h"
 
 #define USE_NUMPAD 0x1000
 
@@ -411,8 +416,6 @@ void UpdateKeyboardState(input_device_t* input_device,
     }
 }
 
-/// @brief replays a user action taken on the client and sent to the server
-/// @details parses the FractalClientMessage struct and send input to Windows OS
 void ReplayUserInput(input_device_t* input_device,
                      struct FractalClientMessage* fmsg) {
     input_device;

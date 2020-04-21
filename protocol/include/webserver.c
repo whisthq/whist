@@ -1,14 +1,8 @@
 /*
- * This file contains the implementation of the functions to query the Fractal
- * webserver to login and logout the user.
-
- Protocol version: 1.0
- Last modification: 12/14/2019
-
- By: Philippe Noël, Ming Ying
-
- Copyright Fractal Computers, Inc. 2019
-*/
+ * Helper functions for webserver querying via POST requests in C.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #if defined(_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS // silence the deprecated warnings
 #endif
@@ -26,10 +20,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #pragma comment(lib, "Ws2_32.lib")
-#pragma warning(disable: 4996) // snprintf unsafe warning
-#pragma warning(disable: 4047) // levels of indirection
-#pragma warning(disable: 4311) // typecast warning
-#pragma warning(disable: 4267) // size_t to int
 #else
 #define SOCKET int
 #include <unistd.h>
@@ -109,59 +99,8 @@ char* sendJSONPost( char* path, char* jsonObj )
 #else
     close( Socket );
 #endif
-
     // return the user credentials if correct authentication, else empty
     return credentials;
-}
-
-// log the user in and log its connection time
-char* login( char* username, char* password )
-{
-    // var to store the usr credentials
-    char* credentials;
-
-    // generate JSON logout format
-    char* jsonFrame = "{\"username\" : \"%s\", \"password\" : \"%s\"}";
-    size_t jsonSize = strlen( jsonFrame ) + strlen( username ) + strlen( password ) - 1;
-    char* jsonObj = malloc( jsonSize );
-
-    // send the logout JSON to log the user in
-    if( jsonObj != NULL )
-    {
-        // write JSON, callback since we start the app
-        snprintf( jsonObj, jsonSize, jsonFrame, username, password );
-        char* path = "/user/login";
-
-        // send JSON to authenticate and free memory
-        credentials = sendJSONPost( path, jsonObj );
-        free( jsonObj );
-        return credentials;
-    } else
-    {
-        return ""; // error message
-    }
-}
-
-// log the logout time of a user
-int32_t logout( char* username )
-{
-    // generate JSON logout format
-    char* jsonFrame = "{\"username\" : \"%s\"}";
-    size_t jsonSize = strlen( jsonFrame ) + strlen( username ) - 1;
-    char* jsonObj = malloc( jsonSize );
-
-    // send the logout JSON to log the logout time
-    if( jsonObj != NULL )
-    {
-        // write JSON, no callback since we terminate the app
-        snprintf( jsonObj, jsonSize, jsonFrame, username );
-        char* path = "/tracker/logoff";
-
-        // send JSON and free memory
-        sendJSONPost( path, jsonObj );
-        free( jsonObj );
-    }
-    return 0;
 }
 
 // parse the server response to get the VM IP address
@@ -211,11 +150,3 @@ char* parse_response( char* credentials )
     // return IP found
     return user_vm_ip;
 }
-
-// re-enable Windows warning, if Windows client
-#if defined(_WIN32)
-#pragma warning(default: 4996)
-#pragma warning(default: 4047)
-#pragma warning(default: 4311)
-#pragma warning(default: 4267)
-#endif

@@ -12,7 +12,7 @@ ARCH = 64
 !ENDIF
 
 # specify executable name
-BIN_NAME = build$(ARCH)/server.exe
+BIN_NAME = build$(ARCH)/FractalServer.exe
 
 # files to build into object files
 OBJS = \
@@ -52,7 +52,8 @@ CFLAGS = \
 	-DWIN32_LEAN_AND_MEAN \
 	-DUNICODE \
 	-DWIN32 \
-	-I ../include -I ../include/ffmpeg
+	-I ../include \
+	-I ../include/ffmpeg
 
 # system libs to link against
 SHARED_LIBS = \
@@ -90,7 +91,8 @@ SHARED_LIBS = \
 	d3dcompiler.lib \
 	dxguid.lib \
 	crypt32.lib \
-	shlwapi.lib
+	shlwapi.lib \
+	shcore.lib
 
 # linking flags
 LD_FLAGS = \

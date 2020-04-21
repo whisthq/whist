@@ -1,4 +1,9 @@
-#include "linuxinput.h"  // header file for this file
+/*
+ * User input processing on Linux Ubuntu.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#include "linuxinput.h"
 
 // @brief Linux keycodes for replaying SDL user inputs on server
 // @details index is SDL keycode, value is Linux keycode.

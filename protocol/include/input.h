@@ -1,3 +1,8 @@
+/*
+ * General input processing functions for Windows and Linux Ubuntu.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef INPUT_H
 #define INPUT_H
 
@@ -17,4 +22,4 @@ void ReplayUserInput(input_device_t* input_device,
 void UpdateKeyboardState(input_device_t* input_device,
                          struct FractalClientMessage* fmsg);
 
-#endif  // INPUT_H
+#endif // INPUT_H

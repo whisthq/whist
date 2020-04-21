@@ -1,4 +1,10 @@
-#define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
+/*
+ * Windows desktop sessions helper functions.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#define _CRT_SECURE_NO_WARNINGS // stupid Windows warnings
+
 #include "desktop.h"
 
 void logToFile(char* msg, char* filename) {

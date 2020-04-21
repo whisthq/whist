@@ -1,4 +1,9 @@
-#include "videoencode.h"  // header file for this file
+/*
+ * Video encoding via FFmpeg C library.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#include "videoencode.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -246,8 +251,6 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
     return 0;
 }
 
-/// @brief creates encoder encoder
-/// @details creates FFmpeg encoder
 // Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the next one when the previous one doesn't work
 encoder_t *create_video_encoder(int width, int height, int bitrate,
                                 int gop_size) {
@@ -276,8 +279,6 @@ encoder_t *create_video_encoder(int width, int height, int bitrate,
     return NULL;
 }
 
-/// @brief destroy encoder encoder
-/// @details frees FFmpeg encoder memory
 void destroy_video_encoder(encoder_t *encoder) {
     // check if encoder encoder exists
     if (encoder == NULL) {
@@ -315,8 +316,6 @@ void video_encoder_unset_iframe(encoder_t *encoder) {
     encoder->sw_frame->key_frame = 0;
 }
 
-/// @brief encode a frame using the encoder encoder
-/// @details encode a RGB frame into encoded format as YUV color
 void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
     int success = 0;  // boolean for success or failure of encoding
 

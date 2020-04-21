@@ -1,4 +1,10 @@
+/*
+ * MacOS helper functions for clipboard functions.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include "mac_utils.h"
+
 #include <stdio.h>
 #include <string.h>
 

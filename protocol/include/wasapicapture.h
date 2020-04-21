@@ -1,10 +1,15 @@
+/*
+ * Audio capture on Windows.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef WASAPICAPTURE_H
 #define WASAPICAPTURE_H
 
+#include "fractal.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "fractal.h"  // contains all the headers
 
 DEFINE_GUID(CLSID_MMDeviceEnumerator, 0xBCDE0395, 0xE52F, 0x467C, 0x8E, 0x3D,
             0xC4, 0x57, 0x92, 0x91, 0x69, 0x2E);
@@ -36,4 +41,4 @@ typedef struct audio_device_t {
     HRESULT hNextPacketResult;
 } audio_device_t;
 
-#endif  // WASAPICAPTURE_H
+#endif // WASAPICAPTURE_H

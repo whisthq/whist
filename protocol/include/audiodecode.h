@@ -1,3 +1,8 @@
+/*
+ * Audio decoding via FFmpeg C library.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef AUDIO_DECODE_H
 #define AUDIO_DECODE_H
 

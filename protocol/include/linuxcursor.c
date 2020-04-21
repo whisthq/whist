@@ -1,4 +1,9 @@
-#include "linuxcursor.h"  // header file for this file
+/*
+ * Set and retrieve Linux Ubuntu cursor shapes.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#include "linuxcursor.h"
 
 static Display* disp;
 
@@ -49,6 +54,7 @@ FractalCursorImage GetCurrentCursor() {
 
     return image;
 }
+
 // typedef struct FractalCursorTypes {
 //     HCURSOR CursorAppStarting;
 //     HCURSOR CursorArrow;

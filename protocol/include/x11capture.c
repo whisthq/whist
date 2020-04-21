@@ -1,7 +1,10 @@
-//
-// Created by mathieu on 28/03/2020.
-//
+/*
+ * GPU screen capture on Linux Ubuntu.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include "x11capture.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -181,4 +184,3 @@ void DestroyCaptureDevice( struct CaptureDevice* device )
     }
     XCloseDisplay( device->display );
 }
-

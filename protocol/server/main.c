@@ -1,3 +1,8 @@
+/*
+ * Fractal Server.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

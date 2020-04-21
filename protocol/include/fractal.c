@@ -1,6 +1,10 @@
-// unportable Windows warnings, need to be at the very top
+/*
+ * General Fractal helper functions and headers.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #if defined(_WIN32)
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS // unportable Windows warnings, need to be at the very top
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
@@ -70,16 +74,24 @@ int GetLastNetworkError() {
 
 int get_native_screen_width() {
     SDL_DisplayMode DM;
-    int res = SDL_GetCurrentDisplayMode(0, &DM);
+//    int res = SDL_GetCurrentDisplayMode(0, &DM);
+    int res = SDL_GetDesktopDisplayMode(0, &DM);
     if (res) mprintf("SDL_GetCurrentDisplayMode failed: %s\n", SDL_GetError());
     return DM.w;
+    // int h, w;
+    // SDL_GL_GetDrawableSize(window, &w, &h);
+    // return w;
 }
 
 int get_native_screen_height() {
     SDL_DisplayMode DM;
-    int res = SDL_GetCurrentDisplayMode(0, &DM);
+//    int res = SDL_GetCurrentDisplayMode(0, &DM);
+    int res = SDL_GetDesktopDisplayMode(0, &DM);
     if (res) mprintf("SDL_GetCurrentDisplayMode failed: %s\n", SDL_GetError());
     return DM.h;
+    // int h, w;
+    // SDL_GL_GetDrawableSize(window, &w, &h);
+    // return h;
 }
 
 void set_timeout(SOCKET s, int timeout_ms) {
@@ -1385,7 +1397,7 @@ int CreateTCPClientContext(struct SocketContext *context, char *destination,
     stun_addr.sin_family = AF_INET;
     stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
     stun_addr.sin_port = htons(STUN_PORT);
-    int opt;
+//    int opt; TODO, is this needed? it is unassigned
 
     // Create TCP socket
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);

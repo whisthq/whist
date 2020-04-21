@@ -1,3 +1,8 @@
+/*
+ * Audio capture on Linux Ubuntu.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef ALSACAPTURE_H
 #define ALSACAPTURE_H
 
@@ -21,4 +26,4 @@ typedef struct audio_device_t {
     int dummy_state;
 } audio_device_t;
 
-#endif  // ALSA_CAPTURE_H
+#endif // ALSA_CAPTURE_H
