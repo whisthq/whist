@@ -1,11 +1,28 @@
 # Fractal Protocol
 
-This repository contains the source code for the Fractal Protocol, which streams in real-time a desktop environment or specific application from a virtual machine or container to a user's local client (Desktop OSes, iOS, Android, Cube/Slate (RPi), etc.) at ultra-low latency.
+This repository contains the source code for the Fractal Protocol, which streams audio and video at ultra-low latency from a virtual machine, OS container or regular computer, and streams back user actions and files.
 
-The Protocol Server runs on Windows 10 or Linux Ubuntu virtual machines/containers.
+### Server
 
-The Protocol Clients are divided into four categories:
-- Desktop (Windows, MacOS, Linux Ubuntu)
-- iOS/iPadOS
-- Android/Chromebook
-- Web
+This folder contains the code to run Fractal servers that are streamed to any of the clients listed below. The currently-supported servers are:
+- Windows
+- Linux Ubuntu
+
+### Desktop
+
+This folder contains the code to run Fractal clients on desktop operating systems. The currently-supported servers are:
+- Windows
+- MacOS
+- Linux
+
+### Android/Chromebook
+
+TBD.
+
+### iOS/iPadOS
+
+TBD.
+
+### Web
+
+TBD.
