@@ -178,11 +178,7 @@ def tracker(action):
                     logon = dt.strptime(user_activity['timestamp'], '%m-%d-%Y, %H:%M:%S')
                     if now - logon > timedelta(minutes = 0):
                         amount = round(79 * (now - logon).total_seconds()/60/60)
-                        print('NOTIFICATION: Charging {} {} cents'.format(username, str(amount)))
-                        charge = stripe.Charge.create(amount = amount, 
-                             currency = 'usd',
-                             customer = customer['id'],
-                             description = 'Fractal Hourly Charge')
+                        addPendingCharge(username, amount)
                 else:
                     print('CRITICAL ERROR: {} logged off but no log on was recorded')
 

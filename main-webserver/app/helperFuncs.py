@@ -1104,6 +1104,32 @@ def getMostRecentActivity(username):
         activity = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         return activity 
 
+def addPendingCharge(username, amount):
+    command = text("""
+        SELECT *
+        FROM customers
+        WHERE "username" = :username
+        """)
+
+    params = {'username': username}
+
+    with engine.connect() as conn:
+        customer = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        if customer:
+            pending_charges = customer['pending_charges'] + amount 
+            command = text("""
+                UPDATE customers
+                SET "pending_charges" = :pending_charges
+                WHERE "username" = :username
+                """)
+            params = {'pending_charges': pending_charges, 'username': username}
+
+            conn.execute(command, **params)
+            conn.close()
+        else:
+            print('CRITICAL ERROR: {} has an hourly plan but not found as a customer in database')
+
+
 def associateVMWithDisk(vm_name, disk_name):
     username = mapDiskToUser(disk_name)
     username = username if username else ''
