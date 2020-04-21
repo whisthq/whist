@@ -1158,11 +1158,11 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
                            int stun_timeout_ms) {
     context->is_tcp = true;
 
-    // Init stun_addr
-    struct sockaddr_in stun_addr;
-    stun_addr.sin_family = AF_INET;
-    stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
-    stun_addr.sin_port = htons(STUN_PORT);
+    // Init stun_addr -- TODO: not used, still needed?
+    // struct sockaddr_in stun_addr;
+    // stun_addr.sin_family = AF_INET;
+    // stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
+    // stun_addr.sin_port = htons(STUN_PORT);
     int opt;
 
     // Create TCP socket
@@ -1392,11 +1392,11 @@ int CreateTCPClientContext(struct SocketContext *context, char *destination,
                            int stun_timeout_ms) {
     context->is_tcp = true;
 
-    // Init stun_addr
-    struct sockaddr_in stun_addr;
-    stun_addr.sin_family = AF_INET;
-    stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
-    stun_addr.sin_port = htons(STUN_PORT);
+    // Init stun_addr -- TODO: this is not called at all, still needed?
+    // struct sockaddr_in stun_addr;
+    // stun_addr.sin_family = AF_INET;
+    // stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
+    // stun_addr.sin_port = htons(STUN_PORT);
 //    int opt; TODO, is this needed? it is unassigned
 
     // Create TCP socket

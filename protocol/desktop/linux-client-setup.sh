@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo apt install libavcodec libavdevice libx11 libxtst libxdamage libasound2 xclip -y
+sudo apt-get install libavcodec-dev libavdevice-dev xclip x11-xserver-utils -y

@@ -367,9 +367,14 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
         SDL_Rect dstrect;
 
         //SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
-
+        // Apple scales differently for some reason
+#ifdef __APPLE__
         dstrect.x = output_width - w / 2;
         dstrect.y = output_height - h / 2;
+#else
+        dstrect.x = output_width / 2 - w / 2;
+        dstrect.y = output_height / 2 - h / 2;
+#endif
         dstrect.w = w;
         dstrect.h = h;
         SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
