@@ -822,7 +822,7 @@ int main(int argc, char* argv[]) {
         StartTimer( &waiting_for_init_timer );
         while( !received_server_init_message )
         {
-            if( GetTimer( waiting_for_init_timer ) > 250 / 1000.0 )
+            if( GetTimer( waiting_for_init_timer ) > 350 / 1000.0 )
             {
                 mprintf( "Took too long for init timer!\n" );
                 exiting = true;
