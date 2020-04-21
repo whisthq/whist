@@ -268,6 +268,7 @@ static int32_t EncoderFactory( void* opaque )
     encoder_factory_result = create_video_encoder( encoder_factory_w, encoder_factory_h,
                                                    encoder_factory_current_bitrate, gop_size );
     encoder_finished = true;
+    return 0;
 }
 
 static int32_t SendVideo(void* opaque) {
@@ -718,7 +719,7 @@ int main() {
         FractalServerMessage* msg_init_whole = malloc(
             sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit));
         msg_init_whole->type = MESSAGE_INIT;
-        FractalServerMessageInit* msg_init = msg_init_whole->init_msg;
+        FractalServerMessageInit* msg_init = (FractalServerMessageInit*) msg_init_whole->init_msg;
 #ifdef _WIN32
         msg_init->filename[0] = '\0';
         strcat(msg_init->filename, "C:\\ProgramData\\FractalCache");

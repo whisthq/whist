@@ -328,7 +328,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
         int in_linesize[1] = {encoder->width * 4};
 
         // convert to the encoder format
-        sws_scale(encoder->sws, in_data, in_linesize, 0, encoder->height,
+        sws_scale(encoder->sws, (const uint8_t * const*) in_data, in_linesize, 0, encoder->height,
                   encoder->sw_frame->data, encoder->sw_frame->linesize);
     } else {
         memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));

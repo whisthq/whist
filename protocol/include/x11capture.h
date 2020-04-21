@@ -6,6 +6,7 @@
 #ifndef CAPTURE_X11CAPTURE_H
 #define CAPTURE_X11CAPTURE_H
 
+#include "fractal.h"
 #include "stdbool.h"
 
 #include <X11/Xlib.h>

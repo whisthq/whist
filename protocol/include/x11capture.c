@@ -15,7 +15,7 @@
 
 int handler(Display* d, XErrorEvent* a)
 {
-  mprintf(stderr, "X11 Error: %d\n", a->error_code);
+  mprintf("X11 Error: %d\n", a->error_code);
   return 0;
 }
 
@@ -23,8 +23,8 @@ void get_wh(struct CaptureDevice* device, int* w, int* h) {
     XWindowAttributes window_attributes;
     if( !XGetWindowAttributes( device->display, device->root, &window_attributes ) )
     {
-        fprintf( stderr, "Error while getting window attributes" );
-        return -1;
+        mprintf("Error while getting window attributes\n");
+        return;
     }
     *w = window_attributes.width;
     *h = window_attributes.height;
@@ -79,7 +79,7 @@ int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
     XWindowAttributes window_attributes;
     if( !XGetWindowAttributes( device->display, device->root, &window_attributes ) )
     {
-        fprintf( stderr, "Error while getting window attributes" );
+        mprintf("Error while getting window attributes\n");
         return -1;
     }
     Screen* screen = window_attributes.screen;
@@ -100,7 +100,7 @@ int CreateCaptureDevice( struct CaptureDevice* device, UINT width, UINT height )
 
     if( !XShmAttach( device->display, &device->segment ) )
     {
-        fprintf( stderr, "Error while attaching display" );
+        mprintf("Error while attaching display\n");
         return -1;
     }
     device->frame_data = device->image->data;
@@ -150,7 +150,7 @@ int CaptureScreen( struct CaptureDevice* device )
                              0,
                              AllPlanes ) )
           {
-            fprintf( stderr, "Error while capturing the screen" );
+            mprintf("Error while capturing the screen");
             update = -1;
           }
 #else
@@ -159,7 +159,7 @@ int CaptureScreen( struct CaptureDevice* device )
 	  }
 	  device->image = XGetImage(device->display, device->root, 0, 0, device->width, device->height, AllPlanes, ZPixmap);
 	  if (!device->image) {
-            mprintf( "Error while capturing the screen" );
+            mprintf( "Error while capturing the screen\n" );
             update = -1;
 	  } else {
             device->frame_data = device->image->data;
