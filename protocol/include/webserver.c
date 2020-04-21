@@ -45,7 +45,7 @@ bool sendJSONPost( char* host_s, char* path, char* jsonObj )
     {
         // if can't create socket, return
         printf( "Could not create socket.\n" );
-        return "2";
+        return false;
     }
     set_timeout( Socket, 250 );
 
@@ -62,7 +62,7 @@ bool sendJSONPost( char* host_s, char* path, char* jsonObj )
     if( connect_status < 0 )
     {
         printf( "Could not connect to the webserver.\n" );
-        return "3";
+        return false;
     }
 
     // now that we're connected, we can send the POST request to authenticate the user
@@ -77,7 +77,7 @@ bool sendJSONPost( char* host_s, char* path, char* jsonObj )
     {
         // error sending, terminate
         printf( "Sending POST message failed.\n" );
-        return "4";
+        return false;
     }
 
     free( message );

@@ -917,7 +917,7 @@ int main() {
 #endif
                 } else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
-                    max_mbps = fmsg->mbps;
+                    max_mbps = max( fmsg->mbps, MINIMUM_BITRATE );
                     update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
                     mprintf("Ping Received - ID %d\n", fmsg->ping_id);
