@@ -66,3 +66,12 @@ def getAccessTokens(user):
     access_token = create_access_token(identity = user, expires_delta = False)
     refresh_token = create_refresh_token(identity = user, expires_delta = False)
     return (access_token, refresh_token)
+
+def serverLog(logMsg):
+    if (logMsg.startswith("FRACTAL ERROR")):
+        headers = {'content-type': 'application/json'}
+		url = "https://fractal-mail-server.herokuapp.com/logError"
+		data = {'error': logMsg}
+		requests.post(url = url, data = json.dumps(data), headers = headers) 
+    else:
+        print(logMsg)
