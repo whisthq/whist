@@ -504,6 +504,9 @@ def addTimeTable(username, action, time, is_user):
     tz = pytz.timezone("US/Eastern")
     aware = tz.localize(dt.now(), is_dst=None)
     now = aware.strftime('%m-%d-%Y, %H:%M:%S')
+
+    print('NOTIFICATION: Adding to time table a {} at time {}'.format(action, now))
+    
     params = {'userName': username, 'currentTime': now, 
               'action': action, 'is_user': is_user}
 
@@ -664,6 +667,15 @@ def fetchLoginActivity():
         conn.close()
         return activities
 
+def fetchCustomer(username):
+    command = text("""
+        SELECT * FROM customers WHERE "username" = :username
+        """)
+    params = {'username': username}
+    with engine.connect() as conn:
+        customer = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        return customer
 
 def fetchCustomers():
     command = text("""
