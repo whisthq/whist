@@ -14,7 +14,7 @@
 
 // @brief sends a JSON POST request to the Fractal webservers
 // @details authenticate the user and return the credentials
-char* sendJSONPost( char* path, char* jsonObj );
+char* sendJSONPost( char* host_s, char* path, char* jsonObj );
 
 // @brief logs the user in
 // @details returns the credentials for the user's cloud computer

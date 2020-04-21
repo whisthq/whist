@@ -593,6 +593,7 @@ typedef enum FractalServerMessageType {
 typedef struct FractalServerMessageInit {
     char filename[300];
     char username[50];
+    int connection_id;
 } FractalServerMessageInit;
 
 typedef struct FractalServerMessage {
@@ -693,6 +694,9 @@ int get_native_screen_width();
 int get_native_screen_height();
 
 void initBacktraceHandler();
+
+char* get_mprintf_history();
+int get_mprintf_history_len();
 
 /** FRACTAL FUNCTIONS END ***/
 

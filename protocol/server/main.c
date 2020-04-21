@@ -36,6 +36,7 @@
 #define DEFAULT_WIDTH 1920
 #define DEFAULT_HEIGHT 1080
 
+volatile int connection_id;
 static volatile bool connected;
 static volatile double max_mbps;
 static volatile int gop_size = 9999;
@@ -650,7 +651,11 @@ void update() {
     );
 }
 
+#include <time.h>
+
 int main() {
+    srand( time( NULL ) );
+    connection_id = rand();
     initBacktraceHandler();
 #ifdef _WIN32
     initMultiThreadedPrintf("C:\\ProgramData\\FractalCache");
@@ -724,6 +729,7 @@ int main() {
         free(cwd);
         char* username = "Fractal";
 #endif
+        msg_init->connection_id = connection_id;
         memcpy(msg_init->username, username, strlen(username) + 1);
         mprintf("SIZE: %d\n", sizeof(FractalServerMessage) +
                                   sizeof(FractalServerMessageInit));

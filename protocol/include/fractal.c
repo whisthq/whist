@@ -859,7 +859,21 @@ char* log_directory = NULL;
 
 #include <stdio.h>
 
+char mprintf_history[1000000];
+int mprintf_history_len;
+
+char* get_mprintf_history()
+{
+    return mprintf_history;
+}
+int get_mprintf_history_len()
+{
+    return mprintf_history_len;
+}
+
 void initMultiThreadedPrintf(char* log_dir) {
+    mprintf_history_len = 0;
+
     if ( log_dir ) {
         log_directory = log_dir;
         char f[1000] = "";
@@ -941,6 +955,19 @@ int MultiThreadedPrintf(void *opaque) {
             //    last_printf = i + 6;
             //} else if (i > last_printf) {
             printf("%s", mprintf_queue_cache[i].buf);
+            int chars_written = sprintf(&mprintf_history[mprintf_history_len], "%s", mprintf_queue_cache[i].buf );
+            mprintf_history_len += chars_written;
+
+            // Shift buffer over if too large;
+            if( mprintf_history_len > sizeof( mprintf_history ) - sizeof( mprintf_queue_cache[i].buf ) - 10 )
+            {
+                int new_len = sizeof( mprintf_history ) / 3;
+                for( int i = 0; i < new_len; i++ )
+                {
+                    mprintf_history[i] = mprintf_history[mprintf_history_len - new_len + i];
+                }
+                mprintf_history_len = new_len;
+            }
             //}
         }
         if (mprintf_log_file) {

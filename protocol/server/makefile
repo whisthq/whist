@@ -16,6 +16,7 @@ BIN_NAME = build$(ARCH)/server.exe
 
 # files to build into object files
 OBJS = \
+        webserver.obj \
 	fractal.obj \
 	win_clipboard.obj \
 	aes.obj \
@@ -104,6 +105,11 @@ all: clean clear $(OBJS)
 # compile the main fractal header source file into object file
 fractal.obj:
 	$(CC) /c $(CFLAGS) ../include/fractal.c
+
+# compile the main fractal header source file into object file
+webserver.obj:
+	$(CC) /c $(CFLAGS) ../include/webserver.c
+
 
 # compile the main clipboard header source file into object file
 win_clipboard.obj:

@@ -20,6 +20,7 @@
 #include <stdbool.h>
 
 #include "webserver.h" // header file for this implementation file
+#include "fractal.h"
 
 // Windows libraries
 #if defined(_WIN32)
@@ -40,7 +41,7 @@
 #endif
 
 // send JSON post to query the database, authenticate the user and return the VM IP
-char* sendJSONPost( char* path, char* jsonObj )
+char* sendJSONPost( char* host_s, char* path, char* jsonObj )
 {
     // environment variables
     SOCKET Socket; // socket to send/receive POST request
@@ -57,7 +58,7 @@ char* sendJSONPost( char* path, char* jsonObj )
     }
 
     // get the host address of the web server
-    host = gethostbyname( "cube-celery-vm.herokuapp.com" );
+    host = gethostbyname( host_s );
 
     // create the struct for the webserver address socket we will query
     webserver_socketAddress.sin_family = AF_INET;
@@ -74,8 +75,9 @@ char* sendJSONPost( char* path, char* jsonObj )
 
     // now that we're connected, we can send the POST request to authenticate the user
     // first, we create the POST request message
+    
     char message[5000];
-    sprintf( message, "POST %s HTTP/1.0\r\nHost: cube-celery-vm.herokuapp.com\r\nContent-Type: application/json\r\nContent-Length:%zd\r\n\r\n%s", path, strlen( jsonObj ), jsonObj );
+    sprintf( message, "POST %s HTTP/1.0\r\nHost: %s\r\nContent-Type: application/json\r\nContent-Length:%zd\r\n\r\n%s", path, host_s, strlen( jsonObj ), jsonObj );
 
     // now we send it
     if( send( Socket, message, strlen( message ), 0 ) < 0 )
@@ -101,6 +103,7 @@ char* sendJSONPost( char* path, char* jsonObj )
     {
         credentials[z++] = buffer[i];
     }
+    mprintf( "Buffer: %s\n", buffer );
 
     // Windows case, closing sockets
 #if defined(_WIN32)
@@ -114,54 +117,30 @@ char* sendJSONPost( char* path, char* jsonObj )
     return credentials;
 }
 
-// log the user in and log its connection time
-char* login( char* username, char* password )
+extern int connection_id;
+
+bool sendLog()
 {
-    // var to store the usr credentials
-    char* credentials;
+    char* host = "fractal-mail-server.herokuapp.com";
+    char* path = "/logs";
 
-    // generate JSON logout format
-    char* jsonFrame = "{\"username\" : \"%s\", \"password\" : \"%s\"}";
-    size_t jsonSize = strlen( jsonFrame ) + strlen( username ) + strlen( password ) - 1;
-    char* jsonObj = malloc( jsonSize );
+    char* logs = get_mprintf_history();
+    int log_len = get_mprintf_history_len();
 
-    // send the logout JSON to log the user in
-    if( jsonObj != NULL )
-    {
-        // write JSON, callback since we start the app
-        snprintf( jsonObj, jsonSize, jsonFrame, username, password );
-        char* path = "/user/login";
+    char* json = malloc(1000 + log_len);
+    sprintf(json, "{\
+            \"vm_ip\": \"40.76.207.99\",\
+            \"connection_id\" : \"%d\",\
+            \"logs\" : \"%s\",\
+            \"sender\" : \"server\"\
+    }",
+    connection_id,
+    logs
+    );
+    sendJSONPost( host, path, json );
+    free( json );
 
-        // send JSON to authenticate and free memory
-        credentials = sendJSONPost( path, jsonObj );
-        free( jsonObj );
-        return credentials;
-    } else
-    {
-        return ""; // error message
-    }
-}
-
-// log the logout time of a user
-int32_t logout( char* username )
-{
-    // generate JSON logout format
-    char* jsonFrame = "{\"username\" : \"%s\"}";
-    size_t jsonSize = strlen( jsonFrame ) + strlen( username ) - 1;
-    char* jsonObj = malloc( jsonSize );
-
-    // send the logout JSON to log the logout time
-    if( jsonObj != NULL )
-    {
-        // write JSON, no callback since we terminate the app
-        snprintf( jsonObj, jsonSize, jsonFrame, username );
-        char* path = "/tracker/logoff";
-
-        // send JSON and free memory
-        sendJSONPost( path, jsonObj );
-        free( jsonObj );
-    }
-    return 0;
+    return true;
 }
 
 // parse the server response to get the VM IP address
