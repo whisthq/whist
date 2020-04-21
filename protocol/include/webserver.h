@@ -10,7 +10,7 @@ bool sendLog();
 
 // @brief sends a JSON POST request to the Fractal webservers
 // @details authenticate the user and return the credentials
-char* sendJSONPost( char* host_s, char* path, char* jsonObj );
+bool sendJSONPost( char* host_s, char* path, char* jsonObj );
 
 char* parse_response( char* credentials );
 

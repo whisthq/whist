@@ -31,7 +31,7 @@
 #endif
 
 // send JSON post to query the database, authenticate the user and return the VM IP
-char* sendJSONPost( char* host_s, char* path, char* jsonObj )
+bool sendJSONPost( char* host_s, char* path, char* jsonObj )
 {
     // environment variables
     SOCKET Socket; // socket to send/receive POST request
@@ -46,6 +46,7 @@ char* sendJSONPost( char* host_s, char* path, char* jsonObj )
         printf( "Could not create socket.\n" );
         return "2";
     }
+    set_timeout( Socket, 250 );
 
     // get the host address of the web server
     host = gethostbyname( host_s );
@@ -66,8 +67,9 @@ char* sendJSONPost( char* host_s, char* path, char* jsonObj )
     // now that we're connected, we can send the POST request to authenticate the user
     // first, we create the POST request message
     
-    char message[5000];
-    sprintf( message, "POST %s HTTP/1.0\r\nHost: %s\r\nContent-Type: application/json\r\nContent-Length:%zd\r\n\r\n%s", path, host_s, strlen( jsonObj ), jsonObj );
+    int json_len = strlen( jsonObj );
+    char* message = malloc(5000 + json_len);
+    int result = sprintf( message, "POST %s HTTP/1.0\r\nHost: %s\r\nContent-Type: application/json\r\nContent-Length:%zd\r\n\r\n%s\0", path, host_s, json_len, jsonObj );
 
     // now we send it
     if( send( Socket, message, strlen( message ), 0 ) < 0 )
@@ -77,23 +79,22 @@ char* sendJSONPost( char* host_s, char* path, char* jsonObj )
         return "4";
     }
 
+    free( message );
+
     // now that it's sent, let's get the reply
     char buffer[4096]; // buffer to store the reply
-    int len, i, z; // counters
-    len = recv( Socket, buffer, 4096, 0 ); // get the reply
-
-    // parse the reply
-    for( i = 0; !(buffer[i] == '\r' && buffer[i + 1] == '\n' && buffer[i + 2] == '\r' && buffer[i + 3] == '\n'); i++ );
-    i += 4;
+    int len; // counters
+    len = recv( Socket, buffer, sizeof(buffer), 0 ); // get the reply
 
     // get the parsed credentials
-    char* credentials;
-    credentials = calloc( sizeof( char ), len );
-    for( z = 0; i < len; i++ )
+    for( int i = 0; i < len; i++ )
     {
-        credentials[z++] = buffer[i];
+        if( buffer[i] == '\r' )
+        {
+            buffer[i] = '\0';
+        }
     }
-    mprintf( "Buffer: %s\n", buffer );
+    mprintf( "Webserver Response: %s\n", buffer );
 
     // Windows case, closing sockets
 #if defined(_WIN32)
@@ -103,7 +104,7 @@ char* sendJSONPost( char* host_s, char* path, char* jsonObj )
     close( Socket );
 #endif
     // return the user credentials if correct authentication, else empty
-    return credentials;
+    return true;
 }
 
 extern int connection_id;
@@ -163,7 +164,7 @@ bool sendLog()
             \"connection_id\" : \"%d\",\
             \"logs\" : \"%s\",\
             \"sender\" : \"server\"\
-    }",
+    }\0",
     connection_id,
     logs
     );

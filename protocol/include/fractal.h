@@ -669,6 +669,8 @@ typedef struct Frame {
 
 void runcmd(const char* cmdline);
 
+void set_timeout( SOCKET s, int timeout_ms );
+
 int CreateUDPContext(struct SocketContext* context, char* origin,
                      char* destination, int port, int recvfrom_timeout_s,
                      int stun_timeout_ms);
