@@ -667,7 +667,7 @@ def storeLogs(self, sender, connection_id, logs, vm_ip):
                 conn.execute(command, **params)
 
             conn.close()
-        return jsonify({'status': 200}), 200
+        return {'status': 200}
     elif sender.upper() == 'SERVER':
         command = text("""
             SELECT * FROM logs WHERE "connection_id" = :connection_id
@@ -694,5 +694,5 @@ def storeLogs(self, sender, connection_id, logs, vm_ip):
 
                 params = {'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
                 conn.execute(command, **params)
-        return jsonify({'status': 200}), 200
-    return jsonify({'status': 422}), 422
+        return {'status': 200}
+    return {'status': 422}
