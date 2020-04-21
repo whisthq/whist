@@ -1151,7 +1151,7 @@ def lockVM(vm_name, lock):
         WHERE
            "vm_name" = :vm_name
         """)
-    last_active = getCurrentTime()
+    last_updated = getCurrentTime()
     params = {'vm_name': vm_name, 'lock': lock, 'last_updated': last_updated}
     with engine.connect() as conn:
         conn.execute(command, **params)
