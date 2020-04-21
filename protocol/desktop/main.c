@@ -642,7 +642,6 @@ int initSDL() {
                          (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP |
                                               SDL_WINDOW_ALWAYS_ON_TOP
                                         : 0));
-#endif
 
     full_width = get_native_screen_width();
     full_height = get_native_screen_height();
@@ -654,6 +653,8 @@ int initSDL() {
     if (output_height < 0) {
         output_height = full_height;
     }
+#endif
+
 
     SDL_AddEventWatch(resizingEventWatcher, (SDL_Window *) window);
     if (!window) {
