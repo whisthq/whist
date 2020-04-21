@@ -27,12 +27,14 @@ def generateCode():
 def unixToDate(utc):
     return datetime.datetime.fromtimestamp(utc)
 
+def getCurrentTime():
+    return datetime.datetime.now().strftime('%m/%d/%Y, %H:%M')
+    
 def dateToUnix(date):
     return round(date.timestamp())
 
 def getToday():
-    tz = pytz.timezone("US/Eastern")
-    aware = tz.localize(datetime.datetime.now(), is_dst=None)
+    aware = datetime.datetime.now()
     return aware
 
 def shiftUnixByMonth(utc, num_months):
