@@ -43,6 +43,7 @@ STATIC_LIBS = \
 
 # files to build into object files
 OBJS = \
+	webserver.o \
 	fractal.o \
 	x11capture.o \
 	videoencode.o \
@@ -79,6 +80,10 @@ all: clean clear $(OBJS)
 # compile the main fractal header source file into object file
 fractal.o:
 	$(CC) -c $(CFLAGS) ../include/fractal.c
+
+# compile the webserver source file into object file
+webserver.o:
+	$(CC) -c $(CFLAGS) ../include/webserver.c
 
 # compile the main fractal header source file into object file
 x11capture.o:
