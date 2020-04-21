@@ -974,7 +974,7 @@ int MultiThreadedPrintf(void *opaque) {
             if( (unsigned long) mprintf_history_len > sizeof( mprintf_history ) - sizeof( mprintf_queue_cache[i].buf ) - 10 )
             {
                 int new_len = sizeof( mprintf_history ) / 3;
-                for( int i = 0; i < new_len; i++ )
+                for( i = 0; i < new_len; i++ )
                 {
                     mprintf_history[i] = mprintf_history[mprintf_history_len - new_len + i];
                 }
@@ -1183,6 +1183,7 @@ void initBacktraceHandler() {
 int CreateTCPServerContext(struct SocketContext *context, char *destination,
                            int port, int recvfrom_timeout_ms,
                            int stun_timeout_ms) {
+    destination; // TODO; remove useless parameter
     context->is_tcp = true;
 
     // Init stun_addr -- TODO: not used, still needed?
@@ -1272,6 +1273,7 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
 int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
                                int port, int recvfrom_timeout_ms,
                                int stun_timeout_ms) {
+    destination; // TODO; remove useless parameter
     context->is_tcp = true;
 
     // Init stun_addr
@@ -1417,6 +1419,7 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
 int CreateTCPClientContext(struct SocketContext *context, char *destination,
                            int port, int recvfrom_timeout_ms,
                            int stun_timeout_ms) {
+    stun_timeout_ms; // TODO; remove useless parameter
     context->is_tcp = true;
 
     // Init stun_addr -- TODO: this is not called at all, still needed?
@@ -1626,6 +1629,7 @@ int CreateTCPContext(struct SocketContext *context, char *origin,
 int CreateUDPServerContext(struct SocketContext *context, char *destination,
                            int port, int recvfrom_timeout_ms,
                            int stun_timeout_ms) {
+    destination; // TODO; remove useless parameter
     context->is_tcp = false;
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -1680,6 +1684,7 @@ int CreateUDPServerContext(struct SocketContext *context, char *destination,
 int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
                                int port, int recvfrom_timeout_ms,
                                int stun_timeout_ms) {
+    destination; // TODO; remove useless parameter
     context->is_tcp = false;
 
     // Create UDP socket

@@ -26,7 +26,7 @@ int setCurrentInputDesktop(HDESK currentInputDesktop);
 
 // @brief Opens current or specified desktop, fills the DesktopContext, sets thread to desktop.
 // @details Uses OpenInputDesktop and SetThreadDesktop from WinAPI.
-DesktopContext OpenNewDesktop(char* desktop_name, bool get_name, bool set_thread);
+DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_thread);
 
 // @brief Opens a Windows station.
 void OpenWindow();
