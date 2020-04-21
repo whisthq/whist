@@ -218,3 +218,13 @@ def info(action):
         return jsonify({'ID': task.id}), 202
 
     return jsonify({}), 400
+
+@vm_bp.route('/logs', methods = ['POST'])
+def logs():
+    body = request.get_json()
+    vm_ip = None
+    if 'vm_ip' in body:
+        vm_ip = body['vm_ip']
+
+    task = storeLogs.apply_async([body['sender'], body['connection_id'], body['logs'], vm_ip])
+    return jsonify({'ID': task.id}), 202

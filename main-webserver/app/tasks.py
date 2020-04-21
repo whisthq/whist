@@ -611,3 +611,88 @@ def deallocateVM(self, vm_name):
 	print('SUCCESS: {} deallocated'.format(vm_name))
 
 	return {'status': 200}
+
+
+@celery.task(bind=True)
+def storeLogs(self, sender, connection_id, logs, vm_ip):
+    title = '[{}] Logs Received From Connect #{}'.format(logs, str(connection_id))
+
+    internal_message = SendGridMail(
+        from_email = 'mingying2011@gmail.com',
+        to_emails = 'logs@fractalcomputers.com',
+        subject = title,
+        html_content= logs
+    )
+
+    try:
+        sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
+        response = sg.send(internal_message)
+    except Exception as e:
+        print(e.message)
+
+    if sender.upper() == 'CLIENT':
+        ip = vm_ip
+        command = text("""
+            SELECT * FROM v_ms WHERE "ip" = :ip
+            """)
+        params = {'ip': ip}
+
+        with engine.connect() as conn:
+            vm = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+            username = vm['username']
+            title = '[{}] Logs Received From Connection #{}'.format(sender.upper(), str(connection_id))
+
+            command = text("""
+                SELECT * FROM logs WHERE "connection_id" = :connection_id
+                """)
+            params = {'connection_id': connection_id}
+            logs_found = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            last_updated = getCurrentTime() 
+
+            if logs_found:
+                command = text("""
+                    UPDATE logs 
+                    SET "ip" = :ip, "last_updated" = :last_updated, "client_logs" = :logs, "username" = :username
+                    WHERE "connection_id" = :connection_id
+                    """)
+                params = {'username': username, 'ip': ip, 'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
+                conn.execute(command, **params)
+            else:
+                command = text("""
+                    INSERT INTO logs("username", "ip", "last_updated", "client_logs", "connection_id") 
+                    VALUES(:username, :ip, :last_updated, :logs, :connection_id)
+                    """)
+
+                params = {'username': username, 'ip': ip, 'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
+                conn.execute(command, **params)
+
+            conn.close()
+        return jsonify({'status': 200}), 200
+    elif sender.upper() == 'SERVER':
+        command = text("""
+            SELECT * FROM logs WHERE "connection_id" = :connection_id
+            """)
+        params = {'connection_id': connection_id}
+        with engine.connect() as conn:
+            logs_found = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            last_updated = getCurrentTime() 
+
+            connection = cleanFetchedSQL(conn.execute(command, **params).fetchone())   
+            if connection:
+                command = text("""
+                    UPDATE logs 
+                    SET "last_updated" = :last_updated, "server_logs" = :logs
+                    WHERE "connection_id" = :connection_id
+                    """)
+                params = {'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
+                conn.execute(command, **params)      
+            else:
+                command = text("""
+                    INSERT INTO logs("last_updated", "server_logs", "connection_id") 
+                    VALUES(:last_updated, :logs, :connection_id)
+                    """)
+
+                params = {'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
+                conn.execute(command, **params)
+        return jsonify({'status': 200}), 200
+    return jsonify({'status': 422}), 422
