@@ -501,7 +501,7 @@ def addTimeTable(username, action, time, is_user):
         VALUES(:userName, :currentTime, :action, :is_user)
         """)
 
-    aware = dt.now(pytz.timezone('US/Eastern'))
+    aware = dt.now()
     now = aware.strftime('%m-%d-%Y, %H:%M:%S')
 
     print('NOTIFICATION: Adding to time table a {} at time {}'.format(action, now))

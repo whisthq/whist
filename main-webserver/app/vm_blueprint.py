@@ -161,7 +161,6 @@ def tracker(action):
     elif action == 'logoff':
         username = body['username']
         is_user = body['is_user']
-        addTimeTable(username, 'logoff', time, is_user)
         customer = fetchCustomer(username)
         if not customer:
             print('CRITICAL ERROR: {} logged on/off but is not a registered customer'.format(username))
@@ -171,18 +170,23 @@ def tracker(action):
             payload = stripe.Subscription.retrieve(subscription_id)
 
             if os.getenv('HOURLY_PLAN_ID') == payload['items']['data'][0]['plan']['id']:
-                print('NOTIFICATION: {} is an hourly plan subscriber')
+                print('NOTIFICATION: {} is an hourly plan subscriber'.format(username))
                 user_activity = getMostRecentActivity(username)
+                print(user_activity)
                 if user_activity['action'] == 'logon':
-                    
-                    charge = stripe.Charge.create(amount = 79, 
-                         currency = 'usd',
-                         customer = 'cus_H1D1AHP5HxvyB7',
-                         description = 'Fractal Hourly Plan Usage')
+                    now = dt.now()
+                    logon = dt.strptime(user_activity['timestamp'], '%m-%d-%Y, %H:%M:%S')
+                    if now - logon > timedelta(minutes = 0):
+                        amount = round(79 * (now - logon).total_seconds()/60/60)
+                        print('NOTIFICATION: Charging {} {} cents'.format(username, str(amount)))
+                        charge = stripe.Charge.create(amount = amount, 
+                             currency = 'usd',
+                             customer = customer['id'],
+                             description = 'Fractal Hourly Charge')
                 else:
                     print('CRITICAL ERROR: {} logged off but no log on was recorded')
 
-
+        addTimeTable(username, 'logoff', time, is_user)
     elif action == 'startup':
         username = body['username']
         is_user = body['is_user']
