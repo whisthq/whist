@@ -1147,12 +1147,12 @@ def associateVMWithDisk(vm_name, disk_name):
 def lockVM(vm_name, lock):
     command = text("""
         UPDATE v_ms
-        SET "lock" = :lock, "last_active" = :last_active
+        SET "lock" = :lock, "last_updated" = :last_updated
         WHERE
            "vm_name" = :vm_name
         """)
     last_active = getCurrentTime()
-    params = {'vm_name': vm_name, 'lock': lock, 'last_active': last_active}
+    params = {'vm_name': vm_name, 'lock': lock, 'last_updated': last_updated}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
