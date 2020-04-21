@@ -616,8 +616,21 @@ int initSDL() {
 
     // TODO: make this a commandline argument based on client app settings!
     bool is_fullscreen = true; 
+    int full_width;
+    int full_height;
 
 #if defined(_WIN32)
+    full_width = get_native_screen_width();
+    full_height = get_native_screen_height();
+
+    if (output_width < 0) {
+        output_width = full_width;
+    }
+
+    if (output_height < 0) {
+        output_height = full_height;
+    }
+
     window = SDL_CreateWindow(
         "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, output_width,
         output_height, SDL_WINDOW_ALLOW_HIGHDPI |
@@ -631,8 +644,8 @@ int initSDL() {
                                         : 0));
 #endif
 
-    int full_width = get_native_screen_width();
-    int full_height = get_native_screen_height();
+    full_width = get_native_screen_width();
+    full_height = get_native_screen_height();
 
     if (output_width < 0) {
         output_width = full_width;
