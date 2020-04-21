@@ -3,6 +3,9 @@
  *
  * Copyright Fractal Computers, Inc. 2020
 **/
+#if defined(_WIN32)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -267,6 +270,7 @@ int encoder_factory_h;
 int encoder_factory_current_bitrate;
 static int32_t EncoderFactory( void* opaque )
 {
+    opaque; // TODO: useless param, should remove
     encoder_factory_result = create_video_encoder( encoder_factory_w, encoder_factory_h,
                                                    encoder_factory_current_bitrate, gop_size );
     encoder_finished = true;
@@ -661,7 +665,7 @@ void update() {
 #include <time.h>
 
 int main() {
-    srand( time( NULL ) );
+    srand( (unsigned int) time( NULL ) );
     connection_id = rand();
     initBacktraceHandler();
 #ifdef _WIN32

@@ -5,6 +5,7 @@
 **/
 #if defined(_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS // silence the deprecated warnings
+#define _CRT_SECURE_NO_WARNINGS
 #endif
 
 #include <stdint.h>
@@ -72,7 +73,7 @@ bool sendJSONPost( char* host_s, char* path, char* jsonObj )
     int result = sprintf( message, "POST %s HTTP/1.0\r\nHost: %s\r\nContent-Type: application/json\r\nContent-Length:%zd\r\n\r\n%s\0", path, host_s, json_len, jsonObj );
 
     // now we send it
-    if( send( Socket, message, strlen( message ), 0 ) < 0 )
+    if( send( Socket, message, (int) strlen( message ), 0 ) < 0 )
     {
         // error sending, terminate
         printf( "Sending POST message failed.\n" );
