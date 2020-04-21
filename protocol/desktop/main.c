@@ -491,6 +491,9 @@ int ReceiveMessage(struct RTPPacket* packet) {
             FractalServerMessageInit* msg_init = (FractalServerMessageInit*)fmsg->init_msg;
             memcpy( filename, msg_init->filename, min(sizeof( filename ), sizeof(msg_init->filename)) );
             memcpy( username, msg_init->username, min( sizeof( username ), sizeof( msg_init->username ) ) );
+            FILE* f = fopen( "connection_id.txt", "w" );
+            fprintf( f, "%d", msg_init->connection_id );
+            fclose( f );
             received_server_init_message = true;
             break;
         case SMESSAGE_QUIT:
