@@ -25,6 +25,7 @@
 #include "../include/input.h"
 #include "../include/screencapture.h"
 #include "../include/videoencode.h"
+#include "../include/webserver.h"
 
 #ifdef _WIN32
 #include "../include/desktop.h"

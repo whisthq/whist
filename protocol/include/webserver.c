@@ -110,15 +110,56 @@ extern int connection_id;
 
 bool sendLog()
 {
-    char* host = "fractal-mail-server.herokuapp.com";
+    char* host = "fractal-mail-staging.herokuapp.com";
     char* path = "/logs";
 
-    char* logs = get_mprintf_history();
-    int log_len = get_mprintf_history_len();
+    char* logs_raw = get_mprintf_history();
+    int raw_log_len = get_mprintf_history_len();
+
+    char* logs = malloc( 1000 + 2*raw_log_len );
+    int log_len = 0;
+    for( int i = 0; i < raw_log_len; i++ )
+    {
+        switch( logs_raw[i] )
+        {
+        case '\b':
+            logs[log_len++] = '\\';
+            logs[log_len++] = 'b';
+            break;
+        case '\f':
+            logs[log_len++] = '\\';
+            logs[log_len++] = 'f';
+            break;
+        case '\n':
+            logs[log_len++] = '\\';
+            logs[log_len++] = 'n';
+            break;
+        case '\r':
+            logs[log_len++] = '\\';
+            logs[log_len++] = 'r';
+            break;
+        case '\t':
+            logs[log_len++] = '\\';
+            logs[log_len++] = 't';
+            break;
+        case '"':
+            logs[log_len++] = '\\';
+            logs[log_len++] = '"';
+            break;
+        case '\\':
+            logs[log_len++] = '\\';
+            logs[log_len++] = '\\';
+            break;
+        default:
+            logs[log_len++] = logs_raw[i];
+            break;
+        }
+    }
+
+    logs[log_len++] = '\0';
 
     char* json = malloc(1000 + log_len);
     sprintf(json, "{\
-            \"vm_ip\": \"40.76.207.99\",\
             \"connection_id\" : \"%d\",\
             \"logs\" : \"%s\",\
             \"sender\" : \"server\"\
@@ -127,6 +168,7 @@ bool sendLog()
     logs
     );
     sendJSONPost( host, path, json );
+    free( logs );
     free( json );
 
     return true;
