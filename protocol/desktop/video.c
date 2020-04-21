@@ -1,5 +1,12 @@
+/*
+ * General client video functions.
+ * 
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include "video.h"
+
 #include <stdio.h>
+
 #define USE_HARDWARE true
 
 // Global Variables
@@ -340,7 +347,6 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
     int gif_frame_index = loading_index % 83;
 
     while (true) {
-        printf( "TEST!\n" );
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
 
@@ -353,17 +359,17 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
         }
 
         SDL_Surface* loading_screen = SDL_LoadBMP(frame_name);
-        printf( "LOADING SCREEN: %p\n", loading_screen );
         loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
         SDL_FreeSurface(loading_screen);
 
-        int w, h;
+        int w = 200;
+        int h = 200;
         SDL_Rect dstrect;
 
-        SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
+        //SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
 
-        dstrect.x = output_width / 2 - w / 2;
-        dstrect.y = output_height / 2 - h / 2;
+        dstrect.x = output_width - w / 2;
+        dstrect.y = output_height - h / 2;
         dstrect.w = w;
         dstrect.h = h;
         SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
@@ -387,12 +393,15 @@ int initMultithreadedVideo(void* opaque) {
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     SDL_Renderer* renderer =
-        SDL_CreateRenderer((SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC);
+        SDL_CreateRenderer((SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     if (!renderer) {
         fprintf(stderr, "SDL: could not create renderer - exiting: %s\n",
                 SDL_GetError());
         return -1;
     }
+
+    // configure texture
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
     // mbps that currently works
     working_mbps = STARTING_BITRATE;
@@ -767,7 +776,7 @@ void destroyVideo() {
     SDL_WaitThread(VideoData.render_screen_thread, NULL);
     SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
 
-    SDL_DestroyTexture(videoContext.texture);
+//    SDL_DestroyTexture(videoContext.texture); not needed, the renderer destroys it
     av_freep(videoContext.data);
 
     has_rendered_yet = false;

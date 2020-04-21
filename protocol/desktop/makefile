@@ -12,7 +12,7 @@ ARCH = 64
 !ENDIF
 
 # specify executable name
-BIN_NAME = build$(ARCH)/desktop.exe
+BIN_NAME = build$(ARCH)/FractalClient.exe
 
 # files to build into object files
 OBJS = \
@@ -50,7 +50,8 @@ CFLAGS = \
 	-DWIN32_LEAN_AND_MEAN \
 	-DUNICODE \
 	-DWIN32 \
-	-I ../include -I ../include/ffmpeg
+	-I ../include \
+	-I ../include/ffmpeg
 
 # system libs to link against
 SHARED_LIBS = \
@@ -70,10 +71,10 @@ SHARED_LIBS = \
 	uuid.lib \
 	version.lib \
 	ws2_32.lib \
-        shlwapi.lib \
+	shlwapi.lib \
 	crypt32.lib \
-        d3d11.lib \
-        dxgi.lib \
+	d3d11.lib \
+	dxgi.lib \
     shcore.lib
 
 # linking flags
@@ -89,7 +90,7 @@ all: clean clear $(OBJS)
 fractal.obj:
 	$(CC) /c $(CFLAGS) ../include/fractal.c
 
-# compile the main clipboard source file into object file
+# compile the main clipboard thread source file into object file
 clipboard_thread.obj:
 	$(CC) /c $(CFLAGS) ../include/clipboard_thread.c
 
