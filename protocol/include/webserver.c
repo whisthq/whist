@@ -1,14 +1,8 @@
 /*
- * This file contains the implementation of the functions to query the Fractal
- * webserver to login and logout the user.
-
- Protocol version: 1.0
- Last modification: 12/14/2019
-
- By: Philippe Noël, Ming Ying
-
- Copyright Fractal Computers, Inc. 2019
-*/
+ * Helper functions for webserver querying via POST requests in C.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #if defined(_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS // silence the deprecated warnings
 #endif
@@ -27,10 +21,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #pragma comment(lib, "Ws2_32.lib")
-#pragma warning(disable: 4996) // snprintf unsafe warning
-#pragma warning(disable: 4047) // levels of indirection
-#pragma warning(disable: 4311) // typecast warning
-#pragma warning(disable: 4267) // size_t to int
 #else
 #define SOCKET int
 #include <unistd.h>
@@ -112,7 +102,6 @@ char* sendJSONPost( char* host_s, char* path, char* jsonObj )
 #else
     close( Socket );
 #endif
-
     // return the user credentials if correct authentication, else empty
     return credentials;
 }
@@ -190,11 +179,3 @@ char* parse_response( char* credentials )
     // return IP found
     return user_vm_ip;
 }
-
-// re-enable Windows warning, if Windows client
-#if defined(_WIN32)
-#pragma warning(default: 4996)
-#pragma warning(default: 4047)
-#pragma warning(default: 4311)
-#pragma warning(default: 4267)
-#endif

@@ -43,6 +43,17 @@ SHARED_LIBS = \
 	-lswscale \
 	-lX11 \
 	-lXfixes
+
+# gcc compiler flags
+CFLAGS = \
+	-g \
+	-Wall \
+	-Wextra \
+	-Wno-missing-braces \
+	-Wno-unused-value \
+	-Wno-unused-parameter \
+	-I ../include \
+	-O0
 endif
 
 ################## MACOS ##################
@@ -69,8 +80,9 @@ OBJS = \
 	main.o
 
 # Apple SDK (standard MacOSX or MacOSX10.15 is ideal - use 10.14 if Xcode bug)
-# export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk
+
+# export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 # export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk
 # export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
 
@@ -100,18 +112,8 @@ SHARED_LIBS = \
 	-framework AppKit \
 	-framework Metal \
 	-framework QuartzCore
-endif
 
-################## COMMON ##################
-# executable name
-BIN_NAME = build$(ARCH)/desktop
-
-# static libs to link against
-STATIC_LIBS = \
-	../lib/$(ARCH)/SDL2/$(PLATFORM)/libSDL2.a \
-	../lib/$(ARCH)/openssl/$(PLATFORM)/libcrypto.a
-
-# compiler flags
+# clang compiler flags
 CFLAGS = \
 	-g \
 	-Wall \
@@ -122,6 +124,16 @@ CFLAGS = \
 	-I ../include \
 	-I ../include/ffmpeg \
 	-O0
+endif
+
+################## COMMON ##################
+# executable name
+BIN_NAME = build$(ARCH)/FractalClient
+
+# static libs to link against
+STATIC_LIBS = \
+	../lib/$(ARCH)/SDL2/$(PLATFORM)/libSDL2.a \
+	../lib/$(ARCH)/openssl/$(PLATFORM)/libcrypto.a
 
 LDFLAGS = \
 	  -g \
@@ -148,23 +160,23 @@ audiodecode.o:
 aes.o:
 	$(CC) -c $(CFLAGS) ../include/aes.c
 
-# compile the MacOS clipboard source file into object file (Requires MacOS 10.14+)
+# compile the MacOS clipboard Objective-C source file into object file
 clipboard_osx.o:
 	$(CC) -c $(CFLAGS) ../include/clipboard_osx.m
 
-# compile the MacOS utils source file into object file (Requires MacOS 10.14+)
+# compile the MacOS utils source file into object file
 mac_utils.o:
 	$(CC) -c $(CFLAGS) ../include/mac_utils.c
 
-# compile the general clipboard source file into object file
+# compile the general clipboard thread source file into object file
 clipboard_thread.o:
 	$(CC) -c $(CFLAGS) ../include/clipboard_thread.c
 
-# compile the general mac clipboard file into object file
+# compile the general MacOS clipboard file into object file
 mac_clipboard.o:
 	$(CC) -c $(CFLAGS) ../include/mac_clipboard.c
 
-# compile the general clipboard source file into object file
+# compile the general Linux Ubuntu clipboard source file into object file
 x11_clipboard.o:
 	$(CC) -c $(CFLAGS) ../include/x11_clipboard.c
 

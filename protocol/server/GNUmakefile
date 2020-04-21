@@ -8,20 +8,12 @@ PLATFORM = linux
 ARCH = $(shell getconf LONG_BIT)
 
 # executable name
-BIN_NAME = build$(ARCH)/server
+BIN_NAME = build$(ARCH)/FractalServer
 
 DYNAMIC_LIBS =
 
 # dynamic libs to link against
 DYNAMIC2_LIBS = \
-	../lib/$(ARCH)/ffmpeg/linux/libavcodec.so.58.54.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavdevice.so.58.8.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavfilter.so.7.57.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavformat.so.58.29.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavutil.so.56.31.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libpostproc.so.55.5.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libswresample.so.3.5.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libswscale.so.5.5.100 \
 	../lib/$(ARCH)/mfx/linux/libmfx.so.1.32
 
 # system libs to link against
@@ -30,7 +22,7 @@ SHARED_LIBS = \
 	-ldl \
 	-lpthread \
 	-lX11 \
-        -lXfixes \
+	-lXfixes \
 	-lXext \
 	-lXtst \
 	-lasound \
@@ -52,7 +44,7 @@ STATIC_LIBS = \
 # files to build into object files
 OBJS = \
 	fractal.o \
-        x11capture.o \
+	x11capture.o \
 	videoencode.o \
 	alsacapture.o \
 	linuxinput.o \
@@ -75,9 +67,10 @@ CFLAGS = \
 	-O0
 
 LDFLAGS = \
-	  -no-pie \
-	  -g -rdynamic \
-	  -O0
+	-no-pie \
+	-g \
+	-rdynamic \
+	-O0
 
 # link all files into executable
 all: clean clear $(OBJS)

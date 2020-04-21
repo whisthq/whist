@@ -1,8 +1,12 @@
+/*
+ * Clipboard thread handling.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include "clipboard.h"
 #include "fractal.h"
-#include <stdio.h>
 
-// CLIPBOARD THREAD HANDLING
+#include <stdio.h>
 
 int UpdateClipboardThread( void* opaque );
 
@@ -88,7 +92,7 @@ int UpdateClipboardThread( void* opaque )
 		if( updating_set_clipboard )
 		{
 			mprintf( "Trying to set clipboard!\n" );
-			ClipboardData cb;
+			// ClipboardData cb; TODO: unused, still needed?
 			if( clipboard->type == CLIPBOARD_FILES )
 			{
 				char cmd[1000] = "";

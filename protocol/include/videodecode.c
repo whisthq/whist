@@ -1,3 +1,8 @@
+/*
+ * Video decoding via FFmpeg C library.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #if defined(_WIN32)
 #pragma warning(disable : 4706)  // assignment within conditional warning
 #endif
@@ -70,7 +75,10 @@ enum AVPixelFormat match_vaapi(AVCodecContext* ctx,
 }
 
 int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
+    // only need to call avcodec_register_all for FFmpeg <4, only on Linux
+#ifdef __linux__
     avcodec_register_all();
+#endif
 
     if (decoder->type == DECODE_TYPE_SOFTWARE) {
         mprintf("Trying software decoder\n");

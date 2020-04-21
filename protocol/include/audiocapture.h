@@ -1,3 +1,8 @@
+/*
+ * General audio capture integrating Windows and Linux Ubuntu servers.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef AUDIO_CAPTURE_H
 #define AUDIO_CAPTURE_H
 
@@ -23,4 +28,4 @@ void ReleaseBuffer(audio_device_t *audio_device);
 
 void WaitTimer(audio_device_t *audio_device);
 
-#endif  // AUDIO_CAPTURE_H
+#endif // AUDIO_CAPTURE_H

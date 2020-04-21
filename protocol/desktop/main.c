@@ -1,3 +1,8 @@
+/*
+ * Fractal Client.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include "main.h"
 
 #include <stdint.h>
@@ -602,6 +607,23 @@ int initSDL() {
         return -1;
     }
 
+    // TODO: make this a commandline argument based on client app settings!
+    bool is_fullscreen = true; 
+
+#if defined(_WIN32)
+    window = SDL_CreateWindow(
+        "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, output_width,
+        output_height, SDL_WINDOW_ALLOW_HIGHDPI |
+        (is_fullscreen ? SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP : 0));
+#else
+    window =
+        SDL_CreateWindow("Fractal", SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED, output_width, output_height, SDL_WINDOW_ALLOW_HIGHDPI |
+                         (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP |
+                                              SDL_WINDOW_ALWAYS_ON_TOP
+                                        : 0));
+#endif
+
     int full_width = get_native_screen_width();
     int full_height = get_native_screen_height();
 
@@ -613,30 +635,13 @@ int initSDL() {
         output_height = full_height;
     }
 
-    bool is_fullscreen =
-        full_width == output_width && full_height == output_height;
-
-#if defined(_WIN32)
-    window = SDL_CreateWindow(
-        "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, output_width,
-        output_height,
-        (is_fullscreen ? SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP : 0));
-#else
-    window =
-        SDL_CreateWindow("Fractal", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, output_width, output_height,
-                         (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALLOW_HIGHDPI |
-                                              SDL_WINDOW_ALWAYS_ON_TOP
-                                        : 0));
-#endif
-
-    SDL_AddEventWatch(resizingEventWatcher, window);
+    SDL_AddEventWatch(resizingEventWatcher, (SDL_Window *) window);
     if (!window) {
         fprintf(stderr, "SDL: could not create window - exiting: %s\n",
                 SDL_GetError());
         return -1;
     }
-	SDL_SetWindowResizable(window, true);
+	SDL_SetWindowResizable((SDL_Window *) window, true);
     return 0;
 }
 
@@ -654,7 +659,7 @@ void destroySDL() {
 
 
 void parse_window_event(SDL_Event* event) {
-	SDL_WindowEvent e = event->window;
+	// SDL_WindowEvent e = event->window; TODO: unused currently, is this needed?
 	switch (event->window.event) {
         case SDL_WINDOWEVENT_RESIZED:
             printf("Window %d resized to %dx%d\n",
@@ -729,11 +734,7 @@ int main(int argc, char* argv[]) {
     }
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-#ifdef _WIN32
-    initMultiThreadedPrintf("C:\\ProgramData\\FractalCache");
-#else
     initMultiThreadedPrintf( "." );
-#endif
 
     initClipboard();
 

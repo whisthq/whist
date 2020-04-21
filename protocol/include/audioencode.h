@@ -1,3 +1,8 @@
+/*
+ * Audio encoding via FFmpeg C library.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef AUDIO_ENCODE_H
 #define AUDIO_ENCODE_H
 
@@ -31,4 +36,4 @@ int audio_encoder_encode_frame(audio_encoder_t *encoder);
 
 void destroy_audio_encoder(audio_encoder_t *encoder);
 
-#endif  // ENCODE_H
+#endif // ENCODE_H

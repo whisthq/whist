@@ -1,3 +1,8 @@
+/*
+ * AES encryption for streamed packets.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #if defined(_WIN32)
 #pragma warning(disable: 4706) // assignment within conditional expression warning
 #endif

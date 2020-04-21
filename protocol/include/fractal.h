@@ -1,3 +1,8 @@
+/*
+ * General Fractal helper functions and headers.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef FRACTAL_H
 #define FRACTAL_H
 
@@ -34,6 +39,8 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #define max(a, b) (((a) > (b)) ? (a) : (b))

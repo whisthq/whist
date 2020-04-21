@@ -1,4 +1,9 @@
-#include "audioencode.h"  // header file for this file
+/*
+ * Audio encoding via FFmpeg C library.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#include "audioencode.h"
 
 audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
     // initialize the audio encoder

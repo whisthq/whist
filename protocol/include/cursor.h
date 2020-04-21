@@ -1,3 +1,8 @@
+/*
+ * General cursor file.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef CURSOR_H
 #define CURSOR_H
 
@@ -11,4 +16,4 @@ void InitCursors();
 
 FractalCursorImage GetCurrentCursor();
 
-#endif  // CURSOR_H
+#endif // CURSOR_H

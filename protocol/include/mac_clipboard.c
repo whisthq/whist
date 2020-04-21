@@ -1,3 +1,8 @@
+/*
+ * Clipboard getting and setting functions on MacOS.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include "clipboard.h"
 #include "fractal.h"
 

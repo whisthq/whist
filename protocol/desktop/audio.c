@@ -1,3 +1,8 @@
+/*
+ * Client audio functions.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include "audio.h"
 
 extern int audio_frequency;

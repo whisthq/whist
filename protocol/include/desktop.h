@@ -1,3 +1,8 @@
+/*
+ * Windows desktop sessions helper functions.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef DESKTOP_H
 #define DESKTOP_H
 
@@ -28,6 +33,5 @@ void OpenWindow();
 
 // @brief Calls the above functions; opens a windows station and desktop.
 void InitDesktop();
-
 
 #endif // DESKTOP_H

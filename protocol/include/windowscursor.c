@@ -1,4 +1,9 @@
-#include "windowscursor.h"  // header file for this file
+/*
+ * Set and retrieve Windows cursor shapes.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#include "windowscursor.h"
 
 typedef struct FractalCursorTypes {
     HCURSOR CursorAppStarting;
