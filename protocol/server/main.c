@@ -1007,6 +1007,8 @@ int main() {
             }
         }
 
+        sendLog();
+
         mprintf("Disconnected\n");
 
         DestroyInputDevice(input_device);

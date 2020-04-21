@@ -12,6 +12,8 @@
 #ifndef WEBSERVER_H  // include guard
 #define WEBSERVER_H
 
+bool sendLog();
+
 // @brief sends a JSON POST request to the Fractal webservers
 // @details authenticate the user and return the credentials
 char* sendJSONPost( char* host_s, char* path, char* jsonObj );
