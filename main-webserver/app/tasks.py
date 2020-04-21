@@ -298,7 +298,9 @@ def startVM(self, vm_name):
 	lockVM(vm_name, True)
 
 	_, compute_client, _ = createClients()
-	fractalVMStart(vm_name)
+	if fractalVMStart(vm_name) > 0:
+		vm_state = fetchVMCredentials(vm_name)['state']
+		updateVMState(vm_name, vm_state.replace('NOT_', ''))
 
 	lockVM(vm_name, False)
 
