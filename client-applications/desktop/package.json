@@ -70,7 +70,7 @@
       "build/icon.png"
     ],
     "extraFiles": [
-      "fractal-protocol/"
+      "protocol/"
     ],
     "dmg": {
       "sign": false,

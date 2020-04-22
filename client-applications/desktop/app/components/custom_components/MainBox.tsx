@@ -50,8 +50,22 @@ class MainBox extends Component {
 
   SendLogs = () => {
     var fs = require("fs");
-    var logs = fs.readFileSync(__dirname + "/../../log.txt").toString();
-    this.props.dispatch(sendLogs(logs))
+    var appRootDir = require('electron').remote.app.getAppPath();
+    const os       = require('os');
+
+    if (os.platform() === 'darwin' || os.platform() === 'linux') {
+      var logs = fs.readFileSync(__dirname + "/../../log.txt").toString();
+      var connection_id = parseInt(fs.readFileSync(__dirname + "/../../connection_id.txt").toString());
+      console.log("the connection id is")
+      console.log(connection_id)
+      this.props.dispatch(sendLogs(connection_id, logs))
+    } else if (os.platform() === 'win32') {
+      var logs = fs.readFileSync(process.cwd() + "\\protocol\\desktop\\log.txt").toString();
+      var connection_id = parseInt(fs.readFileSync(process.cwd() + "\\protocol\\desktop\\connection_id.txt").toString());
+      console.log("the connection id is")
+      console.log(connection_id)
+      this.props.dispatch(sendLogs(connection_id, logs))
+    }
   }
 
   LaunchProtocol = () => {

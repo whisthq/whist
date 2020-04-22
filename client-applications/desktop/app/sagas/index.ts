@@ -253,8 +253,8 @@ function* sendLogs(action) {
   console.log('TRYING TO SEND LOGS!')
   const state = yield select()
   var public_ip = state.counter.public_ip
-  const {json, response} = yield call(apiPost, 'https://fractal-mail-server.com/logs', {
-    connection_id: 123,
+  const {json, response} = yield call(apiPost, 'https://cube-celery-staging.herokuapp.com/logs', {
+    connection_id: action.connection_id,
     logs: action.logs,
     sender: 'client',
     vm_ip: public_ip

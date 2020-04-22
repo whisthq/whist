@@ -243,9 +243,10 @@ export function vmRestarted(status) {
 	}
 }
 
-export function sendLogs(logs) {
+export function sendLogs(connection_id, logs) {
 	return {
 		type: SEND_LOGS,
+		connection_id,
 		logs
 	}
 } 
