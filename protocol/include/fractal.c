@@ -138,7 +138,8 @@ void set_timeout(SOCKET s, int timeout_ms) {
         ioctl(s, FIONBIO, &mode);
 #endif
     } else {
-        unsigned long mode = 1;
+        // Set to blocking when setting a timeout
+        unsigned long mode = 0;
 #if defined(_WIN32)
         ioctlsocket( s, FIONBIO, &mode );
 #else
@@ -1207,6 +1208,45 @@ void initBacktraceHandler() {
 #pragma warning(default : 4100)
 #endif
 
+bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms)
+{
+    // Connect to TCP server
+    set_timeout( s, 0 );
+    if( connect( s, (struct sockaddr*)(&addr),
+                 sizeof( addr ) ) < 0 )
+    {
+#ifdef _WIN32
+        bool worked = GetLastNetworkError() == EWOULDBLOCK;
+#else
+        bool worked = errno == EINPROGRESS;
+#endif
+        if( !worked )
+        {
+            mprintf( "Could not connect() over TCP to server %d\n",
+                     GetLastNetworkError() );
+            closesocket( s );
+            return false;
+        }
+    }
+    // Select connection
+    fd_set set;
+    FD_ZERO( &set );
+    FD_SET( s, &set );
+    struct timeval tv;
+    tv.tv_sec = timeout_ms / 1000;
+    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    if( select( s+1, NULL, &set, NULL, &tv ) <= 0 )
+    {
+        mprintf( "Could not select() over TCP to server %d\n",
+                 GetLastNetworkError() );
+        closesocket( s );
+        return false;
+    }
+
+    set_timeout( s, timeout_ms );
+    return true;
+}
+
 int CreateTCPServerContext(struct SocketContext *context, char *destination,
                            int port, int recvfrom_timeout_ms,
                            int stun_timeout_ms) {
@@ -1337,11 +1377,9 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
     struct sockaddr_in origin_addr;
     // Connect over TCP to STUN
     mprintf("Connecting to STUN TCP...\n");
-    if (connect(context->s, (struct sockaddr *)(&stun_addr),
-                sizeof(stun_addr)) < 0) {
-        mprintf("Could not connect over TCP to server %d\n",
-                GetLastNetworkError());
-        closesocket(context->s);
+    if( !tcp_connect( context->s, stun_addr, stun_timeout_ms ) )
+    {
+        mprintf( "Could not connect to STUN Server over TCP\n" );
         return -1;
     }
 
@@ -1397,14 +1435,6 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
     mprintf("TCP STUN notified of desired request from %s:%d\n",
             inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-    /*
-    if( connect( context->s, (struct sockaddr*)(&client_addr), sizeof(
-    client_addr ) ) < 0 )
-    {
-        mprintf( "Could not connect! (Expected)\n" );
-    }
-    */
-
     closesocket(context->s);
 
     // Create TCP socket
@@ -1431,10 +1461,10 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
 
     mprintf("WAIT\n");
 
-    if (connect(context->s, (struct sockaddr *)&client_addr,
-                sizeof(client_addr)) < 0) {
-        mprintf("Failed to connect! %d\n", GetLastNetworkError());
-        closesocket(context->s);
+    // Connect to client
+    if( !tcp_connect( context->s, client_addr, stun_timeout_ms ) )
+    {
+        mprintf( "Could not connect to Client over TCP\n" );
         return -1;
     }
 
@@ -1478,11 +1508,9 @@ int CreateTCPClientContext(struct SocketContext *context, char *destination,
     SDL_Delay(200);
 
     // Connect to TCP server
-    if (connect(context->s, (struct sockaddr *)(&context->addr),
-                sizeof(context->addr)) < 0) {
-        mprintf("Could not connect over TCP to server %d\n",
-                GetLastNetworkError());
-        closesocket(context->s);
+    if( !tcp_connect( context->s, context->addr, stun_timeout_ms ) )
+    {
+        mprintf( "Could not connect to server over TCP\n" );
         return -1;
     }
 
@@ -1528,17 +1556,14 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
         return -1;
     }
 
-    struct sockaddr_in origin_addr;
-
-    // Connect to TCP server
-    if (connect(context->s, (struct sockaddr *)(&stun_addr),
-                sizeof(stun_addr)) < 0) {
-        mprintf("Could not connect over TCP to server %d\n",
-                GetLastNetworkError());
-        closesocket(context->s);
+    // Connect to STUN server
+    if( !tcp_connect( context->s, stun_addr, stun_timeout_ms ) )
+    {
+        mprintf( "Could not connect to STUN Server over TCP\n" );
         return -1;
     }
 
+    struct sockaddr_in origin_addr;
     socklen_t slen = sizeof(origin_addr);
     if (getsockname(context->s, (struct sockaddr *)&origin_addr, &slen) < 0) {
         mprintf("Could not get sock name\n");
@@ -1624,11 +1649,9 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     SDL_Delay(200);
 
     // Connect to TCP server
-    if (connect(context->s, (struct sockaddr *)(&context->addr),
-                sizeof(context->addr)) < 0) {
-        mprintf("Could not connect over TCP to server %d\n",
-                GetLastNetworkError());
-        closesocket(context->s);
+    if( !tcp_connect( context->s, context->addr, stun_timeout_ms ) )
+    {
+        mprintf( "Could not connect to server over TCP\n" );
         return -1;
     }
 
