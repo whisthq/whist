@@ -1,3 +1,11 @@
+/*
+ * Fractal Server.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#if defined(_WIN32)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,15 +17,18 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
+#include <unistd.h>
 // TODO: Linux headers
 #endif
 
 #include "../include/audiocapture.h"
 #include "../include/audioencode.h"
+#include "../include/cursor.h"
 #include "../include/fractal.h"
 #include "../include/input.h"
 #include "../include/screencapture.h"
 #include "../include/videoencode.h"
+#include "../include/webserver.h"
 
 #ifdef _WIN32
 #include "../include/desktop.h"
@@ -34,6 +45,7 @@
 #define DEFAULT_WIDTH 1920
 #define DEFAULT_HEIGHT 1080
 
+volatile int connection_id;
 static volatile bool connected;
 static volatile double max_mbps;
 static volatile int gop_size = 9999;
@@ -61,17 +73,6 @@ struct SocketContext PacketSendContext = {0};
 
 volatile bool wants_iframe;
 volatile bool update_encoder;
-
-#ifndef _WIN32
-void InitCursors() { return; }
-
-FractalCursorImage GetCurrentCursor() {
-    FractalCursorImage image = {0};
-    image.cursor_state = CURSOR_STATE_VISIBLE;
-    image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
-    return image;
-}
-#endif
 
 int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
                  size_t len) {
@@ -242,7 +243,7 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
         struct RTPPacket encrypted_packet;
         int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
                                          (unsigned char*)PRIVATE_KEY);
-        
+
         // Send it off
         SDL_LockMutex(packet_mutex);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
@@ -261,7 +262,28 @@ int SendPacket(struct SocketContext* context, FractalPacketType type,
     return 0;
 }
 
-static int32_t SendVideo(void* opaque) {
+bool pending_encoder;
+bool encoder_finished;
+encoder_t* encoder_factory_result = NULL;
+int encoder_factory_w;
+int encoder_factory_h;
+int encoder_factory_current_bitrate;
+int32_t MultithreadedEncoderFactory( void* opaque )
+{
+    opaque;
+    encoder_factory_result = create_video_encoder( encoder_factory_w, encoder_factory_h,
+                                                   encoder_factory_current_bitrate, gop_size );
+    encoder_finished = true;
+    return 0;
+}
+int32_t MultithreadedDestroyEncoder( void* opaque )
+{
+    encoder_t* encoder = (encoder_t*)opaque;
+    destroy_video_encoder( encoder );
+    return 0;
+}
+
+int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
     struct SocketContext socketContext = *(struct SocketContext*)opaque;
@@ -296,8 +318,11 @@ static int32_t SendVideo(void* opaque) {
     int frames_since_first_iframe = 0;
     update_device = true;
 
-    static clock last_frame_capture;
+    clock last_frame_capture;
     StartTimer(&last_frame_capture);
+
+    pending_encoder = false;
+    encoder_finished = false;
 
     while (connected) {
         if (client_width < 0 || client_height < 0) {
@@ -332,20 +357,48 @@ static int32_t SendVideo(void* opaque) {
 
         // Update encoder with new parameters
         if (update_encoder) {
-            if (encoder) {
-                destroy_video_encoder(encoder);
+            //encoder = NULL;
+            if( pending_encoder )
+            {
+                if( encoder_finished )
+                {
+                    if( encoder )
+                    {
+                        SDL_CreateThread( MultithreadedDestroyEncoder, "MultithreadedDestroyEncoder", encoder );
+                    }
+                    encoder = encoder_factory_result;
+                    frames_since_first_iframe = 0;
+                    pending_encoder = false;
+                    update_encoder = false;
+                }
+            } else
+            {
+                pending_encoder = true;
+                encoder_finished = false;
+                encoder_factory_w = device->width;
+                encoder_factory_h = device->height;
+                encoder_factory_current_bitrate = current_bitrate;
+                if( encoder == NULL )
+                {
+                    // Run on this thread bc we have to wait for it anyway
+                    MultithreadedEncoderFactory( NULL );
+                    encoder = encoder_factory_result;
+                    frames_since_first_iframe = 0;
+                    pending_encoder = false;
+                    update_encoder = false;
+                } else
+                {
+                    SDL_CreateThread( MultithreadedEncoderFactory, "MultithreadedEncoderFactory", NULL );
+                }
             }
-            encoder = create_video_encoder(device->width, device->height,
-                                           current_bitrate, gop_size);
-
-            update_encoder = false;
-            frames_since_first_iframe = 0;
         }
 
-        // Accumulated_frames is equal to how many frames have passed since the last call to CaptureScreen
+        // Accumulated_frames is equal to how many frames have passed since the
+        // last call to CaptureScreen
         int accumulated_frames = 0;
         if (GetTimer(last_frame_capture) > 1.0 / FPS) {
             accumulated_frames = CaptureScreen(device);
+            //mprintf( "CaptureScreen: %d\n", accumulated_frames );
         }
 
         // If capture screen failed, we should try again
@@ -378,8 +431,13 @@ static int32_t SendVideo(void* opaque) {
             // consecutive_capture_screen_errors = 0;
 
             bool is_iframe = false;
-            if (wants_iframe) {
-                video_encoder_set_iframe(encoder);
+            if( frames_since_first_iframe % gop_size == 0 )
+            {
+                wants_iframe = false;
+                is_iframe = true;
+            } else if( wants_iframe )
+            {
+                video_encoder_set_iframe( encoder );
                 wants_iframe = false;
                 is_iframe = true;
             }
@@ -459,10 +517,9 @@ static int32_t SendVideo(void* opaque) {
                     frame->height = device->height;
                     frame->size = encoder->packet.size;
                     frame->cursor = GetCurrentCursor();
-                    // True if this frame does not require previous frames to render
-                    frame->is_iframe =
-                        (frames_since_first_iframe % gop_size == 1) ||
-                        is_iframe;
+                    // True if this frame does not require previous frames to
+                    // render
+                    frame->is_iframe = is_iframe;
                     memcpy(frame->compressed_frame, encoder->packet.data,
                            encoder->packet.size);
 
@@ -501,7 +558,7 @@ static int32_t SendVideo(void* opaque) {
     return 0;
 }
 
-static int32_t SendAudio(void* opaque) {
+int32_t SendAudio(void* opaque) {
     struct SocketContext context = *(struct SocketContext*)opaque;
     int id = 1;
 
@@ -617,14 +674,25 @@ void update() {
     );
 }
 
+#include <time.h>
+
 int main() {
+    srand( (unsigned int) time( NULL ) );
+    connection_id = rand();
     initBacktraceHandler();
-    initMultiThreadedPrintf(true);
+#ifdef _WIN32
+    initMultiThreadedPrintf("C:\\ProgramData\\FractalCache");
+#else
+    initMultiThreadedPrintf( "." );
+#endif
     initClipboard();
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_Init(SDL_INIT_VIDEO);
 #ifdef _WIN32
-    InitDesktop();
+    if( !InitDesktop() )
+    {
+        mprintf( "Could not winlogon!\n" );
+    }
 #endif
 
 // initialize the windows socket library if this is a windows client
@@ -673,14 +741,41 @@ int main() {
         // Give client time to setup before sending it with packets
         SDL_Delay(150);
 
+        FractalServerMessage* msg_init_whole = malloc(
+            sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit));
+        msg_init_whole->type = MESSAGE_INIT;
+        FractalServerMessageInit* msg_init = (FractalServerMessageInit*) msg_init_whole->init_msg;
+#ifdef _WIN32
+        msg_init->filename[0] = '\0';
+        strcat(msg_init->filename, "C:\\ProgramData\\FractalCache");
+        char* username = "vm1";
+#else  // Linux
+        char* cwd = getcwd(NULL, 0);
+        memcpy(msg_init->filename, cwd, strlen(cwd) + 1);
+        free(cwd);
+        char* username = "Fractal";
+#endif
+        msg_init->connection_id = connection_id;
+        memcpy(msg_init->username, username, strlen(username) + 1);
+        mprintf("SIZE: %d\n", sizeof(FractalServerMessage) +
+                                  sizeof(FractalServerMessageInit));
+        packet_mutex = SDL_CreateMutex();
+        if (SendPacket(
+                &PacketSendContext, PACKET_MESSAGE, (uint8_t*)msg_init_whole,
+                sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit),
+                1) < 0) {
+            mprintf("Could not send server init message!\n");
+            return -1;
+        }
+        free(msg_init_whole);
+
         clock startup_time;
         StartTimer(&startup_time);
 
         connected = true;
-        max_mbps = MAXIMUM_MBPS;
+        max_mbps = STARTING_BITRATE;
         wants_iframe = false;
         update_encoder = false;
-        packet_mutex = SDL_CreateMutex();
 
         SDL_Thread* send_video =
             SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
@@ -826,7 +921,13 @@ int main() {
                     fmsg->type == MESSAGE_MOUSE_MOTION) {
                     // Replay user input (keyboard or mouse presses)
                     if (input_device) {
-                        ReplayUserInput(input_device, fmsg);
+                        if( !ReplayUserInput( input_device, fmsg ) )
+                        {
+                            mprintf( "Failed to replay input!\n" );
+#ifdef _WIN32
+                            InitDesktop();
+#endif
+                        }
                     }
 
                 } else if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
@@ -837,7 +938,8 @@ int main() {
 #endif
                 } else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
-                    max_mbps = fmsg->mbps;
+                    max_mbps = max( fmsg->mbps, MINIMUM_BITRATE );
+                    update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
                     mprintf("Ping Received - ID %d\n", fmsg->ping_id);
 
@@ -864,7 +966,8 @@ int main() {
                     }
                 } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
                     // Update clipboard with message
-                    mprintf("Clipboard! %d\n", fmsg->clipboard.type);
+                    mprintf("Received Clipboard Data! %d\n",
+                            fmsg->clipboard.type);
                     SetClipboard(&fmsg->clipboard);
                 } else if (fmsg->type == MESSAGE_AUDIO_NACK) {
                     // Audio nack received, relay the packet
@@ -923,11 +1026,9 @@ int main() {
                     }
                 } else if (fmsg->type == MESSAGE_IFRAME_REQUEST) {
                     mprintf("Request for i-frame found: Creating iframe\n");
-                    if( fmsg->reinitialize_encoder )
-                    {
+                    if (fmsg->reinitialize_encoder) {
                         update_encoder = true;
-                    } else
-                    {
+                    } else {
                         wants_iframe = true;
                     }
                 } else if (fmsg->type == CMESSAGE_QUIT) {
@@ -937,6 +1038,8 @@ int main() {
                 }
             }
         }
+
+        sendLog();
 
         mprintf("Disconnected\n");
 

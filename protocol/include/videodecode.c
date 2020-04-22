@@ -1,8 +1,13 @@
+/*
+ * Video decoding via FFmpeg C library.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #if defined(_WIN32)
 #pragma warning(disable : 4706)  // assignment within conditional warning
 #endif
 
-#include "videodecode.h"  // header file for this file
+#include "videodecode.h"
 
 #include <stdio.h>
 #include <stdlib.h>

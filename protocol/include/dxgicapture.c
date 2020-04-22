@@ -1,3 +1,8 @@
+/*
+ * GPU screen capture on Windows.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include "dxgicapture.h"
 
 #include <windows.h>

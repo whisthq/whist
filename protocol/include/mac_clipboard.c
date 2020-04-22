@@ -1,3 +1,8 @@
+/*
+ * Clipboard getting and setting functions on MacOS.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include "clipboard.h"
 #include "fractal.h"
 
@@ -19,7 +24,10 @@ static char clipboard_buf[9000000];
 
 void StartTrackingClipboardUpdates()
 {
-	last_clipboard_sequence_number = GetClipboardSequenceNumber();
+	last_clipboard_sequence_number = GetClipboardChangecount(); // to capture the first event
+	clipboardHasImage = false;
+	clipboardHasString = false;
+	clipboardHasFiles = false;
 }
 
 bool hasClipboardUpdated()

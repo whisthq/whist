@@ -1,4 +1,9 @@
-#include "windowsinput.h"  // header file for this file
+/*
+ * User input processing on Windows.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#include "windowsinput.h"
 
 #define USE_NUMPAD 0x1000
 
@@ -271,38 +276,10 @@ const int windows_keycodes[NUM_KEYCODES] = {
     VK_LAUNCH_MEDIA_SELECT  // 263 -> Media Select
 };
 
-typedef struct FractalCursorTypes {
-    HCURSOR CursorAppStarting;
-    HCURSOR CursorArrow;
-    HCURSOR CursorCross;
-    HCURSOR CursorHand;
-    HCURSOR CursorHelp;
-    HCURSOR CursorIBeam;
-    HCURSOR CursorIcon;
-    HCURSOR CursorNo;
-    HCURSOR CursorSize;
-    HCURSOR CursorSizeAll;
-    HCURSOR CursorSizeNESW;
-    HCURSOR CursorSizeNS;
-    HCURSOR CursorSizeNWSE;
-    HCURSOR CursorSizeWE;
-    HCURSOR CursorUpArrow;
-    HCURSOR CursorWait;
-} FractalCursorTypes;
-
-struct FractalCursorTypes l_types = {0};
-struct FractalCursorTypes* types = &l_types;
-
-FractalCursorImage GetCursorImage(PCURSORINFO pci);
-
-void LoadCursors();
-
-void InitCursors() { LoadCursors(); }
-
 int GetWindowsKeyCode(int sdl_keycode) { return windows_keycodes[sdl_keycode]; }
 
 input_device_t* CreateInputDevice(input_device_t* input_device) {
-    *input_device = 1;
+    input_device = malloc(sizeof(char));
     return input_device;
 }
 
@@ -439,9 +416,7 @@ void UpdateKeyboardState(input_device_t* input_device,
     }
 }
 
-/// @brief replays a user action taken on the client and sent to the server
-/// @details parses the FractalClientMessage struct and send input to Windows OS
-void ReplayUserInput(input_device_t* input_device,
+bool ReplayUserInput(input_device_t* input_device,
                      struct FractalClientMessage* fmsg) {
     input_device;
     // get screen width and height for mouse cursor
@@ -545,9 +520,9 @@ void ReplayUserInput(input_device_t* input_device,
                 Event.mi.dwFlags = MOUSEEVENTF_MOVE;
             } else {
                 Event.mi.dx =
-                    (LONG)(fmsg->mouseMotion.x * (double)65536 / 1000000);
+                    (LONG)(fmsg->mouseMotion.x * (double)65536 / MOUSE_SCALING_FACTOR);
                 Event.mi.dy =
-                    (LONG)(fmsg->mouseMotion.y * (double)65536 / 1000000);
+                    (LONG)(fmsg->mouseMotion.y * (double)65536 / MOUSE_SCALING_FACTOR);
                 Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
             }
             break;
@@ -596,7 +571,6 @@ void ReplayUserInput(input_device_t* input_device,
             Event.mi.dy = 0;
             Event.mi.mouseData = fmsg->mouseWheel.y * 100;
             break;
-            // TODO: add clipboard
     }
 
     // send FMSG mapped to Windows event to Windows and return
@@ -605,7 +579,10 @@ void ReplayUserInput(input_device_t* input_device,
 
     if (1 != num_events_sent) {
         mprintf("SendInput did not send all events! %d\n", num_events_sent);
+        return false;
     }
+
+    return true;
 }
 
 void EnterWinString(enum FractalKeycode* keycodes, int len) {
@@ -635,69 +612,4 @@ void EnterWinString(enum FractalKeycode* keycodes, int len) {
 
     // send FMSG mapped to Windows event to Windows and return
     SendInput(index, Event, sizeof(INPUT));
-}
-
-void LoadCursors() {
-    types->CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
-    types->CursorArrow = LoadCursor(NULL, IDC_ARROW);
-    types->CursorCross = LoadCursor(NULL, IDC_CROSS);
-    types->CursorHand = LoadCursor(NULL, IDC_HAND);
-    types->CursorHelp = LoadCursor(NULL, IDC_HELP);
-    types->CursorIBeam = LoadCursor(NULL, IDC_IBEAM);
-    types->CursorIcon = LoadCursor(NULL, IDC_ICON);
-    types->CursorNo = LoadCursor(NULL, IDC_NO);
-    types->CursorSize = LoadCursor(NULL, IDC_SIZE);
-    types->CursorSizeAll = LoadCursor(NULL, IDC_SIZEALL);
-    types->CursorSizeNESW = LoadCursor(NULL, IDC_SIZENESW);
-    types->CursorSizeNS = LoadCursor(NULL, IDC_SIZENS);
-    types->CursorSizeNWSE = LoadCursor(NULL, IDC_SIZENWSE);
-    types->CursorSizeWE = LoadCursor(NULL, IDC_SIZEWE);
-    types->CursorUpArrow = LoadCursor(NULL, IDC_UPARROW);
-    types->CursorWait = LoadCursor(NULL, IDC_WAIT);
-}
-
-FractalCursorImage GetCursorImage(PCURSORINFO pci) {
-    HCURSOR cursor = pci->hCursor;
-    FractalCursorImage image = {0};
-
-    if (cursor == types->CursorArrow) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
-    } else if (cursor == types->CursorCross) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_CROSSHAIR;
-    } else if (cursor == types->CursorHand) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_HAND;
-    } else if (cursor == types->CursorIBeam) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_IBEAM;
-    } else if (cursor == types->CursorNo) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_NO;
-    } else if (cursor == types->CursorSizeAll) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_SIZEALL;
-    } else if (cursor == types->CursorSizeNESW) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_SIZENESW;
-    } else if (cursor == types->CursorSizeNS) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_SIZENS;
-    } else if (cursor == types->CursorSizeNWSE) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_SIZENWSE;
-    } else if (cursor == types->CursorSizeWE) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_SIZEWE;
-    } else if (cursor == types->CursorWait) {
-        image.cursor_id = SDL_SYSTEM_CURSOR_WAITARROW;
-    } else {
-        image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
-    }
-
-    return image;
-}
-
-FractalCursorImage GetCurrentCursor() {
-    CURSORINFO pci;
-    pci.cbSize = sizeof(CURSORINFO);
-    GetCursorInfo(&pci);
-
-    FractalCursorImage image = {0};
-    image = GetCursorImage(&pci);
-
-    image.cursor_state = pci.flags;
-
-    return image;
 }

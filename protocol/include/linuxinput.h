@@ -1,3 +1,8 @@
+/*
+ * User input processing on Linux Ubuntu.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef LINUX_INPUT_H
 #define LINUX_INPUT_H
 
@@ -19,4 +24,4 @@ typedef struct input_device_t {
     int fd_keyboard;
 } input_device_t;
 
-#endif  // LINUX_INPUT_H
+#endif // LINUX_INPUT_H
