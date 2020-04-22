@@ -138,6 +138,13 @@ void set_timeout(SOCKET s, int timeout_ms) {
         ioctl(s, FIONBIO, &mode);
 #endif
     } else {
+        unsigned long mode = 1;
+#if defined(_WIN32)
+        ioctlsocket( s, FIONBIO, &mode );
+#else
+        ioctl( s, FIONBIO, &mode );
+#endif
+
 #if defined(_WIN32)
         int read_timeout = timeout_ms;
 #else
@@ -1590,7 +1597,6 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
         mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
-    set_timeout( context->s, stun_timeout_ms );
 
     // Reuse addr
     opt = 1;
@@ -1607,6 +1613,7 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
         closesocket(context->s);
         return -1;
     }
+    set_timeout( context->s, stun_timeout_ms );
 
     context->addr.sin_family = AF_INET;
     context->addr.sin_addr.s_addr = entry.ip;
