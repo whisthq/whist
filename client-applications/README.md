@@ -4,12 +4,15 @@ Source code for the Fractal client applications, which users download to their l
 
 The following desktop (Windows, MacOS, Linux) platforms are supported:
 - Windows
+  - Latest release available at: https://s3.console.aws.amazon.com/s3/buckets/fractal-applications-release/?region=us-east-1&tab=overview#
 - MacOS
+  - Latest release available at: https://s3.console.aws.amazon.com/s3/buckets/fractal-mac-application-release/?region=us-east-1
 - Linux Ubuntu
+  - Latest release available at: https://s3.console.aws.amazon.com/s3/buckets/fractal-linux-application-release/?region=us-east-1
 
 The following platforms need to be supported:
 - iOS/iPadOS
 - Android/Chromebook
 - Web
 
-The release versions of the executables are hosted on S3: https://s3.console.aws.amazon.com/s3/buckets/fractal-applications-release/?region=us-east-1&tab=overview
+Each folder contains its own README.md with proper infor
