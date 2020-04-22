@@ -17,12 +17,12 @@ Here is a non-exhaustive list of features to add to the protocol:
 
 You can run `desktop.bat` (Windows) or `desktop.sh` to restart your dev environment.
 
-### Running (MacOS, Linux)
+### Running
 
 From the /desktop directory, you can simply run the following:
 
-```./desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```
+```desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```
 
 Alternatively, if you want to run the code directly, in the /desktop/build64 directory or /desktop/build32, call:
 
-```./FractalClient [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```
+```FractalClient [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```

@@ -571,7 +571,6 @@ void ReplayUserInput(input_device_t* input_device,
             Event.mi.dy = 0;
             Event.mi.mouseData = fmsg->mouseWheel.y * 100;
             break;
-            // TODO: add clipboard
     }
 
     // send FMSG mapped to Windows event to Windows and return

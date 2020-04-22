@@ -365,4 +365,3 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb,
 
   return true;
 }
-

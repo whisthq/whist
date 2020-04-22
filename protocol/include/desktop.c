@@ -26,8 +26,7 @@ int setCurrentInputDesktop(HDESK currentInputDesktop) {
     return 0;
 }
 
-DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name,
-                              bool set_thread) {
+DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_thread) {
     DesktopContext context = {0};
     HDESK new_desktop;
 
@@ -56,8 +55,7 @@ DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name,
 }
 
 void OpenWindow() {
-    HWINSTA hwinsta =
-        OpenWindowStationW(L"WinSta0", FALSE, GENERIC_ALL);
+    HWINSTA hwinsta = OpenWindowStationW(L"WinSta0", FALSE, GENERIC_ALL);
     SetProcessWindowStation(hwinsta);
 }
 

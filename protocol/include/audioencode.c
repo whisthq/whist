@@ -13,10 +13,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
     memset(encoder, 0, sizeof(audio_encoder_t));
 
     // setup the AVCodec and AVCodecCtx
-    // only need to call avcodec_register_all for FFmpeg <4, only on Linux
-#ifdef __linux__
     avcodec_register_all();
-#endif
 
     encoder->pCodec = avcodec_find_encoder(AV_CODEC_ID_AAC);
     if (!encoder->pCodec) {

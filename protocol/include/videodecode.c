@@ -7,7 +7,7 @@
 #pragma warning(disable : 4706)  // assignment within conditional warning
 #endif
 
-#include "videodecode.h"  // header file for this file
+#include "videodecode.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,10 +75,7 @@ enum AVPixelFormat match_vaapi(AVCodecContext* ctx,
 }
 
 int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
-    // only need to call avcodec_register_all for FFmpeg <4, only on Linux
-#ifdef __linux__
     avcodec_register_all();
-#endif
 
     if (decoder->type == DECODE_TYPE_SOFTWARE) {
         mprintf("Trying software decoder\n");

@@ -13,10 +13,7 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
     memset(decoder, 0, sizeof(audio_decoder_t));
 
     // setup the AVCodec and AVFormatContext
-    // only need to call avcodec_register_all for FFmpeg <4, only on Linux
-#ifdef __linux__
     avcodec_register_all();
-#endif
 
     decoder->pCodec = avcodec_find_decoder(AV_CODEC_ID_AAC);
     if (!decoder->pCodec) {

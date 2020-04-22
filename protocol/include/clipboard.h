@@ -56,7 +56,7 @@ typedef struct ClipboardFiles
 
 void initClipboard();
 
-ClipboardData* GetClipboard();
+ClipboardData *GetClipboard();
 
 void SetClipboard( ClipboardData* cb );
 

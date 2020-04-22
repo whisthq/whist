@@ -10,7 +10,7 @@ You can run `server.bat` (Windows) or `server.sh` to restart your dev environmen
 
 ### Running
 
-```./FractalServer```
+```FractalServer```
 
 ### Updating
 

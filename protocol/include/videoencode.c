@@ -18,10 +18,7 @@ void set_opt(encoder_t *encoder, char *option, char *value) {
 }
 
 int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
-    // only need to call avcodec_register_all for FFmpeg <4, only on Linux
-#ifdef __linux__
     avcodec_register_all();
-#endif
     int max_buffer = 4 * (bitrate / FPS);
 
     // TODO: If we end up using graphics card encoding, then we should pass it the image from DXGI WinApi screen capture,
