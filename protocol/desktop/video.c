@@ -405,7 +405,7 @@ int initMultithreadedVideo(void* opaque) {
     }
 
     // configure texture
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
     // mbps that currently works
     working_mbps = STARTING_BITRATE;

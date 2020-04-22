@@ -268,16 +268,22 @@ encoder_t* encoder_factory_result = NULL;
 int encoder_factory_w;
 int encoder_factory_h;
 int encoder_factory_current_bitrate;
-static int32_t EncoderFactory( void* opaque )
+int32_t MultithreadedEncoderFactory( void* opaque )
 {
-    opaque; // TODO: useless param, should remove
+    opaque;
     encoder_factory_result = create_video_encoder( encoder_factory_w, encoder_factory_h,
                                                    encoder_factory_current_bitrate, gop_size );
     encoder_finished = true;
     return 0;
 }
+int32_t MultithreadedDestroyEncoder( void* opaque )
+{
+    encoder_t* encoder = (encoder_t*)opaque;
+    destroy_video_encoder( encoder );
+    return 0;
+}
 
-static int32_t SendVideo(void* opaque) {
+int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
     struct SocketContext socketContext = *(struct SocketContext*)opaque;
@@ -312,7 +318,7 @@ static int32_t SendVideo(void* opaque) {
     int frames_since_first_iframe = 0;
     update_device = true;
 
-    static clock last_frame_capture;
+    clock last_frame_capture;
     StartTimer(&last_frame_capture);
 
     pending_encoder = false;
@@ -351,13 +357,14 @@ static int32_t SendVideo(void* opaque) {
 
         // Update encoder with new parameters
         if (update_encoder) {
+            //encoder = NULL;
             if( pending_encoder )
             {
                 if( encoder_finished )
                 {
                     if( encoder )
                     {
-                        destroy_video_encoder( encoder );
+                        SDL_CreateThread( MultithreadedDestroyEncoder, "MultithreadedDestroyEncoder", encoder );
                     }
                     encoder = encoder_factory_result;
                     frames_since_first_iframe = 0;
@@ -373,14 +380,15 @@ static int32_t SendVideo(void* opaque) {
                 encoder_factory_current_bitrate = current_bitrate;
                 if( encoder == NULL )
                 {
-                    EncoderFactory( NULL );
+                    // Run on this thread bc we have to wait for it anyway
+                    MultithreadedEncoderFactory( NULL );
                     encoder = encoder_factory_result;
                     frames_since_first_iframe = 0;
                     pending_encoder = false;
                     update_encoder = false;
                 } else
                 {
-                    SDL_CreateThread( EncoderFactory, "EncoderFactory", NULL );
+                    SDL_CreateThread( MultithreadedEncoderFactory, "MultithreadedEncoderFactory", NULL );
                 }
             }
         }
@@ -390,6 +398,7 @@ static int32_t SendVideo(void* opaque) {
         int accumulated_frames = 0;
         if (GetTimer(last_frame_capture) > 1.0 / FPS) {
             accumulated_frames = CaptureScreen(device);
+            //mprintf( "CaptureScreen: %d\n", accumulated_frames );
         }
 
         // If capture screen failed, we should try again
@@ -422,8 +431,13 @@ static int32_t SendVideo(void* opaque) {
             // consecutive_capture_screen_errors = 0;
 
             bool is_iframe = false;
-            if (wants_iframe) {
-                video_encoder_set_iframe(encoder);
+            if( frames_since_first_iframe % gop_size == 0 )
+            {
+                wants_iframe = false;
+                is_iframe = true;
+            } else if( wants_iframe )
+            {
+                video_encoder_set_iframe( encoder );
                 wants_iframe = false;
                 is_iframe = true;
             }
@@ -505,9 +519,7 @@ static int32_t SendVideo(void* opaque) {
                     frame->cursor = GetCurrentCursor();
                     // True if this frame does not require previous frames to
                     // render
-                    frame->is_iframe =
-                        (frames_since_first_iframe % gop_size == 1) ||
-                        is_iframe;
+                    frame->is_iframe = is_iframe;
                     memcpy(frame->compressed_frame, encoder->packet.data,
                            encoder->packet.size);
 
@@ -546,7 +558,7 @@ static int32_t SendVideo(void* opaque) {
     return 0;
 }
 
-static int32_t SendAudio(void* opaque) {
+int32_t SendAudio(void* opaque) {
     struct SocketContext context = *(struct SocketContext*)opaque;
     int id = 1;
 
@@ -677,7 +689,10 @@ int main() {
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_Init(SDL_INIT_VIDEO);
 #ifdef _WIN32
-    InitDesktop();
+    if( !InitDesktop() )
+    {
+        mprintf( "Could not winlogon!\n" );
+    }
 #endif
 
 // initialize the windows socket library if this is a windows client
@@ -906,7 +921,13 @@ int main() {
                     fmsg->type == MESSAGE_MOUSE_MOTION) {
                     // Replay user input (keyboard or mouse presses)
                     if (input_device) {
-                        ReplayUserInput(input_device, fmsg);
+                        if( !ReplayUserInput( input_device, fmsg ) )
+                        {
+                            mprintf( "Failed to replay input!\n" );
+#ifdef _WIN32
+                            InitDesktop();
+#endif
+                        }
                     }
 
                 } else if (fmsg->type == MESSAGE_KEYBOARD_STATE) {

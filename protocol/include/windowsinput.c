@@ -416,7 +416,7 @@ void UpdateKeyboardState(input_device_t* input_device,
     }
 }
 
-void ReplayUserInput(input_device_t* input_device,
+bool ReplayUserInput(input_device_t* input_device,
                      struct FractalClientMessage* fmsg) {
     input_device;
     // get screen width and height for mouse cursor
@@ -579,7 +579,10 @@ void ReplayUserInput(input_device_t* input_device,
 
     if (1 != num_events_sent) {
         mprintf("SendInput did not send all events! %d\n", num_events_sent);
+        return false;
     }
+
+    return true;
 }
 
 void EnterWinString(enum FractalKeycode* keycodes, int len) {

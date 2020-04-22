@@ -535,7 +535,7 @@ void EmitInputEvent(int fd, int type, int code, int val) {
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
-void ReplayUserInput(input_device_t* input_device,
+bool ReplayUserInput(input_device_t* input_device,
                      struct FractalClientMessage* fmsg) {
     // switch to fill in the event depending on the FractalClientMessage type
     switch (fmsg->type) {
@@ -589,4 +589,6 @@ void ReplayUserInput(input_device_t* input_device,
     EmitInputEvent(input_device->fd_absmouse, EV_SYN, SYN_REPORT, 0);
     EmitInputEvent(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     EmitInputEvent(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
+
+    return true;
 }

@@ -8,8 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static AVBufferRef *hw_device_ctx = NULL;
-
 void set_opt(encoder_t *encoder, char *option, char *value) {
     int ret = av_opt_set(encoder->context->priv_data, option, value, 0);
     if (ret < 0) {
@@ -20,6 +18,7 @@ void set_opt(encoder_t *encoder, char *option, char *value) {
 int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
     avcodec_register_all();
     int max_buffer = 4 * (bitrate / FPS);
+    AVBufferRef* hw_device_ctx = NULL;
 
     // TODO: If we end up using graphics card encoding, then we should pass it the image from DXGI WinApi screen capture,
     // so that the uncompressed image doesn't ever hit the CPU or RAM
@@ -290,10 +289,9 @@ void destroy_video_encoder(encoder_t *encoder) {
     if (encoder->sws) {
         sws_freeContext(encoder->sws);
     }
-    avcodec_close(encoder->context);
+    avcodec_free_context(&encoder->context);
 
     // free the encoder context and frame
-    av_free(encoder->context);
     av_free(encoder->sw_frame);
     av_free(encoder->hw_frame);
 
