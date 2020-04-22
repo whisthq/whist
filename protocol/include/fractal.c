@@ -72,6 +72,24 @@ int GetLastNetworkError() {
 #endif
 }
 
+int get_virtual_screen_width()
+{
+    SDL_DisplayMode DM;
+    //    int res = SDL_GetCurrentDisplayMode(0, &DM);
+    int res = SDL_GetDesktopDisplayMode( 0, &DM );
+    if( res ) mprintf( "SDL_GetCurrentDisplayMode failed: %s\n", SDL_GetError() );
+    return DM.w;
+}
+
+int get_virtual_screen_height()
+{
+    SDL_DisplayMode DM;
+    //    int res = SDL_GetCurrentDisplayMode(0, &DM);
+    int res = SDL_GetDesktopDisplayMode( 0, &DM );
+    if( res ) mprintf( "SDL_GetCurrentDisplayMode failed: %s\n", SDL_GetError() );
+    return DM.h;
+}
+
 int get_native_screen_width(SDL_Window* window) {
     int w;
     if( window )
@@ -79,11 +97,7 @@ int get_native_screen_width(SDL_Window* window) {
         SDL_GL_GetDrawableSize( window, &w, NULL );
     } else
     {
-        SDL_DisplayMode DM;
-        //    int res = SDL_GetCurrentDisplayMode(0, &DM);
-        int res = SDL_GetDesktopDisplayMode( 0, &DM );
-        if( res ) mprintf( "SDL_GetCurrentDisplayMode failed: %s\n", SDL_GetError() );
-        w = DM.w;
+        w = get_virtual_screen_width();
     }
     return w;
 }
@@ -95,11 +109,7 @@ int get_native_screen_height( SDL_Window* window ) {
         SDL_GL_GetDrawableSize( window, NULL, &h );
     } else
     {
-        SDL_DisplayMode DM;
-        //    int res = SDL_GetCurrentDisplayMode(0, &DM);
-        int res = SDL_GetDesktopDisplayMode( 0, &DM );
-        if( res ) mprintf( "SDL_GetCurrentDisplayMode failed: %s\n", SDL_GetError() );
-        h = DM.h;
+        h = get_virtual_screen_height();
     }
     return h;
 }
