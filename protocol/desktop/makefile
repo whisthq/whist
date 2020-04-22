@@ -85,10 +85,6 @@ LD_FLAGS = \
 	/nodefaultlib \
 	/nologo
 
-# set Fractal logo onto executable
-logo: 
-	rcedit.exe /I $(BIN_NAME) $(LOGO_PATH)
-
 # link all files into executable
 all: clean clear $(OBJS) logo
 	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
@@ -128,6 +124,10 @@ audio.obj:
 # compile the main source file into object file
 main.obj:
 	$(CC) /c $(CFLAGS) main.c
+	
+# set Fractal logo onto executable
+logo: 
+	rcedit.exe /I $(BIN_NAME) $(LOGO_PATH)
 
 # clean prior object files
 clean:
