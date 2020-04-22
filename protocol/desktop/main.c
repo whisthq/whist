@@ -620,8 +620,8 @@ int initSDL() {
     int full_height;
 
 #if defined(_WIN32)
-    full_width = get_native_screen_width();
-    full_height = get_native_screen_height();
+    full_width = get_native_screen_width(NULL);
+    full_height = get_native_screen_height(NULL);
 
     if (output_width < 0) {
         output_width = full_width;
@@ -635,6 +635,8 @@ int initSDL() {
         "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, output_width,
         output_height, SDL_WINDOW_ALLOW_HIGHDPI |
         (is_fullscreen ? SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP : 0));
+    output_width = get_native_screen_width( window );
+    output_height = get_native_screen_height( window );
 #else
     window =
         SDL_CreateWindow("Fractal", SDL_WINDOWPOS_CENTERED,
