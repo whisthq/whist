@@ -12,7 +12,7 @@ class UpdateScreen extends Component {
                   transferred: 0, total: 0, downloadError: '',}
   }
 
-  render() {
+  componentDidMount() {
     const ipc = require('electron').ipcRenderer;
     let component = this;
 
@@ -45,7 +45,9 @@ class UpdateScreen extends Component {
 
     ipc.on('downloaded', (event, downloaded) => {
     })
+  }
 
+  render() {
     return (
       <div>
       {

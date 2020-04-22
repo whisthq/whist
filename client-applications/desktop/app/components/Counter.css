@@ -16,6 +16,7 @@
   background-position: center;
   background-repeat: no-repeat;
   background-color: #EEEEEE;
+  -webkit-app-region: drag;
 }
 
 .container h2 {
@@ -196,4 +197,13 @@ button {
 /* Handle */
 ::-webkit-scrollbar-thumb {
   background: #5EC4EB;
+}
+
+.macTitleBar {
+  -webkit-app-region: drag;
+  margin-top: 22px;
+}
+
+.removeDrag {
+  -webkit-app-region: no-drag;
 }

@@ -249,6 +249,20 @@ function* getRestartStatus(id) {
   }
 }
 
+function* sendLogs(action) {
+  console.log('TRYING TO SEND LOGS!')
+  const state = yield select()
+  var public_ip = state.counter.public_ip
+  const {json, response} = yield call(apiPost, 'https://fractal-mail-server.com/logs', {
+    connection_id: 123,
+    logs: action.logs,
+    sender: 'client',
+    vm_ip: public_ip
+  })
+  console.log('LOGS SENT! SERVER RETURNED: ')
+  console.log(json)
+}
+
 export default function* rootSaga() {
  	yield all([
      takeEvery(Action.TRACK_USER_ACTIVITY, trackUserActivity),
@@ -261,6 +275,7 @@ export default function* rootSaga() {
      takeEvery(Action.FETCH_DISK, fetchDisk),
      takeEvery(Action.ATTACH_DISK, attachDisk),
      takeEvery(Action.FETCH_VM, fetchVM),
-     takeEvery(Action.RESTART_PC, restartPC)
+     takeEvery(Action.RESTART_PC, restartPC),
+     takeEvery(Action.SEND_LOGS, sendLogs)
   ])
 }

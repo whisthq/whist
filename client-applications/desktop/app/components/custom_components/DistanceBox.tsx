@@ -11,8 +11,6 @@ class DistanceBox extends Component {
   }
 
   CalculateDistance = (public_ip) => {
-    console.log("Calculating distance")
-    console.log(public_ip)
     let component = this;
     const iplocation = require("iplocation").default;
     var options = {
@@ -67,7 +65,7 @@ class DistanceBox extends Component {
         <div>
          <div style = {{background: "none", border: "solid 1px #14a329", height: 6, width: 6, borderRadius: 4, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
          </div>
-          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             {this.state.distance} Mi. Cloud PC Distance
           </div>
           <div style = {{marginTop: 8, fontSize: 12, color: "#333333", paddingLeft: 20, lineHeight: 1.4}}>
@@ -79,7 +77,7 @@ class DistanceBox extends Component {
         <div>
          <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 4, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
          </div>
-          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             {this.state.distance} Mi. Cloud PC Distance
           </div>
           <div style = {{marginTop: 8, fontSize: 12, color: "#333333", paddingLeft: 20, lineHeight: 1.4}}>
@@ -91,7 +89,7 @@ class DistanceBox extends Component {
         <div>
          <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 4, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
          </div>
-          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             {this.state.distance} Mi. Cloud PC Distance
           </div>
           <div style = {{marginTop: 8, fontSize: 12, color: "#333333", paddingLeft: 20, lineHeight: 1.4}}>
@@ -101,7 +99,7 @@ class DistanceBox extends Component {
     }
 
     return (
-      <div style = {{marginTop: 15}}>
+      <div style = {{marginTop: 20}}>
         {
           this.state.distance === 0
           ?

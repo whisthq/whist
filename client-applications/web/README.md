@@ -1,5 +1,5 @@
-## Web Application
+## Fractal Web Application
 
-Fractal application for a user to connect to their cloud computer.
+Fractal application for a user to connect to their Fractal computer.
 
 TBD.

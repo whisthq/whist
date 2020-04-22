@@ -6,16 +6,16 @@ The applications are divided into four categories:
 
 - Desktop (Windows, MacOS, Linux Ubuntu)
   - Windows is supported
-  - MacOS is supported
+  - MacOS
   - Need to add support for Linux 
   
 - iOS/iPadOS
-  - Not started yet
+  - TBD.
   
 - Android/Chromebook
-  - Not started yet
+  - TBD.
 
 - Web
-  - Not started yet
+  - TBD.
 
 The release versions of the executables are hosted on S3: https://s3.console.aws.amazon.com/s3/buckets/fractal-applications-release/?region=us-east-1&tab=overview

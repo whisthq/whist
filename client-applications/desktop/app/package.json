@@ -1,9 +1,9 @@
 {
   "name": "fractal",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "productName": "Fractal",
-  "description": "Fractal",
-  "version": "1.4.8",
+  "description": "Fractal Desktop Application",
+  "version": "1.5.2",
   "main": "./main.prod.js",
   "author": {
     "name": "Fractal Computers, Inc.",
@@ -13,5 +13,6 @@
     "electron-rebuild": "node -r ../internals/scripts/BabelRegister.js ../internals/scripts/ElectronRebuild.js",
     "postinstall": "yarn electron-rebuild"
   },
-  "dependencies": {}
+  "dependencies": {
+  }
 }

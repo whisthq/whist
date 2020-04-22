@@ -30,6 +30,7 @@ export const STORE_PAYMENT_INFO  = "STORE_PAYMENT_INFO"
 export const STORE_PROMO_CODE    = "STORE_PROMO_CODE"
 export const RESTART_PC          = "RESTART_PC"
 export const VM_RESTARTED        = "VM_RESTARTED"
+export const SEND_LOGS           = "SEND_LOGS"
 
 export function loginUser(username, password) {
 	console.log("login action fired")
@@ -241,3 +242,10 @@ export function vmRestarted(status) {
 		type: VM_RESTARTED
 	}
 }
+
+export function sendLogs(logs) {
+	return {
+		type: SEND_LOGS,
+		logs
+	}
+} 

@@ -43,7 +43,7 @@ class WifiBox extends Component {
         <div>
           <div style = {{background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
           </div>
-          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             {this.state.internetspeed} Mbps Internet
           </div>
           <div style = {{marginTop: 8, fontSize: 12, color: "#333333", lineHeight: 1.4, paddingLeft: 20}}>
@@ -55,11 +55,11 @@ class WifiBox extends Component {
         <div>
           <div style = {{background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
           </div>
-          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             {this.state.internetspeed} Mbps Internet
           </div>
           <div style = {{marginTop: 8, fontSize: 12, color: "#333333", lineHeight: 1.4, paddingLeft: 20}}>
-            Expect a smooth streaming experience, although dips in Internet speed below 10 Mbps could cause low image quality.
+            Expect a smooth streaming experience with occassional image quality drops.
           </div>
         </div>
     } else {
@@ -67,7 +67,7 @@ class WifiBox extends Component {
         <div>
           <div style = {{background: "none", border: "solid 1px #14a329", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13}}>
           </div>
-          <div style = {{marginTop: 5, fontSize: 16, fontWeight: "bold"}}>
+          <div style = {{marginTop: 5, fontSize: 14, fontWeight: "bold"}}>
             {this.state.internetspeed} Mbps Internet
           </div>
           <div style = {{marginTop: 8, fontSize: 12, color: "#333333", lineHeight: 1.4, paddingLeft: 20}}>
