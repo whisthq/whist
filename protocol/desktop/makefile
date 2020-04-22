@@ -14,9 +14,6 @@ ARCH = 64
 # specify executable name
 BIN_NAME = build$(ARCH)/FractalClient.exe
 
-# specify logo path
-LOGO_PATH = ../assets/icon.ico
-
 # files to build into object files
 OBJS = \
 	fractal.obj \
@@ -86,7 +83,7 @@ LD_FLAGS = \
 	/nologo
 
 # link all files into executable
-all: clean clear $(OBJS) logo
+all: clean clear $(OBJS)
 	link $(LD_FLAGS) $(STATIC_LIBS) /out:$(BIN_NAME) *.obj $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
@@ -125,10 +122,6 @@ audio.obj:
 main.obj:
 	$(CC) /c $(CFLAGS) main.c
 	
-# set Fractal logo onto executable
-logo: 
-	rcedit.exe /I $(BIN_NAME) $(LOGO_PATH)
-
 # clean prior object files
 clean:
 	-@del $(BIN_NAME)
