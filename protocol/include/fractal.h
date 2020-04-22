@@ -700,6 +700,8 @@ double GetTimer(clock timer);
 
 uint32_t Hash(void* key, size_t len);
 
+int get_virtual_screen_width();
+int get_virtual_screen_height();
 int get_native_screen_width( SDL_Window* window );
 int get_native_screen_height( SDL_Window* window );
 
