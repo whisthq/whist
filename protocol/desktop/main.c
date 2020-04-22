@@ -616,27 +616,24 @@ int initSDL() {
 
     // TODO: make this a commandline argument based on client app settings!
     bool is_fullscreen = true; 
-    int full_width;
-    int full_height;
+    int full_width = get_native_screen_width( NULL );
+    int full_height = get_native_screen_height( NULL );
 
-#if defined(_WIN32)
-    full_width = get_native_screen_width(NULL);
-    full_height = get_native_screen_height(NULL);
-
-    if (output_width < 0) {
+    if( output_width < 0 )
+    {
         output_width = full_width;
     }
 
-    if (output_height < 0) {
+    if( output_height < 0 )
+    {
         output_height = full_height;
     }
 
+#if defined(_WIN32)
     window = SDL_CreateWindow(
         "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, output_width,
         output_height, SDL_WINDOW_ALLOW_HIGHDPI |
         (is_fullscreen ? SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP : 0));
-    output_width = get_native_screen_width( window );
-    output_height = get_native_screen_height( window );
 #else
     window =
         SDL_CreateWindow("Fractal", SDL_WINDOWPOS_CENTERED,
@@ -644,19 +641,10 @@ int initSDL() {
                          (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP |
                                               SDL_WINDOW_ALWAYS_ON_TOP
                                         : 0));
-
-    full_width = get_native_screen_width();
-    full_height = get_native_screen_height();
-
-    if (output_width < 0) {
-        output_width = full_width;
-    }
-
-    if (output_height < 0) {
-        output_height = full_height;
-    }
 #endif
 
+    output_width = get_native_screen_width( window );
+    output_height = get_native_screen_height( window );
 
     SDL_AddEventWatch(resizingEventWatcher, (SDL_Window *) window);
     if (!window) {
