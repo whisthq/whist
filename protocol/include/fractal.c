@@ -72,6 +72,34 @@ int GetLastNetworkError() {
 #endif
 }
 
+int get_window_pixel_width( SDL_Window* window )
+{
+    int w;
+    SDL_GL_GetDrawableSize( window, &w, NULL );
+    return w;
+}
+
+int get_window_pixel_height( SDL_Window* window )
+{
+    int h;
+    SDL_GL_GetDrawableSize( window, NULL, &h );
+    return h;
+}
+
+int get_window_virtual_width( SDL_Window* window )
+{
+    int w;
+    SDL_GetWindowSize( window, &w, NULL );
+    return w;
+}
+
+int get_window_virtual_height( SDL_Window* window )
+{
+    int h;
+    SDL_GetWindowSize( window, NULL, &h );
+    return h;
+}
+
 int get_virtual_screen_width()
 {
     SDL_DisplayMode DM;
@@ -90,27 +118,13 @@ int get_virtual_screen_height()
     return DM.h;
 }
 
-int get_native_screen_width(SDL_Window* window) {
-    int w;
-    if( window )
-    {
-        SDL_GL_GetDrawableSize( window, &w, NULL );
-    } else
-    {
-        w = get_virtual_screen_width();
-    }
+int get_pixel_screen_width(SDL_Window* window) {
+    int w= (int)(1.0 * get_virtual_screen_width() * get_window_pixel_width(window) / get_window_virtual_width(window) + 0.5);
     return w;
 }
 
-int get_native_screen_height( SDL_Window* window ) {
-    int h;
-    if( window )
-    {
-        SDL_GL_GetDrawableSize( window, NULL, &h );
-    } else
-    {
-        h = get_virtual_screen_height();
-    }
+int get_pixel_screen_height( SDL_Window* window ) {
+    int h = (int)(1.0 * get_virtual_screen_height() * get_window_pixel_height( window ) / get_window_virtual_height( window ) + 0.5);
     return h;
 }
 

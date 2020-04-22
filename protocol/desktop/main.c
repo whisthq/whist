@@ -127,6 +127,7 @@ void update() {
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
+        fmsg.dimensions.dpi = (int)(96.0 * output_width / get_virtual_screen_width());
         SendFmsg(&fmsg);
         UpdateData.tried_to_update_dimension = true;
     }
@@ -595,7 +596,7 @@ static int resizingEventWatcher(void* data, SDL_Event* event) {
       event->window.event == SDL_WINDOWEVENT_RESIZED) {
     SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
     if (win == (SDL_Window*)data) {
-      notify_video(true);
+        set_video_active_resizing(true);
     }
   }
   return 0;
@@ -615,9 +616,8 @@ int initSDL() {
     }
 
     // TODO: make this a commandline argument based on client app settings!
-    bool is_fullscreen = true; 
-    int full_width = get_native_screen_width( NULL );
-    int full_height = get_native_screen_height( NULL );
+    int full_width = get_virtual_screen_width();
+    int full_height = get_virtual_screen_height();
 
     if( output_width < 0 )
     {
@@ -628,6 +628,9 @@ int initSDL() {
     {
         output_height = full_height;
     }
+
+
+    bool is_fullscreen = output_width == full_width && output_height == full_height;
 
 #if defined(_WIN32)
     window = SDL_CreateWindow(
@@ -643,8 +646,8 @@ int initSDL() {
                                         : 0));
 #endif
 
-    output_width = get_native_screen_width( window );
-    output_height = get_native_screen_height( window );
+    output_width = get_window_pixel_width( window );
+    output_height = get_window_pixel_height( window );
 
     SDL_AddEventWatch(resizingEventWatcher, (SDL_Window *) window);
     if (!window) {
@@ -667,20 +670,24 @@ void destroySDL() {
     SDL_Quit();
 }
 
-
-
 void parse_window_event(SDL_Event* event) {
 	// SDL_WindowEvent e = event->window; TODO: unused currently, is this needed?
 	switch (event->window.event) {
-        case SDL_WINDOWEVENT_RESIZED:
-            printf("Window %d resized to %dx%d\n",
-                    event->window.windowID, event->window.data1,
-                    event->window.data2);
-            break;
         case SDL_WINDOWEVENT_SIZE_CHANGED:
-            notify_video(false);
-			output_width = get_native_screen_width(window);
-			output_height = get_native_screen_height(window);
+            set_video_active_resizing(false);
+			output_width = get_window_pixel_width(window);
+			output_height = get_window_pixel_height(window);
+
+            FractalClientMessage fmsg;
+            fmsg.type = MESSAGE_DIMENSIONS;
+            fmsg.dimensions.width = output_width;
+            fmsg.dimensions.height = output_height;
+            fmsg.dimensions.dpi = (int)(96.0 * output_width / get_virtual_screen_width());
+            SendFmsg( &fmsg );
+
+            printf( "Window %d resized to %dx%d\n",
+                    event->window.windowID, event->window.data1,
+                    event->window.data2 );
             break;
         case SDL_WINDOWEVENT_MINIMIZED:
             printf("Window %d minimized\n", event->window.windowID);
@@ -902,11 +909,11 @@ int main(int argc, char* argv[]) {
                         fmsg.mouseMotion.x =
                             fmsg.mouseMotion.relative
                                 ? msg.motion.xrel
-                                : msg.motion.x * MOUSE_SCALING_FACTOR / get_virtual_screen_width();
+                                : msg.motion.x * MOUSE_SCALING_FACTOR / get_window_virtual_width(window);
                         fmsg.mouseMotion.y =
                             fmsg.mouseMotion.relative
                                 ? msg.motion.yrel
-                                : msg.motion.y * MOUSE_SCALING_FACTOR / get_virtual_screen_height();
+                                : msg.motion.y * MOUSE_SCALING_FACTOR / get_window_virtual_height(window);
                         break;
                     case SDL_MOUSEBUTTONDOWN:
                     case SDL_MOUSEBUTTONUP:

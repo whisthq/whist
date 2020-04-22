@@ -780,7 +780,6 @@ void destroyVideo() {
     has_rendered_yet = false;
 }
 
-void notify_video(bool stop) {
-    resizing = stop;
-    printf("Stop video? %d.\n", stop);
+void set_video_active_resizing(bool is_resizing) {
+    resizing = is_resizing;
 }

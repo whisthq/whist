@@ -18,6 +18,6 @@ void updateVideo();
 
 void destroyVideo();
 
-void notify_video(bool stop);
+void set_video_active_resizing( bool is_resizing );
 
 #endif // DESKTOP_VIDEO_H
