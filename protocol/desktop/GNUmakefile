@@ -86,6 +86,9 @@ export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk
 # export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk
 # export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
 
+# Info.plist contains MacOS-specific instructions to enable High DPI
+INFO_PLIST_PATH=Info.plist
+
 # dynamic libs to link against
 DYNAMIC_LIBS = \
 	../lib/64/ffmpeg/macos/libavcodec.58.dylib \
@@ -123,7 +126,8 @@ CFLAGS = \
 	-Wno-unused-parameter \
 	-I ../include \
 	-I ../include/ffmpeg \
-	-O0
+	-O0 \
+	-Wl,-sectcreate,__TEXT,__info_plist,$(INFO_PLIST_PATH)
 endif
 
 ################## COMMON ##################
