@@ -248,3 +248,12 @@ button {
   -ms-transform: rotate(45deg);
   transform: rotate(45deg);
 }
+
+.macTitleBar {
+  -webkit-app-region: drag;
+  margin-top: 22px;
+}
+
+.removeDrag {
+  -webkit-app-region: no-drag;
+}

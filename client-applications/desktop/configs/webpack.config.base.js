@@ -7,7 +7,10 @@ import webpack from 'webpack';
 import { dependencies as externals } from '../app/package.json';
 
 export default {
-  externals: [...Object.keys(externals || {})],
+  externals: [
+    ...Object.keys(externals || {}),
+    {'electron-debug': 'electron-debug'}
+  ],
 
   module: {
     rules: [
@@ -42,6 +45,8 @@ export default {
     new webpack.EnvironmentPlugin({
       NODE_ENV: 'production'
     }),
+
+    new webpack.IgnorePlugin(/osx-temperature-sensor/),
 
     new webpack.NamedModulesPlugin()
   ]

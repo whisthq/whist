@@ -75,7 +75,7 @@ const createWindow = async () => {
       maximizable: false,
       webPreferences: {
         nodeIntegration: true
-      },
+      }
     });
   }
 
@@ -92,7 +92,7 @@ const createWindow = async () => {
       mainWindow.minimize();
     } else {
       mainWindow.show();
-      mainWindow.focus();  
+      mainWindow.focus();
       mainWindow.webContents.send('update', updating);
     }
   });
@@ -101,7 +101,11 @@ const createWindow = async () => {
     mainWindow = null;
   });
 
-  autoUpdater.checkForUpdates();
+  if (process.env.NODE_ENV === 'development') {
+    // Skip autoupdate check
+  } else {
+    autoUpdater.checkForUpdates();
+  }
 };
 
 /**

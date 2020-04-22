@@ -35,4 +35,4 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
   codesign -s "Fractal Computers, Inc." protocol/desktop/FractalClient
 fi
 yarn -i
-yarn package
+yarn package-ci

@@ -5,7 +5,7 @@ This folder contains the code for the Fractal desktop applications running on Wi
 Currently supported:
 - Windows
 - MacOS
-- TODO: Add Linux Support
+- Linux
 
 ## Install
 
@@ -21,17 +21,17 @@ And then install the dependencies with yarn.
 
 ## Starting Development
 
-Start the app in the `dev` environment. This starts the renderer process in [**hot-module-replacement**](https://webpack.js.org/guides/hmr-react/) mode and starts a webpack dev server that sends hot updates to the renderer process:
+Start the app in the `dev` environment. This starts the renderer process in [**hot-module-replacement**](https://webpack.js.org/guides/hmr-react/) mode and starts a webpack dev server that sends hot updates to the renderer process (note that this will only build the application, it won't fetch the latest Fractal protocol):
 
 ```yarn dev```
 
-Before doing this, you will need to run ```yarn -i``` and might need to run ```yarn upgrade``` if you haven't upgrade your yarn in a while.
+Before doing this, you will need to run ```yarn -i``` and might need to run ```yarn upgrade``` if you haven't upgrade your yarn in a while. You can automatically clean unnecessary files with ```yarn autoclean --force``` as needed.
 
 ## Packaging for Production
 
-To package apps for the local platform:
+To package apps for the local platform, including fetching and compiling the latest Fractal protocol:
 
-```yarn package```
+Run ```./build.sh``` (for MacOS/Linux), or ```build.bat``` (for Windows). If you have already downloaded and compiled the latest Fractal protocol, you can simply run ```yarn package```.
 
 This will enable you to get an executable that you can install to test your code locally. The installer executables will be in ```desktop/release```.
 
@@ -46,8 +46,8 @@ Once you are ready to publish for auto-update to the Fractal users, you need to 
   
  2- Increment the version number in ```desktop/app/package.json``` by ```0.0.1```, unless it is a major release, in which case increment by ```0.1.0```
  
- 3- Then, run ```./build.sh``` (MacOS) or ```build.bat``` (Windows) to publish. This will fetch the latest Fractal Protocol, upgrade yarn and run ```yarn package-ci``` to publish to the S3 bucket. 
+ 3- Then, run ```./publish.sh``` (MacOS/Linux) or ```publish.bat``` (Windows) to publish for the respective OS. This will fetch the latest Fractal Protocol, upgrade yarn and run ```yarn package-ci``` to publish to the S3 bucket. 
  
- 4- Push to this repository so that the most current production version number is kept track of!
+ 4- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
  
 The production executables are hosted at: https://s3.console.aws.amazon.com/s3/buckets/fractal-applications-release/?region=us-east-1

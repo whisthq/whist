@@ -43,46 +43,46 @@ class Home extends Component {
 
 
   UpdateUsername = (evt) => {
-    this.setState({
-      username: evt.target.value
-    })
+  	this.setState({
+  		username: evt.target.value
+  	})
   }
 
   UpdatePassword = (evt) => {
-    this.setState({
-      password: evt.target.value
-    })
+  	this.setState({
+  		password: evt.target.value
+  	})
   }
 
   LoginUser = () => {
     const storage = require('electron-json-storage');
     this.props.dispatch(loginFailed(false));
-    this.setState({loggingIn: true});
+  	this.setState({loggingIn: true});
     if(this.state.rememberMe) {
       storage.set('credentials', {username: this.state.username, password: this.state.password})
     } else {
       storage.set('credentials', {username: '', password: ''})
     }
-    this.props.dispatch(loginUser(this.state.username, this.state.password))
+  	this.props.dispatch(loginUser(this.state.username, this.state.password))
   }
 
   LoginKeyPress = (event) => {
-    if(event.key === 'Enter' && !this.state.studios) {
-      this.LoginUser()
-    }
+  	if(event.key === 'Enter' && !this.state.studios) {
+  		this.LoginUser()
+  	}
     if(event.key === 'Enter' && this.state.studios) {
       // this.LoginStudio()
     }
   }
 
   ForgotPassword = () => {
-    const {shell} = require('electron')
-    shell.openExternal('https://www.fractalcomputers.com/reset')
+  	const {shell} = require('electron')
+  	shell.openExternal('https://www.fractalcomputers.com/reset')
   }
 
   SignUp = () => {
-    const {shell} = require('electron')
-    shell.openExternal('https://www.fractalcomputers.com/auth')
+  	const {shell} = require('electron')
+  	shell.openExternal('https://www.fractalcomputers.com/auth')
   }
 
   CloseWindow = () => {
@@ -142,14 +142,14 @@ class Home extends Component {
       }
     });
 
-    if(this.props.username && this.props.public_ip)  {
-      history.push('/counter')
-    }
+  	if(this.props.username && this.props.public_ip)  {
+  		history.push('/counter')
+  	}
   }
 
   render() {
-  return (
-    <div className={styles.container} data-tid="container" style = {{backgroundImage: "url(" + Background + ")"}}>
+	return (
+		<div className={styles.container} data-tid="container" style = {{backgroundImage: "url(" + Background + ")"}}>
       <UpdateScreen/>
       <div style = {{position: 'absolute', bottom: 15, right: 15, fontSize: 11, color: "#D1D1D1"}}>
         Version: {this.state.version}
@@ -161,18 +161,19 @@ class Home extends Component {
           <Titlebar backgroundColor="#000000"/>
         </div>
         :
-        <div style = {{marginTop: 10}}></div>
+        <div className={styles.macTitleBar}/>
       }
-        <div className = {styles.landingHeader}>
-          <div className = {styles.landingHeaderLeft}>
-            <img src = {Logo} width = "20" height = "20"/>
-            <span className = {styles.logoTitle}>Fractal</span>
-          </div>
-          <div className = {styles.landingHeaderRight}>
-            <span id = "forgotButton" onClick = {this.ForgotPassword}>Forgot Password?</span>
-            <button type = "button" className = {styles.signupButton}  style = {{borderRadius: 5, marginLeft: 15}} id = "signup-button" onClick = {this.SignUp}>Sign Up</button>
-          </div>
-        </div>
+      <div className={styles.removeDrag}>
+		    <div className = {styles.landingHeader}>
+		      <div className = {styles.landingHeaderLeft}>
+		        <img src = {Logo} width = "20" height = "20"/>
+		        <span className = {styles.logoTitle}>Fractal</span>
+		      </div>
+		      <div className = {styles.landingHeaderRight}>
+		        <span id = "forgotButton" onClick = {this.ForgotPassword}>Forgot Password?</span>
+		        <button type = "button" className = {styles.signupButton}  style = {{borderRadius: 5, marginLeft: 15}} id = "signup-button" onClick = {this.SignUp}>Sign Up</button>
+		      </div>
+		    </div>
         <div style = {{marginTop: 50}}>
           {
           this.state.studios
@@ -187,16 +188,16 @@ class Home extends Component {
               <div className = {styles.tabHeader} onClick = {() => this.ToggleStudio(true)} style = {{color: '#DADADA', marginLeft: 20, paddingBottom: 8, width: 90}}>Teams</div>
           </div>
           }
-          <div className = {styles.loginContainer}>
-            <div>
-              <img src = {UserIcon} width = "100" className = {styles.inputIcon}/>
-              <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdateUsername} type = "text" className = {styles.inputBox} style = {{borderRadius: 5}} placeholder = "Username" id = "username"/>
-            </div>
-          <div>
-              <img src = {LockIcon} width = "100" className = {styles.inputIcon}/>
-              <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdatePassword} type = "password" className = {styles.inputBox} style = {{borderRadius: 5}} placeholder = "Password" id = "password"/>
-            </div>
-            <div style = {{marginBottom: 20}}>
+  		    <div className = {styles.loginContainer}>
+  		      <div>
+  		        <img src = {UserIcon} width = "100" className = {styles.inputIcon}/>
+  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdateUsername} type = "text" className = {styles.inputBox} style = {{borderRadius: 5}} placeholder = "Username" id = "username"/>
+  		      </div>
+  			  <div>
+  		        <img src = {LockIcon} width = "100" className = {styles.inputIcon}/>
+  		        <input onKeyPress = {this.LoginKeyPress} onChange = {this.UpdatePassword} type = "password" className = {styles.inputBox} style = {{borderRadius: 5}} placeholder = "Password" id = "password"/>
+  		      </div>
+  		      <div style = {{marginBottom: 20}}>
               {
               !this.state.studios 
               ?
@@ -207,14 +208,14 @@ class Home extends Component {
                 <FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "white", width: 12, marginRight: 5, position: 'relative', top: 0.5}}/> Processing 
               </button>
               :
-              <button onClick = {() => this.LoginUser()} type = "button" className = {styles.loginButton} id = "login-button">START</button>
+  		        <button onClick = {() => this.LoginUser()} type = "button" className = {styles.loginButton} id = "login-button">START</button>
               )
               :
               <button type = "button" className = {styles.loginButton} id = "login-button" style = {{opacity: 0.5, background: 'linear-gradient(258.54deg, #5ec3eb 0%, #5ec3eb 100%)', borderRadius: 5}}>
                 START
               </button>
               }
-            </div>
+  		      </div>
             <div style = {{marginTop: 25, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
               <label className = {styles.termsContainer}>
                 <input
@@ -229,33 +230,34 @@ class Home extends Component {
                 Remember Me
               </div>
             </div>
-            <div style = {{fontSize: 12, color: "#D6D6D6", width: 250, margin: 'auto', marginTop: 15}}>
-            {
-              this.props.warning
-              ?
+  		      <div style = {{fontSize: 12, color: "#D6D6D6", width: 250, margin: 'auto', marginTop: 15}}>
+  		      {
+  		      	this.props.warning
+  		      	?
               (
               this.state.studios 
               ?
-              <div>
-                Invalid credentials. If you lost your password, you can reset it on the&nbsp;
+  		      	<div>
+  		      		Invalid credentials. If you lost your password, you can reset it on the&nbsp;
                 <div onClick = {this.ForgotPassword} className = {styles.pointerOnHover} style = {{display: 'inline', fontWeight: 'bold'}}>Fractal website.</div>
-              </div>
+  		      	</div>
               :
               <div>
                 Invalid credentials. If you lost your password, you can reset it on the&nbsp;
                 <div onClick = {this.ForgotPassword} className = {styles.pointerOnHover} style = {{display: 'inline', fontWeight: 'bold'}}>Fractal website.</div>
               </div>
               )
-              :
-              <div>
-              </div>
-            }
-            </div>
-          </div>
+  		      	:
+  		      	<div>
+  		      	</div>
+  		      }
+  		      </div>
+  		    </div>
         </div>
+		</div>
     </div>
-  );
-  }
+	);
+	}
 }
 
 function mapStateToProps(state) {

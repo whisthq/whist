@@ -73,22 +73,29 @@ class Counter extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    console.log("COUNTER STATE UPDATE")
-    console.log(this.props)
     if(this.props.username && prevProps.username == '' && this.props.username != '' && this.state.username == '') {
       this.setState({username: this.props.username.split('@')[0]})
     }
     if(prevProps.askFeedback && !this.props.askFeedback && !this.state.showTitlebar) {
       this.setState({showTitlebar: true})
     }
+    if(this.props.askFeedback && this.state.showTitlebar) {
+      this.setState({showTitlebar: false})
+    }
     if(this.props.location != '' && this.state.location_ip == '') {
       if(this.props.location == 'eastus') {
-        console.log("EAST US IP UPDATE")
         this.setState({location_ip: '40.76.207.99'})
-      } else {
+      } else if(this.props.location == 'southcentralus') {
         this.setState({location_ip: '104.215.96.85'})
+      } else {
+        this.setState({location_ip: '65.52.6.169'})
       }
     }
+  }
+
+  ReturnToDashboard = () => {
+    history.push("/counter");
+    // changeWindow('main');
   }
 
   render() {
@@ -122,10 +129,11 @@ class Counter extends Component {
         <div>
         </div>
         :
-        <div className={styles.removeDrag}>
+        <div>
         <Typeform/>
+      <div className={styles.removeDrag}>
         <div className = {styles.landingHeader}>
-          <div className = {styles.landingHeaderLeft}>
+          <div className = {styles.landingHeaderLeft} onClick={this.ReturnToDashboard}>
             <img src = {Logo} width = "20" height = "20"/>
             <span className = {styles.logoTitle} style = {{color: '#111111', fontWeight: 'bold'}}>Fractal</span>
           </div>
@@ -145,37 +153,26 @@ class Counter extends Component {
           </div>
         </div>
         <div style = {{display: 'flex', padding: '20px 50px' }}>
-          <div style = {{width: '65%', textAlign: 'left', paddingRight: 20}}>
+          <div style = {{width: '60%', textAlign: 'left', paddingRight: 20}}>
             <MainBox currentWindow = {this.props.currentWindow} default = "main"/>
           </div>
           {
           this.props.currentWindow === 'main'
           ?
-          <div className = {styles.statBox} style = {{width: '35%', textAlign: 'left', background: "white", borderRadius: 5, padding: 30, paddingBottom: 25, minHeight: 350, color: "#111111"}}>
-            <div style = {{fontWeight: 'bold', fontSize: 20}}>
-              Welcome, {this.state.username}
+          <div className = {styles.statBox} style = {{width: '40%', textAlign: 'left', background: "white", borderRadius: 5, minHeight: 350, color: "#111111"}}>
+            <div style = {{fontWeight: 'bold', fontSize: 21, lineHeight: 1.3, paddingLeft: 30, paddingRight: 30, paddingTop: 30, borderRadius: '5px 5px 0px 0px', paddingBottom: 10}}>
+              <span className = {styles.blueGradient}>Welcome, {this.state.username}</span>
             </div>
-            <div style = {{marginTop: 10, display: "inline-block"}}>
-              <Online>
-                <div style = {{display: "inline", float: "left", fontSize: 12, color: "#14a329"}}>
-                  Online
-                </div>
-              </Online>
-              <Offline>
-                <div style = {{display: "inline", float: "left", fontSize: 12, color: "#333333"}}>
-                  Offline
-                </div>
-              </Offline>
+            <div style = {{paddingLeft: 30, paddingRight: 30, paddingBottom: 25}}>
+              <WifiBox barHeight = {barHeight}/>
+              <CPUBox barHeight = {barHeight}/>
+              <DistanceBox barHeight = {barHeight} public_ip = {this.state.location_ip}/>
             </div>
-
-            <WifiBox barHeight = {barHeight}/>
-            <CPUBox barHeight = {barHeight}/>
-            <DistanceBox barHeight = {barHeight} public_ip = {this.state.location_ip}/>
-
           </div>
           :
           <div></div>
           }
+        </div>
         </div>
         </div>
         }

@@ -7,7 +7,7 @@ import Slider from 'react-input-slider';
 
 import styles from '../Counter.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheck, faArrowRight, faCogs, faWindowMaximize, faClock, faKeyboard, faDesktop, faInfoCircle, faPencilAlt, 
+import { faCheck, faArrowRight, faCogs, faWindowMaximize, faClock, faKeyboard, faDesktop, faInfoCircle, faPencilAlt,
   faPlus, faCircleNotch, faWrench, faUpload } from '@fortawesome/free-solid-svg-icons'
 
 import Folder from "../../../resources/images/folder.svg";
@@ -16,7 +16,7 @@ import Window from "../../../resources/images/window.svg";
 import Speedometer from "../../../resources/images/speedometer.svg";
 import Car from "../../../resources/images/car.jpg";
 
-import { resetFeedback, sendFeedback, askFeedback, trackUserActivity, changeWindow, attachDisk, restartPC, vmRestarted } from "../../actions/counter"
+import { resetFeedback, sendFeedback, askFeedback, trackUserActivity, changeWindow, attachDisk, restartPC, vmRestarted, sendLogs } from "../../actions/counter"
 
 class MainBox extends Component {
   constructor(props) {
@@ -48,6 +48,12 @@ class MainBox extends Component {
     this.setState({restartPopup: open})
   }
 
+  SendLogs = () => {
+    var fs = require("fs");
+    var logs = fs.readFileSync(__dirname + "/../../log.txt").toString();
+    this.props.dispatch(sendLogs(logs))
+  }
+
   LaunchProtocol = () => {
     if(this.state.reattached && this.props.public_ip && this.props.public_ip != '') {
       this.setState({launched: true})
@@ -58,22 +64,19 @@ class MainBox extends Component {
           const os       = require('os');
 
           // check which OS we're on to properly launch the protocol
-          if (os.platform() === 'darwin') { // mac
-            var path =  appRootDir + "/fractal-protocol/desktop/desktop"
-            path = path.replace('/Resources/app.asar','');
-            path = path.replace('/desktop/app', '/desktop')
+          if (os.platform() === 'darwin' || os.platform() === 'linux') { // mac & linux
+            var path =  appRootDir + "/protocol/desktop/FractalClient"
+            path = path.replace('/resources/app.asar','');
+            path = path.replace('/desktop/app', '/desktop');
           }
           else if (os.platform() === 'win32') { // windows
-            var path = process.cwd() + "\\fractal-protocol\\desktop\\desktop.exe"
-          }
-          else { // linux
-            var path = "TODO"
+            var path = process.cwd() + "\\protocol\\desktop\\FractalClient.exe"
           }
 
           var screenWidth = this.state.windowMode ? window.screen.width : 0
           var screenHeight = this.state.windowMode ? (window.screen.height - 70) : 0
 
-          var parameters = [this.props.public_ip, 123, screenWidth, screenHeight, this.state.mbps]
+          var parameters = [this.props.public_ip, screenWidth, screenHeight, this.state.mbps]
 
           if(this.state.launches == 1) {
             this.TrackActivity(true);
@@ -83,6 +86,7 @@ class MainBox extends Component {
           protocol.on('close', (code) => {
             if(this.state.launches == 1) {
               this.TrackActivity(false);
+              setTimeout(this.SendLogs, 0 ); // send the logs, async
             }
             this.setState({launches: 0, launched: false, reattached: false, diskAttaching: false})
             this.props.dispatch(askFeedback(true))
@@ -182,7 +186,7 @@ class MainBox extends Component {
                 <FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "#111111", height: 30}}/>
               </div>
               <div style = {{marginTop: 10, color: '#111111', fontSize: 14, lineHeight: 1.4}}>
-                Restarting 
+                Restarting
               </div>
             </div>
           </div>
@@ -333,7 +337,7 @@ class MainBox extends Component {
               <div style = {{fontWeight: 'bold', fontSize: 20}} className = {styles.blueGradient}><strong>How It Works</strong></div>
               <div style = {{fontSize: 12, color: "#CCCCCC", marginTop: 20, lineHeight: 1.5}}>
                 This dashboard contains a list of all computers that you've installed Fractal onto. You can start a remote connection to any of these
-                computers, as long `as they are turned on. 
+                computers, as long `as they are turned on.
               </div>
             </Popup>
           </div>
@@ -369,7 +373,7 @@ class MainBox extends Component {
                 <div style = {{width: '31%'}}>
                   <div style = {{float: 'right'}}>
                     {
-                    value.id === this.props.id 
+                    value.id === this.props.id
                     ?
                     <div style = {{width: 110, textAlign: 'center', fontSize: 12, fontWeight: 'bold', border: 'none', borderRadius: 5, paddingTop: 7, paddingBottom: 7, background: '#161936', color: "#D6D6D6"}}>
                       This Computer
@@ -403,14 +407,14 @@ class MainBox extends Component {
                     Windowed Mode
                   </div>
                   <div style = {{fontSize: 13, color: '#333333', marginTop: 10, marginLeft: 28, lineHeight: 1.4}}>
-                    When activated, a titlebar will appear at the top of your cloud PC, so you can adjust your cloud PC's 
+                    When activated, a titlebar will appear at the top of your cloud PC, so you can adjust your cloud PC's
                     position on your screen.
                   </div>
                 </div>
                 <div style = {{width: '25%'}}>
                   <div style = {{float: 'right'}}>
-                    <ToggleButton 
-                      value = {this.state.windowMode} 
+                    <ToggleButton
+                      value = {this.state.windowMode}
                       onToggle = {this.toggleWindow}
                       colors={{
                         active: {
@@ -432,7 +436,7 @@ class MainBox extends Component {
                     Maximum Bandwidth
                   </div>
                   <div style = {{fontSize: 13, color: '#333333', marginTop: 10, marginLeft: 28, lineHeight: 1.4}}>
-                    Toggle the maximum bandwidth (Mbps) that Fractal consumes. We recommend adjusting 
+                    Toggle the maximum bandwidth (Mbps) that Fractal consumes. We recommend adjusting
                     this setting only if you are also running other, bandwidth-consuming apps.
                   </div>
                 </div>
@@ -477,7 +481,7 @@ class MainBox extends Component {
             </div>
           </div>
         </div>
-      )  
+      )
     }
   }
 }
