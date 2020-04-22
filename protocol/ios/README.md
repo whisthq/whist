@@ -1,3 +1,3 @@
-## iOS/iPadOS Client
+## Fractal iOS/iPadOS Client
 
 TBD.

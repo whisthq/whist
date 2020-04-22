@@ -1,3 +1,8 @@
+/*
+ * Clipboard getting and setting functions on Windows.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #if defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -351,10 +356,14 @@ ClipboardData* GetClipboard()
 				FindClose( hFind );
 			}
 
-			RemoveDirectoryW( LGET_CLIPBOARD );
 			if( !CreateDirectoryW( LGET_CLIPBOARD, NULL ) )
 			{
-				mprintf( "Could not create directory: %S (Error %d)\n", LGET_CLIPBOARD, GetLastError() );
+				int err = GetLastError();
+				if( err != ERROR_ALREADY_EXISTS )
+				{
+					mprintf( "Could not create directory: %S (Error %d)\n", LGET_CLIPBOARD, GetLastError() );
+					break;
+				}
 			}
 
 			// Go through filenames
@@ -411,6 +420,11 @@ ClipboardData* GetClipboard()
 HGLOBAL getGlobalAlloc( void* buf, int len )
 {
 	HGLOBAL hMem = GlobalAlloc( GMEM_MOVEABLE, len );
+	if( !hMem )
+	{
+		mprintf( "GlobalAlloc failed!\n" );
+		return hMem;
+	}
 	LPTSTR lptstr = GlobalLock( hMem );
 
 	if( lptstr == NULL )

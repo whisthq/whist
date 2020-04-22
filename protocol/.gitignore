@@ -1,3 +1,4 @@
+# general files
 *.o
 *.obj
 *.iml
@@ -16,15 +17,48 @@
 **/log.txt
 **/log_prev.txt
 .DS_Store
+
+# fractal files
 version
 desktop/build32/clipboard
+desktop/build32/FractalClient
+desktop/build32/FractalClient.exe
 desktop/build32/desktop
 desktop/build32/desktop.exe
 desktop/build64/clipboard
+desktop/build64/FractalClient
+desktop/build64/FractalClient.exe
 desktop/build64/desktop
 desktop/build64/desktop.exe
+server/build32/FractalServer
+server/build32/FractalServer.exe
 server/build32/server
 server/build32/server.exe
+server/build64/FractalServer
+server/build64/FractalServer.exe
 server/build64/server
 server/build64/server.exe
+desktop/log.txt
+desktop/build64/log.txt
+desktop/build32/log.txt
+server/log.txt
+server/build64/log.txt
+server/build32/log.txt
+server/build64.zip
+server/build32.zip
+desktop/build64.zip
+desktop/build32.zip
+desktop/build64/connection_id.txt
+desktop/build32/connection_id.txt
+server/build64/connection_id.txt
+server/build32/connection_id.txt
 
+# ffmpeg mac libs in build folder
+desktop/server/build64/libavcodec.58.dylib
+desktop/server/build64/libavdevice.58.dylib
+desktop/server/build64/libavfilter.7.dylib
+desktop/server/build64/libavformat.58.dylib
+desktop/server/build64/libavutil.56.dylib
+desktop/server/build64/libpostproc.55.dylib
+desktop/server/build64/libswresample.3.dylib
+desktop/server/build64/libswscale.5.dylib

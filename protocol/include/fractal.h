@@ -1,3 +1,8 @@
+/*
+ * General Fractal helper functions and headers.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef FRACTAL_H
 #define FRACTAL_H
 
@@ -16,10 +21,11 @@
 #include <mmdeviceapi.h>
 #include <process.h>
 #include <synchapi.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
 #include <windows.h>
+#include <winsock2.h>
 #include <winuser.h>
+#include "shellscalingapi.h"
+#include <ws2tcpip.h>
 #undef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
 #undef EWOULDBLOCK
@@ -33,6 +39,8 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #define max(a, b) (((a) > (b)) ? (a) : (b))
@@ -69,21 +77,28 @@
 #define USING_AUDIO_ENCODE_DECODE true
 
 #define MAX_PAYLOAD_SIZE 1285
-#define MAXIMUM_MBPS 30.0
+#define MAXIMUM_BITRATE 30000000
+#define MINIMUM_BITRATE 2000000
+#define MAXIMUM_MBPS (MAXIMUM_BITRATE / 1000000.0)
 #define ACK_REFRESH_MS 50
 
 #define LARGEST_FRAME_SIZE 1000000
 #define STARTING_BITRATE 12400000
 #define STARTING_BURST_BITRATE 31800000
+
 #define AUDIO_BITRATE 128000
 #define AVERAGE_LATENCY_MS 8
 #define FPS 50
 #define MIN_FPS 10
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
+#define MAX_CURSOR_WIDTH 32
+#define MAX_CURSOR_HEIGHT 32
 
 #define PRIVATE_KEY \
     "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
+
+#define MOUSE_SCALING_FACTOR 100000
 
 #define WRITE_MPRINTF_TO_LOG true
 
@@ -400,6 +415,12 @@ typedef struct FractalCursor {
 typedef struct FractalCursorImage {
     SDL_SystemCursor cursor_id;
     FractalCursorState cursor_state;
+    bool cursor_use_bmp;
+    unsigned short cursor_bmp_width;
+    unsigned short cursor_bmp_height;
+    unsigned short cursor_bmp_hot_x;
+    unsigned short cursor_bmp_hot_y;
+    uint32_t cursor_bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
 } FractalCursorImage;
 
 /// @brief Latency performance metrics.
@@ -542,6 +563,7 @@ typedef struct FractalClientMessage {
         struct dimensions {
             int width;
             int height;
+            int dpi;
         } dimensions;
 
         // MESSAGE_VIDEO_NACK or MESSAGE_AUDIO_NACK
@@ -573,8 +595,15 @@ typedef enum FractalServerMessageType {
     MESSAGE_PONG = 1,
     MESSAGE_AUDIO_FREQUENCY = 2,
     SMESSAGE_CLIPBOARD = 3,
+    MESSAGE_INIT = 4,
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
+
+typedef struct FractalServerMessageInit {
+    char filename[300];
+    char username[50];
+    int connection_id;
+} FractalServerMessageInit;
 
 typedef struct FractalServerMessage {
     FractalServerMessageType type;  ///< Input message type.
@@ -582,7 +611,10 @@ typedef struct FractalServerMessage {
         int ping_id;
         int frequency;
     };
-    ClipboardData clipboard;
+    union {
+        ClipboardData clipboard;
+        char init_msg[0];
+    };
 } FractalServerMessage;
 
 typedef struct FractalDestination {
@@ -598,7 +630,8 @@ typedef struct SocketContext {
     int ack;
 } SocketContext;
 
-// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be replayed
+// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
+// replayed
 // TODO: INC integer that must not be used twice
 
 // Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) +
@@ -638,6 +671,8 @@ typedef struct Frame {
 
 void runcmd(const char* cmdline);
 
+void set_timeout( SOCKET s, int timeout_ms );
+
 int CreateUDPContext(struct SocketContext* context, char* origin,
                      char* destination, int port, int recvfrom_timeout_s,
                      int stun_timeout_ms);
@@ -656,7 +691,7 @@ void* TryReadingTCPPacket(struct SocketContext* context);
 #define clock struct timeval
 #endif
 
-void initMultiThreadedPrintf(bool use_logging);
+void initMultiThreadedPrintf(char* log_directory);
 void destroyMultiThreadedPrintf();
 void mprintf(const char* fmtStr, ...);
 void lprintf(const char* fmtStr, ...);
@@ -666,10 +701,19 @@ double GetTimer(clock timer);
 
 uint32_t Hash(void* key, size_t len);
 
-int get_native_screen_width();
-int get_native_screen_height();
+int get_window_pixel_width( SDL_Window* window );
+int get_window_pixel_height( SDL_Window* window );
+int get_window_virtual_width( SDL_Window* window );
+int get_window_virtual_height( SDL_Window* window );
+int get_virtual_screen_width();
+int get_virtual_screen_height();
+int get_pixel_screen_width( SDL_Window* window );
+int get_pixel_screen_height( SDL_Window* window );
 
 void initBacktraceHandler();
+
+char* get_mprintf_history();
+int get_mprintf_history_len();
 
 /** FRACTAL FUNCTIONS END ***/
 

@@ -1,4 +1,11 @@
+/*
+ * General client video functions.
+ * 
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include "video.h"
+
+#include <stdio.h>
 
 #define USE_HARDWARE true
 
@@ -8,10 +15,9 @@ extern volatile SDL_Window* window;
 extern volatile int server_width;
 extern volatile int server_height;
 // Keeping track of max mbps
-extern volatile double max_mbps;
+extern volatile int max_bitrate;
 extern volatile bool update_mbps;
 
-extern volatile SDL_Window* window;
 extern volatile int output_width;
 extern volatile int output_height;
 
@@ -21,6 +27,13 @@ volatile SDL_Cursor* cursor = NULL;
 volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
 
 #define LOG_VIDEO false
+
+#define BITRATE_BUCKET_SIZE 500000
+
+#define CURSORIMAGE_A 0xff000000
+#define CURSORIMAGE_R 0x00ff0000
+#define CURSORIMAGE_G 0x0000ff00
+#define CURSORIMAGE_B 0x000000ff
 
 struct VideoData {
     struct FrameData* pending_ctx;
@@ -39,6 +52,12 @@ struct VideoData {
     bool run_render_screen_thread;
 
     SDL_sem* renderscreen_semaphore;
+
+    double target_mbps;
+    int num_nacked;
+    int bucket; // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
+    int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
+    double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
 } VideoData;
 
 typedef struct SDLVideoContext {
@@ -62,8 +81,10 @@ typedef struct FrameData {
     bool nacked_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
     bool rendered;
 
-    int last_nacked_index;
     int num_times_nacked;
+
+    int last_nacked_index;
+
     clock last_nacked_timer;
 
     clock last_packet_timer;
@@ -72,7 +93,7 @@ typedef struct FrameData {
 } FrameData;
 
 // mbps that currently works
-volatile double working_mbps = MAXIMUM_MBPS;
+volatile double working_mbps;
 
 // Context of the frame that is currently being rendered
 volatile struct FrameData renderContext;
@@ -95,11 +116,13 @@ bool has_rendered_yet = false;
 
 void updateWidthAndHeight(int width, int height);
 int32_t RenderScreen(SDL_Renderer* renderer);
+void loadingSDL( SDL_Renderer* renderer, int loading_index );
 
 void nack(int id, int index) {
     if (VideoData.is_waiting_for_iframe) {
         return;
     }
+    VideoData.num_nacked++;
     mprintf("Missing Video Packet ID %d Index %d, NACKing...\n", id, index);
     FractalClientMessage fmsg;
     fmsg.type = MESSAGE_VIDEO_NACK;
@@ -112,14 +135,13 @@ bool requestIframe() {
     if (GetTimer(VideoData.last_iframe_request_timer) > 250.0 / 1000.0) {
         FractalClientMessage fmsg;
         fmsg.type = MESSAGE_IFRAME_REQUEST;
-        if( VideoData.last_rendered_id == 0 )
-        {
+        if (VideoData.last_rendered_id == 0) {
             fmsg.reinitialize_encoder = true;
         } else {
             fmsg.reinitialize_encoder = false;
         }
-        SendFmsg( &fmsg );
-        StartTimer( &VideoData.last_iframe_request_timer );
+        SendFmsg(&fmsg);
+        StartTimer(&VideoData.last_iframe_request_timer);
         VideoData.is_waiting_for_iframe = true;
         return true;
     } else {
@@ -157,13 +179,25 @@ void updateWidthAndHeight(int width, int height) {
 int32_t RenderScreen(SDL_Renderer* renderer) {
     mprintf("RenderScreen running on Thread %d\n", SDL_GetThreadID(NULL));
 
+    int loading_index = 0;
+
+    // present the loading screen
+    loadingSDL( renderer, loading_index );
+
     while (VideoData.run_render_screen_thread) {
         int ret = SDL_SemTryWait(VideoData.renderscreen_semaphore);
 
         if (ret == SDL_MUTEX_TIMEDOUT) {
+            if( loading_index >= 0 )
+            {
+                loading_index++;
+                loadingSDL( renderer, loading_index );
+            }
             SDL_Delay(1);
             continue;
         }
+
+        loading_index = -1;
 
         if (ret < 0) {
             mprintf("Semaphore Error\n");
@@ -174,8 +208,6 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             mprintf("Sem opened but rendering is not true!\n");
             continue;
         }
-		
-											
 
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)renderContext.frame_buffer;
@@ -214,7 +246,6 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         if (!skip_render && !resizing) {
-					
             if (videoContext.sws) {
                 sws_scale(
                     videoContext.sws,
@@ -237,11 +268,29 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         // Set cursor to frame's desired cursor type
-        if ((FractalCursorID)frame->cursor.cursor_id != last_cursor) {
+        if ((FractalCursorID)frame->cursor.cursor_id != last_cursor ||
+            frame->cursor.cursor_use_bmp) {
             if (cursor) {
                 SDL_FreeCursor((SDL_Cursor*)cursor);
             }
-            cursor = SDL_CreateSystemCursor(frame->cursor.cursor_id);
+            if (frame->cursor.cursor_use_bmp) {
+                // use bitmap data to set cursor
+
+                SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
+                    frame->cursor.cursor_bmp, frame->cursor.cursor_bmp_width,
+                    frame->cursor.cursor_bmp_height, sizeof(uint32_t) * 8,
+                    sizeof(uint32_t) * frame->cursor.cursor_bmp_width,
+                    CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B, CURSORIMAGE_A);
+                // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
+                // pre-alpha multplied
+                cursor = SDL_CreateColorCursor(cursor_surface,
+                                               frame->cursor.cursor_bmp_hot_x,
+                                               frame->cursor.cursor_bmp_hot_y);
+                SDL_FreeSurface(cursor_surface);
+            } else {
+                // use cursor id to set cursor
+                cursor = SDL_CreateSystemCursor(frame->cursor.cursor_id);
+            }
             SDL_SetCursor((SDL_Cursor*)cursor);
 
             last_cursor = (FractalCursorID)frame->cursor.cursor_id;
@@ -261,10 +310,11 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         // GetTimer(renderContext.client_frame_timer));
 
         if (!skip_render && !resizing) {
-			//printf("Before, %x\n", renderer);
-            SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL, NULL);
-            //SDL_RenderCopy((SDL_Renderer*)renderer, NULL, NULL, NULL);
-			//printf("After\n");
+            // printf("Before, %x\n", renderer);
+            SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL,
+                           NULL);
+            // SDL_RenderCopy((SDL_Renderer*)renderer, NULL, NULL, NULL);
+            // printf("After\n");
             // SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
             // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
             SDL_RenderPresent((SDL_Renderer*)renderer);
@@ -290,44 +340,44 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 }
 
 // Make the screen black
-void loadingSDL(SDL_Renderer* renderer) {
-    static SDL_Texture* wallpaper_screen_texture = NULL;
+void loadingSDL(SDL_Renderer* renderer, int loading_index) {
     static SDL_Texture* loading_screen_texture = NULL;
-    if (!wallpaper_screen_texture) {
-        SDL_Surface* loading_screen = SDL_LoadBMP("wallpaper.bmp");
-        wallpaper_screen_texture =
-            SDL_CreateTextureFromSurface(renderer, loading_screen);
+
+    int gif_frame_index = loading_index % 83;
+
+    while (true) {
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(renderer);
+
+        char frame_name[24];
+        if (gif_frame_index < 10) {
+            snprintf(frame_name, sizeof( frame_name ), "../loading/frame_0%d.bmp", gif_frame_index);
+        }
+        else {
+            snprintf(frame_name, sizeof( frame_name ), "../loading/frame_%d.bmp", gif_frame_index);
+        }
+
+        SDL_Surface* loading_screen = SDL_LoadBMP(frame_name);
+        loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
         SDL_FreeSurface(loading_screen);
+
+        int w = 200;
+        int h = 200;
+        SDL_Rect dstrect;
+
+        //SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
+        dstrect.x = output_width / 2 - w / 2;
+        dstrect.y = output_height / 2 - h / 2;
+        dstrect.w = w;
+        dstrect.h = h;
+        SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
+        SDL_RenderPresent(renderer);
+
+        SDL_Delay(30); // sleep 30 ms
+        gif_frame_index += 1;
+        gif_frame_index %= 83; // number of loading frames
+        break;
     }
-    if (!loading_screen_texture) {
-        SDL_Surface* loading_screen = SDL_LoadBMP("loading_screen.bmp");
-        loading_screen_texture =
-            SDL_CreateTextureFromSurface(renderer, loading_screen);
-        SDL_FreeSurface(loading_screen);
-    }
-
-    /*
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE
-    ); SDL_RenderClear(renderer );
-    */
-
-    int w, h;
-    SDL_Rect dstrect;
-
-    SDL_QueryTexture(wallpaper_screen_texture, NULL, NULL, &w, &h);
-    dstrect.x = output_width / 2 - w / 2;
-    dstrect.y = output_height / 2 - h / 2;
-    dstrect.w = w;
-    dstrect.h = h;
-    SDL_RenderCopy(renderer, wallpaper_screen_texture, NULL, NULL);
-
-    SDL_QueryTexture(loading_screen_texture, NULL, NULL, &w, &h);
-    dstrect.x = output_width / 2 - w / 2;
-    dstrect.y = output_height / 2 - h / 2;
-    dstrect.w = w;
-    dstrect.h = h;
-    SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
-    SDL_RenderPresent(renderer);
 }
 
 void clearSDL(SDL_Renderer* renderer) {
@@ -341,18 +391,18 @@ int initMultithreadedVideo(void* opaque) {
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     SDL_Renderer* renderer =
-        SDL_CreateRenderer((SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC);
+        SDL_CreateRenderer((SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     if (!renderer) {
         fprintf(stderr, "SDL: could not create renderer - exiting: %s\n",
                 SDL_GetError());
         return -1;
     }
 
-    // present the loading screen
-    loadingSDL(renderer);
+    // configure texture
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
     // mbps that currently works
-    working_mbps = MAXIMUM_MBPS;
+    working_mbps = STARTING_BITRATE;
     VideoData.is_waiting_for_iframe = false;
 
     // True if RenderScreen is currently rendering a frame
@@ -376,6 +426,8 @@ int initMultithreadedVideo(void* opaque) {
     av_image_alloc(videoContext.data, videoContext.linesize, output_width,
                    output_height, AV_PIX_FMT_YUV420P, 1);
 
+    max_bitrate = STARTING_BITRATE;
+    VideoData.target_mbps = STARTING_BITRATE;
     VideoData.pending_ctx = NULL;
     VideoData.frames_received = 0;
     VideoData.bytes_transferred = 0;
@@ -384,6 +436,8 @@ int initMultithreadedVideo(void* opaque) {
     VideoData.last_rendered_id = 0;
     VideoData.max_id = 0;
     VideoData.most_recent_iframe = -1;
+    VideoData.num_nacked = 0;
+    VideoData.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     StartTimer(&VideoData.last_iframe_request_timer);
 
     for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
@@ -409,9 +463,10 @@ int last_rendered_index = 0;
 void updateVideo() {
     // Get statistics from the last 3 seconds of data
     if (GetTimer(VideoData.frame_timer) > 3) {
-        // double time = GetTimer(VideoData.frame_timer);
+        double time = GetTimer(VideoData.frame_timer);
 
         // Calculate statistics
+        /*
         int expected_frames = VideoData.max_id - VideoData.last_statistics_id;
         // double fps = 1.0 * expected_frames / time; // TODO: finish birate
         // throttling alg double mbps = VideoData.bytes_transferred * 8.0 /
@@ -421,39 +476,54 @@ void updateVideo() {
                 ? 1.0
                 : 1.0 * VideoData.frames_received / expected_frames;
         double dropped_rate = 1.0 - receive_rate;
+        */
+
+        double nack_per_second = VideoData.num_nacked / time;
+        VideoData.nack_by_bitrate[VideoData.bucket] += VideoData.num_nacked;
+        VideoData.seconds_by_bitrate[VideoData.bucket] += time;
 
         // Print statistics
 
         // mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 *
         // dropped_rate);
 
+        mprintf( "MBPS: %f %f\n", VideoData.target_mbps, nack_per_second );
+
         // Adjust mbps based on dropped packets
-        if (dropped_rate > 0.4) {
-            max_mbps = max_mbps * 0.75;
-            working_mbps = max_mbps;
+        if ( nack_per_second > 50 ) {
+            VideoData.target_mbps = VideoData.target_mbps * 0.75;
+            working_mbps = VideoData.target_mbps;
             update_mbps = true;
-        } else if (dropped_rate > 0.2) {
-            max_mbps = max_mbps * 0.83;
-            working_mbps = max_mbps;
+        } else if ( nack_per_second > 25 ) {
+            VideoData.target_mbps = VideoData.target_mbps * 0.83;
+            working_mbps = VideoData.target_mbps;
             update_mbps = true;
-        } else if (dropped_rate > 0.1) {
-            max_mbps = max_mbps * 0.9;
-            working_mbps = max_mbps;
+        } else if ( nack_per_second > 15 ) {
+            VideoData.target_mbps = VideoData.target_mbps * 0.9;
+            working_mbps = VideoData.target_mbps;
             update_mbps = true;
-        } else if (dropped_rate > 0.05) {
-            max_mbps = max_mbps * 0.95;
-            working_mbps = max_mbps;
+        } else if ( nack_per_second > 10) {
+            VideoData.target_mbps = VideoData.target_mbps * 0.95;
+            working_mbps = VideoData.target_mbps;
             update_mbps = true;
-        } else if (dropped_rate > 0.00) {
-            max_mbps = max_mbps * 0.98;
-            working_mbps = max_mbps;
+        } else if ( nack_per_second > 6 ) {
+            VideoData.target_mbps = VideoData.target_mbps * 0.98;
+            working_mbps = VideoData.target_mbps;
             update_mbps = true;
-        } else if (dropped_rate == 0.00) {
-            working_mbps = max(max_mbps * 1.05, working_mbps);
-            max_mbps = (max_mbps + working_mbps) / 2.0;
-            max_mbps = max(max_mbps, MAXIMUM_MBPS);
+        } else {
+            working_mbps = max( VideoData.target_mbps * 1.05, working_mbps);
+            VideoData.target_mbps = (VideoData.target_mbps + working_mbps) / 2.0;
+            VideoData.target_mbps = min( VideoData.target_mbps, MAXIMUM_MBPS * 1024 * 1024);
             update_mbps = true;
         }
+
+        mprintf( "MBPS2: %f\n", VideoData.target_mbps );
+
+        VideoData.bucket = (int) VideoData.target_mbps / BITRATE_BUCKET_SIZE;
+        max_bitrate = (int) VideoData.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
+
+        mprintf( "MBPS3: %d\n", max_bitrate );
+        VideoData.num_nacked = 0;
 
         VideoData.bytes_transferred = 0;
         VideoData.frames_received = 0;
@@ -704,13 +774,12 @@ void destroyVideo() {
     SDL_WaitThread(VideoData.render_screen_thread, NULL);
     SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
 
-    SDL_DestroyTexture(videoContext.texture);
+//    SDL_DestroyTexture(videoContext.texture); not needed, the renderer destroys it
     av_freep(videoContext.data);
 
     has_rendered_yet = false;
 }
 
-void notify_video(bool stop) {
-	resizing = stop;
-	printf("Stop video? %d.\n", stop);
+void set_video_active_resizing(bool is_resizing) {
+    resizing = is_resizing;
 }

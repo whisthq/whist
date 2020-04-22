@@ -1,3 +1,8 @@
+/*
+ * Clipboard getting and setting functions on Linux Ubuntu.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include <assert.h>
 #include "clipboard.h"
 
@@ -92,6 +97,9 @@ bool get_clipboard_files(ClipboardData* cb) {
     if (!get_clipboard_data(property_atom, cb, 0)) {
       return false;
     }
+    // Add null terminator
+    cb->data[cb->size] = '\0';
+    cb->size++;
 
     char command[100] = "rm -rf ";
     strcat(command, GET_CLIPBOARD);
@@ -105,11 +113,12 @@ bool get_clipboard_files(ClipboardData* cb) {
 
     while (file != NULL) {
       char file_prefix[] = "file://";
-      if (memcmp(file, "file://", sizeof(file_prefix) - 1) == 0) {
+      if (memcmp(file, file_prefix, sizeof(file_prefix) - 1) == 0) {
         char final_filename[1000] = "";
         strcat(final_filename, GET_CLIPBOARD);
         strcat(final_filename, "/");
         strcat(final_filename, basename(file));
+	printf("NAME: %s %s %s\n", final_filename, file, basename(file));
         symlink(file + sizeof(file_prefix) - 1, final_filename);
       } else {
         mprintf("Not a file: %s\n", file);
@@ -129,7 +138,6 @@ ClipboardData* GetClipboard() {
   ClipboardData* cb = (ClipboardData*)cb_buf;
   cb->type = CLIPBOARD_NONE;
   cb->size = 0;
-  return cb;
   get_clipboard_files(cb) || get_clipboard_picture(cb) ||
       get_clipboard_string(cb);
 
@@ -140,7 +148,6 @@ ClipboardData* GetClipboard() {
 }
 
 void SetClipboard(ClipboardData* cb) {
-  return;
   static FILE* inp = NULL;
 
   //
@@ -195,8 +202,7 @@ void SetClipboard(ClipboardData* cb) {
     // Construct path as "\nfile:///path/to/fractal/set_clipboard/"
     char path[PATH_MAX] = "\nfile://";
     int substr = strlen(path);
-    getcwd(path + substr, PATH_MAX - substr);
-    strcat(path, SET_CLIPBOARD);
+    realpath(SET_CLIPBOARD, path + substr);
     strcat(path, "/");
     // subpath is an index that points to the end of the string
     int subpath = strlen(path);
@@ -289,7 +295,7 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb,
                         int header_size) {
   Atom new_atom;
   int resbits;
-  long ressize, restail;
+  long unsigned ressize, restail;
   char* result;
 
   XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4, True,
@@ -359,4 +365,3 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb,
 
   return true;
 }
-

@@ -1,11 +1,11 @@
-// clipboard for MacOS in Objective-C
-// 
-// By: Philippe Noël
-//
-#include <AppKit/AppKit.h>
+/*
+ * Objective-C MacOS clipboard setting and getting functions.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include "clipboard_osx.h"
 
-#define mprintf printf
+#include <AppKit/AppKit.h>
 
 int GetClipboardChangecount() {
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
@@ -44,7 +44,7 @@ const char *ClipboardGetString() {
         }
 	}
 	else {
-        mprintf("Can't get Mac Clipboard String data.\n");
+        printf("Can't get Mac Clipboard String data.\n");
 		return ""; // empty string since there is no clipboard test data
 	}
 }
@@ -107,7 +107,7 @@ void ClipboardGetFiles(OSXFilenames *filenames[]) {
 		}
 	}
 	else {
-        mprintf("Can't get Mac Clipboard Files data.\n");
+        printf("Can't get Mac Clipboard Files data.\n");
 	}
 
 }

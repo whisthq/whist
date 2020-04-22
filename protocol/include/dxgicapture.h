@@ -1,7 +1,12 @@
+/*
+ * GPU screen capture on Windows.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef DXGI_CAPTURE_H
 #define DXGI_CAPTURE_H
 
-#include "fractal.h" // contains all the headers
+#include "fractal.h"
 
 struct ScreenshotContainer {
   IDXGIResource *desktop_resource;
