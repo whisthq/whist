@@ -32,6 +32,6 @@ DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_threa
 void OpenWindow();
 
 // @brief Calls the above functions; opens a windows station and desktop.
-void InitDesktop();
+bool InitDesktop();
 
 #endif // DESKTOP_H

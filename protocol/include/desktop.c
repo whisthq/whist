@@ -62,12 +62,13 @@ void OpenWindow() {
 }
 
 // Log into the desktop, and block until the login process finishes
-void InitDesktop() {
+bool InitDesktop() {
     DesktopContext lock_screen;
 
     OpenWindow();
     lock_screen = OpenNewDesktop(NULL, true, true);
 
+    bool failed = false;
     int attempt = 0;
     while (wcscmp(L"Default",
                   lock_screen.desktop_name) != 0) {
@@ -77,6 +78,7 @@ void InitDesktop() {
         if( attempt > 10 )
         {
             mprintf( "Attempted too many times! Giving up...\n" );
+            failed = true;
             break;
         }
 
@@ -98,4 +100,6 @@ void InitDesktop() {
 
         attempt++;
     }
+
+    return !failed;
 }

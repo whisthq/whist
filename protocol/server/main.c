@@ -677,7 +677,12 @@ int main() {
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_Init(SDL_INIT_VIDEO);
 #ifdef _WIN32
-    InitDesktop();
+    if( !InitDesktop() )
+    {
+        mprintf( "Could not winlogon! Exiting!\n" );
+        SDL_Delay( 50 );
+        return -1;
+    }
 #endif
 
 // initialize the windows socket library if this is a windows client
