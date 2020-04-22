@@ -397,7 +397,7 @@ int initMultithreadedVideo(void* opaque) {
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     SDL_Renderer* renderer =
-        SDL_CreateRenderer((SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC);
+        SDL_CreateRenderer((SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     if (!renderer) {
         fprintf(stderr, "SDL: could not create renderer - exiting: %s\n",
                 SDL_GetError());

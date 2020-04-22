@@ -906,7 +906,13 @@ int main() {
                     fmsg->type == MESSAGE_MOUSE_MOTION) {
                     // Replay user input (keyboard or mouse presses)
                     if (input_device) {
-                        ReplayUserInput(input_device, fmsg);
+                        if( !ReplayUserInput( input_device, fmsg ) )
+                        {
+                            mprintf( "Failed to replay input!\n" );
+#ifdef _WIN32
+                            InitDesktop();
+#endif
+                        }
                     }
 
                 } else if (fmsg->type == MESSAGE_KEYBOARD_STATE) {

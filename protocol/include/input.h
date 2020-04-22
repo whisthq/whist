@@ -16,7 +16,7 @@ input_device_t* CreateInputDevice(input_device_t* input_device);
 
 void DestroyInputDevice(input_device_t* input_device);
 
-void ReplayUserInput(input_device_t* input_device,
+bool ReplayUserInput(input_device_t* input_device,
                      struct FractalClientMessage* fmsg);
 
 void UpdateKeyboardState(input_device_t* input_device,
