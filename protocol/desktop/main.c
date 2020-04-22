@@ -679,8 +679,8 @@ void parse_window_event(SDL_Event* event) {
             break;
         case SDL_WINDOWEVENT_SIZE_CHANGED:
             notify_video(false);
-			output_width = event->window.data1;
-			output_height = event->window.data2;
+			output_width = get_native_screen_width(window);
+			output_height = get_native_screen_height(window);
             break;
         case SDL_WINDOWEVENT_MINIMIZED:
             printf("Window %d minimized\n", event->window.windowID);

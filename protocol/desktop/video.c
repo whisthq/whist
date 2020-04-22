@@ -166,7 +166,6 @@ void updateWidthAndHeight(int width, int height) {
     struct SwsContext* sws_ctx = NULL;
     if (input_fmt != AV_PIX_FMT_YUV420P || width != output_width ||
         height != output_height) {
-        mprintf( "Sws scale from %dx%d to %dx%d!\n", width, height, output_width, output_height );
         sws_ctx = sws_getContext(width, height, input_fmt, output_width,
                                  output_height, AV_PIX_FMT_YUV420P,
                                  SWS_BILINEAR, NULL, NULL, NULL);
