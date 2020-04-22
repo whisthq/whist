@@ -81,7 +81,7 @@ class MainBox extends Component {
           if(this.state.launches == 1) {
             this.TrackActivity(true);
           }
-          const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
+          const protocol = child(path, parameters, {detached: true, stdio: 'ignore', windowsHide: true});
 
           protocol.on('close', (code) => {
             if(this.state.launches == 1) {
