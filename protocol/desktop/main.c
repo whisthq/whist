@@ -1,3 +1,12 @@
+/*
+ * Fractal Client.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#if defined(_WIN32)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "main.h"
 
 #include <stdint.h>
@@ -18,7 +27,7 @@ volatile int server_width = -1;
 volatile int server_height = -1;
 
 // maximum mbps
-volatile double max_mbps = MAXIMUM_MBPS;
+volatile int max_bitrate = STARTING_BITRATE;
 volatile bool update_mbps = false;
 
 // Global state variables
@@ -118,15 +127,16 @@ void update() {
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
+        fmsg.dimensions.dpi = (int)(96.0 * output_width / get_virtual_screen_width());
         SendFmsg(&fmsg);
         UpdateData.tried_to_update_dimension = true;
     }
 
     if (update_mbps) {
-        mprintf("Asking for server MBPS to be %f\n", max_mbps);
+        mprintf("Asking for server MBPS to be %f\n", max_bitrate);
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
-        fmsg.mbps = max_mbps;
+        fmsg.mbps = max_bitrate / 1024.0 / 1024.0;
         SendFmsg(&fmsg);
     }
     // End update checks
@@ -486,6 +496,9 @@ int ReceiveMessage(struct RTPPacket* packet) {
             FractalServerMessageInit* msg_init = (FractalServerMessageInit*)fmsg->init_msg;
             memcpy( filename, msg_init->filename, min(sizeof( filename ), sizeof(msg_init->filename)) );
             memcpy( username, msg_init->username, min( sizeof( username ), sizeof( msg_init->username ) ) );
+            FILE* f = fopen( "connection_id.txt", "w" );
+            fprintf( f, "%d", msg_init->connection_id );
+            fclose( f );
             received_server_init_message = true;
             break;
         case SMESSAGE_QUIT:
@@ -583,7 +596,7 @@ static int resizingEventWatcher(void* data, SDL_Event* event) {
       event->window.event == SDL_WINDOWEVENT_RESIZED) {
     SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
     if (win == (SDL_Window*)data) {
-      notify_video(true);
+        set_video_active_resizing(true);
     }
   }
   return 0;
@@ -602,41 +615,47 @@ int initSDL() {
         return -1;
     }
 
-    int full_width = get_native_screen_width();
-    int full_height = get_native_screen_height();
+    // TODO: make this a commandline argument based on client app settings!
+    int full_width = get_virtual_screen_width();
+    int full_height = get_virtual_screen_height();
 
-    if (output_width < 0) {
+    if( output_width < 0 )
+    {
         output_width = full_width;
     }
 
-    if (output_height < 0) {
+    if( output_height < 0 )
+    {
         output_height = full_height;
     }
 
-    bool is_fullscreen =
-        full_width == output_width && full_height == output_height;
+
+    bool is_fullscreen = output_width == full_width && output_height == full_height;
 
 #if defined(_WIN32)
     window = SDL_CreateWindow(
         "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, output_width,
-        output_height,
+        output_height, SDL_WINDOW_ALLOW_HIGHDPI |
         (is_fullscreen ? SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP : 0));
 #else
     window =
         SDL_CreateWindow("Fractal", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, output_width, output_height,
-                         (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALLOW_HIGHDPI |
+                         SDL_WINDOWPOS_CENTERED, output_width, output_height, SDL_WINDOW_ALLOW_HIGHDPI |
+                         (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP |
                                               SDL_WINDOW_ALWAYS_ON_TOP
                                         : 0));
 #endif
 
-    SDL_AddEventWatch(resizingEventWatcher, window);
+    output_width = get_window_pixel_width( window );
+    output_height = get_window_pixel_height( window );
+
+    SDL_AddEventWatch(resizingEventWatcher, (SDL_Window *) window);
     if (!window) {
         fprintf(stderr, "SDL: could not create window - exiting: %s\n",
                 SDL_GetError());
         return -1;
     }
-	SDL_SetWindowResizable(window, true);
+	SDL_SetWindowResizable((SDL_Window *) window, true);
     return 0;
 }
 
@@ -651,20 +670,24 @@ void destroySDL() {
     SDL_Quit();
 }
 
-
-
 void parse_window_event(SDL_Event* event) {
-	SDL_WindowEvent e = event->window;
+	// SDL_WindowEvent e = event->window; TODO: unused currently, is this needed?
 	switch (event->window.event) {
-        case SDL_WINDOWEVENT_RESIZED:
-            printf("Window %d resized to %dx%d\n",
-                    event->window.windowID, event->window.data1,
-                    event->window.data2);
-            break;
         case SDL_WINDOWEVENT_SIZE_CHANGED:
-            notify_video(false);
-			output_width = event->window.data1;
-			output_height = event->window.data2;
+            set_video_active_resizing(false);
+			output_width = get_window_pixel_width(window);
+			output_height = get_window_pixel_height(window);
+
+            FractalClientMessage fmsg;
+            fmsg.type = MESSAGE_DIMENSIONS;
+            fmsg.dimensions.width = output_width;
+            fmsg.dimensions.height = output_height;
+            fmsg.dimensions.dpi = (int)(96.0 * output_width / get_virtual_screen_width());
+            SendFmsg( &fmsg );
+
+            printf( "Window %d resized to %dx%d\n",
+                    event->window.windowID, event->window.data1,
+                    event->window.data2 );
             break;
         case SDL_WINDOWEVENT_MINIMIZED:
             printf("Window %d minimized\n", event->window.windowID);
@@ -684,6 +707,9 @@ void parse_window_event(SDL_Event* event) {
 #define HOST_PUBLIC_KEY "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOT1KV+I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/Zt86r9dOzEcfrhxa+MnVQhNE8="
 
 int main(int argc, char* argv[]) {
+#if defined(_WIN32)
+    SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
+#endif
     initBacktraceHandler();
 #ifndef _WIN32
     runcmd("chmod 600 sshkey");
@@ -713,7 +739,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (argc == 5) {
-        max_mbps = atoi(argv[4]);
+        max_bitrate = atoi(argv[4]);
     }
 
     FILE* ssh_key_host = fopen( "ssh_host_ecdsa_key.pub", "w" );
@@ -726,7 +752,7 @@ int main(int argc, char* argv[]) {
     }
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-    initMultiThreadedPrintf(true);
+    initMultiThreadedPrintf( "." );
 
     initClipboard();
 
@@ -807,7 +833,7 @@ int main(int argc, char* argv[]) {
         StartTimer( &waiting_for_init_timer );
         while( !received_server_init_message )
         {
-            if( GetTimer( waiting_for_init_timer ) > 250 / 1000.0 )
+            if( GetTimer( waiting_for_init_timer ) > 350 / 1000.0 )
             {
                 mprintf( "Took too long for init timer!\n" );
                 exiting = true;
@@ -883,11 +909,11 @@ int main(int argc, char* argv[]) {
                         fmsg.mouseMotion.x =
                             fmsg.mouseMotion.relative
                                 ? msg.motion.xrel
-                                : msg.motion.x * MOUSE_SCALING_FACTOR / output_width;
+                                : msg.motion.x * MOUSE_SCALING_FACTOR / get_window_virtual_width(window);
                         fmsg.mouseMotion.y =
                             fmsg.mouseMotion.relative
                                 ? msg.motion.yrel
-                                : msg.motion.y * MOUSE_SCALING_FACTOR / output_height;
+                                : msg.motion.y * MOUSE_SCALING_FACTOR / get_window_virtual_height(window);
                         break;
                     case SDL_MOUSEBUTTONDOWN:
                     case SDL_MOUSEBUTTONUP:

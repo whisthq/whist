@@ -1,4 +1,10 @@
-#define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
+/*
+ * Windows desktop sessions helper functions.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#define _CRT_SECURE_NO_WARNINGS // stupid Windows warnings
+
 #include "desktop.h"
 
 void logToFile(char* msg, char* filename) {
@@ -20,8 +26,7 @@ int setCurrentInputDesktop(HDESK currentInputDesktop) {
     return 0;
 }
 
-DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name,
-                              bool set_thread) {
+DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_thread) {
     DesktopContext context = {0};
     HDESK new_desktop;
 
@@ -50,18 +55,18 @@ DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name,
 }
 
 void OpenWindow() {
-    HWINSTA hwinsta =
-        OpenWindowStationW(L"WinSta0", FALSE, GENERIC_ALL);
+    HWINSTA hwinsta = OpenWindowStationW(L"WinSta0", FALSE, GENERIC_ALL);
     SetProcessWindowStation(hwinsta);
 }
 
 // Log into the desktop, and block until the login process finishes
-void InitDesktop() {
+bool InitDesktop() {
     DesktopContext lock_screen;
 
     OpenWindow();
     lock_screen = OpenNewDesktop(NULL, true, true);
 
+    bool failed = false;
     int attempt = 0;
     while (wcscmp(L"Default",
                   lock_screen.desktop_name) != 0) {
@@ -71,6 +76,7 @@ void InitDesktop() {
         if( attempt > 10 )
         {
             mprintf( "Attempted too many times! Giving up...\n" );
+            failed = true;
             break;
         }
 
@@ -92,4 +98,6 @@ void InitDesktop() {
 
         attempt++;
     }
+
+    return !failed;
 }

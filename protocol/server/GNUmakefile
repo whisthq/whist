@@ -8,20 +8,12 @@ PLATFORM = linux
 ARCH = $(shell getconf LONG_BIT)
 
 # executable name
-BIN_NAME = build$(ARCH)/server
+BIN_NAME = build$(ARCH)/FractalServer
 
 DYNAMIC_LIBS =
 
 # dynamic libs to link against
 DYNAMIC2_LIBS = \
-	../lib/$(ARCH)/ffmpeg/linux/libavcodec.so.58.54.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavdevice.so.58.8.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavfilter.so.7.57.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavformat.so.58.29.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libavutil.so.56.31.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libpostproc.so.55.5.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libswresample.so.3.5.100 \
-	../lib/$(ARCH)/ffmpeg/linux/libswscale.so.5.5.100 \
 	../lib/$(ARCH)/mfx/linux/libmfx.so.1.32
 
 # system libs to link against
@@ -30,7 +22,7 @@ SHARED_LIBS = \
 	-ldl \
 	-lpthread \
 	-lX11 \
-        -lXfixes \
+	-lXfixes \
 	-lXext \
 	-lXtst \
 	-lasound \
@@ -51,11 +43,13 @@ STATIC_LIBS = \
 
 # files to build into object files
 OBJS = \
+	webserver.o \
 	fractal.o \
-        x11capture.o \
+	x11capture.o \
 	videoencode.o \
 	alsacapture.o \
 	linuxinput.o \
+	linuxcursor.o \
 	audioencode.o \
 	aes.o \
 	x11_clipboard.o \
@@ -74,17 +68,22 @@ CFLAGS = \
 	-O0
 
 LDFLAGS = \
-	  -no-pie \
-	  -g -rdynamic \
-	  -O0
+	-no-pie \
+	-g \
+	-rdynamic \
+	-O0
 
 # link all files into executable
-all: clean clear $(OBJS)
+all: clean clear $(OBJS) logo
 	$(CC) $(LDFLAGS) -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
 fractal.o:
 	$(CC) -c $(CFLAGS) ../include/fractal.c
+
+# compile the webserver source file into object file
+webserver.o:
+	$(CC) -c $(CFLAGS) ../include/webserver.c
 
 # compile the main fractal header source file into object file
 x11capture.o:
@@ -113,6 +112,10 @@ alsacapture.o:
 # compile the input playback source file into object file
 linuxinput.o:
 	$(CC) -c $(CFLAGS) ../include/linuxinput.c
+
+# compile the cursor management source file into object file
+linuxcursor.o:
+	$(CC) -c $(CFLAGS) ../include/linuxcursor.c
 
 # compile the main source file into object file
 main.o:

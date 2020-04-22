@@ -1,4 +1,9 @@
-#include "audiodecode.h"  // header file for this file
+/*
+ * Audio decoding via FFmpeg C library.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#include "audiodecode.h"
 
 audio_decoder_t *create_audio_decoder(int sample_rate) {
     // initialize the audio decoder

@@ -1,9 +1,12 @@
-#include "videoencode.h"  // header file for this file
+/*
+ * Video encoding via FFmpeg C library.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#include "videoencode.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-
-static AVBufferRef *hw_device_ctx = NULL;
 
 void set_opt(encoder_t *encoder, char *option, char *value) {
     int ret = av_opt_set(encoder->context->priv_data, option, value, 0);
@@ -15,6 +18,7 @@ void set_opt(encoder_t *encoder, char *option, char *value) {
 int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
     avcodec_register_all();
     int max_buffer = 4 * (bitrate / FPS);
+    AVBufferRef* hw_device_ctx = NULL;
 
     // TODO: If we end up using graphics card encoding, then we should pass it the image from DXGI WinApi screen capture,
     // so that the uncompressed image doesn't ever hit the CPU or RAM
@@ -246,8 +250,6 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
     return 0;
 }
 
-/// @brief creates encoder encoder
-/// @details creates FFmpeg encoder
 // Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the next one when the previous one doesn't work
 encoder_t *create_video_encoder(int width, int height, int bitrate,
                                 int gop_size) {
@@ -276,8 +278,6 @@ encoder_t *create_video_encoder(int width, int height, int bitrate,
     return NULL;
 }
 
-/// @brief destroy encoder encoder
-/// @details frees FFmpeg encoder memory
 void destroy_video_encoder(encoder_t *encoder) {
     // check if encoder encoder exists
     if (encoder == NULL) {
@@ -289,10 +289,9 @@ void destroy_video_encoder(encoder_t *encoder) {
     if (encoder->sws) {
         sws_freeContext(encoder->sws);
     }
-    avcodec_close(encoder->context);
+    avcodec_free_context(&encoder->context);
 
     // free the encoder context and frame
-    av_free(encoder->context);
     av_free(encoder->sw_frame);
     av_free(encoder->hw_frame);
 
@@ -315,10 +314,8 @@ void video_encoder_unset_iframe(encoder_t *encoder) {
     encoder->sw_frame->key_frame = 0;
 }
 
-/// @brief encode a frame using the encoder encoder
-/// @details encode a RGB frame into encoded format as YUV color
 void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
-    int success = 0;  // boolean for success or failure of encoding
+    int success = 0; // boolean for success or failure of encoding
 
     // init packet to prepare encoding
     av_packet_unref(&encoder->packet);
@@ -329,7 +326,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
         int in_linesize[1] = {encoder->width * 4};
 
         // convert to the encoder format
-        sws_scale(encoder->sws, in_data, in_linesize, 0, encoder->height,
+        sws_scale(encoder->sws, (const uint8_t * const*) in_data, in_linesize, 0, encoder->height,
                   encoder->sw_frame->data, encoder->sw_frame->linesize);
     } else {
         memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));

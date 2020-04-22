@@ -1,3 +1,3 @@
-## Web Client
+## Fractal Web Client
 
 TBD.
