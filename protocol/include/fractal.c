@@ -1590,6 +1590,7 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
         mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
+    set_timeout( context->s, stun_timeout_ms );
 
     // Reuse addr
     opt = 1;
