@@ -268,7 +268,7 @@ encoder_t* encoder_factory_result = NULL;
 int encoder_factory_w;
 int encoder_factory_h;
 int encoder_factory_current_bitrate;
-static int32_t MultithreadedEncoderFactory( void* opaque )
+int32_t MultithreadedEncoderFactory( void* opaque )
 {
     opaque;
     encoder_factory_result = create_video_encoder( encoder_factory_w, encoder_factory_h,
@@ -276,13 +276,14 @@ static int32_t MultithreadedEncoderFactory( void* opaque )
     encoder_finished = true;
     return 0;
 }
-static int32_t MultithreadedDestroyEncoder( void* opaque )
+int32_t MultithreadedDestroyEncoder( void* opaque )
 {
     encoder_t* encoder = (encoder_t*)opaque;
     destroy_video_encoder( encoder );
+    return 0;
 }
 
-static int32_t SendVideo(void* opaque) {
+int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
     struct SocketContext socketContext = *(struct SocketContext*)opaque;
@@ -317,7 +318,7 @@ static int32_t SendVideo(void* opaque) {
     int frames_since_first_iframe = 0;
     update_device = true;
 
-    static clock last_frame_capture;
+    clock last_frame_capture;
     StartTimer(&last_frame_capture);
 
     pending_encoder = false;
@@ -557,7 +558,7 @@ static int32_t SendVideo(void* opaque) {
     return 0;
 }
 
-static int32_t SendAudio(void* opaque) {
+int32_t SendAudio(void* opaque) {
     struct SocketContext context = *(struct SocketContext*)opaque;
     int id = 1;
 
@@ -690,9 +691,7 @@ int main() {
 #ifdef _WIN32
     if( !InitDesktop() )
     {
-        mprintf( "Could not winlogon! Exiting!\n" );
-        SDL_Delay( 50 );
-        return -1;
+        mprintf( "Could not winlogon!\n" );
     }
 #endif
 
