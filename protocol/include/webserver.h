@@ -12,6 +12,4 @@ bool sendLog();
 // @details authenticate the user and return the credentials
 bool sendJSONPost( char* host_s, char* path, char* jsonObj );
 
-char* parse_response( char* credentials );
-
 #endif // WEBSERVER_H
