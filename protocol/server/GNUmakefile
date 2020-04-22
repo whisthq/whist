@@ -74,7 +74,7 @@ LDFLAGS = \
 	-O0
 
 # link all files into executable
-all: clean clear $(OBJS)
+all: clean clear $(OBJS) logo
 	$(CC) $(LDFLAGS) -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
