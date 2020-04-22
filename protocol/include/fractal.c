@@ -1219,6 +1219,7 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
         mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
+    set_timeout( context->s, stun_timeout_ms );
     // Server connection protocol
     context->is_server = true;
 
@@ -1309,6 +1310,7 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
         mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
+    set_timeout( context->s, stun_timeout_ms );
 
     SOCKET udp_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     sendto(udp_s, NULL, 0, 0, (struct sockaddr *)&stun_addr, sizeof(stun_addr));
@@ -1455,6 +1457,7 @@ int CreateTCPClientContext(struct SocketContext *context, char *destination,
         mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
+    set_timeout( context->s, stun_timeout_ms );
 
     // Client connection protocol
     context->is_server = false;
@@ -1501,6 +1504,7 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
         mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
+    set_timeout( context->s, stun_timeout_ms );
 
     // Tell the STUN to use TCP
     SOCKET udp_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
