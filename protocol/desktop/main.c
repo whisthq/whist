@@ -27,7 +27,7 @@ volatile int server_width = -1;
 volatile int server_height = -1;
 
 // maximum mbps
-volatile int max_mbps = STARTING_BITRATE;
+volatile int max_bitrate = STARTING_BITRATE;
 volatile bool update_mbps = false;
 
 // Global state variables
@@ -132,10 +132,10 @@ void update() {
     }
 
     if (update_mbps) {
-        mprintf("Asking for server MBPS to be %f\n", max_mbps);
+        mprintf("Asking for server MBPS to be %f\n", max_bitrate);
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
-        fmsg.mbps = max_mbps / 1024.0 / 1024.0;
+        fmsg.mbps = max_bitrate / 1024.0 / 1024.0;
         SendFmsg(&fmsg);
     }
     // End update checks
@@ -742,7 +742,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (argc == 5) {
-        max_mbps = atoi(argv[4]);
+        max_bitrate = atoi(argv[4]);
     }
 
     FILE* ssh_key_host = fopen( "ssh_host_ecdsa_key.pub", "w" );

@@ -15,7 +15,7 @@ extern volatile SDL_Window* window;
 extern volatile int server_width;
 extern volatile int server_height;
 // Keeping track of max mbps
-extern volatile double max_mbps;
+extern volatile int max_bitrate;
 extern volatile bool update_mbps;
 
 extern volatile int output_width;
@@ -432,7 +432,7 @@ int initMultithreadedVideo(void* opaque) {
     av_image_alloc(videoContext.data, videoContext.linesize, output_width,
                    output_height, AV_PIX_FMT_YUV420P, 1);
 
-    max_mbps = STARTING_BITRATE;
+    max_bitrate = STARTING_BITRATE;
     VideoData.target_mbps = STARTING_BITRATE;
     VideoData.pending_ctx = NULL;
     VideoData.frames_received = 0;
@@ -493,7 +493,7 @@ void updateVideo() {
         // mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 *
         // dropped_rate);
 
-        mprintf( "MBPS: %d %f\n", VideoData.target_mbps, nack_per_second );
+        mprintf( "MBPS: %f %f\n", VideoData.target_mbps, nack_per_second );
 
         // Adjust mbps based on dropped packets
         if ( nack_per_second > 50 ) {
@@ -523,12 +523,12 @@ void updateVideo() {
             update_mbps = true;
         }
 
-        mprintf( "MBPS2: %d\n", VideoData.target_mbps );
+        mprintf( "MBPS2: %f\n", VideoData.target_mbps );
 
         VideoData.bucket = (int) VideoData.target_mbps / BITRATE_BUCKET_SIZE;
-        max_mbps = VideoData.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
+        max_bitrate = (int) VideoData.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
 
-        mprintf( "MBPS3: %d\n", max_mbps );
+        mprintf( "MBPS3: %d\n", max_bitrate );
         VideoData.num_nacked = 0;
 
         VideoData.bytes_transferred = 0;
