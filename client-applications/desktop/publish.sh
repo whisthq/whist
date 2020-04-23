@@ -14,13 +14,14 @@ cd protocol
 mkdir desktop
 cd ..
 cp .protocol/desktop/build64/FractalClient protocol/desktop
-cp -avr .protocol/desktop/loading ../loading/ # loading GIF folder needs to be 1 tree level below executable
+cp -R .protocol/desktop/loading loading/ # loading GIF folder needs to be 1 tree level below executable
 cp .protocol/desktop/build64/sshkey protocol/desktop
 cp .protocol/desktop/build64/sshkey.pub protocol/desktop
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
   # Linux Ubuntu
   cp .protocol/desktop/build64/linux_unison protocol/desktop
   sudo chmod +x protocol/desktop/FractalClient # make file executable
+  sudo chmod +x protocol/desktop/linux_unison # make file executable
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Mac OSX
   cp .protocol/desktop/build64/mac_unison protocol/desktop

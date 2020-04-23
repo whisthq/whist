@@ -55,8 +55,8 @@ class MainBox extends Component {
     const os       = require('os');
 
     if (os.platform() === 'darwin' || os.platform() === 'linux') {
-      var logs = fs.readFileSync(__dirname + "/../../log.txt").toString();
-      var connection_id = parseInt(fs.readFileSync(__dirname + "/../../connection_id.txt").toString());
+      var logs = fs.readFileSync(__dirname + "../log.txt").toString();
+      var connection_id = parseInt(fs.readFileSync(__dirname + "../connection_id.txt").toString());
       this.props.dispatch(sendLogs(connection_id, logs))
     } else if (os.platform() === 'win32') {
       var logs = fs.readFileSync(process.cwd() + "\\protocol\\desktop\\log.txt").toString();
@@ -77,7 +77,7 @@ class MainBox extends Component {
           // check which OS we're on to properly launch the protocol
           if (os.platform() === 'darwin' || os.platform() === 'linux') { // mac & linux
             var path = appRootDir + "/protocol/desktop/FractalClient"
-            path = path.replace('/resources/app.asar','');
+            path = path.replace('/Resources/app.asar','');
             path = path.replace('/desktop/app', '/desktop');
           }
           else if (os.platform() === 'win32') { // windows
