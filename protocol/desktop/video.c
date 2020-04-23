@@ -351,10 +351,10 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
 
         char frame_name[24];
         if (gif_frame_index < 10) {
-            snprintf(frame_name, sizeof( frame_name ), "../loading/frame_0%d.bmp", gif_frame_index);
+            snprintf(frame_name, sizeof( frame_name ), "loading/frame_0%d.bmp", gif_frame_index);
         }
         else {
-            snprintf(frame_name, sizeof( frame_name ), "../loading/frame_%d.bmp", gif_frame_index);
+            snprintf(frame_name, sizeof( frame_name ), "loading/frame_%d.bmp", gif_frame_index);
         }
 
         SDL_Surface* loading_screen = SDL_LoadBMP(frame_name);
