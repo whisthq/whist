@@ -223,14 +223,6 @@ def createVMParameters(vmName, nic_id, vm_size, location):
             conn.execute(command, **params)
             conn.close()
 
-            ORIGINAL_DISK = 'Fractal_Disk_Eastus'
-            if location == 'southcentralus':
-                ORIGINAL_DISK = 'Fractal_Disk_Southcentralus'
-            elif location == 'northcentralus':
-                ORIGINAL_DISK = 'Fractal_Disk_Northcentralus'
-
-            disk_image = compute_client.disks.get(os.getenv('VM_GROUP'), ORIGINAL_DISK)
-
             return {'params': {
                 'location': location,
                 'os_profile': {
