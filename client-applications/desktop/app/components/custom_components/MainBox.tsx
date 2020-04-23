@@ -55,8 +55,8 @@ class MainBox extends Component {
     const os       = require('os');
 
     if (os.platform() === 'darwin' || os.platform() === 'linux') {
-      var logs = fs.readFileSync(__dirname + "/../../log.txt").toString();
-      var connection_id = parseInt(fs.readFileSync(__dirname + "/../../connection_id.txt").toString());
+      var logs = fs.readFileSync(__dirname + "/../log.txt").toString();
+      var connection_id = parseInt(fs.readFileSync(__dirname + "/../connection_id.txt").toString());
       this.props.dispatch(sendLogs(connection_id, logs))
     } else if (os.platform() === 'win32') {
       var logs = fs.readFileSync(process.cwd() + "\\protocol\\desktop\\log.txt").toString();
