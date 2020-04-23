@@ -5,8 +5,6 @@
 *.pyc
 **/Debug/
 **/Release/
-**/build32/
-**/build64/
 .vs/
 .vscode/
 .vscode/settings.json
