@@ -242,7 +242,7 @@ def logs():
     return jsonify({'ID': task.id}), 202
 
 @vm_bp.route('/logs/fetch', methods = ['POST'])
-def fetchLogs():
+def fetch_logs():
     body = request.get_json()
     task = fetchLogs.apply_async([body['username']])
     return jsonify({'ID': task.id}), 202
