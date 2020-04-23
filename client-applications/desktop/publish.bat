@@ -15,5 +15,5 @@ mkdir desktop
 mkdir loading
 cd ..
 copy .protocol\desktop\build64 protocol\desktop
-copy .protocol\desktop\loading protocol\loading
+copy .protocol\desktop\loading ..\loading
 yarn package-ci
