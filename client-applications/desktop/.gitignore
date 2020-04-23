@@ -66,5 +66,5 @@ fractal-protocol
 protocol
 fractal-protocol/desktop
 protocol/desktop
-clipboard
+clipboard/
 log.txt

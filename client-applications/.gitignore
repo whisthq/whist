@@ -8,7 +8,7 @@ desktop/fractal-protocol
 desktop/protocol
 desktop/fractal-protocol/desktop
 desktop/protocol/desktop
-desktop/clipboard
+desktop/clipboard/
 desktop/release
 desktop/log.txt
 desktop/app/main.prod.js
@@ -31,3 +31,5 @@ desktop/npm-debug.log.*
 desktop/*.css.d.ts
 desktop/*.sass.d.ts
 desktop/*.scss.d.ts
+desktop/connection_id.txt
+loading/

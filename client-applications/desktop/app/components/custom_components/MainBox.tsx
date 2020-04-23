@@ -76,7 +76,7 @@ class MainBox extends Component {
 
           // check which OS we're on to properly launch the protocol
           if (os.platform() === 'darwin' || os.platform() === 'linux') { // mac & linux
-            var path =  appRootDir + "/protocol/desktop/FractalClient"
+            var path = appRootDir + "/protocol/desktop/FractalClient"
             path = path.replace('/resources/app.asar','');
             path = path.replace('/desktop/app', '/desktop');
           }

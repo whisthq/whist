@@ -67,10 +67,12 @@
       "main.prod.js",
       "main.prod.js.map",
       "package.json",
-      "build/icon.png"
+      "build/icon.png",
+      "../loading/"
     ],
     "extraFiles": [
-      "protocol/"
+      "protocol/",
+      "../loading"
     ],
     "dmg": {
       "sign": false,
