@@ -242,8 +242,7 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                     },
                     'os_disk': {
                         'os_type': 'Windows',
-                        'create_option': DiskCreateOption.copy,
-                        'source_resource_id': disk_image.id 
+                        'create_option': 'FromImage'
                     }
                 },
                 'network_profile': {
