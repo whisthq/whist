@@ -91,6 +91,14 @@ def vm(action):
         body = request.get_json()
         vms = fetchUserVMs(None)
         return jsonify({'payload': vms, 'status': 200}), 200
+    elif action == 'lock':
+        body = request.get_json()
+        lockVM(body['vm_name'], True)
+        return jsonify({'status': 200}), 200
+    elif action == 'unlock':
+        body = request.get_json()
+        lockVM(body['vm_name'], False)
+        return jsonify({'status': 200}), 200
     return jsonify({}), 400
 
 
@@ -167,20 +175,24 @@ def tracker(action):
         else:
             stripe.api_key = os.getenv('STRIPE_SECRET') 
             subscription_id = customer['subscription']
-            payload = stripe.Subscription.retrieve(subscription_id)
 
-            if os.getenv('HOURLY_PLAN_ID') == payload['items']['data'][0]['plan']['id']:
-                print('NOTIFICATION: {} is an hourly plan subscriber'.format(username))
-                user_activity = getMostRecentActivity(username)
-                print(user_activity)
-                if user_activity['action'] == 'logon':
-                    now = dt.now()
-                    logon = dt.strptime(user_activity['timestamp'], '%m-%d-%Y, %H:%M:%S')
-                    if now - logon > timedelta(minutes = 0):
-                        amount = round(79 * (now - logon).total_seconds()/60/60)
-                        addPendingCharge(username, amount)
-                else:
-                    print('CRITICAL ERROR: {} logged off but no log on was recorded')
+            try:
+                payload = stripe.Subscription.retrieve(subscription_id)
+
+                if os.getenv('HOURLY_PLAN_ID') == payload['items']['data'][0]['plan']['id']:
+                    print('NOTIFICATION: {} is an hourly plan subscriber'.format(username))
+                    user_activity = getMostRecentActivity(username)
+                    print(user_activity)
+                    if user_activity['action'] == 'logon':
+                        now = dt.now()
+                        logon = dt.strptime(user_activity['timestamp'], '%m-%d-%Y, %H:%M:%S')
+                        if now - logon > timedelta(minutes = 0):
+                            amount = round(79 * (now - logon).total_seconds()/60/60)
+                            addPendingCharge(username, amount)
+                    else:
+                        print('CRITICAL ERROR: {} logged off but no log on was recorded')
+            except:
+                pass
 
         addTimeTable(username, 'logoff', time, is_user)
     elif action == 'startup':

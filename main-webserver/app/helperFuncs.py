@@ -222,6 +222,15 @@ def createVMParameters(vmName, nic_id, vm_size, location):
         with engine.connect() as conn:
             conn.execute(command, **params)
             conn.close()
+
+            ORIGINAL_DISK = 'Fractal_Disk_Eastus'
+            if location == 'southcentralus':
+                ORIGINAL_DISK = 'Fractal_Disk_Southcentralus'
+            elif location == 'northcentralus':
+                ORIGINAL_DISK = 'Fractal_Disk_Northcentralus'
+
+            disk_image = compute_client.disks.get(os.getenv('VM_GROUP'), ORIGINAL_DISK)
+
             return {'params': {
                 'location': location,
                 'os_profile': {
@@ -241,8 +250,8 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                     },
                     'os_disk': {
                         'os_type': 'Windows',
-                        'create_option': 'FromImage',
-                        'caching': 'ReadOnly'
+                        'create_option': DiskCreateOption.copy,
+                        'source_resource_id': disk_image.id 
                     }
                 },
                 'network_profile': {
@@ -251,7 +260,6 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                     }]
                 },
             }, 'vm_name': vmName}
-
 
 def createDiskEntry(disk_name, vm_name, username, location):
     with engine.connect() as conn:
@@ -1456,3 +1464,4 @@ def spinLock(vm_name):
         locked = checkLock(vm_name)
 
     return 1
+
