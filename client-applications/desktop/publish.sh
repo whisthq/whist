@@ -21,6 +21,7 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
   # Linux Ubuntu
   cp .protocol/desktop/build64/linux_unison protocol/desktop
   sudo chmod +x protocol/desktop/FractalClient # make file executable
+  sudo chmod +x protocol/desktop/linux_unison # make file executable
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Mac OSX
   cp .protocol/desktop/build64/mac_unison protocol/desktop
