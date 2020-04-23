@@ -1089,9 +1089,9 @@ def assignUserToDisk(disk_name, username):
 
 def fetchAttachableVMs(state, location):
     command = text("""
-        SELECT * FROM v_ms WHERE "state" = :state AND "location" = :location AND "lock" = :lock
+        SELECT * FROM v_ms WHERE "state" = :state AND "location" = :location AND "lock" = :lock AND "dev" = :dev
         """)
-    params = {'state': state, 'location': location, 'lock': False}
+    params = {'state': state, 'location': location, 'lock': False, 'dev': False}
 
     with engine.connect() as conn:
         vms = cleanFetchedSQL(conn.execute(command, **params).fetchall())
@@ -1464,4 +1464,3 @@ def spinLock(vm_name):
         locked = checkLock(vm_name)
 
     return 1
-

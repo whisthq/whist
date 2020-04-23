@@ -240,3 +240,9 @@ def logs():
 
     task = storeLogs.apply_async([body['sender'], body['connection_id'], body['logs'], vm_ip])
     return jsonify({'ID': task.id}), 202
+
+@vm_bp.route('/logs/fetch', methods = ['POST'])
+def fetchLogs():
+    body = request.get_json()
+    task = fetchLogs.apply_async([body['username']])
+    return jsonify({'ID': task.id}), 202

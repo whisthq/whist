@@ -700,3 +700,16 @@ def storeLogs(self, sender, connection_id, logs, vm_ip):
                 conn.execute(command, **params)
         return {'status': 200}
     return {'status': 422}
+
+
+@celery.task(bind=True)
+def fetchLogs(self, username):
+	command = text("""
+	    SELECT * FROM logs WHERE "username" = :username
+	    """)
+
+	params = {'username': username}
+
+	with engine.connect() as conn:
+	    logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+	    return logs
