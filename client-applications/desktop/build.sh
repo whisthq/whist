@@ -14,7 +14,8 @@ cd protocol
 mkdir desktop
 cd ..
 cp .protocol/desktop/build64/FractalClient protocol/desktop
-cp -R .protocol/desktop/loading loading/ # loading GIF folder needs to be 1 tree level below executable
+cp -R .protocol/desktop/build64/loading loading/
+cp -R .protocol/desktop/build64/loading protocol/desktop/loading/
 cp .protocol/desktop/build64/sshkey protocol/desktop
 cp .protocol/desktop/build64/sshkey.pub protocol/desktop
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
