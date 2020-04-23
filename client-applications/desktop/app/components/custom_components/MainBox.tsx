@@ -15,6 +15,7 @@ import Video from "../../../resources/images/video.svg";
 import Window from "../../../resources/images/window.svg";
 import Speedometer from "../../../resources/images/speedometer.svg";
 import Car from "../../../resources/images/car.jpg";
+import Scale from "../../../resources/images/scale.svg"
 
 import { resetFeedback, sendFeedback, askFeedback, trackUserActivity, changeWindow, attachDisk, restartPC, vmRestarted, sendLogs } from "../../actions/counter"
 
@@ -22,7 +23,7 @@ class MainBox extends Component {
   constructor(props) {
     super(props)
     this.state = {launches: 0, windowMode: false, mbps: 50, nickname: '', editNickname: -1, diskAttaching: false,
-                  launched: false, reattached: false, restartPopup: false, vmRestarting: false}
+                  launched: false, reattached: false, restartPopup: false, vmRestarting: false, scale: 100}
   }
 
   TrackActivity = (action) => {
@@ -56,14 +57,10 @@ class MainBox extends Component {
     if (os.platform() === 'darwin' || os.platform() === 'linux') {
       var logs = fs.readFileSync(__dirname + "/../../log.txt").toString();
       var connection_id = parseInt(fs.readFileSync(__dirname + "/../../connection_id.txt").toString());
-      console.log("the connection id is")
-      console.log(connection_id)
       this.props.dispatch(sendLogs(connection_id, logs))
     } else if (os.platform() === 'win32') {
       var logs = fs.readFileSync(process.cwd() + "\\protocol\\desktop\\log.txt").toString();
-      var connection_id = parseInt(fs.readFileSync(process.cwd() + "\\protocol\\desktop\\connection_id.txt").toString());
-      console.log("the connection id is")
-      console.log(connection_id)
+      var connection_id = parseInt(fs.readFileSync(process.cwd() + "\\connection_id.txt").toString());
       this.props.dispatch(sendLogs(connection_id, logs))
     }
   }
@@ -90,11 +87,12 @@ class MainBox extends Component {
           var screenWidth = this.state.windowMode ? window.screen.width : 0
           var screenHeight = this.state.windowMode ? (window.screen.height - 70) : 0
 
-          var parameters = [this.props.public_ip, screenWidth, screenHeight, this.state.mbps, this.state.windowMode]
+          var parameters = [this.props.public_ip, screenWidth, screenHeight, this.state.mbps]
 
           if(this.state.launches == 1) {
             this.TrackActivity(true);
           }
+
           const protocol = child(path, parameters, {detached: true, stdio: 'ignore', windowsHide: true});
 
           protocol.on('close', (code) => {
@@ -130,6 +128,16 @@ class MainBox extends Component {
     storage.set('settings', {mbps: mbps})
   }
 
+  changeScale = (scale) => {
+    const storage = require('electron-json-storage');
+    let component = this;
+
+    this.setState({scale: scale}, function() {
+      storage.set('scale', {scale: scale})
+    })
+  }
+
+
   OpenDashboard = () => {
     const {shell} = require('electron')
     shell.openExternal('https://www.fractalcomputers.com/dashboard')
@@ -157,6 +165,11 @@ class MainBox extends Component {
     storage.get('window', function(error, data) {
       if (error) throw error;
       component.setState({windowMode: data.windowMode})
+    });
+
+    storage.get('scale', function(error, data) {
+      if (error) throw error;
+      component.setState({scale: data.scale})
     });
   }
 
@@ -446,6 +459,36 @@ class MainBox extends Component {
               <div style = {{display: 'flex'}}>
                 <div style = {{width: '75%'}}>
                   <div style = {{color: '#111111', fontSize: 16, fontWeight: 'bold'}}>
+                    <img src = {Scale} style = {{color: '#111111', height: 14, marginRight: 12, position: 'relative', top: 2, width: 16}}/>
+                    Scaling Factor
+                  </div>
+                  <div style = {{fontSize: 13, color: '#333333', marginTop: 10, marginLeft: 28, lineHeight: 1.4}}>
+                    Increase or decrease your scaling factor to change the width and height of icons on your cloud PC.
+                  </div>
+                </div>
+                <div style = {{width: '25%'}}>
+                  <div style = {{float: 'right'}}>
+                    {
+                    this.state.scale === 100
+                    ?
+                    <select id="resolution-select" style = {{padding: 4, outline: 'none'}}>
+                      <option value="100%" selected onClick = {() => this.setScale(100)}>100%</option>
+                      <option value="150%" onClick = {() => this.setScale(150)}>150%</option>
+                    </select>
+                    :
+                    <select id="resolution-select" style = {{padding: 4, outline: 'none'}}>
+                      <option value="100%" onClick = {() => this.setScale(100)}>100%</option>
+                      <option value="150%" selected onClick = {() => this.setScale(150)}>150%</option>
+                    </select>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style = {{padding: '30px 30px', borderBottom: 'solid 0.5px #EFEFEF'}}>
+              <div style = {{display: 'flex'}}>
+                <div style = {{width: '75%'}}>
+                  <div style = {{color: '#111111', fontSize: 16, fontWeight: 'bold'}}>
                     <img src = {Speedometer} style = {{color: '#111111', height: 14, marginRight: 12, position: 'relative', top: 2, width: 16}}/>
                     Maximum Bandwidth
                   </div>
@@ -486,7 +529,7 @@ class MainBox extends Component {
                 </div>
               </div>
             </div>
-            <div style = {{padding: '30px 30px'}}>
+            <div style = {{padding: '30px 30px', marginBottom: 30}}>
               <div style = {{float: 'right'}}>
                 <button onClick = {this.ExitSettings} className = {styles.signupButton} style = {{borderRadius: 5, width: 140}}>
                   Save &amp; Exit

@@ -11,6 +11,8 @@ class DistanceBox extends Component {
   }
 
   CalculateDistance = (public_ip) => {
+    console.log("THE PUBLIC IP IS")
+    console.log(public_ip)
     let component = this;
     const iplocation = require("iplocation").default;
     var options = {
@@ -23,20 +25,22 @@ class DistanceBox extends Component {
     navigator.geolocation.getCurrentPosition(showPosition, showError, options);
 
     function showPosition(position) {
-      iplocation(public_ip).then(function(res) {
-        dist = geolib.getDistance(
-        {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        },
-        {
-          latitude: res.latitude,
-          longitude: res.longitude,
-        });
-        dist = Math.round(dist / metersInMile)
-        component.setState({distance: dist,
-          distancebar: Math.min(Math.max(220 * dist / 1000, 80), 220)})
-      })
+      if(public_ip && public_ip !== '') {
+        iplocation(public_ip).then(function(res) {
+          dist = geolib.getDistance(
+          {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          },
+          {
+            latitude: res.latitude,
+            longitude: res.longitude,
+          });
+          dist = Math.round(dist / metersInMile)
+          component.setState({distance: dist,
+            distancebar: Math.min(Math.max(220 * dist / 1000, 80), 220)})
+        })
+      }
     }
 
     function showError(error) {
