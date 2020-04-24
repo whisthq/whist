@@ -78,7 +78,8 @@ def vm(action):
         return jsonify({'ID': task.id}), 202
     elif action == 'diskSwap':
         body = request.get_json()
-        task = swapSpecificDisk.apply_async([body['disk_name'], body['vm_name']])
+        task = swapSpecificDisk.apply_async(
+            [body['disk_name'], body['vm_name']])
         return jsonify({'ID': task.id}), 202
     elif action == 'updateTable':
         task = updateVMTable.apply_async([])
@@ -117,7 +118,8 @@ def disk(action):
     elif action == 'createFromImage':
         body = request.get_json()
         print(body)
-        task = createDiskFromImage.apply_async([body['username'], body['location'], body['vm_size']])
+        task = createDiskFromImage.apply_async(
+            [body['username'], body['location'], body['vm_size']])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
@@ -153,7 +155,8 @@ def disk(action):
 
 # TRACKER endpoint
 
-@vm_bp.route('/tracker/<action>', methods = ['POST'])
+
+@vm_bp.route('/tracker/<action>', methods=['POST'])
 @jwt_required
 def tracker(action):
     body = request.get_json()
@@ -211,6 +214,7 @@ def tracker(action):
 
 # INFO endpoint
 
+
 @vm_bp.route('/info/<action>', methods=['GET', 'POST'])
 @jwt_required
 def info(action):
@@ -231,6 +235,7 @@ def info(action):
 
     return jsonify({}), 400
 
+<<<<<<< HEAD
 @vm_bp.route('/logs', methods = ['POST'])
 def logs():
     body = request.get_json()
@@ -246,3 +251,13 @@ def fetch_logs():
     body = request.get_json()
     task = fetchLogs.apply_async([body['username']])
     return jsonify({'ID': task.id}), 202
+=======
+
+@vm_bp.route('/test/<action>', methods=['GET'])
+def test(action):
+    if action == 'celerytest':
+        task = hello2.apply_async(["Jonathan"])
+        if not task:
+            return jsonify({}), 400
+        return jsonify({'result': task.id}), 200
+>>>>>>> testing celery
