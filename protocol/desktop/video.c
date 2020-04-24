@@ -389,6 +389,8 @@ void clearSDL(SDL_Renderer* renderer) {
 int initMultithreadedVideo(void* opaque) {
     opaque;
 
+    mprintf( "Creating renderer for %dx%d display\n", output_width, output_height );
+
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     SDL_Renderer* renderer =
         SDL_CreateRenderer((SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
