@@ -86,8 +86,8 @@ export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk
 # export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk
 # export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
 
-# Info.plist contains MacOS-specific instructions to enable High DPI
-INFO_PLIST_PATH=Info.plist
+# Info.plist contains MacOS-specific instructions to enable High DPI (handled in Electron app)
+# INFO_PLIST_PATH=Info.plist
 
 # dynamic libs to link against
 DYNAMIC_LIBS = \
@@ -126,8 +126,8 @@ CFLAGS = \
 	-Wno-unused-parameter \
 	-I ../include \
 	-I ../include/ffmpeg \
-	-O0 \
-	-Wl,-sectcreate,__TEXT,__info_plist,$(INFO_PLIST_PATH)
+	-O0
+	# -Wl,-sectcreate,__TEXT,__info_plist,$(INFO_PLIST_PATH) (handled in Electron app)
 endif
 
 ################## COMMON ##################
