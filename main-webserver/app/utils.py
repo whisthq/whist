@@ -32,21 +32,11 @@ def generateCode():
 def unixToDate(utc):
     return datetime.datetime.fromtimestamp(utc)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-def getCurrentTime():
-    return datetime.datetime.now().strftime('%m/%d/%Y, %H:%M')
-    
-=======
-
->>>>>>> testing celery
-=======
 
 def getCurrentTime():
     return datetime.datetime.now().strftime('%m/%d/%Y, %H:%M')
 
 
->>>>>>> merging
 def dateToUnix(date):
     return round(date.timestamp())
 
