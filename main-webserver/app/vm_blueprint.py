@@ -40,10 +40,12 @@ def status(task_id):
         }
         return make_response(jsonify(response), 200)
 
+
 @vm_bp.route('/dummy', methods=['POST'])
 def dummy():
     task = stateChangeTest.apply_async()
     return jsonify({'ID': task.id}), 202
+
 
 @vm_bp.route('/vm/<action>', methods=['POST'])
 def vm(action):
@@ -260,6 +262,15 @@ def info(action):
 
     return jsonify({}), 400
 
+# Test2
+@vm_bp.route('/test/<action>', methods=['GET'])
+def test(action):
+    if action == 'celerytest':
+        task = hello2.apply_async(["Jonathan"])
+        if not task:
+            return jsonify({}), 400
+        return jsonify({'result': task.id}), 200
+
 
 @vm_bp.route('/logs', methods=['POST'])
 def logs():
@@ -278,4 +289,3 @@ def fetch_logs():
     body = request.get_json()
     task = fetchLogs.apply_async([body['username']])
     return jsonify({'ID': task.id}), 202
-
