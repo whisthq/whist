@@ -342,10 +342,6 @@ int CaptureScreen(struct CaptureDevice *device) {
 
   hr = screenshot->desktop_resource->lpVtbl->QueryInterface(screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
 
-  D3D11_TEXTURE2D_DESC tDesc;
-  screenshot->final_texture->lpVtbl->GetDesc( &screenshot->final_texture, &tDesc );
-  mprintf( "ScreenCapture Dimensions: %d\n", tDesc.Width, tDesc.Height );
-
   if (FAILED(hr)) {
       mprintf("Query Interface Failed!\n");
       return -1;
