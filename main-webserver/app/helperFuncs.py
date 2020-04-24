@@ -252,17 +252,19 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                 },
             }, 'vm_name': vmName}
 
-def createDiskEntry(disk_name, vm_name, username, location):
+
+def createDiskEntry(disk_name, vm_name, username, location, state="ACTIVE"):
     with engine.connect() as conn:
         command = text("""
-            INSERT INTO disks("disk_name", "vm_name", "username", "location") 
-            VALUES(:diskname, :vmname, :username, :location)
+            INSERT INTO disks("disk_name", "vm_name", "username", "location", "state") 
+            VALUES(:diskname, :vmname, :username, :location, :state)
             """)
         params = {
             'diskname': disk_name,
             'vmname': vm_name,
             'username': username,
-            "location": location
+            "location": location,
+            "state": state
         }
         with engine.connect() as conn:
             conn.execute(command, **params)
