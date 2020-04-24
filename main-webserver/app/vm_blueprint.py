@@ -240,7 +240,7 @@ def info(action):
 
     return jsonify({}), 400
 
-
+# Test
 @vm_bp.route('/test/<action>', methods=['GET'])
 def test(action):
     if action == 'celerytest':
