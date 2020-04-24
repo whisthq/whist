@@ -6,3 +6,4 @@ Test-Environment
 env3.6
 herokulogs.txtgg
 .venv/
+**/__pycache__/

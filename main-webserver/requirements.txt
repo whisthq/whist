@@ -117,7 +117,7 @@ msrest==0.6.10
 msrestazure==0.6.2
 numpy==1.16.6
 oauthlib==3.1.0
-psycopg2==2.8.4
+psycopg2-binary==2.8.5
 pyasn1==0.4.7
 pycparser==2.19
 PyJWT==1.7.1
