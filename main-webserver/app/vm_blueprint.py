@@ -240,10 +240,6 @@ def info(action):
 
     return jsonify({}), 400
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-@vm_bp.route('/logs', methods = ['POST'])
-=======
 
 @vm_bp.route('/test/<action>', methods=['GET'])
 def test(action):
@@ -255,7 +251,6 @@ def test(action):
 
 
 @vm_bp.route('/logs', methods=['POST'])
->>>>>>> merging
 def logs():
     body = request.get_json()
     vm_ip = None
@@ -272,8 +267,7 @@ def fetch_logs():
     body = request.get_json()
     task = fetchLogs.apply_async([body['username']])
     return jsonify({'ID': task.id}), 202
-<<<<<<< HEAD
-=======
+
 
 @vm_bp.route('/test/<action>', methods=['GET'])
 def test(action):
@@ -282,6 +276,3 @@ def test(action):
         if not task:
             return jsonify({}), 400
         return jsonify({'result': task.id}), 200
->>>>>>> testing celery
-=======
->>>>>>> merging
