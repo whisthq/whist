@@ -240,15 +240,6 @@ def info(action):
 
     return jsonify({}), 400
 
-# Test
-@vm_bp.route('/test/<action>', methods=['GET'])
-def test(action):
-    if action == 'celerytest':
-        task = hello2.apply_async(["Jonathan"])
-        if not task:
-            return jsonify({}), 400
-        return jsonify({'result': task.id}), 200
-
 
 @vm_bp.route('/logs', methods=['POST'])
 def logs():
@@ -268,11 +259,3 @@ def fetch_logs():
     task = fetchLogs.apply_async([body['username']])
     return jsonify({'ID': task.id}), 202
 
-
-@vm_bp.route('/test/<action>', methods=['GET'])
-def test(action):
-    if action == 'celerytest':
-        task = hello2.apply_async(["Jonathan"])
-        if not task:
-            return jsonify({}), 400
-        return jsonify({'result': task.id}), 200
