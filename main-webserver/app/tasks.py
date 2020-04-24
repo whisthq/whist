@@ -476,8 +476,14 @@ def swapDisk(self, disk_name):
 					lockVM(vm_name, False)
 					return {'status': 400}
 				else:
-					print("NOTIFICATION: No VMs are available. Going to sleep...")
-					time.sleep(30)
+					# Create a new VM, discard new disk, insert user disk
+					print("NOTIFICATION: No VMs are available. Creating new VM...")
+					newDbVm = createVM(self, "Standard_NV6_Promo", location)
+					newVm = getVM(newDbVm['vm_name'])
+					newDiskName = newVm.storage_profile.os_disk.name
+					#newDisk = compute_client.disks.get(os.environ.get('VM_GROUP'), newDiskName)
+					createDiskEntry(newDiskName, newDbVm['vm_name'], "", location, "TO_BE_DELETED")
+					
 	return {'status': 200}
 
 

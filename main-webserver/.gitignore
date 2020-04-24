@@ -4,4 +4,5 @@ Test-Environment
 "env" 
 *.pyc
 env3.6
-herokulogs.txt
+herokulogs.txtgg
+.venv/
