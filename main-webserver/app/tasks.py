@@ -512,9 +512,7 @@ def swapSpecificDisk(self, disk_name, vm_name):
 	print(f"SUCCESS: Disk swapped out in {end - start:0.4f} seconds. Restarting " + vm_name)
 
 	start = time.perf_counter()
-	async_vm_restart = compute_client.virtual_machines.restart(
-		'Fractal', vm.name)
-	async_vm_restart.wait()
+	fractalVMStart(vm_name)
 	end = time.perf_counter()
 
 	print(f"SUCCESS: VM restarted in {end - start:0.4f} seconds")
