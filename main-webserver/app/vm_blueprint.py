@@ -78,7 +78,8 @@ def vm(action):
         return jsonify({'ID': task.id}), 202
     elif action == 'diskSwap':
         body = request.get_json()
-        task = swapSpecificDisk.apply_async([body['disk_name'], body['vm_name']])
+        task = swapSpecificDisk.apply_async(
+            [body['disk_name'], body['vm_name']])
         return jsonify({'ID': task.id}), 202
     elif action == 'updateTable':
         task = updateVMTable.apply_async([])
@@ -91,6 +92,14 @@ def vm(action):
         body = request.get_json()
         vms = fetchUserVMs(None)
         return jsonify({'payload': vms, 'status': 200}), 200
+    elif action == 'lock':
+        body = request.get_json()
+        lockVM(body['vm_name'], True)
+        return jsonify({'status': 200}), 200
+    elif action == 'unlock':
+        body = request.get_json()
+        lockVM(body['vm_name'], False)
+        return jsonify({'status': 200}), 200
     return jsonify({}), 400
 
 
@@ -109,7 +118,8 @@ def disk(action):
     elif action == 'createFromImage':
         body = request.get_json()
         print(body)
-        task = createDiskFromImage.apply_async([body['username'], body['location'], body['vm_size']])
+        task = createDiskFromImage.apply_async(
+            [body['username'], body['location'], body['vm_size']])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
@@ -145,7 +155,8 @@ def disk(action):
 
 # TRACKER endpoint
 
-@vm_bp.route('/tracker/<action>', methods = ['POST'])
+
+@vm_bp.route('/tracker/<action>', methods=['POST'])
 @jwt_required
 def tracker(action):
     body = request.get_json()
@@ -161,6 +172,36 @@ def tracker(action):
     elif action == 'logoff':
         username = body['username']
         is_user = body['is_user']
+        customer = fetchCustomer(username)
+        if not customer:
+            print(
+                'CRITICAL ERROR: {} logged on/off but is not a registered customer'.format(username))
+        else:
+            stripe.api_key = os.getenv('STRIPE_SECRET')
+            subscription_id = customer['subscription']
+
+            try:
+                payload = stripe.Subscription.retrieve(subscription_id)
+
+                if os.getenv('HOURLY_PLAN_ID') == payload['items']['data'][0]['plan']['id']:
+                    print(
+                        'NOTIFICATION: {} is an hourly plan subscriber'.format(username))
+                    user_activity = getMostRecentActivity(username)
+                    print(user_activity)
+                    if user_activity['action'] == 'logon':
+                        now = dt.now()
+                        logon = dt.strptime(
+                            user_activity['timestamp'], '%m-%d-%Y, %H:%M:%S')
+                        if now - logon > timedelta(minutes=0):
+                            amount = round(
+                                79 * (now - logon).total_seconds()/60/60)
+                            addPendingCharge(username, amount)
+                    else:
+                        print(
+                            'CRITICAL ERROR: {} logged off but no log on was recorded')
+            except:
+                pass
+
         addTimeTable(username, 'logoff', time, is_user)
     elif action == 'startup':
         username = body['username']
@@ -177,6 +218,7 @@ def tracker(action):
     return jsonify({}), 200
 
 # INFO endpoint
+
 
 @vm_bp.route('/info/<action>', methods=['GET', 'POST'])
 @jwt_required
@@ -197,3 +239,40 @@ def info(action):
         return jsonify({'ID': task.id}), 202
 
     return jsonify({}), 400
+
+# Test
+@vm_bp.route('/test/<action>', methods=['GET'])
+def test(action):
+    if action == 'celerytest':
+        task = hello2.apply_async(["Jonathan"])
+        if not task:
+            return jsonify({}), 400
+        return jsonify({'result': task.id}), 200
+
+
+@vm_bp.route('/logs', methods=['POST'])
+def logs():
+    body = request.get_json()
+    vm_ip = None
+    if 'vm_ip' in body:
+        vm_ip = body['vm_ip']
+
+    task = storeLogs.apply_async(
+        [body['sender'], body['connection_id'], body['logs'], vm_ip])
+    return jsonify({'ID': task.id}), 202
+
+
+@vm_bp.route('/logs/fetch', methods=['POST'])
+def fetch_logs():
+    body = request.get_json()
+    task = fetchLogs.apply_async([body['username']])
+    return jsonify({'ID': task.id}), 202
+
+
+@vm_bp.route('/test/<action>', methods=['GET'])
+def test(action):
+    if action == 'celerytest':
+        task = hello2.apply_async(["Jonathan"])
+        if not task:
+            return jsonify({}), 400
+        return jsonify({'result': task.id}), 200

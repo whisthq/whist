@@ -199,13 +199,10 @@ def account_feedback():
 @account_bp.route('/admin/<action>', methods=['POST'])
 def admin(action):
     body = request.get_json()
-    print(body)
-    print(os.getenv('DASHBOARD_USERNAME'))
-    print(os.getenv('DASHBOARD_PASSWORD'))
     if action == 'login':
         if body['username'] == os.getenv('DASHBOARD_USERNAME') and body['password'] == os.getenv('DASHBOARD_PASSWORD'):
-            print("EQUAL")
-            return jsonify({'status': 200}), 200
+            access_token, refresh_token = getAccessTokens(body['username'])
+            return jsonify({'status': 200, 'access_token': access_token, 'refresh_token': refresh_token}), 200
         return jsonify({'status': 422}), 422
 
 
