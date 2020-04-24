@@ -1,5 +1,7 @@
 # VS Code
 .vscode
+yarn.lock
+node_modules/
 
 # desktop
 desktop/.fractal-protocol
