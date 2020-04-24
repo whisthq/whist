@@ -36,33 +36,33 @@ def createVM(self, vm_size, location):
         'type_handler_version': '1.2'
     }
 
-    async_vm_powershell = compute_client.virtual_machine_extensions.create_or_update(os.environ.get('VM_GROUP'),
-                                                                                     vmParameters['vm_name'], 'NvidiaGpuDriverWindows', extension_parameters)
-    async_vm_powershell.wait()
+    async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(os.environ.get('VM_GROUP'),
+                                                                                    vmParameters['vm_name'], 'NvidiaGpuDriverWindows', extension_parameters)
+    async_vm_extension.wait()
 
     async_vm_start = compute_client.virtual_machines.start(
         os.environ.get('VM_GROUP'), vmParameters['vm_name'])
     async_vm_start.wait()
 
-    with open('app/scripts/vmCreate.txt', 'r') as file:
-        print("TASK: Starting to run Powershell scripts")
-        command = file.read()
-        run_command_parameters = {
-            'command_id': 'RunPowerShellScript',
-            'script': [
-                command
-            ]
-        }
+    # with open('app/scripts/vmCreate.txt', 'r') as file:
+    # 	print("TASK: Starting to run Powershell scripts")
+    # 	command = file.read()
+    # 	run_command_parameters = {
+    # 		'command_id': 'RunPowerShellScript',
+    # 		'script': [
+    # 			command
+    # 		]
+    # 	}
 
-        poller = compute_client.virtual_machines.run_command(
-            os.environ.get('VM_GROUP'),
-            vmParameters['vm_name'],
-            run_command_parameters
-        )
+    # 	poller = compute_client.virtual_machines.run_command(
+    # 		os.environ.get('VM_GROUP'),
+    # 		vmParameters['vm_name'],
+    # 		run_command_parameters
+    # 	)
 
-        result = poller.result()
-        print("SUCCESS: Powershell scripts finished running")
-        print(result.value[0].message)
+    # 	result = poller.result()
+    # 	print("SUCCESS: Powershell scripts finished running")
+    # 	print(result.value[0].message)
 
     vm = getVM(vmParameters['vm_name'])
     vm_ip = getIP(vm)
@@ -310,7 +310,9 @@ def startVM(self, vm_name):
     lockVM(vm_name, True)
 
     _, compute_client, _ = createClients()
-    fractalVMStart(vm_name)
+    if fractalVMStart(vm_name) > 0:
+        vm_state = fetchVMCredentials(vm_name)['state']
+        updateVMState(vm_name, vm_state.replace('NOT_', ''))
 
     lockVM(vm_name, False)
 
@@ -393,6 +395,7 @@ def syncDisks(self):
 
 @celery.task(bind=True)
 def swapDisk(self, disk_name):
+
     print("Swap disk task added to Redis queue")
     _, compute_client, _ = createClients()
     os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
@@ -450,7 +453,7 @@ def swapDisk(self, disk_name):
         return vm_credentials
     # Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
     # (then reboot the VM), or wait until a VM becomes available.
-    if not vm_attached or original_vm_name:
+    if not vm_attached:
         free_vm_found = False
         while not free_vm_found:
             print("No VM attached to " + disk_name)
@@ -487,15 +490,8 @@ def swapDisk(self, disk_name):
                     lockVM(vm_name, False)
                     return {'status': 400}
                 else:
-                    # Create a new VM, discard new disk, insert user disk
-                    print("NOTIFICATION: No VMs are available. Creating new VM...")
-                    newDbVm = createVM(self, "Standard_NV6_Promo", location)
-                    newVm = getVM(newDbVm['vm_name'])
-                    newDiskName = newVm.storage_profile.os_disk.name
-                    # newDisk = compute_client.disks.get(os.environ.get('VM_GROUP'), newDiskName)
-                    createDiskEntry(
-                        newDiskName, newDbVm['vm_name'], "", location, "TO_BE_DELETED")
-
+                    print("NOTIFICATION: No VMs are available. Going to sleep...")
+                    time.sleep(30)
     return {'status': 200}
 
 
@@ -623,6 +619,8 @@ def deallocateVM(self, vm_name):
     lockVM(vm_name, True)
 
     _, compute_client, _ = createClients()
+
+    print('NOTIFICATION: Starting to deallocate {}'.format(vm_name))
 
     async_vm_deallocate = compute_client.virtual_machines.deallocate(
         os.environ.get('VM_GROUP'), vm_name)

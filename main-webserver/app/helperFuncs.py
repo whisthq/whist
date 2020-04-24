@@ -88,7 +88,7 @@ def deleteResource(name, delete_disk):
         '_vnet', name + '_subnet', name + '_ip', name + '_nic'
     hr = 1
 
-    # get VM info based on name 
+    # get VM info based on name
     virtual_machine = getVM(name)
     os_disk_name = virtual_machine.storage_profile.os_disk.name
 
@@ -98,12 +98,12 @@ def deleteResource(name, delete_disk):
         async_vm_deallocate = compute_client.virtual_machines.deallocate(
             os.getenv('VM_GROUP'), name)
         async_vm_deallocate.wait()
-        time.sleep(60) # wait a whole minute to ensure it deallocated properly
+        time.sleep(60)  # wait a whole minute to ensure it deallocated properly
         print("VM deallocated")
     except Exception as e:
         print(e)
         hr = -1
-  
+
     # step 2, detach the IP
     try:
         print("Attempting to detach the IP...")
@@ -119,7 +119,7 @@ def deleteResource(name, delete_disk):
                 'subnet': {'id': subnet_obj.id},
                 # None: Disassociate;
                 'public_ip_address': None,
-             }]
+            }]
         }
         # use method create_or_update to update network interface configuration.
         async_ip_detach = network_client.network_interfaces.create_or_update(
@@ -507,7 +507,7 @@ def addTimeTable(username, action, time, is_user):
 
     print('NOTIFICATION: Adding to time table a {} at time {}'.format(action, now))
 
-    params = {'userName': username, 'currentTime': now, 
+    params = {'userName': username, 'currentTime': now,
               'action': action, 'is_user': is_user}
 
     with engine.connect() as conn:
@@ -527,19 +527,22 @@ def addTimeTable(username, action, time, is_user):
                     lockVM(vm_name, True)
 
                 vm_state = compute_client.virtual_machines.instance_view(
-                    resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+                    resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
                 if 'running' in vm_state.statuses[1].code:
                     state = 'RUNNING_AVAILABLE' if action == 'logoff' else 'RUNNING_UNAVAILABLE'
                     updateVMState(vms[0]['vm_name'], state)
                 else:
                     state = 'NOT_RUNNING_AVAILABLE' if action == 'logoff' else 'NOT_RUNNING_UNAVAILABLE'
-                    updateVMState(vms[0]['vm_name'], state)  
+                    updateVMState(vms[0]['vm_name'], state)
             else:
-                print("CRITICAL ERROR: Could not find a VM currently attached to disk " + disk_name)
+                print(
+                    "CRITICAL ERROR: Could not find a VM currently attached to disk " + disk_name)
         else:
-            print("CRITICAL ERROR: Could not find disk in database attached to user " + username)
+            print(
+                "CRITICAL ERROR: Could not find disk in database attached to user " + username)
 
         conn.close()
+
 
 def deleteTimeTable():
     command = text("""
@@ -559,7 +562,8 @@ def fetchUserVMs(username):
             """)
         params = {'username': username}
         with engine.connect() as conn:
-            vms_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            vms_info = cleanFetchedSQL(
+                conn.execute(command, **params).fetchall())
             conn.close()
             return vms_info
     else:
@@ -568,12 +572,13 @@ def fetchUserVMs(username):
             """)
         params = {}
         with engine.connect() as conn:
-            vms_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            vms_info = cleanFetchedSQL(
+                conn.execute(command, **params).fetchall())
             conn.close()
             return vms_info
 
 
-def fetchUserDisks(username, show_all = False):
+def fetchUserDisks(username, show_all=False):
     if username:
         if not show_all:
             command = text("""
@@ -581,7 +586,8 @@ def fetchUserDisks(username, show_all = False):
                 """)
             params = {'username': username, 'state': 'ACTIVE'}
             with engine.connect() as conn:
-                disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                disks_info = cleanFetchedSQL(
+                    conn.execute(command, **params).fetchall())
                 conn.close()
                 return disks_info
         else:
@@ -590,7 +596,8 @@ def fetchUserDisks(username, show_all = False):
                 """)
             params = {'username': username}
             with engine.connect() as conn:
-                disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                disks_info = cleanFetchedSQL(
+                    conn.execute(command, **params).fetchall())
                 conn.close()
                 return disks_info
     else:
@@ -599,7 +606,8 @@ def fetchUserDisks(username, show_all = False):
             """)
         params = {}
         with engine.connect() as conn:
-            disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            disks_info = cleanFetchedSQL(
+                conn.execute(command, **params).fetchall())
             conn.close()
             return disks_info
 
@@ -662,10 +670,12 @@ def fetchLoginActivity():
         """)
     params = {}
     with engine.connect() as conn:
-        activities = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        activities = cleanFetchedSQL(
+            conn.execute(command, **params).fetchall())
         activities.reverse()
         conn.close()
         return activities
+
 
 def fetchCustomer(username):
     command = text("""
@@ -677,6 +687,7 @@ def fetchCustomer(username):
         conn.close()
         return customer
 
+
 def fetchCustomers():
     command = text("""
         SELECT * FROM customers
@@ -686,6 +697,7 @@ def fetchCustomers():
         customers = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
         return customers
+
 
 def insertCustomer(email, customer_id, subscription_id, location, trial_end, paid):
     command = text("""
@@ -1012,6 +1024,7 @@ def updateVMState(vm_name, state):
         conn.execute(command, **params)
         conn.close()
 
+
 def updateVMLocation(vm_name, location):
     command = text("""
         UPDATE v_ms
@@ -1023,6 +1036,7 @@ def updateVMLocation(vm_name, location):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
 
 def updateDisk(disk_name, vm_name, location):
     command = text("""
@@ -1050,7 +1064,7 @@ def updateDisk(disk_name, vm_name, location):
                        "disk_name" = :disk_name
                 """)
                 params = {'vm_name': vm_name,
-                          'disk_name': disk_name}  
+                          'disk_name': disk_name}
         else:
             if location:
                 command = text("""
@@ -1071,6 +1085,7 @@ def updateDisk(disk_name, vm_name, location):
         conn.execute(command, **params)
         conn.close()
 
+
 def assignUserToDisk(disk_name, username):
     command = text("""
         UPDATE disks SET "username" = :username WHERE "disk_name" = :disk_name
@@ -1080,16 +1095,19 @@ def assignUserToDisk(disk_name, username):
         conn.execute(command, **params)
         conn.close()
 
+
 def fetchAttachableVMs(state, location):
     command = text("""
         SELECT * FROM v_ms WHERE "state" = :state AND "location" = :location AND "lock" = :lock AND "dev" = :dev
         """)
-    params = {'state': state, 'location': location, 'lock': False, 'dev': False}
+    params = {'state': state, 'location': location,
+              'lock': False, 'dev': False}
 
     with engine.connect() as conn:
         vms = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
         return vms
+
 
 def getMostRecentActivity(username):
     command = text("""
@@ -1103,7 +1121,8 @@ def getMostRecentActivity(username):
 
     with engine.connect() as conn:
         activity = cleanFetchedSQL(conn.execute(command, **params).fetchone())
-        return activity 
+        return activity
+
 
 def addPendingCharge(username, amount):
     command = text("""
@@ -1117,7 +1136,7 @@ def addPendingCharge(username, amount):
     with engine.connect() as conn:
         customer = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         if customer:
-            pending_charges = customer['pending_charges'] + amount 
+            pending_charges = customer['pending_charges'] + amount
             command = text("""
                 UPDATE customers
                 SET "pending_charges" = :pending_charges
@@ -1128,7 +1147,8 @@ def addPendingCharge(username, amount):
             conn.execute(command, **params)
             conn.close()
         else:
-            print('CRITICAL ERROR: {} has an hourly plan but not found as a customer in database')
+            print(
+                'CRITICAL ERROR: {} has an hourly plan but not found as a customer in database')
 
 
 def associateVMWithDisk(vm_name, disk_name):
@@ -1145,6 +1165,7 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.execute(command, **params)
         conn.close()
 
+
 def lockVM(vm_name, lock):
     command = text("""
         UPDATE v_ms
@@ -1158,6 +1179,7 @@ def lockVM(vm_name, lock):
         conn.execute(command, **params)
         conn.close()
 
+
 def checkLock(vm_name):
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
@@ -1170,6 +1192,7 @@ def checkLock(vm_name):
         if vm:
             return vm['lock']
         return None
+
 
 def attachDiskToVM(disk_name, vm_name, lun):
     try:
@@ -1197,11 +1220,13 @@ def attachDiskToVM(disk_name, vm_name, lun):
         print(e)
         return -1
 
+
 def swapdisk_name(disk_name, vm_name):
     try:
         _, compute_client, _ = createClients()
         virtual_machine = getVM(vm_name)
-        new_os_disk = compute_client.disks.get(os.getenv('VM_GROUP'), disk_name)
+        new_os_disk = compute_client.disks.get(
+            os.getenv('VM_GROUP'), disk_name)
 
         virtual_machine.storage_profile.os_disk.managed_disk.id = new_os_disk.id
         virtual_machine.storage_profile.os_disk.name = new_os_disk.name
@@ -1213,12 +1238,14 @@ def swapdisk_name(disk_name, vm_name):
         )
         async_disk_attach.wait()
         end = time.perf_counter()
-        print("SUCCESS: Disk " + disk_name + " attached to " + vm_name + " in " + str(end - start) + " seconds")
+        print("SUCCESS: Disk " + disk_name + " attached to " +
+              vm_name + " in " + str(end - start) + " seconds")
 
         return fractalVMStart(vm_name, True)
     except Exception as e:
         print("CRITICAL ERROR: " + str(e))
         return -1
+
 
 def fetchAllDisks():
     command = text("""
@@ -1232,6 +1259,7 @@ def fetchAllDisks():
         disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         return disks
 
+
 def deleteDiskFromTable(disk_name):
     command = text("""
         DELETE FROM disks WHERE "disk_name" = :disk_name 
@@ -1240,6 +1268,7 @@ def deleteDiskFromTable(disk_name):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
 
 def mapDiskToVM(disk_name):
     command = text("""
@@ -1252,6 +1281,7 @@ def mapDiskToVM(disk_name):
         vms = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         return vms
 
+
 def updateVM(vm_name, location, disk_name, username):
     command = text("""
         UPDATE v_ms
@@ -1259,10 +1289,11 @@ def updateVM(vm_name, location, disk_name, username):
         WHERE
            "vm_name" = :vm_name
         """)
-    params = {'location': location, 'vm_name': vm_name, 'disk_name': disk_name, 'username': username}
+    params = {'location': location, 'vm_name': vm_name,
+              'disk_name': disk_name, 'username': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
-        conn.close() 
+        conn.close()
 
 
 def mapDiskToUser(disk_name):
@@ -1279,6 +1310,7 @@ def mapDiskToUser(disk_name):
         print("ERROR: No username found for disk " + disk_name)
         return None
 
+
 def deleteVMFromTable(vm_name):
     command = text("""
         DELETE FROM v_ms WHERE "vm_name" = :vm_name 
@@ -1287,6 +1319,7 @@ def deleteVMFromTable(vm_name):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
 
 def updateDiskState(disk_name, state):
     command = text("""
@@ -1300,6 +1333,7 @@ def updateDiskState(disk_name, state):
         conn.execute(command, **params)
         conn.close()
 
+
 def assignVMSizeToDisk(disk_name, vm_size):
     command = text("""
         UPDATE disks SET "vm_size" = :vm_size WHERE "disk_name" = :disk_name
@@ -1308,6 +1342,7 @@ def assignVMSizeToDisk(disk_name, vm_size):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
 
 def createDiskFromImageHelper(username, location, vm_size):
     disk_name = genDiskName()
@@ -1364,7 +1399,7 @@ def sendVMStartCommand(vm_name, needs_restart):
     try:
         power_state = 'PowerState/deallocated'
         vm_state = compute_client.virtual_machines.instance_view(
-            resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+            resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
 
         try:
             power_state = vm_state.statuses[1].code
@@ -1380,7 +1415,7 @@ def sendVMStartCommand(vm_name, needs_restart):
             async_vm_start.wait()
             time.sleep(10)
             print("VM {} started".format(vm_name))
-        
+
         if needs_restart:
             print("Restarting VM {}".format(vm_name))
             async_vm_restart = compute_client.virtual_machines.restart(
@@ -1394,7 +1429,8 @@ def sendVMStartCommand(vm_name, needs_restart):
         print('CRITICAL ERROR: ' + str(e))
         return -1
 
-def fractalVMStart(vm_name, needs_restart = False):
+
+def fractalVMStart(vm_name, needs_restart=False):
     _, compute_client, _ = createClients()
 
     started = False
@@ -1404,7 +1440,7 @@ def fractalVMStart(vm_name, needs_restart = False):
     while not started and start_attempts < 3:
         start_command_tries = 0
 
-        #First, send a basic start or restart command. Try six times, if it fails, give up
+        # First, send a basic start or restart command. Try six times, if it fails, give up
         while sendVMStartCommand(vm_name, needs_restart) < 0 and start_command_tries < 6:
             time.sleep(10)
             start_command_tries += 1
@@ -1417,7 +1453,7 @@ def fractalVMStart(vm_name, needs_restart = False):
         # After the VM has been started/restarted, query the state. Try 12 times for the state to be running. If it is not running,
         # give up and go to the top of the while loop to send another start/restart command
         vm_state = compute_client.virtual_machines.instance_view(
-            resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+            resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
 
         # Success! VM is running and ready to use
         if 'running' in vm_state.statuses[1].code:
@@ -1426,10 +1462,11 @@ def fractalVMStart(vm_name, needs_restart = False):
             return 1
 
         while not 'running' in vm_state.statuses[1].code and wake_retries < 12:
-            print('VM state is currently {}, sleeping for 5 seconds and querying state again'.format(vm_state.statuses[1].code))
+            print('VM state is currently {}, sleeping for 5 seconds and querying state again'.format(
+                vm_state.statuses[1].code))
             time.sleep(5)
             vm_state = compute_client.virtual_machines.instance_view(
-                resource_group_name = os.getenv('VM_GROUP'), vm_name = vm_name)
+                resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
 
             # Success! VM is running and ready to use
             if 'running' in vm_state.statuses[1].code:

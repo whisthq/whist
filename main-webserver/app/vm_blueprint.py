@@ -174,26 +174,31 @@ def tracker(action):
         is_user = body['is_user']
         customer = fetchCustomer(username)
         if not customer:
-            print('CRITICAL ERROR: {} logged on/off but is not a registered customer'.format(username))
+            print(
+                'CRITICAL ERROR: {} logged on/off but is not a registered customer'.format(username))
         else:
-            stripe.api_key = os.getenv('STRIPE_SECRET') 
+            stripe.api_key = os.getenv('STRIPE_SECRET')
             subscription_id = customer['subscription']
 
             try:
                 payload = stripe.Subscription.retrieve(subscription_id)
 
                 if os.getenv('HOURLY_PLAN_ID') == payload['items']['data'][0]['plan']['id']:
-                    print('NOTIFICATION: {} is an hourly plan subscriber'.format(username))
+                    print(
+                        'NOTIFICATION: {} is an hourly plan subscriber'.format(username))
                     user_activity = getMostRecentActivity(username)
                     print(user_activity)
                     if user_activity['action'] == 'logon':
                         now = dt.now()
-                        logon = dt.strptime(user_activity['timestamp'], '%m-%d-%Y, %H:%M:%S')
-                        if now - logon > timedelta(minutes = 0):
-                            amount = round(79 * (now - logon).total_seconds()/60/60)
+                        logon = dt.strptime(
+                            user_activity['timestamp'], '%m-%d-%Y, %H:%M:%S')
+                        if now - logon > timedelta(minutes=0):
+                            amount = round(
+                                79 * (now - logon).total_seconds()/60/60)
                             addPendingCharge(username, amount)
                     else:
-                        print('CRITICAL ERROR: {} logged off but no log on was recorded')
+                        print(
+                            'CRITICAL ERROR: {} logged off but no log on was recorded')
             except:
                 pass
 
@@ -236,21 +241,38 @@ def info(action):
     return jsonify({}), 400
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 @vm_bp.route('/logs', methods = ['POST'])
+=======
+
+@vm_bp.route('/test/<action>', methods=['GET'])
+def test(action):
+    if action == 'celerytest':
+        task = hello2.apply_async(["Jonathan"])
+        if not task:
+            return jsonify({}), 400
+        return jsonify({'result': task.id}), 200
+
+
+@vm_bp.route('/logs', methods=['POST'])
+>>>>>>> merging
 def logs():
     body = request.get_json()
     vm_ip = None
     if 'vm_ip' in body:
         vm_ip = body['vm_ip']
 
-    task = storeLogs.apply_async([body['sender'], body['connection_id'], body['logs'], vm_ip])
+    task = storeLogs.apply_async(
+        [body['sender'], body['connection_id'], body['logs'], vm_ip])
     return jsonify({'ID': task.id}), 202
 
-@vm_bp.route('/logs/fetch', methods = ['POST'])
+
+@vm_bp.route('/logs/fetch', methods=['POST'])
 def fetch_logs():
     body = request.get_json()
     task = fetchLogs.apply_async([body['username']])
     return jsonify({'ID': task.id}), 202
+<<<<<<< HEAD
 =======
 
 @vm_bp.route('/test/<action>', methods=['GET'])
@@ -261,3 +283,5 @@ def test(action):
             return jsonify({}), 400
         return jsonify({'result': task.id}), 200
 >>>>>>> testing celery
+=======
+>>>>>>> merging
