@@ -1,47 +1,60 @@
 from .imports import *
 
+
 def genHaiku(n):
     haikunator = Haikunator()
-    haikus = [haikunator.haikunate(delimiter='') + str(np.random.randint(0, 10000)) for _ in range(0, n)]
+    haikus = [haikunator.haikunate(
+        delimiter='') + str(np.random.randint(0, 10000)) for _ in range(0, n)]
     haikus = [haiku[0: np.min([15, len(haiku)])] for haiku in haikus]
     return haikus
+
 
 def generatePassword():
     upperCase = string.ascii_uppercase
     lowerCase = string.ascii_lowercase
     specialChars = '!@#$%^*'
     numbers = '1234567890'
-    c1 = ''.join([random.choice(upperCase) for _ in range(0,3)])
-    c2 = ''.join([random.choice(lowerCase) for _ in range(0,9)]) + c1
-    c3 = ''.join([random.choice(lowerCase) for _ in range(0,5)]) + c2
-    c4 = ''.join([random.choice(numbers) for _ in range(0,4)]) + c3
-    return ''.join(random.sample(c4,len(c4)))
+    c1 = ''.join([random.choice(upperCase) for _ in range(0, 3)])
+    c2 = ''.join([random.choice(lowerCase) for _ in range(0, 9)]) + c1
+    c3 = ''.join([random.choice(lowerCase) for _ in range(0, 5)]) + c2
+    c4 = ''.join([random.choice(numbers) for _ in range(0, 4)]) + c3
+    return ''.join(random.sample(c4, len(c4)))
+
 
 def generateCode():
     upperCase = string.ascii_uppercase
     numbers = '1234567890'
-    c1 = ''.join([random.choice(numbers) for _ in range(0,3)])
-    c2 = ''.join([random.choice(upperCase) for _ in range(0,3)]) + '-' + c1
+    c1 = ''.join([random.choice(numbers) for _ in range(0, 3)])
+    c2 = ''.join([random.choice(upperCase) for _ in range(0, 3)]) + '-' + c1
     return c2
+
 
 def unixToDate(utc):
     return datetime.datetime.fromtimestamp(utc)
 
+
+def getCurrentTime():
+    return datetime.datetime.now().strftime('%m/%d/%Y, %H:%M')
+
+
 def dateToUnix(date):
     return round(date.timestamp())
 
+
 def getToday():
-    tz = pytz.timezone("US/Eastern")
-    aware = tz.localize(datetime.datetime.now(), is_dst=None)
+    aware = datetime.datetime.now()
     return aware
+
 
 def shiftUnixByMonth(utc, num_months):
     date = unixToDate(utc)
     return round(dateToUnix(date + relativedelta(months=num_months)))
 
+
 def shiftUnixByWeek(utc, num_weeks):
     date = unixToDate(utc)
     return round(dateToUnix(date + relativedelta(weeks=num_weeks)))
+
 
 def generateToken(user):
     token = jwt.encode({'email': user}, os.getenv('SECRET_KEY'))
@@ -52,6 +65,7 @@ def generateToken(user):
 
     return token
 
+
 def cleanFetchedSQL(out):
     if out:
         is_list = isinstance(out, list)
@@ -61,17 +75,19 @@ def cleanFetchedSQL(out):
             return dict(out)
     return None
 
+
 def getAccessTokens(user):
     # access_token = create_access_token(identity = user, expires_delta = datetime.timedelta(seconds=5))
-    access_token = create_access_token(identity = user, expires_delta = False)
-    refresh_token = create_refresh_token(identity = user, expires_delta = False)
+    access_token = create_access_token(identity=user, expires_delta=False)
+    refresh_token = create_refresh_token(identity=user, expires_delta=False)
     return (access_token, refresh_token)
+
 
 def serverLog(logMsg):
     if (logMsg.startswith("FRACTAL ERROR")):
         headers = {'content-type': 'application/json'}
         url = "https://fractal-mail-server.herokuapp.com/logError"
         data = {'error': logMsg}
-        requests.post(url = url, data = json.dumps(data), headers = headers) 
+        requests.post(url=url, data=json.dumps(data), headers=headers)
     else:
         print(logMsg)
