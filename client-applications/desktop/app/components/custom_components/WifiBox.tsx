@@ -60,8 +60,8 @@ class WifiBox extends Component {
         <div>
           <div style={{ background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13 }} />
           <h1 className={Style.header + " mt-1"}>{this.state.downloadSpeed} Mbps Internet Down</h1>
-          <h1 className={Style.header + " pl-3 ml-1"}>{this.state.uploadSpeed} Mbps Internet Up</h1>
-          <h1 className={Style.header + " pl-3 ml-1"}>{this.state.ping} ms Ping</h1>
+          {/* <h1 className={Style.header + " pl-3 ml-1"}>{this.state.uploadSpeed} Mbps Internet Up</h1>
+          <h1 className={Style.header + " pl-3 ml-1"}>{this.state.ping} ms Ping</h1> */}
           <p className={Style.text + " mt-3 pl-3 ml-1"}>
             Your Internet bandwidth is slow. Try closing streaming apps like Youtube, Netflix, or Spotify.
           </p>
@@ -71,8 +71,8 @@ class WifiBox extends Component {
         <div>
           <div style={{ background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13 }} />
           <h1 className={Style.header + " mt-1"}>{this.state.downloadSpeed} Mbps Internet Down</h1>
-          <h1 className={Style.header + " pl-3 ml-1"}>{this.state.uploadSpeed} Mbps Internet Up</h1>
-          <h1 className={Style.header + " pl-3 ml-1"}>{this.state.ping} ms Ping</h1>
+          {/* <h1 className={Style.header + " pl-3 ml-1"}>{this.state.uploadSpeed} Mbps Internet Up</h1>
+          <h1 className={Style.header + " pl-3 ml-1"}>{this.state.ping} ms Ping</h1> */}
           <p className={Style.text + " mt-3 pl-3 ml-1"}>
             Expect a smooth streaming experience with occassional image quality drops.
           </p>
@@ -82,8 +82,8 @@ class WifiBox extends Component {
         <div>
           <div style={{ background: "none", border: "solid 1px #14a329", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13 }} />
           <h1 className={Style.header + " mt-1"}>{this.state.downloadSpeed} Mbps Internet Down</h1>
-          <h1 className={Style.header + " pl-3 ml-1"}>{this.state.uploadSpeed} Mbps Internet Up</h1>
-          <h1 className={Style.header + " pl-3 ml-1"}>{this.state.ping} ms Ping</h1>
+          {/* <h1 className={Style.header + " pl-3 ml-1"}>{this.state.uploadSpeed} Mbps Internet Up</h1>
+          <h1 className={Style.header + " pl-3 ml-1"}>{this.state.ping} ms Ping</h1> */}
           <p className={Style.text + " mt-3 pl-3 ml-1"}>
             Your Internet is fast enough to support high-quality streaming.
           </p>
