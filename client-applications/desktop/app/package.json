@@ -14,5 +14,7 @@
     "postinstall": "yarn electron-rebuild"
   },
   "dependencies": {
+    "speedtest-net": "^2.1.1",
+    "speedtest.net": "^0.1.0"
   }
 }
