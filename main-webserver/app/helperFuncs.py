@@ -577,6 +577,15 @@ def fetchUserVMs(username):
             conn.close()
             return vms_info
 
+def getVMSize(disk_name):
+    command = text("""
+        SELECT * FROM disks WHERE "disk_name" = :disk_name
+        """)
+    params = {'disk_name': disk_name}
+    with engine.connect() as conn:
+        disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        return disks_info['vm_size']
 
 def fetchUserDisks(username, show_all=False):
     if username:
