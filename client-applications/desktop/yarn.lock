@@ -6929,6 +6929,11 @@ fast-levenshtein@^2.0.6, fast-levenshtein@~2.0.6:
   resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
   integrity sha1-PYpcZog6FqMMqGQ+hR8Zuqd5eRc=
 
+fast-speedtest-api@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/fast-speedtest-api/-/fast-speedtest-api-0.3.2.tgz#930c39be00e3804308a8e32cc421ddde0c2dac10"
+  integrity sha512-QEfo3wytVo3x/ds4grti1nJUGZhmgdX9OpQbkXc6levJamjUFenb1SdbiVYhrTx27pvOAHSJOAXMu62K0dIEDQ==
+
 fastparse@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/fastparse/-/fastparse-1.1.2.tgz#91728c5a5942eced8531283c79441ee4122c35a9"
@@ -10551,6 +10556,11 @@ neo-async@^2.5.0, neo-async@^2.6.1:
   version "2.6.1"
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.1.tgz#ac27ada66167fa8849a6addd837f6b189ad2081c"
   integrity sha512-iyam8fBuCUpWeKPGpaNMetEocMt364qkCsfL9JuhjXX6dRnguRVOfk2GZaDpPjcOKiiXCPINZC1GczQ7iTq3Zw==
+
+network-speed@^2.0.6:
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/network-speed/-/network-speed-2.0.6.tgz#548502983646c1812d394c0f407135c0a87d708a"
+  integrity sha512-Q89Jb2Jb3mydo4Q+rJu7gDscd7h1tVgNY98QO+ovOrpk/QieklwdrqYFVGiO9eTANtR+a3naJmx/nWD2zOBuDA==
 
 nice-try@^1.0.4:
   version "1.0.5"
