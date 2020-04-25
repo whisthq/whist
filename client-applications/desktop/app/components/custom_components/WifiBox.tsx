@@ -22,7 +22,7 @@ class WifiBox extends Component {
       this.setState({ downloadSpeed: (speed.download.bandwidth / 125000).toFixed(1) }); // bytes to megabits
       this.setState({ uploadSpeed: (speed.upload.bandwidth / 125000).toFixed(1) });
       this.setState({ ping: speed.ping.latency.toFixed(1) });
-      console.log(speed);
+      //console.log(speed);
     } catch (err) {
       console.log(err);
     }
