@@ -59,7 +59,7 @@ class MainBox extends Component {
       var connection_id = parseInt(fs.readFileSync(__dirname + "../connection_id.txt").toString());
       this.props.dispatch(sendLogs(connection_id, logs))
     } else if (os.platform() === 'win32') {
-      var logs = fs.readFileSync(process.cwd() + "\\protocol\\desktop\\log.txt").toString();
+      var logs = fs.readFileSync(process.cwd() + "\\log.txt").toString();
       var connection_id = parseInt(fs.readFileSync(process.cwd() + "\\connection_id.txt").toString());
       this.props.dispatch(sendLogs(connection_id, logs))
     }

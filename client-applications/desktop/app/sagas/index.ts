@@ -250,7 +250,6 @@ function* getRestartStatus(id) {
 }
 
 function* sendLogs(action) {
-  console.log('TRYING TO SEND LOGS!')
   const state = yield select()
   var public_ip = state.counter.public_ip
   const {json, response} = yield call(apiPost, 'https://cube-celery-staging.herokuapp.com/logs', {

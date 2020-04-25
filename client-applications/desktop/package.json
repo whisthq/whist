@@ -72,7 +72,7 @@
     ],
     "extraFiles": [
       "protocol/",
-      "../loading"
+      "loading/"
     ],
     "dmg": {
       "sign": false,
