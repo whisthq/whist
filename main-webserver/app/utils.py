@@ -70,8 +70,8 @@ def getAccessTokens(user):
 def serverLog(logMsg):
     if (logMsg.startswith("FRACTAL ERROR")):
         headers = {'content-type': 'application/json'}
-		url = "https://fractal-mail-server.herokuapp.com/logError"
-		data = {'error': logMsg}
-		requests.post(url = url, data = json.dumps(data), headers = headers) 
+        url = "https://fractal-mail-server.herokuapp.com/logError"
+        data = {'error': logMsg}
+        requests.post(url = url, data = json.dumps(data), headers = headers) 
     else:
         print(logMsg)
