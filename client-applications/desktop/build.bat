@@ -12,8 +12,7 @@ rmdir /S/Q protocol
 mkdir protocol
 cd protocol
 mkdir desktop
-mkdir loading
 cd ..
 copy .protocol\desktop\build64 protocol\desktop
-copy .protocol\desktop\loading 
+copy .protocol\desktop\build64\loading loading
 yarn package
