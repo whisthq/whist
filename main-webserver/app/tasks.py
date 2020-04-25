@@ -478,7 +478,7 @@ def swapDisk(self, disk_name):
 				else:
 					# Create a new VM, discard new disk, insert user disk
 					print("NOTIFICATION: No VMs are available. Creating new VM...")
-					newDbVm = createVM(self, "Standard_NV6_Promo", location)
+					newDbVm = createVM("Standard_NV6_Promo", location)
 					newVm = getVM(newDbVm['vm_name'])
 					newDiskName = newVm.storage_profile.os_disk.name
 					#newDisk = compute_client.disks.get(os.environ.get('VM_GROUP'), newDiskName)
