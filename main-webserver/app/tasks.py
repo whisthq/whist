@@ -398,16 +398,16 @@ def syncDisks(self):
 
 ''''
 Example of how to update state during a task
-IN_PROGRESS states handled by /status/<task_id> endpoint
+PENDING states handled by /status/<task_id> endpoint
 Can also use any other string as state (just need to handle in /status/<task_id>)
 
 @celery.task(bind=True)
 def stateChangeTest(self):
-	self.update_state(state='IN_PROGRESS', meta={'msg': 'Dummy task started'})
+	self.update_state(state='PENDING', meta={'msg': 'Dummy task started'})
 	time.sleep(5)
-	self.update_state(state='IN_PROGRESS', meta={'msg': 'Dummy task state 2'})
+	self.update_state(state='PENDING', meta={'msg': 'Dummy task state 2'})
 	time.sleep(5)
-	self.update_state(state='IN_PROGRESS', meta={'msg': 'Dummy task completed'})
+	self.update_state(state='PENDING', meta={'msg': 'Dummy task completed'})
 
 Final state is overridden once celery task execution is done. State becomes "SUCCESS".
 '''
@@ -420,7 +420,7 @@ def swapDisk(self, disk_name):
 	vm_name = os_disk.managed_by
 	vm_attached = True if vm_name else False
 	location = os_disk.location
-	self.update_state(state='IN_PROGRESS', meta={'msg': 'Swap disk task started'})
+	self.update_state(state='PENDING', meta={'msg': 'Swap disk task started'})
 
 	def swapDiskAndUpdate(disk_name, vm_name):
 		# Pick a VM, attach it to disk
@@ -445,7 +445,7 @@ def swapDisk(self, disk_name):
 		print("NOTIFICATION: Disk " + disk_name +
 			  " already attached to VM " + vm_name)
 
-		self.update_state(state='IN_PROGRESS', meta={'msg': 'Waiting for VM to be unlocked'})
+		self.update_state(state='PENDING', meta={'msg': 'Waiting for VM to be unlocked'})
 		locked = checkLock(vm_name)
 
 		while locked:
@@ -453,7 +453,7 @@ def swapDisk(self, disk_name):
 			time.sleep(5)
 			locked = checkLock(vm_name)
 
-		self.update_state(state='IN_PROGRESS', meta={'msg': 'VM acquired for disk'})
+		self.update_state(state='PENDING', meta={'msg': 'VM acquired for disk'})
 		print('NOTIFICATION: VM {} is unlocked and ready for use'.format(vm_name))
 		lockVM(vm_name, True)
 
@@ -461,14 +461,14 @@ def swapDisk(self, disk_name):
 		associateVMWithDisk(vm_name, disk_name)
 		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 
-		self.update_state(state='IN_PROGRESS', meta={'msg': 'Disk attached to VM'})
+		self.update_state(state='PENDING', meta={'msg': 'Disk attached to VM'})
 
 		print("NOTIFICATION: Database updated with disk " +
 			  disk_name + " and " + vm_name)
 
 		if fractalVMStart(vm_name) > 0:
 			print('SUCCESS: VM is started and ready to use')
-			self.update_state(state='IN_PROGRESS', meta={'msg': 'VM started and ready to use'})
+			self.update_state(state='PENDING', meta={'msg': 'VM started and ready to use'})
 		else:
 			print('CRITICAL ERROR: Could not start VM {}'.format(vm_name))
 			self.update_state(state='ERROR', meta={'msg': 'Could not start VM'})
