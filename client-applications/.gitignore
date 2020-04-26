@@ -1,6 +1,7 @@
 # Development
 .vscode
 .github
+.yarnclean
 yarn.lock
 node_modules/
 
