@@ -542,13 +542,15 @@ void SetClipboard( ClipboardData* cb )
 		if( !OpenClipboard( NULL ) ) return;
         mprintf("Emptying clipboard \n");
 		EmptyClipboard();
-		SetClipboardData( cf_type, hMem );
+		if(!SetClipboardData( cf_type, hMem ){
+		    mprintf("Failed to SetClipboardData\n");
+		}
 
 		CloseClipboard();
 	}
 
 	// Update the status so that this specific update doesn't count
 	bool cb_update = hasClipboardUpdated();
-	mprintf("unison cb update %d", cb_update);
-	return cb_update;
+	mprintf("unison cb update %d \n", cb_update);
+	return 0;
 }
