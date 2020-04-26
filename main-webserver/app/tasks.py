@@ -396,6 +396,21 @@ def syncDisks(self):
 
 	return {'status': 200}
 
+''''
+Example of how to update state during a task
+IN_PROGRESS states handled by /status/<task_id> endpoint
+Can also use any other string as state (just need to handle in /status/<task_id>)
+
+@celery.task(bind=True)
+def stateChangeTest(self):
+	self.update_state(state='IN_PROGRESS', meta={'msg': 'Dummy task started'})
+	time.sleep(5)
+	self.update_state(state='IN_PROGRESS', meta={'msg': 'Dummy task state 2'})
+	time.sleep(5)
+	self.update_state(state='IN_PROGRESS', meta={'msg': 'Dummy task completed'})
+
+Final state is overridden once celery task execution is done. State becomes "SUCCESS".
+'''
 
 @celery.task(bind=True)
 def swapDisk(self, disk_name):
@@ -405,7 +420,7 @@ def swapDisk(self, disk_name):
 	vm_name = os_disk.managed_by
 	vm_attached = True if vm_name else False
 	location = os_disk.location
-	vm_created = False
+	self.update_state(state='IN_PROGRESS', meta={'msg': 'Swap disk task started'})
 
 	def swapDiskAndUpdate(disk_name, vm_name):
 		# Pick a VM, attach it to disk
@@ -427,8 +442,10 @@ def swapDisk(self, disk_name):
 	# and restart the VM as a sanity check.
 	if vm_attached:
 		vm_name = vm_name.split('/')[-1]
-		print("NOTIFICATION: Disk " + disk_name +  " already attached to VM " + vm_name)
+		print("NOTIFICATION: Disk " + disk_name +
+			  " already attached to VM " + vm_name)
 
+		self.update_state(state='IN_PROGRESS', meta={'msg': 'Waiting for VM to be unlocked'})
 		locked = checkLock(vm_name)
 
 		while locked:
@@ -436,20 +453,26 @@ def swapDisk(self, disk_name):
 			time.sleep(5)
 			locked = checkLock(vm_name)
 
+		self.update_state(state='IN_PROGRESS', meta={'msg': 'VM acquired for disk'})
 		print('NOTIFICATION: VM {} is unlocked and ready for use'.format(vm_name))
 		lockVM(vm_name, True)
 
 		updateDisk(disk_name, vm_name, location)
 		associateVMWithDisk(vm_name, disk_name)
 		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
-		
-		print("NOTIFICATION: Database updated with disk " + disk_name + " and " + vm_name)
+
+		self.update_state(state='IN_PROGRESS', meta={'msg': 'Disk attached to VM'})
+
+		print("NOTIFICATION: Database updated with disk " +
+			  disk_name + " and " + vm_name)
 
 		if fractalVMStart(vm_name) > 0:
 			print('SUCCESS: VM is started and ready to use')
+			self.update_state(state='IN_PROGRESS', meta={'msg': 'VM started and ready to use'})
 		else:
 			print('CRITICAL ERROR: Could not start VM {}'.format(vm_name))
-			
+			self.update_state(state='ERROR', meta={'msg': 'Could not start VM'})
+
 		vm_credentials = fetchVMCredentials(vm_name)
 		lockVM(vm_name, False)
 		return vm_credentials
@@ -492,15 +515,8 @@ def swapDisk(self, disk_name):
 					lockVM(vm_name, False)
 					return {'status': 400}
 				else:
-					# Create a new VM, discard new disk, insert user disk
-					print("NOTIFICATION: No VMs are available.")
-					if not vm_created:					
-						newDbVm = createVM.apply_async([getVMSize(disk_name), location])
-						vm_created = True
-					else:
-						print('NOTIFICATION: No VMs are available, VM is currently creating.')
-					time.sleep(15)
-					
+					print("NOTIFICATION: No VMs are available. Going to sleep...")
+					time.sleep(30)
 	return {'status': 200}
 
 
@@ -640,97 +656,82 @@ def deallocateVM(self, vm_name):
 
 @celery.task(bind=True)
 def storeLogs(self, sender, connection_id, logs, vm_ip):
-    title = '[{}] Logs Received From Connect #{}'.format(logs, str(connection_id))
+	if sender.upper() == 'CLIENT':
+		ip = vm_ip
+		command = text("""
+			SELECT * FROM v_ms WHERE "ip" = :ip
+			""")
+		params = {'ip': ip}
 
-    internal_message = SendGridMail(
-        from_email = 'mingying2011@gmail.com',
-        to_emails = 'logs@fractalcomputers.com',
-        subject = title,
-        html_content= logs
-    )
+		with engine.connect() as conn:
+			vm = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+			username = vm['username']
+			title = '[{}] Logs Received From Connection #{}'.format(sender.upper(), str(connection_id))
 
-    try:
-        sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
-        response = sg.send(internal_message)
-    except Exception as e:
-        print(e.message)
+			command = text("""
+				SELECT * FROM logs WHERE "connection_id" = :connection_id
+				""")
+			params = {'connection_id': connection_id}
+			logs_found = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+			last_updated = getCurrentTime() 
 
-    if sender.upper() == 'CLIENT':
-        ip = vm_ip
-        command = text("""
-            SELECT * FROM v_ms WHERE "ip" = :ip
-            """)
-        params = {'ip': ip}
+			if logs_found:
+				command = text("""
+					UPDATE logs 
+					SET "ip" = :ip, "last_updated" = :last_updated, "client_logs" = :logs, "username" = :username
+					WHERE "connection_id" = :connection_id
+					""")
+				params = {'username': username, 'ip': ip, 'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
+				conn.execute(command, **params)
+			else:
+				command = text("""
+					INSERT INTO logs("username", "ip", "last_updated", "client_logs", "connection_id") 
+					VALUES(:username, :ip, :last_updated, :logs, :connection_id)
+					""")
 
-        with engine.connect() as conn:
-            vm = cleanFetchedSQL(conn.execute(command, **params).fetchone())
-            username = vm['username']
-            title = '[{}] Logs Received From Connection #{}'.format(sender.upper(), str(connection_id))
+				params = {'username': username, 'ip': ip, 'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
+				conn.execute(command, **params)
 
-            command = text("""
-                SELECT * FROM logs WHERE "connection_id" = :connection_id
-                """)
-            params = {'connection_id': connection_id}
-            logs_found = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-            last_updated = getCurrentTime() 
+			conn.close()
+		return {'status': 200}
+	elif sender.upper() == 'SERVER':
+		command = text("""
+			SELECT * FROM logs WHERE "connection_id" = :connection_id
+			""")
+		params = {'connection_id': connection_id}
+		with engine.connect() as conn:
+			logs_found = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+			last_updated = getCurrentTime() 
 
-            if logs_found:
-                command = text("""
-                    UPDATE logs 
-                    SET "ip" = :ip, "last_updated" = :last_updated, "client_logs" = :logs, "username" = :username
-                    WHERE "connection_id" = :connection_id
-                    """)
-                params = {'username': username, 'ip': ip, 'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
-                conn.execute(command, **params)
-            else:
-                command = text("""
-                    INSERT INTO logs("username", "ip", "last_updated", "client_logs", "connection_id") 
-                    VALUES(:username, :ip, :last_updated, :logs, :connection_id)
-                    """)
+			connection = cleanFetchedSQL(conn.execute(command, **params).fetchone())   
+			if connection:
+				command = text("""
+					UPDATE logs 
+					SET "last_updated" = :last_updated, "server_logs" = :logs
+					WHERE "connection_id" = :connection_id
+					""")
+				params = {'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
+				conn.execute(command, **params)      
+			else:
+				command = text("""
+					INSERT INTO logs("last_updated", "server_logs", "connection_id") 
+					VALUES(:last_updated, :logs, :connection_id)
+					""")
 
-                params = {'username': username, 'ip': ip, 'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
-                conn.execute(command, **params)
-
-            conn.close()
-        return {'status': 200}
-    elif sender.upper() == 'SERVER':
-        command = text("""
-            SELECT * FROM logs WHERE "connection_id" = :connection_id
-            """)
-        params = {'connection_id': connection_id}
-        with engine.connect() as conn:
-            logs_found = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-            last_updated = getCurrentTime() 
-
-            connection = cleanFetchedSQL(conn.execute(command, **params).fetchone())   
-            if connection:
-                command = text("""
-                    UPDATE logs 
-                    SET "last_updated" = :last_updated, "server_logs" = :logs
-                    WHERE "connection_id" = :connection_id
-                    """)
-                params = {'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
-                conn.execute(command, **params)      
-            else:
-                command = text("""
-                    INSERT INTO logs("last_updated", "server_logs", "connection_id") 
-                    VALUES(:last_updated, :logs, :connection_id)
-                    """)
-
-                params = {'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
-                conn.execute(command, **params)
-        return {'status': 200}
-    return {'status': 422}
+				params = {'last_updated': last_updated, 'logs': logs, 'connection_id': connection_id}
+				conn.execute(command, **params)
+		return {'status': 200}
+	return {'status': 422}
 
 
 @celery.task(bind=True)
 def fetchLogs(self, username):
 	command = text("""
-	    SELECT * FROM logs WHERE "username" = :username
-	    """)
+		SELECT * FROM logs WHERE "username" = :username
+		""")
 
 	params = {'username': username}
 
 	with engine.connect() as conn:
-	    logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-	    return logs
+		logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+		return logs

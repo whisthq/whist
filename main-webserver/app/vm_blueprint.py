@@ -27,6 +27,12 @@ def status(task_id):
             'output': str(result.info)
         }
         return make_response(jsonify(response), 200)
+    elif result.status == 'IN_PROGRESS':
+        response = {
+            'state': result.status,
+            'output': str(result.info)
+        }
+        return make_response(jsonify(response), 200)
     else:
         response = {
             'state': result.status,
@@ -34,6 +40,10 @@ def status(task_id):
         }
         return make_response(jsonify(response), 200)
 
+@vm_bp.route('/dummy', methods=['POST'])
+def dummy():
+    task = stateChangeTest.apply_async()
+    return jsonify({'ID': task.id}), 202
 
 @vm_bp.route('/vm/<action>', methods=['POST'])
 def vm(action):
