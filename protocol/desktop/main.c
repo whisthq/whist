@@ -736,10 +736,6 @@ int main(int argc, char* argv[]) {
     // already exists, which is fine
     runcmd("mkdir ~/.fractal");
     runcmd("chmod 0755 ~/.fractal");
-    // clean it for the new connection, and initialize the new files
-    runcmd("rm -r ~/.fractal/*");
-    runcmd("touch ~/.fractal/connection_id.txt");
-    runcmd("touch ~/.fractal/log.txt");
 #endif
     initBacktraceHandler();
 #ifndef _WIN32
