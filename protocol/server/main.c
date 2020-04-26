@@ -680,7 +680,7 @@ int main() {
 #ifdef _WIN32
 	    msg_init->filename[0] = '\0';
         strcat( msg_init->filename, "C:\\ProgramData\\FractalCache" );
-	    char* username = "vm1";
+	    char* username = "Fractal";
 #else // Linux
         char* cwd = getcwd(NULL, 0);
         memcpy( msg_init->filename, cwd, strlen(cwd) + 1);
