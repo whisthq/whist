@@ -542,7 +542,7 @@ void SetClipboard( ClipboardData* cb )
 		if( !OpenClipboard( NULL ) ) return;
         mprintf("Emptying clipboard \n");
 		EmptyClipboard();
-		if(!SetClipboardData( cf_type, hMem ){
+		if(!SetClipboardData( cf_type, hMem) ){
 		    mprintf("Failed to SetClipboardData\n");
 		}
 
