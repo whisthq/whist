@@ -43,6 +43,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <errno.h>
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define SOCKET int
@@ -73,7 +75,7 @@
 #define PORT_SERVER_TO_CLIENT 32263
 #define PORT_SHARED_TCP 32264
 
-#define USING_STUN true
+#define USING_STUN false
 #define USING_AUDIO_ENCODE_DECODE true
 
 #define MAX_PAYLOAD_SIZE 1285

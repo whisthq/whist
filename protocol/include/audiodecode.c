@@ -13,7 +13,11 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
     memset(decoder, 0, sizeof(audio_decoder_t));
 
     // setup the AVCodec and AVFormatContext
+    // avcodec_register_all is deprecated on FFmpeg 4+
+    // only linux uses FFmpeg 3.4.x because of canonical system packages
+#ifdef __linux__
     avcodec_register_all();
+#endif
 
     decoder->pCodec = avcodec_find_decoder(AV_CODEC_ID_AAC);
     if (!decoder->pCodec) {

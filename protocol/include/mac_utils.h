@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <ftw.h>
 #include <fts.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 int remove_file( const char* fpath, const struct stat* sb, int typeflag, struct FTW* ftwbuf );
 

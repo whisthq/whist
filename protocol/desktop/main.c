@@ -20,6 +20,10 @@
 #include "audio.h"
 #include "video.h"
 
+#ifdef __APPLE__
+#include "../include/mac_utils.h"
+#endif
+
 int audio_frequency = -1;
 
 // Width and Height
@@ -496,9 +500,24 @@ int ReceiveMessage(struct RTPPacket* packet) {
             FractalServerMessageInit* msg_init = (FractalServerMessageInit*)fmsg->init_msg;
             memcpy( filename, msg_init->filename, min(sizeof( filename ), sizeof(msg_init->filename)) );
             memcpy( username, msg_init->username, min( sizeof( username ), sizeof( msg_init->username ) ) );
-            FILE* f = fopen( "connection_id.txt", "w" );
-            fprintf( f, "%d", msg_init->connection_id );
-            fclose( f );
+
+            #ifdef __APPLE__
+                // mac apps can't save files into the bundled app package, 
+                // need to save into hidden folder under account
+                // this stores connection_id in Users/USERNAME/.fractal/connection_id.txt
+                char path[100] = "";
+                strcat(path, getenv("HOME"));
+                strcat(path, "/.fractal/connection_id.txt");
+
+                FILE* f = fopen(path, "w" );
+                fprintf( f, "%d", msg_init->connection_id );
+                fclose( f );
+            #else
+                FILE* f = fopen( "connection_id.txt", "w" );
+                fprintf( f, "%d", msg_init->connection_id );
+                fclose( f );
+            #endif
+
             received_server_init_message = true;
             break;
         case SMESSAGE_QUIT:
@@ -708,7 +727,19 @@ void parse_window_event(SDL_Event* event) {
 
 int main(int argc, char* argv[]) {
 #if defined(_WIN32)
+    // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
+#elif defined __APPLE__
+    // files can't be written to a macos app bundle, so they need to be
+    // cached in /Users/USERNAME/.APPNAME, here .fractal directory
+    // attempt to create fractal cache directory, it will fail if it
+    // already exists, which is fine
+    runcmd("mkdir ~/.fractal");
+    runcmd("chmod 0755 ~/.fractal");
+    // clean it for the new connection, and initialize the new files
+    runcmd("rm -r ~/.fractal/*");
+    runcmd("touch ~/.fractal/connection_id.txt");
+    runcmd("touch ~/.fractal/log.txt");
 #endif
     initBacktraceHandler();
 #ifndef _WIN32
@@ -752,7 +783,16 @@ int main(int argc, char* argv[]) {
     }
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
+#ifdef __APPLE__
+    // apple cache, can't be in the same folder as bundled app
+    // this stores log.txt in Users/USERNAME/.fractal/log.txt
+    char path[100] = "";
+    strcat(path, getenv("HOME"));
+    strcat(path, "/.fractal");
+    initMultiThreadedPrintf(path);
+#else
     initMultiThreadedPrintf( "." );
+#endif 
 
     initClipboard();
 
