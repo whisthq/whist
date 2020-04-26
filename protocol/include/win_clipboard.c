@@ -550,7 +550,5 @@ void SetClipboard( ClipboardData* cb )
 	}
 
 	// Update the status so that this specific update doesn't count
-	bool cb_update = hasClipboardUpdated();
-	mprintf("unison cb update %d \n", cb_update);
-	return 0;
+	hasClipboardUpdated();
 }
