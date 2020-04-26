@@ -1,5 +1,7 @@
-# VS Code
+# Development
 .vscode
+.github
+.yarnclean
 yarn.lock
 node_modules/
 
@@ -35,3 +37,6 @@ desktop/*.sass.d.ts
 desktop/*.scss.d.ts
 desktop/connection_id.txt
 loading/
+desktop/ssh_host_ecdsa_key.pub
+desktop/connection_id.txt
+desktop/.unison

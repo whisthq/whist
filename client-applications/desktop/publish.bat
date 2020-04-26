@@ -14,4 +14,5 @@ cd protocol
 mkdir desktop
 cd ..
 copy .protocol\desktop\build64 protocol\desktop
+copy \loading protocol\desktop
 yarn package-ci

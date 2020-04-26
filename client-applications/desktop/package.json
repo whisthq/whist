@@ -68,7 +68,9 @@
       "main.prod.js.map",
       "package.json",
       "build/icon.png",
-      "loading/"
+      "loading/",
+      "sshkey",
+      "sshkey.pub"
     ],
     "extraFiles": [
       "protocol/",
@@ -304,6 +306,7 @@
     "electron-store": "^5.1.1",
     "electron-titlebar": "^0.0.3",
     "electron-updater": "^4.2.5",
+    "fast-speedtest-api": "^0.3.2",
     "fix-path": "^3.0.0",
     "geoip-lite": "^1.4.0",
     "geolib": "^3.2.1",
@@ -344,9 +347,6 @@
     "node": ">=7.x",
     "npm": ">=4.x",
     "yarn": ">=0.21.3"
-  },
-  "collective": {
-    "url": "https://opencollective.com/electron-react-boilerplate-594"
   },
   "browserslist": [
     "extends browserslist-config-erb"

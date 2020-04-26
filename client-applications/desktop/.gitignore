@@ -68,3 +68,7 @@ fractal-protocol/desktop
 protocol/desktop
 clipboard/
 log.txt
+ssh_host_ecdsa_key.pub
+connection_id.txt
+.unison
+app/main.prod.js.LICENSE.txt
