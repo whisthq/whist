@@ -167,7 +167,6 @@ int UpdateClipboardThread( void* opaque )
 #endif
 
 				strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l " );
-				mprintf("Username for unison %s\n", username);
 				strcat( cmd, username );
 				strcat( cmd, " -i sshkey\" " );
 				strcat( cmd, GET_CLIPBOARD );
@@ -213,7 +212,6 @@ void updateClipboard()
 	} else
 	{
 		mprintf( "Pushing update to clipboard\n" );
-        mprintf("update username %s\n", username);
 		pending_update_clipboard = false;
 		updating_clipboard = true;
 		updating_set_clipboard = false;
