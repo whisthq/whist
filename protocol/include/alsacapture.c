@@ -1,4 +1,9 @@
-#include "alsacapture.h"  // header file for this file
+/*
+ * Audio capture on Linux Ubuntu.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#include "alsacapture.h"
 
 audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
     memset(audio_device, 0, sizeof(struct audio_device_t));

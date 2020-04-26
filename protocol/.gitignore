@@ -1,11 +1,10 @@
+# general files
 *.o
 *.obj
 *.iml
 *.pyc
 **/Debug/
 **/Release/
-**/build32/
-**/build64/
 .vs/
 .vscode/
 .vscode/settings.json
@@ -16,15 +15,11 @@
 **/log.txt
 **/log_prev.txt
 .DS_Store
+
+# fractal files
 version
-desktop/build32/clipboard
-desktop/build32/desktop
-desktop/build32/desktop.exe
-desktop/build64/clipboard
-desktop/build64/desktop
-desktop/build64/desktop.exe
-server/build32/server
-server/build32/server.exe
-server/build64/server
-server/build64/server.exe
+**/build32
+**/build64
+desktop/log.txt
+server/log.txt
 

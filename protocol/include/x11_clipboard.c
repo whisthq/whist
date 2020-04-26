@@ -1,3 +1,8 @@
+/*
+ * Clipboard getting and setting functions on Linux Ubuntu.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #include <assert.h>
 #include "clipboard.h"
 
@@ -294,7 +299,7 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb,
                         int header_size) {
   Atom new_atom;
   int resbits;
-  long ressize, restail;
+  long unsigned ressize, restail;
   char* result;
 
   XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4, True,
@@ -364,4 +369,3 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb,
 
   return true;
 }
-

@@ -1,4 +1,9 @@
-#include "wasapicapture.h"  // header file for this file
+/*
+ * Audio capture on Windows.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
+#include "wasapicapture.h"
 
 audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
     HRESULT hr = CoInitialize(NULL);

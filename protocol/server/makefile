@@ -12,10 +12,11 @@ ARCH = 64
 !ENDIF
 
 # specify executable name
-BIN_NAME = build$(ARCH)/server.exe
+BIN_NAME = build$(ARCH)/FractalServer.exe
 
 # files to build into object files
 OBJS = \
+	webserver.obj \
 	fractal.obj \
 	win_clipboard.obj \
 	aes.obj \
@@ -25,6 +26,7 @@ OBJS = \
 	dxgicapture.obj \
 	desktop.obj \
 	windowsinput.obj \
+	windowscursor.obj \
 	main.obj
 
 # static libs to link against
@@ -51,7 +53,8 @@ CFLAGS = \
 	-DWIN32_LEAN_AND_MEAN \
 	-DUNICODE \
 	-DWIN32 \
-	-I ../include -I ../include/ffmpeg
+	-I ../include \
+	-I ../include/ffmpeg
 
 # system libs to link against
 SHARED_LIBS = \
@@ -89,7 +92,8 @@ SHARED_LIBS = \
 	d3dcompiler.lib \
 	dxguid.lib \
 	crypt32.lib \
-	shlwapi.lib
+	shlwapi.lib \
+	shcore.lib
 
 # linking flags
 LD_FLAGS = \
@@ -103,6 +107,10 @@ all: clean clear $(OBJS)
 # compile the main fractal header source file into object file
 fractal.obj:
 	$(CC) /c $(CFLAGS) ../include/fractal.c
+
+# compile the webserver source file into object file
+webserver.obj:
+	$(CC) /c $(CFLAGS) ../include/webserver.c
 
 # compile the main clipboard header source file into object file
 win_clipboard.obj:
@@ -135,6 +143,10 @@ desktop.obj:
 # compile the input handling source file into object file
 windowsinput.obj:
 	$(CC) /c $(CFLAGS) ../include/windowsinput.c
+
+# compile the cursor management source file into object file
+windowscursor.obj:
+	$(CC) /c $(CFLAGS) ../include/windowscursor.c
 
 # compile the source main client file into object file
 main.obj:

@@ -1,3 +1,8 @@
+/*
+ * General clipboard header file.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+**/
 #ifndef CLIPBOARD_H
 #define CLIPBOARD_H
 
@@ -51,7 +56,7 @@ typedef struct ClipboardFiles
 
 void initClipboard();
 
-ClipboardData* GetClipboard();
+ClipboardData *GetClipboard();
 
 void SetClipboard( ClipboardData* cb );
 
