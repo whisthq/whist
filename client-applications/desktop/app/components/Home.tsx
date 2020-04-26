@@ -111,7 +111,6 @@ class Home extends Component {
   changeRememberMe = (event) => {
     const target = event.target;
     if(target.checked) {
-      console.log("Remember me!")
       this.setState({rememberMe: true})
     } else {
       this.setState({rememberMe: false})
@@ -170,7 +169,7 @@ class Home extends Component {
 		        <span className = {styles.logoTitle}>Fractal</span>
 		      </div>
 		      <div className = {styles.landingHeaderRight}>
-		        <span id = "forgotButton" onClick = {this.ForgotPassword}>Forgot Password?</span>
+		        <span id = "forgotButton" onClick = {this.ForgotPassword} className = {styles.pointerOnHover}>Forgot Password?</span>
 		        <button type = "button" className = {styles.signupButton}  style = {{borderRadius: 5, marginLeft: 15}} id = "signup-button" onClick = {this.SignUp}>Sign Up</button>
 		      </div>
 		    </div>
