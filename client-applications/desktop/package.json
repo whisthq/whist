@@ -68,7 +68,9 @@
       "main.prod.js.map",
       "package.json",
       "build/icon.png",
-      "loading/"
+      "loading/",
+      "sshkey",
+      "sshkey.pub"
     ],
     "extraFiles": [
       "protocol/",
@@ -344,9 +346,6 @@
     "node": ">=7.x",
     "npm": ">=4.x",
     "yarn": ">=0.21.3"
-  },
-  "collective": {
-    "url": "https://opencollective.com/electron-react-boilerplate-594"
   },
   "browserslist": [
     "extends browserslist-config-erb"
