@@ -84,18 +84,16 @@ class MainBox extends Component {
             var path = process.cwd() + "\\protocol\\desktop\\FractalClient.exe"
           }
 
-          var screenWidth = this.state.windowMode ? window.screen.width * window.devicePixelRatio : 0
-          var screenHeight = this.state.windowMode ? (window.screen.height * window.devicePixelRatio - 70) : 0
+          var screenWidth = this.state.windowMode ? window.screen.width : 0
+          var screenHeight = this.state.windowMode ? (window.screen.height - 70) : 0
 
           var parameters = [this.props.public_ip, screenWidth, screenHeight, this.state.mbps]
-
-          console.log(parameters)
 
           if(this.state.launches == 1) {
             this.TrackActivity(true);
           }
 
-          const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
+          const protocol = child(path, parameters, {detached: true, stdio: 'ignore', windowsHide: true});
 
           protocol.on('close', (code) => {
             if(this.state.launches == 1) {
