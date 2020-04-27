@@ -31,6 +31,7 @@ export const STORE_PROMO_CODE    = "STORE_PROMO_CODE"
 export const RESTART_PC          = "RESTART_PC"
 export const VM_RESTARTED        = "VM_RESTARTED"
 export const SEND_LOGS           = "SEND_LOGS"
+export const CHANGE_STATUS_MESSAGE = "CHANGE_STATUS_MESSAGE"
 
 export function loginUser(username, password) {
 	console.log("login action fired")
@@ -250,3 +251,10 @@ export function sendLogs(connection_id, logs) {
 		logs
 	}
 } 
+
+export function changeStatusMessage(status_message) {
+	return {
+		type: CHANGE_STATUS_MESSAGE,
+		status_message
+	}
+}

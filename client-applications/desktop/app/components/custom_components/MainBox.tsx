@@ -54,7 +54,12 @@ class MainBox extends Component {
     var appRootDir = require('electron').remote.app.getAppPath();
     const os       = require('os');
 
-    if (os.platform() === 'darwin' || os.platform() === 'linux') {
+    if (os.platform() === 'darwin') {
+      // get logs and connection_id from Fractal MacOS cache
+      var logs = fs.readFileSync(process.env.HOME + "/.fractal/log.txt").toString();
+      var connection_id = parseInt(fs.readFileSync(process.env.HOME + "/.fractal/connection_id.txt").toString());
+      this.props.dispatch(sendLogs(connection_id, logs))
+    } else if (os.platform() === 'linux') {
       var logs = fs.readFileSync(__dirname + "../log.txt").toString();
       var connection_id = parseInt(fs.readFileSync(__dirname + "../connection_id.txt").toString());
       this.props.dispatch(sendLogs(connection_id, logs))
@@ -84,8 +89,8 @@ class MainBox extends Component {
             var path = process.cwd() + "\\protocol\\desktop\\FractalClient.exe"
           }
 
-          var screenWidth = this.state.windowMode ? window.screen.width : 0
-          var screenHeight = this.state.windowMode ? (window.screen.height - 70) : 0
+          var screenWidth = this.state.windowMode ? window.screen.width * window.devicePixelRatio : 0
+          var screenHeight = this.state.windowMode ? (window.screen.height - 80) * window.devicePixelRatio : 0
 
           var parameters = [this.props.public_ip, screenWidth, screenHeight, this.state.mbps]
 
@@ -93,7 +98,7 @@ class MainBox extends Component {
             this.TrackActivity(true);
           }
 
-          const protocol = child(path, parameters, {detached: true, stdio: 'ignore', windowsHide: true});
+          const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
 
           protocol.on('close', (code) => {
             if(this.state.launches == 1) {
@@ -253,8 +258,11 @@ class MainBox extends Component {
               <div>
                 <FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "#111111", height: 30}}/>
               </div>
-              <div style = {{marginTop: 10, color: '#111111', fontSize: 14, lineHeight: 1.4}}>
-                Booting your cloud PC (this could take a few minutes)
+              <div style = {{marginTop: 10, color: '#111111', fontSize: 16, lineHeight: 1.4}}>
+                Booting your cloud PC
+              </div>
+              <div style = {{marginTop: 5, color: '#333333', fontSize: 11, lineHeight: 1.4}}>
+                {this.props.status_message}
               </div>
             </div>
           </div>
@@ -557,7 +565,8 @@ function mapStateToProps(state) {
     account_locked: state.counter.account_locked,
     promo_code: state.counter.promo_code,
     restart_status: state.counter.restart_status,
-    restart_attempts: state.counter.restart_attempts
+    restart_attempts: state.counter.restart_attempts,
+    status_message: state.counter.status_message
   }
 }
 

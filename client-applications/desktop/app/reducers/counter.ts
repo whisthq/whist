@@ -4,7 +4,8 @@ import * as MainAction from '../actions/counter';
 const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, resetFeedback: false, isUser: true, 
                 os: '', askFeedback: false, window: 'main', ipInfo: {}, computers: [], fetchStatus: false, disk: '',
                 attachState: 'NOT_REQUESTED', access_token: '', refresh_token: '', attach_attempts: 0,
-                account_locked: false, promo_code: '', restart_status: 0, restart_attempts: 0, location: ''}
+                account_locked: false, promo_code: '', restart_status: 0, restart_attempts: 0, location: '',
+                status_message: ''}
 
 export default function counter(state = DEFAULT, action: Action<string>) {
   switch (action.type) {
@@ -103,6 +104,12 @@ export default function counter(state = DEFAULT, action: Action<string>) {
         ...state,
         restart_status: action.status,
         restart_attempts: state.restart_attempts + 1
+      }
+    case MainAction.CHANGE_STATUS_MESSAGE:
+      console.log(action)
+      return {
+        ...state,
+        status_message: action.status_message
       }
     default:
       return state;

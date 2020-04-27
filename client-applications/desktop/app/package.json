@@ -3,7 +3,7 @@
   "license": "UNLICENSED",
   "productName": "Fractal",
   "description": "Fractal Desktop Application",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "main": "./main.prod.js",
   "author": {
     "name": "Fractal Computers, Inc.",
@@ -14,6 +14,6 @@
     "postinstall": "yarn electron-rebuild"
   },
   "dependencies": {
-    "speedtest-net": "^2.1.1"
+    "speedtest.net": "^0.1.0"
   }
 }

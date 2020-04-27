@@ -7,6 +7,9 @@ Currently supported:
 - MacOS
 - Linux
 
+## Note
+We currently have to manually fix a node-modules error by modifying 'node_modules/builder-util-runtime/out/httpExecutor.js' and changing the setTimeout() in Line 322. This is the best fix for an update timeout error that I was able to find.
+
 ## Install
 
 First, clone the repo via git:
