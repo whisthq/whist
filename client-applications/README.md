@@ -15,4 +15,4 @@ The following platforms need to be supported:
 - Android/Chromebook
 - Web
 
-Each folder contains its own README.md with proper information on development for each application.
+Each folder contains its own readme with proper information on development for each application.
