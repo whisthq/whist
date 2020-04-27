@@ -33,6 +33,10 @@ node_modules
 # VS Code
 .vscode
 
+# Yarn
+yarn.lock
+app/yarn.lock
+
 # App packaged
 release
 app/main.prod.js
@@ -61,14 +65,13 @@ npm-debug.log.*
 
 # protocol files
 .fractal-protocol
-.protocol
 fractal-protocol
-protocol
 fractal-protocol/desktop
+.protocol
+protocol
 protocol/desktop
 clipboard/
 log.txt
-ssh_host_ecdsa_key.pub
 connection_id.txt
+ssh_host_ecdsa_key.pub
 .unison
-app/main.prod.js.LICENSE.txt

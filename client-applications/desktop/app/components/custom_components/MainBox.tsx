@@ -54,7 +54,12 @@ class MainBox extends Component {
     var appRootDir = require('electron').remote.app.getAppPath();
     const os       = require('os');
 
-    if (os.platform() === 'darwin' || os.platform() === 'linux') {
+    if (os.platform() === 'darwin') {
+      // get logs and connection_id from Fractal MacOS cache
+      var logs = fs.readFileSync(process.env.HOME + "/.fractal/log.txt").toString();
+      var connection_id = parseInt(fs.readFileSync(process.env.HOME + "/.fractal/connection_id.txt").toString());
+      this.props.dispatch(sendLogs(connection_id, logs))
+    } else if (os.platform() === 'linux') {
       var logs = fs.readFileSync(__dirname + "../log.txt").toString();
       var connection_id = parseInt(fs.readFileSync(__dirname + "../connection_id.txt").toString());
       this.props.dispatch(sendLogs(connection_id, logs))
@@ -88,8 +93,6 @@ class MainBox extends Component {
           var screenHeight = this.state.windowMode ? (window.screen.height * window.devicePixelRatio - 70) : 0
 
           var parameters = [this.props.public_ip, screenWidth, screenHeight, this.state.mbps]
-
-          console.log(parameters)
 
           if(this.state.launches == 1) {
             this.TrackActivity(true);

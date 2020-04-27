@@ -7,6 +7,9 @@ Currently supported:
 - MacOS
 - Linux
 
+## Note
+We currently have to manually fix a node-modules error by modifying 'node_modules/builder-util-runtime/out/httpExecutor.js' and changing the setTimeout() in Line 322. This is the best fix for an update timeout error that I was able to find.
+
 ## Install
 
 First, clone the repo via git:
@@ -51,7 +54,3 @@ Once you are ready to publish for auto-update to the Fractal users, you need to 
  4- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
 
 The production executables are hosted at: https://s3.console.aws.amazon.com/s3/home?region=us-east-1#
-
-## Note
-
-We currently have to manually fix a node-modules error by modifying 'node_modules/builder-util-runtime/out/httpExecutor.js' and changing the setTimeout() in Line 322. This is the best fix for an update timeout error that I was able to find.
