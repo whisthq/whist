@@ -2,7 +2,7 @@
  * Fractal Server.
  *
  * Copyright Fractal Computers, Inc. 2020
-**/
+ **/
 #if defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -21,19 +21,18 @@
 // TODO: Linux headers
 #endif
 
-#include "../include/audiocapture.h"
-#include "../include/audioencode.h"
-#include "../include/cursor.h"
-#include "../include/fractal.h"
-#include "../include/input.h"
-#include "../include/screencapture.h"
-#include "../include/videoencode.h"
-#include "../include/webserver.h"
-
+#include "../fractal/audio/audiocapture.h"
+#include "../fractal/audio/audioencode.h"
+#include "../fractal/core/fractal.h"
+#include "../fractal/cursor/cursor.h"
+#include "../fractal/input/input.h"
+#include "../fractal/utils/aes.h"
+#include "../fractal/utils/webserver.h"
+#include "../fractal/video/screencapture.h"
+#include "../fractal/video/videoencode.h"
 #ifdef _WIN32
-#include "../include/desktop.h"
+#include "../fractal/utils/desktop.h"
 #endif
-#include "../include/aes.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
@@ -268,18 +267,17 @@ encoder_t* encoder_factory_result = NULL;
 int encoder_factory_w;
 int encoder_factory_h;
 int encoder_factory_current_bitrate;
-int32_t MultithreadedEncoderFactory( void* opaque )
-{
+int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
-    encoder_factory_result = create_video_encoder( encoder_factory_w, encoder_factory_h,
-                                                   encoder_factory_current_bitrate, gop_size );
+    encoder_factory_result =
+        create_video_encoder(encoder_factory_w, encoder_factory_h,
+                             encoder_factory_current_bitrate, gop_size);
     encoder_finished = true;
     return 0;
 }
-int32_t MultithreadedDestroyEncoder( void* opaque )
-{
+int32_t MultithreadedDestroyEncoder(void* opaque) {
     encoder_t* encoder = (encoder_t*)opaque;
-    destroy_video_encoder( encoder );
+    destroy_video_encoder(encoder);
     return 0;
 }
 
@@ -357,38 +355,35 @@ int32_t SendVideo(void* opaque) {
 
         // Update encoder with new parameters
         if (update_encoder) {
-            //encoder = NULL;
-            if( pending_encoder )
-            {
-                if( encoder_finished )
-                {
-                    if( encoder )
-                    {
-                        SDL_CreateThread( MultithreadedDestroyEncoder, "MultithreadedDestroyEncoder", encoder );
+            // encoder = NULL;
+            if (pending_encoder) {
+                if (encoder_finished) {
+                    if (encoder) {
+                        SDL_CreateThread(MultithreadedDestroyEncoder,
+                                         "MultithreadedDestroyEncoder",
+                                         encoder);
                     }
                     encoder = encoder_factory_result;
                     frames_since_first_iframe = 0;
                     pending_encoder = false;
                     update_encoder = false;
                 }
-            } else
-            {
+            } else {
                 pending_encoder = true;
                 encoder_finished = false;
                 encoder_factory_w = device->width;
                 encoder_factory_h = device->height;
                 encoder_factory_current_bitrate = current_bitrate;
-                if( encoder == NULL )
-                {
+                if (encoder == NULL) {
                     // Run on this thread bc we have to wait for it anyway
-                    MultithreadedEncoderFactory( NULL );
+                    MultithreadedEncoderFactory(NULL);
                     encoder = encoder_factory_result;
                     frames_since_first_iframe = 0;
                     pending_encoder = false;
                     update_encoder = false;
-                } else
-                {
-                    SDL_CreateThread( MultithreadedEncoderFactory, "MultithreadedEncoderFactory", NULL );
+                } else {
+                    SDL_CreateThread(MultithreadedEncoderFactory,
+                                     "MultithreadedEncoderFactory", NULL);
                 }
             }
         }
@@ -398,7 +393,7 @@ int32_t SendVideo(void* opaque) {
         int accumulated_frames = 0;
         if (GetTimer(last_frame_capture) > 1.0 / FPS) {
             accumulated_frames = CaptureScreen(device);
-            //mprintf( "CaptureScreen: %d\n", accumulated_frames );
+            // mprintf( "CaptureScreen: %d\n", accumulated_frames );
         }
 
         // If capture screen failed, we should try again
@@ -431,13 +426,11 @@ int32_t SendVideo(void* opaque) {
             // consecutive_capture_screen_errors = 0;
 
             bool is_iframe = false;
-            if( frames_since_first_iframe % gop_size == 0 )
-            {
+            if (frames_since_first_iframe % gop_size == 0) {
                 wants_iframe = false;
                 is_iframe = true;
-            } else if( wants_iframe )
-            {
-                video_encoder_set_iframe( encoder );
+            } else if (wants_iframe) {
+                video_encoder_set_iframe(encoder);
                 wants_iframe = false;
                 is_iframe = true;
             }
@@ -677,21 +670,20 @@ void update() {
 #include <time.h>
 
 int main() {
-    srand( (unsigned int) time( NULL ) );
+    srand((unsigned int)time(NULL));
     connection_id = rand();
     initBacktraceHandler();
 #ifdef _WIN32
     initMultiThreadedPrintf("C:\\ProgramData\\FractalCache");
 #else
-    initMultiThreadedPrintf( "." );
+    initMultiThreadedPrintf(".");
 #endif
     initClipboard();
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_Init(SDL_INIT_VIDEO);
 #ifdef _WIN32
-    if( !InitDesktop() )
-    {
-        mprintf( "Could not winlogon!\n" );
+    if (!InitDesktop()) {
+        mprintf("Could not winlogon!\n");
     }
 #endif
 
@@ -744,12 +736,13 @@ int main() {
         FractalServerMessage* msg_init_whole = malloc(
             sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit));
         msg_init_whole->type = MESSAGE_INIT;
-        FractalServerMessageInit* msg_init = (FractalServerMessageInit*) msg_init_whole->init_msg;
+        FractalServerMessageInit* msg_init =
+            (FractalServerMessageInit*)msg_init_whole->init_msg;
 #ifdef _WIN32
-	    msg_init->filename[0] = '\0';
-        strcat( msg_init->filename, "C:\\ProgramData\\FractalCache" );
-	    char* username = "Fractal";
-#else // Linux
+        msg_init->filename[0] = '\0';
+        strcat(msg_init->filename, "C:\\ProgramData\\FractalCache");
+        char* username = "Fractal";
+#else  // Linux
         char* cwd = getcwd(NULL, 0);
         memcpy(msg_init->filename, cwd, strlen(cwd) + 1);
         free(cwd);
@@ -921,9 +914,8 @@ int main() {
                     fmsg->type == MESSAGE_MOUSE_MOTION) {
                     // Replay user input (keyboard or mouse presses)
                     if (input_device) {
-                        if( !ReplayUserInput( input_device, fmsg ) )
-                        {
-                            mprintf( "Failed to replay input!\n" );
+                        if (!ReplayUserInput(input_device, fmsg)) {
+                            mprintf("Failed to replay input!\n");
 #ifdef _WIN32
                             InitDesktop();
 #endif
@@ -938,7 +930,7 @@ int main() {
 #endif
                 } else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
-                    max_mbps = max( fmsg->mbps, MINIMUM_BITRATE );
+                    max_mbps = max(fmsg->mbps, MINIMUM_BITRATE);
                     update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
                     mprintf("Ping Received - ID %d\n", fmsg->ping_id);

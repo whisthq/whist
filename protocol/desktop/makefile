@@ -88,27 +88,27 @@ all: clean clear $(OBJS)
 
 # compile the main fractal header source file into object file
 fractal.obj:
-	$(CC) /c $(CFLAGS) ../include/fractal.c
+	$(CC) /c $(CFLAGS) ../fractal/core/fractal.c
 
 # compile the main clipboard thread source file into object file
 clipboard_thread.obj:
-	$(CC) /c $(CFLAGS) ../include/clipboard_thread.c
+	$(CC) /c $(CFLAGS) ../fractal/clipboard/clipboard_thread.c
 
 # compile the main clipboard source file into object file
 win_clipboard.obj:
-	$(CC) /c $(CFLAGS) ../include/win_clipboard.c
+	$(CC) /c $(CFLAGS) ../fractal/clipboard/win_clipboard.c
 
 # compile the aes source file into object file
 aes.obj:
-	$(CC) /c $(CFLAGS) ../include/aes.c
+	$(CC) /c $(CFLAGS) ../fractal/utils/aes.c
 
 # compile the video decoder source file into object file
 videodecode.obj:
-	$(CC) /c $(CFLAGS) ../include/videodecode.c
+	$(CC) /c $(CFLAGS) ../fractal/video/videodecode.c
 
 # compile the audio decoder source file into object file
 audiodecode.obj:
-	$(CC) /c $(CFLAGS) ../include/audiodecode.c
+	$(CC) /c $(CFLAGS) ../fractal/audio/audiodecode.c
 
 # compile the main video source file into object file
 video.obj:

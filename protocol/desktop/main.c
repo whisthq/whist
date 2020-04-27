@@ -2,7 +2,7 @@
  * Fractal Client.
  *
  * Copyright Fractal Computers, Inc. 2020
-**/
+ **/
 #if defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -14,9 +14,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../include/aes.h"
-#include "../include/clipboard.h"
-#include "../include/fractal.h"
+#include "../fractal/clipboard/clipboard.h"
+#include "../fractal/core/fractal.h"
+#include "../fractal/utils/aes.h"
 #include "audio.h"
 #include "video.h"
 
@@ -112,12 +112,12 @@ void update() {
         StartTimer((clock*)&UpdateData.last_tcp_check_timer);
     }
 
-    if (pendingUpdateClipboard() && received_server_init_message ) {
+    if (pendingUpdateClipboard() && received_server_init_message) {
         updateClipboard();
     }
 
     // Check if clipboard has updated
-    if (hasClipboardUpdated() && received_server_init_message ) {
+    if (hasClipboardUpdated() && received_server_init_message) {
         mprintf("Clipboard event found, sending to server!\n");
         updateClipboard();
     }
@@ -131,7 +131,8 @@ void update() {
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
-        fmsg.dimensions.dpi = (int)(96.0 * output_width / get_virtual_screen_width());
+        fmsg.dimensions.dpi =
+            (int)(96.0 * output_width / get_virtual_screen_width());
         SendFmsg(&fmsg);
         UpdateData.tried_to_update_dimension = true;
     }
@@ -470,9 +471,10 @@ int ReceivePackets(void* opaque) {
 
 int ReceiveMessage(struct RTPPacket* packet) {
     FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
-    if (!(packet->payload_size == sizeof(FractalServerMessage)
-           || (fmsg->type == MESSAGE_INIT && packet->payload_size == sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit))
-    )) {
+    if (!(packet->payload_size == sizeof(FractalServerMessage) ||
+          (fmsg->type == MESSAGE_INIT &&
+           packet->payload_size == sizeof(FractalServerMessage) +
+                                       sizeof(FractalServerMessageInit)))) {
         mprintf("Incorrect payload size for a server message!\n");
         return -1;
     }
@@ -496,27 +498,31 @@ int ReceiveMessage(struct RTPPacket* packet) {
             SetClipboard(&fmsg->clipboard);
             break;
         case MESSAGE_INIT:
-            mprintf( "Received init message!\n" );
-            FractalServerMessageInit* msg_init = (FractalServerMessageInit*)fmsg->init_msg;
-            memcpy( filename, msg_init->filename, min(sizeof( filename ), sizeof(msg_init->filename)) );
-            memcpy( username, msg_init->username, min( sizeof( username ), sizeof( msg_init->username ) ) );
+            mprintf("Received init message!\n");
+            FractalServerMessageInit* msg_init =
+                (FractalServerMessageInit*)fmsg->init_msg;
+            memcpy(filename, msg_init->filename,
+                   min(sizeof(filename), sizeof(msg_init->filename)));
+            memcpy(username, msg_init->username,
+                   min(sizeof(username), sizeof(msg_init->username)));
 
-            #ifdef __APPLE__
-                // mac apps can't save files into the bundled app package, 
-                // need to save into hidden folder under account
-                // this stores connection_id in Users/USERNAME/.fractal/connection_id.txt
-                char path[100] = "";
-                strcat(path, getenv("HOME"));
-                strcat(path, "/.fractal/connection_id.txt");
+#ifdef __APPLE__
+            // mac apps can't save files into the bundled app package,
+            // need to save into hidden folder under account
+            // this stores connection_id in
+            // Users/USERNAME/.fractal/connection_id.txt
+            char path[100] = "";
+            strcat(path, getenv("HOME"));
+            strcat(path, "/.fractal/connection_id.txt");
 
-                FILE* f = fopen(path, "w" );
-                fprintf( f, "%d", msg_init->connection_id );
-                fclose( f );
-            #else
-                FILE* f = fopen( "connection_id.txt", "w" );
-                fprintf( f, "%d", msg_init->connection_id );
-                fclose( f );
-            #endif
+            FILE* f = fopen(path, "w");
+            fprintf(f, "%d", msg_init->connection_id);
+            fclose(f);
+#else
+            FILE* f = fopen("connection_id.txt", "w");
+            fprintf(f, "%d", msg_init->connection_id);
+            fclose(f);
+#endif
 
             received_server_init_message = true;
             break;
@@ -609,18 +615,16 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam) {
 }
 #endif
 
-
 static int resizingEventWatcher(void* data, SDL_Event* event) {
-  if (event->type == SDL_WINDOWEVENT &&
-      event->window.event == SDL_WINDOWEVENT_RESIZED) {
-    SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
-    if (win == (SDL_Window*)data) {
-        set_video_active_resizing(true);
+    if (event->type == SDL_WINDOWEVENT &&
+        event->window.event == SDL_WINDOWEVENT_RESIZED) {
+        SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
+        if (win == (SDL_Window*)data) {
+            set_video_active_resizing(true);
+        }
     }
-  }
-  return 0;
+    return 0;
 }
-
 
 int initSDL() {
 #if defined(_WIN32)
@@ -638,43 +642,44 @@ int initSDL() {
     int full_width = get_virtual_screen_width();
     int full_height = get_virtual_screen_height();
 
-    if( output_width < 0 )
-    {
+    if (output_width < 0) {
         output_width = full_width;
     }
 
-    if( output_height < 0 )
-    {
+    if (output_height < 0) {
         output_height = full_height;
     }
 
-
-    bool is_fullscreen = output_width == full_width && output_height == full_height;
+    bool is_fullscreen =
+        output_width == full_width && output_height == full_height;
 
 #if defined(_WIN32)
     window = SDL_CreateWindow(
         "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, output_width,
-        output_height, SDL_WINDOW_ALLOW_HIGHDPI |
-        (is_fullscreen ? SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP : 0));
+        output_height,
+        SDL_WINDOW_ALLOW_HIGHDPI |
+            (is_fullscreen ? SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP
+                           : 0));
 #else
     window =
         SDL_CreateWindow("Fractal", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, output_width, output_height, SDL_WINDOW_ALLOW_HIGHDPI |
-                         (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP |
-                                              SDL_WINDOW_ALWAYS_ON_TOP
-                                        : 0));
+                         SDL_WINDOWPOS_CENTERED, output_width, output_height,
+                         SDL_WINDOW_ALLOW_HIGHDPI |
+                             (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP |
+                                                  SDL_WINDOW_ALWAYS_ON_TOP
+                                            : 0));
 #endif
 
-    output_width = get_window_pixel_width( (SDL_Window *) window );
-    output_height = get_window_pixel_height( (SDL_Window *) window );
+    output_width = get_window_pixel_width((SDL_Window*)window);
+    output_height = get_window_pixel_height((SDL_Window*)window);
 
-    SDL_AddEventWatch(resizingEventWatcher, (SDL_Window *) window);
+    SDL_AddEventWatch(resizingEventWatcher, (SDL_Window*)window);
     if (!window) {
         fprintf(stderr, "SDL: could not create window - exiting: %s\n",
                 SDL_GetError());
         return -1;
     }
-	SDL_SetWindowResizable((SDL_Window *) window, true);
+    SDL_SetWindowResizable((SDL_Window*)window, true);
     return 0;
 }
 
@@ -690,23 +695,24 @@ void destroySDL() {
 }
 
 void parse_window_event(SDL_Event* event) {
-	// SDL_WindowEvent e = event->window; TODO: unused currently, is this needed?
-	switch (event->window.event) {
+    // SDL_WindowEvent e = event->window; TODO: unused currently, is this
+    // needed?
+    switch (event->window.event) {
         case SDL_WINDOWEVENT_SIZE_CHANGED:
             set_video_active_resizing(false);
-			output_width = get_window_pixel_width( (SDL_Window *) window);
-			output_height = get_window_pixel_height( (SDL_Window *) window);
+            output_width = get_window_pixel_width((SDL_Window*)window);
+            output_height = get_window_pixel_height((SDL_Window*)window);
 
             FractalClientMessage fmsg;
             fmsg.type = MESSAGE_DIMENSIONS;
             fmsg.dimensions.width = output_width;
             fmsg.dimensions.height = output_height;
-            fmsg.dimensions.dpi = (int)(96.0 * output_width / get_virtual_screen_width());
-            SendFmsg( &fmsg );
+            fmsg.dimensions.dpi =
+                (int)(96.0 * output_width / get_virtual_screen_width());
+            SendFmsg(&fmsg);
 
-            printf( "Window %d resized to %dx%d\n",
-                    event->window.windowID, event->window.data1,
-                    event->window.data2 );
+            printf("Window %d resized to %dx%d\n", event->window.windowID,
+                   event->window.data1, event->window.data2);
             break;
         case SDL_WINDOWEVENT_MINIMIZED:
             printf("Window %d minimized\n", event->window.windowID);
@@ -717,13 +723,17 @@ void parse_window_event(SDL_Event* event) {
         case SDL_WINDOWEVENT_RESTORED:
             printf("Window %d restored\n", event->window.windowID);
             break;
-		default:
-			printf("WINDOW EVENT %d\n",event->window.event);
-			break;
-	}
+        default:
+            printf("WINDOW EVENT %d\n", event->window.event);
+            break;
+    }
 }
 
-#define HOST_PUBLIC_KEY "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOT1KV+I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/Zt86r9dOzEcfrhxa+MnVQhNE8="
+#define HOST_PUBLIC_KEY                                           \
+    "ecdsa-sha2-nistp256 "                                        \
+    "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOT1KV+" \
+    "I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/"     \
+    "Zt86r9dOzEcfrhxa+MnVQhNE8="
 
 int main(int argc, char* argv[]) {
 #if defined(_WIN32)
@@ -769,9 +779,9 @@ int main(int argc, char* argv[]) {
         max_bitrate = atoi(argv[4]);
     }
 
-    FILE* ssh_key_host = fopen( "ssh_host_ecdsa_key.pub", "w" );
-    fprintf( ssh_key_host, "%s %s\n", server_ip, HOST_PUBLIC_KEY );
-    fclose( ssh_key_host );
+    FILE* ssh_key_host = fopen("ssh_host_ecdsa_key.pub", "w");
+    fprintf(ssh_key_host, "%s %s\n", server_ip, HOST_PUBLIC_KEY);
+    fclose(ssh_key_host);
 
     if (initSDL() < 0) {
         printf("Failed to initialized SDL\n");
@@ -787,8 +797,8 @@ int main(int argc, char* argv[]) {
     strcat(path, "/.fractal");
     initMultiThreadedPrintf(path);
 #else
-    initMultiThreadedPrintf( "." );
-#endif 
+    initMultiThreadedPrintf(".");
+#endif
 
     initClipboard();
 
@@ -866,16 +876,14 @@ int main(int argc, char* argv[]) {
         SDL_Delay(250);
 
         clock waiting_for_init_timer;
-        StartTimer( &waiting_for_init_timer );
-        while( !received_server_init_message )
-        {
-            if( GetTimer( waiting_for_init_timer ) > 350 / 1000.0 )
-            {
-                mprintf( "Took too long for init timer!\n" );
+        StartTimer(&waiting_for_init_timer);
+        while (!received_server_init_message) {
+            if (GetTimer(waiting_for_init_timer) > 350 / 1000.0) {
+                mprintf("Took too long for init timer!\n");
                 exiting = true;
                 break;
             }
-            SDL_Delay( 25 );
+            SDL_Delay(25);
         }
 
         while (connected && !exiting) {
@@ -907,9 +915,9 @@ int main(int argc, char* argv[]) {
             fmsg.type = 0;
             if (SDL_PollEvent(&msg)) {
                 switch (msg.type) {
-					case SDL_WINDOWEVENT:
-						parse_window_event(&msg);
-						break;
+                    case SDL_WINDOWEVENT:
+                        parse_window_event(&msg);
+                        break;
                     case SDL_KEYDOWN:
                     case SDL_KEYUP:
                         // Send a keyboard press for this event
@@ -942,14 +950,18 @@ int main(int argc, char* argv[]) {
                     case SDL_MOUSEMOTION:
                         fmsg.type = MESSAGE_MOUSE_MOTION;
                         fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
-                        fmsg.mouseMotion.x =
-                            fmsg.mouseMotion.relative
-                                ? msg.motion.xrel
-                                : msg.motion.x * MOUSE_SCALING_FACTOR / get_window_virtual_width((SDL_Window *) window);
+                        fmsg.mouseMotion.x = fmsg.mouseMotion.relative
+                                                 ? msg.motion.xrel
+                                                 : msg.motion.x *
+                                                       MOUSE_SCALING_FACTOR /
+                                                       get_window_virtual_width(
+                                                           (SDL_Window*)window);
                         fmsg.mouseMotion.y =
                             fmsg.mouseMotion.relative
                                 ? msg.motion.yrel
-                                : msg.motion.y * MOUSE_SCALING_FACTOR / get_window_virtual_height((SDL_Window *) window);
+                                : msg.motion.y * MOUSE_SCALING_FACTOR /
+                                      get_window_virtual_height(
+                                          (SDL_Window*)window);
                         break;
                     case SDL_MOUSEBUTTONDOWN:
                     case SDL_MOUSEBUTTONUP:
