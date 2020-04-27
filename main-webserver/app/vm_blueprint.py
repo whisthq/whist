@@ -30,7 +30,7 @@ def status(task_id):
     elif result.status == 'PENDING':
         response = {
             'state': result.status,
-            'output': str(result.info)
+            'output': str(result.info.msg)
         }
         return make_response(jsonify(response), 200)
     else:
