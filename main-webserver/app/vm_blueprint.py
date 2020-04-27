@@ -18,7 +18,7 @@ def status(task_id):
     if result.status == 'SUCCESS':
         response = {
             'state': result.status,
-            'output': result.result
+            'output': result.result,
         }
         return make_response(jsonify(response), 200)
     elif result.status == 'FAILURE':
@@ -27,7 +27,7 @@ def status(task_id):
             'output': str(result.info)
         }
         return make_response(jsonify(response), 200)
-    elif result.status == 'IN_PROGRESS':
+    elif result.status == 'PENDING':
         response = {
             'state': result.status,
             'output': str(result.info)
@@ -110,6 +110,16 @@ def vm(action):
         body = request.get_json()
         lockVM(body['vm_name'], False)
         return jsonify({'status': 200}), 200
+    elif action == 'changeState':
+        body = request.get_json()
+        state = body['state']
+        connection_id = body['connection_id']
+
+        if state == 'RUNNING_AVAILABLE' or state == 'RUNNING_UNAVAILABLE':
+            updateVMState(vm_name, state)
+        else:
+            return jsonify({'status': 401, 'msg': 'Invalid state provided'}), 401
+
     return jsonify({}), 400
 
 
