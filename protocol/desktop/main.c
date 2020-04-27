@@ -665,8 +665,8 @@ int initSDL() {
                                         : 0));
 #endif
 
-    output_width = get_window_pixel_width( window );
-    output_height = get_window_pixel_height( window );
+    output_width = get_window_pixel_width( (SDL_Window *) window );
+    output_height = get_window_pixel_height( (SDL_Window *) window );
 
     SDL_AddEventWatch(resizingEventWatcher, (SDL_Window *) window);
     if (!window) {
@@ -694,8 +694,8 @@ void parse_window_event(SDL_Event* event) {
 	switch (event->window.event) {
         case SDL_WINDOWEVENT_SIZE_CHANGED:
             set_video_active_resizing(false);
-			output_width = get_window_pixel_width(window);
-			output_height = get_window_pixel_height(window);
+			output_width = get_window_pixel_width( (SDL_Window *) window);
+			output_height = get_window_pixel_height( (SDL_Window *) window);
 
             FractalClientMessage fmsg;
             fmsg.type = MESSAGE_DIMENSIONS;
@@ -945,11 +945,11 @@ int main(int argc, char* argv[]) {
                         fmsg.mouseMotion.x =
                             fmsg.mouseMotion.relative
                                 ? msg.motion.xrel
-                                : msg.motion.x * MOUSE_SCALING_FACTOR / get_window_virtual_width(window);
+                                : msg.motion.x * MOUSE_SCALING_FACTOR / get_window_virtual_width((SDL_Window *) window);
                         fmsg.mouseMotion.y =
                             fmsg.mouseMotion.relative
                                 ? msg.motion.yrel
-                                : msg.motion.y * MOUSE_SCALING_FACTOR / get_window_virtual_height(window);
+                                : msg.motion.y * MOUSE_SCALING_FACTOR / get_window_virtual_height((SDL_Window *) window);
                         break;
                     case SDL_MOUSEBUTTONDOWN:
                     case SDL_MOUSEBUTTONUP:
