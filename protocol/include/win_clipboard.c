@@ -540,9 +540,10 @@ void SetClipboard( ClipboardData* cb )
 	if( cf_type != -1 )
 	{
 		if( !OpenClipboard( NULL ) ) return;
-
 		EmptyClipboard();
-		SetClipboardData( cf_type, hMem );
+		if(!SetClipboardData( cf_type, hMem) ){
+		    mprintf("Failed to SetClipboardData\n");
+		}
 
 		CloseClipboard();
 	}

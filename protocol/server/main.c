@@ -746,10 +746,10 @@ int main() {
         msg_init_whole->type = MESSAGE_INIT;
         FractalServerMessageInit* msg_init = (FractalServerMessageInit*) msg_init_whole->init_msg;
 #ifdef _WIN32
-        msg_init->filename[0] = '\0';
-        strcat(msg_init->filename, "C:\\ProgramData\\FractalCache");
-        char* username = "vm1";
-#else  // Linux
+	    msg_init->filename[0] = '\0';
+        strcat( msg_init->filename, "C:\\ProgramData\\FractalCache" );
+	    char* username = "Fractal";
+#else // Linux
         char* cwd = getcwd(NULL, 0);
         memcpy(msg_init->filename, cwd, strlen(cwd) + 1);
         free(cwd);

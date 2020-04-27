@@ -59,6 +59,7 @@ void initUpdateClipboard( SEND_FMSG* send_fmsg_local, char* server_ip_local )
 	send_fmsg = send_fmsg_local;
 
 	updating_clipboard = false;
+	pending_update_clipboard = false;
 	StartTimer( (clock*)&last_clipboard_update );
 	clipboard_semaphore = SDL_CreateSemaphore( 0 );
 

@@ -89,9 +89,8 @@ bool get_clipboard_string(ClipboardData* cb) {
 }
 
 bool get_clipboard_files(ClipboardData* cb) {
-  Atom target_atom =
-           XInternAtom(display, "x-special/gnome-copied-files", False),
-       property_atom = XInternAtom(display, "XSEL_DATA", False);
+  Atom target_atom = XInternAtom(display, "x-special/gnome-copied-files", False);
+  Atom property_atom = XInternAtom(display, "XSEL_DATA", False);
 
   if (clipboard_has_target(property_atom, target_atom)) {
     if (!get_clipboard_data(property_atom, cb, 0)) {
@@ -239,6 +238,11 @@ void SetClipboard(ClipboardData* cb) {
 void StartTrackingClipboardUpdates() {
   // To be called at the beginning of clipboard usage
   display = XOpenDisplay(NULL);
+  if (!display) {
+        mprintf("ERROR: StartTrackingClipboardUpdates display did not open\n");
+        perror(NULL);
+        return -1;
+   }
   unsigned long color = BlackPixel(display, DefaultScreen(display));
   window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1, 1,
                                0, color, color);
