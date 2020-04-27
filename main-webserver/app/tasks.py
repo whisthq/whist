@@ -249,14 +249,16 @@ def fetchAll(self, update):
 		if update:
 			try:
 				if not entry.name in vm_names:
+					print('NOTIFICATION: Inserted {} into VM table'.format(entry.name))
 					insertRow(entry.os_profile.admin_username,
 							  entry.name, current_usernames, vm_names)
 			except:
 				pass
 
 	if update:
-		for vm_name, vm_username in current_vms.items():
-			deleteRow(vm_username, vm_name, vm_usernames, vm_names)
+		if current_vms:
+			for vm_name, vm_username in current_vms.items():
+				deleteRow(vm_username, vm_name, vm_usernames, vm_names)
 
 	return vms
 
