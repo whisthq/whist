@@ -10,10 +10,8 @@ ARCH = $(shell getconf LONG_BIT)
 # executable name
 BIN_NAME = build$(ARCH)/FractalServer
 
-DYNAMIC_LIBS =
-
 # dynamic libs to link against
-DYNAMIC2_LIBS = \
+DYNAMIC_LIBS = \
 	../lib/$(ARCH)/mfx/linux/libmfx.so.1.32
 
 # system libs to link against
@@ -74,48 +72,48 @@ LDFLAGS = \
 	-O0
 
 # link all files into executable
-all: clean clear $(OBJS) logo
+all: clean clear $(OBJS)
 	$(CC) $(LDFLAGS) -o $(BIN_NAME) $(OBJS) $(STATIC_LIBS) $(DYNAMIC_LIBS) $(SHARED_LIBS)
 
 # compile the main fractal header source file into object file
 fractal.o:
-	$(CC) -c $(CFLAGS) ../include/fractal.c
+	$(CC) -c $(CFLAGS) ../fractal/core/fractal.c
 
 # compile the webserver source file into object file
 webserver.o:
-	$(CC) -c $(CFLAGS) ../include/webserver.c
+	$(CC) -c $(CFLAGS) ../fractal/utils/webserver.c
 
 # compile the main fractal header source file into object file
 x11capture.o:
-	$(CC) -c $(CFLAGS) ../include/x11capture.c
+	$(CC) -c $(CFLAGS) ../fractal/video/x11capture.c
 
 # compile the video encoder source file into object file
 videoencode.o:
-	$(CC) -c $(CFLAGS) ../include/videoencode.c
+	$(CC) -c $(CFLAGS) ../fractal/video/videoencode.c
 
 # compile the audio encoder source file into object file
 audioencode.o:
-	$(CC) -c $(CFLAGS) ../include/audioencode.c
+	$(CC) -c $(CFLAGS) ../fractal/audio/audioencode.c
 
 # compile the aes source file into object file
 aes.o:
-	$(CC) -c $(CFLAGS) ../include/aes.c
+	$(CC) -c $(CFLAGS) ../fractal/utils/aes.c
 
 # compile the general clipboard source file into object file
 x11_clipboard.o:
-	$(CC) -c $(CFLAGS) ../include/x11_clipboard.c
+	$(CC) -c $(CFLAGS) ../fractal/clipboard/x11_clipboard.c
 
 # compile the audio capture source file into object file
 alsacapture.o:
-	$(CC) -c $(CFLAGS) ../include/alsacapture.c
+	$(CC) -c $(CFLAGS) ../fractal/audio/alsacapture.c
 
 # compile the input playback source file into object file
 linuxinput.o:
-	$(CC) -c $(CFLAGS) ../include/linuxinput.c
+	$(CC) -c $(CFLAGS) ../fractal/input/linuxinput.c
 
 # compile the cursor management source file into object file
 linuxcursor.o:
-	$(CC) -c $(CFLAGS) ../include/linuxcursor.c
+	$(CC) -c $(CFLAGS) ../fractal/cursor/linuxcursor.c
 
 # compile the main source file into object file
 main.o:

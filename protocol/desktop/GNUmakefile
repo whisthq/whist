@@ -150,39 +150,39 @@ all: clean clear $(OBJS)
 
 # compile the main fractal header source file into object file
 fractal.o:
-	$(CC) -c $(CFLAGS) ../include/fractal.c
+	$(CC) -c $(CFLAGS) ../fractal/core/fractal.c
 
 # compile the video decoder source file into object file
 videodecode.o:
-	$(CC) -c $(CFLAGS) ../include/videodecode.c
+	$(CC) -c $(CFLAGS) ../fractal/video/videodecode.c
 
 # compile the audio decoder source file into object file
 audiodecode.o:
-	$(CC) -c $(CFLAGS) ../include/audiodecode.c
+	$(CC) -c $(CFLAGS) ../fractal/audio/audiodecode.c
 
 # compile the aes source file into object file
 aes.o:
-	$(CC) -c $(CFLAGS) ../include/aes.c
+	$(CC) -c $(CFLAGS) ../fractal/utils/aes.c
 
 # compile the MacOS clipboard Objective-C source file into object file
 clipboard_osx.o:
-	$(CC) -c $(CFLAGS) ../include/clipboard_osx.m
+	$(CC) -c $(CFLAGS) ../fractal/clipboard/clipboard_osx.m
 
 # compile the MacOS utils source file into object file
 mac_utils.o:
-	$(CC) -c $(CFLAGS) ../include/mac_utils.c
+	$(CC) -c $(CFLAGS) ../fractal/utils/mac_utils.c
 
 # compile the general clipboard thread source file into object file
 clipboard_thread.o:
-	$(CC) -c $(CFLAGS) ../include/clipboard_thread.c
+	$(CC) -c $(CFLAGS) ../fractal/clipboard/clipboard_thread.c
 
 # compile the general MacOS clipboard file into object file
 mac_clipboard.o:
-	$(CC) -c $(CFLAGS) ../include/mac_clipboard.c
+	$(CC) -c $(CFLAGS) ../fractal/clipboard/mac_clipboard.c
 
 # compile the general Linux Ubuntu clipboard source file into object file
 x11_clipboard.o:
-	$(CC) -c $(CFLAGS) ../include/x11_clipboard.c
+	$(CC) -c $(CFLAGS) ../fractal/clipboard/x11_clipboard.c
 
 # compile the main video source file into object file
 video.o:
