@@ -463,7 +463,7 @@ def swapDisk(self, disk_name):
 		associateVMWithDisk(vm_name, disk_name)
 		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 
-		self.update_state(state='PENDING', meta={"msg": "Booting Cloud PC."})
+		self.update_state(state='PENDING', meta={"msg": "Database updated. Booting Cloud PC."})
 
 		print("NOTIFICATION: Database updated with disk " +
 			  disk_name + " and " + vm_name)
