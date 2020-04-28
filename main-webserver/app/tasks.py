@@ -430,7 +430,6 @@ def swapDisk(self, disk_name):
 		if hr > 0:
 			updateDisk(disk_name, vm_name, location)
 			associateVMWithDisk(vm_name, disk_name)
-			updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 			print("Database updated.")
 			return 1
 		else:
@@ -461,7 +460,6 @@ def swapDisk(self, disk_name):
 
 		updateDisk(disk_name, vm_name, location)
 		associateVMWithDisk(vm_name, disk_name)
-		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 
 		self.update_state(state='PENDING', meta={"msg": "Database updated. Booting Cloud PC."})
 
@@ -566,7 +564,6 @@ def swapSpecificDisk(self, disk_name, vm_name):
 
 	updateDisk(disk_name, vm_name, None)
 	associateVMWithDisk(vm_name, disk_name)
-	updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 	print("Database updated.")
 
 	time.sleep(10)
