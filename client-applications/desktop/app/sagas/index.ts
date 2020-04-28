@@ -211,8 +211,10 @@ function* fetchVM(action) {
       json.output = (0, eval)('(' + json.output + ')');
       yield put(Action.changeStatusMessage(json.output.msg))
     }
+    console.log(json)
     yield delay(5000)
   }
+  console.log(json)
   if(json && json.output && json.output.ip) {
     yield put(Action.storeIP(json.output.ip))
   }

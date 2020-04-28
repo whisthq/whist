@@ -17,7 +17,8 @@ import Speedometer from "../../../resources/images/speedometer.svg";
 import Car from "../../../resources/images/car.jpg";
 import Scale from "../../../resources/images/scale.svg"
 
-import { resetFeedback, sendFeedback, askFeedback, trackUserActivity, changeWindow, attachDisk, restartPC, vmRestarted, sendLogs } from "../../actions/counter"
+import { resetFeedback, sendFeedback, askFeedback, trackUserActivity, changeWindow, attachDisk, 
+  restartPC, vmRestarted, sendLogs, changeStatusMessage } from "../../actions/counter"
 
 class MainBox extends Component {
   constructor(props) {
@@ -73,6 +74,7 @@ class MainBox extends Component {
   LaunchProtocol = () => {
     if(this.state.reattached && this.props.public_ip && this.props.public_ip != '') {
       this.setState({launched: true})
+      this.props.dispatch(changeStatusMessage('Boot request sent to server'))
       if(this.state.launches == 0) {
         this.setState({launches: 1}, function() {
           var child      = require('child_process').spawn;
@@ -86,7 +88,7 @@ class MainBox extends Component {
             path = path.replace('/desktop/app', '/desktop');
           }
           else if (os.platform() === 'win32') { // windows
-            var path = process.cwd() + "\\protocol\\desktop\\FractalClient.exe"
+            var path = process.cwd() + "\\protocol\\desktop"
           }
 
           var screenWidth = this.state.windowMode ? window.screen.width * window.devicePixelRatio : 0
@@ -98,7 +100,8 @@ class MainBox extends Component {
             this.TrackActivity(true);
           }
 
-          const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
+          var executable = "FractalClient.exe";
+          const protocol = child(executable, parameters, {cwd: path, detached: true, stdio: 'ignore'});
 
           protocol.on('close', (code) => {
             if(this.state.launches == 1) {
@@ -471,9 +474,14 @@ class MainBox extends Component {
                     Scaling Factor
                   </div>
                   <div style = {{fontSize: 13, color: '#333333', marginTop: 10, marginLeft: 28, lineHeight: 1.4}}>
-                    Increase or decrease your scaling factor to change the width and height of icons on your cloud PC.
+                    For now, this is an easy manual process. To change the size of icons and text, go to your cloud PC desktop,
+                    right click, and open "Display Settings." Next, select the "Advanced Scaling Settings" option,
+                    where you'll be able to enter your desired scale factor (a percentage between 100 and 500), hit "Apply", and then
+                    select "Sign Out and Exit" in order to save your changes. Once you do, your cloud PC will exit, and your changes 
+                    will take effect when you re-connect. 
                   </div>
                 </div>
+                {/*
                 <div style = {{width: '25%'}}>
                   <div style = {{float: 'right'}}>
                     {
@@ -491,6 +499,7 @@ class MainBox extends Component {
                     }
                   </div>
                 </div>
+                */}
               </div>
             </div>
             <div style = {{padding: '30px 30px', borderBottom: 'solid 0.5px #EFEFEF'}}>
