@@ -249,10 +249,8 @@ def fetchAll(self, update):
 		vm_names.append(entry.name)
 
 		if update:
-			try:
-				insertVM(vm_name)
-			except:
-				pass
+			print('NOTIFICATION: Inserting {} into database'.format(vm_name))
+			insertVM(vm_name)
 
 	if update:
 		updateVMStates()
@@ -343,8 +341,9 @@ def updateVMStates(self):
 		if 'running' in vm_state.statuses[1].code:
 			is_running = True
 
-		username = fetchVMCredentials(vm.name)['username']
+		username = fetchVMCredentials(vm.name)
 		if username:
+			username = username['username']
 			most_recent_action = getMostRecentActivity(username)
 			if not most_recent_action:
 				available = True
