@@ -28,7 +28,7 @@ Start the app in the `dev` environment. This starts the renderer process in [**h
 
 ```yarn dev```
 
-Before doing this, you will need to run ```yarn -i``` and might need to run ```yarn upgrade``` if you haven't upgrade your yarn in a while. You can automatically clean unnecessary files with ```yarn autoclean --force``` as needed.
+Before doing this, you will need to run ```yarn -i``` and might need to run ```yarn upgrade``` if you haven't upgraded yarn in a while. You can automatically clean unnecessary files with ```yarn init --force && yarn autoclean --force``` as needed.
 
 ## Packaging for Production
 
@@ -42,7 +42,7 @@ This will enable you to get an executable that you can install to test your code
 
 Once you are ready to publish for auto-update to the Fractal users, you need to do a few things:
 
-1- Go into ```/desktop/package.json``` and update ```"bucket": ``` to the proper bucket for the operating system you are publishing for:
+1- Go into ```/desktop/package.json``` and update the ```"bucket": ``` field to the proper bucket for the operating system you are publishing for:
   - Windows: ```fractal-applications-release```
   - MacOS: ```fractal-mac-application-release```
   - Linux: ```fractal-linux-application-release```

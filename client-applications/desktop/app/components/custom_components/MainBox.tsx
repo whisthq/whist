@@ -62,6 +62,7 @@ class MainBox extends Component {
       this.props.dispatch(sendLogs(connection_id, logs));
     }
     else if (os.platform() === 'win32') { // windows
+      // get logs from the executable directory, no cache on Windows
       var logs = fs.readFileSync(process.cwd() + "\\log.txt").toString();
       var connection_id = parseInt(fs.readFileSync(process.cwd() + "\\connection_id.txt").toString());
       this.props.dispatch(sendLogs(connection_id, logs));
