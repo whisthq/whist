@@ -74,4 +74,6 @@ clipboard/
 log.txt
 connection_id.txt
 ssh_host_ecdsa_key.pub
+sshkey.pub
+sshkey
 .unison

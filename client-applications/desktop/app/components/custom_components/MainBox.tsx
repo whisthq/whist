@@ -55,19 +55,18 @@ class MainBox extends Component {
     var appRootDir = require('electron').remote.app.getAppPath();
     const os       = require('os');
 
-    if (os.platform() === 'darwin') {
-      // get logs and connection_id from Fractal MacOS cache
+    if (os.platform() === 'darwin' || os.platform() === 'linux') { // mac & linux
+      // get logs and connection_id from Fractal MacOS/Linux Ubuntu caches
+      // cache is located in /users/USERNAME/.fractal or in /home/USERNAME/.fractal
       var logs = fs.readFileSync(process.env.HOME + "/.fractal/log.txt").toString();
       var connection_id = parseInt(fs.readFileSync(process.env.HOME + "/.fractal/connection_id.txt").toString());
-      this.props.dispatch(sendLogs(connection_id, logs))
-    } else if (os.platform() === 'linux') {
-      var logs = fs.readFileSync(__dirname + "../log.txt").toString();
-      var connection_id = parseInt(fs.readFileSync(__dirname + "../connection_id.txt").toString());
-      this.props.dispatch(sendLogs(connection_id, logs))
-    } else if (os.platform() === 'win32') {
+      this.props.dispatch(sendLogs(connection_id, logs));
+    }
+    else if (os.platform() === 'win32') { // windows
+      // get logs from the executable directory, no cache on Windows
       var logs = fs.readFileSync(process.cwd() + "\\log.txt").toString();
       var connection_id = parseInt(fs.readFileSync(process.cwd() + "\\connection_id.txt").toString());
-      this.props.dispatch(sendLogs(connection_id, logs))
+      this.props.dispatch(sendLogs(connection_id, logs));
     }
   }
 
@@ -82,25 +81,33 @@ class MainBox extends Component {
           const os       = require('os');
 
           // check which OS we're on to properly launch the protocol
-          if (os.platform() === 'darwin' || os.platform() === 'linux') { // mac & linux
-            var path = appRootDir + "/protocol/desktop/FractalClient"
+          if (os.platform() === 'darwin') { // mac
+            // path when electron app is packaged as .dmg
+            var path = appRootDir + "/protocol/desktop/";
             path = path.replace('/Resources/app.asar','');
             path = path.replace('/desktop/app', '/desktop');
+            var executable = "./FractalClient";
+          }
+          else if (os.platform() === 'linux') { // linux
+            // path when electron app is packaged as .deb (to use as working directory)
+            var path = "/opt/Fractal/protocol/desktop"
+            var executable = "./FractalClient";
           }
           else if (os.platform() === 'win32') { // windows
-            var path = process.cwd() + "\\protocol\\desktop"
+            // path when electron app is packaged as .nsis (to use as working directory)
+            var path = process.cwd() + "\\protocol\\desktop";
+            var executable = "FractalClient.exe";
           }
 
           var screenWidth = this.state.windowMode ? window.screen.width * window.devicePixelRatio : 0
           var screenHeight = this.state.windowMode ? (window.screen.height - 80) * window.devicePixelRatio : 0
 
-          var parameters = [this.props.public_ip, screenWidth, screenHeight, this.state.mbps]
+          var parameters = [this.props.public_ip, screenWidth, screenHeight, this.state.mbps];
 
-          if(this.state.launches == 1) {
+          if (this.state.launches == 1) {
             this.TrackActivity(true);
           }
 
-          var executable = "FractalClient.exe";
           const protocol = child(executable, parameters, {cwd: path, detached: true, stdio: 'ignore'});
 
           protocol.on('close', (code) => {
@@ -261,11 +268,8 @@ class MainBox extends Component {
               <div>
                 <FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "#111111", height: 30}}/>
               </div>
-              <div style = {{marginTop: 10, color: '#111111', fontSize: 16, lineHeight: 1.4}}>
-                Booting your cloud PC
-              </div>
-              <div style = {{marginTop: 5, color: '#333333', fontSize: 11, lineHeight: 1.4}}>
-                {this.props.status_message}
+              <div style = {{marginTop: 10, color: '#111111', fontSize: 14, lineHeight: 1.4}}>
+                Booting your cloud PC (this could take a few minutes)
               </div>
             </div>
           </div>
@@ -574,8 +578,7 @@ function mapStateToProps(state) {
     account_locked: state.counter.account_locked,
     promo_code: state.counter.promo_code,
     restart_status: state.counter.restart_status,
-    restart_attempts: state.counter.restart_attempts,
-    status_message: state.counter.status_message
+    restart_attempts: state.counter.restart_attempts
   }
 }
 

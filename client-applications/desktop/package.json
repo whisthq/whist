@@ -68,15 +68,10 @@
       "main.prod.js.map",
       "package.json",
       "build/icon.png",
-      "loading/",
-      "sshkey",
-      "sshkey.pub"
+      "loading/"
     ],
     "extraFiles": [
-      "protocol/",
-      "loading/",
-      "sshkey",
-      "sshkey.pub"
+      "protocol/"
     ],
     "dmg": {
       "sign": false,
@@ -118,6 +113,10 @@
       ],
       "icon": "build/icon.ico"
     },
+    "deb": {
+      "vendor": "Fractal Computers, Inc.",
+      "icon": "build/icon.png"
+    },
     "linux": {
       "target": [
         "deb",
@@ -126,7 +125,7 @@
       "category": "Productivity",
       "artifactName": "Fractal.${ext}",
       "synopsis": "Fractal Desktop Application",
-      "description": "Fractal Desktop Application | "
+      "description": "Fractal Desktop Application. "
     },
     "directories": {
       "buildResources": "resources",

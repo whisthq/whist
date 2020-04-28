@@ -28,4 +28,5 @@ copy .protocol\desktop\build64\postproc-55.dll protocol\desktop\postproc-55.dll
 copy .protocol\desktop\build64\swresample-3.dll protocol\desktop\swresample-3.dll
 copy .protocol\desktop\build64\swscale-5.dll protocol\desktop\swscale-5.dll
 copy loading protocol\desktop\loading
+rcedit-x64.exe protocol\desktop\FractalClient.exe --set-icon build\icon.ico
 yarn package-ci

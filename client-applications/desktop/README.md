@@ -28,7 +28,7 @@ Start the app in the `dev` environment. This starts the renderer process in [**h
 
 ```yarn dev```
 
-Before doing this, you will need to run ```yarn -i``` and might need to run ```yarn upgrade``` if you haven't upgrade your yarn in a while. You can automatically clean unnecessary files with ```yarn autoclean --force``` as needed.
+Before doing this, you will need to run ```yarn -i``` and might need to run ```yarn upgrade``` if you haven't upgraded yarn in a while. You can automatically clean unnecessary files with ```yarn init --force && yarn autoclean --force``` as needed.
 
 ## Packaging for Production
 
@@ -42,14 +42,14 @@ This will enable you to get an executable that you can install to test your code
 
 Once you are ready to publish for auto-update to the Fractal users, you need to do a few things:
 
-1- Go into ```/desktop/package.json``` and update ```"bucket": ``` to the proper bucket for the operating system you are publishing for:
+1- Go into ```/desktop/package.json``` and update the ```"bucket": ``` field to the proper bucket for the operating system you are publishing for:
   - Windows: ```fractal-applications-release```
   - MacOS: ```fractal-mac-application-release```
   - Linux: ```fractal-linux-application-release```
   
  2- Increment the version number in ```desktop/app/package.json``` by ```0.0.1```, unless it is a major release, in which case increment by ```0.1.0``` (e.g.: 1.4.6 becomes 1.5.0).
 
- 3- Then, run ```./publish.sh``` (MacOS/Linux) or ```publish.bat``` (Windows) to publish for the respective OS. This will fetch the latest Fractal Protocol, upgrade yarn and run ```yarn package-ci``` to publish to the S3 bucket. 
+ 3- Then, run ```./publish.sh``` (MacOS/Linux) or ```publish.bat``` (Windows) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run ```yarn package-ci``` to publish to the S3 bucket. 
  
  4- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
 
