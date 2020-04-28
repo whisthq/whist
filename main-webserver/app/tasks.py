@@ -213,6 +213,7 @@ def fetchAll(self, update):
 		current_vms = fetchUserVMs(None)
 
 	for entry in azure_portal_vms:
+		print('NOTIFICATION: Found VM {} in Azure portal'.format(entry.name))
 		vm_info = {}
 
 		try:
@@ -249,8 +250,8 @@ def fetchAll(self, update):
 		vm_names.append(entry.name)
 
 		if update:
-			print('NOTIFICATION: Inserting {} into database'.format(vm_name))
-			insertVM(vm_name)
+			print('NOTIFICATION: Inserting {} into database'.format(entry.name))
+			insertVM(entry.name)
 
 	if update:
 		updateVMStates()
