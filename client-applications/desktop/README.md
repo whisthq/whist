@@ -49,7 +49,7 @@ Once you are ready to publish for auto-update to the Fractal users, you need to 
   
  2- Increment the version number in ```desktop/app/package.json``` by ```0.0.1```, unless it is a major release, in which case increment by ```0.1.0``` (e.g.: 1.4.6 becomes 1.5.0).
 
- 3- Then, run ```./publish.sh``` (MacOS/Linux) or ```publish.bat``` (Windows) to publish for the respective OS. This will fetch the latest Fractal Protocol, upgrade yarn and run ```yarn package-ci``` to publish to the S3 bucket. 
+ 3- Then, run ```./publish.sh``` (MacOS/Linux) or ```publish.bat``` (Windows) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run ```yarn package-ci``` to publish to the S3 bucket. 
  
  4- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
 
