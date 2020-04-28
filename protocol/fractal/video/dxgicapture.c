@@ -125,33 +125,75 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     }
     hardware->output = outputs[USE_MONITOR];
 
-    /*
+    // GET LIST OF VALID RESOLUTIONS
     UINT num_display_modes = 0;
     DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
     UINT flags = 0;
-    hr = hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format,
-    flags, &num_display_modes, 0 ); if( FAILED( hr ) )
+    hr = hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num_display_modes, 0 );
+    if( FAILED( hr ) )
     {
         mprintf( "Could not GetDisplayModeList: %X\n", hr );
     }
 
-    DXGI_MODE_DESC* pDescs = malloc(sizeof( DXGI_MODE_DESC ) * num);
-    DXGI_MODE_DESC finalDesc = NULL;
+    DXGI_MODE_DESC* pDescs = malloc(sizeof( DXGI_MODE_DESC ) * num_display_modes );
     bool matchFound = false;
-    hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format,
-    flags, &num, pDescs ); for( UINT k = 0; k < num_display_modes; k++ )
+    hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num_display_modes, pDescs );
+    if( FAILED( hr ) )
     {
-        mprintf( "Possible Resolution: %dx%d\n", pDescs[k].Width,
-    pDescs[k].Height ); if( pDescs[k].Width == width && pDescs[k].Height ==
-    height )
+        mprintf( "Could not GetDisplayModeList: %X\n", hr );
+    }
+    
+    double ratio_closeness = 100.0;
+    int set_width = 0;
+    int set_height = 0;
+    mprintf( "Target Resolution: %dx%d\n", width, height );
+
+    for( UINT k = 0; k < num_display_modes; k++ )
+    {
+        double current_ratio_closeness = abs( 1.0 * pDescs[k].Width / pDescs[k].Height - 1.0 * width / height ) + 0.001;
+        ratio_closeness = min( ratio_closeness, current_ratio_closeness );
+
+        if( pDescs[k].Width == width && pDescs[k].Height ==
+            height )
         {
-            mprintf( "Match found for %dx%d!\n", width, height );
-            memcpy( &finalDesc, &pDescs[k], sizeof( DXGI_MODE_DESC ) );
-            matchFound = true;
+            mprintf( "Exact resolution found!\n" );
+            set_width = pDescs[k].Width;
+            set_height = pDescs[k].Height;
+            ratio_closeness = 0.0;
+            break;
         }
     }
+
+    for( UINT k = 0; k < num_display_modes && ratio_closeness > 0.0; k++ )
+    {
+        mprintf( "Possible Resolution: %dx%d\n", pDescs[k].Width,
+                 pDescs[k].Height );
+
+        double current_ratio_closeness = abs( 1.0 * pDescs[k].Width / pDescs[k].Height - 1.0 * width / height ) + 0.001;
+        if( abs( current_ratio_closeness - ratio_closeness ) / ratio_closeness < 0.01 )
+        {
+            mprintf( "Ratio match found with %dx%d!\n", pDescs[k].Width, pDescs[k].Height );
+            if( set_width == 0 )
+            {
+                set_width = pDescs[k].Width;
+                set_height = pDescs[k].Height;
+            }
+
+            // We'd prefer a higher resolution if possible, but not more than 2x
+            if( set_width < pDescs[k].Width && pDescs[k].Width <= 2*width )
+            {
+                set_width = pDescs[k].Width;
+                set_height = pDescs[k].Height;
+            }
+        }
+    }
+
+    // Update target width and height
+    width = set_width;
+    height = set_height;
+    mprintf( "Found Resolution: %dx%d\n", width, height );
+
     free( pDescs );
-    */
 
     HMONITOR hMonitor = output_desc.Monitor;
     MONITORINFOEXW monitorInfo;
@@ -162,7 +204,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     DEVMODE dm;
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
-    mprintf("Device Name: %s\n", monitorInfo.szDevice);
+    mprintf("Device Name: %S\n", monitorInfo.szDevice);
     if (0 != EnumDisplaySettingsW(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS,
                                   &dm)) {
         if (dm.dmPelsWidth != width || dm.dmPelsHeight != height) {
@@ -186,7 +228,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
                            &device->D3D11context);
 
     if (FAILED(hr)) {
-        mprintf("Failed D3D11CreateDevice: 0x%X %d", hr, GetLastError());
+        mprintf("Failed D3D11CreateDevice: 0x%X %d\n", hr, GetLastError());
         return -1;
     }
 

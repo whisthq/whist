@@ -755,7 +755,7 @@ int main() {
 
         if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE,
             (uint8_t*)msg_init_whole,
-                           sizeof( FractalServerMessage ) + sizeof( FractalServerMessageInit ), 1 ) <
+                           sizeof( FractalServerMessage ) + sizeof( FractalServerMessageInit ) ) <
             0 )
         {
             mprintf( "Could not send server init message!\n" );
