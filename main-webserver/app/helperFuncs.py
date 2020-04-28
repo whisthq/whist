@@ -1269,7 +1269,7 @@ def swapdisk_name(disk_name, vm_name):
         async_disk_attach = compute_client.virtual_machines.create_or_update(
             os.getenv('VM_GROUP'), vm_name, virtual_machine
         )
-        async_disk_attach.wait()
+        # async_disk_attach.wait()
         end = time.perf_counter()
         print("SUCCESS: Disk " + disk_name + " attached to " +
               vm_name + " in " + str(end - start) + " seconds")
@@ -1445,14 +1445,14 @@ def sendVMStartCommand(vm_name, needs_restart):
             print("Starting VM {}".format(vm_name))
             async_vm_start = compute_client.virtual_machines.start(
                 os.environ.get('VM_GROUP'), vm_name)
-            async_vm_start.wait()
+            # async_vm_start.wait()
             print("VM {} started".format(vm_name))
 
         if needs_restart:
             print("Restarting VM {}".format(vm_name))
             async_vm_restart = compute_client.virtual_machines.restart(
                 os.environ.get('VM_GROUP'), vm_name)
-            async_vm_restart.wait()
+            # async_vm_restart.wait()
             print("VM {} restarted".format(vm_name))
 
         time.sleep(20)
