@@ -103,11 +103,7 @@ void update() {
         char* tcp_buf = TryReadingTCPPacket(&PacketTCPContext);
         if (tcp_buf) {
             struct RTPPacket* packet = (struct RTPPacket*)tcp_buf;
-            struct FractalServerMessage* fmsg_response =
-                (struct FractalServerMessage*)packet->data;
-            mprintf("Received %d byte clipboard message from server!\n",
-                    packet->payload_size);
-            updateSetClipboard(&fmsg_response->clipboard);
+            ReceiveMessage( packet );
         }
         StartTimer((clock*)&UpdateData.last_tcp_check_timer);
     }
@@ -471,13 +467,32 @@ int ReceivePackets(void* opaque) {
 
 int ReceiveMessage(struct RTPPacket* packet) {
     FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
-    if (!(packet->payload_size == sizeof(FractalServerMessage) ||
-          (fmsg->type == MESSAGE_INIT &&
-           packet->payload_size == sizeof(FractalServerMessage) +
-                                       sizeof(FractalServerMessageInit)))) {
-        mprintf("Incorrect payload size for a server message!\n");
-        return -1;
+
+    // Verify packet size
+    if( fmsg->type == MESSAGE_INIT )
+    {
+        if( packet->payload_size != sizeof( FractalServerMessage ) +
+            sizeof( FractalServerMessageInit ) )
+        {
+            mprintf( "Incorrect payload size for a server message (type MESSAGE_INIT)!\n" );
+            return -1;
+        }
+    } else if( fmsg->type == SMESSAGE_CLIPBOARD )
+    {
+        if( packet->payload_size != sizeof( FractalServerMessage ) + fmsg->clipboard.size )
+        {
+            mprintf( "Incorrect payload size for a server message (type SMESSAGE_CLIPBOARD)!\n" );
+            return -1;
+        }
+    } else
+    {
+        if( packet->payload_size != sizeof( FractalServerMessage ) )
+        {
+            mprintf( "Incorrect payload size for a server message! (type: %d)\n", (int)packet->type );
+            return -1;
+        }
     }
+
     switch (fmsg->type) {
         case MESSAGE_PONG:
             if (ping_id == fmsg->ping_id) {
@@ -494,8 +509,9 @@ int ReceiveMessage(struct RTPPacket* packet) {
             audio_frequency = fmsg->frequency;
             break;
         case SMESSAGE_CLIPBOARD:
-            mprintf("Receive clipboard message from server!\n");
-            SetClipboard(&fmsg->clipboard);
+            mprintf( "Received %d byte clipboard message from server!\n",
+                     packet->payload_size );
+            updateSetClipboard(&fmsg->clipboard);
             break;
         case MESSAGE_INIT:
             mprintf("Received init message!\n");
