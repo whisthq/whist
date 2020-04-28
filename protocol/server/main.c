@@ -752,11 +752,13 @@ int main() {
         mprintf("SIZE: %d\n", sizeof(FractalServerMessage) +
                                   sizeof(FractalServerMessageInit));
         packet_mutex = SDL_CreateMutex();
-        if (SendPacket(
-                &PacketSendContext, PACKET_MESSAGE, (uint8_t*)msg_init_whole,
-                sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit),
-                1) < 0) {
-            mprintf("Could not send server init message!\n");
+
+        if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE,
+            (uint8_t*)msg_init_whole,
+                           sizeof( FractalServerMessage ) + sizeof( FractalServerMessageInit ), 1 ) <
+            0 )
+        {
+            mprintf( "Could not send server init message!\n" );
             return -1;
         }
         free(msg_init_whole);
