@@ -477,7 +477,7 @@ class MainBox extends Component {
                     For now, this is an easy manual process. To change the size of icons and text, go to your cloud PC desktop,
                     right click, and open "Display Settings." Next, select the "Advanced Scaling Settings" option,
                     where you'll be able to enter your desired scale factor (a percentage between 100 and 500), hit "Apply", and then
-                    select "Sign Out and Exit" in order to save your changes. Once you do, your cloud PC will exit, and your changes 
+                    select "Sign Out Now" in order to save your changes. Once you do, your cloud PC will exit, and your changes 
                     will take effect when you re-connect. 
                   </div>
                 </div>
