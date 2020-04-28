@@ -296,6 +296,8 @@ def restartVM(self, vm_name):
 		os.environ.get('VM_GROUP'), vm_name)
 	async_vm_restart.wait()
 
+	time.sleep(20)
+
 	lockVM(vm_name, False)
 
 	print('SUCCESS: {} restarted'.format(vm_name))
