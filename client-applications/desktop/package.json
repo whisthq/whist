@@ -68,9 +68,7 @@
       "main.prod.js.map",
       "package.json",
       "build/icon.png",
-      "loading/",
-      "sshkey",
-      "sshkey.pub"
+      "loading/"
     ],
     "extraFiles": [
       "protocol/"

@@ -17,7 +17,7 @@ cp .protocol/desktop/build64/FractalClient protocol/desktop
 cp -R loading protocol/desktop
 cp .protocol/desktop/build64/sshkey protocol/desktop
 cp .protocol/desktop/build64/sshkey.pub protocol/desktop
-sudo chmod 600 protocol/desktop/sshkey # was previously in protocol, but operation not permitted
+sudo chmod 600 protocol/desktop/sshkey # was previously in protocol, but operation not permitted from protocol
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
   # Linux Ubuntu
   cp .protocol/desktop/build64/linux_unison protocol/desktop
