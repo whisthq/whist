@@ -1446,7 +1446,6 @@ def sendVMStartCommand(vm_name, needs_restart):
             async_vm_start = compute_client.virtual_machines.start(
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_start.wait()
-            time.sleep(10)
             print("VM {} started".format(vm_name))
 
         if needs_restart:
@@ -1454,8 +1453,9 @@ def sendVMStartCommand(vm_name, needs_restart):
             async_vm_restart = compute_client.virtual_machines.restart(
                 os.environ.get('VM_GROUP'), vm_name)
             async_vm_restart.wait()
-            time.sleep(10)
             print("VM {} restarted".format(vm_name))
+
+        time.sleep(20)
 
         return 1
     except Exception as e:

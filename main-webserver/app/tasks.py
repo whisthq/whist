@@ -455,7 +455,7 @@ def swapDisk(self, disk_name):
 			time.sleep(5)
 			locked = checkLock(vm_name)
 
-		self.update_state(state='PENDING', meta={"msg": "Free server found. Retrieving your data."})
+		self.update_state(state='PENDING', meta={"msg": "Data already uploaded to server. Updating database."})
 		print('NOTIFICATION: VM {} is unlocked and ready for use'.format(vm_name))
 		lockVM(vm_name, True)
 
@@ -463,14 +463,14 @@ def swapDisk(self, disk_name):
 		associateVMWithDisk(vm_name, disk_name)
 		updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
 
-		self.update_state(state='PENDING', meta={"msg": "Cloud PC data successfully retrieved."})
+		self.update_state(state='PENDING', meta={"msg": "Booting Cloud PC."})
 
 		print("NOTIFICATION: Database updated with disk " +
 			  disk_name + " and " + vm_name)
 
 		if fractalVMStart(vm_name) > 0:
 			print('SUCCESS: VM is started and ready to use')
-			self.update_state(state='PENDING', meta={"msg": "Cloud PC successfully started."})
+			self.update_state(state='PENDING', meta={"msg": "Cloud PC is ready to use."})
 		else:
 			print('CRITICAL ERROR: Could not start VM {}'.format(vm_name))
 			self.update_state(state='FAILURE', meta={"msg": "Cloud PC could not be started. Please contact support."})
@@ -486,7 +486,7 @@ def swapDisk(self, disk_name):
 			print("No VM attached to " + disk_name)
 			available_vms = fetchAttachableVMs('RUNNING_AVAILABLE', location)
 			if available_vms:
-				self.update_state(state='PENDING', meta={"msg": "Found an available, powered-on server."})
+				self.update_state(state='PENDING', meta={"msg": "Uploading your data to an available server. This could take a few minutes."})
 				print('Found ' + str(len(available_vms)) + ' available VMs')
 				# Pick a VM, attach it to disk
 				vm_name = available_vms[0]['vm_name']
@@ -508,12 +508,12 @@ def swapDisk(self, disk_name):
 				deactivated_vms = fetchAttachableVMs(
 					'NOT_RUNNING_AVAILABLE', location)
 				if deactivated_vms:
-					self.update_state(state='PENDING', meta={"msg": "Found an available, powered-off server."})
+					self.update_state(state='PENDING', meta={"msg": "Uploading your data to a hibernating server. This could take a few minutes."})
 					vm_name = deactivated_vms[0]['vm_name']
 					lockVM(vm_name, True)
 					print("NOTIFICATION: Found deactivated VM " + vm_name)
 					if swapDiskAndUpdate(disk_name, vm_name) > 0:
-						self.update_state(state='PENDING', meta={"msg": "Cloud PC powered on and data successfully uploaded."})
+						self.update_state(state='PENDING', meta={"msg": "Data successfully uploaded to cloud PC."})
 						free_vm_found = True
 						updateOldDisk(vm_name)
 						lockVM(vm_name, False)
