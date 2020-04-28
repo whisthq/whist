@@ -506,20 +506,21 @@ int ReceiveMessage(struct RTPPacket* packet) {
             memcpy(username, msg_init->username,
                    min(sizeof(username), sizeof(msg_init->username)));
 
-#ifdef __APPLE__
+#ifdef _WIN32
+            FILE* f = fopen("connection_id.txt", "w");
+            fprintf(f, "%d", msg_init->connection_id);
+            fclose(f);
+#else
             // mac apps can't save files into the bundled app package,
             // need to save into hidden folder under account
             // this stores connection_id in
             // Users/USERNAME/.fractal/connection_id.txt
+            // same for Linux, but will be in /home/USERNAME/.fractal/connection_id.txt
             char path[100] = "";
             strcat(path, getenv("HOME"));
             strcat(path, "/.fractal/connection_id.txt");
 
             FILE* f = fopen(path, "w");
-            fprintf(f, "%d", msg_init->connection_id);
-            fclose(f);
-#else
-            FILE* f = fopen("connection_id.txt", "w");
             fprintf(f, "%d", msg_init->connection_id);
             fclose(f);
 #endif
@@ -739,11 +740,13 @@ int main(int argc, char* argv[]) {
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
-#elif defined __APPLE__
+#else
     // files can't be written to a macos app bundle, so they need to be
     // cached in /Users/USERNAME/.APPNAME, here .fractal directory
     // attempt to create fractal cache directory, it will fail if it
     // already exists, which is fine
+    // for Linux, this is in /home/USERNAME/.fractal, the cache is also needed
+    // for the same reason
     runcmd("mkdir ~/.fractal");
     runcmd("chmod 0755 ~/.fractal");
 #endif
@@ -789,15 +792,16 @@ int main(int argc, char* argv[]) {
     }
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-#ifdef __APPLE__
+#ifdef _WIN32
+    // no cache needed on windows
+    initMultiThreadedPrintf(".");
+#else // macos, linux
     // apple cache, can't be in the same folder as bundled app
     // this stores log.txt in Users/USERNAME/.fractal/log.txt
     char path[100] = "";
     strcat(path, getenv("HOME"));
     strcat(path, "/.fractal");
     initMultiThreadedPrintf(path);
-#else
-    initMultiThreadedPrintf(".");
 #endif
 
     initClipboard();

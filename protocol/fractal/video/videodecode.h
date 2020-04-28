@@ -1,5 +1,5 @@
 /*
- * Video decoding via FFmpeg C library.
+ * Video decoding via FFmpeg library.
  *
  * Copyright Fractal Computers, Inc. 2020
  **/

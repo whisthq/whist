@@ -18,7 +18,6 @@
 #include <ws2tcpip.h>
 #else
 #include <unistd.h>
-// TODO: Linux headers
 #endif
 
 #include "../fractal/audio/audiocapture.h"

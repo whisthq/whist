@@ -1,5 +1,5 @@
 /*
- * Audio decoding via FFmpeg C library.
+ * Audio decoding via FFmpeg library.
  *
  * Copyright Fractal Computers, Inc. 2020
  **/

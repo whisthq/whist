@@ -7,8 +7,6 @@ else
 	exit 0 
 fi
 
-
-
 cd build64
 ./FractalServer ${@:1}
 cd ..
