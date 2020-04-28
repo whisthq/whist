@@ -60,14 +60,31 @@ class MainBox extends Component {
       var connection_id = parseInt(fs.readFileSync(process.env.HOME + "/.fractal/connection_id.txt").toString());
       this.props.dispatch(sendLogs(connection_id, logs))
     } else if (os.platform() === 'linux') {
+
+
+
+      console.log(__dirname);
+
       var logs = fs.readFileSync(__dirname + "../log.txt").toString();
       var connection_id = parseInt(fs.readFileSync(__dirname + "../connection_id.txt").toString());
+
+
+
+
       this.props.dispatch(sendLogs(connection_id, logs))
     } else if (os.platform() === 'win32') {
       var logs = fs.readFileSync(process.cwd() + "\\log.txt").toString();
       var connection_id = parseInt(fs.readFileSync(process.cwd() + "\\connection_id.txt").toString());
       this.props.dispatch(sendLogs(connection_id, logs))
     }
+
+
+
+
+
+
+
+
   }
 
   LaunchProtocol = () => {
@@ -80,25 +97,45 @@ class MainBox extends Component {
           const os       = require('os');
 
           // check which OS we're on to properly launch the protocol
-          if (os.platform() === 'darwin' || os.platform() === 'linux') { // mac & linux
-            var path = appRootDir + "/protocol/desktop/FractalClient"
-            path = path.replace('/Resources/app.asar','');
-            path = path.replace('/desktop/app', '/desktop');
+          if (os.platform() === 'darwin') { // mac
+
+
+
+
+
+            // change the working directory to the protocol executable directory
+            var workdir = appRootDir + "/protocol/desktop"
+            workdir = workdir.replace('/Resources/app.asar','');
+            workdir = workdir.replace('/desktop/app', '/desktop');
+            process.chdir(workdir);
+
+            // path when electron app is packaged as .dmg
+            var cmd = workdir + '/FractalClient'
+          }
+          else if (os.platform() === 'linux') { // linux
+
+            // path when electron app is packaged as .deb (to use as working directory)
+            var path = "/opt/Fractal/protocol/desktop";
+            var executable = "./FractalClient";
           }
           else if (os.platform() === 'win32') { // windows
-            var path = process.cwd() + "\\protocol\\desktop\\FractalClient.exe"
+            // path when electron app is packaged as .nsis (to use as working directory)
+            var path = process.cwd() + "\\protocol\\desktop";
+            var executable = "FractalClient.exe";
           }
 
-          var screenWidth = this.state.windowMode ? window.screen.width * window.devicePixelRatio : 0
-          var screenHeight = this.state.windowMode ? (window.screen.height * window.devicePixelRatio - 70) : 0
+          var screenWidth = this.state.windowMode ? window.screen.width * window.devicePixelRatio : 0;
+          var screenHeight = this.state.windowMode ? (window.screen.height * window.devicePixelRatio - 70) : 0;
 
-          var parameters = [this.props.public_ip, screenWidth, screenHeight, this.state.mbps]
+          var parameters = [this.props.public_ip, screenWidth, screenHeight, this.state.mbps];
 
           if(this.state.launches == 1) {
             this.TrackActivity(true);
           }
 
-          const protocol = child(path, parameters, {detached: true, stdio: 'ignore'});
+          const protocol = child(executable, parameters, {cwd: path, detached: true, stdio: 'ignore'});
+
+          console.log(protocol);
 
           protocol.on('close', (code) => {
             if(this.state.launches == 1) {
