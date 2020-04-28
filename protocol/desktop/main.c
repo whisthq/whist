@@ -21,7 +21,7 @@
 #include "video.h"
 
 #ifdef __APPLE__
-#include "../include/mac_utils.h"
+#include "../fractal/utils/mac_utils.h"
 #endif
 
 int audio_frequency = -1;
