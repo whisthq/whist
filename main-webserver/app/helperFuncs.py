@@ -556,7 +556,7 @@ def deleteTimeTable():
 
 
 def fetchUserVMs(username):
-    if(username):
+    if username:
         command = text("""
             SELECT * FROM v_ms WHERE "username" = :username
             """)
@@ -660,15 +660,39 @@ def deleteUser(username):
             return 404
 
 
-def insertRow(username, vm_name, usernames, vm_names):
-    if not (username in usernames and vm_name in vm_names):
-        command = text("""
-            INSERT INTO v_ms("username", "vm_name") 
-            VALUES(:username, :vm_name)
-            """)
-        params = {'username': username,
-                  'vm_name': vm_name}
-        with engine.connect() as conn:
+def insertVM(vm_name, vm_ip = None, location = None):
+    command = text("""
+        SELECT * FROM v_ms WHERE "vm_name" = :vm_name 
+        """)
+    params = {'vm_name': vm_name}
+    with engine.connect() as conn:
+        vms = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+
+        if not vms:
+            _, compute_client, _ = createClients()
+            vm = getVM(vm_name)
+
+            if not vm_ip or not location:
+                vm_ip = getIP(vm)
+                location = vm.location
+
+            disk_name = vm.storage_profile.os_disk.name
+            username = mapDiskToUser(disk_name)
+            lock = False 
+            dev = False
+
+            command = text("""
+                INSERT INTO v_ms("vm_name", "username", "disk_name", "ip", "location", "lock", "dev") 
+                VALUES(:vm_name, :username, :disk_name, :ip, :location, :lock, :dev)
+                """)
+            params = {'username': username,
+                      'vm_name': vm_name,
+                      'disk_name': disk_name,
+                      'ip': vm_ip,
+                      'location': location,
+                      'lock': False,
+                      'dev': False}
+
             conn.execute(command, **params)
             conn.close()
 

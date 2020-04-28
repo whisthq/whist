@@ -207,6 +207,7 @@ def fetchAll(self, update):
 	vm_usernames = []
 	vm_names = []
 	current_vms = {}
+	vm_ip = None
 
 	if update:
 		current_vms = fetchUserVMs(None)
@@ -216,10 +217,11 @@ def fetchAll(self, update):
 
 		try:
 			if current_vms[entry.name]['ip']:
+				vm_ip = current_vms[entry.name]['ip']
 				vm_info = {
 					'vm_name': entry.name,
 					'username': current_vms[entry.name]['username'],
-					'ip': current_vms[entry.name]['ip'],
+					'ip': vm_ip,
 					'location': entry.location
 				}
 			else:
@@ -248,14 +250,12 @@ def fetchAll(self, update):
 
 		if update:
 			try:
-				if not entry.name in vm_names:
-					print('NOTIFICATION: Inserted {} into VM table'.format(entry.name))
-					insertRow(entry.os_profile.admin_username,
-							  entry.name, current_usernames, vm_names)
+				insertVM(vm_name)
 			except:
 				pass
 
 	if update:
+		updateVMStates()
 		if current_vms:
 			for vm_name, vm_username in current_vms.items():
 				deleteRow(vm_username, vm_name, vm_usernames, vm_names)
