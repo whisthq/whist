@@ -207,7 +207,10 @@ function* fetchVM(action) {
 
   while (json.state === "PENDING" || json.state === "STARTED") {
     var { json, response } = yield call(apiGet, (config.url.PRIMARY_SERVER + '/status/').concat(action.id), state.counter.access_token)
-    console.log(json)
+    if(json && json.output && json.state === "PENDING") {
+      json.output = (0, eval)('(' + json.output + ')');
+      yield put(Action.changeStatusMessage(json.output.msg))
+    }
     yield delay(5000)
   }
   if(json && json.output && json.output.ip) {
@@ -242,9 +245,6 @@ function* getRestartStatus(id) {
     yield delay(5000)
   }
 
-  console.log("VM RESTARTED")
-  console.log(json)
-
   if(json && json.output) {
     yield put(Action.vmRestarted(200))
   }
@@ -259,8 +259,6 @@ function* sendLogs(action) {
     sender: 'client',
     vm_ip: public_ip
   })
-  console.log('LOGS SENT! SERVER RETURNED: ')
-  console.log(json)
 }
 
 export default function* rootSaga() {

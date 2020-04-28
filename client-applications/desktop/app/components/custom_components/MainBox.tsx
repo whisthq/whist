@@ -124,8 +124,8 @@ class MainBox extends Component {
             var executable = "FractalClient.exe";
           }
 
-          var screenWidth = this.state.windowMode ? window.screen.width * window.devicePixelRatio : 0;
-          var screenHeight = this.state.windowMode ? (window.screen.height * window.devicePixelRatio - 70) : 0;
+          var screenWidth = this.state.windowMode ? window.screen.width * window.devicePixelRatio : 0
+          var screenHeight = this.state.windowMode ? (window.screen.height - 80) * window.devicePixelRatio : 0
 
           var parameters = [this.props.public_ip, screenWidth, screenHeight, this.state.mbps];
 
@@ -295,8 +295,11 @@ class MainBox extends Component {
               <div>
                 <FontAwesomeIcon icon={faCircleNotch} spin style = {{color: "#111111", height: 30}}/>
               </div>
-              <div style = {{marginTop: 10, color: '#111111', fontSize: 14, lineHeight: 1.4}}>
-                Booting your cloud PC (this could take a few minutes)
+              <div style = {{marginTop: 10, color: '#111111', fontSize: 16, lineHeight: 1.4}}>
+                Booting your cloud PC
+              </div>
+              <div style = {{marginTop: 5, color: '#333333', fontSize: 11, lineHeight: 1.4}}>
+                {this.props.status_message}
               </div>
             </div>
           </div>
@@ -599,7 +602,8 @@ function mapStateToProps(state) {
     account_locked: state.counter.account_locked,
     promo_code: state.counter.promo_code,
     restart_status: state.counter.restart_status,
-    restart_attempts: state.counter.restart_attempts
+    restart_attempts: state.counter.restart_attempts,
+    status_message: state.counter.status_message
   }
 }
 
