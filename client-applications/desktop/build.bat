@@ -28,5 +28,8 @@ copy .protocol\desktop\build64\postproc-55.dll protocol\desktop\postproc-55.dll
 copy .protocol\desktop\build64\swresample-3.dll protocol\desktop\swresample-3.dll
 copy .protocol\desktop\build64\swscale-5.dll protocol\desktop\swscale-5.dll
 copy loading protocol\desktop\loading
+powershell -Command "(New-Object Net.WebClient).DownloadFile('https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe', 'rcedit-x64.exe')"
+powershell -Command "Invoke-WebRequest https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe -OutFile rcedit-x64.exe"
 rcedit-x64.exe protocol\desktop\FractalClient.exe --set-icon build\icon.ico
+del /Q rcedit-x64.exe
 yarn package
