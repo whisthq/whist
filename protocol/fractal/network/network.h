@@ -39,7 +39,7 @@
 #else
 #define SOCKET int
 #define closesocket close
-#define FRACTAL_IOCTL_SCOKET ioctl
+#define FRACTAL_IOCTL_SOCKET ioctl
 #endif
 
 #define TCP_SEGMENT_SIZE 1024
