@@ -140,15 +140,15 @@ dxgicapture.obj:
 	$(CC) /c $(CFLAGS) ../fractal/video/dxgicapture.c
 
 # compile the logging source file into object file
-logging.o:
+logging.obj:
 	$(CC) -c $(CFLAGS) ../fractal/utils/logging.c
 
 # compile the networking source file into object file
-network.o:
+network.obj:
 	$(CC) -c $(CFLAGS) ../fractal/network/network.c
 
 # compile the SDL screen info source file into object file
-sdlscreeninfo.o:
+sdlscreeninfo.obj:
 	$(CC) -c $(CFLAGS) ../fractal/utils/sdlscreeninfo.c
 
 # compile the desktop setting source file into object file
