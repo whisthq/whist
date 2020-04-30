@@ -39,7 +39,7 @@ class WifiBox extends Component {
       internetBox =
         <div>
           <div style={{ background: "none", border: "solid 1px #d13628", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13 }} />
-          <h1 className={Style.header} style={{ marginTop: 5 }}>{this.state.downloadSpeed} Mbps Internet Down</h1>
+          <h1 className={Style.header} style={{ marginTop: 5 }}>{this.state.downloadSpeed} Mbps Download Speed</h1>
           {/* <h1 className={Style.header + " pl-3 ml-1"}>{this.state.uploadSpeed} Mbps Internet Up</h1>
           <h1 className={Style.header + " pl-3 ml-1"}>{this.state.ping} ms Ping</h1> */}
           <p className={Style.text} style={{ marginTop: 8, paddingLeft: 20 }}>
@@ -50,7 +50,7 @@ class WifiBox extends Component {
       internetBox =
         <div>
           <div style={{ background: "none", border: "solid 1px #f2a20c", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13 }} />
-          <h1 className={Style.header} style={{ marginTop: 5 }}>{this.state.downloadSpeed} Mbps Internet Down</h1>
+          <h1 className={Style.header} style={{ marginTop: 5 }}>{this.state.downloadSpeed} Mbps Download Speed</h1>
           {/* <h1 className={Style.header + " pl-3 ml-1"}>{this.state.uploadSpeed} Mbps Internet Up</h1>
           <h1 className={Style.header + " pl-3 ml-1"}>{this.state.ping} ms Ping</h1> */}
           <p className={Style.text} style={{ marginTop: 8, paddingLeft: 20 }}>
@@ -61,7 +61,7 @@ class WifiBox extends Component {
       internetBox =
         <div>
           <div style={{ background: "none", border: "solid 1px #14a329", height: 6, width: 6, borderRadius: 4, display: "inline", float: "left", position: 'relative', top: 5, marginRight: 13 }} />
-          <h1 className={Style.header} style={{ marginTop: 5 }}>{this.state.downloadSpeed} Mbps Internet Down</h1>
+          <h1 className={Style.header} style={{ marginTop: 5 }}>{this.state.downloadSpeed} Mbps Download Speed</h1>
           {/* <h1 className={Style.header + " pl-3 ml-1"}>{this.state.uploadSpeed} Mbps Internet Up</h1>
           <h1 className={Style.header + " pl-3 ml-1"}>{this.state.ping} ms Ping</h1> */}
           <p className={Style.text} style={{ marginTop: 8, paddingLeft: 20 }}>
