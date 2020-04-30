@@ -33,7 +33,7 @@
 #include "../fractal/video/videoencode.h"
 
 #ifdef _WIN32
-#include "../fractal/utils/desktop.h"
+#include "../fractal/utils/windows_utils.h"
 #endif
 
 #ifdef _WIN32

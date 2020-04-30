@@ -113,7 +113,7 @@ fractal.obj:
 
 # compile the webserver source file into object file
 webserver.obj:
-	$(CC) /c $(CFLAGS) ../fractal/utils/webserver.c
+	$(CC) /c $(CFLAGS) ../fractal/network/webserver.c
 
 # compile the main clipboard header source file into object file
 win_clipboard.obj:

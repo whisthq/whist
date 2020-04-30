@@ -22,7 +22,7 @@ int GetLastNetworkError() {
 clock create_clock(int timeout_ms) {
     clock out;
 #if defined(_WIN32)
-    out = timeout_ms;
+    out.QuadPart = timeout_ms;
 #else
     out.tv_sec = timeout_ms / 1000;
     out.tv_usec = (timeout_ms % 1000) * 1000;
@@ -42,15 +42,15 @@ void set_timeout(SOCKET s, int timeout_ms) {
             "able to recover if a packet is never received\n");
         unsigned long mode = 0;
 
-        FRACTAL_IOCTL_SCOKET(s, FIONBIO, &mode);
+        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
 
     } else if (timeout_ms == 0) {
         unsigned long mode = 1;
-        FRACTAL_IOCTL_SCOKET(s, FIONBIO, &mode);
+        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
     } else {
         // Set to blocking when setting a timeout
         unsigned long mode = 0;
-        FRACTAL_IOCTL_SCOKET(s, FIONBIO, &mode);
+        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
 
         clock read_timeout = create_clock(timeout_ms);
 

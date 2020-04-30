@@ -14,6 +14,7 @@
 #endif
 
 #include "../core/fractal.h"
+#include "../utils/aes.h"
 
 // *** end includes ***
 
