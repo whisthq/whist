@@ -11,6 +11,7 @@
 #endif
 
 #include "../core/fractal.h"
+#include "../network/network.h"
 
 // *** END INCLUDES ***
 
@@ -41,6 +42,7 @@ void initBacktraceHandler();
 char* get_mprintf_history();
 int get_mprintf_history_len();
 
+bool sendLog();
 // *** END FUNCTIONS ***
 
 #endif  // LOGGING_H

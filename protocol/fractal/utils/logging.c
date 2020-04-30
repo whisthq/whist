@@ -4,6 +4,8 @@
 
 #include "logging.h"
 
+extern int connection_id;
+
 // Multithreaded printf Semaphores and Mutexes
 static volatile SDL_sem *multithreadedprintf_semaphore;
 static volatile SDL_mutex *multithreadedprintf_mutex;
@@ -296,4 +298,66 @@ void initBacktraceHandler() {
     crash_handler_mutex = SDL_CreateMutex();
     signal(SIGSEGV, crash_handler);
 #endif
+}
+
+bool sendLog() {
+    char *host = "fractal-mail-staging.herokuapp.com";
+    char *path = "/logs";
+
+    char *logs_raw = get_mprintf_history();
+    int raw_log_len = get_mprintf_history_len();
+
+    char *logs = malloc(1000 + 2 * raw_log_len);
+    int log_len = 0;
+    for (int i = 0; i < raw_log_len; i++) {
+        switch (logs_raw[i]) {
+            case '\b':
+                logs[log_len++] = '\\';
+                logs[log_len++] = 'b';
+                break;
+            case '\f':
+                logs[log_len++] = '\\';
+                logs[log_len++] = 'f';
+                break;
+            case '\n':
+                logs[log_len++] = '\\';
+                logs[log_len++] = 'n';
+                break;
+            case '\r':
+                logs[log_len++] = '\\';
+                logs[log_len++] = 'r';
+                break;
+            case '\t':
+                logs[log_len++] = '\\';
+                logs[log_len++] = 't';
+                break;
+            case '"':
+                logs[log_len++] = '\\';
+                logs[log_len++] = '"';
+                break;
+            case '\\':
+                logs[log_len++] = '\\';
+                logs[log_len++] = '\\';
+                break;
+            default:
+                logs[log_len++] = logs_raw[i];
+                break;
+        }
+    }
+
+    logs[log_len++] = '\0';
+
+    char *json = malloc(1000 + log_len);
+    sprintf(json,
+            "{\
+            \"connection_id\" : \"%d\",\
+            \"logs\" : \"%s\",\
+            \"sender\" : \"server\"\
+    }",
+            connection_id, logs);
+    sendJSONPost(host, path, json);
+    free(logs);
+    free(json);
+
+    return true;
 }

@@ -7,6 +7,9 @@
 #define AES_H
 
 #include "../core/fractal.h"
+#include "../network/network.h"
+
+struct RTPPacket;
 
 uint32_t Hash(void* key, size_t len);
 

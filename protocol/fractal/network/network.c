@@ -570,18 +570,18 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateTCPContext(struct SocketContext *context, char *origin,
-                     char *destination, int port, int recvfrom_timeout_ms,
-                     int stun_timeout_ms) {
+int CreateTCPContext(struct SocketContext *context,
+                     FractalConnectionOrigin origin, char *destination,
+                     int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
 #if USING_STUN
-    if (origin[0] == 'C')
+    if (origin == ORIGIN_CLIENT)
         return CreateTCPClientContextStun(context, destination, port,
                                           recvfrom_timeout_ms, stun_timeout_ms);
     else
         return CreateTCPServerContextStun(context, destination, port,
                                           recvfrom_timeout_ms, stun_timeout_ms);
 #else
-    if (origin[0] == 'C')
+    if (origin == ORIGIN_CLIENT)
         return CreateTCPClientContext(context, destination, port,
                                       recvfrom_timeout_ms, stun_timeout_ms);
     else
@@ -933,22 +933,95 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateUDPContext(struct SocketContext *context, char *origin,
-                     char *destination, int port, int recvfrom_timeout_ms,
-                     int stun_timeout_ms) {
+int CreateUDPContext(struct SocketContext *context,
+                     FractalConnectionOrigin origin, char *destination,
+                     int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
 #if USING_STUN
-    if (origin[0] == 'C')
+    if (origin == ORIGIN_CLIENT)
         return CreateUDPClientContextStun(context, destination, port,
                                           recvfrom_timeout_ms, stun_timeout_ms);
     else
         return CreateUDPServerContextStun(context, destination, port,
                                           recvfrom_timeout_ms, stun_timeout_ms);
 #else
-    if (origin[0] == 'C')
+    if (origin == ORIGIN_CLIENT)
         return CreateUDPClientContext(context, destination, port,
                                       recvfrom_timeout_ms, stun_timeout_ms);
     else
         return CreateUDPServerContext(context, destination, port,
                                       recvfrom_timeout_ms, stun_timeout_ms);
 #endif
+}
+
+// send JSON post to query the database, authenticate the user and return the VM
+// IP
+bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
+    // environment variables
+    SOCKET Socket;         // socket to send/receive POST request
+    struct hostent *host;  // address struct of the host webserver
+    struct sockaddr_in
+        webserver_socketAddress;  // address of the web server socket
+
+    // Creating our TCP socket to connect to the web server
+    Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (Socket < 0)  // Windows & Unix cases
+    {
+        // if can't create socket, return
+        printf("Could not create socket.\n");
+        return false;
+    }
+    set_timeout(Socket, 250);
+
+    // get the host address of the web server
+    host = gethostbyname(host_s);
+
+    // create the struct for the webserver address socket we will query
+    webserver_socketAddress.sin_family = AF_INET;
+    webserver_socketAddress.sin_port = htons(80);  // HTTP port
+    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr);
+
+    // connect to the web server before sending the POST request packet
+    int connect_status =
+        connect(Socket, (struct sockaddr *)&webserver_socketAddress,
+                sizeof(webserver_socketAddress));
+    if (connect_status < 0) {
+        printf("Could not connect to the webserver.\n");
+        return false;
+    }
+
+    // now that we're connected, we can send the POST request to authenticate
+    // the user first, we create the POST request message
+
+    int json_len = strlen(jsonObj);
+    char *message = malloc(5000 + json_len);
+    sprintf(message,
+            "POST %s HTTP/1.0\r\nHost: %s\r\nContent-Type: "
+            "application/json\r\nContent-Length:%zd\r\n\r\n%s",
+            path, host_s, (size_t)json_len, jsonObj);
+
+    // now we send it
+    if (send(Socket, message, (int)strlen(message), 0) < 0) {
+        // error sending, terminate
+        printf("Sending POST message failed.\n");
+        return false;
+    }
+
+    free(message);
+
+    // now that it's sent, let's get the reply
+    char buffer[4096];                              // buffer to store the reply
+    int len;                                        // counters
+    len = recv(Socket, buffer, sizeof(buffer), 0);  // get the reply
+
+    // get the parsed credentials
+    for (int i = 0; i < len; i++) {
+        if (buffer[i] == '\r') {
+            buffer[i] = '\0';
+        }
+    }
+    mprintf("Webserver Response: %s\n", buffer);
+
+    FRACTAL_CLOSE_SOCKET(Socket);
+    // return the user credentials if correct authentication, else empty
+    return true;
 }

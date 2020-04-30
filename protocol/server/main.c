@@ -26,7 +26,6 @@
 #include "../fractal/cursor/cursor.h"
 #include "../fractal/input/input.h"
 #include "../fractal/network/network.h"
-#include "../fractal/network/webserver.h"
 #include "../fractal/utils/aes.h"
 #include "../fractal/utils/logging.h"
 #include "../fractal/video/screencapture.h"
@@ -705,7 +704,7 @@ int main() {
         struct SocketContext PacketReceiveContext = {0};
         struct SocketContext PacketTCPContext = {0};
 
-        if (CreateUDPContext(&PacketReceiveContext, "S", "0.0.0.0",
+        if (CreateUDPContext(&PacketReceiveContext, ORIGIN_SERVER, "0.0.0.0",
                              PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
             mprintf("Failed to start connection\n");
 
@@ -715,7 +714,7 @@ int main() {
             continue;
         }
 
-        if (CreateUDPContext(&PacketSendContext, "S", "0.0.0.0",
+        if (CreateUDPContext(&PacketSendContext, ORIGIN_SERVER, "0.0.0.0",
                              PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             mprintf(
                 "Failed to finish connection (Failed at port server to "
@@ -724,8 +723,8 @@ int main() {
             continue;
         }
 
-        if (CreateTCPContext(&PacketTCPContext, "S", "0.0.0.0", PORT_SHARED_TCP,
-                             1, 500) < 0) {
+        if (CreateTCPContext(&PacketTCPContext, ORIGIN_SERVER, "0.0.0.0",
+                             PORT_SHARED_TCP, 1, 500) < 0) {
             mprintf("Failed to finish connection (Failed at TCP context).\n");
             closesocket(PacketReceiveContext.s);
             closesocket(PacketSendContext.s);

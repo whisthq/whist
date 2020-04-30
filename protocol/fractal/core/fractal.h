@@ -53,7 +53,6 @@
 #include "../../include/SDL2/SDL.h"
 #include "../../include/SDL2/SDL_thread.h"
 #include "../clipboard/clipboard.h"
-#include "../utils/logging.h"
 
 #define NUM_KEYCODES 265
 
@@ -334,6 +333,13 @@ typedef enum FractalPCMFormat {
     __PCM_FORMAT_MAKE_32 = 0x7FFFFFFF,
 } FractalPCMFormat;
 
+/// @brief Connection origin.
+/// @details Passed to CreateTCPContext and CreateUDPContext
+typedef enum FractalConnectionOrigin {
+    ORIGIN_CLIENT = 1,  ///< Connection from a client.
+    ORIGIN_SERVER = 2   ///< Connection from a server.
+} FractalConnectionOrigin;
+
 /*** ENUMERATIONS END ***/
 
 /*** STRUCTS START ***/
@@ -608,32 +614,6 @@ typedef struct FractalDestination {
     int port;
 } FractalDestination;
 
-// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
-// replayed
-// TODO: INC integer that must not be used twice
-
-// Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) +
-// RTPPacket.payload_size
-struct RTPPacket {
-    // hash at the beginning of the struct, which is the hash of the rest of the
-    // packet
-    char hash[16];
-    // hash is a signature for everything below this line
-    int cipher_len;
-    char iv[16];
-    // Everything below this line gets encrypted
-    FractalPacketType type;
-    int id;
-    short index;
-    short num_indices;
-    int payload_size;
-    bool is_a_nack;
-    // data at the end of the struct, in the case of a truncated packet
-    uint8_t data[MAX_PAYLOAD_SIZE];
-    // The encrypted packet could overflow
-    uint8_t overflow[16];
-};
-
 typedef struct Frame {
     FractalCursorImage cursor;
     int width;
@@ -652,5 +632,9 @@ void runcmd(const char* cmdline);
 int GetFmsgSize(struct FractalClientMessage* fmsg);
 
 /** FRACTAL FUNCTIONS END ***/
+
+/** COMMON FRACTAL INCLUDES ***/
+#include "../utils/logging.h"
+/** COMMON FRACTAL INCLUDES END ***/
 
 #endif  // FRACTAL_H
