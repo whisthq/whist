@@ -8,6 +8,8 @@
 
 #include "../core/fractal.h"
 
+uint32_t Hash(void* key, size_t len);
+
 int encrypt_packet(struct RTPPacket* plaintext_packet, int packet_len,
                    struct RTPPacket* encrypted_packet,
                    unsigned char* private_key);

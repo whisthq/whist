@@ -16,7 +16,9 @@
 
 #include "../fractal/clipboard/clipboard.h"
 #include "../fractal/core/fractal.h"
+#include "../fractal/network/network.h"
 #include "../fractal/utils/aes.h"
+#include "../fractal/utils/sdlscreeninfo.h"
 #include "audio.h"
 #include "video.h"
 
@@ -103,7 +105,7 @@ void update() {
         char* tcp_buf = TryReadingTCPPacket(&PacketTCPContext);
         if (tcp_buf) {
             struct RTPPacket* packet = (struct RTPPacket*)tcp_buf;
-            ReceiveMessage( packet );
+            ReceiveMessage(packet);
         }
         StartTimer((clock*)&UpdateData.last_tcp_check_timer);
     }
@@ -469,26 +471,26 @@ int ReceiveMessage(struct RTPPacket* packet) {
     FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
 
     // Verify packet size
-    if( fmsg->type == MESSAGE_INIT )
-    {
-        if( packet->payload_size != sizeof( FractalServerMessage ) +
-            sizeof( FractalServerMessageInit ) )
-        {
-            mprintf( "Incorrect payload size for a server message (type MESSAGE_INIT)!\n" );
+    if (fmsg->type == MESSAGE_INIT) {
+        if (packet->payload_size !=
+            sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit)) {
+            mprintf(
+                "Incorrect payload size for a server message (type "
+                "MESSAGE_INIT)!\n");
             return -1;
         }
-    } else if( fmsg->type == SMESSAGE_CLIPBOARD )
-    {
-        if( packet->payload_size != sizeof( FractalServerMessage ) + fmsg->clipboard.size )
-        {
-            mprintf( "Incorrect payload size for a server message (type SMESSAGE_CLIPBOARD)!\n" );
+    } else if (fmsg->type == SMESSAGE_CLIPBOARD) {
+        if (packet->payload_size !=
+            sizeof(FractalServerMessage) + fmsg->clipboard.size) {
+            mprintf(
+                "Incorrect payload size for a server message (type "
+                "SMESSAGE_CLIPBOARD)!\n");
             return -1;
         }
-    } else
-    {
-        if( packet->payload_size != sizeof( FractalServerMessage ) )
-        {
-            mprintf( "Incorrect payload size for a server message! (type: %d)\n", (int)packet->type );
+    } else {
+        if (packet->payload_size != sizeof(FractalServerMessage)) {
+            mprintf("Incorrect payload size for a server message! (type: %d)\n",
+                    (int)packet->type);
             return -1;
         }
     }
@@ -509,8 +511,8 @@ int ReceiveMessage(struct RTPPacket* packet) {
             audio_frequency = fmsg->frequency;
             break;
         case SMESSAGE_CLIPBOARD:
-            mprintf( "Received %d byte clipboard message from server!\n",
-                     packet->payload_size );
+            mprintf("Received %d byte clipboard message from server!\n",
+                    packet->payload_size);
             updateSetClipboard(&fmsg->clipboard);
             break;
         case MESSAGE_INIT:
@@ -531,7 +533,8 @@ int ReceiveMessage(struct RTPPacket* packet) {
             // need to save into hidden folder under account
             // this stores connection_id in
             // Users/USERNAME/.fractal/connection_id.txt
-            // same for Linux, but will be in /home/USERNAME/.fractal/connection_id.txt
+            // same for Linux, but will be in
+            // /home/USERNAME/.fractal/connection_id.txt
             char path[100] = "";
             strcat(path, getenv("HOME"));
             strcat(path, "/.fractal/connection_id.txt");
@@ -811,7 +814,7 @@ int main(int argc, char* argv[]) {
 #ifdef _WIN32
     // no cache needed on windows
     initMultiThreadedPrintf(".");
-#else // macos, linux
+#else  // macos, linux
     // apple cache, can't be in the same folder as bundled app
     // this stores log.txt in Users/USERNAME/.fractal/log.txt
     char path[100] = "";

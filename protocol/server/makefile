@@ -24,7 +24,10 @@ OBJS = \
 	audioencode.obj \
 	wasapicapture.obj \
 	dxgicapture.obj \
-	desktop.obj \
+	logging.obj \
+	network.obj \
+	sdlscreeninfo.obj \
+	windows_utils.obj \
 	windowsinput.obj \
 	windowscursor.obj \
 	main.obj
@@ -136,9 +139,21 @@ wasapicapture.obj:
 dxgicapture.obj:
 	$(CC) /c $(CFLAGS) ../fractal/video/dxgicapture.c
 
+# compile the logging source file into object file
+logging.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/logging.c
+
+# compile the networking source file into object file
+network.o:
+	$(CC) -c $(CFLAGS) ../fractal/network/network.c
+
+# compile the SDL screen info source file into object file
+sdlscreeninfo.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/sdlscreeninfo.c
+
 # compile the desktop setting source file into object file
-desktop.obj:
-	$(CC) /c $(CFLAGS) ../fractal/utils/desktop.c
+windows_utils.obj:
+	$(CC) /c $(CFLAGS) ../fractal/utils/windows_utils.c
 
 # compile the input handling source file into object file
 windowsinput.obj:

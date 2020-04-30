@@ -7,6 +7,8 @@
 #define WEBSERVER_H
 
 #include "../core/fractal.h"
+#include "../utils/logging.h"
+#include "network.h"
 
 bool sendLog();
 

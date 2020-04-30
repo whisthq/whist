@@ -25,10 +25,13 @@
 #include "../fractal/core/fractal.h"
 #include "../fractal/cursor/cursor.h"
 #include "../fractal/input/input.h"
+#include "../fractal/network/network.h"
+#include "../fractal/network/webserver.h"
 #include "../fractal/utils/aes.h"
-#include "../fractal/utils/webserver.h"
+#include "../fractal/utils/logging.h"
 #include "../fractal/video/screencapture.h"
 #include "../fractal/video/videoencode.h"
+
 #ifdef _WIN32
 #include "../fractal/utils/desktop.h"
 #endif
@@ -753,12 +756,11 @@ int main() {
                                   sizeof(FractalServerMessageInit));
         packet_mutex = SDL_CreateMutex();
 
-        if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE,
-            (uint8_t*)msg_init_whole,
-                           sizeof( FractalServerMessage ) + sizeof( FractalServerMessageInit ) ) <
-            0 )
-        {
-            mprintf( "Could not send server init message!\n" );
+        if (SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE,
+                          (uint8_t*)msg_init_whole,
+                          sizeof(FractalServerMessage) +
+                              sizeof(FractalServerMessageInit)) < 0) {
+            mprintf("Could not send server init message!\n");
             return -1;
         }
         free(msg_init_whole);

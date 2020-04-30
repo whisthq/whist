@@ -48,6 +48,9 @@ OBJS = \
 	alsacapture.o \
 	linuxinput.o \
 	linuxcursor.o \
+	logging.o \
+	network.o \
+	sdlscreeninfo.o \
 	audioencode.o \
 	aes.o \
 	x11_clipboard.o \
@@ -81,7 +84,19 @@ fractal.o:
 
 # compile the webserver source file into object file
 webserver.o:
-	$(CC) -c $(CFLAGS) ../fractal/utils/webserver.c
+	$(CC) -c $(CFLAGS) ../fractal/network/webserver.c
+
+# compile the logging source file into object file
+logging.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/logging.c
+
+# compile the networking source file into object file
+network.o:
+	$(CC) -c $(CFLAGS) ../fractal/network/network.c
+
+# compile the SDL screen info source file into object file
+sdlscreeninfo.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/sdlscreeninfo.c
 
 # compile the main fractal header source file into object file
 x11capture.o:

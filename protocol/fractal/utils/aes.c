@@ -15,6 +15,34 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 
+uint32_t Hash(void* buf, size_t len) {
+    char* key = buf;
+
+    uint64_t pre_hash = 123456789;
+    while (len > 8) {
+        pre_hash += *(uint64_t*)(key);
+        pre_hash += (pre_hash << 32);
+        pre_hash += (pre_hash >> 32);
+        pre_hash += (pre_hash << 10);
+        pre_hash ^= (pre_hash >> 6);
+        pre_hash ^= (pre_hash << 48);
+        pre_hash ^= 123456789;
+        len -= 8;
+        key += 8;
+    }
+
+    uint32_t hash = (uint32_t)((pre_hash << 32) ^ pre_hash);
+    for (size_t i = 0; i < len; ++i) {
+        hash += key[i];
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+    return hash;
+}
+
 int aes_encrypt(unsigned char* plaintext, int plaintext_len, unsigned char* key,
                 unsigned char* iv, unsigned char* ciphertext);
 int aes_decrypt(unsigned char* ciphertext, int ciphertext_len,

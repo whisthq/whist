@@ -22,32 +22,20 @@
 #include <process.h>
 #include <synchapi.h>
 #include <windows.h>
-#include <winsock2.h>
 #include <winuser.h>
-#include <ws2tcpip.h>
 
 #include "shellscalingapi.h"
-#undef ETIMEDOUT
-#define ETIMEDOUT WSAETIMEDOUT
-#undef EWOULDBLOCK
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#undef EAGAIN
-#define EAGAIN WSAEWOULDBLOCK
+
 #else
-#include <arpa/inet.h>
 #include <dirent.h>
 #include <errno.h>
-#include <netinet/in.h>
 #include <sys/ioctl.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
-#define SOCKET int
-#define closesocket close
 #endif
 
 #include <libavcodec/avcodec.h>
@@ -65,6 +53,7 @@
 #include "../../include/SDL2/SDL.h"
 #include "../../include/SDL2/SDL_thread.h"
 #include "../clipboard/clipboard.h"
+#include "../utils/logging.h"
 
 #define NUM_KEYCODES 265
 
@@ -109,8 +98,6 @@
 #if defined(_WIN32)
 #pragma warning(disable : 4200)
 #endif
-
-int GetLastNetworkError();
 
 /*** ENUMERATIONS START ***/
 
@@ -589,8 +576,6 @@ typedef struct FractalClientMessage {
     ClipboardData clipboard;
 } FractalClientMessage;
 
-int GetFmsgSize(struct FractalClientMessage* fmsg);
-
 typedef enum FractalServerMessageType {
     SMESSAGE_NONE = 0,  ///< No Message
     MESSAGE_PONG = 1,
@@ -622,14 +607,6 @@ typedef struct FractalDestination {
     int host;
     int port;
 } FractalDestination;
-
-typedef struct SocketContext {
-    bool is_server;
-    bool is_tcp;
-    SOCKET s;
-    struct sockaddr_in addr;
-    int ack;
-} SocketContext;
 
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
 // replayed
@@ -672,49 +649,7 @@ typedef struct Frame {
 
 void runcmd(const char* cmdline);
 
-void set_timeout(SOCKET s, int timeout_ms);
-
-int CreateUDPContext(struct SocketContext* context, char* origin,
-                     char* destination, int port, int recvfrom_timeout_s,
-                     int stun_timeout_ms);
-int CreateTCPContext(struct SocketContext* context, char* origin,
-                     char* destination, int port, int recvfrom_timeout_s,
-                     int stun_timeout_ms);
-int recvp(struct SocketContext* context, void* buf, int len);
-int sendp(struct SocketContext* context, void* buf, int len);
-
-void ClearReadingTCP();
-void* TryReadingTCPPacket(struct SocketContext* context);
-
-#if defined(_WIN32)
-#define clock LARGE_INTEGER
-#else
-#define clock struct timeval
-#endif
-
-void initMultiThreadedPrintf(char* log_directory);
-void destroyMultiThreadedPrintf();
-void mprintf(const char* fmtStr, ...);
-void lprintf(const char* fmtStr, ...);
-
-void StartTimer(clock* timer);
-double GetTimer(clock timer);
-
-uint32_t Hash(void* key, size_t len);
-
-int get_window_pixel_width(SDL_Window* window);
-int get_window_pixel_height(SDL_Window* window);
-int get_window_virtual_width(SDL_Window* window);
-int get_window_virtual_height(SDL_Window* window);
-int get_virtual_screen_width();
-int get_virtual_screen_height();
-int get_pixel_screen_width(SDL_Window* window);
-int get_pixel_screen_height(SDL_Window* window);
-
-void initBacktraceHandler();
-
-char* get_mprintf_history();
-int get_mprintf_history_len();
+int GetFmsgSize(struct FractalClientMessage* fmsg);
 
 /** FRACTAL FUNCTIONS END ***/
 

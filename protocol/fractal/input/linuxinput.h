@@ -9,14 +9,15 @@
 #include <fcntl.h>
 #include <linux/uinput.h>
 
+#include "../core/fractal.h"
+#include "../utils/sdlscreeninfo.h"
+
 #define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                    \
     if (ioctl(FD, PARAMS) == -1) {                                           \
         mprintf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", \
                 strerror(errno));                                            \
         return NULL;                                                         \
     }
-
-#include "../core/fractal.h"
 
 typedef struct input_device_t {
     int fd_absmouse;
