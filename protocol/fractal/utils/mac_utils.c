@@ -4,7 +4,7 @@
  * Copyright Fractal Computers, Inc. 2020
  **/
 #include "mac_utils.h"
-
+#include "logging.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -12,7 +12,7 @@ int remove_file(const char* fpath, const struct stat* sb, int typeflag,
                 struct FTW* ftwbuf) {
     int errCode = remove(fpath);
     if (errCode < 0) {
-        printf("Error from remove: %d", errCode);
+        LOG_WARNING("Error from remove: %d", errCode);
     }
     return errCode;
 }
@@ -22,7 +22,7 @@ void mac_rm_rf(const char* path) {
         nftw(path, remove_file, 64 /* number of simultaneously opened fds*/,
              FTW_DEPTH | FTW_PHYS);
     if (errCode < 0) {
-        printf("Error from nftw, remove recursively: %d", errCode);
+        LOG_WARNING("Error from nftw, remove recursively: %d", errCode);
     }
 }
 

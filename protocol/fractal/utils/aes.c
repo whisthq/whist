@@ -70,7 +70,7 @@ int hmac(char* hash, char* buf, int len, char* key) {
     HMAC(EVP_sha256(), key, 16, (const unsigned char*)buf, len,
          (unsigned char*)hash, (unsigned int*)&hash_len);
     if (hash_len != 32) {
-        mprintf("Incorrect hash length!\n");
+        LOG_WARNING("Incorrect hash length!\n");
         return -1;
     }
     return hash_len;
@@ -117,7 +117,7 @@ int decrypt_packet(struct RTPPacket* encrypted_packet, int packet_len,
                    struct RTPPacket* plaintext_packet,
                    unsigned char* private_key) {
     if ((unsigned long)packet_len > MAX_PACKET_SIZE) {
-        mprintf("Encrypted version of Packet is too large!\n");
+        LOG_WARNING("Encrypted version of Packet is too large!\n");
         return -1;
     }
     int decrypt_len =
@@ -130,7 +130,7 @@ int decrypt_packet_n(struct RTPPacket* encrypted_packet, int packet_len,
                      struct RTPPacket* plaintext_packet, int plaintext_len,
                      unsigned char* private_key) {
     if ((unsigned long)packet_len < PACKET_HEADER_SIZE) {
-        mprintf("Packet is too small for metadata!\n");
+        LOG_WARNING("Packet is too small for metadata!\n");
         return -1;
     }
 
@@ -139,7 +139,7 @@ int decrypt_packet_n(struct RTPPacket* encrypted_packet, int packet_len,
          packet_len - sizeof(encrypted_packet->hash), (char*)private_key);
     for (int i = 0; i < 16; i++) {
         if (hash[i] != encrypted_packet->hash[i]) {
-            mprintf("HMAC failed!\n");
+            LOG_WARNING("HMAC failed!\n");
             return -1;
         }
     }
@@ -162,7 +162,7 @@ int decrypt_packet_n(struct RTPPacket* encrypted_packet, int packet_len,
     }
 
     if (decrypt_len > plaintext_len) {
-        mprintf("Decrypted version of Packet is too large!\n");
+        LOG_WARNING("Decrypted version of Packet is too large!\n");
         return -1;
     }
 

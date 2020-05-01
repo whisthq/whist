@@ -20,7 +20,7 @@ void logToFile(char* msg, char* filename) {
 int setCurrentInputDesktop(HDESK currentInputDesktop) {
     // Set current thread to the current user input desktop
     if (!SetThreadDesktop(currentInputDesktop)) {
-        mprintf("SetThreadDesktop failed w/ error code: %d.\n", GetLastError());
+        LOG_WARNING("SetThreadDesktop failed w/ error code: %d.\n", GetLastError());
         return -2;
     }
     return 0;
@@ -70,11 +70,11 @@ bool InitDesktop() {
     bool failed = false;
     int attempt = 0;
     while (wcscmp(L"Default", lock_screen.desktop_name) != 0) {
-        mprintf("Desktop name is %S\n", lock_screen.desktop_name);
-        mprintf("Attempting to log into desktop...\n");
+        LOG_INFO("Desktop name is %S\n", lock_screen.desktop_name);
+        LOG_INFO("Attempting to log into desktop...\n");
 
         if (attempt > 10) {
-            mprintf("Attempted too many times! Giving up...\n");
+            LOG_WARNING("Attempted too many times! Giving up...\n");
             failed = true;
             break;
         }
