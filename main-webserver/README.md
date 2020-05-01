@@ -22,7 +22,7 @@ Staging hosted on Heroku: https://dashboard.heroku.com/apps/cube-celery-staging
 **Staging**
 `https://git.heroku.com/cube-celery-staging.git`
 
-To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. To push to the staging server, first make sure you’re in the staging branch, then type `git add .`, then `git commit -m “COMMIT MESSAGE”`, then finally `git push staging staging:master`. If you get a git pull error, git pull by typing `git pull staging master` to pull from Heroku or `git pull origin staging` to pull from Github. To view the server logs, type `heroku logs --tail --remote staging`.
+To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. To push to the staging server, first make sure you’re in the staging branch, then type `git add .`, then `git commit -m “COMMIT MESSAGE”`, then finally `git push staging staging:master`. If you are using another branch with name as {branchName}, you push via: `git push staging {branchName}:master`. If you get a git pull error, git pull by typing `git pull staging master` to pull from Heroku or `git pull origin staging` to pull from Github. To view the server logs, type `heroku logs --tail --remote staging`.
 
 To push to the Github production/staging repo, run `git add .`, `git commit -m "COMMIT MESSAGE"`, and finally `git push origin staging` to push to the staging repo, and `git push origin master` to push to the production repo.
 

@@ -189,7 +189,9 @@ def payment(action):
 
     # Endpoint for stripe webhooks
     elif action == 'hooks':
+        print("something posted to hooks:")
         body = request.get_json()
+        print(body)
         event = None
 
         try:
