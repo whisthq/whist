@@ -56,7 +56,7 @@ ClipboardData* GetClipboard();
 
 void SetClipboard(ClipboardData* cb);
 
-void StartTrackingClipboardUpdates();
+bool StartTrackingClipboardUpdates();
 
 bool hasClipboardUpdated();
 

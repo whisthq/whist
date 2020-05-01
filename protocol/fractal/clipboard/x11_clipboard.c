@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include "clipboard.h"
+#include "../core/fractal.h"
 
 #ifndef GET_CLIPBOARD
 #define GET CLIPBOARD "./get_clipboard"
@@ -25,8 +26,6 @@
 #ifndef SET_CLIPBOARD
 #define SET CLIPBOARD "./set_clipboard"
 #endif
-
-#define mprintf printf
 
 #define MAX_CLIPBOARD_SIZE 10000000
 
@@ -48,10 +47,11 @@ bool get_clipboard_picture(ClipboardData* cb) {
 
     if (clipboard_has_target(property_atom, target_atom)) {
         if (!get_clipboard_data(property_atom, cb, 14)) {
+            LOG_WARNING("Failed to get clipboard data");
             return false;
         }
 
-        mprintf("content size: %d\n", cb->size);
+        LOG_INFO("content size: %d\n", cb->size);
 
         // WRITE TO FILE
         char* file_buf = malloc(cb->size + 14);
@@ -69,6 +69,7 @@ bool get_clipboard_picture(ClipboardData* cb) {
         cb->type = CLIPBOARD_IMAGE;
         return true;
     } else {  // request failed, e.g. owner can't convert to the target format
+        LOG_WARNING("Can't convert clipboard image to target format");
         return false;
     }
 }
@@ -78,12 +79,14 @@ bool get_clipboard_string(ClipboardData* cb) {
 
     if (clipboard_has_target(property_atom, target_atom)) {
         if (!get_clipboard_data(property_atom, cb, 0)) {
+            LOG_WARNING("Failed to get clipboard data");
             return false;
         }
 
         cb->type = CLIPBOARD_TEXT;
         return true;
     } else {  // request failed, e.g. owner can't convert to the target format
+        LOG_WARNING("Can't convert clipboard image to target format");
         return false;
     }
 }
@@ -95,6 +98,7 @@ bool get_clipboard_files(ClipboardData* cb) {
 
     if (clipboard_has_target(property_atom, target_atom)) {
         if (!get_clipboard_data(property_atom, cb, 0)) {
+            LOG_WARNING("Failed to get clipboard data");
             return false;
         }
         // Add null terminator
@@ -131,6 +135,7 @@ bool get_clipboard_files(ClipboardData* cb) {
         cb->size = 0;
         return true;
     } else {  // request failed, e.g. owner can't convert to the target format
+        LOG_WARNING("Can't convert clipboard to target format");
         return false;
     }
 }
@@ -165,7 +170,7 @@ void SetClipboard(ClipboardData* cb) {
     //
 
     if (cb->type == CLIPBOARD_TEXT) {
-        mprintf("Setting clipboard to text!\n");
+        LOG_INFO("Setting clipboard to text!\n");
 
         // Open up xclip
         inp = popen("xclip -i -selection clipboard", "w");
@@ -176,7 +181,7 @@ void SetClipboard(ClipboardData* cb) {
         // Close pipe
         pclose(inp);
     } else if (cb->type == CLIPBOARD_IMAGE) {
-        mprintf("Setting clipboard to image!\n");
+        LOG_INFO("Setting clipboard to image!\n");
 
         // Open up xclip
         inp = popen("xclip -i -selection clipboard -t image/png", "w");
@@ -195,7 +200,7 @@ void SetClipboard(ClipboardData* cb) {
         // Close pipe
         pclose(inp);
     } else if (cb->type == CLIPBOARD_FILES) {
-        mprintf("Setting clipboard to Files\n");
+        LOG_INFO("Setting clipboard to Files\n");
 
         inp = popen("xclip -i -sel clipboard -t x-special/gnome-copied-files",
                     "w");
@@ -240,13 +245,13 @@ void SetClipboard(ClipboardData* cb) {
     return;
 }
 
-void StartTrackingClipboardUpdates() {
+bool StartTrackingClipboardUpdates() {
     // To be called at the beginning of clipboard usage
     display = XOpenDisplay(NULL);
     if (!display) {
-        mprintf("ERROR: StartTrackingClipboardUpdates display did not open\n");
+        LOG_WARNING("StartTrackingClipboardUpdates display did not open\n");
         perror(NULL);
-        return -1;
+        return False;
     }
     unsigned long color = BlackPixel(display, DefaultScreen(display));
     window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1,
@@ -366,7 +371,7 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb,
     }
 
     if (bad_clipboard) {
-        mprintf("Clipboard too large!\n");
+        LOG_WARNING("Clipboard too large!\n");
         cb->type = CLIPBOARD_NONE;
         cb->size = 0;
         return false;

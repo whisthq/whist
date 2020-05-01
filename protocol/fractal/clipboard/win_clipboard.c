@@ -186,7 +186,7 @@ static int last_clipboard_sequence_number = -1;
 
 static char clipboard_buf[9000000];
 
-void StartTrackingClipboardUpdates() {
+bool StartTrackingClipboardUpdates() {
     last_clipboard_sequence_number = GetClipboardSequenceNumber();
 }
 
@@ -232,7 +232,7 @@ ClipboardData* GetClipboard() {
                         memcpy(cb->data, lptstr, data_size);
                         cf_type = cf_types[i];
                     } else {
-                        mprintf(
+                        LOG_WARNING(
                             "Could not copy, clipboard too large! %d bytes\n",
                             data_size);
                     }
@@ -240,7 +240,7 @@ ClipboardData* GetClipboard() {
                     // Don't forget to release the lock after you are done.
                     GlobalUnlock(hglb);
                 } else {
-                    mprintf("GlobalLock failed! (Type: %d) (Error: %d)\n",
+                    LOG_WARNING("GlobalLock failed! (Type: %d) (Error: %d)\n",
                             cf_types[i], GetLastError());
                 }
             }
@@ -248,7 +248,7 @@ ClipboardData* GetClipboard() {
     }
 
     if (cf_type == -1) {
-        mprintf("Clipboard not found\n");
+        LOG_WARNING("Clipboard not found\n");
     } else {
         switch (cf_type) {
             case CF_TEXT:
@@ -262,11 +262,11 @@ ClipboardData* GetClipboard() {
                 cb->type = CLIPBOARD_IMAGE;
                 break;
             case CF_HDROP:
-                mprintf("Hdrop! Size: %d\n", cb->size);
+                LOG_INFO("Hdrop! Size: %d\n", cb->size);
                 DROPFILES drop;
                 memcpy(&drop, cb->data, sizeof(DROPFILES));
 
-                mprintf("Drop pFiles: %d\n", drop.pFiles);
+                LOG_INFO("Drop pFiles: %d\n", drop.pFiles);
 
                 // Begin copy to clipboard
                 WCHAR* filename = (WCHAR*)(cb->data + sizeof(drop));
@@ -307,23 +307,23 @@ ClipboardData* GetClipboard() {
                         wcscat((wchar_t*)cur_filename, L"\\");
                         wcscat((wchar_t*)cur_filename, data.cFileName);
 
-                        mprintf("Deleting %S...\n", cur_filename);
+                        LOG_INFO("Deleting %S...\n", cur_filename);
 
                         DWORD fileattributes =
                             GetFileAttributesW((LPCWSTR)cur_filename);
                         if (fileattributes == INVALID_FILE_ATTRIBUTES) {
-                            mprintf("GetFileAttributesW Error: %d\n",
+                            LOG_WARNING("GetFileAttributesW Error: %d\n",
                                     GetLastError());
                         }
 
                         if (fileattributes & FILE_ATTRIBUTE_DIRECTORY) {
                             if (!RemoveDirectoryW((LPCWSTR)cur_filename)) {
-                                mprintf("Delete Folder Error: %d\n",
+                                LOG_WARNING("Delete Folder Error: %d\n",
                                         GetLastError());
                             }
                         } else {
                             if (!DeleteFileW((LPCWSTR)cur_filename)) {
-                                mprintf("Delete Folder Error: %d\n",
+                                LOG_WARNING("Delete Folder Error: %d\n",
                                         GetLastError());
                             }
                         }
@@ -334,7 +334,7 @@ ClipboardData* GetClipboard() {
                 if (!CreateDirectoryW(LGET_CLIPBOARD, NULL)) {
                     int err = GetLastError();
                     if (err != ERROR_ALREADY_EXISTS) {
-                        mprintf("Could not create directory: %S (Error %d)\n",
+                        LOG_WARNING("Could not create directory: %S (Error %d)\n",
                                 LGET_CLIPBOARD, GetLastError());
                         break;
                     }
@@ -350,35 +350,35 @@ ClipboardData* GetClipboard() {
                     wcscat(target_file, L"\\");
                     wcsncat(target_file, fileending, sizeof(target_file));
 
-                    mprintf("Target: %S\n", target_file);
-                    mprintf("Src: %S\n", filename);
+                    LOG_INFO("Target: %S\n", target_file);
+                    LOG_INFO("Src: %S\n", filename);
 
                     if (fileattributes & FILE_ATTRIBUTE_DIRECTORY) {
                         if (!CreateJunction(target_file, filename)) {
-                            mprintf("CreateJunction Error: %d\n",
+                            LOG_WARNING("CreateJunction Error: %d\n",
                                     GetLastError());
                         }
                     } else {
                         if (!CreateHardLinkW(target_file, filename, 0)) {
-                            mprintf("CreateHardLinkW Error: %d\n",
+                            LOG_WARNING("CreateHardLinkW Error: %d\n",
                                     GetLastError());
                         }
                     }
 
-                    mprintf("TARGET FILENAME: %S\n", target_file);
-                    mprintf("FILENAME: %S\n", filename);
-                    mprintf("FILENAME ENDING: %S\n", fileending);
+                    LOG_INFO("TARGET FILENAME: %S\n", target_file);
+                    LOG_INFO("FILENAME: %S\n", filename);
+                    LOG_INFO("FILENAME ENDING: %S\n", fileending);
 
                     filename += wcslen(filename) + 1;
                 }
-                mprintf("Time: %f\n", GetTimer(t));
+                LOG_INFO("Time: %f\n", GetTimer(t));
 
                 cb->type = CLIPBOARD_FILES;
                 cb->size = 0;
 
                 break;
             default:
-                mprintf("Clipboard type unknown: %d\n", cf_type);
+                LOG_WARNING("Clipboard type unknown: %d\n", cf_type);
                 cb->type = CLIPBOARD_NONE;
                 break;
         }
@@ -391,13 +391,13 @@ ClipboardData* GetClipboard() {
 HGLOBAL getGlobalAlloc(void* buf, int len) {
     HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
     if (!hMem) {
-        mprintf("GlobalAlloc failed!\n");
+        LOG_WARNING("GlobalAlloc failed!\n");
         return hMem;
     }
     LPTSTR lptstr = GlobalLock(hMem);
 
     if (lptstr == NULL) {
-        mprintf("getGlobalAlloc GlobalLock failed! Size %d\n", len);
+        LOG_WARNING("getGlobalAlloc GlobalLock failed! Size %d\n", len);
         return hMem;
     }
 
@@ -417,21 +417,21 @@ void SetClipboard(ClipboardData* cb) {
 
     switch (cb->type) {
         case CLIPBOARD_TEXT:
-            mprintf("SetClipboard to Text: %s\n", cb->data);
+            LOG_INFO("SetClipboard to Text: %s\n", cb->data);
             if (cb->size > 0) {
                 cf_type = CF_TEXT;
                 hMem = getGlobalAlloc(cb->data, cb->size);
             }
             break;
         case CLIPBOARD_IMAGE:
-            mprintf("SetClipboard to Image with size %d\n", cb->size);
+            LOG_INFO("SetClipboard to Image with size %d\n", cb->size);
             if (cb->size > 0) {
                 cf_type = CF_DIB;
                 hMem = getGlobalAlloc(cb->data, cb->size);
             }
             break;
         case CLIPBOARD_FILES:
-            mprintf("SetClipboard to Files\n");
+            LOG_INFO("SetClipboard to Files\n");
 
             WCHAR first_file_path[MAX_PATH] = L"";
             wcscat(first_file_path, LSET_CLIPBOARD);
@@ -475,7 +475,7 @@ void SetClipboard(ClipboardData* cb) {
                     int len = (int)wcslen(data.cFileName) +
                               1;  // Including null terminator
 
-                    mprintf("FILENAME: %S\n", data.cFileName);
+                    LOG_INFO("FILENAME: %S\n", data.cFileName);
 
                     memcpy(file_ptr, data.cFileName, sizeof(WCHAR) * len);
                     file_ptr += len;
@@ -486,7 +486,7 @@ void SetClipboard(ClipboardData* cb) {
                 FindClose(hFind);
             }
 
-            mprintf("File: %S\n", (char*)drop + drop->pFiles);
+            LOG_INFO("File: %S\n", (char*)drop + drop->pFiles);
 
             *file_ptr = L'\0';
             total_len += sizeof(L'\0');
@@ -496,7 +496,7 @@ void SetClipboard(ClipboardData* cb) {
 
             break;
         default:
-            mprintf("Unknown clipboard type!\n");
+            LOG_WARNING("Unknown clipboard type!\n");
             break;
     }
 
@@ -504,7 +504,7 @@ void SetClipboard(ClipboardData* cb) {
         if (!OpenClipboard(NULL)) return;
         EmptyClipboard();
         if (!SetClipboardData(cf_type, hMem)) {
-            mprintf("Failed to SetClipboardData\n");
+            LOG_WARNING("Failed to SetClipboardData\n");
         }
 
         CloseClipboard();

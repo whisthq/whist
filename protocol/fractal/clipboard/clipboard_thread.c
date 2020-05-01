@@ -28,7 +28,7 @@ bool isUpdatingClipboard() { return updating_clipboard; }
 
 bool updateSetClipboard(ClipboardData* cb) {
     if (updating_clipboard) {
-        mprintf("Tried to SetClipboard, but clipboard is updating\n");
+        LOG_INFO("Tried to SetClipboard, but clipboard is updating\n");
         return false;
     }
 
@@ -79,7 +79,7 @@ int UpdateClipboardThread(void* opaque) {
         // ClipboardData* clipboard = GetClipboard();
 
         if (updating_set_clipboard) {
-            mprintf("Trying to set clipboard!\n");
+            LOG_INFO("Trying to set clipboard!\n");
             // ClipboardData cb; TODO: unused, still needed?
             if (clipboard->type == CLIPBOARD_FILES) {
                 char cmd[1000] = "";
@@ -128,7 +128,7 @@ int UpdateClipboardThread(void* opaque) {
                 strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
                 */
 
-                mprintf("COMMAND: %s\n", cmd);
+                LOG_INFO("COMMAND: %s\n", cmd);
                 runcmd(cmd);
             }
             SetClipboard(clipboard);
@@ -181,7 +181,7 @@ int UpdateClipboardThread(void* opaque) {
                 strncat(cmd, " -ignorearchives -confirmbigdel=false -batch", sizeof( cmd ) );
                 */
 
-                mprintf("COMMAND: %s\n", cmd);
+                LOG_INFO("COMMAND: %s\n", cmd);
                 runcmd(cmd);
             }
 
@@ -203,7 +203,7 @@ int UpdateClipboardThread(void* opaque) {
             }
         }
 
-        mprintf("Updated clipboard!\n");
+        LOG_INFO("Updated clipboard!\n");
         updating_clipboard = false;
     }
 
@@ -214,7 +214,7 @@ void updateClipboard() {
     if (updating_clipboard) {
         pending_update_clipboard = true;
     } else {
-        mprintf("Pushing update to clipboard\n");
+        LOG_INFO("Pushing update to clipboard\n");
         pending_update_clipboard = false;
         updating_clipboard = true;
         updating_set_clipboard = false;
