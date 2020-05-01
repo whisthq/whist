@@ -16,8 +16,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "clipboard.h"
 #include "../core/fractal.h"
+#include "clipboard.h"
 
 #ifndef GET_CLIPBOARD
 #define GET CLIPBOARD "./get_clipboard"
@@ -258,6 +258,7 @@ bool StartTrackingClipboardUpdates() {
                                  1, 0, color, color);
     clipboard = XInternAtom(display, "CLIPBOARD", False);
     incr_id = XInternAtom(display, "INCR", False);
+    return true;
 }
 
 bool hasClipboardUpdated() {

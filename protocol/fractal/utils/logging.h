@@ -117,7 +117,7 @@ static inline char* timenow() {
     gettimeofday(&time_now, NULL);
 
     time_str_tm = gmtime(&time_now.tv_sec);
-    snprintf(buffer, 20, "%02i:%02i:%02i:%06i", time_str_tm->tm_hour,
+    snprintf(buffer, 20, "%02i:%02i:%02i:%06li", time_str_tm->tm_hour,
              time_str_tm->tm_min, time_str_tm->tm_sec, time_now.tv_usec);
 #endif
 
