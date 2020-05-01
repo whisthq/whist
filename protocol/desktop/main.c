@@ -100,7 +100,7 @@ void update() {
         // Check if TCP is up
         int result = sendp(&PacketTCPContext, NULL, 0);
         if (result < 0) {
-            mprintf("Lost TCP Connection (Error: %d)\n", GetLastNetworkError());
+            LOG_WARNING("Lost TCP Connection (Error: %d)", GetLastNetworkError());
         }
 
         char* tcp_buf = TryReadingTCPPacket(&PacketTCPContext);
@@ -117,7 +117,7 @@ void update() {
 
     // Check if clipboard has updated
     if (hasClipboardUpdated() && received_server_init_message) {
-        mprintf("Clipboard event found, sending to server!\n");
+        LOG_INFO("Clipboard event found, sending to server!");
         updateClipboard();
     }
 
@@ -125,7 +125,7 @@ void update() {
     if (UpdateData.needs_dimension_update &&
         !UpdateData.tried_to_update_dimension &&
         (server_width != output_width || server_height != output_height)) {
-        mprintf("Asking for server dimension to be %dx%d\n", output_width,
+        LOG_INFO("Asking for server dimension to be %dx%d", output_width,
                 output_height);
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = output_width;
@@ -137,7 +137,7 @@ void update() {
     }
 
     if (update_mbps) {
-        mprintf("Asking for server MBPS to be %f\n", max_bitrate);
+        LOG_INFO("Asking for server MBPS to be %f", max_bitrate);
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_bitrate / 1024.0 / 1024.0;
@@ -147,15 +147,15 @@ void update() {
 
     // Start Ping
     if (GetTimer(latency_timer) > 1.0) {
-        mprintf("Whoah, ping timer is way too old\n");
+        LOG_INFO("Whoah, ping timer is way too old");
     }
 
     if (is_timing_latency && GetTimer(latency_timer) > 0.6) {
-        mprintf("Ping received no response: %d\n", ping_id);
+        LOG_INFO("Ping received no response: %d", ping_id);
         is_timing_latency = false;
         ping_failures++;
         if (ping_failures == 3) {
-            mprintf("Server disconnected: 3 consecutive ping failures.\n");
+            LOG_WARNING("Server disconnected: 3 consecutive ping failures.");
             connected = false;
         }
     }
@@ -179,7 +179,7 @@ void update() {
         fmsg.type = MESSAGE_PING;
         fmsg.ping_id = ping_id;
 
-        mprintf("Ping! %d\n", ping_id);
+        LOG_INFO("Ping! %d", ping_id);
         SendFmsg(&fmsg);
     }
     // End Ping
@@ -203,7 +203,7 @@ char encrypted_unbounded_packet[sizeof(int) + LARGEST_PACKET + 16];
 
 int SendTCPPacket(void* data, int len) {
     if (len > LARGEST_PACKET) {
-        mprintf("Packet too large!\n");
+        LOG_WARNING("Packet too large!");
         return -1;
     }
 
@@ -223,14 +223,14 @@ int SendTCPPacket(void* data, int len) {
         (unsigned char*)PRIVATE_KEY);
     *((int*)encrypted_unbounded_packet) = encrypt_len;
 
-    mprintf("Sending TCP Packet... %d\n", encrypt_len);
+    LOG_INFO("Sending TCP Packet... %d\n", encrypt_len);
     bool failed = false;
     if (sendp(&PacketTCPContext, encrypted_unbounded_packet,
               sizeof(int) + encrypt_len) < 0) {
-        mprintf("Failed to send packet!\n");
+        LOG_WARNING("Failed to send packet!");
         failed = true;
     }
-    mprintf("Successfully sent!\n");
+    LOG_INFO("Successfully sent!");
 
     return failed ? -1 : 0;
 }
@@ -238,7 +238,7 @@ int SendTCPPacket(void* data, int len) {
 static int sent_packet_id = 1;
 int SendPacket(void* data, int len) {
     if (len > MAX_PAYLOAD_SIZE) {
-        mprintf("Packet too large!\n");
+        LOG_WARNING("Packet too large!");
         return -1;
     }
 
@@ -260,7 +260,7 @@ int SendPacket(void* data, int len) {
     bool failed = false;
     SDL_LockMutex(send_packet_mutex);
     if (sendp(&PacketSendContext, &encrypted_packet, encrypt_len) < 0) {
-        mprintf("Failed to send packet!\n");
+        LOG_WARNING("Failed to send packet!");
         failed = true;
     }
     SDL_UnlockMutex(send_packet_mutex);
@@ -269,7 +269,7 @@ int SendPacket(void* data, int len) {
 }
 
 int ReceivePackets(void* opaque) {
-    mprintf("ReceivePackets running on Thread %d\n", SDL_GetThreadID(NULL));
+    LOG_INFO("ReceivePackets running on Thread %d", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
     struct RTPPacket packet = {0};
@@ -329,18 +329,16 @@ int ReceivePackets(void* opaque) {
         // mprintf("Update\n");
         // Call as often as possible
         if (GetTimer(world_timer) > 5) {
-            mprintf("\n");
-            mprintf("world_time: %f\n", GetTimer(world_timer));
-            mprintf("recvfrom_time: %f\n", recvfrom_time);
-            mprintf("update_video_time: %f\n", update_video_time);
-            mprintf("update_audio_time: %f\n", update_audio_time);
-            mprintf("hash_time: %f\n", hash_time);
-            mprintf("video_time: %f\n", video_time);
-            mprintf("max_video_time: %f\n", max_video_time);
-            mprintf("audio_time: %f\n", audio_time);
-            mprintf("max_audio_time: %f\n", max_audio_time);
-            mprintf("message_time: %f\n", message_time);
-            mprintf("\n");
+            LOG_INFO("world_time: %f", GetTimer(world_timer));
+            LOG_INFO("recvfrom_time: %f", recvfrom_time);
+            LOG_INFO("update_video_time: %f", update_video_time);
+            LOG_INFO("update_audio_time: %f", update_audio_time);
+            LOG_INFO("hash_time: %f", hash_time);
+            LOG_INFO("video_time: %f", video_time);
+            LOG_INFO("max_video_time: %f", max_video_time);
+            LOG_INFO("audio_time: %f", audio_time);
+            LOG_INFO("max_audio_time: %f", max_audio_time);
+            LOG_INFO("message_time: %f", message_time);
             StartTimer(&world_timer);
         }
 
@@ -374,7 +372,7 @@ int ReceivePackets(void* opaque) {
         if (dropping) {
             SDL_Delay(1);
             recv_size = 0;
-            mprintf("DROPPING\n");
+            LOG_INFO("DROPPING");
         } else {
             struct RTPPacket encrypted_packet;
             int encrypted_len = recvp(&socketContext, &encrypted_packet,
@@ -387,7 +385,7 @@ int ReceivePackets(void* opaque) {
                     decrypt_packet(&encrypted_packet, encrypted_len, &packet,
                                    (unsigned char*)PRIVATE_KEY);
                 if (recv_size < 0) {
-                    mprintf("Failed to decrypt packet\n");
+                    LOG_WARNING("Failed to decrypt packet");
                     // Just pretend like it never happened
                     recv_size = 0;
                 }
@@ -401,17 +399,17 @@ int ReceivePackets(void* opaque) {
 
         if (recv_size > 0) {
             if (lastrecv > 20.0 / 1000.0) {
-                /*
-                mprintf(
+                
+                LOG_INFO(
                     "Took more than 20ms to receive something!! Took %fms "
-                    "total!\n",
+                    "total!",
                     lastrecv * 1000.0);
-                */
+                
             }
             lastrecv = 0.0;
         }
 
-        // mprintf("Recv wait time: %f\n", GetTimer(recvfrom_timer));
+         LOG_INFO("Recv wait time: %f", GetTimer(recvfrom_timer));
 
         total_recvs++;
 
@@ -425,12 +423,11 @@ int ReceivePackets(void* opaque) {
                 case EWOULDBLOCK:
                     break;
                 default:
-                    mprintf("Unexpected Packet Error: %d\n", error);
+                    LOG_WARNING("Unexpected Packet Error: %d", error);
                     break;
             }
         } else {
-            // mprintf("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ",
-            // recv_time, total_recvs, recv_size);
+//             LOG_INFO("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
             switch (packet.type) {
                 case PACKET_VIDEO:
                     StartTimer(&video_timer);
@@ -450,14 +447,14 @@ int ReceivePackets(void* opaque) {
                     message_time += GetTimer(message_timer);
                     break;
                 default:
-                    mprintf("Unknown Packet\n");
+                    LOG_WARNING("Unknown Packet");
                     break;
             }
         }
     }
 
     if (lastrecv > 20.0 / 1000.0) {
-        mprintf("Took more than 20ms to receive something!! Took %fms total!\n",
+        LOG_INFO("Took more than 20ms to receive something!! Took %fms total!",
                 lastrecv * 1000.0);
     }
 
@@ -474,22 +471,22 @@ int ReceiveMessage(struct RTPPacket* packet) {
     if (fmsg->type == MESSAGE_INIT) {
         if (packet->payload_size !=
             sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit)) {
-            mprintf(
+            LOG_ERROR(
                 "Incorrect payload size for a server message (type "
-                "MESSAGE_INIT)!\n");
+                "MESSAGE_INIT)!");
             return -1;
         }
     } else if (fmsg->type == SMESSAGE_CLIPBOARD) {
         if (packet->payload_size !=
             sizeof(FractalServerMessage) + fmsg->clipboard.size) {
-            mprintf(
+            LOG_ERROR(
                 "Incorrect payload size for a server message (type "
-                "SMESSAGE_CLIPBOARD)!\n");
+                "SMESSAGE_CLIPBOARD)!");
             return -1;
         }
     } else {
         if (packet->payload_size != sizeof(FractalServerMessage)) {
-            mprintf("Incorrect payload size for a server message! (type: %d)\n",
+            LOG_ERROR("Incorrect payload size for a server message! (type: %d)",
                     (int)packet->type);
             return -1;
         }
@@ -498,25 +495,25 @@ int ReceiveMessage(struct RTPPacket* packet) {
     switch (fmsg->type) {
         case MESSAGE_PONG:
             if (ping_id == fmsg->ping_id) {
-                mprintf("Latency: %f\n", GetTimer(latency_timer));
+                LOG_INFO("Latency: %f", GetTimer(latency_timer));
                 is_timing_latency = false;
                 ping_failures = 0;
                 try_amount = 0;
             } else {
-                mprintf("Old Ping ID found.\n");
+                LOG_INFO("Old Ping ID found.");
             }
             break;
         case MESSAGE_AUDIO_FREQUENCY:
-            mprintf("Changing audio frequency to %d\n", fmsg->frequency);
+            LOG_INFO("Changing audio frequency to %d", fmsg->frequency);
             audio_frequency = fmsg->frequency;
             break;
         case SMESSAGE_CLIPBOARD:
-            mprintf("Received %d byte clipboard message from server!\n",
+            LOG_INFO("Received %d byte clipboard message from server!",
                     packet->payload_size);
             updateSetClipboard(&fmsg->clipboard);
             break;
         case MESSAGE_INIT:
-            mprintf("Received init message!\n");
+            LOG_INFO("Received init message!\n");
             FractalServerMessageInit* msg_init =
                 (FractalServerMessageInit*)fmsg->init_msg;
             memcpy(filename, msg_init->filename,
@@ -547,11 +544,11 @@ int ReceiveMessage(struct RTPPacket* packet) {
             received_server_init_message = true;
             break;
         case SMESSAGE_QUIT:
-            mprintf("Server signaled a quit!\n");
+            LOG_INFO("Server signaled a quit!");
             exiting = true;
             break;
         default:
-            mprintf("Unknown Server Message Received\n");
+            LOG_WARNING("Unknown Server Message Received");
             return -1;
     }
     return 0;
@@ -654,7 +651,7 @@ int initSDL() {
 #endif
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+        LOG_ERROR("Could not initialize SDL - %s", SDL_GetError());
         return -1;
     }
 
@@ -695,7 +692,7 @@ int initSDL() {
 
     SDL_AddEventWatch(resizingEventWatcher, (SDL_Window*)window);
     if (!window) {
-        fprintf(stderr, "SDL: could not create window - exiting: %s\n",
+        LOG_ERROR("SDL: could not create window - exiting: %s",
                 SDL_GetError());
         return -1;
     }
@@ -711,6 +708,7 @@ void destroySDL() {
         SDL_DestroyWindow((SDL_Window*)window);
         window = NULL;
     }
+    LOG_INFO("Destroying SDL");
     SDL_Quit();
 }
 
@@ -731,20 +729,20 @@ void parse_window_event(SDL_Event* event) {
                 (int)(96.0 * output_width / get_virtual_screen_width());
             SendFmsg(&fmsg);
 
-            printf("Window %d resized to %dx%d\n", event->window.windowID,
+            LOG_INFO("Window %d resized to %dx%d\n", event->window.windowID,
                    event->window.data1, event->window.data2);
             break;
         case SDL_WINDOWEVENT_MINIMIZED:
-            printf("Window %d minimized\n", event->window.windowID);
+            LOG_INFO("Window %d minimized\n", event->window.windowID);
             break;
         case SDL_WINDOWEVENT_MAXIMIZED:
-            printf("Window %d maximized\n", event->window.windowID);
+            LOG_INFO("Window %d maximized\n", event->window.windowID);
             break;
         case SDL_WINDOWEVENT_RESTORED:
-            printf("Window %d restored\n", event->window.windowID);
+            LOG_INFO("Window %d restored\n", event->window.windowID);
             break;
         default:
-            printf("WINDOW EVENT %d\n", event->window.event);
+            LOG_INFO("WINDOW EVENT %d\n", event->window.event);
             break;
     }
 }
@@ -806,7 +804,7 @@ int main(int argc, char* argv[]) {
     fclose(ssh_key_host);
 
     if (initSDL() < 0) {
-        printf("Failed to initialized SDL\n");
+        LOG_WARNING("Failed to initialized SDL");
         return -1;
     }
 
@@ -831,7 +829,7 @@ int main(int argc, char* argv[]) {
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         // If this is a retry, wait a bit more for the server to recover
         if (try_amount > 0) {
-            mprintf("Trying to recover the server connection...\n");
+            LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
         }
 
@@ -851,7 +849,7 @@ int main(int argc, char* argv[]) {
         if (CreateUDPContext(&PacketSendContext, ORIGIN_CLIENT,
                              (char*)server_ip, PORT_CLIENT_TO_SERVER, 10,
                              500) < 0) {
-            mprintf("Failed to connect to server\n");
+            LOG_WARNING("Failed to connect to server");
             continue;
         }
 
@@ -861,7 +859,7 @@ int main(int argc, char* argv[]) {
         if (CreateUDPContext(&PacketReceiveContext, ORIGIN_CLIENT,
                              (char*)server_ip, PORT_SERVER_TO_CLIENT, 1,
                              500) < 0) {
-            mprintf("Failed finish connection to server\n");
+            LOG_ERROR("Failed finish connection to server");
             closesocket(PacketSendContext.s);
             continue;
         }
@@ -870,7 +868,7 @@ int main(int argc, char* argv[]) {
 
         if (CreateTCPContext(&PacketTCPContext, ORIGIN_CLIENT, (char*)server_ip,
                              PORT_SHARED_TCP, 1, 500) < 0) {
-            mprintf("Failed finish connection to server\n");
+            LOG_ERROR("Failed finish connection to server");
             closesocket(PacketSendContext.s);
             closesocket(PacketReceiveContext.s);
             continue;
@@ -904,7 +902,7 @@ int main(int argc, char* argv[]) {
         StartTimer(&waiting_for_init_timer);
         while (!received_server_init_message) {
             if (GetTimer(waiting_for_init_timer) > 350 / 1000.0) {
-                mprintf("Took too long for init timer!\n");
+                LOG_ERROR("Took too long for init timer!");
                 exiting = true;
                 break;
             }
@@ -967,7 +965,7 @@ int main(int argc, char* argv[]) {
 
                         if (ctrl_pressed && alt_pressed &&
                             fmsg.keyboard.code == FK_F4) {
-                            mprintf("Quitting...\n");
+                            LOG_INFO("Quitting...");
                             exiting = true;
                         }
 
@@ -1001,7 +999,7 @@ int main(int argc, char* argv[]) {
                         fmsg.mouseWheel.y = msg.wheel.y;
                         break;
                     case SDL_QUIT:
-                        mprintf("Forcefully Quitting...\n");
+                        LOG_ERROR("Forcefully Quitting...");
                         exiting = true;
                         break;
                 }
@@ -1014,7 +1012,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        mprintf("Disconnecting...\n");
+        LOG_INFO("Disconnecting...");
 
         if (exiting) {
             fmsg.type = CMESSAGE_QUIT;
@@ -1043,7 +1041,7 @@ int main(int argc, char* argv[]) {
     }
 
     destroyVideo();
-    mprintf("Closing Client...\n");
+    LOG_INFO("Closing Client...");
 
     destroyLogger();
     destroySDL();
