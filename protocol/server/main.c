@@ -671,14 +671,14 @@ void update() {
 #include <time.h>
 
 int main() {
-    static_assert(sizeof( unsigned short ) == 2,
-                   "Error: Unsigned short is not length 2 bytes!\n");
+    static_assert(sizeof(unsigned short) == 2,
+                  "Error: Unsigned short is not length 2 bytes!\n");
 
     srand((unsigned int)time(NULL));
     connection_id = rand();
     initBacktraceHandler();
 #ifdef _WIN32
-    initMultiThreadedPrintf("C:\\ProgramData\\FractalCache");
+    initLogger("C:\\ProgramData\\FractalCache");
 #else
     initLogger(".");
 #endif
@@ -697,9 +697,8 @@ int main() {
 #endif
 
 #ifdef _WIN32
-    if( !InitDesktop() )
-    {
-        mprintf( "Could not winlogon!\n" );
+    if (!InitDesktop()) {
+        mprintf("Could not winlogon!\n");
         sendLog();
         return 0;
     }

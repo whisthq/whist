@@ -100,7 +100,8 @@ void update() {
         // Check if TCP is up
         int result = sendp(&PacketTCPContext, NULL, 0);
         if (result < 0) {
-            LOG_WARNING("Lost TCP Connection (Error: %d)", GetLastNetworkError());
+            LOG_WARNING("Lost TCP Connection (Error: %d)",
+                        GetLastNetworkError());
         }
 
         char* tcp_buf = TryReadingTCPPacket(&PacketTCPContext);
@@ -126,7 +127,7 @@ void update() {
         !UpdateData.tried_to_update_dimension &&
         (server_width != output_width || server_height != output_height)) {
         LOG_INFO("Asking for server dimension to be %dx%d", output_width,
-                output_height);
+                 output_height);
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
@@ -399,17 +400,15 @@ int ReceivePackets(void* opaque) {
 
         if (recv_size > 0) {
             if (lastrecv > 20.0 / 1000.0) {
-                
                 LOG_INFO(
                     "Took more than 20ms to receive something!! Took %fms "
                     "total!",
                     lastrecv * 1000.0);
-                
             }
             lastrecv = 0.0;
         }
 
-         LOG_INFO("Recv wait time: %f", GetTimer(recvfrom_timer));
+        LOG_INFO("Recv wait time: %f", GetTimer(recvfrom_timer));
 
         total_recvs++;
 
@@ -427,7 +426,8 @@ int ReceivePackets(void* opaque) {
                     break;
             }
         } else {
-//             LOG_INFO("\nRecv Time: %f\nRecvs: %d\nRecv Size: %d\nType: ", recv_time, total_recvs, recv_size);
+            //             LOG_INFO("\nRecv Time: %f\nRecvs: %d\nRecv Size:
+            //             %d\nType: ", recv_time, total_recvs, recv_size);
             switch (packet.type) {
                 case PACKET_VIDEO:
                     StartTimer(&video_timer);
@@ -455,7 +455,7 @@ int ReceivePackets(void* opaque) {
 
     if (lastrecv > 20.0 / 1000.0) {
         LOG_INFO("Took more than 20ms to receive something!! Took %fms total!",
-                lastrecv * 1000.0);
+                 lastrecv * 1000.0);
     }
 
     SDL_Delay(5);
@@ -487,7 +487,7 @@ int ReceiveMessage(struct RTPPacket* packet) {
     } else {
         if (packet->payload_size != sizeof(FractalServerMessage)) {
             LOG_ERROR("Incorrect payload size for a server message! (type: %d)",
-                    (int)packet->type);
+                      (int)packet->type);
             return -1;
         }
     }
@@ -509,7 +509,7 @@ int ReceiveMessage(struct RTPPacket* packet) {
             break;
         case SMESSAGE_CLIPBOARD:
             LOG_INFO("Received %d byte clipboard message from server!",
-                    packet->payload_size);
+                     packet->payload_size);
             updateSetClipboard(&fmsg->clipboard);
             break;
         case MESSAGE_INIT:
@@ -692,8 +692,7 @@ int initSDL() {
 
     SDL_AddEventWatch(resizingEventWatcher, (SDL_Window*)window);
     if (!window) {
-        LOG_ERROR("SDL: could not create window - exiting: %s",
-                SDL_GetError());
+        LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
         return -1;
     }
     SDL_SetWindowResizable((SDL_Window*)window, true);
@@ -730,7 +729,7 @@ void parse_window_event(SDL_Event* event) {
             SendFmsg(&fmsg);
 
             LOG_INFO("Window %d resized to %dx%d\n", event->window.windowID,
-                   event->window.data1, event->window.data2);
+                     event->window.data1, event->window.data2);
             break;
         case SDL_WINDOWEVENT_MINIMIZED:
             LOG_INFO("Window %d minimized\n", event->window.windowID);
@@ -811,7 +810,7 @@ int main(int argc, char* argv[]) {
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 #ifdef _WIN32
     // no cache needed on windows
-    initMultiThreadedPrintf(".");
+    initLogger(".");
 #else  // macos, linux
     // apple cache, can't be in the same folder as bundled app
     // this stores log.txt in Users/USERNAME/.fractal/log.txt

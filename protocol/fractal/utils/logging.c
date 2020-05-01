@@ -21,9 +21,6 @@ static volatile logger_queue_item logger_queue_cache[LOGGER_QUEUE_SIZE];
 static volatile int logger_queue_index = 0;
 static volatile int logger_queue_size = 0;
 
-
-
-
 // logger global variables
 SDL_Thread *mprintf_thread = NULL;
 static volatile bool run_multithreaded_printf;
@@ -60,7 +57,7 @@ void initLogger(char *log_dir) {
     logger_semaphore = SDL_CreateSemaphore(0);
     mprintf_thread = SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf,
                                       "MultiThreadedPrintf", NULL);
-//    StartTimer(&mprintf_timer);
+    //    StartTimer(&mprintf_timer);
 }
 
 void destroyLogger() {
@@ -129,7 +126,7 @@ int MultiThreadedPrintf(void *opaque) {
 
             // Shift buffer over if too large;
             if ((unsigned long)logger_history_len >
-                    sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) -
+                sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) -
                     10) {
                 int new_len = sizeof(logger_history) / 3;
                 for (i = 0; i < new_len; i++) {
@@ -200,7 +197,8 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
     if (logger_queue_size < LOGGER_QUEUE_SIZE - 2) {
         logger_queue[index].log = log;
         buf = (char *)logger_queue[index].buf;
-//        snprintf(buf, LOGGER_BUF_SIZE, "%15.4f: ", GetTimer(mprintf_timer));
+        //        snprintf(buf, LOGGER_BUF_SIZE, "%15.4f: ",
+        //        GetTimer(mprintf_timer));
         int len = (int)strlen(buf);
         vsnprintf(buf + len, LOGGER_BUF_SIZE - len, fmtStr, args);
         logger_queue_size++;
