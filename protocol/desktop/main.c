@@ -803,7 +803,7 @@ int main(int argc, char* argv[]) {
     fclose(ssh_key_host);
 
     if (initSDL() < 0) {
-        LOG_WARNING("Failed to initialized SDL");
+        LOG_ERROR("Failed to initialized SDL");
         return -1;
     }
 

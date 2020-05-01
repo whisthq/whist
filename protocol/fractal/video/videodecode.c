@@ -99,7 +99,7 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
         decoder->sw_frame->pts = 0;
 
         if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
-            LOG_ERROR("Failed to open codec for stream");
+            LOG_WARNING("Failed to open codec for stream");
             return -1;
         }
     } else if (decoder->type == DECODE_TYPE_QSV) {
@@ -177,7 +177,7 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
         decoder->codec = avcodec_find_decoder_by_name("h264");
 
         if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
-            LOG_ERROR("alloccontext3 failed w/ error code: %d\n",
+            LOG_WARNING("alloccontext3 failed w/ error code: %d\n",
                     AVERROR(ENOMEM));
             return -1;
         }
@@ -186,12 +186,12 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
         av_opt_set(decoder->context->priv_data, "async_depth", "1", 0);
 
         if (hw_decoder_init(decoder->context, decoder->device_type) < 0) {
-            LOG_ERROR("Failed to init hardware decoder");
+            LOG_WARNING("Failed to init hardware decoder");
             return -1;
         }
 
         if ((ret = avcodec_open2(decoder->context, decoder->codec, NULL)) < 0) {
-            LOG_ERROR("Failed to open codec for stream");
+            LOG_WARNING("Failed to open codec for stream");
             return -1;
         }
 
