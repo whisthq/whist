@@ -475,7 +475,7 @@ def swapDisk(self, disk_name):
 			lockVM(vm_name, False)
 			return vm_credentials
 		else:
-			self.update_state(state='PENDING', meta={"msg": "Error: Update took too long. Please contact support."})
+			self.update_state(state='FAILURE', meta={"msg": "Error: Update took too long. Please contact support."})
 			return {}
 	# Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
 	# (then reboot the VM), or wait until a VM becomes available.

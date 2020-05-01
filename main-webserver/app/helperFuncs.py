@@ -1456,7 +1456,7 @@ def sendVMStartCommand(vm_name, needs_restart):
                 os.environ.get('VM_GROUP'), vm_name)
             print(async_vm_restart.result())
             print("VM {} restarted".format(vm_name))
-            time.sleep(5)
+            time.sleep(30)
 
         return 1
     except Exception as e:
