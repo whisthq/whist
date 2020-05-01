@@ -56,7 +56,7 @@ ClipboardData* GetClipboard() {
     // otherwise gets multiple files confused with string and thinks both are
     // true
     if (clipboardHasFiles) {
-        LOG_INFO("Getting files from clipboard\n");
+        LOG_INFO("Getting files from clipboard");
 
         // allocate memory for filenames and paths
         OSXFilenames* filenames[MAX_URLS];
@@ -115,10 +115,10 @@ ClipboardData* GetClipboard() {
             cb->size = data_size;
             memcpy(cb->data, clipboard_string, data_size);
             cb->type = CLIPBOARD_TEXT;
-            LOG_INFO("CLIPBOARD STRING: %s\n", cb->data);
-            LOG_INFO("Len %d, Strlen %d\n", cb->size, strlen(cb->data));
+            LOG_INFO("CLIPBOARD STRING: %s", cb->data);
+            LOG_INFO("Len %d, Strlen %d", cb->size, strlen(cb->data));
         } else {
-            LOG_WARNING("Could not copy, clipboard too large! %d bytes\n",
+            LOG_WARNING("Could not copy, clipboard too large! %d bytes",
                     data_size);
         }
     } else if (clipboardHasImage) {
@@ -135,20 +135,20 @@ ClipboardData* GetClipboard() {
             cb->size = data_size;
             memcpy(cb->data, clipboard_image->data + 14, data_size);
             // dimensions for sanity check
-            LOG_INFO("Width: %d\n", (*(int*)&cb->data[4]));
-            LOG_INFO("Height: %d\n", (*(int*)&cb->data[8]));
+            LOG_INFO("Width: %d", (*(int*)&cb->data[4]));
+            LOG_INFO("Height: %d", (*(int*)&cb->data[8]));
             // data type and length
             cb->type = CLIPBOARD_IMAGE;
-            LOG_INFO("OSX Image! Size: %d\n", cb->size);
+            LOG_INFO("OSX Image! Size: %d", cb->size);
             // now that the image is in Clipboard struct, we can free this
             // struct
             free(clipboard_image);
         } else {
-            LOG_WARNING("Could not copy, clipboard too large! %d bytes\n",
+            LOG_WARNING("Could not copy, clipboard too large! %d bytes",
                     data_size);
         }
     } else {
-        LOG_INFO("Nothing in the clipboard!\n");
+        LOG_INFO("Nothing in the clipboard!");
     }
 
     return cb;
@@ -161,11 +161,11 @@ void SetClipboard(ClipboardData* cb) {
     // check the type of the data
     switch (cb->type) {
         case CLIPBOARD_TEXT:
-            LOG_INFO("SetClipboard to Text: %s\n", cb->data);
+            LOG_INFO("SetClipboard to Text: %s", cb->data);
             ClipboardSetString(cb->data);
             break;
         case CLIPBOARD_IMAGE:
-            LOG_INFO("SetClipboard to Image with size %d\n", cb->size);
+            LOG_INFO("SetClipboard to Image with size %d", cb->size);
             // fix the CGImage header back
             char* data = malloc(cb->size + 14);
             *((char*)(&data[0])) = 'B';
@@ -178,7 +178,7 @@ void SetClipboard(ClipboardData* cb) {
             free(data);
             break;
         case CLIPBOARD_FILES:
-            LOG_INFO("SetClipboard to Files\n");
+            LOG_INFO("SetClipboard to Files");
 
             // allocate memory to store filenames in clipboard
             char* filenames[MAX_URLS];
@@ -200,7 +200,7 @@ void SetClipboard(ClipboardData* cb) {
 
             break;
         default:
-            LOG_INFO("No clipboard data to set!\n");
+            LOG_INFO("No clipboard data to set!");
             break;
     }
 

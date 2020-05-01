@@ -28,7 +28,7 @@ int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
 
     if ((err = av_hwdevice_ctx_create(&ctx->hw_device_ctx, type, NULL, NULL,
                                       0)) < 0) {
-        mprintf("Failed to create specified HW device. Error %d: %s\n", err,
+        LOG_WARNING("Failed to create specified HW device. Error %d: %s\n", err,
                 av_err2str(err));
         return err;
     }
@@ -43,18 +43,18 @@ enum AVPixelFormat match_format(AVCodecContext* ctx,
 
     for (const enum AVPixelFormat* p = pix_fmts; *p != -1; p++) {
         if (*p == match_pix_fmt) {
-            mprintf("Hardware format found: %s\n", av_get_pix_fmt_name(*p));
+            LOG_WARNING("Hardware format found: %s\n", av_get_pix_fmt_name(*p));
             return *p;
         }
     }
 
     if (*pix_fmts != -1) {
-        mprintf("Hardware format not found, using format %s\n",
+        LOG_WARNING("Hardware format not found, using format %s\n",
                 av_get_pix_fmt_name(*pix_fmts));
         return *pix_fmts;
     }
 
-    mprintf("Failed to get HW surface format.\n");
+    LOG_WARNING("Failed to get HW surface format.");
     return AV_PIX_FMT_NONE;
 }
 
@@ -83,10 +83,10 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
 #endif
 
     if (decoder->type == DECODE_TYPE_SOFTWARE) {
-        mprintf("Trying software decoder\n");
+        LOG_INFO("Trying software decoder");
         decoder->codec = avcodec_find_decoder_by_name("h264");
         if (!decoder->codec) {
-            mprintf("Could not find video codec\n");
+            LOG_WARNING("Could not find video codec");
             return -1;
         }
         decoder->context = avcodec_alloc_context3(decoder->codec);
@@ -98,11 +98,11 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
         decoder->sw_frame->pts = 0;
 
         if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
-            mprintf("Failed to open codec for stream\n");
+            LOG_ERROR("Failed to open codec for stream");
             return -1;
         }
     } else if (decoder->type == DECODE_TYPE_QSV) {
-        mprintf("Trying QSV decoder\n");
+        LOG_INFO("Trying QSV decoder");
         decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
         decoder->context = avcodec_alloc_context3(decoder->codec);
 
@@ -133,7 +133,7 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
         av_opt_set(decoder->context->priv_data, "async_depth", "1", 0);
 
         if (avcodec_open2(decoder->context, NULL, NULL) < 0) {
-            mprintf("Failed to open context for stream\n");
+            LOG_WARNING("Failed to open context for stream");
             return -1;
         }
 
@@ -141,11 +141,11 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
         decoder->hw_frame = av_frame_alloc();
         if (av_hwframe_get_buffer(decoder->context->hw_frames_ctx,
                                   decoder->hw_frame, 0) < 0) {
-            mprintf("Failed to init buffer for hw frames\n");
+            LOG_WARNING("Failed to init buffer for hw frames");
             return -1;
         }
     } else if (decoder->type == DECODE_TYPE_HARDWARE) {
-        mprintf("Trying hardware decoder\n");
+        LOG_INFO("Trying hardware decoder");
         // set the appropriate video decoder format based on PS
 #if defined(_WIN32)
 #define match_hardware match_dxva2;
@@ -163,20 +163,20 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
         // get the appropriate hardware device
         decoder->device_type = av_hwdevice_find_type_by_name(device_type);
         if (decoder->device_type == AV_HWDEVICE_TYPE_NONE) {
-            mprintf("Device type %s is not supported.\n", device_type);
-            mprintf("Available device types:");
+            LOG_WARNING("Device type %s is not supported.\n", device_type);
+            LOG_WARNING("Available device types:");
             while ((decoder->device_type = av_hwdevice_iterate_types(
                         decoder->device_type)) != AV_HWDEVICE_TYPE_NONE) {
-                mprintf(" %s", av_hwdevice_get_type_name(decoder->device_type));
+                LOG_WARNING(" %s", av_hwdevice_get_type_name(decoder->device_type));
             }
-            mprintf("\n");
+            LOG_WARNING(" ");
             return -1;
         }
 
         decoder->codec = avcodec_find_decoder_by_name("h264");
 
         if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
-            mprintf("alloccontext3 failed w/ error code: %d\n",
+            LOG_ERROR("alloccontext3 failed w/ error code: %d\n",
                     AVERROR(ENOMEM));
             return -1;
         }
@@ -185,25 +185,25 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
         av_opt_set(decoder->context->priv_data, "async_depth", "1", 0);
 
         if (hw_decoder_init(decoder->context, decoder->device_type) < 0) {
-            mprintf("Failed to init hardware deocder\n");
+            LOG_ERROR("Failed to init hardware decoder");
             return -1;
         }
 
         if ((ret = avcodec_open2(decoder->context, decoder->codec, NULL)) < 0) {
-            mprintf("Failed to open codec for stream\n");
+            LOG_ERROR("Failed to open codec for stream");
             return -1;
         }
 
         if (!(decoder->hw_frame = av_frame_alloc()) ||
             !(decoder->sw_frame = av_frame_alloc())) {
-            mprintf("Can not alloc frame\n");
+            LOG_WARNING("Can not alloc frame");
 
             av_frame_free(&decoder->hw_frame);
             av_frame_free(&decoder->sw_frame);
             return -1;
         }
     } else {
-        mprintf("Unsupported hardware type!\n");
+        LOG_ERROR("Unsupported hardware type!");
         return -1;
     }
     return 0;
@@ -235,23 +235,23 @@ video_decoder_t* create_video_decoder(int width, int height,
              ++i) {
             decoder->type = decoder_precedence[i];
             if (try_setup_video_decoder(width, height, decoder) < 0) {
-                mprintf("Video decoder: Failed, trying next decoder\n");
+                LOG_INFO("Video decoder: Failed, trying next decoder");
             } else {
-                mprintf("Video decoder: Success!\n");
+                LOG_INFO("Video decoder: Success!");
                 return decoder;
             }
         }
 
-        mprintf("Video decoder: All decoders failed!\n");
+        LOG_WARNING("Video decoder: All decoders failed!");
         return NULL;
     } else {
-        mprintf("Video Decoder: NO HARDWARE\n");
+        LOG_WARNING("Video Decoder: NO HARDWARE");
         decoder->type = DECODE_TYPE_SOFTWARE;
         if (try_setup_video_decoder(width, height, decoder) < 0) {
-            mprintf("Video decoder: Software decoder failed!\n");
+            LOG_WARNING("Video decoder: Software decoder failed!");
             return NULL;
         } else {
-            mprintf("Video decoder: Success!\n");
+            LOG_INFO("Video decoder: Success!");
             return decoder;
         }
     }
@@ -263,7 +263,7 @@ video_decoder_t* create_video_decoder(int width, int height,
 void destroy_video_decoder(video_decoder_t* decoder) {
     // check if decoder decoder exists
     if (decoder == NULL) {
-        mprintf("Cannot destroy decoder decoder.\n");
+        LOG_WARNING("Cannot destroy decoder decoder.");
         return;
     }
 
@@ -306,7 +306,7 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
 
     // decode the frame
     if (avcodec_send_packet(decoder->context, &decoder->packet) < 0) {
-        mprintf("Failed to avcodec_send_packet!\n");
+        LOG_WARNING("Failed to avcodec_send_packet!");
         return false;
     }
 
@@ -314,19 +314,19 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
     if (decoder->type == DECODE_TYPE_QSV ||
         decoder->type == DECODE_TYPE_SOFTWARE) {
         if (avcodec_receive_frame(decoder->context, decoder->sw_frame) < 0) {
-            mprintf("Failed to avcodec_receive_frame!\n");
+            LOG_WARNING("Failed to avcodec_receive_frame!");
             return false;
         }
     } else if (decoder->type == DECODE_TYPE_HARDWARE) {
         // If frame was computed on the GPU
         if (avcodec_receive_frame(decoder->context, decoder->hw_frame) < 0) {
-            mprintf("Failed to avcodec_receive_frame!\n");
+            LOG_WARNING("Failed to avcodec_receive_frame!");
             return false;
         }
 
         av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
     } else {
-        mprintf("Incorrect hw frame format!\n");
+        LOG_WARNING("Incorrect hw frame format!");
         return false;
     }
 

@@ -54,7 +54,7 @@ void set_timeout(SOCKET s, int timeout_ms) {
     if (timeout_ms < 0) {
         LOG_WARNING(
             "WARNING: This socket will blocking indefinitely. You will not be "
-            "able to recover if a packet is never received\n");
+            "able to recover if a packet is never received");
         unsigned long mode = 0;
 
         FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
@@ -71,7 +71,7 @@ void set_timeout(SOCKET s, int timeout_ms) {
 
         if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&read_timeout,
                        sizeof(read_timeout)) < 0) {
-            LOG_WARNING("Failed to set timeout\n");
+            LOG_WARNING("Failed to set timeout");
             return;
         }
     }
@@ -121,7 +121,7 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
 
 void *TryReadingTCPPacket(struct SocketContext *context) {
     if (!context->is_tcp) {
-        LOG_WARNING("TryReadingTCPPacket received a context that is NOT TCP!\n");
+        LOG_WARNING("TryReadingTCPPacket received a context that is NOT TCP!");
         return NULL;
     }
 
@@ -176,7 +176,7 @@ void *TryReadingTCPPacket(struct SocketContext *context) {
             reading_packet_len = actual_len - target_len;
 
             if (decrypted_len < 0) {
-                LOG_WARNING("Could not decrypt TCP message\n");
+                LOG_WARNING("Could not decrypt TCP message");
                 return NULL;
             } else {
                 // Return the decrypted packet
@@ -210,7 +210,7 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
     opt = 1;
     if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
                    sizeof(opt)) < 0) {
-        LOG_WARNING("Could not setsockopt SO_REUSEADDR\n");
+        LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
@@ -247,7 +247,7 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
 
     if (select(0, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) <
         0) {
-        LOG_WARNING("Could not select!\n");
+        LOG_WARNING("Could not select!");
         closesocket(context->s);
         return -1;
     }
@@ -306,21 +306,21 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
     opt = 1;
     if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
                    sizeof(opt)) < 0) {
-        LOG_WARNING("Could not setsockopt SO_REUSEADDR\n");
+        LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
     struct sockaddr_in origin_addr;
     // Connect over TCP to STUN
-    LOG_INFO("Connecting to STUN TCP...\n");
+    LOG_INFO("Connecting to STUN TCP...");
     if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
-        LOG_WARNING("Could not connect to STUN Server over TCP\n");
+        LOG_WARNING("Could not connect to STUN Server over TCP");
         return -1;
     }
 
     socklen_t slen = sizeof(origin_addr);
     if (getsockname(context->s, (struct sockaddr *)&origin_addr, &slen) < 0) {
-        LOG_WARNING("Could not get sock name\n");
+        LOG_WARNING("Could not get sock name");
         closesocket(context->s);
         return -1;
     }
@@ -331,7 +331,7 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
     stun_request.entry.public_port = htons((unsigned short)port);
 
     if (sendp(context, &stun_request, sizeof(stun_request)) < 0) {
-        LOG_WARNING("Could not send STUN request to connected STUN server!\n");
+        LOG_WARNING("Could not send STUN request to connected STUN server!");
         closesocket(context->s);
         return -1;
     }
@@ -382,7 +382,7 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
     opt = 1;
     if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
                    sizeof(opt)) < 0) {
-        LOG_WARNING("Could not setsockopt SO_REUSEADDR\n");
+        LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
@@ -394,11 +394,11 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
         return -1;
     }
 
-    LOG_INFO("WAIT\n");
+    LOG_INFO("WAIT");
 
     // Connect to client
     if (!tcp_connect(context->s, client_addr, stun_timeout_ms)) {
-        LOG_WARNING("Could not connect to Client over TCP\n");
+        LOG_WARNING("Could not connect to Client over TCP");
         return -1;
     }
 
@@ -430,13 +430,13 @@ int CreateTCPClientContext(struct SocketContext *context, char *destination,
     context->addr.sin_addr.s_addr = inet_addr(destination);
     context->addr.sin_port = htons((unsigned short)port);
 
-    mprintf("Connecting to server...\n");
+    LOG_INFO("Connecting to server...");
 
     SDL_Delay(200);
 
     // Connect to TCP server
     if (!tcp_connect(context->s, context->addr, stun_timeout_ms)) {
-        LOG_WARNING("Could not connect to server over TCP\n");
+        LOG_WARNING("Could not connect to server over TCP");
         return -1;
     }
 
@@ -478,20 +478,20 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     opt = 1;
     if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
                    sizeof(opt)) < 0) {
-        LOG_WARNING("Could not setsockopt SO_REUSEADDR\n");
+        LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
     // Connect to STUN server
     if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
-        LOG_WARNING("Could not connect to STUN Server over TCP\n");
+        LOG_WARNING("Could not connect to STUN Server over TCP");
         return -1;
     }
 
     struct sockaddr_in origin_addr;
     socklen_t slen = sizeof(origin_addr);
     if (getsockname(context->s, (struct sockaddr *)&origin_addr, &slen) < 0) {
-        LOG_WARNING("Could not get sock name\n");
+        LOG_WARNING("Could not get sock name");
         closesocket(context->s);
         return -1;
     }
@@ -503,7 +503,7 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     stun_request.entry.public_port = htons((unsigned short)port);
 
     if (sendp(context, &stun_request, sizeof(stun_request)) < 0) {
-        LOG_WARNING("Could not send STUN request to connected STUN server!\n");
+        LOG_WARNING("Could not send STUN request to connected STUN server!");
         closesocket(context->s);
         return -1;
     }
@@ -552,7 +552,7 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     opt = 1;
     if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
                    sizeof(opt)) < 0) {
-        LOG_WARNING("Could not setsockopt SO_REUSEADDR\n");
+        LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
@@ -569,13 +569,13 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     context->addr.sin_addr.s_addr = entry.ip;
     context->addr.sin_port = entry.private_port;
 
-    LOG_INFO("Connecting to server...\n");
+    LOG_INFO("Connecting to server...");
 
     SDL_Delay(200);
 
     // Connect to TCP server
     if (!tcp_connect(context->s, context->addr, stun_timeout_ms)) {
-        LOG_WARNING("Could not connect to server over TCP\n");
+        LOG_WARNING("Could not connect to server over TCP");
         return -1;
     }
 
@@ -687,7 +687,7 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
     stun_request.type = POST_INFO;
     stun_request.entry.public_port = htons((unsigned short)port);
 
-    LOG_INFO("Sending stun entry to STUN...\n");
+    LOG_INFO("Sending stun entry to STUN...");
     if (sendto(context->s, (const char *)&stun_request, sizeof(stun_request), 0,
                (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
         LOG_WARNING("Could not send message to STUN %d\n", GetLastNetworkError());
@@ -735,7 +735,7 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
     set_timeout(context->s, 350);
 
     if (recv_size != sizeof(entry)) {
-        LOG_WARNING("STUN response was not the size of an entry!\n");
+        LOG_WARNING("STUN response was not the size of an entry!");
         closesocket(context->s);
         return -1;
     }
@@ -750,7 +750,7 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
 
     // Open up port to receive message
     if (sendp(context, NULL, 0) < 0) {
-        LOG_WARNING("Could not open up port!\n");
+        LOG_WARNING("Could not open up port!");
         closesocket(context->s);
         return -1;
     }
@@ -759,7 +759,7 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
 
     // Send acknowledgement
     if (sendp(context, NULL, 0) < 0) {
-        LOG_WARNING("Could not open up port!\n");
+        LOG_WARNING("Could not open up port!");
         closesocket(context->s);
         return -1;
     }
@@ -767,7 +767,7 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
     // Wait for client to connect
     if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)(&context->addr),
                  &slen) < 0) {
-        LOG_WARNING("Did not receive client confirmation!\n");
+        LOG_WARNING("Did not receive client confirmation!");
         closesocket(context->s);
         return -1;
     }
@@ -814,7 +814,7 @@ int CreateUDPClientContext(struct SocketContext *context, char *destination,
     context->addr.sin_addr.s_addr = inet_addr(destination);
     context->addr.sin_port = htons((unsigned short)port);
 
-    LOG_INFO("Connecting to server...\n");
+    LOG_INFO("Connecting to server...");
 
     // Open up the port
     if (sendp(context, NULL, 0) < 0) {
@@ -877,7 +877,7 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
     stun_request.entry.ip = inet_addr(destination);
     stun_request.entry.public_port = htons((unsigned short)port);
 
-    LOG_INFO("Sending info request to STUN...\n");
+    LOG_INFO("Sending info request to STUN...");
     if (sendto(context->s, (const char *)&stun_request, sizeof(stun_request), 0,
                (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
         LOG_WARNING("Could not send message to STUN %d\n", GetLastNetworkError());
@@ -895,7 +895,7 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
     }
 
     if (recv_size != sizeof(entry)) {
-        LOG_WARNING("STUN Response of incorrect size!\n");
+        LOG_WARNING("STUN Response of incorrect size!");
         closesocket(context->s);
         return -1;
     } else if (entry.ip != stun_request.entry.ip ||
@@ -912,7 +912,7 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
         context->addr.sin_port = entry.private_port;
     }
 
-    LOG_INFO("Connecting to server...\n");
+    LOG_INFO("Connecting to server...");
 
     // Open up the port
     if (sendp(context, NULL, 0) < 0) {
@@ -981,7 +981,7 @@ bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
     if (Socket < 0)  // Windows & Unix cases
     {
         // if can't create socket, return
-        LOG_WARNING("Could not create socket.\n");
+        LOG_WARNING("Could not create socket.");
         return false;
     }
     set_timeout(Socket, 250);
@@ -996,7 +996,7 @@ bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
         connect(Socket, (struct sockaddr *)&webserver_socketAddress,
                 sizeof(webserver_socketAddress));
     if (connect_status < 0) {
-        LOG_WARNING("Could not connect to the webserver.\n");
+        LOG_WARNING("Could not connect to the webserver.");
         return false;
     }
 
@@ -1013,7 +1013,7 @@ bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
         // error sending, terminate
-        LOG_WARNING("Sending POST message failed.\n");
+        LOG_WARNING("Sending POST message failed.");
         return false;
     }
 

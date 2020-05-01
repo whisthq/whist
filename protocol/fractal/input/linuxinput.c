@@ -415,8 +415,8 @@ input_device_t* CreateInputDevice(input_device_t* input_device) {
 
     if (input_device->fd_absmouse < 0 || input_device->fd_relmouse < 0 ||
         input_device->fd_keyboard < 0) {
-        mprintf(
-            "CreateInputDevice: Error opening '/dev/uinput' for writing: %s\n",
+        LOG_ERROR(
+            "CreateInputDevice: Error opening '/dev/uinput' for writing: %s",
             strerror(errno));
         return NULL;
     }
@@ -501,14 +501,14 @@ input_device_t* CreateInputDevice(input_device_t* input_device) {
     _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_DEV_CREATE)
     _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_DEV_CREATE)
     _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_DEV_CREATE)
-    LOG_INFO("Created input devices!\n");
+    LOG_INFO("Created input devices!");
 
     return input_device;
 }
 
 void DestroyInputDevice(input_device_t* input_device) {
     if (!input_device) {
-        mprintf("DestroyInputDevice: Nothing to do, device is null!\n");
+        LOG_INFO("DestroyInputDevice: Nothing to do, device is null!");
         return;
     }
     ioctl(input_device->fd_absmouse, UI_DEV_DESTROY);

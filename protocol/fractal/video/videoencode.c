@@ -11,7 +11,7 @@
 void set_opt(encoder_t *encoder, char *option, char *value) {
     int ret = av_opt_set(encoder->context->priv_data, option, value, 0);
     if (ret < 0) {
-        mprintf("Could not av_opt_set %s to %s!", option, value);
+        LOG_WARNING("Could not av_opt_set %s to %s!", option, value);
     }
 }
 
@@ -24,7 +24,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
     // the image from DXGI WinApi screen capture, so that the uncompressed image
     // doesn't ever hit the CPU or RAM
     if (encoder->type == NVENC_ENCODE) {
-        mprintf("Trying Nvidia encoder\n");
+        LOG_INFO("Trying Nvidia encoder");
 
         enum AVPixelFormat out_format = AV_PIX_FMT_0RGB32;
 
@@ -32,10 +32,10 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         StartTimer(&t);
         if (av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_CUDA,
                                    "CUDA", NULL, 0) < 0) {
-            mprintf("Failed to create specified device.\n");
+            LOG_WARNING("Failed to create specified device.");
             return -1;
         }
-        mprintf("Time to create encoder: %f\n", GetTimer(t));
+        LOG_INFO("Time to create encoder: %f\n", GetTimer(t));
         encoder->codec = avcodec_find_encoder_by_name("h264_nvenc");
 
         enum AVPixelFormat encoder_format = AV_PIX_FMT_CUDA;
@@ -73,7 +73,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         av_hwframe_ctx_init(encoder->context->hw_frames_ctx);
 
         if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
-            mprintf("Failed to open video encoder context\n");
+            LOG_WARNING("Failed to open video encoder context");
             return -1;
         }
 
@@ -99,11 +99,11 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         encoder->hw_frame = av_frame_alloc();
         if (av_hwframe_get_buffer(encoder->context->hw_frames_ctx,
                                   encoder->hw_frame, 0) < 0) {
-            mprintf("Failed to init buffer for video encoder hw frames\n");
+            LOG_WARNING("Failed to init buffer for video encoder hw frames");
             return -1;
         }
     } else if (encoder->type == QSV_ENCODE) {
-        mprintf("Trying QSV encoder\n");
+        LOG_INFO("Trying QSV encoder");
 
         enum AVPixelFormat out_format = AV_PIX_FMT_0RGB32;
 
@@ -111,10 +111,10 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         StartTimer(&t);
         if (av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_QSV, NULL,
                                    NULL, 0) < 0) {
-            mprintf("Failed to create specified device.\n");
+            LOG_WARNING("Failed to create specified device.");
             return -1;
         }
-        mprintf("Time to create encoder: %f\n", GetTimer(t));
+        LOG_INFO("Time to create encoder: %f\n", GetTimer(t));
         encoder->codec = avcodec_find_encoder_by_name("h264_qsv");
 
         enum AVPixelFormat encoder_format = AV_PIX_FMT_QSV;
@@ -151,7 +151,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         av_hwframe_ctx_init(encoder->context->hw_frames_ctx);
 
         if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
-            mprintf("Failed to open video encoder context\n");
+            LOG_WARNING("Failed to open video encoder context");
             return -1;
         }
 
@@ -176,17 +176,17 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
             encoder->width, encoder->height, AV_PIX_FMT_RGB32, encoder->width,
             encoder->height, out_format, SWS_BILINEAR, 0, 0, 0);
         if (!encoder->sws) {
-            mprintf("Failed to initialize swsContext for video encoder\n");
+            LOG_WARNING("Failed to initialize swsContext for video encoder");
             return -1;
         }
         encoder->hw_frame = av_frame_alloc();
         if (av_hwframe_get_buffer(encoder->context->hw_frames_ctx,
                                   encoder->hw_frame, 0) < 0) {
-            mprintf("Failed to init buffer for video encoder hw frames\n");
+            LOG_WARNING("Failed to init buffer for video encoder hw frames");
             return -1;
         }
     } else if (encoder->type == SOFTWARE_ENCODE) {
-        mprintf("Trying software encoder\n");
+        LOG_INFO("Trying software encoder");
 
         enum AVPixelFormat out_format = AV_PIX_FMT_YUV420P;
 
@@ -213,7 +213,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         set_opt(encoder, "delay", "0");
 
         if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
-            mprintf("Failed to open context for stream\n");
+            LOG_WARNING("Failed to open context for stream");
             return -1;
         }
 
@@ -239,15 +239,15 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
             encoder->height, out_format, SWS_BICUBIC, 0, 0, 0);
 
         if (!encoder->sws) {
-            mprintf("Failed to initialize swsContext for video encoder\n");
+            LOG_WARNING("Failed to initialize swsContext for video encoder");
             return -1;
         }
     } else {
-        mprintf("Unsupported hardware type!\n");
+        LOG_ERROR("Unsupported hardware type!");
         return -1;
     }
 
-    mprintf("Video Encoder created!\n");
+    LOG_INFO("Video Encoder created!");
     return 0;
 }
 
@@ -269,21 +269,21 @@ encoder_t *create_video_encoder(int width, int height, int bitrate,
          i < sizeof(encoder_precedence) / sizeof(encoder_precedence[0]); ++i) {
         encoder->type = encoder_precedence[i];
         if (try_setup_video_encoder(encoder, bitrate, gop_size) < 0) {
-            mprintf("Video encoder: Failed, trying next encoder\n");
+            LOG_WARNING("Video encoder: Failed, trying next encoder");
         } else {
-            mprintf("Video encoder: Success!\n");
+            LOG_INFO("Video encoder: Success!");
             return encoder;
         }
     }
 
-    mprintf("Video encoder: All encoders failed!\n");
+    LOG_ERROR("Video encoder: All encoders failed!");
     return NULL;
 }
 
 void destroy_video_encoder(encoder_t *encoder) {
     // check if encoder encoder exists
     if (encoder == NULL) {
-        printf("Cannot destroy encoder encoder.\n");
+        LOG_WARNING("Cannot destroy encoder encoder.");
         return;
     }
 
@@ -352,6 +352,6 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
         avcodec_encode_video2(encoder->context, &encoder->packet,
                               encoder->sw_frame, &success);
     } else {
-        mprintf("Invalid encoder type\n");
+        LOG_WARNING("Invalid encoder type");
     }
 }

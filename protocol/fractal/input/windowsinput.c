@@ -318,7 +318,7 @@ void UpdateKeyboardState(input_device_t* input_device,
     if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
         LOG_WARNING(
             "updateKeyboardState requires fmsg.type to be "
-            "MESSAGE_KEYBOARD_STATE\n");
+            "MESSAGE_KEYBOARD_STATE");
         return;
     }
 
@@ -499,7 +499,7 @@ bool ReplayUserInput(input_device_t* input_device,
             }
 
             if (Event.ki.wScan >> 8 == 0xE1) {
-                LOG_INFO("Weird Extended\n");
+                LOG_INFO("Weird Extended");
             }
 
             if (!fmsg->keyboard.pressed) {

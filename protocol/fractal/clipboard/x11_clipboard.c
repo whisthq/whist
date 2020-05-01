@@ -170,7 +170,7 @@ void SetClipboard(ClipboardData* cb) {
     //
 
     if (cb->type == CLIPBOARD_TEXT) {
-        LOG_INFO("Setting clipboard to text!\n");
+        LOG_INFO("Setting clipboard to text!");
 
         // Open up xclip
         inp = popen("xclip -i -selection clipboard", "w");
@@ -181,7 +181,7 @@ void SetClipboard(ClipboardData* cb) {
         // Close pipe
         pclose(inp);
     } else if (cb->type == CLIPBOARD_IMAGE) {
-        LOG_INFO("Setting clipboard to image!\n");
+        LOG_INFO("Setting clipboard to image!");
 
         // Open up xclip
         inp = popen("xclip -i -selection clipboard -t image/png", "w");
@@ -200,7 +200,7 @@ void SetClipboard(ClipboardData* cb) {
         // Close pipe
         pclose(inp);
     } else if (cb->type == CLIPBOARD_FILES) {
-        LOG_INFO("Setting clipboard to Files\n");
+        LOG_INFO("Setting clipboard to Files");
 
         inp = popen("xclip -i -sel clipboard -t x-special/gnome-copied-files",
                     "w");
@@ -249,7 +249,7 @@ bool StartTrackingClipboardUpdates() {
     // To be called at the beginning of clipboard usage
     display = XOpenDisplay(NULL);
     if (!display) {
-        LOG_WARNING("StartTrackingClipboardUpdates display did not open\n");
+        LOG_WARNING("StartTrackingClipboardUpdates display did not open");
         perror(NULL);
         return False;
     }
@@ -371,7 +371,7 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb,
     }
 
     if (bad_clipboard) {
-        LOG_WARNING("Clipboard too large!\n");
+        LOG_WARNING("Clipboard too large!");
         cb->type = CLIPBOARD_NONE;
         cb->size = 0;
         return false;

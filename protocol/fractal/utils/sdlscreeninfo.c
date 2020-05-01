@@ -28,7 +28,7 @@ int get_virtual_screen_width() {
     SDL_DisplayMode DM;
     //    int res = SDL_GetCurrentDisplayMode(0, &DM);
     int res = SDL_GetDesktopDisplayMode(0, &DM);
-    if (res) mprintf("SDL_GetCurrentDisplayMode failed: %s\n", SDL_GetError());
+    if (res) LOG_WARNING("SDL_GetCurrentDisplayMode failed: %s", SDL_GetError());
     return DM.w;
 }
 
@@ -36,7 +36,7 @@ int get_virtual_screen_height() {
     SDL_DisplayMode DM;
     //    int res = SDL_GetCurrentDisplayMode(0, &DM);
     int res = SDL_GetDesktopDisplayMode(0, &DM);
-    if (res) mprintf("SDL_GetCurrentDisplayMode failed: %s\n", SDL_GetError());
+    if (res) LOG_WARNING("SDL_GetCurrentDisplayMode failed: %s", SDL_GetError());
     return DM.h;
 }
 
