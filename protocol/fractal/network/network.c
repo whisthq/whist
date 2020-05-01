@@ -6,6 +6,21 @@
 
 #include "network.h"
 
+typedef struct
+{
+    unsigned int ip;
+    unsigned short private_port;
+    unsigned short public_port;
+} stun_entry_t;
+
+typedef enum stun_request_type { ASK_INFO, POST_INFO } stun_request_type_t;
+
+typedef struct
+{
+    stun_request_type_t type;
+    stun_entry_t entry;
+} stun_request_t;
+
 static int reading_packet_len = 0;
 static char reading_packet_buffer[LARGEST_TCP_PACKET];
 
@@ -93,7 +108,7 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     struct timeval tv;
     tv.tv_sec = timeout_ms / 1000;
     tv.tv_usec = (timeout_ms % 1000) * 1000;
-    if (select(s + 1, NULL, &set, NULL, &tv) <= 0) {
+    if (select((int)s + 1, NULL, &set, NULL, &tv) <= 0) {
         mprintf("Could not select() over TCP to server %d\n",
                 GetLastNetworkError());
         closesocket(s);
@@ -958,7 +973,6 @@ int CreateUDPContext(struct SocketContext *context,
 bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
     // environment variables
     SOCKET Socket;         // socket to send/receive POST request
-    struct hostent *host;  // address struct of the host webserver
     struct sockaddr_in
         webserver_socketAddress;  // address of the web server socket
 
@@ -972,13 +986,10 @@ bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
     }
     set_timeout(Socket, 250);
 
-    // get the host address of the web server
-    host = gethostbyname(host_s);
-
     // create the struct for the webserver address socket we will query
     webserver_socketAddress.sin_family = AF_INET;
     webserver_socketAddress.sin_port = htons(80);  // HTTP port
-    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr);
+    webserver_socketAddress.sin_addr.s_addr = inet_addr(host_s);
 
     // connect to the web server before sending the POST request packet
     int connect_status =

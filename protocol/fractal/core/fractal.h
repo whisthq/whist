@@ -62,7 +62,7 @@
 #define PORT_SERVER_TO_CLIENT 32263
 #define PORT_SHARED_TCP 32264
 
-#define USING_STUN true
+#define USING_STUN false
 #define USING_AUDIO_ENCODE_DECODE true
 
 #define MAX_PAYLOAD_SIZE 1285
@@ -332,13 +332,6 @@ typedef enum FractalPCMFormat {
     PCM_FORMAT_INT16 = 2,  ///< 16-bit signed integer samples.
     __PCM_FORMAT_MAKE_32 = 0x7FFFFFFF,
 } FractalPCMFormat;
-
-/// @brief Connection origin.
-/// @details Passed to CreateTCPContext and CreateUDPContext
-typedef enum FractalConnectionOrigin {
-    ORIGIN_CLIENT = 1,  ///< Connection from a client.
-    ORIGIN_SERVER = 2   ///< Connection from a server.
-} FractalConnectionOrigin;
 
 /*** ENUMERATIONS END ***/
 

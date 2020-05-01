@@ -45,26 +45,11 @@
 #define FRACTAL_CLOSE_SOCKET close
 #endif
 
-#define SOCKET int
-
 #define TCP_SEGMENT_SIZE 1024
 
 // *** end defines ***
 
 // *** begin typedefs ***
-
-typedef struct {
-    unsigned int ip;
-    unsigned short private_port;
-    unsigned short public_port;
-} stun_entry_t;
-
-typedef enum stun_request_type { ASK_INFO, POST_INFO } stun_request_type_t;
-
-typedef struct {
-    stun_request_type_t type;
-    stun_entry_t entry;
-} stun_request_t;
 
 typedef struct SocketContext {
     bool is_server;
@@ -73,6 +58,14 @@ typedef struct SocketContext {
     struct sockaddr_in addr;
     int ack;
 } SocketContext;
+
+/// @brief Connection origin.
+/// @details Passed to CreateTCPContext and CreateUDPContext
+typedef enum FractalConnectionOrigin
+{
+    ORIGIN_CLIENT = 1,  ///< Connection from a client.
+    ORIGIN_SERVER = 2   ///< Connection from a server.
+} FractalConnectionOrigin;
 
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
 // replayed
