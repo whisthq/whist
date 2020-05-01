@@ -1003,7 +1003,7 @@ bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
     // now that we're connected, we can send the POST request to authenticate
     // the user first, we create the POST request message
 
-    int json_len = strlen(jsonObj);
+    int json_len = (int)strlen(jsonObj);
     char *message = malloc(5000 + json_len);
     sprintf(message,
             "POST %s HTTP/1.0\r\nHost: %s\r\nContent-Type: "

@@ -136,7 +136,6 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     }
 
     DXGI_MODE_DESC* pDescs = malloc(sizeof( DXGI_MODE_DESC ) * num_display_modes );
-    bool matchFound = false;
     hardware->output->lpVtbl->GetDisplayModeList( hardware->output, format, flags, &num_display_modes, pDescs );
     if( FAILED( hr ) )
     {
@@ -144,13 +143,13 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     }
     
     double ratio_closeness = 100.0;
-    int set_width = 0;
-    int set_height = 0;
+    UINT set_width = 0;
+    UINT set_height = 0;
     mprintf( "Target Resolution: %dx%d\n", width, height );
 
     for( UINT k = 0; k < num_display_modes; k++ )
     {
-        double current_ratio_closeness = abs( 1.0 * pDescs[k].Width / pDescs[k].Height - 1.0 * width / height ) + 0.001;
+        double current_ratio_closeness = fabs( 1.0 * pDescs[k].Width / pDescs[k].Height - 1.0 * width / height ) + 0.001;
         ratio_closeness = min( ratio_closeness, current_ratio_closeness );
 
         if( pDescs[k].Width == width && pDescs[k].Height ==
@@ -169,8 +168,8 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
         mprintf( "Possible Resolution: %dx%d\n", pDescs[k].Width,
                  pDescs[k].Height );
 
-        double current_ratio_closeness = abs( 1.0 * pDescs[k].Width / pDescs[k].Height - 1.0 * width / height ) + 0.001;
-        if( abs( current_ratio_closeness - ratio_closeness ) / ratio_closeness < 0.01 )
+        double current_ratio_closeness = fabs( 1.0 * pDescs[k].Width / pDescs[k].Height - 1.0 * width / height ) + 0.001;
+        if( fabs( current_ratio_closeness - ratio_closeness ) / ratio_closeness < 0.01 )
         {
             mprintf( "Ratio match found with %dx%d!\n", pDescs[k].Width, pDescs[k].Height );
             if( set_width == 0 )
