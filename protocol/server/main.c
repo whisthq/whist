@@ -671,6 +671,9 @@ void update() {
 #include <time.h>
 
 int main() {
+    static_assert(sizeof( unsigned short ) == 2,
+                   "Error: Unsigned short is not length 2 bytes!\n");
+
     srand((unsigned int)time(NULL));
     connection_id = rand();
     initBacktraceHandler();
@@ -682,12 +685,6 @@ int main() {
     initClipboard();
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_Init(SDL_INIT_VIDEO);
-#ifdef _WIN32
-    if (!InitDesktop()) {
-        mprintf("Could not winlogon!\n");
-        return 0;
-    }
-#endif
 
 // initialize the windows socket library if this is a windows client
 #ifdef _WIN32
@@ -698,8 +695,15 @@ int main() {
         return -1;
     }
 #endif
-    static_assert(sizeof(unsigned short) == 2,
-                  "Error: Unsigned short is not length 2 bytes!\n");
+
+#ifdef _WIN32
+    if( !InitDesktop() )
+    {
+        mprintf( "Could not winlogon!\n" );
+        sendLog();
+        return 0;
+    }
+#endif
 
     while (true) {
         struct SocketContext PacketReceiveContext = {0};
