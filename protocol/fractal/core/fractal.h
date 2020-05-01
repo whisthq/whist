@@ -66,7 +66,6 @@
 #define USING_STUN false
 #define USING_AUDIO_ENCODE_DECODE true
 
-#define MAX_PAYLOAD_SIZE 1285
 #define MAXIMUM_BITRATE 30000000
 #define MINIMUM_BITRATE 2000000
 #define MAXIMUM_MBPS (MAXIMUM_BITRATE / 1000000.0)
@@ -91,9 +90,6 @@
 #define MOUSE_SCALING_FACTOR 100000
 
 #define WRITE_MPRINTF_TO_LOG true
-
-#define MAX_PACKET_SIZE (sizeof(struct RTPPacket))
-#define PACKET_HEADER_SIZE (sizeof(struct RTPPacket) - MAX_PAYLOAD_SIZE - 16)
 
 #if defined(_WIN32)
 #pragma warning(disable : 4200)
@@ -502,12 +498,6 @@ typedef struct FractalClientCursorEvent {
     uint32_t key;  ///< Buffer lookup key passed to FractalGetBuffer to retrieve
                    ///< the cursor image, if available.
 } FractalClientCursorEvent;
-
-typedef enum FractalPacketType {
-    PACKET_AUDIO,
-    PACKET_VIDEO,
-    PACKET_MESSAGE,
-} FractalPacketType;
 
 typedef enum FractalClientMessageType {
     CMESSAGE_NONE = 0,     ///< No Message

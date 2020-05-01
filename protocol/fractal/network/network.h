@@ -24,6 +24,8 @@
 #define STUN_PORT 48800
 
 #define LARGEST_TCP_PACKET 10000000
+#define MAX_PAYLOAD_SIZE 1285
+
 // windows socklen
 #if defined(_WIN32)
 #undef ETIMEDOUT
@@ -69,6 +71,13 @@ typedef enum FractalConnectionOrigin {
 // replayed
 // TODO: INC integer that must not be used twice
 
+typedef enum FractalPacketType
+{
+    PACKET_AUDIO,
+    PACKET_VIDEO,
+    PACKET_MESSAGE,
+} FractalPacketType;
+
 // Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) +
 // RTPPacket.payload_size
 struct RTPPacket {
@@ -90,6 +99,9 @@ struct RTPPacket {
     // The encrypted packet could overflow
     uint8_t overflow[16];
 };
+
+#define MAX_PACKET_SIZE (sizeof(struct RTPPacket))
+#define PACKET_HEADER_SIZE (sizeof(struct RTPPacket) - MAX_PAYLOAD_SIZE - 16)
 
 // *** end typedefs ***
 
