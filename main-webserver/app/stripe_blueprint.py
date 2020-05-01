@@ -187,10 +187,23 @@ def payment(action):
         insertCustomer(email, None, None, body['location'], trial_end, False)
         return jsonify({'status': 200}), 200
 
-    # Payment has been declined
-    elif action == 'chargeDeclined':
+    # Endpoint for stripe webhooks
+    elif action == 'hooks':
         body = request.get_json()
-        print(body)
+        event = None
+
+        try:
+            event = stripe.Event.construct_from(
+                body, stripe.api_key
+            )
+        except ValueError as e:
+            # Invalid payload
+            return jsonify({'status': 400}), 400
+
+        # Handle the event
+        print(event)
+        if event.type == 'charge.failed':
+            print("Charge failed!")
         return jsonify({'status': 200}), 200
 
 # REFERRAL endpoint
