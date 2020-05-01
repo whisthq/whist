@@ -27,6 +27,7 @@ bool StartTrackingClipboardUpdates() {
     clipboardHasImage = false;
     clipboardHasString = false;
     clipboardHasFiles = false;
+    return True;
 }
 
 bool hasClipboardUpdated() {
