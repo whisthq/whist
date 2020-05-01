@@ -251,7 +251,7 @@ bool StartTrackingClipboardUpdates() {
     if (!display) {
         LOG_WARNING("StartTrackingClipboardUpdates display did not open");
         perror(NULL);
-        return False;
+        return false;
     }
     unsigned long color = BlackPixel(display, DefaultScreen(display));
     window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1,

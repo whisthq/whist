@@ -6,8 +6,9 @@
 
 #include "network.h"
 
-typedef struct
-{
+#include "../utils/aes.h"
+
+typedef struct {
     unsigned int ip;
     unsigned short private_port;
     unsigned short public_port;
@@ -15,8 +16,7 @@ typedef struct
 
 typedef enum stun_request_type { ASK_INFO, POST_INFO } stun_request_type_t;
 
-typedef struct
-{
+typedef struct {
     stun_request_type_t type;
     stun_entry_t entry;
 } stun_request_t;
@@ -972,7 +972,7 @@ int CreateUDPContext(struct SocketContext *context,
 // IP
 bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
     // environment variables
-    SOCKET Socket;         // socket to send/receive POST request
+    SOCKET Socket;  // socket to send/receive POST request
     struct sockaddr_in
         webserver_socketAddress;  // address of the web server socket
 

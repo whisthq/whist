@@ -7,6 +7,7 @@
 #define DESKTOP_VIDEO_H
 
 #include "../fractal/core/fractal.h"
+#include "../fractal/network/network.h"
 #include "../fractal/video/videodecode.h"
 #include "main.h"
 
