@@ -21,12 +21,12 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
 
     decoder->pCodec = avcodec_find_decoder(AV_CODEC_ID_AAC);
     if (!decoder->pCodec) {
-        mprintf("AVCodec not found.\n");
+        LOG_WARNING("AVCodec not found.\n");
         return NULL;
     }
     decoder->pCodecCtx = avcodec_alloc_context3(decoder->pCodec);
     if (!decoder->pCodecCtx) {
-        mprintf("Could not allocate AVCodecContext.\n");
+        LOG_WARNING("Could not allocate AVCodecContext.\n");
         return NULL;
     }
 
@@ -37,7 +37,7 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
         av_get_channel_layout_nb_channels(decoder->pCodecCtx->channel_layout);
 
     if (avcodec_open2(decoder->pCodecCtx, decoder->pCodec, NULL) < 0) {
-        mprintf("Could not open AVCodec.\n");
+        LOG_WARNING("Could not open AVCodec.\n");
         return NULL;
     }
 
@@ -53,12 +53,12 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
         NULL);  //       might not work if not same sample size throughout
 
     if (!decoder->pSwrContext) {
-        mprintf("Could not initialize SwrContext.\n");
+        LOG_WARNING("Could not initialize SwrContext.\n");
         return NULL;
     }
 
     if (swr_init(decoder->pSwrContext)) {
-        mprintf("Could not open SwrContext.\n");
+        LOG_WARNING("Could not open SwrContext.\n");
         return NULL;
     }
 
@@ -77,7 +77,7 @@ int init_av_frame(audio_decoder_t *decoder) {
     // initialize the AVFrame buffer
 
     if (av_frame_get_buffer(decoder->pFrame, 0)) {
-        mprintf("Could not initialize AVFrame buffer.\n");
+        LOG_WARNING("Could not initialize AVFrame buffer.\n");
         return -1;
     }
 
@@ -104,7 +104,7 @@ void audio_decoder_packet_readout(audio_decoder_t *decoder, uint8_t *data) {
     if (swr_convert(decoder->pSwrContext, data_out, len,
                     (const uint8_t **)decoder->pFrame->extended_data,
                     len) < 0) {
-        mprintf("Could not convert samples to output format.\n");
+        LOG_WARNING("Could not convert samples to output format.\n");
     }
     // mprintf("finished reading out packet\n");
 }
@@ -122,7 +122,7 @@ int audio_decoder_decode_packet(audio_decoder_t *decoder,
     // initialize output frame
 
     if (init_av_frame(decoder)) {
-        mprintf("Could not initialize output AVFrame for decoding.\n");
+        LOG_WARNING("Could not initialize output AVFrame for decoding.\n");
         return -1;
     }
 
@@ -130,7 +130,7 @@ int audio_decoder_decode_packet(audio_decoder_t *decoder,
 
     int res = avcodec_send_packet(decoder->pCodecCtx, encoded_packet);
     if (res < 0) {
-        mprintf("Could not send AVPacket for decoding: error '%s'.\n",
+        LOG_WARNING("Could not send AVPacket for decoding: error '%s'.\n",
                 av_err2str(res));
         return -1;
     }
@@ -140,11 +140,11 @@ int audio_decoder_decode_packet(audio_decoder_t *decoder,
     res = avcodec_receive_frame(decoder->pCodecCtx, decoder->pFrame);
     if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
         // decoder needs more data or there's nothing left
-        mprintf("packet wants more things\n");
+        LOG_INFO("packet wants more things\n");
         return 1;
     } else if (res < 0) {
         // real error
-        mprintf("Could not decode frame: error '%s'.\n", av_err2str(res));
+        LOG_ERROR("Could not decode frame: error '%s'.\n", av_err2str(res));
         return -1;
     } else {
         // printf("Succeeded to decode frame of size:%5d\n",
@@ -156,29 +156,29 @@ int audio_decoder_decode_packet(audio_decoder_t *decoder,
 
 void destroy_audio_decoder(audio_decoder_t *decoder) {
     if (decoder == NULL) {
-        mprintf("Cannot destroy null decoder.\n");
+        LOG_WARNING("Cannot destroy null decoder.\n");
         return;
     }
-    mprintf("destroying decoder!\n");
+    LOG_INFO("destroying decoder!\n");
 
     // free the ffmpeg context
     avcodec_free_context(&decoder->pCodecCtx);
 
-    mprintf("freed context\n");
+    LOG_INFO("freed context\n");
 
     // free the frame
     av_frame_free(&decoder->pFrame);
 
-    mprintf("av_freed frame\n");
+    LOG_INFO("av_freed frame\n");
     // av_freep(decoder->pFrame);
-    mprintf("really freed rame\n");
+    LOG_INFO("really freed rame\n");
 
     // free swr
     swr_free(&decoder->pSwrContext);
 
-    mprintf("freed swr\n");
+    LOG_INFO("freed swr\n");
 
     // free the buffer and decoder
     free(decoder);
-    mprintf("done destroying decoder!\n");
+    LOG_INFO("done destroying decoder!\n");
 }

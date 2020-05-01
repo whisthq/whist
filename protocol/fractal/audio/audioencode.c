@@ -17,12 +17,12 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
 
     encoder->pCodec = avcodec_find_encoder(AV_CODEC_ID_AAC);
     if (!encoder->pCodec) {
-        mprintf("AVCodec not found.\n");
+        LOG_WARNING("AVCodec not found.\n");
         return NULL;
     }
     encoder->pCodecCtx = avcodec_alloc_context3(encoder->pCodec);
     if (!encoder->pCodecCtx) {
-        mprintf("Could not allocate AVCodecContext.\n");
+        LOG_WARNING("Could not allocate AVCodecContext.\n");
         return NULL;
     }
 
@@ -36,7 +36,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
     encoder->pCodecCtx->bit_rate = bit_rate;
 
     if (avcodec_open2(encoder->pCodecCtx, encoder->pCodec, NULL) < 0) {
-        mprintf("Could not open AVCodec.\n");
+        LOG_WARNING("Could not open AVCodec.\n");
         return NULL;
     }
 
@@ -52,7 +52,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
     // initialize the AVFrame buffer
 
     if (av_frame_get_buffer(encoder->pFrame, 0)) {
-        mprintf("Could not initialize AVFrame buffer.\n");
+        LOG_WARNING("Could not initialize AVFrame buffer.\n");
         return NULL;
     }
 
@@ -62,7 +62,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
         encoder->pFrame->format,
         av_get_channel_layout_nb_channels(encoder->pFrame->channel_layout), 1);
     if (!encoder->pFifo) {
-        mprintf("Could not allocate AVAudioFifo.\n");
+        LOG_WARNING("Could not allocate AVAudioFifo.\n");
         return NULL;
     }
 
@@ -76,12 +76,12 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
         sample_rate,  // should use same sample rate as WASAPI, though this just
         0, NULL);     //       might not work if not same sample size throughout
     if (!encoder->pSwrContext) {
-        mprintf("Could not initialize SwrContext.\n");
+        LOG_WARNING("Could not initialize SwrContext.\n");
         return NULL;
     }
 
     if (swr_init(encoder->pSwrContext)) {
-        mprintf("Could not open SwrContext.\n");
+        LOG_WARNING("Could not open SwrContext.\n");
         return NULL;
     }
 
@@ -100,7 +100,7 @@ void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data,
         av_get_channel_layout_nb_channels(encoder->pFrame->channel_layout),
         sizeof(uint8_t*));
     if (!converted_data) {
-        mprintf("Could not allocate converted samples channel pointers.\n");
+        LOG_WARNING("Could not allocate converted samples channel pointers.\n");
         return;
     }
 
@@ -108,7 +108,7 @@ void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data,
             converted_data, NULL,
             av_get_channel_layout_nb_channels(encoder->pFrame->channel_layout),
             len, encoder->pFrame->format, 0) < 0) {
-        mprintf("Could not allocate converted samples channel arrays.\n");
+        LOG_WARNING("Could not allocate converted samples channel arrays.\n");
         return;
     }
 
@@ -116,7 +116,7 @@ void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data,
 
     if (swr_convert(encoder->pSwrContext, converted_data, len,
                     (const uint8_t**)&data, len) < 0) {
-        mprintf("Could not convert samples to intake format.\n");
+        LOG_WARNING("Could not convert samples to intake format.\n");
         return;
     }
 
@@ -124,7 +124,7 @@ void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data,
 
     if (av_audio_fifo_realloc(encoder->pFifo,
                               av_audio_fifo_size(encoder->pFifo) + len) < 0) {
-        mprintf("Could not reallocate AVAudioFifo.\n");
+        LOG_WARNING("Could not reallocate AVAudioFifo.\n");
         return;
     }
 
@@ -132,7 +132,7 @@ void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data,
 
     if (av_audio_fifo_write(encoder->pFifo, (void**)converted_data, len) <
         len) {
-        mprintf("Could not write all the requested data to the AVAudioFifo.\n");
+        LOG_WARNING("Could not write all the requested data to the AVAudioFifo.\n");
         return;
     }
 
@@ -154,7 +154,7 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
 
     if (av_audio_fifo_read(encoder->pFifo, (void**)encoder->pFrame->data, len) <
         len) {
-        mprintf(
+        LOG_WARNING(
             "Could not read all the requested data from the AVAudioFifo.\n");
         return -1;
     }
@@ -175,7 +175,7 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
         return -1;
     } else if (res < 0) {
         // real error
-        mprintf("Could not send AVFrame for encoding: error '%s'.\n",
+        LOG_ERROR("Could not send AVFrame for encoding: error '%s'.\n",
                 av_err2str(res));
         return -1;
     }
@@ -189,7 +189,7 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
         return 1;
     } else if (res < 0) {
         // real error
-        mprintf("Could not encode frame: error '%s'.\n", av_err2str(res));
+        LOG_ERROR("Could not encode frame: error '%s'.\n", av_err2str(res));
         return -1;
     } else {
         // we did it!
@@ -200,7 +200,7 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
 
 void destroy_audio_encoder(audio_encoder_t* encoder) {
     if (encoder == NULL) {
-        mprintf("Cannot destroy null encoder.\n");
+        LOG_ERROR("Cannot destroy null encoder.\n");
         return;
     }
 
@@ -209,11 +209,13 @@ void destroy_audio_encoder(audio_encoder_t* encoder) {
 
     // free the encoder context and frame
     av_frame_free(&encoder->pFrame);
+    LOG_INFO("av_freed frame\n");
     av_free(encoder->pFrame);
 
     // free swr
     swr_free(&encoder->pSwrContext);
-
+    LOG_INFO("freed swr\n");
     // free the buffer and decoder
     free(encoder);
+    LOG_INFO("done destroying decoder!\n");
 }
