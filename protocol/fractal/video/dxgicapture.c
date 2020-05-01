@@ -97,7 +97,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
              hardware->adapter->lpVtbl->EnumOutputs(
                  adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND;
              j++) {
-            LOG_INFOT("Found monitor %d on adapter %lu", j, i);
+            LOG_INFO("Found monitor %d on adapter %lu", j, i);
             if (i == USE_GPU) {
                 if (j == MAX_NUM_OUTPUTS) {
                     LOG_WARNING("Too many adapters!");
