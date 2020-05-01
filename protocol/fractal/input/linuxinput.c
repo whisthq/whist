@@ -501,7 +501,7 @@ input_device_t* CreateInputDevice(input_device_t* input_device) {
     _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_DEV_CREATE)
     _FRACTAL_IOCTL_TRY(input_device->fd_relmouse, UI_DEV_CREATE)
     _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_DEV_CREATE)
-    mprintf("Created input devices!\n");
+    LOG_INFO("Created input devices!\n");
 
     return input_device;
 }

@@ -316,7 +316,7 @@ void UpdateKeyboardState(input_device_t* input_device,
                          struct FractalClientMessage* fmsg) {
     input_device;
     if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
-        mprintf(
+        LOG_WARNING(
             "updateKeyboardState requires fmsg.type to be "
             "MESSAGE_KEYBOARD_STATE\n");
         return;
@@ -383,7 +383,7 @@ void UpdateKeyboardState(input_device_t* input_device,
 
     // If caps lock doesn't match, then send a correction
     if (!!server_caps_lock != !!fmsg->caps_lock) {
-        mprintf("Caps lock out of sync, updating! From %s to %s\n",
+        LOG_INFO("Caps lock out of sync, updating! From %s to %s\n",
                 server_caps_lock ? "caps" : "no caps",
                 fmsg->caps_lock ? "caps" : "no caps");
         // If I'm supposed to be holding it down, then just release and then
@@ -400,7 +400,7 @@ void UpdateKeyboardState(input_device_t* input_device,
 
     // If num lock doesn't match, then send a correction
     if (!!server_num_lock != !!fmsg->num_lock) {
-        mprintf("Num lock out of sync, updating! From %s to %s\n",
+        LOG_INFO("Num lock out of sync, updating! From %s to %s\n",
                 server_num_lock ? "num lock" : "no num lock",
                 fmsg->num_lock ? "num lock" : "no num lock");
         // If I'm supposed to be holding it down, then just release and then
@@ -499,7 +499,7 @@ bool ReplayUserInput(input_device_t* input_device,
             }
 
             if (Event.ki.wScan >> 8 == 0xE1) {
-                mprintf("Weird Extended\n");
+                LOG_INFO("Weird Extended\n");
             }
 
             if (!fmsg->keyboard.pressed) {
@@ -578,7 +578,7 @@ bool ReplayUserInput(input_device_t* input_device,
         SendInput(1, &Event, sizeof(INPUT));  // 1 structure to send
 
     if (1 != num_events_sent) {
-        mprintf("SendInput did not send all events! %d\n", num_events_sent);
+        LOG_WARNING("SendInput did not send all events! %d\n", num_events_sent);
         return false;
     }
 

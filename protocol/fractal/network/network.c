@@ -52,7 +52,7 @@ void set_timeout(SOCKET s, int timeout_ms) {
     // 0 means that it will immediately return with whatever data is waiting in
     // the buffer
     if (timeout_ms < 0) {
-        mprintf(
+        LOG_WARNING(
             "WARNING: This socket will blocking indefinitely. You will not be "
             "able to recover if a packet is never received\n");
         unsigned long mode = 0;
@@ -71,7 +71,7 @@ void set_timeout(SOCKET s, int timeout_ms) {
 
         if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&read_timeout,
                        sizeof(read_timeout)) < 0) {
-            mprintf("Failed to set timeout\n");
+            LOG_WARNING("Failed to set timeout\n");
             return;
         }
     }
@@ -95,7 +95,7 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
         bool worked = GetLastNetworkError() == EINPROGRESS;
 
         if (!worked) {
-            mprintf("Could not connect() over TCP to server %d\n",
+            LOG_WARNING("Could not connect() over TCP to server %d\n",
                     GetLastNetworkError());
             closesocket(s);
             return false;
@@ -109,7 +109,7 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     tv.tv_sec = timeout_ms / 1000;
     tv.tv_usec = (timeout_ms % 1000) * 1000;
     if (select((int)s + 1, NULL, &set, NULL, &tv) <= 0) {
-        mprintf("Could not select() over TCP to server %d\n",
+        LOG_WARNING("Could not select() over TCP to server %d\n",
                 GetLastNetworkError());
         closesocket(s);
         return false;
@@ -121,7 +121,7 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
 
 void *TryReadingTCPPacket(struct SocketContext *context) {
     if (!context->is_tcp) {
-        mprintf("TryReadingTCPPacket received a context that is NOT TCP!\n");
+        LOG_WARNING("TryReadingTCPPacket received a context that is NOT TCP!\n");
         return NULL;
     }
 
@@ -176,7 +176,7 @@ void *TryReadingTCPPacket(struct SocketContext *context) {
             reading_packet_len = actual_len - target_len;
 
             if (decrypted_len < 0) {
-                mprintf("Could not decrypt TCP message\n");
+                LOG_WARNING("Could not decrypt TCP message\n");
                 return NULL;
             } else {
                 // Return the decrypted packet
@@ -199,7 +199,7 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
     // Create TCP socket
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
-        mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
     set_timeout(context->s, stun_timeout_ms);
@@ -210,7 +210,7 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
     opt = 1;
     if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
                    sizeof(opt)) < 0) {
-        mprintf("Could not setsockopt SO_REUSEADDR\n");
+        LOG_WARNING("Could not setsockopt SO_REUSEADDR\n");
         return -1;
     }
 
@@ -222,7 +222,7 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
     // Bind to port
     if (bind(context->s, (struct sockaddr *)(&origin_addr),
              sizeof(origin_addr)) < 0) {
-        mprintf("Failed to bind to port! %d\n", GetLastNetworkError());
+        LOG_WARNING("Failed to bind to port! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -230,7 +230,7 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
     // Set listen queue
     set_timeout(context->s, stun_timeout_ms);
     if (listen(context->s, 3) < 0) {
-        mprintf("Could not listen(2)! %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not listen(2)! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -247,7 +247,7 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
 
     if (select(0, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) <
         0) {
-        mprintf("Could not select!\n");
+        LOG_WARNING("Could not select!\n");
         closesocket(context->s);
         return -1;
     }
@@ -257,7 +257,7 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
     SOCKET new_socket;
     if ((new_socket = accept(context->s, (struct sockaddr *)(&context->addr),
                              &slen)) < 0) {
-        mprintf("Did not receive response from client! %d\n",
+        LOG_WARNING("Did not receive response from client! %d\n",
                 GetLastNetworkError());
         closesocket(context->s);
         return -1;
@@ -266,7 +266,7 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
     closesocket(context->s);
     context->s = new_socket;
 
-    mprintf("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
             ntohs(context->addr.sin_port));
 
     set_timeout(context->s, recvfrom_timeout_ms);
@@ -290,7 +290,7 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
     // Create TCP socket
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
-        mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
     set_timeout(context->s, stun_timeout_ms);
@@ -306,21 +306,21 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
     opt = 1;
     if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
                    sizeof(opt)) < 0) {
-        mprintf("Could not setsockopt SO_REUSEADDR\n");
+        LOG_WARNING("Could not setsockopt SO_REUSEADDR\n");
         return -1;
     }
 
     struct sockaddr_in origin_addr;
     // Connect over TCP to STUN
-    mprintf("Connecting to STUN TCP...\n");
+    LOG_INFO("Connecting to STUN TCP...\n");
     if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
-        mprintf("Could not connect to STUN Server over TCP\n");
+        LOG_WARNING("Could not connect to STUN Server over TCP\n");
         return -1;
     }
 
     socklen_t slen = sizeof(origin_addr);
     if (getsockname(context->s, (struct sockaddr *)&origin_addr, &slen) < 0) {
-        mprintf("Could not get sock name\n");
+        LOG_WARNING("Could not get sock name\n");
         closesocket(context->s);
         return -1;
     }
@@ -331,7 +331,7 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
     stun_request.entry.public_port = htons((unsigned short)port);
 
     if (sendp(context, &stun_request, sizeof(stun_request)) < 0) {
-        mprintf("Could not send STUN request to connected STUN server!\n");
+        LOG_WARNING("Could not send STUN request to connected STUN server!\n");
         closesocket(context->s);
         return -1;
     }
@@ -348,7 +348,7 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
         if ((single_recv_size = recvp(context, ((char *)&entry) + recv_size,
                                       max(0, (int)sizeof(entry) - recv_size))) <
             0) {
-            mprintf("Did not receive STUN response %d\n",
+            LOG_WARNING("Did not receive STUN response %d\n",
                     GetLastNetworkError());
             closesocket(context->s);
             return -1;
@@ -357,7 +357,7 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
     }
 
     if (recv_size != sizeof(entry)) {
-        mprintf("TCP STUN Response packet of wrong size! %d\n", recv_size);
+        LOG_WARNING("TCP STUN Response packet of wrong size! %d\n", recv_size);
         closesocket(context->s);
         return -1;
     }
@@ -367,7 +367,7 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
     client_addr.sin_family = AF_INET;
     client_addr.sin_addr.s_addr = entry.ip;
     client_addr.sin_port = entry.private_port;
-    mprintf("TCP STUN notified of desired request from %s:%d\n",
+    LOG_INFO("TCP STUN notified of desired request from %s:%d\n",
             inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
     closesocket(context->s);
@@ -375,35 +375,35 @@ int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
     // Create TCP socket
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
-        mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
 
     opt = 1;
     if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
                    sizeof(opt)) < 0) {
-        mprintf("Could not setsockopt SO_REUSEADDR\n");
+        LOG_WARNING("Could not setsockopt SO_REUSEADDR\n");
         return -1;
     }
 
     // Bind to port
     if (bind(context->s, (struct sockaddr *)(&origin_addr),
              sizeof(origin_addr)) < 0) {
-        mprintf("Failed to bind to port! %d\n", GetLastNetworkError());
+        LOG_WARNING("Failed to bind to port! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    mprintf("WAIT\n");
+    LOG_INFO("WAIT\n");
 
     // Connect to client
     if (!tcp_connect(context->s, client_addr, stun_timeout_ms)) {
-        mprintf("Could not connect to Client over TCP\n");
+        LOG_WARNING("Could not connect to Client over TCP\n");
         return -1;
     }
 
     context->addr = client_addr;
-    mprintf("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
             ntohs(context->addr.sin_port));
     set_timeout(context->s, recvfrom_timeout_ms);
     return 0;
@@ -418,7 +418,7 @@ int CreateTCPClientContext(struct SocketContext *context, char *destination,
     // Create TCP socket
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
-        mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
     set_timeout(context->s, stun_timeout_ms);
@@ -436,11 +436,11 @@ int CreateTCPClientContext(struct SocketContext *context, char *destination,
 
     // Connect to TCP server
     if (!tcp_connect(context->s, context->addr, stun_timeout_ms)) {
-        mprintf("Could not connect to server over TCP\n");
+        LOG_WARNING("Could not connect to server over TCP\n");
         return -1;
     }
 
-    mprintf("Connected on %s:%d!\n", destination, port);
+    LOG_INFO("Connected on %s:%d!\n", destination, port);
 
     set_timeout(context->s, recvfrom_timeout_ms);
 
@@ -462,7 +462,7 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     // Create TCP socket
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
-        mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
     set_timeout(context->s, stun_timeout_ms);
@@ -478,20 +478,20 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     opt = 1;
     if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
                    sizeof(opt)) < 0) {
-        mprintf("Could not setsockopt SO_REUSEADDR\n");
+        LOG_WARNING("Could not setsockopt SO_REUSEADDR\n");
         return -1;
     }
 
     // Connect to STUN server
     if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
-        mprintf("Could not connect to STUN Server over TCP\n");
+        LOG_WARNING("Could not connect to STUN Server over TCP\n");
         return -1;
     }
 
     struct sockaddr_in origin_addr;
     socklen_t slen = sizeof(origin_addr);
     if (getsockname(context->s, (struct sockaddr *)&origin_addr, &slen) < 0) {
-        mprintf("Could not get sock name\n");
+        LOG_WARNING("Could not get sock name\n");
         closesocket(context->s);
         return -1;
     }
@@ -503,7 +503,7 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     stun_request.entry.public_port = htons((unsigned short)port);
 
     if (sendp(context, &stun_request, sizeof(stun_request)) < 0) {
-        mprintf("Could not send STUN request to connected STUN server!\n");
+        LOG_WARNING("Could not send STUN request to connected STUN server!\n");
         closesocket(context->s);
         return -1;
     }
@@ -520,7 +520,7 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
         if ((single_recv_size = recvp(context, ((char *)&entry) + recv_size,
                                       max(0, (int)sizeof(entry) - recv_size))) <
             0) {
-            mprintf("Did not receive STUN response %d\n",
+            LOG_WARNING("Did not receive STUN response %d\n",
                     GetLastNetworkError());
             closesocket(context->s);
             return -1;
@@ -529,7 +529,7 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     }
 
     if (recv_size != sizeof(entry)) {
-        mprintf("TCP STUN Response packet of wrong size! %d\n", recv_size);
+        LOG_WARNING("TCP STUN Response packet of wrong size! %d\n", recv_size);
         closesocket(context->s);
         return -1;
     }
@@ -537,14 +537,14 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     // Print STUN response
     struct in_addr a;
     a.s_addr = entry.ip;
-    mprintf("TCP STUN responded that the TCP server is located at %s:%d\n",
+    LOG_WARNING("TCP STUN responded that the TCP server is located at %s:%d\n",
             inet_ntoa(a), ntohs(entry.private_port));
 
     closesocket(context->s);
 
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
-        mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
 
@@ -552,14 +552,14 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     opt = 1;
     if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
                    sizeof(opt)) < 0) {
-        mprintf("Could not setsockopt SO_REUSEADDR\n");
+        LOG_WARNING("Could not setsockopt SO_REUSEADDR\n");
         return -1;
     }
 
     // Bind to port
     if (bind(context->s, (struct sockaddr *)(&origin_addr),
              sizeof(origin_addr)) < 0) {
-        mprintf("Failed to bind to port! %d\n", GetLastNetworkError());
+        LOG_WARNING("Failed to bind to port! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -569,17 +569,17 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     context->addr.sin_addr.s_addr = entry.ip;
     context->addr.sin_port = entry.private_port;
 
-    mprintf("Connecting to server...\n");
+    LOG_INFO("Connecting to server...\n");
 
     SDL_Delay(200);
 
     // Connect to TCP server
     if (!tcp_connect(context->s, context->addr, stun_timeout_ms)) {
-        mprintf("Could not connect to server over TCP\n");
+        LOG_WARNING("Could not connect to server over TCP\n");
         return -1;
     }
 
-    mprintf("Connected on %s:%d!\n", destination, port);
+    LOG_INFO("Connected on %s:%d!\n", destination, port);
 
     set_timeout(context->s, recvfrom_timeout_ms);
     return 0;
@@ -613,7 +613,7 @@ int CreateUDPServerContext(struct SocketContext *context, char *destination,
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (context->s <= 0) {  // Windows & Unix cases
-        mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
     set_timeout(context->s, stun_timeout_ms);
@@ -628,12 +628,12 @@ int CreateUDPServerContext(struct SocketContext *context, char *destination,
 
     if (bind(context->s, (struct sockaddr *)(&origin_addr),
              sizeof(origin_addr)) < 0) {
-        mprintf("Failed to bind to port! %d\n", GetLastNetworkError());
+        LOG_WARNING("Failed to bind to port! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    mprintf("Waiting for client to connect to %s:%d...\n", "localhost", port);
+    LOG_INFO("Waiting for client to connect to %s:%d...\n", "localhost", port);
 
     socklen_t slen = sizeof(context->addr);
     stun_entry_t entry = {0};
@@ -641,7 +641,7 @@ int CreateUDPServerContext(struct SocketContext *context, char *destination,
     while ((recv_size = recvfrom(context->s, (char *)&entry, sizeof(entry), 0,
                                  (struct sockaddr *)(&context->addr), &slen)) <
            0) {
-        mprintf("Did not receive response from client! %d\n",
+        LOG_WARNING("Did not receive response from client! %d\n",
                 GetLastNetworkError());
         closesocket(context->s);
         return -1;
@@ -652,7 +652,7 @@ int CreateUDPServerContext(struct SocketContext *context, char *destination,
     // Send acknowledgement of connection
     sendp(context, NULL, 0);
 
-    mprintf("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
             ntohs(context->addr.sin_port));
 
     set_timeout(context->s, recvfrom_timeout_ms);
@@ -687,15 +687,15 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
     stun_request.type = POST_INFO;
     stun_request.entry.public_port = htons((unsigned short)port);
 
-    mprintf("Sending stun entry to STUN...\n");
+    LOG_INFO("Sending stun entry to STUN...\n");
     if (sendto(context->s, (const char *)&stun_request, sizeof(stun_request), 0,
                (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
-        mprintf("Could not send message to STUN %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not send message to STUN %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    mprintf("Waiting for client to connect to %s:%d...\n", "localhost", port);
+    LOG_INFO("Waiting for client to connect to %s:%d...\n", "localhost", port);
 
     // Receive client's connection attempt
     // Update the STUN every 100ms
@@ -719,14 +719,14 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
             if (sendto(context->s, (const char *)&stun_request,
                        sizeof(stun_request), 0, (struct sockaddr *)&stun_addr,
                        sizeof(stun_addr)) < 0) {
-                mprintf("Could not send message to STUN %d\n",
+                LOG_WARNING("Could not send message to STUN %d\n",
                         GetLastNetworkError());
                 closesocket(context->s);
                 return -1;
             }
             continue;
         }
-        mprintf("Did not receive response from client! %d\n",
+        LOG_WARNING("Did not receive response from client! %d\n",
                 GetLastNetworkError());
         closesocket(context->s);
         return -1;
@@ -735,7 +735,7 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
     set_timeout(context->s, 350);
 
     if (recv_size != sizeof(entry)) {
-        mprintf("STUN response was not the size of an entry!\n");
+        LOG_WARNING("STUN response was not the size of an entry!\n");
         closesocket(context->s);
         return -1;
     }
@@ -745,12 +745,12 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
     context->addr.sin_addr.s_addr = entry.ip;
     context->addr.sin_port = entry.private_port;
 
-    mprintf("Received STUN response, client connection desired from %s:%d\n",
+    LOG_INFO("Received STUN response, client connection desired from %s:%d\n",
             inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
     // Open up port to receive message
     if (sendp(context, NULL, 0) < 0) {
-        mprintf("Could not open up port!\n");
+        LOG_WARNING("Could not open up port!\n");
         closesocket(context->s);
         return -1;
     }
@@ -759,7 +759,7 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
 
     // Send acknowledgement
     if (sendp(context, NULL, 0) < 0) {
-        mprintf("Could not open up port!\n");
+        LOG_WARNING("Could not open up port!\n");
         closesocket(context->s);
         return -1;
     }
@@ -767,7 +767,7 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
     // Wait for client to connect
     if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)(&context->addr),
                  &slen) < 0) {
-        mprintf("Did not receive client confirmation!\n");
+        LOG_WARNING("Did not receive client confirmation!\n");
         closesocket(context->s);
         return -1;
     }
@@ -775,19 +775,19 @@ int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
     // Check that confirmation matches STUN's claimed client
     if (context->addr.sin_addr.s_addr != entry.ip ||
         context->addr.sin_port != entry.private_port) {
-        mprintf(
+        LOG_WARNING(
             "Connection did not match STUN's claimed client, got %s:%d "
             "instead\n",
             inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
         context->addr.sin_addr.s_addr = entry.ip;
         context->addr.sin_port = entry.private_port;
-        mprintf("Should have been %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+        LOG_WARNING("Should have been %s:%d!\n", inet_ntoa(context->addr.sin_addr),
                 ntohs(context->addr.sin_port));
         closesocket(context->s);
         return -1;
     }
 
-    mprintf("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
             ntohs(context->addr.sin_port));
 
     set_timeout(context->s, recvfrom_timeout_ms);
@@ -803,7 +803,7 @@ int CreateUDPClientContext(struct SocketContext *context, char *destination,
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (context->s <= 0) {  // Windows & Unix cases
-        mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
     set_timeout(context->s, stun_timeout_ms);
@@ -814,11 +814,11 @@ int CreateUDPClientContext(struct SocketContext *context, char *destination,
     context->addr.sin_addr.s_addr = inet_addr(destination);
     context->addr.sin_port = htons((unsigned short)port);
 
-    mprintf("Connecting to server...\n");
+    LOG_INFO("Connecting to server...\n");
 
     // Open up the port
     if (sendp(context, NULL, 0) < 0) {
-        mprintf("Could not send message to server %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -827,7 +827,7 @@ int CreateUDPClientContext(struct SocketContext *context, char *destination,
 
     // Send acknowledgement
     if (sendp(context, NULL, 0) < 0) {
-        mprintf("Could not send message to server %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -836,13 +836,13 @@ int CreateUDPClientContext(struct SocketContext *context, char *destination,
     socklen_t slen = sizeof(context->addr);
     if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)&context->addr,
                  &slen) < 0) {
-        mprintf("Did not receive response from server! %d\n",
+        LOG_WARNING("Did not receive response from server! %d\n",
                 GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    mprintf("Connected to server on %s:%d! (Private %d)\n",
+    LOG_WARNING("Connected to server on %s:%d! (Private %d)\n",
             inet_ntoa(context->addr.sin_addr), port,
             ntohs(context->addr.sin_port));
 
@@ -859,7 +859,7 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (context->s <= 0) {  // Windows & Unix cases
-        mprintf("Could not create UDP socket %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
     set_timeout(context->s, stun_timeout_ms);
@@ -877,10 +877,10 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
     stun_request.entry.ip = inet_addr(destination);
     stun_request.entry.public_port = htons((unsigned short)port);
 
-    mprintf("Sending info request to STUN...\n");
+    LOG_INFO("Sending info request to STUN...\n");
     if (sendto(context->s, (const char *)&stun_request, sizeof(stun_request), 0,
                (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
-        mprintf("Could not send message to STUN %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not send message to STUN %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -888,23 +888,23 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
     stun_entry_t entry = {0};
     int recv_size;
     if ((recv_size = recvp(context, &entry, sizeof(entry))) < 0) {
-        mprintf("Could not receive message from STUN %d\n",
+        LOG_WARNING("Could not receive message from STUN %d\n",
                 GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
     if (recv_size != sizeof(entry)) {
-        mprintf("STUN Response of incorrect size!\n");
+        LOG_WARNING("STUN Response of incorrect size!\n");
         closesocket(context->s);
         return -1;
     } else if (entry.ip != stun_request.entry.ip ||
                entry.public_port != stun_request.entry.public_port) {
-        mprintf("STUN Response IP and/or Public Port is incorrect!");
+        LOG_WARNING("STUN Response IP and/or Public Port is incorrect!");
         closesocket(context->s);
         return -1;
     } else {
-        mprintf("Received STUN response! Public %d is mapped to private %d\n",
+        LOG_WARNING("Received STUN response! Public %d is mapped to private %d\n",
                 ntohs((unsigned short)entry.public_port),
                 ntohs((unsigned short)entry.private_port));
         context->addr.sin_family = AF_INET;
@@ -912,11 +912,11 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
         context->addr.sin_port = entry.private_port;
     }
 
-    mprintf("Connecting to server...\n");
+    LOG_INFO("Connecting to server...\n");
 
     // Open up the port
     if (sendp(context, NULL, 0) < 0) {
-        mprintf("Could not send message to server %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -925,7 +925,7 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
 
     // Send acknowledgement
     if (sendp(context, NULL, 0) < 0) {
-        mprintf("Could not send message to server %d\n", GetLastNetworkError());
+        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -934,13 +934,13 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
     socklen_t slen = sizeof(context->addr);
     if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)&context->addr,
                  &slen) < 0) {
-        mprintf("Did not receive response from server! %d\n",
+        LOG_WARNING("Did not receive response from server! %d\n",
                 GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    mprintf("Connected to server on %s:%d! (Private %d)\n",
+    LOG_INFO("Connected to server on %s:%d! (Private %d)\n",
             inet_ntoa(context->addr.sin_addr), port,
             ntohs(context->addr.sin_port));
     set_timeout(context->s, recvfrom_timeout_ms);
@@ -981,7 +981,7 @@ bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
     if (Socket < 0)  // Windows & Unix cases
     {
         // if can't create socket, return
-        printf("Could not create socket.\n");
+        LOG_WARNING("Could not create socket.\n");
         return false;
     }
     set_timeout(Socket, 250);
@@ -996,7 +996,7 @@ bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
         connect(Socket, (struct sockaddr *)&webserver_socketAddress,
                 sizeof(webserver_socketAddress));
     if (connect_status < 0) {
-        printf("Could not connect to the webserver.\n");
+        LOG_WARNING("Could not connect to the webserver.\n");
         return false;
     }
 
@@ -1013,7 +1013,7 @@ bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
         // error sending, terminate
-        printf("Sending POST message failed.\n");
+        LOG_WARNING("Sending POST message failed.\n");
         return false;
     }
 
@@ -1030,7 +1030,7 @@ bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
             buffer[i] = '\0';
         }
     }
-    mprintf("Webserver Response: %s\n", buffer);
+    LOG_INFO("Webserver Response: %s\n", buffer);
 
     FRACTAL_CLOSE_SOCKET(Socket);
     // return the user credentials if correct authentication, else empty
