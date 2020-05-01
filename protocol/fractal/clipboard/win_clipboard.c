@@ -49,7 +49,7 @@ WCHAR* lclipboard_directory() {
             if (!PathFileExistsW(szPath)) {
                 if (!CreateDirectoryW(szPath, NULL)) {
                     LOG_ERROR("Could not create directory: %S (Error %d)",
-                            szPath, GetLastError());
+                              szPath, GetLastError());
                     return NULL;
                 }
             }
@@ -71,7 +71,7 @@ WCHAR* lget_clipboard_directory() {
     if (!PathFileExistsW(path)) {
         if (!CreateDirectoryW(path, NULL)) {
             LOG_ERROR("Could not create directory: %S (Error %d)", path,
-                    GetLastError());
+                      GetLastError());
             return NULL;
         }
     }
@@ -86,7 +86,7 @@ WCHAR* lset_clipboard_directory() {
     if (!PathFileExistsW(path)) {
         if (!CreateDirectoryW(path, NULL)) {
             LOG_ERROR("Could not create directory: %S (Error %d)", path,
-                    GetLastError());
+                      GetLastError());
             return NULL;
         }
     }
@@ -188,6 +188,7 @@ static char clipboard_buf[9000000];
 
 bool StartTrackingClipboardUpdates() {
     last_clipboard_sequence_number = GetClipboardSequenceNumber();
+    return true;
 }
 
 bool hasClipboardUpdated() {
@@ -241,7 +242,7 @@ ClipboardData* GetClipboard() {
                     GlobalUnlock(hglb);
                 } else {
                     LOG_WARNING("GlobalLock failed! (Type: %d) (Error: %d)",
-                            cf_types[i], GetLastError());
+                                cf_types[i], GetLastError());
                 }
             }
         }
@@ -313,18 +314,18 @@ ClipboardData* GetClipboard() {
                             GetFileAttributesW((LPCWSTR)cur_filename);
                         if (fileattributes == INVALID_FILE_ATTRIBUTES) {
                             LOG_WARNING("GetFileAttributesW Error: %d",
-                                    GetLastError());
+                                        GetLastError());
                         }
 
                         if (fileattributes & FILE_ATTRIBUTE_DIRECTORY) {
                             if (!RemoveDirectoryW((LPCWSTR)cur_filename)) {
                                 LOG_WARNING("Delete Folder Error: %d",
-                                        GetLastError());
+                                            GetLastError());
                             }
                         } else {
                             if (!DeleteFileW((LPCWSTR)cur_filename)) {
                                 LOG_WARNING("Delete Folder Error: %d",
-                                        GetLastError());
+                                            GetLastError());
                             }
                         }
                     } while (FindNextFileW(hFind, &data));
@@ -335,7 +336,7 @@ ClipboardData* GetClipboard() {
                     int err = GetLastError();
                     if (err != ERROR_ALREADY_EXISTS) {
                         LOG_WARNING("Could not create directory: %S (Error %d)",
-                                LGET_CLIPBOARD, GetLastError());
+                                    LGET_CLIPBOARD, GetLastError());
                         break;
                     }
                 }
@@ -356,12 +357,12 @@ ClipboardData* GetClipboard() {
                     if (fileattributes & FILE_ATTRIBUTE_DIRECTORY) {
                         if (!CreateJunction(target_file, filename)) {
                             LOG_WARNING("CreateJunction Error: %d",
-                                    GetLastError());
+                                        GetLastError());
                         }
                     } else {
                         if (!CreateHardLinkW(target_file, filename, 0)) {
                             LOG_WARNING("CreateHardLinkW Error: %d",
-                                    GetLastError());
+                                        GetLastError());
                         }
                     }
 

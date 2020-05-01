@@ -1,10 +1,6 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
-#if defined(_WIN32)
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 // *** BEGIN INCLUDES ***
 
 #include <stdio.h>
@@ -112,16 +108,16 @@ static inline char* timenow() {
 #if defined(_WIN32)
     SYSTEMTIME time_now;
     GetSystemTime(&time_now);
-    sprintf(buffer, "%02i:%02i:%02i:%03i", time_now.wHour, time_now.wMinute,
-            time_now.wSecond, time_now.wMilliseconds);
+    snprintf(buffer, 20, "%02i:%02i:%02i:%03i", time_now.wHour,
+             time_now.wMinute, time_now.wSecond, time_now.wMilliseconds);
 #else
     struct tm* time_str_tm;
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
 
     time_str_tm = gmtime(&time_now.tv_sec);
-    sprintf(buffer, "%02i:%02i:%02i:%06i", time_str_tm->tm_hour,
-            time_str_tm->tm_min, time_str_tm->tm_sec, time_now.tv_usec);
+    snprintf(buffer, 20, "%02i:%02i:%02i:%06i", time_str_tm->tm_hour,
+             time_str_tm->tm_min, time_str_tm->tm_sec, time_now.tv_usec);
 #endif
 
     //    strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
