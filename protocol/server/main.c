@@ -685,6 +685,7 @@ int main() {
 #ifdef _WIN32
     if (!InitDesktop()) {
         mprintf("Could not winlogon!\n");
+        return 0;
     }
 #endif
 
