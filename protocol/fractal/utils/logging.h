@@ -98,6 +98,7 @@ char* get_logger_history();
 int get_logger_history_len();
 
 bool sendLog();
+
 // Get current time
 static inline char* timenow() {
     static char buffer[64];

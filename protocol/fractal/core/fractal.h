@@ -53,6 +53,7 @@
 #include "../../include/SDL2/SDL.h"
 #include "../../include/SDL2/SDL_thread.h"
 #include "../clipboard/clipboard.h"
+#include "../utils/logging.h"
 
 #define NUM_KEYCODES 265
 
@@ -625,9 +626,5 @@ void runcmd(const char* cmdline);
 int GetFmsgSize(struct FractalClientMessage* fmsg);
 
 /** FRACTAL FUNCTIONS END ***/
-
-/** COMMON FRACTAL INCLUDES ***/
-#include "../utils/logging.h"
-/** COMMON FRACTAL INCLUDES END ***/
 
 #endif  // FRACTAL_H

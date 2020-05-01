@@ -2,6 +2,15 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#include <stdio.h>
+
+#ifndef _WIN32
+#include <execinfo.h>
+#include <signal.h>
+#endif
+
+#include "../core/fractal.h"
+#include "../network/network.h"
 #include "logging.h"
 
 extern int connection_id;
