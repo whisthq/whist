@@ -481,7 +481,7 @@ int ReceiveMessage(struct RTPPacket* packet) {
             return -1;
         }
     } else if (fmsg->type == SMESSAGE_CLIPBOARD) {
-        if (packet->payload_size !=
+        if ((unsigned int)packet->payload_size !=
             sizeof(FractalServerMessage) + fmsg->clipboard.size) {
             mprintf(
                 "Incorrect payload size for a server message (type "

@@ -12,8 +12,12 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
         (audio_encoder_t*)malloc(sizeof(audio_encoder_t));
     memset(encoder, 0, sizeof(audio_encoder_t));
 
-    // setup the AVCodec and AVCodecCtx
+    // setup the AVCodec and AVFormatContext
+    // avcodec_register_all is deprecated on FFmpeg 4+
+    // only linux uses FFmpeg 3.4.x because of canonical system packages
+#if LIBAVCODEC_VERSION_MAJOR < 58
     avcodec_register_all();
+#endif
 
     encoder->pCodec = avcodec_find_encoder(AV_CODEC_ID_AAC);
     if (!encoder->pCodec) {
@@ -175,7 +179,7 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
         return -1;
     } else if (res < 0) {
         // real error
-        mprintf("Could not send AVFrame for encoding: error '%s'.\n",
+        mprintf("Could not send audio AVFrame for encoding: error '%s'.\n",
                 av_err2str(res));
         return -1;
     }
@@ -189,7 +193,7 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
         return 1;
     } else if (res < 0) {
         // real error
-        mprintf("Could not encode frame: error '%s'.\n", av_err2str(res));
+        mprintf("Could not encode audio frame: error '%s'.\n", av_err2str(res));
         return -1;
     } else {
         // we did it!

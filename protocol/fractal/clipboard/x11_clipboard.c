@@ -246,7 +246,7 @@ void StartTrackingClipboardUpdates() {
     if (!display) {
         mprintf("ERROR: StartTrackingClipboardUpdates display did not open\n");
         perror(NULL);
-        return -1;
+        return;
     }
     unsigned long color = BlackPixel(display, DefaultScreen(display));
     window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1,
