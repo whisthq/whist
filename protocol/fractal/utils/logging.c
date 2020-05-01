@@ -6,22 +6,25 @@
 
 extern int connection_id;
 
-// Multithreaded printf Semaphores and Mutexes
-static volatile SDL_sem *multithreadedprintf_semaphore;
-static volatile SDL_mutex *multithreadedprintf_mutex;
+// logger Semaphores and Mutexes
+static volatile SDL_sem *logger_semaphore;
+static volatile SDL_mutex *logger_mutex;
 
-// Multithreaded printf queue
+// logger queue
 
-typedef struct mprintf_queue_item {
+typedef struct logger_queue_item {
     bool log;
-    char buf[MPRINTF_BUF_SIZE];
-} mprintf_queue_item;
-static volatile mprintf_queue_item mprintf_queue[MPRINTF_QUEUE_SIZE];
-static volatile mprintf_queue_item mprintf_queue_cache[MPRINTF_QUEUE_SIZE];
-static volatile int mprintf_queue_index = 0;
-static volatile int mprintf_queue_size = 0;
+    char buf[LOGGER_BUF_SIZE];
+} logger_queue_item;
+static volatile logger_queue_item logger_queue[LOGGER_QUEUE_SIZE];
+static volatile logger_queue_item logger_queue_cache[LOGGER_QUEUE_SIZE];
+static volatile int logger_queue_index = 0;
+static volatile int logger_queue_size = 0;
 
-// Multithreaded printf global variables
+
+
+
+// logger global variables
 SDL_Thread *mprintf_thread = NULL;
 static volatile bool run_multithreaded_printf;
 int MultiThreadedPrintf(void *opaque);
@@ -30,14 +33,14 @@ clock mprintf_timer;
 FILE *mprintf_log_file = NULL;
 char *log_directory = NULL;
 
-char mprintf_history[1000000];
-int mprintf_history_len;
+char logger_history[1000000];
+int logger_history_len;
 
-char *get_mprintf_history() { return mprintf_history; }
-int get_mprintf_history_len() { return mprintf_history_len; }
+char *get_logger_history() { return logger_history; }
+int get_logger_history_len() { return logger_history_len; }
 
-void initMultiThreadedPrintf(char *log_dir) {
-    mprintf_history_len = 0;
+void initLogger(char *log_dir) {
+    logger_history_len = 0;
 
     if (log_dir) {
         log_directory = log_dir;
@@ -53,19 +56,19 @@ void initMultiThreadedPrintf(char *log_dir) {
     }
 
     run_multithreaded_printf = true;
-    multithreadedprintf_mutex = SDL_CreateMutex();
-    multithreadedprintf_semaphore = SDL_CreateSemaphore(0);
+    logger_mutex = SDL_CreateMutex();
+    logger_semaphore = SDL_CreateSemaphore(0);
     mprintf_thread = SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf,
                                       "MultiThreadedPrintf", NULL);
-    StartTimer(&mprintf_timer);
+//    StartTimer(&mprintf_timer);
 }
 
-void destroyMultiThreadedPrintf() {
+void destroyLogger() {
     // Wait for any remaining printfs to execute
     SDL_Delay(50);
 
     run_multithreaded_printf = false;
-    SDL_SemPost((SDL_sem *)multithreadedprintf_semaphore);
+    SDL_SemPost((SDL_sem *)logger_semaphore);
 
     SDL_WaitThread(mprintf_thread, NULL);
     mprintf_thread = NULL;
@@ -81,7 +84,7 @@ int MultiThreadedPrintf(void *opaque) {
 
     while (true) {
         // Wait until signaled by printf to begin running
-        SDL_SemWait((SDL_sem *)multithreadedprintf_semaphore);
+        SDL_SemWait((SDL_sem *)logger_semaphore);
 
         if (!run_multithreaded_printf) {
             break;
@@ -91,49 +94,49 @@ int MultiThreadedPrintf(void *opaque) {
 
         // Clear the queue into the cache,
         // And then let go of the mutex so that printf can continue accumulating
-        SDL_LockMutex((SDL_mutex *)multithreadedprintf_mutex);
-        cache_size = mprintf_queue_size;
-        for (int i = 0; i < mprintf_queue_size; i++) {
-            mprintf_queue_cache[i].log = mprintf_queue[mprintf_queue_index].log;
-            strcpy((char *)mprintf_queue_cache[i].buf,
-                   (const char *)mprintf_queue[mprintf_queue_index].buf);
-            mprintf_queue_index++;
-            mprintf_queue_index %= MPRINTF_QUEUE_SIZE;
+        SDL_LockMutex((SDL_mutex *)logger_mutex);
+        cache_size = logger_queue_size;
+        for (int i = 0; i < logger_queue_size; i++) {
+            logger_queue_cache[i].log = logger_queue[logger_queue_index].log;
+            strcpy((char *)logger_queue_cache[i].buf,
+                   (const char *)logger_queue[logger_queue_index].buf);
+            logger_queue_index++;
+            logger_queue_index %= LOGGER_QUEUE_SIZE;
             if (i != 0) {
-                SDL_SemWait((SDL_sem *)multithreadedprintf_semaphore);
+                SDL_SemWait((SDL_sem *)logger_semaphore);
             }
         }
-        mprintf_queue_size = 0;
-        SDL_UnlockMutex((SDL_mutex *)multithreadedprintf_mutex);
+        logger_queue_size = 0;
+        SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 
         // Print all of the data into the cache
         // int last_printf = -1;
         for (int i = 0; i < cache_size; i++) {
-            if (mprintf_log_file && mprintf_queue_cache[i].log) {
-                fprintf(mprintf_log_file, "%s", mprintf_queue_cache[i].buf);
+            if (mprintf_log_file && logger_queue_cache[i].log) {
+                fprintf(mprintf_log_file, "%s", logger_queue_cache[i].buf);
             }
             // if (i + 6 < cache_size) {
-            //	printf("%s%s%s%s%s%s%s", mprintf_queue_cache[i].buf,
-            // mprintf_queue_cache[i+1].buf, mprintf_queue_cache[i+2].buf,
-            // mprintf_queue_cache[i+3].buf, mprintf_queue_cache[i+4].buf,
-            // mprintf_queue_cache[i+5].buf,  mprintf_queue_cache[i+6].buf);
+            //	printf("%s%s%s%s%s%s%s", logger_queue_cache[i].buf,
+            // logger_queue_cache[i+1].buf, logger_queue_cache[i+2].buf,
+            // logger_queue_cache[i+3].buf, logger_queue_cache[i+4].buf,
+            // logger_queue_cache[i+5].buf,  logger_queue_cache[i+6].buf);
             //    last_printf = i + 6;
             //} else if (i > last_printf) {
-            printf("%s", mprintf_queue_cache[i].buf);
-            int chars_written = sprintf(&mprintf_history[mprintf_history_len],
-                                        "%s", mprintf_queue_cache[i].buf);
-            mprintf_history_len += chars_written;
+            printf("%s", logger_queue_cache[i].buf);
+            int chars_written = sprintf(&logger_history[logger_history_len],
+                                        "%s", logger_queue_cache[i].buf);
+            logger_history_len += chars_written;
 
             // Shift buffer over if too large;
-            if ((unsigned long)mprintf_history_len >
-                sizeof(mprintf_history) - sizeof(mprintf_queue_cache[i].buf) -
+            if ((unsigned long)logger_history_len >
+                    sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) -
                     10) {
-                int new_len = sizeof(mprintf_history) / 3;
+                int new_len = sizeof(logger_history) / 3;
                 for (i = 0; i < new_len; i++) {
-                    mprintf_history[i] =
-                        mprintf_history[mprintf_history_len - new_len + i];
+                    logger_history[i] =
+                        logger_history[logger_history_len - new_len + i];
                 }
-                mprintf_history_len = new_len;
+                logger_history_len = new_len;
             }
             //}
         }
@@ -187,36 +190,36 @@ void lprintf(const char *fmtStr, ...) {
 
 void real_mprintf(bool log, const char *fmtStr, va_list args) {
     if (mprintf_thread == NULL) {
-        printf("initMultiThreadedPrintf has not been called!\n");
+        printf("initLogger has not been called!\n");
         return;
     }
 
-    SDL_LockMutex((SDL_mutex *)multithreadedprintf_mutex);
-    int index = (mprintf_queue_index + mprintf_queue_size) % MPRINTF_QUEUE_SIZE;
+    SDL_LockMutex((SDL_mutex *)logger_mutex);
+    int index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
     char *buf = NULL;
-    if (mprintf_queue_size < MPRINTF_QUEUE_SIZE - 2) {
-        mprintf_queue[index].log = log;
-        buf = (char *)mprintf_queue[index].buf;
-        snprintf(buf, MPRINTF_BUF_SIZE, "%15.4f: ", GetTimer(mprintf_timer));
+    if (logger_queue_size < LOGGER_QUEUE_SIZE - 2) {
+        logger_queue[index].log = log;
+        buf = (char *)logger_queue[index].buf;
+//        snprintf(buf, LOGGER_BUF_SIZE, "%15.4f: ", GetTimer(mprintf_timer));
         int len = (int)strlen(buf);
-        vsnprintf(buf + len, MPRINTF_BUF_SIZE - len, fmtStr, args);
-        mprintf_queue_size++;
-    } else if (mprintf_queue_size == MPRINTF_QUEUE_SIZE - 2) {
-        mprintf_queue[index].log = log;
-        buf = (char *)mprintf_queue[index].buf;
+        vsnprintf(buf + len, LOGGER_BUF_SIZE - len, fmtStr, args);
+        logger_queue_size++;
+    } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
+        logger_queue[index].log = log;
+        buf = (char *)logger_queue[index].buf;
         strcpy(buf, "Buffer maxed out!!!\n");
-        mprintf_queue_size++;
+        logger_queue_size++;
     }
 
     if (buf != NULL) {
-        buf[MPRINTF_BUF_SIZE - 5] = '.';
-        buf[MPRINTF_BUF_SIZE - 4] = '.';
-        buf[MPRINTF_BUF_SIZE - 3] = '.';
-        buf[MPRINTF_BUF_SIZE - 2] = '\n';
-        buf[MPRINTF_BUF_SIZE - 1] = '\0';
-        SDL_SemPost((SDL_sem *)multithreadedprintf_semaphore);
+        buf[LOGGER_BUF_SIZE - 5] = '.';
+        buf[LOGGER_BUF_SIZE - 4] = '.';
+        buf[LOGGER_BUF_SIZE - 3] = '.';
+        buf[LOGGER_BUF_SIZE - 2] = '\n';
+        buf[LOGGER_BUF_SIZE - 1] = '\0';
+        SDL_SemPost((SDL_sem *)logger_semaphore);
     }
-    SDL_UnlockMutex((SDL_mutex *)multithreadedprintf_mutex);
+    SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 
     va_end(args);
 }
@@ -304,8 +307,8 @@ bool sendLog() {
     char *host = "fractal-mail-staging.herokuapp.com";
     char *path = "/logs";
 
-    char *logs_raw = get_mprintf_history();
-    int raw_log_len = get_mprintf_history_len();
+    char *logs_raw = get_logger_history();
+    int raw_log_len = get_logger_history_len();
 
     char *logs = malloc(1000 + 2 * raw_log_len);
     int log_len = 0;

@@ -470,7 +470,6 @@ int ReceivePackets(void* opaque) {
 
 int ReceiveMessage(struct RTPPacket* packet) {
     FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
-
     // Verify packet size
     if (fmsg->type == MESSAGE_INIT) {
         if (packet->payload_size !=
@@ -821,7 +820,7 @@ int main(int argc, char* argv[]) {
     char path[100] = "";
     strcat(path, getenv("HOME"));
     strcat(path, "/.fractal");
-    initMultiThreadedPrintf(path);
+    initLogger(path);
 #endif
 
     initClipboard();
@@ -1046,7 +1045,7 @@ int main(int argc, char* argv[]) {
     destroyVideo();
     mprintf("Closing Client...\n");
 
-    destroyMultiThreadedPrintf();
+    destroyLogger();
     destroySDL();
 
     return 0;

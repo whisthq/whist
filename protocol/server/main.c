@@ -680,7 +680,7 @@ int main() {
 #ifdef _WIN32
     initMultiThreadedPrintf("C:\\ProgramData\\FractalCache");
 #else
-    initMultiThreadedPrintf(".");
+    initLogger(".");
 #endif
     initClipboard();
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
@@ -1057,7 +1057,7 @@ int main() {
     WSACleanup();
 #endif
 
-    destroyMultiThreadedPrintf();
+    destroyLogger();
 
     return 0;
 }
