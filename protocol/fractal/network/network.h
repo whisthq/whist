@@ -15,7 +15,6 @@
 #endif
 
 #include "../core/fractal.h"
-#include "../utils/aes.h"
 
 // *** end includes ***
 
@@ -61,8 +60,7 @@ typedef struct SocketContext {
 
 /// @brief Connection origin.
 /// @details Passed to CreateTCPContext and CreateUDPContext
-typedef enum FractalConnectionOrigin
-{
+typedef enum FractalConnectionOrigin {
     ORIGIN_CLIENT = 1,  ///< Connection from a client.
     ORIGIN_SERVER = 2   ///< Connection from a server.
 } FractalConnectionOrigin;
