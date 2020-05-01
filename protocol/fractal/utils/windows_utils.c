@@ -91,7 +91,7 @@ bool InitDesktop() {
 
         EnterWinString(keycodes2, 18);
 
-        Sleep(500);
+        Sleep(1000);
 
         lock_screen = OpenNewDesktop(NULL, true, true);
 
