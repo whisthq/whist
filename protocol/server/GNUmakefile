@@ -41,13 +41,15 @@ STATIC_LIBS = \
 
 # files to build into object files
 OBJS = \
-	webserver.o \
 	fractal.o \
 	x11capture.o \
 	videoencode.o \
 	alsacapture.o \
 	linuxinput.o \
 	linuxcursor.o \
+	logging.o \
+	network.o \
+	sdlscreeninfo.o \
 	audioencode.o \
 	aes.o \
 	x11_clipboard.o \
@@ -79,9 +81,17 @@ all: clean clear $(OBJS)
 fractal.o:
 	$(CC) -c $(CFLAGS) ../fractal/core/fractal.c
 
-# compile the webserver source file into object file
-webserver.o:
-	$(CC) -c $(CFLAGS) ../fractal/utils/webserver.c
+# compile the logging source file into object file
+logging.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/logging.c
+
+# compile the networking source file into object file
+network.o:
+	$(CC) -c $(CFLAGS) ../fractal/network/network.c
+
+# compile the SDL screen info source file into object file
+sdlscreeninfo.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/sdlscreeninfo.c
 
 # compile the main fractal header source file into object file
 x11capture.o:

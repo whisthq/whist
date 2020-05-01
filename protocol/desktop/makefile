@@ -22,6 +22,9 @@ OBJS = \
 	aes.obj \
 	videodecode.obj \
 	audiodecode.obj \
+	logging.obj \
+	network.obj \
+	sdlscreeninfo.obj \
 	video.obj \
 	audio.obj \
 	main.obj
@@ -105,6 +108,18 @@ aes.obj:
 # compile the video decoder source file into object file
 videodecode.obj:
 	$(CC) /c $(CFLAGS) ../fractal/video/videodecode.c
+
+# compile the logging source file into object file
+logging.obj:
+	$(CC) -c $(CFLAGS) ../fractal/utils/logging.c
+
+# compile the networking source file into object file
+network.obj:
+	$(CC) -c $(CFLAGS) ../fractal/network/network.c
+
+# compile the SDL screen info source file into object file
+sdlscreeninfo.obj:
+	$(CC) -c $(CFLAGS) ../fractal/utils/sdlscreeninfo.c
 
 # compile the audio decoder source file into object file
 audiodecode.obj:

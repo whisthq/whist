@@ -16,7 +16,6 @@ BIN_NAME = build$(ARCH)/FractalServer.exe
 
 # files to build into object files
 OBJS = \
-	webserver.obj \
 	fractal.obj \
 	win_clipboard.obj \
 	aes.obj \
@@ -24,7 +23,10 @@ OBJS = \
 	audioencode.obj \
 	wasapicapture.obj \
 	dxgicapture.obj \
-	desktop.obj \
+	logging.obj \
+	network.obj \
+	sdlscreeninfo.obj \
+	windows_utils.obj \
 	windowsinput.obj \
 	windowscursor.obj \
 	main.obj
@@ -108,10 +110,6 @@ all: clean clear $(OBJS)
 fractal.obj:
 	$(CC) /c $(CFLAGS) ../fractal/core/fractal.c
 
-# compile the webserver source file into object file
-webserver.obj:
-	$(CC) /c $(CFLAGS) ../fractal/utils/webserver.c
-
 # compile the main clipboard header source file into object file
 win_clipboard.obj:
 	$(CC) /c $(CFLAGS) ../fractal/clipboard/win_clipboard.c
@@ -136,9 +134,21 @@ wasapicapture.obj:
 dxgicapture.obj:
 	$(CC) /c $(CFLAGS) ../fractal/video/dxgicapture.c
 
+# compile the logging source file into object file
+logging.obj:
+	$(CC) -c $(CFLAGS) ../fractal/utils/logging.c
+
+# compile the networking source file into object file
+network.obj:
+	$(CC) -c $(CFLAGS) ../fractal/network/network.c
+
+# compile the SDL screen info source file into object file
+sdlscreeninfo.obj:
+	$(CC) -c $(CFLAGS) ../fractal/utils/sdlscreeninfo.c
+
 # compile the desktop setting source file into object file
-desktop.obj:
-	$(CC) /c $(CFLAGS) ../fractal/utils/desktop.c
+windows_utils.obj:
+	$(CC) /c $(CFLAGS) ../fractal/utils/windows_utils.c
 
 # compile the input handling source file into object file
 windowsinput.obj:

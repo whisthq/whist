@@ -23,6 +23,9 @@ OBJS = \
 	aes.o \
 	clipboard_thread.o \
 	x11_clipboard.o \
+	logging.o \
+	network.o \
+	sdlscreeninfo.o \
 	main.o
 
 # dynamic libs to link against (using system libs for Linux)
@@ -75,6 +78,9 @@ OBJS = \
 	aes.o \
 	clipboard_osx.o \
 	mac_utils.o \
+	logging.o \
+	network.o \
+	sdlscreeninfo.o \
 	mac_clipboard.o \
 	clipboard_thread.o \
 	main.o
@@ -171,6 +177,18 @@ clipboard_osx.o:
 # compile the MacOS utils source file into object file
 mac_utils.o:
 	$(CC) -c $(CFLAGS) ../fractal/utils/mac_utils.c
+
+# compile the logging source file into object file
+logging.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/logging.c
+
+# compile the networking source file into object file
+network.o:
+	$(CC) -c $(CFLAGS) ../fractal/network/network.c
+
+# compile the SDL screen info source file into object file
+sdlscreeninfo.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/sdlscreeninfo.c
 
 # compile the general clipboard thread source file into object file
 clipboard_thread.o:

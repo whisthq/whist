@@ -98,15 +98,17 @@ int UpdateClipboardThread(void* opaque) {
                 char* exc = "./linux_unison";
 #endif
 
-                sprintf(
+                snprintf(
                     cmd,
+                    sizeof(cmd),
                     "%s %s -follow \"Path *\" -ui text -ignorearchives -confirmbigdel=false -batch \
 						 -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l %s -i sshkey\" \
                          \"ssh://%s/%s/get_clipboard/\" \
                          %s \
                          -force \"ssh://%s/%s/get_clipboard/\"",
                     prefix, exc, username, server_ip, filename, SET_CLIPBOARD,
-                    server_ip, filename);
+                    server_ip, filename
+                );
 
                 /*
                 strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-o
@@ -136,32 +138,48 @@ int UpdateClipboardThread(void* opaque) {
 
             if (clipboard->type == CLIPBOARD_FILES) {
                 char cmd[1000] = "";
+
 #ifndef _WIN32
-                strcat(cmd, "UNISON=./.unison; ");
+                char* prefix = "UNISON=./.unison;";
+#else
+                char* prefix = "";
 #endif
 
 #ifdef _WIN32
-                strcat(cmd, "unison ");
+                char* exc = "unison";
 #elif __APPLE__
-                strcat(cmd, "./mac_unison ");
+                char* exc = "./mac_unison";
 #else  // Linux
-                strcat(cmd, "./linux_unison ");
+                char* exc = "./linux_unison";
 #endif
 
-                strcat(cmd,
+                snprintf(
+                    cmd,
+                    sizeof( cmd ),
+                    "%s %s -follow \"Path *\" -ui text -ignorearchives -confirmbigdel=false -batch \
+						 -sshargs \"-o UserKnownHostsFile=ssh_host_ecdsa_key.pub -l %s -i sshkey\" \
+                         %s \
+                         \"ssh://%s/%s/set_clipboard/\" \
+                         -force %s",
+                    prefix, exc, username, GET_CLIPBOARD, server_ip, filename, GET_CLIPBOARD
+                );
+
+                /*
+                strncat(cmd,
                        "-follow \"Path *\" -ui text -sshargs \"-o "
-                       "UserKnownHostsFile=ssh_host_ecdsa_key.pub -l ");
-                strcat(cmd, username);
-                strcat(cmd, " -i sshkey\" ");
-                strcat(cmd, GET_CLIPBOARD);
-                strcat(cmd, " \"ssh://");
-                strcat(cmd, (char*)server_ip);
-                strcat(cmd, "/");
-                strcat(cmd, filename);
-                strcat(cmd, "/set_clipboard");
-                strcat(cmd, "/\" -force ");
-                strcat(cmd, GET_CLIPBOARD);
-                strcat(cmd, " -ignorearchives -confirmbigdel=false -batch");
+                       "UserKnownHostsFile=ssh_host_ecdsa_key.pub -l ", sizeof(cmd));
+                strncat(cmd, username, sizeof( cmd ) );
+                strncat(cmd, " -i sshkey\" ", sizeof( cmd ) );
+                strncat(cmd, GET_CLIPBOARD, sizeof( cmd ) );
+                strncat(cmd, " \"ssh://", sizeof( cmd ) );
+                strncat(cmd, (char*)server_ip, sizeof( cmd ) );
+                strncat(cmd, "/", sizeof( cmd ) );
+                strncat(cmd, filename, sizeof( cmd ) );
+                strncat(cmd, "/set_clipboard", sizeof( cmd ) );
+                strncat(cmd, "/\" -force ", sizeof( cmd ) );
+                strncat(cmd, GET_CLIPBOARD, sizeof( cmd ) );
+                strncat(cmd, " -ignorearchives -confirmbigdel=false -batch", sizeof( cmd ) );
+                */
 
                 mprintf("COMMAND: %s\n", cmd);
                 runcmd(cmd);

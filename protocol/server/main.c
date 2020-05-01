@@ -25,12 +25,14 @@
 #include "../fractal/core/fractal.h"
 #include "../fractal/cursor/cursor.h"
 #include "../fractal/input/input.h"
+#include "../fractal/network/network.h"
 #include "../fractal/utils/aes.h"
-#include "../fractal/utils/webserver.h"
+#include "../fractal/utils/logging.h"
 #include "../fractal/video/screencapture.h"
 #include "../fractal/video/videoencode.h"
+
 #ifdef _WIN32
-#include "../fractal/utils/desktop.h"
+#include "../fractal/utils/windows_utils.h"
 #endif
 
 #ifdef _WIN32
@@ -683,6 +685,7 @@ int main() {
 #ifdef _WIN32
     if (!InitDesktop()) {
         mprintf("Could not winlogon!\n");
+        return 0;
     }
 #endif
 
@@ -702,7 +705,7 @@ int main() {
         struct SocketContext PacketReceiveContext = {0};
         struct SocketContext PacketTCPContext = {0};
 
-        if (CreateUDPContext(&PacketReceiveContext, "S", "0.0.0.0",
+        if (CreateUDPContext(&PacketReceiveContext, ORIGIN_SERVER, "0.0.0.0",
                              PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
             mprintf("Failed to start connection\n");
 
@@ -712,7 +715,7 @@ int main() {
             continue;
         }
 
-        if (CreateUDPContext(&PacketSendContext, "S", "0.0.0.0",
+        if (CreateUDPContext(&PacketSendContext, ORIGIN_SERVER, "0.0.0.0",
                              PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             mprintf(
                 "Failed to finish connection (Failed at port server to "
@@ -721,8 +724,8 @@ int main() {
             continue;
         }
 
-        if (CreateTCPContext(&PacketTCPContext, "S", "0.0.0.0", PORT_SHARED_TCP,
-                             1, 500) < 0) {
+        if (CreateTCPContext(&PacketTCPContext, ORIGIN_SERVER, "0.0.0.0",
+                             PORT_SHARED_TCP, 1, 500) < 0) {
             mprintf("Failed to finish connection (Failed at TCP context).\n");
             closesocket(PacketReceiveContext.s);
             closesocket(PacketSendContext.s);
@@ -753,12 +756,11 @@ int main() {
                                   sizeof(FractalServerMessageInit));
         packet_mutex = SDL_CreateMutex();
 
-        if( SendTCPPacket( &PacketTCPContext, PACKET_MESSAGE,
-            (uint8_t*)msg_init_whole,
-                           sizeof( FractalServerMessage ) + sizeof( FractalServerMessageInit ) ) <
-            0 )
-        {
-            mprintf( "Could not send server init message!\n" );
+        if (SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE,
+                          (uint8_t*)msg_init_whole,
+                          sizeof(FractalServerMessage) +
+                              sizeof(FractalServerMessageInit)) < 0) {
+            mprintf("Could not send server init message!\n");
             return -1;
         }
         free(msg_init_whole);
