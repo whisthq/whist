@@ -448,36 +448,35 @@ def swapDisk(self, disk_name):
 		print("NOTIFICATION: Disk " + disk_name +
 			  " already attached to VM " + vm_name)
 
-		locked = checkLock(vm_name)
+		self.update_state(state='PENDING', meta={"msg": "Server is updating. Waiting for update to finish."})
+		hr = spinLock(vm_name)
 
-		while locked:
-			print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
-			self.update_state(state='PENDING', meta={"msg": "Server is locked, waiting to be unlocked."})
-			time.sleep(5)
-			locked = checkLock(vm_name)
+		if hr > 0:
+			self.update_state(state='PENDING', meta={"msg": "Data already uploaded to server. Updating database."})
+			print('NOTIFICATION: VM {} is unlocked and ready for use'.format(vm_name))
+			lockVM(vm_name, True)
 
-		self.update_state(state='PENDING', meta={"msg": "Data already uploaded to server. Updating database."})
-		print('NOTIFICATION: VM {} is unlocked and ready for use'.format(vm_name))
-		lockVM(vm_name, True)
+			updateDisk(disk_name, vm_name, location)
+			associateVMWithDisk(vm_name, disk_name)
 
-		updateDisk(disk_name, vm_name, location)
-		associateVMWithDisk(vm_name, disk_name)
+			self.update_state(state='PENDING', meta={"msg": "Database updated. Booting Cloud PC."})
 
-		self.update_state(state='PENDING', meta={"msg": "Database updated. Booting Cloud PC."})
+			print("NOTIFICATION: Database updated with disk " +
+				  disk_name + " and " + vm_name)
 
-		print("NOTIFICATION: Database updated with disk " +
-			  disk_name + " and " + vm_name)
+			if fractalVMStart(vm_name) > 0:
+				print('SUCCESS: VM is started and ready to use')
+				self.update_state(state='PENDING', meta={"msg": "Cloud PC is ready to use."})
+			else:
+				print('CRITICAL ERROR: Could not start VM {}'.format(vm_name))
+				self.update_state(state='FAILURE', meta={"msg": "Cloud PC could not be started. Please contact support."})
 
-		if fractalVMStart(vm_name) > 0:
-			print('SUCCESS: VM is started and ready to use')
-			self.update_state(state='PENDING', meta={"msg": "Cloud PC is ready to use."})
+			vm_credentials = fetchVMCredentials(vm_name)
+			lockVM(vm_name, False)
+			return vm_credentials
 		else:
-			print('CRITICAL ERROR: Could not start VM {}'.format(vm_name))
-			self.update_state(state='FAILURE', meta={"msg": "Cloud PC could not be started. Please contact support."})
-
-		vm_credentials = fetchVMCredentials(vm_name)
-		lockVM(vm_name, False)
-		return vm_credentials
+			self.update_state(state='PENDING', meta={"msg": "Error: Update took too long. Please contact support."})
+			return {}
 	# Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
 	# (then reboot the VM), or wait until a VM becomes available.
 	if not vm_attached:

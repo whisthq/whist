@@ -1520,6 +1520,8 @@ def fractalVMStart(vm_name, needs_restart=False):
 def spinLock(vm_name):
     locked = checkLock(vm_name)
 
+    num_tries = 0
+
     if not locked:
         print('NOTIFICATION: VM {} is unlocked'.format(vm_name))
         return 1
@@ -1528,5 +1530,9 @@ def spinLock(vm_name):
         print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
         time.sleep(5)
         locked = checkLock(vm_name)
+        num_tries += 1
+
+        if num_tries > 50:
+            return -1
 
     return 1
