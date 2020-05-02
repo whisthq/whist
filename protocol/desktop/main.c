@@ -766,7 +766,7 @@ int main(int argc, char* argv[]) {
     runcmd("mkdir ~/.fractal");
     runcmd("chmod 0755 ~/.fractal");
 #endif
-    initBacktraceHandler();
+
 #ifndef _WIN32
     runcmd("chmod 600 sshkey");
 #endif

@@ -47,6 +47,7 @@ char *get_logger_history() { return logger_history; }
 int get_logger_history_len() { return logger_history_len; }
 
 void initLogger(char *log_dir) {
+    initBacktraceHandler();
     logger_history_len = 0;
 
     if (log_dir) {

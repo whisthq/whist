@@ -676,7 +676,6 @@ int main() {
 
     srand((unsigned int)time(NULL));
     connection_id = rand();
-    initBacktraceHandler();
 #ifdef _WIN32
     initLogger("C:\\ProgramData\\FractalCache");
 #else
