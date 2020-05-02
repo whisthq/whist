@@ -7,7 +7,6 @@ stripe_bp = Blueprint('stripe_bp', __name__)
 
 
 @stripe_bp.route('/stripe/<action>', methods=['POST'])
-@jwt_required
 def payment(action):
     stripe.api_key = os.getenv('STRIPE_SECRET')
     customer_id = ''
