@@ -282,18 +282,12 @@ void crash_handler(int sig) {
 
     void *array[HANDLER_ARRAY_SIZE];
     size_t size;
-    // open log file
-    char f[1000] = "";
-    strcat(f, log_directory); //global var initialised in initLogger
-    strcat(f, "/log.txt");
-    printf("log file: %s", f);
-
 
     // get void*'s for all entries on the stack
     size = backtrace(array, HANDLER_ARRAY_SIZE);
 
-    // print out all the frames to stderr
-    mprintf("\nError: signal %d:\n", sig);
+    // print out all the frames to log
+    LOG_ERROR("\nError: signal %d:\n", sig);
     int fd = fileno(mprintf_log_file);
     backtrace_symbols_fd(array, size, fd);
 //    char command_bf[13 + 16 * size +1];
