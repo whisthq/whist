@@ -211,7 +211,7 @@ int SendFmsg(struct FractalClientMessage* fmsg) {
     } else {
         static int sent_packet_id = 0;
         sent_packet_id++;
-        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg), sent_packet_id);
+        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg), sent_packet_id, -1, NULL, NULL);
     }
 }
 

@@ -127,53 +127,7 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type,
     return failed ? -1 : 0;
 }
 
-int SendUDPPacket( struct SocketContext* context, FractalPacketType type, void* data, int len, int id )
-{
-    // Verify packet size can fit
-    if( len > MAX_PAYLOAD_SIZE - PACKET_HEADER_SIZE )
-    {
-        LOG_WARNING( "Packet too large!" );
-        return -1;
-    }
-
-    // Local packet
-    struct RTPPacket packet = { 0 };
-
-    // Set packet ID
-    packet.id = id;
-
-    // Initialize packet data
-    packet.type = type;
-    memcpy( packet.data, data, len );
-    packet.payload_size = len;
-
-    int packet_size = PACKET_HEADER_SIZE + len;
-
-    // Encrypt the packet using aes encryption
-    struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet,
-        (unsigned char*)PRIVATE_KEY );
-
-    // Send the packet
-    bool failed = false;
-    static SDL_mutex* send_packet_mutex = NULL;
-    if( !send_packet_mutex )
-    {
-        send_packet_mutex = SDL_CreateMutex();
-    }
-    SDL_LockMutex( send_packet_mutex );
-    if( sendp( context, &encrypted_packet, encrypt_len ) < 0 )
-    {
-        LOG_WARNING( "Failed to send packet!" );
-        failed = true;
-    }
-    SDL_UnlockMutex( send_packet_mutex );
-
-    // Return success code
-    return failed ? -1 : 0;
-}
-
-int SendComplexUDPPacket( struct SocketContext* context, FractalPacketType type,
+int SendUDPPacket( struct SocketContext* context, FractalPacketType type,
                 uint8_t* data, int len, int id, int burst_bitrate, struct RTPPacket* packet_buffer, int* packet_len_buffer )
 {
     if( id <= 0 )

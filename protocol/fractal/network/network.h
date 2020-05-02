@@ -114,9 +114,8 @@ void set_timeout(SOCKET s, int timeout_ms);
 
 int SendTCPPacket( struct SocketContext* context, FractalPacketType type,
                    void* data, int len );
-int SendUDPPacket( struct SocketContext* context, FractalPacketType type, void* data, int len, int id );
-int SendComplexUDPPacket( struct SocketContext* context, FractalPacketType type,
-                          uint8_t* data, int len, int id, int burst_bitrate, struct RTPPacket* packet_buffer, int* packet_len_buffer );
+int SendUDPPacket( struct SocketContext* context, FractalPacketType type,
+                   uint8_t* data, int len, int id, int burst_bitrate, struct RTPPacket* packet_buffer, int* packet_len_buffer );
 
 int CreateUDPContext(struct SocketContext* context,
                      FractalConnectionOrigin origin, char* destination,

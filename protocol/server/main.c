@@ -359,7 +359,7 @@ int32_t SendVideo(void* opaque) {
                     // "");
 
                     // Send video packet to client
-                    if ( SendComplexUDPPacket(&socketContext, PACKET_VIDEO,
+                    if ( SendUDPPacket(&socketContext, PACKET_VIDEO,
                                    (uint8_t*)frame, frame_size, id, STARTING_BURST_BITRATE, video_buffer[id % VIDEO_BUFFER_SIZE], video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     } else {
@@ -411,7 +411,7 @@ int32_t SendAudio(void* opaque) {
     FractalServerMessage fmsg;
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
     fmsg.frequency = audio_device->sample_rate;
-    SendComplexUDPPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t*)&fmsg,
+    SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t*)&fmsg,
                sizeof(fmsg), 1, STARTING_BURST_BITRATE, NULL, NULL);
     mprintf("Audio Frequency: %d\n", audio_device->sample_rate);
 
@@ -454,7 +454,7 @@ int32_t SendAudio(void* opaque) {
 
                     // Send packet
 
-                    if (SendComplexUDPPacket(&context, PACKET_AUDIO,
+                    if (SendUDPPacket(&context, PACKET_AUDIO,
                                    audio_encoder->packet.data,
                                    audio_encoder->packet.size, id, STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE], audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE] ) < 0) {
                         mprintf("Could not send audio frame\n");
@@ -467,7 +467,7 @@ int32_t SendAudio(void* opaque) {
                     av_packet_unref(&audio_encoder->packet);
                 }
 #else
-                if( SendComplexUDPPacket( &context, PACKET_AUDIO,
+                if( SendUDPPacket( &context, PACKET_AUDIO,
                                           audio_device->buffer,
                                           audio_device->buffer_size, id, STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE], audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE] ) < 0 )
                 {
@@ -679,7 +679,7 @@ int main() {
                     mprintf("Exiting due to button press...\n");
                     FractalServerMessage fmsg_response = {0};
                     fmsg_response.type = SMESSAGE_QUIT;
-                    if (SendComplexUDPPacket(&PacketSendContext, PACKET_MESSAGE,
+                    if (SendUDPPacket(&PacketSendContext, PACKET_MESSAGE,
                                    (uint8_t*)&fmsg_response,
                                    sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL, NULL) < 0) {
                         mprintf("Could not send Quit Message\n");
@@ -785,7 +785,7 @@ int main() {
                     fmsg_response.type = MESSAGE_PONG;
                     fmsg_response.ping_id = fmsg->ping_id;
                     StartTimer(&last_ping);
-                    if (SendComplexUDPPacket(&PacketSendContext, PACKET_MESSAGE,
+                    if (SendUDPPacket(&PacketSendContext, PACKET_MESSAGE,
                                    (uint8_t*)&fmsg_response,
                                    sizeof(fmsg_response), 1, STARTING_BURST_BITRATE, NULL, NULL) < 0) {
                         mprintf("Could not send Pong\n");
