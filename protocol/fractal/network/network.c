@@ -216,7 +216,7 @@ int SendUDPPacket( struct SocketContext* context, FractalPacketType type,
 
         // Construct packet
         packet->type = type;
-        memcpy( packet->data, data + curr_index, payload_size );
+        memcpy( packet->data, (uint8_t*)data + curr_index, payload_size );
         packet->index = (short)i;
         packet->payload_size = payload_size;
         packet->id = id;
