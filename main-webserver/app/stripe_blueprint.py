@@ -188,9 +188,7 @@ def payment(action):
 
     # Endpoint for stripe webhooks
     elif action == 'hooks':
-        print("something posted to hooks:")
         body = request.get_json()
-        print(body)
         event = None
 
         try:
@@ -202,9 +200,35 @@ def payment(action):
             return jsonify({'status': 400}), 400
 
         # Handle the event
-        print(event)
-        if event.type == 'charge.failed':
+        if event.type == 'charge.failed':  # https://stripe.com/docs/api/charges
             print("Charge failed!")
+            custId = event.data.object.customer
+            customer = fetchCustomerById(custId)
+
+            if customer:
+                message = SendGridMail(
+                    from_email='phil@fractalcomputers.com',
+                    to_emails=[customer['username']],
+                    subject='Your payment is overdue',
+                    html_content=render_template('charge_failed.html')
+                )
+                try:
+                    sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
+                    response = sg.send(message)
+                except Exception as e:
+                    print(e.message)
+
+                message = SendGridMail(
+                    from_email='mingying2011@gmail.com',
+                    to_emails=['support@fractalcomputers.com'],
+                    subject='Payment is overdue for ' + customer['username'],
+                    html_content='<div>The charge has failed for account ' + custId + '</div>'
+                )
+                try:
+                    sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
+                    response = sg.send(message)
+                except Exception as e:
+                    print(e.message)
         return jsonify({'status': 200}), 200
 
 # REFERRAL endpoint

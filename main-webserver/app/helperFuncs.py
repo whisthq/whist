@@ -722,6 +722,15 @@ def fetchCustomer(username):
         conn.close()
         return customer
 
+def fetchCustomerById(id):
+    command = text("""
+        SELECT * FROM customers WHERE "id" = :id
+        """)
+    params = {'id': id}
+    with engine.connect() as conn:
+        customer = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        return customer
 
 def fetchCustomers():
     command = text("""
