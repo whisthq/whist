@@ -79,6 +79,54 @@ void set_timeout(SOCKET s, int timeout_ms) {
 
 void ClearReadingTCP() { reading_packet_len = 0; }
 
+#define LARGEST_PACKET 10000000
+char unbounded_packet[LARGEST_PACKET];
+char encrypted_unbounded_packet[sizeof( int ) + LARGEST_PACKET + 16];
+
+int SendTCPPacket( struct SocketContext* context, FractalPacketType type,
+                   void* data, int len )
+{
+    // Verify packet size can fit
+    if( len > LARGEST_PACKET - PACKET_HEADER_SIZE )
+    {
+        LOG_WARNING( "Packet too large!" );
+        return -1;
+    }
+
+    struct RTPPacket* packet = (struct RTPPacket*)unbounded_packet;
+
+    // Contruct packet
+    packet->id = -1;
+    packet->type = type;
+    memcpy( packet->data, data, len );
+    packet->index = 0;
+    packet->payload_size = len;
+    packet->num_indices = 1;
+    packet->is_a_nack = false;
+    int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
+
+    // Encrypt the packet using aes encryption
+    int encrypt_len = encrypt_packet(
+        packet, packet_size,
+        (struct RTPPacket*)(sizeof( int ) + encrypted_unbounded_packet),
+        (unsigned char*)PRIVATE_KEY );
+    *((int*)encrypted_unbounded_packet) = encrypt_len;
+
+    // Send the packet
+    LOG_INFO( "Sending TCP Packet... %d\n", encrypt_len );
+    bool failed = false;
+    if( sendp( context, encrypted_unbounded_packet,
+               sizeof( int ) + encrypt_len ) < 0 )
+    {
+        LOG_WARNING( "Failed to send packet!" );
+        failed = true;
+    }
+    LOG_INFO( "Successfully sent!" );
+
+    // Return success code
+    return failed ? -1 : 0;
+}
+
 int recvp(struct SocketContext *context, void *buf, int len) {
     return recv(context->s, buf, len, 0);
 }

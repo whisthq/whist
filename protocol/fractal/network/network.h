@@ -111,6 +111,9 @@ int GetLastNetworkError();
 
 void set_timeout(SOCKET s, int timeout_ms);
 
+
+int SendTCPPacket( struct SocketContext* context, FractalPacketType type,
+                   void* data, int len );
 int CreateUDPContext(struct SocketContext* context,
                      FractalConnectionOrigin origin, char* destination,
                      int port, int recvfrom_timeout_s, int stun_timeout_ms);

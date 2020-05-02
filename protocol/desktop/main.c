@@ -89,10 +89,17 @@ void initUpdate() {
 
 void destroyUpdate() { destroyUpdateClipboard(); }
 
+/**
+* Check all pending updates, and act on those pending updates
+* to actually update the state of our programs
+* This function expects to be called at minimum every 5ms to keep the program up-to-date
+*
+* @return void
+*/
 void update() {
     FractalClientMessage fmsg;
 
-    // Check for clipboard update, if it's been 25ms since the last TCP check, and the clipboard isn't actively being updated
+    // Check for a new clipboard update from the server, if it's been 25ms since the last time we checked the TCP socket, and the clipboard isn't actively busy
     if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 &&
         !isUpdatingClipboard()) {
 
@@ -115,19 +122,8 @@ void update() {
         StartTimer((clock*)&UpdateData.last_tcp_check_timer);
     }
 
-    // If the user has copied or cut something, then try pushing a clipboard update
-    // NOTE: If clipboard is busy, then pendingUpdateClipboard will start returning true
-    if (hasClipboardUpdated() && received_server_init_message) {
-        LOG_INFO("Clipboard event found, sending to server!");
-        updateClipboard();
-    }
-
-    // If we have a pendingUpdateClipboard, then try pushing that update
-    // NOTE: We have to do this, because hasClipboardUpdated will only be true once
-    // If the clipboard is busy while hasClipboardUpdated is true, then even when
-    // hasClipboardUpdated becomes false, then pendingUpdateClipboard will remain
-    // true until the clipboard update has been properly pushed
-    if( pendingUpdateClipboard() && received_server_init_message )
+    // Assuming we have all of the important init information, then update the clipboard
+    if( received_server_init_message )
     {
         updateClipboard();
     }
@@ -207,7 +203,6 @@ void update() {
 }
 // END UPDATER CODE
 
-int SendTCPPacket(void* data, int len);
 int SendPacket(void* data, int len);
 
 // Large fmsg's should be sent over TCP. At the moment, this is only CLIPBOARD messages
@@ -215,53 +210,10 @@ int SendPacket(void* data, int len);
 // (If low latency large FractalClientMessage packets are needed, then this will have to be implemented)
 int SendFmsg(struct FractalClientMessage* fmsg) {
     if (fmsg->type == CMESSAGE_CLIPBOARD) {
-        return SendTCPPacket(fmsg, GetFmsgSize(fmsg));
+        return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
     } else {
         return SendPacket(fmsg, GetFmsgSize(fmsg));
     }
-}
-
-#define LARGEST_PACKET 10000000
-char unbounded_packet[LARGEST_PACKET];
-char encrypted_unbounded_packet[sizeof(int) + LARGEST_PACKET + 16];
-
-int SendTCPPacket(void* data, int len) {
-    // Verify packet size can fit
-    if (len > LARGEST_PACKET - PACKET_HEADER_SIZE ) {
-        LOG_WARNING("Packet too large!");
-        return -1;
-    }
-
-    struct RTPPacket* packet = (struct RTPPacket*)unbounded_packet;
-
-    // Initialize the packet with all relevant data
-    packet->id = -1;
-    packet->type = PACKET_MESSAGE;
-    memcpy(packet->data, data, len);
-    packet->payload_size = len;
-
-    // Calculate packet size
-    int packet_size = PACKET_HEADER_SIZE + len;
-
-    // Encrypt the packet using aes encryption
-    int encrypt_len = encrypt_packet(
-        packet, packet_size,
-        (struct RTPPacket*)(sizeof(int) + encrypted_unbounded_packet),
-        (unsigned char*)PRIVATE_KEY);
-    *((int*)encrypted_unbounded_packet) = encrypt_len;
-
-    // Send the packet
-    LOG_INFO("Sending TCP Packet... %d\n", encrypt_len);
-    bool failed = false;
-    if (sendp(&PacketTCPContext, encrypted_unbounded_packet,
-              sizeof(int) + encrypt_len) < 0) {
-        LOG_WARNING("Failed to send packet!");
-        failed = true;
-    }
-    LOG_INFO("Successfully sent!");
-
-    // Return success code
-    return failed ? -1 : 0;
 }
 
 int SendPacket(void* data, int len) {
@@ -479,18 +431,21 @@ int ReceivePackets(void* opaque) {
             // Check packet type and then redirect packet to the proper packet handler
             switch (packet.type) {
                 case PACKET_VIDEO:
+                    // Video packet
                     StartTimer(&video_timer);
                     ReceiveVideo(&packet);
                     video_time += GetTimer(video_timer);
                     max_video_time = max(max_video_time, GetTimer(video_timer));
                     break;
                 case PACKET_AUDIO:
+                    // Audio packet
                     StartTimer(&audio_timer);
                     ReceiveAudio(&packet);
                     audio_time += GetTimer(audio_timer);
                     max_audio_time = max(max_audio_time, GetTimer(audio_timer));
                     break;
                 case PACKET_MESSAGE:
+                    // A FractalServerMessage for other information
                     StartTimer(&message_timer);
                     ReceiveMessage(&packet);
                     message_time += GetTimer(message_timer);
@@ -514,6 +469,7 @@ int ReceivePackets(void* opaque) {
     return 0;
 }
 
+// Receiving a FractalServerMessage
 int ReceiveMessage(struct RTPPacket* packet) {
     // Extract fmsg from the packet
     FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
@@ -632,13 +588,15 @@ int main(int argc, char* argv[]) {
 #endif
     initBacktraceHandler();
 
+    // Parse all command-line arguments
+
     int num_required_args = 1;
     int num_optional_args = 3;
     if (argc - 1 < num_required_args ||
         argc - 1 > num_required_args + num_optional_args) {
         printf(
             "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] "
-            "[[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]");
+            "[[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]\n");
         return -1;
     }
 
@@ -659,22 +617,28 @@ int main(int argc, char* argv[]) {
         max_bitrate = atoi(argv[4]);
     }
 
+    // Write ecdsa key to a local file for ssh to use, for that server ip
+    // This will identify the connecting server as the correct server and not an imposter
     FILE* ssh_key_host = fopen("ssh_host_ecdsa_key.pub", "w");
     fprintf(ssh_key_host, "%s %s\n", server_ip, HOST_PUBLIC_KEY);
     fclose(ssh_key_host);
 
+    // Initialize the SDL window
     window = initSDL(output_width, output_height);
     if (!window) {
         LOG_ERROR("Failed to initialized SDL");
         return -1;
     }
+
     // After creating the window, we will grab DPI-adjusted dimensions in real pixels
     output_width = get_window_pixel_width( (SDL_Window*)window );
     output_height = get_window_pixel_height( (SDL_Window*)window );
 
+    // Set all threads to highest priority
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
+
 #ifdef _WIN32
-    // no cache needed on windows
+    // no cache needed on windows, use local directory
     initLogger(".");
 #else  // macos, linux
     // apple cache, can't be in the same folder as bundled app
@@ -685,11 +649,12 @@ int main(int argc, char* argv[]) {
     initLogger(path);
 #endif
 
+    // Initialize clipboard and video
     initClipboard();
-
-    exiting = false;
     initVideo();
+    exiting = false;
 
+    // Try 3 times if a failure to connect occurs
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         // If this is a retry, wait a bit more for the server to recover
         if (try_amount > 0) {
@@ -697,8 +662,8 @@ int main(int argc, char* argv[]) {
             SDL_Delay(1000);
         }
 
-        // initialize the windows socket library if this is a windows client
 #if defined(_WIN32)
+        // Initialize the windows socket library if this is a windows client
         WSADATA wsa;
         if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
             mprintf("Failed to initialize Winsock with error code: %d.\n",
@@ -707,8 +672,9 @@ int main(int argc, char* argv[]) {
         }
 #endif
 
-        SDL_Event msg;
-        FractalClientMessage fmsg = {0};
+        // Create connection contexts to the server application
+
+        // First context: Sending packets to server
 
         if (CreateUDPContext(&PacketSendContext, ORIGIN_CLIENT,
                              (char*)server_ip, PORT_CLIENT_TO_SERVER, 10,
@@ -718,6 +684,8 @@ int main(int argc, char* argv[]) {
         }
 
         SDL_Delay(150);
+
+        // Second context: Receiving packets from server
 
         struct SocketContext PacketReceiveContext = {0};
         if (CreateUDPContext(&PacketReceiveContext, ORIGIN_CLIENT,
@@ -730,6 +698,8 @@ int main(int argc, char* argv[]) {
 
         SDL_Delay(150);
 
+        // Third context: Mutual TCP context for essential but not-speed-sensitive applications
+
         if (CreateTCPContext(&PacketTCPContext, ORIGIN_CLIENT, (char*)server_ip,
                              PORT_SHARED_TCP, 1, 500) < 0) {
             LOG_ERROR("Failed finish connection to server");
@@ -738,7 +708,7 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        // Initialize video and audio
+        // Initialize audio and variables
         send_packet_mutex = SDL_CreateMutex();
         is_timing_latency = false;
         connected = true;
@@ -760,13 +730,11 @@ int main(int argc, char* argv[]) {
         bool lgui_pressed = false;
         bool rgui_pressed = false;
 
-        SDL_Delay(250);
-
         clock waiting_for_init_timer;
         StartTimer(&waiting_for_init_timer);
         while (!received_server_init_message) {
-            // If 350ms and no init timer was received, we should disconnect because something failed
-            if (GetTimer(waiting_for_init_timer) > 350 / 1000.0) {
+            // If 500ms and no init timer was received, we should disconnect because something failed
+            if (GetTimer(waiting_for_init_timer) > 500 / 1000.0) {
                 LOG_ERROR("Took too long for init timer!");
                 exiting = true;
                 break;
@@ -774,8 +742,13 @@ int main(int argc, char* argv[]) {
             SDL_Delay(25);
         }
 
+        SDL_Event msg;
+        FractalClientMessage fmsg = { 0 };
+
+        // Poll input for as long as we are connected and not exiting
+        // This code will run once every millisecond
         while (connected && !exiting) {
-            // Update the keyboard state
+            // Every 50ms we should syncronize the keyboard state
             if (GetTimer(keyboard_sync_timer) > 50.0 / 1000.0) {
                 SDL_Delay(5);
                 fmsg.type = MESSAGE_KEYBOARD_STATE;
@@ -788,10 +761,13 @@ int main(int argc, char* argv[]) {
                 fmsg.num_keycodes = fmin(NUM_KEYCODES, num_keys);
 #endif
 
+                // lgui/rgui don't work with SDL_GetKeyboardState for some reason, so set manually
                 state[FK_LGUI] = lgui_pressed;
                 state[FK_RGUI] = rgui_pressed;
+                // Copy keyboard state
                 memcpy(fmsg.keyboard_state, state, fmsg.num_keycodes);
 
+                // Also send caps lock and num lock status for syncronization
                 fmsg.caps_lock = SDL_GetModState() & KMOD_CAPS;
                 fmsg.num_lock = SDL_GetModState() & KMOD_NUM;
 
@@ -800,6 +776,7 @@ int main(int argc, char* argv[]) {
                 StartTimer(&keyboard_sync_timer);
             }
 
+            // Check if event is waiting
             fmsg.type = 0;
             if (SDL_PollEvent(&msg)) {
                 // Grab SDL event and handle the various input and window events
@@ -807,10 +784,12 @@ int main(int argc, char* argv[]) {
                     case SDL_WINDOWEVENT:
                         if( msg.window.event == SDL_WINDOWEVENT_SIZE_CHANGED )
                         {
+                            // Let video thread know about the resizing to reinitialize display dimensions
                             set_video_active_resizing( false );
                             output_width = get_window_pixel_width( (SDL_Window*)window );
                             output_height = get_window_pixel_height( (SDL_Window*)window );
 
+                            // Let the server know the new dimensions so that it can change native dimensions for monitor
                             fmsg.type = MESSAGE_DIMENSIONS;
                             fmsg.dimensions.width = output_width;
                             fmsg.dimensions.height = output_height;
@@ -830,6 +809,7 @@ int main(int argc, char* argv[]) {
                         fmsg.keyboard.mod = msg.key.keysym.mod;
                         fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN;
 
+                        // Keep memory of alt/ctrl/lgui/rgui status
                         if (fmsg.keyboard.code == FK_LALT) {
                             alt_pressed = fmsg.keyboard.pressed;
                         }
@@ -851,6 +831,9 @@ int main(int argc, char* argv[]) {
 
                         break;
                     case SDL_MOUSEMOTION:
+                        // Relative motion is the delta x and delta y from last mouse position
+                        // Absolute mouse position is where it is on the screen
+                        // We multiply by scaling factor so that integer division doesn't destroy accuracy
                         fmsg.type = MESSAGE_MOUSE_MOTION;
                         fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
                         fmsg.mouseMotion.x = fmsg.mouseMotion.relative
@@ -868,17 +851,21 @@ int main(int argc, char* argv[]) {
                         break;
                     case SDL_MOUSEBUTTONDOWN:
                     case SDL_MOUSEBUTTONUP:
+                        // Handle mouse click
                         fmsg.type = MESSAGE_MOUSE_BUTTON;
+                        // Record if left / right / middle button
                         fmsg.mouseButton.button = msg.button.button;
                         fmsg.mouseButton.pressed =
                             msg.button.type == SDL_MOUSEBUTTONDOWN;
                         break;
                     case SDL_MOUSEWHEEL:
+                        // Record mousewheel x/y change
                         fmsg.type = MESSAGE_MOUSE_WHEEL;
                         fmsg.mouseWheel.x = msg.wheel.x;
                         fmsg.mouseWheel.y = msg.wheel.y;
                         break;
                     case SDL_QUIT:
+                        // Quit if SDL_QUIT received
                         LOG_ERROR("Forcefully Quitting...");
                         exiting = true;
                         break;
@@ -896,6 +883,7 @@ int main(int argc, char* argv[]) {
 
         // Send quit message to server so that it can efficiently disconnect from the protocol and start accepting new connections
         if (exiting) {
+            // Send a couple times just to more sure it gets sent
             fmsg.type = CMESSAGE_QUIT;
             SDL_Delay(50);
             SendFmsg(&fmsg);
@@ -906,12 +894,14 @@ int main(int argc, char* argv[]) {
             SDL_Delay(50);
         }
 
+        // Trigger end of ReceivePackets thread
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
 
-        // Destroy video and audio
+        // Destroy audio
         destroyAudio();
 
+        // Close all open sockets
         closesocket(PacketSendContext.s);
         closesocket(PacketReceiveContext.s);
         closesocket(PacketTCPContext.s);
@@ -920,6 +910,8 @@ int main(int argc, char* argv[]) {
         WSACleanup();
 #endif
     }
+
+    // Destroy video, logger, and SDL
 
     destroyVideo();
     LOG_INFO("Closing Client...");

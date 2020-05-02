@@ -211,14 +211,22 @@ int UpdateClipboardThread(void* opaque) {
 }
 
 void updateClipboard() {
-    if (updating_clipboard) {
-        pending_update_clipboard = true;
-    } else {
-        LOG_INFO("Pushing update to clipboard");
-        pending_update_clipboard = false;
-        updating_clipboard = true;
-        updating_set_clipboard = false;
-        clipboard = GetClipboard();
-        SDL_SemPost(clipboard_semaphore);
+    // If the clipboard has updated since we last checked, or a previous clipboard update is still pending, then we try to update the clipboard
+    if( hasClipboardUpdated() || pendingUpdateClipboard() )
+    {
+        if( updating_clipboard )
+        {
+            // Clipboard is busy, to set pending update clipboard to true to make sure we keep checking the clipboard state
+            pending_update_clipboard = true;
+        } else
+        {
+            LOG_INFO( "Pushing update to clipboard" );
+            // Clipboard is no longer pending
+            pending_update_clipboard = false;
+            updating_clipboard = true;
+            updating_set_clipboard = false;
+            clipboard = GetClipboard();
+            SDL_SemPost( clipboard_semaphore );
+        }
     }
 }

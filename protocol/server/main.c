@@ -99,42 +99,6 @@ int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     return 0;
 }
 
-static char single_packet_buf[10000000];
-static char encrypted_single_packet_buf[10000000];
-int SendTCPPacket(struct SocketContext* context, FractalPacketType type,
-                  uint8_t* data, int len) {
-    struct RTPPacket* packet = (struct RTPPacket*)single_packet_buf;
-
-    // Construct packet
-    packet->type = type;
-    memcpy(packet->data, data, len);
-    packet->index = 0;
-    packet->payload_size = len;
-    packet->id = -1;
-    packet->num_indices = 1;
-    packet->is_a_nack = false;
-    int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
-
-    // Encrypt the packet
-    int encrypt_len = encrypt_packet(
-        packet, packet_size,
-        (struct RTPPacket*)(sizeof(int) + encrypted_single_packet_buf),
-        (unsigned char*)PRIVATE_KEY);
-    *((int*)encrypted_single_packet_buf) = encrypt_len;
-
-    // Send it off
-    mprintf("Sending %d bytes over TCP!\n", encrypt_len);
-    int sent_size =
-        sendp(context, encrypted_single_packet_buf, sizeof(int) + encrypt_len);
-
-    if (sent_size < 0) {
-        int error = GetLastNetworkError();
-        mprintf("Unexpected Packet Error: %d\n", error);
-        return -1;
-    }
-    return 0;  // success
-}
-
 int SendPacket(struct SocketContext* context, FractalPacketType type,
                uint8_t* data, int len, int id) {
     if (id <= 0) {
