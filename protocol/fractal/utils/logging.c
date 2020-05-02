@@ -1,4 +1,5 @@
 #if defined(_WIN32)
+#include <Windows.h>
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
@@ -272,12 +273,12 @@ double GetTimer(clock timer) {
     return ret;
 }
 
-#ifndef _WIN32
+
 SDL_mutex *crash_handler_mutex;
 
 void crash_handler(int sig) {
     SDL_LockMutex(crash_handler_mutex);
-
+#ifndef _WIN32
 #define HANDLER_ARRAY_SIZE 100
 
     void *array[HANDLER_ARRAY_SIZE];
@@ -300,12 +301,41 @@ void crash_handler(int sig) {
 //    printf("%s", command_bf);
 //    system(command_bf);
 //    system("ls \n");
+#else
+    // completely untested (Hamish does not have a dev windows machine )
+    // https://stackoverflow.com/questions/5693192/win32-backtrace-from-c-code/21400864
+    // I think we need this header to do this: #include <Windows.h>
+    unsigned int   i;
+    void         * stack[ 100 ];
+    unsigned short frames;
+    SYMBOL_INFO  * symbol;
+    HANDLE         process;
+
+    process = GetCurrentProcess();
+
+    SymInitialize( process, NULL, TRUE );
+
+    frames               = CaptureStackBackTrace( 0, 100, stack, NULL );
+    symbol               = ( SYMBOL_INFO * )calloc( sizeof( SYMBOL_INFO ) + 256 * sizeof( char ), 1 );
+    symbol->MaxNameLen   = 255;
+    symbol->SizeOfStruct = sizeof( SYMBOL_INFO );
+    int fd = fileno(mprintf_log_file);
+    for( i = 0; i < frames; i++ )
+    {
+     SymFromAddr( process, ( DWORD64 )( stack[ i ] ), 0, symbol );
+
+     dprintf(fd, "%i: %s - 0x%0X\n", frames - i - 1, symbol->Name, symbol->Address );
+    }
+
+    free( symbol );
+
+#endif
     SDL_UnlockMutex(crash_handler_mutex);
 
     SDL_Delay(100);
     exit(-1);
 }
-#endif
+
 
 void initBacktraceHandler() {
 #ifndef _WIN32
