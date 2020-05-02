@@ -24,6 +24,7 @@ OBJS = \
 	audiodecode.obj \
 	logging.obj \
 	network.obj \
+        sdl_utils.obj \
 	sdlscreeninfo.obj \
 	video.obj \
 	audio.obj \
@@ -116,6 +117,10 @@ logging.obj:
 # compile the networking source file into object file
 network.obj:
 	$(CC) -c $(CFLAGS) ../fractal/network/network.c
+
+# compile the SDL screen info source file into object file
+sdl_utils.obj:
+	$(CC) -c $(CFLAGS) sdl_utils.c
 
 # compile the SDL screen info source file into object file
 sdlscreeninfo.obj:
