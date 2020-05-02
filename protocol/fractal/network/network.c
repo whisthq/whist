@@ -253,7 +253,7 @@ int SendComplexUDPPacket( struct SocketContext* context, FractalPacketType type,
             packet = packet_buffer;
         }
 
-        if( packet_len )
+        if( packet_len_buffer )
         {
             packet_len = packet_len_buffer;
         }
