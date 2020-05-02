@@ -99,133 +99,6 @@ int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     return 0;
 }
 
-int SendPacket(struct SocketContext* context, FractalPacketType type,
-               uint8_t* data, int len, int id) {
-    if (id <= 0) {
-        mprintf("IDs must be positive!\n");
-        return -1;
-    }
-
-    int payload_size;
-    int curr_index = 0, i = 0;
-
-    clock packet_timer;
-    StartTimer(&packet_timer);
-
-    int num_indices =
-        len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
-
-    // double max_delay = 5.0;
-    // double delay_thusfar = 0.0;
-
-    // Send some amount of packets every two milliseconds
-    int break_resolution = 2;
-
-    double num_indices_per_unit_latency = (AVERAGE_LATENCY_MS / 1000.0) *
-                                          (STARTING_BURST_BITRATE / 8.0) /
-                                          MAX_PAYLOAD_SIZE;
-
-    double break_distance = num_indices_per_unit_latency *
-                            (1.0 * break_resolution / AVERAGE_LATENCY_MS);
-
-    int num_breaks = (int)(num_indices / break_distance);
-    if (num_breaks < 0) {
-        num_breaks = 0;
-    }
-    int break_point = num_indices / (num_breaks + 1);
-
-    /*
-    if (type == PACKET_AUDIO) {
-        static int ddata = 0;
-        static clock last_timer;
-        if( ddata == 0 )
-        {
-            StartTimer( &last_timer );
-        }
-        ddata += len;
-        GetTimer( last_timer );
-        if( GetTimer( last_timer ) > 5.0 )
-        {
-            mprintf( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / GetTimer(
-    last_timer ) / 1024 ); ddata = 0;
-        }
-        // mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
-    }
-    */
-
-    while (curr_index < len) {
-        // Delay distribution of packets as needed
-        if (i > 0 && break_point > 0 && i % break_point == 0 &&
-            i < num_indices - break_point / 2) {
-            SDL_Delay(break_resolution);
-        }
-
-        // local packet and len for when nack buffer isn't needed
-        struct RTPPacket l_packet = {0};
-        int l_len = 0;
-
-        int* packet_len = &l_len;
-        struct RTPPacket* packet = &l_packet;
-
-        // Based on packet type, the packet to one of the buffers to serve later
-        // nacks
-        if (type == PACKET_AUDIO) {
-            if (i >= MAX_NUM_AUDIO_INDICES) {
-                mprintf("Audio index too long!\n");
-                return -1;
-            } else {
-                packet = &audio_buffer[id % AUDIO_BUFFER_SIZE][i];
-                packet_len =
-                    &audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE][i];
-            }
-        } else if (type == PACKET_VIDEO) {
-            if (i >= MAX_VIDEO_INDEX) {
-                mprintf("Video index too long!\n");
-                return -1;
-            } else {
-                packet = &video_buffer[id % VIDEO_BUFFER_SIZE][i];
-                packet_len =
-                    &video_buffer_packet_len[id % VIDEO_BUFFER_SIZE][i];
-            }
-        }
-        payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
-
-        // Construct packet
-        packet->type = type;
-        memcpy(packet->data, data + curr_index, payload_size);
-        packet->index = (short)i;
-        packet->payload_size = payload_size;
-        packet->id = id;
-        packet->num_indices = (short)num_indices;
-        packet->is_a_nack = false;
-        int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
-
-        // Save the len to nack buffer lens
-        *packet_len = packet_size;
-
-        // Encrypt the packet with AES
-        struct RTPPacket encrypted_packet;
-        int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
-                                         (unsigned char*)PRIVATE_KEY);
-
-        // Send it off
-        SDL_LockMutex(packet_mutex);
-        int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-        SDL_UnlockMutex(packet_mutex);
-
-        if (sent_size < 0) {
-            int error = GetLastNetworkError();
-            mprintf("Unexpected Packet Error: %d\n", error);
-            return -1;
-        }
-
-        i++;
-        curr_index += payload_size;
-    }
-
-    return 0;
-}
-
 bool pending_encoder;
 bool encoder_finished;
 encoder_t* encoder_factory_result = NULL;
@@ -486,8 +359,8 @@ int32_t SendVideo(void* opaque) {
                     // "");
 
                     // Send video packet to client
-                    if (SendPacket(&socketContext, PACKET_VIDEO,
-                                   (uint8_t*)frame, frame_size, id) < 0) {
+                    if ( SendComplexUDPPacket(&socketContext, PACKET_VIDEO,
+                                   (uint8_t*)frame, frame_size, id, STARTING_BURST_BITRATE, video_buffer[id % VIDEO_BUFFER_SIZE], video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) < 0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     } else {
                         // Only increment ID if the send succeeded
@@ -538,8 +411,8 @@ int32_t SendAudio(void* opaque) {
     FractalServerMessage fmsg;
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
     fmsg.frequency = audio_device->sample_rate;
-    SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t*)&fmsg,
-               sizeof(fmsg), 1);
+    SendComplexUDPPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t*)&fmsg,
+               sizeof(fmsg), 1, STARTING_BURST_BITRATE, NULL, NULL);
     mprintf("Audio Frequency: %d\n", audio_device->sample_rate);
 
     // setup
@@ -581,9 +454,9 @@ int32_t SendAudio(void* opaque) {
 
                     // Send packet
 
-                    if (SendPacket(&context, PACKET_AUDIO,
+                    if (SendComplexUDPPacket(&context, PACKET_AUDIO,
                                    audio_encoder->packet.data,
-                                   audio_encoder->packet.size, id) < 0) {
+                                   audio_encoder->packet.size, id, STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE], audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE] ) < 0) {
                         mprintf("Could not send audio frame\n");
                     }
                     // mprintf("sent audio frame %d\n", id);
@@ -594,9 +467,11 @@ int32_t SendAudio(void* opaque) {
                     av_packet_unref(&audio_encoder->packet);
                 }
 #else
-                if (SendPacket(&context, PACKET_AUDIO, audio_device->buffer,
-                               audio_device->buffer_size, id) < 0) {
-                    mprintf("Could not send audio frame\n");
+                if( SendComplexUDPPacket( &context, PACKET_AUDIO,
+                                          audio_device->buffer,
+                                          audio_device->buffer_size, id, STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE], audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE] ) < 0 )
+                {
+                    mprintf( "Could not send audio frame\n" );
                 }
                 id++;
 #endif
@@ -804,9 +679,9 @@ int main() {
                     mprintf("Exiting due to button press...\n");
                     FractalServerMessage fmsg_response = {0};
                     fmsg_response.type = SMESSAGE_QUIT;
-                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE,
+                    if (SendComplexUDPPacket(&PacketSendContext, PACKET_MESSAGE,
                                    (uint8_t*)&fmsg_response,
-                                   sizeof(FractalServerMessage), 1) < 0) {
+                                   sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL, NULL) < 0) {
                         mprintf("Could not send Quit Message\n");
                     }
                     // Give a bit of time to make sure no one is touching it
@@ -910,9 +785,9 @@ int main() {
                     fmsg_response.type = MESSAGE_PONG;
                     fmsg_response.ping_id = fmsg->ping_id;
                     StartTimer(&last_ping);
-                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE,
+                    if (SendComplexUDPPacket(&PacketSendContext, PACKET_MESSAGE,
                                    (uint8_t*)&fmsg_response,
-                                   sizeof(fmsg_response), 1) < 0) {
+                                   sizeof(fmsg_response), 1, STARTING_BURST_BITRATE, NULL, NULL) < 0) {
                         mprintf("Could not send Pong\n");
                     }
                 } else if (fmsg->type == MESSAGE_DIMENSIONS) {

@@ -52,7 +52,6 @@ volatile char* server_ip;
 
 // Function Declarations
 
-SDL_mutex* send_packet_mutex;
 int ReceivePackets(void* opaque);
 int ReceiveMessage(struct RTPPacket* packet);
 bool received_server_init_message;
@@ -203,8 +202,6 @@ void update() {
 }
 // END UPDATER CODE
 
-int SendPacket(void* data, int len);
-
 // Large fmsg's should be sent over TCP. At the moment, this is only CLIPBOARD messages
 // FractalClientMessage packet over UDP that requires multiple sub-packets to send, it not supported
 // (If low latency large FractalClientMessage packets are needed, then this will have to be implemented)
@@ -212,48 +209,10 @@ int SendFmsg(struct FractalClientMessage* fmsg) {
     if (fmsg->type == CMESSAGE_CLIPBOARD) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
     } else {
-        return SendPacket(fmsg, GetFmsgSize(fmsg));
+        static int sent_packet_id = 0;
+        sent_packet_id++;
+        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg), sent_packet_id);
     }
-}
-
-int SendPacket(void* data, int len) {
-    // Verify packet size can fit
-    if (len > MAX_PAYLOAD_SIZE - PACKET_HEADER_SIZE ) {
-        LOG_WARNING("Packet too large!");
-        return -1;
-    }
-
-    // Local packet
-    struct RTPPacket packet = {0};
-
-    // Packet ID is ever incrementing
-    static int sent_packet_id = 1;
-    packet.id = sent_packet_id;
-    sent_packet_id++;
-
-    // Initialize packet data
-    packet.type = PACKET_MESSAGE;
-    memcpy(packet.data, data, len);
-    packet.payload_size = len;
-
-    int packet_size = PACKET_HEADER_SIZE + len;
-
-    // Encrypt the packet using aes encryption
-    struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet(&packet, packet_size, &encrypted_packet,
-                                     (unsigned char*)PRIVATE_KEY);
-
-    // Send the packet
-    bool failed = false;
-    SDL_LockMutex(send_packet_mutex);
-    if (sendp(&PacketSendContext, &encrypted_packet, encrypt_len) < 0) {
-        LOG_WARNING("Failed to send packet!");
-        failed = true;
-    }
-    SDL_UnlockMutex(send_packet_mutex);
-
-    // Return success code
-    return failed ? -1 : 0;
 }
 
 int ReceivePackets(void* opaque) {
@@ -411,7 +370,7 @@ int ReceivePackets(void* opaque) {
             lastrecv = 0.0;
         }
 
-        LOG_INFO("Recv wait time: %f", GetTimer(recvfrom_timer));
+        //LOG_INFO("Recv wait time: %f", GetTimer(recvfrom_timer));
 
         if (recv_size == 0) {
             // This packet was just an ACK; It can be ignored
@@ -709,7 +668,6 @@ int main(int argc, char* argv[]) {
         }
 
         // Initialize audio and variables
-        send_packet_mutex = SDL_CreateMutex();
         is_timing_latency = false;
         connected = true;
         initAudio();

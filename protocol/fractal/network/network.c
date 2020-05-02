@@ -127,6 +127,181 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type,
     return failed ? -1 : 0;
 }
 
+int SendUDPPacket( struct SocketContext* context, FractalPacketType type, void* data, int len, int id )
+{
+    // Verify packet size can fit
+    if( len > MAX_PAYLOAD_SIZE - PACKET_HEADER_SIZE )
+    {
+        LOG_WARNING( "Packet too large!" );
+        return -1;
+    }
+
+    // Local packet
+    struct RTPPacket packet = { 0 };
+
+    // Set packet ID
+    packet.id = id;
+
+    // Initialize packet data
+    packet.type = type;
+    memcpy( packet.data, data, len );
+    packet.payload_size = len;
+
+    int packet_size = PACKET_HEADER_SIZE + len;
+
+    // Encrypt the packet using aes encryption
+    struct RTPPacket encrypted_packet;
+    int encrypt_len = encrypt_packet( &packet, packet_size, &encrypted_packet,
+        (unsigned char*)PRIVATE_KEY );
+
+    // Send the packet
+    bool failed = false;
+    static SDL_mutex* send_packet_mutex = NULL;
+    if( !send_packet_mutex )
+    {
+        send_packet_mutex = SDL_CreateMutex();
+    }
+    SDL_LockMutex( send_packet_mutex );
+    if( sendp( context, &encrypted_packet, encrypt_len ) < 0 )
+    {
+        LOG_WARNING( "Failed to send packet!" );
+        failed = true;
+    }
+    SDL_UnlockMutex( send_packet_mutex );
+
+    // Return success code
+    return failed ? -1 : 0;
+}
+
+int SendComplexUDPPacket( struct SocketContext* context, FractalPacketType type,
+                uint8_t* data, int len, int id, int burst_bitrate, struct RTPPacket* packet_buffer, int* packet_len_buffer )
+{
+    if( id <= 0 )
+    {
+        mprintf( "IDs must be positive!\n" );
+        return -1;
+    }
+
+    int payload_size;
+    int curr_index = 0, i = 0;
+
+    clock packet_timer;
+    StartTimer( &packet_timer );
+
+    int num_indices =
+        len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
+
+    // double max_delay = 5.0;
+    // double delay_thusfar = 0.0;
+
+    // Send some amount of packets every two milliseconds
+    int break_resolution = 2;
+
+    double num_indices_per_unit_latency = (AVERAGE_LATENCY_MS / 1000.0) *
+        (burst_bitrate / 8.0) /
+        MAX_PAYLOAD_SIZE;
+
+    double break_distance = num_indices_per_unit_latency *
+        (1.0 * break_resolution / AVERAGE_LATENCY_MS);
+
+    int num_breaks = (int)(num_indices / break_distance);
+    if( num_breaks < 0 )
+    {
+        num_breaks = 0;
+    }
+    int break_point = num_indices / (num_breaks + 1);
+
+    /*
+    if (type == PACKET_AUDIO) {
+        static int ddata = 0;
+        static clock last_timer;
+        if( ddata == 0 )
+        {
+            StartTimer( &last_timer );
+        }
+        ddata += len;
+        GetTimer( last_timer );
+        if( GetTimer( last_timer ) > 5.0 )
+        {
+            mprintf( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / GetTimer(
+    last_timer ) / 1024 ); ddata = 0;
+        }
+        // mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
+    }
+    */
+
+    while( curr_index < len )
+    {
+        // Delay distribution of packets as needed
+        if( burst_bitrate > 0 && i > 0 && break_point > 0 && i % break_point == 0 &&
+            i < num_indices - break_point / 2 )
+        {
+            SDL_Delay( break_resolution );
+        }
+
+        // local packet and len for when nack buffer isn't needed
+        struct RTPPacket l_packet = { 0 };
+        int l_len = 0;
+
+        int* packet_len = &l_len;
+        struct RTPPacket* packet = &l_packet;
+
+        // Based on packet type, the packet to one of the buffers to serve later
+        // nacks
+        if( packet_buffer )
+        {
+            packet = packet_buffer;
+        }
+
+        if( packet_len )
+        {
+            packet_len = packet_len_buffer;
+        }
+
+        payload_size = min( MAX_PAYLOAD_SIZE, (len - curr_index) );
+
+        // Construct packet
+        packet->type = type;
+        memcpy( packet->data, data + curr_index, payload_size );
+        packet->index = (short)i;
+        packet->payload_size = payload_size;
+        packet->id = id;
+        packet->num_indices = (short)num_indices;
+        packet->is_a_nack = false;
+        int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
+
+        // Save the len to nack buffer lens
+        *packet_len = packet_size;
+
+        // Encrypt the packet with AES
+        struct RTPPacket encrypted_packet;
+        int encrypt_len = encrypt_packet( packet, packet_size, &encrypted_packet,
+            (unsigned char*)PRIVATE_KEY );
+
+        // Send it off
+        static SDL_mutex* send_packet_mutex = NULL;
+        if( !send_packet_mutex )
+        {
+            send_packet_mutex = SDL_CreateMutex();
+        }
+        SDL_LockMutex( send_packet_mutex );
+        int sent_size = sendp( context, &encrypted_packet, encrypt_len );
+        SDL_UnlockMutex( send_packet_mutex );
+
+        if( sent_size < 0 )
+        {
+            int error = GetLastNetworkError();
+            mprintf( "Unexpected Packet Error: %d\n", error );
+            return -1;
+        }
+
+        i++;
+        curr_index += payload_size;
+    }
+
+    return 0;
+}
+
 int recvp(struct SocketContext *context, void *buf, int len) {
     return recv(context->s, buf, len, 0);
 }

@@ -105,6 +105,7 @@ SDL_Window* initSDL(int output_width, int output_height)
 
 void destroySDL(SDL_Window* window)
 {
+    LOG_INFO( "Destroying SDL" );
 #if defined(_WIN32)
     UnhookWindowsHookEx( g_hKeyboardHook );
 #endif
@@ -113,7 +114,6 @@ void destroySDL(SDL_Window* window)
         SDL_DestroyWindow( (SDL_Window*)window );
         window = NULL;
     }
-    LOG_INFO( "Destroying SDL" );
     SDL_Quit();
 }
 
