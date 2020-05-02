@@ -478,6 +478,7 @@ def swapDisk(self, disk_name):
 		vm_credentials = fetchVMCredentials(vm_name)
 		lockVM(vm_name, False)
 		return vm_credentials
+		
 	# Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
 	# (then reboot the VM), or wait until a VM becomes available.
 	if not vm_attached:
