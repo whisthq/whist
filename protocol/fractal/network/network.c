@@ -128,7 +128,7 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type,
 }
 
 int SendUDPPacket( struct SocketContext* context, FractalPacketType type,
-                uint8_t* data, int len, int id, int burst_bitrate, struct RTPPacket* packet_buffer, int* packet_len_buffer )
+                void* data, int len, int id, int burst_bitrate, struct RTPPacket* packet_buffer, int* packet_len_buffer )
 {
     if( id <= 0 )
     {
