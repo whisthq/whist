@@ -754,7 +754,7 @@ int main(int argc, char* argv[]) {
         clock keyboard_sync_timer;
         StartTimer(&keyboard_sync_timer);
 
-        // Initialize variables
+        // Initialize keyboard state variables
         bool alt_pressed = false;
         bool ctrl_pressed = false;
         bool lgui_pressed = false;
@@ -765,6 +765,7 @@ int main(int argc, char* argv[]) {
         clock waiting_for_init_timer;
         StartTimer(&waiting_for_init_timer);
         while (!received_server_init_message) {
+            // If 350ms and no init timer was received, we should disconnect because something failed
             if (GetTimer(waiting_for_init_timer) > 350 / 1000.0) {
                 LOG_ERROR("Took too long for init timer!");
                 exiting = true;
@@ -801,6 +802,7 @@ int main(int argc, char* argv[]) {
 
             fmsg.type = 0;
             if (SDL_PollEvent(&msg)) {
+                // Grab SDL event and handle the various input and window events
                 switch (msg.type) {
                     case SDL_WINDOWEVENT:
                         if( msg.window.event == SDL_WINDOWEVENT_SIZE_CHANGED )
@@ -892,6 +894,7 @@ int main(int argc, char* argv[]) {
 
         LOG_INFO("Disconnecting...");
 
+        // Send quit message to server so that it can efficiently disconnect from the protocol and start accepting new connections
         if (exiting) {
             fmsg.type = CMESSAGE_QUIT;
             SDL_Delay(50);
