@@ -282,20 +282,30 @@ void crash_handler(int sig) {
 
     void *array[HANDLER_ARRAY_SIZE];
     size_t size;
+    // open log file
+    char f[1000] = "";
+    strcat(f, log_directory); //global var initialised in initLogger
+    strcat(f, "/log.txt");
+    printf("log file: %s", f);
+
 
     // get void*'s for all entries on the stack
     size = backtrace(array, HANDLER_ARRAY_SIZE);
 
     // print out all the frames to stderr
-    fprintf(stderr, "\nError: signal %d:\n", sig);
-    backtrace_symbols_fd(array, size, STDERR_FILENO);
-
-    fprintf(stderr, "addr2line -e build64/server");
-    for (size_t i = 0; i < size; i++) {
-        fprintf(stderr, " %p", array[i]);
-    }
-    fprintf(stderr, "\n\n");
-
+    mprintf("\nError: signal %d:\n", sig);
+    int fd = fileno(mprintf_log_file);
+    backtrace_symbols_fd(array, size, fd);
+//    char command_bf[13 + 16 * size +1];
+//    size_t idx = sprintf(command_bf, "addr2line -e FractalClient");
+//
+//    for (size_t i = 0; i < size; i++) {
+//        idx += sprintf(&command_bf[idx]," %p", array[i]);
+//    }
+//    sprintf(&command_bf[idx], " >> %s \n\n ", f);
+//    printf("%s", command_bf);
+//    system(command_bf);
+//    system("ls \n");
     SDL_UnlockMutex(crash_handler_mutex);
 
     SDL_Delay(100);

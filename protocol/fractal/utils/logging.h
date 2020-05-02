@@ -102,10 +102,7 @@ bool sendLog();
 // Get current time
 static inline char* timenow() {
     static char buffer[64];
-//    time_t rawtime;
-//
-//    time(&rawtime);
-//    timeinfo = localtime(&rawtime);
+
 #if defined(_WIN32)
     SYSTEMTIME time_now;
     GetSystemTime(&time_now);
@@ -120,9 +117,6 @@ static inline char* timenow() {
     snprintf(buffer, 20, "%02i:%02i:%02i:%06li", time_str_tm->tm_hour,
              time_str_tm->tm_min, time_str_tm->tm_sec, time_now.tv_usec);
 #endif
-
-    //    strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
-
     return buffer;
 }
 // *** END FUNCTIONS ***
