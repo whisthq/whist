@@ -22,6 +22,13 @@ def createVM(self, vm_size, location):
 
 	print('NOTIFICATION: VM {} created'.format(vmName))
 
+
+	async_vm_start = compute_client.virtual_machines.start(
+		os.environ.get('VM_GROUP'), vmParameters['vm_name'])
+	async_vm_start.wait()
+
+	print('NOTIFICATION: New VM {} started'.format(vmName))
+	
 	extension_parameters = {
 		'location': location,
 		'publisher': 'Microsoft.HpcCompute',
@@ -38,12 +45,6 @@ def createVM(self, vm_size, location):
 
 
 	print('NOTIFICATION: Installed extension on {}'.format(vmName))
-
-	async_vm_start = compute_client.virtual_machines.start(
-		os.environ.get('VM_GROUP'), vmParameters['vm_name'])
-	async_vm_start.wait()
-
-	print('NOTIFICATION: New VM {} started'.format(vmName))
 
 	# with open('app/scripts/vmCreate.txt', 'r') as file:
 	# 	print("TASK: Starting to run Powershell scripts")
