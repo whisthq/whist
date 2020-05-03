@@ -77,7 +77,7 @@ volatile bool update_encoder;
 int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
                  size_t len) {
     if (len > sizeof(struct RTPPacket)) {
-        LOG_WARNING("Len too long!\n");
+        mprintf("Len too long!\n");
         return -1;
     }
 
@@ -92,171 +92,8 @@ int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
     SDL_UnlockMutex(packet_mutex);
 
     if (sent_size < 0) {
-        LOG_WARNING("Could not replay packet!\n");
+        mprintf("Could not replay packet!\n");
         return -1;
-    }
-
-    return 0;
-}
-
-static char single_packet_buf[10000000];
-static char encrypted_single_packet_buf[10000000];
-int SendTCPPacket(struct SocketContext* context, FractalPacketType type,
-                  uint8_t* data, int len) {
-    struct RTPPacket* packet = (struct RTPPacket*)single_packet_buf;
-
-    // Construct packet
-    packet->type = type;
-    memcpy(packet->data, data, len);
-    packet->index = 0;
-    packet->payload_size = len;
-    packet->id = -1;
-    packet->num_indices = 1;
-    packet->is_a_nack = false;
-    int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
-
-    // Encrypt the packet
-    int encrypt_len = encrypt_packet(
-        packet, packet_size,
-        (struct RTPPacket*)(sizeof(int) + encrypted_single_packet_buf),
-        (unsigned char*)PRIVATE_KEY);
-    *((int*)encrypted_single_packet_buf) = encrypt_len;
-
-    // Send it off
-    LOG_INFO("Sending %d bytes over TCP!\n", encrypt_len);
-    int sent_size =
-        sendp(context, encrypted_single_packet_buf, sizeof(int) + encrypt_len);
-
-    if (sent_size < 0) {
-        int error = GetLastNetworkError();
-        LOG_WARNING("Unexpected Packet Error: %d\n", error);
-        return -1;
-    }
-    return 0;  // success
-}
-
-int SendPacket(struct SocketContext* context, FractalPacketType type,
-               uint8_t* data, int len, int id) {
-    if (id <= 0) {
-        LOG_WARNING("IDs must be positive!\n");
-        return -1;
-    }
-
-    int payload_size;
-    int curr_index = 0, i = 0;
-
-    clock packet_timer;
-    StartTimer(&packet_timer);
-
-    int num_indices =
-        len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
-
-    // double max_delay = 5.0;
-    // double delay_thusfar = 0.0;
-
-    // Send some amount of packets every two milliseconds
-    int break_resolution = 2;
-
-    double num_indices_per_unit_latency = (AVERAGE_LATENCY_MS / 1000.0) *
-                                          (STARTING_BURST_BITRATE / 8.0) /
-                                          MAX_PAYLOAD_SIZE;
-
-    double break_distance = num_indices_per_unit_latency *
-                            (1.0 * break_resolution / AVERAGE_LATENCY_MS);
-
-    int num_breaks = (int)(num_indices / break_distance);
-    if (num_breaks < 0) {
-        num_breaks = 0;
-    }
-    int break_point = num_indices / (num_breaks + 1);
-
-    /*
-    if (type == PACKET_AUDIO) {
-        static int ddata = 0;
-        static clock last_timer;
-        if( ddata == 0 )
-        {
-            StartTimer( &last_timer );
-        }
-        ddata += len;
-        GetTimer( last_timer );
-        if( GetTimer( last_timer ) > 5.0 )
-        {
-            mprintf( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / GetTimer(
-    last_timer ) / 1024 ); ddata = 0;
-        }
-        // mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
-    }
-    */
-
-    while (curr_index < len) {
-        // Delay distribution of packets as needed
-        if (i > 0 && break_point > 0 && i % break_point == 0 &&
-            i < num_indices - break_point / 2) {
-            SDL_Delay(break_resolution);
-        }
-
-        // local packet and len for when nack buffer isn't needed
-        struct RTPPacket l_packet = {0};
-        int l_len = 0;
-
-        int* packet_len = &l_len;
-        struct RTPPacket* packet = &l_packet;
-
-        // Based on packet type, the packet to one of the buffers to serve later
-        // nacks
-        if (type == PACKET_AUDIO) {
-            if (i >= MAX_NUM_AUDIO_INDICES) {
-                LOG_WARNING("Audio index too long!\n");
-                return -1;
-            } else {
-                packet = &audio_buffer[id % AUDIO_BUFFER_SIZE][i];
-                packet_len =
-                    &audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE][i];
-            }
-        } else if (type == PACKET_VIDEO) {
-            if (i >= MAX_VIDEO_INDEX) {
-                LOG_WARNING("Video index too long!\n");
-                return -1;
-            } else {
-                packet = &video_buffer[id % VIDEO_BUFFER_SIZE][i];
-                packet_len =
-                    &video_buffer_packet_len[id % VIDEO_BUFFER_SIZE][i];
-            }
-        }
-        payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
-
-        // Construct packet
-        packet->type = type;
-        memcpy(packet->data, data + curr_index, payload_size);
-        packet->index = (short)i;
-        packet->payload_size = payload_size;
-        packet->id = id;
-        packet->num_indices = (short)num_indices;
-        packet->is_a_nack = false;
-        int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
-
-        // Save the len to nack buffer lens
-        *packet_len = packet_size;
-
-        // Encrypt the packet with AES
-        struct RTPPacket encrypted_packet;
-        int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
-                                         (unsigned char*)PRIVATE_KEY);
-
-        // Send it off
-        SDL_LockMutex(packet_mutex);
-        int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-        SDL_UnlockMutex(packet_mutex);
-
-        if (sent_size < 0) {
-            int error = GetLastNetworkError();
-            LOG_WARNING("Unexpected Packet Error: %d\n", error);
-            return -1;
-        }
-
-        i++;
-        curr_index += payload_size;
     }
 
     return 0;
@@ -340,7 +177,7 @@ int32_t SendVideo(void* opaque) {
 
             device = &rdevice;
             if (CreateCaptureDevice(device, client_width, client_height) < 0) {
-                LOG_WARNING("Failed to create capture device\n");
+                mprintf("Failed to create capture device\n");
                 device = NULL;
                 update_device = true;
 
@@ -348,7 +185,7 @@ int32_t SendVideo(void* opaque) {
                 continue;
             }
 
-            LOG_INFO("Created Capture Device of dimensions %dx%d\n",
+            mprintf("Created Capture Device of dimensions %dx%d\n",
                     device->width, device->height);
 
             update_encoder = true;
@@ -394,12 +231,12 @@ int32_t SendVideo(void* opaque) {
         int accumulated_frames = 0;
         if (GetTimer(last_frame_capture) > 1.0 / FPS) {
             accumulated_frames = CaptureScreen(device);
-             LOG_INFO( "CaptureScreen: %d\n", accumulated_frames );
+            // mprintf( "CaptureScreen: %d\n", accumulated_frames );
         }
 
         // If capture screen failed, we should try again
         if (accumulated_frames < 0) {
-            LOG_WARNING("Failed to capture screen\n");
+            mprintf("Failed to capture screen\n");
 
             DestroyCaptureDevice(device);
             device = NULL;
@@ -418,10 +255,10 @@ int32_t SendVideo(void* opaque) {
             StartTimer(&last_frame_capture);
 
             if (accumulated_frames > 1) {
-                LOG_INFO("Accumulated Frames: %d\n", accumulated_frames);
+                mprintf("Accumulated Frames: %d\n", accumulated_frames);
             }
             if (accumulated_frames == 0) {
-                LOG_INFO("Sending current frame!\n");
+                mprintf("Sending current frame!\n");
             }
 
             // consecutive_capture_screen_errors = 0;
@@ -488,7 +325,7 @@ int32_t SendVideo(void* opaque) {
                             (int)(ratio_bitrate * current_bitrate);
                         if (abs(new_bitrate - current_bitrate) / new_bitrate >
                             0.05) {
-                            LOG_INFO("Updating bitrate from %d to %d\n",
+                            mprintf("Updating bitrate from %d to %d\n",
                                     current_bitrate, new_bitrate);
                             // TODO: Analyze bitrate handling with GOP size
                             // current_bitrate = new_bitrate;
@@ -502,7 +339,7 @@ int32_t SendVideo(void* opaque) {
 
                 int frame_size = sizeof(Frame) + encoder->packet.size;
                 if (frame_size > LARGEST_FRAME_SIZE) {
-                    LOG_WARNING("Frame too large: %d\n", frame_size);
+                    mprintf("Frame too large: %d\n", frame_size);
                 } else {
                     // Create frame struct with compressed frame data and
                     // metadata
@@ -522,9 +359,9 @@ int32_t SendVideo(void* opaque) {
                     // "");
 
                     // Send video packet to client
-                    if (SendPacket(&socketContext, PACKET_VIDEO,
-                                   (uint8_t*)frame, frame_size, id) < 0) {
-                        LOG_WARNING("Could not send video frame ID %d\n", id);
+                    if ( SendUDPPacket(&socketContext, PACKET_VIDEO,
+                                   (uint8_t*)frame, frame_size, id, STARTING_BURST_BITRATE, video_buffer[id % VIDEO_BUFFER_SIZE], video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) < 0) {
+                        mprintf("Could not send video frame ID %d\n", id);
                     } else {
                         // Only increment ID if the send succeeded
                         id++;
@@ -535,7 +372,7 @@ int32_t SendVideo(void* opaque) {
                     // server_frame_time);
                 }
             } else {
-                LOG_WARNING("Empty encoder packet");
+                mprintf("Empty encoder packet");
             }
         }
     }
@@ -559,9 +396,9 @@ int32_t SendAudio(void* opaque) {
     audio_device_t* audio_device =
         (audio_device_t*)malloc(sizeof(struct audio_device_t));
     audio_device = CreateAudioDevice(audio_device);
-    LOG_INFO("Created audio device!\n");
+    mprintf("Created audio device!\n");
     if (!audio_device) {
-        LOG_ERROR("Failed to create audio device...\n");
+        mprintf("Failed to create audio device...\n");
         return -1;
     }
     StartAudioDevice(audio_device);
@@ -574,9 +411,9 @@ int32_t SendAudio(void* opaque) {
     FractalServerMessage fmsg;
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
     fmsg.frequency = audio_device->sample_rate;
-    SendPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t*)&fmsg,
-               sizeof(fmsg), 1);
-    LOG_INFO("Audio Frequency: %d\n", audio_device->sample_rate);
+    SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t*)&fmsg,
+               sizeof(fmsg), 1, STARTING_BURST_BITRATE, NULL, NULL);
+    mprintf("Audio Frequency: %d\n", audio_device->sample_rate);
 
     // setup
 
@@ -587,7 +424,7 @@ int32_t SendAudio(void* opaque) {
             GetBuffer(audio_device);
 
             if (audio_device->buffer_size > 10000) {
-                LOG_WARNING("Audio buffer size too large!\n");
+                mprintf("Audio buffer size too large!\n");
             } else if (audio_device->buffer_size > 0) {
 #if USING_AUDIO_ENCODE_DECODE
 
@@ -605,7 +442,7 @@ int32_t SendAudio(void* opaque) {
 
                     if (res < 0) {
                         // bad boy error
-                        LOG_WARNING("error encoding packet\n");
+                        mprintf("error encoding packet\n");
                         continue;
                     } else if (res > 0) {
                         // no data or need more data
@@ -617,12 +454,12 @@ int32_t SendAudio(void* opaque) {
 
                     // Send packet
 
-                    if (SendPacket(&context, PACKET_AUDIO,
+                    if (SendUDPPacket(&context, PACKET_AUDIO,
                                    audio_encoder->packet.data,
-                                   audio_encoder->packet.size, id) < 0) {
-                        LOG_WARNING("Could not send audio frame\n");
+                                   audio_encoder->packet.size, id, STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE], audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE] ) < 0) {
+                        mprintf("Could not send audio frame\n");
                     }
-                    LOG_INFO("sent audio frame %d\n", id);
+                    // mprintf("sent audio frame %d\n", id);
                     id++;
 
                     // Free encoder packet
@@ -630,9 +467,11 @@ int32_t SendAudio(void* opaque) {
                     av_packet_unref(&audio_encoder->packet);
                 }
 #else
-                if (SendPacket(&context, PACKET_AUDIO, audio_device->buffer,
-                               audio_device->buffer_size, id) < 0) {
-                    mprintf("Could not send audio frame\n");
+                if( SendUDPPacket( &context, PACKET_AUDIO,
+                                          audio_device->buffer,
+                                          audio_device->buffer_size, id, STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE], audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE] ) < 0 )
+                {
+                    mprintf( "Could not send audio frame\n" );
                 }
                 id++;
 #endif
@@ -649,7 +488,7 @@ int32_t SendAudio(void* opaque) {
 }
 
 void update() {
-    LOG_INFO("Checking for updates...\n");
+    mprintf("Checking for updates...\n");
     runcmd(
 #ifdef _WIN32
         "powershell -command \"iwr -outf 'C:\\Program "
@@ -676,6 +515,7 @@ int main() {
 
     srand((unsigned int)time(NULL));
     connection_id = rand();
+    initBacktraceHandler();
 #ifdef _WIN32
     initLogger("C:\\ProgramData\\FractalCache");
 #else
@@ -683,16 +523,13 @@ int main() {
 #endif
     initClipboard();
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        LOG_ERROR("Failed to init SDL video");
-    }
-
+    SDL_Init(SDL_INIT_VIDEO);
 
 // initialize the windows socket library if this is a windows client
 #ifdef _WIN32
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        LOG_ERROR("Failed to initialize Winsock with error code: %d.\n",
+        mprintf("Failed to initialize Winsock with error code: %d.\n",
                 WSAGetLastError());
         return -1;
     }
@@ -700,7 +537,7 @@ int main() {
 
 #ifdef _WIN32
     if (!InitDesktop()) {
-        LOG_ERROR("Could not winlogon!\n");
+        mprintf("Could not winlogon!\n");
         sendLog();
         return 0;
     }
@@ -712,7 +549,7 @@ int main() {
 
         if (CreateUDPContext(&PacketReceiveContext, ORIGIN_SERVER, "0.0.0.0",
                              PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
-            LOG_WARNING("Failed to start connection\n");
+            mprintf("Failed to start connection\n");
 
             // Since we're just idling, let's try updating the server
             update();
@@ -722,7 +559,7 @@ int main() {
 
         if (CreateUDPContext(&PacketSendContext, ORIGIN_SERVER, "0.0.0.0",
                              PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
-            LOG_WARNING(
+            mprintf(
                 "Failed to finish connection (Failed at port server to "
                 "client).\n");
             closesocket(PacketReceiveContext.s);
@@ -731,7 +568,7 @@ int main() {
 
         if (CreateTCPContext(&PacketTCPContext, ORIGIN_SERVER, "0.0.0.0",
                              PORT_SHARED_TCP, 1, 500) < 0) {
-            LOG_WARNING("Failed to finish connection (Failed at TCP context).\n");
+            mprintf("Failed to finish connection (Failed at TCP context).\n");
             closesocket(PacketReceiveContext.s);
             closesocket(PacketSendContext.s);
             continue;
@@ -757,7 +594,7 @@ int main() {
 #endif
         msg_init->connection_id = connection_id;
         memcpy(msg_init->username, username, strlen(username) + 1);
-        LOG_INFO("SIZE: %d\n", sizeof(FractalServerMessage) +
+        mprintf("SIZE: %d\n", sizeof(FractalServerMessage) +
                                   sizeof(FractalServerMessageInit));
         packet_mutex = SDL_CreateMutex();
 
@@ -765,7 +602,7 @@ int main() {
                           (uint8_t*)msg_init_whole,
                           sizeof(FractalServerMessage) +
                               sizeof(FractalServerMessageInit)) < 0) {
-            LOG_ERROR("Could not send server init message!\n");
+            mprintf("Could not send server init message!\n");
             return -1;
         }
         free(msg_init_whole);
@@ -782,13 +619,13 @@ int main() {
             SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
         SDL_Thread* send_audio =
             SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
-        LOG_INFO("Sending video and audio...\n");
+        mprintf("Sending video and audio...\n");
 
         input_device_t* input_device =
             (input_device_t*)malloc(sizeof(input_device_t));
         input_device = CreateInputDevice(input_device);
         if (!input_device) {
-            LOG_WARNING("Failed to create input device for playback.\n");
+            mprintf("Failed to create input device for playback.\n");
         }
 
         struct FractalClientMessage local_fmsg;
@@ -803,7 +640,7 @@ int main() {
         clock last_exit_check;
         StartTimer(&last_exit_check);
 
-        LOG_INFO("Receiving packets...\n");
+        mprintf("Receiving packets...\n");
 
         int last_input_id = -1;
         StartTrackingClipboardUpdates();
@@ -818,20 +655,20 @@ int main() {
                 ClipboardData* cb = GetClipboard();
                 memcpy(&fmsg_response->clipboard, cb,
                        sizeof(ClipboardData) + cb->size);
-                LOG_INFO("Received clipboard trigger! Sending to client\n");
+                mprintf("Received clipboard trigger! Sending to client\n");
                 if (SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE,
                                   (uint8_t*)fmsg_response,
                                   sizeof(FractalServerMessage) + cb->size) <
                     0) {
-                    LOG_WARNING("Could not send Clipboard Message\n");
+                    mprintf("Could not send Clipboard Message\n");
                 } else {
-                    LOG_INFO("Send clipboard message!\n");
+                    mprintf("Send clipboard message!\n");
                 }
                 free(fmsg_response);
             }
 
             if (GetTimer(last_ping) > 3.0) {
-                LOG_WARNING("Client connection dropped.\n");
+                mprintf("Client connection dropped.\n");
                 connected = false;
             }
 
@@ -839,13 +676,13 @@ int main() {
 // Exit file seen, time to exit
 #ifdef _WIN32
                 if (PathFileExistsA("C:\\Program Files\\Fractal\\Exit\\exit")) {
-                    LOG_INFO("Exiting due to button press...\n");
+                    mprintf("Exiting due to button press...\n");
                     FractalServerMessage fmsg_response = {0};
                     fmsg_response.type = SMESSAGE_QUIT;
-                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE,
+                    if (SendUDPPacket(&PacketSendContext, PACKET_MESSAGE,
                                    (uint8_t*)&fmsg_response,
-                                   sizeof(FractalServerMessage), 1) < 0) {
-                        LOG_WARNING("Could not send Quit Message\n");
+                                   sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL, NULL) < 0) {
+                        mprintf("Could not send Quit Message\n");
                     }
                     // Give a bit of time to make sure no one is touching it
                     SDL_Delay(50);
@@ -863,8 +700,8 @@ int main() {
             if (tcp_buf) {
                 struct RTPPacket* packet = (struct RTPPacket*)tcp_buf;
                 fmsg = (FractalClientMessage*)packet->data;
-                LOG_INFO("Received TCP BUF!!!! Size %d\n", packet->payload_size);
-                LOG_INFO("Received %d byte clipboard message from client.\n",
+                mprintf("Received TCP BUF!!!! Size %d\n", packet->payload_size);
+                mprintf("Received %d byte clipboard message from client.\n",
                         packet->payload_size);
             } else {
                 memset(&local_fmsg, 0, sizeof(local_fmsg));
@@ -892,9 +729,9 @@ int main() {
                         // Check to see if decrypted packet is of valid size
                         if (decrypted_packet.payload_size !=
                             GetFmsgSize(fmsg)) {
-                            LOG_WARNING("Packet is of the wrong size!: %d\n",
+                            mprintf("Packet is of the wrong size!: %d\n",
                                     decrypted_packet.payload_size);
-                            LOG_WARNING("Type: %d\n", fmsg->type);
+                            mprintf("Type: %d\n", fmsg->type);
                             fmsg->type = 0;
                         }
 
@@ -907,7 +744,6 @@ int main() {
                             } else {
                                 // Received keyboard input out of order, just
                                 // ignore
-                                LOG_WARNING("Received keyboard packets out of order");
                                 fmsg->type = 0;
                             }
                         }
@@ -924,7 +760,7 @@ int main() {
                     // Replay user input (keyboard or mouse presses)
                     if (input_device) {
                         if (!ReplayUserInput(input_device, fmsg)) {
-                            LOG_WARNING("Failed to replay input!\n");
+                            mprintf("Failed to replay input!\n");
 #ifdef _WIN32
                             InitDesktop();
 #endif
@@ -942,20 +778,20 @@ int main() {
                     max_mbps = max(fmsg->mbps, MINIMUM_BITRATE);
                     update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
-                    LOG_INFO("Ping Received - ID %d\n", fmsg->ping_id);
+                    mprintf("Ping Received - ID %d\n", fmsg->ping_id);
 
                     // Response to ping with pong
                     FractalServerMessage fmsg_response = {0};
                     fmsg_response.type = MESSAGE_PONG;
                     fmsg_response.ping_id = fmsg->ping_id;
                     StartTimer(&last_ping);
-                    if (SendPacket(&PacketSendContext, PACKET_MESSAGE,
+                    if (SendUDPPacket(&PacketSendContext, PACKET_MESSAGE,
                                    (uint8_t*)&fmsg_response,
-                                   sizeof(fmsg_response), 1) < 0) {
-                        LOG_WARNING("Could not send Ping\n");
+                                   sizeof(fmsg_response), 1, STARTING_BURST_BITRATE, NULL, NULL) < 0) {
+                        mprintf("Could not send Pong\n");
                     }
                 } else if (fmsg->type == MESSAGE_DIMENSIONS) {
-                    LOG_INFO("Request to use dimensions %dx%d received\n",
+                    mprintf("Request to use dimensions %dx%d received\n",
                             fmsg->dimensions.width, fmsg->dimensions.height);
                     // Update knowledge of client monitor dimensions
                     if (client_width != fmsg->dimensions.width ||
@@ -967,14 +803,14 @@ int main() {
                     }
                 } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
                     // Update clipboard with message
-                    LOG_INFO("Received Clipboard Data! %d\n",
+                    mprintf("Received Clipboard Data! %d\n",
                             fmsg->clipboard.type);
                     SetClipboard(&fmsg->clipboard);
                 } else if (fmsg->type == MESSAGE_AUDIO_NACK) {
                     // Audio nack received, relay the packet
 
-//                     LOG_INFO("Audio NACK requested for: ID %d Index %d\n",
-//                     fmsg->nack_data.id, fmsg->nack_data.index);
+                    // mprintf("Audio NACK requested for: ID %d Index %d\n",
+                    // fmsg->nack_data.id, fmsg->nack_data.index);
                     struct RTPPacket* audio_packet =
                         &audio_buffer[fmsg->nack_data.id % AUDIO_BUFFER_SIZE]
                                      [fmsg->nack_data.index];
@@ -982,7 +818,7 @@ int main() {
                                                       AUDIO_BUFFER_SIZE]
                                                      [fmsg->nack_data.index];
                     if (audio_packet->id == fmsg->nack_data.id) {
-                        LOG_INFO(
+                        mprintf(
                             "NACKed audio packet %d found of length %d. "
                             "Relaying!\n",
                             fmsg->nack_data.id, len);
@@ -991,7 +827,7 @@ int main() {
                     // If we were asked for an invalid index, just ignore it
                     else if (fmsg->nack_data.index <
                              audio_packet->num_indices) {
-                        LOG_WARNING(
+                        mprintf(
                             "NACKed audio packet %d %d not found, ID %d %d was "
                             "located instead.\n",
                             fmsg->nack_data.id, fmsg->nack_data.index,
@@ -1009,7 +845,7 @@ int main() {
                                                       VIDEO_BUFFER_SIZE]
                                                      [fmsg->nack_data.index];
                     if (video_packet->id == fmsg->nack_data.id) {
-                        LOG_INFO(
+                        mprintf(
                             "NACKed video packet ID %d Index %d found of "
                             "length %d. Relaying!\n",
                             fmsg->nack_data.id, fmsg->nack_data.index, len);
@@ -1019,14 +855,14 @@ int main() {
                     // If we were asked for an invalid index, just ignore it
                     else if (fmsg->nack_data.index <
                              video_packet->num_indices) {
-                        LOG_WARNING(
+                        mprintf(
                             "NACKed video packet %d %d not found, ID %d %d was "
                             "located instead.\n",
                             fmsg->nack_data.id, fmsg->nack_data.index,
                             video_packet->id, video_packet->index);
                     }
                 } else if (fmsg->type == MESSAGE_IFRAME_REQUEST) {
-                    LOG_INFO("Request for i-frame found: Creating iframe\n");
+                    mprintf("Request for i-frame found: Creating iframe\n");
                     if (fmsg->reinitialize_encoder) {
                         update_encoder = true;
                     } else {
@@ -1034,7 +870,7 @@ int main() {
                     }
                 } else if (fmsg->type == CMESSAGE_QUIT) {
                     // Client requested to exit, it's time to disconnect
-                    LOG_INFO("Client Quit\n");
+                    mprintf("Client Quit\n");
                     connected = false;
                 }
             }
@@ -1042,7 +878,7 @@ int main() {
 
         sendLog();
 
-        LOG_INFO("Disconnected\n");
+        mprintf("Disconnected\n");
 
         DestroyInputDevice(input_device);
 
