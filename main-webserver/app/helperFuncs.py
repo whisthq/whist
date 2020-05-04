@@ -452,6 +452,17 @@ def fetchVMCredentials(vm_name):
         conn.close()
         return vm_info
 
+def fetchVMByIP(vm_ip):
+    command = text("""
+        SELECT * FROM v_ms WHERE "ip" = :vm_ip
+        """)
+    params = {'vm_ip': vm_ip}
+    with engine.connect() as conn:
+        vm_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        # Decode password
+        conn.close()
+        return vm_info
+
 
 def genVMName():
     with engine.connect() as conn:
@@ -1213,6 +1224,19 @@ def lockVM(vm_name, lock):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+def vmReadyToConnect(vm_name, ready):
+    command = text("""
+        UPDATE v_ms
+        SET "ready_to_connect" = :ready
+        WHERE
+           "vm_name" = :vm_name
+        """)
+    params = {'vm_name': vm_name, 'ready': ready}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
 
 
 def checkLock(vm_name):
