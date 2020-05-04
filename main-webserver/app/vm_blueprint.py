@@ -112,7 +112,7 @@ def vm(action):
         body = request.get_json()
         lockVM(body['vm_name'], False)
         return jsonify({'status': 200}), 200
-    elif action == 'connectionStatus':
+    elif action == 'winlogonStatus':
         body = request.get_json()
         ready = body['ready']
         vm_ip = body['vm_ip']
@@ -124,7 +124,21 @@ def vm(action):
         vmReadyToConnect(vm_name, ready)
 
         return jsonify({'status': 200}), 200
+    elif action == 'connectionStatus':
+        body = request.get_json()
+        available = body['available']
+        vm_ip = body['vm_ip']
+        vm_info = fetchVMByIP(vm_ip)
+        vm_name = vm_info['vm_name']
 
+        if available:
+            updateVMState(vm_name, 'RUNNING_AVAILABLE')
+            lockVM(vm_name, False)
+        else:
+            updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
+            lockVM(vm_name, True)
+
+        return jsonify({'status': 200}), 200
     return jsonify({}), 400
 
 
