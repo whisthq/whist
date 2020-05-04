@@ -215,6 +215,7 @@ def payment(action):
                 try:
                     sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
                     response = sg.send(message)
+                    print("Sent email to customer")
                 except Exception as e:
                     print(e.message)
 
@@ -227,6 +228,7 @@ def payment(action):
                 try:
                     sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
                     response = sg.send(message)
+                    print("Sent email to support")
                 except Exception as e:
                     print(e.message)
         return jsonify({'status': 200}), 200
