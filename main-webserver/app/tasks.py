@@ -4,7 +4,7 @@ from msrest.exceptions import ClientException
 
 
 @celery.task(bind=True)
-def createVM(self, vm_size, location):
+def createVM(self, vm_size, location, operating_system):
 	print("TASK: Create VM added to Redis queue")
 
 	_, compute_client, _ = createClients()
@@ -12,7 +12,7 @@ def createVM(self, vm_size, location):
 	nic = createNic(vmName, location, 0)
 	if not nic:
 		return jsonify({})
-	vmParameters = createVMParameters(vmName, nic.id, vm_size, location)
+	vmParameters = createVMParameters(vmName, nic.id, vm_size, location, operating_system)
 
 	print('NOTIFICATION: Starting to create VM {}'.format(vmName))
 

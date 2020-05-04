@@ -199,7 +199,7 @@ def deleteResource(name, delete_disk):
     return hr
 
 
-def createVMParameters(vmName, nic_id, vm_size, location):
+def createVMParameters(vmName, nic_id, vm_size, location, operating_system = 'Windows'):
     with engine.connect() as conn:
         oldUserNames = [cell[0] for cell in list(
             conn.execute('SELECT "username" FROM v_ms'))]
@@ -212,6 +212,11 @@ def createVMParameters(vmName, nic_id, vm_size, location):
             'offer': 'Windows-10',
             'sku': 'rs5-pro',
             'version': 'latest'
+        } if operating_system == 'Windows' else {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "18.04-LTS",
+            "version": "latest"
         }
 
         command = text("""
@@ -241,7 +246,7 @@ def createVMParameters(vmName, nic_id, vm_size, location):
                         'version': vm_reference['version']
                     },
                     'os_disk': {
-                        'os_type': 'Windows',
+                        'os_type': operating_system,
                         'create_option': 'FromImage'
                     }
                 },

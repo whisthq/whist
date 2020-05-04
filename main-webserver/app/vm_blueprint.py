@@ -50,9 +50,13 @@ def dummy():
 @vm_bp.route('/vm/<action>', methods=['POST'])
 def vm(action):
     if action == 'create':
-        vm_size = request.get_json()['vm_size']
-        location = request.get_json()['location']
-        task = createVM.apply_async([vm_size, location])
+        body = request.get_json()
+        vm_size = body['vm_size']
+        location = body['location']
+        operating_system = 'Windows'
+        if 'operating_system' in body.keys():
+            operating_system = body['operating_system']
+        task = createVM.apply_async([vm_size, location, operating_system])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
