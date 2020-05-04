@@ -23,6 +23,7 @@ OBJS = \
 	aes.o \
 	clipboard_thread.o \
 	x11_clipboard.o \
+	sdl_utils.o \
 	logging.o \
 	network.o \
 	sdlscreeninfo.o \
@@ -78,6 +79,7 @@ OBJS = \
 	aes.o \
 	clipboard_osx.o \
 	mac_utils.o \
+	sdl_utils.o \
 	logging.o \
 	network.o \
 	sdlscreeninfo.o \
@@ -201,6 +203,10 @@ mac_clipboard.o:
 # compile the general Linux Ubuntu clipboard source file into object file
 x11_clipboard.o:
 	$(CC) -c $(CFLAGS) ../fractal/clipboard/x11_clipboard.c
+
+# compile the main sdl utils source file into object file
+sdl_utils.o:
+	$(CC) -c $(CFLAGS) sdl_utils.c
 
 # compile the main video source file into object file
 video.o:
