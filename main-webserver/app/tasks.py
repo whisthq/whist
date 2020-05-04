@@ -22,6 +22,13 @@ def createVM(self, vm_size, location):
 
 	print('NOTIFICATION: VM {} created'.format(vmName))
 
+
+	async_vm_start = compute_client.virtual_machines.start(
+		os.environ.get('VM_GROUP'), vmParameters['vm_name'])
+	async_vm_start.wait()
+
+	print('NOTIFICATION: New VM {} started'.format(vmName))
+	
 	extension_parameters = {
 		'location': location,
 		'publisher': 'Microsoft.HpcCompute',
@@ -38,12 +45,6 @@ def createVM(self, vm_size, location):
 
 
 	print('NOTIFICATION: Installed extension on {}'.format(vmName))
-
-	async_vm_start = compute_client.virtual_machines.start(
-		os.environ.get('VM_GROUP'), vmParameters['vm_name'])
-	async_vm_start.wait()
-
-	print('NOTIFICATION: New VM {} started'.format(vmName))
 
 	# with open('app/scripts/vmCreate.txt', 'r') as file:
 	# 	print("TASK: Starting to run Powershell scripts")
@@ -475,8 +476,13 @@ def swapDisk(self, disk_name):
 			lockVM(vm_name, False)
 			return vm_credentials
 		else:
-			self.update_state(state='FAILURE', meta={"msg": "Error: Update took too long. Please contact support."})
-			return {}
+			print('CRITICAL ERROR: Could not start VM {}'.format(vm_name))
+			self.update_state(state='FAILURE', meta={"msg": "Cloud PC could not be started. Please contact support."})
+
+		vm_credentials = fetchVMCredentials(vm_name)
+		lockVM(vm_name, False)
+		return vm_credentials
+		
 	# Disk is currently in an unattached state. Find an available VM and attach the disk to that VM
 	# (then reboot the VM), or wait until a VM becomes available.
 	if not vm_attached:
@@ -554,13 +560,13 @@ def swapSpecificDisk(self, disk_name, vm_name):
 	async_disk_attach.wait()
 
 	end = time.perf_counter()
-	print(f"SUCCESS: Disk swapped out in {end - start:0.4f} seconds. Restarting " + vm_name)
+	# print(f"SUCCESS: Disk swapped out in {end - start:0.4f} seconds. Restarting " + vm_name)
 
 	start = time.perf_counter()
 	fractalVMStart(vm_name)
 	end = time.perf_counter()
 
-	print(f"SUCCESS: VM restarted in {end - start:0.4f} seconds")
+	# print(f"SUCCESS: VM restarted in {end - start:0.4f} seconds")
 
 
 	updateDisk(disk_name, vm_name, None)
