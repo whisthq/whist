@@ -1261,6 +1261,19 @@ def checkLock(vm_name):
             return vm['lock']
         return None
 
+def checkWinlogon(vm_name):
+    command = text("""
+        SELECT * FROM v_ms WHERE "vm_name" = :vm_name
+        """)
+    params = {'vm_name': vm_name}
+
+    with engine.connect() as conn:
+        vm = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        if vm:
+            return vm['ready_to_connect']
+        return None
+
 
 def attachDiskToVM(disk_name, vm_name, lun):
     try:
@@ -1481,7 +1494,6 @@ def sendVMStartCommand(vm_name, needs_restart):
             async_vm_start = compute_client.virtual_machines.start(
                 os.environ.get('VM_GROUP'), vm_name)
             print(async_vm_start.result())
-            time.sleep(35)
             print("VM {} started".format(vm_name))
 
         if needs_restart:
@@ -1490,12 +1502,32 @@ def sendVMStartCommand(vm_name, needs_restart):
                 os.environ.get('VM_GROUP'), vm_name)
             print(async_vm_restart.result())
             print("VM {} restarted".format(vm_name))
-            time.sleep(55)
+
+        waitForWinlogon(vm_name)
 
         return 1
     except Exception as e:
         print('CRITICAL ERROR: ' + str(e))
         return -1
+
+def waitForWinlogon(vm_name):
+    ready = checkWinlogon(vm_name)
+
+    num_tries = 0
+
+    if ready:
+        print('NOTIFICATION: VM {} has Winlogon successfully'.format(vm_name))
+        return 1
+
+    while not ready:
+        print('NOTIFICATION: Waiting for VM {} to Winlogon'.format(vm_name))
+        time.sleep(5)
+        ready = checkWinlogon(vm_name)
+        num_tries += 1
+
+    print('NOTIFICATION: VM {} has Winlogon successfully'.format(vm_name))
+
+    return 1
 
 
 def fractalVMStart(vm_name, needs_restart=False):
@@ -1565,6 +1597,9 @@ def spinLock(vm_name):
         num_tries += 1
 
         if num_tries > 50:
+            print('FAILURE: VM {} is locked for too long. Giving up.'.format(vm_name))
             return -1
+
+    print('NOTIFICATION: VM {} is unlocked'.format(vm_name))
 
     return 1
