@@ -735,4 +735,6 @@ def fetchLogs(self, username):
 		print("SUCCESS: Logs fetched for {}".format(username))
 		if logs:
 			print(logs)
+		else:
+			print("NOTIFICATION: No logs found for {}".format(username))
 		return logs
