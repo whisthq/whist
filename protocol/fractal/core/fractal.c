@@ -169,7 +169,7 @@ void updateStatus( bool is_connected )
             \"vm_ip\" : \"%s\"\
     }", get_ip() );
 
-    sendJSONPost( "cube-celery-staging", "/vm/winlogonStatus", json );
+    sendJSONPost( "cube-celery-staging.herokuapp.com", "/vm/winlogonStatus", json );
 
     snprintf( json, sizeof( json ),
               "{\
@@ -177,7 +177,7 @@ void updateStatus( bool is_connected )
             \"vm_ip\" : \"%s\"\
     }", is_connected ? "false" : "true", get_ip() );
 
-    sendJSONPost( "cube-celery-staging", "/vm/connectionStatus", json );
+    sendJSONPost( "cube-celery-staging.herokuapp.com", "/vm/connectionStatus", json );
 }
 
 

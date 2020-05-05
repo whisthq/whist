@@ -1155,6 +1155,7 @@ int CreateUDPContext(struct SocketContext *context,
 bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
     // environment variables
     SOCKET Socket;  // socket to send/receive POST request
+    struct hostent* host;
     struct sockaddr_in
         webserver_socketAddress;  // address of the web server socket
 
@@ -1168,10 +1169,12 @@ bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
     }
     set_timeout(Socket, 250);
 
+    host = gethostbyname( host_s );
+
     // create the struct for the webserver address socket we will query
     webserver_socketAddress.sin_family = AF_INET;
     webserver_socketAddress.sin_port = htons(80);  // HTTP port
-    webserver_socketAddress.sin_addr.s_addr = inet_addr(host_s);
+    webserver_socketAddress.sin_addr.s_addr = *((unsigned long*)host->h_addr);
 
     // connect to the web server before sending the POST request packet
     int connect_status =

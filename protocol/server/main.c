@@ -655,7 +655,21 @@ int main() {
         StartTrackingClipboardUpdates();
         ClearReadingTCP();
 
+        clock ack_timer;
+        StartTimer( &ack_timer );
+
         while (connected) {
+            if( GetTimer( ack_timer ) > 5 )
+            {
+#if USING_STUN
+                ack( &PacketTCPContext );
+                ack( &PacketSendContext );
+                ack( &PacketReceiveContext );
+#endif
+                updateStatus( true );
+                StartTimer( &ack_timer );
+            }
+
             // If they clipboard as updated, we should send it over to the
             // client
             if (hasClipboardUpdated()) {
