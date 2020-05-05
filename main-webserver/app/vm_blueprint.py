@@ -310,3 +310,19 @@ def fetch_logs():
     body = request.get_json()
     task = fetchLogs.apply_async([body['username']])
     return jsonify({'ID': task.id}), 202
+
+@vm_bp.route('/ip/<action>', methods=['POST'])
+def ip(action):
+    if action == 'read':
+        print("THE IP IS {}".format(str(request.environ['HTTP_X_FORWARDED_FOR'])))
+
+        ip = None
+
+        if request.headers.getlist('X-Forwarded-For'):
+            ip = request.headers.getlist('X-Forwarded-For')[0]
+        else:
+            ip = request.remote_addr
+
+        print('THE IP ROSHAN GOT IS {}'.format(str(ip)))
+
+        return jsonify({'IP': ip}), 200
