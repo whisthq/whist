@@ -119,28 +119,46 @@ def vm(action):
     elif action == 'winlogonStatus':
         body = request.get_json()
         ready = body['ready']
-        vm_ip = body['vm_ip']
-        vm_info = fetchVMByIP(vm_ip)
-        vm_name = vm_info['vm_name']
+        vm_ip = None
+        if request.headers.getlist('X-Forwarded-For'):
+            vm_ip = request.headers.getlist('X-Forwarded-For')[0]
+        else:
+            vm_ip = request.remote_addr
 
-        updateVMState(vm_name, 'RUNNING_AVAILABLE')
-        lockVM(vm_name, False)
-        vmReadyToConnect(vm_name, ready)
+        vm_info = fetchVMByIP(vm_ip)
+
+        if vm_info:
+            vm_name = vm_info['vm_name']
+
+            updateVMState(vm_name, 'RUNNING_AVAILABLE')
+            lockVM(vm_name, False)
+            vmReadyToConnect(vm_name, ready)
+        else:
+            print('FAILURE: No VM found for IP {}'.format(str(vm_ip)))
 
         return jsonify({'status': 200}), 200
     elif action == 'connectionStatus':
         body = request.get_json()
         available = body['available']
-        vm_ip = body['vm_ip']
-        vm_info = fetchVMByIP(vm_ip)
-        vm_name = vm_info['vm_name']
 
-        if available:
-            updateVMState(vm_name, 'RUNNING_AVAILABLE')
-            lockVM(vm_name, False)
+        vm_ip = None
+        if request.headers.getlist('X-Forwarded-For'):
+            vm_ip = request.headers.getlist('X-Forwarded-For')[0]
         else:
-            updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
-            lockVM(vm_name, True)
+            vm_ip = request.remote_addr
+
+        vm_info = fetchVMByIP(vm_ip)
+        if vm_info:
+            vm_name = vm_info['vm_name']
+
+            if available:
+                updateVMState(vm_name, 'RUNNING_AVAILABLE')
+                lockVM(vm_name, False)
+            else:
+                updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
+                lockVM(vm_name, True)
+        else:
+            print('FAILURE: No VM found for IP {}'.format(str(vm_ip)))
 
         return jsonify({'status': 200}), 200
     return jsonify({}), 400
@@ -283,15 +301,6 @@ def info(action):
 
     return jsonify({}), 400
 
-# Test2
-@vm_bp.route('/test/<action>', methods=['GET'])
-def test(action):
-    if action == 'celerytest':
-        task = hello2.apply_async(["Jonathan"])
-        if not task:
-            return jsonify({}), 400
-        return jsonify({'result': task.id}), 200
-
 
 @vm_bp.route('/logs', methods=['POST'])
 def logs():
@@ -310,19 +319,3 @@ def fetch_logs():
     body = request.get_json()
     task = fetchLogs.apply_async([body['username']])
     return jsonify({'ID': task.id}), 202
-
-@vm_bp.route('/ip/<action>', methods=['POST'])
-def ip(action):
-    if action == 'read':
-        print("THE IP IS {}".format(str(request.environ['HTTP_X_FORWARDED_FOR'])))
-
-        ip = None
-
-        if request.headers.getlist('X-Forwarded-For'):
-            ip = request.headers.getlist('X-Forwarded-For')[0]
-        else:
-            ip = request.remote_addr
-
-        print('THE IP ROSHAN GOT IS {}'.format(str(ip)))
-
-        return jsonify({'IP': ip}), 200
