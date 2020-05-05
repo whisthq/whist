@@ -722,6 +722,7 @@ def storeLogs(self, sender, connection_id, logs, vm_ip):
 
 @celery.task(bind=True)
 def fetchLogs(self, username):
+	print("NOTIFICATION: Fetch log for {} sent to Redis queue".format(username))
 	command = text("""
 		SELECT * FROM logs WHERE "username" = :username
 		""")
@@ -729,5 +730,9 @@ def fetchLogs(self, username):
 	params = {'username': username}
 
 	with engine.connect() as conn:
+		print("NOTIFICATION: Fetching logs for {} from database".format(username))
 		logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+		print("SUCCESS: Logs fetched for {}".format(username))
+		if logs:
+			print(logs)
 		return logs
