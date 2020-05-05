@@ -307,6 +307,7 @@
     "electron-store": "^5.1.1",
     "electron-titlebar": "^0.0.3",
     "electron-updater": "^4.2.5",
+    "eval": "^0.1.4",
     "fast-speedtest-api": "^0.3.2",
     "fix-path": "^3.0.0",
     "geoip-lite": "^1.4.0",

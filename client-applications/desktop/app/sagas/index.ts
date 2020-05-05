@@ -208,15 +208,19 @@ function* fetchVM(action) {
   while (json.state === "PENDING" || json.state === "STARTED") {
     var { json, response } = yield call(apiGet, (config.url.PRIMARY_SERVER + '/status/').concat(action.id), state.counter.access_token)
     if(json && json.output && json.state === "PENDING") {
-      json.output = (0, eval)('(' + json.output + ')');
       yield put(Action.changeStatusMessage(json.output.msg))
     }
-    console.log(json)
     yield delay(5000)
   }
-  console.log(json)
-  if(json && json.output && json.output.ip) {
-    yield put(Action.storeIP(json.output.ip))
+
+  if(json && json.state && json.state === "SUCCESS") {
+    if(json && json.output && json.output.ip) {
+      yield put(Action.storeIP(json.output.ip))
+    }
+  } else {
+    if(json && json.output && json.state === "FAILURE") {
+      yield put(Action.changeStatusMessage(json.output.msg))
+    }
   }
 }
 
