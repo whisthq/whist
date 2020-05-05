@@ -293,11 +293,7 @@ def restartVM(self, vm_name):
 
 	_, compute_client, _ = createClients()
 
-	async_vm_restart = compute_client.virtual_machines.restart(
-		os.environ.get('VM_GROUP'), vm_name)
-	async_vm_restart.wait()
-
-	time.sleep(20)
+	fractalVMStart(vm_name, True)
 
 	lockVM(vm_name, False)
 
