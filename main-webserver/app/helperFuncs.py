@@ -1495,6 +1495,7 @@ def sendVMStartCommand(vm_name, needs_restart):
             pass
 
         if 'stop' in power_state or 'dealloc' in power_state:
+            print('NOTIFICATION: Setting Winlogon to false')
             vmReadyToConnect(vm_name, False)
             print("Starting VM {}".format(vm_name))
             async_vm_start = compute_client.virtual_machines.start(
@@ -1503,6 +1504,7 @@ def sendVMStartCommand(vm_name, needs_restart):
             print("VM {} started".format(vm_name))
 
         if needs_restart:
+            print('NOTIFICATION: Setting Winlogon to false')
             vmReadyToConnect(vm_name, False)
             print("Restarting VM {}".format(vm_name))
             async_vm_restart = compute_client.virtual_machines.restart(
