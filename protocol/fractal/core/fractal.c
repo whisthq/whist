@@ -149,20 +149,17 @@ void updateStatus(bool is_connected) {
 
     snprintf(json, sizeof(json),
              "{\
-            \"ready\" : true,\
-            \"vm_ip\" : \"%s\"\
-    }",
-             get_ip());
+            \"ready\" : true\
+    }");
 
     sendJSONPost("cube-celery-staging.herokuapp.com", "/vm/winlogonStatus",
                  json);
 
     snprintf(json, sizeof(json),
              "{\
-            \"available\" : %s,\
-            \"vm_ip\" : \"%s\"\
+            \"available\" : %s\
     }",
-             is_connected ? "false" : "true", get_ip());
+             is_connected ? "false" : "true");
 
     sendJSONPost("cube-celery-staging.herokuapp.com", "/vm/connectionStatus",
                  json);
