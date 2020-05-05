@@ -24,7 +24,7 @@ def status(task_id):
     elif result.status == 'FAILURE':
         response = {
             'state': result.status,
-            'output': str(result.info)
+            'output': result.info
         }
         return make_response(jsonify(response), 200)
     elif result.status == 'PENDING':
