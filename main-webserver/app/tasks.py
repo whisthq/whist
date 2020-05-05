@@ -401,21 +401,6 @@ def syncDisks(self):
 
 	return {'status': 200}
 
-''''
-Example of how to update state during a task
-PENDING states handled by /status/<task_id> endpoint
-Can also use any other string as state (just need to handle in /status/<task_id>)
-
-@celery.task(bind=True)
-def stateChangeTest(self):
-	self.update_state(state='PENDING', meta={"msg": 'Dummy task started'})
-	time.sleep(5)
-	self.update_state(state='PENDING', meta={"msg": 'Dummy task state 2'})
-	time.sleep(5)
-	self.update_state(state='PENDING', meta={"msg": 'Dummy task completed'})
-
-Final state is overridden once celery task execution is done. State becomes "SUCCESS".
-'''
 
 @celery.task(bind=True)
 def swapDisk(self, disk_name):
