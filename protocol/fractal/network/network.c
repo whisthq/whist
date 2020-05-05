@@ -265,6 +265,11 @@ int sendp(struct SocketContext *context, void *buf, int len) {
                   sizeof(context->addr));
 }
 
+int ack( struct SocketContext* context )
+{
+    return sendp( context, NULL, 0 );
+}
+
 bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     // Connect to TCP server
     set_timeout(s, 0);

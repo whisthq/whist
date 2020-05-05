@@ -129,7 +129,7 @@ int UpdateClipboardThread(void* opaque) {
                 */
 
                 LOG_INFO("COMMAND: %s", cmd);
-                runcmd(cmd);
+                runcmd(cmd, NULL);
             }
             SetClipboard(clipboard);
         } else {
@@ -182,7 +182,7 @@ int UpdateClipboardThread(void* opaque) {
                 */
 
                 LOG_INFO("COMMAND: %s", cmd);
-                runcmd(cmd);
+                runcmd(cmd, NULL);
             }
 
             FractalClientMessage* fmsg =

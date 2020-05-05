@@ -497,6 +497,7 @@ void update() {
 #else
         "TODO: Linux command?"
 #endif
+        , NULL
     );
     runcmd(
 #ifdef _WIN32
@@ -504,6 +505,7 @@ void update() {
 #else
         "TODO: Linux command?"
 #endif
+        , NULL
     );
 }
 
@@ -544,8 +546,13 @@ int main() {
 #endif
 
     while (true) {
+        srand( rand() * (unsigned int)time( NULL ) + rand() );
+        connection_id = rand();
+
         struct SocketContext PacketReceiveContext = {0};
         struct SocketContext PacketTCPContext = {0};
+
+        updateStatus( false );
 
         if (CreateUDPContext(&PacketReceiveContext, ORIGIN_SERVER, "0.0.0.0",
                              PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
@@ -573,6 +580,8 @@ int main() {
             closesocket(PacketSendContext.s);
             continue;
         }
+
+        updateStatus( true );
 
         // Give client time to setup before sending it with packets
         SDL_Delay(150);

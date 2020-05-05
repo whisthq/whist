@@ -125,6 +125,7 @@ int CreateTCPContext(struct SocketContext* context,
                      int port, int recvfrom_timeout_s, int stun_timeout_ms);
 int recvp(struct SocketContext* context, void* buf, int len);
 int sendp(struct SocketContext* context, void* buf, int len);
+int ack( struct SocketContext* context );
 
 void ClearReadingTCP();
 void* TryReadingTCPPacket(struct SocketContext* context);

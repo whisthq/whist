@@ -271,7 +271,7 @@ int ReceivePackets(void* opaque) {
 
     while (run_receive_packets) {
         if (GetTimer(last_ack) > 5.0) {
-            sendp(&socketContext, NULL, 0);
+            ack(&socketContext);
             StartTimer(&last_ack);
         }
 
@@ -535,15 +535,15 @@ int ReceiveMessage(struct RTPPacket* packet) {
 
 int main(int argc, char* argv[]) {
 #ifndef _WIN32
-    runcmd("chmod 600 sshkey");
+    runcmd("chmod 600 sshkey", NULL);
     // files can't be written to a macos app bundle, so they need to be
     // cached in /Users/USERNAME/.APPNAME, here .fractal directory
     // attempt to create fractal cache directory, it will fail if it
     // already exists, which is fine
     // for Linux, this is in /home/USERNAME/.fractal, the cache is also needed
     // for the same reason
-    runcmd( "mkdir ~/.fractal" );
-    runcmd( "chmod 0755 ~/.fractal" );
+    runcmd( "mkdir ~/.fractal", NULL );
+    runcmd( "chmod 0755 ~/.fractal", NULL );
 #endif
     initBacktraceHandler();
 
@@ -703,9 +703,20 @@ int main(int argc, char* argv[]) {
         SDL_Event msg;
         FractalClientMessage fmsg = { 0 };
 
+        clock ack_timer;
+        StartTimer( &ack_timer );
+
         // Poll input for as long as we are connected and not exiting
         // This code will run once every millisecond
         while (connected && !exiting) {
+            // Send acks to sockets every 5 seconds
+            if( GetTimer( ack_timer ) > 5 )
+            {
+                ack( &PacketSendContext );
+                ack( &PacketTCPContext );
+                StartTimer( &ack_timer );
+            }
+
             // Every 50ms we should syncronize the keyboard state
             if (GetTimer(keyboard_sync_timer) > 50.0 / 1000.0) {
                 SDL_Delay(5);
