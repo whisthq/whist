@@ -9,7 +9,7 @@ import { config } from '../constants/config.ts'
 
 function* refreshAccess(action) {
   const state = yield select()
-  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/token/refresh', {}, state.counter.refresh_token) 
+  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/token/refresh', {}, state.counter.refresh_token)
   if(json) {
     yield put(Action.storeJWT(json.access_token, json.refresh_token))
   }
@@ -47,7 +47,7 @@ function* getPromoCode(action) {
 
 function* fetchPaymentInfo(action) {
   const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/stripe/retrieve', {
-    email: action.username 
+    email: action.username
   })
 
   if(json && json.account_locked) {
@@ -257,14 +257,18 @@ function* getRestartStatus(id) {
 }
 
 function* sendLogs(action) {
+  console.log('ENTERING SAGA')
+  console.log(action)
   const state = yield select()
   var public_ip = state.counter.public_ip
+  console.log(public_ip)
   const {json, response} = yield call(apiPost, 'https://cube-celery-staging.herokuapp.com/logs', {
     connection_id: action.connection_id,
-    logs: action.logs,
+    logs: "test",
     sender: 'client',
     vm_ip: public_ip
   })
+  console.log(json)
 }
 
 export default function* rootSaga() {

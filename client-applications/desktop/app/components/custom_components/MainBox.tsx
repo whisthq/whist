@@ -17,7 +17,7 @@ import Speedometer from "../../../resources/images/speedometer.svg";
 import Car from "../../../resources/images/car.jpg";
 import Scale from "../../../resources/images/scale.svg"
 
-import { resetFeedback, sendFeedback, askFeedback, trackUserActivity, changeWindow, attachDisk, 
+import { resetFeedback, sendFeedback, askFeedback, trackUserActivity, changeWindow, attachDisk,
   restartPC, vmRestarted, sendLogs, changeStatusMessage } from "../../actions/counter"
 
 class MainBox extends Component {
@@ -54,13 +54,26 @@ class MainBox extends Component {
     var fs = require("fs");
     var appRootDir = require('electron').remote.app.getAppPath();
     const os       = require('os');
+    let component = this;
 
     if (os.platform() === 'darwin' || os.platform() === 'linux') { // mac & linux
+      console.log('MAC PLATFORM')
       // get logs and connection_id from Fractal MacOS/Linux Ubuntu caches
       // cache is located in /users/USERNAME/.fractal or in /home/USERNAME/.fractal
-      var logs = fs.readFileSync(process.env.HOME + "/.fractal/log.txt").toString();
+      console.log('THE PATH IS' + process.env.HOME + "/.fractal/log.txt")
       var connection_id = parseInt(fs.readFileSync(process.env.HOME + "/.fractal/connection_id.txt").toString());
-      this.props.dispatch(sendLogs(connection_id, logs));
+      console.log(connection_id)
+
+      fs.readFile(process.env.HOME + "/.fractal/log.txt", "utf8", function(err, data) {
+        if (err) {
+          console.log(err)
+        } else {
+          console.log(data)
+          console.log('SENDING TO SAGA')
+          component.props.dispatch(sendLogs(connection_id, data));
+        }
+      })
+      // console.log(logs)
     }
     else if (os.platform() === 'win32') { // windows
       // get logs from the executable directory, no cache on Windows
@@ -111,10 +124,11 @@ class MainBox extends Component {
           const protocol = child(executable, parameters, {cwd: path, detached: true, stdio: 'ignore'});
 
           protocol.on('close', (code) => {
-            if(this.state.launches == 1) {
-              this.TrackActivity(false);
-              setTimeout(this.SendLogs, 0 ); // send the logs, async
-            }
+            console.log('LOGOFF EVENT')
+            this.TrackActivity(false);
+            console.log('SENDING LOGS')
+            this.SendLogs()
+            console.log('CHANGING STATE')
             this.setState({launches: 0, launched: false, reattached: false, diskAttaching: false})
             this.props.dispatch(askFeedback(true))
           })
@@ -484,8 +498,8 @@ class MainBox extends Component {
                     For now, this is an easy manual process. To change the size of icons and text, go to your cloud PC desktop,
                     right click, and open "Display Settings." Next, select the "Advanced Scaling Settings" option,
                     where you'll be able to enter your desired scale factor (a percentage between 100 and 500), hit "Apply", and then
-                    select "Sign Out Now" in order to save your changes. Once you do, your cloud PC will exit, and your changes 
-                    will take effect when you re-connect. 
+                    select "Sign Out Now" in order to save your changes. Once you do, your cloud PC will exit, and your changes
+                    will take effect when you re-connect.
                   </div>
                 </div>
                 {/*
