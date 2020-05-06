@@ -152,7 +152,7 @@ void updateStatus(bool is_connected) {
             \"ready\" : true\
     }");
 
-    sendJSONPost("cube-celery-staging.herokuapp.com", "/vm/winlogonStatus",
+    sendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus",
                  json);
 
     snprintf(json, sizeof(json),
@@ -161,7 +161,7 @@ void updateStatus(bool is_connected) {
     }",
              is_connected ? "false" : "true");
 
-    sendJSONPost("cube-celery-staging.herokuapp.com", "/vm/connectionStatus",
+    sendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus",
                  json);
 }
 
