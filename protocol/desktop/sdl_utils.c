@@ -72,33 +72,30 @@ SDL_Window* initSDL(int output_width, int output_height)
         output_width == full_width && output_height == full_height;
 
     SDL_Window* window;
+
 #if defined(_WIN32)
-    // Simulate fullscreen with borderless always on top, so that it can still be used with multiple monitors
-    window = SDL_CreateWindow(
-        "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, output_width,
-        output_height,
-        SDL_WINDOW_ALLOW_HIGHDPI |
-        (is_fullscreen ? SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP
-          : 0) );
+    int fullscreen_flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP;
 #else
-    // The above settings don't work on Mac for some reason, but we don't need borderless anyway bc multiple monitors works regardless
-    window =
-        SDL_CreateWindow( "Fractal", SDL_WINDOWPOS_CENTERED,
-                          SDL_WINDOWPOS_CENTERED, output_width, output_height,
-                          SDL_WINDOW_ALLOW_HIGHDPI |
-                          (is_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP |
-                            SDL_WINDOW_ALWAYS_ON_TOP
-                            : 0) );
+    int fullscreen_flags = SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALWAYS_ON_TOP;
 #endif
 
-    // Resize event handling
-    SDL_AddEventWatch( resizingEventWatcher, (SDL_Window*)window );
-    if( !window )
+    // Simulate fullscreen with borderless always on top, so that it can still be used with multiple monitors
+    window = SDL_CreateWindow( "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, output_width, output_height,
+        SDL_WINDOW_ALLOW_HIGHDPI |
+        (is_fullscreen ? fullscreen_flags : 0)
+    );
+
+    if( !is_fullscreen )
     {
-        LOG_ERROR( "SDL: could not create window - exiting: %s", SDL_GetError() );
-        return NULL;
+        // Resize event handling
+        SDL_AddEventWatch( resizingEventWatcher, (SDL_Window*)window );
+        if( !window )
+        {
+            LOG_ERROR( "SDL: could not create window - exiting: %s", SDL_GetError() );
+            return NULL;
+        }
+        SDL_SetWindowResizable( (SDL_Window*)window, true );
     }
-    SDL_SetWindowResizable( (SDL_Window*)window, true );
 
     return window;
 }

@@ -230,7 +230,7 @@ int ReceivePackets(void* opaque) {
 
     struct SocketContext socketContext = *(struct SocketContext*)opaque;
     struct RTPPacket packet = {0};
-
+     
     /****
     Timers
     ****/
