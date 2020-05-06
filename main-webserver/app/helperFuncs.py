@@ -1,5 +1,6 @@
 from .utils import *
 from app import engine
+from .logger import *
 
 
 def createClients():
@@ -329,20 +330,9 @@ def updateVMUsername(username, vm_name):
         conn.close()
 
 
-def loginUserVM(username):
-    command = text("""
-        SELECT * FROM v_ms WHERE "username" = :username
-        """)
-    params = {'username': username}
-    with engine.connect() as conn:
-        users = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-        conn.close()
-        if users:
-            return user[0]['username']
-    return None
-
-
 def loginUser(username, password):
+    sendLog('User {} trying to log in'.format(username))
+
     if password != os.getenv('ADMIN_PASSWORD'):
         command = text("""
             SELECT * FROM users WHERE "username" = :userName AND "password" = :password

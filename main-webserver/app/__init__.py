@@ -22,5 +22,5 @@ app.config['MAIL_SERVER'] = "ming@fractalcomputers.com"
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
-app.config['TIME_ZONE'] = 'America/New_York'
+
 CORS(app)

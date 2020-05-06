@@ -8,6 +8,9 @@ def create_app(app_name=PKG_NAME, **kwargs):
     jwtManager = JWTManager(app)
     if kwargs.get("celery"):
         init_celery(kwargs.get("celery"), app)
+    log = logging.getLogger('werkzeug')
+    log.disabled = True
+    app.logger.disabled = True
     return (app, jwtManager)
 
 def init_app(app):

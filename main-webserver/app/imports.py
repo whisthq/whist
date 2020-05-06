@@ -29,5 +29,8 @@ from multiprocessing.util import register_after_fork
 from flask_jwt_extended import *
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail as SendGridMail
+import logging
+import socket
+from logging.handlers import SysLogHandler
 
 load_dotenv()
