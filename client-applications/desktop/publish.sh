@@ -1,3 +1,4 @@
+rm -rf .protocol
 git clone --depth 1 https://github.com/fractalcomputers/protocol .protocol
 cd .protocol
 git reset --hard
