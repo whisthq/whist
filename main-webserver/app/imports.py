@@ -33,5 +33,7 @@ import logging
 import socket
 from logging.handlers import SysLogHandler
 from functools import wraps
+import boto3
+from botocore.exceptions import NoCredentialsError
 
 load_dotenv()

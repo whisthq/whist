@@ -1563,7 +1563,7 @@ def waitForWinlogon(vm_name, ID = -1):
         return 1
 
     while not ready:
-        sendWarning('Waiting for VM {} to Winlogon'.format(vm_name))
+        sendWarning(ID, 'Waiting for VM {} to Winlogon'.format(vm_name))
         time.sleep(5)
         ready = checkWinlogon(vm_name)
         num_tries += 1
