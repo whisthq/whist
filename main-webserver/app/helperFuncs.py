@@ -409,8 +409,6 @@ def generateIDs():
     with engine.connect() as conn:
         for row in list(conn.execute('SELECT * FROM users')):
             token = generateToken(row[0])
-            print("THE USER IS " + row[0])
-            print("THE TOKEN IS " + token)
             command = text("""
                 UPDATE users 
                 SET "id" = :token

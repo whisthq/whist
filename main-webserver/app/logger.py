@@ -20,15 +20,15 @@ logger.setLevel(logging.INFO)
 
 def sendInfo(ID, log, papertrail = True):
 	if papertrail:
-		logger.info('{} INFO: {}'.format(ID, log))
-	print('{} [HIDDEN] INFO: {}'.format(ID, log))
+		logger.info('[WEBSERVER][{}] INFO: {}'.format(ID, log))
+	print('[WEBSERVER][{}] INFO: {}'.format(ID, log))
 
 def sendError(ID, log, papertrail = True):
 	if papertrail:
-		logger.error('{} ERROR: {}'.format(ID, log))
-	print('{} [HIDDEN] ERROR: {}'.format(ID, log))
+		logger.error('[WEBSERVER][{}] ERROR: {}'.format(ID, log))
+	print('[WEBSERVER][{}] ERROR: {}'.format(ID, log))
 
 def sendCritical(ID, log, papertrail = True):
 	if papertrail:
-		logger.critical('{} CRITICAL: {}'.format(ID, log))
-	print('{} [HIDDEN] CRITICAL: {}'.format(ID, log))
+		logger.critical('[WEBSERVER][{}] CRITICAL: {}'.format(ID, log))
+	print('[WEBSERVER][{}] CRITICAL: {}'.format(ID, log))
