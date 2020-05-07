@@ -1538,7 +1538,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID = -1):
             async_vm_restart = compute_client.virtual_machines.restart(
                 os.environ.get('VM_GROUP'), vm_name)
 
-            sendInfo(ID, async_vm_start.result())
+            sendInfo(ID, async_vm_restart.result())
             sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
 
         waitForWinlogon(vm_name, ID)

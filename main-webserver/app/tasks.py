@@ -121,7 +121,6 @@ def createDiskFromImage(self, username, location, vm_size):
 
 @celery.task(bind=True)
 def attachDisk(self, vm_name, disk_name):
-	print('\nAttaching Disk')
 	_, compute_client, _ = createClients()
 	data_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
 	lunNum = 1
