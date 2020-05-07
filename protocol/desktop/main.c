@@ -228,7 +228,6 @@ int ReceivePackets(void* opaque) {
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
     struct SocketContext socketContext = *(struct SocketContext*)opaque;
-    struct RTPPacket packet = {0};
      
     /****
     Timers
@@ -332,34 +331,16 @@ int ReceivePackets(void* opaque) {
         }
         // END DROP EMULATION
 
-        int recv_size;
+
+        struct RTPPacket* packet;
+
         if (is_currently_dropping) {
             // Simulate dropping packets but just not calling recvp
             SDL_Delay(1);
-            recv_size = 0;
             LOG_INFO("DROPPING");
+            packet = NULL;
         } else {
-            // Wait to receive packet over TCP, until timing out
-            struct RTPPacket encrypted_packet;
-            int encrypted_len = recvp(&socketContext, &encrypted_packet,
-                                      sizeof(encrypted_packet));
-
-            recv_size = encrypted_len;
-
-            // If the packet was successfully received, then decrypt it
-            if (recv_size > 0) {
-                recv_size =
-                    decrypt_packet(&encrypted_packet, encrypted_len, &packet,
-                                   (unsigned char*)PRIVATE_KEY);
-
-                // If there was an issue decrypting it, post warning and then
-                // ignore the problem
-                if (recv_size < 0) {
-                    LOG_WARNING("Failed to decrypt packet");
-                    // Just pretend like it never happened
-                    recv_size = 0;
-                }
-            }
+            packet = ReadUDPPacket( &socketContext );
         }
 
         double recvfrom_short_time = GetTimer(recvfrom_timer);
@@ -370,7 +351,7 @@ int ReceivePackets(void* opaque) {
         // time recv_size was > 0
         lastrecv += recvfrom_short_time;
 
-        if (recv_size > 0) {
+        if ( packet ) {
             // Log if it's been a while since the last packet was received
             if (lastrecv > 20.0 / 1000.0) {
                 LOG_INFO(
@@ -383,11 +364,9 @@ int ReceivePackets(void* opaque) {
 
         // LOG_INFO("Recv wait time: %f", GetTimer(recvfrom_timer));
 
-        if (recv_size == 0) {
-            // This packet was just an ACK; It can be ignored
-        } else if (recv_size < 0) {
             // If the packet has an issue, and it wasn't just a simple timeout,
             // then we should log it
+            /*
             int error = GetLastNetworkError();
 
             switch (error) {
@@ -398,28 +377,29 @@ int ReceivePackets(void* opaque) {
                     LOG_WARNING("Unexpected Packet Error: %d", error);
                     break;
             }
-        } else {
+            */
+        if ( packet ) {
             // Check packet type and then redirect packet to the proper packet
             // handler
-            switch (packet.type) {
+            switch (packet->type) {
                 case PACKET_VIDEO:
                     // Video packet
                     StartTimer(&video_timer);
-                    ReceiveVideo(&packet);
+                    ReceiveVideo(packet);
                     video_time += GetTimer(video_timer);
                     max_video_time = max(max_video_time, GetTimer(video_timer));
                     break;
                 case PACKET_AUDIO:
                     // Audio packet
                     StartTimer(&audio_timer);
-                    ReceiveAudio(&packet);
+                    ReceiveAudio(packet);
                     audio_time += GetTimer(audio_timer);
                     max_audio_time = max(max_audio_time, GetTimer(audio_timer));
                     break;
                 case PACKET_MESSAGE:
                     // A FractalServerMessage for other information
                     StartTimer(&message_timer);
-                    ReceiveMessage(&packet);
+                    ReceiveMessage(packet);
                     message_time += GetTimer(message_timer);
                     break;
                 default:
