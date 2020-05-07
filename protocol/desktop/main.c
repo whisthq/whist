@@ -53,11 +53,11 @@ volatile char* server_ip;
 // Function Declarations
 
 int ReceivePackets(void* opaque);
-int ReceiveMessage(struct RTPPacket* packet);
+int ReceiveMessage(FractalPacket* packet);
 bool received_server_init_message;
 
-struct SocketContext PacketSendContext;
-struct SocketContext PacketTCPContext;
+SocketContext PacketSendContext;
+SocketContext PacketTCPContext;
 
 volatile bool connected = true;
 volatile bool exiting = false;
@@ -112,7 +112,7 @@ void update() {
         }
 
         // Receive tcp buffer, if a full packet has been received
-        struct RTPPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
+        FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
         if ( tcp_packet ) {
             ReceiveMessage( tcp_packet );
         }
@@ -227,7 +227,7 @@ int ReceivePackets(void* opaque) {
     LOG_INFO("ReceivePackets running on Thread %d", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
-    struct SocketContext socketContext = *(struct SocketContext*)opaque;
+    SocketContext socketContext = *(SocketContext*)opaque;
      
     /****
     Timers
@@ -331,7 +331,7 @@ int ReceivePackets(void* opaque) {
         }
         // END DROP EMULATION
 
-        struct RTPPacket* packet;
+        FractalPacket* packet;
 
         if (is_currently_dropping) {
             // Simulate dropping packets but just not calling recvp
@@ -407,7 +407,7 @@ int ReceivePackets(void* opaque) {
 }
 
 // Receiving a FractalServerMessage
-int ReceiveMessage(struct RTPPacket* packet) {
+int ReceiveMessage(FractalPacket* packet) {
     // Extract fmsg from the packet
     FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
 
@@ -633,7 +633,7 @@ int main(int argc, char* argv[]) {
 
         // Second context: Receiving packets from server
 
-        struct SocketContext PacketReceiveContext = {0};
+        SocketContext PacketReceiveContext = {0};
         if (CreateUDPContext(&PacketReceiveContext,
                              (char*)server_ip, PORT_SERVER_TO_CLIENT, 1,
                              500) < 0) {

@@ -59,17 +59,17 @@ char buf[LARGEST_FRAME_SIZE];
 
 #define VIDEO_BUFFER_SIZE 25
 #define MAX_VIDEO_INDEX 500
-struct RTPPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
+FractalPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 
 #define AUDIO_BUFFER_SIZE 100
 #define MAX_NUM_AUDIO_INDICES 3
-struct RTPPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
+FractalPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 
 SDL_mutex* packet_mutex;
 
-struct SocketContext PacketSendContext = {0};
+SocketContext PacketSendContext = {0};
 
 volatile bool wants_iframe;
 volatile bool update_encoder;
@@ -97,7 +97,7 @@ int32_t MultithreadedDestroyEncoder(void* opaque) {
 int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
-    struct SocketContext socketContext = *(struct SocketContext*)opaque;
+    SocketContext socketContext = *(SocketContext*)opaque;
 
     // Init DXGI Device
     struct CaptureDevice rdevice;
@@ -365,7 +365,7 @@ int32_t SendVideo(void* opaque) {
 }
 
 int32_t SendAudio(void* opaque) {
-    struct SocketContext context = *(struct SocketContext*)opaque;
+    SocketContext context = *(SocketContext*)opaque;
     int id = 1;
 
     audio_device_t* audio_device =
@@ -524,8 +524,8 @@ int main() {
         srand( rand() * (unsigned int)time( NULL ) + rand() );
         connection_id = rand();
 
-        struct SocketContext PacketReceiveContext = {0};
-        struct SocketContext PacketTCPContext = {0};
+        SocketContext PacketReceiveContext = {0};
+        SocketContext PacketTCPContext = {0};
 
         updateStatus( false );
 
@@ -694,7 +694,7 @@ int main() {
             }
 
             // START Get Packet
-            struct RTPPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
+            FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
             if ( tcp_packet ) {
                 fmsg = (FractalClientMessage*)tcp_packet->data;
                 mprintf("Received TCP BUF!!!! Size %d\n", tcp_packet->payload_size);
@@ -705,7 +705,7 @@ int main() {
 
                 fmsg = &local_fmsg;
 
-                struct RTPPacket* decrypted_packet = ReadUDPPacket(&PacketReceiveContext);
+                FractalPacket* decrypted_packet = ReadUDPPacket(&PacketReceiveContext);
 
                 if( decrypted_packet )
                 {
@@ -804,7 +804,7 @@ int main() {
 
                     // mprintf("Audio NACK requested for: ID %d Index %d\n",
                     // fmsg->nack_data.id, fmsg->nack_data.index);
-                    struct RTPPacket* audio_packet =
+                    FractalPacket* audio_packet =
                         &audio_buffer[fmsg->nack_data.id % AUDIO_BUFFER_SIZE]
                                      [fmsg->nack_data.index];
                     int len = audio_buffer_packet_len[fmsg->nack_data.id %
@@ -831,7 +831,7 @@ int main() {
 
                     // mprintf("Video NACK requested for: ID %d Index %d\n",
                     // fmsg->nack_data.id, fmsg->nack_data.index);
-                    struct RTPPacket* video_packet =
+                    FractalPacket* video_packet =
                         &video_buffer[fmsg->nack_data.id % VIDEO_BUFFER_SIZE]
                                      [fmsg->nack_data.index];
                     int len = video_buffer_packet_len[fmsg->nack_data.id %

@@ -13,7 +13,7 @@
 
 void initAudio();
 
-int32_t ReceiveAudio(struct RTPPacket *packet);
+int32_t ReceiveAudio(FractalPacket *packet);
 
 void updateAudio();
 

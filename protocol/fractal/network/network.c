@@ -83,7 +83,7 @@ void ClearReadingTCP() { reading_packet_len = 0; }
 char unbounded_packet[LARGEST_PACKET];
 char encrypted_unbounded_packet[sizeof(int) + LARGEST_PACKET + 16];
 
-int SendTCPPacket(struct SocketContext *context, FractalPacketType type,
+int SendTCPPacket(SocketContext *context, FractalPacketType type,
                   void *data, int len) {
     // Verify packet size can fit
     if ((unsigned int)len > LARGEST_PACKET - PACKET_HEADER_SIZE) {
@@ -91,7 +91,7 @@ int SendTCPPacket(struct SocketContext *context, FractalPacketType type,
         return -1;
     }
 
-    struct RTPPacket *packet = (struct RTPPacket *)unbounded_packet;
+    FractalPacket *packet = (FractalPacket *)unbounded_packet;
 
     // Contruct packet
     packet->id = -1;
@@ -106,7 +106,7 @@ int SendTCPPacket(struct SocketContext *context, FractalPacketType type,
     // Encrypt the packet using aes encryption
     int encrypt_len = encrypt_packet(
         packet, packet_size,
-        (struct RTPPacket *)(sizeof(int) + encrypted_unbounded_packet),
+        (FractalPacket *)(sizeof(int) + encrypted_unbounded_packet),
         (unsigned char *)PRIVATE_KEY);
     *((int *)encrypted_unbounded_packet) = encrypt_len;
 
@@ -124,9 +124,9 @@ int SendTCPPacket(struct SocketContext *context, FractalPacketType type,
     return failed ? -1 : 0;
 }
 
-int SendUDPPacket(struct SocketContext *context, FractalPacketType type,
+int SendUDPPacket(SocketContext *context, FractalPacketType type,
                   void *data, int len, int id, int burst_bitrate,
-                  struct RTPPacket *packet_buffer, int *packet_len_buffer) {
+                  FractalPacket *packet_buffer, int *packet_len_buffer) {
     if (id <= 0) {
         mprintf("IDs must be positive!\n");
         return -1;
@@ -187,11 +187,11 @@ int SendUDPPacket(struct SocketContext *context, FractalPacketType type,
         }
 
         // local packet and len for when nack buffer isn't needed
-        struct RTPPacket l_packet = {0};
+        FractalPacket l_packet = {0};
         int l_len = 0;
 
         int *packet_len = &l_len;
-        struct RTPPacket *packet = &l_packet;
+        FractalPacket *packet = &l_packet;
 
         // Based on packet type, the packet to one of the buffers to serve later
         // nacks
@@ -219,7 +219,7 @@ int SendUDPPacket(struct SocketContext *context, FractalPacketType type,
         *packet_len = packet_size;
 
         // Encrypt the packet with AES
-        struct RTPPacket encrypted_packet;
+        FractalPacket encrypted_packet;
         int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
                                          (unsigned char *)PRIVATE_KEY);
 
@@ -241,10 +241,10 @@ int SendUDPPacket(struct SocketContext *context, FractalPacketType type,
     return 0;
 }
 
-int ReplayPacket( struct SocketContext* context, struct RTPPacket* packet,
+int ReplayPacket( SocketContext* context, FractalPacket* packet,
                   size_t len )
 {
-    if( len > sizeof( struct RTPPacket ) )
+    if( len > sizeof( FractalPacket ) )
     {
         mprintf( "Len too long!\n" );
         return -1;
@@ -252,7 +252,7 @@ int ReplayPacket( struct SocketContext* context, struct RTPPacket* packet,
 
     packet->is_a_nack = true;
 
-    struct RTPPacket encrypted_packet;
+    FractalPacket encrypted_packet;
     int encrypt_len = encrypt_packet( packet, (int)len, &encrypted_packet,
         (unsigned char*)PRIVATE_KEY );
 
@@ -269,16 +269,16 @@ int ReplayPacket( struct SocketContext* context, struct RTPPacket* packet,
     return 0;
 }
 
-int recvp(struct SocketContext *context, void *buf, int len) {
+int recvp(SocketContext *context, void *buf, int len) {
     return recv(context->s, buf, len, 0);
 }
 
-int sendp(struct SocketContext *context, void *buf, int len) {
+int sendp(SocketContext *context, void *buf, int len) {
     return sendto(context->s, buf, len, 0, (struct sockaddr *)(&context->addr),
                   sizeof(context->addr));
 }
 
-int ack( struct SocketContext* context )
+int ack( SocketContext* context )
 {
     return sendp( context, NULL, 0 );
 }
@@ -314,14 +314,14 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     return true;
 }
 
-struct RTPPacket* ReadUDPPacket( struct SocketContext* context )
+FractalPacket* ReadUDPPacket( SocketContext* context )
 {
     // Wait to receive packet over TCP, until timing out
-    struct RTPPacket encrypted_packet;
+    FractalPacket encrypted_packet;
     int encrypted_len = recvp( context, &encrypted_packet,
                                 sizeof( encrypted_packet ) );
 
-    static struct RTPPacket decrypted_packet;
+    static FractalPacket decrypted_packet;
 
     // If the packet was successfully received, then decrypt it
     if( encrypted_len > 0 )
@@ -358,7 +358,7 @@ struct RTPPacket* ReadUDPPacket( struct SocketContext* context )
     }
 }
 
-struct RTPPacket* ReadTCPPacket(struct SocketContext *context) {
+FractalPacket* ReadTCPPacket(SocketContext *context) {
     if (!context->is_tcp) {
         LOG_WARNING("TryReadingTCPPacket received a context that is NOT TCP!");
         return NULL;
@@ -400,8 +400,8 @@ struct RTPPacket* ReadTCPPacket(struct SocketContext *context) {
             actual_len >= target_len) {
             // Decrypt it
             int decrypted_len = decrypt_packet_n(
-                (struct RTPPacket *)(reading_packet_buffer + sizeof(int)),
-                target_len, (struct RTPPacket *)decrypted_packet_buffer,
+                (FractalPacket *)(reading_packet_buffer + sizeof(int)),
+                target_len, (FractalPacket *)decrypted_packet_buffer,
                 LARGEST_TCP_PACKET, (unsigned char *)PRIVATE_KEY);
 
             // Move the rest of the read bytes to the beginning of the buffer to
@@ -419,7 +419,7 @@ struct RTPPacket* ReadTCPPacket(struct SocketContext *context) {
                 return NULL;
             } else {
                 // Return the decrypted packet
-                return (struct RTPPacket*)decrypted_packet_buffer;
+                return (FractalPacket*)decrypted_packet_buffer;
             }
         }
     }
@@ -427,7 +427,7 @@ struct RTPPacket* ReadTCPPacket(struct SocketContext *context) {
     return NULL;
 }
 
-int CreateTCPServerContext(struct SocketContext *context,
+int CreateTCPServerContext(SocketContext *context,
                            int port, int recvfrom_timeout_ms,
                            int stun_timeout_ms) {
     context->is_tcp = true;
@@ -512,7 +512,7 @@ int CreateTCPServerContext(struct SocketContext *context,
     return 0;
 }
 
-int CreateTCPServerContextStun(struct SocketContext *context,
+int CreateTCPServerContextStun(SocketContext *context,
                                int port, int recvfrom_timeout_ms,
                                int stun_timeout_ms) {
     context->is_tcp = true;
@@ -646,7 +646,7 @@ int CreateTCPServerContextStun(struct SocketContext *context,
     return 0;
 }
 
-int CreateTCPClientContext(struct SocketContext *context, char *destination,
+int CreateTCPClientContext(SocketContext *context, char *destination,
                            int port, int recvfrom_timeout_ms,
                            int stun_timeout_ms) {
     stun_timeout_ms;  // TODO; remove useless parameter
@@ -684,7 +684,7 @@ int CreateTCPClientContext(struct SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
+int CreateTCPClientContextStun(SocketContext *context, char *destination,
                                int port, int recvfrom_timeout_ms,
                                int stun_timeout_ms) {
     context->is_tcp = true;
@@ -822,7 +822,7 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateTCPContext(struct SocketContext *context, char *destination,
+int CreateTCPContext(SocketContext *context, char *destination,
                      int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->mutex = SDL_CreateMutex();
 
@@ -843,7 +843,7 @@ int CreateTCPContext(struct SocketContext *context, char *destination,
 #endif
 }
 
-int CreateUDPServerContext(struct SocketContext *context,
+int CreateUDPServerContext(SocketContext *context,
                            int port, int recvfrom_timeout_ms,
                            int stun_timeout_ms) {
     context->is_tcp = false;
@@ -897,7 +897,7 @@ int CreateUDPServerContext(struct SocketContext *context,
     return 0;
 }
 
-int CreateUDPServerContextStun(struct SocketContext *context,
+int CreateUDPServerContextStun(SocketContext *context,
                                int port, int recvfrom_timeout_ms,
                                int stun_timeout_ms) {
     context->is_tcp = false;
@@ -1033,7 +1033,7 @@ int CreateUDPServerContextStun(struct SocketContext *context,
     return 0;
 }
 
-int CreateUDPClientContext(struct SocketContext *context, char *destination,
+int CreateUDPClientContext(SocketContext *context, char *destination,
                            int port, int recvfrom_timeout_ms,
                            int stun_timeout_ms) {
     context->is_tcp = false;
@@ -1091,7 +1091,7 @@ int CreateUDPClientContext(struct SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
+int CreateUDPClientContextStun(SocketContext *context, char *destination,
                                int port, int recvfrom_timeout_ms,
                                int stun_timeout_ms) {
     context->is_tcp = false;
@@ -1192,7 +1192,7 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateUDPContext(struct SocketContext *context, char *destination,
+int CreateUDPContext(SocketContext *context, char *destination,
                      int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->mutex = SDL_CreateMutex();
 

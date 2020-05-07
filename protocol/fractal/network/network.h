@@ -80,9 +80,9 @@ typedef enum FractalPacketType
     PACKET_MESSAGE,
 } FractalPacketType;
 
-// Real Packet Size = sizeof(RTPPacket) - sizeof(RTPPacket.data) +
+// Real Packet Size = sizeof(FractalPacket) - sizeof(FractalPacket.data) +
 // RTPPacket.payload_size
-struct RTPPacket {
+typedef struct FractalPacket {
     // hash at the beginning of the struct, which is the hash of the rest of the
     // packet
     char hash[16];
@@ -100,10 +100,10 @@ struct RTPPacket {
     uint8_t data[MAX_PAYLOAD_SIZE];
     // The encrypted packet could overflow
     uint8_t overflow[16];
-};
+} FractalPacket;
 
-#define MAX_PACKET_SIZE (sizeof(struct RTPPacket))
-#define PACKET_HEADER_SIZE (sizeof(struct RTPPacket) - MAX_PAYLOAD_SIZE - 16)
+#define MAX_PACKET_SIZE (sizeof(FractalPacket))
+#define PACKET_HEADER_SIZE (sizeof(FractalPacket) - MAX_PAYLOAD_SIZE - 16)
 
 // *** end typedefs ***
 
@@ -134,9 +134,9 @@ void set_timeout(SOCKET s, int timeout_ms);
 @param recvfrom_timeout_s       The timeout that the socketcontext will use after being initialized
 @param connection_timeout_ms    The timeout that will be used when attempting to connect. The handshake sends a few packets back and forth, so the upper bound of how long CreateXContext will take is some small constant times connection_timeout_ms
 */
-int CreateUDPContext(struct SocketContext* context, char* destination,
+int CreateUDPContext(SocketContext* context, char* destination,
                      int port, int recvfrom_timeout_s, int connection_timeout_ms );
-int CreateTCPContext(struct SocketContext* context, char* destination,
+int CreateTCPContext(SocketContext* context, char* destination,
                      int port, int recvfrom_timeout_s, int connection_timeout_ms );
 
 /*
@@ -148,7 +148,7 @@ int CreateTCPContext(struct SocketContext* context, char* destination,
 @param data                     A pointer to the data to be sent
 @param len                      The nubmer of bytes to send
 */
-int SendTCPPacket( struct SocketContext* context, FractalPacketType type,
+int SendTCPPacket( SocketContext* context, FractalPacketType type,
                    void* data, int len );
 
 /*
@@ -164,8 +164,8 @@ int SendTCPPacket( struct SocketContext* context, FractalPacketType type,
 @param packet_buffer            An array of RTPPacket's, each sub-packet of the UDPPacket will be stored in packet_buffer[i]
 @param packet_len_buffer        An array of int's, defining the length of each sub-packet located in packet_buffer[i]
 */
-int SendUDPPacket( struct SocketContext* context, FractalPacketType type,
-                   void* data, int len, int id, int burst_bitrate, struct RTPPacket* packet_buffer, int* packet_len_buffer );
+int SendUDPPacket( SocketContext* context, FractalPacketType type,
+                   void* data, int len, int id, int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer );
 
 /*
 @brief                          Replay the sending of a packet that has already been sent by the network protocol. (Via a packet_buffer write from SendUDPPacket)
@@ -174,15 +174,15 @@ int SendUDPPacket( struct SocketContext* context, FractalPacketType type,
 @param packet                   The packet to resend
 @param len                      The length of the packet to resend
 */
-int ReplayPacket( struct SocketContext* context, struct RTPPacket* packet, size_t len );
+int ReplayPacket( SocketContext* context, FractalPacket* packet, size_t len );
 
-int recvp(struct SocketContext* context, void* buf, int len);
-int sendp(struct SocketContext* context, void* buf, int len);
-int ack( struct SocketContext* context );
+int recvp(SocketContext* context, void* buf, int len);
+int sendp(SocketContext* context, void* buf, int len);
+int ack( SocketContext* context );
 
 void ClearReadingTCP();
-struct RTPPacket* ReadTCPPacket(struct SocketContext* context);
-struct RTPPacket* ReadUDPPacket( struct SocketContext* context );
+FractalPacket* ReadTCPPacket(SocketContext* context);
+FractalPacket* ReadUDPPacket( SocketContext* context );
 
 // @brief sends a JSON POST request to the Fractal webservers
 // @details authenticate the user and return the credentials
