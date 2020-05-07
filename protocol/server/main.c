@@ -705,80 +705,39 @@ int main() {
 
                 fmsg = &local_fmsg;
 
-                /*
-                struct RTPPacket encrypted_packet;
-                int encrypted_len;
-                if ((encrypted_len =
-                         recvp(&PacketReceiveContext, &encrypted_packet,
-                               sizeof(encrypted_packet))) > 0) {
-                    // Decrypt using AES private key
-                    struct RTPPacket decrypted_packet;
-                    int decrypt_len = decrypt_packet(
-                        &encrypted_packet, encrypted_len, &decrypted_packet,
-                        (unsigned char*)PRIVATE_KEY);
-
-                    // If decrypted successfully
-                    if (decrypt_len > 0) {
-                        // Copy data into an fmsg
-                        memcpy(fmsg, decrypted_packet.data,
-                               max(sizeof(*fmsg),
-                                   (size_t)decrypted_packet.payload_size));
-
-                        // Check to see if decrypted packet is of valid size
-                        if (decrypted_packet.payload_size !=
-                            GetFmsgSize(fmsg)) {
-                            mprintf("Packet is of the wrong size!: %d\n",
-                                    decrypted_packet.payload_size);
-                            mprintf("Type: %d\n", fmsg->type);
-                            fmsg->type = 0;
-                        }
-
-                        // Make sure that keyboard events are played in order
-                        if (fmsg->type == MESSAGE_KEYBOARD ||
-                            fmsg->type == MESSAGE_KEYBOARD_STATE) {
-                            // Check that id is in order
-                            if (decrypted_packet.id > last_input_id) {
-                                decrypted_packet.id = last_input_id;
-                            } else {
-                                // Received keyboard input out of order, just
-                                // ignore
-                                fmsg->type = 0;
-                            }
-                        }
-                    }
-                }
-                */
-
                 struct RTPPacket* decrypted_packet = ReadUDPPacket(&PacketReceiveContext);
 
-                // Copy data into an fmsg
-                memcpy( fmsg, decrypted_packet->data,
-                        max( sizeof( *fmsg ),
-                        (size_t)decrypted_packet->payload_size ) );
-
-                // Check to see if decrypted packet is of valid size
-                if( decrypted_packet->payload_size !=
-                    GetFmsgSize( fmsg ) )
+                if( decrypted_packet )
                 {
-                    mprintf( "Packet is of the wrong size!: %d\n",
-                             decrypted_packet->payload_size );
-                    mprintf( "Type: %d\n", fmsg->type );
-                    fmsg->type = 0;
-                }
+                    // Copy data into an fmsg
+                    memcpy( fmsg, decrypted_packet->data,
+                            max( sizeof( *fmsg ),
+                            (size_t)decrypted_packet->payload_size ) );
 
-                // Make sure that keyboard events are played in order
-                if( fmsg->type == MESSAGE_KEYBOARD ||
-                    fmsg->type == MESSAGE_KEYBOARD_STATE )
-                {
-                    // Check that id is in order
-                    if( decrypted_packet->id > last_input_id )
+                    // Check to see if decrypted packet is of valid size
+                    if( decrypted_packet->payload_size !=
+                        GetFmsgSize( fmsg ) )
                     {
-                        decrypted_packet->id = last_input_id;
-                    } else
-                    {
-                        // Received keyboard input out of order, just
-                        // ignore
+                        mprintf( "Packet is of the wrong size!: %d\n",
+                                 decrypted_packet->payload_size );
+                        mprintf( "Type: %d\n", fmsg->type );
                         fmsg->type = 0;
+                    }
+
+                    // Make sure that keyboard events are played in order
+                    if( fmsg->type == MESSAGE_KEYBOARD ||
+                        fmsg->type == MESSAGE_KEYBOARD_STATE )
+                    {
+                        // Check that id is in order
+                        if( decrypted_packet->id > last_input_id )
+                        {
+                            decrypted_packet->id = last_input_id;
+                        } else
+                        {
+                            // Received keyboard input out of order, just
+                            // ignore
+                            fmsg->type = 0;
+                        }
                     }
                 }
             }
