@@ -13,7 +13,9 @@ vm_bp = Blueprint('vm_bp', __name__)
 
 
 @vm_bp.route('/status/<task_id>')
-def status(task_id):
+def status(task_id, **kwargs):
+    sendInfo(kwargs['ID'], 'GET request sent to /status/{}'.format(task_id), papertrail = False)
+
     result = celery.AsyncResult(task_id)
     if result.status == 'SUCCESS':
         response = {
@@ -41,39 +43,46 @@ def status(task_id):
         return make_response(jsonify(response), 200)
 
 
-@vm_bp.route('/dummy', methods=['POST'])
-def dummy():
-    task = stateChangeTest.apply_async()
-    return jsonify({'ID': task.id}), 202
-
-
 @vm_bp.route('/vm/<action>', methods=['POST'])
-def vm(action):
+def vm(action, **kwargs):
     if action == 'create':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/create')
+
         body = request.get_json()
         vm_size = body['vm_size']
         location = body['location']
         operating_system = 'Windows'
+
         if 'operating_system' in body.keys():
             operating_system = body['operating_system']
+
+        sendInfo(kwargs['ID'], 'Creating VM of size {}, location {}, operating system {}'.format(vm_size, location, operating_system))
+
         task = createVM.apply_async([vm_size, location, operating_system])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
     elif action == 'fetchip':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/fetchip')
+
         vm_name = request.get_json()['vm_name']
         try:
             vm = getVM(vm_name)
             ip = getIP(vm)
+
             return({'public_ip': ip}), 200
         except:
             return({'public_ip': None}), 404
     elif action == 'delete':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/delete')
+
         body = request.get_json()
         vm_name, delete_disk = body['vm_name'], body['delete_disk']
         task = deleteVMResources.apply_async([vm_name, delete_disk])
         return jsonify({'ID': task.id}), 202
     elif action == 'restart':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/restart')
+
         username = request.get_json()['username']
         vm = fetchUserVMs(username)
         if vm:
@@ -82,41 +91,43 @@ def vm(action):
             return jsonify({'ID': task.id}), 202
         return jsonify({'ID': None}), 404
     elif action == 'start':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/start')
+
         vm_name = request.get_json()['vm_name']
         task = startVM.apply_async([vm_name])
         return jsonify({'ID': task.id}), 202
     elif action == 'deallocate':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/deallocate')
+
         vm_name = request.get_json()['vm_name']
         task = deallocateVM.apply_async([vm_name])
         return jsonify({'ID': task.id}), 202
     elif action == 'updateState':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/updateState')
+
         task = updateVMStates.apply_async([])
         return jsonify({'ID': task.id}), 202
     elif action == 'diskSwap':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/diskSwap')
+
         body = request.get_json()
         task = swapSpecificDisk.apply_async(
             [body['disk_name'], body['vm_name']])
         return jsonify({'ID': task.id}), 202
     elif action == 'updateTable':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/updateTable')
+
         task = updateVMTable.apply_async([])
         return jsonify({'ID': task.id}), 202
-    elif action == 'powershell':
-        body = request.get_json()
-        task = runPowershell.apply_async([body['vm_name']])
-        return jsonify({'ID': task.id}), 202
     elif action == 'fetchall':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/fetchall')
+
         body = request.get_json()
         vms = fetchUserVMs(None)
         return jsonify({'payload': vms, 'status': 200}), 200
-    elif action == 'lock':
-        body = request.get_json()
-        lockVM(body['vm_name'], True)
-        return jsonify({'status': 200}), 200
-    elif action == 'unlock':
-        body = request.get_json()
-        lockVM(body['vm_name'], False)
-        return jsonify({'status': 200}), 200
     elif action == 'winlogonStatus':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/winlogonStatus', papertrail = False)
+
         body = request.get_json()
         ready = body['ready']
         vm_ip = None
@@ -138,6 +149,8 @@ def vm(action):
 
         return jsonify({'status': 200}), 200
     elif action == 'connectionStatus':
+        sendInfo(kwargs['ID'], 'POST request sent to /vm/connectionStatus', papertrail = False)
+
         body = request.get_json()
         available = body['available']
 
@@ -166,8 +179,10 @@ def vm(action):
 
 @vm_bp.route('/disk/<action>', methods=['POST'])
 @jwt_required
-def disk(action):
+def disk(action, **kwargs):
     if action == 'createEmpty':
+        sendInfo(kwargs['ID'], 'POST request sent to /disk/createEmpty')
+
         body = request.get_json()
         disk_size = body['disk_size']
         username = body['username']
@@ -177,6 +192,8 @@ def disk(action):
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
     elif action == 'createFromImage':
+        sendInfo(kwargs['ID'], 'POST request sent to /disk/createFromImage')
+
         body = request.get_json()
         print(body)
         task = createDiskFromImage.apply_async(
@@ -185,10 +202,14 @@ def disk(action):
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
     elif action == 'attach':
+        sendInfo(kwargs['ID'], 'POST request sent to /disk/attach')
+
         body = request.get_json()
         task = swapDisk.apply_async([body['disk_name']])
         return jsonify({'ID': task.id}), 202
     elif action == 'detach':
+        sendInfo(kwargs['ID'], 'POST request sent to /disk/detach')
+
         vm_name = request.get_json()['vm_name']
         disk_name = request.get_json()['disk_name']
         task = detachDisk.apply_async([vm_name, disk_name])
@@ -196,18 +217,24 @@ def disk(action):
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
     elif action == 'resync':
+        sendInfo(kwargs['ID'], 'POST request sent to /disk/resync')
+
         task = syncDisks.apply_async([])
         return jsonify({'ID': task.id}), 202
     elif action == 'update':
+        sendInfo(kwargs['ID'], 'POST request sent to /disk/update')
+
         body = request.get_json()
         assignUserToDisk(body['disk_name'], body['username'])
         return jsonify({'status': 200}), 200
     elif action == 'delete':
+        sendInfo(kwargs['ID'], 'POST request sent to /disk/delete')
+
         body = request.get_json()
         username = body['username']
         disks = fetchUserDisks(username, True)
         task_id = None
-        print(disks)
+
         if disks:
             for disk in disks:
                 task = deleteDisk.apply_async([disk['disk_name']])
@@ -219,7 +246,7 @@ def disk(action):
 
 @vm_bp.route('/tracker/<action>', methods=['POST'])
 @jwt_required
-def tracker(action):
+def tracker(action, **kwargs):
     body = request.get_json()
     time = None
     try:
@@ -227,10 +254,14 @@ def tracker(action):
     except:
         pass
     if action == 'logon':
+        sendInfo(kwargs['ID'], 'POST request sent to /tracker/logon')
+
         username = body['username']
         is_user = body['is_user']
         addTimeTable(username, 'logon', time, is_user)
     elif action == 'logoff':
+        sendInfo(kwargs['ID'], 'POST request sent to /tracker/logoff')
+
         username = body['username']
         is_user = body['is_user']
         customer = fetchCustomer(username)
@@ -265,15 +296,19 @@ def tracker(action):
 
         addTimeTable(username, 'logoff', time, is_user)
     elif action == 'startup':
+        sendInfo(kwargs['ID'], 'POST request sent to /tracker/startup')
+
         username = body['username']
         is_user = body['is_user']
         addTimeTable(username, 'startup', time, is_user)
-    elif action == 'clear':
-        deleteTimeTable()
     elif action == 'fetch':
+        sendInfo(kwargs['ID'], 'POST request sent to /tracker/fetch')
+
         activity = fetchLoginActivity()
         return jsonify({'payload': activity}), 200
     elif action == 'fetchMostRecent':
+        sendInfo(kwargs['ID'], 'POST request sent to /tracker/fetchMostRecent')
+
         activity = getMostRecentActivity(body['username'])
         return jsonify({'payload': activity})
     return jsonify({}), 200
@@ -283,17 +318,23 @@ def tracker(action):
 
 @vm_bp.route('/info/<action>', methods=['GET', 'POST'])
 @jwt_required
-def info(action):
+def info(action, **kwargs):
     body = request.get_json()
     if action == 'list_all' and request.method == 'GET':
+        sendInfo(kwargs['ID'], 'GET request sent to /info/list_all')
+
         task = fetchAll.apply_async([False])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
     if action == 'list_all_disks' and request.method == 'GET':
+        sendInfo(kwargs['ID'], 'GET request sent to /info/list_all_disks')
+
         disks = fetchUserDisks(None)
         return jsonify({'disks': disks}), 200
     if action == 'update_db' and request.method == 'POST':
+        sendInfo(kwargs['ID'], 'POST request sent to /info/update_db')
+
         task = fetchAll.apply_async([True])
         if not task:
             return jsonify({}), 400
@@ -303,7 +344,10 @@ def info(action):
 
 
 @vm_bp.route('/logs', methods=['POST'])
-def logs():
+@generateID
+def logs(**kwargs):
+    sendInfo(kwargs['ID'], 'POST request sent to /logs')
+
     body = request.get_json()
     vm_ip = None
     if 'vm_ip' in body:
@@ -315,7 +359,10 @@ def logs():
 
 
 @vm_bp.route('/logs/fetch', methods=['POST'])
-def fetch_logs():
+@generateID
+def fetch_logs(**kwargs):
+    sendInfo(kwargs['ID'], 'POST request sent to /logs/fetch')
+
     body = request.get_json()
     task = fetchLogs.apply_async([body['username']])
     return jsonify({'ID': task.id}), 202

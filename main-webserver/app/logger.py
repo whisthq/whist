@@ -1,26 +1,34 @@
 from .imports import *
 
-def sendLog(log):
-	# class ContextFilter(logging.Filter):
-	#     hostname = socket.gethostname()
+class ContextFilter(logging.Filter):
+    hostname = socket.gethostname()
 
-	#     def filter(self, record):
-	#         record.hostname = ContextFilter.hostname
-	#         return True
+    def filter(self, record):
+        record.hostname = ContextFilter.hostname
+        return True
 
-	# syslog = SysLogHandler(address=('logs3.papertrailapp.com', 44138))
-	# syslog.addFilter(ContextFilter())
+syslog = SysLogHandler(address=('logs3.papertrailapp.com', 44138))
+syslog.addFilter(ContextFilter())
 
-	# format = '%(asctime)s %(hostname)s YOUR_APP: %(message)s'
-	# formatter = logging.Formatter(format, datefmt='%b %d %H:%M:%S')
-	# syslog.setFormatter(formatter)
+format = '%(asctime)s %(hostname)s YOUR_APP: %(message)s'
+formatter = logging.Formatter(format, datefmt='%b %d %H:%M:%S')
+syslog.setFormatter(formatter)
 
-	# log = logging.getLogger('werkzeug')
-	# log.setLevel(logging.CRITICAL)
-	# log.disabled = True
+logger = logging.getLogger()
+logger.addHandler(syslog)
+logger.setLevel(logging.INFO)
 
-	# logger = logging.getLogger()
-	# logger.addHandler(syslog)
-	# logger.setLevel(logging.WARNING)
-	# logger.info(log)
-	return 1
+def sendInfo(ID, log, papertrail = True):
+	if papertrail:
+		logger.info('{} INFO: {}'.format(ID, log))
+	print('{} [HIDDEN] INFO: {}'.format(ID, log))
+
+def sendError(ID, log, papertrail = True):
+	if papertrail:
+		logger.error('{} ERROR: {}'.format(ID, log))
+	print('{} [HIDDEN] ERROR: {}'.format(ID, log))
+
+def sendCritical(ID, log, papertrail = True):
+	if papertrail:
+		logger.critical('{} CRITICAL: {}'.format(ID, log))
+	print('{} [HIDDEN] CRITICAL: {}'.format(ID, log))

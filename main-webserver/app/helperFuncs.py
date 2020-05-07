@@ -331,8 +331,6 @@ def updateVMUsername(username, vm_name):
 
 
 def loginUser(username, password):
-    sendLog('User {} trying to log in'.format(username))
-
     if password != os.getenv('ADMIN_PASSWORD'):
         command = text("""
             SELECT * FROM users WHERE "username" = :userName AND "password" = :password

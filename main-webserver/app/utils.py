@@ -91,3 +91,11 @@ def serverLog(logMsg):
         requests.post(url=url, data=json.dumps(data), headers=headers)
     else:
         print(logMsg)
+
+def yieldNumber():
+    num = 0
+    while True:
+        if num > 9999:
+            num = 0
+        num += 1
+        yield str(num)

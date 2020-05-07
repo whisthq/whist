@@ -32,5 +32,6 @@ from sendgrid.helpers.mail import Mail as SendGridMail
 import logging
 import socket
 from logging.handlers import SysLogHandler
+from functools import wraps
 
 load_dotenv()
