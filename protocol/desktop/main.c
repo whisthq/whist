@@ -560,6 +560,11 @@ int main(int argc, char* argv[]) {
     // for the same reason
     runcmd("mkdir ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
+
+    // the mkdir command won't do anything if the folder already exists, in which case
+    // we make sure to clear the previous logs and connection id
+    runcmd("rm -f ~/.fractal/log.txt", NULL);
+    runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
 #endif
     initBacktraceHandler();
 
