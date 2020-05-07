@@ -739,6 +739,8 @@ int main() {
                             fmsg->type = 0;
                         }
                     }
+                } else {
+                    fmsg->type = 0;
                 }
             }
             // END Get Packet
