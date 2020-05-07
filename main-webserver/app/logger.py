@@ -7,7 +7,7 @@ class ContextFilter(logging.Filter):
         record.hostname = ContextFilter.hostname
         return True
 
-syslog = SysLogHandler(address=(os.getenv('PAPERTRAIL_URL'), os.getenv('PAPERTRAIL_PORT')))
+syslog = SysLogHandler(address=(os.getenv('PAPERTRAIL_URL'), int(os.getenv('PAPERTRAIL_PORT'))))
 syslog.addFilter(ContextFilter())
 
 format = '%(asctime)s %(hostname)s YOUR_APP: %(message)s'
