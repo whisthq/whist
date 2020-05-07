@@ -74,31 +74,6 @@ struct SocketContext PacketSendContext = {0};
 volatile bool wants_iframe;
 volatile bool update_encoder;
 
-int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
-                 size_t len) {
-    if (len > sizeof(struct RTPPacket)) {
-        mprintf("Len too long!\n");
-        return -1;
-    }
-
-    packet->is_a_nack = true;
-
-    struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
-                                     (unsigned char*)PRIVATE_KEY);
-
-    SDL_LockMutex(packet_mutex);
-    int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-    SDL_UnlockMutex(packet_mutex);
-
-    if (sent_size < 0) {
-        mprintf("Could not replay packet!\n");
-        return -1;
-    }
-
-    return 0;
-}
-
 bool pending_encoder;
 bool encoder_finished;
 encoder_t* encoder_factory_result = NULL;
@@ -554,7 +529,7 @@ int main() {
 
         updateStatus( false );
 
-        if (CreateUDPContext(&PacketReceiveContext, ORIGIN_SERVER, "0.0.0.0",
+        if (CreateUDPContext(&PacketReceiveContext, NULL,
                              PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
             mprintf("Failed to start connection\n");
 
@@ -564,7 +539,7 @@ int main() {
             continue;
         }
 
-        if (CreateUDPContext(&PacketSendContext, ORIGIN_SERVER, "0.0.0.0",
+        if (CreateUDPContext(&PacketSendContext, NULL,
                              PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             mprintf(
                 "Failed to finish connection (Failed at port server to "
@@ -573,7 +548,7 @@ int main() {
             continue;
         }
 
-        if (CreateTCPContext(&PacketTCPContext, ORIGIN_SERVER, "0.0.0.0",
+        if (CreateTCPContext(&PacketTCPContext, NULL,
                              PORT_SHARED_TCP, 1, 500) < 0) {
             mprintf("Failed to finish connection (Failed at TCP context).\n");
             closesocket(PacketReceiveContext.s);
@@ -719,18 +694,18 @@ int main() {
             }
 
             // START Get Packet
-            char* tcp_buf = TryReadingTCPPacket(&PacketTCPContext);
-            if (tcp_buf) {
-                struct RTPPacket* packet = (struct RTPPacket*)tcp_buf;
-                fmsg = (FractalClientMessage*)packet->data;
-                mprintf("Received TCP BUF!!!! Size %d\n", packet->payload_size);
+            struct RTPPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
+            if ( tcp_packet ) {
+                fmsg = (FractalClientMessage*)tcp_packet->data;
+                mprintf("Received TCP BUF!!!! Size %d\n", tcp_packet->payload_size);
                 mprintf("Received %d byte clipboard message from client.\n",
-                        packet->payload_size);
+                         tcp_packet->payload_size);
             } else {
                 memset(&local_fmsg, 0, sizeof(local_fmsg));
 
                 fmsg = &local_fmsg;
 
+                /*
                 struct RTPPacket encrypted_packet;
                 int encrypted_len;
                 if ((encrypted_len =
@@ -770,6 +745,40 @@ int main() {
                                 fmsg->type = 0;
                             }
                         }
+                    }
+                }
+                */
+
+                struct RTPPacket* decrypted_packet = ReadUDPPacket(&PacketReceiveContext);
+
+                // Copy data into an fmsg
+                memcpy( fmsg, decrypted_packet->data,
+                        max( sizeof( *fmsg ),
+                        (size_t)decrypted_packet->payload_size ) );
+
+                // Check to see if decrypted packet is of valid size
+                if( decrypted_packet->payload_size !=
+                    GetFmsgSize( fmsg ) )
+                {
+                    mprintf( "Packet is of the wrong size!: %d\n",
+                             decrypted_packet->payload_size );
+                    mprintf( "Type: %d\n", fmsg->type );
+                    fmsg->type = 0;
+                }
+
+                // Make sure that keyboard events are played in order
+                if( fmsg->type == MESSAGE_KEYBOARD ||
+                    fmsg->type == MESSAGE_KEYBOARD_STATE )
+                {
+                    // Check that id is in order
+                    if( decrypted_packet->id > last_input_id )
+                    {
+                        decrypted_packet->id = last_input_id;
+                    } else
+                    {
+                        // Received keyboard input out of order, just
+                        // ignore
+                        fmsg->type = 0;
                     }
                 }
             }

@@ -196,11 +196,11 @@ int SendUDPPacket(struct SocketContext *context, FractalPacketType type,
         // Based on packet type, the packet to one of the buffers to serve later
         // nacks
         if (packet_buffer) {
-            packet = packet_buffer;
+            packet = &packet_buffer[i];
         }
 
         if (packet_len_buffer) {
-            packet_len = packet_len_buffer;
+            packet_len = &packet_len_buffer[i];
         }
 
         payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
@@ -224,13 +224,9 @@ int SendUDPPacket(struct SocketContext *context, FractalPacketType type,
                                          (unsigned char *)PRIVATE_KEY);
 
         // Send it off
-        static SDL_mutex *send_packet_mutex = NULL;
-        if (!send_packet_mutex) {
-            send_packet_mutex = SDL_CreateMutex();
-        }
-        SDL_LockMutex(send_packet_mutex);
+        SDL_LockMutex( context->mutex );
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-        SDL_UnlockMutex(send_packet_mutex);
+        SDL_UnlockMutex( context->mutex );
 
         if (sent_size < 0) {
             int error = GetLastNetworkError();
@@ -240,6 +236,34 @@ int SendUDPPacket(struct SocketContext *context, FractalPacketType type,
 
         i++;
         curr_index += payload_size;
+    }
+
+    return 0;
+}
+
+int ReplayPacket( struct SocketContext* context, struct RTPPacket* packet,
+                  size_t len )
+{
+    if( len > sizeof( struct RTPPacket ) )
+    {
+        mprintf( "Len too long!\n" );
+        return -1;
+    }
+
+    packet->is_a_nack = true;
+
+    struct RTPPacket encrypted_packet;
+    int encrypt_len = encrypt_packet( packet, (int)len, &encrypted_packet,
+        (unsigned char*)PRIVATE_KEY );
+
+    SDL_LockMutex( context->mutex );
+    int sent_size = sendp( context, &encrypted_packet, encrypt_len );
+    SDL_UnlockMutex( context->mutex );
+
+    if( sent_size < 0 )
+    {
+        mprintf( "Could not replay packet!\n" );
+        return -1;
     }
 
     return 0;
@@ -290,7 +314,38 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     return true;
 }
 
-void *TryReadingTCPPacket(struct SocketContext *context) {
+struct RTPPacket* ReadUDPPacket( struct SocketContext* context )
+{
+    // Wait to receive packet over TCP, until timing out
+    struct RTPPacket encrypted_packet;
+    int encrypted_len = recvp( context, &encrypted_packet,
+                                sizeof( encrypted_packet ) );
+
+    static struct RTPPacket decrypted_packet;
+
+    // If the packet was successfully received, then decrypt it
+    if( encrypted_len > 0 )
+    {
+        int decrypted_len =
+            decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet,
+            (unsigned char*)PRIVATE_KEY );
+
+        // If there was an issue decrypting it, post warning and then
+        // ignore the problem
+        if( decrypted_len < 0 )
+        {
+            LOG_WARNING( "Failed to decrypt packet" );
+            return NULL;
+        }
+
+        return &decrypted_packet;
+    } else
+    {
+        return NULL;
+    }
+}
+
+struct RTPPacket* ReadTCPPacket(struct SocketContext *context) {
     if (!context->is_tcp) {
         LOG_WARNING("TryReadingTCPPacket received a context that is NOT TCP!");
         return NULL;
@@ -351,7 +406,7 @@ void *TryReadingTCPPacket(struct SocketContext *context) {
                 return NULL;
             } else {
                 // Return the decrypted packet
-                return decrypted_packet_buffer;
+                return (struct RTPPacket*)decrypted_packet_buffer;
             }
         }
     }
@@ -359,10 +414,9 @@ void *TryReadingTCPPacket(struct SocketContext *context) {
     return NULL;
 }
 
-int CreateTCPServerContext(struct SocketContext *context, char *destination,
+int CreateTCPServerContext(struct SocketContext *context,
                            int port, int recvfrom_timeout_ms,
                            int stun_timeout_ms) {
-    destination;  // TODO; remove useless parameter
     context->is_tcp = true;
 
     int opt;
@@ -445,10 +499,9 @@ int CreateTCPServerContext(struct SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateTCPServerContextStun(struct SocketContext *context, char *destination,
+int CreateTCPServerContextStun(struct SocketContext *context,
                                int port, int recvfrom_timeout_ms,
                                int stun_timeout_ms) {
-    destination;  // TODO; remove useless parameter
     context->is_tcp = true;
 
     // Init stun_addr
@@ -756,30 +809,30 @@ int CreateTCPClientContextStun(struct SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateTCPContext(struct SocketContext *context,
-                     FractalConnectionOrigin origin, char *destination,
+int CreateTCPContext(struct SocketContext *context, char *destination,
                      int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
+    context->mutex = SDL_CreateMutex();
+
 #if USING_STUN
-    if (origin == ORIGIN_CLIENT)
-        return CreateTCPClientContextStun(context, destination, port,
-                                          recvfrom_timeout_ms, stun_timeout_ms);
+    if (destination == NULL)
+        return CreateTCPServerContextStun( context, port,
+                                           recvfrom_timeout_ms, stun_timeout_ms );
     else
-        return CreateTCPServerContextStun(context, destination, port,
-                                          recvfrom_timeout_ms, stun_timeout_ms);
+        return CreateTCPClientContextStun( context, destination, port,
+                                           recvfrom_timeout_ms, stun_timeout_ms );
 #else
-    if (origin == ORIGIN_CLIENT)
-        return CreateTCPClientContext(context, destination, port,
-                                      recvfrom_timeout_ms, stun_timeout_ms);
+    if (destination == NULL)
+        return CreateTCPServerContext( context, port,
+                                       recvfrom_timeout_ms, stun_timeout_ms );
     else
-        return CreateTCPServerContext(context, destination, port,
-                                      recvfrom_timeout_ms, stun_timeout_ms);
+        return CreateTCPClientContext( context, destination, port,
+                                       recvfrom_timeout_ms, stun_timeout_ms );
 #endif
 }
 
-int CreateUDPServerContext(struct SocketContext *context, char *destination,
+int CreateUDPServerContext(struct SocketContext *context,
                            int port, int recvfrom_timeout_ms,
                            int stun_timeout_ms) {
-    destination;  // TODO; remove useless parameter
     context->is_tcp = false;
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -831,10 +884,9 @@ int CreateUDPServerContext(struct SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateUDPServerContextStun(struct SocketContext *context, char *destination,
+int CreateUDPServerContextStun(struct SocketContext *context,
                                int port, int recvfrom_timeout_ms,
                                int stun_timeout_ms) {
-    destination;  // TODO; remove useless parameter
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1127,23 +1179,24 @@ int CreateUDPClientContextStun(struct SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateUDPContext(struct SocketContext *context,
-                     FractalConnectionOrigin origin, char *destination,
+int CreateUDPContext(struct SocketContext *context, char *destination,
                      int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
+    context->mutex = SDL_CreateMutex();
+
 #if USING_STUN
-    if (origin == ORIGIN_CLIENT)
-        return CreateUDPClientContextStun(context, destination, port,
-                                          recvfrom_timeout_ms, stun_timeout_ms);
+    if ( destination == NULL)
+        return CreateUDPServerContextStun( context, port,
+                                           recvfrom_timeout_ms, stun_timeout_ms );
     else
-        return CreateUDPServerContextStun(context, destination, port,
-                                          recvfrom_timeout_ms, stun_timeout_ms);
+        return CreateUDPClientContextStun( context, destination, port,
+                                           recvfrom_timeout_ms, stun_timeout_ms );
 #else
-    if (origin == ORIGIN_CLIENT)
-        return CreateUDPClientContext(context, destination, port,
-                                      recvfrom_timeout_ms, stun_timeout_ms);
+    if ( destination == NULL )
+        return CreateUDPServerContext( context, port,
+                                       recvfrom_timeout_ms, stun_timeout_ms );
     else
-        return CreateUDPServerContext(context, destination, port,
-                                      recvfrom_timeout_ms, stun_timeout_ms);
+        return CreateUDPClientContext( context, destination, port,
+                                       recvfrom_timeout_ms, stun_timeout_ms );
 #endif
 }
 

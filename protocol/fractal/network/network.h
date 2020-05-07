@@ -1,6 +1,14 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
+/*
+
+This file contains all code that interacts directly with sockets under-the-hood.
+
+
+
+*/
+
 // *** begin includes ***
 
 #if defined(_WIN32)
@@ -58,14 +66,8 @@ typedef struct SocketContext {
     SOCKET s;
     struct sockaddr_in addr;
     int ack;
+    SDL_mutex* mutex;
 } SocketContext;
-
-/// @brief Connection origin.
-/// @details Passed to CreateTCPContext and CreateUDPContext
-typedef enum FractalConnectionOrigin {
-    ORIGIN_CLIENT = 1,  ///< Connection from a client.
-    ORIGIN_SERVER = 2   ///< Connection from a server.
-} FractalConnectionOrigin;
 
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
 // replayed
@@ -107,28 +109,80 @@ struct RTPPacket {
 
 // *** begin functions ***
 
+/*
+@brief This will set the socket s to have timeout timeout_ms. Use 0 to have a non-blocking socket, and -1 for an indefinitely blocking socket
+
+@returns The network error that most recently occured, through WSAGetLastError on windows or errno on linux
+*/
 int GetLastNetworkError();
 
+/*
+@brief                          This will set the socket s to have timeout timeout_ms.
+                                Use 0 to have a non-blocking socket, and -1 for an indefinitely blocking socket
+
+@param s                        The socket
+@param timeout_ms               The maximum amount of time that all recv/send calls will take for that socket (0 to return immediately, -1 to never return)
+*/
 void set_timeout(SOCKET s, int timeout_ms);
 
+/*
+@brief                          Initialize a UDP/TCP connection between a server and a client
 
+@param context                  The socket context that will be initialized
+@param destination              The server IP address to connect to. Passing NULL will wait for another client to connect to the socket
+@param port                     The port to connect to. This will be a real port if USING_STUN is false, and it will be a virtual port if USING_STUN is true. (The real port will be some randomly chosen port if USING_STUN is true)
+@param recvfrom_timeout_s       The timeout that the socketcontext will use after being initialized
+@param connection_timeout_ms    The timeout that will be used when attempting to connect. The handshake sends a few packets back and forth, so the upper bound of how long CreateXContext will take is some small constant times connection_timeout_ms
+*/
+int CreateUDPContext(struct SocketContext* context, char* destination,
+                     int port, int recvfrom_timeout_s, int connection_timeout_ms );
+int CreateTCPContext(struct SocketContext* context, char* destination,
+                     int port, int recvfrom_timeout_s, int connection_timeout_ms );
+
+/*
+@brief                          This will send a FractalPacket over TCP to the SocketContext context.
+                                A FractalPacketType is also provided to describe the packet
+
+@param context                  The socket context
+@param type                     The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
+@param data                     A pointer to the data to be sent
+@param len                      The nubmer of bytes to send
+*/
 int SendTCPPacket( struct SocketContext* context, FractalPacketType type,
                    void* data, int len );
+
+/*
+@brief                          This will send a FractalPacket over UDP to the SocketContext context.
+                                A FractalPacketType is also provided to the receiving end.
+
+@param context                  The socket context
+@param type                     The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
+@param data                     A pointer to the data to be sent
+@param len                      The nubmer of bytes to send
+@param id                       An ID for the UDP data.
+@param burst_bitrate            The maximum bitrate that packets will be sent over. -1 will imply sending as fast as possible
+@param packet_buffer            An array of RTPPacket's, each sub-packet of the UDPPacket will be stored in packet_buffer[i]
+@param packet_len_buffer        An array of int's, defining the length of each sub-packet located in packet_buffer[i]
+*/
 int SendUDPPacket( struct SocketContext* context, FractalPacketType type,
                    void* data, int len, int id, int burst_bitrate, struct RTPPacket* packet_buffer, int* packet_len_buffer );
 
-int CreateUDPContext(struct SocketContext* context,
-                     FractalConnectionOrigin origin, char* destination,
-                     int port, int recvfrom_timeout_s, int stun_timeout_ms);
-int CreateTCPContext(struct SocketContext* context,
-                     FractalConnectionOrigin origin, char* destination,
-                     int port, int recvfrom_timeout_s, int stun_timeout_ms);
+/*
+@brief                          Replay the sending of a packet that has already been sent by the network protocol. (Via a packet_buffer write from SendUDPPacket)
+
+@param context                  The socket context
+@param packet                   The packet to resend
+@param len                      The length of the packet to resend
+*/
+int ReplayPacket( struct SocketContext* context, struct RTPPacket* packet, size_t len );
+
 int recvp(struct SocketContext* context, void* buf, int len);
 int sendp(struct SocketContext* context, void* buf, int len);
 int ack( struct SocketContext* context );
 
 void ClearReadingTCP();
-void* TryReadingTCPPacket(struct SocketContext* context);
+struct RTPPacket* ReadTCPPacket(struct SocketContext* context);
+struct RTPPacket* ReadUDPPacket( struct SocketContext* context );
 
 // @brief sends a JSON POST request to the Fractal webservers
 // @details authenticate the user and return the credentials

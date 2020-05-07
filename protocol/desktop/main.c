@@ -105,17 +105,16 @@ void update() {
     if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 &&
         !isUpdatingClipboard()) {
         // Check if TCP connction is active
-        int result = sendp(&PacketTCPContext, NULL, 0);
+        int result = ack(&PacketTCPContext);
         if (result < 0) {
             LOG_ERROR("Lost TCP Connection (Error: %d)", GetLastNetworkError());
             // TODO: Should exit or recover protocol if TCP connection is lost
         }
 
         // Receive tcp buffer, if a full packet has been received
-        char* tcp_buf = TryReadingTCPPacket(&PacketTCPContext);
-        if (tcp_buf) {
-            struct RTPPacket* packet = (struct RTPPacket*)tcp_buf;
-            ReceiveMessage(packet);
+        struct RTPPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
+        if ( tcp_packet ) {
+            ReceiveMessage( tcp_packet );
         }
 
         // Update the last tcp check timer
@@ -658,7 +657,7 @@ int main(int argc, char* argv[]) {
 
         // First context: Sending packets to server
 
-        if (CreateUDPContext(&PacketSendContext, ORIGIN_CLIENT,
+        if (CreateUDPContext(&PacketSendContext,
                              (char*)server_ip, PORT_CLIENT_TO_SERVER, 10,
                              500) < 0) {
             LOG_WARNING("Failed to connect to server");
@@ -670,7 +669,7 @@ int main(int argc, char* argv[]) {
         // Second context: Receiving packets from server
 
         struct SocketContext PacketReceiveContext = {0};
-        if (CreateUDPContext(&PacketReceiveContext, ORIGIN_CLIENT,
+        if (CreateUDPContext(&PacketReceiveContext,
                              (char*)server_ip, PORT_SERVER_TO_CLIENT, 1,
                              500) < 0) {
             LOG_ERROR("Failed finish connection to server");
@@ -683,7 +682,7 @@ int main(int argc, char* argv[]) {
         // Third context: Mutual TCP context for essential but
         // not-speed-sensitive applications
 
-        if (CreateTCPContext(&PacketTCPContext, ORIGIN_CLIENT, (char*)server_ip,
+        if (CreateTCPContext(&PacketTCPContext, (char*)server_ip,
                              PORT_SHARED_TCP, 1, 500) < 0) {
             LOG_ERROR("Failed finish connection to server");
             closesocket(PacketSendContext.s);
