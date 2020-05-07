@@ -7,7 +7,7 @@ class ContextFilter(logging.Filter):
         record.hostname = ContextFilter.hostname
         return True
 
-syslog = SysLogHandler(address=('logs3.papertrailapp.com', 44138))
+syslog = SysLogHandler(address=(os.getenv('PAPERTRAIL_URL'), os.getenv('PAPERTRAIL_PORT')))
 syslog.addFilter(ContextFilter())
 
 format = '%(asctime)s %(hostname)s YOUR_APP: %(message)s'
@@ -22,6 +22,11 @@ def sendInfo(ID, log, papertrail = True):
 	if papertrail:
 		logger.info('[WEBSERVER][{}] INFO: {}'.format(ID, log))
 	print('[WEBSERVER][{}] INFO: {}'.format(ID, log))
+
+def sendWarning(ID, log, papertrail = True):
+	if papertrail:
+		logger.warning('[WEBSERVER][{}] WARNING: {}'.format(ID, log))
+	print('[WEBSERVER][{}] WARNING: {}'.format(ID, log))
 
 def sendError(ID, log, papertrail = True):
 	if papertrail:

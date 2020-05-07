@@ -148,7 +148,7 @@ def vm(action, **kwargs):
             lockVM(vm_name, False)
             vmReadyToConnect(vm_name, ready)
         else:
-            print('FAILURE: No VM found for IP {}'.format(str(vm_ip)))
+            sendError(kwargs['ID'], 'No VM found for IP {}'.format(str(vm_ip)))
 
         return jsonify({'status': 200}), 200
     elif action == 'connectionStatus':
@@ -174,7 +174,7 @@ def vm(action, **kwargs):
                 updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
                 lockVM(vm_name, True)
         else:
-            print('FAILURE: No VM found for IP {}'.format(str(vm_ip)))
+            sendError(kwargs['ID'], 'No VM found for IP {}'.format(str(vm_ip)))
 
         return jsonify({'status': 200}), 200
     return jsonify({}), 400
@@ -199,7 +199,7 @@ def disk(action, **kwargs):
         sendInfo(kwargs['ID'], 'POST request sent to /disk/createFromImage')
 
         body = request.get_json()
-        print(body)
+
         task = createDiskFromImage.apply_async(
             [body['username'], body['location'], body['vm_size']])
         if not task:
@@ -271,8 +271,7 @@ def tracker(action, **kwargs):
         is_user = body['is_user']
         customer = fetchCustomer(username)
         if not customer:
-            print(
-                'CRITICAL ERROR: {} logged on/off but is not a registered customer'.format(username))
+            sendCritical(kwargs['ID'], '{} logged on/off but is not a registered customer'.format(username))
         else:
             stripe.api_key = os.getenv('STRIPE_SECRET')
             subscription_id = customer['subscription']
@@ -281,10 +280,8 @@ def tracker(action, **kwargs):
                 payload = stripe.Subscription.retrieve(subscription_id)
 
                 if os.getenv('HOURLY_PLAN_ID') == payload['items']['data'][0]['plan']['id']:
-                    print(
-                        'NOTIFICATION: {} is an hourly plan subscriber'.format(username))
+                    sendInfo(kwargs['ID'], '{} is an hourly plan subscriber'.format(username))
                     user_activity = getMostRecentActivity(username)
-                    print(user_activity)
                     if user_activity['action'] == 'logon':
                         now = dt.now()
                         logon = dt.strptime(
@@ -294,8 +291,7 @@ def tracker(action, **kwargs):
                                 79 * (now - logon).total_seconds()/60/60)
                             addPendingCharge(username, amount)
                     else:
-                        print(
-                            'CRITICAL ERROR: {} logged off but no log on was recorded')
+                        sendError(kwargs['ID'], '{} logged off but no logon was recorded'.format(username))
             except:
                 pass
 

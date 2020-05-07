@@ -11,7 +11,7 @@ def user_login(**kwargs):
 	sendInfo(kwargs['ID'], 'POST request sent to /user/login')
 	body = request.get_json()
 	username = body['username']
-	payload = fetchUserDisks(username)
+	payload = fetchUserDisks(username, ID = kwargs['ID'])
 	return jsonify({'payload': payload}), 200
 
 @account_bp.route('/user/fetchvms', methods=['POST'])
