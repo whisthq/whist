@@ -13,6 +13,7 @@ vm_bp = Blueprint('vm_bp', __name__)
 
 
 @vm_bp.route('/status/<task_id>')
+@generateID
 def status(task_id, **kwargs):
     sendInfo(kwargs['ID'], 'GET request sent to /status/{}'.format(task_id), papertrail = False)
 
@@ -44,6 +45,7 @@ def status(task_id, **kwargs):
 
 
 @vm_bp.route('/vm/<action>', methods=['POST'])
+@generateID
 def vm(action, **kwargs):
     if action == 'create':
         sendInfo(kwargs['ID'], 'POST request sent to /vm/create')
@@ -179,6 +181,7 @@ def vm(action, **kwargs):
 
 @vm_bp.route('/disk/<action>', methods=['POST'])
 @jwt_required
+@generateID
 def disk(action, **kwargs):
     if action == 'createEmpty':
         sendInfo(kwargs['ID'], 'POST request sent to /disk/createEmpty')
@@ -246,6 +249,7 @@ def disk(action, **kwargs):
 
 @vm_bp.route('/tracker/<action>', methods=['POST'])
 @jwt_required
+@generateID
 def tracker(action, **kwargs):
     body = request.get_json()
     time = None
@@ -318,6 +322,7 @@ def tracker(action, **kwargs):
 
 @vm_bp.route('/info/<action>', methods=['GET', 'POST'])
 @jwt_required
+@generateID
 def info(action, **kwargs):
     body = request.get_json()
     if action == 'list_all' and request.method == 'GET':
