@@ -5,7 +5,13 @@
 
 This file contains all code that interacts directly with sockets under-the-hood.
 
+Usage -
 
+SocketContext: This type represents a socket.
+   To use a socket, call CreateUDPContext or CreateTCPContext with the desired parameters
+   To send data over a socket, call SendTCPPacket or SendUDPPacket
+   To receive data over a socket, call ReadTCPPacket or ReadUDPPacket
+   If there is belief that a packet wasn't sent, you can call ReplayPacket to send a packet twice
 
 */
 
@@ -117,15 +123,6 @@ typedef struct FractalPacket {
 int GetLastNetworkError();
 
 /*
-@brief                          This will set the socket s to have timeout timeout_ms.
-                                Use 0 to have a non-blocking socket, and -1 for an indefinitely blocking socket
-
-@param s                        The socket
-@param timeout_ms               The maximum amount of time that all recv/send calls will take for that socket (0 to return immediately, -1 to never return)
-*/
-void set_timeout(SOCKET s, int timeout_ms);
-
-/*
 @brief                          Initialize a UDP/TCP connection between a server and a client
 
 @param context                  The socket context that will be initialized
@@ -133,6 +130,8 @@ void set_timeout(SOCKET s, int timeout_ms);
 @param port                     The port to connect to. This will be a real port if USING_STUN is false, and it will be a virtual port if USING_STUN is true. (The real port will be some randomly chosen port if USING_STUN is true)
 @param recvfrom_timeout_s       The timeout that the socketcontext will use after being initialized
 @param connection_timeout_ms    The timeout that will be used when attempting to connect. The handshake sends a few packets back and forth, so the upper bound of how long CreateXContext will take is some small constant times connection_timeout_ms
+
+@returns                        Will return -1 on failure, will return 0 on success
 */
 int CreateUDPContext(SocketContext* context, char* destination,
                      int port, int recvfrom_timeout_s, int connection_timeout_ms );
@@ -147,6 +146,8 @@ int CreateTCPContext(SocketContext* context, char* destination,
 @param type                     The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
 @param data                     A pointer to the data to be sent
 @param len                      The nubmer of bytes to send
+
+@returns                        Will return -1 on failure, will return 0 on success
 */
 int SendTCPPacket( SocketContext* context, FractalPacketType type,
                    void* data, int len );
@@ -163,6 +164,8 @@ int SendTCPPacket( SocketContext* context, FractalPacketType type,
 @param burst_bitrate            The maximum bitrate that packets will be sent over. -1 will imply sending as fast as possible
 @param packet_buffer            An array of RTPPacket's, each sub-packet of the UDPPacket will be stored in packet_buffer[i]
 @param packet_len_buffer        An array of int's, defining the length of each sub-packet located in packet_buffer[i]
+
+@returns                        Will return -1 on failure, will return 0 on success
 */
 int SendUDPPacket( SocketContext* context, FractalPacketType type,
                    void* data, int len, int id, int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer );
@@ -173,14 +176,31 @@ int SendUDPPacket( SocketContext* context, FractalPacketType type,
 @param context                  The socket context
 @param packet                   The packet to resend
 @param len                      The length of the packet to resend
+
+@returns                        Will return -1 on failure, will return 0 on success
 */
 int ReplayPacket( SocketContext* context, FractalPacket* packet, size_t len );
 
-int recvp(SocketContext* context, void* buf, int len);
-int sendp(SocketContext* context, void* buf, int len);
+/*
+@brief                          Send a 0-length packet over the socket. Used to keep-alive over NATs, and to check on the validity of the socket
+
+@param context                  The socket context
+
+@returns                        Will return -1 on failure, will return 0 on success
+                                Failure implies that the socket is broken or the TCP connection has ended, use GetLastNetworkError() to learn more about the error
+*/
 int ack( SocketContext* context );
 
 void ClearReadingTCP();
+
+
+/*
+@brief                          Receive a FractalPacket from a SocketContext, if any such packet exists
+
+@param context                  The socket context
+
+@returns                        A pointer to the FractalPacket on success, NULL on failure
+*/
 FractalPacket* ReadTCPPacket(SocketContext* context);
 FractalPacket* ReadUDPPacket( SocketContext* context );
 

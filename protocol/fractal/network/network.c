@@ -8,6 +8,9 @@
 
 #include "../utils/aes.h"
 
+int recvp( SocketContext* context, void* buf, int len );
+int sendp( SocketContext* context, void* buf, int len );
+
 typedef struct {
     unsigned int ip;
     unsigned short private_port;
@@ -23,8 +26,22 @@ typedef struct {
 
 static int reading_packet_len = 0;
 static char reading_packet_buffer[LARGEST_TCP_PACKET];
-
 static char decrypted_packet_buffer[LARGEST_TCP_PACKET];
+
+/*
+@brief                          This will set the socket s to have timeout timeout_ms.
+                                Use 0 to have a non-blocking socket, and -1 for an indefinitely blocking socket
+
+@param s                        The socket
+@param timeout_ms               The maximum amount of time that all recv/send calls will take for that socket (0 to return immediately, -1 to never return)
+*/
+void set_timeout( SOCKET s, int timeout_ms );
+
+/*
+============================
+Function Implementations
+============================
+*/
 
 int GetLastNetworkError() {
 #if defined(_WIN32)
