@@ -331,7 +331,6 @@ int ReceivePackets(void* opaque) {
         }
         // END DROP EMULATION
 
-
         struct RTPPacket* packet;
 
         if (is_currently_dropping) {
@@ -364,20 +363,6 @@ int ReceivePackets(void* opaque) {
 
         // LOG_INFO("Recv wait time: %f", GetTimer(recvfrom_timer));
 
-            // If the packet has an issue, and it wasn't just a simple timeout,
-            // then we should log it
-            /*
-            int error = GetLastNetworkError();
-
-            switch (error) {
-                case ETIMEDOUT:
-                case EWOULDBLOCK:
-                    break;
-                default:
-                    LOG_WARNING("Unexpected Packet Error: %d", error);
-                    break;
-            }
-            */
         if ( packet ) {
             // Check packet type and then redirect packet to the proper packet
             // handler

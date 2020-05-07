@@ -341,6 +341,19 @@ struct RTPPacket* ReadUDPPacket( struct SocketContext* context )
         return &decrypted_packet;
     } else
     {
+        if( encrypted_len < 0 )
+        {
+            int error = GetLastNetworkError();
+            switch( error )
+            {
+            case ETIMEDOUT:
+            case EWOULDBLOCK:
+                break;
+            default:
+                LOG_WARNING( "Unexpected Packet Error: %d", error );
+                break;
+            }
+        }
         return NULL;
     }
 }
