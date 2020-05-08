@@ -59,45 +59,20 @@ char buf[LARGEST_FRAME_SIZE];
 
 #define VIDEO_BUFFER_SIZE 25
 #define MAX_VIDEO_INDEX 500
-struct RTPPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
+FractalPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 
 #define AUDIO_BUFFER_SIZE 100
 #define MAX_NUM_AUDIO_INDICES 3
-struct RTPPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
+FractalPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 
 SDL_mutex* packet_mutex;
 
-struct SocketContext PacketSendContext = {0};
+SocketContext PacketSendContext = {0};
 
 volatile bool wants_iframe;
 volatile bool update_encoder;
-
-int ReplayPacket(struct SocketContext* context, struct RTPPacket* packet,
-                 size_t len) {
-    if (len > sizeof(struct RTPPacket)) {
-        mprintf("Len too long!\n");
-        return -1;
-    }
-
-    packet->is_a_nack = true;
-
-    struct RTPPacket encrypted_packet;
-    int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
-                                     (unsigned char*)PRIVATE_KEY);
-
-    SDL_LockMutex(packet_mutex);
-    int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-    SDL_UnlockMutex(packet_mutex);
-
-    if (sent_size < 0) {
-        mprintf("Could not replay packet!\n");
-        return -1;
-    }
-
-    return 0;
-}
 
 bool pending_encoder;
 bool encoder_finished;
@@ -122,7 +97,7 @@ int32_t MultithreadedDestroyEncoder(void* opaque) {
 int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
-    struct SocketContext socketContext = *(struct SocketContext*)opaque;
+    SocketContext socketContext = *(SocketContext*)opaque;
 
     // Init DXGI Device
     struct CaptureDevice rdevice;
@@ -394,7 +369,7 @@ int32_t SendVideo(void* opaque) {
 }
 
 int32_t SendAudio(void* opaque) {
-    struct SocketContext context = *(struct SocketContext*)opaque;
+    SocketContext context = *(SocketContext*)opaque;
     int id = 1;
 
     audio_device_t* audio_device =
@@ -558,13 +533,13 @@ int main() {
         srand(rand() * (unsigned int)time(NULL) + rand());
         connection_id = rand();
 
-        struct SocketContext PacketReceiveContext = {0};
-        struct SocketContext PacketTCPContext = {0};
+        SocketContext PacketReceiveContext = {0};
+        SocketContext PacketTCPContext = {0};
 
         updateStatus(false);
 
-        if (CreateUDPContext(&PacketReceiveContext, ORIGIN_SERVER, "0.0.0.0",
-                             PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
+        if (CreateUDPContext(&PacketReceiveContext, NULL, PORT_CLIENT_TO_SERVER,
+                             1, 5000) < 0) {
             mprintf("Failed to start connection\n");
 
             // Since we're just idling, let's try updating the server
@@ -573,8 +548,8 @@ int main() {
             continue;
         }
 
-        if (CreateUDPContext(&PacketSendContext, ORIGIN_SERVER, "0.0.0.0",
-                             PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
+        if (CreateUDPContext(&PacketSendContext, NULL, PORT_SERVER_TO_CLIENT, 1,
+                             500) < 0) {
             mprintf(
                 "Failed to finish connection (Failed at port server to "
                 "client).\n");
@@ -582,8 +557,8 @@ int main() {
             continue;
         }
 
-        if (CreateTCPContext(&PacketTCPContext, ORIGIN_SERVER, "0.0.0.0",
-                             PORT_SHARED_TCP, 1, 500) < 0) {
+        if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 500) <
+            0) {
             mprintf("Failed to finish connection (Failed at TCP context).\n");
             closesocket(PacketReceiveContext.s);
             closesocket(PacketSendContext.s);
@@ -662,7 +637,6 @@ int main() {
 
         int last_input_id = -1;
         StartTrackingClipboardUpdates();
-        ClearReadingTCP();
 
         clock ack_timer;
         StartTimer(&ack_timer);
@@ -672,9 +646,9 @@ int main() {
 
             if (GetTimer(ack_timer) > 5) {
 #if USING_STUN
-                ack(&PacketTCPContext);
-                ack(&PacketSendContext);
-                ack(&PacketReceiveContext);
+                Ack(&PacketTCPContext);
+                Ack(&PacketSendContext);
+                Ack(&PacketReceiveContext);
 #endif
                 updateStatus(true);
                 StartTimer(&ack_timer);
@@ -730,58 +704,49 @@ int main() {
             }
 
             // START Get Packet
-            char* tcp_buf = TryReadingTCPPacket(&PacketTCPContext);
-            if (tcp_buf) {
-                struct RTPPacket* packet = (struct RTPPacket*)tcp_buf;
-                fmsg = (FractalClientMessage*)packet->data;
-                mprintf("Received TCP BUF!!!! Size %d\n", packet->payload_size);
+            FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
+            if (tcp_packet) {
+                fmsg = (FractalClientMessage*)tcp_packet->data;
+                mprintf("Received TCP BUF!!!! Size %d\n",
+                        tcp_packet->payload_size);
                 mprintf("Received %d byte clipboard message from client.\n",
-                        packet->payload_size);
+                        tcp_packet->payload_size);
             } else {
                 memset(&local_fmsg, 0, sizeof(local_fmsg));
 
                 fmsg = &local_fmsg;
 
-                struct RTPPacket encrypted_packet;
-                int encrypted_len;
-                if ((encrypted_len =
-                         recvp(&PacketReceiveContext, &encrypted_packet,
-                               sizeof(encrypted_packet))) > 0) {
-                    // Decrypt using AES private key
-                    struct RTPPacket decrypted_packet;
-                    int decrypt_len = decrypt_packet(
-                        &encrypted_packet, encrypted_len, &decrypted_packet,
-                        (unsigned char*)PRIVATE_KEY);
+                FractalPacket* decrypted_packet =
+                    ReadUDPPacket(&PacketReceiveContext);
 
-                    // If decrypted successfully
-                    if (decrypt_len > 0) {
-                        // Copy data into an fmsg
-                        memcpy(fmsg, decrypted_packet.data,
-                               max(sizeof(*fmsg),
-                                   (size_t)decrypted_packet.payload_size));
+                if (decrypted_packet) {
+                    // Copy data into an fmsg
+                    memcpy(fmsg, decrypted_packet->data,
+                           max(sizeof(*fmsg),
+                               (size_t)decrypted_packet->payload_size));
 
-                        // Check to see if decrypted packet is of valid size
-                        if (decrypted_packet.payload_size !=
-                            GetFmsgSize(fmsg)) {
-                            mprintf("Packet is of the wrong size!: %d\n",
-                                    decrypted_packet.payload_size);
-                            mprintf("Type: %d\n", fmsg->type);
+                    // Check to see if decrypted packet is of valid size
+                    if (decrypted_packet->payload_size != GetFmsgSize(fmsg)) {
+                        mprintf("Packet is of the wrong size!: %d\n",
+                                decrypted_packet->payload_size);
+                        mprintf("Type: %d\n", fmsg->type);
+                        fmsg->type = 0;
+                    }
+
+                    // Make sure that keyboard events are played in order
+                    if (fmsg->type == MESSAGE_KEYBOARD ||
+                        fmsg->type == MESSAGE_KEYBOARD_STATE) {
+                        // Check that id is in order
+                        if (decrypted_packet->id > last_input_id) {
+                            decrypted_packet->id = last_input_id;
+                        } else {
+                            // Received keyboard input out of order, just
+                            // ignore
                             fmsg->type = 0;
                         }
-
-                        // Make sure that keyboard events are played in order
-                        if (fmsg->type == MESSAGE_KEYBOARD ||
-                            fmsg->type == MESSAGE_KEYBOARD_STATE) {
-                            // Check that id is in order
-                            if (decrypted_packet.id > last_input_id) {
-                                decrypted_packet.id = last_input_id;
-                            } else {
-                                // Received keyboard input out of order, just
-                                // ignore
-                                fmsg->type = 0;
-                            }
-                        }
                     }
+                } else {
+                    fmsg->type = 0;
                 }
             }
             // END Get Packet
@@ -846,7 +811,7 @@ int main() {
 
                     // mprintf("Audio NACK requested for: ID %d Index %d\n",
                     // fmsg->nack_data.id, fmsg->nack_data.index);
-                    struct RTPPacket* audio_packet =
+                    FractalPacket* audio_packet =
                         &audio_buffer[fmsg->nack_data.id % AUDIO_BUFFER_SIZE]
                                      [fmsg->nack_data.index];
                     int len = audio_buffer_packet_len[fmsg->nack_data.id %
@@ -873,7 +838,7 @@ int main() {
 
                     // mprintf("Video NACK requested for: ID %d Index %d\n",
                     // fmsg->nack_data.id, fmsg->nack_data.index);
-                    struct RTPPacket* video_packet =
+                    FractalPacket* video_packet =
                         &video_buffer[fmsg->nack_data.id % VIDEO_BUFFER_SIZE]
                                      [fmsg->nack_data.index];
                     int len = video_buffer_packet_len[fmsg->nack_data.id %

@@ -89,6 +89,7 @@ void lprintf(const char* fmtStr, ...);
 
 void StartTimer(clock* timer);
 double GetTimer(clock timer);
+clock CreateClock( int timeout_ms );
 
 static inline char* timenow();
 

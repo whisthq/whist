@@ -278,7 +278,7 @@ void updateAudio() {
     }
 }
 
-int32_t ReceiveAudio(struct RTPPacket* packet) {
+int32_t ReceiveAudio(FractalPacket* packet) {
     if (packet->index >= MAX_NUM_AUDIO_INDICES) {
         LOG_WARNING("Packet Index too large!");
         return -1;

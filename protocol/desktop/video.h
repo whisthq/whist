@@ -13,7 +13,7 @@
 
 void initVideo();
 
-int32_t ReceiveVideo(struct RTPPacket *packet);
+int32_t ReceiveVideo(FractalPacket *packet);
 
 void updateVideo();
 

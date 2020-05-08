@@ -650,7 +650,7 @@ void updateVideo() {
     }
 }
 
-int32_t ReceiveVideo(struct RTPPacket* packet) {
+int32_t ReceiveVideo(FractalPacket* packet) {
     // mprintf("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)\n",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
 

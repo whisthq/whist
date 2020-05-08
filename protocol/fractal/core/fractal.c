@@ -181,7 +181,7 @@ void updateStatus(bool is_connected) {
             \"ready\" : true\
     }");
 
-    sendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus", json);
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus", json);
 
     snprintf(json, sizeof(json),
              "{\
@@ -189,7 +189,7 @@ void updateStatus(bool is_connected) {
     }",
              is_connected ? "false" : "true");
 
-    sendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
 }
 
 int GetFmsgSize(struct FractalClientMessage* fmsg) {

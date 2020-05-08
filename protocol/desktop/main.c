@@ -53,11 +53,11 @@ volatile char* server_ip;
 // Function Declarations
 
 int ReceivePackets(void* opaque);
-int ReceiveMessage(struct RTPPacket* packet);
+int ReceiveMessage(FractalPacket* packet);
 bool received_server_init_message;
 
-struct SocketContext PacketSendContext;
-struct SocketContext PacketTCPContext;
+SocketContext PacketSendContext;
+SocketContext PacketTCPContext;
 
 volatile bool connected = true;
 volatile bool exiting = false;
@@ -83,7 +83,6 @@ void initUpdate() {
     ping_failures = -2;
 
     initUpdateClipboard((SEND_FMSG*)&SendFmsg, (char*)server_ip);
-    ClearReadingTCP();
 }
 
 void destroyUpdate() { destroyUpdateClipboard(); }
@@ -105,17 +104,16 @@ void update() {
     if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 &&
         !isUpdatingClipboard()) {
         // Check if TCP connction is active
-        int result = sendp(&PacketTCPContext, NULL, 0);
+        int result = Ack(&PacketTCPContext);
         if (result < 0) {
             LOG_ERROR("Lost TCP Connection (Error: %d)", GetLastNetworkError());
             // TODO: Should exit or recover protocol if TCP connection is lost
         }
 
         // Receive tcp buffer, if a full packet has been received
-        char* tcp_buf = TryReadingTCPPacket(&PacketTCPContext);
-        if (tcp_buf) {
-            struct RTPPacket* packet = (struct RTPPacket*)tcp_buf;
-            ReceiveMessage(packet);
+        FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
+        if (tcp_packet) {
+            ReceiveMessage(tcp_packet);
         }
 
         // Update the last tcp check timer
@@ -228,8 +226,7 @@ int ReceivePackets(void* opaque) {
     LOG_INFO("ReceivePackets running on Thread %d", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
-    struct SocketContext socketContext = *(struct SocketContext*)opaque;
-    struct RTPPacket packet = {0};
+    SocketContext socketContext = *(SocketContext*)opaque;
 
     /****
     Timers
@@ -280,7 +277,7 @@ int ReceivePackets(void* opaque) {
 
     while (run_receive_packets) {
         if (GetTimer(last_ack) > 5.0) {
-            ack(&socketContext);
+            Ack(&socketContext);
             StartTimer(&last_ack);
         }
 
@@ -333,34 +330,15 @@ int ReceivePackets(void* opaque) {
         }
         // END DROP EMULATION
 
-        int recv_size;
+        FractalPacket* packet;
+
         if (is_currently_dropping) {
             // Simulate dropping packets but just not calling recvp
             SDL_Delay(1);
-            recv_size = 0;
             LOG_INFO("DROPPING");
+            packet = NULL;
         } else {
-            // Wait to receive packet over TCP, until timing out
-            struct RTPPacket encrypted_packet;
-            int encrypted_len = recvp(&socketContext, &encrypted_packet,
-                                      sizeof(encrypted_packet));
-
-            recv_size = encrypted_len;
-
-            // If the packet was successfully received, then decrypt it
-            if (recv_size > 0) {
-                recv_size =
-                    decrypt_packet(&encrypted_packet, encrypted_len, &packet,
-                                   (unsigned char*)PRIVATE_KEY);
-
-                // If there was an issue decrypting it, post warning and then
-                // ignore the problem
-                if (recv_size < 0) {
-                    LOG_WARNING("Failed to decrypt packet");
-                    // Just pretend like it never happened
-                    recv_size = 0;
-                }
-            }
+            packet = ReadUDPPacket(&socketContext);
         }
 
         double recvfrom_short_time = GetTimer(recvfrom_timer);
@@ -371,7 +349,7 @@ int ReceivePackets(void* opaque) {
         // time recv_size was > 0
         lastrecv += recvfrom_short_time;
 
-        if (recv_size > 0) {
+        if (packet) {
             // Log if it's been a while since the last packet was received
             if (lastrecv > 20.0 / 1000.0) {
                 LOG_INFO(
@@ -384,43 +362,28 @@ int ReceivePackets(void* opaque) {
 
         // LOG_INFO("Recv wait time: %f", GetTimer(recvfrom_timer));
 
-        if (recv_size == 0) {
-            // This packet was just an ACK; It can be ignored
-        } else if (recv_size < 0) {
-            // If the packet has an issue, and it wasn't just a simple timeout,
-            // then we should log it
-            int error = GetLastNetworkError();
-
-            switch (error) {
-                case ETIMEDOUT:
-                case EWOULDBLOCK:
-                    break;
-                default:
-                    LOG_WARNING("Unexpected Packet Error: %d", error);
-                    break;
-            }
-        } else {
+        if (packet) {
             // Check packet type and then redirect packet to the proper packet
             // handler
-            switch (packet.type) {
+            switch (packet->type) {
                 case PACKET_VIDEO:
                     // Video packet
                     StartTimer(&video_timer);
-                    ReceiveVideo(&packet);
+                    ReceiveVideo(packet);
                     video_time += GetTimer(video_timer);
                     max_video_time = max(max_video_time, GetTimer(video_timer));
                     break;
                 case PACKET_AUDIO:
                     // Audio packet
                     StartTimer(&audio_timer);
-                    ReceiveAudio(&packet);
+                    ReceiveAudio(packet);
                     audio_time += GetTimer(audio_timer);
                     max_audio_time = max(max_audio_time, GetTimer(audio_timer));
                     break;
                 case PACKET_MESSAGE:
                     // A FractalServerMessage for other information
                     StartTimer(&message_timer);
-                    ReceiveMessage(&packet);
+                    ReceiveMessage(packet);
                     message_time += GetTimer(message_timer);
                     break;
                 default:
@@ -443,7 +406,7 @@ int ReceivePackets(void* opaque) {
 }
 
 // Receiving a FractalServerMessage
-int ReceiveMessage(struct RTPPacket* packet) {
+int ReceiveMessage(FractalPacket* packet) {
     // Extract fmsg from the packet
     FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
 
@@ -658,9 +621,8 @@ int main(int argc, char* argv[]) {
 
         // First context: Sending packets to server
 
-        if (CreateUDPContext(&PacketSendContext, ORIGIN_CLIENT,
-                             (char*)server_ip, PORT_CLIENT_TO_SERVER, 10,
-                             500) < 0) {
+        if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
+                             PORT_CLIENT_TO_SERVER, 10, 500) < 0) {
             LOG_WARNING("Failed to connect to server");
             continue;
         }
@@ -669,10 +631,9 @@ int main(int argc, char* argv[]) {
 
         // Second context: Receiving packets from server
 
-        struct SocketContext PacketReceiveContext = {0};
-        if (CreateUDPContext(&PacketReceiveContext, ORIGIN_CLIENT,
-                             (char*)server_ip, PORT_SERVER_TO_CLIENT, 1,
-                             500) < 0) {
+        SocketContext PacketReceiveContext = {0};
+        if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
+                             PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             LOG_ERROR("Failed finish connection to server");
             closesocket(PacketSendContext.s);
             continue;
@@ -683,7 +644,7 @@ int main(int argc, char* argv[]) {
         // Third context: Mutual TCP context for essential but
         // not-speed-sensitive applications
 
-        if (CreateTCPContext(&PacketTCPContext, ORIGIN_CLIENT, (char*)server_ip,
+        if (CreateTCPContext(&PacketTCPContext, (char*)server_ip,
                              PORT_SHARED_TCP, 1, 500) < 0) {
             LOG_ERROR("Failed finish connection to server");
             closesocket(PacketSendContext.s);
@@ -736,8 +697,8 @@ int main(int argc, char* argv[]) {
         while (connected && !exiting) {
             // Send acks to sockets every 5 seconds
             if (GetTimer(ack_timer) > 5) {
-                ack(&PacketSendContext);
-                ack(&PacketTCPContext);
+                Ack(&PacketSendContext);
+                Ack(&PacketTCPContext);
                 StartTimer(&ack_timer);
             }
 
