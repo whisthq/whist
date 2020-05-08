@@ -1,5 +1,6 @@
 from app import *
 from .helperFuncs import *
+from .s3 import *
 from msrest.exceptions import ClientException
 
 
