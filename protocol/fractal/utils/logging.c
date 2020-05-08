@@ -106,6 +106,7 @@ int MultiThreadedPrintf(void *opaque) {
             logger_queue_cache[i].log = logger_queue[logger_queue_index].log;
             strcpy((char *)logger_queue_cache[i].buf,
                    (const char *)logger_queue[logger_queue_index].buf);
+            logger_queue[logger_queue_index].buf[0] = '\0';
             logger_queue_index++;
             logger_queue_index %= LOGGER_QUEUE_SIZE;
             if (i != 0) {
