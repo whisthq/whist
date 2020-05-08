@@ -5,7 +5,7 @@ const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, reset
                 os: '', askFeedback: false, window: 'main', ipInfo: {}, computers: [], fetchStatus: false, disk: '',
                 attachState: 'NOT_REQUESTED', access_token: '', refresh_token: '', attach_attempts: 0,
                 account_locked: false, promo_code: '', restart_status: 0, restart_attempts: 0, location: '',
-                status_message: 'Boot request sent to server'}
+                status_message: 'Boot request sent to server', update_found: false}
 
 export default function counter(state = DEFAULT, action: Action<string>) {
   switch (action.type) {
@@ -106,10 +106,14 @@ export default function counter(state = DEFAULT, action: Action<string>) {
         restart_attempts: state.restart_attempts + 1
       }
     case MainAction.CHANGE_STATUS_MESSAGE:
-      console.log(action)
       return {
         ...state,
         status_message: action.status_message
+      }
+    case MainAction.UPDATE_FOUND:
+      return {
+        ...state,
+        update_found: action.update
       }
     default:
       return state;

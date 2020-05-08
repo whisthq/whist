@@ -9,7 +9,7 @@ import { config } from '../constants/config.ts'
 
 function* refreshAccess(action) {
   const state = yield select()
-  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/token/refresh', {}, state.counter.refresh_token) 
+  const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/token/refresh', {}, state.counter.refresh_token)
   if(json) {
     yield put(Action.storeJWT(json.access_token, json.refresh_token))
   }
@@ -47,7 +47,7 @@ function* getPromoCode(action) {
 
 function* fetchPaymentInfo(action) {
   const {json, response} = yield call(apiPost, config.url.PRIMARY_SERVER + '/stripe/retrieve', {
-    email: action.username 
+    email: action.username
   })
 
   if(json && json.account_locked) {
@@ -208,14 +208,19 @@ function* fetchVM(action) {
   while (json.state === "PENDING" || json.state === "STARTED") {
     var { json, response } = yield call(apiGet, (config.url.PRIMARY_SERVER + '/status/').concat(action.id), state.counter.access_token)
     if(json && json.output && json.state === "PENDING") {
-      json.output = (0, eval)('(' + json.output + ')');
       yield put(Action.changeStatusMessage(json.output.msg))
     }
     yield delay(5000)
   }
-  console.log(json)
-  if(json && json.output && json.output.ip) {
-    yield put(Action.storeIP(json.output.ip))
+
+  if(json && json.state && json.state === "SUCCESS") {
+    if(json && json.output && json.output.ip) {
+      yield put(Action.storeIP(json.output.ip))
+    }
+  } else {
+    if(json && json.output && json.state === "FAILURE") {
+      yield put(Action.changeStatusMessage(json.output.msg))
+    }
   }
 }
 
@@ -252,14 +257,17 @@ function* getRestartStatus(id) {
 }
 
 function* sendLogs(action) {
+  console.log('ENTERING SAGA')
   const state = yield select()
   var public_ip = state.counter.public_ip
+  console.log(public_ip)
   const {json, response} = yield call(apiPost, 'https://cube-celery-staging.herokuapp.com/logs', {
     connection_id: action.connection_id,
     logs: action.logs,
     sender: 'client',
     vm_ip: public_ip
   })
+  console.log(json)
 }
 
 export default function* rootSaga() {

@@ -52,5 +52,7 @@ Once you are ready to publish for auto-update to the Fractal users, you need to 
  3- Then, run ```./publish.sh``` (MacOS/Linux) or ```publish.bat``` (Windows) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run ```yarn package-ci``` to publish to the S3 bucket. 
  
  4- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
+ 
+ 5. Go to node_modules and locate the ```builder-util-runtime``` package. Under the ```out``` folder, find the ```httpExecutor.js``` file. Go to Line 319 and change the timeout to ```60 * 1000 * 1000```.
 
 The production executables are hosted at: https://s3.console.aws.amazon.com/s3/home?region=us-east-1#
