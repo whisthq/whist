@@ -166,6 +166,8 @@ int32_t SendVideo(void* opaque) {
             continue;
         }
 
+        PrintMemoryInfo();
+
         // Update device with new parameters
         if (update_device) {
             update_device = false;
@@ -359,8 +361,12 @@ int32_t SendVideo(void* opaque) {
                     // "");
 
                     // Send video packet to client
-                    if ( SendUDPPacket(&socketContext, PACKET_VIDEO,
-                                   (uint8_t*)frame, frame_size, id, STARTING_BURST_BITRATE, video_buffer[id % VIDEO_BUFFER_SIZE], video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) < 0) {
+                    if (SendUDPPacket(
+                            &socketContext, PACKET_VIDEO, (uint8_t*)frame,
+                            frame_size, id, STARTING_BURST_BITRATE,
+                            video_buffer[id % VIDEO_BUFFER_SIZE],
+                            video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) <
+                        0) {
                         mprintf("Could not send video frame ID %d\n", id);
                     } else {
                         // Only increment ID if the send succeeded
@@ -412,7 +418,7 @@ int32_t SendAudio(void* opaque) {
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
     fmsg.frequency = audio_device->sample_rate;
     SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t*)&fmsg,
-               sizeof(fmsg), 1, STARTING_BURST_BITRATE, NULL, NULL);
+                  sizeof(fmsg), 1, STARTING_BURST_BITRATE, NULL, NULL);
     mprintf("Audio Frequency: %d\n", audio_device->sample_rate);
 
     // setup
@@ -454,9 +460,13 @@ int32_t SendAudio(void* opaque) {
 
                     // Send packet
 
-                    if (SendUDPPacket(&context, PACKET_AUDIO,
-                                   audio_encoder->packet.data,
-                                   audio_encoder->packet.size, id, STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE], audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE] ) < 0) {
+                    if (SendUDPPacket(
+                            &context, PACKET_AUDIO, audio_encoder->packet.data,
+                            audio_encoder->packet.size, id,
+                            STARTING_BURST_BITRATE,
+                            audio_buffer[id % AUDIO_BUFFER_SIZE],
+                            audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) <
+                        0) {
                         mprintf("Could not send audio frame\n");
                     }
                     // mprintf("sent audio frame %d\n", id);
@@ -467,11 +477,12 @@ int32_t SendAudio(void* opaque) {
                     av_packet_unref(&audio_encoder->packet);
                 }
 #else
-                if( SendUDPPacket( &context, PACKET_AUDIO,
-                                          audio_device->buffer,
-                                          audio_device->buffer_size, id, STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE], audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE] ) < 0 )
-                {
-                    mprintf( "Could not send audio frame\n" );
+                if (SendUDPPacket(
+                        &context, PACKET_AUDIO, audio_device->buffer,
+                        audio_device->buffer_size, id, STARTING_BURST_BITRATE,
+                        audio_buffer[id % AUDIO_BUFFER_SIZE],
+                        audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
+                    mprintf("Could not send audio frame\n");
                 }
                 id++;
 #endif
@@ -497,16 +508,16 @@ void update() {
 #else
         "TODO: Linux command?"
 #endif
-        , NULL
-    );
+        ,
+        NULL);
     runcmd(
 #ifdef _WIN32
         "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\""
 #else
         "TODO: Linux command?"
 #endif
-        , NULL
-    );
+        ,
+        NULL);
 }
 
 #include <time.h>
@@ -546,13 +557,13 @@ int main() {
 #endif
 
     while (true) {
-        srand( rand() * (unsigned int)time( NULL ) + rand() );
+        srand(rand() * (unsigned int)time(NULL) + rand());
         connection_id = rand();
 
         struct SocketContext PacketReceiveContext = {0};
         struct SocketContext PacketTCPContext = {0};
 
-        updateStatus( false );
+        updateStatus(false);
 
         if (CreateUDPContext(&PacketReceiveContext, ORIGIN_SERVER, "0.0.0.0",
                              PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
@@ -581,7 +592,7 @@ int main() {
             continue;
         }
 
-        updateStatus( true );
+        updateStatus(true);
 
         // Give client time to setup before sending it with packets
         SDL_Delay(150);
@@ -656,18 +667,17 @@ int main() {
         ClearReadingTCP();
 
         clock ack_timer;
-        StartTimer( &ack_timer );
+        StartTimer(&ack_timer);
 
         while (connected) {
-            if( GetTimer( ack_timer ) > 5 )
-            {
+            if (GetTimer(ack_timer) > 5) {
 #if USING_STUN
-                ack( &PacketTCPContext );
-                ack( &PacketSendContext );
-                ack( &PacketReceiveContext );
+                ack(&PacketTCPContext);
+                ack(&PacketSendContext);
+                ack(&PacketReceiveContext);
 #endif
-                updateStatus( true );
-                StartTimer( &ack_timer );
+                updateStatus(true);
+                StartTimer(&ack_timer);
             }
 
             // If they clipboard as updated, we should send it over to the
@@ -703,8 +713,9 @@ int main() {
                     FractalServerMessage fmsg_response = {0};
                     fmsg_response.type = SMESSAGE_QUIT;
                     if (SendUDPPacket(&PacketSendContext, PACKET_MESSAGE,
-                                   (uint8_t*)&fmsg_response,
-                                   sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL, NULL) < 0) {
+                                      (uint8_t*)&fmsg_response,
+                                      sizeof(FractalServerMessage), 1,
+                                      STARTING_BURST_BITRATE, NULL, NULL) < 0) {
                         mprintf("Could not send Quit Message\n");
                     }
                     // Give a bit of time to make sure no one is touching it
@@ -809,8 +820,9 @@ int main() {
                     fmsg_response.ping_id = fmsg->ping_id;
                     StartTimer(&last_ping);
                     if (SendUDPPacket(&PacketSendContext, PACKET_MESSAGE,
-                                   (uint8_t*)&fmsg_response,
-                                   sizeof(fmsg_response), 1, STARTING_BURST_BITRATE, NULL, NULL) < 0) {
+                                      (uint8_t*)&fmsg_response,
+                                      sizeof(fmsg_response), 1,
+                                      STARTING_BURST_BITRATE, NULL, NULL) < 0) {
                         mprintf("Could not send Pong\n");
                     }
                 } else if (fmsg->type == MESSAGE_DIMENSIONS) {

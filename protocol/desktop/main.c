@@ -230,7 +230,7 @@ int ReceivePackets(void* opaque) {
 
     struct SocketContext socketContext = *(struct SocketContext*)opaque;
     struct RTPPacket packet = {0};
-     
+
     /****
     Timers
     ****/
@@ -561,8 +561,8 @@ int main(int argc, char* argv[]) {
     runcmd("mkdir ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
 
-    // the mkdir command won't do anything if the folder already exists, in which case
-    // we make sure to clear the previous logs and connection id
+    // the mkdir command won't do anything if the folder already exists, in
+    // which case we make sure to clear the previous logs and connection id
     runcmd("rm -f ~/.fractal/log.txt", NULL);
     runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
 #endif

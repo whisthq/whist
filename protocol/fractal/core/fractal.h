@@ -611,11 +611,13 @@ typedef struct Frame {
 
 /*** FRACTAL FUNCTIONS START ***/
 
-int runcmd( const char* cmdline, char** response );
+void PrintMemoryInfo();
+
+int runcmd(const char* cmdline, char** response);
 
 char* get_ip();
 
-void updateStatus( bool is_connected );
+void updateStatus(bool is_connected);
 
 int GetFmsgSize(struct FractalClientMessage* fmsg);
 

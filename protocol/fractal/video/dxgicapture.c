@@ -12,30 +12,6 @@
 
 void GetBitmapScreenshot(struct CaptureDevice* device);
 
-// Print Memory Info
-#include <processthreadsapi.h>
-#include <psapi.h>
-void PrintMemoryInfo() {
-    DWORD processID = GetCurrentProcessId();
-    HANDLE hProcess;
-    PROCESS_MEMORY_COUNTERS pmc;
-
-    // Print information about the memory usage of the process.
-
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE,
-                           processID);
-    if (NULL == hProcess) return;
-
-    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
-        LOG_INFO("\tPeakWorkingSetSize: %lld",
-                 (long long)pmc.PeakWorkingSetSize);
-        LOG_INFO("\tWorkingSetSize: %lld", (long long)pmc.WorkingSetSize);
-    }
-
-    CloseHandle(hProcess);
-}
-// End Print Memory Info
-
 #define USE_GPU 0
 #define USE_MONITOR 0
 
