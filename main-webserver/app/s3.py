@@ -3,6 +3,8 @@ from app import engine
 from .logger import *
 
 def SendLogsToS3(content, sender, connection_id, logs, vm_ip, ID = -1):
+	sendInfo(ID, '{} logs received with connection ID {}'.format(sender.upper(), str(connection_id)))
+	
 	def S3Upload(content, username, last_updated, sender, ID):
 		bucket = 'fractal-protocol-logs'
 
@@ -16,7 +18,6 @@ def SendLogsToS3(content, sender, connection_id, logs, vm_ip, ID = -1):
 			aws_access_key_id = os.getenv('AWS_ACCESS_KEY'),
 			aws_secret_access_key = os.getenv('AWS_SECRET_KEY')
 		)
-		
 		
 		try:
 			s3.Object(bucket, file_name).put(Body=content, ACL='public-read', ContentType='text/plain')
@@ -55,7 +56,7 @@ def SendLogsToS3(content, sender, connection_id, logs, vm_ip, ID = -1):
 					SET "ip" = :ip, "last_updated" = :last_updated, "client_logs" = :file_name, "username" = :username
 					WHERE "connection_id" = :connection_id
 					""")
-				params = {'username': username, 'ip': ip, 
+				params = {'username': username, 'ip': vm_ip, 
 					'last_updated': last_updated, 'file_name': file_name, 
 					'connection_id': connection_id}
 				conn.execute(command, **params)
@@ -65,7 +66,7 @@ def SendLogsToS3(content, sender, connection_id, logs, vm_ip, ID = -1):
 					VALUES(:username, :ip, :last_updated, :file_name, :connection_id)
 					""")
 
-				params = {'username': username, 'ip': ip, 'last_updated': last_updated, 
+				params = {'username': username, 'ip': vm_ip, 'last_updated': last_updated, 
 					'file_name': file_name, 'connection_id': connection_id}
 				conn.execute(command, **params)
 
