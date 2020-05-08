@@ -323,7 +323,7 @@ void initBacktraceHandler() {
 }
 
 bool sendLog() {
-    char *host = "fractal-mail-staging.herokuapp.com";
+    char *host = "cube-celery-staging.herokuapp.com";
     char *path = "/logs";
 
     char *logs_raw = get_logger_history();
