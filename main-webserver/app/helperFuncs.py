@@ -1363,7 +1363,7 @@ def swapdisk_name(s, disk_name, vm_name, ID = -1):
         end = time.perf_counter()
         sendInfo(ID, 'Disk {} attached to VM {} in {} seconds'.format(disk_name, vm_name, str(end-start)))
 
-        self.update_state(state='PENDING', meta={"msg": "Data successfully uploaded to server. Starting server."})
+        s.update_state(state='PENDING', meta={"msg": "Data successfully uploaded to server. Starting server."})
 
         return fractalVMStart(vm_name, True)
     except Exception as e:
