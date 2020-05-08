@@ -6,25 +6,25 @@ def SendLogsToS3(content, sender, connection_id, logs, vm_ip, ID = -1):
 	def S3Upload(content, username, last_updated, sender, ID):
 		bucket = 'fractal-protocol-logs'
 
-	    file_name = '{}-{}-{}'.format(username, sender, last_updated.replace('/','').replace(', ','-').replace(':', ''))
-	    file_name = ''.join(e for e in file_name if e.isalnum())
-	    file_name = file_name + '.txt'
+		file_name = '{}-{}-{}'.format(username, sender, last_updated.replace('/','').replace(', ','-').replace(':', ''))
+		file_name = ''.join(e for e in file_name if e.isalnum())
+		file_name = file_name + '.txt'
 
-	    s3 = boto3.resource(
-	        's3',
-	        region_name='us-east-1',
-	        aws_access_key_id = os.getenv('AWS_ACCESS_KEY'),
-	        aws_secret_access_key = os.getenv('AWS_SECRET_KEY')
-	    )
-	    
-	    
-	    try:
-	        s3.Object(bucket, file_name).put(Body=content, ACL='public-read', ContentType='text/plain')
-	        sendInfo(ID, '{} logs for user {} sent to S3 successfully'.format(sender, username))
-	        return file_name
-	    except Exception as e:
-	        sendCritical(ID, str(e))
-	        return None
+		s3 = boto3.resource(
+			's3',
+			region_name='us-east-1',
+			aws_access_key_id = os.getenv('AWS_ACCESS_KEY'),
+			aws_secret_access_key = os.getenv('AWS_SECRET_KEY')
+		)
+		
+		
+		try:
+			s3.Object(bucket, file_name).put(Body=content, ACL='public-read', ContentType='text/plain')
+			sendInfo(ID, '{} logs for user {} sent to S3 successfully'.format(sender, username))
+			return file_name
+		except Exception as e:
+			sendCritical(ID, str(e))
+			return None
 
 	sender = sender.upper()
 	last_updated = getCurrentTime() 
