@@ -20,10 +20,13 @@ def init_app(app):
     from app.account_blueprint import account_bp
     from app.stripe_blueprint import stripe_bp
     from app.p2p_blueprint import p2p_bp
+    from app.disk_blueprint import disk_bp
 
     app.register_blueprint(vm_bp)
     app.register_blueprint(account_bp)
     app.register_blueprint(stripe_bp)
     app.register_blueprint(p2p_bp)
+    app.register_blueprint(disk_bp)
+    
     return app
 
