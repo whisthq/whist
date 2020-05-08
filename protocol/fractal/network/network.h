@@ -1,7 +1,7 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-/*
+/******
 
 This file contains all code that interacts directly with sockets under-the-hood.
 
@@ -52,7 +52,7 @@ while(!packet) {
 
 printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 
-*/
+*****/
 
 /*
 ============================
@@ -72,19 +72,6 @@ Includes
 #endif
 
 #include "../core/fractal.h"
-
-/*
-============================
-Constants
-============================
-*/
-
-#define STUN_IP "52.22.246.213"
-#define STUN_PORT 48800
-
-#define LARGEST_TCP_PACKET 10000000
-#define MAX_PAYLOAD_SIZE 1285
-
 
 /*
 ============================
@@ -111,6 +98,17 @@ Defines
 #define FRACTAL_CLOSE_SOCKET close
 #endif
 
+/*
+============================
+Constants
+============================
+*/
+
+#define STUN_IP "52.22.246.213"
+#define STUN_PORT 48800
+
+#define LARGEST_TCP_PACKET 10000000
+#define MAX_PAYLOAD_SIZE 1285
 #define TCP_SEGMENT_SIZE 1024
 
 /*
@@ -131,6 +129,9 @@ typedef struct SocketContext {
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be replayed
 // TODO: INC integer that must not be used twice
 
+/*
+@brief                          Data packet description
+*/
 typedef enum FractalPacketType
 {
     PACKET_AUDIO,
@@ -138,30 +139,38 @@ typedef enum FractalPacketType
     PACKET_MESSAGE,
 } FractalPacketType;
 
-// Real Packet Size = sizeof(FractalPacket) - sizeof(FractalPacket.data) +
-// RTPPacket.payload_size
+/*
+@brief                          Packet of data to be sent over a SocketContext
+*/
 typedef struct FractalPacket {
-    // hash at the beginning of the struct,
-    // which contains the hash of the rest of the packet
+    // Hash of the rest of the packet
     char hash[16];
-    // hash is a signature for everything below this line
-    int cipher_len;
-    char iv[16];
+
+    // hash[16] is a signature for everything below this line
+
+    // Encrypted packet data
+    int cipher_len;  // The length of the encrypted segment
+    char iv[16];     // One-time pad for encrypted data
+
     // Everything below this line gets encrypted
+
+    // Metadata
     FractalPacketType type;  // Video, Audio, or Message
-    int id;                  // Unique identifier (Two packets with the same type and id will be the same)
-    short index;             // 
-    short num_indices;
-    int payload_size;
-    bool is_a_nack;
-    // data at the end of the struct, in the case of a truncated packet
-    uint8_t data[MAX_PAYLOAD_SIZE];
-    // The encrypted packet could overflow
-    uint8_t overflow[16];
+    int id;                  // Unique identifier (Two packets with the same type and id, from the same IP, will be the same)
+    short index;             // Handle separation of large datagrams
+    short num_indices;       // The total datagram consists of data packets with indices from 0 to payload_size - 1
+    int payload_size;        // size of data[] that is of interest
+    bool is_a_nack;          // True if this is a replay'ed packet
+
+    // Data
+    uint8_t data[MAX_PAYLOAD_SIZE]; // data at the end of the struct, with invalid bytes beyond payload_size / cipher_len
+    uint8_t overflow[16]; // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16, as the encrypted packet might be slightly larger than the unencrypted packet
 } FractalPacket;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
 #define PACKET_HEADER_SIZE (sizeof(FractalPacket) - MAX_PAYLOAD_SIZE - 16)
+// Real packet size = PACKET_HEADER_SIZE + FractalPacket.payload_size    (If Unencrypted)
+//                  = PACKET_HEADER_SIZE + cipher_len                    (If Encrypted)
 
 
 /*
@@ -244,7 +253,7 @@ int ReplayPacket( SocketContext* context, FractalPacket* packet, size_t len );
 @returns                        Will return -1 on failure, will return 0 on success
                                 Failure implies that the socket is broken or the TCP connection has ended, use GetLastNetworkError() to learn more about the error
 */
-int ack( SocketContext* context );
+int Ack( SocketContext* context );
 
 
 /*
@@ -267,6 +276,6 @@ FractalPacket* ReadUDPPacket( SocketContext* context );
 @returns                        Will return false on failure, will return true on success
                                 Failure implies that the socket is broken or the TCP connection has ended, use GetLastNetworkError() to learn more about the error
 */
-bool sendJSONPost( char* host_s, char* path, char* jsonObj );
+bool SendJSONPost( char* host_s, char* path, char* jsonObj );
 
 #endif // NETWORK_H

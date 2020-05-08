@@ -636,9 +636,9 @@ int main() {
             if( GetTimer( ack_timer ) > 5 )
             {
 #if USING_STUN
-                ack( &PacketTCPContext );
-                ack( &PacketSendContext );
-                ack( &PacketReceiveContext );
+                Ack( &PacketTCPContext );
+                Ack( &PacketSendContext );
+                Ack( &PacketReceiveContext );
 #endif
                 updateStatus( true );
                 StartTimer( &ack_timer );

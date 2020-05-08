@@ -272,6 +272,18 @@ double GetTimer(clock timer) {
     return ret;
 }
 
+clock CreateClock( int timeout_ms )
+{
+    clock out;
+#if defined(_WIN32)
+    out.QuadPart = timeout_ms;
+#else
+    out.tv_sec = timeout_ms / 1000;
+    out.tv_usec = (timeout_ms % 1000) * 1000;
+#endif
+    return out;
+}
+
 #ifndef _WIN32
 SDL_mutex *crash_handler_mutex;
 
@@ -365,7 +377,7 @@ bool sendLog() {
             \"sender\" : \"server\"\
     }",
             connection_id, logs);
-    sendJSONPost(host, path, json);
+    SendJSONPost(host, path, json);
     free(logs);
     free(json);
 

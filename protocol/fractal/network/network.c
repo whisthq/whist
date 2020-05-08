@@ -8,9 +8,6 @@
 
 #include "../utils/aes.h"
 
-int recvp( SocketContext* context, void* buf, int len );
-int sendp( SocketContext* context, void* buf, int len );
-
 typedef struct {
     unsigned int ip;
     unsigned short private_port;
@@ -25,19 +22,43 @@ typedef struct {
 } stun_request_t;
 
 /*
-@brief                          This will set the socket s to have timeout timeout_ms.
-                                Use 0 to have a non-blocking socket, and -1 for an indefinitely blocking socket
+============================
+Private Functions
+============================
+*/
 
-@param s                        The socket
+/*
+@brief                          This will set the socket s to have timeout timeout_ms.
+
+@param s                        The SOCKET to be configured
 @param timeout_ms               The maximum amount of time that all recv/send calls will take for that socket (0 to return immediately, -1 to never return)
+                                Set 0 to have a non-blocking socket, and -1 for an indefinitely blocking socket
 */
 void set_timeout( SOCKET s, int timeout_ms );
 
+/*
+@brief                          This will send or receive data over a socket
+
+@param s                        The SOCKET to be used
+@param buf                      The buffer to read or write to
+@param len                      The length of the buffer to send over the socket
+                                Or, the maximum number of bytes that can be read from the socket
+
+@returns                        The number of bytes that have been read or written to or from the buffer
+*/
+int recvp( SocketContext* context, void* buf, int len );
+int sendp( SocketContext* context, void* buf, int len );
+
+/*
+@brief                          This will initialize and clear the TCP reader buffer. TCP data will have be read into this buffer, and will only return a packet when the entire packet is received
+
+@param context                  The socket context
+*/
 void ClearReadingTCP( SocketContext* context );
 
 /*
 ============================
-Function Implementations
+Public Function Implementations
 ============================
 */
 
@@ -49,84 +70,45 @@ int GetLastNetworkError() {
 #endif
 }
 
-clock create_clock(int timeout_ms) {
-    clock out;
-#if defined(_WIN32)
-    out.QuadPart = timeout_ms;
-#else
-    out.tv_sec = timeout_ms / 1000;
-    out.tv_usec = (timeout_ms % 1000) * 1000;
-#endif
-    return out;
-}
-
-void set_timeout(SOCKET s, int timeout_ms) {
-    // Sets the timeout for SOCKET s to be timeout_ms in milliseconds
-    // Any recv calls will wait this long before timing out
-    // -1 means that it will block indefinitely until a packet is received
-    // 0 means that it will immediately return with whatever data is waiting in
-    // the buffer
-    if (timeout_ms < 0) {
-        LOG_WARNING(
-            "WARNING: This socket will blocking indefinitely. You will not be "
-            "able to recover if a packet is never received");
-        unsigned long mode = 0;
-
-        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
-
-    } else if (timeout_ms == 0) {
-        unsigned long mode = 1;
-        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
-    } else {
-        // Set to blocking when setting a timeout
-        unsigned long mode = 0;
-        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
-
-        clock read_timeout = create_clock(timeout_ms);
-
-        if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&read_timeout,
-                       sizeof(read_timeout)) < 0) {
-            LOG_WARNING("Failed to set timeout");
-            return;
-        }
-    }
-}
-
 #define LARGEST_PACKET 10000000
-char unbounded_packet[LARGEST_PACKET];
-char encrypted_unbounded_packet[sizeof(int) + LARGEST_PACKET + 16];
 
 int SendTCPPacket(SocketContext *context, FractalPacketType type,
                   void *data, int len) {
     // Verify packet size can fit
-    if ((unsigned int)len > LARGEST_PACKET - PACKET_HEADER_SIZE) {
+    if ( PACKET_HEADER_SIZE + (unsigned int)len > LARGEST_PACKET) {
         LOG_WARNING("Packet too large!");
         return -1;
     }
 
-    FractalPacket *packet = (FractalPacket *)unbounded_packet;
+    static char packet_buffer[LARGEST_PACKET];
+    static char encrypted_packet_buffer[sizeof( int ) + LARGEST_PACKET + 16];
+
+    FractalPacket *packet = (FractalPacket *)packet_buffer;
 
     // Contruct packet
     packet->id = -1;
     packet->type = type;
-    memcpy(packet->data, data, len);
     packet->index = 0;
     packet->payload_size = len;
     packet->num_indices = 1;
     packet->is_a_nack = false;
-    int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
+
+    memcpy( packet->data, data, len );
+    int unencrypted_len = PACKET_HEADER_SIZE + packet->payload_size;
 
     // Encrypt the packet using aes encryption
-    int encrypt_len = encrypt_packet(
-        packet, packet_size,
-        (FractalPacket *)(sizeof(int) + encrypted_unbounded_packet),
+    int encrypted_len = encrypt_packet(
+        packet, unencrypted_len,
+        (FractalPacket *)(sizeof(int) + encrypted_packet_buffer),
         (unsigned char *)PRIVATE_KEY);
-    *((int *)encrypted_unbounded_packet) = encrypt_len;
+
+    // Past the length of the packet as the first byte
+    *((int *)encrypted_packet_buffer) = encrypted_len;
 
     // Send the packet
-    LOG_INFO("Sending TCP Packet... %d\n", encrypt_len);
+    LOG_INFO("Sending TCP Packet... %d\n", encrypted_len );
     bool failed = false;
-    if (sendp(context, encrypted_unbounded_packet, sizeof(int) + encrypt_len) <
+    if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len ) <
         0) {
         LOG_WARNING("Failed to send packet!");
         failed = true;
@@ -291,7 +273,7 @@ int sendp(SocketContext *context, void *buf, int len) {
                   sizeof(context->addr));
 }
 
-int ack( SocketContext* context )
+int Ack( SocketContext* context )
 {
     return sendp( context, NULL, 0 );
 }
@@ -1239,7 +1221,7 @@ int CreateUDPContext(SocketContext *context, char *destination,
 
 // send JSON post to query the database, authenticate the user and return the VM
 // IP
-bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
+bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     // environment variables
     SOCKET Socket;  // socket to send/receive POST request
     struct hostent* host;
@@ -1307,4 +1289,41 @@ bool sendJSONPost(char *host_s, char *path, char *jsonObj) {
     FRACTAL_CLOSE_SOCKET(Socket);
     // return the user credentials if correct authentication, else empty
     return true;
+}
+
+void set_timeout( SOCKET s, int timeout_ms )
+{
+    // Sets the timeout for SOCKET s to be timeout_ms in milliseconds
+    // Any recv calls will wait this long before timing out
+    // -1 means that it will block indefinitely until a packet is received
+    // 0 means that it will immediately return with whatever data is waiting in
+    // the buffer
+    if( timeout_ms < 0 )
+    {
+        LOG_WARNING(
+            "WARNING: This socket will blocking indefinitely. You will not be "
+            "able to recover if a packet is never received" );
+        unsigned long mode = 0;
+
+        FRACTAL_IOCTL_SOCKET( s, FIONBIO, &mode );
+
+    } else if( timeout_ms == 0 )
+    {
+        unsigned long mode = 1;
+        FRACTAL_IOCTL_SOCKET( s, FIONBIO, &mode );
+    } else
+    {
+        // Set to blocking when setting a timeout
+        unsigned long mode = 0;
+        FRACTAL_IOCTL_SOCKET( s, FIONBIO, &mode );
+
+        clock read_timeout = CreateClock( timeout_ms );
+
+        if( setsockopt( s, SOL_SOCKET, SO_RCVTIMEO, (const char*)&read_timeout,
+                        sizeof( read_timeout ) ) < 0 )
+        {
+            LOG_WARNING( "Failed to set timeout" );
+            return;
+        }
+    }
 }

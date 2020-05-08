@@ -104,7 +104,7 @@ void update() {
     if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 &&
         !isUpdatingClipboard()) {
         // Check if TCP connction is active
-        int result = ack(&PacketTCPContext);
+        int result = Ack(&PacketTCPContext);
         if (result < 0) {
             LOG_ERROR("Lost TCP Connection (Error: %d)", GetLastNetworkError());
             // TODO: Should exit or recover protocol if TCP connection is lost
@@ -277,7 +277,7 @@ int ReceivePackets(void* opaque) {
 
     while (run_receive_packets) {
         if (GetTimer(last_ack) > 5.0) {
-            ack(&socketContext);
+            Ack(&socketContext);
             StartTimer(&last_ack);
         }
 
@@ -699,8 +699,8 @@ int main(int argc, char* argv[]) {
         while (connected && !exiting) {
             // Send acks to sockets every 5 seconds
             if (GetTimer(ack_timer) > 5) {
-                ack(&PacketSendContext);
-                ack(&PacketTCPContext);
+                Ack(&PacketSendContext);
+                Ack(&PacketTCPContext);
                 StartTimer(&ack_timer);
             }
 
