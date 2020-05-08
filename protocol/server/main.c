@@ -166,8 +166,6 @@ int32_t SendVideo(void* opaque) {
             continue;
         }
 
-        PrintMemoryInfo();
-
         // Update device with new parameters
         if (update_device) {
             update_device = false;
@@ -670,6 +668,8 @@ int main() {
         StartTimer(&ack_timer);
 
         while (connected) {
+            PrintMemoryInfo();
+
             if (GetTimer(ack_timer) > 5) {
 #if USING_STUN
                 ack(&PacketTCPContext);
