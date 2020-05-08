@@ -106,6 +106,7 @@ int MultiThreadedPrintf(void *opaque) {
             logger_queue_cache[i].log = logger_queue[logger_queue_index].log;
             strcpy((char *)logger_queue_cache[i].buf,
                    (const char *)logger_queue[logger_queue_index].buf);
+            logger_queue[logger_queue_index].buf[0] = '\0';
             logger_queue_index++;
             logger_queue_index %= LOGGER_QUEUE_SIZE;
             if (i != 0) {
@@ -208,8 +209,15 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
         buf = (char *)logger_queue[index].buf;
         //        snprintf(buf, LOGGER_BUF_SIZE, "%15.4f: ",
         //        GetTimer(mprintf_timer));
-        int len = (int)strlen(buf);
-        vsnprintf(buf + len, LOGGER_BUF_SIZE - len, fmtStr, args);
+        if( buf[0] != '\0' )
+        {
+            char old_msg[LOGGER_BUF_SIZE];
+            memcpy( old_msg, buf, LOGGER_BUF_SIZE );
+            snprintf( buf, LOGGER_BUF_SIZE, "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n", old_msg, logger_queue[index].buf );
+        } else
+        {
+            vsnprintf( buf, LOGGER_BUF_SIZE, fmtStr, args );
+        }
         logger_queue_size++;
     } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
         logger_queue[index].log = log;

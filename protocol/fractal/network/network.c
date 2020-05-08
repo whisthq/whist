@@ -8,6 +8,12 @@
 
 #include "../utils/aes.h"
 
+/*
+============================
+Private Custom Types
+============================
+*/
+
 typedef struct {
     unsigned int ip;
     unsigned short private_port;
@@ -70,22 +76,23 @@ int GetLastNetworkError() {
 #endif
 }
 
-#define LARGEST_PACKET 10000000
+#define LARGEST_TCP_PACKET 10000000
+#define LARGEST_ENCRYPTED_TCP_PACKET (sizeof( int ) + LARGEST_TCP_PACKET + 16)
 
 int SendTCPPacket(SocketContext *context, FractalPacketType type,
                   void *data, int len) {
     // Verify packet size can fit
-    if ( PACKET_HEADER_SIZE + (unsigned int)len > LARGEST_PACKET) {
+    if ( PACKET_HEADER_SIZE + (unsigned int)len > LARGEST_TCP_PACKET) {
         LOG_WARNING("Packet too large!");
         return -1;
     }
 
-    static char packet_buffer[LARGEST_PACKET];
-    static char encrypted_packet_buffer[sizeof( int ) + LARGEST_PACKET + 16];
+    static char packet_buffer[LARGEST_TCP_PACKET];
+    static char encrypted_packet_buffer[LARGEST_ENCRYPTED_TCP_PACKET];
 
     FractalPacket *packet = (FractalPacket *)packet_buffer;
 
-    // Contruct packet
+    // Contruct packet metadata
     packet->id = -1;
     packet->type = type;
     packet->index = 0;
@@ -93,27 +100,27 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type,
     packet->num_indices = 1;
     packet->is_a_nack = false;
 
+    // Copy packet data
     memcpy( packet->data, data, len );
-    int unencrypted_len = PACKET_HEADER_SIZE + packet->payload_size;
 
     // Encrypt the packet using aes encryption
+    int unencrypted_len = PACKET_HEADER_SIZE + packet->payload_size;
     int encrypted_len = encrypt_packet(
         packet, unencrypted_len,
         (FractalPacket *)(sizeof(int) + encrypted_packet_buffer),
         (unsigned char *)PRIVATE_KEY);
 
-    // Past the length of the packet as the first byte
+    // Pass the length of the packet as the first byte
     *((int *)encrypted_packet_buffer) = encrypted_len;
 
     // Send the packet
-    LOG_INFO("Sending TCP Packet... %d\n", encrypted_len );
+    LOG_INFO("Sending TCP Packet of length %d\n", encrypted_len );
     bool failed = false;
     if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len ) <
         0) {
         LOG_WARNING("Failed to send packet!");
         failed = true;
     }
-    LOG_INFO("Successfully sent!");
 
     // Return success code
     return failed ? -1 : 0;
@@ -353,10 +360,7 @@ FractalPacket* ReadUDPPacket( SocketContext* context )
     }
 }
 
-// NOTE: The following code only works when reading from one TCP socket. Will need to be adjusted if multiple TCP sockets are used
-static int reading_packet_len = 0;
-static char reading_packet_buffer[LARGEST_TCP_PACKET];
-static char decrypted_packet_buffer[LARGEST_TCP_PACKET];
+static int reading_packet_len;
 
 void ClearReadingTCP( SocketContext* context ) { context; reading_packet_len = 0; }
 
@@ -366,14 +370,18 @@ FractalPacket* ReadTCPPacket(SocketContext *context) {
         return NULL;
     }
 
+    // NOTE: The following code only works when reading from one TCP socket. Will need to be adjusted if multiple TCP sockets are used
+    static char encrypted_packet_buffer[LARGEST_ENCRYPTED_TCP_PACKET];
+    static char decrypted_packet_buffer[LARGEST_TCP_PACKET];
+
     int len;
 
     do {
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
         len = recvp(
-            context, reading_packet_buffer + reading_packet_len,
-            min(TCP_SEGMENT_SIZE, LARGEST_TCP_PACKET - reading_packet_len));
+            context, encrypted_packet_buffer + reading_packet_len,
+            min(TCP_SEGMENT_SIZE, LARGEST_ENCRYPTED_TCP_PACKET - reading_packet_len));
 
         if (len < 0) {
             int err = GetLastNetworkError();
@@ -394,7 +402,7 @@ FractalPacket* ReadTCPPacket(SocketContext *context) {
         // The amount of data bytes read (actual len), and the amount of bytes
         // we're looking for (target len), respectively
         int actual_len = reading_packet_len - sizeof(int);
-        int target_len = *((int *)reading_packet_buffer);
+        int target_len = *((int *)encrypted_packet_buffer);
 
         // If the target len is valid, and actual len > target len, then we're
         // good to go
@@ -402,7 +410,7 @@ FractalPacket* ReadTCPPacket(SocketContext *context) {
             actual_len >= target_len) {
             // Decrypt it
             int decrypted_len = decrypt_packet_n(
-                (FractalPacket *)(reading_packet_buffer + sizeof(int)),
+                (FractalPacket *)(encrypted_packet_buffer + sizeof(int)),
                 target_len, (FractalPacket *)decrypted_packet_buffer,
                 LARGEST_TCP_PACKET, (unsigned char *)PRIVATE_KEY);
 
@@ -411,8 +419,8 @@ FractalPacket* ReadTCPPacket(SocketContext *context) {
             int start_next_bytes = sizeof(int) + target_len;
             for (unsigned long i = start_next_bytes;
                  i < sizeof(int) + actual_len; i++) {
-                reading_packet_buffer[i - start_next_bytes] =
-                    reading_packet_buffer[i];
+                encrypted_packet_buffer[i - start_next_bytes] =
+                    encrypted_packet_buffer[i];
             }
             reading_packet_len = actual_len - target_len;
 
