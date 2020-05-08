@@ -277,7 +277,15 @@ encoder_t *create_video_encoder(int width, int height, int bitrate,
          i < sizeof(encoder_precedence) / sizeof(encoder_precedence[0]); ++i) {
         encoder->type = encoder_precedence[i];
         if (try_setup_video_encoder(encoder, bitrate, gop_size) < 0) {
-            LOG_WARNING("Video encoder: Failed, trying next encoder");
+            LOG_WARNING(
+                "Video encoder: Failed, destroying encoder and trying next "
+                "encoder");
+
+            destroy_video_encoder(encoder);
+            encoder = (encoder_t *)malloc(sizeof(encoder_t));
+            memset(encoder, 0, sizeof(encoder_t));
+            encoder->width = width;
+            encoder->height = height;
         } else {
             LOG_INFO("Video encoder: Success!");
             return encoder;

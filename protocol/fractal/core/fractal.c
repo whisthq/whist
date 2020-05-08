@@ -68,6 +68,7 @@ int runcmd(const char* cmdline, char** response) {
     if ((pPipe = popen(cmd, "r")) == NULL) {
         return -1;
     }
+    free(cmd);
 
     /* Read pipe until end of file, or an error occurs. */
 
@@ -152,8 +153,7 @@ void updateStatus(bool is_connected) {
             \"ready\" : true\
     }");
 
-    sendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus",
-                 json);
+    sendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus", json);
 
     snprintf(json, sizeof(json),
              "{\
@@ -161,8 +161,7 @@ void updateStatus(bool is_connected) {
     }",
              is_connected ? "false" : "true");
 
-    sendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus",
-                 json);
+    sendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
 }
 
 int GetFmsgSize(struct FractalClientMessage* fmsg) {
