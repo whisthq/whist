@@ -67,8 +67,6 @@ function* fetchDisk(action) {
   }
 
   if(json && json.payload && Object.keys(json.payload).length > 0) {
-    console.log("disk fetched")
-    console.log(json.payload)
     yield put(Action.storeDiskName(json.payload[0].disk_name, json.payload[0].location))
   } else {
     yield put(Action.storeDiskName('', ''))
