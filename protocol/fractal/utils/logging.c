@@ -208,8 +208,15 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
         buf = (char *)logger_queue[index].buf;
         //        snprintf(buf, LOGGER_BUF_SIZE, "%15.4f: ",
         //        GetTimer(mprintf_timer));
-        int len = (int)strlen(buf);
-        vsnprintf(buf + len, LOGGER_BUF_SIZE - len, fmtStr, args);
+        if( buf[0] != '\0' )
+        {
+            char old_msg[LOGGER_BUF_SIZE];
+            memcpy( old_msg, buf, LOGGER_BUF_SIZE );
+            snprintf( buf, LOGGER_BUF_SIZE, "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n", old_msg, logger_queue[index].buf );
+        } else
+        {
+            vsnprintf( buf, LOGGER_BUF_SIZE, fmtStr, args );
+        }
         logger_queue_size++;
     } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
         logger_queue[index].log = log;
