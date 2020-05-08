@@ -408,9 +408,9 @@ def swapDisk(self, disk_name, ID = -1):
 	location = os_disk.location
 	self.update_state(state='PENDING', meta={"msg": "Swap disk task started."})
 
-	def swapDiskAndUpdate(disk_name, vm_name):
+	def swapDiskAndUpdate(s, disk_name, vm_name):
 		# Pick a VM, attach it to disk
-		hr = swapdisk_name(disk_name, vm_name)
+		hr = swapdisk_name(s, disk_name, vm_name)
 		if hr > 0:
 			updateDisk(disk_name, vm_name, location)
 			associateVMWithDisk(vm_name, disk_name)
@@ -476,7 +476,7 @@ def swapDisk(self, disk_name, ID = -1):
 				vm_name = available_vms[0]['vm_name']
 				lockVM(vm_name, True, ID = ID)
 				sendInfo(ID, 'Selected VM {} to attach to disk {}'.format(vm_name, disk_name))
-				if swapDiskAndUpdate(disk_name, vm_name) > 0:
+				if swapDiskAndUpdate(self, disk_name, vm_name) > 0:
 					self.update_state(state='PENDING', meta={"msg": "Data successfully uploaded to cloud PC."})
 					free_vm_found = True
 					updateOldDisk(vm_name)
@@ -493,7 +493,7 @@ def swapDisk(self, disk_name, ID = -1):
 					vm_name = deactivated_vms[0]['vm_name']
 					lockVM(vm_name, True, ID = ID)
 					sendInfo(ID, 'Found deactivated VM {}'.format(vm_name))
-					if swapDiskAndUpdate(disk_name, vm_name) > 0:
+					if swapDiskAndUpdate(self, disk_name, vm_name) > 0:
 						self.update_state(state='PENDING', meta={"msg": "Data successfully uploaded to cloud PC."})
 						free_vm_found = True
 						updateOldDisk(vm_name)

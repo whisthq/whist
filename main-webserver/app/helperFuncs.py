@@ -1344,7 +1344,7 @@ def attachDiskToVM(disk_name, vm_name, lun, ID = -1):
         return -1
 
 
-def swapdisk_name(disk_name, vm_name, ID = -1):
+def swapdisk_name(s, disk_name, vm_name, ID = -1):
     try:
         _, compute_client, _ = createClients()
         virtual_machine = getVM(vm_name)
@@ -1362,6 +1362,8 @@ def swapdisk_name(disk_name, vm_name, ID = -1):
         sendInfo(ID, async_disk_attach.result())
         end = time.perf_counter()
         sendInfo(ID, 'Disk {} attached to VM {} in {} seconds'.format(disk_name, vm_name, str(end-start)))
+
+        self.update_state(state='PENDING', meta={"msg": "Data successfully uploaded to server. Starting server."})
 
         return fractalVMStart(vm_name, True)
     except Exception as e:
