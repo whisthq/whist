@@ -366,5 +366,11 @@ def fetch_logs(**kwargs):
     sendInfo(kwargs['ID'], 'POST request sent to /logs/fetch')
 
     body = request.get_json()
-    task = fetchLogs.apply_async([body['username']])
+    
+    try:
+        fetch_all = body['fetch_all']
+    except:
+        fetch_all = False
+
+    task = fetchLogs.apply_async([body['username'], fetch_all])
     return jsonify({'ID': task.id}), 202

@@ -649,16 +649,32 @@ def storeLogs(self, sender, connection_id, logs, vm_ip, ID = -1):
 
 
 @celery.task(bind=True)
-def fetchLogs(self, username):
-	print("NOTIFICATION: Fetch log for {} sent to Redis queue".format(username))
-	command = text("""
-		SELECT * FROM logs WHERE "username" = :username
-		""")
+def fetchLogs(self, username, fetch_all = False, ID = -1):
+	if not fetch_all:
+		sendInfo(ID, 'Fetch log for {} sent to Redis queue'.format(username))
+		command = text("""
+			SELECT * FROM logs WHERE "username" = :username ORDER BY last_updated DESC
+			""")
 
-	params = {'username': username}
+		params = {'username': username}
 
-	with engine.connect() as conn:
-		print("NOTIFICATION: Fetching logs for {} from database".format(username))
-		logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-		print("SUCCESS: Logs fetched for {}".format(username))
-		return logs
+		with engine.connect() as conn:
+			sendInfo(ID, 'Fetching logs for {} from Postgres'.format(username))
+			logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+			sendInfo(ID, 'Logs fetched for {} successfully'.format(username))
+			conn.close()
+			return logs
+	else:
+		sendInfo(ID, 'Fetch all logs sent to Redis queue')
+		command = text("""
+			SELECT * FROM logs ORDER BY last_updated DESC
+			""")
+
+		params = {'username': username}
+
+		with engine.connect() as conn:
+			sendInfo(ID, 'Fetching all logs from Postgres'.format(username))
+			logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+			sendInfo(ID, 'All logs fetched successfully'.format(username))
+			conn.close()
+			return logs
