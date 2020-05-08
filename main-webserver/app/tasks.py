@@ -398,7 +398,7 @@ def syncDisks(self):
 
 
 @celery.task(bind=True)
-def swapDisk(self, disk_name, ID = ID):
+def swapDisk(self, disk_name, ID = -1):
 	sendInfo(ID, "Swap disk task added to Redis queue")
 	_, compute_client, _ = createClients()
 	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
