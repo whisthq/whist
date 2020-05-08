@@ -19,6 +19,7 @@ typedef struct {
     AVPacket packet;
     struct SwsContext *sws;
     EncodeType type;
+    AVBufferRef *hw_device_ctx;
 } encoder_t;
 
 encoder_t *create_video_encoder(int width, int height, int bitrate,

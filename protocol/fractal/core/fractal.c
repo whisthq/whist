@@ -7,9 +7,13 @@
 #include "fractal.h"  // header file for this protocol, includes winsock
 
 // Print Memory Info
+#if defined(_WIN32)
 #include <processthreadsapi.h>
 #include <psapi.h>
+#endif
+
 void PrintMemoryInfo() {
+#if defined(_WIN32)
     DWORD processID = GetCurrentProcessId();
     HANDLE hProcess;
     PROCESS_MEMORY_COUNTERS pmc;
@@ -21,12 +25,12 @@ void PrintMemoryInfo() {
     if (NULL == hProcess) return;
 
     if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
-        LOG_INFO("\tPeakWorkingSetSize: %lld",
-                 (long long)pmc.PeakWorkingSetSize);
-        LOG_INFO("\tWorkingSetSize: %lld", (long long)pmc.WorkingSetSize);
+        LOG_INFO("PeakWorkingSetSize: %lld", (long long)pmc.PeakWorkingSetSize);
+        LOG_INFO("WorkingSetSize: %lld", (long long)pmc.WorkingSetSize);
     }
 
     CloseHandle(hProcess);
+#endif
 }
 // End Print Memory Info
 

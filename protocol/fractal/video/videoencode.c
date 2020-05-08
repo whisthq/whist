@@ -23,7 +23,6 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
     avcodec_register_all();
 #endif
     int max_buffer = 4 * (bitrate / FPS);
-    AVBufferRef *hw_device_ctx = NULL;
 
     // TODO: If we end up using graphics card encoding, then we should pass it
     // the image from DXGI WinApi screen capture, so that the uncompressed image
@@ -35,8 +34,9 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
 
         clock t;
         StartTimer(&t);
-        if (av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_CUDA,
-                                   "CUDA", NULL, 0) < 0) {
+        if (av_hwdevice_ctx_create(&encoder->hw_device_ctx,
+                                   AV_HWDEVICE_TYPE_CUDA, "CUDA", NULL,
+                                   0) < 0) {
             LOG_WARNING("Failed to create specified device.");
             return -1;
         }
@@ -65,7 +65,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         // set_opt( encoder, "max-intra-rate", );
 
         av_buffer_unref(&encoder->context->hw_frames_ctx);
-        encoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(hw_device_ctx);
+        encoder->context->hw_frames_ctx =
+            av_hwframe_ctx_alloc(encoder->hw_device_ctx);
 
         AVHWFramesContext *frames_ctx;
 
@@ -115,8 +116,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
 
         clock t;
         StartTimer(&t);
-        if (av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_QSV, NULL,
-                                   NULL, 0) < 0) {
+        if (av_hwdevice_ctx_create(&encoder->hw_device_ctx,
+                                   AV_HWDEVICE_TYPE_QSV, NULL, NULL, 0) < 0) {
             LOG_WARNING("Failed to create specified device.");
             return -1;
         }
@@ -144,7 +145,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         set_opt(encoder, "delay", "0");
 
         av_buffer_unref(&encoder->context->hw_frames_ctx);
-        encoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(hw_device_ctx);
+        encoder->context->hw_frames_ctx =
+            av_hwframe_ctx_alloc(encoder->hw_device_ctx);
 
         AVHWFramesContext *frames_ctx;
 
@@ -307,6 +309,11 @@ void destroy_video_encoder(encoder_t *encoder) {
     if (encoder->sws) {
         sws_freeContext(encoder->sws);
     }
+
+    if (encoder->hw_device_ctx) {
+        av_buffer_unref(&encoder->hw_device_ctx);
+    }
+
     avcodec_free_context(&encoder->context);
 
     // free the encoder context and frame
