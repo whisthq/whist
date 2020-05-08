@@ -695,6 +695,7 @@ int main(int argc, char* argv[]) {
         // Poll input for as long as we are connected and not exiting
         // This code will run once every millisecond
         while (connected && !exiting) {
+            PrintMemoryInfo();
             // Send acks to sockets every 5 seconds
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);

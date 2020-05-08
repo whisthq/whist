@@ -642,8 +642,6 @@ int main() {
         StartTimer(&ack_timer);
 
         while (connected) {
-            PrintMemoryInfo();
-
             if (GetTimer(ack_timer) > 5) {
 #if USING_STUN
                 Ack(&PacketTCPContext);
