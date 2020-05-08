@@ -209,7 +209,7 @@ def disk(action, **kwargs):
         sendInfo(kwargs['ID'], 'POST request sent to /disk/attach')
 
         body = request.get_json()
-        task = swapDisk.apply_async([kwargs['ID'], body['disk_name']])
+        task = swapDisk.apply_async([body['disk_name'], kwargs['ID']])
         return jsonify({'ID': task.id}), 202
     elif action == 'detach':
         sendInfo(kwargs['ID'], 'POST request sent to /disk/detach')

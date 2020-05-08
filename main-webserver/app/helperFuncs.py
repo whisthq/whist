@@ -1239,7 +1239,12 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.close()
 
 
-def lockVM(vm_name, lock):
+def lockVM(vm_name, lock, ID = -1):
+    if lock:
+        sendInfo(ID, 'Trying to lock VM {}'.format(vm_name))
+    else:
+        sendInfo(ID, 'Trying to unlock VM {}'.format(vm_name))
+
     command = text("""
         UPDATE v_ms
         SET "lock" = :lock, "last_updated" = :last_updated
@@ -1251,6 +1256,11 @@ def lockVM(vm_name, lock):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+        if lock:
+            sendInfo(ID, 'Successfully locked VM {}'.format(vm_name))
+        else:
+            sendInfo(ID, 'Successfully unlocked VM {}'.format(vm_name))
+
 
 def vmReadyToConnect(vm_name, ready):
     command = text("""
@@ -1567,6 +1577,10 @@ def waitForWinlogon(vm_name, ID = -1):
         time.sleep(5)
         ready = checkWinlogon(vm_name)
         num_tries += 1
+
+        if num_tries > 50:
+            sendCritical(ID, 'Waited too long for winlogon. Giving up')
+            return 1
 
     sendInfo(ID, 'VM {} has Winlogon successfully'.format(vm_name))
 
