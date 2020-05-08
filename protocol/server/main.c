@@ -628,7 +628,6 @@ int main() {
 
         int last_input_id = -1;
         StartTrackingClipboardUpdates();
-        ClearReadingTCP();
 
         clock ack_timer;
         StartTimer( &ack_timer );

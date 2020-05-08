@@ -24,10 +24,6 @@ typedef struct {
     stun_entry_t entry;
 } stun_request_t;
 
-static int reading_packet_len = 0;
-static char reading_packet_buffer[LARGEST_TCP_PACKET];
-static char decrypted_packet_buffer[LARGEST_TCP_PACKET];
-
 /*
 @brief                          This will set the socket s to have timeout timeout_ms.
                                 Use 0 to have a non-blocking socket, and -1 for an indefinitely blocking socket
@@ -36,6 +32,8 @@ static char decrypted_packet_buffer[LARGEST_TCP_PACKET];
 @param timeout_ms               The maximum amount of time that all recv/send calls will take for that socket (0 to return immediately, -1 to never return)
 */
 void set_timeout( SOCKET s, int timeout_ms );
+
+void ClearReadingTCP( SocketContext* context );
 
 /*
 ============================
@@ -93,8 +91,6 @@ void set_timeout(SOCKET s, int timeout_ms) {
         }
     }
 }
-
-void ClearReadingTCP() { reading_packet_len = 0; }
 
 #define LARGEST_PACKET 10000000
 char unbounded_packet[LARGEST_PACKET];
@@ -374,6 +370,13 @@ FractalPacket* ReadUDPPacket( SocketContext* context )
         return NULL;
     }
 }
+
+// NOTE: The following code only works when reading from one TCP socket. Will need to be adjusted if multiple TCP sockets are used
+static int reading_packet_len = 0;
+static char reading_packet_buffer[LARGEST_TCP_PACKET];
+static char decrypted_packet_buffer[LARGEST_TCP_PACKET];
+
+void ClearReadingTCP( SocketContext* context ) { context; reading_packet_len = 0; }
 
 FractalPacket* ReadTCPPacket(SocketContext *context) {
     if (!context->is_tcp) {
@@ -843,21 +846,25 @@ int CreateTCPContext(SocketContext *context, char *destination,
                      int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->mutex = SDL_CreateMutex();
 
+    int ret;
+
 #if USING_STUN
     if (destination == NULL)
-        return CreateTCPServerContextStun( context, port,
-                                           recvfrom_timeout_ms, stun_timeout_ms );
+        ret = CreateTCPServerContextStun( context, port,
+                                          recvfrom_timeout_ms, stun_timeout_ms );
     else
-        return CreateTCPClientContextStun( context, destination, port,
-                                           recvfrom_timeout_ms, stun_timeout_ms );
+        ret = CreateTCPClientContextStun( context, destination, port,
+                                          recvfrom_timeout_ms, stun_timeout_ms );
 #else
     if (destination == NULL)
-        return CreateTCPServerContext( context, port,
-                                       recvfrom_timeout_ms, stun_timeout_ms );
+        ret = CreateTCPServerContext( context, port,
+                                      recvfrom_timeout_ms, stun_timeout_ms );
     else
-        return CreateTCPClientContext( context, destination, port,
-                                       recvfrom_timeout_ms, stun_timeout_ms );
+        ret = CreateTCPClientContext( context, destination, port,
+                                      recvfrom_timeout_ms, stun_timeout_ms );
 #endif
+    ClearReadingTCP( context );
+    return ret;
 }
 
 int CreateUDPServerContext(SocketContext *context,

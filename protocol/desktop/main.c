@@ -83,7 +83,6 @@ void initUpdate() {
     ping_failures = -2;
 
     initUpdateClipboard((SEND_FMSG*)&SendFmsg, (char*)server_ip);
-    ClearReadingTCP();
 }
 
 void destroyUpdate() { destroyUpdateClipboard(); }

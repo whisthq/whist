@@ -5,17 +5,60 @@
 
 This file contains all code that interacts directly with sockets under-the-hood.
 
-Usage -
+============================
+Usage
+============================
 
 SocketContext: This type represents a socket.
-   To use a socket, call CreateUDPContext or CreateTCPContext with the desired parameters
-   To send data over a socket, call SendTCPPacket or SendUDPPacket
-   To receive data over a socket, call ReadTCPPacket or ReadUDPPacket
-   If there is belief that a packet wasn't sent, you can call ReplayPacket to send a packet twice
+   - To use a socket, call CreateUDPContext or CreateTCPContext with the desired parameters
+   - To send data over a socket, call SendTCPPacket or SendUDPPacket
+   - To receive data over a socket, call ReadTCPPacket or ReadUDPPacket
+   - If there is belief that a packet wasn't sent, you can call ReplayPacket to send a packet twice
+
+FractalPacket: This type represents a packet of information
+   - Unique packets of a given type will be given unique IDs.
+     IDs are expected to be increasing monotonically, with a gap implying that a packet was lost
+   - FractalPackets that were thought to have been sent may not arrive, and FractalPackets may arrive out-of-order, in the case of UDP.
+     This will not be the case for TCP, however TCP sockets may lose connection if there is a problem.
+   - A given block of data will, during transmission, be split up into packets with the same type and ID, but indicies ranging from 0 to num_indices - 1
+   - A missing index implies that a packet was lost
+   - A FractalPacket is only guaranteed to have data information from 0 to payload_size - 1
+     data[] occurs at the end of the packet, so extra bytes may in-fact point to invalid memory to save space and bandwidth
+   - A FractalPacket may be sent twice in the case of packet recovery, but any two FractalPackets found that are of the same type and ID will be expected to have the same data
+     (To be specific, the Client should never legally send two distinct packets with same ID/Type, and neither should the Server, but if the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1 they can be different)
+   - To reconstruct the original datagram from a sequence of FractalPackets, concatenated the data[] streams (From 0 to payload_size - 1) for each index from 0 to num_indices - 1
+
+-----
+Client
+-----
+
+SocketContext context;
+CreateTCPContext(&context, "10.0.0.5", 5055, 500, 250);
+
+char* msg = "Hello this is a message!";
+SendTCPPacket(&context, PACKET_MESSAGE, msg, strlen(msg);
+
+-----
+Server
+-----
+
+SocketContext context;
+CreateTCPContext(&context, NULL, 5055, 500, 250);
+
+FractalPacket* packet = NULL;
+while(!packet) {
+  packet = ReadTCPPacket(context);
+}
+
+printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 
 */
 
-// *** begin includes ***
+/*
+============================
+Includes
+============================
+*/
 
 #if defined(_WIN32)
 #pragma comment(lib, "ws2_32.lib")
@@ -30,9 +73,11 @@ SocketContext: This type represents a socket.
 
 #include "../core/fractal.h"
 
-// *** end includes ***
-
-// *** begin defines ***
+/*
+============================
+Constants
+============================
+*/
 
 #define STUN_IP "52.22.246.213"
 #define STUN_PORT 48800
@@ -40,7 +85,13 @@ SocketContext: This type represents a socket.
 #define LARGEST_TCP_PACKET 10000000
 #define MAX_PAYLOAD_SIZE 1285
 
-// windows socklen
+
+/*
+============================
+Defines
+============================
+*/
+
 #if defined(_WIN32)
 #undef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
@@ -62,9 +113,11 @@ SocketContext: This type represents a socket.
 
 #define TCP_SEGMENT_SIZE 1024
 
-// *** end defines ***
-
-// *** begin typedefs ***
+/*
+============================
+Custom types
+============================
+*/
 
 typedef struct SocketContext {
     bool is_server;
@@ -75,8 +128,7 @@ typedef struct SocketContext {
     SDL_mutex* mutex;
 } SocketContext;
 
-// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
-// replayed
+// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be replayed
 // TODO: INC integer that must not be used twice
 
 typedef enum FractalPacketType
@@ -89,16 +141,16 @@ typedef enum FractalPacketType
 // Real Packet Size = sizeof(FractalPacket) - sizeof(FractalPacket.data) +
 // RTPPacket.payload_size
 typedef struct FractalPacket {
-    // hash at the beginning of the struct, which is the hash of the rest of the
-    // packet
+    // hash at the beginning of the struct,
+    // which contains the hash of the rest of the packet
     char hash[16];
     // hash is a signature for everything below this line
     int cipher_len;
     char iv[16];
     // Everything below this line gets encrypted
-    FractalPacketType type;
-    int id;
-    short index;
+    FractalPacketType type;  // Video, Audio, or Message
+    int id;                  // Unique identifier (Two packets with the same type and id will be the same)
+    short index;             // 
     short num_indices;
     int payload_size;
     bool is_a_nack;
@@ -111,9 +163,12 @@ typedef struct FractalPacket {
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
 #define PACKET_HEADER_SIZE (sizeof(FractalPacket) - MAX_PAYLOAD_SIZE - 16)
 
-// *** end typedefs ***
 
-// *** begin functions ***
+/*
+============================
+Public Functions
+============================
+*/
 
 /*
 @brief This will set the socket s to have timeout timeout_ms. Use 0 to have a non-blocking socket, and -1 for an indefinitely blocking socket
@@ -191,8 +246,6 @@ int ReplayPacket( SocketContext* context, FractalPacket* packet, size_t len );
 */
 int ack( SocketContext* context );
 
-void ClearReadingTCP();
-
 
 /*
 @brief                          Receive a FractalPacket from a SocketContext, if any such packet exists
@@ -201,13 +254,19 @@ void ClearReadingTCP();
 
 @returns                        A pointer to the FractalPacket on success, NULL on failure
 */
-FractalPacket* ReadTCPPacket(SocketContext* context);
+FractalPacket* ReadTCPPacket( SocketContext* context );
 FractalPacket* ReadUDPPacket( SocketContext* context );
 
-// @brief sends a JSON POST request to the Fractal webservers
-// @details authenticate the user and return the credentials
-bool sendJSONPost(char* host_s, char* path, char* jsonObj);
+/*
+@brief                          Sends a JSON POST request to the Fractal webservers
 
-// *** end functions ***
+@param host_s                   The hostname IP address
+@param path                     The /path/to/the/endpoint
+@param jsonObj                  A string consisting of the JSON-complient datastream to send to the webserver
 
-#endif  // NETWORK_H
+@returns                        Will return false on failure, will return true on success
+                                Failure implies that the socket is broken or the TCP connection has ended, use GetLastNetworkError() to learn more about the error
+*/
+bool sendJSONPost( char* host_s, char* path, char* jsonObj );
+
+#endif // NETWORK_H
