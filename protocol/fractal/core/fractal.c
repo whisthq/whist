@@ -6,6 +6,34 @@
 
 #include "fractal.h"  // header file for this protocol, includes winsock
 
+// Print Memory Info
+#if defined(_WIN32)
+#include <processthreadsapi.h>
+#include <psapi.h>
+#endif
+
+void PrintMemoryInfo() {
+#if defined(_WIN32)
+    DWORD processID = GetCurrentProcessId();
+    HANDLE hProcess;
+    PROCESS_MEMORY_COUNTERS pmc;
+
+    // Print information about the memory usage of the process.
+
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE,
+                           processID);
+    if (NULL == hProcess) return;
+
+    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
+        LOG_INFO("PeakWorkingSetSize: %lld", (long long)pmc.PeakWorkingSetSize);
+        LOG_INFO("WorkingSetSize: %lld", (long long)pmc.WorkingSetSize);
+    }
+
+    CloseHandle(hProcess);
+#endif
+}
+// End Print Memory Info
+
 void runcmd_nobuffer(const char* cmdline) {
     // Will run a command on the commandline, simple as that
 #ifdef _WIN32
@@ -66,8 +94,10 @@ int runcmd(const char* cmdline, char** response) {
 #endif
 
     if ((pPipe = popen(cmd, "r")) == NULL) {
+        free(cmd);
         return -1;
     }
+    free(cmd);
 
     /* Read pipe until end of file, or an error occurs. */
 
@@ -152,8 +182,7 @@ void updateStatus(bool is_connected) {
             \"ready\" : true\
     }");
 
-    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus",
-                 json);
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus", json);
 
     snprintf(json, sizeof(json),
              "{\
@@ -161,8 +190,7 @@ void updateStatus(bool is_connected) {
     }",
              is_connected ? "false" : "true");
 
-    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus",
-                 json);
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
 }
 
 int GetFmsgSize(struct FractalClientMessage* fmsg) {

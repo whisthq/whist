@@ -1276,6 +1276,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
         // error sending, terminate
         LOG_WARNING("Sending POST message failed.");
+        free( message );
         return false;
     }
 

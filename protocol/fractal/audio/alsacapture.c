@@ -5,8 +5,9 @@
  **/
 #include "alsacapture.h"
 
-audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
-    memset(audio_device, 0, sizeof(struct audio_device_t));
+audio_device_t *CreateAudioDevice() {
+    audio_device_t* audio_device = malloc( sizeof( audio_device ) );
+    memset(audio_device, 0, sizeof(audio_device_t));
 
     int res;
 
@@ -15,6 +16,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
                        0);
     if (res < 0) {
         LOG_WARNING("Failed to open PCM device: %s\n", snd_strerror(res));
+        free( audio_device );
         return NULL;
     }
 
@@ -24,6 +26,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
     res = snd_pcm_hw_params_any(audio_device->handle, audio_device->params);
     if (res < 0) {
         LOG_WARNING("No available PCM hardware configurations.\n");
+        free( audio_device );
         return NULL;
     }
 
@@ -37,6 +40,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
     if (res < 0) {
         LOG_WARNING("PCM sample format 'enum _snd_pcm_format %d' unavailable.\n",
                 audio_device->sample_format);
+        free( audio_device );
         return NULL;
     }
 
@@ -47,6 +51,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
     if (res < 0) {
         LOG_WARNING("PCM cannot set format with num channels: %d\n",
                 audio_device->channels);
+        free( audio_device );
         return NULL;
     }
 
@@ -56,6 +61,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
                                      SND_PCM_ACCESS_RW_INTERLEAVED);
     if (res < 0) {
         LOG_WARNING("Unavailable PCM access type.\n");
+        free( audio_device );
         return NULL;
     }
 
@@ -67,6 +73,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
     if (res < 0) {
         LOG_WARNING("PCM cannot set format with sample rate: %d\n",
                 audio_device->sample_rate);
+        free( audio_device );
         return NULL;
     }
 
@@ -82,6 +89,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
 
     if (res < 0) {
         LOG_WARNING("Unable to set hw parameters. Error: %s\n", snd_strerror(res));
+        free( audio_device );
         return NULL;
     }
 

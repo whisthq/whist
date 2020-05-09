@@ -112,8 +112,8 @@ void update() {
 
         // Receive tcp buffer, if a full packet has been received
         FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
-        if ( tcp_packet ) {
-            ReceiveMessage( tcp_packet );
+        if (tcp_packet) {
+            ReceiveMessage(tcp_packet);
         }
 
         // Update the last tcp check timer
@@ -227,7 +227,7 @@ int ReceivePackets(void* opaque) {
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
     SocketContext socketContext = *(SocketContext*)opaque;
-     
+
     /****
     Timers
     ****/
@@ -338,7 +338,7 @@ int ReceivePackets(void* opaque) {
             LOG_INFO("DROPPING");
             packet = NULL;
         } else {
-            packet = ReadUDPPacket( &socketContext );
+            packet = ReadUDPPacket(&socketContext);
         }
 
         double recvfrom_short_time = GetTimer(recvfrom_timer);
@@ -349,7 +349,7 @@ int ReceivePackets(void* opaque) {
         // time recv_size was > 0
         lastrecv += recvfrom_short_time;
 
-        if ( packet ) {
+        if (packet) {
             // Log if it's been a while since the last packet was received
             if (lastrecv > 20.0 / 1000.0) {
                 LOG_INFO(
@@ -362,7 +362,7 @@ int ReceivePackets(void* opaque) {
 
         // LOG_INFO("Recv wait time: %f", GetTimer(recvfrom_timer));
 
-        if ( packet ) {
+        if (packet) {
             // Check packet type and then redirect packet to the proper packet
             // handler
             switch (packet->type) {
@@ -524,8 +524,8 @@ int main(int argc, char* argv[]) {
     runcmd("mkdir ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
 
-    // the mkdir command won't do anything if the folder already exists, in which case
-    // we make sure to clear the previous logs and connection id
+    // the mkdir command won't do anything if the folder already exists, in
+    // which case we make sure to clear the previous logs and connection id
     runcmd("rm -f ~/.fractal/log.txt", NULL);
     runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
 #endif
@@ -621,9 +621,8 @@ int main(int argc, char* argv[]) {
 
         // First context: Sending packets to server
 
-        if (CreateUDPContext(&PacketSendContext,
-                             (char*)server_ip, PORT_CLIENT_TO_SERVER, 10,
-                             500) < 0) {
+        if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
+                             PORT_CLIENT_TO_SERVER, 10, 500) < 0) {
             LOG_WARNING("Failed to connect to server");
             continue;
         }
@@ -633,9 +632,8 @@ int main(int argc, char* argv[]) {
         // Second context: Receiving packets from server
 
         SocketContext PacketReceiveContext = {0};
-        if (CreateUDPContext(&PacketReceiveContext,
-                             (char*)server_ip, PORT_SERVER_TO_CLIENT, 1,
-                             500) < 0) {
+        if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
+                             PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             LOG_ERROR("Failed finish connection to server");
             closesocket(PacketSendContext.s);
             continue;
