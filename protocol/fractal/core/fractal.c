@@ -94,6 +94,7 @@ int runcmd(const char* cmdline, char** response) {
 #endif
 
     if ((pPipe = popen(cmd, "r")) == NULL) {
+        free(cmd);
         return -1;
     }
     free(cmd);
