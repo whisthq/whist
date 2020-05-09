@@ -24,7 +24,7 @@ class Home extends Component {
   constructor(props) {
     super(props)
     this.state = {username: '', password: '', loggingIn: false, warning: false, version: "1.0.0", 
-                  studios: false, rememberMe: false, live: false}
+                  studios: false, rememberMe: false, live: true}
   }
 
   CloseWindow = () => {
@@ -259,9 +259,10 @@ class Home extends Component {
         </div>
 		</div>
     :
-    <div style = {{lineHeight: 1.5, margin: '150px auto'}}> We are currently pushing out a critical Linux update. Your app will be back online very soon. We apologize for the inconvenience!
+    <div style = {{lineHeight: 1.5, margin: '150px auto', maxWidth: 400}}> We are currently pushing out a critical Linux update. Your app will be back online very soon. We apologize for the inconvenience!
     </div>
     }
+    </div>
 	);
 	}
 }
