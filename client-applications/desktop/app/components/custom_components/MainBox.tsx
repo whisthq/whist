@@ -271,7 +271,7 @@ class MainBox extends Component {
           </div>
           :
           <div onClick = {this.LaunchProtocol} className = {styles.bigBox} style = {{position: 'relative', backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.0), rgba(0,0,0,0.0)), url(" + Car + ")", width: "100%", height: 275, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center", borderRadius: 5}}>
-            <div style = {{position: 'absolute', bottom: 10, right: 15, fontWeight: 'bold', fontSize: 16}}>
+            <div style = {{position: 'absolute', bottom: 10, left: 15, fontWeight: 'bold', fontSize: 16}}>
               Launch My Cloud PC
             </div>
           </div>
