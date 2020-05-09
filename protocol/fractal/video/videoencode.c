@@ -317,11 +317,8 @@ void destroy_video_encoder(encoder_t *encoder) {
     avcodec_free_context(&encoder->context);
 
     // free the encoder context and frame
-    av_frame_unref(encoder->sw_frame);
-    av_frame_unref(encoder->hw_frame);
-
-    av_free(encoder->sw_frame);
-    av_free(encoder->hw_frame);
+    av_frame_free(encoder->sw_frame);
+    av_frame_free(encoder->hw_frame);
 
     // free the buffer and encoder
     free(encoder->frame_buffer);
