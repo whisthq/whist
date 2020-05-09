@@ -12,7 +12,7 @@
 #include "alsacapture.h"
 #endif
 
-audio_device_t *CreateAudioDevice(audio_device_t *audio_device);
+audio_device_t *CreateAudioDevice();
 
 void StartAudioDevice(audio_device_t *audio_device);
 

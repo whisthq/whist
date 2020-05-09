@@ -372,9 +372,7 @@ int32_t SendAudio(void* opaque) {
     SocketContext context = *(SocketContext*)opaque;
     int id = 1;
 
-    audio_device_t* audio_device =
-        (audio_device_t*)malloc(sizeof(struct audio_device_t));
-    audio_device = CreateAudioDevice(audio_device);
+    audio_device_t* audio_device = CreateAudioDevice();
     mprintf("Created audio device!\n");
     if (!audio_device) {
         mprintf("Failed to create audio device...\n");
