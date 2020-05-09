@@ -64,7 +64,7 @@ const createWindow = async () => {
         nodeIntegration: true
       }
     });
-  } else {
+  } else if(os.platform() === 'darwin') {
     mainWindow = new BrowserWindow({
       show: false,
       width: 900,
@@ -77,9 +77,24 @@ const createWindow = async () => {
         nodeIntegration: true
       }
     });
+  } else if(os.platform() === 'linux') {
+    mainWindow = new BrowserWindow({
+      show: false,
+      width: 900,
+      height: 600,
+      titleBarStyle: 'hidden',
+      center: true,
+      resizable: false,
+      maximizable: false,
+      webPreferences: {
+        nodeIntegration: true
+      },
+      icon: path.join(__dirname, '/build/icon.png')
+    });
   }
 
-  // mainWindow.webContents.openDevTools();
+  console.log(path.join(__dirname, '/build/icon.png'))
+  mainWindow.webContents.openDevTools();
   mainWindow.loadURL(`file://${__dirname}/app.html`);
 
   // @TODO: Use 'ready-to-show' event

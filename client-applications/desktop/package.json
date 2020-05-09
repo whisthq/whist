@@ -125,7 +125,8 @@
       "category": "Productivity",
       "artifactName": "Fractal.${ext}",
       "synopsis": "Fractal Desktop Application",
-      "description": "Fractal Desktop Application. "
+      "description": "Fractal Desktop Application. ",
+      "icon": "build/icon.png"
     },
     "directories": {
       "buildResources": "resources",
@@ -133,7 +134,7 @@
     },
     "publish": {
       "provider": "s3",
-      "bucket": "fractal-mac-application-release",
+      "bucket": "fractal-linux-application-release",
       "region": "us-east-1"
     }
   },
