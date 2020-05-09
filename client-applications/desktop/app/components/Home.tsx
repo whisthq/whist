@@ -24,7 +24,7 @@ class Home extends Component {
   constructor(props) {
     super(props)
     this.state = {username: '', password: '', loggingIn: false, warning: false, version: "1.0.0", 
-                  studios: false, rememberMe: false}
+                  studios: false, rememberMe: false, live: false}
   }
 
   CloseWindow = () => {
@@ -134,7 +134,7 @@ class Home extends Component {
       console.log(data)
 
       if(data && Object.keys(data).length > 0) {
-        if(data.username != '' && data.password != '') {
+        if(data.username != '' && data.password != '' && component.state.live) {
           component.setState({username: data.username, password: data.password, loggingIn: true, warning: false}, function() {
             component.props.dispatch(loginUser(component.state.username, component.state.password))
           })
@@ -142,7 +142,7 @@ class Home extends Component {
       }
     });
 
-  	if(this.props.username && this.props.public_ip)  {
+  	if(this.props.username && this.props.public_ip && component.state.live)  {
   		history.push('/counter')
   	}
   }
@@ -163,6 +163,9 @@ class Home extends Component {
         :
         <div className={styles.macTitleBar}/>
       }
+      {
+      this.state.live
+      ?
       <div className={styles.removeDrag}>
 		    <div className = {styles.landingHeader}>
 		      <div className = {styles.landingHeaderLeft}>
@@ -255,7 +258,10 @@ class Home extends Component {
   		    </div>
         </div>
 		</div>
+    :
+    <div style = {{lineHeight: 1.5, margin: '150px auto'}}> We are currently pushing out a critical Linux update. Your app will be back online very soon. We apologize for the inconvenience!
     </div>
+    }
 	);
 	}
 }
