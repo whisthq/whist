@@ -280,9 +280,9 @@ def info(action, **kwargs):
 @generateID
 def logs(**kwargs):
     sendInfo(kwargs['ID'], 'POST request sent to /logs')
+    body = request.get_json()
     sendInfo(kwargs['ID'], 'Logs received from {} with connection ID {}'.format(body['sender'], str(body['connection_id'])))
 
-    body = request.get_json()
     vm_ip = None
     if 'vm_ip' in body:
         vm_ip = body['vm_ip']
