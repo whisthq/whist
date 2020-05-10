@@ -470,25 +470,29 @@ int32_t SendAudio(void* opaque) {
 }
 
 void update() {
-    //     mprintf("Checking for updates...\n");
-    //     runcmd(
-    // #ifdef _WIN32
-    //         "powershell -command \"iwr -outf 'C:\\Program "
-    //         "Files\\Fractal\\update.bat' "
-    //         "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\""
-    // #else
-    //         "TODO: Linux command?"
-    // #endif
-    //         ,
-    //         NULL);
-    //     runcmd(
-    // #ifdef _WIN32
-    //         "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\""
-    // #else
-    //         "TODO: Linux command?"
-    // #endif
-    //         ,
-    //         NULL);
+    if (is_dev_vm()) {
+        LOG_INFO("dev vm, not auto-updating");
+    } else {
+        LOG_INFO("Checking for server protocol updates...");
+        runcmd(
+#ifdef _WIN32
+            "powershell -command \"iwr -outf 'C:\\Program "
+            "Files\\Fractal\\update.bat' "
+            "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\""
+#else
+            "TODO: Linux command?"
+#endif
+            ,
+            NULL);
+        runcmd(
+#ifdef _WIN32
+            "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\""
+#else
+            "TODO: Linux command?"
+#endif
+            ,
+            NULL);
+    }
 }
 
 #include <time.h>

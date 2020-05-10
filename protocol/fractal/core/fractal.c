@@ -174,6 +174,43 @@ char* get_ip() {
     return ip;
 }
 
+bool is_dev_vm() {
+    static bool is_dev;
+    static bool already_obtained_vm_type = false;
+    if (already_obtained_vm_type) {
+        return is_dev;
+    }
+
+    char buf[4800];
+    size_t len = sizeof(buf);
+
+    SendJSONGet("cube-celery-vm.herokuapp.com", "/vm/isDev", buf, len);
+
+    for (int i = 1; i < len; i++) {
+        if (buf[i - 1] != '\n') {
+            continue;
+        }
+        char* psBuffer = &buf[i];
+#define DEV_VM_PREFIX_STRING "  \"dev\": \""
+        if (strncmp(DEV_VM_PREFIX_STRING, psBuffer,
+                    sizeof(DEV_VM_PREFIX_STRING) - 1) == 0) {
+            char* is_dev_start_string =
+                psBuffer + sizeof(DEV_VM_PREFIX_STRING) - 1;
+            for (int j = 0;; j++) {
+                if (is_dev_start_string[j] == '\"') {
+                    is_dev_start_string[j] = '\0';
+                    break;
+                }
+            }
+            is_dev = (strncmp("true", is_dev_start_string,
+                              sizeof(is_dev_start_string)) == 0);
+        }
+    }
+
+    already_obtained_vm_type = true;
+    return is_dev;
+}
+
 int GetFmsgSize(struct FractalClientMessage* fmsg) {
     if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
         return sizeof(*fmsg);
