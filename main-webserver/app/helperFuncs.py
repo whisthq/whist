@@ -1282,9 +1282,9 @@ def associateVMWithDisk(vm_name, disk_name):
 
 def lockVM(vm_name, lock, change_last_updated = True, verbose = True, ID = -1):
     if lock and verbose:
-        sendInfo(ID, 'Trying to lock VM {}'.format(vm_name))
+        sendInfo(ID, 'Trying to lock VM {}'.format(vm_name), papertrail = verbose)
     elif not lock and verbose:
-        sendInfo(ID, 'Trying to unlock VM {}'.format(vm_name))
+        sendInfo(ID, 'Trying to unlock VM {}'.format(vm_name), papertrail = verbose)
 
 
     command = text("""
@@ -1308,9 +1308,9 @@ def lockVM(vm_name, lock, change_last_updated = True, verbose = True, ID = -1):
         conn.execute(command, **params)
         conn.close()
         if lock and verbose:
-            sendInfo(ID, 'Successfully locked VM {}'.format(vm_name))
+            sendInfo(ID, 'Successfully locked VM {}'.format(vm_name), papertrail = verbose)
         elif not lock and verbose:
-            sendInfo(ID, 'Successfully unlocked VM {}'.format(vm_name))
+            sendInfo(ID, 'Successfully unlocked VM {}'.format(vm_name), papertrail = verbose)
 
 
 def vmReadyToConnect(vm_name, ready):
