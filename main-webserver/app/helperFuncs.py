@@ -1491,7 +1491,7 @@ def deleteDiskFromTable(disk_name):
         conn.close()
 
 
-def scheduleDiskDelete(disk_name, date):
+def scheduleDiskDelete(disk_name, date, ID=-1):
     dateString = dateToString(date)
     command = text("""
         UPDATE disks
@@ -1503,6 +1503,7 @@ def scheduleDiskDelete(disk_name, date):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+    sendInfo(ID, 'Fetching all disks associated with state ACTIVE')
 
 
 def mapDiskToVM(disk_name):

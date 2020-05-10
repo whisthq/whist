@@ -244,6 +244,7 @@ def payment(action, **kwargs):
                 expiry = datetime.datetime.today() + timedelta(days=7)
                 for disk in disks:
                     scheduleDiskDelete(disk['disk_name'], expiry)
+
         return jsonify({'status': 200}), 200
 
 # REFERRAL endpoint
