@@ -2,6 +2,7 @@ from .imports import *
 from .factory import *
 from .utils import *
 
+
 def make_celery(app_name = __name__):
 	backend = os.getenv('REDIS_URL')
 	broker = os.getenv('REDIS_URL')

@@ -1,5 +1,4 @@
-from .imports import *
-from .helperFuncs import *
+from app.helperFuncs import *
 
 stripe_bp = Blueprint('stripe_bp', __name__)
 
@@ -206,11 +205,17 @@ def payment(action):
             customer = fetchCustomerById(custId)
 
             if customer:
+                # message = SendGridMail(
+                #     from_email='phil@fractalcomputers.com',
+                #     to_emails=[customer['username']],
+                #     subject='Your payment is overdue',
+                #     html_content=render_template('charge_failed.html')
+                # )
                 message = SendGridMail(
                     from_email='phil@fractalcomputers.com',
                     to_emails=[customer['username']],
                     subject='Your payment is overdue',
-                    html_content=render_template('charge_failed.html')
+                    html_content='Your credit card failed.'
                 )
                 try:
                     sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))

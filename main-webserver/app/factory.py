@@ -16,11 +16,11 @@ def create_app(app_name=PKG_NAME, **kwargs):
     return (app, jwtManager)
 
 def init_app(app):
-    from app.vm_blueprint import vm_bp
-    from app.account_blueprint import account_bp
-    from app.stripe_blueprint import stripe_bp
-    from app.p2p_blueprint import p2p_bp
-    from app.disk_blueprint import disk_bp
+    from .blueprints.vm_blueprint import vm_bp
+    from .blueprints.account_blueprint import account_bp
+    from .blueprints.stripe_blueprint import stripe_bp
+    from .blueprints.p2p_blueprint import p2p_bp
+    from .blueprints.disk_blueprint import disk_bp
 
     app.register_blueprint(vm_bp)
     app.register_blueprint(account_bp)

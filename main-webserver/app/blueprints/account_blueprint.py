@@ -1,5 +1,4 @@
-from .imports import *
-from .helperFuncs import *
+from app.helperFuncs import *
 from app import *
 
 account_bp = Blueprint('account_bp', __name__)

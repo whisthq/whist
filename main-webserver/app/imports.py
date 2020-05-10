@@ -1,9 +1,11 @@
 import os, random, string, time, sys, logging, requests
+import os.path
 
 import stripe
 import datetime
 import pytz
 from dateutil.relativedelta import relativedelta
+from inspect import getsourcefile
 
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.resource import ResourceManagementClient

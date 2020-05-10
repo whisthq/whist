@@ -1,5 +1,4 @@
-from .imports import *
-from .tasks import *
+from app.tasks import *
 from app import *
 
 disk_bp = Blueprint('disk_bp', __name__)

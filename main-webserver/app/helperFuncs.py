@@ -536,8 +536,7 @@ def addTimeTable(username, action, time, is_user, ID = -1):
                     elif action == 'logon':
                         updateVMState(vms[0]['vm_name'], 'RUNNING_UNAVAILABLE')
                 else:
-                    state = 'NOT_RUNNING_AVAILABLE' if action == 'logoff' else 'NOT_RUNNING_UNAVAILABLE'
-                    updateVMState(vms[0]['vm_name'], state)
+                    updateVMStateAutomatically(vm_name)
             else:
                 sendCritical(ID, 'Could not find a VM currently attached to disk {}'.format(disk_name))
         else:
@@ -1098,6 +1097,47 @@ def updateVMState(vm_name, state):
         conn.execute(command, **params)
         conn.close()
 
+def updateVMStateAutomatically(vm_name, ID = -1):
+    _, compute_client, _ = createClients()
+
+    vm_state = compute_client.virtual_machines.instance_view(
+        resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
+
+    hr = -1
+
+    try:
+        power_state = vm_state.statuses[1].code
+        sendInfo(ID, 'VM {} has Azure state {}'.format(vm_name, power_state))
+    except:
+        sendError(ID, 'VM {} Azure state unable to be fetched'.format(vm_name))
+
+    if 'starting' in power_state:
+        updateVMState(vm_name, 'STARTING')
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'STARTING'))
+        hr = 1
+    elif 'running' in power_state:
+        updateVMState(vm_name, 'RUNNING_AVAILABLE')
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'RUNNING_AVAILABLE'))
+        hr = 1
+    elif 'stopping' in power_state:
+        updateVMState(vm_name, 'STOPPING')
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'STOPPING'))
+        hr = 1
+    elif 'deallocating' in power_state:
+        updateVMState(vm_name, 'DEALLOCATING')
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'DEALLOCATING'))
+        hr = 1
+    elif 'stopped' in power_state:
+        updateVMState(vm_name, 'STOPPED')
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'STOPPED'))
+        hr = 1
+    elif 'deallocated' in power_state:
+        updateVMState(vm_name, 'DEALLOCATED')  
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'DEALLOCATED'))  
+        hr = 1
+
+    return hr
+
 
 def updateVMLocation(vm_name, location):
     command = text("""
@@ -1180,6 +1220,7 @@ def fetchAttachableVMs(state, location):
     with engine.connect() as conn:
         vms = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
+        vms = vms if vms else []
         return vms
 
 
@@ -1536,6 +1577,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID = -1):
             sendInfo(ID, 'VM {} currently in state {}. Setting Winlogon to False'.format(vm_name, power_state))
             vmReadyToConnect(vm_name, False)
             sendInfo(ID, 'Starting VM {}'.format(vm_name))
+            updateVMState(vm_name, 'STARTING')
 
             async_vm_start = compute_client.virtual_machines.start(
                 os.environ.get('VM_GROUP'), vm_name)
@@ -1547,12 +1589,15 @@ def sendVMStartCommand(vm_name, needs_restart, ID = -1):
             sendInfo(ID, 'VM {} needs to restart. Setting Winlogon to False'.format(vm_name))
             vmReadyToConnect(vm_name, False)
 
+            updateVMState(vm_name, 'RESTARTING')
+
             async_vm_restart = compute_client.virtual_machines.restart(
                 os.environ.get('VM_GROUP'), vm_name)
 
             sendInfo(ID, async_vm_restart.result())
             sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
 
+        updateVMState(vm_name, 'RUNNING_AVAILABLE')
         waitForWinlogon(vm_name, ID)
 
         return 1

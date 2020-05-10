@@ -1,5 +1,4 @@
-from .imports import *
-from .tasks import *
+from app.tasks import *
 from app import *
 
 vm_bp = Blueprint('vm_bp', __name__)
@@ -143,9 +142,6 @@ def vm(action, **kwargs):
 
         if vm_info:
             vm_name = vm_info['vm_name']
-
-            updateVMState(vm_name, 'RUNNING_AVAILABLE')
-            lockVM(vm_name, False)
             vmReadyToConnect(vm_name, ready)
         else:
             sendError(kwargs['ID'], 'No VM found for IP {}'.format(str(vm_ip)))
@@ -165,16 +161,20 @@ def vm(action, **kwargs):
 
         vm_info = fetchVMByIP(vm_ip)
         if vm_info:
-            vm_name = vm_info['vm_name']
+            vm_name = vm_info['vm_name'] if vm_info['vm_name'] else ''
+            vm_state = vm_info['state'] if vm_info['state'] else ''
+            intermediate_states = ['STOPPING', 'DEALLOCATING', 'STARTING', 'RESTARTING']
 
-            if available:
+            if vm_state in intermediate_states:
+                sendWarning(kwargs['ID'], 'Trying to change connection status, but VM {} is in intermediate state {}. Not changing state.'.format(vm_name, vm_state))
+            if available and not vm_state in intermediate_states:
                 updateVMState(vm_name, 'RUNNING_AVAILABLE')
                 lockVM(vm_name, False)
-            else:
+            elif not available and not vm_state in intermediate_states:
                 updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
                 lockVM(vm_name, True)
         else:
-            sendError(kwargs['ID'], 'No VM found for IP {}'.format(str(vm_ip)))
+            sendError(kwargs['ID'], 'Trying to change connection status, but no VM found for IP {}'.format(str(vm_ip)))
 
         return jsonify({'status': 200}), 200
     return jsonify({}), 400

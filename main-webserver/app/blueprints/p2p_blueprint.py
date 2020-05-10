@@ -1,5 +1,4 @@
-from .imports import *
-from .helperFuncs import *
+from app.helperFuncs import *
 from app import *
 
 p2p_bp = Blueprint('p2p_bp', __name__)

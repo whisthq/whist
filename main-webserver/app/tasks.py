@@ -281,7 +281,7 @@ def deleteVMResources(self, vm_name, delete_disk):
 
 
 @celery.task(bind=True)
-def restartVM(self, vm_name):
+def restartVM(self, vm_name, ID = -1):
 	locked = checkLock(vm_name)
 
 	while locked:
@@ -296,13 +296,12 @@ def restartVM(self, vm_name):
 	fractalVMStart(vm_name, True)
 
 	lockVM(vm_name, False)
-
-	print('SUCCESS: {} restarted'.format(vm_name))
+	sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
 
 	return {'status': 200}
 
 @celery.task(bind=True)
-def startVM(self, vm_name):
+def startVM(self, vm_name, ID = -1):
 	locked = checkLock(vm_name)
 
 	while locked:
@@ -313,13 +312,11 @@ def startVM(self, vm_name):
 	lockVM(vm_name, True)
 
 	_, compute_client, _ = createClients()
-	if fractalVMStart(vm_name) > 0:
-		vm_state = fetchVMCredentials(vm_name)['state']
-		updateVMState(vm_name, vm_state.replace('NOT_', ''))
 
+	fractalVMStart(vm_name)
 	lockVM(vm_name, False)
 
-	print('SUCCESS: {} started'.format(vm_name))
+	sendInfo(ID, 'VM {} started successfully'.format(vm_name))
 
 	return {'status': 200}
 
@@ -355,16 +352,7 @@ def updateVMStates(self):
 		if len(vm_info.storage_profile.data_disks) == 0:
 			available = True
 
-		if is_running and available:
-			state = 'RUNNING_AVAILABLE'
-		elif is_running and not available:
-			state = 'RUNNING_UNAVAILABLE'
-		elif not is_running and available:
-			state = 'NOT_RUNNING_AVAILABLE'
-		else:
-			state = 'NOT_RUNNING_UNAVAILABLE'
-
-		updateVMState(vm.name, state)
+		updateVMStateAutomatically(vm.name)
 
 	return {'status': 200}
 
@@ -487,7 +475,7 @@ def swapDisk(self, disk_name, ID = -1):
 			else:
 				# Look for VMs that are not running
 				sendInfo(ID, 'Could not find a running and available VM to attach to disk {}'.format(disk_name))
-				deactivated_vms = fetchAttachableVMs('NOT_RUNNING_AVAILABLE', location)
+				deactivated_vms = fetchAttachableVMs('DEALLOCATED', location) + fetchAttachableVMs('STOPPED', location)
 				if deactivated_vms:
 					self.update_state(state='PENDING', meta={"msg": "Uploading your data to a hibernating server. This could take a few minutes."})
 					vm_name = deactivated_vms[0]['vm_name']
@@ -621,22 +609,22 @@ def deleteDisk(self, disk_name):
 	return {'status': 200}
 
 @celery.task(bind=True)
-def deallocateVM(self, vm_name):
+def deallocateVM(self, vm_name, ID = -1):
 	lockVM(vm_name, True)
 
 	_, compute_client, _ = createClients()
 
-	print('NOTIFICATION: Starting to deallocate {}'.format(vm_name))
+	sendInfo(ID, 'Starting to deallocate VM {}'.format(vm_name))
+	updateVMState(vm_name, 'DEALLOCATING')
 
 	async_vm_deallocate = compute_client.virtual_machines.deallocate(
 		os.environ.get('VM_GROUP'), vm_name)
 	async_vm_deallocate.wait()
 
-	updateVMState(vm_name, 'NOT_RUNNING_AVAILABLE')
-
 	lockVM(vm_name, False)
 
-	print('SUCCESS: {} deallocated'.format(vm_name))
+	updateVMState(vm_name, 'DEALLOCATED')
+	sendInfo(ID, 'VM {} deallocated successfully'.format(vm_name))
 
 	return {'status': 200}
 
