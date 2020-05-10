@@ -33,8 +33,12 @@ def unixToDate(utc):
     return datetime.datetime.fromtimestamp(utc)
 
 
+def dateToString(time):
+    return time.strftime('%m/%d/%Y, %H:%M')
+
+
 def getCurrentTime():
-    return datetime.datetime.now().strftime('%m/%d/%Y, %H:%M')
+    return dateToString(datetime.datetime.now())
 
 
 def dateToUnix(date):
@@ -91,6 +95,7 @@ def serverLog(logMsg):
         requests.post(url=url, data=json.dumps(data), headers=headers)
     else:
         print(logMsg)
+
 
 def yieldNumber():
     num = 0
