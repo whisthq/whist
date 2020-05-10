@@ -522,7 +522,6 @@ int main() {
 #ifdef _WIN32
     if (!InitDesktop()) {
         mprintf("Could not winlogon!\n");
-        sendLog();
         return 0;
     }
 #endif
