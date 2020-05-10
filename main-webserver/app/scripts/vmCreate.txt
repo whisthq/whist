@@ -17,17 +17,17 @@ param (
 Set-ExecutionPolicy RemoteSigned -Force
 
 # Helper function to download the PowerShell scripts from S3 buckets
-function GetPowerShellScript ($script_name, $script_url) {
+function Get-PowerShellScript ($script_name, $script_url) {
     Write-Output "Downloading Powershell script $script_name from $script_url"
     [Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-    $webClient = new-object System.Net.WebClient
+    $webClient = New-Object System.Net.WebClient
     $webClient.DownloadFile($script_url, $script_name)
 }
 
 # Download utils PowerShell script with helper functions and import it, and download cloud-1.ps1
 $utils_script_name = "C:\utils.psm1"
 $utils_script_url = "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.psm1"
-GetPowerShellScript $utils_script_name $utils_script_url
+Get-PowerShellScript $utils_script_name $utils_script_url
 Import-Module "$utils_script_name"
 
 # Make sure we're in the proper directory (mostly for running from webservers) and define credentials for user
@@ -89,7 +89,7 @@ if ($datascience_install) {
     Write-Output "Launching Data Science Install script"
     $datascience_script_name = "C:\datascience.ps1"
     $datascience_script_url = "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/datascience.ps1"
-    GetPowerShellScript $datascience_script_name $datascience_script_url
+    Get-PowerShellScript $datascience_script_name $datascience_script_url
     Start-Process Powershell.exe -Credential $credentials -ArgumentList ("-file $datascience_script_name") -Wait
     Write-Output "Cleaning up Data Science Install script"
     Remove-Item -Path $datascience_script_name -Confirm:$false
@@ -101,7 +101,7 @@ if ($gaming_install) {
     Write-Output "Launching Gaming Install script"
     $gaming_script_name = "C:\gaming.ps1"
     $gaming_script_url = "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/gaming.ps1"
-    GetPowerShellScript $gaming_script_name $gaming_script_url
+    Get-PowerShellScript $gaming_script_name $gaming_script_url
     Start-Process Powershell.exe -Credential $credentials -ArgumentList ("-file $gaming_script_name") -Wait
     Write-Output "Cleaning up Gaming Install script"
     Remove-Item -Path $gaming_script_name -Confirm:$false
@@ -113,7 +113,7 @@ if ($softwaredev_install) {
     Write-Output "Launching Software Development Install script"
     $softwaredev_script_name = "C:\softwaredev.ps1"
     $softwaredev_script_url = "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/softwaredev.ps1"
-    GetPowerShellScript $softwaredev_script_name $softwaredev_script_url
+    Get-PowerShellScript $softwaredev_script_name $softwaredev_script_url
     Start-Process Powershell.exe -Credential $credentials -ArgumentList ("-file $softwaredev_script_name") -Wait
     Write-Output "Cleaning up Software Development Install script"
     Remove-Item -Path $softwaredev_script_name -Confirm:$false
@@ -125,7 +125,7 @@ if ($engineering_install) {
     Write-Output "Launching Engineering Install script"
     $engineering_script_name = "C:\engineering.ps1"
     $engineering_script_url = "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/engineering.ps1"
-    GetPowerShellScript $engineering_script_name $engineering_script_url
+    Get-PowerShellScript $engineering_script_name $engineering_script_url
     Start-Process Powershell.exe -Credential $credentials -ArgumentList ("-file $engineering_script_name") -Wait
     Write-Output "Cleaning up Engineering Install script"
     Remove-Item -Path $engineering_script_name -Confirm:$false
@@ -137,7 +137,7 @@ if ($productivity_install) {
     Write-Output "Launching Productivity Install script"
     $productivity_script_name = "C:\productivity.ps1"
     $productivity_script_url = "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/productivity.ps1"
-    GetPowerShellScript $productivity_script_name $productivity_script_url
+    Get-PowerShellScript $productivity_script_name $productivity_script_url
     Start-Process Powershell.exe -Credential $credentials -ArgumentList ("-file $productivity_script_name") -Wait
     Write-Output "Cleaning up Productivity Install script"
     Remove-Item -Path $productivity_script_name -Confirm:$false
