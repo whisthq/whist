@@ -26,6 +26,17 @@ def generateID(f):
 		return f(*args, **kwargs)
 	return wrapper
 
+def logRequestInfo(f):
+	@wraps(f)
+	def wrapper(*args, **kwargs):
+		try:
+			print(request.method)
+			print(request.get_json())
+		except Exception as e:
+			print(str(e))
+		return f(*args, **kwargs)
+	return wrapper
+
 app = init_app(app)
 # celery.conf.update(enable_utc=True, timezone='US_Eastern')
 # celery.conf['CELERY_TIMEZONE'] = 'US/Eastern'

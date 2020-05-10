@@ -288,14 +288,14 @@ def logs(**kwargs):
         vm_ip = body['vm_ip']
         sendInfo(kwargs['ID'], 'Logs came from {}'.format(body['vm_ip']))
 
-    # task = storeLogs.apply_async(
-    #     [body['sender'], body['connection_id'], body['logs'], vm_ip, kwargs['ID']])
-    # return jsonify({'ID': task.id}), 202
-    return jsonify({'ID': 200}), 202
+    task = storeLogs.apply_async(
+        [body['sender'], body['connection_id'], body['logs'], vm_ip, kwargs['ID']])
+    return jsonify({'ID': task.id}), 202
 
 
 @vm_bp.route('/logs/fetch', methods=['POST'])
 @generateID
+@logRequestInfo
 def fetch_logs(**kwargs):
     sendInfo(kwargs['ID'], 'POST request sent to /logs/fetch')
 

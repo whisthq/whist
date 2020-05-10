@@ -10,8 +10,8 @@ disk_bp = Blueprint('disk_bp', __name__)
 def disk(action, **kwargs):
     if action == 'createEmpty':
         sendInfo(kwargs['ID'], 'POST request sent to /disk/createEmpty')
-
         body = request.get_json()
+
         disk_size = body['disk_size']
         username = body['username']
         location = body['location']
@@ -31,8 +31,9 @@ def disk(action, **kwargs):
         return jsonify({'ID': task.id}), 202
     elif action == 'attach':
         sendInfo(kwargs['ID'], 'POST request sent to /disk/attach')
-
         body = request.get_json()
+        sendInfo(kwargs['ID'], 'POST request body is {}'.format(str(body)))
+
         task = swapDisk.apply_async([body['disk_name'], kwargs['ID']])
         return jsonify({'ID': task.id}), 202
     elif action == 'detach':
