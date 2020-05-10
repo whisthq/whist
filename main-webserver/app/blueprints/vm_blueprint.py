@@ -44,7 +44,7 @@ def status(task_id, **kwargs):
         return make_response(jsonify(response), 200)
 
 
-@vm_bp.route('/vm/<action>', methods=['POST'])
+@vm_bp.route('/vm/<action>', methods=['POST', 'GET'])
 @generateID
 def vm(action, **kwargs):
     if action == 'create':
@@ -177,6 +177,19 @@ def vm(action, **kwargs):
             sendError(kwargs['ID'], 'Trying to change connection status, but no VM found for IP {}'.format(str(vm_ip)))
 
         return jsonify({'status': 200}), 200
+    elif action == 'isDev' and request.method == 'GET':
+        body = request.get_json()
+        if request.headers.getlist('X-Forwarded-For'):
+            vm_ip = request.headers.getlist('X-Forwarded-For')[0]
+        else:
+            vm_ip = request.remote_addr
+
+        vm_info = fetchVMByIP(vm_ip)
+        if vm_info:
+            is_dev = vm_info['dev']
+            return jsonify({'dev': is_dev, 'status': 200}), 200
+        return jsonify({'dev': False, 'status': 200}), 200
+
     return jsonify({}), 400
 
 @vm_bp.route('/tracker/<action>', methods=['POST'])
