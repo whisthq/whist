@@ -89,7 +89,7 @@ void lprintf(const char* fmtStr, ...);
 
 void StartTimer(clock* timer);
 double GetTimer(clock timer);
-clock CreateClock( int timeout_ms );
+clock CreateClock(int timeout_ms);
 
 static inline char* timenow();
 
@@ -119,13 +119,15 @@ static inline char* timenow() {
 
     time_str_tm = gmtime(&time_now.tv_sec);
     snprintf(buffer, 20, "%02i:%02i:%02i:%06li", time_str_tm->tm_hour,
-             time_str_tm->tm_min, time_str_tm->tm_sec, (long) time_now.tv_usec);
+             time_str_tm->tm_min, time_str_tm->tm_sec, (long)time_now.tv_usec);
 #endif
 
     //    strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
 
     return buffer;
 }
+
+void updateStatus(bool is_connected);
 // *** END FUNCTIONS ***
 
 #endif  // LOGGING_H

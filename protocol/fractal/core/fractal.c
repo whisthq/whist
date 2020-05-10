@@ -174,25 +174,6 @@ char* get_ip() {
     return ip;
 }
 
-void updateStatus(bool is_connected) {
-    char json[1000];
-
-    snprintf(json, sizeof(json),
-             "{\
-            \"ready\" : true\
-    }");
-
-    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus", json);
-
-    snprintf(json, sizeof(json),
-             "{\
-            \"available\" : %s\
-    }",
-             is_connected ? "false" : "true");
-
-    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
-}
-
 int GetFmsgSize(struct FractalClientMessage* fmsg) {
     if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
         return sizeof(*fmsg);

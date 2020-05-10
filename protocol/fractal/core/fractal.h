@@ -617,8 +617,6 @@ int runcmd(const char* cmdline, char** response);
 
 char* get_ip();
 
-void updateStatus(bool is_connected);
-
 int GetFmsgSize(struct FractalClientMessage* fmsg);
 
 /** FRACTAL FUNCTIONS END ***/

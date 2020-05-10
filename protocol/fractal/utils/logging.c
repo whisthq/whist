@@ -209,14 +209,14 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
         buf = (char *)logger_queue[index].buf;
         //        snprintf(buf, LOGGER_BUF_SIZE, "%15.4f: ",
         //        GetTimer(mprintf_timer));
-        if( buf[0] != '\0' )
-        {
+        if (buf[0] != '\0') {
             char old_msg[LOGGER_BUF_SIZE];
-            memcpy( old_msg, buf, LOGGER_BUF_SIZE );
-            snprintf( buf, LOGGER_BUF_SIZE, "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n", old_msg, logger_queue[index].buf );
-        } else
-        {
-            vsnprintf( buf, LOGGER_BUF_SIZE, fmtStr, args );
+            memcpy(old_msg, buf, LOGGER_BUF_SIZE);
+            snprintf(buf, LOGGER_BUF_SIZE,
+                     "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n", old_msg,
+                     logger_queue[index].buf);
+        } else {
+            vsnprintf(buf, LOGGER_BUF_SIZE, fmtStr, args);
         }
         logger_queue_size++;
     } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
@@ -280,8 +280,7 @@ double GetTimer(clock timer) {
     return ret;
 }
 
-clock CreateClock( int timeout_ms )
-{
+clock CreateClock(int timeout_ms) {
     clock out;
 #if defined(_WIN32)
     out.QuadPart = timeout_ms;
@@ -390,4 +389,31 @@ bool sendLog() {
     free(json);
 
     return true;
+}
+
+int32_t MultithreadedUpdateStatus(void *data) {
+    char json[1000];
+
+    snprintf(json, sizeof(json),
+             "{\
+            \"ready\" : true\
+    }");
+
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus", json);
+
+    snprintf(json, sizeof(json),
+             "{\
+            \"available\" : %s\
+    }",
+             *(bool *)data ? "false" : "true");
+
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
+
+    return 0;
+}
+
+void updateStatus(bool is_connected) {
+    SDL_Thread *update_status = SDL_CreateThread(MultithreadedUpdateStatus,
+                                                 "UpdateStatus", &is_connected);
+    SDL_DetachThread(update_status);
 }
