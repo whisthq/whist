@@ -1280,11 +1280,12 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.close()
 
 
-def lockVM(vm_name, lock, ID = -1):
+def lockVM(vm_name, lock, change_last_updated = True, ID = -1):
     if lock:
         sendInfo(ID, 'Trying to lock VM {}'.format(vm_name))
     else:
         sendInfo(ID, 'Trying to unlock VM {}'.format(vm_name))
+
 
     command = text("""
         UPDATE v_ms
@@ -1292,6 +1293,15 @@ def lockVM(vm_name, lock, ID = -1):
         WHERE
            "vm_name" = :vm_name
         """)
+
+    if not change_last_updated:
+        command = text("""
+            UPDATE v_ms
+            SET "lock" = :lock
+            WHERE
+               "vm_name" = :vm_name
+            """)
+
     last_updated = getCurrentTime()
     params = {'vm_name': vm_name, 'lock': lock, 'last_updated': last_updated}
     with engine.connect() as conn:
