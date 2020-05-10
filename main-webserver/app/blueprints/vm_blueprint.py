@@ -288,8 +288,8 @@ def logs(**kwargs):
         vm_ip = body['vm_ip']
         sendInfo(kwargs['ID'], 'Logs came from {}'.format(body['vm_ip']))
 
-    task = storeLogs.apply_async(
-        [body['sender'], body['connection_id'], body['logs'], vm_ip, kwargs['ID']])
+    # task = storeLogs.apply_async(
+    #     [body['sender'], body['connection_id'], body['logs'], vm_ip, kwargs['ID']])
     return jsonify({'ID': task.id}), 202
 
 
