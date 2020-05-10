@@ -178,7 +178,6 @@ def vm(action, **kwargs):
 
         return jsonify({'status': 200}), 200
     elif action == 'isDev' and request.method == 'GET':
-        body = request.get_json()
         if request.headers.getlist('X-Forwarded-For'):
             vm_ip = request.headers.getlist('X-Forwarded-For')[0]
         else:
