@@ -9,7 +9,6 @@ def SendLogsToS3(content, sender, connection_id, vm_ip, ID = -1):
 		file_name = '{}-{}'.format(sender, last_updated.replace('/','').replace(', ','-').replace(':', ''))
 		file_name = ''.join(e for e in file_name if e.isalnum())
 		file_name = file_name + '.txt'
-		print('FILE NAME IS {}'.format(file_name))
 
 		s3 = boto3.resource(
 			's3',
