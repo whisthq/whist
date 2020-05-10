@@ -290,7 +290,8 @@ def logs(**kwargs):
 
     # task = storeLogs.apply_async(
     #     [body['sender'], body['connection_id'], body['logs'], vm_ip, kwargs['ID']])
-    return jsonify({'ID': task.id}), 202
+    # return jsonify({'ID': task.id}), 202
+    return jsonify({'ID': 200}), 202
 
 
 @vm_bp.route('/logs/fetch', methods=['POST'])
