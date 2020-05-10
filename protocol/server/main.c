@@ -650,8 +650,6 @@ int main() {
                 StartTimer(&ack_timer);
             }
 
-            PrintMemoryInfo();
-
             // If they clipboard as updated, we should send it over to the
             // client
             if (hasClipboardUpdated()) {
