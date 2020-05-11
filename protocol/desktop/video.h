@@ -1,22 +1,16 @@
 #ifndef DESKTOP_VIDEO_H
 #define DESKTOP_VIDEO_H
 
-
 /******
 
-This file contains all code that interacts directly with processing and displaying 
-
-
-sockets under-the-hood.
+This file contains all code that interacts directly with receiving and processing video packets on the client.
 
 ============================
 Usage
 ============================
 
-
-
-
-
+initVideo() gets called before any video packet can be received. The video packets are received as standard FractalPackets
+by ReceiveVideo(FractalPacket* packet), before being saved in a proper video frame format.
 
 *****/
 

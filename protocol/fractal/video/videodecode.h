@@ -1,12 +1,34 @@
-/*
- * Video decoding via FFmpeg library.
- *
- * Copyright Fractal Computers, Inc. 2020
- **/
 #ifndef VIDEO_DECODE_H
 #define VIDEO_DECODE_H
 
+/******
+
+
+
+
+This file contains the code to create and destroy SDL windows on the client.
+
+============================
+Usage
+============================
+
+initSDL gets called first to create an SDL window, and destroySDL at the end to close the window.
+
+*****/
+
+/*
+============================
+Includes
+============================
+*/
+
 #include "../core/fractal.h"
+
+
+
+
+
+
 
 // define decoder struct to pass as a type
 typedef struct {

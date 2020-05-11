@@ -70,4 +70,4 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard();
 */
 void destroyClipboardSynchronizer();
 
-#endif
+#endif  // CLIPBOARD_THREAD_H

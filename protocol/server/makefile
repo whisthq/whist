@@ -17,7 +17,7 @@ BIN_NAME = build$(ARCH)/FractalServer.exe
 # files to build into object files
 OBJS = \
 	fractal.obj \
-        clock.obj \
+    clock.obj \
 	win_clipboard.obj \
 	aes.obj \
 	videoencode.obj \

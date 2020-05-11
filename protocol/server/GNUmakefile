@@ -82,7 +82,7 @@ all: clean clear $(OBJS)
 fractal.o:
 	$(CC) -c $(CFLAGS) ../fractal/core/fractal.c
 
-# compile the main fractal header source file into object file
+# compile the main clock source file into object file
 clock.o:
 	$(CC) -c $(CFLAGS) ../fractal/utils/clock.c
 

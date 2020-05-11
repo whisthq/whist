@@ -218,7 +218,7 @@ video.o:
 audio.o:
 	$(CC) -c $(CFLAGS) audio.c
 
-# compile the main audio source file into object file
+# compile the main clock source file into object file
 clock.o:
 	$(CC) -c $(CFLAGS) ../fractal/utils/clock.c
 
