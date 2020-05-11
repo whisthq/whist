@@ -1309,7 +1309,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
         LOG_WARNING("Could not create socket.");
         return false;
     }
-    set_timeout(Socket, 250);
+    set_timeout(Socket, 500);
 
     host = gethostbyname(host_s);
 
@@ -1330,8 +1330,8 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
     // now that we're connected, we can send the POST request to authenticate
     // the user first, we create the POST request message
     char *message = malloc(5000);
-    sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r", path, host_s);
-    LOG_INFO("SENDING GET MESSAGE:\n%s\n", message);
+    sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
+
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
         // error sending, terminate
@@ -1345,7 +1345,6 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
     // now that it's sent, let's get the reply
     int len;                                              // counters
     len = recv(Socket, json_res, (int)json_res_size, 0);  // get the reply
-    LOG_INFO("GET Request Webserver Response: %s\n", json_res);
 
     // get the parsed credentials
     for (int i = 0; i < len; i++) {

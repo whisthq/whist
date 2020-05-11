@@ -184,7 +184,7 @@ bool is_dev_vm() {
     char buf[4800];
     size_t len = sizeof(buf);
 
-    SendJSONGet("cube-celery-vm.herokuapp.com", "/vm/isDev", buf, len);
+    SendJSONGet("cube-celery-staging.herokuapp.com", "/vm/isDev", buf, len);
 
     for (int i = 1; i < len; i++) {
         if (buf[i - 1] != '\n') {
