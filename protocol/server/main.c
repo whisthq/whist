@@ -83,15 +83,14 @@ int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
-    LOG_INFO("creating encoder with iw %d ih %d ow %d oh %d",
              encoder_factory_server_w, encoder_factory_server_h,
              encoder_factory_client_w, encoder_factory_client_h);
-    encoder_factory_result =
-        create_video_encoder(encoder_factory_server_w, encoder_factory_server_h,
-                             encoder_factory_client_w, encoder_factory_client_h,
-                             encoder_factory_current_bitrate);
-    encoder_finished = true;
-    return 0;
+             encoder_factory_result = create_video_encoder(
+                 encoder_factory_server_w, encoder_factory_server_h,
+                 encoder_factory_client_w, encoder_factory_client_h,
+                 encoder_factory_current_bitrate);
+             encoder_finished = true;
+             return 0;
 }
 int32_t MultithreadedDestroyEncoder(void* opaque) {
     encoder_t* encoder = (encoder_t*)opaque;
@@ -190,7 +189,7 @@ int32_t SendVideo(void* opaque) {
                 pending_encoder = true;
                 encoder_finished = false;
                 encoder_factory_server_w = device->width;
-                encoder_factory_client_h = device->height;
+                encoder_factory_server_h = device->height;
                 encoder_factory_client_w = (int)client_width;
                 encoder_factory_client_h = (int)client_height;
                 encoder_factory_current_bitrate = current_bitrate;
