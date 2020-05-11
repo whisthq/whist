@@ -1,6 +1,7 @@
 from .imports import *
 from .factory import *
 from .utils import *
+from .logger import *
 
 
 def make_celery(app_name = __name__):
@@ -30,16 +31,17 @@ def logRequestInfo(f):
 	@wraps(f)
 	def wrapper(*args, **kwargs):
 		try:
-			print(request.method)
-			print(request.get_json())
+			papertrail = True
+			if request.url_rule in ['/vm/connectionStatus', '/vm/winlogonStatus']:
+				papertrail = False
+
+			sendInfo(kwargs['ID'], '{} request received at {} with parameters {}'.format(request.method, request.url_rule, str(request.get_json())), papertrail = papertrail)
 		except Exception as e:
 			print(str(e))
 		return f(*args, **kwargs)
 	return wrapper
 
 app = init_app(app)
-# celery.conf.update(enable_utc=True, timezone='US_Eastern')
-# celery.conf['CELERY_TIMEZONE'] = 'US/Eastern'
 
 app.config['MAIL_SERVER'] = "ming@fractalcomputers.com"
 app.config['MAIL_PORT'] = 465
