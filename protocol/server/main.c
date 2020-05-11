@@ -83,6 +83,9 @@ int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
+    LOG_INFO("creating encoder with iw %d ih %d ow %d oh %d",
+             encoder_factory_server_w, encoder_factory_server_h,
+             encoder_factory_client_w, encoder_factory_client_h);
     encoder_factory_result =
         create_video_encoder(encoder_factory_server_w, encoder_factory_server_h,
                              encoder_factory_client_w, encoder_factory_client_h,
