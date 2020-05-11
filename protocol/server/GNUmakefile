@@ -42,6 +42,7 @@ STATIC_LIBS = \
 # files to build into object files
 OBJS = \
 	fractal.o \
+	clock.o \
 	x11capture.o \
 	videoencode.o \
 	alsacapture.o \
@@ -80,6 +81,10 @@ all: clean clear $(OBJS)
 # compile the main fractal header source file into object file
 fractal.o:
 	$(CC) -c $(CFLAGS) ../fractal/core/fractal.c
+
+# compile the main fractal header source file into object file
+clock.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/clock.c
 
 # compile the logging source file into object file
 logging.o:

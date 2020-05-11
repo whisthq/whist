@@ -1,36 +1,78 @@
-/*
- * Video encoding via FFmpeg library.
- *
- * Copyright Fractal Computers, Inc. 2020
- **/
 #ifndef VIDEO_ENCODE_H
 #define VIDEO_ENCODE_H
 
+/*
+============================
+Includes
+============================
+*/
+
 #include "../core/fractal.h"
 
-// define encoder struct to pass as a type
+/*
+============================
+Custom Types
+============================
+*/
+
+/*
+@brief                          The encoder
+*/
 typedef struct {
+    int width, height;
+    int gop_size;
+    int encoded_frame_size;
+    void* encoded_frame_data;
+
     AVCodec *codec;
     AVCodecContext *context;
     AVFrame *sw_frame;
     AVFrame *hw_frame;
     void *frame_buffer;
-    int width, height;
     AVPacket packet;
     struct SwsContext *sws;
     EncodeType type;
     AVBufferRef *hw_device_ctx;
 } encoder_t;
 
-encoder_t *create_video_encoder(int width, int height, int bitrate,
-                                int gop_size);
+/*
+@brief                          Will create a new encoder
 
-void destroy_video_encoder(encoder_t *encoder);
+@param width                    Width of the frames that the encoder must encode
+@param height                   Height of the frames that the encoder must encode
+@param bitrate                  The number of bits per second that this encoder will encode to
 
-void video_encoder_encode(encoder_t *encoder, void *rgb_pixels);
+@returns                        The newly created encoder
+*/
+encoder_t *create_video_encoder(int width, int height, int bitrate);
 
+
+/*
+@brief                          Encode the given frame. The frame can be accessed via encoded_frame_size and encoded_frame_data
+
+@param rgb_pixels               The frame to be in encoded
+*/
+void video_encoder_encode(encoder_t *encoder, void* rgb_pixels);
+
+/*
+@brief                          Set the next frame to be an i-frame
+
+@param encoder                  Encoder to be updated
+*/
 void video_encoder_set_iframe(encoder_t *encoder);
 
+/*
+@brief                          Allow the next frame to be either an i-frame or not an i-frame.
+
+@param encoder                  Encoder to be updated
+*/
 void video_encoder_unset_iframe(encoder_t *encoder);
+
+/*
+@brief                          Destroy encoder
+
+@param encoder                  Encoder to be destroyed
+*/
+void destroy_video_encoder( encoder_t* encoder );
 
 #endif  // ENCODE_H

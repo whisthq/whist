@@ -20,6 +20,9 @@ typedef struct {
     AVPacket packet;
     SwrContext *pSwrContext;
     int frame_count;
+
+    int encoded_frame_size;
+    void* encoded_frame_data;
 } audio_encoder_t;
 
 typedef struct {

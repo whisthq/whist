@@ -6,7 +6,11 @@
 #include "../core/fractal.h"
 #include "clipboard.h"
 
-void initClipboard() {}
+bool StartTrackingClipboardUpdates();
+
+void initClipboard() {
+    StartTrackingClipboardUpdates();
+}
 
 #include <sys/syslimits.h>
 #include <unistd.h>

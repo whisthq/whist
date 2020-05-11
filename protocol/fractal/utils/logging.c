@@ -13,6 +13,10 @@
 #include "../network/network.h"
 #include "logging.h"
 
+char *get_logger_history();
+int get_logger_history_len();
+void initBacktraceHandler();
+
 extern int connection_id;
 
 // logger Semaphores and Mutexes
@@ -46,6 +50,8 @@ char *get_logger_history() { return logger_history; }
 int get_logger_history_len() { return logger_history_len; }
 
 void initLogger(char *log_dir) {
+    initBacktraceHandler();
+
     logger_history_len = 0;
 
     if (log_dir) {
@@ -189,12 +195,6 @@ void mprintf(const char *fmtStr, ...) {
     real_mprintf(WRITE_MPRINTF_TO_LOG, fmtStr, args);
 }
 
-void lprintf(const char *fmtStr, ...) {
-    va_list args;
-    va_start(args, fmtStr);
-    real_mprintf(true, fmtStr, args);
-}
-
 void real_mprintf(bool log, const char *fmtStr, va_list args) {
     if (mprintf_thread == NULL) {
         printf("initLogger has not been called!\n");
@@ -239,58 +239,6 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
     va_end(args);
 }
 
-#if defined(_WIN32)
-LARGE_INTEGER frequency;
-bool set_frequency = false;
-#endif
-
-void StartTimer(clock *timer) {
-#if defined(_WIN32)
-    if (!set_frequency) {
-        QueryPerformanceFrequency(&frequency);
-        set_frequency = true;
-    }
-    QueryPerformanceCounter(timer);
-#else
-    // start timer
-    gettimeofday(timer, NULL);
-#endif
-}
-
-double GetTimer(clock timer) {
-#if defined(_WIN32)
-    LARGE_INTEGER end;
-    QueryPerformanceCounter(&end);
-    double ret = (double)(end.QuadPart - timer.QuadPart) / frequency.QuadPart;
-#else
-    // stop timer
-    struct timeval t2;
-    gettimeofday(&t2, NULL);
-
-    // compute and print the elapsed time in millisec
-    double elapsedTime = (t2.tv_sec - timer.tv_sec) * 1000.0;  // sec to ms
-    elapsedTime += (t2.tv_usec - timer.tv_usec) / 1000.0;      // us to ms
-
-    // printf("elapsed time in ms is: %f\n", elapsedTime);
-
-    // standard var to return and convert to seconds since it gets converted to
-    // ms in function call
-    double ret = elapsedTime / 1000.0;
-#endif
-    return ret;
-}
-
-clock CreateClock(int timeout_ms) {
-    clock out;
-#if defined(_WIN32)
-    out.QuadPart = timeout_ms;
-#else
-    out.tv_sec = timeout_ms / 1000;
-    out.tv_usec = (timeout_ms % 1000) * 1000;
-#endif
-    return out;
-}
-
 #ifndef _WIN32
 SDL_mutex *crash_handler_mutex;
 
@@ -329,7 +277,7 @@ void initBacktraceHandler() {
 #endif
 }
 
-bool sendLog() {
+bool sendLogHistory() {
     char *host = "cube-celery-staging.herokuapp.com";
     char *path = "/logs";
 

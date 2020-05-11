@@ -21,8 +21,9 @@ OBJS = \
 	video.o \
 	audio.o \
 	aes.o \
-	clipboard_thread.o \
+	clipboard_synchronizer.o \
 	x11_clipboard.o \
+	clock.o \
 	sdl_utils.o \
 	logging.o \
 	network.o \
@@ -84,8 +85,9 @@ OBJS = \
 	network.o \
 	sdlscreeninfo.o \
 	mac_clipboard.o \
-	clipboard_thread.o \
-	main.o
+	clipboard_synchronizer.o \
+	main.o \
+	clock.o
 
 # Apple SDK (standard MacOSX or MacOSX10.15 is ideal - use 10.14 if Xcode bug)
 export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk
@@ -193,8 +195,8 @@ sdlscreeninfo.o:
 	$(CC) -c $(CFLAGS) ../fractal/utils/sdlscreeninfo.c
 
 # compile the general clipboard thread source file into object file
-clipboard_thread.o:
-	$(CC) -c $(CFLAGS) ../fractal/clipboard/clipboard_thread.c
+clipboard_synchronizer.o:
+	$(CC) -c $(CFLAGS) ../fractal/clipboard/clipboard_synchronizer.c
 
 # compile the general MacOS clipboard file into object file
 mac_clipboard.o:
@@ -215,6 +217,10 @@ video.o:
 # compile the main audio source file into object file
 audio.o:
 	$(CC) -c $(CFLAGS) audio.c
+
+# compile the main audio source file into object file
+clock.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/clock.c
 
 # compile the main source file into object file
 main.o:

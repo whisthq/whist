@@ -198,6 +198,9 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
     } else {
         // we did it!
         encoder->frame_count += encoder->pFrame->nb_samples;
+
+        encoder->encoded_frame_size = encoder->packet.size;
+        encoder->encoded_frame_data = encoder->packet.data;
         return 0;
     }
 }
