@@ -612,9 +612,7 @@ int main() {
             SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
         mprintf("Sending video and audio...\n");
 
-        input_device_t* input_device =
-            (input_device_t*)malloc(sizeof(input_device_t));
-        input_device = CreateInputDevice(input_device);
+        input_device_t* input_device = CreateInputDevice();
         if (!input_device) {
             mprintf("Failed to create input device for playback.\n");
         }
