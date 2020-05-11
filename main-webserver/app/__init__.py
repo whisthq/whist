@@ -31,11 +31,11 @@ def logRequestInfo(f):
 	@wraps(f)
 	def wrapper(*args, **kwargs):
 		try:
-	        vm_ip = None
-	        if request.headers.getlist('X-Forwarded-For'):
-	            vm_ip = request.headers.getlist('X-Forwarded-For')[0]
-	        else:
-	            vm_ip = request.remote_addr
+			vm_ip = None
+			if request.headers.getlist('X-Forwarded-For'):
+				vm_ip = request.headers.getlist('X-Forwarded-For')[0]
+			else:
+				vm_ip = request.remote_addr
 
 			papertrail = True
 			# if request.path in ['/vm/connectionStatus', '/vm/winlogonStatus']:
