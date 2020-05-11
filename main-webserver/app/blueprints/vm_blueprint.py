@@ -304,7 +304,7 @@ def logs(**kwargs):
         else:
             vm_ip = request.remote_addr
 
-    sendInfo(kwargs['ID'], 'Logs received from {} with connection ID {} and IP {}'.format(body['sender'], str(body['connection_id'], str(vm_ip))))
+    sendInfo(kwargs['ID'], 'Logs received from {} with connection ID {} and IP {}'.format(body['sender'], str(body['connection_id']), str(vm_ip)))
 
     version = None
     if 'version' in body:
