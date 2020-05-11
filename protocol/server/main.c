@@ -530,7 +530,7 @@ int main() {
         updateStatus( false );
 
         if (CreateUDPContext(&PacketReceiveContext, NULL,
-                             PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
+                             PORT_CLIENT_TO_SERVER, 1, 500) < 0) {
             mprintf("Failed to start connection\n");
 
             // Since we're just idling, let's try updating the server
