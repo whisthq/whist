@@ -35,7 +35,7 @@ def logRequestInfo(f):
 			if request.url_rule in ['/vm/connectionStatus', '/vm/winlogonStatus']:
 				papertrail = False
 
-			sendInfo(kwargs['ID'], '{} request received at {} with parameters {}'.format(request.method, request.url_rule, str(request.get_json())), papertrail = papertrail)
+			sendInfo(kwargs['ID'], '{} request received at {} with parameters {}'.format(request.method, request.path, str(request.get_json())), papertrail = papertrail)
 		except Exception as e:
 			print(str(e))
 		return f(*args, **kwargs)
