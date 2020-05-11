@@ -139,7 +139,7 @@ def vm(action, **kwargs):
         if vm_info:
             vm_name = vm_info['vm_name'] if vm_info['vm_name'] else ''
             vm_state = vm_info['state'] if vm_info['state'] else ''
-            intermediate_states = ['STOPPING', 'DEALLOCATING', 'STARTING', 'RESTARTING']
+            intermediate_states = ['STOPPING', 'DEALLOCATING']
 
             if vm_state in intermediate_states:
                 sendWarning(kwargs['ID'], 'Trying to change connection status, but VM {} is in intermediate state {}. Not changing state.'.format(vm_name, vm_state))
