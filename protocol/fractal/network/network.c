@@ -5,6 +5,7 @@
 #endif
 
 #include "network.h"
+#include <stdio.h>
 
 #include "../utils/aes.h"
 
@@ -1267,10 +1268,14 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
 
     int json_len = (int)strlen(jsonObj);
     char *message = malloc(5000 + json_len);
-    sprintf(message,
-            "POST %s HTTP/1.0\r\nHost: %s\r\nContent-Type: "
-            "application/json\r\nContent-Length:%zd\r\n\r\n%s",
-            path, host_s, (size_t)json_len, jsonObj);
+    snprintf(message, 5000 + json_len,
+            "POST %s HTTP/1.0\r\n"
+            "Host: %s\r\n"
+            "Content-Type: application/json\r\n"
+            "Content-Length: %d\r\n"
+            "\r\n"
+            "%s\r\n",
+              path, host_s, json_len, jsonObj);
 
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
@@ -1317,7 +1322,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
         LOG_WARNING("Could not create socket.");
         return false;
     }
-    set_timeout(Socket, 1000);
+    set_timeout(Socket, 250);
 
     host = gethostbyname(host_s);
 
