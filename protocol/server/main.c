@@ -83,14 +83,12 @@ int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
-             encoder_factory_server_w, encoder_factory_server_h,
-             encoder_factory_client_w, encoder_factory_client_h);
-             encoder_factory_result = create_video_encoder(
-                 encoder_factory_server_w, encoder_factory_server_h,
-                 encoder_factory_client_w, encoder_factory_client_h,
-                 encoder_factory_current_bitrate);
-             encoder_finished = true;
-             return 0;
+    encoder_factory_result =
+        create_video_encoder(encoder_factory_server_w, encoder_factory_server_h,
+                             encoder_factory_client_w, encoder_factory_client_h,
+                             encoder_factory_current_bitrate);
+    encoder_finished = true;
+    return 0;
 }
 int32_t MultithreadedDestroyEncoder(void* opaque) {
     encoder_t* encoder = (encoder_t*)opaque;
