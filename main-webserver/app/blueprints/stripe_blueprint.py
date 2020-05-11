@@ -6,7 +6,9 @@ stripe_bp = Blueprint('stripe_bp', __name__)
 
 
 @stripe_bp.route('/stripe/<action>', methods=['POST'])
-def payment(action):
+@generateID
+@logRequestInfo
+def payment(action, **kwargs):
     stripe.api_key = os.getenv('STRIPE_SECRET')
     customer_id = ''
     subscription_id = ''
@@ -243,7 +245,9 @@ def payment(action):
 
 @stripe_bp.route('/referral/<action>', methods=['POST'])
 @jwt_required
-def referral(action):
+@generateID
+@logRequestInfo
+def referral(action, **kwargs):
     if action == 'validate':
         body = request.get_json()
         code = body['code']

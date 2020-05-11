@@ -2,6 +2,7 @@ from app import *
 from .helperFuncs import *
 from .s3 import *
 from msrest.exceptions import ClientException
+from .logger import *
 
 
 @celery.task(bind=True)
@@ -630,8 +631,8 @@ def deallocateVM(self, vm_name, ID = -1):
 
 
 @celery.task(bind=True)
-def storeLogs(self, sender, connection_id, logs, vm_ip, ID = -1):
-	if SendLogsToS3(logs, sender, connection_id, vm_ip, ID) > 0:
+def storeLogs(self, sender, connection_id, logs, vm_ip, version, ID = -1):
+	if SendLogsToS3(logs, sender, connection_id, vm_ip, version, ID) > 0:
 		return {'status': 200}
 	return {'status': 422}
 

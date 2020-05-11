@@ -6,6 +6,7 @@ p2p_bp = Blueprint('p2p_bp', __name__)
 @p2p_bp.route('/account/fetchCustomers', methods=['POST'])
 @jwt_required
 @generateID
+@logRequestInfo
 def account_fetch_customers(**kwargs):
     sendInfo(kwargs['ID'], 'POST request sent to /account/fetchCustomers')
     customers = fetchCustomers()
@@ -14,6 +15,7 @@ def account_fetch_customers(**kwargs):
 @p2p_bp.route('/account/insertComputer', methods=['POST'])
 @jwt_required
 @generateID
+@logRequestInfo
 def account_insert_computer(**kwargs):
     sendInfo(kwargs['ID'], 'POST request sent to /account/insertComputer')
     body = request.get_json()
@@ -25,6 +27,7 @@ def account_insert_computer(**kwargs):
 @p2p_bp.route('/account/fetchComputers', methods=['POST'])
 @jwt_required
 @generateID
+@logRequestInfo
 def account_fetch_computers(**kwargs):
     sendInfo(kwargs['ID'], 'POST request sent to /account/fetchComputers')
     body = request.get_json()
@@ -52,6 +55,7 @@ def account_fetch_computers(**kwargs):
 @p2p_bp.route('/account/checkComputer', methods=['POST'])
 @jwt_required
 @generateID
+@logRequestInfo
 def account_check_computer(**kwargs):
     sendInfo(kwargs['ID'], 'POST request sent to /account/checkComputer')
     body = request.get_json()
@@ -62,6 +66,7 @@ def account_check_computer(**kwargs):
 @p2p_bp.route('/account/changeComputerName', methods=['POST'])
 @jwt_required
 @generateID
+@logRequestInfo
 def account_change_computer_name(**kwargs):
     sendInfo(kwargs['ID'], 'POST request sent to /account/changeComputerName')
     body = request.get_json()
