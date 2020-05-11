@@ -328,17 +328,39 @@ bool sendLogHistory() {
 
     logs[log_len++] = '\0';
 
+    char* version = NULL;
+    long length;
+    FILE* f = fopen( "version", "rb" );
+
+    if( f )
+    {
+        fseek( f, 0, SEEK_END );
+        length = ftell( f );
+        fseek( f, 0, SEEK_SET );
+        version = malloc( length );
+        if( version )
+        {
+            fread( version, 1, length, f );
+        }
+        fclose( f );
+    } else
+    {
+        version = "NONE";
+    }
+
     char *json = malloc(1000 + log_len);
     sprintf(json,
             "{\
             \"connection_id\" : \"%d\",\
+            \"version\" : \"%s\",\
             \"logs\" : \"%s\",\
             \"sender\" : \"server\"\
     }",
-            connection_id, logs);
+            connection_id, version, logs);
     SendJSONPost(host, path, json);
     free(logs);
     free(json);
+    free(version);
 
     return true;
 }
