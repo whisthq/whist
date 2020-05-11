@@ -6,7 +6,7 @@
 #include "alsacapture.h"
 
 audio_device_t *CreateAudioDevice() {
-    audio_device_t* audio_device = malloc( sizeof( audio_device ) );
+    audio_device_t* audio_device = malloc( sizeof( audio_device_t ) );
     memset(audio_device, 0, sizeof(audio_device_t));
 
     int res;
