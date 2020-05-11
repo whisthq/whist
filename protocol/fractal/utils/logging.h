@@ -100,4 +100,11 @@ void destroyLogger();
 */
 bool sendLogHistory();
 
+/*
+@brief                          Tell the server the WinLogon and connection status
+
+@param is_connected             The connection status to send to the server. Pass true if connected to a client and false otherwise.
+*/
+void updateStatus(bool is_connected);
+
 #endif  // LOGGING_H

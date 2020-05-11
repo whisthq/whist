@@ -34,13 +34,16 @@ Private Functions
 */
 
 /*
-@brief                          This will set the socket s to have timeout timeout_ms.
+@brief                          This will set the socket s to have timeout
+timeout_ms.
 
 @param s                        The SOCKET to be configured
-@param timeout_ms               The maximum amount of time that all recv/send calls will take for that socket (0 to return immediately, -1 to never return)
-                                Set 0 to have a non-blocking socket, and -1 for an indefinitely blocking socket
+@param timeout_ms               The maximum amount of time that all recv/send
+calls will take for that socket (0 to return immediately, -1 to never return)
+                                Set 0 to have a non-blocking socket, and -1 for
+an indefinitely blocking socket
 */
-void set_timeout( SOCKET s, int timeout_ms );
+void set_timeout(SOCKET s, int timeout_ms);
 
 /*
 @brief                          This will send or receive data over a socket
@@ -48,19 +51,23 @@ void set_timeout( SOCKET s, int timeout_ms );
 @param s                        The SOCKET to be used
 @param buf                      The buffer to read or write to
 @param len                      The length of the buffer to send over the socket
-                                Or, the maximum number of bytes that can be read from the socket
+                                Or, the maximum number of bytes that can be read
+from the socket
 
-@returns                        The number of bytes that have been read or written to or from the buffer
+@returns                        The number of bytes that have been read or
+written to or from the buffer
 */
-int recvp( SocketContext* context, void* buf, int len );
-int sendp( SocketContext* context, void* buf, int len );
+int recvp(SocketContext *context, void *buf, int len);
+int sendp(SocketContext *context, void *buf, int len);
 
 /*
-@brief                          This will initialize and clear the TCP reader buffer. TCP data will have be read into this buffer, and will only return a packet when the entire packet is received
+@brief                          This will initialize and clear the TCP reader
+buffer. TCP data will have be read into this buffer, and will only return a
+packet when the entire packet is received
 
 @param context                  The socket context
 */
-void ClearReadingTCP( SocketContext* context );
+void ClearReadingTCP(SocketContext *context);
 
 /*
 ============================
@@ -77,12 +84,12 @@ int GetLastNetworkError() {
 }
 
 #define LARGEST_TCP_PACKET 10000000
-#define LARGEST_ENCRYPTED_TCP_PACKET (sizeof( int ) + LARGEST_TCP_PACKET + 16)
+#define LARGEST_ENCRYPTED_TCP_PACKET (sizeof(int) + LARGEST_TCP_PACKET + 16)
 
-int SendTCPPacket(SocketContext *context, FractalPacketType type,
-                  void *data, int len) {
+int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data,
+                  int len) {
     // Verify packet size can fit
-    if ( PACKET_HEADER_SIZE + (unsigned int)len > LARGEST_TCP_PACKET) {
+    if (PACKET_HEADER_SIZE + (unsigned int)len > LARGEST_TCP_PACKET) {
         LOG_WARNING("Packet too large!");
         return -1;
     }
@@ -101,22 +108,22 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type,
     packet->is_a_nack = false;
 
     // Copy packet data
-    memcpy( packet->data, data, len );
+    memcpy(packet->data, data, len);
 
     // Encrypt the packet using aes encryption
     int unencrypted_len = PACKET_HEADER_SIZE + packet->payload_size;
-    int encrypted_len = encrypt_packet(
-        packet, unencrypted_len,
-        (FractalPacket *)(sizeof(int) + encrypted_packet_buffer),
-        (unsigned char *)PRIVATE_KEY);
+    int encrypted_len =
+        encrypt_packet(packet, unencrypted_len,
+                       (FractalPacket *)(sizeof(int) + encrypted_packet_buffer),
+                       (unsigned char *)PRIVATE_KEY);
 
     // Pass the length of the packet as the first byte
     *((int *)encrypted_packet_buffer) = encrypted_len;
 
     // Send the packet
-    LOG_INFO("Sending TCP Packet of length %d\n", encrypted_len );
+    LOG_INFO("Sending TCP Packet of length %d\n", encrypted_len);
     bool failed = false;
-    if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len ) <
+    if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len) <
         0) {
         LOG_WARNING("Failed to send packet!");
         failed = true;
@@ -126,8 +133,8 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type,
     return failed ? -1 : 0;
 }
 
-int SendUDPPacket(SocketContext *context, FractalPacketType type,
-                  void *data, int len, int id, int burst_bitrate,
+int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
+                  int len, int id, int burst_bitrate,
                   FractalPacket *packet_buffer, int *packet_len_buffer) {
     if (id <= 0) {
         mprintf("IDs must be positive!\n");
@@ -226,9 +233,9 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type,
                                          (unsigned char *)PRIVATE_KEY);
 
         // Send it off
-        SDL_LockMutex( context->mutex );
+        SDL_LockMutex(context->mutex);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-        SDL_UnlockMutex( context->mutex );
+        SDL_UnlockMutex(context->mutex);
 
         if (sent_size < 0) {
             int error = GetLastNetworkError();
@@ -243,28 +250,24 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type,
     return 0;
 }
 
-int ReplayPacket( SocketContext* context, FractalPacket* packet,
-                  size_t len )
-{
-    if( len > sizeof( FractalPacket ) )
-    {
-        mprintf( "Len too long!\n" );
+int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
+    if (len > sizeof(FractalPacket)) {
+        mprintf("Len too long!\n");
         return -1;
     }
 
     packet->is_a_nack = true;
 
     FractalPacket encrypted_packet;
-    int encrypt_len = encrypt_packet( packet, (int)len, &encrypted_packet,
-        (unsigned char*)PRIVATE_KEY );
+    int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
+                                     (unsigned char *)PRIVATE_KEY);
 
-    SDL_LockMutex( context->mutex );
-    int sent_size = sendp( context, &encrypted_packet, encrypt_len );
-    SDL_UnlockMutex( context->mutex );
+    SDL_LockMutex(context->mutex);
+    int sent_size = sendp(context, &encrypted_packet, encrypt_len);
+    SDL_UnlockMutex(context->mutex);
 
-    if( sent_size < 0 )
-    {
-        mprintf( "Could not replay packet!\n" );
+    if (sent_size < 0) {
+        mprintf("Could not replay packet!\n");
         return -1;
     }
 
@@ -280,10 +283,7 @@ int sendp(SocketContext *context, void *buf, int len) {
                   sizeof(context->addr));
 }
 
-int Ack( SocketContext* context )
-{
-    return sendp( context, NULL, 0 );
-}
+int Ack(SocketContext *context) { return sendp(context, NULL, 0); }
 
 bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     // Connect to TCP server
@@ -324,44 +324,38 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     return true;
 }
 
-FractalPacket* ReadUDPPacket( SocketContext* context )
-{
+FractalPacket *ReadUDPPacket(SocketContext *context) {
     // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
-    int encrypted_len = recvp( context, &encrypted_packet,
-                                sizeof( encrypted_packet ) );
+    int encrypted_len =
+        recvp(context, &encrypted_packet, sizeof(encrypted_packet));
 
     static FractalPacket decrypted_packet;
 
     // If the packet was successfully received, then decrypt it
-    if( encrypted_len > 0 )
-    {
+    if (encrypted_len > 0) {
         int decrypted_len =
-            decrypt_packet( &encrypted_packet, encrypted_len, &decrypted_packet,
-            (unsigned char*)PRIVATE_KEY );
+            decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
+                           (unsigned char *)PRIVATE_KEY);
 
         // If there was an issue decrypting it, post warning and then
         // ignore the problem
-        if( decrypted_len < 0 )
-        {
-            LOG_WARNING( "Failed to decrypt packet" );
+        if (decrypted_len < 0) {
+            LOG_WARNING("Failed to decrypt packet");
             return NULL;
         }
 
         return &decrypted_packet;
-    } else
-    {
-        if( encrypted_len < 0 )
-        {
+    } else {
+        if (encrypted_len < 0) {
             int error = GetLastNetworkError();
-            switch( error )
-            {
-            case ETIMEDOUT:
-            case EWOULDBLOCK:
-                break;
-            default:
-                LOG_WARNING( "Unexpected Packet Error: %d", error );
-                break;
+            switch (error) {
+                case ETIMEDOUT:
+                case EWOULDBLOCK:
+                    break;
+                default:
+                    LOG_WARNING("Unexpected Packet Error: %d", error);
+                    break;
             }
         }
         return NULL;
@@ -370,15 +364,19 @@ FractalPacket* ReadUDPPacket( SocketContext* context )
 
 static int reading_packet_len;
 
-void ClearReadingTCP( SocketContext* context ) { context; reading_packet_len = 0; }
+void ClearReadingTCP(SocketContext *context) {
+    context;
+    reading_packet_len = 0;
+}
 
-FractalPacket* ReadTCPPacket(SocketContext *context) {
+FractalPacket *ReadTCPPacket(SocketContext *context) {
     if (!context->is_tcp) {
         LOG_WARNING("TryReadingTCPPacket received a context that is NOT TCP!");
         return NULL;
     }
 
-    // NOTE: The following code only works when reading from one TCP socket. Will need to be adjusted if multiple TCP sockets are used
+    // NOTE: The following code only works when reading from one TCP socket.
+    // Will need to be adjusted if multiple TCP sockets are used
     static char encrypted_packet_buffer[LARGEST_ENCRYPTED_TCP_PACKET];
     static char decrypted_packet_buffer[LARGEST_TCP_PACKET];
 
@@ -387,9 +385,9 @@ FractalPacket* ReadTCPPacket(SocketContext *context) {
     do {
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
-        len = recvp(
-            context, encrypted_packet_buffer + reading_packet_len,
-            min(TCP_SEGMENT_SIZE, LARGEST_ENCRYPTED_TCP_PACKET - reading_packet_len));
+        len = recvp(context, encrypted_packet_buffer + reading_packet_len,
+                    min(TCP_SEGMENT_SIZE,
+                        LARGEST_ENCRYPTED_TCP_PACKET - reading_packet_len));
 
         if (len < 0) {
             int err = GetLastNetworkError();
@@ -437,7 +435,7 @@ FractalPacket* ReadTCPPacket(SocketContext *context) {
                 return NULL;
             } else {
                 // Return the decrypted packet
-                return (FractalPacket*)decrypted_packet_buffer;
+                return (FractalPacket *)decrypted_packet_buffer;
             }
         }
     }
@@ -445,9 +443,8 @@ FractalPacket* ReadTCPPacket(SocketContext *context) {
     return NULL;
 }
 
-int CreateTCPServerContext(SocketContext *context,
-                           int port, int recvfrom_timeout_ms,
-                           int stun_timeout_ms) {
+int CreateTCPServerContext(SocketContext *context, int port,
+                           int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = true;
 
     int opt;
@@ -530,9 +527,8 @@ int CreateTCPServerContext(SocketContext *context,
     return 0;
 }
 
-int CreateTCPServerContextStun(SocketContext *context,
-                               int port, int recvfrom_timeout_ms,
-                               int stun_timeout_ms) {
+int CreateTCPServerContextStun(SocketContext *context, int port,
+                               int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = true;
 
     // Init stun_addr
@@ -664,9 +660,8 @@ int CreateTCPServerContextStun(SocketContext *context,
     return 0;
 }
 
-int CreateTCPClientContext(SocketContext *context, char *destination,
-                           int port, int recvfrom_timeout_ms,
-                           int stun_timeout_ms) {
+int CreateTCPClientContext(SocketContext *context, char *destination, int port,
+                           int recvfrom_timeout_ms, int stun_timeout_ms) {
     stun_timeout_ms;  // TODO; remove useless parameter
     context->is_tcp = true;
 
@@ -840,34 +835,33 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateTCPContext(SocketContext *context, char *destination,
-                     int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
+int CreateTCPContext(SocketContext *context, char *destination, int port,
+                     int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->mutex = SDL_CreateMutex();
 
     int ret;
 
 #if USING_STUN
     if (destination == NULL)
-        ret = CreateTCPServerContextStun( context, port,
-                                          recvfrom_timeout_ms, stun_timeout_ms );
+        ret = CreateTCPServerContextStun(context, port, recvfrom_timeout_ms,
+                                         stun_timeout_ms);
     else
-        ret = CreateTCPClientContextStun( context, destination, port,
-                                          recvfrom_timeout_ms, stun_timeout_ms );
+        ret = CreateTCPClientContextStun(context, destination, port,
+                                         recvfrom_timeout_ms, stun_timeout_ms);
 #else
     if (destination == NULL)
-        ret = CreateTCPServerContext( context, port,
-                                      recvfrom_timeout_ms, stun_timeout_ms );
+        ret = CreateTCPServerContext(context, port, recvfrom_timeout_ms,
+                                     stun_timeout_ms);
     else
-        ret = CreateTCPClientContext( context, destination, port,
-                                      recvfrom_timeout_ms, stun_timeout_ms );
+        ret = CreateTCPClientContext(context, destination, port,
+                                     recvfrom_timeout_ms, stun_timeout_ms);
 #endif
-    ClearReadingTCP( context );
+    ClearReadingTCP(context);
     return ret;
 }
 
-int CreateUDPServerContext(SocketContext *context,
-                           int port, int recvfrom_timeout_ms,
-                           int stun_timeout_ms) {
+int CreateUDPServerContext(SocketContext *context, int port,
+                           int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -919,9 +913,8 @@ int CreateUDPServerContext(SocketContext *context,
     return 0;
 }
 
-int CreateUDPServerContextStun(SocketContext *context,
-                               int port, int recvfrom_timeout_ms,
-                               int stun_timeout_ms) {
+int CreateUDPServerContextStun(SocketContext *context, int port,
+                               int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1055,9 +1048,8 @@ int CreateUDPServerContextStun(SocketContext *context,
     return 0;
 }
 
-int CreateUDPClientContext(SocketContext *context, char *destination,
-                           int port, int recvfrom_timeout_ms,
-                           int stun_timeout_ms) {
+int CreateUDPClientContext(SocketContext *context, char *destination, int port,
+                           int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1214,24 +1206,24 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateUDPContext(SocketContext *context, char *destination,
-                     int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
+int CreateUDPContext(SocketContext *context, char *destination, int port,
+                     int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->mutex = SDL_CreateMutex();
 
 #if USING_STUN
-    if ( destination == NULL)
-        return CreateUDPServerContextStun( context, port,
-                                           recvfrom_timeout_ms, stun_timeout_ms );
+    if (destination == NULL)
+        return CreateUDPServerContextStun(context, port, recvfrom_timeout_ms,
+                                          stun_timeout_ms);
     else
-        return CreateUDPClientContextStun( context, destination, port,
-                                           recvfrom_timeout_ms, stun_timeout_ms );
+        return CreateUDPClientContextStun(context, destination, port,
+                                          recvfrom_timeout_ms, stun_timeout_ms);
 #else
-    if ( destination == NULL )
-        return CreateUDPServerContext( context, port,
-                                       recvfrom_timeout_ms, stun_timeout_ms );
+    if (destination == NULL)
+        return CreateUDPServerContext(context, port, recvfrom_timeout_ms,
+                                      stun_timeout_ms);
     else
-        return CreateUDPClientContext( context, destination, port,
-                                       recvfrom_timeout_ms, stun_timeout_ms );
+        return CreateUDPClientContext(context, destination, port,
+                                      recvfrom_timeout_ms, stun_timeout_ms);
 #endif
 }
 
@@ -1240,7 +1232,7 @@ int CreateUDPContext(SocketContext *context, char *destination,
 bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     // environment variables
     SOCKET Socket;  // socket to send/receive POST request
-    struct hostent* host;
+    struct hostent *host;
     struct sockaddr_in
         webserver_socketAddress;  // address of the web server socket
 
@@ -1254,12 +1246,12 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     }
     set_timeout(Socket, 250);
 
-    host = gethostbyname( host_s );
+    host = gethostbyname(host_s);
 
     // create the struct for the webserver address socket we will query
     webserver_socketAddress.sin_family = AF_INET;
     webserver_socketAddress.sin_port = htons(80);  // HTTP port
-    webserver_socketAddress.sin_addr.s_addr = *((unsigned long*)host->h_addr);
+    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr);
 
     // connect to the web server before sending the POST request packet
     int connect_status =
@@ -1284,7 +1276,7 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
         // error sending, terminate
         LOG_WARNING("Sending POST message failed.");
-        free( message );
+        free(message);
         return false;
     }
 
@@ -1301,45 +1293,100 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
             buffer[i] = '\0';
         }
     }
-    LOG_INFO("Webserver Response: %s\n", buffer);
+    LOG_INFO("POST Request Webserver Response: %s\n", buffer);
 
     FRACTAL_CLOSE_SOCKET(Socket);
     // return the user credentials if correct authentication, else empty
     return true;
 }
 
-void set_timeout( SOCKET s, int timeout_ms )
-{
+// send JSON get to query the database for VM details
+bool SendJSONGet(char *host_s, char *path, char *json_res,
+                 size_t json_res_size) {
+    // environment variables
+    SOCKET Socket;  // socket to send/receive POST request
+    struct hostent *host;
+    struct sockaddr_in
+        webserver_socketAddress;  // address of the web server socket
+
+    // Creating our TCP socket to connect to the web server
+    Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (Socket < 0)  // Windows & Unix cases
+    {
+        // if can't create socket, return
+        LOG_WARNING("Could not create socket.");
+        return false;
+    }
+    set_timeout(Socket, 1000);
+
+    host = gethostbyname(host_s);
+
+    // create the struct for the webserver address socket we will query
+    webserver_socketAddress.sin_family = AF_INET;
+    webserver_socketAddress.sin_port = htons(80);  // HTTP port
+    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr);
+
+    // connect to the web server before sending the POST request packet
+    int connect_status =
+        connect(Socket, (struct sockaddr *)&webserver_socketAddress,
+                sizeof(webserver_socketAddress));
+    if (connect_status < 0) {
+        LOG_WARNING("Could not connect to the webserver.");
+        return false;
+    }
+
+    // now that we're connected, we can send the POST request to authenticate
+    // the user first, we create the POST request message
+    char *message = malloc(250);
+    sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host_s);
+
+    // now we send it
+    if (send(Socket, message, (int)strlen(message), 0) < 0) {
+        // error sending, terminate
+        LOG_WARNING("Sending GET message failed.");
+        free(message);
+        return false;
+    }
+
+    free(message);
+
+    // now that it's sent, let's get the reply
+    int len;                                              // counters
+    len = recv(Socket, json_res, (int)json_res_size, 0);  // get the reply
+
+    LOG_INFO("GET Request Webserver Response: %s\n", json_res);
+
+    FRACTAL_CLOSE_SOCKET(Socket);
+    return true;
+}
+
+void set_timeout(SOCKET s, int timeout_ms) {
     // Sets the timeout for SOCKET s to be timeout_ms in milliseconds
     // Any recv calls will wait this long before timing out
     // -1 means that it will block indefinitely until a packet is received
     // 0 means that it will immediately return with whatever data is waiting in
     // the buffer
-    if( timeout_ms < 0 )
-    {
+    if (timeout_ms < 0) {
         LOG_WARNING(
             "WARNING: This socket will blocking indefinitely. You will not be "
-            "able to recover if a packet is never received" );
+            "able to recover if a packet is never received");
         unsigned long mode = 0;
 
-        FRACTAL_IOCTL_SOCKET( s, FIONBIO, &mode );
+        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
 
-    } else if( timeout_ms == 0 )
-    {
+    } else if (timeout_ms == 0) {
         unsigned long mode = 1;
-        FRACTAL_IOCTL_SOCKET( s, FIONBIO, &mode );
-    } else
-    {
+        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
+    } else {
         // Set to blocking when setting a timeout
         unsigned long mode = 0;
-        FRACTAL_IOCTL_SOCKET( s, FIONBIO, &mode );
+        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
 
-        clock read_timeout = CreateClock( timeout_ms );
+        clock read_timeout = CreateClock(timeout_ms);
 
-        if( setsockopt( s, SOL_SOCKET, SO_RCVTIMEO, (const char*)&read_timeout,
-                        sizeof( read_timeout ) ) < 0 )
-        {
-            LOG_WARNING( "Failed to set timeout" );
+        if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&read_timeout,
+                       sizeof(read_timeout)) < 0) {
+            LOG_WARNING("Failed to set timeout");
             return;
         }
     }

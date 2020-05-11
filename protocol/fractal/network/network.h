@@ -278,4 +278,18 @@ FractalPacket* ReadUDPPacket( SocketContext* context );
 */
 bool SendJSONPost( char* host_s, char* path, char* jsonObj );
 
+
+/*
+@brief                          Sends a JSON GET request to the Fractal webservers
+
+@param host_s                   The hostname IP address
+@param path                     The /path/to/the/endpoint
+@param json_res                 The buffer in which to store the JSON response
+@param json_res_size            The size of the response buffer
+
+@returns                        Will return false on failure, will return true on success
+                                Failure implies that the socket is broken or the TCP connection has ended, use GetLastNetworkError() to learn more about the error
+*/
+bool SendJSONGet( char *host_s, char *path, char *json_res, size_t json_res_size );
+
 #endif // NETWORK_H
