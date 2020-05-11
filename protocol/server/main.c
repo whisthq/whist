@@ -76,13 +76,16 @@ volatile bool update_encoder;
 bool pending_encoder;
 bool encoder_finished;
 encoder_t* encoder_factory_result = NULL;
-int encoder_factory_w;
-int encoder_factory_h;
+int encoder_factory_server_w;
+int encoder_factory_server_h;
+int encoder_factory_client_w;
+int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
 int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
     encoder_factory_result =
-        create_video_encoder(encoder_factory_w, encoder_factory_h,
+        create_video_encoder(encoder_factory_server_w, encoder_factory_server_h,
+                             encoder_factory_client_w, encoder_factory_client_h,
                              encoder_factory_current_bitrate);
     encoder_finished = true;
     return 0;
@@ -183,8 +186,10 @@ int32_t SendVideo(void* opaque) {
             } else {
                 pending_encoder = true;
                 encoder_finished = false;
-                encoder_factory_w = device->width;
-                encoder_factory_h = device->height;
+                encoder_factory_server_w = device->width;
+                encoder_factory_client_h = device->height;
+                encoder_factory_client_w = (int)client_width;
+                encoder_factory_client_h = (int)client_height;
                 encoder_factory_current_bitrate = current_bitrate;
                 if (encoder == NULL) {
                     // Run on this thread bc we have to wait for it anyway
@@ -234,8 +239,6 @@ int32_t SendVideo(void* opaque) {
             if (accumulated_frames == 0) {
                 mprintf("Sending current frame!\n");
             }
-
-            // consecutive_capture_screen_errors = 0;
 
             bool is_iframe = false;
             if (frames_since_first_iframe % encoder->gop_size == 0) {
@@ -318,8 +321,8 @@ int32_t SendVideo(void* opaque) {
                     // Create frame struct with compressed frame data and
                     // metadata
                     Frame* frame = (Frame*)buf;
-                    frame->width = device->width;
-                    frame->height = device->height;
+                    frame->width = encoder->out_width;
+                    frame->height = encoder->out_height;
                     frame->size = encoder->encoded_frame_size;
                     frame->cursor = GetCurrentCursor();
                     // True if this frame does not require previous frames to
@@ -329,7 +332,8 @@ int32_t SendVideo(void* opaque) {
                            encoder->encoded_frame_size);
 
                     // mprintf("Sent video packet %d (Size: %d) %s\n", id,
-                    // encoder->encoded_frame_size, frame->is_iframe ? "(I-frame)" :
+                    // encoder->encoded_frame_size, frame->is_iframe ?
+                    // "(I-frame)" :
                     // "");
 
                     // Send video packet to client
@@ -431,7 +435,8 @@ int32_t SendAudio(void* opaque) {
                     // Send packet
 
                     if (SendUDPPacket(
-                            &context, PACKET_AUDIO, audio_encoder->encoded_frame_data,
+                            &context, PACKET_AUDIO,
+                            audio_encoder->encoded_frame_data,
                             audio_encoder->encoded_frame_size, id,
                             STARTING_BURST_BITRATE,
                             audio_buffer[id % AUDIO_BUFFER_SIZE],
@@ -536,8 +541,8 @@ int main() {
 
         updateStatus(false);
 
-        if (CreateUDPContext(&PacketReceiveContext, NULL,
-                             PORT_CLIENT_TO_SERVER, 1, 5000) < 0) {
+        if (CreateUDPContext(&PacketReceiveContext, NULL, PORT_CLIENT_TO_SERVER,
+                             1, 5000) < 0) {
             mprintf("Failed to start connection\n");
 
             // Since we're just idling, let's try updating the server

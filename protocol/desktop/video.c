@@ -170,7 +170,9 @@ void updateWidthAndHeight(int width, int height) {
                                  output_height, AV_PIX_FMT_YUV420P,
                                  SWS_BILINEAR, NULL, NULL, NULL);
     }
+    struct SwsContext* old_sws_ctx = videoContext.sws;
     videoContext.sws = sws_ctx;
+    sws_freeContext(old_sws_ctx);
 
     server_width = width;
     server_height = height;
