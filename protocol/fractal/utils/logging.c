@@ -373,7 +373,14 @@ bool sendLogHistory() {
     return true;
 }
 
+typedef struct update_status_data
+{
+    bool is_connected;
+} update_status_data_t;
+
 int32_t MultithreadedUpdateStatus(void *data) {
+    update_status_data_t* d = data;
+
     char json[1000];
 
     snprintf(json, sizeof(json),
@@ -387,15 +394,18 @@ int32_t MultithreadedUpdateStatus(void *data) {
              "{\
             \"available\" : %s\
     }",
-             *(bool *)data ? "false" : "true");
+             d->is_connected ? "false" : "true");
 
     SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
 
+    free( d );
     return 0;
 }
 
 void updateStatus(bool is_connected) {
+    update_status_data_t* d = malloc( sizeof( update_status_data_t ) );
+    d->is_connected = is_connected;
     SDL_Thread *update_status = SDL_CreateThread(MultithreadedUpdateStatus,
-                                                 "UpdateStatus", &is_connected);
+                                                 "UpdateStatus", d);
     SDL_DetachThread(update_status);
 }
