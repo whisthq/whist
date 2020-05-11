@@ -2,7 +2,7 @@ from .utils import *
 from app import engine
 from .logger import *
 
-def SendLogsToS3(content, sender, connection_id, vm_ip, ID = -1):
+def SendLogsToS3(content, sender, connection_id, vm_ip, version, ID = -1):
 	def S3Upload(content, last_updated, sender, ID):
 		bucket = 'fractal-protocol-logs'
 
@@ -80,18 +80,18 @@ def SendLogsToS3(content, sender, connection_id, vm_ip, ID = -1):
 			if logs_found:
 				command = text("""
 					UPDATE logs 
-					SET "last_updated" = :last_updated, "server_logs" = :file_name
+					SET "last_updated" = :last_updated, "server_logs" = :file_name, "ip" = :vm_ip, "version" = :version
 					WHERE "connection_id" = :connection_id
 					""")
-				params = {'last_updated': last_updated, 'file_name': file_name, 'connection_id': connection_id}
+				params = {'last_updated': last_updated, 'file_name': file_name, 'connection_id': connection_id, 'vm_ip': vm_ip, 'version': version}
 				conn.execute(command, **params)      
 			else:
 				command = text("""
-					INSERT INTO logs("last_updated", "server_logs", "connection_id") 
-					VALUES(:last_updated, :file_name, :connection_id)
+					INSERT INTO logs("last_updated", "server_logs", "connection_id", "ip", "version") 
+					VALUES(:last_updated, :file_name, :connection_id, :vm_ip, :version)
 					""")
 
-				params = {'last_updated': last_updated, 'file_name': file_name, 'connection_id': connection_id}
+				params = {'last_updated': last_updated, 'file_name': file_name, 'connection_id': connection_id, 'vm_ip': vm_ip, 'version': version}
 				conn.execute(command, **params)
 
 		conn.close()

@@ -47,7 +47,7 @@ def status(task_id, **kwargs):
 @vm_bp.route('/vm/<action>', methods=['POST', 'GET'])
 @generateID
 def vm(action, **kwargs):
-    if action == 'create':
+    if action == 'create' and request.method == 'POST':
         sendInfo(kwargs['ID'], 'POST request sent to /vm/create')
 
         body = request.get_json()
@@ -64,7 +64,7 @@ def vm(action, **kwargs):
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202
-    elif action == 'fetchip':
+    elif action == 'fetchip' and request.method == 'POST':
         sendInfo(kwargs['ID'], 'POST request sent to /vm/fetchip')
 
         vm_name = request.get_json()['vm_name']
@@ -75,14 +75,14 @@ def vm(action, **kwargs):
             return({'public_ip': ip}), 200
         except:
             return({'public_ip': None}), 404
-    elif action == 'delete':
+    elif action == 'delete' and request.method == 'POST':
         sendInfo(kwargs['ID'], 'POST request sent to /vm/delete')
 
         body = request.get_json()
         vm_name, delete_disk = body['vm_name'], body['delete_disk']
         task = deleteVMResources.apply_async([vm_name, delete_disk])
         return jsonify({'ID': task.id}), 202
-    elif action == 'restart':
+    elif action == 'restart' and request.method == 'POST':
         sendInfo(kwargs['ID'], 'POST request sent to /vm/restart')
 
         username = request.get_json()['username']
@@ -104,30 +104,30 @@ def vm(action, **kwargs):
         vm_name = request.get_json()['vm_name']
         task = deallocateVM.apply_async([vm_name])
         return jsonify({'ID': task.id}), 202
-    elif action == 'updateState':
+    elif action == 'updateState' and request.method == 'POST':
         sendInfo(kwargs['ID'], 'POST request sent to /vm/updateState')
 
         task = updateVMStates.apply_async([])
         return jsonify({'ID': task.id}), 202
-    elif action == 'diskSwap':
+    elif action == 'diskSwap' and request.method == 'POST':
         sendInfo(kwargs['ID'], 'POST request sent to /vm/diskSwap')
 
         body = request.get_json()
         task = swapSpecificDisk.apply_async(
             [body['disk_name'], body['vm_name']])
         return jsonify({'ID': task.id}), 202
-    elif action == 'updateTable':
+    elif action == 'updateTable' and request.method == 'POST':
         sendInfo(kwargs['ID'], 'POST request sent to /vm/updateTable')
 
         task = updateVMTable.apply_async([])
         return jsonify({'ID': task.id}), 202
-    elif action == 'fetchall':
+    elif action == 'fetchall' and request.method == 'POST':
         sendInfo(kwargs['ID'], 'POST request sent to /vm/fetchall')
 
         body = request.get_json()
         vms = fetchUserVMs(None)
         return jsonify({'payload': vms, 'status': 200}), 200
-    elif action == 'winlogonStatus':
+    elif action == 'winlogonStatus' and request.method == 'POST':
         sendInfo(kwargs['ID'], 'POST request sent to /vm/winlogonStatus', papertrail = False)
 
         body = request.get_json()
@@ -147,7 +147,7 @@ def vm(action, **kwargs):
             sendError(kwargs['ID'], 'No VM found for IP {}'.format(str(vm_ip)))
 
         return jsonify({'status': 200}), 200
-    elif action == 'connectionStatus':
+    elif action == 'connectionStatus' and request.method == 'POST':
         sendInfo(kwargs['ID'], 'POST request sent to /vm/connectionStatus', papertrail = False)
 
         body = request.get_json()
@@ -299,9 +299,19 @@ def logs(**kwargs):
     if 'vm_ip' in body:
         vm_ip = body['vm_ip']
         sendInfo(kwargs['ID'], 'Logs came from {}'.format(body['vm_ip']))
+    else:
+        if request.headers.getlist('X-Forwarded-For'):
+            vm_ip = request.headers.getlist('X-Forwarded-For')[0]
+        else:
+            vm_ip = request.remote_addr
+
+    version = None
+    if 'version' in body:
+        version = body['version']
+        sendInfo(kwargs['ID'], 'Logs came from version {}'.format(body['version']))
 
     task = storeLogs.apply_async(
-        [body['sender'], body['connection_id'], body['logs'], vm_ip, kwargs['ID']])
+        [body['sender'], body['connection_id'], body['logs'], vm_ip, version, kwargs['ID']])
     return jsonify({'ID': task.id}), 202
 
 
