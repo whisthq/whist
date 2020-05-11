@@ -371,11 +371,11 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
     } else {
         LOG_ERROR("resizer not initialized! exiting...");
         exit(1);
-        memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
-        memset(encoder->sw_frame->linesize, 0,
-               sizeof(encoder->sw_frame->linesize));
-        encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
-        encoder->sw_frame->linesize[0] = encoder->width * 4;
+        // memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
+        // memset(encoder->sw_frame->linesize, 0,
+        //        sizeof(encoder->sw_frame->linesize));
+        // encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
+        // encoder->sw_frame->linesize[0] = encoder->width * 4;
     }
 
     int res;
