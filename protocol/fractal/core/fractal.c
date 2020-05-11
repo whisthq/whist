@@ -186,7 +186,7 @@ bool is_dev_vm() {
 
     SendJSONGet("cube-celery-staging.herokuapp.com", "/vm/isDev", buf, len);
 
-    for (int i = 1; i < len; i++) {
+    for (int i = 1; i < (int)len; i++) {
         if (buf[i - 1] != '\n') {
             continue;
         }
@@ -203,7 +203,7 @@ bool is_dev_vm() {
                 }
             }
             is_dev = (strncmp("true", is_dev_start_string,
-                              sizeof(is_dev_start_string)) == 0);
+                              strlen(is_dev_start_string)) == 0);
         }
     }
 

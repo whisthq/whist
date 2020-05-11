@@ -351,7 +351,6 @@ bool sendLogHistory() {
     version[16] = '\0';
 
     char *json = malloc(1000 + log_len);
-    //\"version\" : \"%s\",\
 
     sprintf(json,
             "{\
@@ -360,7 +359,7 @@ bool sendLogHistory() {
             \"logs\" : \"%s\",\
             \"sender\" : \"server\"\
     }",
-            connection_id, version, "Hi");
+            connection_id, version, logs);
 
     SendJSONPost(host, path, json);
     free(logs);
