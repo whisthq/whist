@@ -13,7 +13,7 @@
 #include "../network/network.h"
 #include "logging.h"
 
-char* get_logger_history();
+char *get_logger_history();
 int get_logger_history_len();
 void initBacktraceHandler();
 
@@ -209,14 +209,18 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
         buf = (char *)logger_queue[index].buf;
         //        snprintf(buf, LOGGER_BUF_SIZE, "%15.4f: ",
         //        GetTimer(mprintf_timer));
-        if( buf[0] != '\0' )
-        {
+        if (buf[0] != '\0') {
             char old_msg[LOGGER_BUF_SIZE];
-            memcpy( old_msg, buf, LOGGER_BUF_SIZE );
-            snprintf( buf, LOGGER_BUF_SIZE, "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n", old_msg, logger_queue[index].buf );
-        } else
-        {
-            vsnprintf( buf, LOGGER_BUF_SIZE, fmtStr, args );
+            memcpy(old_msg, buf, LOGGER_BUF_SIZE);
+            int chars_written =
+                snprintf(buf, LOGGER_BUF_SIZE,
+                         "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n",
+                         old_msg, logger_queue[index].buf);
+            if (!(chars_written > 0 && chars_written <= LOGGER_BUF_SIZE)) {
+                buf[0] = '\0';
+            }
+        } else {
+            vsnprintf(buf, LOGGER_BUF_SIZE, fmtStr, args);
         }
         logger_queue_size++;
     } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
