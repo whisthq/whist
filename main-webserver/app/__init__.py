@@ -31,11 +31,17 @@ def logRequestInfo(f):
 	@wraps(f)
 	def wrapper(*args, **kwargs):
 		try:
+	        vm_ip = None
+	        if request.headers.getlist('X-Forwarded-For'):
+	            vm_ip = request.headers.getlist('X-Forwarded-For')[0]
+	        else:
+	            vm_ip = request.remote_addr
+
 			papertrail = True
-			if request.url_rule in ['/vm/connectionStatus', '/vm/winlogonStatus']:
+			if request.path in ['/vm/connectionStatus', '/vm/winlogonStatus']:
 				papertrail = False
 
-			sendInfo(kwargs['ID'], '{} request received at {} with parameters {}'.format(request.method, request.path, str(request.get_json())), papertrail = papertrail)
+			sendInfo(kwargs['ID'], '{} request received at {} with parameters {} from {}'.format(request.method, request.path, str(request.get_json()), str(vm_ip)), papertrail = papertrail)
 		except Exception as e:
 			print(str(e))
 		return f(*args, **kwargs)
