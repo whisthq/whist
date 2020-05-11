@@ -10,6 +10,7 @@ Includes
 #ifdef _WIN32
 #include <windows.h>
 #else
+#include <time.h>
 #include <sys/time.h>
 #endif
 
@@ -59,6 +60,7 @@ clock CreateClock( int timeout_ms );
 
 @returns						The current time as a string
 */
-char* CurrentTime();
+char* GetCurrentTime();
 
 #endif
+

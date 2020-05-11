@@ -212,9 +212,13 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
         if (buf[0] != '\0') {
             char old_msg[LOGGER_BUF_SIZE];
             memcpy(old_msg, buf, LOGGER_BUF_SIZE);
-            snprintf(buf, LOGGER_BUF_SIZE,
-                     "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n", old_msg,
-                     logger_queue[index].buf);
+            int chars_written =
+                snprintf(buf, LOGGER_BUF_SIZE,
+                         "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n",
+                         old_msg, logger_queue[index].buf);
+            if (!(chars_written > 0 && chars_written <= LOGGER_BUF_SIZE)) {
+                buf[0] = '\0';
+            }
         } else {
             vsnprintf(buf, LOGGER_BUF_SIZE, fmtStr, args);
         }

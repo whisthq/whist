@@ -34,7 +34,7 @@ Defines
 
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-15s | %s:%d | "
-#define LOG_ARGS(LOG_TAG) CurrentTime(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
+#define LOG_ARGS(LOG_TAG) GetCurrentTime(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE "\n"
 #define ERROR_TAG "ERROR"
