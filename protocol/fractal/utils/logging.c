@@ -361,6 +361,7 @@ bool sendLogHistory() {
     }",
             connection_id, version, logs);
 
+    LOG_INFO( "Sending logs to webserver..." );
     SendJSONPost(host, path, json);
     free(logs);
     free(json);
