@@ -60,7 +60,7 @@ clock CreateClock( int timeout_ms );
 
 @returns						The current time as a string
 */
-char* GetCurrentTime();
+char* CurrentTimeStr();
 
 #endif
 
