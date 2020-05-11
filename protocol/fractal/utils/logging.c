@@ -328,17 +328,74 @@ bool sendLogHistory() {
 
     logs[log_len++] = '\0';
 
+    char* version = NULL;
+    long length;
+    FILE* f = fopen( "version", "r" );
+
+    if( f )
+    {
+        fseek( f, 0, SEEK_END );
+        length = ftell( f );
+        fseek( f, 0, SEEK_SET );
+        version = malloc( length + 1 );
+        if( version )
+        {
+            fread( version, 1, length, f );
+        }
+        fclose( f );
+    } else
+    {
+        version = "NONE";
+    }
+
+    version[16] = '\0';
+
     char *json = malloc(1000 + log_len);
+    //\"version\" : \"%s\",\
+
     sprintf(json,
             "{\
             \"connection_id\" : \"%d\",\
+            \"version\" : \"%s\",\
             \"logs\" : \"%s\",\
             \"sender\" : \"server\"\
     }",
-            connection_id, logs);
+            connection_id, version, "Hi");
+
     SendJSONPost(host, path, json);
     free(logs);
     free(json);
+    if( f && version )
+    {
+        free( version );
+    }
 
     return true;
+}
+
+int32_t MultithreadedUpdateStatus(void *data) {
+    char json[1000];
+
+    snprintf(json, sizeof(json),
+             "{\
+            \"ready\" : true\
+    }");
+
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus", json);
+
+    snprintf(json, sizeof(json),
+             "{\
+            \"available\" : %s\
+    }",
+             *(bool *)data ? "false" : "true");
+
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
+
+    return 0;
+}
+
+void updateStatus(bool is_connected) {
+    SDL_Thread *update_status = SDL_CreateThread(MultithreadedUpdateStatus,
+                                                 "UpdateStatus", &is_connected);
+    SDL_DetachThread(update_status);
 }

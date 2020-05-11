@@ -34,7 +34,7 @@ Defines
 
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-15s | %s:%d | "
-#define LOG_ARGS(LOG_TAG) GetCurrentTime(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
+#define LOG_ARGS(LOG_TAG) CurrentTimeStr(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE "\n"
 #define ERROR_TAG "ERROR"
@@ -99,5 +99,12 @@ void destroyLogger();
 @brief                          Send the log history to the webserver
 */
 bool sendLogHistory();
+
+/*
+@brief                          Tell the server the WinLogon and connection status
+
+@param is_connected             The connection status to send to the server. Pass true if connected to a client and false otherwise.
+*/
+void updateStatus(bool is_connected);
 
 #endif  // LOGGING_H

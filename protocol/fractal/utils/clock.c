@@ -55,7 +55,7 @@ clock CreateClock(int timeout_ms) {
     return out;
 }
 
-char* GetCurrentTime() {
+char* CurrentTimeStr() {
     static char buffer[64];
     //    time_t rawtime;
     //

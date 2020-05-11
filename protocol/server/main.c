@@ -194,8 +194,8 @@ int32_t SendVideo(void* opaque) {
                     pending_encoder = false;
                     update_encoder = false;
                 } else {
-                    SDL_CreateThread(MultithreadedEncoderFactory,
-                                     "MultithreadedEncoderFactory", NULL);
+                    // SDL_CreateThread(MultithreadedEncoderFactory,
+                    //                  "MultithreadedEncoderFactory", NULL);
                 }
             }
         }
@@ -469,25 +469,29 @@ int32_t SendAudio(void* opaque) {
 }
 
 void update() {
-    mprintf("Checking for updates...\n");
-    runcmd(
+    if (is_dev_vm()) {
+        LOG_INFO("dev vm, not auto-updating");
+    } else {
+        LOG_INFO("Checking for server protocol updates...");
+        runcmd(
 #ifdef _WIN32
-        "powershell -command \"iwr -outf 'C:\\Program "
-        "Files\\Fractal\\update.bat' "
-        "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\""
+            "powershell -command \"iwr -outf 'C:\\Program "
+            "Files\\Fractal\\update.bat' "
+            "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\""
 #else
-        "TODO: Linux command?"
+            "TODO: Linux command?"
 #endif
-        ,
-        NULL);
-    runcmd(
+            ,
+            NULL);
+        runcmd(
 #ifdef _WIN32
-        "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\""
+            "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\""
 #else
-        "TODO: Linux command?"
+            "TODO: Linux command?"
 #endif
-        ,
-        NULL);
+            ,
+            NULL);
+    }
 }
 
 #include <time.h>
