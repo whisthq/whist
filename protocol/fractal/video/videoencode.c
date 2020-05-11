@@ -104,10 +104,10 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
                              encoder->out_width, encoder->out_height, 1);
 
         // set sws context for color format conversion
-        encoder->sws = sws_getContext(encoder->in_width, encoder->in_height,
-                                      AV_PIX_FMT_RGB32, encoder->out_width,
-                                      encoder->out_height, out_format,
-                                      SWS_FAST_BILINEAR, 0, 0, 0);
+        encoder->sws =
+            sws_getContext(encoder->in_width, encoder->in_height,
+                           AV_PIX_FMT_RGB32, encoder->out_width,
+                           encoder->out_height, out_format, SWS_POINT, 0, 0, 0);
 
         encoder->hw_frame = av_frame_alloc();
         if (av_hwframe_get_buffer(encoder->context->hw_frames_ctx,
@@ -187,10 +187,10 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
                              encoder->out_width, encoder->out_height, 1);
 
         // set sws context for color format conversion
-        encoder->sws = sws_getContext(encoder->in_width, encoder->in_height,
-                                      AV_PIX_FMT_RGB32, encoder->out_width,
-                                      encoder->out_height, out_format,
-                                      SWS_FAST_BILINEAR, 0, 0, 0);
+        encoder->sws =
+            sws_getContext(encoder->in_width, encoder->in_height,
+                           AV_PIX_FMT_RGB32, encoder->out_width,
+                           encoder->out_height, out_format, SWS_POINT, 0, 0, 0);
 
         if (!encoder->sws) {
             LOG_WARNING("Failed to initialize swsContext for video encoder");
@@ -252,10 +252,10 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
                              encoder->out_width, encoder->out_height, 1);
 
         // set sws context for color format conversion
-        encoder->sws = sws_getContext(encoder->in_width, encoder->in_height,
-                                      AV_PIX_FMT_RGB32, encoder->out_width,
-                                      encoder->out_height, out_format,
-                                      SWS_FAST_BILINEAR, 0, 0, 0);
+        encoder->sws =
+            sws_getContext(encoder->in_width, encoder->in_height,
+                           AV_PIX_FMT_RGB32, encoder->out_width,
+                           encoder->out_height, out_format, SWS_POINT, 0, 0, 0);
 
         if (!encoder->sws) {
             LOG_WARNING("Failed to initialize swsContext for video encoder");
