@@ -29,6 +29,8 @@
 
 #define MAX_CLIPBOARD_SIZE 10000000
 
+bool StartTrackingClipboardUpdates();
+
 static char cb_buf[MAX_CLIPBOARD_SIZE];
 static Display* display = NULL;
 static Window window;
@@ -39,7 +41,9 @@ static Atom incr_id;
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
 bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
 
-void initClipboard() {}
+void initClipboard() {
+    StartTrackingClipboardUpdates();
+}
 
 bool get_clipboard_picture(ClipboardData* cb) {
     Atom target_atom = XInternAtom(display, "image/bmp", False),

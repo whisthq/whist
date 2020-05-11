@@ -82,10 +82,10 @@ void initUpdate() {
     ping_id = 1;
     ping_failures = -2;
 
-    initUpdateClipboard((SEND_FMSG*)&SendFmsg, (char*)server_ip);
+    initClipboardSynchronizer((char*)server_ip);
 }
 
-void destroyUpdate() { destroyUpdateClipboard(); }
+void destroyUpdate() { destroyClipboardSynchronizer(); }
 
 /**
  * Check all pending updates, and act on those pending updates
@@ -102,7 +102,7 @@ void update() {
     // the last time we checked the TCP socket, and the clipboard isn't actively
     // busy
     if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 &&
-        !isUpdatingClipboard()) {
+        !isClipboardSynchronizing()) {
         // Check if TCP connction is active
         int result = Ack(&PacketTCPContext);
         if (result < 0) {
@@ -123,7 +123,18 @@ void update() {
     // Assuming we have all of the important init information, then update the
     // clipboard
     if (received_server_init_message) {
-        updateClipboard();
+        ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
+        if( clipboard )
+        {
+            FractalClientMessage* fmsg_clipboard =
+                malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) +
+                        clipboard->size );
+            fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
+            memcpy( &fmsg_clipboard->clipboard, clipboard,
+                    sizeof( ClipboardData ) + clipboard->size );
+            SendFmsg( fmsg_clipboard );
+            free( fmsg_clipboard );
+        }
     }
 
     // If we haven't yet tried to update the dimension, and the dimensions don't
@@ -144,10 +155,10 @@ void update() {
     // If the code has triggered a mbps update, then notify the server of the
     // newly desired mbps
     if (update_mbps) {
-        LOG_INFO("Asking for server MBPS to be %f", max_bitrate);
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_bitrate / 1024.0 / 1024.0;
+        LOG_INFO( "Asking for server MBPS to be %f", fmsg.mbps );
         SendFmsg(&fmsg);
     }
 
@@ -459,7 +470,7 @@ int ReceiveMessage(FractalPacket* packet) {
             // Receiving a clipboard update
             LOG_INFO("Received %d byte clipboard message from server!",
                      packet->payload_size);
-            updateSetClipboard(&fmsg->clipboard);
+            ClipboardSynchronizerSetClipboard(&fmsg->clipboard);
             break;
         case MESSAGE_INIT:
             // Receiving a bunch of initializing server data for a new
@@ -529,7 +540,6 @@ int main(int argc, char* argv[]) {
     runcmd("rm -f ~/.fractal/log.txt", NULL);
     runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
 #endif
-    initBacktraceHandler();
 
     // Parse all command-line arguments
 
@@ -595,7 +605,6 @@ int main(int argc, char* argv[]) {
 #endif
 
     // Initialize clipboard and video
-    initClipboard();
     initVideo();
     exiting = false;
 

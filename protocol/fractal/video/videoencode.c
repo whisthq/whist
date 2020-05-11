@@ -15,7 +15,10 @@ void set_opt(encoder_t *encoder, char *option, char *value) {
     }
 }
 
-int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
+int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
+    int gop_size = 9999;
+    encoder->gop_size = gop_size;
+
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only linux uses FFmpeg 3.4.x because of canonical system packages
@@ -263,8 +266,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
 
 // Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the
 // next one when the previous one doesn't work
-encoder_t *create_video_encoder(int width, int height, int bitrate,
-                                int gop_size) {
+encoder_t *create_video_encoder(int width, int height, int bitrate) {
     // set memory for the encoder
     encoder_t *encoder = (encoder_t *)malloc(sizeof(encoder_t));
     memset(encoder, 0, sizeof(encoder_t));
@@ -278,7 +280,7 @@ encoder_t *create_video_encoder(int width, int height, int bitrate,
     for (unsigned long i = 0;
          i < sizeof(encoder_precedence) / sizeof(encoder_precedence[0]); ++i) {
         encoder->type = encoder_precedence[i];
-        if (try_setup_video_encoder(encoder, bitrate, gop_size) < 0) {
+        if (try_setup_video_encoder(encoder, bitrate) < 0) {
             LOG_WARNING(
                 "Video encoder: Failed, destroying encoder and trying next "
                 "encoder");
@@ -339,7 +341,7 @@ void video_encoder_unset_iframe(encoder_t *encoder) {
     encoder->sw_frame->key_frame = 0;
 }
 
-void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
+void video_encoder_encode(encoder_t *encoder, void* rgb_pixels) {
     // init packet to prepare encoding
     av_packet_unref(&encoder->packet);
     av_init_packet(&encoder->packet);
@@ -397,4 +399,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
     } else {
         LOG_WARNING("Invalid encoder type");
     }
+
+    encoder->encoded_frame_size = encoder->packet.size;
+    encoder->encoded_frame_data = encoder->packet.data;
 }

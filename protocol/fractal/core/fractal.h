@@ -52,8 +52,10 @@
 #define SDL_MAIN_HANDLED
 #include "../../include/SDL2/SDL.h"
 #include "../../include/SDL2/SDL_thread.h"
-#include "../clipboard/clipboard.h"
+#include "../clipboard/clipboard_synchronizer.h"
 #include "../utils/logging.h"
+#include "../network/network.h"
+#include "../cursor/cursor.h"
 
 #define NUM_KEYCODES 265
 
@@ -81,8 +83,6 @@
 #define MIN_FPS 10
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
-#define MAX_CURSOR_WIDTH 32
-#define MAX_CURSOR_HEIGHT 32
 
 #define PRIVATE_KEY \
     "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
@@ -126,11 +126,6 @@ typedef enum FractalCursorID {
     CURSOR_ID_UP = 32516,
     CURSOR_ID_WAIT = 32514
 } FractalCursorID;
-
-typedef enum FractalCursorState {
-    CURSOR_STATE_HIDDEN = 0,
-    CURSOR_STATE_VISIBLE = 1
-} FractalCursorState;
 
 /// @brief Keyboard input.
 /// @details Integer code for each of the user keyboard inputs.
@@ -396,16 +391,6 @@ typedef struct FractalCursor {
     uint8_t __pad[1];
 } FractalCursor;
 
-typedef struct FractalCursorImage {
-    SDL_SystemCursor cursor_id;
-    FractalCursorState cursor_state;
-    bool cursor_use_bmp;
-    unsigned short cursor_bmp_width;
-    unsigned short cursor_bmp_height;
-    unsigned short cursor_bmp_hot_x;
-    unsigned short cursor_bmp_hot_y;
-    uint32_t cursor_bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
-} FractalCursorImage;
 
 /// @brief Latency performance metrics.
 /// @details Latency metrics for the client

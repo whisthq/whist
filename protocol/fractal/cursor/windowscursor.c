@@ -3,7 +3,9 @@
  *
  * Copyright Fractal Computers, Inc. 2020
  **/
-#include "windowscursor.h"
+
+#include "cursor.h"
+#include <windows.h>
 
 typedef struct FractalCursorTypes {
     HCURSOR CursorAppStarting;
@@ -31,7 +33,9 @@ FractalCursorImage GetCursorImage(PCURSORINFO pci);
 
 void LoadCursors();
 
-void InitCursors() { LoadCursors(); }
+void InitCursors() {
+    LoadCursors();
+}
 
 void LoadCursors() {
     types->CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);

@@ -48,7 +48,6 @@
 volatile int connection_id;
 static volatile bool connected;
 static volatile double max_mbps;
-static volatile int gop_size = 9999;
 volatile int client_width = -1;
 volatile int client_height = -1;
 volatile bool update_device = true;
@@ -84,7 +83,7 @@ int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
     encoder_factory_result =
         create_video_encoder(encoder_factory_w, encoder_factory_h,
-                             encoder_factory_current_bitrate, gop_size);
+                             encoder_factory_current_bitrate);
     encoder_finished = true;
     return 0;
 }
@@ -239,7 +238,7 @@ int32_t SendVideo(void* opaque) {
             // consecutive_capture_screen_errors = 0;
 
             bool is_iframe = false;
-            if (frames_since_first_iframe % gop_size == 0) {
+            if (frames_since_first_iframe % encoder->gop_size == 0) {
                 wants_iframe = false;
                 is_iframe = true;
             } else if (wants_iframe) {
@@ -258,12 +257,12 @@ int32_t SendVideo(void* opaque) {
 
             // mprintf("Encode Time: %f (%d) (%d)\n", GetTimer(t),
             //        frames_since_first_iframe % gop_size,
-            //        encoder->packet.size);
+            //        encoder->encoded_frame_size);
 
             bitrate_tested_frames++;
-            bytes_tested_frames += encoder->packet.size;
+            bytes_tested_frames += encoder->encoded_frame_size;
 
-            if (encoder->packet.size != 0) {
+            if (encoder->encoded_frame_size != 0) {
                 double delay = -1.0;
 
                 if (previous_frame_size > 0) {
@@ -312,7 +311,7 @@ int32_t SendVideo(void* opaque) {
                     }
                 }
 
-                int frame_size = sizeof(Frame) + encoder->packet.size;
+                int frame_size = sizeof(Frame) + encoder->encoded_frame_size;
                 if (frame_size > LARGEST_FRAME_SIZE) {
                     mprintf("Frame too large: %d\n", frame_size);
                 } else {
@@ -321,16 +320,16 @@ int32_t SendVideo(void* opaque) {
                     Frame* frame = (Frame*)buf;
                     frame->width = device->width;
                     frame->height = device->height;
-                    frame->size = encoder->packet.size;
+                    frame->size = encoder->encoded_frame_size;
                     frame->cursor = GetCurrentCursor();
                     // True if this frame does not require previous frames to
                     // render
                     frame->is_iframe = is_iframe;
-                    memcpy(frame->compressed_frame, encoder->packet.data,
-                           encoder->packet.size);
+                    memcpy(frame->compressed_frame, encoder->encoded_frame_data,
+                           encoder->encoded_frame_size);
 
                     // mprintf("Sent video packet %d (Size: %d) %s\n", id,
-                    // encoder->packet.size, frame->is_iframe ? "(I-frame)" :
+                    // encoder->encoded_frame_size, frame->is_iframe ? "(I-frame)" :
                     // "");
 
                     // Send video packet to client
@@ -345,7 +344,7 @@ int32_t SendVideo(void* opaque) {
                         // Only increment ID if the send succeeded
                         id++;
                     }
-                    previous_frame_size = encoder->packet.size;
+                    previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time = GetTimer(server_frame_timer);
                     // mprintf("Server Frame Time for ID %d: %f\n", id,
                     // server_frame_time);
@@ -427,13 +426,13 @@ int32_t SendAudio(void* opaque) {
                     }
 
                     // mprintf("we got a packet of size %d\n",
-                    //         audio_encoder->packet.size);
+                    //         audio_encoder->encoded_frame_size);
 
                     // Send packet
 
                     if (SendUDPPacket(
-                            &context, PACKET_AUDIO, audio_encoder->packet.data,
-                            audio_encoder->packet.size, id,
+                            &context, PACKET_AUDIO, audio_encoder->encoded_frame_data,
+                            audio_encoder->encoded_frame_size, id,
                             STARTING_BURST_BITRATE,
                             audio_buffer[id % AUDIO_BUFFER_SIZE],
                             audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) <
@@ -499,13 +498,11 @@ int main() {
 
     srand((unsigned int)time(NULL));
     connection_id = rand();
-    initBacktraceHandler();
 #ifdef _WIN32
     initLogger("C:\\ProgramData\\FractalCache");
 #else
     initLogger(".");
 #endif
-    initClipboard();
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -522,7 +519,6 @@ int main() {
 #ifdef _WIN32
     if (!InitDesktop()) {
         mprintf("Could not winlogon!\n");
-        sendLog();
         return 0;
     }
 #endif
@@ -634,7 +630,7 @@ int main() {
         mprintf("Receiving packets...\n");
 
         int last_input_id = -1;
-        StartTrackingClipboardUpdates();
+        initClipboard();
 
         clock ack_timer;
         StartTimer(&ack_timer);
@@ -872,7 +868,7 @@ int main() {
             }
         }
 
-        sendLog();
+        sendLogHistory();
 
         mprintf("Disconnected\n");
 
