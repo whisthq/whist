@@ -261,7 +261,7 @@ void crash_handler(int sig) {
     fprintf(stderr, "\nError: signal %d:\n", sig);
     backtrace_symbols_fd(array, size, STDERR_FILENO);
 
-    fprintf(stderr, "addr2line -e build64/server");
+    fprintf(stderr, "addr2line -e build64/FractalServer");
     for (size_t i = 0; i < size; i++) {
         fprintf(stderr, " %p", array[i]);
     }
@@ -342,13 +342,12 @@ bool sendLogHistory() {
         {
             fread( version, 1, length, f );
         }
+        version[16] = '\0';
         fclose( f );
     } else
     {
         version = "NONE";
     }
-
-    version[16] = '\0';
 
     char *json = malloc(1000 + log_len);
 

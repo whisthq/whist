@@ -1249,6 +1249,11 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
 
     host = gethostbyname(host_s);
 
+    if (!host) {
+       LOG_WARNING("Could not SendJSONPost to %s\n", host_s);
+       return false;
+    }
+
     // create the struct for the webserver address socket we will query
     webserver_socketAddress.sin_family = AF_INET;
     webserver_socketAddress.sin_port = htons(80);  // HTTP port
