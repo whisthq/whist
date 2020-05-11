@@ -1684,6 +1684,7 @@ def fractalVMStart(vm_name, needs_restart=False, ID = -1):
 
             # Success! VM is running and ready to use
             if 'running' in vm_state.statuses[1].code:
+                updateVMState(vm_name, 'RUNNING_AVAILABLE')
                 sendInfo(ID, 'VM {} is running. State is {}'.format(vm_name, vm_state.statuses[1].code))
                 started = True
                 return 1
