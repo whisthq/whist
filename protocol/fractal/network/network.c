@@ -1331,7 +1331,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
     // the user first, we create the POST request message
     char *message = malloc(5000);
     sprintf(message, "GET %s HTTP/1.0\r\nHost: %s\r", path, host_s);
-
+    LOG_INFO("SENDING GET MESSAGE:\n%s\n", message);
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
         // error sending, terminate
