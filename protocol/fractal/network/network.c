@@ -287,9 +287,14 @@ int Ack( SocketContext* context )
 
 bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     // Connect to TCP server
+    int ret;
     set_timeout(s, 0);
-    if (connect(s, (struct sockaddr *)(&addr), sizeof(addr)) < 0) {
+    if ((ret = connect(s, (struct sockaddr *)(&addr), sizeof(addr))) < 0) {
         bool worked = GetLastNetworkError() == EINPROGRESS;
+
+        LOG_WARNING("Bool worked = %d\n", worked); 
+        LOG_WARNING("Ret = %d\n", ret); 
+
 
         if (!worked) {
             LOG_WARNING("Could not connect() over TCP to server %d\n",
@@ -298,6 +303,9 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
             return false;
         }
     }
+
+    LOG_WARNING("last errno = %d\n", errno); 
+
     // Select connection
     fd_set set;
     FD_ZERO(&set);
