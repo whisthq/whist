@@ -38,8 +38,8 @@ def logRequestInfo(f):
 	            vm_ip = request.remote_addr
 
 			papertrail = True
-			if request.path in ['/vm/connectionStatus', '/vm/winlogonStatus']:
-				papertrail = False
+			# if request.path in ['/vm/connectionStatus', '/vm/winlogonStatus']:
+			# 	papertrail = False
 
 			sendInfo(kwargs['ID'], '{} request received at {} with parameters {} from {}'.format(request.method, request.path, str(request.get_json()), str(vm_ip)), papertrail = papertrail)
 		except Exception as e:
