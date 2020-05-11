@@ -293,7 +293,6 @@ def info(action, **kwargs):
 def logs(**kwargs):
     sendInfo(kwargs['ID'], 'POST request sent to /logs')
     body = request.get_json()
-    sendInfo(kwargs['ID'], 'Logs received from {} with connection ID {}'.format(body['sender'], str(body['connection_id'])))
 
     vm_ip = None
     if 'vm_ip' in body:
@@ -304,6 +303,8 @@ def logs(**kwargs):
             vm_ip = request.headers.getlist('X-Forwarded-For')[0]
         else:
             vm_ip = request.remote_addr
+
+    sendInfo(kwargs['ID'], 'Logs received from {} with connection ID {} and IP {}'.format(body['sender'], str(body['connection_id'], str(vm_ip))))
 
     version = None
     if 'version' in body:
