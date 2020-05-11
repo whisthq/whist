@@ -365,9 +365,12 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
         in_linesize[0] = encoder->in_width * 4;
 
         // convert to the encoder format
+        clock t;
+        StartTimer(&t);
         sws_scale(encoder->sws, (const uint8_t *const *)in_data, in_linesize, 0,
                   encoder->in_height, encoder->sw_frame->data,
                   encoder->sw_frame->linesize);
+        LOG_INFO("sws_scale took time %f", GetTimer(t));
     } else {
         LOG_ERROR("resizer not initialized! exiting...");
         exit(1);
