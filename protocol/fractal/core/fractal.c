@@ -191,13 +191,13 @@ bool is_dev_vm() {
             continue;
         }
         char* psBuffer = &buf[i];
-#define DEV_VM_PREFIX_STRING "  \"dev\": \""
+#define DEV_VM_PREFIX_STRING "{\"dev\":"
         if (strncmp(DEV_VM_PREFIX_STRING, psBuffer,
                     sizeof(DEV_VM_PREFIX_STRING) - 1) == 0) {
             char* is_dev_start_string =
                 psBuffer + sizeof(DEV_VM_PREFIX_STRING) - 1;
             for (int j = 0;; j++) {
-                if (is_dev_start_string[j] == '\"') {
+                if (is_dev_start_string[j] == ',') {
                     is_dev_start_string[j] = '\0';
                     break;
                 }
