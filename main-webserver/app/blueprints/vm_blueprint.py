@@ -138,6 +138,12 @@ def vm(action, **kwargs):
         vm_info = fetchVMByIP(vm_ip)
         if vm_info:
             vm_name = vm_info['vm_name'] if vm_info['vm_name'] else ''
+
+            version = None
+            if 'version' in body:
+                version = body['version']
+                updateProtocolVersion(vm_name, version)
+
             vm_state = vm_info['state'] if vm_info['state'] else ''
             intermediate_states = ['STOPPING', 'DEALLOCATING', 'ATTACHING']
 

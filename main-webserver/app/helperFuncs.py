@@ -1747,3 +1747,20 @@ def spinLock(vm_name, ID = -1):
     sendInfo(ID, 'After waiting {} times, VM {} is unlocked'.format(num_tries, vm_name))
 
     return 1
+
+def updateProtocolVersion(vm_name, version):
+    vm = getVM(vm_name)
+    os_disk = vm.storage_profile.os_disk.name
+
+    command = text("""
+        UPDATE disks
+        SET "version" = :version
+        WHERE
+           "disk_name" = :disk_name
+    """)
+    params = {'version': version,
+              'disk_name': os_disk}
+
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
