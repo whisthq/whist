@@ -261,6 +261,10 @@ void crash_handler(int sig) {
     fprintf(stderr, "\nError: signal %d:\n", sig);
     backtrace_symbols_fd(array, size, STDERR_FILENO);
 
+    // and to the log
+    int fd = fileno(mprintf_log_file);
+    backtrace_symbols_fd(array, size, fd);
+
     fprintf(stderr, "addr2line -e build64/FractalServer");
     for (size_t i = 0; i < size; i++) {
         fprintf(stderr, " %p", array[i]);
