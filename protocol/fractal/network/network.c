@@ -5,6 +5,7 @@
 #endif
 
 #include "network.h"
+
 #include <stdio.h>
 
 #include "../utils/aes.h"
@@ -293,9 +294,8 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     if ((ret = connect(s, (struct sockaddr *)(&addr), sizeof(addr))) < 0) {
         bool worked = GetLastNetworkError() == EINPROGRESS;
 
-        LOG_WARNING("Bool worked = %d\n", worked); 
-        LOG_WARNING("Ret = %d\n", ret); 
-
+        LOG_INFO("Bool TCP worked = %d\n", worked);
+        LOG_INFO("Ret TCP = %d\n", ret);
 
         if (!worked) {
             LOG_WARNING("Could not connect() over TCP to server %d\n",
@@ -305,7 +305,7 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
         }
     }
 
-    LOG_WARNING("last errno = %d\n", errno); 
+    LOG_WARNING("last network error = %d\n", GetLastNetworkError());
 
     // Select connection
     fd_set set;
@@ -1250,8 +1250,8 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     host = gethostbyname(host_s);
 
     if (!host) {
-       LOG_WARNING("Could not SendJSONPost to %s\n", host_s);
-       return false;
+        LOG_WARNING("Could not SendJSONPost to %s\n", host_s);
+        return false;
     }
 
     // create the struct for the webserver address socket we will query
@@ -1274,13 +1274,13 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     int json_len = (int)strlen(jsonObj);
     char *message = malloc(5000 + json_len);
     snprintf(message, 5000 + json_len,
-            "POST %s HTTP/1.0\r\n"
-            "Host: %s\r\n"
-            "Content-Type: application/json\r\n"
-            "Content-Length: %d\r\n"
-            "\r\n"
-            "%s\r\n",
-              path, host_s, json_len, jsonObj);
+             "POST %s HTTP/1.0\r\n"
+             "Host: %s\r\n"
+             "Content-Type: application/json\r\n"
+             "Content-Length: %d\r\n"
+             "\r\n"
+             "%s\r\n",
+             path, host_s, json_len, jsonObj);
 
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
