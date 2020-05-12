@@ -146,26 +146,20 @@ def vm(action, **kwargs):
                 updateProtocolVersion(vm_name, version)
 
             vm_state = vm_info['state'] if vm_info['state'] else ''
-            intermediate_states = ['STOPPING', 'DEALLOCATING', 'ATTACHING', 'STARTING', 'RESTARTING']
+            intermediate_states = [
+                'STOPPING', 'DEALLOCATING', 'ATTACHING', 'STARTING', 'RESTARTING']
 
             if vm_state in intermediate_states:
                 sendWarning(kwargs['ID'], 'Trying to change connection status, but VM {} is in intermediate state {}. Not changing state.'.format(
                     vm_name, vm_state))
             if available and not vm_state in intermediate_states:
                 updateVMState(vm_name, 'RUNNING_AVAILABLE')
-<<<<<<< HEAD
-                lockVM(vm_name, False, change_last_updated = False, verbose = False, ID = kwargs['ID'])
-            elif not available and not vm_state in intermediate_states:
-                updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
-                lockVM(vm_name, True, change_last_updated = False, verbose = False, ID = kwargs['ID'])
-=======
                 lockVM(vm_name, False, change_last_updated=False,
-                       ID=kwargs['ID'])
+                       verbose=False, ID=kwargs['ID'])
             elif not available and not vm_state in intermediate_states:
                 updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
                 lockVM(vm_name, True, change_last_updated=False,
-                       ID=kwargs['ID'])
->>>>>>> documenting helperfunctions
+                       verbose=False, ID=kwargs['ID'])
         else:
             sendError(
                 kwargs['ID'], 'Trying to change connection status, but no VM found for IP {}'.format(str(vm_ip)))
