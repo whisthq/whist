@@ -29,7 +29,6 @@ def disk(action, **kwargs):
         return jsonify({'ID': task.id}), 202
     elif action == 'attach':
         body = request.get_json()
-        sendInfo(kwargs['ID'], 'POST request body is {}'.format(str(body)))
 
         task = swapDisk.apply_async([body['disk_name'], kwargs['ID']])
         return jsonify({'ID': task.id}), 202
