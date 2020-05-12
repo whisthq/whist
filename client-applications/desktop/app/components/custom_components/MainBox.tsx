@@ -224,10 +224,10 @@ class MainBox extends Component {
           ?
           <div onClick = {this.OpenDashboard} className = {styles.pointerOnHover} style = {{boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.2)', position: 'relative', backgroundImage: "linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url(" + Car + ")", width: "100%", height: 275, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center", borderRadius: 5}}>
             <div style = {{textAlign: 'center', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontWeight: 'bold', fontSize: 20}}>
-              <div style = {{marginTop: 30, marginBottom: 20, width: 350}}>
+              <div style = {{marginTop: 30, marginBottom: 20, width: 350, color: '#111111'}}>
                 Oops! Your Free Trial Has Expired
               </div>
-              <div style = {{marginTop: 10, color: '#CCCCCC', fontSize: 12, lineHeight: 1.4}}>
+              <div style = {{marginTop: 10, color: '#333333', fontSize: 12, lineHeight: 1.4}}>
                 Please provide your payment details in order to access your cloud PC.
               </div>
             </div>
