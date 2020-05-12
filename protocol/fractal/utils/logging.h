@@ -27,6 +27,13 @@ Defines
 #define INFO_LEVEL 0x04
 #define DEBUG_LEVEL 0x05
 
+/*
+ * Defines for conditional logging go here
+ * e.g if you are debugging audio and only want to see your debug statements then
+ * you would #define LOG_AUDIO True and use LOG_IF(LOG_AUDIO, "your debug statement here")
+ */
+
+
 // Cut-off for which log level is required
 #ifndef LOG_LEVEL
 #define LOG_LEVEL DEBUG_LEVEL
@@ -68,6 +75,13 @@ Defines
     PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__)
 #else
 #define LOG_ERROR(message, ...)
+#endif
+
+#if LOG_LEVEL >= NO_LOGS
+#define LOG_IF(condition, message, ...) \
+    if (condition) PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
+#else
+#define LOG_IF(condition, message, args...)
 #endif
 
 /*
