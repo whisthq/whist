@@ -233,7 +233,7 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system='Wind
     operating_system (str): The operating system of the vm (default is 'Windows')
 
     Returns:
-    TODO
+    dict: Parameters that will be used in Azure sdk
    """
 
     with engine.connect() as conn:
@@ -485,7 +485,7 @@ def lookup(username):
 
 
 def genUniqueCode():
-    """Generates a unique code to be used in PaperTrail logging
+    """Generates a unique referral code
 
     Returns:
         int: The generated code
@@ -526,9 +526,10 @@ def registerUser(username, password, token):
         except:
             return 400
 
+
 def generateIDs():
     """Generates an email verification token for all users in the users SQL table
-    """    
+    """
     with engine.connect() as conn:
         for row in list(conn.execute('SELECT * FROM users')):
             token = generateToken(row[0])
@@ -548,7 +549,7 @@ def resetPassword(username, password):
     Args:
         username (str): The user to update the password for
         password (str): The new password
-    """    
+    """
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     command = text("""
         UPDATE users
@@ -569,7 +570,7 @@ def fetchVMCredentials(vm_name):
 
     Returns:
         dict: An object respresenting the respective row in the table
-    """       
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
@@ -606,7 +607,7 @@ def genVMName():
 
     Returns:
         str: The generated name
-    """    
+    """
     with engine.connect() as conn:
         oldVMs = [cell[0]
                   for cell in list(conn.execute('SELECT "vm_name" FROM v_ms'))]
@@ -621,7 +622,7 @@ def genDiskName():
 
     Returns:
         str: The generated name
-    """    
+    """
     with engine.connect() as conn:
         oldDisks = [cell[0] for cell in list(
             conn.execute('SELECT "disk_name" FROM disks'))]
@@ -629,6 +630,7 @@ def genDiskName():
         while diskName in oldDisks:
             diskName = genHaiku(1)[0]
         return str(diskName)
+
 
 def addTimeTable(username, action, time, is_user, ID=-1):
     """Adds a user action to the login_history sql table
@@ -639,7 +641,7 @@ def addTimeTable(username, action, time, is_user, ID=-1):
         time (str): Time in the format mm-dd-yyyy, hh:mm:ss
         is_user (bool): Whether an actual user did the action, vs admin
         ID (int, optional): Papertrail loggind ID. Defaults to -1.
-    """    
+    """
     command = text("""
         INSERT INTO login_history("username", "timestamp", "action", "is_user")
         VALUES(:userName, :currentTime, :action, :is_user)
@@ -676,7 +678,16 @@ def addTimeTable(username, action, time, is_user, ID=-1):
 
         conn.close()
 
-def fetchUserVMs(username):  
+
+def fetchUserVMs(username):
+    """Fetches vms that are connected to the user
+
+    Args:
+        username (str): The username
+
+    Returns:
+        dict: The object representing the respective vm in the v_ms sql database
+    """
     if username:
         command = text("""
             SELECT * FROM v_ms WHERE "username" = :username
@@ -700,6 +711,14 @@ def fetchUserVMs(username):
 
 
 def getVMSize(disk_name):
+    """Gets the size of the vm
+
+    Args:
+        disk_name (str): Name of the disk attached to the vm
+
+    Returns:
+        str: The size of the disk attached to the vm
+    """
     command = text("""
         SELECT * FROM disks WHERE "disk_name" = :disk_name
         """)
@@ -712,6 +731,16 @@ def getVMSize(disk_name):
 
 
 def fetchUserDisks(username, show_all=False, ID=-1):
+    """Fetches all disks associated with the user
+
+    Args:
+        username (str): The username. If username is null, it fetches all disks
+        show_all (bool, optional): Whether or not to select all disks regardless of state, vs only disks with ACTIVE state. Defaults to False.
+        ID (int, optional): Papertrail logging ID. Defaults to -1.
+
+    Returns:
+        array: An array of the disks
+    """
     if username:
         if not show_all:
             sendInfo(
@@ -784,6 +813,14 @@ def fetchUserDisks(username, show_all=False, ID=-1):
 
 
 def fetchUserCode(username):
+    """Fetches the verification code of a user
+
+    Args:
+        username (str): The username of the user of interest
+
+    Returns:
+        str: The verification code
+    """
     try:
         command = text("""
             SELECT * FROM users WHERE "username" = :userName
@@ -798,7 +835,13 @@ def fetchUserCode(username):
         return None
 
 
-def deleteRow(username, vm_name, usernames, vm_names):
+def deleteRow(vm_name, vm_names):
+    """Deletes a row from the v_ms sql table, if vm_name is not in vm_names
+
+    Args:
+        vm_name (str): The name of the vm to check
+        vm_names (array[string]): An array of the names of accepted VMs
+    """
     if not (vm_name in vm_names):
         command = text("""
             DELETE FROM v_ms WHERE "vm_name" = :vm_name
@@ -810,6 +853,14 @@ def deleteRow(username, vm_name, usernames, vm_names):
 
 
 def deleteUser(username):
+    """Deletes a user from the users sql table
+
+    Args:
+        username (str): The name of the user
+
+    Returns:
+        int: 200 for successs, 404 for failure
+    """
     command = text("""
         DELETE FROM users WHERE "username" = :username
         """)
@@ -824,6 +875,13 @@ def deleteUser(username):
 
 
 def insertVM(vm_name, vm_ip=None, location=None):
+    """Inserts a vm into the v_ms table
+
+    Args:
+        vm_name (str): The name of the vm
+        vm_ip (str, optional): The ipv4 address of the vm. Defaults to None.
+        location (str, optional): The region that the vm is based in. Defaults to None.
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
@@ -861,6 +919,11 @@ def insertVM(vm_name, vm_ip=None, location=None):
 
 
 def fetchLoginActivity():
+    """Fetches the entire login_history sql table
+
+    Returns:
+        array[dict]: The login history
+    """
     command = text("""
         SELECT * FROM login_history
         """)
@@ -874,6 +937,14 @@ def fetchLoginActivity():
 
 
 def fetchCustomer(username):
+    """Fetches the customer from the customers sql table by username
+
+    Args:
+        username (str): The customer name
+
+    Returns:
+        dict: A dictionary that represents the customer
+    """
     command = text("""
         SELECT * FROM customers WHERE "username" = :username
         """)
@@ -886,6 +957,14 @@ def fetchCustomer(username):
 
 
 def fetchCustomerById(id):
+    """Fetches the customer from the customers sql table by id
+
+    Args:
+        id (str): The unique id of the customer
+
+    Returns:
+        dict: A dictionary that represents the customer
+    """
     command = text("""
         SELECT * FROM customers WHERE "id" = :id
         """)
@@ -898,6 +977,11 @@ def fetchCustomerById(id):
 
 
 def fetchCustomers():
+    """Fetches all customers from the customers sql table
+
+    Returns:
+        arr[dict]: An array of all the customers
+    """
     command = text("""
         SELECT * FROM customers
         """)
@@ -910,6 +994,16 @@ def fetchCustomers():
 
 
 def insertCustomer(email, customer_id, subscription_id, location, trial_end, paid):
+    """Adds a customer to the customer sql table, or updates the row if the customer already exists
+
+    Args:
+        email (str): Email of the customer
+        customer_id (str): Uid of the customer
+        subscription_id (str): Uid of the customer's subscription, if applicable
+        location (str): The location of the customer (state)
+        trial_end (int): The unix timestamp of the expiry of their trial
+        paid (bool): Whether or not the user paid before
+    """
     command = text("""
         SELECT * FROM customers WHERE "username" = :email
         """)
@@ -956,17 +1050,31 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
             conn.close()
 
 
-def deleteCustomer(email):
+def deleteCustomer(username):
+    """Deletes a cusotmer from the table
+
+    Args:
+        username (str): The username (email) of the customer
+    """
     command = text("""
         DELETE FROM customers WHERE "username" = :email
         """)
-    params = {'email': email}
+    params = {'email': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
 
 
 def checkComputer(computer_id, username):
+    """TODO: Functions for peer to peer
+
+    Args:
+        computer_id ([type]): [description]
+        username ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     command = text("""
         SELECT * FROM studios WHERE "id" = :id AND "username" = :username
         """)
@@ -999,6 +1107,14 @@ def checkComputer(computer_id, username):
 
 
 def insertComputer(username, location, nickname, computer_id):
+    """TODO: Functions for peer to peer
+
+    Args:
+        username ([type]): [description]
+        location ([type]): [description]
+        nickname ([type]): [description]
+        computer_id ([type]): [description]
+    """
     computer = checkComputer(computer_id, username)
     if not computer['found']:
         command = text("""
@@ -1017,6 +1133,14 @@ def insertComputer(username, location, nickname, computer_id):
 
 
 def fetchComputers(username):
+    """TODO: Function for peer to peer
+
+    Args:
+        username ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     command = text("""
         SELECT * FROM studios WHERE "username" = :username
         """)
@@ -1034,6 +1158,13 @@ def fetchComputers(username):
 
 
 def changeComputerName(username, computer_id, nickname):
+    """TODO: Function for peer to peer
+
+    Args:
+        username ([type]): [description]
+        computer_id ([type]): [description]
+        nickname ([type]): [description]
+    """
     command = text("""
         UPDATE studios
         SET nickname = :nickname
@@ -1050,6 +1181,11 @@ def changeComputerName(username, computer_id, nickname):
 
 
 def fetchAllUsers():
+    """Fetches all users from the users sql table
+
+    Returns:
+        arr[dict]: The array of users
+    """
     command = text("""
         SELECT * FROM users
         """)
@@ -1062,6 +1198,14 @@ def fetchAllUsers():
 
 
 def mapCodeToUser(code):
+    """Returns the user with the respective code. 
+
+    Args:
+        code (str): The user's referral code
+
+    Returns:
+        dict: The user. If there is no match, return None
+    """
     command = text("""
         SELECT * FROM users WHERE "code" = :code
         """)
@@ -1073,6 +1217,12 @@ def mapCodeToUser(code):
 
 
 def changeUserCredits(username, credits):
+    """Changes the outstanding credits for a user
+
+    Args:
+        username (str): The username of the user
+        credits (int): The credits that the user has outstanding (1 credit = 1 month of use)
+    """
     command = text("""
         UPDATE users
         SET "credits_outstanding" = :credits
@@ -1086,6 +1236,14 @@ def changeUserCredits(username, credits):
 
 
 def getUserCredits(username):
+    """Gets the credits associated with the user
+
+    Args:
+        username (str): The user's username
+
+    Returns:
+        int: The credits the user has
+    """
     command = text("""
         SELECT * FROM users
         WHERE "username" = :username
@@ -1100,6 +1258,11 @@ def getUserCredits(username):
 
 
 def fetchCodes():
+    """Gets all the referral codes
+
+    Returns:
+        arr[str]: An array of all the user codes
+    """
     command = text("""
         SELECT * FROM users
         """)
@@ -1112,6 +1275,14 @@ def fetchCodes():
 
 
 def userVMStatus(username):
+    """Returns the status of the user vm
+
+    Args:
+        username (string): The username of the user of interest
+
+    Returns:
+        str: vm status ['not_created', 'is_creating', 'has_created', 'has_not_paid'] 
+    """
     has_paid = False
     has_disk = False
 
@@ -1151,6 +1322,14 @@ def userVMStatus(username):
 
 
 def checkUserVerified(username):
+    """Checks if a user has verified their email already
+
+    Args:
+        username (str): The username
+
+    Returns:
+        bool: Whether they have verified
+    """
     command = text("""
         SELECT * FROM users WHERE "username" = :userName
         """)
@@ -1164,6 +1343,14 @@ def checkUserVerified(username):
 
 
 def fetchUserToken(username):
+    """Returns the uid of the user
+
+    Args:
+        username (str): The username of the user
+
+    Returns:
+        str: The uid of the user
+    """
     command = text("""
         SELECT * FROM users WHERE "username" = :userName
         """)
@@ -1177,6 +1364,12 @@ def fetchUserToken(username):
 
 
 def makeUserVerified(username, verified):
+    """Sets the user's verification 
+
+    Args:
+        username (str): The username of the user
+        verified (bool): The new verification state
+    """
     command = text("""
         UPDATE users
         SET verified = :verified
@@ -1190,17 +1383,31 @@ def makeUserVerified(username, verified):
 
 
 def storeFeedback(username, feedback):
-    command = text("""
-        INSERT INTO feedback("username", "feedback")
-        VALUES(:email, :feedback)
-        """)
-    params = {'email': username, 'feedback': feedback}
-    with engine.connect() as conn:
-        conn.execute(command, **params)
-        conn.close()
+    """Saves feedback in the feedback table
+
+    Args:
+        username (str): The username of the user who submitted feedback
+        feedback (str): The feedback message
+    """
+
+    if feedback:
+        command = text("""
+            INSERT INTO feedback("username", "feedback")
+            VALUES(:email, :feedback)
+            """)
+        params = {'email': username, 'feedback': feedback}
+        with engine.connect() as conn:
+            conn.execute(command, **params)
+            conn.close()
 
 
 def updateVMIP(vm_name, ip):
+    """Updates the ip address of a vm
+
+    Args:
+        vm_name (str): The name of the vm to update
+        ip (str): The new ipv4 address
+    """
     command = text("""
         UPDATE v_ms
         SET ip = :ip
@@ -1214,6 +1421,12 @@ def updateVMIP(vm_name, ip):
 
 
 def updateTrialEnd(subscription, trial_end):
+    """Update the end date for the trial subscription
+
+    Args:
+        subscription (str): The uid of the subscription we wish to update
+        trial_end (int): The trial end date, as a unix timestamp
+    """
     command = text("""
         UPDATE customers
         SET trial_end = :trial_end
@@ -1227,6 +1440,12 @@ def updateTrialEnd(subscription, trial_end):
 
 
 def updateVMState(vm_name, state):
+    """Updates the state for a vm
+
+    Args:
+        vm_name (str): The name of the vm to update
+        state (str): The new state of the vm
+    """
     command = text("""
         UPDATE v_ms
         SET state = :state
@@ -1240,6 +1459,15 @@ def updateVMState(vm_name, state):
 
 
 def updateVMStateAutomatically(vm_name, ID=-1):
+    """Updates the v_ms sql entry based on the azure vm state
+
+    Args:
+        vm_name (str): Name of the vm
+        ID (int, optional): Papertrail Logging ID. Defaults to -1.
+
+    Returns:
+        int: 1 for success, -1 for error
+    """
     _, compute_client, _ = createClients()
 
     vm_state = compute_client.virtual_machines.instance_view(
@@ -1289,6 +1517,12 @@ def updateVMStateAutomatically(vm_name, ID=-1):
 
 
 def updateVMLocation(vm_name, location):
+    """Updates the location of the vm entry in the v_ms sql table
+
+    Args:
+        vm_name (str): Name of vm of interest
+        location (str): The new region of the vm
+    """
     command = text("""
         UPDATE v_ms
         SET location = :location
@@ -1302,6 +1536,13 @@ def updateVMLocation(vm_name, location):
 
 
 def updateDisk(disk_name, vm_name, location):
+    """Updates the vm name and location properties of the disk. If no disk with the provided name exists, create a new disk entry
+
+    Args:
+        disk_name (str): Name of disk to update
+        vm_name (str): Name of the new vm that the disk is attached to
+        location (str): The new Azure region of the disk
+    """
     command = text("""
         SELECT * FROM disks WHERE "disk_name" = :disk_name
         """)
@@ -1350,6 +1591,12 @@ def updateDisk(disk_name, vm_name, location):
 
 
 def assignUserToDisk(disk_name, username):
+    """Assigns a user to a disk
+
+    Args:
+        disk_name (str): Disk that the user will be assigned to
+        username (str): Username of the user
+    """
     command = text("""
         UPDATE disks SET "username" = :username WHERE "disk_name" = :disk_name
         """)
@@ -1360,6 +1607,15 @@ def assignUserToDisk(disk_name, username):
 
 
 def fetchAttachableVMs(state, location):
+    """Finds all vms with specified location and state that are unlocked and not in dev mode
+
+    Args:
+        state (str): State of the vm
+        location (str): Azure region to look in
+
+    Returns:
+        arr[dict]: Arrray of all vms that are attachable
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "state" = :state AND "location" = :location AND "lock" = :lock AND "dev" = :dev
         """)
@@ -1374,6 +1630,14 @@ def fetchAttachableVMs(state, location):
 
 
 def getMostRecentActivity(username):
+    """Gets the last activity of a user
+
+    Args:
+        username (str): Username of the user
+
+    Returns:
+        str: The latest activity of the user
+    """
     command = text("""
         SELECT *
         FROM login_history
@@ -1390,6 +1654,13 @@ def getMostRecentActivity(username):
 
 
 def addPendingCharge(username, amount, ID=0):
+    """Adds to the user's current pending charges by amount. This is done since stripe requires payments of at least 50 cents. By using pending charges, we can keep track and charge it all at the end.
+
+    Args:
+        username (str): The username of the user to add a pending charge to
+        amount (int): Amount by which to increment by
+        ID (int, optional): Papertrail logging ID. Defaults to 0.
+    """
     command = text("""
         SELECT *
         FROM customers
@@ -1419,6 +1690,12 @@ def addPendingCharge(username, amount, ID=0):
 
 
 def associateVMWithDisk(vm_name, disk_name):
+    """Associates a VM with a disk on the v_ms sql table
+
+    Args:
+        vm_name (str): The name of the vm
+        disk_name (str): The name of the disk
+    """
     username = mapDiskToUser(disk_name)
     username = username if username else ''
     command = text("""
@@ -1433,7 +1710,17 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.execute(command, **params)
         conn.close()
 
+
 def lockVM(vm_name, lock, change_last_updated=True, verbose=True, ID=-1):
+    """Locks/unlocks a vm. A vm entry with lock set to True prevents other processes from changing that entry.
+
+    Args:
+        vm_name (str): The name of the vm to lock
+        lock (bool): True for lock
+        change_last_updated (bool, optional): Whether or not to change the last_updated column as well. Defaults to True.
+        verbose (bool, optional): Flag to log verbose in papertrail. Defaults to True.
+        ID (int, optional): A unique papertrail logging id. Defaults to -1.
+    """
     if lock and verbose:
         sendInfo(ID, 'Trying to lock VM {}'.format(
             vm_name), papertrail=verbose)
@@ -1469,7 +1756,14 @@ def lockVM(vm_name, lock, change_last_updated=True, verbose=True, ID=-1):
             sendInfo(ID, 'Successfully unlocked VM {}'.format(
                 vm_name), papertrail=verbose)
 
+
 def vmReadyToConnect(vm_name, ready):
+    """Sets the vm's ready_to_connect field
+
+    Args:
+        vm_name (str): Name of the vm
+        ready (boolean): True for ready to connect
+    """
     command = text("""
         UPDATE v_ms
         SET "ready_to_connect" = :ready
@@ -1483,6 +1777,14 @@ def vmReadyToConnect(vm_name, ready):
 
 
 def checkLock(vm_name):
+    """Check to see if a vm has been locked
+
+    Args:
+        vm_name (str): Name of the vm to check
+
+    Returns:
+        bool: True if VM is locked, False otherwise
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
@@ -1497,6 +1799,14 @@ def checkLock(vm_name):
 
 
 def checkDev(vm_name):
+    """Checks to see if a vm is in dev mode
+
+    Args:
+        vm_name (str): Name of vm to check
+
+    Returns:
+        bool: True if vm is in dev mode, False otherwise
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
@@ -1511,6 +1821,14 @@ def checkDev(vm_name):
 
 
 def checkWinlogon(vm_name):
+    """Checks if a vm is ready to connect
+
+    Args:
+        vm_name (str): Name of the vm to check
+
+    Returns:
+        bool: True if vm is ready to connect
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
@@ -1525,6 +1843,17 @@ def checkWinlogon(vm_name):
 
 
 def attachDiskToVM(disk_name, vm_name, lun, ID=-1):
+    """Attach a secondary disk to a vm
+
+    Args:
+        disk_name (str): Name of the disk
+        vm_name (str): Name of the vm
+        lun (int): The logical unit number of the disk.  This value is used to identify data disks within the VM and therefore must be unique for each data disk attached to a VM.
+        ID (int, optional): The unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: ! for success, -1 for fail
+    """
     try:
         _, compute_client, _ = createClients()
         virtual_machine = getVM(vm_name)
@@ -1553,6 +1882,17 @@ def attachDiskToVM(disk_name, vm_name, lun, ID=-1):
 
 
 def swapdisk_name(s, disk_name, vm_name, ID=-1):
+    """Attaches an OS disk to the VM. If the vm already has an OS disk attached, the vm will detach that and attach this one.
+
+    Args:
+        s (class): The reference to the parent's instance of self
+        disk_name (str): The name of the disk
+        vm_name (str): The name of the vm
+        ID (int, optional): The unique papertrail logging ID. Defaults to -1.
+
+    Returns:
+        [type]: [description]
+    """
     try:
         _, compute_client, _ = createClients()
         virtual_machine = getVM(vm_name)
