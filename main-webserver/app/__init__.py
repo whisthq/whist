@@ -51,7 +51,12 @@ def logRequestInfo(f):
 			# 	print(str(e))
 			# 	body = None
 			body = None
-			print(request.__dict__)
+			try:
+				print(request.json)
+			except Exception as e:
+				print('ERROR {}'.format(str(e)))
+				pass
+				
 			sendDebug(kwargs['ID'], '({}) {} request received at {} with parameters {}'.format(str(vm_ip), request.method, request.path, str(body)), papertrail = papertrail)
 		except Exception as e:
 			print(str(e))
