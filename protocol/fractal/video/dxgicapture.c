@@ -19,6 +19,8 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     LOG_INFO("Creating capture device for resolution %dx%d...", width, height);
     memset(device, 0, sizeof(struct CaptureDevice));
 
+    ShowCursor(FALSE);
+
     device->hardware =
         (struct DisplayHardware*)malloc(sizeof(struct DisplayHardware));
     memset(device->hardware, 0, sizeof(struct DisplayHardware));
