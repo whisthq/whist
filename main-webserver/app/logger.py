@@ -16,7 +16,12 @@ syslog.setFormatter(formatter)
 
 logger = logging.getLogger()
 logger.addHandler(syslog)
-logger.setLevel(logging.INFO)
+
+def sendDebug(ID, log, papertrail = True):
+	logger.setLevel(logging.DEBUG)
+	if papertrail:
+		logger.info('[{} WEBSERVER][{}] INFO: {}'.format(os.getenv('SERVER_TYPE'), ID, log))
+	print('[{} WEBSERVER][{}] INFO: {}'.format(os.getenv('SERVER_TYPE'), ID, log))
 
 def sendInfo(ID, log, papertrail = True):
 	logger.setLevel(logging.INFO)

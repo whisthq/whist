@@ -11,7 +11,7 @@ def create_app(app_name=PKG_NAME, **kwargs):
         init_celery(kwargs.get("celery"), app)
 
     log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
+    log.setLevel(logging.DEBUG)
 
     return (app, jwtManager)
 
