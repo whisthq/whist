@@ -107,4 +107,11 @@ bool sendLogHistory();
 */
 void updateStatus(bool is_connected);
 
+/*
+@brief                          Get the current server's version number
+
+@returns                        A 16-character hexadecimal version number
+*/
+char* get_version();
+
 #endif  // LOGGING_H

@@ -281,6 +281,42 @@ void initBacktraceHandler() {
 #endif
 }
 
+char* get_version()
+{
+    static char* version = NULL;
+
+    if( version )
+    {
+        return version;
+    }
+
+#ifdef _WIN32
+    char* version_filepath = "C:\\Program Files\\Fractal\\version";
+#else
+    char* version_filepath = "./version";
+#endif
+
+    long length;
+    FILE* f = fopen( version_filepath, "r" );
+
+    if( f )
+    {
+        fseek( f, 0, SEEK_END );
+        length = ftell( f );
+        fseek( f, 0, SEEK_SET );
+        static char buf[17];
+        version = buf;
+        fread( version, 1, min(length, sizeof(buf)), f );
+        version[16] = '\0';
+        fclose( f );
+    } else
+    {
+        version = "NONE";
+    }
+
+    return version;
+}
+
 bool sendLogHistory() {
     char *host = "cube-celery-staging.herokuapp.com";
     char *path = "/logs";
@@ -328,27 +364,6 @@ bool sendLogHistory() {
 
     logs[log_len++] = '\0';
 
-    char* version = NULL;
-    long length;
-    FILE* f = fopen( "version", "r" );
-
-    if( f )
-    {
-        fseek( f, 0, SEEK_END );
-        length = ftell( f );
-        fseek( f, 0, SEEK_SET );
-        version = malloc( length + 1 );
-        if( version )
-        {
-            fread( version, 1, length, f );
-        }
-        version[16] = '\0';
-        fclose( f );
-    } else
-    {
-        version = "NONE";
-    }
-
     char *json = malloc(1000 + log_len);
 
     sprintf(json,
@@ -358,16 +373,12 @@ bool sendLogHistory() {
             \"logs\" : \"%s\",\
             \"sender\" : \"server\"\
     }",
-            connection_id, version, logs);
+            connection_id, get_version(), logs);
 
     LOG_INFO( "Sending logs to webserver..." );
     SendJSONPost(host, path, json);
     free(logs);
     free(json);
-    if( f && version )
-    {
-        free( version );
-    }
 
     return true;
 }
@@ -391,10 +402,10 @@ int32_t MultithreadedUpdateStatus(void *data) {
 
     snprintf(json, sizeof(json),
              "{\
+            \"version\" : \"%s\",\
             \"available\" : %s\
     }",
-             d->is_connected ? "false" : "true");
-
+              get_version(), d->is_connected ? "false" : "true");
     SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
 
     free( d );
