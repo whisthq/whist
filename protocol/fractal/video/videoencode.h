@@ -19,7 +19,8 @@ Custom Types
 @brief                          The encoder
 */
 typedef struct {
-    int width, height;
+    int in_width, in_height;
+    int out_width, out_height;
     int gop_size;
     int encoded_frame_size;
     void* encoded_frame_data;
@@ -38,13 +39,15 @@ typedef struct {
 /*
 @brief                          Will create a new encoder
 
-@param width                    Width of the frames that the encoder must encode
-@param height                   Height of the frames that the encoder must encode
+@param in_width                 Width of the frames that the encoder must intake
+@param in_height                Height of the frames that the encoder must intake
+@param out_width                Width of the frames that the encoder must output
+@param out_height               Height of the frames that the encoder must output  
 @param bitrate                  The number of bits per second that this encoder will encode to
 
 @returns                        The newly created encoder
 */
-encoder_t *create_video_encoder(int width, int height, int bitrate);
+encoder_t *create_video_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate);
 
 
 /*
