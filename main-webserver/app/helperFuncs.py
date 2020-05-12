@@ -1922,6 +1922,11 @@ def swapdisk_name(s, disk_name, vm_name, ID=-1):
 
 
 def fetchAllDisks():
+    """Fetches all the disks
+
+    Returns:
+        arr[dict]: An array of all the disks in the disks sql table
+    """
     command = text("""
         SELECT *
         FROM disks
@@ -1935,6 +1940,11 @@ def fetchAllDisks():
 
 
 def deleteDiskFromTable(disk_name):
+    """Deletes a disk from the disks sql table
+
+    Args:
+        disk_name (str): The name of the disk to delete
+    """
     command = text("""
         DELETE FROM disks WHERE "disk_name" = :disk_name 
         """)
@@ -1945,6 +1955,13 @@ def deleteDiskFromTable(disk_name):
 
 
 def scheduleDiskDelete(disk_name, date, ID=-1):
+    """Schedule a disk to be deleted later
+
+    Args:
+        disk_name (str): Name of the disk to be deleted
+        date (str): The date at which it should be deleted. In the format mm/dd/yyyy, hh:mm (24 hour time)
+        ID (int, optional): The unique paprtrail loggin id. Defaults to -1.
+    """
     dateString = dateToString(date)
     command = text("""
         UPDATE disks
@@ -1960,6 +1977,14 @@ def scheduleDiskDelete(disk_name, date, ID=-1):
 
 
 def mapDiskToVM(disk_name):
+    """Find the vm with the specified disk attached
+
+    Args:
+        disk_name (str): Name of the disk to look for
+
+    Returns:
+        dict: The vm with the specified disk attached
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "disk_name" = :disk_name
         """)
@@ -1972,6 +1997,14 @@ def mapDiskToVM(disk_name):
 
 
 def updateVM(vm_name, location, disk_name, username):
+    """Updates the VM table
+
+    Args:
+        vm_name ([type]): [description]
+        location ([type]): [description]
+        disk_name ([type]): [description]
+        username ([type]): [description]
+    """
     command = text("""
         UPDATE v_ms
         SET "location" = :location, "disk_name" = :disk_name, "username" = :username
