@@ -259,7 +259,7 @@ def fetchAll(self, update):
 		updateVMStates()
 		if current_vms:
 			for vm_name, vm_username in current_vms.items():
-				deleteRow(vm_username, vm_name, vm_usernames, vm_names)
+				deleteRow(vm_name, vm_names)
 
 	return vms
 
