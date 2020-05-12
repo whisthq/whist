@@ -1997,13 +1997,13 @@ def mapDiskToVM(disk_name):
 
 
 def updateVM(vm_name, location, disk_name, username):
-    """Updates the VM table
+    """Updates the vm entry in the vm_s sql table
 
     Args:
-        vm_name ([type]): [description]
-        location ([type]): [description]
-        disk_name ([type]): [description]
-        username ([type]): [description]
+        vm_name (str): The name of the vm to update
+        location (str): The new Azure region of the vm
+        disk_name (str): The new disk that is attached to the vm
+        username (str): The new username associated with the vm
     """
     command = text("""
         UPDATE v_ms
@@ -2019,6 +2019,15 @@ def updateVM(vm_name, location, disk_name, username):
 
 
 def mapDiskToUser(disk_name, ID=-1):
+    """Find the user that is associated with the disk
+
+    Args:
+        disk_name (str): The name of the disk of interest
+        ID (int, optional): Papertrail loggin id. Defaults to -1.
+
+    Returns:
+        str: The username associated with the disk
+    """
     command = text("""
         SELECT * FROM disks WHERE "disk_name" = :disk_name
         """)
@@ -2036,6 +2045,11 @@ def mapDiskToUser(disk_name, ID=-1):
 
 
 def deleteVMFromTable(vm_name):
+    """Deletes a vm from the v_ms sql table
+
+    Args:
+        vm_name (str): The name of the vm to delete
+    """
     command = text("""
         DELETE FROM v_ms WHERE "vm_name" = :vm_name 
         """)
@@ -2046,6 +2060,12 @@ def deleteVMFromTable(vm_name):
 
 
 def updateDiskState(disk_name, state):
+    """Updates the state of a disk in the disks sql table
+
+    Args:
+        disk_name (str): Name of the disk to update
+        state (str): The new state of the disk
+    """
     command = text("""
         UPDATE disks
         SET state = :state
@@ -2059,6 +2079,12 @@ def updateDiskState(disk_name, state):
 
 
 def assignVMSizeToDisk(disk_name, vm_size):
+    """Updates the vm_size field for a disk
+
+    Args:
+        disk_name (str): The name of the disk to update
+        vm_size (str): The new size of the vm the disk is attached to
+    """
     command = text("""
         UPDATE disks SET "vm_size" = :vm_size WHERE "disk_name" = :disk_name
         """)
@@ -2069,6 +2095,17 @@ def assignVMSizeToDisk(disk_name, vm_size):
 
 
 def createDiskFromImageHelper(username, location, vm_size, ID=-1):
+    """Creates a disk from an image, and assigns users and vm_sizes to the disk
+
+    Args:
+        username (str): The username of the user that will be assigned to the disk
+        location (str): The Azure region of the new disk
+        vm_size (str): The size of the vm associated with the new disk
+        ID (int, optional): Unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: 200 for success, 400 for error
+    """
     disk_name = genDiskName()
     sendInfo(ID, 'Preparing to create disk {} from an image'.format(disk_name))
     _, compute_client, _ = createClients()
@@ -2120,6 +2157,16 @@ def createDiskFromImageHelper(username, location, vm_size, ID=-1):
 
 
 def sendVMStartCommand(vm_name, needs_restart, ID=-1):
+    """Starts a vm
+
+    Args:
+        vm_name (str): The name of the vm to start
+        needs_restart (bool): Whether the vm needs to restart after
+        ID (int, optional): Unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: 1 for success, -1 for fail
+    """
     _, compute_client, _ = createClients()
 
     try:
@@ -2169,6 +2216,15 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
 
 
 def waitForWinlogon(vm_name, ID=-1):
+    """Periodically checks and sleeps until winlogon succeeds
+
+    Args:
+        vm_name (str): Name of the vm
+        ID (int, optional): Unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: 1 for success, -1 for fail
+    """
     ready = checkWinlogon(vm_name)
 
     num_tries = 0
@@ -2191,7 +2247,7 @@ def waitForWinlogon(vm_name, ID=-1):
 
         if num_tries > 50:
             sendCritical(ID, 'Waited too long for winlogon. Giving up')
-            return 1
+            return -1
 
     sendInfo(ID, 'VM {} has Winlogon successfully'.format(vm_name))
 
@@ -2199,6 +2255,16 @@ def waitForWinlogon(vm_name, ID=-1):
 
 
 def fractalVMStart(vm_name, needs_restart=False, ID=-1):
+    """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary(big brain thoughts from Ming)
+
+    Args:
+        vm_name (str): Name of the vm to start
+        needs_restart (bool, optional): Whether the vm needs to restart after. Defaults to False.
+        ID (int, optional): Unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: 1 for success, -1 for failure
+    """
     _, compute_client, _ = createClients()
 
     started = False
@@ -2253,6 +2319,15 @@ def fractalVMStart(vm_name, needs_restart=False, ID=-1):
 
 
 def spinLock(vm_name, ID=-1):
+    """Waits for vm to be unlocked
+
+    Args:
+        vm_name (str): Name of vm of interest
+        ID (int, optional): Unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: 1 = vm is unlocked, -1 = giving up
+    """
     locked = checkLock(vm_name)
 
     num_tries = 0
@@ -2279,6 +2354,12 @@ def spinLock(vm_name, ID=-1):
 
 
 def updateProtocolVersion(vm_name, version):
+    """Updates the protocol version associated with the vm. This is used for tracking updates.
+
+    Args:
+        vm_name (str): The name of the vm to update
+        version (str): The id of the new version. It is based off a github commit number.
+    """
     vm = getVM(vm_name)
     os_disk = vm.storage_profile.os_disk.name
 
