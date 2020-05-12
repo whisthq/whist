@@ -47,7 +47,8 @@ def logRequestInfo(f):
 					for k, v in body.items():
 						if isinstance(v, str):
 							body[k] = v[0: min(100, len(v))]
-			except:
+			except Exception as e:
+				print(str(e))
 				body = None
 
 			sendDebug(kwargs['ID'], '({}) {} request received at {} with parameters {}'.format(str(vm_ip), request.method, request.path, str(body)), papertrail = papertrail)
