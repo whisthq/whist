@@ -558,13 +558,6 @@ def addTimeTable(username, action, time, is_user, ID = -1):
 
                 vm_state = compute_client.virtual_machines.instance_view(
                     resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
-                if 'running' in vm_state.statuses[1].code:
-                    if action == 'logoff':
-                        updateVMState(vms[0]['vm_name'], 'RUNNING_AVAILABLE')
-                    elif action == 'logon':
-                        updateVMState(vms[0]['vm_name'], 'RUNNING_UNAVAILABLE')
-                else:
-                    updateVMStateAutomatically(vm_name)
             else:
                 sendCritical(ID, 'Could not find a VM currently attached to disk {}'.format(disk_name))
         else:
