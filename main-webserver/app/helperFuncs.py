@@ -548,16 +548,12 @@ def addTimeTable(username, action, time, is_user, ID = -1):
             disk_name = disk[0]['disk_name']
             vms = mapDiskToVM(disk_name)
             if vms:
-                _, compute_client, _ = createClients()
                 vm_name = vms[0]['vm_name']
 
                 if action == 'logoff':
                     lockVM(vm_name, False)
                 elif action == 'logon':
                     lockVM(vm_name, True)
-
-                vm_state = compute_client.virtual_machines.instance_view(
-                    resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
             else:
                 sendCritical(ID, 'Could not find a VM currently attached to disk {}'.format(disk_name))
         else:

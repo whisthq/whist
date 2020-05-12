@@ -40,8 +40,13 @@ def logRequestInfo(f):
 			papertrail = True
 			# if request.path in ['/vm/connectionStatus', '/vm/winlogonStatus']:
 			# 	papertrail = False
+			body = request.get_json()
 
-			sendDebug(kwargs['ID'], '({}) {} request received at {} with parameters {}'.format(str(vm_ip), request.method, request.path, str(request.get_json())), papertrail = papertrail)
+			for k, v in body.items():
+				if isinstance(v, str):
+					v = v[0, min(100, len(v))]
+
+			sendDebug(kwargs['ID'], '({}) {} request received at {} with parameters {}'.format(str(vm_ip), request.method, request.path, str(body)), papertrail = papertrail)
 		except Exception as e:
 			print(str(e))
 		return f(*args, **kwargs)
