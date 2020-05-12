@@ -15,7 +15,10 @@ void set_opt(encoder_t *encoder, char *option, char *value) {
     }
 }
 
-int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
+int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
+    int gop_size = 9999;
+    encoder->gop_size = gop_size;
+
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only linux uses FFmpeg 3.4.x because of canonical system packages
@@ -23,7 +26,6 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
     avcodec_register_all();
 #endif
     int max_buffer = 4 * (bitrate / FPS);
-    AVBufferRef *hw_device_ctx = NULL;
 
     // TODO: If we end up using graphics card encoding, then we should pass it
     // the image from DXGI WinApi screen capture, so that the uncompressed image
@@ -35,8 +37,9 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
 
         clock t;
         StartTimer(&t);
-        if (av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_CUDA,
-                                   "CUDA", NULL, 0) < 0) {
+        if (av_hwdevice_ctx_create(&encoder->hw_device_ctx,
+                                   AV_HWDEVICE_TYPE_CUDA, "CUDA", NULL,
+                                   0) < 0) {
             LOG_WARNING("Failed to create specified device.");
             return -1;
         }
@@ -65,7 +68,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         // set_opt( encoder, "max-intra-rate", );
 
         av_buffer_unref(&encoder->context->hw_frames_ctx);
-        encoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(hw_device_ctx);
+        encoder->context->hw_frames_ctx =
+            av_hwframe_ctx_alloc(encoder->hw_device_ctx);
 
         AVHWFramesContext *frames_ctx;
 
@@ -115,8 +119,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
 
         clock t;
         StartTimer(&t);
-        if (av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_QSV, NULL,
-                                   NULL, 0) < 0) {
+        if (av_hwdevice_ctx_create(&encoder->hw_device_ctx,
+                                   AV_HWDEVICE_TYPE_QSV, NULL, NULL, 0) < 0) {
             LOG_WARNING("Failed to create specified device.");
             return -1;
         }
@@ -144,7 +148,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
         set_opt(encoder, "delay", "0");
 
         av_buffer_unref(&encoder->context->hw_frames_ctx);
-        encoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(hw_device_ctx);
+        encoder->context->hw_frames_ctx =
+            av_hwframe_ctx_alloc(encoder->hw_device_ctx);
 
         AVHWFramesContext *frames_ctx;
 
@@ -261,8 +266,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate, int gop_size) {
 
 // Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the
 // next one when the previous one doesn't work
-encoder_t *create_video_encoder(int width, int height, int bitrate,
-                                int gop_size) {
+encoder_t *create_video_encoder(int width, int height, int bitrate) {
     // set memory for the encoder
     encoder_t *encoder = (encoder_t *)malloc(sizeof(encoder_t));
     memset(encoder, 0, sizeof(encoder_t));
@@ -276,8 +280,16 @@ encoder_t *create_video_encoder(int width, int height, int bitrate,
     for (unsigned long i = 0;
          i < sizeof(encoder_precedence) / sizeof(encoder_precedence[0]); ++i) {
         encoder->type = encoder_precedence[i];
-        if (try_setup_video_encoder(encoder, bitrate, gop_size) < 0) {
-            LOG_WARNING("Video encoder: Failed, trying next encoder");
+        if (try_setup_video_encoder(encoder, bitrate) < 0) {
+            LOG_WARNING(
+                "Video encoder: Failed, destroying encoder and trying next "
+                "encoder");
+
+            destroy_video_encoder(encoder);
+            encoder = (encoder_t *)malloc(sizeof(encoder_t));
+            memset(encoder, 0, sizeof(encoder_t));
+            encoder->width = width;
+            encoder->height = height;
         } else {
             LOG_INFO("Video encoder: Success!");
             return encoder;
@@ -299,11 +311,16 @@ void destroy_video_encoder(encoder_t *encoder) {
     if (encoder->sws) {
         sws_freeContext(encoder->sws);
     }
+
+    if (encoder->hw_device_ctx) {
+        av_buffer_unref(&encoder->hw_device_ctx);
+    }
+
     avcodec_free_context(&encoder->context);
 
     // free the encoder context and frame
-    av_free(encoder->sw_frame);
-    av_free(encoder->hw_frame);
+    av_frame_free(&encoder->sw_frame);
+    av_frame_free(&encoder->hw_frame);
 
     // free the buffer and encoder
     free(encoder->frame_buffer);
@@ -324,7 +341,7 @@ void video_encoder_unset_iframe(encoder_t *encoder) {
     encoder->sw_frame->key_frame = 0;
 }
 
-void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
+void video_encoder_encode(encoder_t *encoder, void* rgb_pixels) {
     // init packet to prepare encoding
     av_packet_unref(&encoder->packet);
     av_init_packet(&encoder->packet);
@@ -382,4 +399,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
     } else {
         LOG_WARNING("Invalid encoder type");
     }
+
+    encoder->encoded_frame_size = encoder->packet.size;
+    encoder->encoded_frame_data = encoder->packet.data;
 }

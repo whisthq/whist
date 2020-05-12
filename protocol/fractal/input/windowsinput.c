@@ -278,8 +278,9 @@ const int windows_keycodes[NUM_KEYCODES] = {
 
 int GetWindowsKeyCode(int sdl_keycode) { return windows_keycodes[sdl_keycode]; }
 
-input_device_t* CreateInputDevice(input_device_t* input_device) {
-    input_device = malloc(sizeof(char));
+input_device_t* CreateInputDevice() {
+    input_device_t* input_device = malloc(sizeof(input_device_t));
+    memset(input_device, 0, sizeof(input_device_t));
     return input_device;
 }
 

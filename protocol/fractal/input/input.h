@@ -12,7 +12,7 @@
 #include "linuxinput.h"
 #endif
 
-input_device_t* CreateInputDevice(input_device_t* input_device);
+input_device_t* CreateInputDevice();
 
 void DestroyInputDevice(input_device_t* input_device);
 

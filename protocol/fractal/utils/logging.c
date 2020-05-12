@@ -1,5 +1,4 @@
 #if defined(_WIN32)
-#include <Windows.h>
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
@@ -13,6 +12,10 @@
 #include "../core/fractal.h"
 #include "../network/network.h"
 #include "logging.h"
+
+char *get_logger_history();
+int get_logger_history_len();
+void initBacktraceHandler();
 
 extern int connection_id;
 
@@ -48,6 +51,7 @@ int get_logger_history_len() { return logger_history_len; }
 
 void initLogger(char *log_dir) {
     initBacktraceHandler();
+
     logger_history_len = 0;
 
     if (log_dir) {
@@ -108,6 +112,7 @@ int MultiThreadedPrintf(void *opaque) {
             logger_queue_cache[i].log = logger_queue[logger_queue_index].log;
             strcpy((char *)logger_queue_cache[i].buf,
                    (const char *)logger_queue[logger_queue_index].buf);
+            logger_queue[logger_queue_index].buf[0] = '\0';
             logger_queue_index++;
             logger_queue_index %= LOGGER_QUEUE_SIZE;
             if (i != 0) {
@@ -190,12 +195,6 @@ void mprintf(const char *fmtStr, ...) {
     real_mprintf(WRITE_MPRINTF_TO_LOG, fmtStr, args);
 }
 
-void lprintf(const char *fmtStr, ...) {
-    va_list args;
-    va_start(args, fmtStr);
-    real_mprintf(true, fmtStr, args);
-}
-
 void real_mprintf(bool log, const char *fmtStr, va_list args) {
     if (mprintf_thread == NULL) {
         printf("initLogger has not been called!\n");
@@ -210,8 +209,19 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
         buf = (char *)logger_queue[index].buf;
         //        snprintf(buf, LOGGER_BUF_SIZE, "%15.4f: ",
         //        GetTimer(mprintf_timer));
-        int len = (int)strlen(buf);
-        vsnprintf(buf + len, LOGGER_BUF_SIZE - len, fmtStr, args);
+        if (buf[0] != '\0') {
+            char old_msg[LOGGER_BUF_SIZE];
+            memcpy(old_msg, buf, LOGGER_BUF_SIZE);
+            int chars_written =
+                snprintf(buf, LOGGER_BUF_SIZE,
+                         "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n",
+                         old_msg, logger_queue[index].buf);
+            if (!(chars_written > 0 && chars_written <= LOGGER_BUF_SIZE)) {
+                buf[0] = '\0';
+            }
+        } else {
+            vsnprintf(buf, LOGGER_BUF_SIZE, fmtStr, args);
+        }
         logger_queue_size++;
     } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
         logger_queue[index].log = log;
@@ -233,53 +243,12 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
     va_end(args);
 }
 
-#if defined(_WIN32)
-LARGE_INTEGER frequency;
-bool set_frequency = false;
-#endif
-
-void StartTimer(clock *timer) {
-#if defined(_WIN32)
-    if (!set_frequency) {
-        QueryPerformanceFrequency(&frequency);
-        set_frequency = true;
-    }
-    QueryPerformanceCounter(timer);
-#else
-    // start timer
-    gettimeofday(timer, NULL);
-#endif
-}
-
-double GetTimer(clock timer) {
-#if defined(_WIN32)
-    LARGE_INTEGER end;
-    QueryPerformanceCounter(&end);
-    double ret = (double)(end.QuadPart - timer.QuadPart) / frequency.QuadPart;
-#else
-    // stop timer
-    struct timeval t2;
-    gettimeofday(&t2, NULL);
-
-    // compute and print the elapsed time in millisec
-    double elapsedTime = (t2.tv_sec - timer.tv_sec) * 1000.0;  // sec to ms
-    elapsedTime += (t2.tv_usec - timer.tv_usec) / 1000.0;      // us to ms
-
-    // printf("elapsed time in ms is: %f\n", elapsedTime);
-
-    // standard var to return and convert to seconds since it gets converted to
-    // ms in function call
-    double ret = elapsedTime / 1000.0;
-#endif
-    return ret;
-}
-
-
+#ifndef _WIN32
 SDL_mutex *crash_handler_mutex;
 
 void crash_handler(int sig) {
     SDL_LockMutex(crash_handler_mutex);
-#ifndef _WIN32
+
 #define HANDLER_ARRAY_SIZE 100
 
     void *array[HANDLER_ARRAY_SIZE];
@@ -288,55 +257,22 @@ void crash_handler(int sig) {
     // get void*'s for all entries on the stack
     size = backtrace(array, HANDLER_ARRAY_SIZE);
 
-    // print out all the frames to log
-    LOG_ERROR("\nError: signal %d:\n", sig);
-    int fd = fileno(mprintf_log_file);
-    backtrace_symbols_fd(array, size, fd);
-//    char command_bf[13 + 16 * size +1];
-//    size_t idx = sprintf(command_bf, "addr2line -e FractalClient");
-//
-//    for (size_t i = 0; i < size; i++) {
-//        idx += sprintf(&command_bf[idx]," %p", array[i]);
-//    }
-//    sprintf(&command_bf[idx], " >> %s \n\n ", f);
-//    printf("%s", command_bf);
-//    system(command_bf);
-//    system("ls \n");
-#else
-    // completely untested (Hamish does not have a dev windows machine )
-    // https://stackoverflow.com/questions/5693192/win32-backtrace-from-c-code/21400864
-    // I think we need this header to do this: #include <Windows.h>
-    unsigned int   i;
-    void         * stack[ 100 ];
-    unsigned short frames;
-    SYMBOL_INFO  * symbol;
-    HANDLE         process;
+    // print out all the frames to stderr
+    fprintf(stderr, "\nError: signal %d:\n", sig);
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
 
-    process = GetCurrentProcess();
-
-    SymInitialize( process, NULL, TRUE );
-
-    frames               = CaptureStackBackTrace( 0, 100, stack, NULL );
-    symbol               = ( SYMBOL_INFO * )calloc( sizeof( SYMBOL_INFO ) + 256 * sizeof( char ), 1 );
-    symbol->MaxNameLen   = 255;
-    symbol->SizeOfStruct = sizeof( SYMBOL_INFO );
-    int fd = fileno(mprintf_log_file);
-    for( i = 0; i < frames; i++ )
-    {
-     SymFromAddr( process, ( DWORD64 )( stack[ i ] ), 0, symbol );
-
-     dprintf(fd, "%i: %s - 0x%0X\n", frames - i - 1, symbol->Name, symbol->Address );
+    fprintf(stderr, "addr2line -e build64/FractalServer");
+    for (size_t i = 0; i < size; i++) {
+        fprintf(stderr, " %p", array[i]);
     }
+    fprintf(stderr, "\n\n");
 
-    free( symbol );
-
-#endif
     SDL_UnlockMutex(crash_handler_mutex);
 
     SDL_Delay(100);
     exit(-1);
 }
-
+#endif
 
 void initBacktraceHandler() {
 #ifndef _WIN32
@@ -345,8 +281,44 @@ void initBacktraceHandler() {
 #endif
 }
 
-bool sendLog() {
-    char *host = "fractal-mail-staging.herokuapp.com";
+char* get_version()
+{
+    static char* version = NULL;
+
+    if( version )
+    {
+        return version;
+    }
+
+#ifdef _WIN32
+    char* version_filepath = "C:\\Program Files\\Fractal\\version";
+#else
+    char* version_filepath = "./version";
+#endif
+
+    long length;
+    FILE* f = fopen( version_filepath, "r" );
+
+    if( f )
+    {
+        fseek( f, 0, SEEK_END );
+        length = ftell( f );
+        fseek( f, 0, SEEK_SET );
+        static char buf[17];
+        version = buf;
+        fread( version, 1, min(length, sizeof(buf)), f );
+        version[16] = '\0';
+        fclose( f );
+    } else
+    {
+        version = "NONE";
+    }
+
+    return version;
+}
+
+bool sendLogHistory() {
+    char *host = "cube-celery-staging.herokuapp.com";
     char *path = "/logs";
 
     char *logs_raw = get_logger_history();
@@ -393,16 +365,57 @@ bool sendLog() {
     logs[log_len++] = '\0';
 
     char *json = malloc(1000 + log_len);
+
     sprintf(json,
             "{\
             \"connection_id\" : \"%d\",\
+            \"version\" : \"%s\",\
             \"logs\" : \"%s\",\
             \"sender\" : \"server\"\
     }",
-            connection_id, logs);
-    sendJSONPost(host, path, json);
+            connection_id, get_version(), logs);
+
+    LOG_INFO( "Sending logs to webserver..." );
+    SendJSONPost(host, path, json);
     free(logs);
     free(json);
 
     return true;
+}
+
+typedef struct update_status_data
+{
+    bool is_connected;
+} update_status_data_t;
+
+int32_t MultithreadedUpdateStatus(void *data) {
+    update_status_data_t* d = data;
+
+    char json[1000];
+
+    snprintf(json, sizeof(json),
+             "{\
+            \"ready\" : true\
+    }");
+
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus", json);
+
+    snprintf(json, sizeof(json),
+             "{\
+            \"version\" : \"%s\",\
+            \"available\" : %s\
+    }",
+              get_version(), d->is_connected ? "false" : "true");
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
+
+    free( d );
+    return 0;
+}
+
+void updateStatus(bool is_connected) {
+    update_status_data_t* d = malloc( sizeof( update_status_data_t ) );
+    d->is_connected = is_connected;
+    SDL_Thread *update_status = SDL_CreateThread(MultithreadedUpdateStatus,
+                                                 "UpdateStatus", d);
+    SDL_DetachThread(update_status);
 }

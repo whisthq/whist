@@ -3,7 +3,11 @@
  *
  * Copyright Fractal Computers, Inc. 2020
  **/
-#include "linuxcursor.h"
+
+#include <X11/Xlib.h>
+#include <X11/extensions/Xfixes.h>
+#include "cursor.h"
+#include "string.h"
 
 static Display* disp;
 

@@ -1,25 +1,23 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
-// *** BEGIN INCLUDES ***
-
-#include <stdio.h>
-
-#ifndef _WIN32
-#include <execinfo.h>
-#include <signal.h>
-#else
-#include <time.h>
-#endif
+/*
+============================
+Includes
+============================
+*/
 
 #include <string.h>
 
 #include "../core/fractal.h"
-#include "../network/network.h"
+#include "clock.h"
 
-// *** END INCLUDES ***
+/*
+============================
+Defines
+============================
+*/
 
-// *** BEGIN DEFINES ***
 #define LOGGER_QUEUE_SIZE 1000
 #define LOGGER_BUF_SIZE 1000
 #define _FILE strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__
@@ -29,14 +27,14 @@
 #define INFO_LEVEL 0x04
 #define DEBUG_LEVEL 0x05
 
-// Set logging level here
+// Cut-off for which log level is required
 #ifndef LOG_LEVEL
 #define LOG_LEVEL DEBUG_LEVEL
 #endif
 
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-15s | %s:%d | "
-#define LOG_ARGS(LOG_TAG) timenow(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
+#define LOG_ARGS(LOG_TAG) CurrentTimeStr(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE "\n"
 #define ERROR_TAG "ERROR"
@@ -72,53 +70,48 @@
 #define LOG_ERROR(message, ...)
 #endif
 
-#if defined(_WIN32)
-#define clock LARGE_INTEGER
-#else
-#define clock struct timeval
-#endif
+/*
+============================
+Public Functions
+============================
+*/
 
-// *** END DEFINES ***
+/*
+@brief                          Initialize the logger
 
-// *** BEGIN FUNCTIONS ***
-
+@param log_directory            The directory to store the log files in. Pass NULL to not store the logs in a log file.
+*/
 void initLogger(char* log_directory);
-void destroyLogger();
+
+/*
+@brief                          Log the given format string.
+
+@param fmtStr            The directory to store the log files in
+*/
 void mprintf(const char* fmtStr, ...);
-void lprintf(const char* fmtStr, ...);
 
-void StartTimer(clock* timer);
-double GetTimer(clock timer);
+/*
+@brief                          Destroy the logger
+*/
+void destroyLogger();
 
-static inline char* timenow();
+/*
+@brief                          Send the log history to the webserver
+*/
+bool sendLogHistory();
 
-void initBacktraceHandler();
+/*
+@brief                          Tell the server the WinLogon and connection status
 
-char* get_logger_history();
-int get_logger_history_len();
+@param is_connected             The connection status to send to the server. Pass true if connected to a client and false otherwise.
+*/
+void updateStatus(bool is_connected);
 
-bool sendLog();
+/*
+@brief                          Get the current server's version number
 
-// Get current time
-static inline char* timenow() {
-    static char buffer[64];
-
-#if defined(_WIN32)
-    SYSTEMTIME time_now;
-    GetSystemTime(&time_now);
-    snprintf(buffer, 20, "%02i:%02i:%02i:%03i", time_now.wHour,
-             time_now.wMinute, time_now.wSecond, time_now.wMilliseconds);
-#else
-    struct tm* time_str_tm;
-    struct timeval time_now;
-    gettimeofday(&time_now, NULL);
-
-    time_str_tm = gmtime(&time_now.tv_sec);
-    snprintf(buffer, 20, "%02i:%02i:%02i:%06li", time_str_tm->tm_hour,
-             time_str_tm->tm_min, time_str_tm->tm_sec, time_now.tv_usec);
-#endif
-    return buffer;
-}
-// *** END FUNCTIONS ***
+@returns                        A 16-character hexadecimal version number
+*/
+char* get_version();
 
 #endif  // LOGGING_H

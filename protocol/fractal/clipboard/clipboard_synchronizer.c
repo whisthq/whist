@@ -9,6 +9,7 @@
 #include "clipboard.h"
 
 int UpdateClipboardThread(void* opaque);
+bool pendingUpdateClipboard();
 
 extern char filename[300];
 extern char username[50];
@@ -18,37 +19,24 @@ bool pending_update_clipboard;
 clock last_clipboard_update;
 SDL_sem* clipboard_semaphore;
 ClipboardData* clipboard;
-SEND_FMSG* send_fmsg;
 SDL_Thread* thread;
 bool connected;
 char* server_ip;
-ClipboardData* clipboard;
 
-bool isUpdatingClipboard() { return updating_clipboard; }
+bool pending_clipboard_push;
 
-bool updateSetClipboard(ClipboardData* cb) {
-    if (updating_clipboard) {
-        LOG_INFO("Tried to SetClipboard, but clipboard is updating");
-        return false;
-    }
-
-    updating_clipboard = true;
-    updating_set_clipboard = true;
-    clipboard = cb;
-
-    SDL_SemPost(clipboard_semaphore);
-
-    return true;
-}
+bool isClipboardSynchronizing() { return updating_clipboard; }
 
 bool pendingUpdateClipboard() { return pending_update_clipboard; }
 
-void initUpdateClipboard(SEND_FMSG* send_fmsg_local, char* server_ip_local) {
+void initClipboardSynchronizer(char* server_ip_local) {
+    initClipboard();
+
     connected = true;
 
     server_ip = server_ip_local;
-    send_fmsg = send_fmsg_local;
 
+    pending_clipboard_push = false;
     updating_clipboard = false;
     pending_update_clipboard = false;
     StartTimer((clock*)&last_clipboard_update);
@@ -58,12 +46,28 @@ void initUpdateClipboard(SEND_FMSG* send_fmsg_local, char* server_ip_local) {
         SDL_CreateThread(UpdateClipboardThread, "UpdateClipboardThread", NULL);
 
     pending_update_clipboard = true;
-    StartTrackingClipboardUpdates();
 }
 
-void destroyUpdateClipboard() {
+void destroyClipboardSynchronizer() {
     connected = false;
     SDL_SemPost(clipboard_semaphore);
+}
+
+bool ClipboardSynchronizerSetClipboard( ClipboardData* cb )
+{
+    if( updating_clipboard )
+    {
+        LOG_INFO( "Tried to SetClipboard, but clipboard is updating" );
+        return false;
+    }
+
+    updating_clipboard = true;
+    updating_set_clipboard = true;
+    clipboard = cb;
+
+    SDL_SemPost( clipboard_semaphore );
+
+    return true;
 }
 
 int UpdateClipboardThread(void* opaque) {
@@ -129,7 +133,7 @@ int UpdateClipboardThread(void* opaque) {
                 */
 
                 LOG_INFO("COMMAND: %s", cmd);
-                runcmd(cmd);
+                runcmd(cmd, NULL);
             }
             SetClipboard(clipboard);
         } else {
@@ -182,17 +186,19 @@ int UpdateClipboardThread(void* opaque) {
                 */
 
                 LOG_INFO("COMMAND: %s", cmd);
-                runcmd(cmd);
+                runcmd(cmd, NULL);
             }
 
+            pending_clipboard_push = true;
+            /*
             FractalClientMessage* fmsg =
                 malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) +
                        clipboard->size);
             fmsg->type = CMESSAGE_CLIPBOARD;
             memcpy(&fmsg->clipboard, clipboard,
                    sizeof(ClipboardData) + clipboard->size);
-            send_fmsg(fmsg);
-            free(fmsg);
+            clipboard_fmsg = fmsg;
+            */
 
             // If it hasn't been 500ms yet, then wait 500ms to prevent too much
             // spam
@@ -210,7 +216,13 @@ int UpdateClipboardThread(void* opaque) {
     return 0;
 }
 
-void updateClipboard() {
+ClipboardData* ClipboardSynchronizerGetNewClipboard() {
+    if( pending_clipboard_push )
+    {
+        pending_clipboard_push = false;
+        return clipboard;
+    }
+
     // If the clipboard has updated since we last checked, or a previous clipboard update is still pending, then we try to update the clipboard
     if( hasClipboardUpdated() || pendingUpdateClipboard() )
     {
@@ -229,4 +241,6 @@ void updateClipboard() {
             SDL_SemPost( clipboard_semaphore );
         }
     }
+
+    return NULL;
 }

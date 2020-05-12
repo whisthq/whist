@@ -10,6 +10,8 @@
 #include "../core/fractal.h"
 #include "clipboard.h"
 
+bool StartTrackingClipboardUpdates();
+
 #ifdef _WIN32
 char* get_clipboard_directory() {
     static char buf[MAX_PATH];
@@ -26,6 +28,7 @@ char* set_clipboard_directory() {
 void initClipboard() {
     get_clipboard_directory();
     set_clipboard_directory();
+    StartTrackingClipboardUpdates();
 }
 
 #ifdef _WIN32

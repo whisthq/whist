@@ -5,10 +5,11 @@
  **/
 #include "wasapicapture.h"
 
-audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
-    HRESULT hr = CoInitialize(NULL);
-    memset(audio_device, 0, sizeof(struct audio_device_t));
+audio_device_t *CreateAudioDevice() {
+    audio_device_t* audio_device = malloc( sizeof(audio_device_t) );
+    memset(audio_device, 0, sizeof(audio_device_t));
 
+    HRESULT hr = CoInitialize( NULL );
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL,
                           &IID_IMMDeviceEnumerator,
                           (void **)&audio_device->pMMDeviceEnumerator);
@@ -24,6 +25,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
         &audio_device->device);
     if (FAILED(hr)) {
         LOG_ERROR("Failed to get default audio endpoint.\n");
+        free( audio_device );
         return NULL;
     }
 
@@ -32,6 +34,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
         (void **)&audio_device->pAudioClient);
     if (FAILED(hr)) {
         LOG_ERROR("IMMDevice::Activate(IAudioClient) failed: hr = 0x%08x", hr);
+        free( audio_device );
         return NULL;
     }
 
@@ -40,6 +43,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
         NULL);
     if (FAILED(hr)) {
         LOG_ERROR("IAudioClient::GetDevicePeriod failed: hr = 0x%08x", hr);
+        free( audio_device );
         return NULL;
     }
 
@@ -47,6 +51,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
         audio_device->pAudioClient, &audio_device->pwfx);
     if (FAILED(hr)) {
         LOG_ERROR("IAudioClient::GetMixFormat failed: hr = 0x%08x", hr);
+        free( audio_device );
         return NULL;
     }
 
@@ -55,6 +60,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
         AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, audio_device->pwfx, 0);
     if (FAILED(hr)) {
         LOG_ERROR("IAudioClient::Initialize failed: hr = 0x%08x", hr);
+        free( audio_device );
         return NULL;
     }
 
@@ -64,6 +70,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
 
     if (FAILED(hr)) {
         LOG_ERROR("IAudioClient::GetService failed: hr = 0x%08x", hr);
+        free( audio_device );
         return NULL;
     }
 
@@ -72,6 +79,7 @@ audio_device_t *CreateAudioDevice(audio_device_t *audio_device) {
         audio_device->pAudioClient, NULL, &minimum_period);
     if (FAILED(hr)) {
         LOG_ERROR("IAudioClient::GetDevicePeriod failed: hr = 0x%08x", hr);
+        free( audio_device );
         return NULL;
     }
     LOG_INFO("Minimum period: %d\n", minimum_period);
@@ -109,6 +117,7 @@ void DestroyAudioDevice(audio_device_t *audio_device) {
     audio_device->pMMDeviceEnumerator->lpVtbl->Release(
         audio_device->pMMDeviceEnumerator);
     CoUninitialize();
+    free( audio_device );
 }
 
 void GetNextPacket(audio_device_t *audio_device) {

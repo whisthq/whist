@@ -391,7 +391,7 @@ int initMultithreadedVideo(void* opaque) {
     opaque;
 
     LOG_INFO("Creating renderer for %dx%d display", output_width,
-            output_height);
+             output_height);
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     SDL_Renderer* renderer = SDL_CreateRenderer(
@@ -399,7 +399,7 @@ int initMultithreadedVideo(void* opaque) {
         SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     if (!renderer) {
         LOG_WARNING("SDL: could not create renderer - exiting: %s",
-                SDL_GetError());
+                    SDL_GetError());
         return -1;
     }
 
@@ -546,24 +546,25 @@ void updateVideo() {
     if (!rendering && VideoData.last_rendered_id >= 0) {
         if (VideoData.most_recent_iframe - 1 > VideoData.last_rendered_id) {
             LOG_INFO("Skipping from %d to i-frame %d!",
-                    VideoData.last_rendered_id, VideoData.most_recent_iframe);
+                     VideoData.last_rendered_id, VideoData.most_recent_iframe);
             for (int i = VideoData.last_rendered_id + 1;
                  i < VideoData.most_recent_iframe; i++) {
                 int index = i % RECV_FRAMES_BUFFER_SIZE;
                 if (receiving_frames[index].id == i) {
                     LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
-                            receiving_frames[index].packets_received,
-                            receiving_frames[index].num_packets);
+                                receiving_frames[index].packets_received,
+                                receiving_frames[index].num_packets);
 
                     for (int j = 0; j < receiving_frames[index].num_packets;
                          j++) {
                         if (!receiving_frames[index].received_indicies[j]) {
-                            LOG_WARNING("Did not receive ID %d, Index %d", i, j);
+                            LOG_WARNING("Did not receive ID %d, Index %d", i,
+                                        j);
                         }
                     }
                 } else {
                     LOG_WARNING("Bad ID? %d instead of %d",
-                            receiving_frames[index].id, i);
+                                receiving_frames[index].id, i);
                 }
             }
             VideoData.last_rendered_id = VideoData.most_recent_iframe - 1;
@@ -649,7 +650,7 @@ void updateVideo() {
     }
 }
 
-int32_t ReceiveVideo(struct RTPPacket* packet) {
+int32_t ReceiveVideo(FractalPacket* packet) {
     // mprintf("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)\n",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
 
@@ -695,7 +696,7 @@ int32_t ReceiveVideo(struct RTPPacket* packet) {
     if (packet->is_a_nack) {
         if (!ctx->received_indicies[packet->index]) {
             LOG_INFO("NACK for Video ID %d, Index %d Received!", packet->id,
-                    packet->index);
+                     packet->index);
         } else {
             LOG_INFO(
                 "NACK for Video ID %d, Index %d Received! But didn't need "

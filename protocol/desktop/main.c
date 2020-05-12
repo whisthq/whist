@@ -20,8 +20,8 @@
 #include "../fractal/utils/aes.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "audio.h"
-#include "video.h"
 #include "sdl_utils.h"
+#include "video.h"
 
 #ifdef __APPLE__
 #include "../fractal/utils/mac_utils.h"
@@ -53,11 +53,11 @@ volatile char* server_ip;
 // Function Declarations
 
 int ReceivePackets(void* opaque);
-int ReceiveMessage(struct RTPPacket* packet);
+int ReceiveMessage(FractalPacket* packet);
 bool received_server_init_message;
 
-struct SocketContext PacketSendContext;
-struct SocketContext PacketTCPContext;
+SocketContext PacketSendContext;
+SocketContext PacketTCPContext;
 
 volatile bool connected = true;
 volatile bool exiting = false;
@@ -82,52 +82,63 @@ void initUpdate() {
     ping_id = 1;
     ping_failures = -2;
 
-    initUpdateClipboard((SEND_FMSG*)&SendFmsg, (char*)server_ip);
-    ClearReadingTCP();
+    initClipboardSynchronizer((char*)server_ip);
 }
 
-void destroyUpdate() { destroyUpdateClipboard(); }
+void destroyUpdate() { destroyClipboardSynchronizer(); }
 
 /**
-* Check all pending updates, and act on those pending updates
-* to actually update the state of our programs
-* This function expects to be called at minimum every 5ms to keep the program up-to-date
-*
-* @return void
-*/
+ * Check all pending updates, and act on those pending updates
+ * to actually update the state of our programs
+ * This function expects to be called at minimum every 5ms to keep the program
+ * up-to-date
+ *
+ * @return void
+ */
 void update() {
     FractalClientMessage fmsg;
 
-    // Check for a new clipboard update from the server, if it's been 25ms since the last time we checked the TCP socket, and the clipboard isn't actively busy
+    // Check for a new clipboard update from the server, if it's been 25ms since
+    // the last time we checked the TCP socket, and the clipboard isn't actively
+    // busy
     if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 &&
-        !isUpdatingClipboard()) {
-
+        !isClipboardSynchronizing()) {
         // Check if TCP connction is active
-        int result = sendp(&PacketTCPContext, NULL, 0);
+        int result = Ack(&PacketTCPContext);
         if (result < 0) {
-            LOG_ERROR("Lost TCP Connection (Error: %d)",
-                        GetLastNetworkError());
+            LOG_ERROR("Lost TCP Connection (Error: %d)", GetLastNetworkError());
             // TODO: Should exit or recover protocol if TCP connection is lost
         }
 
         // Receive tcp buffer, if a full packet has been received
-        char* tcp_buf = TryReadingTCPPacket(&PacketTCPContext);
-        if (tcp_buf) {
-            struct RTPPacket* packet = (struct RTPPacket*)tcp_buf;
-            ReceiveMessage(packet);
+        FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
+        if (tcp_packet) {
+            ReceiveMessage(tcp_packet);
         }
 
         // Update the last tcp check timer
         StartTimer((clock*)&UpdateData.last_tcp_check_timer);
     }
 
-    // Assuming we have all of the important init information, then update the clipboard
-    if( received_server_init_message )
-    {
-        updateClipboard();
+    // Assuming we have all of the important init information, then update the
+    // clipboard
+    if (received_server_init_message) {
+        ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
+        if( clipboard )
+        {
+            FractalClientMessage* fmsg_clipboard =
+                malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) +
+                        clipboard->size );
+            fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
+            memcpy( &fmsg_clipboard->clipboard, clipboard,
+                    sizeof( ClipboardData ) + clipboard->size );
+            SendFmsg( fmsg_clipboard );
+            free( fmsg_clipboard );
+        }
     }
 
-    // If we haven't yet tried to update the dimension, and the dimensions don't line up, then request the proper dimension
+    // If we haven't yet tried to update the dimension, and the dimensions don't
+    // line up, then request the proper dimension
     if (!UpdateData.tried_to_update_dimension &&
         (server_width != output_width || server_height != output_height)) {
         LOG_INFO("Asking for server dimension to be %dx%d", output_width,
@@ -141,12 +152,13 @@ void update() {
         UpdateData.tried_to_update_dimension = true;
     }
 
-    // If the code has triggered a mbps update, then notify the server of the newly desired mbps
+    // If the code has triggered a mbps update, then notify the server of the
+    // newly desired mbps
     if (update_mbps) {
-        LOG_INFO("Asking for server MBPS to be %f", max_bitrate);
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_bitrate / 1024.0 / 1024.0;
+        LOG_INFO( "Asking for server MBPS to be %f", fmsg.mbps );
         SendFmsg(&fmsg);
     }
 
@@ -155,7 +167,8 @@ void update() {
         LOG_WARNING("Whoah, ping timer is way too old");
     }
 
-    // If we're waiting for a ping, and it's been 600ms, then that ping will be noted as failed
+    // If we're waiting for a ping, and it's been 600ms, then that ping will be
+    // noted as failed
     if (is_timing_latency && GetTimer(latency_timer) > 0.6) {
         LOG_WARNING("Ping received no response: %d", ping_id);
         is_timing_latency = false;
@@ -174,8 +187,9 @@ void update() {
     // Ie, a ping try will occur every 210ms
     bool taking_a_bit = is_timing_latency &&
                         GetTimer(latency_timer) > 0.21 * (1 + num_ping_tries);
-    // If 500ms has past since the last resolved ping, then it's been a while and we should ping again
-    // (Last resolved ping is a ping that either has been received, or was noted as failed)
+    // If 500ms has past since the last resolved ping, then it's been a while
+    // and we should ping again (Last resolved ping is a ping that either has
+    // been received, or was noted as failed)
     bool awhile_since_last_resolved_ping =
         !is_timing_latency && GetTimer(latency_timer) > 0.5;
 
@@ -202,16 +216,20 @@ void update() {
 }
 // END UPDATER CODE
 
-// Large fmsg's should be sent over TCP. At the moment, this is only CLIPBOARD messages
-// FractalClientMessage packet over UDP that requires multiple sub-packets to send, it not supported
-// (If low latency large FractalClientMessage packets are needed, then this will have to be implemented)
+// Large fmsg's should be sent over TCP. At the moment, this is only CLIPBOARD
+// messages FractalClientMessage packet over UDP that requires multiple
+// sub-packets to send, it not supported (If low latency large
+// FractalClientMessage packets are needed, then this will have to be
+// implemented)
 int SendFmsg(struct FractalClientMessage* fmsg) {
     if (fmsg->type == CMESSAGE_CLIPBOARD) {
-        return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
+        return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg,
+                             GetFmsgSize(fmsg));
     } else {
         static int sent_packet_id = 0;
         sent_packet_id++;
-        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg), sent_packet_id, -1, NULL, NULL);
+        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg,
+                             GetFmsgSize(fmsg), sent_packet_id, -1, NULL, NULL);
     }
 }
 
@@ -219,8 +237,7 @@ int ReceivePackets(void* opaque) {
     LOG_INFO("ReceivePackets running on Thread %d", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
-    struct SocketContext socketContext = *(struct SocketContext*)opaque;
-    struct RTPPacket packet = {0};
+    SocketContext socketContext = *(SocketContext*)opaque;
 
     /****
     Timers
@@ -257,9 +274,9 @@ int ReceivePackets(void* opaque) {
     StartTimer(&last_ack);
 
     // NOTE: FOR DEBUGGING
-    // This code will drop packets intentionally to test protocol's ability to handle such events
-    // drop_distance_sec is the number of seconds in-between simulated drops
-    // drop_time_ms is how long the drop will last for
+    // This code will drop packets intentionally to test protocol's ability to
+    // handle such events drop_distance_sec is the number of seconds in-between
+    // simulated drops drop_time_ms is how long the drop will last for
     clock drop_test_timer;
     int drop_time_ms = 250;
     int drop_distance_sec = -1;
@@ -271,7 +288,7 @@ int ReceivePackets(void* opaque) {
 
     while (run_receive_packets) {
         if (GetTimer(last_ack) > 5.0) {
-            sendp(&socketContext, NULL, 0);
+            Ack(&socketContext);
             StartTimer(&last_ack);
         }
 
@@ -294,7 +311,8 @@ int ReceivePackets(void* opaque) {
         }
 
         // Video and Audio should be updated at least every 5ms
-        // We will do it here, after receiving each packet or if the last recvp timed out
+        // We will do it here, after receiving each packet or if the last recvp
+        // timed out
 
         StartTimer(&update_video_timer);
         updateVideo();
@@ -308,7 +326,7 @@ int ReceivePackets(void* opaque) {
         StartTimer(&recvfrom_timer);
 
         // START DROP EMULATION
-        if ( is_currently_dropping ) {
+        if (is_currently_dropping) {
             if (drop_time_ms > 0 &&
                 GetTimer(drop_test_timer) * 1000.0 > drop_time_ms) {
                 is_currently_dropping = false;
@@ -323,43 +341,26 @@ int ReceivePackets(void* opaque) {
         }
         // END DROP EMULATION
 
-        int recv_size;
-        if ( is_currently_dropping ) {
+        FractalPacket* packet;
+
+        if (is_currently_dropping) {
             // Simulate dropping packets but just not calling recvp
             SDL_Delay(1);
-            recv_size = 0;
             LOG_INFO("DROPPING");
+            packet = NULL;
         } else {
-            // Wait to receive packet over TCP, until timing out
-            struct RTPPacket encrypted_packet;
-            int encrypted_len = recvp(&socketContext, &encrypted_packet,
-                                      sizeof(encrypted_packet));
-
-            recv_size = encrypted_len;
-
-            // If the packet was successfully received, then decrypt it
-            if (recv_size > 0) {
-                recv_size =
-                    decrypt_packet(&encrypted_packet, encrypted_len, &packet,
-                                   (unsigned char*)PRIVATE_KEY);
-
-                // If there was an issue decrypting it, post warning and then ignore the problem
-                if (recv_size < 0) {
-                    LOG_WARNING("Failed to decrypt packet");
-                    // Just pretend like it never happened
-                    recv_size = 0;
-                }
-            }
+            packet = ReadUDPPacket(&socketContext);
         }
 
         double recvfrom_short_time = GetTimer(recvfrom_timer);
 
         // Total amount of time spent in recvfrom / decrypt_packet
         recvfrom_time += recvfrom_short_time;
-        // Total amount of cumulative time spend in recvfrom, since the last time recv_size was > 0
+        // Total amount of cumulative time spend in recvfrom, since the last
+        // time recv_size was > 0
         lastrecv += recvfrom_short_time;
 
-        if (recv_size > 0) {
+        if (packet) {
             // Log if it's been a while since the last packet was received
             if (lastrecv > 20.0 / 1000.0) {
                 LOG_INFO(
@@ -370,43 +371,30 @@ int ReceivePackets(void* opaque) {
             lastrecv = 0.0;
         }
 
-        //LOG_INFO("Recv wait time: %f", GetTimer(recvfrom_timer));
+        // LOG_INFO("Recv wait time: %f", GetTimer(recvfrom_timer));
 
-        if (recv_size == 0) {
-            // This packet was just an ACK; It can be ignored
-        } else if (recv_size < 0) {
-            // If the packet has an issue, and it wasn't just a simple timeout, then we should log it
-            int error = GetLastNetworkError();
-
-            switch (error) {
-                case ETIMEDOUT:
-                case EWOULDBLOCK:
-                    break;
-                default:
-                    LOG_WARNING("Unexpected Packet Error: %d", error);
-                    break;
-            }
-        } else {
-            // Check packet type and then redirect packet to the proper packet handler
-            switch (packet.type) {
+        if (packet) {
+            // Check packet type and then redirect packet to the proper packet
+            // handler
+            switch (packet->type) {
                 case PACKET_VIDEO:
                     // Video packet
                     StartTimer(&video_timer);
-                    ReceiveVideo(&packet);
+                    ReceiveVideo(packet);
                     video_time += GetTimer(video_timer);
                     max_video_time = max(max_video_time, GetTimer(video_timer));
                     break;
                 case PACKET_AUDIO:
                     // Audio packet
                     StartTimer(&audio_timer);
-                    ReceiveAudio(&packet);
+                    ReceiveAudio(packet);
                     audio_time += GetTimer(audio_timer);
                     max_audio_time = max(max_audio_time, GetTimer(audio_timer));
                     break;
                 case PACKET_MESSAGE:
                     // A FractalServerMessage for other information
                     StartTimer(&message_timer);
-                    ReceiveMessage(&packet);
+                    ReceiveMessage(packet);
                     message_time += GetTimer(message_timer);
                     break;
                 default:
@@ -429,7 +417,7 @@ int ReceivePackets(void* opaque) {
 }
 
 // Receiving a FractalServerMessage
-int ReceiveMessage(struct RTPPacket* packet) {
+int ReceiveMessage(FractalPacket* packet) {
     // Extract fmsg from the packet
     FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
 
@@ -469,7 +457,8 @@ int ReceiveMessage(struct RTPPacket* packet) {
                 ping_failures = 0;
                 try_amount = 0;
             } else {
-                LOG_INFO("Old Ping ID found: Got %d but expected %d", fmsg->ping_id, ping_id);
+                LOG_INFO("Old Ping ID found: Got %d but expected %d",
+                         fmsg->ping_id, ping_id);
             }
             break;
         case MESSAGE_AUDIO_FREQUENCY:
@@ -481,10 +470,11 @@ int ReceiveMessage(struct RTPPacket* packet) {
             // Receiving a clipboard update
             LOG_INFO("Received %d byte clipboard message from server!",
                      packet->payload_size);
-            updateSetClipboard(&fmsg->clipboard);
+            ClipboardSynchronizerSetClipboard(&fmsg->clipboard);
             break;
         case MESSAGE_INIT:
-            // Receiving a bunch of initializing server data for a new connection
+            // Receiving a bunch of initializing server data for a new
+            // connection
             LOG_INFO("Received init message!\n");
             FractalServerMessageInit* msg_init =
                 (FractalServerMessageInit*)fmsg->init_msg;
@@ -508,9 +498,9 @@ int ReceiveMessage(struct RTPPacket* packet) {
 
 #endif
 
-            FILE* f = fopen( path, "w" );
-            fprintf( f, "%d", msg_init->connection_id );
-            fclose( f );
+            FILE* f = fopen(path, "w");
+            fprintf(f, "%d", msg_init->connection_id);
+            fclose(f);
 
             received_server_init_message = true;
             break;
@@ -535,17 +525,21 @@ int ReceiveMessage(struct RTPPacket* packet) {
 
 int main(int argc, char* argv[]) {
 #ifndef _WIN32
-    runcmd("chmod 600 sshkey");
+    runcmd("chmod 600 sshkey", NULL);
     // files can't be written to a macos app bundle, so they need to be
     // cached in /Users/USERNAME/.APPNAME, here .fractal directory
     // attempt to create fractal cache directory, it will fail if it
     // already exists, which is fine
     // for Linux, this is in /home/USERNAME/.fractal, the cache is also needed
     // for the same reason
-    runcmd( "mkdir ~/.fractal" );
-    runcmd( "chmod 0755 ~/.fractal" );
+    runcmd("mkdir ~/.fractal", NULL);
+    runcmd("chmod 0755 ~/.fractal", NULL);
+
+    // the mkdir command won't do anything if the folder already exists, in
+    // which case we make sure to clear the previous logs and connection id
+    runcmd("rm -f ~/.fractal/log.txt", NULL);
+    runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
 #endif
-    initBacktraceHandler();
 
     // Parse all command-line arguments
 
@@ -577,7 +571,8 @@ int main(int argc, char* argv[]) {
     }
 
     // Write ecdsa key to a local file for ssh to use, for that server ip
-    // This will identify the connecting server as the correct server and not an imposter
+    // This will identify the connecting server as the correct server and not an
+    // imposter
     FILE* ssh_key_host = fopen("ssh_host_ecdsa_key.pub", "w");
     fprintf(ssh_key_host, "%s %s\n", server_ip, HOST_PUBLIC_KEY);
     fclose(ssh_key_host);
@@ -589,9 +584,10 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // After creating the window, we will grab DPI-adjusted dimensions in real pixels
-    output_width = get_window_pixel_width( (SDL_Window*)window );
-    output_height = get_window_pixel_height( (SDL_Window*)window );
+    // After creating the window, we will grab DPI-adjusted dimensions in real
+    // pixels
+    output_width = get_window_pixel_width((SDL_Window*)window);
+    output_height = get_window_pixel_height((SDL_Window*)window);
 
     // Set all threads to highest priority
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
@@ -609,9 +605,10 @@ int main(int argc, char* argv[]) {
 #endif
 
     // Initialize clipboard and video
-    initClipboard();
     initVideo();
     exiting = false;
+
+    int tcp_connection_timeout = 250;
 
     // Try 3 times if a failure to connect occurs
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
@@ -635,9 +632,8 @@ int main(int argc, char* argv[]) {
 
         // First context: Sending packets to server
 
-        if (CreateUDPContext(&PacketSendContext, ORIGIN_CLIENT,
-                             (char*)server_ip, PORT_CLIENT_TO_SERVER, 10,
-                             500) < 0) {
+        if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
+                             PORT_CLIENT_TO_SERVER, 10, 500) < 0) {
             LOG_WARNING("Failed to connect to server");
             continue;
         }
@@ -646,10 +642,9 @@ int main(int argc, char* argv[]) {
 
         // Second context: Receiving packets from server
 
-        struct SocketContext PacketReceiveContext = {0};
-        if (CreateUDPContext(&PacketReceiveContext, ORIGIN_CLIENT,
-                             (char*)server_ip, PORT_SERVER_TO_CLIENT, 1,
-                             500) < 0) {
+        SocketContext PacketReceiveContext = {0};
+        if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
+                             PORT_SERVER_TO_CLIENT, 1, 500) < 0) {
             LOG_ERROR("Failed finish connection to server");
             closesocket(PacketSendContext.s);
             continue;
@@ -657,11 +652,13 @@ int main(int argc, char* argv[]) {
 
         SDL_Delay(150);
 
-        // Third context: Mutual TCP context for essential but not-speed-sensitive applications
+        // Third context: Mutual TCP context for essential but
+        // not-speed-sensitive applications
 
-        if (CreateTCPContext(&PacketTCPContext, ORIGIN_CLIENT, (char*)server_ip,
-                             PORT_SHARED_TCP, 1, 500) < 0) {
+        if (CreateTCPContext(&PacketTCPContext, (char*)server_ip,
+                             PORT_SHARED_TCP, 1, tcp_connection_timeout) < 0) {
             LOG_ERROR("Failed finish connection to server");
+            tcp_connection_timeout += 250;
             closesocket(PacketSendContext.s);
             closesocket(PacketReceiveContext.s);
             continue;
@@ -691,7 +688,8 @@ int main(int argc, char* argv[]) {
         clock waiting_for_init_timer;
         StartTimer(&waiting_for_init_timer);
         while (!received_server_init_message) {
-            // If 500ms and no init timer was received, we should disconnect because something failed
+            // If 500ms and no init timer was received, we should disconnect
+            // because something failed
             if (GetTimer(waiting_for_init_timer) > 500 / 1000.0) {
                 LOG_ERROR("Took too long for init timer!");
                 exiting = true;
@@ -701,11 +699,21 @@ int main(int argc, char* argv[]) {
         }
 
         SDL_Event msg;
-        FractalClientMessage fmsg = { 0 };
+        FractalClientMessage fmsg = {0};
+
+        clock ack_timer;
+        StartTimer(&ack_timer);
 
         // Poll input for as long as we are connected and not exiting
         // This code will run once every millisecond
         while (connected && !exiting) {
+            // Send acks to sockets every 5 seconds
+            if (GetTimer(ack_timer) > 5) {
+                Ack(&PacketSendContext);
+                Ack(&PacketTCPContext);
+                StartTimer(&ack_timer);
+            }
+
             // Every 50ms we should syncronize the keyboard state
             if (GetTimer(keyboard_sync_timer) > 50.0 / 1000.0) {
                 SDL_Delay(5);
@@ -719,7 +727,8 @@ int main(int argc, char* argv[]) {
                 fmsg.num_keycodes = fmin(NUM_KEYCODES, num_keys);
 #endif
 
-                // lgui/rgui don't work with SDL_GetKeyboardState for some reason, so set manually
+                // lgui/rgui don't work with SDL_GetKeyboardState for some
+                // reason, so set manually
                 state[FK_LGUI] = lgui_pressed;
                 state[FK_RGUI] = rgui_pressed;
                 // Copy keyboard state
@@ -740,22 +749,28 @@ int main(int argc, char* argv[]) {
                 // Grab SDL event and handle the various input and window events
                 switch (msg.type) {
                     case SDL_WINDOWEVENT:
-                        if( msg.window.event == SDL_WINDOWEVENT_SIZE_CHANGED )
-                        {
-                            // Let video thread know about the resizing to reinitialize display dimensions
-                            set_video_active_resizing( false );
-                            output_width = get_window_pixel_width( (SDL_Window*)window );
-                            output_height = get_window_pixel_height( (SDL_Window*)window );
+                        if (msg.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                            // Let video thread know about the resizing to
+                            // reinitialize display dimensions
+                            set_video_active_resizing(false);
+                            output_width =
+                                get_window_pixel_width((SDL_Window*)window);
+                            output_height =
+                                get_window_pixel_height((SDL_Window*)window);
 
-                            // Let the server know the new dimensions so that it can change native dimensions for monitor
+                            // Let the server know the new dimensions so that it
+                            // can change native dimensions for monitor
                             fmsg.type = MESSAGE_DIMENSIONS;
                             fmsg.dimensions.width = output_width;
                             fmsg.dimensions.height = output_height;
                             fmsg.dimensions.dpi =
-                                (int)(96.0 * output_width / get_virtual_screen_width());
+                                (int)(96.0 * output_width /
+                                      get_virtual_screen_width());
 
-                            LOG_INFO( "Window %d resized to %dx%d (Physical %dx%d)\n", msg.window.windowID,
-                                      msg.window.data1, msg.window.data2, output_width, output_height );
+                            LOG_INFO(
+                                "Window %d resized to %dx%d (Physical %dx%d)\n",
+                                msg.window.windowID, msg.window.data1,
+                                msg.window.data2, output_width, output_height);
                         }
                         break;
                     case SDL_KEYDOWN:
@@ -789,9 +804,10 @@ int main(int argc, char* argv[]) {
 
                         break;
                     case SDL_MOUSEMOTION:
-                        // Relative motion is the delta x and delta y from last mouse position
-                        // Absolute mouse position is where it is on the screen
-                        // We multiply by scaling factor so that integer division doesn't destroy accuracy
+                        // Relative motion is the delta x and delta y from last
+                        // mouse position Absolute mouse position is where it is
+                        // on the screen We multiply by scaling factor so that
+                        // integer division doesn't destroy accuracy
                         fmsg.type = MESSAGE_MOUSE_MOTION;
                         fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
                         fmsg.mouseMotion.x = fmsg.mouseMotion.relative
@@ -839,7 +855,8 @@ int main(int argc, char* argv[]) {
 
         LOG_INFO("Disconnecting...");
 
-        // Send quit message to server so that it can efficiently disconnect from the protocol and start accepting new connections
+        // Send quit message to server so that it can efficiently disconnect
+        // from the protocol and start accepting new connections
         if (exiting) {
             // Send a couple times just to more sure it gets sent
             fmsg.type = CMESSAGE_QUIT;
@@ -874,8 +891,8 @@ int main(int argc, char* argv[]) {
     destroyVideo();
     LOG_INFO("Closing Client...");
 
+    destroySDL((SDL_Window*)window);
     destroyLogger();
-    destroySDL( (SDL_Window*)window );
 
     return 0;
 }

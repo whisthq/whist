@@ -406,7 +406,9 @@ int GetLinuxMouseButton(FractalMouseButton fractal_code) {
 //     }
 // }
 
-input_device_t* CreateInputDevice(input_device_t* input_device) {
+input_device_t* CreateInputDevice() {
+    input_device_t* input_device = malloc(sizeof(input_device_t));
+    memset(input_device, 0, sizeof(input_device_t));
     // create event writing FDs
 
     input_device->fd_absmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
@@ -518,7 +520,6 @@ void DestroyInputDevice(input_device_t* input_device) {
     close(input_device->fd_relmouse);
     close(input_device->fd_keyboard);
     free(input_device);
-    input_device = NULL;
 }
 
 void EmitInputEvent(int fd, int type, int code, int val) {
