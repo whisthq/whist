@@ -52,11 +52,12 @@ def logRequestInfo(f):
 			# 	body = None
 			body = None
 			try:
-				print(request.json)
+				print(request.data)
+				print(request.stream.read())
 			except Exception as e:
 				print('ERROR {}'.format(str(e)))
 				pass
-				
+
 			sendDebug(kwargs['ID'], '({}) {} request received at {} with parameters {}'.format(str(vm_ip), request.method, request.path, str(body)), papertrail = papertrail)
 		except Exception as e:
 			print(str(e))
