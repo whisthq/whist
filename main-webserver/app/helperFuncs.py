@@ -1749,7 +1749,7 @@ def lockVM(vm_name, lock, username = None, disk_name = None, change_last_updated
     params = {'vm_name': vm_name, 'lock': lock,
               'last_updated': last_updated}
 
-    session.execute(command, **params)
+    session.execute(command, params)
 
     if username and disk_name:
         command = text("""
@@ -1760,7 +1760,7 @@ def lockVM(vm_name, lock, username = None, disk_name = None, change_last_updated
             """)
 
         params = {'username': username, 'vm_name': vm_name, 'disk_name': disk_name}
-        session.execute(command, **params)
+        session.execute(command, params)
 
     session.commit()
     session.close()
@@ -1787,7 +1787,7 @@ def claimAvailableVM(disk_name, location):
 
         params = {'lock': False, 'state': state, 'dev': False, 'location': location}
 
-        available_vm = cleanFetchedSQL(session.execute(command, **params).fetchone())
+        available_vm = cleanFetchedSQL(session.execute(command, params).fetchone())
 
         if available_vm:
             command = text("""
@@ -1797,7 +1797,7 @@ def claimAvailableVM(disk_name, location):
                 """)
 
             params = {'lock': True, 'username': username, 'disk_name': disk_name, 'vm_name': available_vm['vm_name']}
-            session.execute(command, **params)
+            session.execute(command, params)
             session.commit()
             session.close()
 
@@ -1842,7 +1842,7 @@ def checkLock(vm_name):
         """)
     params = {'vm_name': vm_name}
 
-    vm = cleanFetchedSQL(session.execute(command, **params).fetchone())
+    vm = cleanFetchedSQL(session.execute(command, params).fetchone())
     session.commit()
     session.close()
 
