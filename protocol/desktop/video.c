@@ -301,7 +301,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             if (frame->cursor.cursor_state == CURSOR_STATE_HIDDEN) {
                 SDL_SetRelativeMouseMode(SDL_TRUE);
             } else {
-                SDL_SetRelativeMouseMode(SDL_DISABLE);
+                SDL_SetRelativeMouseMode(SDL_FALSE);
             }
 
             cursor_state = frame->cursor.cursor_state;
@@ -322,7 +322,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
 #if LOG_VIDEO
-        mprintf("Rendered %d (Size: %d) (Age %f)\n", renderContext.id,
+        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)\n", renderContext.id,
                 renderContext.frame_size,
                 GetTimer(renderContext.frame_creation_timer));
 #endif
@@ -488,6 +488,8 @@ void updateVideo() {
         double nack_per_second = VideoData.num_nacked / time;
         VideoData.nack_by_bitrate[VideoData.bucket] += VideoData.num_nacked;
         VideoData.seconds_by_bitrate[VideoData.bucket] += time;
+
+        mprintf( "====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====\n", VideoData.bucket*BITRATE_BUCKET_SIZE, time, nack_per_second );
 
         // Print statistics
 
