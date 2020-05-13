@@ -59,6 +59,9 @@ def shiftUnixByWeek(utc, num_weeks):
     date = unixToDate(utc)
     return round(dateToUnix(date + relativedelta(weeks=num_weeks)))
 
+def shiftUnixByMinutes(utc, num_minutes):
+    date = unixToDate(utc)
+    return round(dateToUnix(date + relativedelta(minutes=num_minutes)))
 
 def generateToken(user):
     token = jwt.encode({'email': user}, os.getenv('SECRET_KEY'))

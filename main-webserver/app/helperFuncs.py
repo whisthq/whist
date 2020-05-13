@@ -1784,10 +1784,10 @@ def claimAvailableVM(disk_name, location, ID = -1):
 
         command = text("""
             SELECT * FROM v_ms
-            WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location
+            WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location AND temporary_lock < :temporary_lock
             """)
 
-        params = {'lock': False, 'state': state, 'dev': False, 'location': location}
+        params = {'lock': False, 'state': state, 'dev': False, 'location': location, 'temporary_lock': dateToUnix(getToday())}
 
         available_vm = cleanFetchedSQL(session.execute(command, params).fetchone())
 
@@ -1813,6 +1813,26 @@ def claimAvailableVM(disk_name, location, ID = -1):
     session.close()
     return None
 
+def createTemporaryLock(vm_name, minutes):
+    temporary_lock = shiftUnixByMinutes(dateToUnix(getToday()), minutes)
+    session = Session()
+
+    command = text("""
+        UPDATE v_ms
+        SET "temporary_lock" = :temporary_lock
+        WHERE
+        "vm_name" = :vm_name
+        """)
+
+    params = {'vm_name': vm_name, 'temporary_lock': temporary_lock}
+    session.execute(command, params)
+
+    sendInfo(ID, 'Temporary lock created for VM {} for {} minutes'.format(vm_name, str(minutes)))
+
+    session.commit()
+    session.close()
+
+
 def vmReadyToConnect(vm_name, ready):
     """Sets the vm's ready_to_connect field
 
@@ -1832,7 +1852,7 @@ def vmReadyToConnect(vm_name, ready):
         conn.close()
 
 
-def checkLock(vm_name):
+def checkLock(vm_name, ID = -1):
     """Check to see if a vm has been locked
 
     Args:
@@ -1853,7 +1873,11 @@ def checkLock(vm_name):
     session.close()
 
     if vm:
-        return vm['lock']
+        temporary_lock = False
+        if vm['temporary_lock']:
+            temporary_lock = dateToUnix(getToday()) < vm['temporary_lock']
+            sendInfo(ID, 'Temporary lock found on VM {}, expires at {}'.format(vm_name, str(unixToDate(vm['temporary_lock']))))
+        return vm['lock'] or temporary_lock
     return None
 
 
