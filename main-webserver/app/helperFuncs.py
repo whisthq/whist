@@ -1773,13 +1773,15 @@ def lockVM(vm_name, lock, username = None, disk_name = None, change_last_updated
             vm_name), papertrail=verbose)
 
 
-def claimAvailableVM(disk_name, location):
+def claimAvailableVM(disk_name, location, ID = -1):
     username = mapDiskToUser(disk_name)
     session = Session()
 
     state_preference = ['RUNNING_AVAILABLE', 'STOPPED', 'DEALLOCATED']
 
     for state in state_preference:
+        sendInfo(ID, 'Looking for VMs with state {} in {}'.format(state, location))
+
         command = text("""
             SELECT FROM v_ms *
             WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location
@@ -1790,6 +1792,8 @@ def claimAvailableVM(disk_name, location):
         available_vm = cleanFetchedSQL(session.execute(command, params).fetchone())
 
         if available_vm:
+            sendInfo(ID, 'Found an available VM {}'.format(str(available_vm)))
+
             command = text("""
                 UPDATE v_ms 
                 SET lock = :lock, username = :username, disk_name = :disk_name
@@ -1802,6 +1806,8 @@ def claimAvailableVM(disk_name, location):
             session.close()
 
             return available_vm
+        else:
+            sendInfo(ID, 'Did not find any VMs in {} with state {}.'.format(location, state))
 
     session.commit()
     session.close()
