@@ -1360,6 +1360,8 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
 
     free(message);
 
+    memset(json_res, 0, json_res_size);
+
     // now that it's sent, let's get the reply
     recv(Socket, json_res, (int)json_res_size, 0);  // get the reply
 
