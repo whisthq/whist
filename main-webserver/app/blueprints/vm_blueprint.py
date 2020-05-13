@@ -1,5 +1,9 @@
 from app.tasks import *
 from app import *
+from app.helpers.customers import *
+from app.helpers.vms import *
+from app.helpers.logins import *
+from app.helpers.disks import *
 
 vm_bp = Blueprint('vm_bp', __name__)
 
