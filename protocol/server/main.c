@@ -185,7 +185,7 @@ int32_t SendVideo(void* opaque) {
                 }
             } else {
                 current_bitrate = (int)(max_mbps * 1024 * 1024);
-                LOG_INFO( "Updating Encoder using Bitrate: %d\n", current_bitrate );
+                LOG_INFO( "Updating Encoder using Bitrate: %d from %f\n", current_bitrate, max_mbps );
                 pending_encoder = true;
                 encoder_finished = false;
                 encoder_factory_server_w = device->width;
@@ -304,8 +304,8 @@ int32_t SendVideo(void* opaque) {
                             (int)(ratio_bitrate * current_bitrate);
                         if (abs(new_bitrate - current_bitrate) / new_bitrate >
                             0.05) {
-                            LOG_INFO("Updating bitrate from %d to %d",
-                                    current_bitrate, new_bitrate);
+                            //LOG_INFO("Updating bitrate from %d to %d",
+                            //        current_bitrate, new_bitrate);
                             // TODO: Analyze bitrate handling with GOP size
                             // current_bitrate = new_bitrate;
                             // update_encoder = true;
@@ -778,7 +778,7 @@ int main() {
                 } else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
                     LOG_INFO( "MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps );
-                    max_mbps = max(fmsg->mbps, MINIMUM_BITRATE);
+                    max_mbps = max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
                     update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
                     LOG_INFO("Ping Received - ID %d", fmsg->ping_id);
