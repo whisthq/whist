@@ -1876,7 +1876,7 @@ def checkLock(vm_name, ID = -1):
         temporary_lock = False
         if vm['temporary_lock']:
             temporary_lock = dateToUnix(getToday()) < vm['temporary_lock']
-            sendInfo(ID, 'Temporary lock found on VM {}, expires at {}'.format(vm_name, str(unixToDate(vm['temporary_lock']))))
+            sendInfo(ID, 'Temporary lock found on VM {}, expires at {}. It is currently {}'.format(vm_name, str(vm['temporary_lock']), str(dateToUnix(getToday()))))
         return vm['lock'] or temporary_lock
     return None
 

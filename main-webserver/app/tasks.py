@@ -412,8 +412,6 @@ def swapDiskSync(self, disk_name, ID = -1):
 	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
 	username = mapDiskToUser(disk_name)
 	vm_name = os_disk.managed_by
-	if vm_name:
-		vm_name = vm_name.split('/')[-1]
 
 	location = os_disk.location
 	vm_attached = True if vm_name else False
@@ -425,6 +423,9 @@ def swapDiskSync(self, disk_name, ID = -1):
 
 	# Update the database to reflect the disk attached to the VM currently
 	if vm_attached:
+		vm_name = vm_name.split('/')[-1]
+		sendInfo(ID, "{}is attached to {}".format(username, vm_name))
+
 		unlocked = False
 		while not unlocked:
 			if spinLock(vm_name) > 0:
