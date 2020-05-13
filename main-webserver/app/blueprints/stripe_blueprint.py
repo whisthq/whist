@@ -230,7 +230,7 @@ def payment(action, **kwargs):
                     print(e.message)
 
                 message = SendGridMail(
-                    from_email='mingying2011@gmail.com',
+                    from_email='noreply@fractalcomputers.com',
                     to_emails=['support@fractalcomputers.com'],
                     subject='Payment is overdue for ' + customer['username'],
                     html_content='<div>The charge has failed for account ' + custId + '</div>'
