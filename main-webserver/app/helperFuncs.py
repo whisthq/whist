@@ -1813,7 +1813,7 @@ def claimAvailableVM(disk_name, location, ID = -1):
     session.close()
     return None
 
-def createTemporaryLock(vm_name, minutes):
+def createTemporaryLock(vm_name, minutes, ID = -1):
     temporary_lock = shiftUnixByMinutes(dateToUnix(getToday()), minutes)
     session = Session()
 
