@@ -1,4 +1,6 @@
-from app.helperFuncs import *
+from app.helpers.customers import *
+from app.helpers.users import *
+from app.helpers.disks import *
 
 stripe_bp = Blueprint('stripe_bp', __name__)
 
@@ -133,12 +135,13 @@ def payment(action, **kwargs):
 
         customers = fetchCustomers()
         for customer in customers:
-            if email == customer['username']:
+            if email == customer['username'] and customer['subscription']:
                 has_subscription = True
                 subscription_id = customer['subscription']
-
+        print(has_subscription)
         if has_subscription:
             new_subscription = stripe.Subscription.retrieve(subscription_id)
+            print(new_subscription)
             if new_subscription['trial_end']:
                 if new_subscription['trial_end'] <= dateToUnix(getToday()):
                     trial_end = shiftUnixByMonth(dateToUnix(getToday()), 1)
