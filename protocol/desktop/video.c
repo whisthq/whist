@@ -524,7 +524,7 @@ void updateVideo() {
             VideoData.target_mbps =
                 (VideoData.target_mbps + working_mbps) / 2.0;
             VideoData.target_mbps =
-                min(VideoData.target_mbps, MAXIMUM_MBPS * 1024 * 1024);
+                min(VideoData.target_mbps, MAXIMUM_BITRATE);
             update_mbps = true;
         }
 
