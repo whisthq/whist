@@ -160,6 +160,7 @@ def vm(action, **kwargs):
                 updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
                 lockVM(vm_name, True, change_last_updated=False,
                        verbose=False, ID=kwargs['ID'])
+                createTemporaryLock(vm_name, 0)
         else:
             sendError(
                 kwargs['ID'], 'Trying to change connection status, but no VM found for IP {}'.format(str(vm_ip)))

@@ -1784,7 +1784,7 @@ def claimAvailableVM(disk_name, location, ID = -1):
 
         command = text("""
             SELECT * FROM v_ms
-            WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location AND temporary_lock < :temporary_lock
+            WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location AND (temporary_lock < :temporary_lock OR temporary_lock IS NULL)
             """)
 
         params = {'lock': False, 'state': state, 'dev': False, 'location': location, 'temporary_lock': dateToUnix(getToday())}
