@@ -1754,7 +1754,7 @@ def lockVM(vm_name, lock, username = None, disk_name = None, change_last_updated
     if username and disk_name:
         command = text("""
             UPDATE v_ms
-            SET "username" = :username AND "disk_name" = :disk_name
+            SET "username" = :username, "disk_name" = :disk_name
             WHERE
             "vm_name" = :vm_name
             """)
@@ -1792,7 +1792,7 @@ def claimAvailableVM(disk_name, location):
         if available_vm:
             command = text("""
                 UPDATE v_ms 
-                SET lock = :lock AND username = :username AND disk_name = :disk_name
+                SET lock = :lock, username = :username, disk_name = :disk_name
                 WHERE vm_name = :vm_name
                 """)
 
