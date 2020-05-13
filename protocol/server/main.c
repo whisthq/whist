@@ -775,6 +775,7 @@ int main() {
 #endif
                 } else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
+                    LOG_INFO( "MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps );
                     max_mbps = max(fmsg->mbps, MINIMUM_BITRATE);
                     update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
