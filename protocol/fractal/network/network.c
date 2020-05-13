@@ -1363,8 +1363,6 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
     // now that it's sent, let's get the reply
     recv(Socket, json_res, (int)json_res_size, 0);  // get the reply
 
-    LOG_INFO("GET Request Webserver Response: %s\n", json_res);
-
     FRACTAL_CLOSE_SOCKET(Socket);
     return true;
 }
