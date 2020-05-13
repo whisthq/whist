@@ -25,7 +25,7 @@ OBJS = \
 	audiodecode.obj \
 	logging.obj \
 	network.obj \
-        sdl_utils.obj \
+    sdl_utils.obj \
 	sdlscreeninfo.obj \
 	video.obj \
 	audio.obj \

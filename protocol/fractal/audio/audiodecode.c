@@ -14,7 +14,7 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
 
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
-    // only linux uses FFmpeg 3.4.x because of canonical system packages
+    // only Linux uses FFmpeg 3.4.x because of canonical system packages
 #if LIBAVCODEC_VERSION_MAJOR < 58
     avcodec_register_all();
 #endif

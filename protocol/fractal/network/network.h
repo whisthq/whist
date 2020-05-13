@@ -182,7 +182,7 @@ Public Functions
 /*
 @brief This will set the socket s to have timeout timeout_ms. Use 0 to have a non-blocking socket, and -1 for an indefinitely blocking socket
 
-@returns The network error that most recently occured, through WSAGetLastError on windows or errno on linux
+@returns The network error that most recently occured, through WSAGetLastError on windows or errno on Linux
 */
 int GetLastNetworkError();
 

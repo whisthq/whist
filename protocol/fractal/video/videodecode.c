@@ -78,7 +78,7 @@ enum AVPixelFormat match_vaapi(AVCodecContext* ctx,
 int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
-    // only linux uses FFmpeg 3.4.x because of canonical system packages
+    // only Linux uses FFmpeg 3.4.x because of canonical system packages
 #if LIBAVCODEC_VERSION_MAJOR < 58
     avcodec_register_all();
 #endif
