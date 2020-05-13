@@ -2167,47 +2167,52 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
     Returns:
         int: 1 for success, -1 for fail
     """
-    _, compute_client, _ = createClients()
-
     try:
-        power_state = 'PowerState/deallocated'
-        vm_state = compute_client.virtual_machines.instance_view(
-            resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
+        def boot_if_necessary(vm_name, needs_restart, ID):
+            _, compute_client, _ = createClients()
 
-        try:
-            power_state = vm_state.statuses[1].code
-        except Exception as e:
-            sendCritical(ID, str(e))
-            pass
+            power_state = 'PowerState/deallocated'
+            vm_state = compute_client.virtual_machines.instance_view(
+                resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
 
-        if 'stop' in power_state or 'dealloc' in power_state:
-            sendInfo(ID, 'VM {} currently in state {}. Setting Winlogon to False'.format(
-                vm_name, power_state))
-            vmReadyToConnect(vm_name, False)
-            sendInfo(ID, 'Starting VM {}'.format(vm_name))
-            updateVMState(vm_name, 'STARTING')
+            try:
+                power_state = vm_state.statuses[1].code
+            except Exception as e:
+                sendCritical(ID, str(e))
+                pass
 
-            async_vm_start = compute_client.virtual_machines.start(
-                os.environ.get('VM_GROUP'), vm_name)
+            if 'stop' in power_state or 'dealloc' in power_state:
+                sendInfo(ID, 'VM {} currently in state {}. Setting Winlogon to False'.format(
+                    vm_name, power_state))
+                vmReadyToConnect(vm_name, False)
+                sendInfo(ID, 'Starting VM {}'.format(vm_name))
+                updateVMState(vm_name, 'STARTING')
 
-            sendInfo(ID, async_vm_start.result())
-            sendInfo(ID, 'VM {} started successfully'.format(vm_name))
+                async_vm_start = compute_client.virtual_machines.start(
+                    os.environ.get('VM_GROUP'), vm_name)
 
-        if needs_restart:
-            sendInfo(
-                ID, 'VM {} needs to restart. Setting Winlogon to False'.format(vm_name))
-            vmReadyToConnect(vm_name, False)
+                sendInfo(ID, async_vm_start.result())
+                sendInfo(ID, 'VM {} started successfully'.format(vm_name))
 
-            updateVMState(vm_name, 'RESTARTING')
+            if needs_restart:
+                sendInfo(
+                    ID, 'VM {} needs to restart. Setting Winlogon to False'.format(vm_name))
+                vmReadyToConnect(vm_name, False)
 
-            async_vm_restart = compute_client.virtual_machines.restart(
-                os.environ.get('VM_GROUP'), vm_name)
+                updateVMState(vm_name, 'RESTARTING')
 
-            sendInfo(ID, async_vm_restart.result())
-            sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
+                async_vm_restart = compute_client.virtual_machines.restart(
+                    os.environ.get('VM_GROUP'), vm_name)
 
+                sendInfo(ID, async_vm_restart.result())
+                sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
+
+        boot_if_necessary(vm_name, needs_restart, ID)
         updateVMState(vm_name, 'RUNNING_AVAILABLE')
-        waitForWinlogon(vm_name, ID)
+
+        winlogon = waitForWinlogon(vm_name, ID)
+        while winlogon < 0:
+            boot_if_necessary(vm_name, needs_restart, ID)
 
         return 1
     except Exception as e:
@@ -2215,7 +2220,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
         return -1
 
 
-def waitForWinlogon(vm_name, ID=-1):
+def waitForWinlogon(vm_name, ID = -1):
     """Periodically checks and sleeps until winlogon succeeds
 
     Args:
@@ -2245,11 +2250,11 @@ def waitForWinlogon(vm_name, ID=-1):
         ready = checkWinlogon(vm_name)
         num_tries += 1
 
-        if num_tries > 50:
-            sendCritical(ID, 'Waited too long for winlogon. Giving up')
+        if num_tries > 20:
+            sendError(ID, 'Waited too long for winlogon. Sending failure message.')
             return -1
 
-    sendInfo(ID, 'VM {} has Winlogon successfully'.format(vm_name))
+    sendInfo(ID, 'VM {} has Winlogon successfully after {} tries'.format(vm_name, str(num_tries)))
 
     return 1
 
