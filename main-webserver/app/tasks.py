@@ -408,9 +408,15 @@ def swapDiskSync(self, disk_name, ID = -1):
 
 	# Get the 
 	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
+	username = mapDiskToUser(disk_name)
 	vm_name = os_disk.managed_by
 	location = os_disk.location
 	vm_attached = True if vm_name else False
+
+	if vm_attached:
+		sendInfo(ID, "PENIS Azure says that disk {} belonging to {} is attached to {}".format(disk_name, username, vm_name))
+	else:
+		sendInfo(ID, "PENIS Azure syas that disk {} belonging to {} is not attached to any VM".format(disk_name, username))
 
 	# Update the database to reflect the disk attached to the VM currently
 	if vm_attached:
@@ -422,7 +428,6 @@ def swapDiskSync(self, disk_name, ID = -1):
 				lockVM(vm_name, True, username = username, disk_name = disk_name, ID = ID)
 
 				# Update database with new disk name and VM state
-				username = mapDiskToUser(disk_name)
 				sendInfo(ID, "PENIS Disk {} belongs to user {} and is already attached to VM {}".format(disk_name, username, vm_name))
 
 				updateVMState(vm_name, 'ATTACHING')
@@ -454,6 +459,7 @@ def swapDiskSync(self, disk_name, ID = -1):
 			vm = claimAvailableVM(disk_name, location)
 			if vm:
 				try:
+					sendInfo(ID, 'Disk was unattached. VM {} claimed for {}'.format(vm_name, username))
 					vm_name = vm['vm_name']
 					# Attach and boot to that VM
 					self.update_state(state='PENDING', meta={"msg": "Preparing your cloud PC for streaming. This could take a few minutes."})
@@ -472,12 +478,13 @@ def swapDiskSync(self, disk_name, ID = -1):
 
 					disk_attached = True
 					sendInfo(ID, 'PENIS VM {} successfully attached to disk {}'.format(vm_name, disk_name))
+					return {'status': 200}
 				except Exception as e:
 					sendCritical(ID, str(e))
 
 			else:
 				self.update_state(state='PENDING', meta={"msg": "Running performance tests. This could take a few extra minutes."})
-				sendInfo(ID, 'No VMs are available for {} using {}. Going to sleep...'.format(mapDiskToUser(disk_name), disk_name))
+				sendInfo(ID, 'No VMs are available for {} using {}. Going to sleep...'.format(username, disk_name))
 				time.sleep(30)
 
 	return {'status': 200}
