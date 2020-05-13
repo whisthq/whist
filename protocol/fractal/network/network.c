@@ -1361,9 +1361,16 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
     free(message);
 
     // now that it's sent, let's get the reply
-    recv(Socket, json_res, (int)json_res_size, 0);  // get the reply
-
-    LOG_INFO("GET Request Webserver Response: %s\n", json_res);
+    int len = recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
+    if( len < 0 )
+    {
+        LOG_WARNING( "Response to JSON GET failed!" );
+        json_res[0] = '\0';
+    } else
+    {
+        json_res[len] = '\0';
+        LOG_INFO( "JSON GET Response: %s", json_res );
+    }
 
     FRACTAL_CLOSE_SOCKET(Socket);
     return true;
