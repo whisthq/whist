@@ -412,8 +412,9 @@ def swapDiskSync(self, disk_name, ID = -1):
 	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
 	username = mapDiskToUser(disk_name)
 	vm_name = os_disk.managed_by
-	vm_name = vm_name.split('/')[-1]
-	
+	if vm_name:
+		vm_name = vm_name.split('/')[-1]
+
 	location = os_disk.location
 	vm_attached = True if vm_name else False
 
