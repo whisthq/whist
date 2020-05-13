@@ -1783,7 +1783,7 @@ def claimAvailableVM(disk_name, location, ID = -1):
         sendInfo(ID, 'Looking for VMs with state {} in {}'.format(state, location))
 
         command = text("""
-            SELECT FROM v_ms *
+            SELECT * FROM v_ms
             WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location
             """)
 
