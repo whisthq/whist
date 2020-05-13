@@ -1711,7 +1711,7 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.close()
 
 
-def lockVM(vm_name, lock, change_last_updated=True, verbose=True, ID=-1):
+def lockVM(vm_name, lock, username = None, disk_name = None, change_last_updated = True, verbose = True, ID=-1):
     """Locks/unlocks a vm. A vm entry with lock set to True prevents other processes from changing that entry.
 
     Args:
@@ -1727,6 +1727,8 @@ def lockVM(vm_name, lock, change_last_updated=True, verbose=True, ID=-1):
     elif not lock and verbose:
         sendInfo(ID, 'Trying to unlock VM {}'.format(
             vm_name), papertrail=verbose)
+
+    session = Session()
 
     command = text("""
         UPDATE v_ms
@@ -1746,16 +1748,64 @@ def lockVM(vm_name, lock, change_last_updated=True, verbose=True, ID=-1):
     last_updated = getCurrentTime()
     params = {'vm_name': vm_name, 'lock': lock,
               'last_updated': last_updated}
-    with engine.connect() as conn:
-        conn.execute(command, **params)
-        conn.close()
-        if lock and verbose:
-            sendInfo(ID, 'Successfully locked VM {}'.format(
-                vm_name), papertrail=verbose)
-        elif not lock and verbose:
-            sendInfo(ID, 'Successfully unlocked VM {}'.format(
-                vm_name), papertrail=verbose)
 
+    session.execute(command, **params)
+
+    if username and disk_name:
+        command = text("""
+            UPDATE v_ms
+            SET "username" = :username AND "disk_name" = :disk_name
+            WHERE
+            "vm_name" = :vm_name
+            """)
+
+        params = {'username': username, 'vm_name': vm_name, 'disk_name': disk_name}
+        session.execute(command, **params)
+
+    session.commit()
+    session.close()
+
+    if lock and verbose:
+        sendInfo(ID, 'Successfully locked VM {}'.format(
+            vm_name), papertrail=verbose)
+    elif not lock and verbose:
+        sendInfo(ID, 'Successfully unlocked VM {}'.format(
+            vm_name), papertrail=verbose)
+
+
+def claimAvailableVM(disk_name, location):
+    username = mapDiskToUser(disk_name)
+    session = Session()
+
+    state_preference = ['RUNNING_AVAILABLE', 'STOPPED', 'DEALLOCATED']
+
+    for state in state_preference:
+        command = text("""
+            SELECT FROM v_ms *
+            WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location
+            """)
+
+        params = {'lock': False, 'state': state, 'dev': False, 'location': location}
+
+        available_vm = cleanFetchedSQL(session.execute(command, **params).fetchone())
+
+        if available_vm:
+            command = text("""
+                UPDATE v_ms 
+                SET lock = :lock AND username = :username AND disk_name = :disk_name
+                WHERE vm_name = :vm_name
+                """)
+
+            params = {'lock': True, 'username': username, 'disk_name': disk_name, 'vm_name': available_vm['vm_name']}
+            session.execute(command, **params)
+            session.commit()
+            session.close()
+
+            return available_vm
+
+    session.commit()
+    session.close()
+    return None
 
 def vmReadyToConnect(vm_name, ready):
     """Sets the vm's ready_to_connect field
@@ -1785,17 +1835,20 @@ def checkLock(vm_name):
     Returns:
         bool: True if VM is locked, False otherwise
     """
+    session = Session()
+
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name}
 
-    with engine.connect() as conn:
-        vm = cleanFetchedSQL(conn.execute(command, **params).fetchone())
-        conn.close()
-        if vm:
-            return vm['lock']
-        return None
+    vm = cleanFetchedSQL(session.execute(command, **params).fetchone())
+    session.commit()
+    session.close()
+
+    if vm:
+        return vm['lock']
+    return None
 
 
 def checkDev(vm_name):
@@ -2324,7 +2377,7 @@ def fractalVMStart(vm_name, needs_restart=False, ID=-1):
     return -1
 
 
-def spinLock(vm_name, ID=-1):
+def spinLock(vm_name, autolock = False, ID = -1):
     """Waits for vm to be unlocked
 
     Args:
@@ -2349,7 +2402,7 @@ def spinLock(vm_name, ID=-1):
         locked = checkLock(vm_name)
         num_tries += 1
 
-        if num_tries > 100:
+        if num_tries > 20:
             sendCritical(
                 ID, 'FAILURE: VM {} is locked for too long. Giving up.'.format(vm_name))
             return -1

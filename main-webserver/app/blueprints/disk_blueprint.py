@@ -30,7 +30,7 @@ def disk(action, **kwargs):
     elif action == 'attach':
         body = request.get_json()
 
-        task = swapDisk.apply_async([body['disk_name'], kwargs['ID']])
+        task = swapDiskSync.apply_async([body['disk_name'], kwargs['ID']])
         return jsonify({'ID': task.id}), 202
     elif action == 'detach':
         vm_name = request.get_json()['vm_name']

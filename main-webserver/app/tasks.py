@@ -386,6 +386,102 @@ def syncDisks(self):
 
 	return {'status': 200}
 
+@celery.task(bind = True)
+def swapDiskSync(self, disk_name, ID = -1):
+	def swapDiskAndUpdate(s, disk_name, vm_name):
+		# Pick a VM, attach it to disk
+		hr = swapdisk_name(s, disk_name, vm_name)
+		if hr > 0:
+			updateDisk(disk_name, vm_name, location)
+			associateVMWithDisk(vm_name, disk_name)
+			sendInfo(ID, "Database updated with VM {}, disk {}".format(vm_name, disk_name))
+			return 1
+		else:
+			return -1
+
+	def updateOldDisk(vm_name):
+		virtual_machine = getVM(vm_name)
+		old_disk = virtual_machine.storage_profile.os_disk
+		updateDisk(old_disk.name, '', None)
+
+	sendInfo(ID, "PENIS Swap disk task for disk {} added to Redis queue".format(disk_name))
+
+	# Get the 
+	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
+	vm_name = os_disk.managed_by
+	location = os_disk.location
+	vm_attached = True if vm_name else False
+
+	# Update the database to reflect the disk attached to the VM currently
+	if vm_attached:
+		unlocked = False
+		while not unlocked:
+			if spinLock(vm_name) > 0:
+				unlocked = True
+				# Lock immediately
+				lockVM(vm_name, True, username = username, disk_name = disk_name, ID = ID)
+
+				# Update database with new disk name and VM state
+				username = mapDiskToUser(disk_name)
+				sendInfo(ID, "PENIS Disk {} belongs to user {} and is already attached to VM {}".format(disk_name, username, vm_name))
+
+				updateVMState(vm_name, 'ATTACHING')
+				updateDisk(disk_name, vm_name, location)
+
+				self.update_state(state='PENDING', meta={"msg": "Database updated. Booting Cloud PC."})
+
+				sendInfo(ID, 'PENIS Database updated with {} and {}'.format(disk_name, vm_name))
+
+				if fractalVMStart(vm_name) > 0:
+					sendInfo(ID, 'PENIS VM {} is started and ready to use'.format(vm_name))
+					self.update_state(state='PENDING', meta={"msg": "Cloud PC is ready to use."})
+				else:
+					sendError(ID, 'PENIS Could not start VM {}'.format(vm_name))
+					self.update_state(state='FAILURE', meta={"msg": "Cloud PC could not be started. Please contact support."})
+
+				vm_credentials = fetchVMCredentials(vm_name)
+				lockVM(vm_name, False, ID = ID)
+				updateVMState(vm_name, 'RUNNING_AVAILABLE')
+				return vm_credentials
+			else:
+				os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
+				vm_name = os_disk.managed_by
+				location = os_disk.location
+				vm_attached = True if vm_name else False
+	else:
+		disk_attached = False
+		while not disk_attached: 
+			vm = claimAvailableVM(disk_name, location)
+			if vm:
+				try:
+					vm_name = vm['vm_name']
+					# Attach and boot to that VM
+					self.update_state(state='PENDING', meta={"msg": "Preparing your cloud PC for streaming. This could take a few minutes."})
+
+					updateVMState(vm_name, 'ATTACHING')
+					sendInfo(ID, 'PENIS Selected VM {} to attach to disk {}'.format(vm_name, disk_name))
+					if swapDiskAndUpdate(self, disk_name, vm_name) > 0:
+						self.update_state(state='PENDING', meta={"msg": "Data successfully uploaded to cloud PC."})
+						free_vm_found = True
+						updateOldDisk(vm_name)
+						lockVM(vm_name, False)
+						updateVMState(vm_name, 'RUNNING_AVAILABLE')
+						return fetchVMCredentials(vm_name)
+					lockVM(vm_name, False, ID = ID)
+					updateVMState(vm_name, 'RUNNING_AVAILABLE')
+
+					disk_attached = True
+					sendInfo(ID, 'PENIS VM {} successfully attached to disk {}'.format(vm_name, disk_name))
+				except Exception as e:
+					sendCritical(ID, str(e))
+
+			else:
+				self.update_state(state='PENDING', meta={"msg": "Running performance tests. This could take a few extra minutes."})
+				sendInfo(ID, 'No VMs are available for {} using {}. Going to sleep...'.format(mapDiskToUser(disk_name), disk_name))
+				time.sleep(30)
+
+	return {'status': 200}
+
 
 @celery.task(bind=True)
 def swapDisk(self, disk_name, ID = -1):
@@ -403,7 +499,7 @@ def swapDisk(self, disk_name, ID = -1):
 		if hr > 0:
 			updateDisk(disk_name, vm_name, location)
 			associateVMWithDisk(vm_name, disk_name)
-			print("Database updated.")
+			sendInfo(ID, "Database updated with VM {}, disk {}".format(vm_name, disk_name))
 			return 1
 		else:
 			return -1
