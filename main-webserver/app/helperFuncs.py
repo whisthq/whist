@@ -2213,6 +2213,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
         winlogon = waitForWinlogon(vm_name, ID)
         while winlogon < 0:
             boot_if_necessary(vm_name, True, ID)
+            winlogon = waitForWinlogon(vm_name, ID)
 
         return 1
     except Exception as e:
