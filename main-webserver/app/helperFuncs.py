@@ -2246,6 +2246,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
                 vmReadyToConnect(vm_name, False)
                 sendInfo(ID, 'Starting VM {}'.format(vm_name))
                 updateVMState(vm_name, 'STARTING')
+                lockVM(vm_name, True, ID = ID)
 
                 async_vm_start = compute_client.virtual_machines.start(
                     os.environ.get('VM_GROUP'), vm_name)
@@ -2259,6 +2260,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
                 vmReadyToConnect(vm_name, False)
 
                 updateVMState(vm_name, 'RESTARTING')
+                lockVM(vm_name, True, ID = ID)
 
                 async_vm_restart = compute_client.virtual_machines.restart(
                     os.environ.get('VM_GROUP'), vm_name)
@@ -2268,6 +2270,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
 
         boot_if_necessary(vm_name, needs_restart, ID)
         updateVMState(vm_name, 'RUNNING_AVAILABLE')
+        lockVM(vm_name, False, ID = ID)
 
         winlogon = waitForWinlogon(vm_name, ID)
         while winlogon < 0:
