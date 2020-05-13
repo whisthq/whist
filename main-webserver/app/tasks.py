@@ -407,6 +407,8 @@ def swapDiskSync(self, disk_name, ID = -1):
 	sendInfo(ID, "PENIS Swap disk task for disk {} added to Redis queue".format(disk_name))
 
 	# Get the 
+	_, compute_client, _ = createClients()
+	
 	os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
 	username = mapDiskToUser(disk_name)
 	vm_name = os_disk.managed_by
