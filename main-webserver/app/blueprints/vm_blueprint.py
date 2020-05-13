@@ -196,6 +196,9 @@ def tracker(action, **kwargs):
         username = body['username']
         is_user = body['is_user']
         addTimeTable(username, 'logon', time, is_user)
+        vms = fetchUserVMs(username)
+        if vms:
+            createTemporaryLock(vms[0]['vm_name'], 0)
     elif action == 'logoff':
         username = body['username']
         is_user = body['is_user']

@@ -1784,7 +1784,7 @@ def claimAvailableVM(disk_name, location, ID = -1):
 
         command = text("""
             SELECT * FROM v_ms
-            WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location AND (temporary_lock < :temporary_lock OR temporary_lock IS NULL)
+            WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
             """)
 
         params = {'lock': False, 'state': state, 'dev': False, 'location': location, 'temporary_lock': dateToUnix(getToday())}
@@ -1796,11 +1796,11 @@ def claimAvailableVM(disk_name, location, ID = -1):
 
             command = text("""
                 UPDATE v_ms 
-                SET lock = :lock, username = :username, disk_name = :disk_name
+                SET lock = :lock, username = :username, disk_name = :disk_name, state = :state
                 WHERE vm_name = :vm_name
                 """)
 
-            params = {'lock': True, 'username': username, 'disk_name': disk_name, 'vm_name': available_vm['vm_name']}
+            params = {'lock': True, 'username': username, 'disk_name': disk_name, 'vm_name': available_vm['vm_name'], 'state': 'ATTACHING'}
             session.execute(command, params)
             session.commit()
             session.close()

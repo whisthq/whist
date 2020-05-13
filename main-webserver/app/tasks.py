@@ -465,12 +465,12 @@ def swapDiskSync(self, disk_name, ID = -1):
 			vm = claimAvailableVM(disk_name, location)
 			if vm:
 				try:
-					sendInfo(ID, 'Disk was unattached. VM {} claimed for {}'.format(vm_name, username))
 					vm_name = vm['vm_name']
+					sendInfo(ID, 'Disk was unattached. VM {} claimed for {}'.format(vm_name, username))
+
 					# Attach and boot to that VM
 					self.update_state(state='PENDING', meta={"msg": "Preparing your cloud PC for streaming. This could take a few minutes."})
 
-					updateVMState(vm_name, 'ATTACHING')
 					sendInfo(ID, 'PENIS Selected VM {} to attach to disk {}'.format(vm_name, disk_name))
 					if swapDiskAndUpdate(self, disk_name, vm_name) > 0:
 						self.update_state(state='PENDING', meta={"msg": "Data successfully uploaded to cloud PC."})
