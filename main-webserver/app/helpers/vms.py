@@ -602,19 +602,21 @@ def vmReadyToConnect(vm_name, ready):
         vm_name (str): Name of the vm
         ready (boolean): True for ready to connect
     """
-    session = Session()
+    if ready:
+        current = dateToUnix(getToday())
+        session = Session()
 
-    command = text("""
-        UPDATE v_ms
-        SET "ready_to_connect" = :ready
-        WHERE
-        "vm_name" = :vm_name
-        """)
-    params = {'vm_name': vm_name, 'ready': ready}
+        command = text("""
+            UPDATE v_ms
+            SET "ready_to_connect" = :current
+            WHERE
+            "vm_name" = :vm_name
+            """)
+        params = {'vm_name': vm_name, 'current': current}
 
-    session.execute(command, params)
-    session.commit()
-    session.close()
+        session.execute(command, params)
+        session.commit()
+        session.close()
 
 
 def checkLock(vm_name, ID = -1):
@@ -686,7 +688,7 @@ def checkWinlogon(vm_name):
         vm = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if vm:
-            return vm['ready_to_connect']
+            return dateToUnix(getToday()) - vm['ready_to_connect'] < 10
         return None
 
 
@@ -1149,7 +1151,7 @@ def waitForWinlogon(vm_name, ID=-1):
         ready = checkWinlogon(vm_name)
         num_tries += 1
 
-        if num_tries > 50:
+        if num_tries > 25:
             sendCritical(ID, 'Waited too long for winlogon. Giving up')
             return -1
 
