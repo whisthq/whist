@@ -115,6 +115,9 @@ def deleteResource(name, delete_disk, ID=-1):
     # step 1, deallocate the VM
     try:
         sendInfo(ID, 'Attempting to deallocate the VM {}'.format(name))
+        lockVMAndUpdate(vm_name = name, state = 'DEALLOCATING', lock = True, temporary_lock = None, 
+            change_last_updated = False, verbose = False)
+
         async_vm_deallocate = compute_client.virtual_machines.deallocate(
             os.getenv('VM_GROUP'), name)
         async_vm_deallocate.wait()
