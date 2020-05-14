@@ -52,7 +52,7 @@ def logRequestInfo(f):
 			except Exception as e:
 				body = None
 
-			sendDebug(kwargs['ID'], '({}) {} request received at {} with parameters {}'.format(str(vm_ip), request.method, request.path, str(body)), papertrail = papertrail)
+			sendDebug(kwargs['ID'], '[{}][{}][{}](BODY: {})'.format(request.path, request.method, str(vm_ip), str(body)), papertrail = papertrail)
 		except Exception as e:
 			print(str(e))
 		return f(*args, **kwargs)
