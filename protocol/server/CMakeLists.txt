@@ -133,9 +133,12 @@ if(${WIN32})
     # Link to system libs
     target_link_libraries(FractalServer
             libvcruntime
-            libucrt
             libcmt
             kernel32
+            ws2_32
+            crypt32
+            wldap32
+            normaliz
             gdi32
             winmm
             imm32
@@ -147,11 +150,23 @@ if(${WIN32})
             user32
             uuid
             version
-            ws2_32
-            shlwapi
-            crypt32
-            d3d11
             dxgi
+            d3d11
+            winspool
+            comdlg32
+            odbc32
+            odbccp32
+            ucrt
+            vcruntime
+            msvcrt
+            msvcmrt
+            libcpmt
+            msvcprt
+            avrt
+            d3dcompiler
+            dxguid
+            crypt32
+            shlwapi
             shcore
             )
 
