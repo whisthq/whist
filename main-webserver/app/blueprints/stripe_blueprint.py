@@ -210,24 +210,16 @@ def payment(action, **kwargs):
             customer = fetchCustomerById(custId)
 
             if customer:
-                # message = SendGridMail(
-                #     from_email='phil@fractalcomputers.com',
-                #     to_emails=[customer['username']],
-                #     subject='Your payment is overdue',
-                #     html_content=render_template('charge_failed.html')
-                # )
-                message = SendGridMail(
-                    from_email='phil@fractalcomputers.com',
-                    to_emails=[customer['username']],
-                    subject='Your payment is overdue',
-                    html_content='Your credit card failed.'
-                )
-                try:
-                    sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
-                    response = sg.send(message)
+                headers = {'content-type': 'application/json'}
+                url = "https://fractal-mail-server.herokuapp.com/charge/failed"
+                data = {'username': customer['username']}
+                resp = requests.post(
+                    url=url, data=json.dumps(data), headers=headers)
+
+                if resp.status_code == 200:
                     print("Sent email to customer")
-                except Exception as e:
-                    print(e.message)
+                else:
+                    print("Mail send failed: Error code " + resp.status_code)
 
                 message = SendGridMail(
                     from_email='noreply@fractalcomputers.com',

@@ -678,6 +678,14 @@ def attachDiskToVM(disk_name, vm_name, lun, ID=-1):
 
 
 def getIP(vm):
+    """Gets the IP address for a vm
+
+    Args:
+        vm (str): The name of the vm
+
+    Returns:
+        str: The ipv4 address
+    """
     _, _, network_client = createClients()
     ni_reference = vm.network_profile.network_interfaces[0]
     ni_reference = ni_reference.id.split('/')
