@@ -1,6 +1,7 @@
 from app.helpers.customers import *
 from app.helpers.users import *
 from app.helpers.disks import *
+from app.logger import *
 
 stripe_bp = Blueprint('stripe_bp', __name__)
 
@@ -205,7 +206,7 @@ def payment(action, **kwargs):
 
         # Handle the event
         if event.type == 'charge.failed':  # https://stripe.com/docs/api/charges
-            print("Charge failed!")
+            sendInfo(-1, "Charge failed webhook received from stripe")
             custId = event.data.object.customer
             customer = fetchCustomerById(custId)
 
@@ -217,9 +218,10 @@ def payment(action, **kwargs):
                     url=url, data=json.dumps(data), headers=headers)
 
                 if resp.status_code == 200:
-                    print("Sent email to customer")
+                    sendInfo(-1, "Sent charge failed email to customer")
                 else:
-                    print("Mail send failed: Error code " + resp.status_code)
+                    sendError(-1, "Mail send failed: Error code " +
+                              resp.status_code)
 
                 message = SendGridMail(
                     from_email='noreply@fractalcomputers.com',
@@ -230,15 +232,33 @@ def payment(action, **kwargs):
                 try:
                     sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
                     response = sg.send(message)
-                    print("Sent email to support")
+                    sendInfo(-1, "Sent charge failed email to support")
                 except Exception as e:
-                    print(e.message)
+                    sendError(-1, e.message)
 
                 # Schedule disk deletion in 7 days
                 disks = fetchUserDisks(customer['username'])
                 expiry = datetime.datetime.today() + timedelta(days=7)
                 for disk in disks:
                     scheduleDiskDelete(disk['disk_name'], expiry)
+
+        elif event.type == 'charge.succeeded':
+            sendInfo(-1, "Charge succeeded webhook received from stripe")
+            custId = event.data.object.customer
+            customer = fetchCustomerById(custId)
+            if customer:
+                message = SendGridMail(
+                    from_email='noreply@fractalcomputers.com',
+                    to_emails=['support@fractalcomputers.com'],
+                    subject='Payment recieved from ' + customer['username'],
+                    html_content='<div>The charge has succeeded for account ' + custId + '</div>'
+                )
+                try:
+                    sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
+                    response = sg.send(message)
+                    sendInfo(-1, "Sent charge success email to support")
+                except Exception as e:
+                    print(e.message)
 
         return jsonify({'status': 200}), 200
 
