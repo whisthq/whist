@@ -202,8 +202,8 @@ int32_t SendVideo(void* opaque) {
                     pending_encoder = false;
                     update_encoder = false;
                 } else {
-                    SDL_CreateThread(MultithreadedEncoderFactory,
-                                     "MultithreadedEncoderFactory", NULL);
+                    // SDL_CreateThread(MultithreadedEncoderFactory,
+                    //                 "MultithreadedEncoderFactory", NULL);
                 }
             }
         }
@@ -234,6 +234,8 @@ int32_t SendVideo(void* opaque) {
         // Only if we have a frame to render
         if (accumulated_frames > 0 || wants_iframe ||
             GetTimer(last_frame_capture) > 1.0 / MIN_FPS) {
+            // LOG_INFO( "Frame Time: %f\n", GetTimer( last_frame_capture ) );
+
             StartTimer(&last_frame_capture);
 
             if (accumulated_frames > 1) {
@@ -258,6 +260,8 @@ int32_t SendVideo(void* opaque) {
 
             video_encoder_encode(encoder, device->frame_data);
             frames_since_first_iframe++;
+
+            // LOG_INFO( "Encode Time: %f\n", GetTimer( t ) );
 
             video_encoder_unset_iframe(encoder);
 
@@ -347,6 +351,8 @@ int32_t SendVideo(void* opaque) {
                     // "(I-frame)" :
                     // "");
 
+                    StartTimer( &t );
+
                     // Send video packet to client
                     if (SendUDPPacket(
                             &socketContext, PACKET_VIDEO, (uint8_t*)frame,
@@ -359,6 +365,9 @@ int32_t SendVideo(void* opaque) {
                         // Only increment ID if the send succeeded
                         id++;
                     }
+
+                    // LOG_INFO( "Send Frame Time: %f\n", GetTimer( t ) );
+
                     previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time = GetTimer(server_frame_timer);
                     // mprintf("Server Frame Time for ID %d: %f\n", id,
