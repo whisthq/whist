@@ -9,9 +9,7 @@ add_library(fractalUtils STATIC
         sdlscreeninfo.c
         )
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_sources(fractalUtils PRIVATE linuxinput.c linuxinput.h)
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(fractalUtils PRIVATE windows_utils.c windows_utils.h)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         target_sources(fractalUtils PRIVATE mac_utils.c mac_utils.h)

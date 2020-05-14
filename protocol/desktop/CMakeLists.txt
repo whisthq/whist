@@ -3,8 +3,8 @@
 ]]
 
 
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/desktop/build64)
-set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/desktop/build64)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/desktop/build${arch})
+set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/desktop/build${arch})
 add_executable(FractalClient
         main.c
         main.h
@@ -19,34 +19,42 @@ foreach(LIB ${FFMPEG_LIBS_PATHS})
     message(STATUS ${LIB})
     target_link_libraries(FractalClient ${LIB})
 endforeach(LIB)
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-#target_link_libraries(FractalClient
-#        Threads::Threads
-#        ${CMAKE_DL_LIBS}
-#        )
+
+# Threading and Dynamic link for linux/macosx only
+# if we add other target platforms we may need to come back to this
+if ( NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+    target_link_libraries(FractalClient
+            Threads::Threads
+            ${CMAKE_DL_LIBS}
+            )
+endif ()
+
 
 #message(FATAL_ERROR ${CMAKE_DL_LIBS})
 
 #[[
 ################## Static Libraries we supply ##################
 ]]
-find_library(STATIC_SDL2 SDL2 HINTS ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}/)
+find_library(STATIC_SDL2 SDL2 PATH "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 if(NOT STATIC_SDL2)
-    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}/")
+    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
-find_library(STATIC_OPENSSL libcrypto HINTS ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/)
+find_library(STATIC_OPENSSL NAMES  crypto PATH "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}")
+#message(ERROR_FATAL ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/)
 if(NOT STATIC_OPENSSL)
-    message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
+    message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}")
 endif()
-message(STATUS ${STATIC_SDL2})
+
 message(STATUS ${STATIC_OPENSSL})
 #[[
 ################## Linking platform independent libs ##################
 ]]
 target_link_libraries(FractalClient
-#        m
+        ${STATIC_SDL2}
+        ${STATIC_OPENSSL}
         fractalCore
         fractalAudio
         fractalVideo
@@ -55,8 +63,7 @@ target_link_libraries(FractalClient
         fractalInput
         fractalNetwork
         fractalUtils
-        ${STATIC_SDL2}
-        ${STATIC_OPENSSL}
+
         )
 
 #[[
@@ -69,6 +76,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(FractalClient
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
+            m
             )
 endif()
 

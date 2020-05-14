@@ -5,9 +5,9 @@ add_library(fractalAudio STATIC
         audiodecode.h
         audioencode.h)
 
-if (${UNIX})
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(fractalAudio PRIVATE alsacapture.c alsacapture.h)
-elseif(${WIN32})
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(fractalAudio PRIVATE wasapicapture.c wasapicapture.h)
 endif ()
 

@@ -502,9 +502,6 @@ void update() {
 #include <time.h>
 
 int main() {
-    static_assert(sizeof(unsigned short) == 2,
-                  "Error: Unsigned short is not length 2 bytes!\n");
-
     srand((unsigned int)time(NULL));
     connection_id = rand();
 #ifdef _WIN32

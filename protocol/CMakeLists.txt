@@ -6,7 +6,7 @@ set(META_PROJECT_NAME        "protocol")
 set(META_PROJECT_DESCRIPTION "CMake Project Template")
 set(META_AUTHOR_ORGANIZATION "Fractal Computers")
 set(META_AUTHOR_DOMAIN       "https://github.com/fractalcomputers/protocol")
-
+set( CMAKE_VERBOSE_MAKEFILE on )
 set(CMAKE_C_STANDARD 99)
 
 if (${CMAKE_SIZEOF_VOID_P} MATCHES "8")
@@ -56,4 +56,4 @@ include_directories(include/SDL2)
 
 add_subdirectory(fractal)
 add_subdirectory(desktop)
-#add_subdirectory(server)
+add_subdirectory(server)

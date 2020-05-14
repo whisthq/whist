@@ -1,14 +1,14 @@
 add_library(fractalVideo STATIC
         screencapture.h
-        videodecode.h
-        videodecode.h
         videodecode.c
+        videodecode.h
+        videoencode.c
         videoencode.h
         )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(fractalVideo PRIVATE x11capture.c x11capture.h)
-elseif(${WIN32})
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(fractalVideo PRIVATE dxgicapture.c dxgicapture.h)
 endif ()
 
