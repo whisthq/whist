@@ -1,6 +1,7 @@
 from app.helpers.customers import *
 from app.helpers.users import *
 from app.helpers.disks import *
+from app.logger import *
 
 stripe_bp = Blueprint('stripe_bp', __name__)
 
@@ -205,29 +206,22 @@ def payment(action, **kwargs):
 
         # Handle the event
         if event.type == 'charge.failed':  # https://stripe.com/docs/api/charges
-            print("Charge failed!")
+            sendInfo(-1, "Charge failed webhook received from stripe")
             custId = event.data.object.customer
             customer = fetchCustomerById(custId)
 
             if customer:
-                # message = SendGridMail(
-                #     from_email='phil@fractalcomputers.com',
-                #     to_emails=[customer['username']],
-                #     subject='Your payment is overdue',
-                #     html_content=render_template('charge_failed.html')
-                # )
-                message = SendGridMail(
-                    from_email='phil@fractalcomputers.com',
-                    to_emails=[customer['username']],
-                    subject='Your payment is overdue',
-                    html_content='Your credit card failed.'
-                )
-                try:
-                    sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
-                    response = sg.send(message)
-                    print("Sent email to customer")
-                except Exception as e:
-                    print(e.message)
+                headers = {'content-type': 'application/json'}
+                url = "https://fractal-mail-server.herokuapp.com/charge/failed"
+                data = {'username': customer['username']}
+                resp = requests.post(
+                    url=url, data=json.dumps(data), headers=headers)
+
+                if resp.status_code == 200:
+                    sendInfo(-1, "Sent charge failed email to customer")
+                else:
+                    sendError(-1, "Mail send failed: Error code " +
+                              resp.status_code)
 
                 message = SendGridMail(
                     from_email='noreply@fractalcomputers.com',
@@ -238,15 +232,33 @@ def payment(action, **kwargs):
                 try:
                     sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
                     response = sg.send(message)
-                    print("Sent email to support")
+                    sendInfo(-1, "Sent charge failed email to support")
                 except Exception as e:
-                    print(e.message)
+                    sendError(-1, e.message)
 
                 # Schedule disk deletion in 7 days
                 disks = fetchUserDisks(customer['username'])
                 expiry = datetime.datetime.today() + timedelta(days=7)
                 for disk in disks:
                     scheduleDiskDelete(disk['disk_name'], expiry)
+
+        elif event.type == 'charge.succeeded':
+            sendInfo(-1, "Charge succeeded webhook received from stripe")
+            custId = event.data.object.customer
+            customer = fetchCustomerById(custId)
+            if customer:
+                message = SendGridMail(
+                    from_email='noreply@fractalcomputers.com',
+                    to_emails=['support@fractalcomputers.com'],
+                    subject='Payment recieved from ' + customer['username'],
+                    html_content='<div>The charge has succeeded for account ' + custId + '</div>'
+                )
+                try:
+                    sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
+                    response = sg.send(message)
+                    sendInfo(-1, "Sent charge success email to support")
+                except Exception as e:
+                    print(e.message)
 
         return jsonify({'status': 200}), 200
 

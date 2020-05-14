@@ -10,6 +10,15 @@ from .helpers.disks import *
 
 @celery.task(bind=True)
 def createVM(self, vm_size, location, operating_system):
+    """Creates a windows vm of size vm_size in Azure region location
+
+    Args:
+        vm_size (str): The size of the vm to create
+        location (str): The Azure region
+
+    Returns:
+        dict: The dict representing the vm in the v_ms sql table
+    """
     print("TASK: Create VM added to Redis queue")
 
     _, compute_client, _ = createClients()
