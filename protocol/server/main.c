@@ -504,8 +504,13 @@ void update() {
 #include <time.h>
 
 int main() {
-    static_assert(sizeof(unsigned short) == 2,
-                  "Error: Unsigned short is not length 2 bytes!\n");
+    static_assert(sizeof( unsigned short ) == 2,
+                   "Error: Unsigned short is not length 2 bytes!\n");
+
+#if defined(_WIN32)
+    // set Windows DPI
+    SetProcessDpiAwareness( PROCESS_SYSTEM_DPI_AWARE );
+#endif
 
     srand((unsigned int)time(NULL));
     connection_id = rand();
