@@ -32,29 +32,10 @@ if ( NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif ()
 
 
-#message(FATAL_ERROR ${CMAKE_DL_LIBS})
-
-#[[
-################## Static Libraries we supply ##################
-]]
-find_library(STATIC_SDL2 SDL2 PATH "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
-if(NOT STATIC_SDL2)
-    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
-endif()
-
-find_library(STATIC_OPENSSL NAMES  crypto PATH "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}")
-#message(ERROR_FATAL ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/)
-if(NOT STATIC_OPENSSL)
-    message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}")
-endif()
-
-message(STATUS ${STATIC_OPENSSL})
 #[[
 ################## Linking platform independent libs ##################
 ]]
 target_link_libraries(FractalClient
-        ${STATIC_SDL2}
-        ${STATIC_OPENSSL}
         fractalCore
         fractalAudio
         fractalVideo
@@ -63,7 +44,8 @@ target_link_libraries(FractalClient
         fractalInput
         fractalNetwork
         fractalUtils
-
+        ${STATIC_SDL2}
+        ${STATIC_OPENSSL}
         )
 
 #[[
@@ -109,7 +91,7 @@ endif()
 #[[
 ################## WINDOWS ##################
 ]]
-if(${WIN32})
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     #compiler flags, TODO debug vs release
     SET(CMAKE_C_FLAGS  " -DWIN32_LEAN_AND_MEAN -DUNICODE -DWIN32 -DWIN32 /W4 /MT /MP" )
 
@@ -117,8 +99,6 @@ if(${WIN32})
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
 
-    #libmfx, windows specific static lib
-    find_library(LIBMFX libmfx HINTS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/)
     target_link_libraries(FractalClient ${LIBMFX})
 
     set_property(TARGET FractalClient PROPERTY

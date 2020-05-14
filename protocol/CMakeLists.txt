@@ -1,23 +1,50 @@
+#[[
+################## FractalProtocol ##################
+This is the root CmakeLists.txt for the protocol repo
+We define various project level settings here as well as include the subdirectories of the repo.
+We also look for the ffmpeg libraries here.
+]]
+
+
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0091 NEW)
-project(protocol)
+project(FractalProtocol)
 
-set(META_PROJECT_NAME        "protocol")
+set(META_PROJECT_NAME        "FractalProtocol")
 set(META_PROJECT_DESCRIPTION "CMake Project Template")
 set(META_AUTHOR_ORGANIZATION "Fractal Computers")
 set(META_AUTHOR_DOMAIN       "https://github.com/fractalcomputers/protocol")
-set( CMAKE_VERBOSE_MAKEFILE on )
+
 set(CMAKE_C_STANDARD 99)
 
+# verbose cmake outputs, useful for debugging
+set(CMAKE_VERBOSE_MAKEFILE on )
+
+# Set up clang-format
+# clang-format can be called with make clang-format
+include(cmake/clang-format.cmake)
+
+option(BUILD_SERVER "build FractalServer" ON)
+option(BUILD_CLIENT "build FractalClient" ON)
+
+# For debug builds log every thing, for release builds log warnings or higher
+if (${CMAKE_BUILD_TYPE} MATCHES Debug)
+    add_definitions(-DLOG_LEVEL=5)
+elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
+    add_definitions(-DLOG_LEVEL=2)
+endif()
+
+#detect if we are building 64bit or 32bit
 if (${CMAKE_SIZEOF_VOID_P} MATCHES "8")
     set(arch 64)
 else()
     set(arch 32)
 endif()
 
+
 # ffmpeg: using our provided libs on mac and windows and system on linux.
 set(FFMPEG_LIBS swresample;avcodec;avdevice;avfilter;avformat;swscale;avutil;postproc)
-set(FFMPEG_LIBS_PATHS)
+set(FFMPEG_LIBS_PATHS "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     FOREACH(LIB ${FFMPEG_LIBS})
@@ -45,9 +72,51 @@ else()
         message(VERBOSE "found lib ${LIB_VAR}")
         LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
     endforeach(LIB)
-    message(v "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
+    message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
     include_directories(include/ffmpeg)
 endif ()
+
+
+#[[
+################## Static Libraries we supply ##################
+]]
+# the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
+find_library(STATIC_SDL2 NAMES SDL2 PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+if(NOT STATIC_SDL2)
+    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
+endif()
+
+find_library(STATIC_OPENSSL NAMES crypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+
+if(NOT STATIC_OPENSSL)
+    message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
+endif()
+
+find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+
+if((NOT LIBMFX))
+    message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/")
+endif()
+
+
 
 include_directories(fractal)
 include_directories(include)
@@ -55,5 +124,11 @@ include_directories(include/SDL2)
 
 
 add_subdirectory(fractal)
-add_subdirectory(desktop)
-add_subdirectory(server)
+if (${BUILD_CLIENT})
+    message(STATUS building client)
+    add_subdirectory(desktop)
+endif()
+if (${BUILD_SERVER})
+    message(STATUS building server)
+    add_subdirectory(server)
+endif()

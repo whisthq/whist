@@ -32,26 +32,6 @@ endif ()
 #message(FATAL_ERROR ${CMAKE_DL_LIBS})
 
 #[[
-################## Static Libraries we supply ##################
-]]
-find_library(STATIC_SDL2 SDL2 HINTS ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}/)
-if(NOT STATIC_SDL2)
-    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}/")
-endif()
-
-find_library(STATIC_OPENSSL libcrypto HINTS ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/)
-if(NOT STATIC_OPENSSL)
-    message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
-endif()
-
-#libmfx, windows specific static lib
-find_library(LIBMFX NAMES libmfx mfx HINTS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/)
-if(NOT LIBMFX)
-    message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/")
-endif()
-
-
-#[[
 ################## Linking platform independent libs ##################
 ]]
 target_link_libraries(FractalServer
@@ -85,6 +65,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ${X11_Xext_LIB}
             ${X11_Xtst_LIB}
             asound
+            m
             )
 endif()
 

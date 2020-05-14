@@ -10,13 +10,13 @@
 
 // define decoder struct to pass as a type
 typedef struct {
-    AVCodec *codec;
-    AVCodecContext *context;
-    AVFrame *sw_frame;
-    AVFrame *hw_frame;
-    AVPacket packet;
-    DecodeType type;
-    enum AVHWDeviceType device_type;
+  AVCodec *codec;
+  AVCodecContext *context;
+  AVFrame *sw_frame;
+  AVFrame *hw_frame;
+  AVPacket packet;
+  DecodeType type;
+  enum AVHWDeviceType device_type;
 } video_decoder_t;
 
 video_decoder_t *create_video_decoder(int width, int height, bool use_hardware);
