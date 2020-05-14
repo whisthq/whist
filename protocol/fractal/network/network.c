@@ -146,30 +146,10 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
     int payload_size;
     int curr_index = 0, i = 0;
 
-    clock packet_timer;
-    StartTimer(&packet_timer);
-
     int num_indices =
         len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
 
-    // double max_delay = 5.0;
-    // double delay_thusfar = 0.0;
-
-    // Send some amount of packets every two milliseconds
-    int break_resolution = 2;
-
-    double num_indices_per_unit_latency = (AVERAGE_LATENCY_MS / 1000.0) *
-                                          (burst_bitrate / 8.0) /
-                                          MAX_PAYLOAD_SIZE;
-
-    double break_distance = num_indices_per_unit_latency *
-                            (1.0 * break_resolution / AVERAGE_LATENCY_MS);
-
-    int num_breaks = (int)(num_indices / break_distance);
-    if (num_breaks < 0) {
-        num_breaks = 0;
-    }
-    int break_point = num_indices / (num_breaks + 1);
+    double max_bytes_per_second = burst_bitrate / 8.0;
 
     /*
     if (type == PACKET_AUDIO) {
@@ -190,11 +170,14 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
     }
     */
 
+    clock packet_timer;
+    StartTimer( &packet_timer );
+
     while (curr_index < len) {
         // Delay distribution of packets as needed
-        if (burst_bitrate > 0 && i > 0 && break_point > 0 &&
-            i % break_point == 0 && i < num_indices - break_point / 2) {
-            SDL_Delay(break_resolution);
+        while( curr_index > GetTimer( packet_timer ) * max_bytes_per_second )
+        {
+            SDL_Delay( 1 );
         }
 
         // local packet and len for when nack buffer isn't needed
