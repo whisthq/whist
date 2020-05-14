@@ -1,5 +1,6 @@
 from app.tasks import *
 from app import *
+from app.helpers.disks import *
 
 disk_bp = Blueprint('disk_bp', __name__)
 

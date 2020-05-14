@@ -1,6 +1,8 @@
-from .utils import *
-from app import engine
-from .logger import *
+from app.utils import *
+from app import *
+from app.logger import *
+from .vms import *
+from .disks import *
 
 def SendLogsToS3(content, sender, connection_id, vm_ip, version, ID = -1):
 	def S3Upload(content, last_updated, sender, ID):

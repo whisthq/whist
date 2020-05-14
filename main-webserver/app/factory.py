@@ -4,6 +4,7 @@ import click
 
 PKG_NAME = os.path.dirname(os.path.realpath(__file__)).split("/")[-1]
 
+
 def create_app(app_name=PKG_NAME, **kwargs):
     app = Flask(app_name)
     jwtManager = JWTManager(app)
@@ -14,6 +15,7 @@ def create_app(app_name=PKG_NAME, **kwargs):
     log.setLevel(logging.DEBUG)
 
     return (app, jwtManager)
+
 
 def init_app(app):
     from .blueprints.vm_blueprint import vm_bp
@@ -27,6 +29,5 @@ def init_app(app):
     app.register_blueprint(stripe_bp)
     app.register_blueprint(p2p_bp)
     app.register_blueprint(disk_bp)
-    
-    return app
 
+    return app

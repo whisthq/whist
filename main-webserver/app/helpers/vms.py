@@ -1134,7 +1134,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
         return -1
 
 
-def waitForWinlogon(vm_name, ID = -1):
+def waitForWinlogon(vm_name, ID=-1):
     """Periodically checks and sleeps until winlogon succeeds
 
     Args:
