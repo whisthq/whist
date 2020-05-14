@@ -419,7 +419,7 @@ def swapDiskSync(self, disk_name, ID = -1):
 	if vm_attached:
 		sendInfo(ID, "PENIS Azure says that disk {} belonging to {} is attached to {}".format(disk_name, username, vm_name))
 	else:
-		sendInfo(ID, "PENIS Azure syas that disk {} belonging to {} is not attached to any VM".format(disk_name, username))
+		sendInfo(ID, "PENIS Azure says that disk {} belonging to {} is not attached to any VM".format(disk_name, username))
 
 	# Update the database to reflect the disk attached to the VM currently
 	if vm_attached:
@@ -427,7 +427,7 @@ def swapDiskSync(self, disk_name, ID = -1):
 		sendInfo(ID, "{}is attached to {}".format(username, vm_name))
 
 		unlocked = False
-		while not unlocked:
+		while not unlocked and vm_attached:
 			if spinLock(vm_name) > 0:
 				unlocked = True
 				# Lock immediately
@@ -460,7 +460,8 @@ def swapDiskSync(self, disk_name, ID = -1):
 				vm_name = os_disk.managed_by
 				location = os_disk.location
 				vm_attached = True if vm_name else False
-	else:
+	
+	if not vm_attached:
 		disk_attached = False
 		while not disk_attached: 
 			vm = claimAvailableVM(disk_name, location)

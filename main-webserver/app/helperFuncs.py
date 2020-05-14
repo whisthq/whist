@@ -1710,6 +1710,24 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.execute(command, **params)
         conn.close()
 
+def lockVMAndUpdate(vm_name, state, lock, temporary_lock, change_last_updated, verbose, ID):
+    session = Session()
+
+    command = text("""
+        UPDATE v_ms SET vm_name = :vm_name, state = :state, lock = :lock
+        """)
+
+    if temporary_lock:
+        command = text("""
+            UPDATE v_ms SET vm_name = :vm_name, state = :state, lock = :lock, temporary_lock = :temporary_lock
+            """)
+
+    params = {'vm_name': vm_name, 'state': state, 'lock': lock, 'temporary_lock': temporary_lock}
+
+    session.execute(command, params)
+    session.commit()
+    session.close()
+
 
 def lockVM(vm_name, lock, username = None, disk_name = None, change_last_updated = True, verbose = True, ID=-1):
     """Locks/unlocks a vm. A vm entry with lock set to True prevents other processes from changing that entry.
@@ -1802,6 +1820,9 @@ def claimAvailableVM(disk_name, location, ID = -1):
 
             params = {'lock': True, 'username': username, 'disk_name': disk_name, 'vm_name': available_vm['vm_name'], 'state': 'ATTACHING'}
             session.execute(command, params)
+
+            sendInfo(ID, 'Set VM {} belonging to {} to ATTACHING'.format(available_vm['vm_name'], username))
+
             session.commit()
             session.close()
 

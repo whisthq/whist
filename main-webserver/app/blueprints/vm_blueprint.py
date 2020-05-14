@@ -150,17 +150,14 @@ def vm(action, **kwargs):
                 'STOPPING', 'DEALLOCATING', 'ATTACHING', 'STARTING', 'RESTARTING']
 
             if vm_state in intermediate_states:
-                sendWarning(kwargs['ID'], 'Trying to change connection status, but VM {} is in intermediate state {}. Not changing state.'.format(
-                    vm_name, vm_state))
+                sendWarning(kwargs['ID'], 'Trying to change connection status to {}, but VM {} is in intermediate state {}. Not changing state.'.format(
+                    'RUNNING_AVAILABLE' if available else 'RUNNING_UNAVAILABLE', vm_name, vm_state))
             if available and not vm_state in intermediate_states:
-                updateVMState(vm_name, 'RUNNING_AVAILABLE')
-                lockVM(vm_name, False, change_last_updated=False,
-                       verbose=False, ID=kwargs['ID'])
+                lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_AVAILABLE', lock = False, temporary_lock = None, 
+                    change_last_updated = False, verbose = False, ID = kwargs['ID'])
             elif not available and not vm_state in intermediate_states:
-                updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
-                lockVM(vm_name, True, change_last_updated=False,
-                       verbose=False, ID=kwargs['ID'])
-                createTemporaryLock(vm_name, 0)
+                lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_UNAVAILABLE', lock = True, temporary_lock = dateToUnix(getToday()), 
+                    change_last_updated = False, verbose = False, ID = kwargs['ID'])
         else:
             sendError(
                 kwargs['ID'], 'Trying to change connection status, but no VM found for IP {}'.format(str(vm_ip)))
