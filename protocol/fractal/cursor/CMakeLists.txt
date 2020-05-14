@@ -1,11 +1,11 @@
-if (${UNIX} AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_library(fractalCursor STATIC
             cursor.h
             linuxcursor.c
             )
-elseif(${WIN32})
+elseif((${CMAKE_SYSTEM_NAME} MATCHES "Windows"))
     add_library(fractalCursor STATIC
             cursor.h
-            windowscursor.c.c
+            windowscursor.c
             )
 endif()

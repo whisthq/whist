@@ -10,3 +10,6 @@ if (${UNIX})
 elseif(${WIN32})
     target_sources(fractalAudio PRIVATE wasapicapture.c wasapicapture.h)
 endif ()
+
+set_property(TARGET fractalAudio PROPERTY
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

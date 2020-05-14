@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 #if defined(_WIN32)
-#pragma comment(lib, "ws2_32.lib")
+#include <winsock2.h>
 #include <Audioclient.h>
 #include <D3D11.h>
 #include <D3d11_1.h>

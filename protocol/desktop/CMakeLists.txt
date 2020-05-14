@@ -14,13 +14,19 @@ add_executable(FractalClient
 
 
 # FFMPEG, Threading and Dynamic linking libs
+
+foreach(LIB ${FFMPEG_LIBS_PATHS})
+    message(STATUS ${LIB})
+    target_link_libraries(FractalClient ${LIB})
+endforeach(LIB)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-target_link_libraries(FractalClient
-        PkgConfig::LIBAV
-        Threads::Threads
-        ${CMAKE_DL_LIBS}
-        )
+#target_link_libraries(FractalClient
+#        Threads::Threads
+#        ${CMAKE_DL_LIBS}
+#        )
+
+#message(FATAL_ERROR ${CMAKE_DL_LIBS})
 
 #[[
 ################## Static Libraries we supply ##################
@@ -30,7 +36,7 @@ if(NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}/")
 endif()
 
-find_library(STATIC_OPENSSL crypto HINTS ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/)
+find_library(STATIC_OPENSSL libcrypto HINTS ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/)
 if(NOT STATIC_OPENSSL)
     message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
 endif()
@@ -40,10 +46,10 @@ message(STATUS ${STATIC_OPENSSL})
 ################## Linking platform independent libs ##################
 ]]
 target_link_libraries(FractalClient
-        m
+#        m
+        fractalCore
         fractalAudio
         fractalVideo
-        fractalCore
         fractalClipboard
         fractalCursor
         fractalInput
@@ -56,7 +62,7 @@ target_link_libraries(FractalClient
 #[[
 ################## LINUX ##################
 ]]
-if (${UNIX} AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_package(X11 REQUIRED
             Xfixes)
     include_directories(${X11_INCLUDE_DIR})
@@ -70,11 +76,12 @@ endif()
 #[[
 ################## MACOS ##################
 ]]
-if (${UNIX} AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+# untested
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     SET(CMAKE_C_COMPILER clang)
     set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
-    find_library(OSX_LIBS
+    target_link_libraries(FractalClient
             objc
             iconv
             OpenGL
@@ -89,34 +96,49 @@ if (${UNIX} AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
             Metal
             QuartzCore
             )
-    target_link_libraries(FractalClient ${OSX_LIBS})
 endif()
 
 #[[
 ################## WINDOWS ##################
 ]]
 if(${WIN32})
-    find_library(WIN_LIBS
-        libvcruntime
-        libucrt
-        libcmt
-        kernel32
-        gdi32
-        winmm
-        imm32
-        shell32
-        advapi32
-        ole32
-        oleaut32
-        opengl32
-        user32
-        uuid
-        version
-        ws2_32
-        shlwapi
-        crypt32
-        d3d11
-        dxgi
-        shcore)
-    target_link_libraries(FractalClient ${WIN_LIBS})
+    #compiler flags, TODO debug vs release
+    SET(CMAKE_C_FLAGS  " -DWIN32_LEAN_AND_MEAN -DUNICODE -DWIN32 -DWIN32 /W4 /MT /MP" )
+
+    #Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
+    # this comes up when we used precompiled libraries which we do not have .pdb files for
+    set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
+
+    #libmfx, windows specific static lib
+    find_library(LIBMFX libmfx HINTS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/)
+    target_link_libraries(FractalClient ${LIBMFX})
+
+    set_property(TARGET FractalClient PROPERTY
+            MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+    # Link to system libs
+    target_link_libraries(FractalClient
+            libvcruntime
+            libucrt
+            libcmt
+            kernel32
+            gdi32
+            winmm
+            imm32
+            shell32
+            advapi32
+            ole32
+            oleaut32
+            opengl32
+            user32
+            uuid
+            version
+            ws2_32
+            shlwapi
+            crypt32
+            d3d11
+            dxgi
+            shcore
+            )
+
 endif()

@@ -1,6 +1,6 @@
 add_library(fractalInput "")
 
-if (${UNIX} AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(fractalInput PRIVATE
             input.h
             linuxinput.c

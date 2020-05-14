@@ -2,21 +2,20 @@ add_library(fractalUtils STATIC
         aes.h
         clock.h
         logging.h
-#        mac_utils.h
         sdlscreeninfo.h
-        windows_utils.h
         aes.c
         clock.c
         logging.c
-#        mac_utils.c
         sdlscreeninfo.c
-#        windows_utils.c
         )
 
-if (${UNIX} AND NOT ${APPLE})
-    target_sources(fractalInput PRIVATE linuxinput.c linuxinput.h)
-elseif(${WIN32})
-    target_sources(fractalInput PRIVATE windowsinput.c windowsinput.h)
-    #elseif(${APPLE})
-    #    target_sources(fractalInput PRIVATE mac_clipboard.c clipboard_osx.m)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    target_sources(fractalUtils PRIVATE linuxinput.c linuxinput.h)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    target_sources(fractalUtils PRIVATE windows_utils.c windows_utils.h)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        target_sources(fractalUtils PRIVATE mac_utils.c mac_utils.h)
 endif ()
+
+set_property(TARGET fractalUtils PROPERTY
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

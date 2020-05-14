@@ -61,9 +61,11 @@ Includes
 */
 
 #if defined(_WIN32)
+// moved this to #include winsock2.h to fractal.h because it needs to come before windows.h
 #pragma comment(lib, "ws2_32.lib")
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <windows.h>
 #else
 #include <arpa/inet.h>
 #include <netdb.h>

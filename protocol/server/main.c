@@ -35,9 +35,9 @@
 #include "../fractal/utils/windows_utils.h"
 #endif
 
-#ifdef _WIN32
-#pragma comment(lib, "ws2_32.lib")
-#endif
+//#ifdef _WIN32
+//#pragma comment(lib, "ws2_32.lib")
+//#endif
 // Linux shouldn't have this
 
 #define USE_GPU 0
