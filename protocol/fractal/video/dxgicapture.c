@@ -231,6 +231,16 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
         return -1;
     }
 
+    if( hardware->final_output_desc.DesktopCoordinates.left != 0 )
+    {
+        LOG_ERROR( "final_output_desc left found: %d\n", hardware->final_output_desc.DesktopCoordinates.left );
+    }
+
+    if( hardware->final_output_desc.DesktopCoordinates.top != 0 )
+    {
+        LOG_ERROR( "final_output_desc top found: %d\n", hardware->final_output_desc.DesktopCoordinates.top );
+    }
+
     device->width = hardware->final_output_desc.DesktopCoordinates.right;
     device->height = hardware->final_output_desc.DesktopCoordinates.bottom;
 
