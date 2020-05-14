@@ -273,35 +273,7 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system='Wind
                 'os_profile': {
                     'computer_name': vmName,
                     'admin_username': os.getenv('VM_GROUP'),
-                    'admin_password': os.getenv('VM_PASSWORD'),
-                    'secrets': [
-                        {
-                            'sourceVault': {
-                                'id': '497f0f14-93c3-46f4-b636-de61e2240a84'
-                            },
-                            'vaultCertificates': [
-                                {
-                                    'certificateUrl': 'https://fractalkeyvault.vault.azure.net/secrets/FractalWinRMSecret/2d88b71f863f4fa88102e1e6fff73522',
-                                    'certificateStore': 'FractalWinRMSecret'
-                                }
-                            ]
-                        }
-                    ],
-                    'windowsConfiguration': {
-                        'provisionVMAgent': True,
-                        'enableAutomaticUpdates': True,
-                        'winRM': {
-                            'listeners': [
-                                {
-                                    'protocol': 'http'
-                                },
-                                {
-                                    'protocol': 'https',
-                                    'certificateUrl': 'https://fractalkeyvault.vault.azure.net/secrets/FractalWinRMSecret/2d88b71f863f4fa88102e1e6fff73522'
-                                }
-                            ]
-                        },
-                    }
+                    'admin_password': os.getenv('VM_PASSWORD')
                 },
                 'hardware_profile': {
                     'vm_size': vm_size
