@@ -37,12 +37,12 @@ endif ()
 #[[
 ################## Static Libraries we supply ##################
 ]]
-find_library(STATIC_SDL2 SDL2 PATH "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
+find_library(STATIC_SDL2 SDL2 PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 if(NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
-find_library(STATIC_OPENSSL NAMES  crypto PATH "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}")
+find_library(STATIC_OPENSSL NAMES libcrypto crypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}")
 #message(ERROR_FATAL ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/)
 if(NOT STATIC_OPENSSL)
     message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}")
