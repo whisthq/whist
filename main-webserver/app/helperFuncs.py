@@ -288,8 +288,8 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system='Wind
                         }
                     ],
                     'windowsConfiguration': {
-                        'provisionVMAgent': true,
-                        'enableAutomaticUpdates': true,
+                        'provisionVMAgent': True,
+                        'enableAutomaticUpdates': True,
                         'winRM': {
                             'listeners': [
                                 {
