@@ -33,8 +33,12 @@ def unixToDate(utc):
     return datetime.datetime.fromtimestamp(utc)
 
 
+def dateToString(time):
+    return time.strftime('%m/%d/%Y, %H:%M')
+
+
 def getCurrentTime():
-    return datetime.datetime.now().strftime('%m/%d/%Y, %H:%M')
+    return dateToString(datetime.datetime.now())
 
 
 def dateToUnix(date):
@@ -55,6 +59,9 @@ def shiftUnixByWeek(utc, num_weeks):
     date = unixToDate(utc)
     return round(dateToUnix(date + relativedelta(weeks=num_weeks)))
 
+def shiftUnixByMinutes(utc, num_minutes):
+    date = unixToDate(utc)
+    return round(dateToUnix(date + relativedelta(minutes=num_minutes)))
 
 def generateToken(user):
     token = jwt.encode({'email': user}, os.getenv('SECRET_KEY'))
@@ -91,6 +98,7 @@ def serverLog(logMsg):
         requests.post(url=url, data=json.dumps(data), headers=headers)
     else:
         print(logMsg)
+
 
 def yieldNumber():
     num = 0

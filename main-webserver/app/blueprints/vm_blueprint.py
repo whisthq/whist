@@ -56,7 +56,8 @@ def vm(action, **kwargs):
         if 'operating_system' in body.keys():
             operating_system = body['operating_system']
 
-        sendInfo(kwargs['ID'], 'Creating VM of size {}, location {}, operating system {}'.format(vm_size, location, operating_system))
+        sendInfo(kwargs['ID'], 'Creating VM of size {}, location {}, operating system {}'.format(
+            vm_size, location, operating_system))
 
         task = createVM.apply_async([vm_size, location, operating_system])
         if not task:
@@ -138,19 +139,28 @@ def vm(action, **kwargs):
         vm_info = fetchVMByIP(vm_ip)
         if vm_info:
             vm_name = vm_info['vm_name'] if vm_info['vm_name'] else ''
+
+            version = None
+            if 'version' in body:
+                version = body['version']
+                updateProtocolVersion(vm_name, version)
+
             vm_state = vm_info['state'] if vm_info['state'] else ''
-            intermediate_states = ['STOPPING', 'DEALLOCATING', 'ATTACHING']
+            intermediate_states = [
+                'STOPPING', 'DEALLOCATING', 'ATTACHING', 'STARTING', 'RESTARTING']
 
             if vm_state in intermediate_states:
-                sendWarning(kwargs['ID'], 'Trying to change connection status, but VM {} is in intermediate state {}. Not changing state.'.format(vm_name, vm_state))
+                sendWarning(kwargs['ID'], 'Trying to change connection status to {}, but VM {} is in intermediate state {}. Not changing state.'.format(
+                    'RUNNING_AVAILABLE' if available else 'RUNNING_UNAVAILABLE', vm_name, vm_state))
             if available and not vm_state in intermediate_states:
-                updateVMState(vm_name, 'RUNNING_AVAILABLE')
-                lockVM(vm_name, False, change_last_updated = False, verbose = False, ID = kwargs['ID'])
+                lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_AVAILABLE', lock = False, temporary_lock = None, 
+                    change_last_updated = False, verbose = False, ID = kwargs['ID'])
             elif not available and not vm_state in intermediate_states:
-                updateVMState(vm_name, 'RUNNING_UNAVAILABLE')
-                lockVM(vm_name, True, change_last_updated = False, verbose = False, ID = kwargs['ID'])
+                lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_UNAVAILABLE', lock = True, temporary_lock = dateToUnix(getToday()), 
+                    change_last_updated = False, verbose = False, ID = kwargs['ID'])
         else:
-            sendError(kwargs['ID'], 'Trying to change connection status, but no VM found for IP {}'.format(str(vm_ip)))
+            sendError(
+                kwargs['ID'], 'Trying to change connection status, but no VM found for IP {}'.format(str(vm_ip)))
 
         return jsonify({'status': 200}), 200
     elif action == 'isDev' and request.method == 'GET':
@@ -167,6 +177,7 @@ def vm(action, **kwargs):
 
     return jsonify({}), 400
 
+
 @vm_bp.route('/tracker/<action>', methods=['POST'])
 @jwt_required
 @generateID
@@ -182,12 +193,16 @@ def tracker(action, **kwargs):
         username = body['username']
         is_user = body['is_user']
         addTimeTable(username, 'logon', time, is_user)
+        vms = fetchUserVMs(username)
+        if vms:
+            createTemporaryLock(vms[0]['vm_name'], 0)
     elif action == 'logoff':
         username = body['username']
         is_user = body['is_user']
         customer = fetchCustomer(username)
         if not customer:
-            sendCritical(kwargs['ID'], '{} logged on/off but is not a registered customer'.format(username))
+            sendCritical(
+                kwargs['ID'], '{} logged on/off but is not a registered customer'.format(username))
         else:
             stripe.api_key = os.getenv('STRIPE_SECRET')
             subscription_id = customer['subscription']
@@ -196,7 +211,8 @@ def tracker(action, **kwargs):
                 payload = stripe.Subscription.retrieve(subscription_id)
 
                 if os.getenv('HOURLY_PLAN_ID') == payload['items']['data'][0]['plan']['id']:
-                    sendInfo(kwargs['ID'], '{} is an hourly plan subscriber'.format(username))
+                    sendInfo(
+                        kwargs['ID'], '{} is an hourly plan subscriber'.format(username))
                     user_activity = getMostRecentActivity(username)
                     if user_activity['action'] == 'logon':
                         now = dt.now()
@@ -207,7 +223,8 @@ def tracker(action, **kwargs):
                                 79 * (now - logon).total_seconds()/60/60)
                             addPendingCharge(username, amount)
                     else:
-                        sendError(kwargs['ID'], '{} logged off but no logon was recorded'.format(username))
+                        sendError(
+                            kwargs['ID'], '{} logged off but no logon was recorded'.format(username))
             except:
                 pass
 
@@ -254,7 +271,7 @@ def info(action, **kwargs):
 @generateID
 @logRequestInfo
 def logs(**kwargs):
-    body = request.get_json()
+    body = json.loads(request.data)
 
     vm_ip = None
     if 'vm_ip' in body:
@@ -266,12 +283,14 @@ def logs(**kwargs):
         else:
             vm_ip = request.remote_addr
 
-    sendInfo(kwargs['ID'], 'Logs received from {} with connection ID {} and IP {}'.format(body['sender'], str(body['connection_id']), str(vm_ip)))
+    sendInfo(kwargs['ID'], 'Logs received from {} with connection ID {} and IP {}'.format(
+        body['sender'], str(body['connection_id']), str(vm_ip)))
 
     version = None
     if 'version' in body:
         version = body['version']
-        sendInfo(kwargs['ID'], 'Logs came from version {}'.format(body['version']))
+        sendInfo(kwargs['ID'], 'Logs came from version {}'.format(
+            body['version']))
 
     task = storeLogs.apply_async(
         [body['sender'], body['connection_id'], body['logs'], vm_ip, version, kwargs['ID']])

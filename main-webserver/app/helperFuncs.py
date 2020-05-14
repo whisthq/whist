@@ -4,6 +4,14 @@ from .logger import *
 
 
 def createClients():
+    """Creates Azure management clients
+
+    This function is used to access the resource management, compute management, and network management clients, which are used to access the Azure VM API
+
+    Returns:
+    ResourceManagementClient, ComputeManagementClient, NetworkManagementClient
+
+   """
     subscription_id = os.getenv('AZURE_SUBSCRIPTION_ID')
     credentials = ServicePrincipalCredentials(
         client_id=os.getenv('AZURE_CLIENT_ID'),
@@ -83,7 +91,18 @@ def createNic(name, location, tries):
             return None
 
 
-def deleteResource(name, delete_disk, ID = -1):
+def deleteResource(name, delete_disk, ID=-1):
+    """Deletes a vm
+
+    Parameters:
+    name (str): the name of the VM
+    delete_disk (bool): whether or not to delete the disk attached to the vm
+    ID (int): a unique identifier for the method in PaperTrail (default is -1)
+
+    Returns:
+    int: Error flag: 1 success, -1 fail
+
+   """
     _, compute_client, network_client = createClients()
     vnetName, subnetName, ipName, nicName = name + \
         '_vnet', name + '_subnet', name + '_ip', name + '_nic'
@@ -99,7 +118,8 @@ def deleteResource(name, delete_disk, ID = -1):
         async_vm_deallocate = compute_client.virtual_machines.deallocate(
             os.getenv('VM_GROUP'), name)
         async_vm_deallocate.wait()
-        time.sleep(60)  # wait a whole minute to ensure it deallocated properly
+        # wait a whole minute to ensure it deallocated properly
+        time.sleep(60)
         sendInfo(ID, 'VM {} deallocated successfully'.format(name))
     except Exception as e:
         sendError(ID, str(e))
@@ -188,11 +208,13 @@ def deleteResource(name, delete_disk, ID = -1):
     if delete_disk:
         # step 6, delete the OS disk -- not needed anymore (OS disk swapping)
         try:
-            sendInfo(ID, "Attempting to delete OS disk from VM {}".format(name))
+            sendInfo(
+                ID, "Attempting to delete OS disk from VM {}".format(name))
             os_disk_delete = compute_client.disks.delete(
                 os.getenv('VM_GROUP'), os_disk_name)
             os_disk_delete.wait()
-            sendInfo(ID, 'Disk {} deleted from VM {} successfully'.format(os_disk_name, name))
+            sendInfo(ID, 'Disk {} deleted from VM {} successfully'.format(
+                os_disk_name, name))
         except Exception as e:
             sendError(ID, str(e))
             hr = -1
@@ -200,7 +222,20 @@ def deleteResource(name, delete_disk, ID = -1):
     return hr
 
 
-def createVMParameters(vmName, nic_id, vm_size, location, operating_system = 'Windows'):
+def createVMParameters(vmName, nic_id, vm_size, location, operating_system='Windows'):
+    """Adds a vm entry to the SQL database
+
+    Parameters:
+    vmName (str): The name of the VM to add
+    nic_id (str): The vm's network interface ID
+    vm_size (str): The type of vm in terms of specs(default is NV6)
+    location (str): The Azure region of the vm
+    operating_system (str): The operating system of the vm (default is 'Windows')
+
+    Returns:
+    dict: Parameters that will be used in Azure sdk
+   """
+
     with engine.connect() as conn:
         oldUserNames = [cell[0] for cell in list(
             conn.execute('SELECT "username" FROM v_ms'))]
@@ -221,10 +256,11 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system = 'Wi
         }
 
         command = text("""
-            INSERT INTO v_ms("vm_name", "disk_name") 
+            INSERT INTO v_ms("vm_name", "disk_name")
             VALUES(:vmName, :disk_name)
             """)
-        params = {'vmName': vmName, 'username': userName, 'disk_name': None}
+        params = {'vmName': vmName,
+                  'username': userName, 'disk_name': None}
         with engine.connect() as conn:
             conn.execute(command, **params)
             conn.close()
@@ -237,30 +273,30 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system = 'Wi
                     'admin_password': os.getenv('VM_PASSWORD'),
                     'secrets': [
                         {
-                        'sourceVault': {
-                            'id': '497f0f14-93c3-46f4-b636-de61e2240a84'
-                        },
-                        'vaultCertificates': [
-                            {
-                            'certificateUrl': 'https://fractalkeyvault.vault.azure.net/secrets/FractalWinRMSecret/2d88b71f863f4fa88102e1e6fff73522',
-                            'certificateStore': 'FractalWinRMSecret'
-                            }
-                        ]
+                            'sourceVault': {
+                                'id': '497f0f14-93c3-46f4-b636-de61e2240a84'
+                            },
+                            'vaultCertificates': [
+                                {
+                                    'certificateUrl': 'https://fractalkeyvault.vault.azure.net/secrets/FractalWinRMSecret/2d88b71f863f4fa88102e1e6fff73522',
+                                    'certificateStore': 'FractalWinRMSecret'
+                                }
+                            ]
                         }
                     ],
                     'windowsConfiguration': {
                         'provisionVMAgent': true,
                         'enableAutomaticUpdates': true,
                         'winRM': {
-                        'listeners': [
-                            {
-                            'protocol': 'http'
-                            },
-                            {
-                            'protocol': 'https',
-                            'certificateUrl': 'https://fractalkeyvault.vault.azure.net/secrets/FractalWinRMSecret/2d88b71f863f4fa88102e1e6fff73522'
-                            }
-                        ]
+                            'listeners': [
+                                {
+                                    'protocol': 'http'
+                                },
+                                {
+                                    'protocol': 'https',
+                                    'certificateUrl': 'https://fractalkeyvault.vault.azure.net/secrets/FractalWinRMSecret/2d88b71f863f4fa88102e1e6fff73522'
+                                }
+                            ]
                         },
                     }
                 },
@@ -288,9 +324,18 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system = 'Wi
 
 
 def createDiskEntry(disk_name, vm_name, username, location, state="ACTIVE"):
+    """Adds a disk to the disks SQL database
+
+    Parameters:
+    disk_name(str): The name of the disk to add
+    vmName (str): The name of the VM that it is attached to
+    username (str): The username of the disk's respective user
+    location (str): The Azure region of the vm
+    state (str): The state of the disk (default is "ACTIVE")
+   """
     with engine.connect() as conn:
         command = text("""
-            INSERT INTO disks("disk_name", "vm_name", "username", "location", "state") 
+            INSERT INTO disks("disk_name", "vm_name", "username", "location", "state")
             VALUES(:diskname, :vmname, :username, :location, :state)
             """)
         params = {
@@ -306,6 +351,14 @@ def createDiskEntry(disk_name, vm_name, username, location, state="ACTIVE"):
 
 
 def getVM(vm_name):
+    """Retrieves information about the model view or the instance view of an Azure virtual machine
+
+    Parameters:
+    vmName (str): The name of the VM to retrieve
+
+    Returns:
+    VirtualMachine: The instance view of the virtual machine
+   """
     _, compute_client, _ = createClients()
     try:
         virtual_machine = compute_client.virtual_machines.get(
@@ -318,12 +371,21 @@ def getVM(vm_name):
 
 
 def singleValueQuery(value):
+    """Queries all vms from the v_ms SQL table with the specified name
+
+    Parameters:
+    vmName (str): The name of the VM to retrieve
+
+    Returns:
+    dict: The dictionary respresenting the query result
+   """
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :value
         """)
     params = {'value': value}
     with engine.connect() as conn:
-        exists = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        exists = cleanFetchedSQL(
+            conn.execute(command, **params).fetchall())
         conn.close()
         return True if exists else False
 
@@ -335,7 +397,8 @@ def getIP(vm):
     ni_group = ni_reference[4]
     ni_name = ni_reference[8]
 
-    net_interface = network_client.network_interfaces.get(ni_group, ni_name)
+    net_interface = network_client.network_interfaces.get(
+        ni_group, ni_name)
     ip_reference = net_interface.ip_configurations[0].public_ip_address
     ip_reference = ip_reference.id.split('/')
     ip_group = ip_reference[4]
@@ -346,11 +409,17 @@ def getIP(vm):
 
 
 def updateVMUsername(username, vm_name):
+    """Updates the username associated with a vm entry in the v_ms SQL table
+
+    Parameters:
+    username (str): The new username
+    vm_name (str): The name of the VM row to update
+   """
     command = text("""
         UPDATE v_ms
         SET username = :username
         WHERE
-           "vm_name" = :vm_name
+        "vm_name" = :vm_name
         """)
     params = {'username': username, 'vm_name': vm_name}
     with engine.connect() as conn:
@@ -359,6 +428,19 @@ def updateVMUsername(username, vm_name):
 
 
 def loginUser(username, password):
+    """Verifies the username password combination in the users SQL table
+
+    If the password is the admin password, just check if the username exists
+    Else, check to see if the username is in the database and the jwt encoded password is in the database
+
+    Parameters:
+    username (str): The username
+    vm_name (str): The password
+
+    Returns:
+    bool: True if authentication success, False otherwise
+   """
+
     if password != os.getenv('ADMIN_PASSWORD'):
         command = text("""
             SELECT * FROM users WHERE "username" = :userName AND "password" = :password
@@ -366,7 +448,8 @@ def loginUser(username, password):
         pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
         params = {'userName': username, 'password': pwd_token}
         with engine.connect() as conn:
-            user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            user = cleanFetchedSQL(conn.execute(
+                command, **params).fetchall())
             conn.close()
             return True if user else False
     else:
@@ -375,12 +458,22 @@ def loginUser(username, password):
             """)
         params = {'userName': username}
         with engine.connect() as conn:
-            user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            user = cleanFetchedSQL(conn.execute(
+                command, **params).fetchall())
             conn.close()
             return True if user else False
 
 
 def lookup(username):
+    """Looks up the username in the users SQL table
+
+    Args:
+        username (str): The username to look up
+
+    Returns:
+        bool: True if user exists, False otherwise
+    """
+
     command = text("""
         SELECT * FROM users WHERE "username" = :userName
         """)
@@ -392,6 +485,11 @@ def lookup(username):
 
 
 def genUniqueCode():
+    """Generates a unique referral code
+
+    Returns:
+        int: The generated code
+    """
     with engine.connect() as conn:
         old_codes = [cell[0]
                      for cell in list(conn.execute('SELECT "code" FROM users'))]
@@ -402,10 +500,20 @@ def genUniqueCode():
 
 
 def registerUser(username, password, token):
+    """Registers a user, and stores it in the users table
+
+    Args:
+        username (str): The username
+        password (str): The password (to be encoded into a jwt token)
+        token (str): The email comfirmation token
+
+    Returns:
+        int: 200 on success, 400 on fail
+    """
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     code = genUniqueCode()
     command = text("""
-        INSERT INTO users("username", "password", "code", "id") 
+        INSERT INTO users("username", "password", "code", "id")
         VALUES(:userName, :password, :code, :token)
         """)
     params = {'userName': username, 'password': pwd_token,
@@ -419,26 +527,14 @@ def registerUser(username, password, token):
             return 400
 
 
-def regenerateAllCodes():
-    with engine.connect() as conn:
-        for row in list(conn.execute('SELECT * FROM users')):
-            code = genUniqueCode()
-            command = text("""
-                UPDATE users 
-                SET "code" = :code
-                WHERE "username" = :userName
-                """)
-            params = {'code': code, 'userName': row[0]}
-            conn.execute(command, **params)
-            conn.close()
-
-
 def generateIDs():
+    """Generates an email verification token for all users in the users SQL table
+    """
     with engine.connect() as conn:
         for row in list(conn.execute('SELECT * FROM users')):
             token = generateToken(row[0])
             command = text("""
-                UPDATE users 
+                UPDATE users
                 SET "id" = :token
                 WHERE "username" = :userName
                 """)
@@ -448,9 +544,15 @@ def generateIDs():
 
 
 def resetPassword(username, password):
+    """Updates the password for a user in the users SQL table
+
+    Args:
+        username (str): The user to update the password for
+        password (str): The new password
+    """
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     command = text("""
-        UPDATE users 
+        UPDATE users
         SET "password" = :password
         WHERE "username" = :userName
         """)
@@ -461,29 +563,51 @@ def resetPassword(username, password):
 
 
 def fetchVMCredentials(vm_name):
+    """Fetches a vm from the v_ms sql table
+
+    Args:
+        vm_name (str): The name of the vm to fetch
+
+    Returns:
+        dict: An object respresenting the respective row in the table
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name}
     with engine.connect() as conn:
-        vm_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
-        # Decode password
+        vm_info = cleanFetchedSQL(
+            conn.execute(command, **params).fetchone())
         conn.close()
         return vm_info
 
+
 def fetchVMByIP(vm_ip):
+    """Fetches a vm from the v_ms sql table
+
+    Args:
+        vm_ip (str): The ip address (ipv4) of the vm to fetch
+
+    Returns:
+        dict: An object respresenting the respective row in the table
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "ip" = :vm_ip
         """)
     params = {'vm_ip': vm_ip}
     with engine.connect() as conn:
-        vm_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
-        # Decode password
+        vm_info = cleanFetchedSQL(
+            conn.execute(command, **params).fetchone())
         conn.close()
         return vm_info
 
 
 def genVMName():
+    """Generates a unique name for a vm
+
+    Returns:
+        str: The generated name
+    """
     with engine.connect() as conn:
         oldVMs = [cell[0]
                   for cell in list(conn.execute('SELECT "vm_name" FROM v_ms'))]
@@ -494,6 +618,11 @@ def genVMName():
 
 
 def genDiskName():
+    """Generates a unique name for a disk
+
+    Returns:
+        str: The generated name
+    """
     with engine.connect() as conn:
         oldDisks = [cell[0] for cell in list(
             conn.execute('SELECT "disk_name" FROM disks'))]
@@ -503,32 +632,18 @@ def genDiskName():
         return str(diskName)
 
 
-def storeForm(name, email, cubeType):
+def addTimeTable(username, action, time, is_user, ID=-1):
+    """Adds a user action to the login_history sql table
+
+    Args:
+        username (str): The username of the user
+        action (str): ['logon', 'logoff']
+        time (str): Time in the format mm-dd-yyyy, hh:mm:ss
+        is_user (bool): Whether an actual user did the action, vs admin
+        ID (int, optional): Papertrail loggind ID. Defaults to -1.
+    """
     command = text("""
-        INSERT INTO form("fullname", "username", "cubetype") 
-        VALUES(:name, :email, :cubeType)
-        """)
-    params = {'name': name, 'email': email, 'cubeType': cubeType}
-    with engine.connect() as conn:
-        conn.execute(command, **params)
-        conn.close()
-
-
-def storePreOrder(address1, address2, zipCode, email, order):
-    command = text("""
-        INSERT INTO pre_order("address1", "address2", "zipcode", "username", "base", "enhanced", "power") 
-        VALUES(:address1, :address2, :zipcode, :email, :base, :enhanced, :power)
-        """)
-    params = {'address1': address1, 'address2': address2, 'zipcode': zipCode, 'email': email,
-              'base': int(order['base']), 'enhanced': int(order['enhanced']), 'power': int(order['power'])}
-    with engine.connect() as conn:
-        conn.execute(command, **params)
-        conn.close()
-
-
-def addTimeTable(username, action, time, is_user, ID = -1):
-    command = text("""
-        INSERT INTO login_history("username", "timestamp", "action", "is_user") 
+        INSERT INTO login_history("username", "timestamp", "action", "is_user")
         VALUES(:userName, :currentTime, :action, :is_user)
         """)
 
@@ -548,43 +663,31 @@ def addTimeTable(username, action, time, is_user, ID = -1):
             disk_name = disk[0]['disk_name']
             vms = mapDiskToVM(disk_name)
             if vms:
-                _, compute_client, _ = createClients()
                 vm_name = vms[0]['vm_name']
 
                 if action == 'logoff':
                     lockVM(vm_name, False)
                 elif action == 'logon':
                     lockVM(vm_name, True)
-
-                vm_state = compute_client.virtual_machines.instance_view(
-                    resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
-                if 'running' in vm_state.statuses[1].code:
-                    if action == 'logoff':
-                        updateVMState(vms[0]['vm_name'], 'RUNNING_AVAILABLE')
-                    elif action == 'logon':
-                        updateVMState(vms[0]['vm_name'], 'RUNNING_UNAVAILABLE')
-                else:
-                    updateVMStateAutomatically(vm_name)
             else:
-                sendCritical(ID, 'Could not find a VM currently attached to disk {}'.format(disk_name))
+                sendCritical(
+                    ID, 'Could not find a VM currently attached to disk {}'.format(disk_name))
         else:
-            sendCritical(ID, 'Could not find a disk belong to user {}'.format(username))
+            sendCritical(
+                ID, 'Could not find a disk belong to user {}'.format(username))
 
-        conn.close()
-
-
-def deleteTimeTable():
-    command = text("""
-        DELETE FROM login_history
-        """)
-    params = {}
-
-    with engine.connect() as conn:
-        conn.execute(command, **params)
         conn.close()
 
 
 def fetchUserVMs(username):
+    """Fetches vms that are connected to the user
+
+    Args:
+        username (str): The username
+
+    Returns:
+        dict: The object representing the respective vm in the v_ms sql database
+    """
     if username:
         command = text("""
             SELECT * FROM v_ms WHERE "username" = :username
@@ -606,20 +709,42 @@ def fetchUserVMs(username):
             conn.close()
             return vms_info
 
+
 def getVMSize(disk_name):
+    """Gets the size of the vm
+
+    Args:
+        disk_name (str): Name of the disk attached to the vm
+
+    Returns:
+        str: The size of the disk attached to the vm
+    """
     command = text("""
         SELECT * FROM disks WHERE "disk_name" = :disk_name
         """)
     params = {'disk_name': disk_name}
     with engine.connect() as conn:
-        disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        disks_info = cleanFetchedSQL(
+            conn.execute(command, **params).fetchone())
         conn.close()
         return disks_info['vm_size']
 
-def fetchUserDisks(username, show_all=False, ID = -1):
+
+def fetchUserDisks(username, show_all=False, ID=-1):
+    """Fetches all disks associated with the user
+
+    Args:
+        username (str): The username. If username is null, it fetches all disks
+        show_all (bool, optional): Whether or not to select all disks regardless of state, vs only disks with ACTIVE state. Defaults to False.
+        ID (int, optional): Papertrail logging ID. Defaults to -1.
+
+    Returns:
+        array: An array of the disks
+    """
     if username:
         if not show_all:
-            sendInfo(ID, 'Fetching all disks associated with {} state ACTIVE'.format(username))
+            sendInfo(
+                ID, 'Fetching all disks associated with {} state ACTIVE'.format(username))
 
             command = text("""
                 SELECT * FROM disks WHERE "username" = :username AND "state" = :state
@@ -633,13 +758,16 @@ def fetchUserDisks(username, show_all=False, ID = -1):
                 conn.close()
 
                 if disks_info:
-                    sendInfo(ID, 'Disk names fetched and Postgres connection closed')
+                    sendInfo(
+                        ID, 'Disk names fetched and Postgres connection closed')
                 else:
-                    sendWarning(ID, 'No disk found for {}. Postgres connection closed')
+                    sendWarning(
+                        ID, 'No disk found for {}. Postgres connection closed')
 
                 return disks_info
         else:
-            sendInfo(ID, 'Fetching all disks associated with {} regardless of state'.format(username))
+            sendInfo(
+                ID, 'Fetching all disks associated with {} regardless of state'.format(username))
 
             command = text("""
                 SELECT * FROM disks WHERE "username" = :username
@@ -653,9 +781,11 @@ def fetchUserDisks(username, show_all=False, ID = -1):
                 conn.close()
 
                 if disks_info:
-                    sendInfo(ID, 'Disk names fetched and Postgres connection closed')
+                    sendInfo(
+                        ID, 'Disk names fetched and Postgres connection closed')
                 else:
-                    sendWarning(ID, 'No disk found for {}. Postgres connection closed')
+                    sendWarning(
+                        ID, 'No disk found for {}. Postgres connection closed')
 
                 return disks_info
     else:
@@ -673,31 +803,48 @@ def fetchUserDisks(username, show_all=False, ID = -1):
             conn.close()
 
             if disks_info:
-                sendInfo(ID, 'Disk names fetched and Postgres connection closed')
+                sendInfo(
+                    ID, 'Disk names fetched and Postgres connection closed')
             else:
-                sendWarning(ID, 'No disk found in Postgres. Postgres connection closed')
+                sendWarning(
+                    ID, 'No disk found in Postgres. Postgres connection closed')
 
             return disks_info
 
 
 def fetchUserCode(username):
+    """Fetches the verification code of a user
+
+    Args:
+        username (str): The username of the user of interest
+
+    Returns:
+        str: The verification code
+    """
     try:
         command = text("""
             SELECT * FROM users WHERE "username" = :userName
             """)
         params = {'userName': username}
         with engine.connect() as conn:
-            user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+            user = cleanFetchedSQL(conn.execute(
+                command, **params).fetchone())
             conn.close()
             return user['code']
     except:
         return None
 
 
-def deleteRow(username, vm_name, usernames, vm_names):
+def deleteRow(vm_name, vm_names):
+    """Deletes a row from the v_ms sql table, if vm_name is not in vm_names
+
+    Args:
+        vm_name (str): The name of the vm to check
+        vm_names (array[string]): An array of the names of accepted VMs
+    """
     if not (vm_name in vm_names):
         command = text("""
-            DELETE FROM v_ms WHERE "vm_name" = :vm_name 
+            DELETE FROM v_ms WHERE "vm_name" = :vm_name
             """)
         params = {'vm_name': vm_name}
         with engine.connect() as conn:
@@ -706,8 +853,16 @@ def deleteRow(username, vm_name, usernames, vm_names):
 
 
 def deleteUser(username):
+    """Deletes a user from the users sql table
+
+    Args:
+        username (str): The name of the user
+
+    Returns:
+        int: 200 for successs, 404 for failure
+    """
     command = text("""
-        DELETE FROM users WHERE "username" = :username 
+        DELETE FROM users WHERE "username" = :username
         """)
     params = {'username': username}
     with engine.connect() as conn:
@@ -719,9 +874,16 @@ def deleteUser(username):
             return 404
 
 
-def insertVM(vm_name, vm_ip = None, location = None):
+def insertVM(vm_name, vm_ip=None, location=None):
+    """Inserts a vm into the v_ms table
+
+    Args:
+        vm_name (str): The name of the vm
+        vm_ip (str, optional): The ipv4 address of the vm. Defaults to None.
+        location (str, optional): The region that the vm is based in. Defaults to None.
+    """
     command = text("""
-        SELECT * FROM v_ms WHERE "vm_name" = :vm_name 
+        SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name}
     with engine.connect() as conn:
@@ -737,11 +899,11 @@ def insertVM(vm_name, vm_ip = None, location = None):
 
             disk_name = vm.storage_profile.os_disk.name
             username = mapDiskToUser(disk_name)
-            lock = False 
+            lock = False
             dev = False
 
             command = text("""
-                INSERT INTO v_ms("vm_name", "username", "disk_name", "ip", "location", "lock", "dev") 
+                INSERT INTO v_ms("vm_name", "username", "disk_name", "ip", "location", "lock", "dev")
                 VALUES(:vm_name, :username, :disk_name, :ip, :location, :lock, :dev)
                 """)
             params = {'username': username,
@@ -757,6 +919,11 @@ def insertVM(vm_name, vm_ip = None, location = None):
 
 
 def fetchLoginActivity():
+    """Fetches the entire login_history sql table
+
+    Returns:
+        array[dict]: The login history
+    """
     command = text("""
         SELECT * FROM login_history
         """)
@@ -770,47 +937,84 @@ def fetchLoginActivity():
 
 
 def fetchCustomer(username):
+    """Fetches the customer from the customers sql table by username
+
+    Args:
+        username (str): The customer name
+
+    Returns:
+        dict: A dictionary that represents the customer
+    """
     command = text("""
         SELECT * FROM customers WHERE "username" = :username
         """)
     params = {'username': username}
     with engine.connect() as conn:
-        customer = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        customer = cleanFetchedSQL(
+            conn.execute(command, **params).fetchone())
         conn.close()
         return customer
 
+
 def fetchCustomerById(id):
+    """Fetches the customer from the customers sql table by id
+
+    Args:
+        id (str): The unique id of the customer
+
+    Returns:
+        dict: A dictionary that represents the customer
+    """
     command = text("""
         SELECT * FROM customers WHERE "id" = :id
         """)
     params = {'id': id}
     with engine.connect() as conn:
-        customer = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        customer = cleanFetchedSQL(
+            conn.execute(command, **params).fetchone())
         conn.close()
         return customer
 
+
 def fetchCustomers():
+    """Fetches all customers from the customers sql table
+
+    Returns:
+        arr[dict]: An array of all the customers
+    """
     command = text("""
         SELECT * FROM customers
         """)
     params = {}
     with engine.connect() as conn:
-        customers = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        customers = cleanFetchedSQL(
+            conn.execute(command, **params).fetchall())
         conn.close()
         return customers
 
 
 def insertCustomer(email, customer_id, subscription_id, location, trial_end, paid):
+    """Adds a customer to the customer sql table, or updates the row if the customer already exists
+
+    Args:
+        email (str): Email of the customer
+        customer_id (str): Uid of the customer
+        subscription_id (str): Uid of the customer's subscription, if applicable
+        location (str): The location of the customer (state)
+        trial_end (int): The unix timestamp of the expiry of their trial
+        paid (bool): Whether or not the user paid before
+    """
     command = text("""
         SELECT * FROM customers WHERE "username" = :email
         """)
     params = {'email': email}
     with engine.connect() as conn:
-        customers = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        customers = cleanFetchedSQL(
+            conn.execute(command, **params).fetchall())
 
         if not customers:
             command = text("""
-                INSERT INTO customers("username", "id", "subscription", "location", "trial_end", "paid") 
+                INSERT INTO customers("username", "id", "subscription", "location", "trial_end", "paid")
                 VALUES(:email, :id, :subscription, :location, :trial_end, :paid)
                 """)
 
@@ -826,10 +1030,10 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
         else:
             location = customers[0]['location']
             command = text("""
-                UPDATE customers 
-                SET "id" = :id, 
-                    "subscription" = :subscription, 
-                    "location" = :location, 
+                UPDATE customers
+                SET "id" = :id,
+                    "subscription" = :subscription,
+                    "location" = :location,
                     "trial_end" = :trial_end,
                     "paid" = :paid
                 WHERE "username" = :email
@@ -846,23 +1050,38 @@ def insertCustomer(email, customer_id, subscription_id, location, trial_end, pai
             conn.close()
 
 
-def deleteCustomer(email):
+def deleteCustomer(username):
+    """Deletes a cusotmer from the table
+
+    Args:
+        username (str): The username (email) of the customer
+    """
     command = text("""
-        DELETE FROM customers WHERE "username" = :email 
+        DELETE FROM customers WHERE "username" = :email
         """)
-    params = {'email': email}
+    params = {'email': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
 
 
 def checkComputer(computer_id, username):
+    """TODO: Functions for peer to peer
+
+    Args:
+        computer_id ([type]): [description]
+        username ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     command = text("""
         SELECT * FROM studios WHERE "id" = :id AND "username" = :username
         """)
     params = {'id': computer_id, 'username': username}
     with engine.connect() as conn:
-        computer = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        computer = cleanFetchedSQL(
+            conn.execute(command, **params).fetchone())
         if not computer:
             computers = fetchComputers(username)
             nicknames = [c['nickname'] for c in computers]
@@ -888,10 +1107,18 @@ def checkComputer(computer_id, username):
 
 
 def insertComputer(username, location, nickname, computer_id):
+    """TODO: Functions for peer to peer
+
+    Args:
+        username ([type]): [description]
+        location ([type]): [description]
+        nickname ([type]): [description]
+        computer_id ([type]): [description]
+    """
     computer = checkComputer(computer_id, username)
     if not computer['found']:
         command = text("""
-            INSERT INTO studios("username", "location", "nickname", "id") 
+            INSERT INTO studios("username", "location", "nickname", "id")
             VALUES(:username, :location, :nickname, :id)
             """)
 
@@ -906,12 +1133,21 @@ def insertComputer(username, location, nickname, computer_id):
 
 
 def fetchComputers(username):
+    """TODO: Function for peer to peer
+
+    Args:
+        username ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     command = text("""
         SELECT * FROM studios WHERE "username" = :username
         """)
     params = {'username': username}
     with engine.connect() as conn:
-        computers = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        computers = cleanFetchedSQL(
+            conn.execute(command, **params).fetchall())
         out = [{'username': computer[0],
                 'location': computer[1],
                 'nickname': computer[2],
@@ -922,21 +1158,34 @@ def fetchComputers(username):
 
 
 def changeComputerName(username, computer_id, nickname):
+    """TODO: Function for peer to peer
+
+    Args:
+        username ([type]): [description]
+        computer_id ([type]): [description]
+        nickname ([type]): [description]
+    """
     command = text("""
         UPDATE studios
         SET nickname = :nickname
         WHERE
-           "username" = :username
+        "username" = :username
         AND
             "id" = :id
         """)
-    params = {'nickname': nickname, 'username': username, 'id': computer_id}
+    params = {'nickname': nickname,
+              'username': username, 'id': computer_id}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
 
 
 def fetchAllUsers():
+    """Fetches all users from the users sql table
+
+    Returns:
+        arr[dict]: The array of users
+    """
     command = text("""
         SELECT * FROM users
         """)
@@ -949,6 +1198,14 @@ def fetchAllUsers():
 
 
 def mapCodeToUser(code):
+    """Returns the user with the respective code. 
+
+    Args:
+        code (str): The user's referral code
+
+    Returns:
+        dict: The user. If there is no match, return None
+    """
     command = text("""
         SELECT * FROM users WHERE "code" = :code
         """)
@@ -960,11 +1217,17 @@ def mapCodeToUser(code):
 
 
 def changeUserCredits(username, credits):
+    """Changes the outstanding credits for a user
+
+    Args:
+        username (str): The username of the user
+        credits (int): The credits that the user has outstanding (1 credit = 1 month of use)
+    """
     command = text("""
         UPDATE users
         SET "credits_outstanding" = :credits
         WHERE
-           "username" = :username
+        "username" = :username
         """)
     params = {'credits': credits, 'username': username}
     with engine.connect() as conn:
@@ -973,6 +1236,14 @@ def changeUserCredits(username, credits):
 
 
 def getUserCredits(username):
+    """Gets the credits associated with the user
+
+    Args:
+        username (str): The user's username
+
+    Returns:
+        int: The credits the user has
+    """
     command = text("""
         SELECT * FROM users
         WHERE "username" = :username
@@ -987,6 +1258,11 @@ def getUserCredits(username):
 
 
 def fetchCodes():
+    """Gets all the referral codes
+
+    Returns:
+        arr[str]: An array of all the user codes
+    """
     command = text("""
         SELECT * FROM users
         """)
@@ -999,6 +1275,14 @@ def fetchCodes():
 
 
 def userVMStatus(username):
+    """Returns the status of the user vm
+
+    Args:
+        username (string): The username of the user of interest
+
+    Returns:
+        str: vm status ['not_created', 'is_creating', 'has_created', 'has_not_paid'] 
+    """
     has_paid = False
     has_disk = False
 
@@ -1038,6 +1322,14 @@ def userVMStatus(username):
 
 
 def checkUserVerified(username):
+    """Checks if a user has verified their email already
+
+    Args:
+        username (str): The username
+
+    Returns:
+        bool: Whether they have verified
+    """
     command = text("""
         SELECT * FROM users WHERE "username" = :userName
         """)
@@ -1051,6 +1343,14 @@ def checkUserVerified(username):
 
 
 def fetchUserToken(username):
+    """Returns the uid of the user
+
+    Args:
+        username (str): The username of the user
+
+    Returns:
+        str: The uid of the user
+    """
     command = text("""
         SELECT * FROM users WHERE "username" = :userName
         """)
@@ -1064,11 +1364,17 @@ def fetchUserToken(username):
 
 
 def makeUserVerified(username, verified):
+    """Sets the user's verification 
+
+    Args:
+        username (str): The username of the user
+        verified (bool): The new verification state
+    """
     command = text("""
         UPDATE users
         SET verified = :verified
         WHERE
-           "username" = :username
+        "username" = :username
         """)
     params = {'verified': verified, 'username': username}
     with engine.connect() as conn:
@@ -1077,22 +1383,36 @@ def makeUserVerified(username, verified):
 
 
 def storeFeedback(username, feedback):
-    command = text("""
-        INSERT INTO feedback("username", "feedback") 
-        VALUES(:email, :feedback)
-        """)
-    params = {'email': username, 'feedback': feedback}
-    with engine.connect() as conn:
-        conn.execute(command, **params)
-        conn.close()
+    """Saves feedback in the feedback table
+
+    Args:
+        username (str): The username of the user who submitted feedback
+        feedback (str): The feedback message
+    """
+
+    if feedback:
+        command = text("""
+            INSERT INTO feedback("username", "feedback")
+            VALUES(:email, :feedback)
+            """)
+        params = {'email': username, 'feedback': feedback}
+        with engine.connect() as conn:
+            conn.execute(command, **params)
+            conn.close()
 
 
 def updateVMIP(vm_name, ip):
+    """Updates the ip address of a vm
+
+    Args:
+        vm_name (str): The name of the vm to update
+        ip (str): The new ipv4 address
+    """
     command = text("""
         UPDATE v_ms
         SET ip = :ip
         WHERE
-           "vm_name" = :vm_name
+        "vm_name" = :vm_name
         """)
     params = {'ip': ip, 'vm_name': vm_name}
     with engine.connect() as conn:
@@ -1101,11 +1421,17 @@ def updateVMIP(vm_name, ip):
 
 
 def updateTrialEnd(subscription, trial_end):
+    """Update the end date for the trial subscription
+
+    Args:
+        subscription (str): The uid of the subscription we wish to update
+        trial_end (int): The trial end date, as a unix timestamp
+    """
     command = text("""
         UPDATE customers
         SET trial_end = :trial_end
         WHERE
-           "subscription" = :subscription
+        "subscription" = :subscription
         """)
     params = {'subscription': subscription, 'trial_end': trial_end}
     with engine.connect() as conn:
@@ -1114,18 +1440,34 @@ def updateTrialEnd(subscription, trial_end):
 
 
 def updateVMState(vm_name, state):
+    """Updates the state for a vm
+
+    Args:
+        vm_name (str): The name of the vm to update
+        state (str): The new state of the vm
+    """
     command = text("""
         UPDATE v_ms
         SET state = :state
         WHERE
-           "vm_name" = :vm_name
+        "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name, 'state': state}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
 
-def updateVMStateAutomatically(vm_name, ID = -1):
+
+def updateVMStateAutomatically(vm_name, ID=-1):
+    """Updates the v_ms sql entry based on the azure vm state
+
+    Args:
+        vm_name (str): Name of the vm
+        ID (int, optional): Papertrail Logging ID. Defaults to -1.
+
+    Returns:
+        int: 1 for success, -1 for error
+    """
     _, compute_client, _ = createClients()
 
     vm_state = compute_client.virtual_machines.instance_view(
@@ -1135,44 +1477,57 @@ def updateVMStateAutomatically(vm_name, ID = -1):
 
     try:
         power_state = vm_state.statuses[1].code
-        sendInfo(ID, 'VM {} has Azure state {}'.format(vm_name, power_state))
+        sendInfo(ID, 'VM {} has Azure state {}'.format(
+            vm_name, power_state))
     except:
-        sendError(ID, 'VM {} Azure state unable to be fetched'.format(vm_name))
-
+        sendError(
+            ID, 'VM {} Azure state unable to be fetched'.format(vm_name))
     if 'starting' in power_state:
         updateVMState(vm_name, 'STARTING')
-        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'STARTING'))
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(
+            vm_name, 'STARTING'))
         hr = 1
     elif 'running' in power_state:
         updateVMState(vm_name, 'RUNNING_AVAILABLE')
-        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'RUNNING_AVAILABLE'))
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(
+            vm_name, 'RUNNING_AVAILABLE'))
         hr = 1
     elif 'stopping' in power_state:
         updateVMState(vm_name, 'STOPPING')
-        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'STOPPING'))
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(
+            vm_name, 'STOPPING'))
         hr = 1
     elif 'deallocating' in power_state:
         updateVMState(vm_name, 'DEALLOCATING')
-        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'DEALLOCATING'))
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(
+            vm_name, 'DEALLOCATING'))
         hr = 1
     elif 'stopped' in power_state:
         updateVMState(vm_name, 'STOPPED')
-        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'STOPPED'))
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(
+            vm_name, 'STOPPED'))
         hr = 1
     elif 'deallocated' in power_state:
-        updateVMState(vm_name, 'DEALLOCATED')  
-        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(vm_name, 'DEALLOCATED'))  
+        updateVMState(vm_name, 'DEALLOCATED')
+        sendInfo(ID, 'VM {} set to state {} in Postgres'.format(
+            vm_name, 'DEALLOCATED'))
         hr = 1
 
     return hr
 
 
 def updateVMLocation(vm_name, location):
+    """Updates the location of the vm entry in the v_ms sql table
+
+    Args:
+        vm_name (str): Name of vm of interest
+        location (str): The new region of the vm
+    """
     command = text("""
         UPDATE v_ms
         SET location = :location
         WHERE
-           "vm_name" = :vm_name
+        "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name, 'location': location}
     with engine.connect() as conn:
@@ -1181,6 +1536,13 @@ def updateVMLocation(vm_name, location):
 
 
 def updateDisk(disk_name, vm_name, location):
+    """Updates the vm name and location properties of the disk. If no disk with the provided name exists, create a new disk entry
+
+    Args:
+        disk_name (str): Name of disk to update
+        vm_name (str): Name of the new vm that the disk is attached to
+        location (str): The new Azure region of the disk
+    """
     command = text("""
         SELECT * FROM disks WHERE "disk_name" = :disk_name
         """)
@@ -1193,7 +1555,7 @@ def updateDisk(disk_name, vm_name, location):
                     UPDATE disks
                     SET "vm_name" = :vm_name, "location" = :location
                     WHERE
-                       "disk_name" = :disk_name
+                    "disk_name" = :disk_name
                 """)
                 params = {'vm_name': vm_name,
                           'location': location,
@@ -1203,7 +1565,7 @@ def updateDisk(disk_name, vm_name, location):
                     UPDATE disks
                     SET "vm_name" = :vm_name
                     WHERE
-                       "disk_name" = :disk_name
+                    "disk_name" = :disk_name
                 """)
                 params = {'vm_name': vm_name,
                           'disk_name': disk_name}
@@ -1229,6 +1591,12 @@ def updateDisk(disk_name, vm_name, location):
 
 
 def assignUserToDisk(disk_name, username):
+    """Assigns a user to a disk
+
+    Args:
+        disk_name (str): Disk that the user will be assigned to
+        username (str): Username of the user
+    """
     command = text("""
         UPDATE disks SET "username" = :username WHERE "disk_name" = :disk_name
         """)
@@ -1239,6 +1607,15 @@ def assignUserToDisk(disk_name, username):
 
 
 def fetchAttachableVMs(state, location):
+    """Finds all vms with specified location and state that are unlocked and not in dev mode
+
+    Args:
+        state (str): State of the vm
+        location (str): Azure region to look in
+
+    Returns:
+        arr[dict]: Arrray of all vms that are attachable
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "state" = :state AND "location" = :location AND "lock" = :lock AND "dev" = :dev
         """)
@@ -1253,6 +1630,14 @@ def fetchAttachableVMs(state, location):
 
 
 def getMostRecentActivity(username):
+    """Gets the last activity of a user
+
+    Args:
+        username (str): Username of the user
+
+    Returns:
+        str: The latest activity of the user
+    """
     command = text("""
         SELECT *
         FROM login_history
@@ -1263,11 +1648,19 @@ def getMostRecentActivity(username):
     params = {'username': username}
 
     with engine.connect() as conn:
-        activity = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        activity = cleanFetchedSQL(
+            conn.execute(command, **params).fetchone())
         return activity
 
 
-def addPendingCharge(username, amount, ID = 0):
+def addPendingCharge(username, amount, ID=0):
+    """Adds to the user's current pending charges by amount. This is done since stripe requires payments of at least 50 cents. By using pending charges, we can keep track and charge it all at the end.
+
+    Args:
+        username (str): The username of the user to add a pending charge to
+        amount (int): Amount by which to increment by
+        ID (int, optional): Papertrail logging ID. Defaults to 0.
+    """
     command = text("""
         SELECT *
         FROM customers
@@ -1277,7 +1670,8 @@ def addPendingCharge(username, amount, ID = 0):
     params = {'username': username}
 
     with engine.connect() as conn:
-        customer = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        customer = cleanFetchedSQL(
+            conn.execute(command, **params).fetchone())
         if customer:
             pending_charges = customer['pending_charges'] + amount
             command = text("""
@@ -1285,41 +1679,80 @@ def addPendingCharge(username, amount, ID = 0):
                 SET "pending_charges" = :pending_charges
                 WHERE "username" = :username
                 """)
-            params = {'pending_charges': pending_charges, 'username': username}
+            params = {'pending_charges': pending_charges,
+                      'username': username}
 
             conn.execute(command, **params)
             conn.close()
         else:
-            sendCritical(ID, '{} has an hourly plan but was not found as a customer in database'.format(username))
+            sendCritical(
+                ID, '{} has an hourly plan but was not found as a customer in database'.format(username))
 
 
 def associateVMWithDisk(vm_name, disk_name):
+    """Associates a VM with a disk on the v_ms sql table
+
+    Args:
+        vm_name (str): The name of the vm
+        disk_name (str): The name of the disk
+    """
     username = mapDiskToUser(disk_name)
     username = username if username else ''
     command = text("""
         UPDATE v_ms
         SET "disk_name" = :disk_name, "username" = :username
         WHERE
-           "vm_name" = :vm_name
+        "vm_name" = :vm_name
         """)
-    params = {'vm_name': vm_name, 'disk_name': disk_name, 'username': username}
+    params = {'vm_name': vm_name,
+              'disk_name': disk_name, 'username': username}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
 
+def lockVMAndUpdate(vm_name, state, lock, temporary_lock, change_last_updated, verbose, ID):
+    session = Session()
 
-def lockVM(vm_name, lock, change_last_updated = True, verbose = True, ID = -1):
+    command = text("""
+        UPDATE v_ms SET vm_name = :vm_name, state = :state, lock = :lock
+        """)
+
+    if temporary_lock:
+        command = text("""
+            UPDATE v_ms SET vm_name = :vm_name, state = :state, lock = :lock, temporary_lock = :temporary_lock
+            """)
+
+    params = {'vm_name': vm_name, 'state': state, 'lock': lock, 'temporary_lock': temporary_lock}
+
+    session.execute(command, params)
+    session.commit()
+    session.close()
+
+
+def lockVM(vm_name, lock, username = None, disk_name = None, change_last_updated = True, verbose = True, ID=-1):
+    """Locks/unlocks a vm. A vm entry with lock set to True prevents other processes from changing that entry.
+
+    Args:
+        vm_name (str): The name of the vm to lock
+        lock (bool): True for lock
+        change_last_updated (bool, optional): Whether or not to change the last_updated column as well. Defaults to True.
+        verbose (bool, optional): Flag to log verbose in papertrail. Defaults to True.
+        ID (int, optional): A unique papertrail logging id. Defaults to -1.
+    """
     if lock and verbose:
-        sendInfo(ID, 'Trying to lock VM {}'.format(vm_name), papertrail = verbose)
+        sendInfo(ID, 'Trying to lock VM {}'.format(
+            vm_name), papertrail=verbose)
     elif not lock and verbose:
-        sendInfo(ID, 'Trying to unlock VM {}'.format(vm_name), papertrail = verbose)
+        sendInfo(ID, 'Trying to unlock VM {}'.format(
+            vm_name), papertrail=verbose)
 
+    session = Session()
 
     command = text("""
         UPDATE v_ms
         SET "lock" = :lock, "last_updated" = :last_updated
         WHERE
-           "vm_name" = :vm_name
+        "vm_name" = :vm_name
         """)
 
     if not change_last_updated:
@@ -1327,26 +1760,112 @@ def lockVM(vm_name, lock, change_last_updated = True, verbose = True, ID = -1):
             UPDATE v_ms
             SET "lock" = :lock
             WHERE
-               "vm_name" = :vm_name
+            "vm_name" = :vm_name
             """)
 
     last_updated = getCurrentTime()
-    params = {'vm_name': vm_name, 'lock': lock, 'last_updated': last_updated}
-    with engine.connect() as conn:
-        conn.execute(command, **params)
-        conn.close()
-        if lock and verbose:
-            sendInfo(ID, 'Successfully locked VM {}'.format(vm_name), papertrail = verbose)
-        elif not lock and verbose:
-            sendInfo(ID, 'Successfully unlocked VM {}'.format(vm_name), papertrail = verbose)
+    params = {'vm_name': vm_name, 'lock': lock,
+              'last_updated': last_updated}
+
+    session.execute(command, params)
+
+    if username and disk_name:
+        command = text("""
+            UPDATE v_ms
+            SET "username" = :username, "disk_name" = :disk_name
+            WHERE
+            "vm_name" = :vm_name
+            """)
+
+        params = {'username': username, 'vm_name': vm_name, 'disk_name': disk_name}
+        session.execute(command, params)
+
+    session.commit()
+    session.close()
+
+    if lock and verbose:
+        sendInfo(ID, 'Successfully locked VM {}'.format(
+            vm_name), papertrail=verbose)
+    elif not lock and verbose:
+        sendInfo(ID, 'Successfully unlocked VM {}'.format(
+            vm_name), papertrail=verbose)
+
+
+def claimAvailableVM(disk_name, location, ID = -1):
+    username = mapDiskToUser(disk_name)
+    session = Session()
+
+    state_preference = ['RUNNING_AVAILABLE', 'STOPPED', 'DEALLOCATED']
+
+    for state in state_preference:
+        sendInfo(ID, 'Looking for VMs with state {} in {}'.format(state, location))
+
+        command = text("""
+            SELECT * FROM v_ms
+            WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
+            """)
+
+        params = {'lock': False, 'state': state, 'dev': False, 'location': location, 'temporary_lock': dateToUnix(getToday())}
+
+        available_vm = cleanFetchedSQL(session.execute(command, params).fetchone())
+
+        if available_vm:
+            sendInfo(ID, 'Found an available VM {}'.format(str(available_vm)))
+
+            command = text("""
+                UPDATE v_ms 
+                SET lock = :lock, username = :username, disk_name = :disk_name, state = :state
+                WHERE vm_name = :vm_name
+                """)
+
+            params = {'lock': True, 'username': username, 'disk_name': disk_name, 'vm_name': available_vm['vm_name'], 'state': 'ATTACHING'}
+            session.execute(command, params)
+
+            sendInfo(ID, 'Set VM {} belonging to {} to ATTACHING'.format(available_vm['vm_name'], username))
+
+            session.commit()
+            session.close()
+
+            return available_vm
+        else:
+            sendInfo(ID, 'Did not find any VMs in {} with state {}.'.format(location, state))
+
+    session.commit()
+    session.close()
+    return None
+
+def createTemporaryLock(vm_name, minutes, ID = -1):
+    temporary_lock = shiftUnixByMinutes(dateToUnix(getToday()), minutes)
+    session = Session()
+
+    command = text("""
+        UPDATE v_ms
+        SET "temporary_lock" = :temporary_lock
+        WHERE
+        "vm_name" = :vm_name
+        """)
+
+    params = {'vm_name': vm_name, 'temporary_lock': temporary_lock}
+    session.execute(command, params)
+
+    sendInfo(ID, 'Temporary lock created for VM {} for {} minutes'.format(vm_name, str(minutes)))
+
+    session.commit()
+    session.close()
 
 
 def vmReadyToConnect(vm_name, ready):
+    """Sets the vm's ready_to_connect field
+
+    Args:
+        vm_name (str): Name of the vm
+        ready (boolean): True for ready to connect
+    """
     command = text("""
         UPDATE v_ms
         SET "ready_to_connect" = :ready
         WHERE
-           "vm_name" = :vm_name
+        "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name, 'ready': ready}
     with engine.connect() as conn:
@@ -1354,22 +1873,44 @@ def vmReadyToConnect(vm_name, ready):
         conn.close()
 
 
+def checkLock(vm_name, ID = -1):
+    """Check to see if a vm has been locked
 
-def checkLock(vm_name):
+    Args:
+        vm_name (str): Name of the vm to check
+
+    Returns:
+        bool: True if VM is locked, False otherwise
+    """
+    session = Session()
+
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name}
 
-    with engine.connect() as conn:
-        vm = cleanFetchedSQL(conn.execute(command, **params).fetchone())
-        conn.close()
-        if vm:
-            return vm['lock']
-        return None
+    vm = cleanFetchedSQL(session.execute(command, params).fetchone())
+    session.commit()
+    session.close()
+
+    if vm:
+        temporary_lock = False
+        if vm['temporary_lock']:
+            temporary_lock = dateToUnix(getToday()) < vm['temporary_lock']
+            sendInfo(ID, 'Temporary lock found on VM {}, expires at {}. It is currently {}'.format(vm_name, str(vm['temporary_lock']), str(dateToUnix(getToday()))))
+        return vm['lock'] or temporary_lock
+    return None
 
 
 def checkDev(vm_name):
+    """Checks to see if a vm is in dev mode
+
+    Args:
+        vm_name (str): Name of vm to check
+
+    Returns:
+        bool: True if vm is in dev mode, False otherwise
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
@@ -1382,7 +1923,16 @@ def checkDev(vm_name):
             return vm['dev']
         return None
 
+
 def checkWinlogon(vm_name):
+    """Checks if a vm is ready to connect
+
+    Args:
+        vm_name (str): Name of the vm to check
+
+    Returns:
+        bool: True if vm is ready to connect
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
@@ -1396,12 +1946,24 @@ def checkWinlogon(vm_name):
         return None
 
 
-def attachDiskToVM(disk_name, vm_name, lun, ID = -1):
+def attachDiskToVM(disk_name, vm_name, lun, ID=-1):
+    """Attach a secondary disk to a vm
+
+    Args:
+        disk_name (str): Name of the disk
+        vm_name (str): Name of the vm
+        lun (int): The logical unit number of the disk.  This value is used to identify data disks within the VM and therefore must be unique for each data disk attached to a VM.
+        ID (int, optional): The unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: ! for success, -1 for fail
+    """
     try:
         _, compute_client, _ = createClients()
         virtual_machine = getVM(vm_name)
 
-        data_disk = compute_client.disks.get(os.getenv('VM_GROUP'), disk_name)
+        data_disk = compute_client.disks.get(
+            os.getenv('VM_GROUP'), disk_name)
         virtual_machine.storage_profile.data_disks.append({
             'lun': lun,
             'name': disk_name,
@@ -1423,7 +1985,18 @@ def attachDiskToVM(disk_name, vm_name, lun, ID = -1):
         return -1
 
 
-def swapdisk_name(s, disk_name, vm_name, ID = -1):
+def swapdisk_name(s, disk_name, vm_name, ID=-1):
+    """Attaches an OS disk to the VM. If the vm already has an OS disk attached, the vm will detach that and attach this one.
+
+    Args:
+        s (class): The reference to the parent's instance of self
+        disk_name (str): The name of the disk
+        vm_name (str): The name of the vm
+        ID (int, optional): The unique papertrail logging ID. Defaults to -1.
+
+    Returns:
+        [type]: [description]
+    """
     try:
         _, compute_client, _ = createClients()
         virtual_machine = getVM(vm_name)
@@ -1440,9 +2013,11 @@ def swapdisk_name(s, disk_name, vm_name, ID = -1):
         )
         sendInfo(ID, async_disk_attach.result())
         end = time.perf_counter()
-        sendInfo(ID, 'Disk {} attached to VM {} in {} seconds'.format(disk_name, vm_name, str(end-start)))
+        sendInfo(ID, 'Disk {} attached to VM {} in {} seconds'.format(
+            disk_name, vm_name, str(end-start)))
 
-        s.update_state(state='PENDING', meta={"msg": "Data successfully uploaded to server. Starting server."})
+        s.update_state(state='PENDING', meta={
+            "msg": "Data successfully uploaded to server. Starting server."})
 
         return fractalVMStart(vm_name, True)
     except Exception as e:
@@ -1451,6 +2026,11 @@ def swapdisk_name(s, disk_name, vm_name, ID = -1):
 
 
 def fetchAllDisks():
+    """Fetches all the disks
+
+    Returns:
+        arr[dict]: An array of all the disks in the disks sql table
+    """
     command = text("""
         SELECT *
         FROM disks
@@ -1464,6 +2044,11 @@ def fetchAllDisks():
 
 
 def deleteDiskFromTable(disk_name):
+    """Deletes a disk from the disks sql table
+
+    Args:
+        disk_name (str): The name of the disk to delete
+    """
     command = text("""
         DELETE FROM disks WHERE "disk_name" = :disk_name 
         """)
@@ -1473,7 +2058,37 @@ def deleteDiskFromTable(disk_name):
         conn.close()
 
 
+def scheduleDiskDelete(disk_name, date, ID=-1):
+    """Schedule a disk to be deleted later
+
+    Args:
+        disk_name (str): Name of the disk to be deleted
+        date (str): The date at which it should be deleted. In the format mm/dd/yyyy, hh:mm (24 hour time)
+        ID (int, optional): The unique paprtrail loggin id. Defaults to -1.
+    """
+    dateString = dateToString(date)
+    command = text("""
+        UPDATE disks
+        SET "delete_date" = :delete_date, "state" = :'TO_BE_DELETED'
+        WHERE
+        "disk_name" = :disk_name
+        """)
+    params = {'disk_name': disk_name, 'delete_date': dateString}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+    sendInfo(ID, 'Fetching all disks associated with state ACTIVE')
+
+
 def mapDiskToVM(disk_name):
+    """Find the vm with the specified disk attached
+
+    Args:
+        disk_name (str): Name of the disk to look for
+
+    Returns:
+        dict: The vm with the specified disk attached
+    """
     command = text("""
         SELECT * FROM v_ms WHERE "disk_name" = :disk_name
         """)
@@ -1486,11 +2101,19 @@ def mapDiskToVM(disk_name):
 
 
 def updateVM(vm_name, location, disk_name, username):
+    """Updates the vm entry in the vm_s sql table
+
+    Args:
+        vm_name (str): The name of the vm to update
+        location (str): The new Azure region of the vm
+        disk_name (str): The new disk that is attached to the vm
+        username (str): The new username associated with the vm
+    """
     command = text("""
         UPDATE v_ms
         SET "location" = :location, "disk_name" = :disk_name, "username" = :username
         WHERE
-           "vm_name" = :vm_name
+        "vm_name" = :vm_name
         """)
     params = {'location': location, 'vm_name': vm_name,
               'disk_name': disk_name, 'username': username}
@@ -1499,7 +2122,16 @@ def updateVM(vm_name, location, disk_name, username):
         conn.close()
 
 
-def mapDiskToUser(disk_name, ID = -1):
+def mapDiskToUser(disk_name, ID=-1):
+    """Find the user that is associated with the disk
+
+    Args:
+        disk_name (str): The name of the disk of interest
+        ID (int, optional): Papertrail loggin id. Defaults to -1.
+
+    Returns:
+        str: The username associated with the disk
+    """
     command = text("""
         SELECT * FROM disks WHERE "disk_name" = :disk_name
         """)
@@ -1509,13 +2141,19 @@ def mapDiskToUser(disk_name, ID = -1):
     with engine.connect() as conn:
         disk = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         if disk:
-            sendInfo(ID, 'Disk {} belongs to user {}'.format(disk_name, disk['username']))
+            sendInfo(ID, 'Disk {} belongs to user {}'.format(
+                disk_name, disk['username']))
             return disk['username']
         sendWarning(ID, 'No username found for disk {}'.format(disk_name))
         return None
 
 
 def deleteVMFromTable(vm_name):
+    """Deletes a vm from the v_ms sql table
+
+    Args:
+        vm_name (str): The name of the vm to delete
+    """
     command = text("""
         DELETE FROM v_ms WHERE "vm_name" = :vm_name 
         """)
@@ -1526,11 +2164,17 @@ def deleteVMFromTable(vm_name):
 
 
 def updateDiskState(disk_name, state):
+    """Updates the state of a disk in the disks sql table
+
+    Args:
+        disk_name (str): Name of the disk to update
+        state (str): The new state of the disk
+    """
     command = text("""
         UPDATE disks
         SET state = :state
         WHERE
-           "disk_name" = :disk_name
+        "disk_name" = :disk_name
         """)
     params = {'state': state, 'disk_name': disk_name}
     with engine.connect() as conn:
@@ -1539,6 +2183,12 @@ def updateDiskState(disk_name, state):
 
 
 def assignVMSizeToDisk(disk_name, vm_size):
+    """Updates the vm_size field for a disk
+
+    Args:
+        disk_name (str): The name of the disk to update
+        vm_size (str): The new size of the vm the disk is attached to
+    """
     command = text("""
         UPDATE disks SET "vm_size" = :vm_size WHERE "disk_name" = :disk_name
         """)
@@ -1548,7 +2198,18 @@ def assignVMSizeToDisk(disk_name, vm_size):
         conn.close()
 
 
-def createDiskFromImageHelper(username, location, vm_size, ID = -1):
+def createDiskFromImageHelper(username, location, vm_size, ID=-1):
+    """Creates a disk from an image, and assigns users and vm_sizes to the disk
+
+    Args:
+        username (str): The username of the user that will be assigned to the disk
+        location (str): The Azure region of the new disk
+        vm_size (str): The size of the vm associated with the new disk
+        ID (int, optional): Unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: 200 for success, 400 for error
+    """
     disk_name = genDiskName()
     sendInfo(ID, 'Preparing to create disk {} from an image'.format(disk_name))
     _, compute_client, _ = createClients()
@@ -1576,7 +2237,8 @@ def createDiskFromImageHelper(username, location, vm_size, ID = -1):
         )
         sendInfo(ID, 'Disk clone command sent. Waiting on disk to create')
         async_disk_creation.wait()
-        sendInfo(ID, 'Disk {} successfully created from image'.format(disk_name))
+        sendInfo(
+            ID, 'Disk {} successfully created from image'.format(disk_name))
         new_disk = async_disk_creation.result()
 
         updateDisk(disk_name, '', location)
@@ -1591,59 +2253,91 @@ def createDiskFromImageHelper(username, location, vm_size, ID = -1):
         os_disk_delete = compute_client.disks.delete(
             os.getenv('VM_GROUP'), disk_name)
         os_disk_delete.wait()
-        sendInfo(ID, 'Disk {} deleted due to a critical error in disk creation'.format(disk_name))
+        sendInfo(
+            ID, 'Disk {} deleted due to a critical error in disk creation'.format(disk_name))
 
         time.sleep(30)
         return {'status': 400, 'disk_name': None}
 
 
-def sendVMStartCommand(vm_name, needs_restart, ID = -1):
-    _, compute_client, _ = createClients()
+def sendVMStartCommand(vm_name, needs_restart, ID=-1):
+    """Starts a vm
 
+    Args:
+        vm_name (str): The name of the vm to start
+        needs_restart (bool): Whether the vm needs to restart after
+        ID (int, optional): Unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: 1 for success, -1 for fail
+    """
     try:
-        power_state = 'PowerState/deallocated'
-        vm_state = compute_client.virtual_machines.instance_view(
-            resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
+        def boot_if_necessary(vm_name, needs_restart, ID):
+            _, compute_client, _ = createClients()
 
-        try:
-            power_state = vm_state.statuses[1].code
-        except Exception as e:
-            sendCritical(ID, str(e))
-            pass
+            power_state = 'PowerState/deallocated'
+            vm_state = compute_client.virtual_machines.instance_view(
+                resource_group_name=os.getenv('VM_GROUP'), vm_name=vm_name)
 
-        if 'stop' in power_state or 'dealloc' in power_state:
-            sendInfo(ID, 'VM {} currently in state {}. Setting Winlogon to False'.format(vm_name, power_state))
-            vmReadyToConnect(vm_name, False)
-            sendInfo(ID, 'Starting VM {}'.format(vm_name))
-            updateVMState(vm_name, 'STARTING')
+            try:
+                power_state = vm_state.statuses[1].code
+            except Exception as e:
+                sendCritical(ID, str(e))
+                pass
 
-            async_vm_start = compute_client.virtual_machines.start(
-                os.environ.get('VM_GROUP'), vm_name)
+            if 'stop' in power_state or 'dealloc' in power_state:
+                sendInfo(ID, 'VM {} currently in state {}. Setting Winlogon to False'.format(
+                    vm_name, power_state))
+                vmReadyToConnect(vm_name, False)
+                sendInfo(ID, 'Starting VM {}'.format(vm_name))
+                updateVMState(vm_name, 'STARTING')
+                lockVM(vm_name, True, ID = ID)
 
-            sendInfo(ID, async_vm_start.result())
-            sendInfo(ID, 'VM {} started successfully'.format(vm_name))
+                async_vm_start = compute_client.virtual_machines.start(
+                    os.environ.get('VM_GROUP'), vm_name)
 
-        if needs_restart:
-            sendInfo(ID, 'VM {} needs to restart. Setting Winlogon to False'.format(vm_name))
-            vmReadyToConnect(vm_name, False)
+                sendInfo(ID, async_vm_start.result())
+                sendInfo(ID, 'VM {} started successfully'.format(vm_name))
 
-            updateVMState(vm_name, 'RESTARTING')
+            if needs_restart:
+                sendInfo(
+                    ID, 'VM {} needs to restart. Setting Winlogon to False'.format(vm_name))
+                vmReadyToConnect(vm_name, False)
 
-            async_vm_restart = compute_client.virtual_machines.restart(
-                os.environ.get('VM_GROUP'), vm_name)
+                updateVMState(vm_name, 'RESTARTING')
+                lockVM(vm_name, True, ID = ID)
 
-            sendInfo(ID, async_vm_restart.result())
-            sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
+                async_vm_restart = compute_client.virtual_machines.restart(
+                    os.environ.get('VM_GROUP'), vm_name)
 
+                sendInfo(ID, async_vm_restart.result())
+                sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
+
+        boot_if_necessary(vm_name, needs_restart, ID)
         updateVMState(vm_name, 'RUNNING_AVAILABLE')
-        waitForWinlogon(vm_name, ID)
+        lockVM(vm_name, False, ID = ID)
+
+        winlogon = waitForWinlogon(vm_name, ID)
+        while winlogon < 0:
+            boot_if_necessary(vm_name, True, ID)
+            winlogon = waitForWinlogon(vm_name, ID)
 
         return 1
     except Exception as e:
         sendCritical(ID, str(e))
         return -1
 
+
 def waitForWinlogon(vm_name, ID = -1):
+    """Periodically checks and sleeps until winlogon succeeds
+
+    Args:
+        vm_name (str): Name of the vm
+        ID (int, optional): Unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: 1 for success, -1 for fail
+    """
     ready = checkWinlogon(vm_name)
 
     num_tries = 0
@@ -1653,7 +2347,8 @@ def waitForWinlogon(vm_name, ID = -1):
         return 1
 
     if checkDev(vm_name):
-        sendInfo(ID, 'VM {} is a DEV machine. Bypassing Winlogon. Sleeping for 50 seconds before returning.'.format(vm_name))
+        sendInfo(
+            ID, 'VM {} is a DEV machine. Bypassing Winlogon. Sleeping for 50 seconds before returning.'.format(vm_name))
         time.sleep(50)
         return 1
 
@@ -1663,16 +2358,26 @@ def waitForWinlogon(vm_name, ID = -1):
         ready = checkWinlogon(vm_name)
         num_tries += 1
 
-        if num_tries > 50:
-            sendCritical(ID, 'Waited too long for winlogon. Giving up')
-            return 1
+        if num_tries > 20:
+            sendError(ID, 'Waited too long for winlogon. Sending failure message.')
+            return -1
 
-    sendInfo(ID, 'VM {} has Winlogon successfully'.format(vm_name))
+    sendInfo(ID, 'VM {} has Winlogon successfully after {} tries'.format(vm_name, str(num_tries)))
 
     return 1
 
 
-def fractalVMStart(vm_name, needs_restart=False, ID = -1):
+def fractalVMStart(vm_name, needs_restart=False, ID=-1):
+    """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary (big brain thoughts from Ming)
+
+    Args:
+        vm_name (str): Name of the vm to start
+        needs_restart (bool, optional): Whether the vm needs to restart after. Defaults to False.
+        ID (int, optional): Unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: 1 for success, -1 for failure
+    """
     _, compute_client, _ = createClients()
 
     started = False
@@ -1714,7 +2419,8 @@ def fractalVMStart(vm_name, needs_restart=False, ID = -1):
             # Success! VM is running and ready to use
             if 'running' in vm_state.statuses[1].code:
                 updateVMState(vm_name, 'RUNNING_AVAILABLE')
-                sendInfo(ID, 'VM {} is running. State is {}'.format(vm_name, vm_state.statuses[1].code))
+                sendInfo(ID, 'VM {} is running. State is {}'.format(
+                    vm_name, vm_state.statuses[1].code))
                 started = True
                 return 1
 
@@ -1726,6 +2432,15 @@ def fractalVMStart(vm_name, needs_restart=False, ID = -1):
 
 
 def spinLock(vm_name, ID = -1):
+    """Waits for vm to be unlocked
+
+    Args:
+        vm_name (str): Name of vm of interest
+        ID (int, optional): Unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: 1 = vm is unlocked, -1 = giving up
+    """
     locked = checkLock(vm_name)
 
     num_tries = 0
@@ -1735,15 +2450,41 @@ def spinLock(vm_name, ID = -1):
         return 1
 
     while locked:
-        sendWarning(ID, 'VM {} is locked. Waiting to be unlocked.'.format(vm_name))
+        sendWarning(
+            ID, 'VM {} is locked. Waiting to be unlocked.'.format(vm_name))
         time.sleep(5)
         locked = checkLock(vm_name)
         num_tries += 1
 
-        if num_tries > 100:
-            sendCritical(ID, 'FAILURE: VM {} is locked for too long. Giving up.'.format(vm_name))
+        if num_tries > 20:
+            sendCritical(
+                ID, 'FAILURE: VM {} is locked for too long. Giving up.'.format(vm_name))
             return -1
 
-    sendInfo(ID, 'After waiting {} times, VM {} is unlocked'.format(num_tries, vm_name))
-
+    sendInfo(ID, 'After waiting {} times, VM {} is unlocked'.format(
+        num_tries, vm_name))
     return 1
+
+
+def updateProtocolVersion(vm_name, version):
+    """Updates the protocol version associated with the vm. This is used for tracking updates.
+
+    Args:
+        vm_name (str): The name of the vm to update
+        version (str): The id of the new version. It is based off a github commit number.
+    """
+    vm = getVM(vm_name)
+    os_disk = vm.storage_profile.os_disk.name
+
+    command = text("""
+        UPDATE disks
+        SET "version" = :version
+        WHERE
+           "disk_name" = :disk_name
+    """)
+    params = {'version': version,
+              'disk_name': os_disk}
+
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()

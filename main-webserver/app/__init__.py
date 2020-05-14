@@ -16,6 +16,7 @@ def dispose_engine(engine):
 celery = make_celery()
 engine = db.create_engine(
 	os.getenv('DATABASE_URL'), echo=False, pool_pre_ping = True)
+Session = sessionmaker(bind = engine, autocommit = False)
 register_after_fork(engine, dispose_engine)
 app, jwtManager = create_app(celery = celery)
 gen = yieldNumber()
@@ -41,7 +42,17 @@ def logRequestInfo(f):
 			# if request.path in ['/vm/connectionStatus', '/vm/winlogonStatus']:
 			# 	papertrail = False
 
-			sendInfo(kwargs['ID'], '({}) {} request received at {} with parameters {}'.format(str(vm_ip), request.method, request.path, str(request.get_json())), papertrail = papertrail)
+			try:
+				body = json.loads(request.data) 
+
+				if body:
+					for k, v in body.items():
+						if isinstance(v, str):
+							body[k] = v[0: min(100, len(v))]
+			except Exception as e:
+				body = None
+
+			sendDebug(kwargs['ID'], '({}) {} request received at {} with parameters {}'.format(str(vm_ip), request.method, request.path, str(body)), papertrail = papertrail)
 		except Exception as e:
 			print(str(e))
 		return f(*args, **kwargs)

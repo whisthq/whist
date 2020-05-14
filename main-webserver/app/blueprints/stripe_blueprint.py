@@ -238,6 +238,13 @@ def payment(action, **kwargs):
                     print("Sent email to support")
                 except Exception as e:
                     print(e.message)
+
+                # Schedule disk deletion in 7 days
+                disks = fetchUserDisks(customer['username'])
+                expiry = datetime.datetime.today() + timedelta(days=7)
+                for disk in disks:
+                    scheduleDiskDelete(disk['disk_name'], expiry)
+
         return jsonify({'status': 200}), 200
 
 # REFERRAL endpoint
