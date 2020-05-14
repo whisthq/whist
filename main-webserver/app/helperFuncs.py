@@ -1803,7 +1803,7 @@ def claimAvailableVM(disk_name, location, ID = -1):
     state_preference = ['RUNNING_AVAILABLE', 'STOPPED', 'DEALLOCATED']
 
     for state in state_preference:
-        sendInfo(ID, 'Looking for VMs with state {} in {}'.format(state, location))
+        sendInfo(ID, 'Looking for VMs with state {} in {} for {}'.format(state, location, username))
 
         command = text("""
             SELECT * FROM v_ms
@@ -1815,7 +1815,7 @@ def claimAvailableVM(disk_name, location, ID = -1):
         available_vm = cleanFetchedSQL(session.execute(command, params).fetchone())
 
         if available_vm:
-            sendInfo(ID, 'Found an available VM {}'.format(str(available_vm)))
+            sendInfo(ID, 'Found an available VM {} for {}'.format(str(available_vm, username)))
 
             command = text("""
                 UPDATE v_ms 
@@ -1826,14 +1826,14 @@ def claimAvailableVM(disk_name, location, ID = -1):
             params = {'lock': True, 'username': username, 'disk_name': disk_name, 'vm_name': available_vm['vm_name'], 'state': 'ATTACHING'}
             session.execute(command, params)
 
-            sendInfo(ID, 'Set VM {} belonging to {} to ATTACHING'.format(available_vm['vm_name'], username))
+            sendInfo(ID, 'ATTACHING VM {} to new user {}'.format(available_vm['vm_name'], username))
 
             session.commit()
             session.close()
 
             return available_vm
         else:
-            sendInfo(ID, 'Did not find any VMs in {} with state {}.'.format(location, state))
+            sendInfo(ID, 'Did not find any VMs in {} with state {} for {}.'.format(location, state, username))
 
     session.commit()
     session.close()
