@@ -1714,12 +1714,14 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock, change_last_updated, v
     session = Session()
 
     command = text("""
-        UPDATE v_ms SET vm_name = :vm_name, state = :state, lock = :lock
+        UPDATE v_ms SET state = :state, lock = :lock
+        WHERE vm_name = :vm_name
         """)
 
     if temporary_lock:
         command = text("""
-            UPDATE v_ms SET vm_name = :vm_name, state = :state, lock = :lock, temporary_lock = :temporary_lock
+            UPDATE v_ms SET state = :state, lock = :lock, temporary_lock = :temporary_lock
+            WHERE vm_name = :vm_name
             """)
 
     params = {'vm_name': vm_name, 'state': state, 'lock': lock, 'temporary_lock': temporary_lock}
