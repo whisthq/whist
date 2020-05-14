@@ -17,7 +17,7 @@ celery = make_celery()
 engine = db.create_engine(
 	os.getenv('DATABASE_URL'), echo=False, pool_pre_ping = True)
 Session = sessionmaker(bind = engine, autocommit = False)
-
+register_after_fork(engine, dispose_engine)
 
 app, jwtManager = create_app(celery = celery)
 gen = yieldNumber()
