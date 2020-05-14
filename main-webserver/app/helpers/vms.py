@@ -449,8 +449,28 @@ def fetchAttachableVMs(state, location):
         vms = vms if vms else []
         return vms
 
+def lockVMAndUpdate(vm_name, state, lock, temporary_lock, change_last_updated, verbose, ID):
+    session = Session()
 
-def lockVM(vm_name, lock, change_last_updated=True, verbose=True, ID=-1):
+    command = text("""
+        UPDATE v_ms SET state = :state, lock = :lock
+        WHERE vm_name = :vm_name
+        """)
+
+    if temporary_lock:
+        command = text("""
+            UPDATE v_ms SET state = :state, lock = :lock, temporary_lock = :temporary_lock
+            WHERE vm_name = :vm_name
+            """)
+
+    params = {'vm_name': vm_name, 'state': state, 'lock': lock, 'temporary_lock': temporary_lock}
+
+    session.execute(command, params)
+    session.commit()
+    session.close()
+
+
+def lockVM(vm_name, lock, username = None, disk_name = None, change_last_updated = True, verbose = True, ID=-1):
     """Locks/unlocks a vm. A vm entry with lock set to True prevents other processes from changing that entry.
 
     Args:
@@ -466,6 +486,8 @@ def lockVM(vm_name, lock, change_last_updated=True, verbose=True, ID=-1):
     elif not lock and verbose:
         sendInfo(ID, 'Trying to unlock VM {}'.format(
             vm_name), papertrail=verbose)
+
+    session = Session()
 
     command = text("""
         UPDATE v_ms
@@ -485,15 +507,92 @@ def lockVM(vm_name, lock, change_last_updated=True, verbose=True, ID=-1):
     last_updated = getCurrentTime()
     params = {'vm_name': vm_name, 'lock': lock,
               'last_updated': last_updated}
-    with engine.connect() as conn:
-        conn.execute(command, **params)
-        conn.close()
-        if lock and verbose:
-            sendInfo(ID, 'Successfully locked VM {}'.format(
-                vm_name), papertrail=verbose)
-        elif not lock and verbose:
-            sendInfo(ID, 'Successfully unlocked VM {}'.format(
-                vm_name), papertrail=verbose)
+
+    session.execute(command, params)
+
+    if username and disk_name:
+        command = text("""
+            UPDATE v_ms
+            SET "username" = :username, "disk_name" = :disk_name
+            WHERE
+            "vm_name" = :vm_name
+            """)
+
+        params = {'username': username, 'vm_name': vm_name, 'disk_name': disk_name}
+        session.execute(command, params)
+
+    session.commit()
+    session.close()
+
+    if lock and verbose:
+        sendInfo(ID, 'Successfully locked VM {}'.format(
+            vm_name), papertrail=verbose)
+    elif not lock and verbose:
+        sendInfo(ID, 'Successfully unlocked VM {}'.format(
+            vm_name), papertrail=verbose)
+
+
+def claimAvailableVM(disk_name, location, ID = -1):
+    username = mapDiskToUser(disk_name)
+    session = Session()
+
+    state_preference = ['RUNNING_AVAILABLE', 'STOPPED', 'DEALLOCATED']
+
+    for state in state_preference:
+        sendInfo(ID, 'Looking for VMs with state {} in {} for {}'.format(state, location, username))
+
+        command = text("""
+            SELECT * FROM v_ms
+            WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
+            """)
+
+        params = {'lock': False, 'state': state, 'dev': False, 'location': location, 'temporary_lock': dateToUnix(getToday())}
+
+        available_vm = cleanFetchedSQL(session.execute(command, params).fetchone())
+
+        if available_vm:
+            sendInfo(ID, 'Found an available VM {} for {}'.format(str(available_vm, username)))
+
+            command = text("""
+                UPDATE v_ms 
+                SET lock = :lock, username = :username, disk_name = :disk_name, state = :state
+                WHERE vm_name = :vm_name
+                """)
+
+            params = {'lock': True, 'username': username, 'disk_name': disk_name, 'vm_name': available_vm['vm_name'], 'state': 'ATTACHING'}
+            session.execute(command, params)
+
+            sendInfo(ID, 'ATTACHING VM {} to new user {}'.format(available_vm['vm_name'], username))
+
+            session.commit()
+            session.close()
+
+            return available_vm
+        else:
+            sendInfo(ID, 'Did not find any VMs in {} with state {} for {}.'.format(location, state, username))
+
+    session.commit()
+    session.close()
+    return None
+
+def createTemporaryLock(vm_name, minutes, ID = -1):
+    temporary_lock = shiftUnixByMinutes(dateToUnix(getToday()), minutes)
+    session = Session()
+
+    command = text("""
+        UPDATE v_ms
+        SET "temporary_lock" = :temporary_lock
+        WHERE
+        "vm_name" = :vm_name
+        """)
+
+    params = {'vm_name': vm_name, 'temporary_lock': temporary_lock}
+    session.execute(command, params)
+
+    sendInfo(ID, 'Temporary lock created for VM {} for {} minutes'.format(vm_name, str(minutes)))
+
+    session.commit()
+    session.close()
 
 
 def vmReadyToConnect(vm_name, ready):
@@ -503,6 +602,8 @@ def vmReadyToConnect(vm_name, ready):
         vm_name (str): Name of the vm
         ready (boolean): True for ready to connect
     """
+    session = Session()
+
     command = text("""
         UPDATE v_ms
         SET "ready_to_connect" = :ready
@@ -510,12 +611,13 @@ def vmReadyToConnect(vm_name, ready):
         "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name, 'ready': ready}
-    with engine.connect() as conn:
-        conn.execute(command, **params)
-        conn.close()
+
+    session.execute(command, params)
+    session.commit()
+    session.close()
 
 
-def checkLock(vm_name):
+def checkLock(vm_name, ID = -1):
     """Check to see if a vm has been locked
 
     Args:
@@ -524,17 +626,24 @@ def checkLock(vm_name):
     Returns:
         bool: True if VM is locked, False otherwise
     """
+    session = Session()
+
     command = text("""
         SELECT * FROM v_ms WHERE "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name}
 
-    with engine.connect() as conn:
-        vm = cleanFetchedSQL(conn.execute(command, **params).fetchone())
-        conn.close()
-        if vm:
-            return vm['lock']
-        return None
+    vm = cleanFetchedSQL(session.execute(command, params).fetchone())
+    session.commit()
+    session.close()
+
+    if vm:
+        temporary_lock = False
+        if vm['temporary_lock']:
+            temporary_lock = dateToUnix(getToday()) < vm['temporary_lock']
+            sendInfo(ID, 'Temporary lock found on VM {}, expires at {}. It is currently {}'.format(vm_name, str(vm['temporary_lock']), str(dateToUnix(getToday()))))
+        return vm['lock'] or temporary_lock
+    return None
 
 
 def checkDev(vm_name):
