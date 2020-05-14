@@ -285,36 +285,32 @@ void initBacktraceHandler() {
 #endif
 }
 
-char* get_version()
-{
-    static char* version = NULL;
+char *get_version() {
+    static char *version = NULL;
 
-    if( version )
-    {
+    if (version) {
         return version;
     }
 
 #ifdef _WIN32
-    char* version_filepath = "C:\\Program Files\\Fractal\\version";
+    char *version_filepath = "C:\\Program Files\\Fractal\\version";
 #else
-    char* version_filepath = "./version";
+    char *version_filepath = "./version";
 #endif
 
     long length;
-    FILE* f = fopen( version_filepath, "r" );
+    FILE *f = fopen(version_filepath, "r");
 
-    if( f )
-    {
-        fseek( f, 0, SEEK_END );
-        length = ftell( f );
-        fseek( f, 0, SEEK_SET );
+    if (f) {
+        fseek(f, 0, SEEK_END);
+        length = ftell(f);
+        fseek(f, 0, SEEK_SET);
         static char buf[17];
         version = buf;
-        fread( version, 1, min(length, sizeof(buf)), f );
+        fread(version, 1, min(length, sizeof(buf)), f);
         version[16] = '\0';
-        fclose( f );
-    } else
-    {
+        fclose(f);
+    } else {
         version = "NONE";
     }
 
@@ -322,7 +318,7 @@ char* get_version()
 }
 
 bool sendLogHistory() {
-    char *host = "cube-celery-staging.herokuapp.com";
+    char *host = "cube-celery.herokuapp.com";
     char *path = "/logs";
 
     char *logs_raw = get_logger_history();
@@ -379,7 +375,7 @@ bool sendLogHistory() {
     }",
             connection_id, get_version(), logs);
 
-    LOG_INFO( "Sending logs to webserver..." );
+    LOG_INFO("Sending logs to webserver...");
     SendJSONPost(host, path, json);
     free(logs);
     free(json);
@@ -387,13 +383,12 @@ bool sendLogHistory() {
     return true;
 }
 
-typedef struct update_status_data
-{
+typedef struct update_status_data {
     bool is_connected;
 } update_status_data_t;
 
 int32_t MultithreadedUpdateStatus(void *data) {
-    update_status_data_t* d = data;
+    update_status_data_t *d = data;
 
     char json[1000];
 
@@ -409,17 +404,17 @@ int32_t MultithreadedUpdateStatus(void *data) {
             \"version\" : \"%s\",\
             \"available\" : %s\
     }",
-              get_version(), d->is_connected ? "false" : "true");
+             get_version(), d->is_connected ? "false" : "true");
     SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
 
-    free( d );
+    free(d);
     return 0;
 }
 
 void updateStatus(bool is_connected) {
-    update_status_data_t* d = malloc( sizeof( update_status_data_t ) );
+    update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
-    SDL_Thread *update_status = SDL_CreateThread(MultithreadedUpdateStatus,
-                                                 "UpdateStatus", d);
+    SDL_Thread *update_status =
+        SDL_CreateThread(MultithreadedUpdateStatus, "UpdateStatus", d);
     SDL_DetachThread(update_status);
 }
