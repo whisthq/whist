@@ -37,7 +37,7 @@ endif ()
 #[[
 ################## Static Libraries we supply ##################
 ]]
-find_library(STATIC_SDL2 SDL2 PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
+find_library(STATIC_SDL2 NAMES SDL2 libSDL2 PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 if(NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
