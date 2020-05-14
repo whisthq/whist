@@ -650,6 +650,12 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
+        int a = 65535;
+        if( setsockopt( PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof( int ) ) == -1 )
+        {
+            fprintf( stderr, "Error setting socket opts: %s\n", strerror( errno ) );
+        }
+
         SDL_Delay(150);
 
         // Third context: Mutual TCP context for essential but
