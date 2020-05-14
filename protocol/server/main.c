@@ -327,7 +327,7 @@ int32_t SendVideo(void* opaque) {
                     if (encoder->type == NVENC_ENCODE) {
                         // resize on the client
                         frame->width = encoder->in_width;
-                        frame->height = encoder->out_width;
+                        frame->height = encoder->in_width;
                     } else {
                         // already been resized
                         frame->width = encoder->out_width;
