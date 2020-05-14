@@ -49,8 +49,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
         enum AVPixelFormat encoder_format = AV_PIX_FMT_CUDA;
 
         encoder->context = avcodec_alloc_context3(encoder->codec);
-        encoder->context->width = encoder->in_width;
-        encoder->context->height = encoder->in_height;
+        encoder->context->width = encoder->out_width;
+        encoder->context->height = encoder->out_height;
         encoder->context->bit_rate = bitrate;
         encoder->context->rc_max_rate = bitrate;
         encoder->context->rc_buffer_size = max_buffer;
@@ -88,28 +88,33 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
 
         encoder->sw_frame = (AVFrame *)av_frame_alloc();
         encoder->sw_frame->format = out_format;
-        encoder->sw_frame->width = encoder->in_width;
-        encoder->sw_frame->height = encoder->in_height;
+        encoder->sw_frame->width = encoder->out_width;
+        encoder->sw_frame->height = encoder->out_height;
         encoder->sw_frame->pts = 0;
 
         // set frame size and allocate memory for it
-        int frame_size = av_image_get_buffer_size(out_format, encoder->in_width,
-                                                  encoder->in_height, 1);
+        int frame_size = av_image_get_buffer_size(out_format, encoder->sw_frame->width,
+                                                  encoder->sw_frame->height, 1);
         encoder->frame_buffer = malloc(frame_size);
 
         // fill picture with empty frame buffer
         av_image_fill_arrays(encoder->sw_frame->data,
                              encoder->sw_frame->linesize,
                              (uint8_t *)encoder->frame_buffer, out_format,
-                             encoder->in_width, encoder->in_height, 1);
+                             encoder->sw_frame->width, encoder->sw_frame->height, 1);
 
         // set sws context for color format conversion
 
-        encoder->sws = NULL;
-        // sws_getContext(encoder->in_width, encoder->in_height,
-        //   AV_PIX_FMT_RGB32, encoder->out_width,
-        //   encoder->out_height, out_format,
-        //   SWS_FAST_BILINEAR, 0, 0, 0);
+        if( encoder->in_width != encoder->out_width || encoder->in_height != encoder->out_height )
+        {
+            encoder->sws = sws_getContext(encoder->in_width, encoder->in_height,
+               AV_PIX_FMT_RGB32, encoder->out_width,
+               encoder->out_height, out_format,
+               SWS_FAST_BILINEAR, 0, 0, 0);
+        } else
+        {
+            encoder->sws = NULL;
+        }
 
         encoder->hw_frame = av_frame_alloc();
         if (av_hwframe_get_buffer(encoder->context->hw_frames_ctx,

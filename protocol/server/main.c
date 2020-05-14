@@ -328,15 +328,8 @@ int32_t SendVideo(void* opaque) {
                     // Create frame struct with compressed frame data and
                     // metadata
                     Frame* frame = (Frame*)buf;
-                    if (encoder->type == NVENC_ENCODE) {
-                        // resize on the client
-                        frame->width = encoder->in_width;
-                        frame->height = encoder->in_height;
-                    } else {
-                        // already been resized
-                        frame->width = encoder->out_width;
-                        frame->height = encoder->out_height;
-                    }
+                    frame->width = encoder->context->width;
+                    frame->height = encoder->context->height;
 
                     frame->size = encoder->encoded_frame_size;
                     frame->cursor = GetCurrentCursor();
