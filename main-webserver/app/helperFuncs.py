@@ -1866,6 +1866,8 @@ def vmReadyToConnect(vm_name, ready):
         vm_name (str): Name of the vm
         ready (boolean): True for ready to connect
     """
+    session = Session()
+
     command = text("""
         UPDATE v_ms
         SET "ready_to_connect" = :ready
@@ -1873,9 +1875,10 @@ def vmReadyToConnect(vm_name, ready):
         "vm_name" = :vm_name
         """)
     params = {'vm_name': vm_name, 'ready': ready}
-    with engine.connect() as conn:
-        conn.execute(command, **params)
-        conn.close()
+
+    session.execute(command, params)
+    session.commit()
+    session.close()
 
 
 def checkLock(vm_name, ID = -1):
@@ -2301,6 +2304,8 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
                 async_vm_start = compute_client.virtual_machines.start(
                     os.environ.get('VM_GROUP'), vm_name)
 
+                createTemporaryLock(vm_name, 12)
+
                 sendInfo(ID, async_vm_start.result())
                 sendInfo(ID, 'VM {} started successfully'.format(vm_name))
 
@@ -2314,6 +2319,8 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
 
                 async_vm_restart = compute_client.virtual_machines.restart(
                     os.environ.get('VM_GROUP'), vm_name)
+
+                createTemporaryLock(vm_name, 12)
 
                 sendInfo(ID, async_vm_restart.result())
                 sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
