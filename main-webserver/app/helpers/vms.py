@@ -551,7 +551,7 @@ def claimAvailableVM(disk_name, location, ID = -1):
         available_vm = cleanFetchedSQL(session.execute(command, params).fetchone())
 
         if available_vm:
-            sendInfo(ID, 'Found an available VM {} for {}'.format(str(available_vm, username)))
+            sendInfo(ID, 'Found an available VM {} for {}'.format(str(available_vm), username))
 
             command = text("""
                 UPDATE v_ms 
