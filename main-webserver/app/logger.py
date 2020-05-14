@@ -10,7 +10,7 @@ class ContextFilter(logging.Filter):
 syslog = SysLogHandler(address=(os.getenv('PAPERTRAIL_URL'), int(os.getenv('PAPERTRAIL_PORT'))))
 syslog.addFilter(ContextFilter())
 
-format = '%(asctime)s %(hostname)s YOUR_APP: %(message)s'
+format = '%(asctime)s [%(filename)s:%(lineno)d] %(message)s'
 formatter = logging.Formatter(format, datefmt='%b %d %H:%M:%S')
 syslog.setFormatter(formatter)
 
