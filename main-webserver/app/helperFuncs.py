@@ -2240,7 +2240,7 @@ def createDiskFromImageHelper(username, location, vm_size, ID=-1):
         return {'status': 400, 'disk_name': None}
 
 
-def sendVMStartCommand(vm_name, needs_restart, ID=-1):
+def sendVMStartCommand(vm_name, needs_restart, needs_winlogon = True, ID=-1):
     """Starts a vm
 
     Args:
@@ -2301,10 +2301,11 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
         updateVMState(vm_name, 'RUNNING_AVAILABLE')
         lockVM(vm_name, False, ID = ID)
 
-        winlogon = waitForWinlogon(vm_name, ID)
-        while winlogon < 0:
-            boot_if_necessary(vm_name, True, ID)
+        if needs_winlogon:
             winlogon = waitForWinlogon(vm_name, ID)
+            while winlogon < 0:
+                boot_if_necessary(vm_name, True, ID)
+                winlogon = waitForWinlogon(vm_name, ID)
 
         return 1
     except Exception as e:
@@ -2351,7 +2352,7 @@ def waitForWinlogon(vm_name, ID = -1):
     return 1
 
 
-def fractalVMStart(vm_name, needs_restart=False, ID=-1):
+def fractalVMStart(vm_name, needs_restart=False, needs_winlogon = True, ID=-1):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary (big brain thoughts from Ming)
 
     Args:
@@ -2372,7 +2373,7 @@ def fractalVMStart(vm_name, needs_restart=False, ID=-1):
         start_command_tries = 0
 
         # First, send a basic start or restart command. Try six times, if it fails, give up
-        while sendVMStartCommand(vm_name, needs_restart) < 0 and start_command_tries < 6:
+        while sendVMStartCommand(vm_name, needs_restart, needs_winlogon = needs_winlogon) < 0 and start_command_tries < 6:
             time.sleep(10)
             start_command_tries += 1
 

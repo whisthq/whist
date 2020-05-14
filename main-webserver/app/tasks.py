@@ -29,6 +29,8 @@ def createVM(self, vm_size, location, operating_system):
 		os.environ.get('VM_GROUP'), vmParameters['vm_name'])
 	async_vm_start.wait()
 
+	fractalVMStart(vmName, True, needs_winlogon = False)
+
 	print('NOTIFICATION: New VM {} started'.format(vmName))
 	
 	extension_parameters = {
