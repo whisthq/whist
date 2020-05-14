@@ -417,7 +417,7 @@ def swapDiskSync(self, disk_name, ID = -1):
 		old_disk = virtual_machine.storage_profile.os_disk
 		updateDisk(old_disk.name, '', None)
 
-	sendInfo(ID, "PENIS Swap disk task for disk {} added to Redis queue".format(disk_name))
+	sendInfo(ID, " Swap disk task for disk {} added to Redis queue".format(disk_name))
 
 	# Get the 
 	_, compute_client, _ = createClients()
@@ -430,9 +430,9 @@ def swapDiskSync(self, disk_name, ID = -1):
 	vm_attached = True if vm_name else False
 
 	if vm_attached:
-		sendInfo(ID, "PENIS Azure says that disk {} belonging to {} is attached to {}".format(disk_name, username, vm_name))
+		sendInfo(ID, " Azure says that disk {} belonging to {} is attached to {}".format(disk_name, username, vm_name))
 	else:
-		sendInfo(ID, "PENIS Azure says that disk {} belonging to {} is not attached to any VM".format(disk_name, username))
+		sendInfo(ID, " Azure says that disk {} belonging to {} is not attached to any VM".format(disk_name, username))
 
 	# Update the database to reflect the disk attached to the VM currently
 	if vm_attached:
@@ -447,20 +447,20 @@ def swapDiskSync(self, disk_name, ID = -1):
 				lockVM(vm_name, True, username = username, disk_name = disk_name, ID = ID)
 
 				# Update database with new disk name and VM state
-				sendInfo(ID, "PENIS Disk {} belongs to user {} and is already attached to VM {}".format(disk_name, username, vm_name))
+				sendInfo(ID, " Disk {} belongs to user {} and is already attached to VM {}".format(disk_name, username, vm_name))
 
 				updateVMState(vm_name, 'ATTACHING')
 				updateDisk(disk_name, vm_name, location)
 
 				self.update_state(state='PENDING', meta={"msg": "Database updated. Booting Cloud PC."})
 
-				sendInfo(ID, 'PENIS Database updated with {} and {}'.format(disk_name, vm_name))
+				sendInfo(ID, ' Database updated with {} and {}'.format(disk_name, vm_name))
 
 				if fractalVMStart(vm_name) > 0:
-					sendInfo(ID, 'PENIS VM {} is started and ready to use'.format(vm_name))
+					sendInfo(ID, ' VM {} is started and ready to use'.format(vm_name))
 					self.update_state(state='PENDING', meta={"msg": "Cloud PC is ready to use."})
 				else:
-					sendError(ID, 'PENIS Could not start VM {}'.format(vm_name))
+					sendError(ID, ' Could not start VM {}'.format(vm_name))
 					self.update_state(state='FAILURE', meta={"msg": "Cloud PC could not be started. Please contact support."})
 
 				vm_credentials = fetchVMCredentials(vm_name)
@@ -486,7 +486,7 @@ def swapDiskSync(self, disk_name, ID = -1):
 					# Attach and boot to that VM
 					self.update_state(state='PENDING', meta={"msg": "Preparing your cloud PC for streaming. This could take a few minutes."})
 
-					sendInfo(ID, 'PENIS Selected VM {} to attach to disk {}'.format(vm_name, disk_name))
+					sendInfo(ID, ' Selected VM {} to attach to disk {}'.format(vm_name, disk_name))
 					if swapDiskAndUpdate(self, disk_name, vm_name) > 0:
 						self.update_state(state='PENDING', meta={"msg": "Data successfully uploaded to cloud PC."})
 						free_vm_found = True
@@ -499,7 +499,7 @@ def swapDiskSync(self, disk_name, ID = -1):
 					updateVMState(vm_name, 'RUNNING_AVAILABLE')
 
 					disk_attached = True
-					sendInfo(ID, 'PENIS VM {} successfully attached to disk {}'.format(vm_name, disk_name))
+					sendInfo(ID, ' VM {} successfully attached to disk {}'.format(vm_name, disk_name))
 					return {'status': 200}
 				except Exception as e:
 					sendCritical(ID, str(e))
