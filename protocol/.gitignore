@@ -29,6 +29,9 @@ server/log.txt
 *.marks
 *.internal
 *.includecache
+*.lib
+CMakeSettings.json
+
 cmake-build-*
 CMakeFiles/
 build/
