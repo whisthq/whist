@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfractalClipboard.a  CMakeFiles/fractalClipboard.dir/clipboard_synchronizer.c.o CMakeFiles/fractalClipboard.dir/mac_clipboard.c.o CMakeFiles/fractalClipboard.dir/clipboard_osx.m.o
+/usr/bin/ranlib libfractalClipboard.a

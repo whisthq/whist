@@ -1,0 +1,92 @@
+[
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/audio",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalAudio.dir/audiodecode.c.o   -c /Users/Philippe/Downloads/protocol/fractal/audio/audiodecode.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/audio/audiodecode.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/audio",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalAudio.dir/audioencode.c.o   -c /Users/Philippe/Downloads/protocol/fractal/audio/audioencode.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/audio/audioencode.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/clipboard",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalClipboard.dir/clipboard_synchronizer.c.o   -c /Users/Philippe/Downloads/protocol/fractal/clipboard/clipboard_synchronizer.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/clipboard/clipboard_synchronizer.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/clipboard",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalClipboard.dir/mac_clipboard.c.o   -c /Users/Philippe/Downloads/protocol/fractal/clipboard/mac_clipboard.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/clipboard/mac_clipboard.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/clipboard",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalClipboard.dir/clipboard_osx.m.o   -c /Users/Philippe/Downloads/protocol/fractal/clipboard/clipboard_osx.m",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/clipboard/clipboard_osx.m"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/core",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalCore.dir/fractal.c.o   -c /Users/Philippe/Downloads/protocol/fractal/core/fractal.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/core/fractal.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/network",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalNetwork.dir/network.c.o   -c /Users/Philippe/Downloads/protocol/fractal/network/network.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/network/network.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/utils",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalUtils.dir/aes.c.o   -c /Users/Philippe/Downloads/protocol/fractal/utils/aes.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/utils/aes.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/utils",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalUtils.dir/clock.c.o   -c /Users/Philippe/Downloads/protocol/fractal/utils/clock.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/utils/clock.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/utils",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalUtils.dir/logging.c.o   -c /Users/Philippe/Downloads/protocol/fractal/utils/logging.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/utils/logging.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/utils",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalUtils.dir/sdlscreeninfo.c.o   -c /Users/Philippe/Downloads/protocol/fractal/utils/sdlscreeninfo.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/utils/sdlscreeninfo.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/utils",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalUtils.dir/mac_utils.c.o   -c /Users/Philippe/Downloads/protocol/fractal/utils/mac_utils.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/utils/mac_utils.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/video",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalVideo.dir/videodecode.c.o   -c /Users/Philippe/Downloads/protocol/fractal/video/videodecode.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/video/videodecode.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/fractal/video",
+  "command": "/usr/local/opt/llvm/bin/clang-10 -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2  -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/fractalVideo.dir/videoencode.c.o   -c /Users/Philippe/Downloads/protocol/fractal/video/videoencode.c",
+  "file": "/Users/Philippe/Downloads/protocol/fractal/video/videoencode.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/desktop",
+  "command": "clang -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2 -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks  -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk -mmacosx-version-min=10.13   -std=gnu99 -o CMakeFiles/FractalClient.dir/main.c.o   -c /Users/Philippe/Downloads/protocol/desktop/main.c",
+  "file": "/Users/Philippe/Downloads/protocol/desktop/main.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/desktop",
+  "command": "clang -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2 -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks  -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk -mmacosx-version-min=10.13   -std=gnu99 -o CMakeFiles/FractalClient.dir/video.c.o   -c /Users/Philippe/Downloads/protocol/desktop/video.c",
+  "file": "/Users/Philippe/Downloads/protocol/desktop/video.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/desktop",
+  "command": "clang -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2 -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks  -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk -mmacosx-version-min=10.13   -std=gnu99 -o CMakeFiles/FractalClient.dir/audio.c.o   -c /Users/Philippe/Downloads/protocol/desktop/audio.c",
+  "file": "/Users/Philippe/Downloads/protocol/desktop/audio.c"
+},
+{
+  "directory": "/Users/Philippe/Downloads/protocol/build/desktop",
+  "command": "clang -DLOG_LEVEL=5 -I/Users/Philippe/Downloads/protocol/include/ffmpeg -I/Users/Philippe/Downloads/protocol/fractal -I/Users/Philippe/Downloads/protocol/include -I/Users/Philippe/Downloads/protocol/include/SDL2 -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks  -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk -mmacosx-version-min=10.13   -std=gnu99 -o CMakeFiles/FractalClient.dir/sdl_utils.c.o   -c /Users/Philippe/Downloads/protocol/desktop/sdl_utils.c",
+  "file": "/Users/Philippe/Downloads/protocol/desktop/sdl_utils.c"
+}
+]

@@ -1,0 +1,330 @@
+The system is: Darwin - 19.4.0 - x86_64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: /usr/local/opt/llvm/bin/clang-10 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+
+The C compiler identification is Clang, found in "/Users/Philippe/Downloads/protocol/build/CMakeFiles/3.17.2/CompilerIdC/a.out"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: /usr/local/opt/llvm/bin/clang++ 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+
+The CXX compiler identification is Clang, found in "/Users/Philippe/Downloads/protocol/build/CMakeFiles/3.17.2/CompilerIdCXX/a.out"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_5ed1e/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_5ed1e.dir/build.make CMakeFiles/cmTC_5ed1e.dir/build
+Building C object CMakeFiles/cmTC_5ed1e.dir/testCCompiler.c.o
+/usr/local/opt/llvm/bin/clang-10   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -o CMakeFiles/cmTC_5ed1e.dir/testCCompiler.c.o   -c /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp/testCCompiler.c
+Linking C executable cmTC_5ed1e
+/usr/local/Cellar/cmake/3.17.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5ed1e.dir/link.txt --verbose=1
+/usr/local/opt/llvm/bin/clang-10   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_5ed1e.dir/testCCompiler.c.o  -o cmTC_5ed1e 
+
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2f3eb/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_2f3eb.dir/build.make CMakeFiles/cmTC_2f3eb.dir/build
+Building C object CMakeFiles/cmTC_2f3eb.dir/CMakeCCompilerABI.c.o
+/usr/local/opt/llvm/bin/clang-10   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -v -Wl,-v -o CMakeFiles/cmTC_2f3eb.dir/CMakeCCompilerABI.c.o   -c /usr/local/Cellar/cmake/3.17.2/share/cmake/Modules/CMakeCCompilerABI.c
+clang version 10.0.0 
+Target: x86_64-apple-darwin19.4.0
+Thread model: posix
+InstalledDir: /usr/local/opt/llvm/bin
+clang-10: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
+ (in-process)
+ "/usr/local/Cellar/llvm/10.0.0_1/bin/clang-10" -cc1 -triple x86_64-apple-macosx10.15.0 -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mthread-model posix -mframe-pointer=all -fno-rounding-math -masm-verbose -munwind-tables -target-sdk-version=10.15.4 -target-cpu penryn -dwarf-column-info -debugger-tuning=lldb -target-linker-version 556.5 -v -resource-dir /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/local/include -internal-isystem /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include -fdebug-compilation-dir /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -stack-protector 1 -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fobjc-runtime=macosx-10.15.0 -fmax-type-align=16 -fdiagnostics-show-option -o CMakeFiles/cmTC_2f3eb.dir/CMakeCCompilerABI.c.o -x c /usr/local/Cellar/cmake/3.17.2/share/cmake/Modules/CMakeCCompilerABI.c
+clang -cc1 version 10.0.0 based upon LLVM 10.0.0 default target x86_64-apple-darwin19.4.0
+ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/local/include"
+ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/Library/Frameworks"
+#include "..." search starts here:
+#include <...> search starts here:
+ /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include
+ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include
+ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks (framework directory)
+End of search list.
+Linking C executable cmTC_2f3eb
+/usr/local/Cellar/cmake/3.17.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2f3eb.dir/link.txt --verbose=1
+/usr/local/opt/llvm/bin/clang-10   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  -v -Wl,-v CMakeFiles/cmTC_2f3eb.dir/CMakeCCompilerABI.c.o  -o cmTC_2f3eb 
+clang version 10.0.0 
+Target: x86_64-apple-darwin19.4.0
+Thread model: posix
+InstalledDir: /usr/local/opt/llvm/bin
+ "/usr/bin/ld" -demangle -lto_library /usr/local/Cellar/llvm/10.0.0_1/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 10.15.0 10.15.4 -syslibroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk -o cmTC_2f3eb -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_2f3eb.dir/CMakeCCompilerABI.c.o -lSystem /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a
+@(#)PROGRAM:ld  PROJECT:ld64-556.6
+BUILD 13:10:29 Apr  7 2020
+configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em
+Library search paths:
+	/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib
+Framework search paths:
+	/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/
+
+
+
+Parsed C implicit include dir info from above output: rv=done
+  found start of include info
+  found start of implicit include info
+    add: [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include]
+    add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include]
+  end of search list found
+  collapse include dir [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include] ==> [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include]
+  collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include]
+  implicit include dirs: [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include]
+
+
+Parsed C implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command(s):/usr/bin/make cmTC_2f3eb/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_2f3eb.dir/build.make CMakeFiles/cmTC_2f3eb.dir/build]
+  ignore line: [Building C object CMakeFiles/cmTC_2f3eb.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/usr/local/opt/llvm/bin/clang-10   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -v -Wl -v -o CMakeFiles/cmTC_2f3eb.dir/CMakeCCompilerABI.c.o   -c /usr/local/Cellar/cmake/3.17.2/share/cmake/Modules/CMakeCCompilerABI.c]
+  ignore line: [clang version 10.0.0 ]
+  ignore line: [Target: x86_64-apple-darwin19.4.0]
+  ignore line: [Thread model: posix]
+  ignore line: [InstalledDir: /usr/local/opt/llvm/bin]
+  ignore line: [clang-10: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
+  ignore line: [ (in-process)]
+  ignore line: [ "/usr/local/Cellar/llvm/10.0.0_1/bin/clang-10" -cc1 -triple x86_64-apple-macosx10.15.0 -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mthread-model posix -mframe-pointer=all -fno-rounding-math -masm-verbose -munwind-tables -target-sdk-version=10.15.4 -target-cpu penryn -dwarf-column-info -debugger-tuning=lldb -target-linker-version 556.5 -v -resource-dir /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/local/include -internal-isystem /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include -fdebug-compilation-dir /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -stack-protector 1 -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fobjc-runtime=macosx-10.15.0 -fmax-type-align=16 -fdiagnostics-show-option -o CMakeFiles/cmTC_2f3eb.dir/CMakeCCompilerABI.c.o -x c /usr/local/Cellar/cmake/3.17.2/share/cmake/Modules/CMakeCCompilerABI.c]
+  ignore line: [clang -cc1 version 10.0.0 based upon LLVM 10.0.0 default target x86_64-apple-darwin19.4.0]
+  ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/local/include"]
+  ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/Library/Frameworks"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks (framework directory)]
+  ignore line: [End of search list.]
+  ignore line: [Linking C executable cmTC_2f3eb]
+  ignore line: [/usr/local/Cellar/cmake/3.17.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2f3eb.dir/link.txt --verbose=1]
+  ignore line: [/usr/local/opt/llvm/bin/clang-10   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -Wl -search_paths_first -Wl -headerpad_max_install_names  -v -Wl -v CMakeFiles/cmTC_2f3eb.dir/CMakeCCompilerABI.c.o  -o cmTC_2f3eb ]
+  ignore line: [clang version 10.0.0 ]
+  ignore line: [Target: x86_64-apple-darwin19.4.0]
+  ignore line: [Thread model: posix]
+  ignore line: [InstalledDir: /usr/local/opt/llvm/bin]
+  link line: [ "/usr/bin/ld" -demangle -lto_library /usr/local/Cellar/llvm/10.0.0_1/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 10.15.0 10.15.4 -syslibroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk -o cmTC_2f3eb -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_2f3eb.dir/CMakeCCompilerABI.c.o -lSystem /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+    arg [/usr/bin/ld] ==> ignore
+    arg [-demangle] ==> ignore
+    arg [-lto_library] ==> ignore, skip following value
+    arg [/usr/local/Cellar/llvm/10.0.0_1/lib/libLTO.dylib] ==> skip value of -lto_library
+    arg [-dynamic] ==> ignore
+    arg [-arch] ==> ignore
+    arg [x86_64] ==> ignore
+    arg [-platform_version] ==> ignore
+    arg [macos] ==> ignore
+    arg [10.15.0] ==> ignore
+    arg [10.15.4] ==> ignore
+    arg [-syslibroot] ==> ignore
+    arg [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_2f3eb] ==> ignore
+    arg [-search_paths_first] ==> ignore
+    arg [-headerpad_max_install_names] ==> ignore
+    arg [-v] ==> ignore
+    arg [CMakeFiles/cmTC_2f3eb.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [-lSystem] ==> lib [System]
+    arg [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a] ==> lib [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+  Library search paths: [;/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib]
+  Framework search paths: [;/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/]
+  remove lib [System]
+  remove lib [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+  collapse library dir [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib] ==> [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib]
+  collapse framework dir [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/] ==> [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks]
+  implicit libs: []
+  implicit dirs: [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib]
+  implicit fwks: [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks]
+
+
+Determining if the CXX compiler works passed with the following output:
+Change Dir: /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_9ebca/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_9ebca.dir/build.make CMakeFiles/cmTC_9ebca.dir/build
+Building CXX object CMakeFiles/cmTC_9ebca.dir/testCXXCompiler.cxx.o
+/usr/local/opt/llvm/bin/clang++    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -o CMakeFiles/cmTC_9ebca.dir/testCXXCompiler.cxx.o -c /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
+Linking CXX executable cmTC_9ebca
+/usr/local/Cellar/cmake/3.17.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9ebca.dir/link.txt --verbose=1
+/usr/local/opt/llvm/bin/clang++    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_9ebca.dir/testCXXCompiler.cxx.o  -o cmTC_9ebca 
+
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_8fe11/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_8fe11.dir/build.make CMakeFiles/cmTC_8fe11.dir/build
+Building CXX object CMakeFiles/cmTC_8fe11.dir/CMakeCXXCompilerABI.cpp.o
+/usr/local/opt/llvm/bin/clang++    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -v -Wl,-v -o CMakeFiles/cmTC_8fe11.dir/CMakeCXXCompilerABI.cpp.o -c /usr/local/Cellar/cmake/3.17.2/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+clang version 10.0.0 
+Target: x86_64-apple-darwin19.4.0
+Thread model: posix
+InstalledDir: /usr/local/opt/llvm/bin
+clang-10: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
+ (in-process)
+ "/usr/local/Cellar/llvm/10.0.0_1/bin/clang-10" -cc1 -triple x86_64-apple-macosx10.15.0 -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mthread-model posix -mframe-pointer=all -fno-rounding-math -masm-verbose -munwind-tables -target-sdk-version=10.15.4 -target-cpu penryn -dwarf-column-info -debugger-tuning=lldb -target-linker-version 556.5 -v -resource-dir /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -stdlib=libc++ -internal-isystem /usr/local/opt/llvm/bin/../include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/local/include -internal-isystem /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include -fdeprecated-macro -fdebug-compilation-dir /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -stack-protector 1 -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fobjc-runtime=macosx-10.15.0 -fcxx-exceptions -fexceptions -fmax-type-align=16 -fdiagnostics-show-option -o CMakeFiles/cmTC_8fe11.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/local/Cellar/cmake/3.17.2/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+clang -cc1 version 10.0.0 based upon LLVM 10.0.0 default target x86_64-apple-darwin19.4.0
+ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include/c++/v1"
+ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/local/include"
+ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/Library/Frameworks"
+#include "..." search starts here:
+#include <...> search starts here:
+ /usr/local/opt/llvm/bin/../include/c++/v1
+ /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include
+ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include
+ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks (framework directory)
+End of search list.
+Linking CXX executable cmTC_8fe11
+/usr/local/Cellar/cmake/3.17.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8fe11.dir/link.txt --verbose=1
+/usr/local/opt/llvm/bin/clang++    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  -v -Wl,-v CMakeFiles/cmTC_8fe11.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_8fe11 
+clang version 10.0.0 
+Target: x86_64-apple-darwin19.4.0
+Thread model: posix
+InstalledDir: /usr/local/opt/llvm/bin
+ "/usr/bin/ld" -demangle -lto_library /usr/local/Cellar/llvm/10.0.0_1/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 10.15.0 10.15.4 -syslibroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk -o cmTC_8fe11 -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_8fe11.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a
+@(#)PROGRAM:ld  PROJECT:ld64-556.6
+BUILD 13:10:29 Apr  7 2020
+configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em
+Library search paths:
+	/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib
+Framework search paths:
+	/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/
+
+
+
+Parsed CXX implicit include dir info from above output: rv=done
+  found start of include info
+  found start of implicit include info
+    add: [/usr/local/opt/llvm/bin/../include/c++/v1]
+    add: [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include]
+    add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include]
+  end of search list found
+  collapse include dir [/usr/local/opt/llvm/bin/../include/c++/v1] ==> [/usr/local/opt/llvm/include/c++/v1]
+  collapse include dir [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include] ==> [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include]
+  collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include]
+  implicit include dirs: [/usr/local/opt/llvm/include/c++/v1;/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include]
+
+
+Parsed CXX implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command(s):/usr/bin/make cmTC_8fe11/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_8fe11.dir/build.make CMakeFiles/cmTC_8fe11.dir/build]
+  ignore line: [Building CXX object CMakeFiles/cmTC_8fe11.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/usr/local/opt/llvm/bin/clang++    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -v -Wl -v -o CMakeFiles/cmTC_8fe11.dir/CMakeCXXCompilerABI.cpp.o -c /usr/local/Cellar/cmake/3.17.2/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [clang version 10.0.0 ]
+  ignore line: [Target: x86_64-apple-darwin19.4.0]
+  ignore line: [Thread model: posix]
+  ignore line: [InstalledDir: /usr/local/opt/llvm/bin]
+  ignore line: [clang-10: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
+  ignore line: [ (in-process)]
+  ignore line: [ "/usr/local/Cellar/llvm/10.0.0_1/bin/clang-10" -cc1 -triple x86_64-apple-macosx10.15.0 -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mthread-model posix -mframe-pointer=all -fno-rounding-math -masm-verbose -munwind-tables -target-sdk-version=10.15.4 -target-cpu penryn -dwarf-column-info -debugger-tuning=lldb -target-linker-version 556.5 -v -resource-dir /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -stdlib=libc++ -internal-isystem /usr/local/opt/llvm/bin/../include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/local/include -internal-isystem /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include -fdeprecated-macro -fdebug-compilation-dir /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -stack-protector 1 -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fobjc-runtime=macosx-10.15.0 -fcxx-exceptions -fexceptions -fmax-type-align=16 -fdiagnostics-show-option -o CMakeFiles/cmTC_8fe11.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/local/Cellar/cmake/3.17.2/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [clang -cc1 version 10.0.0 based upon LLVM 10.0.0 default target x86_64-apple-darwin19.4.0]
+  ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include/c++/v1"]
+  ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/local/include"]
+  ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/Library/Frameworks"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /usr/local/opt/llvm/bin/../include/c++/v1]
+  ignore line: [ /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/include]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks (framework directory)]
+  ignore line: [End of search list.]
+  ignore line: [Linking CXX executable cmTC_8fe11]
+  ignore line: [/usr/local/Cellar/cmake/3.17.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8fe11.dir/link.txt --verbose=1]
+  ignore line: [/usr/local/opt/llvm/bin/clang++    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -Wl -search_paths_first -Wl -headerpad_max_install_names  -v -Wl -v CMakeFiles/cmTC_8fe11.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_8fe11 ]
+  ignore line: [clang version 10.0.0 ]
+  ignore line: [Target: x86_64-apple-darwin19.4.0]
+  ignore line: [Thread model: posix]
+  ignore line: [InstalledDir: /usr/local/opt/llvm/bin]
+  link line: [ "/usr/bin/ld" -demangle -lto_library /usr/local/Cellar/llvm/10.0.0_1/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 10.15.0 10.15.4 -syslibroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk -o cmTC_8fe11 -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_8fe11.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+    arg [/usr/bin/ld] ==> ignore
+    arg [-demangle] ==> ignore
+    arg [-lto_library] ==> ignore, skip following value
+    arg [/usr/local/Cellar/llvm/10.0.0_1/lib/libLTO.dylib] ==> skip value of -lto_library
+    arg [-dynamic] ==> ignore
+    arg [-arch] ==> ignore
+    arg [x86_64] ==> ignore
+    arg [-platform_version] ==> ignore
+    arg [macos] ==> ignore
+    arg [10.15.0] ==> ignore
+    arg [10.15.4] ==> ignore
+    arg [-syslibroot] ==> ignore
+    arg [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_8fe11] ==> ignore
+    arg [-search_paths_first] ==> ignore
+    arg [-headerpad_max_install_names] ==> ignore
+    arg [-v] ==> ignore
+    arg [CMakeFiles/cmTC_8fe11.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [-lc++] ==> lib [c++]
+    arg [-lSystem] ==> lib [System]
+    arg [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a] ==> lib [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+  Library search paths: [;/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib]
+  Framework search paths: [;/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/]
+  remove lib [System]
+  remove lib [/usr/local/Cellar/llvm/10.0.0_1/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+  collapse library dir [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib] ==> [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib]
+  collapse framework dir [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/] ==> [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks]
+  implicit libs: [c++]
+  implicit dirs: [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib]
+  implicit fwks: [/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks]
+
+
+Determining if the include file pthread.h exists passed with the following output:
+Change Dir: /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2e76a/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_2e76a.dir/build.make CMakeFiles/cmTC_2e76a.dir/build
+Building C object CMakeFiles/cmTC_2e76a.dir/CheckIncludeFile.c.o
+/usr/local/opt/llvm/bin/clang-10   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/cmTC_2e76a.dir/CheckIncludeFile.c.o   -c /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_2e76a
+/usr/local/Cellar/cmake/3.17.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2e76a.dir/link.txt --verbose=1
+/usr/local/opt/llvm/bin/clang-10   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_2e76a.dir/CheckIncludeFile.c.o  -o cmTC_2e76a 
+
+
+
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD succeeded with the following output:
+Change Dir: /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a68e6/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_a68e6.dir/build.make CMakeFiles/cmTC_a68e6.dir/build
+Building C object CMakeFiles/cmTC_a68e6.dir/src.c.o
+/usr/local/opt/llvm/bin/clang-10   -DCMAKE_HAVE_LIBC_PTHREAD -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk   -std=gnu99 -o CMakeFiles/cmTC_a68e6.dir/src.c.o   -c /Users/Philippe/Downloads/protocol/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_a68e6
+/usr/local/Cellar/cmake/3.17.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a68e6.dir/link.txt --verbose=1
+/usr/local/opt/llvm/bin/clang-10  -DCMAKE_HAVE_LIBC_PTHREAD -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_a68e6.dir/src.c.o  -o cmTC_a68e6 
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+

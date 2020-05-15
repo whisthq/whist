@@ -71,17 +71,17 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
 
     #MAC frameworks require package finding
-    find_package(OpenGL REQUIRED)
-    find_package(VideoToolbox REQUIRED)
-    find_package(CoreMedia REQUIRED)
-    find_package(CoreAudio REQUIRED)
-    find_package(AudioToolbox REQUIRED)
-    find_package(IOKit REQUIRED)
-    find_package(ForceFeedback REQUIRED)
-    find_package(Carbon REQUIRED)
-    find_package(AppKit REQUIRED)
-    find_package(Metal REQUIRED)
-    find_package(QuartzCore REQUIRED)
+    find_library(OpenGL REQUIRED)
+    find_library(VideoToolbox REQUIRED)
+    find_library(CoreMedia REQUIRED)
+    find_library(CoreAudio REQUIRED)
+    find_library(AudioToolbox REQUIRED)
+    find_library(IOKit REQUIRED)
+    find_library(ForceFeedback REQUIRED)
+    find_library(Carbon REQUIRED)
+    find_library(AppKit REQUIRED)
+    find_library(Metal REQUIRED)
+    find_library(QuartzCore REQUIRED)
     include_directories(
             ${OPENGL_INCLUDE_DIR}
             ${VIDEOTOOLBOX_INCLUDE_DIR}
