@@ -1034,7 +1034,7 @@ def swapdisk_name(s, disk_name, vm_name, ID=-1):
         return -1
 
 
-def sendVMStartCommand(vm_name, needs_restart, ID=-1):
+def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
     """Starts a vm
 
     Args:
@@ -1046,7 +1046,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
         int: 1 for success, -1 for fail
     """
     try:
-        def boot_if_necessary(vm_name, needs_restart, ID):
+        def boot_if_necessary(vm_name, needs_restart, ID, s = s):
             _, compute_client, _ = createClients()
 
             power_state = 'PowerState/deallocated'
@@ -1060,6 +1060,9 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
                 pass
 
             if 'stop' in power_state or 'dealloc' in power_state:
+                if s:
+                    s.update_state(state='PENDING', meta={"msg": "Your cloud PC is powered off. Powering on (this could take a few minutes)."})
+
                 sendInfo(ID, 'VM {} currently in state {}. Setting Winlogon to False'.format(
                     vm_name, power_state))
                 vmReadyToConnect(vm_name, False)
@@ -1070,12 +1073,18 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
                 async_vm_start = compute_client.virtual_machines.start(
                     os.environ.get('VM_GROUP'), vm_name)
 
+                if s:
+                    s.update_state(state='PENDING', meta={"msg": "Your cloud PC was started successfully."})
+
                 createTemporaryLock(vm_name, 12)
 
                 sendInfo(ID, async_vm_start.result())
                 sendInfo(ID, 'VM {} started successfully'.format(vm_name))
 
             if needs_restart:
+                if s:
+                    s.update_state(state='PENDING', meta={"msg": "Your cloud PC needs to be restarted. Restarting (this will take no more than a minute)."})
+
                 sendInfo(
                     ID, 'VM {} needs to restart. Setting Winlogon to False'.format(vm_name))
                 vmReadyToConnect(vm_name, False)
@@ -1086,6 +1095,9 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
                 async_vm_restart = compute_client.virtual_machines.restart(
                     os.environ.get('VM_GROUP'), vm_name)
 
+                if s:
+                    s.update_state(state='PENDING', meta={"msg": "Your cloud PC was restarted successfully."})
+
                 createTemporaryLock(vm_name, 12)
 
                 sendInfo(ID, async_vm_restart.result())
@@ -1095,10 +1107,16 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1):
         updateVMState(vm_name, 'RUNNING_AVAILABLE')
         lockVM(vm_name, False, ID = ID)
 
+        if s:
+            s.update_state(state='PENDING', meta={"msg": "Logging you into your cloud PC."})
+
         winlogon = waitForWinlogon(vm_name, ID)
         while winlogon < 0:
             boot_if_necessary(vm_name, True, ID)
             winlogon = waitForWinlogon(vm_name, ID)
+
+        if s:
+            s.update_state(state='PENDING', meta={"msg": "Logged into your cloud PC successfully."})
 
         return 1
     except Exception as e:
@@ -1145,7 +1163,7 @@ def waitForWinlogon(vm_name, ID=-1):
     return 1
 
 
-def fractalVMStart(vm_name, needs_restart=False, ID=-1):
+def fractalVMStart(vm_name, needs_restart=False, ID=-1, s = None):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary (big brain thoughts from Ming)
 
     Args:
@@ -1166,7 +1184,10 @@ def fractalVMStart(vm_name, needs_restart=False, ID=-1):
         start_command_tries = 0
 
         # First, send a basic start or restart command. Try six times, if it fails, give up
-        while sendVMStartCommand(vm_name, needs_restart) < 0 and start_command_tries < 6:
+        if s:
+            s.update_state(state='PENDING', meta={"msg": "Cloud PC successfully received boot request."})
+
+        while sendVMStartCommand(vm_name, needs_restart, s = s) < 0 and start_command_tries < 6:
             time.sleep(10)
             start_command_tries += 1
 
