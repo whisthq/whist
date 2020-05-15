@@ -70,7 +70,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
 
-    #MAC frameworks require package finding
+    #MAC frameworks require library finding
     find_library(OpenGL REQUIRED)
     find_library(VideoToolbox REQUIRED)
     find_library(CoreMedia REQUIRED)
@@ -81,7 +81,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(Carbon REQUIRED)
     find_library(AppKit REQUIRED)
     find_library(Metal REQUIRED)
+    find_library(Cocoa REQUIRED)
     find_library(QuartzCore REQUIRED)
+
     include_directories(
             ${OPENGL_INCLUDE_DIR}
             ${VIDEOTOOLBOX_INCLUDE_DIR}
@@ -90,7 +92,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
             ${AUDIOTOOLBOX_INCLUDE_DIR}
             ${IOKIT_INCLUDE_DIR}
             ${FORCEFEEDBACK_INCLUDE_DIR}
-            ${CARBON_INCLUDE_DIR}
             ${CARBON_INCLUDE_DIR}
             ${APPKIT_INCLUDE_DIR}
             ${METAL_INCLUDE_DIR}
@@ -104,15 +105,24 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
             ${IOKIT_LIBRARIES}
             ${FORCEFEEDBACK_LIBRARIES}
             ${CARBON_LIBRARIES}
-            ${CARBON_LIBRARIES}
             ${APPKIT_LIBRARIES}
             ${METAL_LIBRARIES}
             ${QUARTZCORE_LIBRARIES})
 
-    target_link_libraries(FractalClient
-            objc
-            iconv
-            )
+    target_link_libraries(FractalClient 
+        "-framework VideoToolbox"
+        "-framework CoreMedia"
+        "-framework CoreAudio"
+        "-framework AudioToolbox"
+        "-framework IOKit"
+        "-framework ForceFeedback"
+        "-framework Carbon"
+        "-framework AppKit"
+        "-framework Metal"
+        "-framework QuartzCore"
+        objc
+        iconv
+        )
 endif()
 
 #[[
