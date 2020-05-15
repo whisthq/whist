@@ -27,7 +27,7 @@ def createVM(self, vm_size, location, operating_system):
     if not nic:
         return
     vmParameters = createVMParameters(vmName, nic.id, vm_size, location)
-    async_vm_creation = CCLIENT.virtual_machines.create_or_update(
+    async_vm_creation = compute_client.virtual_machines.create_or_update(
         os.environ['VM_GROUP'], vmParameters['vm_name'], vmParameters['params'])
     async_vm_creation.wait()
 
@@ -39,11 +39,11 @@ def createVM(self, vm_size, location, operating_system):
         'type_handler_version': '1.2'
     }
 
-    async_vm_extension = CCLIENT.virtual_machine_extensions.create_or_update(os.environ['VM_GROUP'],
+    async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(os.environ['VM_GROUP'],
                                                                              vmParameters['vm_name'], 'NvidiaGpuDriverWindows', extension_parameters)
     async_vm_extension.wait()
 
-    async_vm_start = CCLIENT.virtual_machines.start(
+    async_vm_start = compute_client.virtual_machines.start(
         os.environ['VM_GROUP'], vmParameters['vm_name'])
     async_vm_start.wait()
 
