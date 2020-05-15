@@ -136,7 +136,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
             set_width = pDescs[k].Width;
             set_height = pDescs[k].Height;
             ratio_closeness = 0.0;
-            break;
+            LOG_INFO( "FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator, pDescs[k].RefreshRate.Denominator );
         }
     }
 
@@ -152,6 +152,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
             0.01) {
             LOG_INFO("Ratio match found with %dx%d!", pDescs[k].Width,
                      pDescs[k].Height);
+            LOG_INFO( "FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator, pDescs[k].RefreshRate.Denominator );
             if (set_width == 0) {
                 set_width = pDescs[k].Width;
                 set_height = pDescs[k].Height;
@@ -188,6 +189,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
             dm.dmPelsWidth = width;
             dm.dmPelsHeight = height;
             dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+            //dm.dmDisplayFrequency = 
 
             int ret = ChangeDisplaySettingsExW(
                 monitorInfo.szDevice, &dm, NULL,
