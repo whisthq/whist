@@ -12,7 +12,7 @@ project(FractalProtocol)
 
 set(META_PROJECT_NAME        "FractalProtocol")
 set(META_PROJECT_DESCRIPTION "CMake Project Template")
-set(META_AUTHOR_ORGANIZATION "Fractal Computers")
+set(META_AUTHOR_ORGANIZATION "Fractal")
 set(META_AUTHOR_DOMAIN       "https://github.com/fractalcomputers/protocol")
 
 set(CMAKE_C_STANDARD 99)
@@ -43,7 +43,13 @@ endif()
 
 
 # ffmpeg: using our provided libs on mac and windows and system on linux.
-set(FFMPEG_LIBS swresample;avcodec;avdevice;avfilter;avformat;swscale;avutil;postproc)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(FFMPEG_LIBS libswresample.3.dylib;libavcodec.58.dylib;libavdevice.58.dylib;libavfilter.7.dylib;
+                    libavformat.58.dylib;libswscale.5.dylib;libavutil.56.dylib;libpostproc.55.dylib)
+else()
+    set(FFMPEG_LIBS swresample;avcodec;avdevice;avfilter;avformat;swscale;avutil;postproc)
+endif()
+
 set(FFMPEG_LIBS_PATHS "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -57,12 +63,17 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
     include_directories(include/ffmpeg)
 else()
+
+message(STATUS "FFMPEG PATHS ${CMAKE_SYSTEM_NAME}")
+
+
+
     FOREACH(LIB ${FFMPEG_LIBS})
-        message(VERBOSE "Looking for lib ${LIB}")
+        message(STATUS "Looking for lib ${LIB}")
         set(LIB_VAR "LIB_${LIB}")
         find_library(${LIB_VAR}
                 NAMES ${LIB}
-                PATHS lib/${arch}/ffmpeg/Windows
+                PATHS lib/${arch}/ffmpeg/${CMAKE_SYSTEM_NAME}
                 NO_DEFAULT_PATH
                 NO_CMAKE_ENVIRONMENT PATH
                 NO_CMAKE_PATH
@@ -112,7 +123,7 @@ find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/$
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
 
-if((NOT LIBMFX))
+if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/")
 endif()
 
@@ -128,7 +139,7 @@ if (${BUILD_CLIENT})
     message(STATUS building client)
     add_subdirectory(desktop)
 endif()
-if (${BUILD_SERVER})
+if (${BUILD_SERVER} AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message(STATUS building server)
     add_subdirectory(server)
 endif()

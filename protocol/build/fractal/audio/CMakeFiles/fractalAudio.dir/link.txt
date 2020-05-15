@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfractalAudio.a  CMakeFiles/fractalAudio.dir/audiodecode.c.o CMakeFiles/fractalAudio.dir/audioencode.c.o
+/usr/bin/ranlib libfractalAudio.a

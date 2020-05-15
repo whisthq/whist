@@ -40,8 +40,6 @@ target_link_libraries(FractalClient
         fractalAudio
         fractalVideo
         fractalClipboard
-        fractalCursor
-        fractalInput
         fractalNetwork
         fractalUtils
         ${STATIC_SDL2}
@@ -55,7 +53,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_package(X11 REQUIRED
             Xfixes)
     include_directories(${X11_INCLUDE_DIR})
-    target_link_libraries(FractalClient
+    target_link_libraries(FractalClient fractalInput fractalCursor
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
             m
@@ -71,11 +69,15 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     SET(CMAKE_C_COMPILER clang)
     set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
+
+    find_package(OpenGL REQUIRED)
+    include_directories(${OPENGL_INCLUDE_DIR})
+    target_link_libraries(FractalClient ${OPENGL_LIBRARIES} )
+
     target_link_libraries(FractalClient
             objc
             iconv
-            OpenGL
-            VideoToolbox
+            VideoToolbox # TODO: CRASHES HERE, CAN'T FIND VIDEOTOOLBOX, LIKELY SAME ISSUE FOR OTHER ONES BELOW
             CoreMedia
             CoreAudio
             AudioToolbox
@@ -99,7 +101,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
 
-    target_link_libraries(FractalClient ${LIBMFX})
+    target_link_libraries(FractalClient fractalInput fractalCursor ${LIBMFX})
 
     set_property(TARGET FractalClient PROPERTY
             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
