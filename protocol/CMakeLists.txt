@@ -125,7 +125,7 @@ find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/$
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
 
-if((NOT ${LIBMFX} AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/")
 endif()
 

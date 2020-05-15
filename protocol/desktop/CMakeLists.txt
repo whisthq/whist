@@ -70,33 +70,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
 
-    #MAC frameworks require library finding
-    find_library(OpenGL REQUIRED)
-    find_library(VideoToolbox REQUIRED)
-    find_library(CoreMedia REQUIRED)
-    find_library(CoreAudio REQUIRED)
-    find_library(AudioToolbox REQUIRED)
-    find_library(IOKit REQUIRED)
-    find_library(ForceFeedback REQUIRED)
-    find_library(Carbon REQUIRED)
-    find_library(AppKit REQUIRED)
-    find_library(Metal REQUIRED)
-    find_library(Cocoa REQUIRED)
-    find_library(QuartzCore REQUIRED)
-
-    include_directories(
-            ${OPENGL_INCLUDE_DIR}
-            ${VIDEOTOOLBOX_INCLUDE_DIR}
-            ${COREMEDIA_INCLUDE_DIR}
-            ${COREAUDIO_INCLUDE_DIR}
-            ${AUDIOTOOLBOX_INCLUDE_DIR}
-            ${IOKIT_INCLUDE_DIR}
-            ${FORCEFEEDBACK_INCLUDE_DIR}
-            ${CARBON_INCLUDE_DIR}
-            ${APPKIT_INCLUDE_DIR}
-            ${METAL_INCLUDE_DIR}
-            ${QUARTZCORE_INCLUDE_DIR}
-            )
     target_link_libraries(FractalClient 
         ${OPENGL_LIBRARIES}
         "-framework VideoToolbox"
