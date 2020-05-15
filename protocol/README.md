@@ -6,6 +6,7 @@ This repository contains the source code for the Fractal Protocol, which streams
 
 For .c and .h files, we are formatting using the clang format `{BasedOnStyle: Google, IndentWidth: 4}`. If using VSCode or Visual Studio, please set this up in your editor to format on save if possible (in Visual Studio, this is through the C/C++ extension settings, as well as the general 'Format on Save' setting/shortcut). Otherwise, please make sure to run your code through `clang` before commits.
 We also have a custom build tagret in the CMake 'clang-format' with will run with this style over all .c and .h files in server/ desktop/ and fractal/
+
 ------------
 
 ### Server
