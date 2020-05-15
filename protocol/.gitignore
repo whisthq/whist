@@ -25,3 +25,8 @@ server/log.txt
 
 # CMake
 *.cmake
+*.make
+*.marks
+*.internal
+*.txt
+*.includecache
