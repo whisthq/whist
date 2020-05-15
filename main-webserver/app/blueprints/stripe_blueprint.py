@@ -260,6 +260,37 @@ def payment(action, **kwargs):
                 except Exception as e:
                     print(e.message)
 
+        elif event.type == 'customer.subscription.trial_will_end':
+            sendInfo(-1, "Trial ending webhook received from stripe")
+            custId = event.data.object.customer
+            customer = fetchCustomerById(custId)
+            status = event.data.object.status
+            if customer:
+                if status == "trialing:
+                    headers = {'content-type': 'application/json'}
+                    url = "https://fractal-mail-server.herokuapp.com/trial/ending"
+                    data = {'username': customer['username']}
+                    resp = requests.post(
+                        url=url, data=json.dumps(data), headers=headers)
+
+                    if resp.status_code == 200:
+                        sendInfo(-1, "Sent trial ending email to customer")
+                    else:
+                        sendError(-1, "Mail send failed: Error code " +
+                                resp.status_code)
+                else:
+                    headers = {'content-type': 'application/json'}
+                    url = "https://fractal-mail-server.herokuapp.com/trial/ended"
+                    data = {'username': customer['username']}
+                    resp = requests.post(
+                        url=url, data=json.dumps(data), headers=headers)
+
+                    if resp.status_code == 200:
+                        sendInfo(-1, "Sent trial ended email to customer")
+                    else:
+                        sendError(-1, "Mail send failed: Error code " +
+                                resp.status_code)
+
         return jsonify({'status': 200}), 200
 
 # REFERRAL endpoint
