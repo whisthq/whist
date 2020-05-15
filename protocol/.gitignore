@@ -32,3 +32,4 @@ server/log.txt
 cmake-build-*
 CMakeFiles/
 build/
+CMakeCache.txt
