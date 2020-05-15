@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfractalCore.a  CMakeFiles/fractalCore.dir/fractal.c.o
+/usr/bin/ranlib libfractalCore.a
