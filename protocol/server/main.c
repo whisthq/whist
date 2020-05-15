@@ -163,7 +163,7 @@ int32_t SendVideo(void* opaque) {
             }
 
             LOG_INFO("Created Capture Device of dimensions %dx%d",
-                    device->width, device->height);
+                     device->width, device->height);
 
             update_encoder = true;
         }
@@ -185,7 +185,8 @@ int32_t SendVideo(void* opaque) {
                 }
             } else {
                 current_bitrate = (int)(max_mbps * 1024 * 1024);
-                LOG_INFO( "Updating Encoder using Bitrate: %d from %f\n", current_bitrate, max_mbps );
+                LOG_INFO("Updating Encoder using Bitrate: %d from %f\n",
+                         current_bitrate, max_mbps);
                 pending_encoder = true;
                 encoder_finished = false;
                 encoder_factory_server_w = device->width;
@@ -233,6 +234,8 @@ int32_t SendVideo(void* opaque) {
         // Only if we have a frame to render
         if (accumulated_frames > 0 || wants_iframe ||
             GetTimer(last_frame_capture) > 1.0 / MIN_FPS) {
+            // LOG_INFO( "Frame Time: %f\n", GetTimer( last_frame_capture ) );
+
             StartTimer(&last_frame_capture);
 
             if (accumulated_frames > 1) {
@@ -257,6 +260,22 @@ int32_t SendVideo(void* opaque) {
 
             video_encoder_encode(encoder, device->frame_data);
             frames_since_first_iframe++;
+
+            static int frame_stat_number = 0;
+            static double total_frame_time = 0.0;
+            static double max_frame_time = 0.0;
+
+            frame_stat_number++;
+            total_frame_time += GetTimer( t );
+            max_frame_time = max( max_frame_time, GetTimer( t ) );
+
+            if( frame_stat_number % 30 == 0 )
+            {
+                LOG_INFO( "Longest Encode Time: %f\n", max_frame_time );
+                LOG_INFO( "Average Encode Time: %f\n", total_frame_time / 30 );
+                total_frame_time = 0.0;
+                max_frame_time = 0.0;
+            }
 
             video_encoder_unset_iframe(encoder);
 
@@ -304,7 +323,7 @@ int32_t SendVideo(void* opaque) {
                             (int)(ratio_bitrate * current_bitrate);
                         if (abs(new_bitrate - current_bitrate) / new_bitrate >
                             0.05) {
-                            //LOG_INFO("Updating bitrate from %d to %d",
+                            // LOG_INFO("Updating bitrate from %d to %d",
                             //        current_bitrate, new_bitrate);
                             // TODO: Analyze bitrate handling with GOP size
                             // current_bitrate = new_bitrate;
@@ -323,8 +342,9 @@ int32_t SendVideo(void* opaque) {
                     // Create frame struct with compressed frame data and
                     // metadata
                     Frame* frame = (Frame*)buf;
-                    frame->width = encoder->out_width;
-                    frame->height = encoder->out_height;
+                    frame->width = encoder->context->width;
+                    frame->height = encoder->context->height;
+
                     frame->size = encoder->encoded_frame_size;
                     frame->cursor = GetCurrentCursor();
                     // True if this frame does not require previous frames to
@@ -338,6 +358,8 @@ int32_t SendVideo(void* opaque) {
                     // "(I-frame)" :
                     // "");
 
+                    StartTimer( &t );
+
                     // Send video packet to client
                     if (SendUDPPacket(
                             &socketContext, PACKET_VIDEO, (uint8_t*)frame,
@@ -350,6 +372,9 @@ int32_t SendVideo(void* opaque) {
                         // Only increment ID if the send succeeded
                         id++;
                     }
+
+                    // LOG_INFO( "Send Frame Time: %f\n", GetTimer( t ) );
+
                     previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time = GetTimer(server_frame_timer);
                     // mprintf("Server Frame Time for ID %d: %f\n", id,
@@ -507,7 +532,7 @@ int main() {
 
 #if defined(_WIN32)
     // set Windows DPI
-    SetProcessDpiAwareness( PROCESS_SYSTEM_DPI_AWARE );
+    SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE );
 #endif
 
     srand((unsigned int)time(NULL));
@@ -517,7 +542,7 @@ int main() {
 #else
     initLogger(".");
 #endif
-    LOG_INFO( "Version Number: %s", get_version() );
+    LOG_INFO("Version Number: %s", get_version());
 
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_Init(SDL_INIT_VIDEO);
@@ -598,7 +623,7 @@ int main() {
         msg_init->connection_id = connection_id;
         memcpy(msg_init->username, username, strlen(username) + 1);
         LOG_INFO("SIZE: %d", sizeof(FractalServerMessage) +
-                                  sizeof(FractalServerMessageInit));
+                                 sizeof(FractalServerMessageInit));
         packet_mutex = SDL_CreateMutex();
 
         if (SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE,
@@ -714,9 +739,9 @@ int main() {
             if (tcp_packet) {
                 fmsg = (FractalClientMessage*)tcp_packet->data;
                 LOG_INFO("Received TCP BUF!!!! Size %d",
-                        tcp_packet->payload_size);
+                         tcp_packet->payload_size);
                 LOG_INFO("Received %d byte clipboard message from client.",
-                        tcp_packet->payload_size);
+                         tcp_packet->payload_size);
             } else {
                 memset(&local_fmsg, 0, sizeof(local_fmsg));
 
@@ -734,7 +759,7 @@ int main() {
                     // Check to see if decrypted packet is of valid size
                     if (decrypted_packet->payload_size != GetFmsgSize(fmsg)) {
                         LOG_WARNING("Packet is of the wrong size!: %d",
-                                decrypted_packet->payload_size);
+                                    decrypted_packet->payload_size);
                         LOG_WARNING("Type: %d", fmsg->type);
                         fmsg->type = 0;
                     }
@@ -780,8 +805,9 @@ int main() {
 #endif
                 } else if (fmsg->type == MESSAGE_MBPS) {
                     // Update mbps
-                    LOG_INFO( "MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps );
-                    max_mbps = max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
+                    LOG_INFO("MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps);
+                    max_mbps =
+                        max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
                     update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
                     LOG_INFO("Ping Received - ID %d", fmsg->ping_id);
@@ -799,7 +825,7 @@ int main() {
                     }
                 } else if (fmsg->type == MESSAGE_DIMENSIONS) {
                     LOG_INFO("Request to use dimensions %dx%d received",
-                            fmsg->dimensions.width, fmsg->dimensions.height);
+                             fmsg->dimensions.width, fmsg->dimensions.height);
                     // Update knowledge of client monitor dimensions
                     if (client_width != fmsg->dimensions.width ||
                         client_height != fmsg->dimensions.height) {
@@ -811,7 +837,7 @@ int main() {
                 } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
                     // Update clipboard with message
                     LOG_INFO("Received Clipboard Data! %d",
-                            fmsg->clipboard.type);
+                             fmsg->clipboard.type);
                     SetClipboard(&fmsg->clipboard);
                 } else if (fmsg->type == MESSAGE_AUDIO_NACK) {
                     // Audio nack received, relay the packet
