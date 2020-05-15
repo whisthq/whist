@@ -5,8 +5,10 @@ We define various project level settings here as well as include the subdirector
 We also look for the ffmpeg libraries here.
 ]]
 
-
 cmake_minimum_required(VERSION 3.15)
+#3.15 required for CMP0091
+#We need CMP0091 to select the MSVC_RUNTIME_LIBRARY
+#See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
 cmake_policy(SET CMP0091 NEW)
 project(FractalProtocol)
 
