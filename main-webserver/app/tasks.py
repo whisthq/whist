@@ -31,6 +31,14 @@ def createVM(self, vm_size, location, operating_system):
         os.environ['VM_GROUP'], vmParameters['vm_name'], vmParameters['params'])
     async_vm_creation.wait()
 
+    time.sleep(10)
+
+    async_vm_start = compute_client.virtual_machines.start(
+        os.environ['VM_GROUP'], vmParameters['vm_name'])
+    async_vm_start.wait()
+
+    time.sleep(30)
+
     extension_parameters = {
         'location': location,
         'publisher': 'Microsoft.HpcCompute',
@@ -42,10 +50,6 @@ def createVM(self, vm_size, location, operating_system):
     async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(os.environ['VM_GROUP'],
                                                                              vmParameters['vm_name'], 'NvidiaGpuDriverWindows', extension_parameters)
     async_vm_extension.wait()
-
-    async_vm_start = compute_client.virtual_machines.start(
-        os.environ['VM_GROUP'], vmParameters['vm_name'])
-    async_vm_start.wait()
 
     vm = getVM(vmParameters['vm_name'])
     vm_ip = getIP(vm)
