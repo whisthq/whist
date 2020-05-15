@@ -8,7 +8,7 @@ you need to either open the root repo folder as a project, or open the root CMak
 as a project. On CLion and VS there is a menu to build at the top, on VS code you need the 
 CMake extension and the build command is at the bottom. The CMake currently has two types of builds
 Debug and Release. You probably want to be building debug builds while developing, since they log more
-aggressively (info and above) and add debug compile flags such as -g. 
+aggressively (info and above) and add debug compile flags such as -g. The build target for desktop is "FractalClient"
 
 ### Building from the command line
 
