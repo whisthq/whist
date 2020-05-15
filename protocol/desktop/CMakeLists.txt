@@ -2,9 +2,9 @@
 ################## FractalClient ##################
 ]]
 
-
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/desktop/build${arch})
-set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/desktop/build${arch})
+#Tell CMake where to put
+#set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/desktop/build${arch})
+#set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/desktop/build${arch})
 add_executable(FractalClient
         main.c
         main.h
@@ -12,6 +12,9 @@ add_executable(FractalClient
         audio.c
         sdl_utils.c)
 
+set_target_properties(FractalClient PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/desktop/build${arch}
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/desktop/build${arch})
 
 # FFMPEG, Threading and Dynamic linking libs
 
@@ -66,7 +69,6 @@ endif()
 #[[
 ################## MACOS ##################
 ]]
-# untested
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     SET(CMAKE_C_COMPILER clang)
     set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk")
@@ -129,5 +131,4 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             dxgi
             shcore
             )
-
 endif()

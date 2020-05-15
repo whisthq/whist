@@ -2,13 +2,13 @@
 ################## FractalServer ##################
 ]]
 
-
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/server/build64)
-set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/server/build64)
 add_executable(FractalServer
         main.c
         )
 
+set_target_properties(FractalServer PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/server/build${arch}
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/server/build${arch})
 
 # FFMPEG, Threading and Dynamic linking libs
 

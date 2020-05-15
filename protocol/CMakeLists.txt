@@ -11,13 +11,14 @@ cmake_policy(SET CMP0091 NEW)
 project(FractalProtocol)
 
 set(META_PROJECT_NAME        "FractalProtocol")
-set(META_PROJECT_DESCRIPTION "CMake Project Template")
+set(META_PROJECT_DESCRIPTION "CMake Project for the Fractal client protocol clients on mac, linux and windows
+                              and servers on windows and linux.")
 set(META_AUTHOR_ORGANIZATION "Fractal")
 set(META_AUTHOR_DOMAIN       "https://github.com/fractalcomputers/protocol")
 
 set(CMAKE_C_STANDARD 99)
 
-# verbose cmake outputs, useful for debugging
+# verbose cmake outputs, useful for debugging CMake issues such as linking
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 # Set up clang-format
@@ -65,11 +66,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
     include_directories(include/ffmpeg)
 else()
-
-message(STATUS "FFMPEG PATHS ${CMAKE_SYSTEM_NAME}")
-
-
-
     FOREACH(LIB ${FFMPEG_LIBS})
         message(STATUS "Looking for lib ${LIB}")
         set(LIB_VAR "LIB_${LIB}")
@@ -91,7 +87,7 @@ endif ()
 
 
 #[[
-################## Static Libraries we supply ##################
+################## Libraries we supply ##################
 ]]
 # the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
 find_library(STATIC_SDL2 NAMES SDL2 PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"
@@ -130,18 +126,18 @@ if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
 endif()
 
 
-
+# Tell CMake where to look for includes
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
 
-
+#Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
 if (${BUILD_CLIENT})
     message(STATUS building client)
     add_subdirectory(desktop)
 endif()
-if (${BUILD_SERVER} AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (${BUILD_SERVER} AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") #Server does not ever build on macos
     message(STATUS building server)
     add_subdirectory(server)
 endif()
