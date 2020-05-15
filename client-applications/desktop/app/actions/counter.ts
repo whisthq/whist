@@ -33,6 +33,7 @@ export const VM_RESTARTED        = "VM_RESTARTED"
 export const SEND_LOGS           = "SEND_LOGS"
 export const CHANGE_STATUS_MESSAGE = "CHANGE_STATUS_MESSAGE"
 export const UPDATE_FOUND        = "UPDATE_FOUND"
+export const ATTACH_DISK        = "ATTACH_DISK"
 
 export function loginUser(username, password) {
 	console.log("login action fired")
@@ -263,6 +264,13 @@ export function changeStatusMessage(status_message) {
 export function updateFound(update) {
 	return {
 		type: UPDATE_FOUND,
+		update
+	}
+}
+
+export function attachDisk(update) {
+	return {
+		type: ATTACH_DISK,
 		update
 	}
 }

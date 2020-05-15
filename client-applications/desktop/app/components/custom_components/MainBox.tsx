@@ -41,6 +41,7 @@ import {
   vmRestarted,
   sendLogs,
   changeStatusMessage,
+  attachDisk
 } from '../../actions/counter';
 
 class MainBox extends Component {
@@ -212,7 +213,7 @@ class MainBox extends Component {
       this.setState({ launched: false });
       this.setState({ diskAttaching: true });
       //TODO
-      this.props.dispatch(attachDisk());
+      this.props.dispatch(attachDisk(true));
     }
   };
 
@@ -293,6 +294,10 @@ class MainBox extends Component {
     ) {
       console.log('VM DONE RESTARTING!');
       this.setState({ vmRestarting: false });
+    }
+    if(!prevProps.attach_disk && this.props.attach_disk){
+      this.props.dispatch(attachDisk(false));
+      this.LaunchProtocol();
     }
   }
 
@@ -1351,6 +1356,7 @@ function mapStateToProps(state) {
     restart_status: state.counter.restart_status,
     restart_attempts: state.counter.restart_attempts,
     status_message: state.counter.status_message,
+    attach_disk: state.counter.attach_disk,
   };
 }
 
