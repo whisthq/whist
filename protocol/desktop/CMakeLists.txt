@@ -71,7 +71,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Require MacOS 10.13 or up, to ensure LibObj-C is standard
 
     target_link_libraries(FractalClient 
-        ${OPENGL_LIBRARIES}
+        "-framework OpenGL"
         "-framework VideoToolbox"
         "-framework CoreMedia"
         "-framework CoreAudio"
