@@ -69,6 +69,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     SET(CMAKE_C_COMPILER clang)
     set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
+    set(CMAKE_C_FLAGS "--sysroot ${CMAKE_OSX_SYSROOT} ${CMAKE_C_FLAGS}")
 
     #MAC frameworks require package finding
     find_library(OpenGL REQUIRED)
@@ -82,32 +83,35 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(AppKit REQUIRED)
     find_library(Metal REQUIRED)
     find_library(QuartzCore REQUIRED)
-    include_directories(
-            ${OPENGL_INCLUDE_DIR}
-            ${VIDEOTOOLBOX_INCLUDE_DIR}
-            ${COREMEDIA_INCLUDE_DIR}
-            ${COREAUDIO_INCLUDE_DIR}
-            ${AUDIOTOOLBOX_INCLUDE_DIR}
-            ${IOKIT_INCLUDE_DIR}
-            ${FORCEFEEDBACK_INCLUDE_DIR}
-            ${CARBON_INCLUDE_DIR}
-            ${CARBON_INCLUDE_DIR}
-            ${APPKIT_INCLUDE_DIR}
-            ${METAL_INCLUDE_DIR}
-            ${QUARTZCORE_INCLUDE_DIR}
-            )
-    target_link_libraries(FractalClient ${OPENGL_LIBRARIES}
-            ${VIDEOTOOLBOX_LIBRARIES}
-            ${COREMEDIA_LIBRARIES}
-            ${COREAUDIO_LIBRARIES}
-            ${AUDIOTOOLBOX_LIBRARIES}
-            ${IOKIT_LIBRARIES}
-            ${FORCEFEEDBACK_LIBRARIES}
-            ${CARBON_LIBRARIES}
-            ${CARBON_LIBRARIES}
-            ${APPKIT_LIBRARIES}
-            ${METAL_LIBRARIES}
-            ${QUARTZCORE_LIBRARIES})
+
+    target_link_libraries(FractalClient
+            ${OPENGL}
+            ${VIDEOTOOLBOX}
+            ${COREMEDIA}
+            ${COREAUDIO}
+            ${AUDIOTOOLBOX}
+            ${IOKIT}
+            ${FORCEFEEDBACK}
+            ${CARBON}
+            ${CARBON}
+            ${APPKIT}
+            ${METAL}
+            ${QUARTZCORE})
+
+    # approach 2
+#    target_link_libraries(FractalClient
+#            "-framework OpenGL"
+#            "-framework VideoToolbox"
+#            "-framework CoreMedia"
+#            "-framework CoreAudio"
+#            "-framework AudioToolbox"
+#            "-framework IOKit"
+#            "-framework ForceFeedback"
+#            "-framework Carbon"
+#            "-framework AppKit"
+#            "-framework Metal"
+#            "-framework QuartzCore"
+#    )
 
     target_link_libraries(FractalClient
             objc

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libfractalUtils.a  CMakeFiles/fractalUtils.dir/aes.c.o CMakeFiles/fractalUtils.dir/clock.c.o CMakeFiles/fractalUtils.dir/logging.c.o CMakeFiles/fractalUtils.dir/sdlscreeninfo.c.o CMakeFiles/fractalUtils.dir/mac_utils.c.o
-/usr/bin/ranlib libfractalUtils.a
