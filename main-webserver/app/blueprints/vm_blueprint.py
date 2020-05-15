@@ -80,7 +80,7 @@ def vm(action, **kwargs):
     elif action == 'delete' and request.method == 'POST':
         body = request.get_json()
         vm_name, delete_disk = body['vm_name'], body['delete_disk']
-        task = deleteVMResources.apply_async([vm_name, delete_disk])
+        task = deleteVMResources.apply_async([vm_name, delete_disk, kwargs['ID']])
         return jsonify({'ID': task.id}), 202
     elif action == 'restart' and request.method == 'POST':
         username = request.get_json()['username']

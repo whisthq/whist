@@ -249,8 +249,11 @@ def fetchAll(self, update):
 
 
 @celery.task(bind=True)
-def deleteVMResources(self, vm_name, delete_disk):
-	locked = checkLock(vm_name)
+
+def deleteVMResources(self, vm_name, delete_disk, ID = -1):
+    sendInfo(ID, 'Trying to delete vm {} with disk {}'.format(vm_name, delete_disk))
+
+    locked = checkLock(vm_name)
 
 	while locked:
 		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
@@ -261,8 +264,15 @@ def deleteVMResources(self, vm_name, delete_disk):
 
 	status = 200 if deleteResource(vm_name, delete_disk) else 404
 
+<<<<<<< HEAD
 	lockVM(vm_name, False)
 	return {'status': status}
+=======
+    lockVM(vm_name, False)
+    sendInfo(ID, 'Disk vm deletion request for vm {} resolved with status {}'.format(vm_name, status))
+
+    return {'status': status}
+>>>>>>> adding ids
 
 
 @celery.task(bind=True)
