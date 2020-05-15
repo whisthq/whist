@@ -504,8 +504,6 @@ void update() {
 #include <time.h>
 
 int main() {
-    static_assert(sizeof( unsigned short ) == 2,
-                   "Error: Unsigned short is not length 2 bytes!\n");
 
 #if defined(_WIN32)
     // set Windows DPI
