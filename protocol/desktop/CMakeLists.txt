@@ -97,19 +97,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
             ${METAL_INCLUDE_DIR}
             ${QUARTZCORE_INCLUDE_DIR}
             )
-    target_link_libraries(FractalClient ${OPENGL_LIBRARIES}
-            ${VIDEOTOOLBOX_LIBRARIES}
-            ${COREMEDIA_LIBRARIES}
-            ${COREAUDIO_LIBRARIES}
-            ${AUDIOTOOLBOX_LIBRARIES}
-            ${IOKIT_LIBRARIES}
-            ${FORCEFEEDBACK_LIBRARIES}
-            ${CARBON_LIBRARIES}
-            ${APPKIT_LIBRARIES}
-            ${METAL_LIBRARIES}
-            ${QUARTZCORE_LIBRARIES})
-
     target_link_libraries(FractalClient 
+        ${OPENGL_LIBRARIES}
         "-framework VideoToolbox"
         "-framework CoreMedia"
         "-framework CoreAudio"
