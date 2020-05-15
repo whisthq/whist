@@ -59,3 +59,7 @@ TBD.
  #### Windows CLI
  I have not yet built from the commandline on windows, but there is a gui utility which is basically the same as ccmake. 
  I imagine it is very similar to the Linux process once you have this gui open, but it will create nmake style make files.  
+
+
+#### Further documentation
+More documentation is in our [gdrive](https://docs.google.com/document/d/1T9Lc3HVoqhqSjdUbiaFaQU71oV1VH25iFGDNvAYjtOs/edit?usp=sharing)
