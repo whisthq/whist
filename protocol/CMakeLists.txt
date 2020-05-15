@@ -19,7 +19,7 @@ set(META_AUTHOR_DOMAIN       "https://github.com/fractalcomputers/protocol")
 set(CMAKE_C_STANDARD 99)
 
 # verbose cmake outputs, useful for debugging CMake issues such as linking
-set(CMAKE_VERBOSE_MAKEFILE OFF)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Set up clang-format
 # clang-format can be called with make clang-format
@@ -101,7 +101,7 @@ if(NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
-find_library(STATIC_OPENSSL NAMES crypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
+find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT PATH
         NO_CMAKE_PATH
