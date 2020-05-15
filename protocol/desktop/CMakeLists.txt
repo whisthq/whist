@@ -52,10 +52,12 @@ target_link_libraries(FractalClient
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_package(X11 REQUIRED
             Xfixes)
-    include_directories(${X11_INCLUDE_DIR})
+    find_package(ALSA REQUIRED)
+    include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
     target_link_libraries(FractalClient fractalInput fractalCursor
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
+            ${ALSA_LIBRARIES}
             m
             )
 endif()
