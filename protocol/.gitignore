@@ -30,3 +30,4 @@ server/log.txt
 *.internal
 *.includecache
 cmake-build-*
+CMakeFiles/
