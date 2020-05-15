@@ -25,23 +25,11 @@ def createVM(self, vm_size, location, operating_system):
     vmName = genVMName()
     nic = createNic(vmName, location, 0)
     if not nic:
-        return jsonify({})
-    vmParameters = createVMParameters(
-        vmName, nic.id, vm_size, location, operating_system)
-
-    print('NOTIFICATION: Starting to create VM {}'.format(vmName))
-
-    async_vm_creation = compute_client.virtual_machines.create_or_update(
-        os.environ.get('VM_GROUP'), vmParameters['vm_name'], vmParameters['params'])
+        return
+    vmParameters = createVMParameters(vmName, nic.id, vm_size, location)
+    async_vm_creation = CCLIENT.virtual_machines.create_or_update(
+        os.environ['VM_GROUP'], vmParameters['vm_name'], vmParameters['params'])
     async_vm_creation.wait()
-
-    print('NOTIFICATION: VM {} created'.format(vmName))
-
-    async_vm_start = compute_client.virtual_machines.start(
-        os.environ.get('VM_GROUP'), vmParameters['vm_name'])
-    async_vm_start.wait()
-
-    print('NOTIFICATION: New VM {} started'.format(vmName))
 
     extension_parameters = {
         'location': location,
@@ -51,42 +39,19 @@ def createVM(self, vm_size, location, operating_system):
         'type_handler_version': '1.2'
     }
 
-    print('NOTIFICATION: About to install NVIDIA extension on {}'.format(vmName))
-
-    async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(os.environ.get('VM_GROUP'),
-                                                                                    vmParameters['vm_name'], 'NvidiaGpuDriverWindows', extension_parameters)
+    async_vm_extension = CCLIENT.virtual_machine_extensions.create_or_update(os.environ['VM_GROUP'],
+                                                                             vmParameters['vm_name'], 'NvidiaGpuDriverWindows', extension_parameters)
     async_vm_extension.wait()
 
-    print('NOTIFICATION: Installed extension on {}'.format(vmName))
-
-    # with open('app/scripts/vmCreate.txt', 'r') as file:
-    # 	print("TASK: Starting to run Powershell scripts")
-    # 	command = file.read()
-    # 	run_command_parameters = {
-    # 		'command_id': 'RunPowerShellScript',
-    # 		'script': [
-    # 			command
-    # 		]
-    # 	}
-
-    # 	poller = compute_client.virtual_machines.run_command(
-    # 		os.environ.get('VM_GROUP'),
-    # 		vmParameters['vm_name'],
-    # 		run_command_parameters
-    # 	)
-
-    # 	result = poller.result()
-    # 	print("SUCCESS: Powershell scripts finished running")
-    # 	print(result.value[0].message)
+    async_vm_start = CCLIENT.virtual_machines.start(
+        os.environ['VM_GROUP'], vmParameters['vm_name'])
+    async_vm_start.wait()
 
     vm = getVM(vmParameters['vm_name'])
     vm_ip = getIP(vm)
     updateVMIP(vmParameters['vm_name'], vm_ip)
     updateVMState(vmParameters['vm_name'], 'RUNNING_AVAILABLE')
     updateVMLocation(vmParameters['vm_name'], location)
-    os_disk = vm.storage_profile.os_disk.name
-    createDiskEntry(
-        os_disk, vmParameters['vm_name'], '', location, 'TO_BE_DELETED')
 
     print('SUCCESS: VM {} created and updated'.format(vmName))
 
