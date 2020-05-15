@@ -23,8 +23,12 @@ def disk(action, **kwargs):
     elif action == 'createFromImage':
         body = request.get_json()
 
+        operating_system = 'Windows'
+        if 'operating_system' in body.keys():
+            operating_system = body['operating_system']
+
         task = createDiskFromImage.apply_async(
-            [body['username'], body['location'], body['vm_size']])
+            [body['username'], body['location'], body['vm_size'], operating_system])
         if not task:
             return jsonify({}), 400
         return jsonify({'ID': task.id}), 202

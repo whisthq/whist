@@ -115,23 +115,22 @@ def createEmptyDisk(self, disk_size, username, location):
 
     vm_name = ""
     createDiskEntry(disk_name, vm_name, username, location)
-    print("Disk created")
     attachDisk()
 
     return disk_name
 
 
 @celery.task(bind=True)
-def createDiskFromImage(self, username, location, vm_size):
+def createDiskFromImage(self, username, location, vm_size, operating_system):
     hr = 400
-    disk_name = None
+    payload = None
 
     while hr == 400:
-        payload = createDiskFromImageHelper(username, location, vm_size)
+        payload = createDiskFromImageHelper(username, location, vm_size, operating_system)
         hr = payload['status']
-        disk_name = payload['disk_name']
 
-    return {'disk_name': disk_name, 'location': location}
+    payload['location'] = location
+    return payload
 
 
 @celery.task(bind=True)

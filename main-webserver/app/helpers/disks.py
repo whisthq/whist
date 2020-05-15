@@ -358,7 +358,7 @@ def assignVMSizeToDisk(disk_name, vm_size):
         conn.close()
 
 
-def createDiskFromImageHelper(username, location, vm_size, ID=-1):
+def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=-1):
     """Creates a disk from an image, and assigns users and vm_sizes to the disk
 
     Args:
@@ -381,9 +381,15 @@ def createDiskFromImageHelper(username, location, vm_size, ID=-1):
         elif location == 'northcentralus':
             ORIGINAL_DISK = 'Fractal_Disk_Northcentralus'
 
+        if operating_system == 'Linux':
+            if not location == 'eastus':
+                return {'status': 402, 'disk_name': None, 
+                'error': '{} disk not available in {}'.format(operating_system, location)}
+            ORIGINAL_DISK = ORIGINAL_DISK + '_Linux'
+
         disk_image = compute_client.disks.get('Fractal', ORIGINAL_DISK)
-        sendInfo(ID, 'Image found. Preparing to create disk {} with location {} under {} attached to a {} VM'.format(
-            disk_name, location, username, vm_size))
+        sendInfo(ID, 'Image found. Preparing to create {} disk {} with location {} under {} attached to a {} VM'.format(
+            operating_system, disk_name, location, username, vm_size))
         async_disk_creation = compute_client.disks.create_or_update(
             'Fractal',
             disk_name,
