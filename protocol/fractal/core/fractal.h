@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 #if defined(_WIN32)
+#define _WINSOCKAPI_
 #include <Audioclient.h>
 #include <D3D11.h>
 #include <D3d11_1.h>
