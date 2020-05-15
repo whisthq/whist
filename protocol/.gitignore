@@ -22,3 +22,6 @@ version
 **/build64
 desktop/log.txt
 server/log.txt
+
+# CMake
+*.cmake
