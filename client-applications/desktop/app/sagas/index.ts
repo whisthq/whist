@@ -295,10 +295,10 @@ function* fetchVM(action) {
     }
     yield delay(5000);
   }
-  //TODO
   if (json && json.state && json.state === 'SUCCESS') {
     if (json && json.output && json.output.ip) {
       yield put(Action.storeIP(json.output.ip));
+      yield put(Action.readyToConnect(true))
     }
   } else {
     if (json && json.output && json.state === 'FAILURE') {
