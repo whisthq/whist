@@ -19,7 +19,7 @@ set(META_AUTHOR_DOMAIN       "https://github.com/fractalcomputers/protocol")
 set(CMAKE_C_STANDARD 99)
 
 # verbose cmake outputs, useful for debugging CMake issues such as linking
-set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 # Set up clang-format
 # clang-format can be called with make clang-format
