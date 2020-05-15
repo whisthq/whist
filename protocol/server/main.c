@@ -261,7 +261,7 @@ int32_t SendVideo(void* opaque) {
             video_encoder_encode(encoder, device->frame_data);
             frames_since_first_iframe++;
 
-            // LOG_INFO( "Encode Time: %f\n", GetTimer( t ) );
+            LOG_INFO( "Encode Time: %f\n", GetTimer( t ) );
 
             video_encoder_unset_iframe(encoder);
 
