@@ -70,23 +70,48 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
 
+    #MAC frameworks require package finding
     find_package(OpenGL REQUIRED)
-    include_directories(${OPENGL_INCLUDE_DIR})
-    target_link_libraries(FractalClient ${OPENGL_LIBRARIES} )
+    find_package(VideoToolbox REQUIRED)
+    find_package(CoreMedia REQUIRED)
+    find_package(CoreAudio REQUIRED)
+    find_package(AudioToolbox REQUIRED)
+    find_package(IOKit REQUIRED)
+    find_package(ForceFeedback REQUIRED)
+    find_package(Carbon REQUIRED)
+    find_package(AppKit REQUIRED)
+    find_package(Metal REQUIRED)
+    find_package(QuartzCore REQUIRED)
+    include_directories(
+            ${OPENGL_INCLUDE_DIR}
+            ${VIDEOTOOLBOX_INCLUDE_DIR}
+            ${COREMEDIA_INCLUDE_DIR}
+            ${COREAUDIO_INCLUDE_DIR}
+            ${AUDIOTOOLBOX_INCLUDE_DIR}
+            ${IOKIT_INCLUDE_DIR}
+            ${FORCEFEEDBACK_INCLUDE_DIR}
+            ${CARBON_INCLUDE_DIR}
+            ${CARBON_INCLUDE_DIR}
+            ${APPKIT_INCLUDE_DIR}
+            ${METAL_INCLUDE_DIR}
+            ${QUARTZCORE_INCLUDE_DIR}
+            )
+    target_link_libraries(FractalClient ${OPENGL_LIBRARIES}
+            ${VIDEOTOOLBOX_LIBRARIES}
+            ${COREMEDIA_LIBRARIES}
+            ${COREAUDIO_LIBRARIES}
+            ${AUDIOTOOLBOX_LIBRARIES}
+            ${IOKIT_LIBRARIES}
+            ${FORCEFEEDBACK_LIBRARIES}
+            ${CARBON_LIBRARIES}
+            ${CARBON_LIBRARIES}
+            ${APPKIT_LIBRARIES}
+            ${METAL_LIBRARIES}
+            ${QUARTZCORE_LIBRARIES})
 
     target_link_libraries(FractalClient
             objc
             iconv
-            VideoToolbox # TODO: CRASHES HERE, CAN'T FIND VIDEOTOOLBOX, LIKELY SAME ISSUE FOR OTHER ONES BELOW
-            CoreMedia
-            CoreAudio
-            AudioToolbox
-            IOKit
-            ForceFeedback
-            Carbon
-            AppKit
-            Metal
-            QuartzCore
             )
 endif()
 

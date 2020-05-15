@@ -28,5 +28,5 @@ server/log.txt
 *.make
 *.marks
 *.internal
-*.txt
 *.includecache
+cmake-build-*
