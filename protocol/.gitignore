@@ -8,6 +8,9 @@
 .vs/
 .vscode/
 .vscode/settings.json
+*.vcxproj
+*.vcxproj.filters
+*.sln
 .idea/
 *.pdb
 *.ilk
@@ -20,6 +23,8 @@
 version
 **/build32
 **/build64
+fractal/*/*.lib
+fractal/*/*.a
 desktop/log.txt
 server/log.txt
 
@@ -33,8 +38,9 @@ cmake-build-*
 CMakeFiles/
 build/
 CMakeCache.txt
-Makefile
-GNUmakefile
+**/Makefile
+**/makefile
+**/GNUmakefile
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
