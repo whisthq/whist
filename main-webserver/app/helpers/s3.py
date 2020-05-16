@@ -130,7 +130,7 @@ def deleteLogsInS3(connection_id, ID = -1):
 			""")
 
 		params = {'connection_id': connection_id}
-		logs_found = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+		logs_found = (cleanFetchedSQL(conn.execute(command, **params).fetchall()))[0]
 
 		print(logs_found)
 
