@@ -175,7 +175,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
 
     while (curr_index < len) {
         // Delay distribution of packets as needed
-        while( burst_bitrate > 0 && curr_index > GetTimer( packet_timer ) * max_bytes_per_second )
+        while( burst_bitrate > 0 && curr_index - 5000 > GetTimer( packet_timer ) * max_bytes_per_second )
         {
             SDL_Delay( 1 );
         }
@@ -231,6 +231,8 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
         i++;
         curr_index += payload_size;
     }
+
+    //LOG_INFO( "Packet Time: %f\n", GetTimer( packet_timer ) );
 
     return 0;
 }
