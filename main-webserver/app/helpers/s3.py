@@ -134,14 +134,24 @@ def deleteLogsInS3(connection_id, ID = -1):
 
 		print(logs_found)
 
-		if logs_found:
-			for log in logs_found:
-				success = S3Delete(log, last_updated, ID)
-				if success:
-					print("Successfully deleted log: " + str(log))
-				else:
-					print("Could not delete log: " + str(log))
-
+		# delete server log for this connection ID
+		if logs_found['server_logs']:
+			print(logs_found['server_logs'])
+			success = S3Delete(logs_found['server_logs'], last_updated, ID)
+			if success:
+				print("Successfully deleted log: " + str(logs_found['server_logs']))
+			else:
+				print("Could not delete log: " + str(logs_found['server_logs']))
+		
+		# delete the client logs
+		if logs_found['client_logs']:
+			print(logs_found['client_logs'])
+			success = S3Delete(logs_found['client_logs'], last_updated, ID)
+			if success:
+				print("Successfully deleted log: " + str(logs_found['client_logs']))
+			else:
+				print("Could not delete log: " + str(logs_found['client_logs']))
+		
 		conn.close()
 		return 1
 	return -1
