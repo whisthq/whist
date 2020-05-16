@@ -106,6 +106,9 @@ def deleteLogsInS3(connection_id, ID = -1):
 	def S3Delete(file_name, last_updated, ID):
 		bucket = 'fractal-protocol-logs'
 
+		# remove url, keep filename only		
+		file_name.replace("https://fractal-protocol-logs.s3.amazonaws.com/", "")) 
+
 		s3 = boto3.resource(
 			's3',
 			region_name='us-east-1',
