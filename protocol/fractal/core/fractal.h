@@ -22,7 +22,7 @@
 #include <process.h>
 #include <synchapi.h>
 #include <windows.h>
-#include <winsock2.h>
+//#include <winsock2.h>
 #include <winuser.h>
 
 #include "shellscalingapi.h"
