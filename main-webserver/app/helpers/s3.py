@@ -103,7 +103,7 @@ def SendLogsToS3(content, sender, connection_id, vm_ip, version, ID = -1):
 
 
 def deleteLogsInS3(connection_id, ID = -1):
-	def S3Delete(file_name, last_updated, sender, ID):
+	def S3Delete(file_name, last_updated, ID):
 		bucket = 'fractal-protocol-logs'
 
 		file_name = file_name + '.txt'
@@ -122,9 +122,7 @@ def deleteLogsInS3(connection_id, ID = -1):
 			print(str(e))
 			return False
 
-	sender = sender.upper()
 	last_updated = getCurrentTime() 
-	username = None
 
 	with engine.connect() as conn:
 		command = text("""
@@ -138,7 +136,7 @@ def deleteLogsInS3(connection_id, ID = -1):
 
 		if logs_found:
 			for log in logs_found:
-				success = S3Delete(log, last_updated, sender, ID)
+				success = S3Delete(log, last_updated, ID)
 				if success:
 					print("Successfully deleted log: " + str(log))
 				else:
