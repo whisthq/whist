@@ -1073,7 +1073,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
                 async_vm_start = compute_client.virtual_machines.start(
                     os.environ.get('VM_GROUP'), vm_name)
 
-                createTemporaryLock(vm_name, 12)
+                createTemporaryLock(vm_name, 8)
 
                 sendInfo(ID, async_vm_start.result())
 
@@ -1096,14 +1096,17 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
                 async_vm_restart = compute_client.virtual_machines.restart(
                     os.environ.get('VM_GROUP'), vm_name)
 
-                createTemporaryLock(vm_name, 12)
+                createTemporaryLock(vm_name, 8)
 
                 sendInfo(ID, async_vm_restart.result())
 
                 if s:
                     s.update_state(state='PENDING', meta={"msg": "Your cloud PC was restarted successfully."})
-                    
+
                 sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
+
+        if s:
+            s.update_state(state='PENDING', meta={"msg": "Cloud PC currently executing boot request."})
 
         boot_if_necessary(vm_name, needs_restart, ID)
         updateVMState(vm_name, 'RUNNING_AVAILABLE')

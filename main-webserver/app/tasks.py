@@ -415,12 +415,12 @@ def swapDiskSync(self, disk_name, ID = -1):
 			if spinLock(vm_name, s = self) > 0:
 				unlocked = True
 				# Lock immediately
+				lockVMAndUpdate(vm_name = vm_name, state = 'ATTACHING', lock = True, temporary_lock = None, 
+					change_last_updated = True, verbose = False, ID = ID)
 				lockVM(vm_name, True, username = username, disk_name = disk_name, ID = ID)
 
 				# Update database with new disk name and VM state
 				sendInfo(ID, " Disk {} belongs to user {} and is already attached to VM {}".format(disk_name, username, vm_name))
-
-				updateVMState(vm_name, 'ATTACHING')
 				updateDisk(disk_name, vm_name, location)
 
 				self.update_state(state='PENDING', meta={"msg": "Database updated. Sending signal to boot your cloud PC."})
@@ -435,7 +435,7 @@ def swapDiskSync(self, disk_name, ID = -1):
 					self.update_state(state='FAILURE', meta={"msg": "Cloud PC could not be started. Please contact support."})
 
 				vm_credentials = fetchVMCredentials(vm_name)
-				createTemporaryLock(vm_name, 10)
+				createTemporaryLock(vm_name, 2)
 				lockVM(vm_name, False, ID = ID)
 				updateVMState(vm_name, 'RUNNING_AVAILABLE')
 				return vm_credentials
@@ -465,7 +465,7 @@ def swapDiskSync(self, disk_name, ID = -1):
 						lockVM(vm_name, False)
 						updateVMState(vm_name, 'RUNNING_AVAILABLE')
 						return fetchVMCredentials(vm_name)
-					createTemporaryLock(vm_name, 10)
+					createTemporaryLock(vm_name, 5)
 					lockVM(vm_name, False, ID = ID)
 					updateVMState(vm_name, 'RUNNING_AVAILABLE')
 
