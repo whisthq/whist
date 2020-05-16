@@ -202,8 +202,8 @@ int32_t SendVideo(void* opaque) {
                     pending_encoder = false;
                     update_encoder = false;
                 } else {
-                    // SDL_CreateThread(MultithreadedEncoderFactory,
-                    //                 "MultithreadedEncoderFactory", NULL);
+                    SDL_CreateThread(MultithreadedEncoderFactory,
+                                    "MultithreadedEncoderFactory", NULL);
                 }
             }
         }
@@ -810,7 +810,7 @@ int main() {
                     LOG_INFO("MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps);
                     max_mbps =
                         max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
-                    update_encoder = true;
+                    //update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
                     LOG_INFO("Ping Received - ID %d", fmsg->ping_id);
 
