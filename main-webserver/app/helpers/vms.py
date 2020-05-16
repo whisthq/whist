@@ -1230,7 +1230,7 @@ def fractalVMStart(vm_name, needs_restart=False, ID=-1, s = None):
     return -1
 
 
-def spinLock(vm_name, ID=-1):
+def spinLock(vm_name, s = None, ID=-1):
     """Waits for vm to be unlocked
 
     Args:
