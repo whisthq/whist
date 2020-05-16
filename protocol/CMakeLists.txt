@@ -10,6 +10,9 @@ cmake_minimum_required(VERSION 3.15)
 #We need CMP0091 to select the MSVC_RUNTIME_LIBRARY
 #See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
 cmake_policy(SET CMP0091 NEW)
+#set default compiler flags
+set (CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
+
 project(FractalProtocol)
 
 set(META_PROJECT_NAME        "FractalProtocol")
@@ -28,6 +31,7 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 include(cmake/clang-format.cmake)
 # A small module which sets the default build type to debug if a .git is present and release otherwise.
 include(cmake/default-build.cmake)
+
 
 option(BUILD_SERVER "build FractalServer" ON)
 option(BUILD_CLIENT "build FractalClient" ON)

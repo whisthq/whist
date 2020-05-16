@@ -76,9 +76,9 @@ Includes
 // TODO: second opinion on whether this is fine.
 // moved this to #include winsock2.h to fractal.h because it needs to come
 // before windows.h
-//#pragma comment(lib, "ws2_32.lib")
-//#include <windows.h>
-//#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+#include <windows.h>
+#include <winsock2.h>
 #include <ws2tcpip.h>
 #else
 #include <arpa/inet.h>
