@@ -194,11 +194,8 @@ class MainBox extends Component {
           });
           //Listener for closing the stream window
           protocol.on('close', (code) => {
-            console.log('LOGOFF EVENT');
             this.TrackActivity(false);
-            console.log('SENDING LOGS');
             this.SendLogs();
-            console.log('CHANGING STATE');
             this.setState({
               launches: 0,
               launched: false,
@@ -210,8 +207,8 @@ class MainBox extends Component {
         });
       }
     } else {
-      this.setState({ launched: false });
-      this.setState({ diskAttaching: true });
+      this.setState({ launched: false, diskAttaching: true });
+      this.props.dispatch(attachDisk())
     }
   };
 
@@ -277,8 +274,8 @@ class MainBox extends Component {
 
   componentDidUpdate(prevProps) {
     // If !prevProps.readytoconnect && this.props.readytoconnect
-    console.log(prevProps.restart_attempts);
-    console.log(this.props.restart_attempts);
+    console.log(this.props)
+
     if (
       prevProps.attach_attempts != this.props.attach_attempts &&
       this.state.diskAttaching
@@ -290,361 +287,134 @@ class MainBox extends Component {
       prevProps.restart_attempts != this.props.restart_attempts &&
       this.state.vmRestarting
     ) {
-      console.log('VM DONE RESTARTING!');
       this.setState({ vmRestarting: false });
     }
     if(!prevProps.ready_to_connect && this.props.ready_to_connect){
+      console.log("READY TO  CONNECT NOW")
       this.props.dispatch(readyToConnect(false));
-      this.setState({diskAttaching: false});
+      this.setState({diskAttaching: false, reattached: true});
       this.LaunchProtocol();
     }
   }
 
   render() {
-    if (this.props.currentWindow === 'main') {
-      return (
-        <div>
-          {this.props.account_locked ? (
-            <div
-              onClick={this.OpenDashboard}
-              className={styles.pointerOnHover}
-              style={{
-                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.2)',
-                position: 'relative',
-                backgroundImage:
-                  'linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url(' +
-                  Car +
-                  ')',
-                width: '100%',
-                height: 275,
-                backgroundSize: 'cover',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
-                borderRadius: 5,
-              }}
-            >
-              <div
-                style={{
-                  textAlign: 'center',
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  fontWeight: 'bold',
-                  fontSize: 20,
-                }}
-              >
-                <div
-                  style={{
-                    marginTop: 30,
-                    marginBottom: 20,
-                    width: 350,
-                    color: '#111111',
-                  }}
-                >
-                  Oops! Your Free Trial Has Expired
-                </div>
-                <div
-                  style={{
-                    marginTop: 10,
-                    color: '#333333',
-                    fontSize: 12,
-                    lineHeight: 1.4,
-                  }}
-                >
-                  Please provide your payment details in order to access your
-                  cloud PC.
-                </div>
+    const BigButton = () => {
+      console.log(this.state.launched)
+      console.log(this.state.diskAttaching)
+      console.log(this.props.disk)
+      console.log(this.props.fetchStatus)
+      if(this.props.account_locked) {
+        return(
+          <div className = {styles.bigButton}>
+            <div className = {styles.centerContent}>
+              <div className = {styles.centerText}>
+                Oops! Your Free Trial Has Expired
+              </div>
+              <div className = {styles.centerSubtext}>
+                Please provide your payment details in order to access your
+                cloud PC.
               </div>
             </div>
-          ) : this.state.vmRestarting ? (
-            <div
-              style={{
-                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.2)',
-                position: 'relative',
-                backgroundImage:
-                  'linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url(' +
-                  Car +
-                  ')',
-                width: '100%',
-                height: 275,
-                backgroundSize: 'cover',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
-                borderRadius: 5,
-              }}
-            >
-              <div
-                style={{
-                  textAlign: 'center',
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  fontWeight: 'bold',
-                  fontSize: 20,
-                }}
-              >
-                <div>
-                  <FontAwesomeIcon
-                    icon={faCircleNotch}
-                    spin
-                    style={{ color: '#111111', height: 30 }}
-                  />
-                </div>
-                <div
-                  style={{
-                    marginTop: 10,
-                    color: '#111111',
-                    fontSize: 14,
-                    lineHeight: 1.4,
-                  }}
-                >
-                  Restarting
-                </div>
+          </div>
+        )
+      }
+
+      if(this.state.vmRestarting) {
+        return(
+          <div className = {styles.bigButton}>
+            <div className = {styles.centerContent}>
+              <div>
+                <FontAwesomeIcon icon={faCircleNotch} spin style={{ color: '#111111', height: 30 }}/>
+              </div>
+              <div className = {styles.centerText}>
+                Restarting
               </div>
             </div>
-          ) : this.props.fetchStatus ? (
-            this.props.disk != '' ? (
-              !this.state.diskAttaching ? (
-                this.state.launched ? (
-                  <div
-                    style={{
-                      boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.2)',
-                      position: 'relative',
-                      backgroundImage:
-                        'linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url(' +
-                        Car +
-                        ')',
-                      width: '100%',
-                      height: 275,
-                      backgroundSize: 'cover',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'center',
-                      borderRadius: 5,
-                    }}
-                  >
-                    <div
-                      style={{
-                        textAlign: 'center',
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        fontWeight: 'bold',
-                        fontSize: 20,
-                      }}
-                    >
-                      <div>
-                        <FontAwesomeIcon
-                          icon={faCircleNotch}
-                          spin
-                          style={{ color: '#111111', height: 30 }}
-                        />
-                      </div>
-                      <div
-                        style={{
-                          marginTop: 10,
-                          color: '#111111',
-                          fontSize: 14,
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        Streaming
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    onClick={this.LaunchProtocol}
-                    className={styles.bigBox}
-                    style={{
-                      position: 'relative',
-                      backgroundImage:
-                        'linear-gradient(to bottom, rgba(0, 0, 0, 0.0), rgba(0,0,0,0.0)), url(' +
-                        Car +
-                        ')',
-                      width: '100%',
-                      height: 275,
-                      backgroundSize: 'cover',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'center',
-                      borderRadius: 5,
-                    }}
-                  >
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 10,
-                        left: 15,
-                        fontWeight: 'bold',
-                        fontSize: 16,
-                      }}
-                    >
-                      Launch My Cloud PC
-                    </div>
-                  </div>
-                )
-              ) : (
-                <div
-                  style={{
-                    boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.2)',
-                    position: 'relative',
-                    backgroundImage:
-                      'linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url(' +
-                      Car +
-                      ')',
-                    width: '100%',
-                    height: 275,
-                    backgroundSize: 'cover',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'center',
-                    borderRadius: 5,
-                  }}
-                >
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      fontWeight: 'bold',
-                      fontSize: 20,
-                    }}
-                  >
-                    <div>
-                      <FontAwesomeIcon
-                        icon={faCircleNotch}
-                        spin
-                        style={{ color: '#111111', height: 30 }}
-                      />
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 10,
-                        color: '#111111',
-                        fontSize: 16,
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      Booting your cloud PC
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 5,
-                        color: '#111111',
-                        fontSize: 11,
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {this.props.status_message}
-                    </div>
-                  </div>
-                </div>
-              )
-            ) : (
-              <div
-                onClick={this.OpenDashboard}
-                className={styles.pointerOnHover}
-                style={{
-                  boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.2)',
-                  position: 'relative',
-                  backgroundImage:
-                    'linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url(' +
-                    Car +
-                    ')',
-                  width: '100%',
-                  height: 275,
-                  backgroundSize: 'cover',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'center',
-                  borderRadius: 5,
-                }}
-              >
-                <div
-                  style={{
-                    textAlign: 'center',
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    fontWeight: 'bold',
-                    fontSize: 20,
-                  }}
-                >
+          </div>
+        )
+      }
+
+      if(this.props.fetchStatus) {
+        if(this.props.disk !== '') {
+          if(!this.state.diskAttaching && this.state.launched) {
+            return(
+              <div className = {styles.bigButton}>
+                <div className = {styles.centerContent}>
                   <div>
-                    <FontAwesomeIcon
-                      icon={faPlus}
-                      style={{ height: 30, color: '#111111' }}
-                    />
+                    <FontAwesomeIcon icon={faCircleNotch} spin style={{ color: '#111111', height: 30 }}/>
                   </div>
-                  <div style={{ marginTop: 25, color: '#111111' }}>
-                    <span className={styles.blueGradient}>
-                      Create My Cloud PC
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      marginTop: 20,
-                      color: '#333333',
-                      fontSize: 14,
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    Transform your computer into a GPU-powered workstation.
+                   <div className = {styles.centerText}>
+                    Streaming
                   </div>
                 </div>
               </div>
             )
-          ) : (
-            <div
-              style={{
-                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.2)',
-                position: 'relative',
-                backgroundImage:
-                  'linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255,255,255,0.8)), url(' +
-                  Car +
-                  ')',
-                width: '100%',
-                height: 275,
-                backgroundSize: 'cover',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
-                borderRadius: 5,
-              }}
-            >
-              <div
-                style={{
-                  textAlign: 'center',
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  fontWeight: 'bold',
-                  fontSize: 20,
-                }}
-              >
-                <div>
-                  <FontAwesomeIcon
-                    icon={faCircleNotch}
-                    spin
-                    style={{ color: '#111111', height: 30 }}
-                  />
+          } else if (!this.state.diskAttaching && !this.state.launched) {
+            return(
+              <div className = {styles.pointerOnHover}>
+                <div onClick = {this.LaunchProtocol} className = {styles.bigButton} style = {{backgroundImage: "linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url(" + Car + ")"}}>
+                  <div style = {{color: 'white', position: 'absolute', bottom: 15, left: 15, fontWeight: 'bold'}}>
+                    Launch My Cloud PC
+                  </div>
                 </div>
-                <div
-                  style={{
-                    marginTop: 10,
-                    color: '#333333',
-                    fontSize: 16,
-                    lineHeight: 1.4,
-                  }}
-                >
-                  Loading your account
+              </div>
+            )
+          } else if (this.state.diskAttaching) {
+            return(
+              <div className = {styles.bigButton}>
+                <div className = {styles.centerContent}>
+                  <div>
+                    <FontAwesomeIcon icon={faCircleNotch} spin style={{ color: '#111111', height: 30 }}/>
+                  </div>
+                  <div className = {styles.centerText}>
+                    Booting your cloud PC
+                  </div>
+                  <div className = {styles.centerSubtext}>
+                    {this.props.status_message}
+                  </div>
+                </div>
+              </div>
+            )
+          }
+        } else {
+          return(
+            <div onClick = {this.OpenDashboard} className = {styles.bigButton}>
+              <div className = {styles.centerContent}>
+                <div>
+                  <FontAwesomeIcon icon={faPlus} style={{ height: 30, color: '#111111' }}/>
+                </div>
+                <div style={{ marginTop: 25, color: '#111111' }}>
+                  <span className={styles.blueGradient}>
+                    Create My Cloud PC
+                  </span>
+                </div>
+                <div className = {styles.centerSubtext}>
+                  Transform your computer into a GPU-powered workstation.
                 </div>
               </div>
             </div>
-          )}
+          )
+        }
+      } else {
+        return(
+          <div className = {styles.bigButton}>
+            <div className = {styles.centerContent}>
+              <div>
+                <FontAwesomeIcon icon={faCircleNotch} spin style={{ color: '#111111', height: 30 }}/>
+              </div>
+              <div className = {styles.centerText}>
+                Loading your account
+              </div>
+            </div>
+          </div>
+        )
+      }
+    }
+
+    if (this.props.currentWindow === 'main') {
+      return (
+        <div>
+          {BigButton()}
           <div style={{ display: 'flex', marginTop: 20 }}>
             <div
               style={{ width: '50%', paddingRight: 20, textAlign: 'center' }}

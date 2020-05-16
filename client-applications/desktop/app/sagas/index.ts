@@ -293,6 +293,7 @@ function* fetchVM(action) {
     if (json && json.output && json.state === 'PENDING') {
       yield put(Action.changeStatusMessage(json.output.msg));
     }
+    console.log(json)
     yield delay(5000);
   }
   if (json && json.state && json.state === 'SUCCESS') {
