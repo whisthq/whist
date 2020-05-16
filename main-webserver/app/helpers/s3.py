@@ -134,7 +134,7 @@ def deleteLogsInS3(connection_id, ID = -1):
 		params = {'connection_id': connection_id}
 		logs_found = (cleanFetchedSQL(conn.execute(command, **params).fetchall()))[0]
 		success_serverlogs = None
-		
+
 		# delete server log for this connection ID
 		if logs_found['server_logs']:
 			print(logs_found['server_logs'])
@@ -153,14 +153,12 @@ def deleteLogsInS3(connection_id, ID = -1):
 			else:
 				print("Could not delete log: " + str(logs_found['client_logs']))
 		
-		# update database
-		if success_serverlogs and success_clientlogs:
-			command = text("""
-				DELETE FROM logs WHERE "connection_id" = :connection_id
-				""")
+		command = text("""
+			DELETE FROM logs WHERE "connection_id" = :connection_id
+			""")
 
-			params = {'connection_id': connection_id}
-			conn.execute(command, **params)      
+		params = {'connection_id': connection_id}
+		conn.execute(command, **params)      
 
 		conn.close()
 		return 1
