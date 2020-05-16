@@ -98,7 +98,9 @@ def createDiskFromImage(self, username, location, vm_size, operating_system):
 		print('Creating {} disk for {}'.format(operating_system, username))
 		payload = createDiskFromImageHelper(username, location, vm_size, operating_system)
 		hr = payload['status']
+		print('Disk created with status {}'.format(hr))
 
+	print(payload)
 	payload['location'] = location
 	return payload
 

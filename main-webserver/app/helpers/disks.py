@@ -371,7 +371,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
         int: 200 for success, 400 for error
     """
     disk_name = genDiskName()
-    sendInfo(ID, 'Preparing to create disk {} from an image'.format(disk_name))
+    print('Preparing to create disk {} from an image'.format(disk_name))
     _, compute_client, _ = createClients()
 
     try:
@@ -388,7 +388,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
             ORIGINAL_DISK = ORIGINAL_DISK + '_Linux'
 
         disk_image = compute_client.disks.get('Fractal', ORIGINAL_DISK)
-        sendInfo(ID, 'Image found. Preparing to create {} disk {} with location {} under {} attached to a {} VM'.format(
+        print('Image found. Preparing to create {} disk {} with location {} under {} attached to a {} VM'.format(
             operating_system, disk_name, location, username, vm_size))
         async_disk_creation = compute_client.disks.create_or_update(
             'Fractal',
@@ -401,11 +401,9 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
                 }
             }
         )
-        sendInfo(ID, 'Disk clone command sent. Waiting on disk to create')
-        async_disk_creation.wait()
-        sendInfo(
-            ID, 'Disk {} successfully created from image'.format(disk_name))
+        print('Disk clone command sent. Waiting on disk to create')
         new_disk = async_disk_creation.result()
+        print('Disk {} successfully created from image'.format(disk_name))
 
         updateDisk(disk_name, '', location)
         assignUserToDisk(disk_name, username)
