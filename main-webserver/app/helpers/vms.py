@@ -1073,12 +1073,13 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
                 async_vm_start = compute_client.virtual_machines.start(
                     os.environ.get('VM_GROUP'), vm_name)
 
-                if s:
-                    s.update_state(state='PENDING', meta={"msg": "Your cloud PC was started successfully."})
-
                 createTemporaryLock(vm_name, 12)
 
                 sendInfo(ID, async_vm_start.result())
+
+                if s:
+                    s.update_state(state='PENDING', meta={"msg": "Your cloud PC was started successfully."})
+
                 sendInfo(ID, 'VM {} started successfully'.format(vm_name))
 
             if needs_restart:
@@ -1095,12 +1096,13 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
                 async_vm_restart = compute_client.virtual_machines.restart(
                     os.environ.get('VM_GROUP'), vm_name)
 
-                if s:
-                    s.update_state(state='PENDING', meta={"msg": "Your cloud PC was restarted successfully."})
-
                 createTemporaryLock(vm_name, 12)
 
                 sendInfo(ID, async_vm_restart.result())
+
+                if s:
+                    s.update_state(state='PENDING', meta={"msg": "Your cloud PC was restarted successfully."})
+                    
                 sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
 
         boot_if_necessary(vm_name, needs_restart, ID)
@@ -1249,13 +1251,16 @@ def spinLock(vm_name, s = None, ID=-1):
         return 1
 
     while locked:
+        if s:
+            s.update_state(state='PENDING', meta={"msg": "Cloud PC is downloading an update. This could take a few minutes."})
+
         sendWarning(
             ID, 'VM {} is locked. Waiting to be unlocked.'.format(vm_name))
         time.sleep(5)
         locked = checkLock(vm_name)
         num_tries += 1
 
-        if num_tries > 100:
+        if num_tries > 50:
             sendCritical(
                 ID, 'FAILURE: VM {} is locked for too long. Giving up.'.format(vm_name))
             return -1

@@ -412,7 +412,7 @@ def swapDiskSync(self, disk_name, ID = -1):
 
 		unlocked = False
 		while not unlocked and vm_attached:
-			if spinLock(vm_name) > 0:
+			if spinLock(vm_name, s = self) > 0:
 				unlocked = True
 				# Lock immediately
 				lockVM(vm_name, True, username = username, disk_name = disk_name, ID = ID)
