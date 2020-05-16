@@ -155,7 +155,7 @@ def deleteLogsInS3(connection_id, ID = -1):
 		# update database
 		if success_serverlogs and success_clientlogs:
 			command = text("""
-				DELETE * FROM logs WHERE "connection_id" = :connection_id
+				DELETE FROM logs WHERE "connection_id" = :connection_id
 				""")
 
 			params = {'connection_id': connection_id}
