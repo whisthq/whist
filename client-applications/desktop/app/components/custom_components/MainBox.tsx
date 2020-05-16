@@ -491,42 +491,6 @@ class MainBox extends Component {
               <div style = {{display: 'flex'}}>
                 <div style = {{width: '75%'}}>
                   <div style = {{color: '#111111', fontSize: 16, fontWeight: 'bold'}}>
-                    <img src = {Scale} style = {{color: '#111111', height: 14, marginRight: 12, position: 'relative', top: 2, width: 16}}/>
-                    Scaling Factor
-                  </div>
-                  <div style = {{fontSize: 13, color: '#333333', marginTop: 10, marginLeft: 28, lineHeight: 1.4}}>
-                    For now, this is an easy manual process. To change the size of icons and text, go to your cloud PC desktop,
-                    right click, and open "Display Settings." Next, select the "Advanced Scaling Settings" option,
-                    where you'll be able to enter your desired scale factor (a percentage between 100 and 500), hit "Apply", and then
-                    select "Sign Out Now" in order to save your changes. Once you do, your cloud PC will exit, and your changes
-                    will take effect when you re-connect.
-                  </div>
-                </div>
-                {/*
-                <div style = {{width: '25%'}}>
-                  <div style = {{float: 'right'}}>
-                    {
-                    this.state.scale === 100
-                    ?
-                    <select id="resolution-select" style = {{padding: 4, outline: 'none'}}>
-                      <option value="100%" selected onClick = {() => this.setScale(100)}>100%</option>
-                      <option value="150%" onClick = {() => this.setScale(150)}>150%</option>
-                    </select>
-                    :
-                    <select id="resolution-select" style = {{padding: 4, outline: 'none'}}>
-                      <option value="100%" onClick = {() => this.setScale(100)}>100%</option>
-                      <option value="150%" selected onClick = {() => this.setScale(150)}>150%</option>
-                    </select>
-                    }
-                  </div>
-                </div>
-                */}
-              </div>
-            </div>
-            <div style = {{padding: '30px 30px', borderBottom: 'solid 0.5px #EFEFEF'}}>
-              <div style = {{display: 'flex'}}>
-                <div style = {{width: '75%'}}>
-                  <div style = {{color: '#111111', fontSize: 16, fontWeight: 'bold'}}>
                     <img src = {Speedometer} style = {{color: '#111111', height: 14, marginRight: 12, position: 'relative', top: 2, width: 16}}/>
                     Maximum Bandwidth
                   </div>
@@ -563,6 +527,20 @@ class MainBox extends Component {
                   </div><br/>
                   <div style = {{fontSize: 11, color: '#333333', float: 'right', marginTop: 5}}>
                     {this.state.mbps} Mbps
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style = {{padding: '30px 30px', borderBottom: 'solid 0.5px #EFEFEF'}}>
+              <div style = {{display: 'flex'}}>
+                <div style = {{width: '75%'}}>
+                  <div style = {{color: '#111111', fontSize: 16, fontWeight: 'bold'}}>
+                    <img src = {Scale} style = {{color: '#111111', height: 14, marginRight: 12, position: 'relative', top: 2, width: 16}}/>
+                    Scaling Factor
+                  </div>
+                  <div style = {{fontSize: 13, color: '#333333', marginTop: 10, marginLeft: 28, lineHeight: 1.4}}>
+                    To change the size of text and icons in your cloud PC, connect to your cloud PC, right click on the desktop, and select
+                    "Display Settings". Next, select Screen 2. Finally, select the appropriate scaling factor (100%, 150%, etc.).
                   </div>
                 </div>
               </div>
