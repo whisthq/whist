@@ -106,8 +106,6 @@ def deleteLogsInS3(connection_id, ID = -1):
 	def S3Delete(file_name, last_updated, ID):
 		bucket = 'fractal-protocol-logs'
 
-		file_name = file_name + '.txt'
-
 		s3 = boto3.resource(
 			's3',
 			region_name='us-east-1',
@@ -116,6 +114,7 @@ def deleteLogsInS3(connection_id, ID = -1):
 		)
 	
 		try:
+			print("deleting filename: " + str(file_name))
 			s3.Object(bucket, file_name).delete()
 			return True
 		except Exception as e:
