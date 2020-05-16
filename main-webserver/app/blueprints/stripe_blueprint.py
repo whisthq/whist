@@ -266,7 +266,7 @@ def payment(action, **kwargs):
             customer = fetchCustomerById(custId)
             status = event.data.object.status
             if customer:
-                if status == "trialing:
+                if status == "trialing":
                     headers = {'content-type': 'application/json'}
                     url = "https://fractal-mail-server.herokuapp.com/trial/ending"
                     data = {'username': customer['username']}

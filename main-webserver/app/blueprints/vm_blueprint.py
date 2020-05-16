@@ -302,16 +302,27 @@ def logs(**kwargs):
     return jsonify({'ID': task.id}), 202
 
 
-@vm_bp.route('/logs/fetch', methods=['POST'])
+@vm_bp.route('/logs/<action>', methods=['POST'])
 @generateID
 @logRequestInfo
-def fetch_logs(**kwargs):
+def logs_actions(action, **kwargs):
     body = request.get_json()
+    # fetch logs action
+    if action == 'fetch' and request.method == 'POST':
+        try:
+            fetch_all = body['fetch_all']
+        except:
+            fetch_all = False
 
-    try:
-        fetch_all = body['fetch_all']
-    except:
-        fetch_all = False
+        task = fetchLogs.apply_async([body['username'], fetch_all])
+        return jsonify({'ID': task.id}), 202
+    # delete logs action
+    elif action == 'delete' and request.method == 'POST':
+        try:
+            connection_id = body['connection_id']
+        except:
+            # should always be a connection_id
+            return jsonify({}), 400
 
-    task = fetchLogs.apply_async([body['username'], fetch_all])
-    return jsonify({'ID': task.id}), 202
+        task = deleteLogs.apply_async([connection_id])
+        return jsonify({'ID': task.id}), 202

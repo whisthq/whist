@@ -99,3 +99,51 @@ def SendLogsToS3(content, sender, connection_id, vm_ip, version, ID = -1):
 		conn.close()
 		return 1
 	return -1
+
+
+
+def deleteLogsInS3(connection_id, ID = -1):
+	def S3Delete(file_name, last_updated, sender, ID):
+		bucket = 'fractal-protocol-logs'
+
+		file_name = file_name + '.txt'
+
+		s3 = boto3.resource(
+			's3',
+			region_name='us-east-1',
+			aws_access_key_id = os.getenv('AWS_ACCESS_KEY'),
+			aws_secret_access_key = os.getenv('AWS_SECRET_KEY')
+		)
+	
+		try:
+			s3.Object(bucket, file_name).delete()
+			return True
+		except Exception as e:
+			print(str(e))
+			return False
+
+	sender = sender.upper()
+	last_updated = getCurrentTime() 
+	username = None
+
+	with engine.connect() as conn:
+		command = text("""
+			SELECT * FROM logs WHERE "connection_id" = :connection_id
+			""")
+
+		params = {'connection_id': connection_id}
+		logs_found = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+
+		print(logs_found)
+
+		if logs_found:
+			for log in logs_found:
+				success = S3Delete(log, last_updated, sender, ID)
+				if success:
+					print("Successfully deleted log: " + str(log))
+				else:
+					print("Could not delete log: " + str(log))
+
+		conn.close()
+		return 1
+	return -1

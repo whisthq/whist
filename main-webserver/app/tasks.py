@@ -656,3 +656,10 @@ def fetchLogs(self, username, fetch_all=False, ID=-1):
 			sendInfo(ID, 'All logs fetched successfully'.format(username))
 			conn.close()
 			return logs
+
+
+@celery.task(bind=True)
+def deleteLogs(self, connection_id, ID=-1):
+	if deleteLogsInS3(connection_id, ID) > 0:
+		return {'status': 200}
+	return {'status': 422}
