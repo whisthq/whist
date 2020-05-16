@@ -103,10 +103,11 @@ def SendLogsToS3(content, sender, connection_id, vm_ip, version, ID = -1):
 
 
 def deleteLogsInS3(connection_id, ID = -1):
-	def S3Delete(file_name, last_updated, sender, ID):
+	def S3Delete(file_name, last_updated, ID):
 		bucket = 'fractal-protocol-logs'
 
-		file_name = file_name + '.txt'
+		# remove url, keep filename only		
+		file_name = file_name.replace("https://fractal-protocol-logs.s3.amazonaws.com/", "") 
 
 		s3 = boto3.resource(
 			's3',
@@ -116,15 +117,14 @@ def deleteLogsInS3(connection_id, ID = -1):
 		)
 	
 		try:
+			print("deleting filename: " + str(file_name))
 			s3.Object(bucket, file_name).delete()
 			return True
 		except Exception as e:
 			print(str(e))
 			return False
 
-	sender = sender.upper()
 	last_updated = getCurrentTime() 
-	username = None
 
 	with engine.connect() as conn:
 		command = text("""
@@ -132,18 +132,28 @@ def deleteLogsInS3(connection_id, ID = -1):
 			""")
 
 		params = {'connection_id': connection_id}
-		logs_found = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+		logs_found = (cleanFetchedSQL(conn.execute(command, **params).fetchall()))[0]
 
 		print(logs_found)
 
-		if logs_found:
-			for log in logs_found:
-				success = S3Delete(log, last_updated, sender, ID)
-				if success:
-					print("Successfully deleted log: " + str(log))
-				else:
-					print("Could not delete log: " + str(log))
-
+		# delete server log for this connection ID
+		if logs_found['server_logs']:
+			print(logs_found['server_logs'])
+			success = S3Delete(logs_found['server_logs'], last_updated, ID)
+			if success:
+				print("Successfully deleted log: " + str(logs_found['server_logs']))
+			else:
+				print("Could not delete log: " + str(logs_found['server_logs']))
+		
+		# delete the client logs
+		if logs_found['client_logs']:
+			print(logs_found['client_logs'])
+			success = S3Delete(logs_found['client_logs'], last_updated, ID)
+			if success:
+				print("Successfully deleted log: " + str(logs_found['client_logs']))
+			else:
+				print("Could not delete log: " + str(logs_found['client_logs']))
+		
 		conn.close()
 		return 1
 	return -1
