@@ -399,10 +399,10 @@ def swapDiskSync(self, disk_name, ID = -1):
 	vm_attached = True if vm_name else False
 
 	if vm_attached:
-        self.update_state(state='PENDING', meta={"msg": "Boot request received successfully. Preparing your cloud PC."})
+		self.update_state(state='PENDING', meta={"msg": "Boot request received successfully. Preparing your cloud PC."})
 		sendInfo(ID, " Azure says that disk {} belonging to {} is attached to {}".format(disk_name, username, vm_name))
 	else:
-        self.update_state(state='PENDING', meta={"msg": "Boot request received successfully. Fetching your cloud PC."})
+		self.update_state(state='PENDING', meta={"msg": "Boot request received successfully. Fetching your cloud PC."})
 		sendInfo(ID, " Azure says that disk {} belonging to {} is not attached to any VM".format(disk_name, username))
 
 	# Update the database to reflect the disk attached to the VM currently
