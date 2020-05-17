@@ -32,6 +32,8 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
     // doesn't ever hit the CPU or RAM
     if (encoder->type == NVENC_ENCODE) {
         LOG_INFO("Trying Nvidia encoder");
+        encoder->out_width = encoder->in_width;
+        encoder->out_height = encoder->in_height;
 
         enum AVPixelFormat out_format = AV_PIX_FMT_0RGB32;
 
