@@ -21,8 +21,13 @@ OBJS = \
 	video.o \
 	audio.o \
 	aes.o \
-	clipboard_thread.o \
+	clipboard_synchronizer.o \
 	x11_clipboard.o \
+	clock.o \
+	sdl_utils.o \
+	logging.o \
+	network.o \
+	sdlscreeninfo.o \
 	main.o
 
 # dynamic libs to link against (using system libs for Linux)
@@ -75,9 +80,14 @@ OBJS = \
 	aes.o \
 	clipboard_osx.o \
 	mac_utils.o \
+	sdl_utils.o \
+	logging.o \
+	network.o \
+	sdlscreeninfo.o \
 	mac_clipboard.o \
-	clipboard_thread.o \
-	main.o
+	clipboard_synchronizer.o \
+	main.o \
+	clock.o
 
 # Apple SDK (standard MacOSX or MacOSX10.15 is ideal - use 10.14 if Xcode bug)
 export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk
@@ -86,8 +96,8 @@ export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk
 # export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk
 # export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
 
-# Info.plist contains MacOS-specific instructions to enable High DPI
-INFO_PLIST_PATH=Info.plist
+# Info.plist contains MacOS-specific instructions to enable High DPI (handled in Electron app)
+# INFO_PLIST_PATH=Info.plist
 
 # dynamic libs to link against
 DYNAMIC_LIBS = \
@@ -126,8 +136,8 @@ CFLAGS = \
 	-Wno-unused-parameter \
 	-I ../include \
 	-I ../include/ffmpeg \
-	-O0 \
-	-Wl,-sectcreate,__TEXT,__info_plist,$(INFO_PLIST_PATH)
+	-O0
+	# -Wl,-sectcreate,__TEXT,__info_plist,$(INFO_PLIST_PATH) (handled in Electron app)
 endif
 
 ################## COMMON ##################
@@ -150,39 +160,55 @@ all: clean clear $(OBJS)
 
 # compile the main fractal header source file into object file
 fractal.o:
-	$(CC) -c $(CFLAGS) ../include/fractal.c
+	$(CC) -c $(CFLAGS) ../fractal/core/fractal.c
 
 # compile the video decoder source file into object file
 videodecode.o:
-	$(CC) -c $(CFLAGS) ../include/videodecode.c
+	$(CC) -c $(CFLAGS) ../fractal/video/videodecode.c
 
 # compile the audio decoder source file into object file
 audiodecode.o:
-	$(CC) -c $(CFLAGS) ../include/audiodecode.c
+	$(CC) -c $(CFLAGS) ../fractal/audio/audiodecode.c
 
 # compile the aes source file into object file
 aes.o:
-	$(CC) -c $(CFLAGS) ../include/aes.c
+	$(CC) -c $(CFLAGS) ../fractal/utils/aes.c
 
 # compile the MacOS clipboard Objective-C source file into object file
 clipboard_osx.o:
-	$(CC) -c $(CFLAGS) ../include/clipboard_osx.m
+	$(CC) -c $(CFLAGS) ../fractal/clipboard/clipboard_osx.m
 
 # compile the MacOS utils source file into object file
 mac_utils.o:
-	$(CC) -c $(CFLAGS) ../include/mac_utils.c
+	$(CC) -c $(CFLAGS) ../fractal/utils/mac_utils.c
+
+# compile the logging source file into object file
+logging.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/logging.c
+
+# compile the networking source file into object file
+network.o:
+	$(CC) -c $(CFLAGS) ../fractal/network/network.c
+
+# compile the SDL screen info source file into object file
+sdlscreeninfo.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/sdlscreeninfo.c
 
 # compile the general clipboard thread source file into object file
-clipboard_thread.o:
-	$(CC) -c $(CFLAGS) ../include/clipboard_thread.c
+clipboard_synchronizer.o:
+	$(CC) -c $(CFLAGS) ../fractal/clipboard/clipboard_synchronizer.c
 
 # compile the general MacOS clipboard file into object file
 mac_clipboard.o:
-	$(CC) -c $(CFLAGS) ../include/mac_clipboard.c
+	$(CC) -c $(CFLAGS) ../fractal/clipboard/mac_clipboard.c
 
 # compile the general Linux Ubuntu clipboard source file into object file
 x11_clipboard.o:
-	$(CC) -c $(CFLAGS) ../include/x11_clipboard.c
+	$(CC) -c $(CFLAGS) ../fractal/clipboard/x11_clipboard.c
+
+# compile the main sdl utils source file into object file
+sdl_utils.o:
+	$(CC) -c $(CFLAGS) sdl_utils.c
 
 # compile the main video source file into object file
 video.o:
@@ -191,6 +217,10 @@ video.o:
 # compile the main audio source file into object file
 audio.o:
 	$(CC) -c $(CFLAGS) audio.c
+
+# compile the main audio source file into object file
+clock.o:
+	$(CC) -c $(CFLAGS) ../fractal/utils/clock.c
 
 # compile the main source file into object file
 main.o:

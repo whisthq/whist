@@ -60,7 +60,7 @@ void initAudio() {
     SDL_zero(audioSpec);
     wantedSpec.channels = (Uint8)AudioData.audio_decoder->pCodecCtx->channels;
     wantedSpec.freq = decoder_frequency;
-    mprintf("Freq: %d\n", wantedSpec.freq);
+    LOG_INFO("Freq: %d", wantedSpec.freq);
     wantedSpec.format = AUDIO_F32SYS;
     wantedSpec.silence = 0;
     wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
@@ -68,7 +68,7 @@ void initAudio() {
     AudioData.dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec,
                                         SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (AudioData.dev == 0) {
-        mprintf("Failed to open audio\n");
+        LOG_ERROR("Failed to open audio");
         exit(1);
     }
 
@@ -91,7 +91,7 @@ void updateAudio() {
     // mprintf("Queue: %d\n", SDL_GetQueuedAudioSize(AudioData.dev));
 #endif
     if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
-        mprintf("Updating audio frequency to %d!\n", audio_frequency);
+        LOG_INFO("Updating audio frequency to %d!", audio_frequency);
         decoder_frequency = audio_frequency;
         destroyAudio();
         initAudio();
@@ -122,7 +122,7 @@ void updateAudio() {
         (most_recent_audio_id - last_played_id) * MAX_PAYLOAD_SIZE +
         SDL_GetQueuedAudioSize(AudioData.dev);
     if (!gapping && bytes_until_can_play < AUDIO_QUEUE_LOWER_LIMIT) {
-        mprintf("Audio Queue too low: %d. Needs to catch up!\n",
+        LOG_INFO("Audio Queue too low: %d. Needs to catch up!",
                 bytes_until_can_play);
         gapping = true;
     }
@@ -131,7 +131,7 @@ void updateAudio() {
         if (bytes_until_can_play < TARGET_AUDIO_QUEUE_LIMIT) {
             return;
         } else {
-            mprintf("Done catching up! Audio Queue: %d\n",
+            LOG_INFO("Done catching up! Audio Queue: %d",
                     bytes_until_can_play);
             gapping = false;
         }
@@ -147,7 +147,7 @@ void updateAudio() {
         next_to_play_id = last_played_id + 1;
 
         if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
-            mprintf("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!\n");
+            LOG_WARNING("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!");
             return;
         }
 
@@ -168,8 +168,8 @@ void updateAudio() {
 
             if (SDL_GetQueuedAudioSize(AudioData.dev) >
                 (unsigned int)real_limit) {
-                mprintf("*******************\n");
-                mprintf("Audio queue full, skipping ID %d (Queued: %d)\n",
+//                mprintf("*******************");
+                LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
                         next_to_play_id / MAX_NUM_AUDIO_INDICES,
                         SDL_GetQueuedAudioSize(AudioData.dev));
                 for (int i = next_to_play_id;
@@ -216,7 +216,7 @@ void updateAudio() {
                                              AudioData.audio_decoder));
 
                     if (res < 0) {
-                        mprintf("Could not play audio!\n");
+                        LOG_WARNING("Could not play audio!");
                     }
                 }
 #else
@@ -265,8 +265,8 @@ void updateAudio() {
                 fmsg.type = MESSAGE_AUDIO_NACK;
                 fmsg.nack_data.id = i / MAX_NUM_AUDIO_INDICES;
                 fmsg.nack_data.index = i % MAX_NUM_AUDIO_INDICES;
-                // mprintf("Missing Audio Packet ID %d, Index %d. NACKing...\n",
-                // fmsg.nack_data.id, fmsg.nack_data.index);
+                LOG_INFO("Missing Audio Packet ID %d, Index %d. NACKing...",
+                 fmsg.nack_data.id, fmsg.nack_data.index);
                 i_packet->nacked_for = i;
                 SendFmsg(&fmsg);
                 num_nacked++;
@@ -278,9 +278,9 @@ void updateAudio() {
     }
 }
 
-int32_t ReceiveAudio(struct RTPPacket* packet) {
+int32_t ReceiveAudio(FractalPacket* packet) {
     if (packet->index >= MAX_NUM_AUDIO_INDICES) {
-        mprintf("Packet Index too large!\n");
+        LOG_WARNING("Packet Index too large!");
         return -1;
     }
 
@@ -289,7 +289,7 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
         &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
 
     if (audio_id == audio_pkt->id) {
-        // mprintf("Already received audio packet: %d\n", audio_id);
+//         mprintf("Already received audio packet: %d\n", audio_id);
     } else if (audio_id < audio_pkt->id || audio_id <= last_played_id) {
         // mprintf("Old audio packet received: %d, last played id is %d\n",
         // audio_id, last_played_id);
@@ -319,10 +319,10 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
             }
 
             if (last_played_id > 0) {
-                mprintf(
+                LOG_INFO(
                     "Audio packet being overwritten before being played! ID %d "
                     "replaced with ID %d, when the Last Played ID was %d. Last "
-                    "Played ID is Now %d\n",
+                    "Played ID is Now %d",
                     audio_pkt->id, audio_id, old_last_played_id,
                     last_played_id);
             }
@@ -330,23 +330,23 @@ int32_t ReceiveAudio(struct RTPPacket* packet) {
 
         if (packet->is_a_nack) {
             if (audio_pkt->nacked_for == audio_id) {
-                mprintf("NACK for Audio ID %d, Index %d Received!\n",
+                LOG_INFO("NACK for Audio ID %d, Index %d Received!",
                         packet->id, packet->index);
             } else if (audio_pkt->nacked_for == -1) {
-                mprintf(
+                LOG_INFO(
                     "NACK for Audio ID %d, Index %d Received! But not "
-                    "needed.\n",
+                    "needed.",
                     packet->id, packet->index);
             } else {
-                mprintf("NACK for Audio ID %d, Index %d Received Wrongly!\n",
+                LOG_WARNING("NACK for Audio ID %d, Index %d Received Wrongly!",
                         packet->id, packet->index);
             }
         }
 
         if (audio_pkt->nacked_for == audio_id) {
-            mprintf(
+            LOG_INFO(
                 "Packet for Audio ID %d, Index %d Received! But it was already "
-                "NACK'ed!\n",
+                "NACK'ed!",
                 packet->id, packet->index);
         }
         audio_pkt->nacked_for = -1;
