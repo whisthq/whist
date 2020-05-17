@@ -107,6 +107,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
 
         if( encoder->in_width != encoder->out_width || encoder->in_height != encoder->out_height )
         {
+            LOG_INFO( "Will be server-side scaling from %dx%d to %dx%d\n", encoder->in_width, encoder->in_height, encoder->out_width, encoder->out_height );
             encoder->sws = sws_getContext(encoder->in_width, encoder->in_height,
                AV_PIX_FMT_RGB32, encoder->out_width,
                encoder->out_height, out_format,

@@ -261,7 +261,21 @@ int32_t SendVideo(void* opaque) {
             video_encoder_encode(encoder, device->frame_data);
             frames_since_first_iframe++;
 
-            // LOG_INFO( "Encode Time: %f\n", GetTimer( t ) );
+            static int frame_stat_number = 0;
+            static double total_frame_time = 0.0;
+            static double max_frame_time = 0.0;
+
+            frame_stat_number++;
+            total_frame_time += GetTimer( t );
+            max_frame_time = max( max_frame_time, GetTimer( t ) );
+
+            if( frame_stat_number % 30 == 0 )
+            {
+                LOG_INFO( "Longest Encode Time: %f\n", max_frame_time );
+                LOG_INFO( "Average Encode Time: %f\n", total_frame_time / 30 );
+                total_frame_time = 0.0;
+                max_frame_time = 0.0;
+            }
 
             video_encoder_unset_iframe(encoder);
 
@@ -796,7 +810,7 @@ int main() {
                     LOG_INFO("MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps);
                     max_mbps =
                         max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
-                    update_encoder = true;
+                    //update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
                     LOG_INFO("Ping Received - ID %d", fmsg->ping_id);
 
