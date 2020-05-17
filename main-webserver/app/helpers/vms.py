@@ -591,7 +591,7 @@ def vmReadyToConnect(vm_name, ready):
         session.close()
 
 
-def checkLock(vm_name, ID = -1):
+def checkLock(vm_name, s = None, ID = -1):
     """Check to see if a vm has been locked
 
     Args:
@@ -615,6 +615,11 @@ def checkLock(vm_name, ID = -1):
         temporary_lock = False
         if vm['temporary_lock']:
             temporary_lock = dateToUnix(getToday()) < vm['temporary_lock']
+
+            if temporary_lock and s:
+                s.update_state(state='PENDING', meta={
+                    "msg": "{} seconds remaining until update finishes.".format(vm['temporary_lock'] - dateToUnix(getToday()))})
+
             sendInfo(ID, 'Temporary lock found on VM {}, expires at {}. It is currently {}'.format(vm_name, str(vm['temporary_lock']), str(dateToUnix(getToday()))))
         return vm['lock'] or temporary_lock
     return None
@@ -1252,15 +1257,15 @@ def spinLock(vm_name, s = None, ID=-1):
     if not locked:
         sendInfo(ID, 'VM {} is unlocked.'.format(vm_name))
         return 1
-
-    while locked:
+    else:
         if s:
             s.update_state(state='PENDING', meta={"msg": "Cloud PC is downloading an update. This could take a few minutes."})
-
+            
+    while locked:
         sendWarning(
             ID, 'VM {} is locked. Waiting to be unlocked.'.format(vm_name))
         time.sleep(5)
-        locked = checkLock(vm_name)
+        locked = checkLock(vm_name, s = s)
         num_tries += 1
 
         if num_tries > 50:
