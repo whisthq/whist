@@ -18,7 +18,7 @@ First, clone the repo via git:
 
 And then install the dependencies with yarn.
 
-```cd client-applications```
+```cd client-applications/desktop```
 
 ```yarn```
 
