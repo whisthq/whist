@@ -151,25 +151,6 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
 
     double max_bytes_per_second = burst_bitrate / 8.0;
 
-        // double max_delay = 5.0;
-        // double delay_thusfar = 0.0;
-    
-        // Send some amount of packets every two milliseconds
-    int break_resolution = 2;
-    double num_indices_per_unit_latency = (8 / 1000.0) *
-    (31800000 / 8.0) /
-    MAX_PAYLOAD_SIZE;
-    double break_distance = num_indices_per_unit_latency *
-    (1.0 * break_resolution / 8);
-    
-    int num_breaks = (int)(num_indices / break_distance);
-    if( num_breaks < 0 )
-    {
-    num_breaks = 0;
-    
-    }
-    int break_point = num_indices / (num_breaks + 1);
-
     /*
     if (type == PACKET_AUDIO) {
         static int ddata = 0;
@@ -194,12 +175,6 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
 
     while (curr_index < len) {
         // Delay distribution of packets as needed
-        
-        /*if( 31800000 > 0 && i > 0 && break_point > 0 &&
-            i % break_point == 0 && i < num_indices - break_point / 2 )
-        {
-            SDL_Delay( break_resolution );
-        }*/
         while( burst_bitrate > 0 && curr_index - 5000 > GetTimer( packet_timer ) * max_bytes_per_second )
         {
             SDL_Delay( 1 );
