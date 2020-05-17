@@ -17,11 +17,16 @@ BIN_NAME = build$(ARCH)/FractalClient.exe
 # files to build into object files
 OBJS = \
 	fractal.obj \
-	clipboard_thread.obj \
+	clock.obj \
+	clipboard_synchronizer.obj \
 	win_clipboard.obj \
 	aes.obj \
 	videodecode.obj \
 	audiodecode.obj \
+	logging.obj \
+	network.obj \
+        sdl_utils.obj \
+	sdlscreeninfo.obj \
 	video.obj \
 	audio.obj \
 	main.obj
@@ -88,27 +93,47 @@ all: clean clear $(OBJS)
 
 # compile the main fractal header source file into object file
 fractal.obj:
-	$(CC) /c $(CFLAGS) ../include/fractal.c
+	$(CC) /c $(CFLAGS) ../fractal/core/fractal.c
+
+# compile the clock header source file into object file
+clock.obj:
+	$(CC) /c $(CFLAGS) ../fractal/utils/clock.c
 
 # compile the main clipboard thread source file into object file
-clipboard_thread.obj:
-	$(CC) /c $(CFLAGS) ../include/clipboard_thread.c
+clipboard_synchronizer.obj:
+	$(CC) /c $(CFLAGS) ../fractal/clipboard/clipboard_synchronizer.c
 
 # compile the main clipboard source file into object file
 win_clipboard.obj:
-	$(CC) /c $(CFLAGS) ../include/win_clipboard.c
+	$(CC) /c $(CFLAGS) ../fractal/clipboard/win_clipboard.c
 
 # compile the aes source file into object file
 aes.obj:
-	$(CC) /c $(CFLAGS) ../include/aes.c
+	$(CC) /c $(CFLAGS) ../fractal/utils/aes.c
 
 # compile the video decoder source file into object file
 videodecode.obj:
-	$(CC) /c $(CFLAGS) ../include/videodecode.c
+	$(CC) /c $(CFLAGS) ../fractal/video/videodecode.c
+
+# compile the logging source file into object file
+logging.obj:
+	$(CC) /c $(CFLAGS) ../fractal/utils/logging.c
+
+# compile the networking source file into object file
+network.obj:
+	$(CC) /c $(CFLAGS) ../fractal/network/network.c
+
+# compile the SDL screen info source file into object file
+sdl_utils.obj:
+	$(CC) /c $(CFLAGS) sdl_utils.c
+
+# compile the SDL screen info source file into object file
+sdlscreeninfo.obj:
+	$(CC) /c $(CFLAGS) ../fractal/utils/sdlscreeninfo.c
 
 # compile the audio decoder source file into object file
 audiodecode.obj:
-	$(CC) /c $(CFLAGS) ../include/audiodecode.c
+	$(CC) /c $(CFLAGS) ../fractal/audio/audiodecode.c
 
 # compile the main video source file into object file
 video.obj:

@@ -1,0 +1,27 @@
+/*
+ * MacOS helper functions for clipboard functions.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+ **/
+#ifndef MAC_UTILS_H
+#define MAC_UTILS_H
+
+#include <fts.h>
+#include <ftw.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+int remove_file(const char* fpath, const struct stat* sb, int typeflag,
+                struct FTW* ftwbuf);
+
+void mac_rm_rf(const char* path);
+
+int cmp_files(const FTSENT** first, const FTSENT** second);
+
+void get_filenames(char* dir, char* filenames[]);
+
+int dir_exists(const char* path);
+
+#endif  // MAC_UTILS_H

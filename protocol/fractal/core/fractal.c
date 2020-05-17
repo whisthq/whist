@@ -1,0 +1,222 @@
+/*
+ * General Fractal helper functions and headers.
+ *
+ * Copyright Fractal Computers, Inc. 2020
+ **/
+
+#include "fractal.h"  // header file for this protocol, includes winsock
+
+// Print Memory Info
+#if defined(_WIN32)
+#include <processthreadsapi.h>
+#include <psapi.h>
+#endif
+
+void PrintMemoryInfo() {
+#if defined(_WIN32)
+    DWORD processID = GetCurrentProcessId();
+    HANDLE hProcess;
+    PROCESS_MEMORY_COUNTERS pmc;
+
+    // Print information about the memory usage of the process.
+
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE,
+                           processID);
+    if (NULL == hProcess) return;
+
+    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
+        LOG_INFO("PeakWorkingSetSize: %lld", (long long)pmc.PeakWorkingSetSize);
+        LOG_INFO("WorkingSetSize: %lld", (long long)pmc.WorkingSetSize);
+    }
+
+    CloseHandle(hProcess);
+#endif
+}
+// End Print Memory Info
+
+void runcmd_nobuffer(const char* cmdline) {
+    // Will run a command on the commandline, simple as that
+#ifdef _WIN32
+    // Windows makes this hard
+    STARTUPINFOA si;
+    PROCESS_INFORMATION pi;
+
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+
+    char cmd_buf[1000];
+
+    if (strlen((const char*)cmdline) + 1 > sizeof(cmd_buf)) {
+        mprintf("runcmd cmdline too long!\n");
+        return;
+    }
+
+    memcpy(cmd_buf, cmdline, strlen((const char*)cmdline) + 1);
+
+    SetEnvironmentVariableW((LPCWSTR)L"UNISON", (LPCWSTR)L"./.unison");
+
+    if (CreateProcessA(NULL, (LPSTR)cmd_buf, NULL, NULL, FALSE,
+                       CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+#else
+    // For Linux / MACOSX we make the system syscall
+    system(cmdline);
+#endif
+}
+
+int runcmd(const char* cmdline, char** response) {
+    if (response == NULL) {
+        runcmd_nobuffer(cmdline);
+        return 0;
+    }
+
+    FILE* pPipe;
+
+    /* Run DIR so that it writes its output to a pipe. Open this
+     * pipe with read text attribute so that we can read it
+     * like a text file.
+     */
+
+#ifdef _WIN32
+#define popen _popen
+#define pclose _pclose
+#endif
+
+    char* cmd = malloc(strlen(cmdline) + 128);
+#ifdef _WIN32
+    snprintf(cmd, strlen(cmdline) + 128, "%s 2>nul", cmdline);
+#else
+    snprintf(cmd, strlen(cmdline) + 128, "%s 2>/dev/null", cmdline);
+#endif
+
+    if ((pPipe = popen(cmd, "r")) == NULL) {
+        free(cmd);
+        return -1;
+    }
+    free(cmd);
+
+    /* Read pipe until end of file, or an error occurs. */
+
+    int current_len = 0;
+
+    int max_len = 128;
+    char* buffer = malloc(max_len);
+
+    while (true) {
+        char c = (char)fgetc(pPipe);
+        if (current_len == max_len) {
+            int next_max_len = 2 * max_len;
+            char* next_buffer = malloc(next_max_len);
+
+            memcpy(next_buffer, buffer, max_len);
+            max_len = next_max_len;
+
+            free(buffer);
+            buffer = next_buffer;
+        }
+
+        if (c == EOF) {
+            buffer[current_len] = '\0';
+            break;
+        } else {
+            buffer[current_len] = c;
+            current_len++;
+        }
+    }
+
+    *response = buffer;
+
+    /* Close pipe and print return value of pPipe. */
+    if (feof(pPipe)) {
+        return current_len;
+    } else {
+        printf("Error: Failed to read the pipe to the end.\n");
+        return -1;
+    }
+}
+
+char* get_ip() {
+    static char ip[128];
+    static bool already_obtained_ip = false;
+    if (already_obtained_ip) {
+        return ip;
+    }
+
+    char* buf;
+    int len = runcmd("curl ipinfo.io", &buf);
+
+    for (int i = 1; i < len; i++) {
+        if (buf[i - 1] != '\n') {
+            continue;
+        }
+        char* psBuffer = &buf[i];
+#define IP_PREFIX_STRING "  \"ip\": \""
+        if (strncmp(IP_PREFIX_STRING, psBuffer, sizeof(IP_PREFIX_STRING) - 1) ==
+            0) {
+            char* ip_start_string = psBuffer + sizeof(IP_PREFIX_STRING) - 1;
+            for (int j = 0;; j++) {
+                if (ip_start_string[j] == '\"') {
+                    ip_start_string[j] = '\0';
+                    break;
+                }
+            }
+            memcpy(ip, ip_start_string, sizeof(ip));
+        }
+    }
+
+    free(buf);
+
+    already_obtained_ip = true;
+    return ip;
+}
+
+bool is_dev_vm() {
+    static bool is_dev;
+    static bool already_obtained_vm_type = false;
+    if (already_obtained_vm_type) {
+        return is_dev;
+    }
+
+    char buf[4800];
+    size_t len = sizeof(buf);
+
+    SendJSONGet("cube-celery-staging.herokuapp.com", "/vm/isDev", buf, len);
+
+    for (int i = 1; i < (int)len; i++) {
+        if (buf[i - 1] != '\n') {
+            continue;
+        }
+        char* psBuffer = &buf[i];
+#define DEV_VM_PREFIX_STRING "{\"dev\":"
+        if (strncmp(DEV_VM_PREFIX_STRING, psBuffer,
+                    sizeof(DEV_VM_PREFIX_STRING) - 1) == 0) {
+            char* is_dev_start_string =
+                psBuffer + sizeof(DEV_VM_PREFIX_STRING) - 1;
+            for (int j = 0;; j++) {
+                if (is_dev_start_string[j] == ',') {
+                    is_dev_start_string[j] = '\0';
+                    break;
+                }
+            }
+            is_dev = (strncmp("true", is_dev_start_string,
+                              strlen(is_dev_start_string)) == 0);
+        }
+    }
+
+    already_obtained_vm_type = true;
+    return is_dev;
+}
+
+int GetFmsgSize(struct FractalClientMessage* fmsg) {
+    if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
+        return sizeof(*fmsg);
+    } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
+        return sizeof(*fmsg) + fmsg->clipboard.size;
+    } else {
+        return sizeof(fmsg->type) + 40;
+    }
+}

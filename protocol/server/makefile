@@ -16,15 +16,18 @@ BIN_NAME = build$(ARCH)/FractalServer.exe
 
 # files to build into object files
 OBJS = \
-	webserver.obj \
 	fractal.obj \
+        clock.obj \
 	win_clipboard.obj \
 	aes.obj \
 	videoencode.obj \
 	audioencode.obj \
 	wasapicapture.obj \
 	dxgicapture.obj \
-	desktop.obj \
+	logging.obj \
+	network.obj \
+	sdlscreeninfo.obj \
+	windows_utils.obj \
 	windowsinput.obj \
 	windowscursor.obj \
 	main.obj
@@ -106,47 +109,59 @@ all: clean clear $(OBJS)
 
 # compile the main fractal header source file into object file
 fractal.obj:
-	$(CC) /c $(CFLAGS) ../include/fractal.c
+	$(CC) /c $(CFLAGS) ../fractal/core/fractal.c
 
-# compile the webserver source file into object file
-webserver.obj:
-	$(CC) /c $(CFLAGS) ../include/webserver.c
+# compile the clock source file into object file
+clock.obj:
+	$(CC) /c $(CFLAGS) ../fractal/utils/clock.c
 
 # compile the main clipboard header source file into object file
 win_clipboard.obj:
-	$(CC) /c $(CFLAGS) ../include/win_clipboard.c
+	$(CC) /c $(CFLAGS) ../fractal/clipboard/win_clipboard.c
 
 # compile the aes source file into object file
 aes.obj:
-	$(CC) /c $(CFLAGS) ../include/aes.c
+	$(CC) /c $(CFLAGS) ../fractal/utils/aes.c
 
 # compile the video encoder source file into object file
 videoencode.obj:
-	$(CC) /c $(CFLAGS) ../include/videoencode.c
+	$(CC) /c $(CFLAGS) ../fractal/video/videoencode.c
 
 # compile the audio encoder source file into object file
 audioencode.obj:
-	$(CC) /c $(CFLAGS) ../include/audioencode.c
+	$(CC) /c $(CFLAGS) ../fractal/audio/audioencode.c
 
 # compile the audio capture source file into object file
 wasapicapture.obj:
-	$(CC) /c $(CFLAGS) ../include/wasapicapture.c
+	$(CC) /c $(CFLAGS) ../fractal/audio/wasapicapture.c
 
 # compile the video capture source file into object file
 dxgicapture.obj:
-	$(CC) /c $(CFLAGS) ../include/dxgicapture.c
+	$(CC) /c $(CFLAGS) ../fractal/video/dxgicapture.c
+
+# compile the logging source file into object file
+logging.obj:
+	$(CC) -c $(CFLAGS) ../fractal/utils/logging.c
+
+# compile the networking source file into object file
+network.obj:
+	$(CC) -c $(CFLAGS) ../fractal/network/network.c
+
+# compile the SDL screen info source file into object file
+sdlscreeninfo.obj:
+	$(CC) -c $(CFLAGS) ../fractal/utils/sdlscreeninfo.c
 
 # compile the desktop setting source file into object file
-desktop.obj:
-	$(CC) /c $(CFLAGS) ../include/desktop.c
+windows_utils.obj:
+	$(CC) /c $(CFLAGS) ../fractal/utils/windows_utils.c
 
 # compile the input handling source file into object file
 windowsinput.obj:
-	$(CC) /c $(CFLAGS) ../include/windowsinput.c
+	$(CC) /c $(CFLAGS) ../fractal/input/windowsinput.c
 
 # compile the cursor management source file into object file
 windowscursor.obj:
-	$(CC) /c $(CFLAGS) ../include/windowscursor.c
+	$(CC) /c $(CFLAGS) ../fractal/cursor/windowscursor.c
 
 # compile the source main client file into object file
 main.obj:
