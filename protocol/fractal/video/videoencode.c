@@ -380,9 +380,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
         // convert to the encoder format
         static int sample_counter = 0;
         clock t;
-        if (!sample_counter) {
-            StartTimer(&t);
-        }
+        StartTimer( &t );
         sws_scale(encoder->sws, (const uint8_t *const *)in_data, in_linesize, 0,
                   encoder->in_height, encoder->sw_frame->data,
                   encoder->sw_frame->linesize);
