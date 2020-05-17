@@ -4,3 +4,4 @@ This repository contains internal tools used to analyze logs and debug the assoc
 
 ## Existing Tools
 - Memory analysis from protocol logs to find memory leaks
+- Latency analysis from protocol logs to find bottlenecks
