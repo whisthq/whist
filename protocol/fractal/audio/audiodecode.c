@@ -121,10 +121,10 @@ int audio_decoder_decode_packet(audio_decoder_t *decoder,
     // mprintf("decoding packet!\n");
     // initialize output frame
 
-    if (init_av_frame(decoder)) {
-        LOG_WARNING("Could not initialize output AVFrame for decoding.\n");
-        return -1;
-    }
+    // if (init_av_frame(decoder)) {
+    //     LOG_WARNING("Could not initialize output AVFrame for decoding.\n");
+    //     return -1;
+    // }
 
     // send packet for decoding
 

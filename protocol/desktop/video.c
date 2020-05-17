@@ -455,6 +455,7 @@ int initMultithreadedVideo(void* opaque) {
     VideoData.run_render_screen_thread = true;
 
     RenderScreen(renderer);
+    av_freep(&videoContext.data[0]);
     SDL_DestroyRenderer(renderer);
     return 0;
 }
