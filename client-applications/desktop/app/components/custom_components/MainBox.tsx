@@ -93,26 +93,21 @@ class MainBox extends Component {
 
     if (os.platform() === 'darwin' || os.platform() === 'linux') {
       // mac & linux
-      console.log('MAC PLATFORM');
       // get logs and connection_id from Fractal MacOS/Linux Ubuntu caches
       // cache is located in /users/USERNAME/.fractal or in /home/USERNAME/.fractal
-      console.log('THE PATH IS' + process.env.HOME + '/.fractal/log.txt');
       var connection_id = parseInt(
         fs
           .readFileSync(process.env.HOME + '/.fractal/connection_id.txt')
           .toString()
       );
-      console.log(connection_id);
 
       fs.readFile(process.env.HOME + '/.fractal/log.txt', 'utf8', function (
         err,
         data
       ) {
         if (err) {
-          console.log(err);
+          console.log(err)
         } else {
-          console.log(data);
-          console.log('SENDING TO SAGA');
           component.props.dispatch(sendLogs(connection_id, data));
         }
       });
@@ -289,8 +284,7 @@ class MainBox extends Component {
     ) {
       this.setState({ vmRestarting: false });
     }
-    if(!prevProps.ready_to_connect && this.props.ready_to_connect){
-      console.log("READY TO  CONNECT NOW")
+    if(!prevProps.ready_to_connect && this.props.ready_to_connect) {
       this.props.dispatch(readyToConnect(false));
       this.setState({diskAttaching: false, reattached: true});
       this.LaunchProtocol();
