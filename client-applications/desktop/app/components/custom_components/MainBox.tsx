@@ -67,7 +67,6 @@ class MainBox extends Component {
   };
 
   ExitSettings = () => {
-    console.log(this.props.default);
     this.props.dispatch(changeWindow(this.props.default));
   };
 
@@ -131,11 +130,13 @@ class MainBox extends Component {
 
   // Launches the protocol
   LaunchProtocol = () => {
+    console.log('ENTERING LAUCNH PROTOCOL')
     if (
       this.state.reattached &&
       this.props.public_ip &&
       this.props.public_ip != ''
     ) {
+      console.log('ENTERING PROTOCOL IF STATEMENT')
       this.setState({ launched: true });
       this.props.dispatch(changeStatusMessage('Boot request sent to server'));
       if (this.state.launches == 0) {
@@ -181,6 +182,8 @@ class MainBox extends Component {
           if (this.state.launches == 1) {
             this.TrackActivity(true);
           }
+          console.log('ABOUT TO SPAWN CHILD')
+
           // Starts the protocol
           const protocol = child(executable, parameters, {
             cwd: path,
@@ -202,6 +205,7 @@ class MainBox extends Component {
         });
       }
     } else {
+      console.log('ENTERING LAUNCH PROTOCOL ELSE STATEMENT')
       this.setState({ launched: false, diskAttaching: true });
       this.props.dispatch(attachDisk())
     }
@@ -239,8 +243,6 @@ class MainBox extends Component {
 
   RestartPC = () => {
     this.setState({ restartPopup: false, vmRestarting: true }, function () {
-      console.log('STATE CHANGED ON RESTART');
-      console.log(this.state);
     });
     this.props.dispatch(restartPC());
   };
@@ -268,9 +270,6 @@ class MainBox extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    // If !prevProps.readytoconnect && this.props.readytoconnect
-    console.log(this.props)
-
     if (
       prevProps.attach_attempts != this.props.attach_attempts &&
       this.state.diskAttaching
@@ -285,9 +284,11 @@ class MainBox extends Component {
       this.setState({ vmRestarting: false });
     }
     if(!prevProps.ready_to_connect && this.props.ready_to_connect) {
+      let component = this
+      this.setState({diskAttaching: false, reattached: true, launched: true}, function() {
+        this.LaunchProtocol();
+      });
       this.props.dispatch(readyToConnect(false));
-      this.setState({diskAttaching: false, reattached: true});
-      this.LaunchProtocol();
     }
   }
 
@@ -1021,7 +1022,6 @@ class MainBox extends Component {
 }
 
 function mapStateToProps(state) {
-  console.log(state);
   return {
     username: state.counter.username,
     isUser: state.counter.isUser,

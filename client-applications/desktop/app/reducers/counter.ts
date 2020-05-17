@@ -20,7 +20,8 @@ export default function counter(state = DEFAULT, action: Action<string>) {
       return {
         ...state,
         public_ip: action.ip,
-        attach_attempts: state.attach_attempts + 1
+        attach_attempts: state.attach_attempts + 1,
+        ready_to_connect: true
       }
     case MainAction.STORE_IS_USER:
       return {
@@ -118,7 +119,7 @@ export default function counter(state = DEFAULT, action: Action<string>) {
     case MainAction.READY_TO_CONNECT:
       return {
         ...state,
-        ready_to_connect: action.update
+        ready_to_connect: state.ready_to_connect ? false : action.update
       }
     default:
       return state;

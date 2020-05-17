@@ -293,7 +293,6 @@ function* fetchVM(action) {
     if (json && json.output && json.state === 'PENDING') {
       yield put(Action.changeStatusMessage(json.output.msg));
     }
-    console.log(json)
     yield delay(5000);
   }
   if (json && json.state && json.state === 'SUCCESS') {
@@ -354,10 +353,8 @@ function* getRestartStatus(id) {
 }
 
 function* sendLogs(action) {
-  console.log('ENTERING SAGA');
   const state = yield select();
   var public_ip = state.counter.public_ip;
-  console.log(public_ip);
   const { json, response } = yield call(
     apiPost,
     'https://cube-celery-staging.herokuapp.com/logs',
@@ -368,7 +365,6 @@ function* sendLogs(action) {
       vm_ip: public_ip,
     }
   );
-  console.log(json);
 }
 
 export default function* rootSaga() {
