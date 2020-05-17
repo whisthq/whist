@@ -19,6 +19,11 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
     int gop_size = 9999;
     encoder->gop_size = gop_size;
 
+#if !USING_SERVERSIDE_SCALE
+    encoder->out_width = encoder->in_width;
+    encoder->out_height = encoder->in_height;
+#endif
+
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only linux uses FFmpeg 3.4.x because of canonical system packages

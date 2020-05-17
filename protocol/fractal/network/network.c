@@ -195,16 +195,16 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
     while (curr_index < len) {
         // Delay distribution of packets as needed
         
-        if( 31800000 > 0 && i > 0 && break_point > 0 &&
+        /*if( 31800000 > 0 && i > 0 && break_point > 0 &&
             i % break_point == 0 && i < num_indices - break_point / 2 )
         {
             SDL_Delay( break_resolution );
-        }
-        /*while( burst_bitrate > 0 && curr_index - 5000 > GetTimer( packet_timer ) * max_bytes_per_second )
+        }*/
+        while( burst_bitrate > 0 && curr_index - 5000 > GetTimer( packet_timer ) * max_bytes_per_second )
         {
             SDL_Delay( 1 );
         }
-        */
+        
         // local packet and len for when nack buffer isn't needed
         FractalPacket l_packet = {0};
         int l_len = 0;
