@@ -618,7 +618,7 @@ def checkLock(vm_name, s = None, ID = -1):
 
             if temporary_lock and s:
                 s.update_state(state='PENDING', meta={
-                    "msg": "{} seconds remaining until update finishes.".format(vm['temporary_lock'] - dateToUnix(getToday()))})
+                    "msg": "Estimated {} seconds remaining until update finishes.".format(vm['temporary_lock'] - dateToUnix(getToday()))})
 
             sendInfo(ID, 'Temporary lock found on VM {}, expires at {}. It is currently {}'.format(vm_name, str(vm['temporary_lock']), str(dateToUnix(getToday()))))
         return vm['lock'] or temporary_lock
@@ -1272,6 +1272,9 @@ def spinLock(vm_name, s = None, ID=-1):
             sendCritical(
                 ID, 'FAILURE: VM {} is locked for too long. Giving up.'.format(vm_name))
             return -1
+
+    if s:
+        s.update_state(state='PENDING', meta={"msg": "Update successfully downloaded."})
 
     sendInfo(ID, 'After waiting {} times, VM {} is unlocked'.format(
         num_tries, vm_name))

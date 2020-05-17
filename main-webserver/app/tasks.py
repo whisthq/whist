@@ -437,9 +437,9 @@ def swapDiskSync(self, disk_name, ID = -1):
 					self.update_state(state='FAILURE', meta={"msg": "Cloud PC could not be started. Please contact support."})
 
 				vm_credentials = fetchVMCredentials(vm_name)
-				createTemporaryLock(vm_name, 2)
-				lockVM(vm_name, False, ID = ID)
-				updateVMState(vm_name, 'RUNNING_AVAILABLE')
+				lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_AVAILABLE', lock = False, temporary_lock = 2, 
+					change_last_updated = True, verbose = False, ID = ID)
+				
 				return vm_credentials
 			else:
 				os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
