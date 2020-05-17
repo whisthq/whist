@@ -439,7 +439,7 @@ def swapDiskSync(self, disk_name, ID = -1):
 				vm_credentials = fetchVMCredentials(vm_name)
 				lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_AVAILABLE', lock = False, temporary_lock = 2, 
 					change_last_updated = True, verbose = False, ID = ID)
-				
+
 				return vm_credentials
 			else:
 				os_disk = compute_client.disks.get(os.environ.get('VM_GROUP'), disk_name)
@@ -450,7 +450,7 @@ def swapDiskSync(self, disk_name, ID = -1):
 	if not vm_attached:
 		disk_attached = False
 		while not disk_attached: 
-			vm = claimAvailableVM(disk_name, location)
+			vm = claimAvailableVM(disk_name, location, s = self)
 			if vm:
 				try:
 					vm_name = vm['vm_name']

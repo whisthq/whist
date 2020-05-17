@@ -504,7 +504,7 @@ def lockVM(vm_name, lock, username = None, disk_name = None, change_last_updated
             vm_name), papertrail=verbose)
 
 
-def claimAvailableVM(disk_name, location, ID = -1):
+def claimAvailableVM(disk_name, location, s = None, ID = -1):
     username = mapDiskToUser(disk_name)
     session = Session()
 
@@ -523,6 +523,12 @@ def claimAvailableVM(disk_name, location, ID = -1):
         available_vm = cleanFetchedSQL(session.execute(command, params).fetchone())
 
         if available_vm:
+            if s:
+                if state == 'RUNNING_AVAILABLE':
+                    s.update_state(state='PENDING', meta={"msg": "Your cloud PC is powered on. Preparing your cloud PC (this could take a few minutes)."})
+                else:
+                    s.update_state(state='PENDING', meta={"msg": "Your cloud PC is powered off. Preparing your cloud PC (this could take a few minutes)."})
+
             sendInfo(ID, 'Found an available VM {} for {}'.format(str(available_vm), username))
 
             command = text("""
