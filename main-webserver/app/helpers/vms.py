@@ -1083,13 +1083,12 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
                     vm_name, power_state))
                 vmReadyToConnect(vm_name, False)
                 sendInfo(ID, 'Starting VM {}'.format(vm_name))
-                updateVMState(vm_name, 'STARTING')
-                lockVM(vm_name, True, ID = ID)
+                lockVMAndUpdate(vm_name, 'STARTING', True, temporary_lock = None, change_last_updated = True, verbose = False, ID = ID)
 
                 async_vm_start = compute_client.virtual_machines.start(
                     os.environ.get('VM_GROUP'), vm_name)
 
-                createTemporaryLock(vm_name, 8)
+                createTemporaryLock(vm_name, 12)
 
                 sendInfo(ID, async_vm_start.result())
 
@@ -1106,13 +1105,12 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
                     ID, 'VM {} needs to restart. Setting Winlogon to False'.format(vm_name))
                 vmReadyToConnect(vm_name, False)
 
-                updateVMState(vm_name, 'RESTARTING')
-                lockVM(vm_name, True, ID = ID)
+                lockVMAndUpdate(vm_name, 'RESTARTING', True, temporary_lock = None, change_last_updated = True, verbose = False, ID = ID)
 
                 async_vm_restart = compute_client.virtual_machines.restart(
                     os.environ.get('VM_GROUP'), vm_name)
 
-                createTemporaryLock(vm_name, 8)
+                createTemporaryLock(vm_name, 12)
 
                 sendInfo(ID, async_vm_restart.result())
 
@@ -1121,23 +1119,69 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
 
                 sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
 
+        def checkFirstTime(disk_name):
+            session = Session()
+            command = text("""
+                SELECT * FROM disks WHERE "disk_name" = :disk_name
+                """)
+            params = {'disk_name': disk_name}
+
+            disk_info = cleanFetchedSQL(session.execute(command, params).fetchone())
+            
+            if disk_info:
+                session.commit()
+                session.close()
+                return disk_info['first_time']
+
+            session.commit()
+            session.close()
+
+            return False
+
+        def changeFirstTime(disk_name, first_time = False):
+            session = Session()
+            command = text("""
+                UPDATE disks SET "first_time" = :first_time WHERE "disk_name" = :disk_name
+                """)
+            params = {'disk_name': disk_name, 'first_time': first_time}
+
+            session.execute(command, params)
+            session.commit()
+            session.close()
+
         if s:
             s.update_state(state='PENDING', meta={"msg": "Cloud PC currently executing boot request."})
 
-        boot_if_necessary(vm_name, needs_restart, ID)
-        updateVMState(vm_name, 'RUNNING_AVAILABLE')
-        lockVM(vm_name, False, ID = ID)
+        disk_name = fetchVMCredentials(vm_name)['disk_name']
+        first_time = checkFirstTime(disk_name)
+        num_boots = 1 if not first_time else 2
 
-        if s:
-            s.update_state(state='PENDING', meta={"msg": "Last step: logging you into your cloud PC."})
+        for i in range(0, num_boots):
+            if i == 1 and s:
+                s.update_state(state='PENDING', meta={"msg": "Since this is your first time logging on, we're running a few extra tests to ensure stability. Please allow a few extra minutes."})
+                time.sleep(20)
 
-        winlogon = waitForWinlogon(vm_name, ID)
-        while winlogon < 0:
-            boot_if_necessary(vm_name, True, ID)
+            lockVMAndUpdate(vm_name, 'ATTACHING', True, temporary_lock = None, change_last_updated = True, verbose = False, ID = ID)
+
+            if i == 1:
+                needs_restart = True
+
+            boot_if_necessary(vm_name, needs_restart, ID)
+            lockVMAndUpdate(vm_name, 'RUNNING_AVAILABLE', False, temporary_lock = None, change_last_updated = True, verbose = False, ID = ID)
+
+            if s:
+                s.update_state(state='PENDING', meta={"msg": "Logging you into your cloud PC."})
+
             winlogon = waitForWinlogon(vm_name, ID)
+            while winlogon < 0:
+                boot_if_necessary(vm_name, True, ID)
+                winlogon = waitForWinlogon(vm_name, ID)
 
-        if s:
-            s.update_state(state='PENDING', meta={"msg": "Logged into your cloud PC successfully."})
+            if s:
+                s.update_state(state='PENDING', meta={"msg": "Logged into your cloud PC successfully."})
+
+            if i == 1:
+                changeFirstTime(disk_name)
 
         return 1
     except Exception as e:
