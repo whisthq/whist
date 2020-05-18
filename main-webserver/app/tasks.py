@@ -263,16 +263,10 @@ def deleteVMResources(self, vm_name, delete_disk, ID = -1):
 	lockVM(vm_name, True)
 
 	status = 200 if deleteResource(vm_name, delete_disk) else 404
-
-<<<<<<< HEAD
-	lockVM(vm_name, False)
-	return {'status': status}
-=======
     lockVM(vm_name, False)
     sendInfo(ID, 'Disk vm deletion request for vm {} resolved with status {}'.format(vm_name, status))
 
     return {'status': status}
->>>>>>> adding ids
 
 
 @celery.task(bind=True)

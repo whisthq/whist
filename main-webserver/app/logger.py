@@ -1,54 +1,90 @@
 from .imports import *
 
-# class ContextFilter(logging.Filter):
-#     hostname = socket.gethostname()
+# class MyLogger(logging.Logger):
+#     # Sets the minimum logging priority to actually log (DEBUG < INFO < WARNING < ERROR < CRITICAL)
+#     def __init__(self, name=__name__, level=logging.INFO):
+#         return super(MyLogger, self).__init__(name, level)
 
-#     def filter(self, record):
-#         record.hostname = ContextFilter.hostname
-#         return True
+#     def debug(self, ID, msg, papertrail=True, *args, **kwargs):
+#         return super(MyLogger, self).debug(
+#             "[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE")), *args, **kwargs
+#         )
 
-# syslog = SysLogHandler(address=(os.getenv('PAPERTRAIL_URL'), int(os.getenv('PAPERTRAIL_PORT'))))
-# syslog.addFilter(ContextFilter())
+#     def info(self, ID, msg, papertrail=True, *args, **kwargs):
+#         return super(MyLogger, self).info(
+#             "[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE")), *args, **kwargs
+#         )
 
-# format = '%(asctime)s [%(pathname)s:%(lineno)d] %(message)s'
-# formatter = logging.Formatter(format, datefmt='%b %d %H:%M:%S')
-# syslog.setFormatter(formatter)
+#     def warning(self, ID, msg, papertrail=True, *args, **kwargs):
+#         return super(MyLogger, self).warning(
+#             "[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE")), *args, **kwargs
+#         )
 
-# logger = logging.getLogger()
-# logger.addHandler(syslog)
+#     def error(self, ID, msg, papertrail=True, *args, **kwargs):
+#         return super(MyLogger, self).error(
+#             "[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE")), *args, **kwargs
+#         )
 
-# def sendDebug(ID, log, papertrail = True):
-# 	if papertrail:
-# 		logger.info('[{} WEBSERVER][{}] INFO: {}'.format(os.getenv('SERVER_TYPE'), ID, log))
-
-# def sendInfo(ID, log, papertrail = True):
-# 	if papertrail:
-# 		logger.info('[{} WEBSERVER][{}] INFO: {}'.format(os.getenv('SERVER_TYPE'), ID, log))
-
-# def sendWarning(ID, log, papertrail = True):
-# 	if papertrail:
-# 		logger.warning('[{} WEBSERVER][{}] WARNING: {}'.format(os.getenv('SERVER_TYPE'), ID, log))
-
-# def sendError(ID, log, papertrail = True):
-# 	if papertrail:
-# 		logger.error('[{} WEBSERVER][{}] ERROR: {}'.format(os.getenv('SERVER_TYPE'), ID, log))
-
-# def sendCritical(ID, log, papertrail = True):
-# 	if papertrail:
-# 		logger.critical('[{} WEBSERVER][{}] CRITICAL: {}'.format(os.getenv('SERVER_TYPE'), ID, log))
+#     def critical(self, ID, msg, papertrail=True, *args, **kwargs):
+#         return super(MyLogger, self).critical(
+#             "[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE")), *args, **kwargs
+#         )
 
 
-def sendDebug(ID, log, papertrail = True):
-	return None
+class ContextFilter(logging.Filter):
+    hostname = socket.gethostname()
 
-def sendInfo(ID, log, papertrail = True):
-	return None
+    def filter(self, record):
+        record.hostname = ContextFilter.hostname
+        return True
 
-def sendWarning(ID, log, papertrail = True):
-	return None
 
-def sendError(ID, log, papertrail = True):
-	return None
+syslog = SysLogHandler(
+    address=(os.getenv("PAPERTRAIL_URL"), int(os.getenv("PAPERTRAIL_PORT")))
+)
+syslog.addFilter(ContextFilter())
 
-def sendCritical(ID, log, papertrail = True):
-	return None
+format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
+# format = "%(asctime)s [%(pathname)s:%(lineno)d] %(message)s"
+formatter = logging.Formatter(format, datefmt="%b %d %H:%M:%S")
+syslog.setFormatter(formatter)
+# logging.setLoggerClass(MyLogger)
+
+
+logger = logging.getLogger()
+logger.addHandler(syslog)
+
+
+def sendDebug(ID, log, papertrail=True):
+    if papertrail:
+        logger.info(
+            "[{} WEBSERVER][{}] INFO: {}".format(os.getenv("SERVER_TYPE"), ID, log)
+        )
+
+
+def sendInfo(ID, log, papertrail=True):
+    if papertrail:
+        logger.info(
+            "[{} WEBSERVER][{}] INFO: {}".format(os.getenv("SERVER_TYPE"), ID, log)
+        )
+
+
+def sendWarning(ID, log, papertrail=True):
+    if papertrail:
+        logger.warning(
+            "[{} WEBSERVER][{}] WARNING: {}".format(os.getenv("SERVER_TYPE"), ID, log)
+        )
+
+
+def sendError(ID, log, papertrail=True):
+    if papertrail:
+        logger.error(
+            "[{} WEBSERVER][{}] ERROR: {}".format(os.getenv("SERVER_TYPE"), ID, log)
+        )
+
+
+def sendCritical(ID, log, papertrail=True):
+    if papertrail:
+        logger.critical(
+            "[{} WEBSERVER][{}] CRITICAL: {}".format(os.getenv("SERVER_TYPE"), ID, log)
+        )
