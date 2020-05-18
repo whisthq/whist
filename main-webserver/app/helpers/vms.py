@@ -1124,7 +1124,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
         lockVM(vm_name, False, ID = ID)
 
         if s:
-            s.update_state(state='PENDING', meta={"msg": "Logging you into your cloud PC."})
+            s.update_state(state='PENDING', meta={"msg": "Last step: logging you into your cloud PC."})
 
         winlogon = waitForWinlogon(vm_name, ID)
         while winlogon < 0:
