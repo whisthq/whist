@@ -99,6 +99,13 @@ int32_t MultithreadedDestroyEncoder(void* opaque) {
 int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
+
+#if defined(_WIN32)
+    // set Windows DPI
+    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+#endif
+
+
     SocketContext socketContext = *(SocketContext*)opaque;
 
     // Init DXGI Device
@@ -381,7 +388,7 @@ int32_t SendVideo(void* opaque) {
                         id++;
                     }
 
-                    // LOG_INFO( "Send Frame Time: %f\n", GetTimer( t ) );
+                    LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n", GetTimer( t ), frame_size );
 
                     previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time = GetTimer(server_frame_timer);
