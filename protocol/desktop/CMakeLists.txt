@@ -29,7 +29,7 @@ endforeach(LIB)
 # if we add other target platforms we may need to come back to this
 if ( NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package(Threads REQUIRED)
+#    find_package(Threads REQUIRED)
     target_link_libraries(FractalClient
 #            Threads::Threads
             ${CMAKE_DL_LIBS}

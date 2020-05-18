@@ -7,7 +7,7 @@ To support WSL running with ubuntu 18.04, which only has cmake v1.10 in its repo
 if you want to compile on windows with MSVC set it to 1.15
 ]]
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.10)
 #3.15 required for CMP0091
 #We need CMP0091 to select the MSVC_RUNTIME_LIBRARY
 #See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
