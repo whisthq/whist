@@ -75,7 +75,7 @@ volatile bool update_encoder;
 
 bool pending_encoder;
 bool encoder_finished;
-encoder_t* encoder_factory_result = NULL;
+video_encoder_t* encoder_factory_result = NULL;
 int encoder_factory_server_w;
 int encoder_factory_server_h;
 int encoder_factory_client_w;
@@ -91,7 +91,7 @@ int32_t MultithreadedEncoderFactory(void* opaque) {
     return 0;
 }
 int32_t MultithreadedDestroyEncoder(void* opaque) {
-    encoder_t* encoder = (encoder_t*)opaque;
+    video_encoder_t* encoder = (video_encoder_t*)opaque;
     destroy_video_encoder(encoder);
     return 0;
 }
@@ -99,12 +99,10 @@ int32_t MultithreadedDestroyEncoder(void* opaque) {
 int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
-
 #if defined(_WIN32)
     // set Windows DPI
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 #endif
-
 
     SocketContext socketContext = *(SocketContext*)opaque;
 
@@ -116,7 +114,7 @@ int32_t SendVideo(void* opaque) {
 
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
-    encoder_t* encoder = NULL;
+    video_encoder_t* encoder = NULL;
 
     double worst_fps = 40.0;
     int ideal_bitrate = current_bitrate;
@@ -210,7 +208,7 @@ int32_t SendVideo(void* opaque) {
                     update_encoder = false;
                 } else {
                     SDL_CreateThread(MultithreadedEncoderFactory,
-                                    "MultithreadedEncoderFactory", NULL);
+                                     "MultithreadedEncoderFactory", NULL);
                 }
             }
         }
@@ -275,17 +273,16 @@ int32_t SendVideo(void* opaque) {
             static double max_frame_size = 0.0;
 
             frame_stat_number++;
-            total_frame_time += GetTimer( t );
-            max_frame_time = max( max_frame_time, GetTimer( t ) );
+            total_frame_time += GetTimer(t);
+            max_frame_time = max(max_frame_time, GetTimer(t));
             total_frame_sizes += encoder->encoded_frame_size;
-            max_frame_size = max( max_frame_size, encoder->encoded_frame_size );
+            max_frame_size = max(max_frame_size, encoder->encoded_frame_size);
 
-            if( frame_stat_number % 30 == 0 )
-            {
-                LOG_INFO( "Longest Encode Time: %f\n", max_frame_time );
-                LOG_INFO( "Average Encode Time: %f\n", total_frame_time / 30 );
-                LOG_INFO( "Longest Encode Size: %f\n", max_frame_size );
-                LOG_INFO( "Average Encode Size: %f\n", total_frame_sizes / 30 );
+            if (frame_stat_number % 30 == 0) {
+                LOG_INFO("Longest Encode Time: %f\n", max_frame_time);
+                LOG_INFO("Average Encode Time: %f\n", total_frame_time / 30);
+                LOG_INFO("Longest Encode Size: %f\n", max_frame_size);
+                LOG_INFO("Average Encode Size: %f\n", total_frame_sizes / 30);
                 total_frame_time = 0.0;
                 max_frame_time = 0.0;
                 total_frame_sizes = 0.0;
@@ -357,8 +354,8 @@ int32_t SendVideo(void* opaque) {
                     // Create frame struct with compressed frame data and
                     // metadata
                     Frame* frame = (Frame*)buf;
-                    frame->width = encoder->context->width;
-                    frame->height = encoder->context->height;
+                    frame->width = encoder->pCodecCtx->width;
+                    frame->height = encoder->pCodecCtx->height;
 
                     frame->size = encoder->encoded_frame_size;
                     frame->cursor = GetCurrentCursor();
@@ -373,7 +370,7 @@ int32_t SendVideo(void* opaque) {
                     // "(I-frame)" :
                     // "");
 
-                    StartTimer( &t );
+                    StartTimer(&t);
 
                     // Send video packet to client
                     if (SendUDPPacket(
@@ -388,7 +385,8 @@ int32_t SendVideo(void* opaque) {
                         id++;
                     }
 
-                    LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n", GetTimer( t ), frame_size );
+                    LOG_INFO("Send Frame Time: %f, Send Frame Size: %d\n",
+                             GetTimer(t), frame_size);
 
                     previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time = GetTimer(server_frame_timer);
@@ -409,7 +407,7 @@ int32_t SendVideo(void* opaque) {
 #endif
     DestroyCaptureDevice(device);
     device = NULL;
-    MultithreadedDestroyEncoder( encoder );
+    MultithreadedDestroyEncoder(encoder);
     encoder = NULL;
 
     return 0;
@@ -827,7 +825,7 @@ int main() {
                     LOG_INFO("MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps);
                     max_mbps =
                         max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
-                    //update_encoder = true;
+                    // update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
                     LOG_INFO("Ping Received - ID %d", fmsg->ping_id);
 

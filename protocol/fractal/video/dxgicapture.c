@@ -45,7 +45,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
                                           &hardware->adapter) !=
            DXGI_ERROR_NOT_FOUND) {
         if (num_adapters == MAX_NUM_ADAPTERS) {
-            LOG_WARNING("Too many adaters!\n");
+            LOG_WARNING("Too many adapters!\n");
             break;
         }
         adapters[num_adapters] = hardware->adapter;
