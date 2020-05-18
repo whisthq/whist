@@ -99,6 +99,13 @@ int32_t MultithreadedDestroyEncoder(void* opaque) {
 int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
+
+#if defined(_WIN32)
+    // set Windows DPI
+    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+#endif
+
+
     SocketContext socketContext = *(SocketContext*)opaque;
 
     // Init DXGI Device
