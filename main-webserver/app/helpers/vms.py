@@ -430,12 +430,13 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock, change_last_updated, v
         """)
 
     if temporary_lock:
+        temporary_lock = shiftUnixByMinutes(dateToUnix(getToday()), temporary_lock)
+        
         command = text("""
             UPDATE v_ms SET state = :state, lock = :lock, temporary_lock = :temporary_lock
             WHERE vm_name = :vm_name
             """)
 
-    temporary_lock = shiftUnixByMinutes(dateToUnix(getToday()), temporary_lock)
     params = {'vm_name': vm_name, 'state': state, 'lock': lock, 'temporary_lock': temporary_lock}
 
     session.execute(command, params)
