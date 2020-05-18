@@ -19,6 +19,11 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
     int gop_size = 9999;
     encoder->gop_size = gop_size;
 
+#if !USING_SERVERSIDE_SCALE
+    encoder->out_width = encoder->in_width;
+    encoder->out_height = encoder->in_height;
+#endif
+
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only linux uses FFmpeg 3.4.x because of canonical system packages
@@ -107,6 +112,7 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
 
         if( encoder->in_width != encoder->out_width || encoder->in_height != encoder->out_height )
         {
+            LOG_INFO( "Will be server-side scaling from %dx%d to %dx%d\n", encoder->in_width, encoder->in_height, encoder->out_width, encoder->out_height );
             encoder->sws = sws_getContext(encoder->in_width, encoder->in_height,
                AV_PIX_FMT_RGB32, encoder->out_width,
                encoder->out_height, out_format,
@@ -374,9 +380,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
         // convert to the encoder format
         static int sample_counter = 0;
         clock t;
-        if (!sample_counter) {
-            StartTimer(&t);
-        }
+        StartTimer( &t );
         sws_scale(encoder->sws, (const uint8_t *const *)in_data, in_linesize, 0,
                   encoder->in_height, encoder->sw_frame->data,
                   encoder->sw_frame->linesize);

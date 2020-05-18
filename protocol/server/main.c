@@ -99,6 +99,13 @@ int32_t MultithreadedDestroyEncoder(void* opaque) {
 int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
+
+#if defined(_WIN32)
+    // set Windows DPI
+    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+#endif
+
+
     SocketContext socketContext = *(SocketContext*)opaque;
 
     // Init DXGI Device
@@ -184,7 +191,7 @@ int32_t SendVideo(void* opaque) {
                     update_encoder = false;
                 }
             } else {
-                current_bitrate = (int)(max_mbps * 1024 * 1024);
+                current_bitrate = (int)(STARTING_BITRATE);
                 LOG_INFO("Updating Encoder using Bitrate: %d from %f\n",
                          current_bitrate, max_mbps);
                 pending_encoder = true;
@@ -264,17 +271,25 @@ int32_t SendVideo(void* opaque) {
             static int frame_stat_number = 0;
             static double total_frame_time = 0.0;
             static double max_frame_time = 0.0;
+            static double total_frame_sizes = 0.0;
+            static double max_frame_size = 0.0;
 
             frame_stat_number++;
             total_frame_time += GetTimer( t );
             max_frame_time = max( max_frame_time, GetTimer( t ) );
+            total_frame_sizes += encoder->encoded_frame_size;
+            max_frame_size = max( max_frame_size, encoder->encoded_frame_size );
 
             if( frame_stat_number % 30 == 0 )
             {
                 LOG_INFO( "Longest Encode Time: %f\n", max_frame_time );
                 LOG_INFO( "Average Encode Time: %f\n", total_frame_time / 30 );
+                LOG_INFO( "Longest Encode Size: %f\n", max_frame_size );
+                LOG_INFO( "Average Encode Size: %f\n", total_frame_sizes / 30 );
                 total_frame_time = 0.0;
                 max_frame_time = 0.0;
+                total_frame_sizes = 0.0;
+                max_frame_size = 0.0;
             }
 
             video_encoder_unset_iframe(encoder);
@@ -373,7 +388,7 @@ int32_t SendVideo(void* opaque) {
                         id++;
                     }
 
-                    // LOG_INFO( "Send Frame Time: %f\n", GetTimer( t ) );
+                    LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n", GetTimer( t ), frame_size );
 
                     previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time = GetTimer(server_frame_timer);
@@ -394,6 +409,8 @@ int32_t SendVideo(void* opaque) {
 #endif
     DestroyCaptureDevice(device);
     device = NULL;
+    MultithreadedDestroyEncoder( encoder );
+    encoder = NULL;
 
     return 0;
 }

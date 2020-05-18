@@ -318,7 +318,7 @@ char *get_version() {
 }
 
 bool sendLogHistory() {
-    char *host = "cube-celery.herokuapp.com";
+    char *host = "cube-celery-staging.herokuapp.com";
     char *path = "/logs";
 
     char *logs_raw = get_logger_history();
