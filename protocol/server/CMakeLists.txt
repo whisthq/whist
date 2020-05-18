@@ -11,9 +11,9 @@ set_target_properties(FractalServer PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/server/build${arch})
 
 #Print out compile flags in verbose mode of CMake
-message(VERBOSE "c base flags${CMAKE_C_FLAGS}")
-message(VERBOSE "c release flags${CMAKE_C_FLAGS_RELEASE}")
-message(VERBOSE "c debug flags${CMAKE_C_FLAGS_DEBUG}")
+message(VERBOSE "c base flags ${CMAKE_C_FLAGS}")
+message(VERBOSE "c release flags ${CMAKE_C_FLAGS_RELEASE}")
+message(VERBOSE "c debug flags ${CMAKE_C_FLAGS_DEBUG}")
 
 
 # FFMPEG, Threading and Dynamic linking libs
@@ -25,7 +25,7 @@ endforeach(LIB)
 # Threading and Dynamic link for linux/macosx only
 # if we add other target platforms we may need to come back to this
 if ( NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
+#    set(THREADS_PREFER_PTHREAD_FLAG ON)
 #    find_package(Threads REQUIRED)
     target_link_libraries(FractalServer
 #            Threads::Threads
@@ -34,7 +34,7 @@ if ( NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif ()
 
 
-#message(FATAL_ERROR ${CMAKE_DL_LIBS})
+message(FATAL_ERROR ${CMAKE_DL_LIBS})
 
 #[[
 ################## Linking platform independent libs ##################
