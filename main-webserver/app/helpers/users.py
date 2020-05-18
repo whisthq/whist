@@ -383,6 +383,9 @@ def userVMStatus(username):
         if user:
             has_disk = True
 
+            if user['first_time']:
+                return 'is_creating'
+
     if not has_paid and not has_disk:
         return 'not_created'
 
