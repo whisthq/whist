@@ -30,8 +30,8 @@ def status(task_id, **kwargs):
         return make_response(jsonify(response), 200)
     elif result.status == 'FAILURE':
         response = {
-            'state': result.status,
-            'output': result.info
+            'state': 'FAILURE',
+            'output': 'Server crashed unexpectedly. Please close the client app and reconnect.'
         }
         return make_response(jsonify(response), 200)
     elif result.status == 'PENDING':
