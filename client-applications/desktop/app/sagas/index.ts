@@ -284,19 +284,20 @@ function* fetchVM(action) {
     state.counter.access_token
   );
 
-  while (json.state === 'PENDING' || json.state === 'STARTED') {
+  while (json.state !== 'SUCCESS' && json.state !== 'FAILURE') {
     var { json, response } = yield call(
       apiGet,
       (config.url.PRIMARY_SERVER + '/status/').concat(action.id),
       state.counter.access_token
     );
     if (json && json.output && json.state === 'PENDING') {
-      yield put(Action.changeStatusMessage(json.output.msg));
+      var now = new Date();
+      var message = String(now.getHours()) + ":" + String(now.getMinutes())+ ":" + String(now.getSeconds()) + ": " + json.output.msg
+      yield put(Action.changeStatusMessage(message));
     }
     yield delay(5000);
   }
   if (json && json.state && json.state === 'SUCCESS') {
-    yield put(Action.readyToConnect(true))
     if (json.output && json.output.ip) {
       yield put(Action.storeIP(json.output.ip));
     }

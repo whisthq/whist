@@ -111,7 +111,6 @@ class Home extends Component {
   changeRememberMe = (event) => {
     const target = event.target;
     if(target.checked) {
-      console.log("Remember me!")
       this.setState({rememberMe: true})
     } else {
       this.setState({rememberMe: false})
@@ -131,7 +130,6 @@ class Home extends Component {
 
     storage.get('credentials', function(error, data) {
       if (error) throw error;
-      console.log(data)
 
       if(data && Object.keys(data).length > 0) {
         if(data.username != '' && data.password != '' && component.state.live) {
@@ -268,7 +266,6 @@ class Home extends Component {
 }
 
 function mapStateToProps(state) {
-  console.log(this.state)
   return {
     username: state.counter.username,
     public_ip: state.counter.public_ip,

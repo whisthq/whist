@@ -119,7 +119,7 @@ export default function counter(state = DEFAULT, action: Action<string>) {
     case MainAction.READY_TO_CONNECT:
       return {
         ...state,
-        ready_to_connect: state.ready_to_connect ? false : action.update
+        ready_to_connect: action.update
       }
     default:
       return state;
