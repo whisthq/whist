@@ -2,9 +2,6 @@
 ################## FractalClient ##################
 ]]
 
-#Tell CMake where to put
-#set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/desktop/build${arch})
-#set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/desktop/build${arch})
 add_executable(FractalClient
         main.c
         main.h
@@ -16,8 +13,13 @@ set_target_properties(FractalClient PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/desktop/build${arch}
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/desktop/build${arch})
 
-# FFMPEG, Threading and Dynamic linking libs
 
+#Print out compile flags in verbose mode of CMake
+message(VERBOSE c base flags${CMAKE_C_FLAGS})
+message(VERBOSE c release flags${CMAKE_C_FLAGS_RELEASE})
+message(VERBOSE c debug flags${CMAKE_C_FLAGS_DEBUG})
+
+# FFMPEG, Threading and Dynamic linking libs
 foreach(LIB ${FFMPEG_LIBS_PATHS})
     message(STATUS ${LIB})
     target_link_libraries(FractalClient ${LIB})
@@ -95,9 +97,6 @@ endif()
 ################## WINDOWS ##################
 ]]
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    #compiler flags, TODO debug vs release
-    SET(CMAKE_C_FLAGS  " -DWIN32_LEAN_AND_MEAN -DUNICODE -DWIN32 -DWIN32 /W4 /MT /MP" )
-
     #Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")

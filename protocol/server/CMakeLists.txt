@@ -10,8 +10,13 @@ set_target_properties(FractalServer PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/server/build${arch}
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/server/build${arch})
 
-# FFMPEG, Threading and Dynamic linking libs
+#Print out compile flags in verbose mode of CMake
+message(VERBOSE c base flags${CMAKE_C_FLAGS})
+message(VERBOSE c release flags${CMAKE_C_FLAGS_RELEASE})
+message(VERBOSE c debug flags${CMAKE_C_FLAGS_DEBUG})
 
+
+# FFMPEG, Threading and Dynamic linking libs
 foreach(LIB ${FFMPEG_LIBS_PATHS})
     message(STATUS ${LIB})
     target_link_libraries(FractalServer ${LIB})
@@ -99,9 +104,6 @@ endif()
 ################## WINDOWS ##################
 ]]
 if(${WIN32})
-    message(VERBOSE c base flags${CMAKE_C_FLAGS})
-    message(VERBOSE c release flags${CMAKE_C_FLAGS_RELEASE})
-    message(VERBOSE c debug flags${CMAKE_C_FLAGS_DEBUG})
     #Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
