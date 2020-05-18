@@ -1156,6 +1156,9 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
         first_time = checkFirstTime(disk_name)
         num_boots = 1 if not first_time else 2
 
+        if first_time:
+            print('First time! Going to boot {} times'.format(str(num_boots)))
+
         for i in range(0, num_boots):
             if i == 1 and s:
                 s.update_state(state='PENDING', meta={"msg": "Since this is your first time logging on, we're running a few extra tests to ensure stability. Please allow a few extra minutes."})
