@@ -1031,6 +1031,9 @@ def swapdisk_name(s, disk_name, vm_name, ID=-1):
         virtual_machine.storage_profile.os_disk.managed_disk.id = new_os_disk.id
         virtual_machine.storage_profile.os_disk.name = new_os_disk.name
 
+        s.update_state(state='PENDING', meta={
+            "msg": "Uploading necessary data to our servers. This could take a few minutes."})
+
         sendInfo(ID, 'Attaching disk {} to {}'.format(disk_name, vm_name))
         start = time.perf_counter()
         async_disk_attach = compute_client.virtual_machines.create_or_update(
@@ -1173,7 +1176,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
             lockVMAndUpdate(vm_name, 'RUNNING_AVAILABLE', False, temporary_lock = 4, change_last_updated = True, verbose = False, ID = ID)
 
             if s:
-                s.update_state(state='PENDING', meta={"msg": "Logging you into your cloud PC."})
+                s.update_state(state='PENDING', meta={"msg": "Logging you into your cloud PC. This should take less than a minute."})
 
             winlogon = waitForWinlogon(vm_name, ID)
             while winlogon < 0:
