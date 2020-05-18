@@ -161,7 +161,7 @@ def vm(action, **kwargs):
                 lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_AVAILABLE', lock = False, temporary_lock = None, 
                     change_last_updated = False, verbose = False, ID = kwargs['ID'])
             elif not available and not vm_state in intermediate_states:
-                lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_UNAVAILABLE', lock = True, temporary_lock = dateToUnix(getToday()), 
+                lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_UNAVAILABLE', lock = True, temporary_lock = 0, 
                     change_last_updated = False, verbose = False, ID = kwargs['ID'])
         else:
             sendError(
