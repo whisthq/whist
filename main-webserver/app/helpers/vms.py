@@ -1165,7 +1165,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
         for i in range(0, num_boots):
             if i == 1 and s:
                 s.update_state(state='PENDING', meta={"msg": "Since this is your first time logging on, we're running a few extra tests to ensure stability. Please allow a few extra minutes."})
-                time.sleep(20)
+                time.sleep(150)
 
             lockVMAndUpdate(vm_name, 'ATTACHING', True, temporary_lock = None, change_last_updated = True, verbose = False, ID = ID)
 
@@ -1188,7 +1188,10 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
 
             if i == 1:
                 changeFirstTime(disk_name)
-                lockVMAndUpdate(vm_name, 'RUNNING_AVAILABLE', False, temporary_lock = 4, change_last_updated = True, verbose = False, ID = ID)
+                if s:
+                    s.update_state(state='PENDING', meta={"msg": "Running final performance checks. This will take two minutes."})
+                time.sleep(120)
+                lockVMAndUpdate(vm_name, 'RUNNING_AVAILABLE', False, temporary_lock = 3, change_last_updated = True, verbose = False, ID = ID)
 
         return 1
     except Exception as e:
