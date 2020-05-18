@@ -15,9 +15,9 @@ set_target_properties(FractalClient PROPERTIES
 
 
 #Print out compile flags in verbose mode of CMake
-message(VERBOSE c base flags${CMAKE_C_FLAGS})
-message(VERBOSE c release flags${CMAKE_C_FLAGS_RELEASE})
-message(VERBOSE c debug flags${CMAKE_C_FLAGS_DEBUG})
+message(VERBOSE "c base flags${CMAKE_C_FLAGS}")
+message(VERBOSE "c release flags${CMAKE_C_FLAGS_RELEASE}")
+message(VERBOSE "c debug flags${CMAKE_C_FLAGS_DEBUG}")
 
 # FFMPEG, Threading and Dynamic linking libs
 foreach(LIB ${FFMPEG_LIBS_PATHS})
@@ -31,7 +31,7 @@ if ( NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
     target_link_libraries(FractalClient
-            Threads::Threads
+#            Threads::Threads
             ${CMAKE_DL_LIBS}
             )
 endif ()

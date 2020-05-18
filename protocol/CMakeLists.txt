@@ -3,6 +3,8 @@
 This is the root CmakeLists.txt for the protocol repo
 We define various project level settings here as well as include the subdirectories of the repo.
 We also look for the ffmpeg libraries here.
+To support WSL running with ubuntu 18.04, which only has cmake v1.10 in its repositories we use v1.10,
+if you want to compile on windows with MSVC set it to 1.15
 ]]
 
 cmake_minimum_required(VERSION 3.15)

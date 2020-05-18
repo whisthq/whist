@@ -11,9 +11,9 @@ set_target_properties(FractalServer PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/server/build${arch})
 
 #Print out compile flags in verbose mode of CMake
-message(VERBOSE c base flags${CMAKE_C_FLAGS})
-message(VERBOSE c release flags${CMAKE_C_FLAGS_RELEASE})
-message(VERBOSE c debug flags${CMAKE_C_FLAGS_DEBUG})
+message(VERBOSE "c base flags${CMAKE_C_FLAGS}")
+message(VERBOSE "c release flags${CMAKE_C_FLAGS_RELEASE}")
+message(VERBOSE "c debug flags${CMAKE_C_FLAGS_DEBUG}")
 
 
 # FFMPEG, Threading and Dynamic linking libs
