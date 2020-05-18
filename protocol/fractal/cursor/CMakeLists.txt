@@ -9,5 +9,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
                 cursor.h
                 windowscursor.c
                 )
+        set_property(TARGET fractalCursor PROPERTY
+                MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     endif()
 endif()

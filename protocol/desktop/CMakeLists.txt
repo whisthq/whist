@@ -97,6 +97,9 @@ endif()
 ################## WINDOWS ##################
 ]]
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    message(STATUS c base flags${CMAKE_C_FLAGS})
+    message(STATUS c release flags${CMAKE_C_FLAGS_RELEASE})
+    message(STATUS c debug flags${CMAKE_C_FLAGS_DEBUG})
     #Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")

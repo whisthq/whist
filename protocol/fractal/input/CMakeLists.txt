@@ -11,5 +11,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
             input.h
             windowsinput.c
             windowsinput.h)
+        set_property(TARGET fractalInput PROPERTY
+                MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     endif ()
 endif()

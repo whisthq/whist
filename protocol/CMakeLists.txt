@@ -32,7 +32,6 @@ include(cmake/clang-format.cmake)
 # A small module which sets the default build type to debug if a .git is present and release otherwise.
 include(cmake/default-build.cmake)
 
-
 option(BUILD_SERVER "build FractalServer" ON)
 option(BUILD_CLIENT "build FractalClient" ON)
 
