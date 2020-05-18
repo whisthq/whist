@@ -202,8 +202,8 @@ int32_t SendVideo(void* opaque) {
                     pending_encoder = false;
                     update_encoder = false;
                 } else {
-                    // SDL_CreateThread(MultithreadedEncoderFactory,
-                    //                 "MultithreadedEncoderFactory", NULL);
+                    SDL_CreateThread(MultithreadedEncoderFactory,
+                                    "MultithreadedEncoderFactory", NULL);
                 }
             }
         }
@@ -402,6 +402,8 @@ int32_t SendVideo(void* opaque) {
 #endif
     DestroyCaptureDevice(device);
     device = NULL;
+    MultithreadedDestroyEncoder( encoder );
+    encoder = NULL;
 
     return 0;
 }
