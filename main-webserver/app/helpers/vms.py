@@ -1170,7 +1170,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
                 needs_restart = True
 
             boot_if_necessary(vm_name, needs_restart, ID)
-            lockVMAndUpdate(vm_name, 'RUNNING_AVAILABLE', False, temporary_lock = None, change_last_updated = True, verbose = False, ID = ID)
+            lockVMAndUpdate(vm_name, 'RUNNING_AVAILABLE', False, temporary_lock = 4, change_last_updated = True, verbose = False, ID = ID)
 
             if s:
                 s.update_state(state='PENDING', meta={"msg": "Logging you into your cloud PC."})
@@ -1185,6 +1185,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
 
             if i == 1:
                 changeFirstTime(disk_name)
+                lockVMAndUpdate(vm_name, 'RUNNING_AVAILABLE', False, temporary_lock = 4, change_last_updated = True, verbose = False, ID = ID)
 
         return 1
     except Exception as e:
