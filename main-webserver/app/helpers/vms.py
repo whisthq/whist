@@ -422,6 +422,8 @@ def fetchAttachableVMs(state, location):
         return vms
 
 def lockVMAndUpdate(vm_name, state, lock, temporary_lock, change_last_updated, verbose, ID):
+    MAX_LOCK_TIME = 10
+    
     session = Session()
 
     command = text("""
@@ -430,8 +432,9 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock, change_last_updated, v
         """)
 
     if temporary_lock:
+        temporary_lock = min(MAX_LOCK_TIME, temporary_lock)
         temporary_lock = shiftUnixByMinutes(dateToUnix(getToday()), temporary_lock)
-        
+
         command = text("""
             UPDATE v_ms SET state = :state, lock = :lock, temporary_lock = :temporary_lock
             WHERE vm_name = :vm_name
