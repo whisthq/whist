@@ -1,7 +1,6 @@
 from .imports import *
 
 # class MyLogger(logging.Logger):
-#     # Sets the minimum logging priority to actually log (DEBUG < INFO < WARNING < ERROR < CRITICAL)
 #     def __init__(self, name=__name__, level=logging.INFO):
 #         return super(MyLogger, self).__init__(name, level)
 
@@ -52,39 +51,36 @@ syslog.setFormatter(formatter)
 
 
 logger = logging.getLogger()
+# Sets the minimum logging priority to actually log (DEBUG < INFO < WARNING < ERROR < CRITICAL)
+logger.setLevel(logging.DEBUG)
 logger.addHandler(syslog)
 
 
 def sendDebug(ID, log, papertrail=True):
+    print("[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log))
     if papertrail:
-        logger.info(
-            "[{} WEBSERVER][{}] INFO: {}".format(os.getenv("SERVER_TYPE"), ID, log)
-        )
+        logger.debug("[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log))
 
 
 def sendInfo(ID, log, papertrail=True):
     if papertrail:
-        logger.info(
-            "[{} WEBSERVER][{}] INFO: {}".format(os.getenv("SERVER_TYPE"), ID, log)
-        )
+        logger.info("[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log))
 
 
 def sendWarning(ID, log, papertrail=True):
     if papertrail:
         logger.warning(
-            "[{} WEBSERVER][{}] WARNING: {}".format(os.getenv("SERVER_TYPE"), ID, log)
+            "[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log)
         )
 
 
 def sendError(ID, log, papertrail=True):
     if papertrail:
-        logger.error(
-            "[{} WEBSERVER][{}] ERROR: {}".format(os.getenv("SERVER_TYPE"), ID, log)
-        )
+        logger.error("[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log))
 
 
 def sendCritical(ID, log, papertrail=True):
     if papertrail:
         logger.critical(
-            "[{} WEBSERVER][{}] CRITICAL: {}".format(os.getenv("SERVER_TYPE"), ID, log)
+            "[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log)
         )
