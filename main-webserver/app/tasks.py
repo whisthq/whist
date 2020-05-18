@@ -470,7 +470,9 @@ def swapDiskSync(self, disk_name, ID = -1):
 
 					disk_attached = True
 					sendInfo(ID, ' VM {} successfully attached to disk {}'.format(vm_name, disk_name))
-					return {'status': 200}
+
+					vm_credentials = fetchVMCredentials(vm_name)
+					return vm_credentials
 				except Exception as e:
 					sendCritical(ID, str(e))
 
@@ -479,7 +481,8 @@ def swapDiskSync(self, disk_name, ID = -1):
 				sendInfo(ID, 'No VMs are available for {} using {}. Going to sleep...'.format(username, disk_name))
 				time.sleep(30)
 
-	return {'status': 200}
+	self.update_state(state='FAILURE', meta={"msg": "Cloud PC could not be started. Please contact support."})
+	return None
 
 
 @celery.task(bind=True)
