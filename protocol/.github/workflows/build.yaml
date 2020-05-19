@@ -74,7 +74,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - make: run ls
+      - name: run ls
         run: ls -laht
       - name: Download Ninja and CMake, install linux dependencies
         id: cmake_and_ninja
