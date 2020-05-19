@@ -5,7 +5,7 @@ const DEFAULT = {username: '', public_ip: '', warning: false, distance: 0, reset
                 os: '', askFeedback: false, window: 'main', ipInfo: {}, computers: [], fetchStatus: false, disk: '',
                 attachState: 'NOT_REQUESTED', access_token: '', refresh_token: '', attach_attempts: 0,
                 account_locked: false, promo_code: '', restart_status: 0, restart_attempts: 0, location: '',
-                status_message: 'Boot request sent to server', update_found: false}
+                status_message: 'Boot request sent to server', update_found: false, ready_to_connect: false}
 
 export default function counter(state = DEFAULT, action: Action<string>) {
   switch (action.type) {
@@ -20,7 +20,8 @@ export default function counter(state = DEFAULT, action: Action<string>) {
       return {
         ...state,
         public_ip: action.ip,
-        attach_attempts: state.attach_attempts + 1
+        attach_attempts: state.attach_attempts + 1,
+        ready_to_connect: true
       }
     case MainAction.STORE_IS_USER:
       return {
@@ -114,6 +115,11 @@ export default function counter(state = DEFAULT, action: Action<string>) {
       return {
         ...state,
         update_found: action.update
+      }
+    case MainAction.READY_TO_CONNECT:
+      return {
+        ...state,
+        ready_to_connect: action.update
       }
     default:
       return state;

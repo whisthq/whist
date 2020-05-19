@@ -207,3 +207,40 @@ button {
 .removeDrag {
   -webkit-app-region: no-drag;
 }
+
+.bigButton {
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+  position: relative;
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255,255,255,0.8)), url('../../resources/images/car.jpg');
+  width: 100%;
+  height: 275px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 5px;
+}
+
+.bigButton .centerContent {
+  text-align: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  color: #111111;
+  transform: translate(-50%, -50%);
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.bigButton .centerText {
+  margin-top: 10px;
+  color: #333333;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.bigButton .centerSubtext {
+  margin-top: 5px;
+  color: #333333;
+  font-size: 12px;
+  line-height: 1.4;
+}

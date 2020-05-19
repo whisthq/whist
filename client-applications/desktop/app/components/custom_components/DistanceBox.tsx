@@ -11,8 +11,6 @@ class DistanceBox extends Component {
   }
 
   CalculateDistance = (public_ip) => {
-    console.log("THE PUBLIC IP IS")
-    console.log(public_ip)
     let component = this;
     const iplocation = require("iplocation").default;
     var options = {
@@ -53,8 +51,6 @@ class DistanceBox extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    console.log("distance box update!")
-    console.log(this.props)
     if(this.props.public_ip != '' && this.state.distance == 0) {
       this.CalculateDistance(this.props.public_ip)
     }
