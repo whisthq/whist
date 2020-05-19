@@ -99,6 +99,13 @@ int32_t MultithreadedDestroyEncoder(void* opaque) {
 int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
+
+#if defined(_WIN32)
+    // set Windows DPI
+    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+#endif
+
+
     SocketContext socketContext = *(SocketContext*)opaque;
 
     // Init DXGI Device
@@ -202,8 +209,8 @@ int32_t SendVideo(void* opaque) {
                     pending_encoder = false;
                     update_encoder = false;
                 } else {
-                    // SDL_CreateThread(MultithreadedEncoderFactory,
-                    //                 "MultithreadedEncoderFactory", NULL);
+                    SDL_CreateThread(MultithreadedEncoderFactory,
+                                    "MultithreadedEncoderFactory", NULL);
                 }
             }
         }
@@ -381,7 +388,7 @@ int32_t SendVideo(void* opaque) {
                         id++;
                     }
 
-                    // LOG_INFO( "Send Frame Time: %f\n", GetTimer( t ) );
+                    LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n", GetTimer( t ), frame_size );
 
                     previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time = GetTimer(server_frame_timer);
@@ -402,6 +409,8 @@ int32_t SendVideo(void* opaque) {
 #endif
     DestroyCaptureDevice(device);
     device = NULL;
+    MultithreadedDestroyEncoder( encoder );
+    encoder = NULL;
 
     return 0;
 }
@@ -537,8 +546,8 @@ void update() {
 #include <time.h>
 
 int main() {
-    static_assert(sizeof(unsigned short) == 2,
-                  "Error: Unsigned short is not length 2 bytes!\n");
+//    static_assert(sizeof(unsigned short) == 2,
+//                  "Error: Unsigned short is not length 2 bytes!\n");
 
 #if defined(_WIN32)
     // set Windows DPI
