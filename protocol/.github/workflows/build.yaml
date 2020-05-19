@@ -51,7 +51,6 @@ jobs:
   build:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
-    run: echo "::add-matcher::cmake_matcher.json"
     strategy:
       fail-fast: false
       matrix:
@@ -84,7 +83,7 @@ jobs:
           set(ninja_version $ENV{NINJA_VERSION})
 
           message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
-
+          message(STATUS "::add-matcher::cmake_matcher.json")
           if ("${{ runner.os }}" STREQUAL "Windows")
             set(ninja_suffix "win.zip")
             set(cmake_suffix "win64-x64.zip")
