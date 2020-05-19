@@ -75,8 +75,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     SET(CMAKE_C_COMPILER clang)
     set(CMAKE_OSX_SYSROOT CACHE STRING "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Require MacOS 10.13 or up, to ensure LibObj-C is standard
-    MESSAGE(STATUS  "cmake sys root ${CMAKE_OSX_SYSROOT}")
-    target_link_libraries(FractalClient 
+
+    target_link_libraries(FractalClient
         "-framework OpenGL"
         "-framework VideoToolbox"
         "-framework CoreMedia"
