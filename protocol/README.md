@@ -38,13 +38,15 @@ TBD.
  
  ------------
  ## Building
+ If you are on ubuntu/linux run desktop/linux-client-setup.sh to install the dev versions of the dependencies. 
  ### Building in an IDE
  We use CMake to build. If you are using VS code, VS or Clion this is pretty easy to use, 
  you need to either open the root repo folder as a project, or open the root CMakeCache.txt
  as a project. On CLion and VS there is a menu to build at the top, on VS code you need the 
  CMake extension and the build command is at the bottom. The CMake currently has two types of builds
  Debug and Release. You probably want to be building debug builds while developing, since they log more
- aggressively (info and above) and add debug compile flags such as -g. The build target for desktop is "FractalClient"
+ aggressively (info and above). Currently, we use the same compiler flags for debug and release because we 
+  distribute binaries with debug flags. The build target for desktop is "FractalClient" and the sever is "Fractal Server".
  
  
  #### Linux CLI
@@ -57,10 +59,12 @@ TBD.
  Running just make defaults to building FractalClient and FractalServer if you set both of these to ON in your configuration.
  GCC only supports one type of build at a time, so if you are currently building release, but want to build debug, you need to edit the cache and regenerate the makefile.  
  
+ If you would like to keep your repo cleaner, make a build folder in protocol and run cmake from there. e.g cd "build && 
+ cmake ../." this way you can just delete the contents of the build folder to start over. 
+ 
  #### Windows CLI
- I have not yet built from the commandline on windows, but there is a gui utility which is basically the same as ccmake. 
- I imagine it is very similar to the Linux process once you have this gui open, but it will create nmake style make files.  
-
+To build on windows use the command 'cmake -G "NMake Makefiles" .' at the root directory. This tells CMake to generate 
+NMake style makefiles. Likewise, you can do this in a build subdirectory, replacing '.' with '../.'
 
 #### Further documentation
 More documentation is in our [gdrive](https://docs.google.com/document/d/1T9Lc3HVoqhqSjdUbiaFaQU71oV1VH25iFGDNvAYjtOs/edit?usp=sharing)
