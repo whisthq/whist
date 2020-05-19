@@ -119,7 +119,7 @@ jobs:
 
           if ("${{ runner.os }}" STREQUAL "Linux")
             # install linux dev dependencies
-              execute_process(${{ github.workspace }}/desktop/linux-client-setup.sh)
+              execute_process(COMMAND ${{ github.workspace }}/desktop/linux-client-setup.sh)
           endif()
 
 
