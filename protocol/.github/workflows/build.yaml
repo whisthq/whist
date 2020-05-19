@@ -51,6 +51,7 @@ jobs:
   build:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
+    echo "::add-matcher::cmake_matcher.json"
     strategy:
       fail-fast: false
       matrix:
@@ -60,16 +61,19 @@ jobs:
             os: windows-latest,
             cc: "cl", cxx: "cl",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+            echo "::add-matcher::mscv_matcher.json"
           }
           - {
             name: "Ubuntu Latest GCC", artifact: "Linux.tar.xz",
             os: ubuntu-latest,
             cc: "gcc", cxx: "g++"
+            echo "::add-matcher::gcc_matcher.josn"
           }
           - {
             name: "macOS Latest Clang", artifact: "macOS.tar.xz",
             os: macos-latest,
             cc: "clang", cxx: "clang++"
+            echo "::add-matcher::clang_matcher.json"
           }
 
     steps:
