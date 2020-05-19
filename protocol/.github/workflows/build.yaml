@@ -61,19 +61,16 @@ jobs:
             os: windows-latest,
             cc: "cl", cxx: "cl",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-            run: echo "::add-matcher::mscv_matcher.json"
           }
           - {
             name: "Ubuntu Latest GCC", artifact: "Linux.tar.xz",
             os: ubuntu-latest,
             cc: "gcc", cxx: "g++"
-            run: echo "::add-matcher::gcc_matcher.josn"
           }
           - {
             name: "macOS Latest Clang", artifact: "macOS.tar.xz",
             os: macos-latest,
             cc: "clang", cxx: "clang++"
-            run: echo "::add-matcher::clang_matcher.json"
           }
 
     steps:
@@ -92,14 +89,17 @@ jobs:
             set(ninja_suffix "win.zip")
             set(cmake_suffix "win64-x64.zip")
             set(cmake_dir "cmake-${cmake_version}-win64-x64/bin")
+            message(STATUS "::add-matcher::msvc_matcher.json")
           elseif ("${{ runner.os }}" STREQUAL "Linux")
             set(ninja_suffix "linux.zip")
             set(cmake_suffix "Linux-x86_64.tar.gz")
             set(cmake_dir "cmake-${cmake_version}-Linux-x86_64/bin")
+            message(STATUS "::add-matcher::gcc_matcher.json")
           elseif ("${{ runner.os }}" STREQUAL "macOS")
             set(ninja_suffix "mac.zip")
             set(cmake_suffix "Darwin-x86_64.tar.gz")
             set(cmake_dir "cmake-${cmake_version}-Darwin-x86_64/CMake.app/Contents/bin")
+            message(STATUS "::add-matcher::clang_matcher.json")
           endif()
 
           set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
