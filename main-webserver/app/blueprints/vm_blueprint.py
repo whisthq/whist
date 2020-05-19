@@ -79,6 +79,10 @@ def vm(action, **kwargs):
             return({'public_ip': None}), 404
     elif action == 'delete' and request.method == 'POST':
         body = request.get_json()
+
+        lockVMAndUpdate(vm_name = body['vm_name'], state = 'DELETING', lock = True, temporary_lock = None, 
+            change_last_updated = True, verbose = False, ID = kwargs['ID'])
+                
         vm_name, delete_disk = body['vm_name'], body['delete_disk']
         task = deleteVMResources.apply_async([vm_name, delete_disk])
         return jsonify({'ID': task.id}), 202

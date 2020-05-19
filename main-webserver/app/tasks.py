@@ -250,61 +250,47 @@ def fetchAll(self, update):
 
 @celery.task(bind=True)
 def deleteVMResources(self, vm_name, delete_disk):
-	locked = checkLock(vm_name)
 
-	while locked:
-		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
-		time.sleep(5)
-		locked = checkLock(vm_name)
-
-	lockVM(vm_name, True)
-
-	status = 200 if deleteResource(vm_name, delete_disk) else 404
-
-	lockVM(vm_name, False)
-	return {'status': status}
+	if spinLock(vm_name) > 0:
+		status = 200 if deleteResource(vm_name, delete_disk) else 404
+		lockVM(vm_name, False)
+		return {'status': status}
+	else:
+		return {'status': 404}
 
 
 @celery.task(bind=True)
 def restartVM(self, vm_name, ID=-1):
-	locked = checkLock(vm_name)
+	if spinLock(vm_name) > 0:
+		lockVM(vm_name, True)
 
-	while locked:
-		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
-		time.sleep(5)
-		locked = checkLock(vm_name)
+		_, compute_client, _ = createClients()
 
-	lockVM(vm_name, True)
+		fractalVMStart(vm_name, True)
 
-	_, compute_client, _ = createClients()
+		lockVM(vm_name, False)
+		sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
 
-	fractalVMStart(vm_name, True)
-
-	lockVM(vm_name, False)
-	sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
-
-	return {'status': 200}
+		return {'status': 200}
+	else:
+		return {'status': 404}
 
 
 @celery.task(bind=True)
 def startVM(self, vm_name, ID=-1):
-	locked = checkLock(vm_name)
+	if spinLock(vm_name) > 0:
+		lockVM(vm_name, True)
 
-	while locked:
-		print('NOTIFICATION: VM {} is locked. Waiting to be unlocked'.format(vm_name))
-		time.sleep(5)
-		locked = checkLock(vm_name)
+		_, compute_client, _ = createClients()
 
-	lockVM(vm_name, True)
+		fractalVMStart(vm_name)
+		lockVM(vm_name, False)
 
-	_, compute_client, _ = createClients()
+		sendInfo(ID, 'VM {} started successfully'.format(vm_name))
 
-	fractalVMStart(vm_name)
-	lockVM(vm_name, False)
-
-	sendInfo(ID, 'VM {} started successfully'.format(vm_name))
-
-	return {'status': 200}
+		return {'status': 200}
+	else:
+		return {'status': 400}
 
 
 @celery.task(bind=True)

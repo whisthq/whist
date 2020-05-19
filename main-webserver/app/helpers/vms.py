@@ -1333,7 +1333,7 @@ def spinLock(vm_name, s = None, ID=-1):
         locked = checkLock(vm_name, s = s)
         num_tries += 1
 
-        if num_tries > 50:
+        if num_tries > 40:
             sendCritical(
                 ID, 'FAILURE: VM {} is locked for too long. Giving up.'.format(vm_name))
             return -1
