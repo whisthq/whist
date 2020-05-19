@@ -76,6 +76,7 @@ jobs:
       - uses: actions/checkout@v1
       - name: run ls
         run: ls -laht ${{ github.workspace }}
+      - name: ls github
         run: ls -laht ${{ github.workspace }}/.github
       - name: Download Ninja and CMake, install linux dependencies
         id: cmake_and_ninja
