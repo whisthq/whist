@@ -1,0 +1,35 @@
+name: compile
+# This workflow is triggered on pushes to the repository.
+on: [push]
+
+#jobs:
+#  build:
+#    # Job name is Greeting
+#    name: Greeting
+#    # This job runs on Linux
+#
+#    steps:
+#      # This step uses GitHub's hello-world-javascript-action: https://github.com/actions/hello-world-javascript-action
+#      - name: Hello world
+#        uses: actions/hello-world-javascript-action@v1
+#        with:
+#          who-to-greet: 'Mona the Octocat'
+#        id: hello
+#      # This step prints an output (time) from the previous step's action.
+#      - name: Echo the greeting's time
+#        run: echo 'The time was ${{ steps.hello.outputs.time }}.'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: "checkout repo"
+      uses: actions/checkout@v2
+    - name: "Install build dependencies"
+      run: '${{ github.workspace }}/desktop/linux-client-setup.sh'
+    - name: 'Run CMake'
+      uses: lukka/run-cmake@v2
+      with:
+        cmakeListsOrSettingsJson: CMakeLists.txt
+        cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+        buildDirectory: '${{ github.workspace }}/b//unixmakefiles'
+        configurationRegexFilter: 'Debug*'
