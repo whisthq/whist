@@ -2,8 +2,6 @@ add_library(fractalVideo STATIC
         screencapture.h
         videodecode.c
         videodecode.h
-        videoencode.c
-        videoencode.h
         )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -11,6 +9,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(fractalVideo PRIVATE dxgicapture.c dxgicapture.h)
 endif ()
+
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    target_sources(fractalVideo PRIVATE videoencode.c videoencode.h)
+endif ()
+
+
+
 
 set_property(TARGET fractalVideo PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
