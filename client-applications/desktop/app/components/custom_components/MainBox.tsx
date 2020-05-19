@@ -124,11 +124,8 @@ class MainBox extends Component {
           const protocol = child(executable, parameters, {cwd: path, detached: true, stdio: 'ignore'});
 
           protocol.on('close', (code) => {
-            console.log('LOGOFF EVENT')
             this.TrackActivity(false);
-            console.log('SENDING LOGS')
             this.SendLogs()
-            console.log('CHANGING STATE')
             this.setState({launches: 0, launched: false, reattached: false, diskAttaching: false})
             this.props.dispatch(askFeedback(true))
           })
@@ -203,14 +200,11 @@ class MainBox extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    console.log(prevProps.restart_attempts)
-    console.log(this.props.restart_attempts)
     if(prevProps.attach_attempts != this.props.attach_attempts && this.state.diskAttaching) {
       this.setState({diskAttaching: false, reattached: true})
     }
 
     if(prevProps.restart_attempts != this.props.restart_attempts && this.state.vmRestarting) {
-      console.log("VM DONE RESTARTING!")
       this.setState({vmRestarting: false})
     }
   }
