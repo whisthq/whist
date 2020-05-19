@@ -156,12 +156,13 @@ def vm(action, **kwargs):
 
             vm_state = vm_info['state'] if vm_info['state'] else ''
             intermediate_states = [
-                'STOPPING', 'DEALLOCATING', 'ATTACHING', 'STARTING', 'RESTARTING']
+                'STOPPING', 'DEALLOCATING', 'ATTACHING']
+            temporary_lock = checkTemporaryLock(vm_name)
 
             if vm_state in intermediate_states:
                 sendWarning(kwargs['ID'], 'Trying to change connection status to {}, but VM {} is in intermediate state {}. Not changing state.'.format(
                     'RUNNING_AVAILABLE' if available else 'RUNNING_UNAVAILABLE', vm_name, vm_state))
-            if available and not vm_state in intermediate_states:
+            if available and not vm_state in intermediate_states and not temporary_lock:
                 lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_AVAILABLE', lock = False, temporary_lock = None, 
                     change_last_updated = False, verbose = False, ID = kwargs['ID'])
             elif not available and not vm_state in intermediate_states:

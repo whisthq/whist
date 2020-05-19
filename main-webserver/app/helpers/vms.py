@@ -635,6 +635,34 @@ def checkLock(vm_name, s = None, ID = -1):
         return vm['lock'] or temporary_lock
     return None
 
+def checkTemporaryLock(vm_name, ID = -1):
+    """Check to see if a vm has been locked
+
+    Args:
+        vm_name (str): Name of the vm to check
+
+    Returns:
+        bool: True if VM is locked, False otherwise
+    """
+    session = Session()
+
+    command = text("""
+        SELECT * FROM v_ms WHERE "vm_name" = :vm_name
+        """)
+    params = {'vm_name': vm_name}
+
+    vm = cleanFetchedSQL(session.execute(command, params).fetchone())
+    session.commit()
+    session.close()
+
+    if vm:
+        temporary_lock = False
+        if vm['temporary_lock']:
+            temporary_lock = dateToUnix(getToday()) < vm['temporary_lock']
+
+        return temporary_lock
+    return None
+
 
 def checkDev(vm_name):
     """Checks to see if a vm is in dev mode
@@ -1086,7 +1114,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
                     vm_name, power_state))
                 vmReadyToConnect(vm_name, False)
                 sendInfo(ID, 'Starting VM {}'.format(vm_name))
-                lockVMAndUpdate(vm_name, 'STARTING', True, temporary_lock = None, change_last_updated = True, verbose = False, ID = ID)
+                lockVMAndUpdate(vm_name, 'STARTING', True, temporary_lock = 12, change_last_updated = True, verbose = False, ID = ID)
 
                 async_vm_start = compute_client.virtual_machines.start(
                     os.environ.get('VM_GROUP'), vm_name)
@@ -1108,7 +1136,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
                     ID, 'VM {} needs to restart. Setting Winlogon to False'.format(vm_name))
                 vmReadyToConnect(vm_name, False)
 
-                lockVMAndUpdate(vm_name, 'RESTARTING', True, temporary_lock = None, change_last_updated = True, verbose = False, ID = ID)
+                lockVMAndUpdate(vm_name, 'RESTARTING', True, temporary_lock = 12, change_last_updated = True, verbose = False, ID = ID)
 
                 async_vm_restart = compute_client.virtual_machines.restart(
                     os.environ.get('VM_GROUP'), vm_name)
