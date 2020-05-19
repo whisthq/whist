@@ -63,8 +63,8 @@ TBD.
  cmake ../." this way you can just delete the contents of the build folder to start over. 
  
  #### Windows CLI
-To build on windows use the command 'cmake -G "NMake Makefiles" .' at the root directory. This tells CMake to generate 
-NMake style makefiles. Likewise, you can do this in a build subdirectory, replacing '.' with '../.'
+To build on windows use the command `cmake -G "NMake Makefiles"` at the root directory. This tells CMake to generate 
+NMake style makefiles. Then, run `nmake` in either `server` or `desktop`, depending on which one you want to compile.
 
 #### CMake installation 
 ##### Linux
