@@ -220,7 +220,6 @@ jobs:
           execute_process(COMMAND ccache -p)
           execute_process(COMMAND ccache -z)
 
-#          hard coding the macosx SDK because it is in a different location on github VMs than locally
           execute_process(
             COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build
             -DCMAKE_OSX_SYSROOT=/Applications/Xcode_11.4.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
