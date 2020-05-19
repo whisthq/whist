@@ -20,6 +20,7 @@ on: [push]
 #        run: echo 'The time was ${{ steps.hello.outputs.time }}.'
 jobs:
   build:
+    name: "Compile on linux"
     runs-on: ubuntu-latest
     steps:
     - name: "checkout repo"
