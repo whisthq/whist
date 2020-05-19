@@ -34,7 +34,6 @@ if ( NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif ()
 
 
-message(FATAL_ERROR ${CMAKE_DL_LIBS})
 
 #[[
 ################## Linking platform independent libs ##################
@@ -63,6 +62,21 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             Xext
             Xtst)
     include_directories(${X11_INCLUDE_DIR})
+    if(NOT X11_LIBRARIES)
+        message(FATAL_ERROR "Library X11_LIBRARIES was not found!")
+    endif()
+    if(NOT X11_Xfixes_LIB)
+        message(FATAL_ERROR "Library X11_Xfixes_LIB was not found!")
+    endif()
+    if(NOT X11_Xdamage_LIB)
+        message(FATAL_ERROR "Library X11_Xdamage_LIB was not found!")
+    endif()
+    if(NOT X11_Xext_LIB)
+        message(FATAL_ERROR "Library X11_Xext_LIB was not found!")
+    endif()
+    if(NOT X11_Xtst_LIB)
+        message(FATAL_ERROR "Library X11_Xtst_LIB was not found!")
+    endif()
     target_link_libraries(FractalServer
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
@@ -71,32 +85,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ${X11_Xtst_LIB}
             asound
             m
-            )
-endif()
-
-
-#[[
-################## MACOS ##################
-]]
-# untested
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    SET(CMAKE_C_COMPILER clang)
-    set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk")
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
-    target_link_libraries(FractalServer
-            objc
-            iconv
-            OpenGL
-            VideoToolbox
-            CoreMedia
-            CoreAudio
-            AudioToolbox
-            IOKit
-            ForceFeedback
-            Carbon
-            AppKit
-            Metal
-            QuartzCore
             )
 endif()
 
