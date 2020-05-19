@@ -256,6 +256,7 @@ function* fetchComputers(action) {
 }
 
 function* attachDisk(action) {
+  console.log('ATTACHING DISK')
   const state = yield select();
   const { json, response } = yield call(
     apiPost,
@@ -276,6 +277,15 @@ function* attachDisk(action) {
   }
 }
 
+function formatDate(num) {
+  num = String(num)
+  var singleDigits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+  if(singleDigits.includes(num)) {
+    num = "0" + num 
+  }
+  return(num)
+}
+
 function* fetchVM(action) {
   const state = yield select();
   var { json, response } = yield call(
@@ -285,16 +295,18 @@ function* fetchVM(action) {
   );
 
   while (json.state !== 'SUCCESS' && json.state !== 'FAILURE') {
-    var { json, response } = yield call(
+    var { json } = yield call(
       apiGet,
       (config.url.PRIMARY_SERVER + '/status/').concat(action.id),
       state.counter.access_token
     );
     if (json && json.output && json.state === 'PENDING') {
       var now = new Date();
-      var message = String(now.getHours()) + ":" + String(now.getMinutes())+ ":" + String(now.getSeconds()) + ": " + json.output.msg
+      var message = "(" + formatDate(now.getHours()) + ":" + formatDate(now.getMinutes())+ ":" + formatDate(now.getSeconds()) + ") " + json.output.msg
       yield put(Action.changeStatusMessage(message));
     }
+    console.log(json)
+
     yield delay(5000);
   }
   if (json && json.state && json.state === 'SUCCESS') {
@@ -302,9 +314,12 @@ function* fetchVM(action) {
       yield put(Action.storeIP(json.output.ip));
     }
   } else {
-    if (json && json.state && json.state === 'FAILURE' && json.output && json.output.msg) {
-      yield put(Action.changeStatusMessage(json.output.msg));
-    }
+    console.log('WORKER LOST FAILURE')
+    console.log(json)
+    var now = new Date();
+    var message = "(" + formatDate(now.getHours()) + ":" + formatDate(now.getMinutes())+ ":" + formatDate(now.getSeconds()) + ") " + 'Unexpectedly lost connection with server. Trying again.'
+    yield put(Action.changeStatusMessage(message));
+    yield put(Action.attachDisk())
   }
 }
 
