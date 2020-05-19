@@ -1032,7 +1032,7 @@ def swapdisk_name(s, disk_name, vm_name, ID=-1):
         virtual_machine.storage_profile.os_disk.name = new_os_disk.name
 
         s.update_state(state='PENDING', meta={
-            "msg": "Uploading necessary data to our servers. This could take a few minutes."})
+            "msg": "Uploading the necessary data to our servers. This could take a few minutes."})
 
         sendInfo(ID, 'Attaching disk {} to {}'.format(disk_name, vm_name))
         start = time.perf_counter()
@@ -1045,7 +1045,7 @@ def swapdisk_name(s, disk_name, vm_name, ID=-1):
             disk_name, vm_name, str(end-start)))
 
         s.update_state(state='PENDING', meta={
-            "msg": "Data successfully uploaded to server. Starting server."})
+            "msg": "Data successfully uploaded to server. Forwarding boot request to cloud PC."})
 
         return fractalVMStart(vm_name, True, s = s)
     except Exception as e:
@@ -1165,7 +1165,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
         for i in range(0, num_boots):
             if i == 1 and s:
                 s.update_state(state='PENDING', meta={"msg": "Since this is your first time logging on, we're running a few extra tests to ensure stability. Please allow a few extra minutes."})
-                time.sleep(150)
+                time.sleep(60)
 
             lockVMAndUpdate(vm_name, 'ATTACHING', True, temporary_lock = None, change_last_updated = True, verbose = False, ID = ID)
 
@@ -1190,7 +1190,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s = None):
                 changeFirstTime(disk_name)
                 if s:
                     s.update_state(state='PENDING', meta={"msg": "Running final performance checks. This will take two minutes."})
-                time.sleep(120)
+                time.sleep(60)
                 lockVMAndUpdate(vm_name, 'RUNNING_AVAILABLE', False, temporary_lock = 3, change_last_updated = True, verbose = False, ID = ID)
 
         return 1
