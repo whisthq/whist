@@ -74,9 +74,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if(NOT X11_Xext_LIB)
         message(FATAL_ERROR "Library X11_Xext_LIB was not found!")
     endif()
-    if(NOT X11_Xtst_LIB)
-        message(FATAL_ERROR "Library X11_Xtst_LIB was not found!")
-    endif()
+
     target_link_libraries(FractalServer
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}

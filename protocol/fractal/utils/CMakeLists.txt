@@ -17,3 +17,5 @@ endif ()
 
 set_property(TARGET fractalUtils PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+target_link_libraries(fractalUtils ${STATIC_SDL2} ${CMAKE_DL_LIBS})

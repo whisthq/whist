@@ -4,14 +4,17 @@ This is the root CmakeLists.txt for the protocol repo
 We define various project level settings here as well as include the subdirectories of the repo.
 We also look for the ffmpeg libraries here.
 To support WSL running with ubuntu 18.04, which only has cmake v1.10 in its repositories we use v1.10,
-if you want to compile on windows with MSVC set it to 1.15
+if you want to compile on windows with MSVC set it to 1.15 and uncomment the line setting the policy CMP0091
+Additional VERBOSE message output is a feature of cmake v3.15 and later, if you use an earlier version the verbose messages
+will be printed regardless of whether verbose output is set to ON or OFF.
 ]]
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15)
 #3.15 required for CMP0091
 #We need CMP0091 to select the MSVC_RUNTIME_LIBRARY
 #See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
 cmake_policy(SET CMP0091 NEW)
+
 #set default compiler flags
 set (CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
 
@@ -137,14 +140,15 @@ endif()
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
+include_directories(include/ffmpeg)
 
 #Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
-if (${BUILD_CLIENT})
+if (${BUILD_CLIENT} MATCHES "ON")
     message(STATUS building client)
     add_subdirectory(desktop)
 endif()
-if (${BUILD_SERVER} AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") #Server does not ever build on macos
+if (${BUILD_SERVER} MATCHES "ON" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") #Server does not ever build on macos
     message(STATUS building server)
     add_subdirectory(server)
 endif()
