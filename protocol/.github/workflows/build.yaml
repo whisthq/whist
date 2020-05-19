@@ -83,7 +83,7 @@ jobs:
           set(ninja_version $ENV{NINJA_VERSION})
 
           message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
-          message(STATUS "\n ::add-matcher::cmake_matcher.json \n")
+
           if ("${{ runner.os }}" STREQUAL "Windows")
             set(ninja_suffix "win.zip")
             set(cmake_suffix "win64-x64.zip")
@@ -114,10 +114,13 @@ jobs:
           message("::set-output name=cmake_dir::${cmake_dir}")
 
           if (NOT "${{ runner.os }}" STREQUAL "Windows")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/cmake_matcher.json \n")
             execute_process(
               COMMAND chmod +x ninja
               COMMAND chmod +x ${cmake_dir}/cmake
             )
+          else()
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\cmake_matcher.json \n")
           endif()
 
           if ("${{ runner.os }}" STREQUAL "Linux")
