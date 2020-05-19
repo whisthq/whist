@@ -6,7 +6,7 @@ git fetch --depth 25 origin dev:dev
 git checkout dev
 git checkout %1
 cd desktop
-make
+cmake .
 cd ..
 cd ..
 rm -rf protocol
@@ -35,14 +35,14 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
   rm tmpicns.rsrc # clean up
   # copy over the Unison executable and FFmpeg dylibs
   cp .protocol/desktop/build64/mac_unison protocol/desktop
-  cp .protocol/lib/64/ffmpeg/macos/libavcodec.58.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/macos/libavdevice.58.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/macos/libavfilter.7.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/macos/libavformat.58.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/macos/libavutil.56.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/macos/libpostproc.55.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/macos/libswresample.3.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/macos/libswscale.5.dylib protocol/desktop
+  cp .protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol/desktop
+  cp .protocol/lib/64/ffmpeg/Darwin/libavdevice.58.dylib protocol/desktop
+  cp .protocol/lib/64/ffmpeg/Darwin/libavfilter.7.dylib protocol/desktop
+  cp .protocol/lib/64/ffmpeg/Darwin/libavformat.58.dylib protocol/desktop
+  cp .protocol/lib/64/ffmpeg/Darwin/libavutil.56.dylib protocol/desktop
+  cp .protocol/lib/64/ffmpeg/Darwin/libpostproc.55.dylib protocol/desktop
+  cp .protocol/lib/64/ffmpeg/Darwin/libswresample.3.dylib protocol/desktop
+  cp .protocol/lib/64/ffmpeg/Darwin/libswscale.5.dylib protocol/desktop
   # codesign the FractalClient executable
   codesign -s "Fractal Computers, Inc." protocol/desktop/FractalClient
 fi
