@@ -26,7 +26,7 @@ jobs:
     - name: "checkout repo"
       uses: actions/checkout@v2
     - name: "Install build dependencies"
-      run: 'sudo ${{ github.workspace }}/desktop/linux-client-setup.sh'
+      run: sudo ${{ github.workspace }}/desktop/linux-client-setup.sh
     - name: 'Run CMake'
       uses: lukka/run-cmake@v2
       with:
