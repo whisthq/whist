@@ -48,13 +48,12 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
 endif()
 
 # static analysis during build defaults to off, but we set to on in github actions
-# you can also use this locally if you like.
+# you can also use this locally if you like, but will need to install cppcheck.
 OPTION(USE_CPPCHECK OFF)
 find_program(CPPCHECK cppcheck)
 if (CPPCHECK)
     message(STATUS found cppcheck )
 endif()
-
 
 if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
     message(STATUS CPPCHECKON)
@@ -63,8 +62,6 @@ if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
             "--enable=performance,portability"
             "--verbose"
             "--std=c99"
-#            "--suppress=unusedFunction"
-#            "--suppress=missingInclude"
             "--suppress=shiftTooManyBitsSigned"
             )
 endif()
