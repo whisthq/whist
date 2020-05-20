@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: Download Ninja and CMake, install linux dependencies
+       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
         shell: cmake -P {0}
         run: |
@@ -86,6 +86,7 @@ jobs:
           if ("${{ runner.os }}" STREQUAL "Linux")
             # install linux dev dependencies
               execute_process(COMMAND ${{ github.workspace }}/desktop/linux-client-setup.sh)
+              execute_process(COMMAND "sudo apt-get install cppcheck -y")
           endif()
 
 
@@ -137,6 +138,10 @@ jobs:
           endif()
           set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
 
+
+          if ("${{ runner.os }}" STREQUAL "Linux")
+            set(CPPCHECK_ARGS "/usr/bin/cppcheck --enable=warning")
+          endif()
           execute_process(
             COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
               -S .
@@ -147,6 +152,7 @@ jobs:
               -D CMAKE_C_COMPILER_LAUNCHER=ccache
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
               -D CMAKE_OSX_SYSROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
+              -D CMAAKE_C_CPPCHECK="/usr/bin/cppcheck --template=gcc --enable=unusedFunction,missingInclude --inline-suppr -j 2 --std=C99"
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
