@@ -2,56 +2,56 @@
  * @NOTE: Prepend a `~` to css file paths that are in your node_modules
  *        See https://github.com/webpack-contrib/sass-loader#imports
  */
-@import '~@fortawesome/fontawesome-free/css/all.css';
+@import "~@fortawesome/fontawesome-free/css/all.css";
 
 @font-face {
-    font-family: 'Maven Pro';
-    src: url('fonts/MavenPro-Regular.ttf');
+    font-family: "Maven Pro";
+    src: url("fonts/MavenPro-Regular.ttf");
     font-weight: normal;
     font-style: normal;
 }
 
 @font-face {
-    font-family: 'Maven Pro Bold';
-    src: url('fonts/MavenPro-Medium.ttf');
+    font-family: "Maven Pro Bold";
+    src: url("fonts/MavenPro-Medium.ttf");
     font-weight: bold;
     font-style: normal;
 }
 
 body {
-  position: relative;
-  color: white;
-  padding: 0px;
-  margin: 0px;
-  background-color: #0B172B;
-  font-family: 'Maven Pro';
-  overflow-y: hidden;
+    position: relative;
+    color: white;
+    padding: 0px;
+    margin: 0px;
+    background-color: #0b172b;
+    font-family: "Maven Pro";
+    overflow-y: hidden;
 }
 
 h2 {
-  margin: 0;
-  font-size: 2.25rem;
-  font-weight: bold;
-  letter-spacing: -0.025em;
-  color: #fff;
+    margin: 0;
+    font-size: 2.25rem;
+    font-weight: bold;
+    letter-spacing: -0.025em;
+    color: #fff;
 }
 
 p {
-  font-size: 24px;
+    font-size: 24px;
 }
 
 li {
-  list-style: none;
+    list-style: none;
 }
 
 a {
-  color: white;
-  opacity: 0.75;
-  text-decoration: none;
+    color: white;
+    opacity: 0.75;
+    text-decoration: none;
 }
 
 a:hover {
-  opacity: 1;
-  text-decoration: none;
-  cursor: pointer;
+    opacity: 1;
+    text-decoration: none;
+    cursor: pointer;
 }
