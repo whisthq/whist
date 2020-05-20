@@ -49,7 +49,7 @@ endif()
 
 # static analysis during build defaults to off, but we set to on in github actions
 # you can also use this locally if you like.
-set(USE_CPPCHECK OFF)
+OPTION(USE_CPPCHECK OFF)
 find_program(CPPCHECK cppcheck)
 if (CPPCHECK)
     message(STATUS found cppcheck )

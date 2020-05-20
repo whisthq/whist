@@ -148,7 +148,7 @@ jobs:
               -D CMAKE_C_COMPILER_LAUNCHER=ccache
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
               -D CMAKE_OSX_SYSROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
-              -D USE_CPPCHECK="ON"
+              -DUSE_CPPCHECK=ON
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
