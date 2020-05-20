@@ -52,7 +52,7 @@ syslog.setFormatter(formatter)
 
 logger = logging.getLogger()
 # Sets the minimum logging priority to actually log (DEBUG < INFO < WARNING < ERROR < CRITICAL)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 logger.addHandler(syslog)
 
 
