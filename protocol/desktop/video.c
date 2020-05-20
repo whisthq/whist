@@ -156,7 +156,7 @@ void updateSwsContext()
     LOG_INFO( "Updating SWS Context" );
     video_decoder_t* decoder = videoContext.decoder;
 
-    sws_input_fmt = decoder->context->pix_fmt;
+    sws_input_fmt = decoder->sw_frame->format;
 
     mprintf( "Decoder Format: %s\n", av_get_pix_fmt_name( sws_input_fmt ) );
 
@@ -178,9 +178,9 @@ void updateSwsContext()
 
 void updatePixelFormat()
 {
-    if( sws_input_fmt != videoContext.decoder->context->pix_fmt )
+    if( sws_input_fmt != videoContext.decoder->sw_frame->format )
     {
-        sws_input_fmt = videoContext.decoder->context->pix_fmt;
+        sws_input_fmt = videoContext.decoder->sw_frame->format;
 
         updateSwsContext();
     }

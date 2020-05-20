@@ -41,6 +41,19 @@ enum AVPixelFormat match_format(AVCodecContext* ctx,
                                 enum AVPixelFormat match_pix_fmt) {
   ctx;
 
+  char supported_formats[2000] = "";
+  int len = 2000;
+  int i = 0;
+
+  i += snprintf( supported_formats, len, "Supported formats:" );
+
+  for( const enum AVPixelFormat* p = pix_fmts; *p != -1; p++ )
+  {
+      i += snprintf( supported_formats + i, len - i, " %s", av_get_pix_fmt_name(*p) );
+  }
+
+  LOG_INFO( "%s", supported_formats );
+
   for (const enum AVPixelFormat* p = pix_fmts; *p != -1; p++) {
     if (*p == match_pix_fmt) {
       LOG_WARNING("Hardware format found: %s\n", av_get_pix_fmt_name(*p));
@@ -224,7 +237,7 @@ video_decoder_t* create_video_decoder(int width, int height,
 
   if (use_hardware) {
 #if defined(_WIN32)
-    int decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,
+    int decoder_precedence[] = { DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,
                                 DECODE_TYPE_SOFTWARE};
 #elif __APPLE__
     int decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
@@ -279,8 +292,8 @@ void destroy_video_decoder(video_decoder_t* decoder) {
 
   // free the decoder context and frame
   av_free(decoder->context);
-  av_free(decoder->sw_frame);
-  av_free(decoder->hw_frame);
+  av_frame_free(&decoder->sw_frame);
+  av_frame_free(&decoder->hw_frame);
 
   // free the buffer and decoder
   free(decoder);
@@ -312,7 +325,7 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
   }
 
   // If frame was computed on the CPU
-  if (decoder->context->hwaccel) {
+  if (decoder->context->hw_frames_ctx) {
       // If frame was computed on the GPU
       if( avcodec_receive_frame( decoder->context, decoder->hw_frame ) < 0 )
       {
