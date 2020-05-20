@@ -51,6 +51,11 @@ endif()
 # you can also use this locally if you like.
 set(USE_CPPCHECK OFF)
 find_program(CPPCHECK cppcheck)
+if (CPPCHECK)
+    message(STATUS found cppcheck )
+endif()
+
+
 if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
     message(STATUS CPPCHECKON)
     set(CMAKE_C_CPPCHECK "${CPPCHECK}"
