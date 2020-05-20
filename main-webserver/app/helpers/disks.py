@@ -417,7 +417,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
             ORIGINAL_DISK = "Fractal_Disk_Northcentralus"
 
         if operating_system == "Linux":
-            if not location == "eastus":
+            if not location == "northcentralus":
                 return {
                     "status": 402,
                     "disk_name": None,
