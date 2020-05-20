@@ -383,33 +383,6 @@ def syncDisks(self, ID=-1):
 	return {"status": 200}
 
 
-@celery.task(bind=True)
-def syncDisks(self):
-	_, compute_client, _ = createClients()
-	disks = compute_client.disks.list(
-		resource_group_name=os.environ.get('VM_GROUP'))
-	disk_names = []
-
-	for disk in disks:
-		disk_name = disk.name
-		disk_names.append(disk_name)
-		disk_state = disk.disk_state
-		vm_name = disk.managed_by
-		if vm_name:
-			vm_name = vm_name.split('/')[-1]
-		else:
-			vm_name = ''
-		location = disk.location
-
-		updateDisk(disk_name, vm_name, location)
-
-	stored_disks = fetchUserDisks(None)
-	for stored_disk in stored_disks:
-		if not stored_disk['disk_name'] in disk_names:
-			deleteDiskFromTable(stored_disk['disk_name'])
-
-	return {'status': 200}
-
 @celery.task(bind = True)
 def swapDiskSync(self, disk_name, ID=-1):
 	def swapDiskAndUpdate(s, disk_name, vm_name):
