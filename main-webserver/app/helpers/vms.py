@@ -325,14 +325,14 @@ def updateVMIP(vm_name, ip):
         conn.close()
 
 
-def updateVMState(vm_name, state):
+def updateVMState(vm_name, state, ID = -1):
     """Updates the state for a vm
 
     Args:
         vm_name (str): The name of the vm to update
         state (str): The new state of the vm
     """
-    sendInfo(ID, "Updating state for VM {} to {} in SQL".format(vm_name, state))
+    sendInfo(ID, "Updating state for VM {} to {} in SQL".format(vm_name, state, ID))
     command = text(
         """
         UPDATE v_ms
