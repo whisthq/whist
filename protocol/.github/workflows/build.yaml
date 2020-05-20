@@ -34,6 +34,11 @@ jobs:
           }
 
     steps:
+      - name: Chocolatey install cppcheck if windows
+        if: runner.os == 'Windows'
+        uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: install cppcheck --force
       - uses: actions/checkout@v1
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
@@ -41,7 +46,6 @@ jobs:
         run: |
           set(cmake_version $ENV{CMAKE_VERSION})
           set(ninja_version $ENV{NINJA_VERSION})
-
           message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
 
           if ("${{ runner.os }}" STREQUAL "Windows")
@@ -74,15 +78,15 @@ jobs:
           message("::set-output name=cmake_dir::${cmake_dir}")
 
           if (NOT "${{ runner.os }}" STREQUAL "Windows")
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/cppcheck_matcher.json\n")
+
             execute_process(
               COMMAND chmod +x ninja
               COMMAND chmod +x ${cmake_dir}/cmake
             )
-          else()
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\cmake_matcher.json\n")
           endif()
 
+          message(STATUS "\n::add-matcher::./.github/cppcheck_matcher.json\n")
+          message(STATUS "\n::add-matcher::./.github/cmake_matcher.json\n")
 
           if ("${{ runner.os }}" STREQUAL "Linux")
             # install linux dev dependencies

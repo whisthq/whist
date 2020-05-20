@@ -39,9 +39,9 @@ TBD.
  ------------
  ## GitHub Actions
  
- We have GitHub Actions enabled on this repository, in conjunction with CMake. Therefore, every time there is a push or a PR, GitHub will automatically compile both FractalClient and FractalServer on Windows, MacOS and Linux Ubuntu, and will outline any warnings and/or errors on the "Actions" tab above. Make sure to verify there after your push or PR. The relevant workflow file for comiling is .github/workflow/build.yaml.
+ We have GitHub Actions enabled on this repository, in conjunction with CMake. Therefore, every time there is a push or a PR, GitHub will automatically compile both FractalClient and FractalServer on Windows, MacOS and Linux Ubuntu, and will outline any warnings and/or errors on the "Actions" tab above. Make sure to verify there after your push or PR. The relevant workflow file for compiling is .github/workflow/build.yaml.
  This workflow also runs cppcheck on linux and Mac (windows is a possible todo), which is a static analysis tool which can catch errors which compilers cannot. e.g accessing uninitialized memory and other undefined behaviour. Not everything it catches is critical, but it does indicate the possibility of unexpected behaviour. 
- 
+ To see the warnings in context go to the actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log. 
  
  Dev status: ![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=dev)
  
