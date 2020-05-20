@@ -23,9 +23,9 @@ void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
 }
 #endif
 
-void set_opt( video_decoder_t* decoder, char* option, char* value )
+static void set_opt( video_decoder_t* decoder, char* option, char* value )
 {
-    int ret = av_opt_set( decoder->context->priv_data, option, value, 0 );
+    int ret = av_opt_set( decoder->context, option, value, 0 );
     if( ret < 0 )
     {
         LOG_WARNING( "Could not av_opt_set %s to %s!", option, value );
@@ -114,10 +114,8 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
   avcodec_register_all();
 #endif
 
-  AVDictionary* codec_options;
-  av_dict_set( &codec_options, "preset", "veryfast", 0 );
-
   if (decoder->type == DECODE_TYPE_SOFTWARE) {
+    // BEGIN SOFTWARE DECODER
     LOG_INFO("Trying software decoder");
     decoder->codec = avcodec_find_decoder_by_name("h264");
     if (!decoder->codec) {
@@ -132,13 +130,16 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
     decoder->sw_frame->height = height;
     decoder->sw_frame->pts = 0;
 
-    if (avcodec_open2(decoder->context, decoder->codec, &codec_options ) < 0) {
+    if (avcodec_open2(decoder->context, decoder->codec, NULL ) < 0) {
       LOG_WARNING("Failed to open codec for stream");
       return -1;
     }
 
     set_decoder_opts( decoder );
+    // END QSV DECODER
+
   } else if (decoder->type == DECODE_TYPE_QSV) {
+    // BEGIN QSV DECODER
     LOG_INFO("Trying QSV decoder");
     decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
     decoder->context = avcodec_alloc_context3(decoder->codec);
@@ -149,26 +150,7 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
       return -1;
     }
 
-    av_buffer_unref(&decoder->context->hw_frames_ctx);
-    decoder->context->hw_frames_ctx =
-        av_hwframe_ctx_alloc(decoder->context->hw_device_ctx);
-
-    AVHWFramesContext* frames_ctx;
-    AVQSVFramesContext* frames_hwctx;
-
-    frames_ctx = (AVHWFramesContext*)decoder->context->hw_frames_ctx->data;
-    frames_hwctx = frames_ctx->hwctx;
-
-    frames_ctx->format = AV_PIX_FMT_QSV;
-    frames_ctx->sw_format = AV_PIX_FMT_NV12;
-    frames_ctx->width = width;
-    frames_ctx->height = height;
-    frames_ctx->initial_pool_size = 32;
-    frames_hwctx->frame_type = MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
-
-    av_hwframe_ctx_init(decoder->context->hw_frames_ctx);
-
-    if (avcodec_open2(decoder->context, decoder->codec, &codec_options ) < 0) {
+    if (avcodec_open2(decoder->context, decoder->codec, NULL ) < 0) {
       LOG_WARNING("Failed to open context for stream");
       return -1;
     }
@@ -177,12 +159,10 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
 
     decoder->sw_frame = av_frame_alloc();
     decoder->hw_frame = av_frame_alloc();
-    if (av_hwframe_get_buffer(decoder->context->hw_frames_ctx,
-                              decoder->hw_frame, 0) < 0) {
-      LOG_WARNING("Failed to init buffer for hw frames");
-      return -1;
-    }
+    // END QSV DECODER
+
   } else if (decoder->type == DECODE_TYPE_HARDWARE) {
+    // BEGIN HARDWARE DECODER
     LOG_INFO("Trying hardware decoder");
     // set the appropriate video decoder format based on PS
 #if defined(_WIN32)
@@ -195,8 +175,6 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
 #define match_hardware match_vaapi;
     char* device_type = "vaapi";
 #endif
-
-    int ret = 0;
 
     // get the appropriate hardware device
     decoder->device_type = av_hwdevice_find_type_by_name(device_type);
@@ -225,7 +203,7 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
       return -1;
     }
 
-    if (avcodec_open2(decoder->context, decoder->codec, &codec_options ) < 0) {
+    if (avcodec_open2(decoder->context, decoder->codec, NULL ) < 0) {
       LOG_WARNING("Failed to open codec for stream");
       return -1;
     }
@@ -240,6 +218,8 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
       av_frame_free(&decoder->sw_frame);
       return -1;
     }
+
+    // END HARDWARE DECODER
   } else {
     LOG_ERROR("Unsupported hardware type!");
     return -1;
