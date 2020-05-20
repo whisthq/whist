@@ -699,7 +699,7 @@ void updateVideo() {
 
         if( VideoData.max_id >
             VideoData.last_rendered_id +
-            10 )
+            5 )
         {
             if( requestIframe() )
             {
