@@ -89,7 +89,8 @@ jobs:
               execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
           endif()
 
-
+      - name: which cppmake
+        run: which cppcheck
       - name: Download ccache
         id: ccache
         shell: cmake -P {0}
