@@ -37,8 +37,8 @@ jobs:
       name: Chocolatey install cppcheck if windows
       if: runner.os == "Windows"
       uses: crazy-max/ghaction-chocolatey@v1
-        with:
-          args: install cppcheck --force
+      with:
+        args: install cppcheck --force
       - uses: actions/checkout@v1
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
