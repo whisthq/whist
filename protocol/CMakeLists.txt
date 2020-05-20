@@ -50,7 +50,7 @@ endif()
 # static analysis during build defaults to off, but we set to on in github actions
 # you can also use this locally if you like, but will need to install cppcheck.
 OPTION(USE_CPPCHECK OFF)
-find_program(CPPCHECK cppcheck)
+find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
 if (CPPCHECK)
     message(STATUS "found cppcheck")
 else()
