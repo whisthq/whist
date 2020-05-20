@@ -6,9 +6,7 @@ git fetch --depth 25 origin dev:dev
 git checkout dev
 git checkout %1
 cmake -G "NMake Makefiles"
-cd desktop
-nmake
-cd ..
+nmake FracalClient
 cd ..
 rmdir /S/Q protocol
 mkdir protocol

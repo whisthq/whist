@@ -4,10 +4,8 @@ cd .protocol
 git reset --hard
 git fetch --depth 25 origin dev:dev
 git checkout dev
-git checkout %1
-cd desktop
 cmake .
-cd ..
+make FractalClient
 cd ..
 rm -rf protocol
 mkdir protocol
