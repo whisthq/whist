@@ -103,7 +103,7 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
 
 
 @celery.task(bind=True)
-def createDiskFromImage(self, username, location, vm_size, operating_system):
+def createDiskFromImage(self, username, location, vm_size, operating_system, ID = -1):
 	hr = 400
 	payload = None
 
