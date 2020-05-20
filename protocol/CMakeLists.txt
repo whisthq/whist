@@ -59,7 +59,7 @@ endif()
 if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
     message(STATUS CPPCHECKON)
     set(CMAKE_C_CPPCHECK "${CPPCHECK}"
-            "--template={file}({line}):({severity}) {message}"
+            "--template=cppcheck:{file}:{line}:{severity}: {message}"
             "--enable=performance,portability"
             "--verbose"
             "--std=c99"
