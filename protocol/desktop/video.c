@@ -272,6 +272,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
         clock decode_timer;
         StartTimer( &decode_timer );
+
         if (!video_decoder_decode(videoContext.decoder, frame->compressed_frame,
                                   frame->size)) {
             LOG_WARNING("Failed to video_decoder_decode!");
@@ -279,11 +280,13 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             continue;
         }
         updatePixelFormat();
-        LOG_INFO( "Decode Time: %f\n", GetTimer( decode_timer ) );
+
+        //LOG_INFO( "Decode Time: %f\n", GetTimer( decode_timer ) );
 
         if (!skip_render && !resizing) {
             clock sws_timer;
             StartTimer( &sws_timer );
+
             if (videoContext.sws) {
                 sws_scale(
                     videoContext.sws,
@@ -298,7 +301,9 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                        videoContext.decoder->sw_frame->linesize,
                        sizeof(videoContext.linesize));
             }
-            LOG_INFO( "SWS Time: %f\n", GetTimer( sws_timer ) );
+
+            //LOG_INFO( "SWS Time: %f\n", GetTimer( sws_timer ) );
+
             SDL_UpdateYUVTexture(videoContext.texture, NULL,
                                  videoContext.data[0], videoContext.linesize[0],
                                  videoContext.data[1], videoContext.linesize[1],
@@ -629,9 +634,11 @@ void updateVideo() {
                 rendering = true;
 
                 skip_render = false;
+
                 int after_render_id = next_render_id + 1;
                 int after_index = after_render_id % RECV_FRAMES_BUFFER_SIZE;
                 struct FrameData* after_ctx = &receiving_frames[after_index];
+
                 if (after_ctx->id == after_render_id &&
                     after_ctx->packets_received == after_ctx->num_packets) {
                     skip_render = true;
@@ -687,6 +694,16 @@ void updateVideo() {
                 if (requestIframe()) {
                     LOG_INFO("TOO FAR BEHIND! REQUEST FOR IFRAME!");
                 }
+            }
+        }
+
+        if( VideoData.max_id >
+            VideoData.last_rendered_id +
+            10 )
+        {
+            if( requestIframe() )
+            {
+                LOG_INFO( "WAYY TOO FAR BEHIND! REQUEST FOR IFRAME!" );
             }
         }
     }
