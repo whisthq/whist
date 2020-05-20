@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
+      - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
         shell: cmake -P {0}
         run: |
