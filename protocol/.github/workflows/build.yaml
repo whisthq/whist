@@ -41,6 +41,7 @@ jobs:
         run: |
           set(cmake_version $ENV{CMAKE_VERSION})
           set(ninja_version $ENV{NINJA_VERSION})
+          set(CPPCHECK_URL https://github.com/danmar/cppcheck/releases/download/2.0/cppcheck-2.0-x64-Setup.msi)
 
           message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
 
@@ -81,6 +82,8 @@ jobs:
             )
           else()
             message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\cmake_matcher.json\n")
+            file(DOWNLOAD ${CPPCHECK_URL} ./cppcheck.msi  )
+            execute_process(COMMAND cmd //C "msiexec /qn /i cppcheck.msi")
           endif()
 
 
