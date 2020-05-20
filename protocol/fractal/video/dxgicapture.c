@@ -153,13 +153,23 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
             LOG_INFO("Ratio match found with %dx%d!", pDescs[k].Width,
                      pDescs[k].Height);
             LOG_INFO( "FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator, pDescs[k].RefreshRate.Denominator );
+
             if (set_width == 0) {
+                LOG_INFO("Will try using this resolution");
                 set_width = pDescs[k].Width;
                 set_height = pDescs[k].Height;
             }
 
-            // We'd prefer a higher resolution if possible, but not more than 2x
-            if (set_width < pDescs[k].Width && pDescs[k].Width <= 2 * width) {
+            // We'd prefer a higher resolution if possible, if the current resolution still isn't high enough
+            if (set_width < pDescs[k].Width && set_width < width) {
+                LOG_INFO("This resolution is higher, let's use it");
+                set_width = pDescs[k].Width;
+                set_height = pDescs[k].Height;
+            }
+
+            // We'd prefer a lower resolution if possible, if the potential resolution is indeed high enough
+            if (pDescs[k].Width < set_width && width < pDescs[k].Width) {
+                LOG_INFO("This resolution is lower, let's use it");
                 set_width = pDescs[k].Width;
                 set_height = pDescs[k].Height;
             }
