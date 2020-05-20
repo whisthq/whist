@@ -15,62 +15,73 @@ def addTimeTable(username, action, time, is_user, ID=-1):
         is_user (bool): Whether an actual user did the action, vs admin
         ID (int, optional): Papertrail loggind ID. Defaults to -1.
     """
-    command = text("""
+    command = text(
+        """
         INSERT INTO login_history("username", "timestamp", "action", "is_user")
         VALUES(:userName, :currentTime, :action, :is_user)
-        """)
+        """
+    )
 
     aware = dt.now()
-    now = aware.strftime('%m-%d-%Y, %H:%M:%S')
+    now = aware.strftime("%m-%d-%Y, %H:%M:%S")
 
-    sendInfo(ID, 'Adding to time table a {} at time {}'.format(action, now))
+    sendInfo(ID, "Adding to time table a {} at time {}".format(action, now))
 
-    params = {'userName': username, 'currentTime': now,
-              'action': action, 'is_user': is_user}
+    params = {
+        "userName": username,
+        "currentTime": now,
+        "action": action,
+        "is_user": is_user,
+    }
 
     with engine.connect() as conn:
         conn.execute(command, **params)
 
         disk = fetchUserDisks(username)
         if disk:
-            disk_name = disk[0]['disk_name']
+            disk_name = disk[0]["disk_name"]
             vms = mapDiskToVM(disk_name)
             if vms:
-                vm_name = vms[0]['vm_name']
+                vm_name = vms[0]["vm_name"]
 
-                if action == 'logoff':
+                if action == "logoff":
                     lockVM(vm_name, False)
-                elif action == 'logon':
+                elif action == "logon":
                     lockVM(vm_name, True)
             else:
                 sendCritical(
-                    ID, 'Could not find a VM currently attached to disk {}'.format(disk_name))
+                    ID,
+                    "Could not find a VM currently attached to disk {}".format(
+                        disk_name
+                    ),
+                )
         else:
-            sendCritical(
-                ID, 'Could not find a disk belong to user {}'.format(username))
+            sendCritical(ID, "Could not find a disk belong to user {}".format(username))
 
         conn.close()
 
 
-def fetchLoginActivity():
+def fetchLoginActivity(ID=-1):
     """Fetches the entire login_history sql table
 
     Returns:
         array[dict]: The login history
     """
-    command = text("""
+    sendInfo(ID, "Fetching all login activity")
+    command = text(
+        """
         SELECT * FROM login_history
-        """)
+        """
+    )
     params = {}
     with engine.connect() as conn:
-        activities = cleanFetchedSQL(
-            conn.execute(command, **params).fetchall())
+        activities = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         activities.reverse()
         conn.close()
         return activities
 
 
-def getMostRecentActivity(username):
+def getMostRecentActivity(username, ID=-1):
     """Gets the last activity of a user
 
     Args:
@@ -79,16 +90,18 @@ def getMostRecentActivity(username):
     Returns:
         str: The latest activity of the user
     """
-    command = text("""
+    sendInfo(ID, "Fetching the latest login activity for user {}".format(username))
+    command = text(
+        """
         SELECT *
         FROM login_history
         WHERE "username" = :username
         ORDER BY timestamp DESC LIMIT 1
-        """)
+        """
+    )
 
-    params = {'username': username}
+    params = {"username": username}
 
     with engine.connect() as conn:
-        activity = cleanFetchedSQL(
-            conn.execute(command, **params).fetchone())
+        activity = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         return activity
