@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: Download Ninja and CMake, install linux dependencies
+      - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
         shell: cmake -P {0}
         run: |
@@ -74,7 +74,7 @@ jobs:
           message("::set-output name=cmake_dir::${cmake_dir}")
 
           if (NOT "${{ runner.os }}" STREQUAL "Windows")
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/cmake_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/cppcheck_matcher.json\n")
             execute_process(
               COMMAND chmod +x ninja
               COMMAND chmod +x ${cmake_dir}/cmake
@@ -83,9 +83,13 @@ jobs:
             message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\cmake_matcher.json\n")
           endif()
 
+
           if ("${{ runner.os }}" STREQUAL "Linux")
             # install linux dev dependencies
               execute_process(COMMAND ${{ github.workspace }}/desktop/linux-client-setup.sh)
+              execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
+          elseif("${{ runner.os }}" STREQUAL "macOS")
+              execute_process(COMMAND brew install cppcheck)
           endif()
 
 
@@ -137,6 +141,7 @@ jobs:
           endif()
           set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
 
+
           execute_process(
             COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
               -S .
@@ -147,6 +152,7 @@ jobs:
               -D CMAKE_C_COMPILER_LAUNCHER=ccache
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
               -D CMAKE_OSX_SYSROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
+              -DUSE_CPPCHECK=ON
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
