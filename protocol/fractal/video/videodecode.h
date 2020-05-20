@@ -10,6 +10,8 @@
 
 // define decoder struct to pass as a type
 typedef struct {
+  int width;
+  int height;
   AVCodec *codec;
   AVCodecContext *context;
   AVFrame *sw_frame;

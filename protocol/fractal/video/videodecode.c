@@ -219,6 +219,9 @@ video_decoder_t* create_video_decoder(int width, int height,
   video_decoder_t* decoder = (video_decoder_t*)malloc(sizeof(video_decoder_t));
   memset(decoder, 0, sizeof(video_decoder_t));
 
+  decoder->width = width;
+  decoder->height = height;
+
   if (use_hardware) {
 #if defined(_WIN32)
     int decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,

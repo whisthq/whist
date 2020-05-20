@@ -149,30 +149,61 @@ bool requestIframe() {
     }
 }
 
+static enum AVPixelFormat sws_input_fmt;
+
+void updateSwsContext()
+{
+    LOG_INFO( "Updating SWS Context" );
+    video_decoder_t* decoder = videoContext.decoder;
+
+    sws_input_fmt = decoder->context->pix_fmt;
+
+    mprintf( "Decoder Format: %s\n", av_get_pix_fmt_name( sws_input_fmt ) );
+
+    if( videoContext.sws )
+    {
+        sws_freeContext( videoContext.sws );
+    }
+
+    videoContext.sws = NULL;
+
+    if( sws_input_fmt != AV_PIX_FMT_YUV420P || decoder->width != output_width ||
+        decoder->height != output_height )
+    {
+        videoContext.sws = sws_getContext( decoder->width, decoder->height, sws_input_fmt, output_width,
+                                           output_height, AV_PIX_FMT_YUV420P,
+                                           SWS_BILINEAR, NULL, NULL, NULL );
+    }
+}
+
+void updatePixelFormat()
+{
+    if( sws_input_fmt != videoContext.decoder->context->pix_fmt )
+    {
+        sws_input_fmt = videoContext.decoder->context->pix_fmt;
+
+        updateSwsContext();
+    }
+}
+
 void updateWidthAndHeight(int width, int height) {
+    LOG_INFO( "Updating Width & Height to %dx%d", width, height );
+
+    if( videoContext.decoder )
+    {
+        destroy_video_decoder( videoContext.decoder );
+    }
+
     video_decoder_t* decoder =
         create_video_decoder(width, height, USE_HARDWARE);
+
     videoContext.decoder = decoder;
     if (!decoder) {
         LOG_WARNING("ERROR: Decoder could not be created!");
         exit(-1);
     }
 
-    enum AVPixelFormat input_fmt = AV_PIX_FMT_YUV420P;
-    if (decoder->type != DECODE_TYPE_SOFTWARE) {
-        input_fmt = AV_PIX_FMT_NV12;
-    }
-
-    struct SwsContext* sws_ctx = NULL;
-    if (input_fmt != AV_PIX_FMT_YUV420P || width != output_width ||
-        height != output_height) {
-        sws_ctx = sws_getContext(width, height, input_fmt, output_width,
-                                 output_height, AV_PIX_FMT_YUV420P,
-                                 SWS_BILINEAR, NULL, NULL, NULL);
-    }
-    struct SwsContext* old_sws_ctx = videoContext.sws;
-    videoContext.sws = sws_ctx;
-    sws_freeContext(old_sws_ctx);
+    sws_input_fmt = AV_PIX_FMT_NONE;
 
     server_width = width;
     server_height = height;
@@ -245,6 +276,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             rendering = false;
             continue;
         }
+        updatePixelFormat();
 
         if (!skip_render && !resizing) {
             if (videoContext.sws) {
