@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - name: Chocolatey install cppcheck if windows
-        if: runner.os == "Windows"
+        if: runner.os == 'Windows'
         uses: crazy-max/ghaction-chocolatey@v1
         with:
           args: install cppcheck --force
