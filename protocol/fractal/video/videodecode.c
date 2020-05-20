@@ -309,23 +309,27 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
   }
 
   // If frame was computed on the CPU
-  if (decoder->type == DECODE_TYPE_QSV ||
-      decoder->type == DECODE_TYPE_SOFTWARE) {
-    if (avcodec_receive_frame(decoder->context, decoder->sw_frame) < 0) {
-      LOG_WARNING("Failed to avcodec_receive_frame!");
-      return false;
-    }
-  } else if (decoder->type == DECODE_TYPE_HARDWARE) {
-    // If frame was computed on the GPU
-    if (avcodec_receive_frame(decoder->context, decoder->hw_frame) < 0) {
-      LOG_WARNING("Failed to avcodec_receive_frame!");
-      return false;
-    }
+  if (decoder->context->hwaccel) {
+      // If frame was computed on the GPU
+      if( avcodec_receive_frame( decoder->context, decoder->hw_frame ) < 0 )
+      {
+          LOG_WARNING( "Failed to avcodec_receive_frame!" );
+          return false;
+      }
 
-    av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
+      av_hwframe_transfer_data( decoder->sw_frame, decoder->hw_frame, 0 );
   } else {
-    LOG_WARNING("Incorrect hw frame format!");
-    return false;
+      if( decoder->type != DECODE_TYPE_SOFTWARE )
+      {
+          LOG_INFO( "Decoder cascaded from hardware to software" );
+          decoder->type = DECODE_TYPE_SOFTWARE;
+      }
+
+      if( avcodec_receive_frame( decoder->context, decoder->sw_frame ) < 0 )
+      {
+          LOG_WARNING( "Failed to avcodec_receive_frame!" );
+          return false;
+      }
   }
 
   av_packet_unref(&decoder->packet);
