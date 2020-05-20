@@ -37,8 +37,6 @@ void set_decoder_opts( video_decoder_t* decoder )
     decoder->context->flags |= AV_CODEC_FLAG_LOW_DELAY;
     decoder->context->flags2 |= AV_CODEC_FLAG2_FAST;
     set_opt( decoder, "async_depth", "1" );
-    set_opt( decoder, "preset", "ultrafast" );
-    set_opt( decoder, "tune", "zerolatency" );
 }
 
 int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
