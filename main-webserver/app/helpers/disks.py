@@ -16,16 +16,18 @@ def createDiskEntry(disk_name, vm_name, username, location, state="ACTIVE"):
     state (str): The state of the disk (default is "ACTIVE")
    """
     with engine.connect() as conn:
-        command = text("""
+        command = text(
+            """
             INSERT INTO disks("disk_name", "vm_name", "username", "location", "state")
             VALUES(:diskname, :vmname, :username, :location, :state)
-            """)
+            """
+        )
         params = {
-            'diskname': disk_name,
-            'vmname': vm_name,
-            'username': username,
+            "diskname": disk_name,
+            "vmname": vm_name,
+            "username": username,
             "location": location,
-            "state": state
+            "state": state,
         }
         with engine.connect() as conn:
             conn.execute(command, **params)
@@ -39,8 +41,9 @@ def genDiskName():
         str: The generated name
     """
     with engine.connect() as conn:
-        oldDisks = [cell[0] for cell in list(
-            conn.execute('SELECT "disk_name" FROM disks'))]
+        oldDisks = [
+            cell[0] for cell in list(conn.execute('SELECT "disk_name" FROM disks'))
+        ]
         diskName = genHaiku(1)[0]
         while diskName in oldDisks:
             diskName = genHaiku(1)[0]
@@ -56,15 +59,16 @@ def getVMSize(disk_name):
     Returns:
         str: The size of the disk attached to the vm
     """
-    command = text("""
+    command = text(
+        """
         SELECT * FROM disks WHERE "disk_name" = :disk_name
-        """)
-    params = {'disk_name': disk_name}
+        """
+    )
+    params = {"disk_name": disk_name}
     with engine.connect() as conn:
-        disks_info = cleanFetchedSQL(
-            conn.execute(command, **params).fetchone())
+        disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
-        return disks_info['vm_size']
+        return disks_info["vm_size"]
 
 
 def fetchUserDisks(username, show_all=False, ID=-1):
@@ -81,70 +85,73 @@ def fetchUserDisks(username, show_all=False, ID=-1):
     if username:
         if not show_all:
             sendInfo(
-                ID, 'Fetching all disks associated with {} state ACTIVE'.format(username))
+                ID,
+                "Fetching all disks associated with {} state ACTIVE".format(username),
+            )
 
-            command = text("""
+            command = text(
+                """
                 SELECT * FROM disks WHERE "username" = :username AND "state" = :state
-                """)
-            params = {'username': username, 'state': 'ACTIVE'}
+                """
+            )
+            params = {"username": username, "state": "ACTIVE"}
             with engine.connect() as conn:
-                sendInfo(ID, 'Connection with Postgres established')
+                sendInfo(ID, "Connection with Postgres established")
 
-                disks_info = cleanFetchedSQL(
-                    conn.execute(command, **params).fetchall())
+                disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
                 conn.close()
 
                 if disks_info:
-                    sendInfo(
-                        ID, 'Disk names fetched and Postgres connection closed')
+                    sendInfo(ID, "Disk names fetched and Postgres connection closed")
                 else:
-                    sendWarning(
-                        ID, 'No disk found for {}. Postgres connection closed')
+                    sendWarning(ID, "No disk found for {}. Postgres connection closed")
 
                 return disks_info
         else:
             sendInfo(
-                ID, 'Fetching all disks associated with {} regardless of state'.format(username))
+                ID,
+                "Fetching all disks associated with {} regardless of state".format(
+                    username
+                ),
+            )
 
-            command = text("""
+            command = text(
+                """
                 SELECT * FROM disks WHERE "username" = :username
-                """)
-            params = {'username': username}
+                """
+            )
+            params = {"username": username}
             with engine.connect() as conn:
-                sendInfo(ID, 'Connection with Postgres established')
+                sendInfo(ID, "Connection with Postgres established")
 
-                disks_info = cleanFetchedSQL(
-                    conn.execute(command, **params).fetchall())
+                disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
                 conn.close()
 
                 if disks_info:
-                    sendInfo(
-                        ID, 'Disk names fetched and Postgres connection closed')
+                    sendInfo(ID, "Disk names fetched and Postgres connection closed")
                 else:
-                    sendWarning(
-                        ID, 'No disk found for {}. Postgres connection closed')
+                    sendWarning(ID, "No disk found for {}. Postgres connection closed")
 
                 return disks_info
     else:
-        sendInfo(ID, 'Fetching all disks in Postgres')
+        sendInfo(ID, "Fetching all disks in Postgres")
 
-        command = text("""
+        command = text(
+            """
             SELECT * FROM disks
-            """)
+            """
+        )
         params = {}
         with engine.connect() as conn:
-            sendInfo(ID, 'Connection with Postgres established')
+            sendInfo(ID, "Connection with Postgres established")
 
-            disks_info = cleanFetchedSQL(
-                conn.execute(command, **params).fetchall())
+            disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()
 
             if disks_info:
-                sendInfo(
-                    ID, 'Disk names fetched and Postgres connection closed')
+                sendInfo(ID, "Disk names fetched and Postgres connection closed")
             else:
-                sendWarning(
-                    ID, 'No disk found in Postgres. Postgres connection closed')
+                sendWarning(ID, "No disk found in Postgres. Postgres connection closed")
 
             return disks_info
 
@@ -157,48 +164,60 @@ def updateDisk(disk_name, vm_name, location):
         vm_name (str): Name of the new vm that the disk is attached to
         location (str): The new Azure region of the disk
     """
-    command = text("""
+    command = text(
+        """
         SELECT * FROM disks WHERE "disk_name" = :disk_name
-        """)
-    params = {'disk_name': disk_name}
+        """
+    )
+    params = {"disk_name": disk_name}
     with engine.connect() as conn:
         disk = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         if disk:
             if location:
-                command = text("""
+                command = text(
+                    """
                     UPDATE disks
                     SET "vm_name" = :vm_name, "location" = :location
                     WHERE
                     "disk_name" = :disk_name
-                """)
-                params = {'vm_name': vm_name,
-                          'location': location,
-                          'disk_name': disk_name}
+                """
+                )
+                params = {
+                    "vm_name": vm_name,
+                    "location": location,
+                    "disk_name": disk_name,
+                }
             else:
-                command = text("""
+                command = text(
+                    """
                     UPDATE disks
                     SET "vm_name" = :vm_name
                     WHERE
                     "disk_name" = :disk_name
-                """)
-                params = {'vm_name': vm_name,
-                          'disk_name': disk_name}
+                """
+                )
+                params = {"vm_name": vm_name, "disk_name": disk_name}
         else:
             if location:
-                command = text("""
+                command = text(
+                    """
                     INSERT INTO disks("disk_name", "vm_name", "location") 
                     VALUES(:disk_name, :vm_name, :location)
-                    """)
-                params = {'vm_name': vm_name,
-                          'location': location,
-                          'disk_name': disk_name}
+                    """
+                )
+                params = {
+                    "vm_name": vm_name,
+                    "location": location,
+                    "disk_name": disk_name,
+                }
             else:
-                command = text("""
+                command = text(
+                    """
                     INSERT INTO disks("disk_name", "vm_name") 
                     VALUES(:disk_name, :vm_name)
-                    """)
-                params = {'vm_name': vm_name,
-                          'disk_name': disk_name}
+                    """
+                )
+                params = {"vm_name": vm_name, "disk_name": disk_name}
 
         conn.execute(command, **params)
         conn.close()
@@ -211,10 +230,12 @@ def assignUserToDisk(disk_name, username):
         disk_name (str): Disk that the user will be assigned to
         username (str): Username of the user
     """
-    command = text("""
+    command = text(
+        """
         UPDATE disks SET "username" = :username WHERE "disk_name" = :disk_name
-        """)
-    params = {'username': username, 'disk_name': disk_name}
+        """
+    )
+    params = {"username": username, "disk_name": disk_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
@@ -228,15 +249,16 @@ def associateVMWithDisk(vm_name, disk_name):
         disk_name (str): The name of the disk
     """
     username = mapDiskToUser(disk_name)
-    username = username if username else ''
-    command = text("""
+    username = username if username else ""
+    command = text(
+        """
         UPDATE v_ms
         SET "disk_name" = :disk_name, "username" = :username
         WHERE
         "vm_name" = :vm_name
-        """)
-    params = {'vm_name': vm_name,
-              'disk_name': disk_name, 'username': username}
+        """
+    )
+    params = {"vm_name": vm_name, "disk_name": disk_name, "username": username}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
@@ -248,10 +270,12 @@ def fetchAllDisks():
     Returns:
         arr[dict]: An array of all the disks in the disks sql table
     """
-    command = text("""
+    command = text(
+        """
         SELECT *
         FROM disks
-        """)
+        """
+    )
 
     params = {}
 
@@ -266,10 +290,12 @@ def deleteDiskFromTable(disk_name):
     Args:
         disk_name (str): The name of the disk to delete
     """
-    command = text("""
+    command = text(
+        """
         DELETE FROM disks WHERE "disk_name" = :disk_name 
-        """)
-    params = {'disk_name': disk_name}
+        """
+    )
+    params = {"disk_name": disk_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
@@ -284,17 +310,19 @@ def scheduleDiskDelete(disk_name, date, ID=-1):
         ID (int, optional): The unique paprtrail loggin id. Defaults to -1.
     """
     dateString = dateToString(date)
-    command = text("""
+    command = text(
+        """
         UPDATE disks
         SET "delete_date" = :delete_date, "state" = :'TO_BE_DELETED'
         WHERE
         "disk_name" = :disk_name
-        """)
-    params = {'disk_name': disk_name, 'delete_date': dateString}
+        """
+    )
+    params = {"disk_name": disk_name, "delete_date": dateString}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
-    sendInfo(ID, 'Fetching all disks associated with state ACTIVE')
+    sendInfo(ID, "Fetching all disks associated with state ACTIVE")
 
 
 def mapDiskToUser(disk_name, ID=-1):
@@ -307,19 +335,22 @@ def mapDiskToUser(disk_name, ID=-1):
     Returns:
         str: The username associated with the disk
     """
-    command = text("""
+    command = text(
+        """
         SELECT * FROM disks WHERE "disk_name" = :disk_name
-        """)
+        """
+    )
 
-    params = {'disk_name': disk_name}
+    params = {"disk_name": disk_name}
 
     with engine.connect() as conn:
         disk = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         if disk:
-            sendInfo(ID, 'Disk {} belongs to user {}'.format(
-                disk_name, disk['username']))
-            return disk['username']
-        sendWarning(ID, 'No username found for disk {}'.format(disk_name))
+            sendInfo(
+                ID, "Disk {} belongs to user {}".format(disk_name, disk["username"])
+            )
+            return disk["username"]
+        sendWarning(ID, "No username found for disk {}".format(disk_name))
         return None
 
 
@@ -330,13 +361,15 @@ def updateDiskState(disk_name, state):
         disk_name (str): Name of the disk to update
         state (str): The new state of the disk
     """
-    command = text("""
+    command = text(
+        """
         UPDATE disks
         SET state = :state
         WHERE
         "disk_name" = :disk_name
-        """)
-    params = {'state': state, 'disk_name': disk_name}
+        """
+    )
+    params = {"state": state, "disk_name": disk_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
@@ -349,10 +382,12 @@ def assignVMSizeToDisk(disk_name, vm_size):
         disk_name (str): The name of the disk to update
         vm_size (str): The new size of the vm the disk is attached to
     """
-    command = text("""
+    command = text(
+        """
         UPDATE disks SET "vm_size" = :vm_size WHERE "disk_name" = :disk_name
-        """)
-    params = {'vm_size': vm_size, 'disk_name': disk_name}
+        """
+    )
+    params = {"vm_size": vm_size, "disk_name": disk_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
@@ -371,54 +406,67 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
         int: 200 for success, 400 for error
     """
     disk_name = genDiskName()
-    print('Preparing to create disk {} from an image'.format(disk_name))
+    sendInfo(ID, "Preparing to create disk {} from an image".format(disk_name))
     _, compute_client, _ = createClients()
 
     try:
-        ORIGINAL_DISK = 'Fractal_Disk_Eastus'
-        if location == 'southcentralus':
-            ORIGINAL_DISK = 'Fractal_Disk_Southcentralus'
-        elif location == 'northcentralus':
-            ORIGINAL_DISK = 'Fractal_Disk_Northcentralus'
+        ORIGINAL_DISK = "Fractal_Disk_Eastus"
+        if location == "southcentralus":
+            ORIGINAL_DISK = "Fractal_Disk_Southcentralus"
+        elif location == "northcentralus":
+            ORIGINAL_DISK = "Fractal_Disk_Northcentralus"
 
-        if operating_system == 'Linux':
-            if not location == 'eastus':
-                return {'status': 402, 'disk_name': None, 
-                'error': '{} disk not available in {}'.format(operating_system, location)}
-            ORIGINAL_DISK = ORIGINAL_DISK + '_Linux'
+        if operating_system == "Linux":
+            if not location == "eastus":
+                return {
+                    "status": 402,
+                    "disk_name": None,
+                    "error": "{} disk not available in {}".format(
+                        operating_system, location
+                    ),
+                }
+            ORIGINAL_DISK = ORIGINAL_DISK + "_Linux"
 
-        disk_image = compute_client.disks.get('Fractal', ORIGINAL_DISK)
-        print('Image found. Preparing to create {} disk {} with location {} under {} attached to a {} VM'.format(
-            operating_system, disk_name, location, username, vm_size))
+        disk_image = compute_client.disks.get("Fractal", ORIGINAL_DISK)
+        sendInfo(
+            ID,
+            "Image found. Preparing to create {} disk {} with location {} under {} attached to a {} VM".format(
+                operating_system, disk_name, location, username, vm_size
+            ),
+        )
         async_disk_creation = compute_client.disks.create_or_update(
-            'Fractal',
+            "Fractal",
             disk_name,
             {
-                'location': location,
-                'creation_data': {
-                    'create_option': DiskCreateOption.copy,
-                    'source_resource_id': disk_image.id
-                }
-            }
+                "location": location,
+                "creation_data": {
+                    "create_option": DiskCreateOption.copy,
+                    "source_resource_id": disk_image.id,
+                },
+            },
         )
-        print('Disk clone command sent. Waiting on disk to create')
+        sendDebug(ID, "Disk clone command sent. Waiting on disk to create")
         new_disk = async_disk_creation.result()
-        print('Disk {} successfully created from image'.format(disk_name))
+        sendInfo(ID, "Disk {} successfully created from image".format(disk_name))
 
-        updateDisk(disk_name, '', location)
+        updateDisk(disk_name, "", location)
         assignUserToDisk(disk_name, username)
         assignVMSizeToDisk(disk_name, vm_size)
 
-        return {'status': 200, 'disk_name': disk_name}
+        return {"status": 200, "disk_name": disk_name}
     except Exception as e:
         sendCritical(ID, str(e))
 
-        sendInfo(ID, 'Attempting to delete the disk {}'.format(disk_name))
-        os_disk_delete = compute_client.disks.delete(
-            os.getenv('VM_GROUP'), disk_name)
+        sendInfo(ID, "Attempting to delete the disk {}".format(disk_name))
+        os_disk_delete = compute_client.disks.delete(os.getenv("VM_GROUP"), disk_name)
         os_disk_delete.wait()
         sendInfo(
-            ID, 'Disk {} deleted due to a critical error in disk creation'.format(disk_name))
+            ID,
+            "Disk {} deleted due to a critical error in disk creation".format(
+                disk_name
+            ),
+        )
 
         time.sleep(30)
-        return {'status': 400, 'disk_name': None}
+        return {"status": 400, "disk_name": None}
+
