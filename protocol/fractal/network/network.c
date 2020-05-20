@@ -277,7 +277,7 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     int ret;
     set_timeout(s, 0);
     if ((ret = connect(s, (struct sockaddr *)(&addr), sizeof(addr))) < 0) {
-        bool worked = GetLastNetworkError() == EINPROGRESS;
+        bool worked = GetLastNetworkError() == FRACTAL_EINPROGRESS;
 
         LOG_INFO("Bool TCP worked = %d\n", worked);
         LOG_INFO("Ret TCP = %d\n", ret);
@@ -336,8 +336,8 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
         if (encrypted_len < 0) {
             int error = GetLastNetworkError();
             switch (error) {
-                case ETIMEDOUT:
-                case EWOULDBLOCK:
+                case FRACTAL_ETIMEDOUT:
+                case FRACTAL_EWOULDBLOCK:
                     break;
                 default:
                     LOG_WARNING("Unexpected Packet Error: %d", error);
@@ -377,7 +377,7 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
 
         if (len < 0) {
             int err = GetLastNetworkError();
-            if (err == ETIMEDOUT || err == EAGAIN) {
+            if (err == FRACTAL_ETIMEDOUT || err == FRACTAL_EAGAIN) {
             } else {
                 // mprintf( "Error %d\n", err );
             }
@@ -952,8 +952,8 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
         // If we haven't spent too much time waiting, and our previous 100ms
         // poll failed, then send another STUN update
         if (GetTimer(recv_timer) * 1000 < stun_timeout_ms &&
-            (GetLastNetworkError() == ETIMEDOUT ||
-             GetLastNetworkError() == EAGAIN)) {
+            (GetLastNetworkError() == FRACTAL_ETIMEDOUT ||
+             GetLastNetworkError() == FRACTAL_EAGAIN)) {
             if (sendto(context->s, (const char *)&stun_request,
                        sizeof(stun_request), 0, (struct sockaddr *)&stun_addr,
                        sizeof(stun_addr)) < 0) {
