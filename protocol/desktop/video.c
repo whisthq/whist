@@ -270,6 +270,8 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             updateWidthAndHeight(frame->width, frame->height);
         }
 
+        clock decode_timer;
+        StartTimer( &decode_timer );
         if (!video_decoder_decode(videoContext.decoder, frame->compressed_frame,
                                   frame->size)) {
             LOG_WARNING("Failed to video_decoder_decode!");
@@ -277,8 +279,11 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             continue;
         }
         updatePixelFormat();
+        LOG_INFO( "Decode Time: %f\n", GetTimer( decode_timer ) );
 
         if (!skip_render && !resizing) {
+            clock sws_timer;
+            StartTimer( &sws_timer );
             if (videoContext.sws) {
                 sws_scale(
                     videoContext.sws,
@@ -293,6 +298,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                        videoContext.decoder->sw_frame->linesize,
                        sizeof(videoContext.linesize));
             }
+            LOG_INFO( "SWS Time: %f\n", GetTimer( sws_timer ) );
             SDL_UpdateYUVTexture(videoContext.texture, NULL,
                                  videoContext.data[0], videoContext.linesize[0],
                                  videoContext.data[1], videoContext.linesize[1],

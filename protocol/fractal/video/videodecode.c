@@ -335,7 +335,7 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
 
       av_hwframe_transfer_data( decoder->sw_frame, decoder->hw_frame, 0 );
   } else {
-      if( decoder->type != DECODE_TYPE_SOFTWARE )
+      if( decoder->type == DECODE_TYPE_HARDWARE )
       {
           LOG_INFO( "Decoder cascaded from hardware to software" );
           decoder->type = DECODE_TYPE_SOFTWARE;
