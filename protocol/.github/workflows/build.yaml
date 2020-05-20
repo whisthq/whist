@@ -78,15 +78,15 @@ jobs:
           message("::set-output name=cmake_dir::${cmake_dir}")
 
           if (NOT "${{ runner.os }}" STREQUAL "Windows")
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/cppcheck_matcher.json\n")
+
             execute_process(
               COMMAND chmod +x ninja
               COMMAND chmod +x ${cmake_dir}/cmake
             )
-          else()
-            message(STATUS "\n ::add-matcher::./.github/cmake_matcher.json\n")
           endif()
 
+          message(STATUS "\n::add-matcher::./.github/cppcheck_matcher.json\n")
+          message(STATUS "\n::add-matcher::./.github/cmake_matcher.json\n")
 
           if ("${{ runner.os }}" STREQUAL "Linux")
             # install linux dev dependencies
