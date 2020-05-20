@@ -52,14 +52,14 @@ endif()
 set(USE_CPPCHECK OFF)
 find_program(CPPCHECK cppcheck)
 if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
-    message(STATUS CPPCHECKON )
+    message(STATUS CPPCHECKON)
     set(CMAKE_C_CPPCHECK "${CPPCHECK}"
             "--template=gcc"
-            "--enable=all"
+            "--enable=performance,portability"
             "--verbose"
             "--std=c99"
-            "--suppress=unusedFunction"
-            "--suppress=missingInclude"
+#            "--suppress=unusedFunction"
+#            "--suppress=missingInclude"
             "--suppress=shiftTooManyBitsSigned"
             )
 endif()

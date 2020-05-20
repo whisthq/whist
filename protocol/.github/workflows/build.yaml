@@ -89,8 +89,6 @@ jobs:
               execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
           endif()
 
-      - name: which cppmake
-        run: which cppcheck
       - name: Download ccache
         id: ccache
         shell: cmake -P {0}
@@ -150,7 +148,7 @@ jobs:
               -D CMAKE_C_COMPILER_LAUNCHER=ccache
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
               -D CMAKE_OSX_SYSROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
-              -D CPPCHECK=ON
+              -D USE_CPPCHECK=ON
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
