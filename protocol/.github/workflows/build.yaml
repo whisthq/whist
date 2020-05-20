@@ -92,8 +92,8 @@ jobs:
           elseif("${{ runner.os }}" STREQUAL "macOS")
               execute_process(COMMAND brew install cppcheck)
           elseif("${{ runner.os }}" STREQUAL "Windows")
-              file(DOWNLOAD ${CPPCHECK_URL} ${{ github.workspace }}/cppcheck.msi SHOW_PROGRESS)
-              execute_process(COMMAND cmd //C "msiexec /qn /i ./cppcheck.msi")
+              file(DOWNLOAD ${CPPCHECK_URL} ./cppcheck.msi SHOW_PROGRESS)
+              execute_process(COMMAND cmd //C "msiexec /qn /i cppcheck.msi")
           endif()
 
 
