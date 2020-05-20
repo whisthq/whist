@@ -23,6 +23,24 @@ void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
 }
 #endif
 
+void set_opt( video_decoder_t* decoder, char* option, char* value )
+{
+    int ret = av_opt_set( decoder->context->priv_data, option, value, 0 );
+    if( ret < 0 )
+    {
+        LOG_WARNING( "Could not av_opt_set %s to %s!", option, value );
+    }
+}
+
+void set_decoder_opts( video_decoder_t* decoder )
+{
+    decoder->context->flags |= AV_CODEC_FLAG_LOW_DELAY;
+    decoder->context->flags2 |= AV_CODEC_FLAG2_FAST;
+    set_opt( decoder, "async_depth", "1" );
+    set_opt( decoder, "preset", "ultrafast" );
+    set_opt( decoder, "tune", "zerolatency" );
+}
+
 int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
   int err = 0;
 
@@ -96,6 +114,9 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
   avcodec_register_all();
 #endif
 
+  AVDictionary* codec_options;
+  av_dict_set( &codec_options, "preset", "veryfast", 0 );
+
   if (decoder->type == DECODE_TYPE_SOFTWARE) {
     LOG_INFO("Trying software decoder");
     decoder->codec = avcodec_find_decoder_by_name("h264");
@@ -111,10 +132,12 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
     decoder->sw_frame->height = height;
     decoder->sw_frame->pts = 0;
 
-    if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
+    if (avcodec_open2(decoder->context, decoder->codec, &codec_options ) < 0) {
       LOG_WARNING("Failed to open codec for stream");
       return -1;
     }
+
+    set_decoder_opts( decoder );
   } else if (decoder->type == DECODE_TYPE_QSV) {
     LOG_INFO("Trying QSV decoder");
     decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
@@ -144,12 +167,13 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
     frames_hwctx->frame_type = MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
     av_hwframe_ctx_init(decoder->context->hw_frames_ctx);
-    av_opt_set(decoder->context->priv_data, "async_depth", "1", 0);
 
-    if (avcodec_open2(decoder->context, NULL, NULL) < 0) {
+    if (avcodec_open2(decoder->context, decoder->codec, &codec_options ) < 0) {
       LOG_WARNING("Failed to open context for stream");
       return -1;
     }
+
+    set_decoder_opts( decoder );
 
     decoder->sw_frame = av_frame_alloc();
     decoder->hw_frame = av_frame_alloc();
@@ -195,17 +219,18 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
     }
 
     decoder->context->get_format = match_hardware;
-    av_opt_set(decoder->context->priv_data, "async_depth", "1", 0);
 
     if (hw_decoder_init(decoder->context, decoder->device_type) < 0) {
       LOG_WARNING("Failed to init hardware decoder");
       return -1;
     }
 
-    if ((ret = avcodec_open2(decoder->context, decoder->codec, NULL)) < 0) {
+    if (avcodec_open2(decoder->context, decoder->codec, &codec_options ) < 0) {
       LOG_WARNING("Failed to open codec for stream");
       return -1;
     }
+
+    set_decoder_opts( decoder );
 
     if (!(decoder->hw_frame = av_frame_alloc()) ||
         !(decoder->sw_frame = av_frame_alloc())) {
@@ -219,6 +244,7 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
     LOG_ERROR("Unsupported hardware type!");
     return -1;
   }
+
   return 0;
 }
 
