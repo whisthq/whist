@@ -138,9 +138,9 @@ jobs:
           endif()
           set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
 
-
+          set(CPPCHECK_ARGS "")
           if ("${{ runner.os }}" STREQUAL "Linux")
-            set(CPPCHECK_ARGS "/usr/bin/cppcheck --enable=warning")
+            set(CPPCHECK_ARGS "/usr/bin/cppcheck --template=gcc --enable=unusedFunction,missingInclude --inline-suppr -j 2 --std=C99")
           endif()
           execute_process(
             COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
@@ -152,7 +152,7 @@ jobs:
               -D CMAKE_C_COMPILER_LAUNCHER=ccache
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
               -D CMAKE_OSX_SYSROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
-              -D CMAAKE_C_CPPCHECK="/usr/bin/cppcheck --template=gcc --enable=unusedFunction,missingInclude --inline-suppr -j 2 --std=C99"
+              -D CMAKE_C_CPPCHECK= ${CPPCHECK_ARGS}
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
