@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - uses: crazy-max/ghaction-chocolatey@v1
-        if: ${{ runner.os == "Windows"}}
+        if: runner.os == "Windows"
         with:
           args: install cppcheck --force
       - uses: actions/checkout@v1
