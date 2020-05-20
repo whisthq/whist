@@ -81,7 +81,7 @@ jobs:
               COMMAND chmod +x ${cmake_dir}/cmake
             )
           else()
-            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\cmake_matcher.json\n")
+            message(STATUS "\n ::add-matcher::./.github/cmake_matcher.json\n")
           endif()
 
 
@@ -93,7 +93,7 @@ jobs:
               execute_process(COMMAND brew install cppcheck)
           elseif("${{ runner.os }}" STREQUAL "Windows")
               file(DOWNLOAD ${CPPCHECK_URL} ${{ github.workspace }}/cppcheck.msi SHOW_PROGRESS)
-              execute_process(COMMAND cmd //C "msiexec /qn /i ${{ github.workspace }}\cppcheck.msi")
+              execute_process(COMMAND cmd //C "msiexec /qn /i ./cppcheck.msi")
           endif()
 
 
