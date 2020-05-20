@@ -66,6 +66,12 @@ def vm(action, **kwargs):
         except:
             sendError(kwargs["ID"], "Ip not found for VM {}".format(vm_name))
             return ({"public_ip": None}), 404
+    elif action == "setDev" and request.method == "POST":
+        vm_name = request.get_json()["vm_name"]
+        dev = request.get_json()["dev"]
+        setDev(vm_name, dev)
+        sendInfo(kwargs["ID"], "Set dev state for vm {} to {}".format(vm_name, dev))
+        return 200
     elif action == "delete" and request.method == "POST":
         body = request.get_json()
 
