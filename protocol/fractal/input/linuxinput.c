@@ -419,6 +419,7 @@ input_device_t* CreateInputDevice() {
       input_device->fd_keyboard < 0) {
     LOG_ERROR("CreateInputDevice: Error opening '/dev/uinput' for writing: %s",
               strerror(errno));
+    free(input_device);
     return NULL;
   }
 
