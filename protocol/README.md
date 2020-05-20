@@ -37,6 +37,12 @@ TBD.
 TBD.
  
  ------------
+ ## GitHub Actions
+ 
+ We have GitHub Actions enabled on this repository, in conjunction with CMake. Therefore, every time there is a push or a PR, GitHub will automatically compile both FractalClient and FractalServer on Windows, MacOS and Linux Ubuntu, and will outline any warnings and/or errors on the "Actions" tab above. Make sure to verify there after your push or PR.
+ 
+  ------------
+
  ## Building
  If you are on ubuntu/linux run desktop/linux-client-setup.sh to install the dev versions of the dependencies. 
  ### Building in an IDE
