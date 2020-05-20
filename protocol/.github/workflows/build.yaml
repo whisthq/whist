@@ -34,6 +34,10 @@ jobs:
           }
 
     steps:
+      - uses: crazy-max/ghaction-chocolatey@v1
+        if: ${{ runner.os == "Windows"}}
+        with:
+          args: install cppcheck --force
       - uses: actions/checkout@v1
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
@@ -41,8 +45,6 @@ jobs:
         run: |
           set(cmake_version $ENV{CMAKE_VERSION})
           set(ninja_version $ENV{NINJA_VERSION})
-          set(CPPCHECK_URL https://github.com/danmar/cppcheck/releases/download/2.0/cppcheck-2.0-x64-Setup.msi)
-
           message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
 
           if ("${{ runner.os }}" STREQUAL "Windows")
@@ -91,9 +93,6 @@ jobs:
               execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
           elseif("${{ runner.os }}" STREQUAL "macOS")
               execute_process(COMMAND brew install cppcheck)
-          elseif("${{ runner.os }}" STREQUAL "Windows")
-              file(DOWNLOAD ${CPPCHECK_URL} ./cppcheck.msi SHOW_PROGRESS)
-              execute_process(COMMAND cmd /C "msiexec /qn /i cppcheck.msi")
           endif()
 
 
