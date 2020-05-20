@@ -35,7 +35,7 @@ video_encoder_t *create_nvenc_encoder(int in_width, int in_height,
     encoder->gop_size = GOP_SIZE;
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
     enum AVPixelFormat hw_format = AV_PIX_FMT_CUDA;
-    enum AVPixelFormat sw_format = AV_PIX_FMT_YUV420P;
+    enum AVPixelFormat sw_format = AV_PIX_FMT_0RGB32;
 
     // init intake format in sw_frame
 
@@ -470,7 +470,6 @@ void video_encoder_filter_graph_intake(video_encoder_t *encoder,
     AVFrame *active_frame = encoder->sw_frame;
 
     if (encoder->hw_frame) {
-        // av_hwframe_map_data()
         av_hwframe_transfer_data(encoder->hw_frame, encoder->sw_frame, 0);
         encoder->hw_frame->pict_type = encoder->sw_frame->pict_type;
         active_frame = encoder->hw_frame;
