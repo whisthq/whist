@@ -15,6 +15,7 @@ import { autoUpdater } from "electron-updater";
 var updating = false;
 let mainWindow: BrowserWindow | null = null;
 
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 process.env.GOOGLE_API_KEY = "AIzaSyA2FUwAOXKqIWMqKN5DNPBUaqYMOWdBADQ";
 
 if (process.env.NODE_ENV === "production") {
