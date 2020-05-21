@@ -6,7 +6,7 @@ import { counterStateType } from "../reducers/types";
 function mapStateToProps(state: counterStateType) {}
 
 function mapDispatchToProps(dispatch: Dispatch) {
-    return bindActionCreators({}, dispatch);
+  return bindActionCreators({}, dispatch);
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Studios);
