@@ -50,7 +50,7 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 	time.sleep(30)
 
 	print('The VM created is called {}'.format(vmParameters["vm_name"]))
-	
+
 	fractalVMStart(vmParameters["vm_name"], needs_winlogon = False)
 
 	time.sleep(30)
@@ -78,6 +78,7 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 	updateVMIP(vmParameters["vm_name"], vm_ip)
 	updateVMState(vmParameters["vm_name"], "RUNNING_AVAILABLE")
 	updateVMLocation(vmParameters["vm_name"], location)
+	updateVMOS(vmParameters["vm_name"], operating_system)
 
 	sendInfo(ID, "SUCCESS: VM {} created and updated".format(vmName))
 

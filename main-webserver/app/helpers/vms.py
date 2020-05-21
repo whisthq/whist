@@ -424,6 +424,29 @@ def updateVMLocation(vm_name, location, ID=-1):
         conn.close()
 
 
+def updateVMLocation(vm_name, operating_system, ID=-1):
+    """Updates the OS of the vm entry in the v_ms sql table
+
+    Args:
+        vm_name (str): Name of vm of interest
+        operating_system (str): The OSof the vm
+    """
+    sendInfo(ID, "Updating OS for VM {} to {} in SQL".format(vm_name, operating_system))
+    command = text(
+        """
+        UPDATE v_ms
+        SET operating_system = :operating_system
+        WHERE
+        "vm_name" = :vm_name
+        """
+    )
+    params = {"vm_name": vm_name, "operating_system": operating_system}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
+
 def fetchAttachableVMs(state, location):
     """Finds all vms with specified location and state that are unlocked and not in dev mode
 
