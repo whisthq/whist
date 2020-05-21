@@ -447,7 +447,7 @@ def updateVMLocation(vm_name, operating_system, ID=-1):
 
 
 
-def fetchAttachableVMs(state, location):
+def fetchAttachableVMs(state, location, ID=-1):
     """Finds all vms with specified location and state that are unlocked and not in dev mode
 
     Args:
@@ -472,7 +472,7 @@ def fetchAttachableVMs(state, location):
 
 
 def lockVMAndUpdate(
-    vm_name, state, lock, temporary_lock, change_last_updated, verbose, ID
+    vm_name, state, lock, temporary_lock, change_last_updated, verbose, ID=-1
 ):
     MAX_LOCK_TIME = 10
 

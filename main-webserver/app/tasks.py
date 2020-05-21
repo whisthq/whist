@@ -417,7 +417,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 	_, compute_client, _ = createClients()
 
 	os_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
-	os_tye = 'Windows' if 'windows' in str(os_disk.os_type) else 'Linux'
+	os_type = 'Windows' if 'windows' in str(os_disk.os_type) else 'Linux'
 	username = mapDiskToUser(disk_name)
 	vm_name = os_disk.managed_by
 
