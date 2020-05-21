@@ -426,7 +426,7 @@ def updateVMLocation(vm_name, location, ID=-1):
         conn.close()
 
 
-def updateVMLocation(vm_name, operating_system, ID=-1):
+def updateVMOS(vm_name, operating_system, ID=-1):
     """Updates the OS of the vm entry in the v_ms sql table
 
     Args:
