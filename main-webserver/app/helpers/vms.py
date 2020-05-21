@@ -1226,7 +1226,7 @@ def swapdisk_name(s, disk_name, vm_name, ID=-1):
         return -1
 
 
-def sendVMStartCommand(vm_name, needs_restart, ID=-1, s=None):
+def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
     """Starts a vm
 
     Args:
@@ -1426,16 +1426,17 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s=None):
                     state="PENDING", meta={"msg": "Logging you into your cloud PC. This should take less than two minutes."}
                 )
 
-            winlogon = waitForWinlogon(vm_name, ID)
-            while winlogon < 0:
-                boot_if_necessary(vm_name, True, ID)
+            if needs_winlogon:
                 winlogon = waitForWinlogon(vm_name, ID)
+                while winlogon < 0:
+                    boot_if_necessary(vm_name, True, ID)
+                    winlogon = waitForWinlogon(vm_name, ID)
 
-            if s:
-                s.update_state(
-                    state="PENDING",
-                    meta={"msg": "Logged into your cloud PC successfully."},
-                )
+                if s:
+                    s.update_state(
+                        state="PENDING",
+                        meta={"msg": "Logged into your cloud PC successfully."},
+                    )
 
             if i == 1:
                 changeFirstTime(disk_name)
@@ -1508,7 +1509,7 @@ def waitForWinlogon(vm_name, ID=-1):
     return 1
 
 
-def fractalVMStart(vm_name, needs_restart=False, ID=-1, s=None):
+def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, ID=-1, s=None):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary (big brain thoughts from Ming)
 
     Args:
@@ -1539,7 +1540,7 @@ def fractalVMStart(vm_name, needs_restart=False, ID=-1, s=None):
             )
 
         while (
-            sendVMStartCommand(vm_name, needs_restart, s=s) < 0
+            sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=s) < 0
             and start_command_tries < 6
         ):
             time.sleep(10)
