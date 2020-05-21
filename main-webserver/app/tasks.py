@@ -50,7 +50,8 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 	time.sleep(30)
 
 	print('The VM created is called {}'.format(vmParameters["vm_name"]))
-	fractalVMStart(vmParameters["vm_name"])
+	
+	fractalVMStart(vmParameters["vm_name"], needs_winlogon = False)
 
 	time.sleep(30)
 
