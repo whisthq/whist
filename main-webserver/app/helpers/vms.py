@@ -303,7 +303,7 @@ def insertVM(vm_name, vm_ip=None, location=None):
             conn.close()
 
 
-def updateVMIP(vm_name, ip):
+def updateVMIP(vm_name, ip, ID=-1):
     """Updates the ip address of a vm
 
     Args:
@@ -402,7 +402,7 @@ def updateVMStateAutomatically(vm_name, ID=-1):
     return hr
 
 
-def updateVMLocation(vm_name, location):
+def updateVMLocation(vm_name, location, ID=-1):
     """Updates the location of the vm entry in the v_ms sql table
 
     Args:
