@@ -25,7 +25,7 @@ void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
 
 static void set_opt( video_decoder_t* decoder, char* option, char* value )
 {
-    int ret = av_opt_set( decoder->context, option, value, 0 );
+    int ret = av_opt_set( decoder->context->priv_data, option, value, 0 );
     if( ret < 0 )
     {
         LOG_WARNING( "Could not av_opt_set %s to %s!", option, value );
@@ -34,8 +34,8 @@ static void set_opt( video_decoder_t* decoder, char* option, char* value )
 
 void set_decoder_opts( video_decoder_t* decoder )
 {
-    decoder->context->flags |= AV_CODEC_FLAG_LOW_DELAY;
-    decoder->context->flags2 |= AV_CODEC_FLAG2_FAST;
+    //decoder->context->flags |= AV_CODEC_FLAG_LOW_DELAY;
+    //decoder->context->flags2 |= AV_CODEC_FLAG2_FAST;
     set_opt( decoder, "async_depth", "1" );
 }
 
@@ -87,21 +87,43 @@ enum AVPixelFormat match_format(AVCodecContext* ctx,
   return AV_PIX_FMT_NONE;
 }
 
-enum AVPixelFormat match_qsv(AVCodecContext* ctx,
+enum AVPixelFormat get_format(AVCodecContext* ctx,
                              const enum AVPixelFormat* pix_fmts) {
-  return match_format(ctx, pix_fmts, AV_PIX_FMT_QSV);
-}
-enum AVPixelFormat match_dxva2(AVCodecContext* ctx,
-                               const enum AVPixelFormat* pix_fmts) {
-  return match_format(ctx, pix_fmts, AV_PIX_FMT_DXVA2_VLD);
-}
-enum AVPixelFormat match_videotoolbox(AVCodecContext* ctx,
-                                      const enum AVPixelFormat* pix_fmts) {
-  return match_format(ctx, pix_fmts, AV_PIX_FMT_VIDEOTOOLBOX);
-}
-enum AVPixelFormat match_vaapi(AVCodecContext* ctx,
-                               const enum AVPixelFormat* pix_fmts) {
-  return match_format(ctx, pix_fmts, AV_PIX_FMT_VAAPI);
+  video_decoder_t* decoder = ctx->opaque;
+
+  enum AVPixelFormat match = match_format(ctx, pix_fmts, decoder->match_fmt);
+
+  // Create an AV_HWDEVICE_TYPE_QSV so that QSV occurs over a hardware frame
+  // False, because this seems to slow down QSV for me
+  if( false && decoder->match_fmt == AV_PIX_FMT_QSV )
+  {
+        av_hwdevice_ctx_create( &decoder->ref, AV_HWDEVICE_TYPE_QSV, "auto", NULL, 0 );
+
+        AVHWFramesContext  *frames_ctx;
+        AVQSVFramesContext *frames_hwctx;
+        int ret;
+      
+        /* create a pool of surfaces to be used by the decoder */
+        ctx->hw_frames_ctx = av_hwframe_ctx_alloc( decoder->ref );
+        if( !ctx->hw_frames_ctx )
+            return AV_PIX_FMT_NONE;
+        frames_ctx = (AVHWFramesContext*)ctx->hw_frames_ctx->data;
+        frames_hwctx = frames_ctx->hwctx;
+      
+        frames_ctx->format = AV_PIX_FMT_QSV;
+        frames_ctx->sw_format = ctx->sw_pix_fmt;
+        frames_ctx->width = FFALIGN( ctx->coded_width, 32 );
+        frames_ctx->height = FFALIGN( ctx->coded_height, 32 );
+        frames_ctx->initial_pool_size = 32;
+      
+        frames_hwctx->frame_type = MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
+      
+        ret = av_hwframe_ctx_init( ctx->hw_frames_ctx );
+        if( ret < 0 )
+            return AV_PIX_FMT_NONE;
+  }
+
+  return match;
 }
 
 int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
@@ -121,6 +143,7 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
       return -1;
     }
     decoder->context = avcodec_alloc_context3(decoder->codec);
+    decoder->context->opaque = decoder;
 
     decoder->sw_frame = (AVFrame*)av_frame_alloc();
     decoder->sw_frame->format = AV_PIX_FMT_YUV420P;
@@ -128,35 +151,35 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
     decoder->sw_frame->height = height;
     decoder->sw_frame->pts = 0;
 
-    if (avcodec_open2(decoder->context, decoder->codec, NULL ) < 0) {
+    if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
       LOG_WARNING("Failed to open codec for stream");
       return -1;
     }
 
     set_decoder_opts( decoder );
-    // END QSV DECODER
+    // END SOFTWARE DECODER
 
   } else if (decoder->type == DECODE_TYPE_QSV) {
     // BEGIN QSV DECODER
     LOG_INFO("Trying QSV decoder");
     decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
     decoder->context = avcodec_alloc_context3(decoder->codec);
-
-    decoder->context->get_format = match_qsv;
-
-    if (hw_decoder_init(decoder->context, AV_HWDEVICE_TYPE_QSV) < 0) {
-      return -1;
-    }
-
-    if (avcodec_open2(decoder->context, decoder->codec, NULL ) < 0) {
-      LOG_WARNING("Failed to open context for stream");
-      return -1;
-    }
-
+    decoder->context->opaque = decoder;
     set_decoder_opts( decoder );
+
+    LOG_INFO( "HWDECODER: %p", decoder->context->hw_frames_ctx );
+
+    decoder->match_fmt = AV_PIX_FMT_QSV;
+    decoder->context->get_format = get_format;
+
+    if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
+      LOG_WARNING( "Failed to open context for stream" );
+      return -1;
+    }
 
     decoder->sw_frame = av_frame_alloc();
     decoder->hw_frame = av_frame_alloc();
+
     // END QSV DECODER
 
   } else if (decoder->type == DECODE_TYPE_HARDWARE) {
@@ -164,13 +187,16 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
     LOG_INFO("Trying hardware decoder");
     // set the appropriate video decoder format based on PS
 #if defined(_WIN32)
-#define match_hardware match_dxva2;
+    decoder->match_fmt = AV_PIX_FMT_DXVA2_VLD;
     char* device_type = "dxva2";
 #elif __APPLE__
-#define match_hardware match_videotoolbox;
+    // TODO: Fix because "videotoolbox" doesn't appear to be a valid av_hwdevice_find_type_by_name
+    // See https://github.com/libav/libav/blob/master/libavutil/hwcontext.c av_hwdevice_find_type_by_name
+    // Also, we should use `enum AVHWDeviceType` instead.
+    decoder->match_fmt = AV_PIX_FMT_VIDEOTOOLBOX;
     char* device_type = "videotoolbox";
 #else  // linux
-#define match_hardware match_vaapi;
+    decoder->match_fmt = AV_PIX_FMT_VAAPI;
     char* device_type = "vaapi";
 #endif
 
@@ -193,8 +219,9 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
       LOG_WARNING("alloccontext3 failed w/ error code: %d\n", AVERROR(ENOMEM));
       return -1;
     }
+    decoder->context->opaque = decoder;
 
-    decoder->context->get_format = match_hardware;
+    decoder->context->get_format = get_format;
 
     if (hw_decoder_init(decoder->context, decoder->device_type) < 0) {
       LOG_WARNING("Failed to init hardware decoder");
@@ -298,6 +325,7 @@ void destroy_video_decoder(video_decoder_t* decoder) {
   av_free(decoder->context);
   av_frame_free(&decoder->sw_frame);
   av_frame_free(&decoder->hw_frame);
+  av_buffer_unref( &decoder->ref );
 
   // free the buffer and decoder
   free(decoder);
@@ -308,8 +336,6 @@ void destroy_video_decoder(video_decoder_t* decoder) {
 /// @details decode an encoded frame under YUV color format into RGB frame
 bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
                           int buffer_size) {
-  static double total_time = 0.0;
-  static int num_times = 0;
 
   clock t;
   StartTimer(&t);
@@ -339,7 +365,7 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
 
       av_hwframe_transfer_data( decoder->sw_frame, decoder->hw_frame, 0 );
   } else {
-      if( decoder->type == DECODE_TYPE_HARDWARE )
+      if( decoder->type != DECODE_TYPE_SOFTWARE )
       {
           LOG_INFO( "Decoder cascaded from hardware to software" );
           decoder->type = DECODE_TYPE_SOFTWARE;
@@ -355,11 +381,21 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
   av_packet_unref(&decoder->packet);
 
   double time = GetTimer(t);
-  // mprintf( "Decode Time: %f\n", time );
-  if (time < 0.020) {
-    total_time += time;
-    num_times++;
-    // mprintf( "Avg Decode Time: %f\n", total_time / num_times );
+
+  static double total_time = 0.0;
+  static double max_time = 0.0;
+  static int num_times = 0;
+
+  total_time += time;
+  max_time = max( max_time, time );
+  num_times++;
+
+  if( num_times == 10 )
+  {
+      LOG_INFO( "Avg Decode Time: %f\n", total_time / num_times );
+      total_time = 0.0;
+      max_time = 0.0;
+      num_times = 0;
   }
 
   return true;
