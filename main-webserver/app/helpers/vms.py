@@ -1314,7 +1314,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
 
                 createTemporaryLock(vm_name, 12)
 
-                sendInfo(ID, async_vm_start.result(timeout = 120))
+                sendInfo(ID, async_vm_start.result())
 
                 if s:
                     s.update_state(
@@ -1355,7 +1355,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
 
                 createTemporaryLock(vm_name, 12)
 
-                sendInfo(ID, async_vm_restart.result(timeout = 120))
+                sendInfo(ID, async_vm_restart.result())
 
                 if s:
                     s.update_state(

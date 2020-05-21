@@ -278,6 +278,7 @@ def deleteVMResources(self, vm_name, delete_disk, ID=-1):
 			change_last_updated = True, verbose = False, ID = ID)
 
 		status = 200 if deleteResource(vm_name, delete_disk) else 404
+		
 		lockVM(vm_name, False)
 
 		sendInfo(
@@ -295,13 +296,16 @@ def deleteVMResources(self, vm_name, delete_disk, ID=-1):
 @celery.task(bind=True)
 def restartVM(self, vm_name, ID=-1):
 	if spinLock(vm_name) > 0:
-		lockVM(vm_name, True)
+		lockVMAndUpdate(vm_name = vm_name, state = 'RESTARTING', lock = True, temporary_lock = None, 
+			change_last_updated = True, verbose = False, ID = ID)
 
 		_, compute_client, _ = createClients()
 
 		fractalVMStart(vm_name, True)
 
-		lockVM(vm_name, False)
+		lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_AVAILABLE', lock = False, temporary_lock = 1, 
+			change_last_updated = True, verbose = False, ID = ID)
+
 		sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
 
 		return {'status': 200}
