@@ -134,12 +134,12 @@ Custom types
 */
 
 typedef struct SocketContext {
-  bool is_server;
-  bool is_tcp;
-  SOCKET s;
-  struct sockaddr_in addr;
-  int ack;
-  SDL_mutex* mutex;
+    bool is_server;
+    bool is_tcp;
+    SOCKET s;
+    struct sockaddr_in addr;
+    int ack;
+    SDL_mutex* mutex;
 } SocketContext;
 
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
@@ -150,43 +150,43 @@ typedef struct SocketContext {
 @brief                          Data packet description
 */
 typedef enum FractalPacketType {
-  PACKET_AUDIO,
-  PACKET_VIDEO,
-  PACKET_MESSAGE,
+    PACKET_AUDIO,
+    PACKET_VIDEO,
+    PACKET_MESSAGE,
 } FractalPacketType;
 
 /*
 @brief                          Packet of data to be sent over a SocketContext
 */
 typedef struct FractalPacket {
-  // Hash of the rest of the packet
-  char hash[16];
+    // Hash of the rest of the packet
+    char hash[16];
 
-  // hash[16] is a signature for everything below this line
+    // hash[16] is a signature for everything below this line
 
-  // Encrypted packet data
-  int cipher_len;  // The length of the encrypted segment
-  char iv[16];     // One-time pad for encrypted data
+    // Encrypted packet data
+    int cipher_len;  // The length of the encrypted segment
+    char iv[16];     // One-time pad for encrypted data
 
-  // Everything below this line gets encrypted
+    // Everything below this line gets encrypted
 
-  // Metadata
-  FractalPacketType type;  // Video, Audio, or Message
-  int id;  // Unique identifier (Two packets with the same type and id, from the
-           // same IP, will be the same)
-  short index;        // Handle separation of large datagrams
-  short num_indices;  // The total datagram consists of data packets with
-                      // indices from 0 to payload_size - 1
-  int payload_size;   // size of data[] that is of interest
-  bool is_a_nack;     // True if this is a replay'ed packet
+    // Metadata
+    FractalPacketType type;  // Video, Audio, or Message
+    int id;  // Unique identifier (Two packets with the same type and id, from
+             // the same IP, will be the same)
+    short index;        // Handle separation of large datagrams
+    short num_indices;  // The total datagram consists of data packets with
+                        // indices from 0 to payload_size - 1
+    int payload_size;   // size of data[] that is of interest
+    bool is_a_nack;     // True if this is a replay'ed packet
 
-  // Data
-  uint8_t
-      data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
-                               // bytes beyond payload_size / cipher_len
-  uint8_t overflow[16];  // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16, as
-                         // the encrypted packet might be slightly larger than
-                         // the unencrypted packet
+    // Data
+    uint8_t
+        data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
+                                 // bytes beyond payload_size / cipher_len
+    uint8_t overflow[16];  // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16,
+                           // as the encrypted packet might be slightly larger
+                           // than the unencrypted packet
 } FractalPacket;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))

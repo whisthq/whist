@@ -269,7 +269,7 @@ int32_t SendVideo(void* opaque) {
                 clock t;
                 StartTimer(&t);
 
-                res = video_encoder_encode_frame(encoder, device->frame_data);
+                res = video_encoder_encode_frame(encoder);
                 if (res < 0) {
                     // bad boy error
                     LOG_ERROR("Error encoding video frame!");

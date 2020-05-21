@@ -39,9 +39,9 @@ Custom types
 */
 
 typedef struct DesktopContext {
-  TCHAR desktop_name[1000];
-  HDESK desktop_handle;
-  bool ready;
+    TCHAR desktop_name[1000];
+    HDESK desktop_handle;
+    bool ready;
 } DesktopContext;
 
 /*

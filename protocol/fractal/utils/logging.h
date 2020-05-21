@@ -42,7 +42,7 @@ Defines
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-15s | %s:%d | "
 #define LOG_ARGS(LOG_TAG) \
-  CurrentTimeStr(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
+    CurrentTimeStr(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE "\n"
 #define ERROR_TAG "ERROR"
@@ -52,36 +52,36 @@ Defines
 
 #if LOG_LEVEL >= DEBUG_LEVEL
 #define LOG_DEBUG(message, ...) \
-  PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
+    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(message, ...)
 #endif
 
 #if LOG_LEVEL >= INFO_LEVEL
 #define LOG_INFO(message, ...) \
-  PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(INFO_TAG), ##__VA_ARGS__)
+    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(INFO_TAG), ##__VA_ARGS__)
 #else
 #define LOG_INFO(message, ...)
 #endif
 
 #if LOG_LEVEL >= WARNING_LEVEL
 #define LOG_WARNING(message, ...) \
-  PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__)
+    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__)
 #else
 #define LOG_WARNING(message, ...)
 #endif
 
 #if LOG_LEVEL >= ERROR_LEVEL
 #define LOG_ERROR(message, ...) \
-  PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__)
+    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__)
 #else
 #define LOG_ERROR(message, ...)
 #endif
 
 #if LOG_LEVEL >= NO_LOGS
 #define LOG_IF(condition, message, ...) \
-  if (condition)                        \
-  PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
+    if (condition)                      \
+    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
 #else
 #define LOG_IF(condition, message, args...)
 #endif

@@ -136,7 +136,8 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
             set_width = pDescs[k].Width;
             set_height = pDescs[k].Height;
             ratio_closeness = 0.0;
-            LOG_INFO( "FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator, pDescs[k].RefreshRate.Denominator );
+            LOG_INFO("FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator,
+                     pDescs[k].RefreshRate.Denominator);
         }
     }
 
@@ -152,7 +153,8 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
             0.01) {
             LOG_INFO("Ratio match found with %dx%d!", pDescs[k].Width,
                      pDescs[k].Height);
-            LOG_INFO( "FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator, pDescs[k].RefreshRate.Denominator );
+            LOG_INFO("FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator,
+                     pDescs[k].RefreshRate.Denominator);
             if (set_width == 0) {
                 set_width = pDescs[k].Width;
                 set_height = pDescs[k].Height;
@@ -189,7 +191,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
             dm.dmPelsWidth = width;
             dm.dmPelsHeight = height;
             dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
-            //dm.dmDisplayFrequency = 
+            // dm.dmDisplayFrequency =
 
             int ret = ChangeDisplaySettingsExW(
                 monitorInfo.szDevice, &dm, NULL,
@@ -233,14 +235,14 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
         return -1;
     }
 
-    if( hardware->final_output_desc.DesktopCoordinates.left != 0 )
-    {
-        LOG_ERROR( "final_output_desc left found: %d\n", hardware->final_output_desc.DesktopCoordinates.left );
+    if (hardware->final_output_desc.DesktopCoordinates.left != 0) {
+        LOG_ERROR("final_output_desc left found: %d\n",
+                  hardware->final_output_desc.DesktopCoordinates.left);
     }
 
-    if( hardware->final_output_desc.DesktopCoordinates.top != 0 )
-    {
-        LOG_ERROR( "final_output_desc top found: %d\n", hardware->final_output_desc.DesktopCoordinates.top );
+    if (hardware->final_output_desc.DesktopCoordinates.top != 0) {
+        LOG_ERROR("final_output_desc top found: %d\n",
+                  hardware->final_output_desc.DesktopCoordinates.top);
     }
 
     device->width = hardware->final_output_desc.DesktopCoordinates.right;
@@ -425,14 +427,14 @@ int CaptureScreen(struct CaptureDevice* device) {
         static double time_spent = 0.0;
 
         clock dxgi_copy_timer;
-        StartTimer( &dxgi_copy_timer );
+        StartTimer(&dxgi_copy_timer);
         hr = screenshot->surface->lpVtbl->Map(
             screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
         times_measured++;
-        time_spent += GetTimer( dxgi_copy_timer );
-        if( times_measured == 10 )
-        {
-            LOG_INFO( "Average Time Spent Moving DXGI to CPU: %f\n", time_spent / times_measured );
+        time_spent += GetTimer(dxgi_copy_timer);
+        if (times_measured == 10) {
+            LOG_INFO("Average Time Spent Moving DXGI to CPU: %f\n",
+                     time_spent / times_measured);
             times_measured = 0;
             time_spent = 0.0;
         }

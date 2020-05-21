@@ -124,16 +124,15 @@ void update() {
     // clipboard
     if (received_server_init_message) {
         ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
-        if( clipboard )
-        {
+        if (clipboard) {
             FractalClientMessage* fmsg_clipboard =
-                malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) +
-                        clipboard->size );
+                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) +
+                       clipboard->size);
             fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
-            memcpy( &fmsg_clipboard->clipboard, clipboard,
-                    sizeof( ClipboardData ) + clipboard->size );
-            SendFmsg( fmsg_clipboard );
-            free( fmsg_clipboard );
+            memcpy(&fmsg_clipboard->clipboard, clipboard,
+                   sizeof(ClipboardData) + clipboard->size);
+            SendFmsg(fmsg_clipboard);
+            free(fmsg_clipboard);
         }
     }
 
@@ -158,7 +157,7 @@ void update() {
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_bitrate / 1024.0 / 1024.0;
-        LOG_INFO( "Asking for server MBPS to be %f", fmsg.mbps );
+        LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
         SendFmsg(&fmsg);
     }
 
@@ -651,9 +650,9 @@ int main(int argc, char* argv[]) {
         }
 
         int a = 65535;
-        if( setsockopt( PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof( int ) ) == -1 )
-        {
-            fprintf( stderr, "Error setting socket opts: %s\n", strerror( errno ) );
+        if (setsockopt(PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF,
+                       (const char*)&a, sizeof(int)) == -1) {
+            fprintf(stderr, "Error setting socket opts: %s\n", strerror(errno));
         }
 
         SDL_Delay(150);

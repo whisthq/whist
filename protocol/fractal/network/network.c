@@ -171,15 +171,16 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
     */
 
     clock packet_timer;
-    StartTimer( &packet_timer );
+    StartTimer(&packet_timer);
 
     while (curr_index < len) {
         // Delay distribution of packets as needed
-        while( burst_bitrate > 0 && curr_index - 5000 > GetTimer( packet_timer ) * max_bytes_per_second )
-        {
-            SDL_Delay( 1 );
+        while (burst_bitrate > 0 &&
+               curr_index - 5000 >
+                   GetTimer(packet_timer) * max_bytes_per_second) {
+            SDL_Delay(1);
         }
-        
+
         // local packet and len for when nack buffer isn't needed
         FractalPacket l_packet = {0};
         int l_len = 0;
@@ -232,7 +233,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
         curr_index += payload_size;
     }
 
-    //LOG_INFO( "Packet Time: %f\n", GetTimer( packet_timer ) );
+    // LOG_INFO( "Packet Time: %f\n", GetTimer( packet_timer ) );
 
     return 0;
 }
@@ -1346,15 +1347,14 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
     free(message);
 
     // now that it's sent, let's get the reply
-    int len = recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
-    if( len < 0 )
-    {
-        LOG_WARNING( "Response to JSON GET failed!" );
+    int len =
+        recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
+    if (len < 0) {
+        LOG_WARNING("Response to JSON GET failed!");
         json_res[0] = '\0';
-    } else
-    {
+    } else {
         json_res[len] = '\0';
-        LOG_INFO( "JSON GET Response: %s", json_res );
+        LOG_INFO("JSON GET Response: %s", json_res);
     }
 
     FRACTAL_CLOSE_SOCKET(Socket);

@@ -323,8 +323,8 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
 #if LOG_VIDEO
         LOG_DEBUG("Rendered %d (Size: %d) (Age %f)\n", renderContext.id,
-                renderContext.frame_size,
-                GetTimer(renderContext.frame_creation_timer));
+                  renderContext.frame_size,
+                  GetTimer(renderContext.frame_creation_timer));
 #endif
 
         if (frame->is_iframe) {
@@ -489,7 +489,8 @@ void updateVideo() {
         VideoData.nack_by_bitrate[VideoData.bucket] += VideoData.num_nacked;
         VideoData.seconds_by_bitrate[VideoData.bucket] += time;
 
-        mprintf( "====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====\n", VideoData.bucket*BITRATE_BUCKET_SIZE, time, nack_per_second );
+        mprintf("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====\n",
+                VideoData.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
 
         // Print statistics
 
@@ -523,8 +524,7 @@ void updateVideo() {
             working_mbps = max(VideoData.target_mbps * 1.05, working_mbps);
             VideoData.target_mbps =
                 (VideoData.target_mbps + working_mbps) / 2.0;
-            VideoData.target_mbps =
-                min(VideoData.target_mbps, MAXIMUM_BITRATE);
+            VideoData.target_mbps = min(VideoData.target_mbps, MAXIMUM_BITRATE);
             update_mbps = true;
         }
 

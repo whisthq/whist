@@ -33,10 +33,10 @@ Custom types
 @brief                          The type of data that a clipboard might be
 */
 typedef enum ClipboardType {
-  CLIPBOARD_NONE,
-  CLIPBOARD_TEXT,
-  CLIPBOARD_IMAGE,
-  CLIPBOARD_FILES
+    CLIPBOARD_NONE,
+    CLIPBOARD_TEXT,
+    CLIPBOARD_IMAGE,
+    CLIPBOARD_FILES
 } ClipboardType;
 
 /*
@@ -44,17 +44,17 @@ typedef enum ClipboardType {
 information of a clipboard
 */
 typedef struct ClipboardData {
-  int size;            // Number of bytes for the clipboard data
-  ClipboardType type;  // The type of data for the clipboard
-  char data[];         // The data that stores the clipboard information
+    int size;            // Number of bytes for the clipboard data
+    ClipboardType type;  // The type of data for the clipboard
+    char data[];         // The data that stores the clipboard information
 } ClipboardData;
 
 /*
 @brief                          Data packet description
 */
 typedef struct ClipboardFiles {
-  int size;
-  char* files[];
+    int size;
+    char* files[];
 } ClipboardFiles;
 
 /*
