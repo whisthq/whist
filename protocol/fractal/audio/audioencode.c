@@ -21,11 +21,13 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
   encoder->pCodec = avcodec_find_encoder(AV_CODEC_ID_AAC);
   if (!encoder->pCodec) {
     LOG_WARNING("AVCodec not found.\n");
+    destroy_audio_encoder(encoder);
     return NULL;
   }
   encoder->pCodecCtx = avcodec_alloc_context3(encoder->pCodec);
   if (!encoder->pCodecCtx) {
     LOG_WARNING("Could not allocate AVCodecContext.\n");
+    destroy_audio_encoder(encoder);
     return NULL;
   }
 
@@ -40,6 +42,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
 
   if (avcodec_open2(encoder->pCodecCtx, encoder->pCodec, NULL) < 0) {
     LOG_WARNING("Could not open AVCodec.\n");
+    destroy_audio_encoder(encoder);
     return NULL;
   }
 
@@ -56,6 +59,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
 
   if (av_frame_get_buffer(encoder->pFrame, 0)) {
     LOG_WARNING("Could not initialize AVFrame buffer.\n");
+    destroy_audio_encoder(encoder);
     return NULL;
   }
 
@@ -66,6 +70,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
       av_get_channel_layout_nb_channels(encoder->pFrame->channel_layout), 1);
   if (!encoder->pFifo) {
     LOG_WARNING("Could not allocate AVAudioFifo.\n");
+    destroy_audio_encoder(encoder);
     return NULL;
   }
 
@@ -80,11 +85,13 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
       0, NULL);     //       might not work if not same sample size throughout
   if (!encoder->pSwrContext) {
     LOG_WARNING("Could not initialize SwrContext.\n");
+    destroy_audio_encoder(encoder);
     return NULL;
   }
 
   if (swr_init(encoder->pSwrContext)) {
     LOG_WARNING("Could not open SwrContext.\n");
+    destroy_audio_encoder(encoder);
     return NULL;
   }
 

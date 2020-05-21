@@ -419,11 +419,12 @@ input_device_t* CreateInputDevice() {
       input_device->fd_keyboard < 0) {
     LOG_ERROR("CreateInputDevice: Error opening '/dev/uinput' for writing: %s",
               strerror(errno));
+    free(input_device);
     return NULL;
   }
 
   // register keyboard events
-
+  // TODO: if this fails we get a memory leak because the macro returns NULL, but does not free input_device
   _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_EVBIT, EV_KEY)
   int kcode;
   for (int i = 0; i < NUM_KEYCODES; ++i) {
