@@ -71,7 +71,7 @@ def vm(action, **kwargs):
         dev = request.get_json()["dev"]
         setDev(vm_name, dev)
         sendInfo(kwargs["ID"], "Set dev state for vm {} to {}".format(vm_name, dev))
-        jsonify({"status": 200}), 200
+        return jsonify({"status": 200}), 200
     elif action == "delete" and request.method == "POST":
         body = request.get_json()
 
