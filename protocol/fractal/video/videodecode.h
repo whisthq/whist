@@ -12,6 +12,7 @@
 typedef struct {
   int width;
   int height;
+  bool can_use_hardware;
   AVCodec *codec;
   AVCodecContext *context;
   AVFrame *sw_frame;

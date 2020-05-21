@@ -95,13 +95,18 @@ enum AVPixelFormat get_format(AVCodecContext* ctx,
 
   // Create an AV_HWDEVICE_TYPE_QSV so that QSV occurs over a hardware frame
   // False, because this seems to slow down QSV for me
-  if( false && decoder->match_fmt == AV_PIX_FMT_QSV )
+  if( decoder->match_fmt == AV_PIX_FMT_QSV )
   {
-        av_hwdevice_ctx_create( &decoder->ref, AV_HWDEVICE_TYPE_QSV, "auto", NULL, 0 );
+        int ret;
+		
+        ret = av_hwdevice_ctx_create( &decoder->ref, AV_HWDEVICE_TYPE_QSV, "auto", NULL, 0 );
+		if ( ret < 0 ) {
+			LOG_WARNING("Could not av_hwdevice_ctx_create for QSV");
+			return AV_PIX_FMT_NONE;
+		}
 
         AVHWFramesContext  *frames_ctx;
         AVQSVFramesContext *frames_hwctx;
-        int ret;
       
         /* create a pool of surfaces to be used by the decoder */
         ctx->hw_frames_ctx = av_hwframe_ctx_alloc( decoder->ref );
@@ -119,20 +124,25 @@ enum AVPixelFormat get_format(AVCodecContext* ctx,
         frames_hwctx->frame_type = MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
       
         ret = av_hwframe_ctx_init( ctx->hw_frames_ctx );
-        if( ret < 0 )
-            return AV_PIX_FMT_NONE;
+        if( ret < 0 ) {
+			LOG_WARNING("Could not av_hwframe_ctx_init for QSV");
+			return AV_PIX_FMT_NONE;
+		}
   }
 
   return match;
 }
 
-int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
+int try_setup_video_decoder(video_decoder_t* decoder) {
   // setup the AVCodec and AVFormatContext
   // avcodec_register_all is deprecated on FFmpeg 4+
   // only Linux uses FFmpeg 3.4.x because of canonical system packages
 #if LIBAVCODEC_VERSION_MAJOR < 58
   avcodec_register_all();
 #endif
+
+  int width = decoder->width;
+  int height = decoder->height;
 
   if (decoder->type == DECODE_TYPE_SOFTWARE) {
     // BEGIN SOFTWARE DECODER
@@ -253,6 +263,58 @@ int try_setup_video_decoder(int width, int height, video_decoder_t* decoder) {
   return 0;
 }
 
+#if defined(_WIN32)
+    int decoder_precedence[] = { DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,
+                                DECODE_TYPE_SOFTWARE};
+#elif __APPLE__
+    int decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
+#else  // linux
+    int decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,
+                                DECODE_TYPE_SOFTWARE};
+#endif
+
+#define NUM_DECODER_TYPES (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
+
+bool try_next_decoder(video_decoder_t* decoder) {
+  if (decoder->can_use_hardware) {
+	int i = 0;
+    if ( decoder->type != DECODE_TYPE_NONE ) {
+	  for(; i < NUM_DECODER_TYPES; i++) {
+		if ( decoder->type == decoder_precedence[i] ) {
+			// Let's begin by trying the next one
+			i++;
+			break;
+		}
+	  }
+	}
+
+	LOG_INFO("Trying decoder #%d", i);
+	  
+    for (; i < NUM_DECODER_TYPES; i++) {
+      decoder->type = decoder_precedence[i];
+      if (try_setup_video_decoder(decoder) < 0) {
+        LOG_INFO("Video decoder: Failed, trying next decoder");
+      } else {
+		LOG_INFO("Video decoder: Success!");
+		return true;
+      }
+    }
+
+    LOG_WARNING("Video decoder: Failed, No more decoders, All decoders failed!");
+    return false;
+  } else {
+    LOG_WARNING("Video Decoder: NO HARDWARE");
+    decoder->type = DECODE_TYPE_SOFTWARE;
+    if (try_setup_video_decoder(decoder) < 0) {
+      LOG_WARNING("Video decoder: Software decoder failed!");
+      return false;
+    } else {
+      LOG_INFO("Video decoder: Success!");
+      return true;
+    }
+  }
+}
+
 video_decoder_t* create_video_decoder(int width, int height,
                                       bool use_hardware) {
 #if SHOW_DECODER_LOGS
@@ -265,41 +327,15 @@ video_decoder_t* create_video_decoder(int width, int height,
 
   decoder->width = width;
   decoder->height = height;
-
-  if (use_hardware) {
-#if defined(_WIN32)
-    int decoder_precedence[] = { DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,
-                                DECODE_TYPE_SOFTWARE};
-#elif __APPLE__
-    int decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
-#else  // linux
-    int decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,
-                                DECODE_TYPE_SOFTWARE};
-#endif
-    for (unsigned long i = 0;
-         i < sizeof(decoder_precedence) / sizeof(decoder_precedence[0]); ++i) {
-      decoder->type = decoder_precedence[i];
-      if (try_setup_video_decoder(width, height, decoder) < 0) {
-        LOG_INFO("Video decoder: Failed, trying next decoder");
-      } else {
-        LOG_INFO("Video decoder: Success!");
-        return decoder;
-      }
-    }
-
-    LOG_WARNING("Video decoder: All decoders failed!");
-    return NULL;
-  } else {
-    LOG_WARNING("Video Decoder: NO HARDWARE");
-    decoder->type = DECODE_TYPE_SOFTWARE;
-    if (try_setup_video_decoder(width, height, decoder) < 0) {
-      LOG_WARNING("Video decoder: Software decoder failed!");
-      return NULL;
-    } else {
-      LOG_INFO("Video decoder: Success!");
-      return decoder;
-    }
+  decoder->can_use_hardware = use_hardware;
+  decoder->type = DECODE_TYPE_NONE;
+  
+  if (!try_next_decoder(decoder)) {
+	destroy_video_decoder(decoder);
+	return NULL;
   }
+  
+  return decoder;
 }
 
 /// @brief destroy decoder decoder
@@ -349,9 +385,12 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
   decoder->packet.size = buffer_size;
 
   // decode the frame
-  if (avcodec_send_packet(decoder->context, &decoder->packet) < 0) {
+  while (avcodec_send_packet(decoder->context, &decoder->packet) < 0) {
     LOG_WARNING("Failed to avcodec_send_packet!");
-    return false;
+    if (!try_next_decoder(decoder)) {
+	  destroy_video_decoder(decoder);
+      return false;
+    }
   }
 
   // If frame was computed on the CPU
@@ -360,6 +399,7 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
       if( avcodec_receive_frame( decoder->context, decoder->hw_frame ) < 0 )
       {
           LOG_WARNING( "Failed to avcodec_receive_frame!" );
+	      destroy_video_decoder(decoder);
           return false;
       }
 
@@ -374,6 +414,7 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
       if( avcodec_receive_frame( decoder->context, decoder->sw_frame ) < 0 )
       {
           LOG_WARNING( "Failed to avcodec_receive_frame!" );
+	      destroy_video_decoder(decoder);
           return false;
       }
   }
