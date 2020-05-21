@@ -1,12 +1,7 @@
 import React, { Component } from "react";
-import { connect, bindActionCreators } from "react-redux";
-import { Link, useHistory } from "react-router-dom";
-import { configureStore, history } from "../store/configureStore";
-import InputGroup from "react-bootstrap/InputGroup";
-import FormControl from "react-bootstrap/FormControl";
-import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
+import { connect } from "react-redux";
+import { history } from "../store/configureStore";
 
-import routes from "../constants/routes.json";
 import styles from "./Home.css";
 import Titlebar from "react-electron-titlebar";
 import Background from "../../resources/images/background.jpg";
@@ -18,8 +13,6 @@ import UpdateScreen from "./custom_components/UpdateScreen.tsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faCircleNotch,
-    faWindowMinimize,
-    faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { loginUser, setOS, loginStudio, loginFailed } from "../actions/counter";

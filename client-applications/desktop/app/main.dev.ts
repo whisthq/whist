@@ -11,9 +11,6 @@
 import path from "path";
 import { app, BrowserWindow } from "electron";
 import { autoUpdater } from "electron-updater";
-import log from "electron-log";
-import MenuBuilder from "./menu";
-import { dialog, Menu } from "electron";
 
 var updating = false;
 let mainWindow: BrowserWindow | null = null;
