@@ -26,8 +26,6 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         ),
     )
 
-    print("printing statement")
-
     _, compute_client, _ = createClients()
     vmName = genVMName()
     nic = createNic(vmName, location, 0)
@@ -53,7 +51,7 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 
     time.sleep(30)
 
-    print("The VM created is called {}".format(vmParameters["vm_name"]))
+    sendInfo(ID, "The VM created is called {}".format(vmParameters["vm_name"]))
 
     fractalVMStart(vmParameters["vm_name"], needs_winlogon=False)
 
@@ -130,14 +128,14 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, ID=
     payload = None
 
     while hr == 400:
-        print("Creating {} disk for {}".format(operating_system, username))
+        sendInfo(ID, "Creating {} disk for {}".format(operating_system, username))
         payload = createDiskFromImageHelper(
             username, location, vm_size, operating_system
         )
         hr = payload["status"]
-        print("Disk created with status {}".format(hr))
+        sendInfo(ID, "Disk created with status {}".format(hr))
 
-    print(payload)
+    sendDebug(ID, payload)
     payload["location"] = location
     return payload
 
@@ -151,7 +149,7 @@ def attachDisk(self, vm_name, disk_name):
     while not attachedDisk:
         try:
             # Get the virtual machine by name
-            print("Incrementing lun")
+            sendDebug(ID, "Incrementing lun")
             virtual_machine = compute_client.virtual_machines.get(
                 os.environ.get("VM_GROUP"), vm_name
             )
@@ -187,8 +185,8 @@ def attachDisk(self, vm_name, disk_name):
     )
 
     result = poller.result()
-    print("Disk attached to LUN#" + str(lunNum))
-    print(result.value[0].message)
+    sendInfo(ID, "Disk attached to LUN#" + str(lunNum))
+    sendDebug(ID, result.value[0].message)
 
 
 @celery.task(bind=True)
@@ -703,10 +701,10 @@ def updateVMTable(self, ID=-1):
 
 
 @celery.task(bind=True)
-def runPowershell(self, vm_name):
+def runPowershell(self, vm_name, ID=-1):
     _, compute_client, _ = createClients()
     with open("app/scripts/vmCreate.txt", "r") as file:
-        print("TASK: Starting to run Powershell scripts")
+        sendInfo(ID, "TASK: Starting to run Powershell scripts")
         command = file.read()
         run_command_parameters = {
             "command_id": "RunPowerShellScript",
@@ -718,26 +716,26 @@ def runPowershell(self, vm_name):
         )
         # poller.wait()
         result = poller.result()
-        print("SUCCESS: Powershell scripts finished running")
-        print(result.value[0].message)
+        sendInfo(ID, "SUCCESS: Powershell scripts finished running")
+        sendDebug(ID, result.value[0].message)
 
     return {"status": 200}
 
 
 @celery.task(bind=True)
-def deleteDisk(self, disk_name):
+def deleteDisk(self, disk_name, ID=-1):
     _, compute_client, _ = createClients()
     try:
-        print("Attempting to delete the OS disk...")
+        sendInfo(ID, "Attempting to delete the OS disk...")
         os_disk_delete = compute_client.disks.delete(os.getenv("VM_GROUP"), disk_name)
         os_disk_delete.wait()
         deleteDiskFromTable(disk_name)
-        print("OS disk deleted")
+        sendInfo(ID, "OS disk deleted")
     except Exception as e:
-        print("ERROR: " + str(e))
+        sendError(ID, "ERROR: " + str(e))
         updateDiskState(disk_name, "TO_BE_DELETED")
 
-    print("SUCCESS: {} deleted".format(disk_name))
+    sendInfo(ID, "SUCCESS: {} deleted".format(disk_name))
 
     return {"status": 200}
 
@@ -780,8 +778,6 @@ def fetchLogs(self, username, fetch_all=False, ID=-1):
 			SELECT * FROM logs WHERE "username" = :username ORDER BY last_updated DESC
 			"""
         )
-        print("fetch log print")
-
         params = {"username": username}
 
         with engine.connect() as conn:
@@ -815,4 +811,3 @@ def deleteLogs(self, connection_id, ID=-1):
         return {"status": 200}
     sendError(ID, "Delete logs unsuccessful")
     return {"status": 422}
-
