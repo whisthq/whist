@@ -1202,7 +1202,7 @@ def createNic(name, location, tries):
             return None
 
 
-def swapdisk_name(s, disk_name, vm_name, ID=-1):
+def swapdisk_name(s, disk_name, vm_name, needs_winlogon = True, ID=-1):
     """Attaches an OS disk to the VM. If the vm already has an OS disk attached, the vm will detach that and attach this one.
 
     Args:
@@ -1245,7 +1245,7 @@ def swapdisk_name(s, disk_name, vm_name, ID=-1):
             meta={"msg": "Data successfully uploaded to server. Forwarding boot request to cloud PC."},
         )
 
-        return fractalVMStart(vm_name, True, s=s)
+        return fractalVMStart(vm_name, True, needs_winlogon = needs_winlogon, s=s)
     except Exception as e:
         sendCritical(ID, str(e))
         return -1

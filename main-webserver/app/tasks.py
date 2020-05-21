@@ -399,9 +399,9 @@ def syncDisks(self, ID=-1):
 
 @celery.task(bind = True)
 def swapDiskSync(self, disk_name, ID=-1):
-	def swapDiskAndUpdate(s, disk_name, vm_name):
+	def swapDiskAndUpdate(s, disk_name, vm_name, needs_winlogon):
 		# Pick a VM, attach it to disk
-		hr = swapdisk_name(s, disk_name, vm_name)
+		hr = swapdisk_name(s, disk_name, vm_name, needs_winlogon = needs_winlogon)
 		if hr > 0:
 			updateDisk(disk_name, vm_name, location)
 			associateVMWithDisk(vm_name, disk_name)
@@ -424,6 +424,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 
 	os_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
 	os_type = 'Windows' if 'windows' in str(os_disk.os_type) else 'Linux'
+	needs_winlogon = os_type == 'Windows'
 	username = mapDiskToUser(disk_name)
 	vm_name = os_disk.managed_by
 
@@ -496,7 +497,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 					ID, " Database updated with {} and {}".format(disk_name, vm_name)
 				)
 
-				if fractalVMStart(vm_name, s=self) > 0:
+				if fractalVMStart(vm_name, needs_winlogon = needs_winlogon, s=self) > 0:
 					sendInfo(ID, " VM {} is started and ready to use".format(vm_name))
 					self.update_state(
 						state="PENDING", meta={"msg": "Cloud PC is ready to use."}
@@ -545,7 +546,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 						),
 					)
 
-					if swapDiskAndUpdate(self, disk_name, vm_name) > 0:
+					if swapDiskAndUpdate(self, disk_name, vm_name, needs_winlogon) > 0:
 						self.update_state(
 							state="PENDING",
 							meta={"msg": "Data successfully uploaded to cloud PC."},
