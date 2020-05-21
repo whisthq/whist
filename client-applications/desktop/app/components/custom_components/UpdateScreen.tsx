@@ -5,8 +5,6 @@ import Logo from "../../../resources/images/logo.svg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faCircleNotch,
-    faWindowMinimize,
-    faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 
 class UpdateScreen extends Component {

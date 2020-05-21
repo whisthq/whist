@@ -27,7 +27,7 @@ import Folder from "../../../resources/images/folder.svg";
 import Video from "../../../resources/images/video.svg";
 import Window from "../../../resources/images/window.svg";
 import Speedometer from "../../../resources/images/speedometer.svg";
-import Car from "../../../resources/images/car.jpg";
+import Mountain from "../../../resources/images/mountain.jpg";
 import Scale from "../../../resources/images/scale.svg";
 
 import {
@@ -371,7 +371,7 @@ class MainBox extends Component {
                                     style={{
                                         backgroundImage:
                                             "linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url(" +
-                                            Car +
+                                            Mountain +
                                             ")",
                                     }}
                                 >

@@ -1,17 +1,14 @@
 import {
     put,
-    take,
-    takeLatest,
     takeEvery,
     all,
     call,
     select,
     delay,
 } from "redux-saga/effects";
-import { channel } from "redux-saga";
 import { apiPost, apiGet } from "../utils/api.ts";
 import * as Action from "../actions/counter";
-import { configureStore, history } from "../store/configureStore";
+import { history } from "../store/configureStore";
 
 import { config } from "../constants/config.ts";
 

@@ -5,7 +5,7 @@ import Style from "../../style/components/general.module.css";
 const FastSpeedtest = require("fast-speedtest-api");
 
 class WifiBox extends Component {
-    constructor(props) {
+    constructor(props: any) {
         super(props);
         this.state = { downloadSpeed: 0, internetbar: 50 };
     }
@@ -22,10 +22,10 @@ class WifiBox extends Component {
         });
         speedtest
             .getSpeed()
-            .then((s) => {
+            .then((s: any) => {
                 this.setState({ downloadSpeed: s.toFixed(1) });
             })
-            .catch((e) => {
+            .catch((e: any) => {
                 console.error(e.message);
             });
     }

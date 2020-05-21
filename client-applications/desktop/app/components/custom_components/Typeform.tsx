@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import * as geolib from "geolib";
 import { connect } from "react-redux";
 import styles from "../Counter.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
