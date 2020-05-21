@@ -26,13 +26,17 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         ),
     )
 
+    print("printing statement")
+
     _, compute_client, _ = createClients()
     vmName = genVMName()
     nic = createNic(vmName, location, 0)
     if not nic:
         sendError(ID, "Nic does not exist, aborting")
         return
-    vmParameters = createVMParameters(vmName, nic.id, vm_size, location)
+    vmParameters = createVMParameters(
+        vmName, nic.id, vm_size, location, operating_system
+    )
     async_vm_creation = compute_client.virtual_machines.create_or_update(
         os.environ["VM_GROUP"], vmParameters["vm_name"], vmParameters["params"]
     )
@@ -49,20 +53,37 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 
     time.sleep(30)
 
-    extension_parameters = {
-        "location": location,
-        "publisher": "Microsoft.HpcCompute",
-        "vm_extension_name": "NvidiaGpuDriverWindows",
-        "virtual_machine_extension_type": "NvidiaGpuDriverWindows",
-        "type_handler_version": "1.2",
-    }
+    print("The VM created is called {}".format(vmParameters["vm_name"]))
+
+    fractalVMStart(vmParameters["vm_name"], needs_winlogon=False)
+
+    time.sleep(30)
+
+    extension_parameters = (
+        {
+            "location": location,
+            "publisher": "Microsoft.HpcCompute",
+            "vm_extension_name": "NvidiaGpuDriverWindows",
+            "virtual_machine_extension_type": "NvidiaGpuDriverWindows",
+            "type_handler_version": "1.2",
+        }
+        if operating_system == "Windows"
+        else {
+            "location": location,
+            "publisher": "Microsoft.HpcCompute",
+            "vm_extension_name": "NvidiaGpuDriverLinux",
+            "virtual_machine_extension_type": "NvidiaGpuDriverLinux",
+            "type_handler_version": "1.2",
+        }
+    )
 
     async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(
         os.environ["VM_GROUP"],
         vmParameters["vm_name"],
-        "NvidiaGpuDriverWindows",
+        extension_parameters["vm_extension_name"],
         extension_parameters,
     )
+
     sendDebug(ID, "Waiting on async_vm_extension")
     async_vm_extension.wait()
 
@@ -71,6 +92,7 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     updateVMIP(vmParameters["vm_name"], vm_ip)
     updateVMState(vmParameters["vm_name"], "RUNNING_AVAILABLE")
     updateVMLocation(vmParameters["vm_name"], location)
+    updateVMOS(vmParameters["vm_name"], operating_system)
 
     sendInfo(ID, "SUCCESS: VM {} created and updated".format(vmName))
 
@@ -103,7 +125,7 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
 
 
 @celery.task(bind=True)
-def createDiskFromImage(self, username, location, vm_size, operating_system):
+def createDiskFromImage(self, username, location, vm_size, operating_system, ID=-1):
     hr = 400
     payload = None
 
@@ -173,11 +195,11 @@ def attachDisk(self, vm_name, disk_name):
 def detachDisk(self, vm_Name, disk_name, ID=-1):
     """Detaches disk from vm
 
-    Args:
-        vm_Name (str): Name of the vm
-        disk_name (str): Name of the disk
-        ID (int, optional): Papertrail logging ID. Defaults to -1.
-    """
+	Args:
+		vm_Name (str): Name of the vm
+		disk_name (str): Name of the disk
+		ID (int, optional): Papertrail logging ID. Defaults to -1.
+	"""
     _, compute_client, _ = createClients()
     # Detach data disk
     sendInfo(ID, "\nDetach Data Disk: " + disk_name)
@@ -259,70 +281,54 @@ def fetchAll(self, update, ID=-1):
 
 @celery.task(bind=True)
 def deleteVMResources(self, vm_name, delete_disk, ID=-1):
-    sendInfo(ID, "Trying to delete vm {} with disk {}".format(vm_name, delete_disk))
+    if spinLock(vm_name) > 0:
+        status = 200 if deleteResource(vm_name, delete_disk) else 404
+        lockVM(vm_name, False)
 
-    locked = checkLock(vm_name)
+        sendInfo(
+            ID,
+            "Disk vm deletion request for vm {} resolved with status {}".format(
+                vm_name, status
+            ),
+        )
 
-    while locked:
-        sendDebug(ID, "VM {} is locked. Waiting to be unlocked".format(vm_name))
-        time.sleep(5)
-        locked = checkLock(vm_name)
-
-    lockVM(vm_name, True, ID=ID)
-    status = 200 if deleteResource(vm_name, delete_disk, ID) else 404
-    lockVM(vm_name, False, ID=ID)
-    sendInfo(
-        ID,
-        "Disk vm deletion request for vm {} resolved with status {}".format(
-            vm_name, status
-        ),
-    )
-
-    return {"status": status}
+        return {"status": status}
+    else:
+        return {"status": 404}
 
 
 @celery.task(bind=True)
 def restartVM(self, vm_name, ID=-1):
-    sendInfo(ID, "Attempting to restart VM {}".format(vm_name))
-    locked = checkLock(vm_name)
+    if spinLock(vm_name) > 0:
+        lockVM(vm_name, True)
 
-    while locked:
-        sendDebug(ID, "VM {} is locked. Waiting to be unlocked".format(vm_name))
-        time.sleep(5)
-        locked = checkLock(vm_name)
+        _, compute_client, _ = createClients()
 
-    lockVM(vm_name, True, ID=ID)
+        fractalVMStart(vm_name, True)
 
-    _, compute_client, _ = createClients()
+        lockVM(vm_name, False)
+        sendInfo(ID, "VM {} restarted successfully".format(vm_name))
 
-    fractalVMStart(vm_name, True)
-
-    lockVM(vm_name, False, ID=ID)
-    sendInfo(ID, "VM {} restarted successfully".format(vm_name))
-
-    return {"status": 200}
+        return {"status": 200}
+    else:
+        return {"status": 404}
 
 
 @celery.task(bind=True)
 def startVM(self, vm_name, ID=-1):
-    sendInfo(ID, "Attempting to start VM {}".format(vm_name))
-    locked = checkLock(vm_name)
+    if spinLock(vm_name) > 0:
+        lockVM(vm_name, True)
 
-    while locked:
-        sendDebug(ID, "VM {} is locked. Waiting to be unlocked".format(vm_name))
-        time.sleep(5)
-        locked = checkLock(vm_name)
+        _, compute_client, _ = createClients()
 
-    lockVM(vm_name, True, ID=ID)
+        fractalVMStart(vm_name)
+        lockVM(vm_name, False)
 
-    _, compute_client, _ = createClients()
+        sendInfo(ID, "VM {} started successfully".format(vm_name))
 
-    fractalVMStart(vm_name, ID=ID)
-    lockVM(vm_name, False, ID=ID)
-
-    sendInfo(ID, "VM {} started successfully".format(vm_name))
-
-    return {"status": 200}
+        return {"status": 200}
+    else:
+        return {"status": 400}
 
 
 @celery.task(bind=True)
@@ -368,9 +374,9 @@ def updateVMStates(self, ID=-1):
 def syncDisks(self, ID=-1):
     """Syncs disks sql table to what's on Azure
 
-    Returns:
-        dict: status = 200 for success
-    """
+	Returns:
+		dict: status = 200 for success
+	"""
     sendInfo(ID, "Starting sync disks")
     _, compute_client, _ = createClients()
     disks = compute_client.disks.list(resource_group_name=os.environ.get("VM_GROUP"))
@@ -425,6 +431,7 @@ def swapDiskSync(self, disk_name, ID=-1):
     _, compute_client, _ = createClients()
 
     os_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
+    os_type = "Windows" if "windows" in str(os_disk.os_type) else "Linux"
     username = mapDiskToUser(disk_name)
     vm_name = os_disk.managed_by
 
@@ -535,7 +542,7 @@ def swapDiskSync(self, disk_name, ID=-1):
     if not vm_attached:
         disk_attached = False
         while not disk_attached:
-            vm = claimAvailableVM(disk_name, location, s=self)
+            vm = claimAvailableVM(disk_name, location, os_type, s=self)
             if vm:
                 try:
                     vm_name = vm["vm_name"]
@@ -606,14 +613,14 @@ def swapDiskSync(self, disk_name, ID=-1):
 def swapSpecificDisk(self, disk_name, vm_name, ID=-1):
     """Swaps out a disk in a vm
 
-    Args:
-        disk_name (str): The name of the disk to swap out
-        vm_name (str): The name of the vm the disk is attached to
-        ID (int, optional): Papertrail logging ID. Defaults to -1.
+	Args:
+		disk_name (str): The name of the disk to swap out
+		vm_name (str): The name of the vm the disk is attached to
+		ID (int, optional): Papertrail logging ID. Defaults to -1.
 
-    Returns:
-        dict: A dictionary representing the VM in the v_ms sql table
-    """
+	Returns:
+		dict: A dictionary representing the VM in the v_ms sql table
+	"""
     sendInfo(ID, "Attempting to swap out disk {} in VM {}".format(disk_name, vm_name))
     locked = checkLock(vm_name)
 
@@ -664,12 +671,12 @@ def swapSpecificDisk(self, disk_name, vm_name, ID=-1):
 def updateVMTable(self, ID=-1):
     """Updates the entire VM sql table
 
-    Args:
-        ID (int, optional): Papertrail logging id. Defaults to -1.
+	Args:
+		ID (int, optional): Papertrail logging id. Defaults to -1.
 
-    Returns:
-        dict: status 200 for success
-    """
+	Returns:
+		dict: status 200 for success
+	"""
     sendInfo(ID, "Updating VM table")
     vms = fetchUserVMs(None, ID)
     _, compute_client, network_client = createClients()
@@ -773,6 +780,7 @@ def fetchLogs(self, username, fetch_all=False, ID=-1):
 			SELECT * FROM logs WHERE "username" = :username ORDER BY last_updated DESC
 			"""
         )
+        print("fetch log print")
 
         params = {"username": username}
 
@@ -807,3 +815,4 @@ def deleteLogs(self, connection_id, ID=-1):
         return {"status": 200}
     sendError(ID, "Delete logs unsuccessful")
     return {"status": 422}
+

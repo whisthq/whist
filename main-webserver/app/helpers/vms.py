@@ -43,6 +43,8 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
             }
         )
 
+        print("Creating VM {} with parameters {}".format(vmName, str(vm_reference)))
+
         command = text(
             """
             INSERT INTO v_ms("vm_name", "disk_name")
@@ -303,7 +305,7 @@ def insertVM(vm_name, vm_ip=None, location=None):
             conn.close()
 
 
-def updateVMIP(vm_name, ip):
+def updateVMIP(vm_name, ip, ID=-1):
     """Updates the ip address of a vm
 
     Args:
@@ -325,14 +327,14 @@ def updateVMIP(vm_name, ip):
         conn.close()
 
 
-def updateVMState(vm_name, state):
+def updateVMState(vm_name, state, ID=-1):
     """Updates the state for a vm
 
     Args:
         vm_name (str): The name of the vm to update
         state (str): The new state of the vm
     """
-    sendInfo(ID, "Updating state for VM {} to {} in SQL".format(vm_name, state))
+    sendInfo(ID, "Updating state for VM {} to {} in SQL".format(vm_name, state, ID))
     command = text(
         """
         UPDATE v_ms
@@ -402,7 +404,7 @@ def updateVMStateAutomatically(vm_name, ID=-1):
     return hr
 
 
-def updateVMLocation(vm_name, location):
+def updateVMLocation(vm_name, location, ID=-1):
     """Updates the location of the vm entry in the v_ms sql table
 
     Args:
@@ -424,7 +426,29 @@ def updateVMLocation(vm_name, location):
         conn.close()
 
 
-def fetchAttachableVMs(state, location):
+def updateVMOS(vm_name, operating_system, ID=-1):
+    """Updates the OS of the vm entry in the v_ms sql table
+
+    Args:
+        vm_name (str): Name of vm of interest
+        operating_system (str): The OSof the vm
+    """
+    sendInfo(ID, "Updating OS for VM {} to {} in SQL".format(vm_name, operating_system))
+    command = text(
+        """
+        UPDATE v_ms
+        SET os = :operating_system
+        WHERE
+        "vm_name" = :vm_name
+        """
+    )
+    params = {"vm_name": vm_name, "operating_system": operating_system}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
+def fetchAttachableVMs(state, location, ID=-1):
     """Finds all vms with specified location and state that are unlocked and not in dev mode
 
     Args:
@@ -449,7 +473,7 @@ def fetchAttachableVMs(state, location):
 
 
 def lockVMAndUpdate(
-    vm_name, state, lock, temporary_lock, change_last_updated, verbose, ID
+    vm_name, state, lock, temporary_lock, change_last_updated, verbose, ID=-1
 ):
     MAX_LOCK_TIME = 10
 
@@ -556,6 +580,21 @@ def lockVM(
         sendInfo(ID, "Successfully unlocked VM {}".format(vm_name), papertrail=verbose)
 
 
+def setDev(vm_name, dev):
+    command = text(
+        """
+        UPDATE v_ms
+        SET dev = :dev
+        WHERE
+        "vm_name" = :vm_name
+        """
+    )
+    params = {"dev": dev, "vm_name": vm_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
 def claimAvailableVM(disk_name, location, s=None, ID=-1):
     username = mapDiskToUser(disk_name)
     session = Session()
@@ -573,7 +612,7 @@ def claimAvailableVM(disk_name, location, s=None, ID=-1):
         command = text(
             """
             SELECT * FROM v_ms
-            WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
+            WHERE lock = :lock AND state = :state AND dev = :dev AND os = :os_type AND location = :location AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
             """
         )
 
@@ -583,6 +622,7 @@ def claimAvailableVM(disk_name, location, s=None, ID=-1):
             "dev": False,
             "location": location,
             "temporary_lock": dateToUnix(getToday()),
+            "os_type": os_type,
         }
 
         available_vm = cleanFetchedSQL(session.execute(command, params).fetchone())
@@ -753,6 +793,37 @@ def checkLock(vm_name, s=None, ID=-1):
                 ),
             )
         return vm["lock"] or temporary_lock
+    return None
+
+
+def checkTemporaryLock(vm_name, ID=-1):
+    """Check to see if a vm has been locked
+
+    Args:
+        vm_name (str): Name of the vm to check
+
+    Returns:
+        bool: True if VM is locked, False otherwise
+    """
+    session = Session()
+
+    command = text(
+        """
+        SELECT * FROM v_ms WHERE "vm_name" = :vm_name
+        """
+    )
+    params = {"vm_name": vm_name}
+
+    vm = cleanFetchedSQL(session.execute(command, params).fetchone())
+    session.commit()
+    session.close()
+
+    if vm:
+        temporary_lock = False
+        if vm["temporary_lock"]:
+            temporary_lock = dateToUnix(getToday()) < vm["temporary_lock"]
+
+        return temporary_lock
     return None
 
 
@@ -1168,7 +1239,15 @@ def swapdisk_name(s, disk_name, vm_name, ID=-1):
         virtual_machine.storage_profile.os_disk.managed_disk.id = new_os_disk.id
         virtual_machine.storage_profile.os_disk.name = new_os_disk.name
 
+        s.update_state(
+            state="PENDING",
+            meta={
+                "msg": "Uploading the necessary data to our servers. This could take a few minutes."
+            },
+        )
+
         sendInfo(ID, "Attaching disk {} to {}".format(disk_name, vm_name))
+
         start = time.perf_counter()
         async_disk_attach = compute_client.virtual_machines.create_or_update(
             os.getenv("VM_GROUP"), vm_name, virtual_machine
@@ -1184,7 +1263,9 @@ def swapdisk_name(s, disk_name, vm_name, ID=-1):
 
         s.update_state(
             state="PENDING",
-            meta={"msg": "Data successfully uploaded to server. Starting server."},
+            meta={
+                "msg": "Data successfully uploaded to server. Forwarding boot request to cloud PC."
+            },
         )
 
         return fractalVMStart(vm_name, True, s=s)
@@ -1193,7 +1274,7 @@ def swapdisk_name(s, disk_name, vm_name, ID=-1):
         return -1
 
 
-def sendVMStartCommand(vm_name, needs_restart, ID=-1, s=None):
+def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
     """Starts a vm
 
     Args:
@@ -1238,12 +1319,13 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s=None):
                     ),
                 )
                 vmReadyToConnect(vm_name, False)
+
                 sendInfo(ID, "Starting VM {}".format(vm_name))
                 lockVMAndUpdate(
                     vm_name,
                     "STARTING",
                     True,
-                    temporary_lock=None,
+                    temporary_lock=12,
                     change_last_updated=True,
                     verbose=False,
                     ID=ID,
@@ -1284,7 +1366,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s=None):
                     vm_name,
                     "RESTARTING",
                     True,
-                    temporary_lock=None,
+                    temporary_lock=12,
                     change_last_updated=True,
                     verbose=False,
                     ID=ID,
@@ -1361,7 +1443,7 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s=None):
                         "msg": "Since this is your first time logging on, we're running a few extra tests to ensure stability. Please allow a few extra minutes."
                     },
                 )
-                time.sleep(20)
+                time.sleep(60)
 
             lockVMAndUpdate(
                 vm_name,
@@ -1389,27 +1471,41 @@ def sendVMStartCommand(vm_name, needs_restart, ID=-1, s=None):
 
             if s:
                 s.update_state(
-                    state="PENDING", meta={"msg": "Logging you into your cloud PC."}
-                )
-
-            winlogon = waitForWinlogon(vm_name, ID)
-            while winlogon < 0:
-                boot_if_necessary(vm_name, True, ID)
-                winlogon = waitForWinlogon(vm_name, ID)
-
-            if s:
-                s.update_state(
                     state="PENDING",
-                    meta={"msg": "Logged into your cloud PC successfully."},
+                    meta={
+                        "msg": "Logging you into your cloud PC. This should take less than two minutes."
+                    },
                 )
+
+            if needs_winlogon:
+                winlogon = waitForWinlogon(vm_name, ID)
+                while winlogon < 0:
+                    boot_if_necessary(vm_name, True, ID)
+                    winlogon = waitForWinlogon(vm_name, ID)
+
+                if s:
+                    s.update_state(
+                        state="PENDING",
+                        meta={"msg": "Logged into your cloud PC successfully."},
+                    )
 
             if i == 1:
                 changeFirstTime(disk_name)
+
+                if s:
+                    s.update_state(
+                        state="PENDING",
+                        meta={
+                            "msg": "Running final performance checks. This will take two minutes."
+                        },
+                    )
+                time.sleep(60)
+
                 lockVMAndUpdate(
                     vm_name,
                     "RUNNING_AVAILABLE",
                     False,
-                    temporary_lock=4,
+                    temporary_lock=3,
                     change_last_updated=True,
                     verbose=False,
                     ID=ID,
@@ -1469,7 +1565,7 @@ def waitForWinlogon(vm_name, ID=-1):
     return 1
 
 
-def fractalVMStart(vm_name, needs_restart=False, ID=-1, s=None):
+def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, ID=-1, s=None):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary (big brain thoughts from Ming)
 
     Args:
@@ -1500,7 +1596,7 @@ def fractalVMStart(vm_name, needs_restart=False, ID=-1, s=None):
             )
 
         while (
-            sendVMStartCommand(vm_name, needs_restart, s=s) < 0
+            sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=s) < 0
             and start_command_tries < 6
         ):
             time.sleep(10)
@@ -1587,7 +1683,7 @@ def spinLock(vm_name, s=None, ID=-1):
         locked = checkLock(vm_name, s=s)
         num_tries += 1
 
-        if num_tries > 50:
+        if num_tries > 40:
             sendCritical(
                 ID, "FAILURE: VM {} is locked for too long. Giving up.".format(vm_name)
             )

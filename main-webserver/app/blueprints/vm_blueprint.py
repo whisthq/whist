@@ -66,13 +66,23 @@ def vm(action, **kwargs):
         except:
             sendError(kwargs["ID"], "Ip not found for VM {}".format(vm_name))
             return ({"public_ip": None}), 404
+    elif action == "setDev" and request.method == "POST":
+        vm_name = request.get_json()["vm_name"]
+        dev = request.get_json()["dev"]
+        setDev(vm_name, dev)
+        sendInfo(kwargs["ID"], "Set dev state for vm {} to {}".format(vm_name, dev))
+        return 200
     elif action == "delete" and request.method == "POST":
         body = request.get_json()
-        vm_name, delete_disk = body["vm_name"], body["delete_disk"]
-        task = deleteVMResources.apply_async([vm_name, delete_disk, kwargs["ID"]])
-        return jsonify({"ID": task.id}), 202
-    elif action == "restart" and request.method == "POST":
-        username = request.get_json()["username"]
+
+        lockVMAndUpdate(vm_name = body['vm_name'], state = 'DELETING', lock = True, temporary_lock = None, 
+            change_last_updated = True, verbose = False, ID = kwargs['ID'])
+                
+        vm_name, delete_disk = body['vm_name'], body['delete_disk']
+        task = deleteVMResources.apply_async([vm_name, delete_disk])
+        return jsonify({'ID': task.id}), 202
+    elif action == 'restart' and request.method == 'POST':
+        username = request.get_json()['username']
         vm = fetchUserVMs(username)
         if vm:
             vm_name = vm[0]["vm_name"]
@@ -152,9 +162,7 @@ def vm(action, **kwargs):
             intermediate_states = [
                 "STOPPING",
                 "DEALLOCATING",
-                "ATTACHING",
-                "STARTING",
-                "RESTARTING",
+                "ATTACHING"
             ]
 
             if vm_state in intermediate_states:

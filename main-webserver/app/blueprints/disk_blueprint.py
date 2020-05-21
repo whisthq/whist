@@ -39,6 +39,7 @@ def disk(action, **kwargs):
                 kwargs["ID"],
             ]
         )
+        
         if not task:
             sendError(kwargs["ID"], "Error creating disk from image")
             return jsonify({}), 400
