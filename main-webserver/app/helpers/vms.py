@@ -556,7 +556,7 @@ def lockVM(
         sendInfo(ID, "Successfully unlocked VM {}".format(vm_name), papertrail=verbose)
 
 
-def claimAvailableVM(disk_name, location, s=None, ID=-1):
+def claimAvailableVM(disk_name, location, os_type = 'Windows', s=None, ID=-1):
     username = mapDiskToUser(disk_name)
     session = Session()
 
@@ -573,7 +573,7 @@ def claimAvailableVM(disk_name, location, s=None, ID=-1):
         command = text(
             """
             SELECT * FROM v_ms
-            WHERE lock = :lock AND state = :state AND dev = :dev AND location = :location AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
+            WHERE lock = :lock AND state = :state AND dev = :dev AND os = :os_type AND location = :location AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
             """
         )
 
@@ -583,6 +583,7 @@ def claimAvailableVM(disk_name, location, s=None, ID=-1):
             "dev": False,
             "location": location,
             "temporary_lock": dateToUnix(getToday()),
+            "os_type": os_type
         }
 
         available_vm = cleanFetchedSQL(session.execute(command, params).fetchone())

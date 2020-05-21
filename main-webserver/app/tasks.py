@@ -49,6 +49,10 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 
 	time.sleep(30)
 
+	fractalVMStart(vm_name)
+
+	time.sleep(30)
+
 	extension_parameters = {
 		"location": location,
 		"publisher": "Microsoft.HpcCompute",
@@ -63,6 +67,7 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 		"NvidiaGpuDriverWindows",
 		extension_parameters,
 	)
+	
 	sendDebug(ID, "Waiting on async_vm_extension")
 	async_vm_extension.wait()
 
@@ -409,6 +414,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 	_, compute_client, _ = createClients()
 
 	os_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
+	os_tye = 'Windows' if 'windows' in str(os_disk.os_type) else 'Linux'
 	username = mapDiskToUser(disk_name)
 	vm_name = os_disk.managed_by
 
@@ -519,7 +525,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 	if not vm_attached:
 		disk_attached = False
 		while not disk_attached:
-			vm = claimAvailableVM(disk_name, location, s=self)
+			vm = claimAvailableVM(disk_name, location, os_type, s=self)
 			if vm:
 				try:
 					vm_name = vm["vm_name"]
