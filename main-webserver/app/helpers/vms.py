@@ -437,7 +437,7 @@ def updateVMLocation(vm_name, operating_system, ID=-1):
     command = text(
         """
         UPDATE v_ms
-        SET operating_system = :operating_system
+        SET os = :operating_system
         WHERE
         "vm_name" = :vm_name
         """
