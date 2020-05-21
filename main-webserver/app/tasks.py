@@ -32,7 +32,7 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 	if not nic:
 		sendError(ID, "Nic does not exist, aborting")
 		return
-	vmParameters = createVMParameters(vmName, nic.id, vm_size, location, operating)
+	vmParameters = createVMParameters(vmName, nic.id, vm_size, location, operating_system)
 	async_vm_creation = compute_client.virtual_machines.create_or_update(
 		os.environ["VM_GROUP"], vmParameters["vm_name"], vmParameters["params"]
 	)
