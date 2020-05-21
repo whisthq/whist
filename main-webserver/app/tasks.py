@@ -297,6 +297,7 @@ def deleteVMResources(self, vm_name, delete_disk, ID=-1):
 
 @celery.task(bind=True)
 def restartVM(self, vm_name, ID=-1):
+    sendInfo(ID, "Trying to restart vm {}".format(vm_name))
     if spinLock(vm_name) > 0:
         lockVM(vm_name, True)
 
@@ -314,6 +315,8 @@ def restartVM(self, vm_name, ID=-1):
 
 @celery.task(bind=True)
 def startVM(self, vm_name, ID=-1):
+    sendInfo(ID, "Trying to start vm {}".format(vm_name))
+
     if spinLock(vm_name) > 0:
         lockVM(vm_name, True)
 

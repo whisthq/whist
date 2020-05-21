@@ -39,14 +39,14 @@ def disk(action, **kwargs):
                 kwargs["ID"],
             ]
         )
-        
+
         if not task:
             sendError(kwargs["ID"], "Error creating disk from image")
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202
     elif action == "attach":
+        # Attaches a disk to an available vm in the region. If an available vm has a disk, swap the disks.
         body = request.get_json()
-
         task = swapDiskSync.apply_async([body["disk_name"], kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
     elif action == "detach":
@@ -66,7 +66,9 @@ def disk(action, **kwargs):
     elif action == "delete":
         body = request.get_json()
         username = body["username"]
-        sendInfo(kwargs["ID"], "Deleting disks associated with users...")
+        sendInfo(
+            kwargs["ID"], "Deleting disks associated with user {}".format(username)
+        )
         disks = fetchUserDisks(username, True)
         task_id = None
 
@@ -75,4 +77,14 @@ def disk(action, **kwargs):
                 task = deleteDisk.apply_async([disk["disk_name"]])
                 task_id = task.id
         sendInfo(kwargs["ID"], "User disk deletion complete")
+        return jsonify({"ID": task_id}), 202
+    elif action == "deleteSpecific":
+        body = request.get_json()
+        disk_name = body["disk_name"]
+        sendInfo(kwargs["ID"], "Deleting disk {}".format(disk_name))
+        task_id = None
+
+        task = deleteDisk.apply_async(disk_name)
+        task_id = task.id
+        sendInfo(kwargs["ID"], "Disk deletion complete")
         return jsonify({"ID": task_id}), 202
