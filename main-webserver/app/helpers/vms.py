@@ -56,14 +56,23 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
             conn.execute(command, **params)
             conn.close()
 
+            os_profile = {
+                "computer_name": vmName,
+                "admin_username": os.getenv("VM_GROUP"),
+                "admin_password": os.getenv("VM_PASSWORD"),
+                "LinuxConfiguration": {
+                    "disablePasswordAuthentication": True
+                }
+            } if operating_system == 'Linux' else {
+                "computer_name": vmName,
+                "admin_username": os.getenv("VM_GROUP"),
+                "admin_password": os.getenv("VM_PASSWORD")
+            }
+
             return {
                 "params": {
                     "location": location,
-                    "os_profile": {
-                        "computer_name": vmName,
-                        "admin_username": os.getenv("VM_GROUP"),
-                        "admin_password": os.getenv("VM_PASSWORD"),
-                    },
+                    "os_profile": os_profile,
                     "hardware_profile": {"vm_size": vm_size},
                     "storage_profile": {
                         "image_reference": {
