@@ -1,260 +1,260 @@
 button {
-    outline: none;
+  outline: none;
 }
 
 .pointerOnHover:hover {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .windowControl:hover {
-    cursor: pointer;
-    color: #5ec4eb !important;
+  cursor: pointer;
+  color: #5ec4eb !important;
 }
 
 .container {
-    position: absolute;
-    text-align: center;
-    width: 100vw;
-    height: 100vh;
-    overflow-x: hidden;
-    overflow-y: hidden;
-    font-family: "Maven Pro";
-    margin: 0px;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    -webkit-app-region: drag;
+  position: absolute;
+  text-align: center;
+  width: 100vw;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  font-family: "Maven Pro";
+  margin: 0px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  -webkit-app-region: drag;
 }
 
 .container h2 {
-    font-size: 5rem;
+  font-size: 5rem;
 }
 
 .container a {
-    font-size: 1.4rem;
+  font-size: 1.4rem;
 }
 
 .landingHeader {
-    padding: 30px;
-    padding-top: 20px;
-    display: flex;
+  padding: 30px;
+  padding-top: 20px;
+  display: flex;
 }
 
 .landingHeaderLeft {
-    width: 40%;
-    text-align: left;
+  width: 40%;
+  text-align: left;
 }
 
 .landingHeaderRight {
-    width: 60%;
-    text-align: right;
-    font-size: 12px;
-    color: #d3d3d3;
+  width: 60%;
+  text-align: right;
+  font-size: 12px;
+  color: #d3d3d3;
 }
 
 .logoTitle {
-    font-family: "Maven Pro";
-    position: relative;
-    bottom: 3px;
-    left: 10px;
-    font-weight: "bold";
-    font-size: 20px;
+  font-family: "Maven Pro";
+  position: relative;
+  bottom: 3px;
+  left: 10px;
+  font-weight: "bold";
+  font-size: 20px;
 }
 
 .signupButton,
 .loginButton {
-    font-family: "Maven Pro";
-    border: none;
-    border: solid 2px #5ec4eb;
-    background: none;
-    font-weight: bold;
-    border-radius: 5px;
-    padding: 10px 30px;
-    color: #5ec4eb;
-    font-weight: "bold";
-    margin-left: 10px;
+  font-family: "Maven Pro";
+  border: none;
+  border: solid 2px #5ec4eb;
+  background: none;
+  font-weight: bold;
+  border-radius: 5px;
+  padding: 10px 30px;
+  color: #5ec4eb;
+  font-weight: "bold";
+  margin-left: 10px;
 }
 
 .loginButton {
-    border: none;
-    color: white;
-    background: linear-gradient(258.54deg, #5ec3eb 0%, #d023eb 100%);
-    margin-left: 0px;
-    width: 275px;
+  border: none;
+  color: white;
+  background: linear-gradient(258.54deg, #5ec3eb 0%, #d023eb 100%);
+  margin-left: 0px;
+  width: 275px;
 }
 
 .signupButton:hover,
 .loginButton:hover {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .loginContainer {
-    text-align: center;
-    margin-top: 50px;
+  text-align: center;
+  margin-top: 50px;
 }
 
 .inputBox {
-    width: 175px;
-    background-color: rgba(20, 20, 20, 0.7);
-    padding: 15px 50px;
-    border-radius: 30px;
-    margin-bottom: 20px;
-    border: none;
-    outline: none !important;
-    color: white;
-    font-family: "Maven Pro";
+  width: 175px;
+  background-color: rgba(20, 20, 20, 0.7);
+  padding: 15px 50px;
+  border-radius: 30px;
+  margin-bottom: 20px;
+  border: none;
+  outline: none !important;
+  color: white;
+  font-family: "Maven Pro";
 }
 
 .inputIcon {
-    position: absolute;
-    margin-top: 17px;
-    margin-left: 20px;
-    width: 12px;
-    height: 12px;
+  position: absolute;
+  margin-top: 17px;
+  margin-left: 20px;
+  width: 12px;
+  height: 12px;
 }
 
 .bottomBox {
-    position: absolute;
-    bottom: 3%;
-    right: 2%;
+  position: absolute;
+  bottom: 3%;
+  right: 2%;
 }
 #internetSpeed,
 #location,
 #cores {
-    background-color: rgba(25, 25, 25, 0.6);
-    border-radius: 10px;
-    padding: 10px 15px;
-    color: white;
-    font-size: 13px;
-    font-family: "Maven Pro";
-    margin-top: 10px;
-    max-width: 250px;
+  background-color: rgba(25, 25, 25, 0.6);
+  border-radius: 10px;
+  padding: 10px 15px;
+  color: white;
+  font-size: 13px;
+  font-family: "Maven Pro";
+  margin-top: 10px;
+  max-width: 250px;
 }
 
 .notificationText {
-    padding-left: 10px;
-    font-size: 12px;
+  padding-left: 10px;
+  font-size: 12px;
 }
 
 .internetSpeedText {
-    font-family: "Maven Pro";
-    font-size: 12px;
-    margin-top: 10px;
-    color: #d3d3d3;
+  font-family: "Maven Pro";
+  font-size: 12px;
+  margin-top: 10px;
+  color: #d3d3d3;
 }
 
 #forgotButton {
-    margin-left: 10px;
+  margin-left: 10px;
 }
 
 #forgotButton:hover {
-    cursor: pointer;
-    color: #5ec4eb;
+  cursor: pointer;
+  color: #5ec4eb;
 }
 
 .rememberMeContainer {
-    margin-top: 20px;
-    color: white;
-    font-size: 12px;
+  margin-top: 20px;
+  color: white;
+  font-size: 12px;
 }
 
 .rememberMe {
-    margin-right: 5px;
-    position: relative;
-    top: 3px;
+  margin-right: 5px;
+  position: relative;
+  top: 3px;
 }
 
 .rememberMeContainer {
-    margin-top: 20px;
-    color: white;
-    font-size: 12px;
+  margin-top: 20px;
+  color: white;
+  font-size: 12px;
 }
 
 #remember-me {
-    background-color: rgba(0, 0, 0, 0);
-    border: solid 1px white;
-    margin-right: 5px;
-    position: relative;
-    top: 3px;
+  background-color: rgba(0, 0, 0, 0);
+  border: solid 1px white;
+  margin-right: 5px;
+  position: relative;
+  top: 3px;
 }
 
 .tabHeader:hover {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .termsContainer {
-    display: block;
-    position: relative;
-    padding-left: 25px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    font-size: 22px;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+  display: block;
+  position: relative;
+  padding-left: 25px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 22px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 /* Hide the browser's default checkbox */
 .termsContainer input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
 }
 
 /* Create a custom checkbox */
 .checkmark {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 12px;
-    width: 12px;
-    background-color: #eee;
-    border-radius: 2px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 12px;
+  width: 12px;
+  background-color: #eee;
+  border-radius: 2px;
 }
 
 /* On mouse-over, add a grey background color */
 .termsContainer:hover input ~ .checkmark {
-    background-color: #ccc;
+  background-color: #ccc;
 }
 
 /* When the checkbox is checked, add a blue background */
 .termsContainer input:checked ~ .checkmark {
-    background-color: #5ec3eb;
+  background-color: #5ec3eb;
 }
 
 /* Create the checkmark/indicator (hidden when not checked) */
 .checkmark:after {
-    content: "";
-    position: absolute;
-    display: none;
+  content: "";
+  position: absolute;
+  display: none;
 }
 
 /* Show the checkmark when checked */
 .termsContainer input:checked ~ .checkmark:after {
-    display: block;
+  display: block;
 }
 
 /* Style the checkmark/indicator */
 .termsContainer .checkmark:after {
-    top: 2px;
-    left: 4px;
-    width: 3px;
-    height: 6px;
-    border: solid white;
-    border-width: 0 1.2px 1.2px 0;
-    -webkit-transform: rotate(45deg);
-    -ms-transform: rotate(45deg);
-    transform: rotate(45deg);
+  top: 2px;
+  left: 4px;
+  width: 3px;
+  height: 6px;
+  border: solid white;
+  border-width: 0 1.2px 1.2px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
 }
 
 .macTitleBar {
-    -webkit-app-region: drag;
-    margin-top: 22px;
+  -webkit-app-region: drag;
+  margin-top: 22px;
 }
 
 .removeDrag {
-    -webkit-app-region: no-drag;
+  -webkit-app-region: no-drag;
 }

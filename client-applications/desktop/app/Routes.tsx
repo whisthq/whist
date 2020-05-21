@@ -7,13 +7,13 @@ import CounterPage from "./containers/CounterPage";
 import StudiosPage from "./containers/StudiosPage";
 
 export default function Routes() {
-    return (
-        <App>
-            <Switch>
-                <Route path={routes.STUDIOS} component={StudiosPage} />
-                <Route path={routes.COUNTER} component={CounterPage} />
-                <Route path={routes.HOME} component={HomePage} />
-            </Switch>
-        </App>
-    );
+  return (
+    <App>
+      <Switch>
+        <Route path={routes.STUDIOS} component={StudiosPage} />
+        <Route path={routes.COUNTER} component={CounterPage} />
+        <Route path={routes.HOME} component={HomePage} />
+      </Switch>
+    </App>
+  );
 }

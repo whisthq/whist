@@ -13,9 +13,9 @@ const sagaMiddleware = createSagaMiddleware();
 const enhancer = applyMiddleware(sagaMiddleware);
 
 function configureStore(initialState?: counterStateType): Store {
-    const store = createStore(rootReducer, initialState, enhancer);
-    sagaMiddleware.run(rootSaga);
-    return store;
+  const store = createStore(rootReducer, initialState, enhancer);
+  sagaMiddleware.run(rootSaga);
+  return store;
 }
 
 export default { configureStore, history };

@@ -30,7 +30,7 @@ Start the app in the `dev` environment. This starts the renderer process in [**h
 
 `yarn dev`
 
-Before doing this, you will need to run `yarn -i` and might need to run `yarn upgrade` if you haven't upgraded yarn in a while. You can automatically clean unnecessary files with `yarn init --force && yarn autoclean --force` as needed.
+Before doing this, you will need to run `yarn -i` and might need to run `yarn upgrade` if you haven't upgraded yarn in a while. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
 
 ## Packaging for Production
 
@@ -71,11 +71,8 @@ https://packagecontrol.io/packages/JsPrettier
 Install prettier if you haven't yet.
 
 ```
-# npm (local):
-npm install --save-dev prettier
-
-# npm (global):
-npm install --global prettier
+# yarn (global):
+yarn add prettier
 ```
 
 The easiest and recommended way to install Js​Prettier is using Package Control. From the application menu, navigate to:  
@@ -109,4 +106,3 @@ To ensure that this extension is used over other extensions you may have install
   }
 }
 ```
-
