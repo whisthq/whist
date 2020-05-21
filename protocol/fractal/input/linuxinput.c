@@ -5,6 +5,13 @@
  **/
 #include "linuxinput.h"
 
+#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                    \
+    if (ioctl(FD, PARAMS) == -1) {                                           \
+        mprintf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", \
+                strerror(errno));                                            \
+        goto failure;                                                        \
+    }
+
 // @brief Linux keycodes for replaying SDL user inputs on server
 // @details index is SDL keycode, value is Linux keycode.
 // To debug specific keycodes, use 'sudo showkey --keycodes'.
@@ -420,13 +427,10 @@ input_device_t* CreateInputDevice() {
         LOG_ERROR(
             "CreateInputDevice: Error opening '/dev/uinput' for writing: %s",
             strerror(errno));
-        free(input_device);
-        return NULL;
+        goto failure;
     }
 
     // register keyboard events
-    // TODO: if this fails we get a memory leak because the macro returns NULL,
-    // but does not free input_device
     _FRACTAL_IOCTL_TRY(input_device->fd_keyboard, UI_SET_EVBIT, EV_KEY)
     int kcode;
     for (int i = 0; i < NUM_KEYCODES; ++i) {
@@ -508,6 +512,9 @@ input_device_t* CreateInputDevice() {
     LOG_INFO("Created input devices!");
 
     return input_device;
+failure:
+    DestroyInputDevice(input_device);
+    return NULL;
 }
 
 void DestroyInputDevice(input_device_t* input_device) {
