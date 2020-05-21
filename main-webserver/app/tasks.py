@@ -32,7 +32,7 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 	if not nic:
 		sendError(ID, "Nic does not exist, aborting")
 		return
-	vmParameters = createVMParameters(vmName, nic.id, vm_size, location, operating_system)
+	vmParameters = createVMParameters(vmName, nic.id, vm_size, location, operating)
 	async_vm_creation = compute_client.virtual_machines.create_or_update(
 		os.environ["VM_GROUP"], vmParameters["vm_name"], vmParameters["params"]
 	)
@@ -60,13 +60,19 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 		"publisher": "Microsoft.HpcCompute",
 		"vm_extension_name": "NvidiaGpuDriverWindows",
 		"virtual_machine_extension_type": "NvidiaGpuDriverWindows",
-		"type_handler_version": "1.2",
+		"type_handler_version": "1.2"
+	} if operating_system == 'Windows' else {
+		"location": location,
+		"publisher": "Microsoft.HpcCompute",
+		"vm_extension_name": "NvidiaGpuDriverLinux",
+		"virtual_machine_extension_type": "NvidiaGpuDriverLinux",
+		"type_handler_version": "1.2"
 	}
 
 	async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(
 		os.environ["VM_GROUP"],
 		vmParameters["vm_name"],
-		"NvidiaGpuDriverWindows",
+		extension_parameters["vm_extension_name"],
 		extension_parameters,
 	)
 
