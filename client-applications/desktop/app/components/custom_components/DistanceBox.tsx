@@ -4,12 +4,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
 
 class DistanceBox extends Component {
-  constructor(props) {
+  constructor(props: any) {
     super(props);
     this.state = { distance: 0, distancebar: 50 };
   }
 
-  CalculateDistance = (public_ip) => {
+  CalculateDistance = (public_ip: any) => {
     let component = this;
     const iplocation = require("iplocation").default;
     var options = {
@@ -21,9 +21,9 @@ class DistanceBox extends Component {
 
     navigator.geolocation.getCurrentPosition(showPosition, showError, options);
 
-    function showPosition(position) {
+    function showPosition(position: any) {
       if (public_ip && public_ip !== "") {
-        iplocation(public_ip).then(function (res) {
+        iplocation(public_ip).then(function (res: any) {
           dist = geolib.getDistance(
             {
               latitude: position.coords.latitude,
@@ -43,7 +43,7 @@ class DistanceBox extends Component {
       }
     }
 
-    function showError(error) {
+    function showError(error: any) {
       console.log(error);
     }
   };
@@ -52,7 +52,7 @@ class DistanceBox extends Component {
     this.CalculateDistance(this.props.public_ip);
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(_prevProps: any) {
     if (this.props.public_ip != "" && this.state.distance == 0) {
       this.CalculateDistance(this.props.public_ip);
     }
@@ -70,7 +70,6 @@ class DistanceBox extends Component {
               border: "solid 1px #14a329",
               height: 6,
               width: 6,
-              borderRadius: 4,
               borderRadius: 4,
               display: "inline",
               float: "left",
@@ -112,7 +111,6 @@ class DistanceBox extends Component {
               height: 6,
               width: 6,
               borderRadius: 4,
-              borderRadius: 4,
               display: "inline",
               float: "left",
               position: "relative",
@@ -152,7 +150,6 @@ class DistanceBox extends Component {
               border: "solid 1px #d13628",
               height: 6,
               width: 6,
-              borderRadius: 4,
               borderRadius: 4,
               display: "inline",
               float: "left",

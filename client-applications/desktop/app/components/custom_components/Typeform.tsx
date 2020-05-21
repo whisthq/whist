@@ -11,7 +11,7 @@ import {
 } from "../../actions/counter";
 
 class Typeform extends Component {
-  constructor(props) {
+  constructor(props: any) {
     super(props);
     this.state = { feedback: "", feedbackThankYou: false };
   }
