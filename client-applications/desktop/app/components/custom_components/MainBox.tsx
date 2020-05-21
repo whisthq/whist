@@ -581,7 +581,7 @@ class MainBox extends Component {
                     borderRadius: 5,
                     backgroundColor: "white",
                     border: "none",
-                    height: 100,
+                    height: 150,
                     padding: 30,
                   }}
                 >
@@ -603,6 +603,16 @@ class MainBox extends Component {
                   >
                     Boot your cloud PC first by selecting the "Launch My Cloud
                     PC" button.
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      lineHeight: 1.4,
+                      width: 300,
+                      margin: "20px auto",
+                    }}
+                  >
+                    If you need more specific help, you can email us at support@fractalcomputers.com.
                   </div>
                 </Popup>
               )}
