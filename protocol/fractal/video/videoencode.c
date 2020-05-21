@@ -527,8 +527,3 @@ int video_encoder_encode_frame(video_encoder_t *encoder) {
 
     return 0;
 }
-
-int video_encoder_encode(video_encoder_t *encoder, void *rgb_pixels) {
-    video_encoder_filter_graph_intake(encoder, rgb_pixels);
-    return video_encoder_encode_frame(encoder);
-}

@@ -82,18 +82,6 @@ frames, and -1 on failure
 int video_encoder_encode_frame(video_encoder_t *encoder);
 
 /*
-@brief                          Intake and encode a frame, as a legacy API for
-testing purposes.
-
-@param encoder                  Encoder to use
-@param rgb_pixels               The frame data to encode
-
-@returns                        0 on success, 1 if the encoder has no more
-frames, and -1 on failure
-*/
-int video_encoder_encode(video_encoder_t *encoder, void *rgb_pixels);
-
-/*
 @brief                          Set the next frame to be an i-frame
 
 @param encoder                  Encoder to be updated
