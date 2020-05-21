@@ -274,6 +274,9 @@ def fetchAll(self, update, ID=-1):
 @celery.task(bind=True)
 def deleteVMResources(self, vm_name, delete_disk, ID=-1):
 	if spinLock(vm_name) > 0:
+		lockVMAndUpdate(vm_name = vm_name, state = 'DELETING', lock = True, temporary_lock = None, 
+			change_last_updated = True, verbose = False, ID = ID)
+
 		status = 200 if deleteResource(vm_name, delete_disk) else 404
 		lockVM(vm_name, False)
 
