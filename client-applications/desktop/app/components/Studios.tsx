@@ -268,7 +268,16 @@ class Studios extends Component {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: {
+  counter: {
+    username: any;
+    public_ip: any;
+    os: any;
+    askFeedback: any;
+    window: any;
+    ipInfo: any;
+  };
+}) {
   return {
     username: state.counter.username,
     public_ip: state.counter.public_ip,

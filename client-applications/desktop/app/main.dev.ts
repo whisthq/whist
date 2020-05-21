@@ -75,7 +75,7 @@ const createWindow = async () => {
                 nodeIntegration: true,
             },
         });
-    } else if (os.platform() === "linux") {
+    } else { // if (os.platform() === "linux") case
         mainWindow = new BrowserWindow({
             show: false,
             width: 900,

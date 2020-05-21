@@ -1,15 +1,10 @@
 import React, { Component } from "react";
-import { Link } from "react-router-dom";
 import { connect } from "react-redux";
 import styles from "./Counter.css";
-import routes from "../constants/routes.json";
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
-import { configureStore, history } from "../store/configureStore";
+import { history } from "../store/configureStore";
 
 import Titlebar from "react-electron-titlebar";
 import Logo from "../../resources/images/logo.svg";
-import Spinner from "../../resources/images/spinner.svg";
 import WifiBox from "./custom_components/WifiBox.tsx";
 import DistanceBox from "./custom_components/DistanceBox.tsx";
 import CPUBox from "./custom_components/CPUBox.tsx";
@@ -17,27 +12,11 @@ import Typeform from "./custom_components/Typeform.tsx";
 import MainBox from "./custom_components/MainBox.tsx";
 import UpdateScreen from "./custom_components/UpdateScreen.tsx";
 
-import { Offline, Online } from "react-detect-offline";
 import Popup from "reactjs-popup";
-import { ReactTypeformEmbed } from "react-typeform-embed";
-
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faSpinner,
-    faCheck,
-    faArrowRight,
-} from "@fortawesome/free-solid-svg-icons";
 
 import {
-    storeUsername,
-    storeIP,
-    storeIsUser,
-    trackUserActivity,
-    storeDistance,
     askFeedback,
     changeWindow,
-    fetchDiskStatus,
-    storeDiskName,
     logout,
 } from "../actions/counter";
 

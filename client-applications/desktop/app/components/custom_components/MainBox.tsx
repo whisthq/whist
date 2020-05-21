@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import * as geolib from "geolib";
 import { connect } from "react-redux";
 import Popup from "reactjs-popup";
 import ToggleButton from "react-toggle-button";
@@ -9,12 +8,8 @@ import styles from "../Counter.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faCheck,
-    faArrowRight,
     faCogs,
-    faWindowMaximize,
-    faClock,
     faKeyboard,
-    faDesktop,
     faInfoCircle,
     faPencilAlt,
     faPlus,
@@ -23,22 +18,17 @@ import {
     faUpload,
 } from "@fortawesome/free-solid-svg-icons";
 
-import Folder from "../../../resources/images/folder.svg";
-import Video from "../../../resources/images/video.svg";
 import Window from "../../../resources/images/window.svg";
 import Speedometer from "../../../resources/images/speedometer.svg";
 import Mountain from "../../../resources/images/mountain.jpg";
 import Scale from "../../../resources/images/scale.svg";
 
 import {
-    resetFeedback,
-    sendFeedback,
     askFeedback,
     trackUserActivity,
     changeWindow,
     attachDisk,
     restartPC,
-    vmRestarted,
     sendLogs,
     changeStatusMessage,
     readyToConnect,
