@@ -49,7 +49,8 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 
 	time.sleep(30)
 
-	fractalVMStart(vm_name)
+	print('The VM created is called {}'.format(vmParameters["vm_name"]))
+	fractalVMStart(vmParameters["vm_name"])
 
 	time.sleep(30)
 
@@ -67,7 +68,7 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 		"NvidiaGpuDriverWindows",
 		extension_parameters,
 	)
-	
+
 	sendDebug(ID, "Waiting on async_vm_extension")
 	async_vm_extension.wait()
 
