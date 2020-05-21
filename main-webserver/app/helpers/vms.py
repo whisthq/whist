@@ -43,6 +43,8 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
             }
         )
 
+        print('Creating VM {} with parameters {}'.format(vmName, str(vm_reference)))
+
         command = text(
             """
             INSERT INTO v_ms("vm_name", "disk_name")
