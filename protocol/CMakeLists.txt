@@ -76,6 +76,20 @@ else()
     set(arch 32)
 endif()
 
+#download libs from S3
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    execute_process(COMMAND CMD /C "get-shared-libs.bat")
+else()
+    MESSAGE(STATUS "Downlading libs from s3")
+    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get-shared-libs.sh
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    RESULT_VARIABLE dl_libs_res)
+    if (NOT ${dl_libs_res} EQUAL "0")
+        message(FATAL_ERROR "Failed to download libs from s3: exitcode: ${dl_libs_res}")
+    endif()
+endif()
+
+
 
 # ffmpeg: using our provided libs on mac and windows and system on linux.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
