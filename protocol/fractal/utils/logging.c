@@ -193,6 +193,7 @@ void mprintf(const char *fmtStr, ...) {
     va_start(args, fmtStr);
 
     real_mprintf(WRITE_MPRINTF_TO_LOG, fmtStr, args);
+    va_end(args);
 }
 
 void real_mprintf(bool log, const char *fmtStr, va_list args) {
@@ -307,7 +308,7 @@ char *get_version() {
         fseek(f, 0, SEEK_SET);
         static char buf[17];
         version = buf;
-        fread(version, 1, min(length, sizeof(buf)), f);
+        fread(version, 1, min(length, (long)sizeof(buf)), f); // cast for compiler warning
         version[16] = '\0';
         fclose(f);
     } else {

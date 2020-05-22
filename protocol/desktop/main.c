@@ -295,6 +295,9 @@ int ReceivePackets(void* opaque) {
         // Handle all pending updates
         update();
 
+        //TODO hash_time is never updated, leaving it in here in case it is used in the future
+        // casting to suppress warnings.
+        (void)hash_time;
         // Post statistics every 5 seconds
         if (GetTimer(world_timer) > 5) {
             LOG_INFO("world_time: %f", GetTimer(world_timer));
