@@ -65,6 +65,7 @@ if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
             "--verbose"
             "--std=c99"
             "--suppress=shiftTooManyBitsSigned"
+            "--inline-suppr"
             )
 endif()
 
