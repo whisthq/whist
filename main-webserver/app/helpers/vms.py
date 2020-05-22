@@ -595,7 +595,7 @@ def setDev(vm_name, dev):
         conn.close()
 
 
-def claimAvailableVM(disk_name, location, s=None, ID=-1):
+def claimAvailableVM(disk_name, location, os_type="Windows", s=None, ID=-1):
     username = mapDiskToUser(disk_name)
     session = Session()
 
@@ -608,18 +608,17 @@ def claimAvailableVM(disk_name, location, s=None, ID=-1):
                 state, location, username
             ),
         )
-
         command = text(
             """
             SELECT * FROM v_ms
             WHERE lock = :lock AND state = :state AND dev = :dev AND os = :os_type AND location = :location AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
             """
         )
-
         params = {
             "lock": False,
             "state": state,
-            "dev": False,
+            # TODO: Change back to false
+            "dev": True,
             "location": location,
             "temporary_lock": dateToUnix(getToday()),
             "os_type": os_type,
@@ -643,12 +642,10 @@ def claimAvailableVM(disk_name, location, s=None, ID=-1):
                             "msg": "Your cloud PC is powered off. Preparing your cloud PC (this could take a few minutes)."
                         },
                     )
-
             sendInfo(
                 ID,
                 "Found an available VM {} for {}".format(str(available_vm), username),
             )
-
             command = text(
                 """
                 UPDATE v_ms 
@@ -656,7 +653,6 @@ def claimAvailableVM(disk_name, location, s=None, ID=-1):
                 WHERE vm_name = :vm_name
                 """
             )
-
             params = {
                 "lock": True,
                 "username": username,
@@ -665,17 +661,14 @@ def claimAvailableVM(disk_name, location, s=None, ID=-1):
                 "state": "ATTACHING",
             }
             session.execute(command, params)
-
             sendInfo(
                 ID,
                 "ATTACHING VM {} to new user {}".format(
                     available_vm["vm_name"], username
                 ),
             )
-
             session.commit()
             session.close()
-
             return available_vm
         else:
             sendInfo(
