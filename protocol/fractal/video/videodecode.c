@@ -264,13 +264,12 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
 }
 
 #if defined(_WIN32)
-    int decoder_precedence[] = { DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,
+    int decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE,
                                 DECODE_TYPE_SOFTWARE};
 #elif __APPLE__
     int decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
 #else  // linux
-    int decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_HARDWARE,
-                                DECODE_TYPE_SOFTWARE};
+    int decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
 #endif
 
 #define NUM_DECODER_TYPES (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
