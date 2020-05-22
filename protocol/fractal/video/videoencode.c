@@ -129,6 +129,8 @@ video_encoder_t *create_nvenc_encoder(int in_width, int in_height,
         return NULL;
     }
 
+#if defined(_WIN32)
+// windows currently supports hw resize
 #define N_FILTERS_NVENC 3
     // source -> scale_cuda -> sink
     const AVFilter *filters[N_FILTERS_NVENC] = {0};
@@ -185,6 +187,51 @@ video_encoder_t *create_nvenc_encoder(int in_width, int in_height,
         return NULL;
     }
     encoder->pFilterGraphSink = filter_contexts[2];
+#else
+// linux currently doesn't support hw resize
+#define N_FILTERS_NVENC 2
+    // source -> sink
+    const AVFilter *filters[N_FILTERS_NVENC] = {0};
+    filters[0] = avfilter_get_by_name("buffer");
+    filters[1] = avfilter_get_by_name("buffersink");
+
+    for (int i = 0; i < N_FILTERS_NVENC; ++i) {
+        if (!filters[i]) {
+            LOG_WARNING("Could not find filter %d in the list!", i);
+            destroy_video_encoder(encoder);
+            return NULL;
+        }
+    }
+
+    AVFilterContext *filter_contexts[N_FILTERS_NVENC] = {0};
+
+    // source buffer
+    filter_contexts[0] =
+        avfilter_graph_alloc_filter(encoder->pFilterGraph, filters[0], "src");
+    AVBufferSrcParameters *avbsp = av_buffersrc_parameters_alloc();
+    avbsp->width = encoder->in_width;
+    avbsp->height = encoder->in_height;
+    avbsp->format = hw_format;
+    avbsp->frame_rate = (AVRational){FPS, 1};
+    avbsp->time_base = (AVRational){1, FPS};
+    avbsp->hw_frames_ctx = encoder->pCodecCtx->hw_frames_ctx;
+    av_buffersrc_parameters_set(filter_contexts[0], avbsp);
+    if (avfilter_init_str(filter_contexts[0], NULL) < 0) {
+        LOG_WARNING("Unable to initialize buffer source");
+        destroy_video_encoder(encoder);
+        return NULL;
+    }
+    av_free(avbsp);
+    encoder->pFilterGraphSource = filter_contexts[0];
+    // sink buffer
+    if (avfilter_graph_create_filter(&filter_contexts[1], filters[1], "sink",
+                                     NULL, NULL, encoder->pFilterGraph) < 0) {
+        LOG_WARNING("Unable to initialize buffer sink");
+        destroy_video_encoder(encoder);
+        return NULL;
+    }
+    encoder->pFilterGraphSink = filter_contexts[1];
+#endif
 
     // connect the filters in a simple line
     for (int i = 0; i < N_FILTERS_NVENC - 1; ++i) {
