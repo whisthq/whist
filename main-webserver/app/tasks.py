@@ -410,6 +410,7 @@ def syncDisks(self, ID=-1):
 def swapDiskSync(self, disk_name, ID=-1):
     def swapDiskAndUpdate(s, disk_name, vm_name):
         # Pick a VM, attach it to disk
+        sendInfo(ID, "Preparing to attach disk {} to vm {}".format(disk_name, vm_name))
         hr = swapdisk_name(s, disk_name, vm_name)
         if hr > 0:
             updateDisk(disk_name, vm_name, location)
