@@ -59,10 +59,7 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
             os_profile = {
                 "computer_name": vmName,
                 "admin_username": os.getenv("VM_GROUP"),
-                "admin_password": os.getenv("VM_PASSWORD"),
-                "LinuxConfiguration": {
-                    "disablePasswordAuthentication": True
-                }
+                "admin_password": os.getenv("VM_PASSWORD")
             } if operating_system == 'Linux' else {
                 "computer_name": vmName,
                 "admin_username": os.getenv("VM_GROUP"),
@@ -1323,7 +1320,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
 
                 createTemporaryLock(vm_name, 12)
 
-                sendInfo(ID, async_vm_start.result())
+                sendInfo(ID, async_vm_start.result(timeout = 180))
 
                 if s:
                     s.update_state(
@@ -1460,17 +1457,16 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                     state="PENDING", meta={"msg": "Logging you into your cloud PC. This should take less than two minutes."}
                 )
 
-            if needs_winlogon:
+            winlogon = waitForWinlogon(vm_name, ID)
+            while winlogon < 0:
+                boot_if_necessary(vm_name, True, ID)
                 winlogon = waitForWinlogon(vm_name, ID)
-                while winlogon < 0:
-                    boot_if_necessary(vm_name, True, ID)
-                    winlogon = waitForWinlogon(vm_name, ID)
 
-                if s:
-                    s.update_state(
-                        state="PENDING",
-                        meta={"msg": "Logged into your cloud PC successfully."},
-                    )
+            if s:
+                s.update_state(
+                    state="PENDING",
+                    meta={"msg": "Logged into your cloud PC successfully."},
+                )
 
             if i == 1:
                 changeFirstTime(disk_name)

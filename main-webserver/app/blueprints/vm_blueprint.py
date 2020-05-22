@@ -144,6 +144,9 @@ def vm(action, **kwargs):
         if vm_info:
             vm_name = vm_info["vm_name"] if vm_info["vm_name"] else ""
 
+            if vm_info["os"] == 'Linux':
+                vmReadyToConnect(vm_info["vm_name"], True)
+
             version = None
             if "version" in body:
                 version = body["version"]
