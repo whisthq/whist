@@ -172,7 +172,7 @@ void updateSwsContext()
     {
         videoContext.sws = sws_getContext( decoder->width, decoder->height, sws_input_fmt, output_width,
                                            output_height, AV_PIX_FMT_YUV420P,
-                                           SWS_BILINEAR, NULL, NULL, NULL );
+                                           SWS_FAST_BILINEAR, NULL, NULL, NULL );
     }
 }
 
