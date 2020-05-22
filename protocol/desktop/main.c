@@ -608,6 +608,8 @@ int main(int argc, char* argv[]) {
     initVideo();
     exiting = false;
 
+    int tcp_connection_timeout = 250;
+
     // Try 3 times if a failure to connect occurs
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         // If this is a retry, wait a bit more for the server to recover
@@ -648,14 +650,21 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
+        int a = 65535;
+        if( setsockopt( PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof( int ) ) == -1 )
+        {
+            fprintf( stderr, "Error setting socket opts: %s\n", strerror( errno ) );
+        }
+
         SDL_Delay(150);
 
         // Third context: Mutual TCP context for essential but
         // not-speed-sensitive applications
 
         if (CreateTCPContext(&PacketTCPContext, (char*)server_ip,
-                             PORT_SHARED_TCP, 1, 500) < 0) {
+                             PORT_SHARED_TCP, 1, tcp_connection_timeout) < 0) {
             LOG_ERROR("Failed finish connection to server");
+            tcp_connection_timeout += 250;
             closesocket(PacketSendContext.s);
             closesocket(PacketReceiveContext.s);
             continue;

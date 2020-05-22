@@ -170,7 +170,9 @@ void updateWidthAndHeight(int width, int height) {
                                  output_height, AV_PIX_FMT_YUV420P,
                                  SWS_BILINEAR, NULL, NULL, NULL);
     }
+    struct SwsContext* old_sws_ctx = videoContext.sws;
     videoContext.sws = sws_ctx;
+    sws_freeContext(old_sws_ctx);
 
     server_width = width;
     server_height = height;
@@ -299,7 +301,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             if (frame->cursor.cursor_state == CURSOR_STATE_HIDDEN) {
                 SDL_SetRelativeMouseMode(SDL_TRUE);
             } else {
-                SDL_SetRelativeMouseMode(SDL_DISABLE);
+                SDL_SetRelativeMouseMode(SDL_FALSE);
             }
 
             cursor_state = frame->cursor.cursor_state;
@@ -320,7 +322,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
 #if LOG_VIDEO
-        mprintf("Rendered %d (Size: %d) (Age %f)\n", renderContext.id,
+        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)\n", renderContext.id,
                 renderContext.frame_size,
                 GetTimer(renderContext.frame_creation_timer));
 #endif
@@ -487,6 +489,8 @@ void updateVideo() {
         VideoData.nack_by_bitrate[VideoData.bucket] += VideoData.num_nacked;
         VideoData.seconds_by_bitrate[VideoData.bucket] += time;
 
+        mprintf( "====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====\n", VideoData.bucket*BITRATE_BUCKET_SIZE, time, nack_per_second );
+
         // Print statistics
 
         // mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 *
@@ -520,7 +524,7 @@ void updateVideo() {
             VideoData.target_mbps =
                 (VideoData.target_mbps + working_mbps) / 2.0;
             VideoData.target_mbps =
-                min(VideoData.target_mbps, MAXIMUM_MBPS * 1024 * 1024);
+                min(VideoData.target_mbps, MAXIMUM_BITRATE);
             update_mbps = true;
         }
 

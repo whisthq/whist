@@ -22,11 +22,11 @@
 
 // define decoder struct to pass as a type
 typedef struct {
-    AVCodec *pCodec;
-    AVCodecContext *pCodecCtx;
-    AVFrame *pFrame;
-    SwrContext *pSwrContext;
-    uint8_t *out_buffer;
+  AVCodec *pCodec;
+  AVCodecContext *pCodecCtx;
+  AVFrame *pFrame;
+  SwrContext *pSwrContext;
+  uint8_t *out_buffer;
 } audio_decoder_t;
 
 audio_decoder_t *create_audio_decoder(int sample_rate);

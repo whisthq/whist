@@ -1,0 +1,16 @@
+{
+  "problemMatcher": [
+    {
+      "owner": "cppcheck",
+      "pattern": [
+        {
+        "regexp": "^(cppcheck):(.*):([0-9]+):(?:(?:fatal)?(warning|error)):(.*)$",
+        "file": 2,
+        "line": 3,
+        "severity": 4,
+        "message": 5
+        }
+      ]
+    }
+  ]
+}

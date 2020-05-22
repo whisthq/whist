@@ -13,7 +13,7 @@
 #include "../network/network.h"
 #include "logging.h"
 
-char* get_logger_history();
+char *get_logger_history();
 int get_logger_history_len();
 void initBacktraceHandler();
 
@@ -209,14 +209,18 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
         buf = (char *)logger_queue[index].buf;
         //        snprintf(buf, LOGGER_BUF_SIZE, "%15.4f: ",
         //        GetTimer(mprintf_timer));
-        if( buf[0] != '\0' )
-        {
+        if (buf[0] != '\0') {
             char old_msg[LOGGER_BUF_SIZE];
-            memcpy( old_msg, buf, LOGGER_BUF_SIZE );
-            snprintf( buf, LOGGER_BUF_SIZE, "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n", old_msg, logger_queue[index].buf );
-        } else
-        {
-            vsnprintf( buf, LOGGER_BUF_SIZE, fmtStr, args );
+            memcpy(old_msg, buf, LOGGER_BUF_SIZE);
+            int chars_written =
+                snprintf(buf, LOGGER_BUF_SIZE,
+                         "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n",
+                         old_msg, logger_queue[index].buf);
+            if (!(chars_written > 0 && chars_written <= LOGGER_BUF_SIZE)) {
+                buf[0] = '\0';
+            }
+        } else {
+            vsnprintf(buf, LOGGER_BUF_SIZE, fmtStr, args);
         }
         logger_queue_size++;
     } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
@@ -257,7 +261,11 @@ void crash_handler(int sig) {
     fprintf(stderr, "\nError: signal %d:\n", sig);
     backtrace_symbols_fd(array, size, STDERR_FILENO);
 
-    fprintf(stderr, "addr2line -e build64/server");
+    // and to the log
+    int fd = fileno(mprintf_log_file);
+    backtrace_symbols_fd(array, size, fd);
+
+    fprintf(stderr, "addr2line -e build64/FractalServer");
     for (size_t i = 0; i < size; i++) {
         fprintf(stderr, " %p", array[i]);
     }
@@ -275,6 +283,38 @@ void initBacktraceHandler() {
     crash_handler_mutex = SDL_CreateMutex();
     signal(SIGSEGV, crash_handler);
 #endif
+}
+
+char *get_version() {
+    static char *version = NULL;
+
+    if (version) {
+        return version;
+    }
+
+#ifdef _WIN32
+    char *version_filepath = "C:\\Program Files\\Fractal\\version";
+#else
+    char *version_filepath = "./version";
+#endif
+
+    long length;
+    FILE *f = fopen(version_filepath, "r");
+
+    if (f) {
+        fseek(f, 0, SEEK_END);
+        length = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        static char buf[17];
+        version = buf;
+        fread(version, 1, min(length, sizeof(buf)), f);
+        version[16] = '\0';
+        fclose(f);
+    } else {
+        version = "NONE";
+    }
+
+    return version;
 }
 
 bool sendLogHistory() {
@@ -325,16 +365,56 @@ bool sendLogHistory() {
     logs[log_len++] = '\0';
 
     char *json = malloc(1000 + log_len);
+
     sprintf(json,
             "{\
             \"connection_id\" : \"%d\",\
+            \"version\" : \"%s\",\
             \"logs\" : \"%s\",\
             \"sender\" : \"server\"\
     }",
-            connection_id, logs);
+            connection_id, get_version(), logs);
+
+    LOG_INFO("Sending logs to webserver...");
     SendJSONPost(host, path, json);
     free(logs);
     free(json);
 
     return true;
+}
+
+typedef struct update_status_data {
+    bool is_connected;
+} update_status_data_t;
+
+int32_t MultithreadedUpdateStatus(void *data) {
+    update_status_data_t *d = data;
+
+    char json[1000];
+
+    snprintf(json, sizeof(json),
+             "{\
+            \"ready\" : true\
+    }");
+
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus", json);
+
+    snprintf(json, sizeof(json),
+             "{\
+            \"version\" : \"%s\",\
+            \"available\" : %s\
+    }",
+             get_version(), d->is_connected ? "false" : "true");
+    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
+
+    free(d);
+    return 0;
+}
+
+void updateStatus(bool is_connected) {
+    update_status_data_t *d = malloc(sizeof(update_status_data_t));
+    d->is_connected = is_connected;
+    SDL_Thread *update_status =
+        SDL_CreateThread(MultithreadedUpdateStatus, "UpdateStatus", d);
+    SDL_DetachThread(update_status);
 }

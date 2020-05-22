@@ -37,28 +37,35 @@ Public Functions
 void initVideo();
 
 /*
-@brief                          Free the video thread and VideContext data to exit
+@brief                          Free the video thread and VideContext data to
+exit
 
-@param packet                   Packet received from the server, which gets sorted as video packet with proper parameters
+@param packet                   Packet received from the server, which gets
+sorted as video packet with proper parameters
 
-@returns                        Return -1 if failed to receive packet into video frame, else 0
+@returns                        Return -1 if failed to receive packet into video
+frame, else 0
 */
 int32_t ReceiveVideo(FractalPacket* packet);
 
 /*
-@brief                          Calculate statistics about bitrate, I-Frame, etc. and request video update from the server
+@brief                          Calculate statistics about bitrate, I-Frame,
+etc. and request video update from the server
 */
 void updateVideo();
 
 /*
-@brief                          Free the video thread and VideContext data to exit
+@brief                          Free the video thread and VideContext data to
+exit
 */
 void destroyVideo();
 
 /*
-@brief                          Set the global variable 'resizing' to true if the SDL window is being resized, else false
+@brief                          Set the global variable 'resizing' to true if
+the SDL window is being resized, else false
 
-@param is_resizing              Boolean indicating whether or not the SDL window is being resized                      
+@param is_resizing              Boolean indicating whether or not the SDL window
+is being resized
 */
 void set_video_active_resizing(bool is_resizing);
 
