@@ -72,6 +72,7 @@ bool get_clipboard_picture(ClipboardData* cb) {
     // END WRITE TO FILE
 
     cb->type = CLIPBOARD_IMAGE;
+    free(file_buf);
     return true;
   } else {  // request failed, e.g. owner can't convert to the target format
     LOG_WARNING("Can't convert clipboard image to target format");

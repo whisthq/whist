@@ -47,6 +47,28 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
     add_definitions(-DLOG_LEVEL=2)
 endif()
 
+# static analysis during build defaults to off, but we set to on in github actions
+# you can also use this locally if you like, but will need to install cppcheck.
+OPTION(USE_CPPCHECK OFF)
+find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
+if (CPPCHECK)
+    message(STATUS "found cppcheck")
+else()
+    message(STATUS "cppcheck not found")
+endif()
+
+if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
+    message(STATUS CPPCHECKON)
+    set(CMAKE_C_CPPCHECK "${CPPCHECK}"
+            "--template=cppcheck:{file}:{line}:{severity}: cppcheck: {file}:{line} {message}"
+            "--enable=performance,portability"
+            "--verbose"
+            "--std=c99"
+            "--suppress=shiftTooManyBitsSigned"
+            )
+endif()
+
+
 #detect if we are building 64bit or 32bit
 if (${CMAKE_SIZEOF_VOID_P} MATCHES "8")
     set(arch 64)

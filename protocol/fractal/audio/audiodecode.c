@@ -21,11 +21,13 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
   decoder->pCodec = avcodec_find_decoder(AV_CODEC_ID_AAC);
   if (!decoder->pCodec) {
     LOG_WARNING("AVCodec not found.\n");
+    destroy_audio_decoder(decoder);
     return NULL;
   }
   decoder->pCodecCtx = avcodec_alloc_context3(decoder->pCodec);
   if (!decoder->pCodecCtx) {
     LOG_WARNING("Could not allocate AVCodecContext.\n");
+    destroy_audio_decoder(decoder);
     return NULL;
   }
 
@@ -37,6 +39,7 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
 
   if (avcodec_open2(decoder->pCodecCtx, decoder->pCodec, NULL) < 0) {
     LOG_WARNING("Could not open AVCodec.\n");
+    destroy_audio_decoder(decoder);
     return NULL;
   }
 
@@ -53,11 +56,13 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
 
   if (!decoder->pSwrContext) {
     LOG_WARNING("Could not initialize SwrContext.\n");
+    destroy_audio_decoder(decoder);
     return NULL;
   }
 
   if (swr_init(decoder->pSwrContext)) {
     LOG_WARNING("Could not open SwrContext.\n");
+    destroy_audio_decoder(decoder);
     return NULL;
   }
 
