@@ -98,27 +98,28 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
         encoder->sw_frame->pts = 0;
 
         // set frame size and allocate memory for it
-        int frame_size = av_image_get_buffer_size(out_format, encoder->sw_frame->width,
-                                                  encoder->sw_frame->height, 1);
+        int frame_size = av_image_get_buffer_size(
+            out_format, encoder->sw_frame->width, encoder->sw_frame->height, 64);
         encoder->frame_buffer = malloc(frame_size);
 
         // fill picture with empty frame buffer
-        av_image_fill_arrays(encoder->sw_frame->data,
-                             encoder->sw_frame->linesize,
-                             (uint8_t *)encoder->frame_buffer, out_format,
-                             encoder->sw_frame->width, encoder->sw_frame->height, 1);
+        av_image_fill_arrays(
+            encoder->sw_frame->data, encoder->sw_frame->linesize,
+            (uint8_t *)encoder->frame_buffer, out_format,
+            encoder->sw_frame->width, encoder->sw_frame->height, 64);
 
         // set sws context for color format conversion
 
-        if( encoder->in_width != encoder->out_width || encoder->in_height != encoder->out_height )
-        {
-            LOG_INFO( "Will be server-side scaling from %dx%d to %dx%d\n", encoder->in_width, encoder->in_height, encoder->out_width, encoder->out_height );
+        if (encoder->in_width != encoder->out_width ||
+            encoder->in_height != encoder->out_height) {
+            LOG_INFO("Will be server-side scaling from %dx%d to %dx%d\n",
+                     encoder->in_width, encoder->in_height, encoder->out_width,
+                     encoder->out_height);
             encoder->sws = sws_getContext(encoder->in_width, encoder->in_height,
-               AV_PIX_FMT_RGB32, encoder->out_width,
-               encoder->out_height, out_format,
-               SWS_FAST_BILINEAR, 0, 0, 0);
-        } else
-        {
+                                          AV_PIX_FMT_RGB32, encoder->out_width,
+                                          encoder->out_height, out_format,
+                                          SWS_FAST_BILINEAR, 0, 0, 0);
+        } else {
             encoder->sws = NULL;
         }
 
@@ -190,14 +191,14 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
 
         // set frame size and allocate memory for it
         int frame_size = av_image_get_buffer_size(
-            out_format, encoder->out_width, encoder->out_height, 1);
+            out_format, encoder->out_width, encoder->out_height, 64);
         encoder->frame_buffer = malloc(frame_size);
 
         // fill picture with empty frame buffer
         av_image_fill_arrays(encoder->sw_frame->data,
                              encoder->sw_frame->linesize,
                              (uint8_t *)encoder->frame_buffer, out_format,
-                             encoder->out_width, encoder->out_height, 1);
+                             encoder->out_width, encoder->out_height, 64);
 
         // set sws context for color format conversion
         encoder->sws = sws_getContext(encoder->in_width, encoder->in_height,
@@ -255,14 +256,14 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
 
         // set frame size and allocate memory for it
         int frame_size = av_image_get_buffer_size(
-            out_format, encoder->out_width, encoder->out_height, 1);
+            out_format, encoder->out_width, encoder->out_height, 64);
         encoder->frame_buffer = malloc(frame_size);
 
         // fill picture with empty frame buffer
         av_image_fill_arrays(encoder->sw_frame->data,
                              encoder->sw_frame->linesize,
                              (uint8_t *)encoder->frame_buffer, out_format,
-                             encoder->out_width, encoder->out_height, 1);
+                             encoder->out_width, encoder->out_height, 64);
 
         // set sws context for color format conversion
         encoder->sws = sws_getContext(encoder->in_width, encoder->in_height,
@@ -365,7 +366,7 @@ void video_encoder_unset_iframe(encoder_t *encoder) {
     encoder->sw_frame->key_frame = 0;
 }
 
-void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
+void video_encoder_encode(encoder_t *encoder, void *rgb_pixels, int pitch) {
     // init packet to prepare encoding
     av_packet_unref(&encoder->packet);
     av_init_packet(&encoder->packet);
@@ -375,12 +376,12 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
         int in_linesize[1];
 
         in_data[0] = (uint8_t *)rgb_pixels;
-        in_linesize[0] = encoder->in_width * 4;
+        in_linesize[0] = pitch;
 
         // convert to the encoder format
         static int sample_counter = 0;
         clock t;
-        StartTimer( &t );
+        StartTimer(&t);
         sws_scale(encoder->sws, (const uint8_t *const *)in_data, in_linesize, 0,
                   encoder->in_height, encoder->sw_frame->data,
                   encoder->sw_frame->linesize);
@@ -394,7 +395,7 @@ void video_encoder_encode(encoder_t *encoder, void *rgb_pixels) {
         memset(encoder->sw_frame->linesize, 0,
                sizeof(encoder->sw_frame->linesize));
         encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
-        encoder->sw_frame->linesize[0] = encoder->in_width * 4;
+        encoder->sw_frame->linesize[0] = pitch;
     }
 
     int res;

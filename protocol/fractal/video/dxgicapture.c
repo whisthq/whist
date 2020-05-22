@@ -287,6 +287,7 @@ void GetBitmapScreenshot(struct CaptureDevice* device) {
     DeleteObject(hBitmap);
 
     device->frame_data = device->bitmap;
+    device->pitch = device->width * 4;
 }
 
 ID3D11Texture2D* CreateTexture(struct CaptureDevice* device) {
@@ -461,6 +462,7 @@ int CaptureScreen(struct CaptureDevice* device) {
 
     if (!device->bitmap) {
         device->frame_data = (char*)screenshot->mapped_rect.pBits;
+        device->pitch = screenshot->mapped_rect.Pitch;
     }
 
     device->released = false;
