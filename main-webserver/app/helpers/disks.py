@@ -76,7 +76,7 @@ def getVMSize(disk_name):
         return disks_info["vm_size"]
 
 
-def fetchUserDisks(username, show_all=False, ID=-1):
+def fetchUserDisks(username, show_all=False, main=True, ID=-1):
     """Fetches all disks associated with the user
 
     Args:
@@ -111,6 +111,9 @@ def fetchUserDisks(username, show_all=False, ID=-1):
                 else:
                     sendWarning(ID, "No disk found for {}. Postgres connection closed")
 
+                if main:
+                    disks_info = [disk for disk in disks_info if disk["main"]]
+
                 return disks_info
         else:
             sendInfo(
@@ -137,6 +140,9 @@ def fetchUserDisks(username, show_all=False, ID=-1):
                 else:
                     sendWarning(ID, "No disk found for {}. Postgres connection closed")
 
+                if main:
+                    disks_info = [disk for disk in disks_info if disk["main"]]
+
                 return disks_info
     else:
         sendInfo(ID, "Fetching all disks in Postgres")
@@ -158,6 +164,9 @@ def fetchUserDisks(username, show_all=False, ID=-1):
             else:
                 sendWarning(ID, "No disk found in Postgres. Postgres connection closed")
 
+            if main:
+                disks_info = [disk for disk in disks_info if disk["main"]]
+                    
             return disks_info
 
 def fetchSecondaryDisks(username, ID=-1):

@@ -38,7 +38,12 @@ def user_fetchvms(**kwargs):
 @logRequestInfo
 def user_fetchdisks(**kwargs):
     body = request.get_json()
-    disks = fetchUserDisks(body["username"], False, kwargs["ID"])
+
+    main = True 
+    if 'main' in body.keys():
+        main = body['main']
+
+    disks = fetchUserDisks(body["username"], False, main=main, ID=kwargs["ID"])
     return jsonify({"disks": disks, "status": 200}), 200
 
 
