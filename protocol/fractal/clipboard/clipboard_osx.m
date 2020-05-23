@@ -7,33 +7,27 @@
 #include <AppKit/AppKit.h>
 
 int GetClipboardChangecount() {
-  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSInteger changeCount = [pasteboard changeCount];
+  NSInteger changeCount = [[NSPasteboard generalPasteboard] changeCount];
   return (int) changeCount;
 }
 
 bool ClipboardHasString() {
-  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
-  NSDictionary *options = [NSDictionary dictionary];
-  return [pasteboard canReadObjectForClasses:classArray options:options];
+  return [[NSPasteboard generalPasteboard]
+          canReadObjectForClasses:[NSArray arrayWithObject:
+          [NSString class]] options:[NSDictionary dictionary]];
 }
 
 bool ClipboardHasImage() {
-  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSArray *classArray = [NSArray arrayWithObject:[NSImage class]];
-  NSDictionary *options = [NSDictionary dictionary];
-  return [pasteboard canReadObjectForClasses:classArray options:options];
+  return [[NSPasteboard generalPasteboard]
+          canReadObjectForClasses:[NSArray arrayWithObject:
+          [NSImage class]] options:[NSDictionary dictionary]];
 }
 
 const char *ClipboardGetString() {
-  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
-  NSDictionary *options = [NSDictionary dictionary];
-
   // attempt to read the strings from the clipboard
-  NSArray *objectsToPaste = [pasteboard readObjectsForClasses:classArray options:options];
-  NSString *text = [objectsToPaste firstObject];
+  NSString *text = [[[NSPasteboard generalPasteboard]
+                    readObjectsForClasses:[NSArray arrayWithObject:
+                    [NSString class]] options:[NSDictionary dictionary]] firstObject];
   if (!text) {
     printf("Can't get Mac Clipboard String data // No String data to get.\n");
     return "";  // empty string since there is no clipboard text data
@@ -44,10 +38,8 @@ const char *ClipboardGetString() {
 }
 
 void ClipboardSetString(const char *str) {
-  [[NSPasteboard generalPasteboard] declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString]
-                                           owner:nil];
-  [[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str]
-                                      forType:NSPasteboardTypeString];
+  [[NSPasteboard generalPasteboard] declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+  [[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str] forType:NSPasteboardTypeString];
   return;
 }
 
