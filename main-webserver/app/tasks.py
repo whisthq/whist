@@ -134,9 +134,16 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, ID 
 
 
 @celery.task(bind=True)
-def attachDisk(self, vm_name, disk_name):
+def attachDisk(self, disk_name):
 	_, compute_client, _ = createClients()
 	data_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
+
+	vms = mapDiskToVM(disk_name)
+	if vms:
+		vm_name = vms[0]["vm_name"]
+	else:
+		return {'status': 404}
+
 	lunNum = 1
 	attachedDisk = False
 	while not attachedDisk:
@@ -180,6 +187,7 @@ def attachDisk(self, vm_name, disk_name):
 	result = poller.result()
 	print("Disk attached to LUN#" + str(lunNum))
 	print(result.value[0].message)
+	return {'status': 200, 'disk_name': disk_name, 'vm_name': vm_name}
 
 
 @celery.task(bind=True)
