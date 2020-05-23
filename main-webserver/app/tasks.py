@@ -141,6 +141,7 @@ def attachDisk(self, disk_name, username, ID=-1):
 		return {'status': 404, 'error': 'Disk is already attached to a VM {}'.format(data_disk.managed_by.split("/")[-1])}
 
 	vms = fetchUserVMs(username)
+	vm_name = None
 	if vms:
 		vm_name = vms[0]["vm_name"]
 	else:
@@ -167,7 +168,8 @@ def attachDisk(self, disk_name, username, ID=-1):
 				os.environ.get("VM_GROUP"), virtual_machine.name, virtual_machine
 			)
 			attachedDisk = True
-		except ClientException:
+		except ClientException as e:
+			print(str(e))
 			lunNum += 1
 
 	async_disk_attach.wait()
