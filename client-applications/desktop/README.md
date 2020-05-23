@@ -1,16 +1,12 @@
 # Fractal Desktop Applications
 
-This folder contains the code for the Fractal desktop applications running on Windows, MacOS and Linux Ubuntu. The applications are built cross-platform using ElectronJS.
+This folder contains the code for the Fractal desktop applications running on Windows, MacOS and Linux Ubuntu. The applications are built cross-platform using ElectronJS. This repository contains all the directions for building the applications locally and for publishing them for production.
 
 Currently supported:
 
 -   Windows
 -   MacOS
--   Linux
-
-## Note
-
-We currently have to manually fix a node-modules error by modifying 'node_modules/builder-util-runtime/out/httpExecutor.js' and changing the setTimeout() in Line 322. This is the best fix for an update timeout error that I was able to find.
+-   Linux Ubuntu
 
 ## Install
 
@@ -26,11 +22,13 @@ And then install the dependencies with yarn.
 
 ## Starting Development
 
-Start the app in the `dev` environment. This starts the renderer process in [**hot-module-replacement**](https://webpack.js.org/guides/hmr-react/) mode and starts a webpack dev server that sends hot updates to the renderer process (note that this will only build the application, it won't fetch the latest Fractal protocol):
+Start the app in the `dev` environment. This starts the renderer process in [**hot-module-replacement**](https://webpack.js.org/guides/hmr-react/) mode and starts a webpack dev server that sends hot updates to the renderer process (note that this will only build the application, it won't fetch the latest Fractal protocol, so you won't be able to run the protocol by simply doing `yarn dev`):
 
 `yarn dev`
 
 Before doing this, you will need to run `yarn -i` and might need to run `yarn upgrade` if you haven't upgraded yarn in a while. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
+
+If you would like to fully test the application, including the launch of the Fractal protocol, you need to run part of the build scripts, listed in the next section, to clone and make the protocol for your platform. Compiling the protocol requires Cmake. In order to make sure that your system has everything needed to compile the protocol, you should refer to the protocol repository.
 
 ## Packaging for Production
 
@@ -50,15 +48,13 @@ Once you are ready to publish for auto-update to the Fractal users, you need to 
 -   MacOS: `fractal-mac-application-release`
 -   Linux: `fractal-linux-application-release`
 
-2- Increment the version number in `desktop/app/package.json` by `0.0.1`, unless it is a major release, in which case increment by `0.1.0` (e.g.: 1.4.6 becomes 1.5.0).
+2- Go to `node_modules/builder-util-runtime/out/httpExecutor.js`, and change the timeout on Line 319 from `60 * 1000` to `60 * 1000 * 1000`. This is necessary to avoid timeout errors for connection in the production application.
 
-3- Then, run `./publish.sh` (MacOS/Linux) or `publish.bat` (Windows) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run `yarn package-ci` to publish to the S3 bucket.
+3- Increment the version number in `desktop/app/package.json` by `0.0.1`, unless it is a major release, in which case increment by `0.1.0` (e.g.: 1.4.6 becomes 1.5.0).
 
-4- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
+4- Then, run `./publish.sh` (MacOS/Linux) or `publish.bat` (Windows) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run `yarn package-ci` to publish to the S3 bucket.
 
-5.  Go to node_modules and locate the `builder-util-runtime` package. Under the `out` folder, find the `httpExecutor.js` file. Go to Line 319 and change the timeout to `60 * 1000 * 1000`.
-
-The production executables are hosted at: https://s3.console.aws.amazon.com/s3/home?region=us-east-1#
+5- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
 
 ## Styling
 
