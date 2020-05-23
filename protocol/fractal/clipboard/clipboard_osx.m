@@ -36,9 +36,9 @@ void ClipboardSetString(const char *str) {
 }
 
 void ClipboardGetImage(OSXImage *clipboard_image) {
-  clipboard_image->size = [[[NSBitmapImageRep* imageRepWithPasteboard:[NSPasteboard generalPasteboard]]
+  clipboard_image->size = [[((NSBitmapImageRep*) [NSBitmapImageRep imageRepWithPasteboard:[NSPasteboard generalPasteboard]])
                             representationUsingType:NSBitmapImageFileTypeBMP properties:[NSDictionary dictionary]] length];
-  clipboard_image->data = [[[NSBitmapImageRep* imageRepWithPasteboard:[NSPasteboard generalPasteboard]]
+  clipboard_image->data = [[((NSBitmapImageRep*) [NSBitmapImageRep imageRepWithPasteboard:[NSPasteboard generalPasteboard]])
                             representationUsingType:NSBitmapImageFileTypeBMP properties:[NSDictionary dictionary]] bytes];
   if (clipboard_image->size == 0) {
     printf("Can't get Mac Clipboard Image data // No Image data to get.\n");
@@ -47,22 +47,13 @@ void ClipboardGetImage(OSXImage *clipboard_image) {
 }
 
 void ClipboardSetImage(char *img, int len) {
-
-
-
-
-  NSImage image = [[[NSImage alloc] initWithSize:[[[[NSBitmapImageRep alloc] initWithData:[[[NSData alloc] initWithBytes:img length:len] autorelease]] autorelease] size]] autorelease];
+  // cppcheck-suppress uninitvar
+  NSImage *image = [[[NSImage alloc] initWithSize:[[[[NSBitmapImageRep alloc]
+                    initWithData:[[[NSData alloc] initWithBytes:img length:len] autorelease]] autorelease] size]] autorelease];
   [image addRepresentation:[[[NSBitmapImageRep alloc] initWithData:[[[NSData alloc] initWithBytes:img length:len] autorelease]] autorelease]];
-
-
   [[NSPasteboard generalPasteboard] declareTypes:[NSArray arrayWithObject:NSPasteboardTypeTIFF] owner:nil];
   [[NSPasteboard generalPasteboard] setData:[image TIFFRepresentation] forType:NSPasteboardTypeTIFF];
   return;
-
-
-
-
-
 }
 
 bool ClipboardHasFiles() {
@@ -74,8 +65,8 @@ bool ClipboardHasFiles() {
 
 void ClipboardGetFiles(OSXFilenames *filenames[]) {
   // attempt to get the files and return
-
-  NSArray fileURLs = [[NSPasteboard generalPasteboard]
+  // cppcheck-suppress uninitvar
+  NSArray* fileURLs = [[NSPasteboard generalPasteboard]
                         readObjectsForClasses:[NSArray arrayWithObject:[NSURL class]]
                         options:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
                         forKey:NSPasteboardURLReadingFileURLsOnlyKey]];
@@ -95,13 +86,16 @@ void ClipboardSetFiles(char *filepaths[]) {
   // clear clipboard
   [[NSPasteboard generalPasteboard] clearContents];
   // create NSArray of NSURLs
-  NSMutableArray mutableArrURLs = [NSMutableArray arrayWithCapacity:MAX_URLS];
+  // cppcheck-suppress uninitvar
+  NSMutableArray *mutableArrURLs = [NSMutableArray arrayWithCapacity:MAX_URLS];
 
   // convert
   for (size_t i = 0; i < MAX_URLS; i++) {
     if (*filepaths[i] != '\0') {
-      NSString urlString = [NSString stringWithUTF8String:filepaths[i]];
-      NSURL url = [[NSURL fileURLWithPath:urlString] absoluteURL];
+      // cppcheck-suppress uninitvar
+      NSString *urlString = [NSString stringWithUTF8String:filepaths[i]];
+      // cppcheck-suppress uninitvar
+      NSURL *url = [[NSURL fileURLWithPath:urlString] absoluteURL];
       if (url == nil) {
         printf("Error in converting C string relative path to NSURL.\n");
       }
