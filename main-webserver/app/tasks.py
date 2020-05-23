@@ -110,7 +110,7 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
 	data_disk = async_disk_creation.result()
 
 	vm_name = ""
-	createDiskEntry(disk_name, vm_name, username, location, disk_size=disk_size)
+	createDiskEntry(disk_name, vm_name, username, location, disk_size=disk_size, main=False)
 
 	return disk_name
 

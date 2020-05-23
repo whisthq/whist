@@ -5,7 +5,7 @@ from .general import *
 from .vms import *
 
 
-def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, state="ACTIVE"):
+def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, main=True, state="ACTIVE"):
     """Adds a disk to the disks SQL database
 
     Parameters:
@@ -18,8 +18,8 @@ def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, state
     with engine.connect() as conn:
         command = text(
             """
-            INSERT INTO disks("disk_name", "vm_name", "username", "location", "state", "disk_size")
-            VALUES(:diskname, :vmname, :username, :location, :state, :disk_size)
+            INSERT INTO disks("disk_name", "vm_name", "username", "location", "state", "disk_size", "main")
+            VALUES(:diskname, :vmname, :username, :location, :state, :disk_size, :main)
             """
         )
         params = {
@@ -28,7 +28,8 @@ def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, state
             "username": username,
             "location": location,
             "state": state,
-            "disk_size": disk_size
+            "disk_size": disk_size,
+            "main": main
         }
         with engine.connect() as conn:
             conn.execute(command, **params)
