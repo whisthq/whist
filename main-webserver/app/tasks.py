@@ -111,7 +111,6 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
 
 	vm_name = ""
 	createDiskEntry(disk_name, vm_name, username, location)
-	attachDisk()
 
 	return disk_name
 
