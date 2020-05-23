@@ -54,7 +54,7 @@ void ClipboardSetString(const char *str) {
 void ClipboardGetImage(OSXImage *clipboard_image) {
   // create a bitmap image from the content of the clipboard
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithPasteboard:pasteboard];
+  NSBitmapImageRep *imageRep = [NSBitmapImageRep* imageRepWithPasteboard:pasteboard];
   NSDictionary *properties = [NSDictionary dictionary];
 
   // attempt to get the image from the clipboard
@@ -110,9 +110,8 @@ void ClipboardGetFiles(OSXFilenames *filenames[]) {
 }
 
 void ClipboardSetFiles(char *filepaths[]) {
-  // NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  [[NSPasteboard generalPasteboard] clearContents]; // errors with cppcheck, is this needed?
-
+  // clear clipboard
+  [[NSPasteboard generalPasteboard] clearContents];
   // create NSArray of NSURLs
   NSMutableArray *mutableArrURLs = [NSMutableArray arrayWithCapacity:MAX_URLS];
 
