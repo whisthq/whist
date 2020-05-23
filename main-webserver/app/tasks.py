@@ -169,6 +169,8 @@ def attachDisk(self, disk_name, username, ID=-1):
 				}
 			)
 			print("Appended data disk")
+			time.sleep(15)
+			
 			async_disk_attach = compute_client.virtual_machines.create_or_update(
 				os.environ.get("VM_GROUP"), virtual_machine.name, virtual_machine
 			)
