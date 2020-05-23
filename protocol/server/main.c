@@ -521,6 +521,11 @@ void update() {
     if (is_dev_vm()) {
         LOG_INFO("dev vm, not auto-updating");
     } else {
+        if (!get_branch()) {
+            LOG_ERROR("COULD NOT GET BRANCH");
+            return
+        }
+
         LOG_INFO("Checking for server protocol updates...");
         char cmd[5000];
 
@@ -539,8 +544,6 @@ void update() {
         snprintf(cmd, sizeof(cmd),
                  "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\" %s", get_branch());
 
-        char* response;
-
         runcmd(
 #ifdef _WIN32
             cmd
@@ -548,10 +551,7 @@ void update() {
             "TODO: Linux command?"
 #endif
             ,
-            &response);
-
-        LOG_INFO("UPDATE RESPONSE: %s", response);
-        free(response);
+            NULL);
     }
 }
 
