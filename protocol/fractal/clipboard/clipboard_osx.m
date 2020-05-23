@@ -80,7 +80,7 @@ void ClipboardSetImage(char *img, int len) {
                                            owner:nil];
   [[NSPasteboard generalPasteboard] setData:[image TIFFRepresentation]
                                     forType:NSPasteboardTypeTIFF];
-  [image release];
+  [imageData release];
   return;
 }
 
