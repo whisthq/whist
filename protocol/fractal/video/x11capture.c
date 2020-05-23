@@ -108,6 +108,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     return -1;
   }
   device->frame_data = device->image->data;
+  device->pitch = device->width * 4;
 #else
   device->image = NULL;
   CaptureScreen(device);
@@ -160,6 +161,7 @@ int CaptureScreen(struct CaptureDevice* device) {
         update = -1;
       } else {
         device->frame_data = device->image->data;
+        device->pitch = device->width * 4;
       }
 #endif
       XSetErrorHandler(prev_handler);

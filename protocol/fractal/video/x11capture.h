@@ -21,6 +21,7 @@ struct CaptureDevice {
   int counter;
   int width;
   int height;
+  int pitch;
   char* frame_data;
   Damage damage;
   int event;
