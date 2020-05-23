@@ -160,7 +160,7 @@ def attachDisk(self, disk_name, username, ID=-1):
 				os.environ.get("VM_GROUP"), vm_name
 			)
 			print("Retrieved VM")
-			async_append = virtual_machine.storage_profile.data_disks.append(
+			virtual_machine.storage_profile.data_disks.append(
 				{
 					"lun": lunNum,
 					"name": data_disk.name,
@@ -168,7 +168,6 @@ def attachDisk(self, disk_name, username, ID=-1):
 					"managed_disk": {"id": data_disk.id},
 				}
 			)
-			async_append.wait()
 			print("Appended data disk")
 			async_disk_attach = compute_client.virtual_machines.create_or_update(
 				os.environ.get("VM_GROUP"), virtual_machine.name, virtual_machine
