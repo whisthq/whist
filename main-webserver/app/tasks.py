@@ -140,6 +140,8 @@ def attachDisk(self, disk_name, username, ID=-1):
 	if data_disk.managed_by:
 		return {'status': 404, 'error': 'Disk is already attached to a VM {}'.format(data_disk.managed_by.split("/")[-1])}
 
+	print(data_disk)
+	
 	vms = fetchUserVMs(username)
 	vm_name = None
 	if vms:
