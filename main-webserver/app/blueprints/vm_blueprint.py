@@ -173,17 +173,23 @@ def vm(action, **kwargs):
                 kwargs['ID'], 'Trying to change connection status, but no VM found for IP {}'.format(str(vm_ip)))
 
         return jsonify({'status': 200}), 200
-    elif action == 'isDev' and request.method == 'GET':
-        if request.headers.getlist('X-Forwarded-For'):
-            vm_ip = request.headers.getlist('X-Forwarded-For')[0]
+    elif action == "isDev" and request.method == "GET":
+        if request.headers.getlist("X-Forwarded-For"):
+            vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
             vm_ip = request.remote_addr
 
         vm_info = fetchVMByIP(vm_ip)
         if vm_info:
-            is_dev = vm_info['dev']
-            return jsonify({'dev': is_dev, 'status': 200}), 200
-        return jsonify({'dev': False, 'status': 200}), 200
+            is_dev = vm_info["dev"]
+            disk_name = vm_info["disk_name"]
+            disk_info = fetchUserDisks(vm_info["username"])
+
+            if disk_info:
+                branch = disk_info[0]["branch"]
+
+            return jsonify({"dev": is_dev, "branch": branch, "status": 200}), 200
+        return jsonify({"dev": False, "status": 200}), 200
 
     return jsonify({}), 400
 
