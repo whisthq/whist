@@ -603,10 +603,15 @@ def swapDiskSync(self, disk_name, ID=-1):
 				try:
 					vm_name = vm["vm_name"]
 
-					vm_info = compute_client.virtual_machines.get(GROUP_NAME, 'orangepond74738')
+					vm_info = compute_client.virtual_machines.get(os.getenv('VM_GROUP'), 'orangepond74738')
 
 					for disk in vm_info.storage_profile.data_disks:
-					    detachDisk(disk.name, vm_name)
+						self.update_state(
+							state="PENDING",
+							meta={"msg": "Making sure that you have a stable connection."},
+						)
+
+						detachDisk(disk.name, vm_name)
 
 					sendInfo(
 						ID,
