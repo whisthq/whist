@@ -445,7 +445,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 		old_disk = virtual_machine.storage_profile.os_disk
 		updateDisk(old_disk.name, "", None)
 
-	def attachSecondaryDisks(username, vm_name):
+	def attachSecondaryDisks(s, username, vm_name):
 		secondary_disks = fetchSecondaryDisks(username)
 		if secondary_disks:
 			# Lock immediately
@@ -457,6 +457,11 @@ def swapDiskSync(self, disk_name, ID=-1):
 				change_last_updated=True,
 				verbose=False,
 				ID=ID,
+			)
+
+			s.update_state(
+				state="PENDING",
+				meta={"msg": "{} extra storage hard drives found on your cloud PC. Running a few extra tests."},
 			)
 
 			for secondary_disk in secondary_disks:
@@ -597,6 +602,12 @@ def swapDiskSync(self, disk_name, ID=-1):
 			if vm:
 				try:
 					vm_name = vm["vm_name"]
+
+					vm_info = compute_client.virtual_machines.get(GROUP_NAME, 'orangepond74738')
+
+					for disk in vm_info.storage_profile.data_disks:
+					    detachDisk(disk.name, vm_name)
+
 					sendInfo(
 						ID,
 						"Disk {} was unattached. VM {} claimed for {}".format(
@@ -627,7 +638,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 
 					vm_credentials = fetchVMCredentials(vm_name)
 					attachSecondaryDisks(username, vm_name)
-					
+
 					lockVMAndUpdate(
 						vm_name=vm_name,
 						state="RUNNING_AVAILABLE",
