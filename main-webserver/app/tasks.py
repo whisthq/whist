@@ -137,7 +137,8 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, ID 
 def attachDisk(self, disk_name, username):
 	_, compute_client, _ = createClients()
 	data_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
-
+	if data_disk.managed_by:
+		return {'status': 404, 'error': 'Disk is already attached to a VM {}'.format(data_disk.managed_by.split("/")[-1])}
 
 	vms = fetchUserVMs(username)
 	if vms:
