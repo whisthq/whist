@@ -31,7 +31,7 @@ const char *ClipboardGetString() {
   NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
   NSDictionary *options = [NSDictionary dictionary];
 
-  if ([pasteboard canReadObjectForClasses:classArray options:options]) {
+  if ([pasteboard canReadObjectForClasses:classArray options:options] == YES) {
     NSArray *objectsToPaste = [pasteboard readObjectsForClasses:classArray options:options];
     NSString *text = [objectsToPaste firstObject];
     if (!text) {
@@ -55,11 +55,14 @@ void ClipboardSetString(const char *str) {
 }
 
 void ClipboardGetImage(OSXImage *clipboard_image) {
+
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
   NSBitmapImageRep *rep = (NSBitmapImageRep *)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
+
+
   if (rep) {
     // get the data
-    NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:nil];
+    NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
     // set fields and return
     clipboard_image->size = [data length];
     clipboard_image->data = (unsigned char *)[data bytes];
@@ -110,8 +113,8 @@ void ClipboardGetFiles(OSXFilenames *filenames[]) {
 }
 
 void ClipboardSetFiles(char *filepaths[]) {
-  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  // [pasteboard clearContents]; errors with cppcheck, is this needed?
+  // NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+  [[NSPasteboard generalPasteboard] clearContents]; // errors with cppcheck, is this needed?
 
   // create NSArray of NSURLs
   NSMutableArray *mutableArrURLs = [NSMutableArray arrayWithCapacity:MAX_URLS];
@@ -129,5 +132,5 @@ void ClipboardSetFiles(char *filepaths[]) {
       break;
     }
   }
-  [pasteboard writeObjects:mutableArrURLs];
+  [[NSPasteboard generalPasteboard] writeObjects:mutableArrURLs];
 }
