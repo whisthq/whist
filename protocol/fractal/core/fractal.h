@@ -604,6 +604,8 @@ bool is_dev_vm();
 
 int GetFmsgSize(struct FractalClientMessage* fmsg);
 
+char* get_branch();
+
 /** FRACTAL FUNCTIONS END ***/
 
 #endif  // FRACTAL_H
