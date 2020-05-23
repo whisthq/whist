@@ -298,7 +298,7 @@ char *get_version() {
     char *version_filepath = "./version";
 #endif
 
-    long length;
+    size_t length;
     FILE *f = fopen(version_filepath, "r");
 
     if (f) {
