@@ -58,24 +58,26 @@ void ClipboardGetImage(OSXImage *clipboard_image) {
 
 
 
-  // NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  // NSBitmapImageRep *rep = (NSBitmapImageRep *)[NSBitmapImageRep imageRepWithPasteboard:[NSPasteboard generalPasteboard]];
-  NSBitmapImageRep *rep = [NSBitmapImageRep imageRepWithPasteboard:[NSPasteboard generalPasteboard]];
+
+  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+  NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] imageRepWithPasteboard:pasteboard] autorelease];
 
 
-  if (rep) {
+  if (imageRep) {
     // get the data
-    NSData *data = [[NSBitmapImageRep imageRepWithPasteboard:[NSPasteboard generalPasteboard]] representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
+    // NSData *data = [imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
+
+    NSData *imageData = [[[NSData alloc] imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}] autorelease];
+
+
     // set fields and return
-    clipboard_image->size = [data length];
-    clipboard_image->data = (unsigned char *)[data bytes];
+    clipboard_image->size = [imageData length];
+    clipboard_image->data = (unsigned char *)[imageData bytes];
     return;
   } else {
     // no image in clipboard
     return;
   }
-
-
 
 
 }
