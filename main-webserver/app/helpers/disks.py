@@ -31,9 +31,9 @@ def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, main=
             "disk_size": disk_size,
             "main": main
         }
-        with engine.connect() as conn:
-            conn.execute(command, **params)
-            conn.close()
+        
+        conn.execute(command, **params)
+        conn.close()
 
 
 def genDiskName():

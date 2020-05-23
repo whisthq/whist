@@ -134,24 +134,20 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, ID 
 
 
 @celery.task(bind=True)
-def attachDisk(self, disk_name, username, ID=-1):
+def attachDisk(self, disk_name, vm_name, ID=-1):
 	_, compute_client, _ = createClients()
 	data_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
 	if data_disk.managed_by:
-		return {'status': 404, 'error': 'Disk is already attached to a VM {}'.format(data_disk.managed_by.split("/")[-1])}
-
-	print(data_disk)
-
-	vms = fetchUserVMs(username)
-	vm_name = None
-	if vms:
-		vm_name = vms[0]["vm_name"]
-	else:
-		return {'status': 404}
+		old_vm_name = data_disk.managed_by.split("/")[-1]
+		if old_vm_name != vm_name:
+			print('Disk {} already attached to {}. Detaching.'.format(disk_name, old_vm_name))
+			detachDisk(disk_name, old_vm_name)
+		else:
+			return {'status': 200, 'disk_name': disk_name, 'vm_name': vm_name}
 
 	lunNum = 1
 	attachedDisk = False
-	while not attachedDisk:
+	while not attachedDisk and lunNum < 15:
 		print('Trying to attach {} to {}'.format(disk_name, vm_name))
 		try:
 			# Get the virtual machine by name
@@ -169,16 +165,21 @@ def attachDisk(self, disk_name, username, ID=-1):
 				}
 			)
 			print("Appended data disk")
-			time.sleep(15)
-			
+
 			async_disk_attach = compute_client.virtual_machines.create_or_update(
 				os.environ.get("VM_GROUP"), virtual_machine.name, virtual_machine
 			)
 			async_disk_attach.wait()
+
+			print("Done appending data disk")
+
 			attachedDisk = True
 		except ClientException as e:
 			print(str(e))
 			lunNum += 1
+
+	if lunNum >= 15:
+		return {'status': 404}
 
 	async_disk_attach.wait()
 
@@ -203,11 +204,11 @@ def attachDisk(self, disk_name, username, ID=-1):
 
 
 @celery.task(bind=True)
-def detachDisk(self, vm_Name, disk_name, ID=-1):
+def detachDisk(self, disk_name, vm_name, ID=-1):
 	"""Detaches disk from vm
 
 	Args:
-		vm_Name (str): Name of the vm
+		vm_name (str): Name of the vm
 		disk_name (str): Name of the disk
 		ID (int, optional): Papertrail logging ID. Defaults to -1.
 	"""
@@ -216,15 +217,16 @@ def detachDisk(self, vm_Name, disk_name, ID=-1):
 	sendInfo(ID, "\nDetach Data Disk: " + disk_name)
 
 	virtual_machine = compute_client.virtual_machines.get(
-		os.environ.get("VM_GROUP"), vm_Name
+		os.environ.get("VM_GROUP"), vm_name
 	)
 	data_disks = virtual_machine.storage_profile.data_disks
 	data_disks[:] = [disk for disk in data_disks if disk.name != disk_name]
 	async_vm_update = compute_client.virtual_machines.create_or_update(
-		os.environ.get("VM_GROUP"), vm_Name, virtual_machine
+		os.environ.get("VM_GROUP"), vm_name, virtual_machine
 	)
 	virtual_machine = async_vm_update.result()
 	sendInfo(ID, "Detach data disk sucessful")
+	return {'status': 200}
 
 
 @celery.task(bind=True)
