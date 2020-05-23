@@ -141,7 +141,7 @@ def attachDisk(self, disk_name, username, ID=-1):
 		return {'status': 404, 'error': 'Disk is already attached to a VM {}'.format(data_disk.managed_by.split("/")[-1])}
 
 	print(data_disk)
-	
+
 	vms = fetchUserVMs(username)
 	vm_name = None
 	if vms:
@@ -152,23 +152,28 @@ def attachDisk(self, disk_name, username, ID=-1):
 	lunNum = 1
 	attachedDisk = False
 	while not attachedDisk:
+		print('Trying to attach {} to {}'.format(disk_name, vm_name))
 		try:
 			# Get the virtual machine by name
 			print("Incrementing lun")
 			virtual_machine = compute_client.virtual_machines.get(
 				os.environ.get("VM_GROUP"), vm_name
 			)
-			virtual_machine.storage_profile.data_disks.append(
+			print("Retrieved VM")
+			async_append = virtual_machine.storage_profile.data_disks.append(
 				{
 					"lun": lunNum,
-					"name": disk_name,
+					"name": data_disk.name,
 					"create_option": DiskCreateOption.attach,
 					"managed_disk": {"id": data_disk.id},
 				}
 			)
+			async_append.wait()
+			print("Appended data disk")
 			async_disk_attach = compute_client.virtual_machines.create_or_update(
 				os.environ.get("VM_GROUP"), virtual_machine.name, virtual_machine
 			)
+			async_disk_attach.wait()
 			attachedDisk = True
 		except ClientException as e:
 			print(str(e))
