@@ -66,7 +66,7 @@ void ClipboardGetImage(OSXImage *clipboard_image) {
 
 
 
-    NSData *imageData = [imageRep representationUsingType:NSBMPFileType properties:@{}];
+    NSData *imageData = [imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:{}];
 
 //   NSData *imageData = [[[NSData alloc] initWithBytes:img length:len] autorelease];
 
