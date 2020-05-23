@@ -31,18 +31,15 @@ const char *ClipboardGetString() {
   NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
   NSDictionary *options = [NSDictionary dictionary];
 
-  if ([pasteboard canReadObjectForClasses:classArray options:options] == YES) {
-    NSArray *objectsToPaste = [pasteboard readObjectsForClasses:classArray options:options];
-    NSString *text = [objectsToPaste firstObject];
-    if (!text) {
-      return "";  // empty string since there is no clipboard text data
-    } else {
-      // convert to const char* and return
-      return [text UTF8String];
-    }
+  // attempt to read the strings from the clipboard
+  NSArray *objectsToPaste = [pasteboard readObjectsForClasses:classArray options:options];
+  NSString *text = [objectsToPaste firstObject];
+  if (!text) {
+    printf("Can't get Mac Clipboard String data // No String data to get.\n");
+    return "";  // empty string since there is no clipboard text data
   } else {
-    printf("Can't get Mac Clipboard String data.\n");
-    return "";  // empty string since there is no clipboard test data
+    // convert to const char* and return
+    return [text UTF8String];
   }
 }
 
@@ -57,58 +54,17 @@ void ClipboardSetString(const char *str) {
 void ClipboardGetImage(OSXImage *clipboard_image) {
   // create a bitmap image from the content of the clipboard
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSBitmapImageRep *imageRep = (NSBitmapImageRep *)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
-  // if the image was created
-  if (imageRep) {
-    // get the data
+  NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithPasteboard:pasteboard];
+  NSDictionary *properties = [NSDictionary dictionary];
 
-
-
-
-
-    NSData *imageData = [imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:{}];
-
-//   NSData *imageData = [[[NSData alloc] initWithBytes:img length:len] autorelease];
-
-//     // NSData *data = [imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
-
-//     NSData *imageData = [[[NSData alloc] imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}] autorelease];
-
-// NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
-
-//     NSImage *image = [[[NSImage alloc] initWithSize:[imageRep size]] autorelease];
-
-
-// NSBitmapImageRep *imgRep = [[image representations] objectAtIndex: 0];
-// NSData *data = [imgRep representationUsingType: NSPNGFileType properties: nil];
-// [data writeToFile: @"/path/to/file.png" atomically: NO];
-
-
-    // set fields and return
-    clipboard_image->size = [imageData length];
-    clipboard_image->data = (unsigned char *)[imageData bytes];
-    return;
-  } else {
-    // no image in clipboard
-    return;
+  // attempt to get the image from the clipboard
+  NSData *imageData = [imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:properties];
+  clipboard_image->size = [imageData length];
+  clipboard_image->data = [imageData bytes];
+  if (clipboard_image->size == 0) {
+    printf("Can't get Mac Clipboard Image data // No Image data to get.\n");
   }
-
-  // NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  // NSBitmapImageRep *rep = (NSBitmapImageRep *)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
-
-
-  // if (rep) {
-  //   // get the data
-  //   NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
-  //   // set fields and return
-  //   clipboard_image->size = [data length];
-  //   clipboard_image->data = (unsigned char *)[data bytes];
-  //   return;
-  // } else {
-  //   // no image in clipboard
-  //   return;
-  // }
-  
+  return;
 }
 
 void ClipboardSetImage(char *img, int len) {
@@ -139,15 +95,18 @@ void ClipboardGetFiles(OSXFilenames *filenames[]) {
   NSDictionary *options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
                                                       forKey:NSPasteboardURLReadingFileURLsOnlyKey];
 
-  if ([pasteboard canReadObjectForClasses:classArray options:options]) {
-    NSArray *fileURLs = [pasteboard readObjectsForClasses:classArray options:options];
-    for (NSUInteger i = 0; i < [fileURLs count]; i++) {
-      strcpy(filenames[i]->fullPath, [fileURLs[i] fileSystemRepresentation]);
-      strcpy(filenames[i]->filename, [[fileURLs[i] lastPathComponent] UTF8String]);
-    }
-  } else {
-    printf("Can't get Mac Clipboard Files data.\n");
+  // attempt to get the files and return
+  NSArray *fileURLs = [pasteboard readObjectsForClasses:classArray options:options];
+  NSUInteger i;
+  for (i = 0; i < (NSUInteger)[fileURLs count]; i++) {
+    strcpy(filenames[i]->fullPath, [fileURLs[i] fileSystemRepresentation]);
+    strcpy(filenames[i]->filename, [[fileURLs[i] lastPathComponent] UTF8String]);
   }
+  // error checking
+  if (i == 0) {
+    printf("Can't get Mac Clipboard Files data. / no File data to get.\n");
+  }
+  return;
 }
 
 void ClipboardSetFiles(char *filepaths[]) {
