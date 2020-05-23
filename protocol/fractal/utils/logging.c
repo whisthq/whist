@@ -193,6 +193,7 @@ void mprintf(const char *fmtStr, ...) {
     va_start(args, fmtStr);
 
     real_mprintf(WRITE_MPRINTF_TO_LOG, fmtStr, args);
+    va_end(args);
 }
 
 void real_mprintf(bool log, const char *fmtStr, va_list args) {
@@ -239,8 +240,6 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
         SDL_SemPost((SDL_sem *)logger_semaphore);
     }
     SDL_UnlockMutex((SDL_mutex *)logger_mutex);
-
-    va_end(args);
 }
 
 #ifndef _WIN32
