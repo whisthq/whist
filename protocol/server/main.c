@@ -265,7 +265,7 @@ int32_t SendVideo(void* opaque) {
             clock t;
             StartTimer(&t);
 
-            video_encoder_encode(encoder, device->frame_data);
+            video_encoder_encode(encoder, device->frame_data, device->pitch);
             frames_since_first_iframe++;
 
             static int frame_stat_number = 0;
@@ -388,7 +388,7 @@ int32_t SendVideo(void* opaque) {
                         id++;
                     }
 
-                    LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n", GetTimer( t ), frame_size );
+                    //LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n", GetTimer( t ), frame_size );
 
                     previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time = GetTimer(server_frame_timer);
@@ -546,8 +546,8 @@ void update() {
 #include <time.h>
 
 int main() {
-    static_assert(sizeof(unsigned short) == 2,
-                  "Error: Unsigned short is not length 2 bytes!\n");
+//    static_assert(sizeof(unsigned short) == 2,
+//                  "Error: Unsigned short is not length 2 bytes!\n");
 
 #if defined(_WIN32)
     // set Windows DPI

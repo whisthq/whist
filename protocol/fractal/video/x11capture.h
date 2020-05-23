@@ -14,18 +14,19 @@
 #include "../core/fractal.h"
 
 struct CaptureDevice {
-    Display* display;
-    XImage* image;
-    XShmSegmentInfo segment;
-    Window root;
-    int counter;
-    int width;
-    int height;
-    char* frame_data;
-    Damage damage;
-    int event;
-    bool did_use_map_desktop_surface;
-    bool released;
+  Display* display;
+  XImage* image;
+  XShmSegmentInfo segment;
+  Window root;
+  int counter;
+  int width;
+  int height;
+  int pitch;
+  char* frame_data;
+  Damage damage;
+  int event;
+  bool did_use_map_desktop_surface;
+  bool released;
 };
 
 typedef unsigned int UINT;

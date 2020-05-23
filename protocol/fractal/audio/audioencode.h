@@ -13,22 +13,22 @@
 #include "../core/fractal.h"
 
 typedef struct {
-    AVCodec *pCodec;
-    AVCodecContext *pCodecCtx;
-    AVFrame *pFrame;
-    AVAudioFifo *pFifo;
-    AVPacket packet;
-    SwrContext *pSwrContext;
-    int frame_count;
+  AVCodec *pCodec;
+  AVCodecContext *pCodecCtx;
+  AVFrame *pFrame;
+  AVAudioFifo *pFifo;
+  AVPacket packet;
+  SwrContext *pSwrContext;
+  int frame_count;
 
-    int encoded_frame_size;
-    void* encoded_frame_data;
+  int encoded_frame_size;
+  void *encoded_frame_data;
 } audio_encoder_t;
 
 typedef struct {
-    int pts;
-    int size;
-    uint8_t data[10];
+  int pts;
+  int size;
+  uint8_t data[10];
 } encoded_audio_t;
 
 audio_encoder_t *create_audio_encoder(int bit_rate, int sample_rate);
