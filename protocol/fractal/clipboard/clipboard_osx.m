@@ -24,17 +24,9 @@ bool ClipboardHasImage() {
 }
 
 const char *ClipboardGetString() {
-  // attempt to read the strings from the clipboard
-  NSString *text = [[[NSPasteboard generalPasteboard]
-                    readObjectsForClasses:[NSArray arrayWithObject:
-                    [NSString class]] options:[NSDictionary dictionary]] firstObject];
-  if (!text) {
-    printf("Can't get Mac Clipboard String data // No String data to get.\n");
-    return "";  // empty string since there is no clipboard text data
-  } else {
-    // convert to const char* and return
-    return [text UTF8String];
-  }
+    return [[[[NSPasteboard generalPasteboard]
+            readObjectsForClasses:[NSArray arrayWithObject:
+            [NSString class]] options:[NSDictionary dictionary]] firstObject] UTF8String];
 }
 
 void ClipboardSetString(const char *str) {
@@ -44,18 +36,20 @@ void ClipboardSetString(const char *str) {
 }
 
 void ClipboardGetImage(OSXImage *clipboard_image) {
-  // create a bitmap image from the content of the clipboard
-  NSBitmapImageRep *imageRep = [NSBitmapImageRep* imageRepWithPasteboard:[NSPasteboard generalPasteboard]];
-
-  // attempt to get the image from the clipboard
-  NSData *imageData = [imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:[NSDictionary dictionary]];
-  clipboard_image->size = [imageData length];
-  clipboard_image->data = [imageData bytes];
+  clipboard_image->size = [[[NSBitmapImageRep* imageRepWithPasteboard:[NSPasteboard generalPasteboard]]
+                            representationUsingType:NSBitmapImageFileTypeBMP properties:[NSDictionary dictionary]] length];
+  clipboard_image->data = [[[NSBitmapImageRep* imageRepWithPasteboard:[NSPasteboard generalPasteboard]]
+                            representationUsingType:NSBitmapImageFileTypeBMP properties:[NSDictionary dictionary]] bytes];
   if (clipboard_image->size == 0) {
     printf("Can't get Mac Clipboard Image data // No Image data to get.\n");
   }
   return;
 }
+
+
+
+
+
 
 void ClipboardSetImage(char *img, int len) {
   NSData *imageData = [[[NSData alloc] initWithBytes:img length:len] autorelease];
