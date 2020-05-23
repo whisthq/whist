@@ -518,12 +518,12 @@ int32_t SendAudio(void* opaque) {
 }
 
 void update() {
-    if (false && is_dev_vm()) {
+    if (is_dev_vm()) {
         LOG_INFO("dev vm, not auto-updating");
     } else {
         LOG_INFO("Checking for server protocol updates...");
-
         char cmd[5000];
+
         snprintf(cmd, sizeof(cmd),
 #ifdef _WIN32
             "powershell -command \"iwr -outf 'C:\\Program "
@@ -536,7 +536,6 @@ void update() {
 
         runcmd(cmd, NULL);
 
-        char cmd[5000];
         snprintf(cmd, sizeof(cmd),
                  "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\" %s", get_branch());
 
