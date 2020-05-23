@@ -574,7 +574,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 
 				vm_credentials = fetchVMCredentials(vm_name)
 
-				attachSecondaryDisks(username, vm_name)
+				attachSecondaryDisks(self, username, vm_name)
 
 				lockVMAndUpdate(
 					vm_name=vm_name,
@@ -635,7 +635,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 						)
 						free_vm_found = True
 						updateOldDisk(vm_name)
-						attachSecondaryDisks(username, vm_name)
+						attachSecondaryDisks(self, username, vm_name)
 
 						lockVMAndUpdate(
 							vm_name=vm_name,
@@ -650,7 +650,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 						return fetchVMCredentials(vm_name)
 
 					vm_credentials = fetchVMCredentials(vm_name)
-					attachSecondaryDisks(username, vm_name)
+					attachSecondaryDisks(self, username, vm_name)
 
 					lockVMAndUpdate(
 						vm_name=vm_name,
