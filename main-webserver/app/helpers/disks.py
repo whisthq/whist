@@ -160,6 +160,41 @@ def fetchUserDisks(username, show_all=False, ID=-1):
 
             return disks_info
 
+def fetchSecondaryDisks(username, ID=-1):
+    """Fetches all non-OS disks associated with the user
+
+    Args:
+        username (str): The username. If username is null, it fetches all disks
+        show_all (bool, optional): Whether or not to select all disks regardless of state, vs only disks with ACTIVE state. Defaults to False.
+        ID (int, optional): Papertrail logging ID. Defaults to -1.
+
+    Returns:
+        array: An array of the disks
+    """
+    sendInfo(
+        ID,
+        "Fetching all non-OS disks associated with {} state ACTIVE".format(username),
+    )
+
+    command = text(
+        """
+        SELECT * FROM disks WHERE "username" = :username AND "state" = :state AND "main" = :main
+        """
+    )
+    params = {"username": username, "state": "ACTIVE", "main": False}
+    with engine.connect() as conn:
+        sendInfo(ID, "Connection with Postgres established")
+
+        disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        conn.close()
+
+        if disks_info:
+            sendInfo(ID, "Disk names fetched and Postgres connection closed")
+        else:
+            sendWarning(ID, "No non-OS disks found for {}. Postgres connection closed")
+
+        return disks_info
+
 
 def updateDisk(disk_name, vm_name, location):
     """Updates the vm name and location properties of the disk. If no disk with the provided name exists, create a new disk entry

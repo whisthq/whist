@@ -52,12 +52,12 @@ def disk(action, **kwargs):
     elif action == "add":
         body = request.get_json()
 
-        task = attachDisk.apply_async([body["disk_name"], body["username"], kwargs["ID"]])
+        task = attachDisk.apply_async([body["disk_name"], body["vm_name"], kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
     elif action == "detach":
-        vm_name = request.get_json()["vm_name"]
-        disk_name = request.get_json()["disk_name"]
-        task = detachDisk.apply_async([disk_name, vm_name, kwargs["ID"]])
+        body = request.get_json()
+        
+        task = detachDisk.apply_async([body["disk_name"], body["vm_name"], kwargs["ID"]])
         if not task:
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202

@@ -445,6 +445,34 @@ def swapDiskSync(self, disk_name, ID=-1):
 		old_disk = virtual_machine.storage_profile.os_disk
 		updateDisk(old_disk.name, "", None)
 
+	def attachSecondaryDisks(username, vm_name):
+		secondary_disks = fetchSecondaryDisks(username)
+		if secondary_disks:
+			# Lock immediately
+			lockVMAndUpdate(
+				vm_name=vm_name,
+				state="ATTACHING",
+				lock=True,
+				temporary_lock=None,
+				change_last_updated=True,
+				verbose=False,
+				ID=ID,
+			)
+
+			for secondary_disk in secondary_disks:
+				attachDisk(secondary_disk["disk_name"], vm_name)
+
+			# Lock immediately
+			lockVMAndUpdate(
+				vm_name=vm_name,
+				state="RUNNING_AVAILABLE",
+				lock=False,
+				temporary_lock=1,
+				change_last_updated=True,
+				verbose=False,
+				ID=ID,
+			)
+
 	sendInfo(ID, " Swap disk task for disk {} added to Redis queue".format(disk_name))
 
 	# Get the
@@ -541,6 +569,8 @@ def swapDiskSync(self, disk_name, ID=-1):
 
 				vm_credentials = fetchVMCredentials(vm_name)
 
+				attachSecondaryDisks(username, vm_name)
+
 				lockVMAndUpdate(
 					vm_name=vm_name,
 					state="RUNNING_AVAILABLE",
@@ -581,10 +611,23 @@ def swapDiskSync(self, disk_name, ID=-1):
 						)
 						free_vm_found = True
 						updateOldDisk(vm_name)
-						lockVM(vm_name, False, ID=ID)
-						updateVMState(vm_name, "RUNNING_AVAILABLE")
+						attachSecondaryDisks(username, vm_name)
+
+						lockVMAndUpdate(
+							vm_name=vm_name,
+							state="RUNNING_AVAILABLE",
+							lock=False,
+							temporary_lock=1,
+							change_last_updated=True,
+							verbose=False,
+							ID=ID,
+						)
+
 						return fetchVMCredentials(vm_name)
 
+					vm_credentials = fetchVMCredentials(vm_name)
+					attachSecondaryDisks(username, vm_name)
+					
 					lockVMAndUpdate(
 						vm_name=vm_name,
 						state="RUNNING_AVAILABLE",
@@ -603,7 +646,6 @@ def swapDiskSync(self, disk_name, ID=-1):
 						),
 					)
 
-					vm_credentials = fetchVMCredentials(vm_name)
 					return vm_credentials
 				except Exception as e:
 					sendCritical(ID, str(e))
