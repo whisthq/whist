@@ -4,13 +4,14 @@
  * Copyright Fractal Computers, Inc. 2020
  **/
 #include "clipboard_osx.h"
-
+#include <CoreFoundation/CoreFoundation.h>
+#include <Foundation/Foundation.h>
 #include <AppKit/AppKit.h>
 
 int GetClipboardChangecount() {
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
   NSInteger changeCount = [pasteboard changeCount];
-  return (int)changeCount;
+  return (int) changeCount;
 }
 
 bool ClipboardHasString() {
@@ -112,8 +113,6 @@ void ClipboardGetFiles(OSXFilenames *filenames[]) {
 
 void ClipboardSetFiles(char *filepaths[]) {
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-
-  // clear pasteboard
   [pasteboard clearContents];
 
   // create NSArray of NSURLs
