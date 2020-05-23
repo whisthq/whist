@@ -4,8 +4,6 @@
  * Copyright Fractal Computers, Inc. 2020
  **/
 #include "clipboard_osx.h"
-#include <CoreFoundation/CoreFoundation.h>
-#include <Foundation/Foundation.h>
 #include <AppKit/AppKit.h>
 
 int GetClipboardChangecount() {
@@ -113,7 +111,7 @@ void ClipboardGetFiles(OSXFilenames *filenames[]) {
 
 void ClipboardSetFiles(char *filepaths[]) {
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  [pasteboard clearContents];
+  // [pasteboard clearContents]; errors with cppcheck, is this needed?
 
   // create NSArray of NSURLs
   NSMutableArray *mutableArrURLs = [NSMutableArray arrayWithCapacity:MAX_URLS];
