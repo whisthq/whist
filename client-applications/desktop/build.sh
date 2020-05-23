@@ -2,8 +2,8 @@ rm -rf .protocol
 git clone --depth 1 https://github.com/fractalcomputers/protocol .protocol
 cd .protocol
 git reset --hard
-git fetch --depth 25 origin dev:dev
-git checkout dev
+git fetch --depth 25 origin master:master
+git checkout master
 cmake .
 make FractalClient
 cd ..

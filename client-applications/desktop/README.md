@@ -28,13 +28,13 @@ Start the app in the `dev` environment. This starts the renderer process in [**h
 
 Before doing this, you will need to run `yarn -i` and might need to run `yarn upgrade` if you haven't upgraded yarn in a while. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
 
-If you would like to fully test the application, including the launch of the Fractal protocol, you need to run part of the build scripts, listed in the next section, to clone and make the protocol for your platform. Compiling the protocol requires Cmake. In order to make sure that your system has everything needed to compile the protocol, you should refer to the protocol repository.
+If you would like to fully test the application, including the launch of the Fractal protocol, you need to run part of the build scripts, listed in the next section, to clone and make the protocol for your platform. Compiling the protocol requires Cmake. In order to make sure that your system has everything needed to compile the protocol, you should refer to the protocol repository readme.
 
 ## Packaging for Production
 
 To package apps for the local platform, including fetching and compiling the latest Fractal protocol:
 
-Run `./build.sh` (for MacOS/Linux), or `build.bat` (for Windows). If you have already downloaded and compiled the latest Fractal protocol, you can simply run `yarn package`.
+Run `./build.sh` (for MacOS/Linux), or `build.bat` (for Windows). If you have already downloaded and compiled the latest Fractal protocol, you can simply run `yarn package`. The version of the protocol that gets downloaded is the `master` branch, which is our stable production branch. If you want to test another branch, you can do so by modifying the build scripts git commands, but make sure not to commit or publish, as only the master branch should ever be pushed to users.
 
 This will enable you to get an executable that you can install to test your code locally. The installer executables will be in `desktop/release`.
 
