@@ -59,7 +59,7 @@ void ClipboardGetImage(OSXImage *clipboard_image) {
   NSBitmapImageRep *rep = (NSBitmapImageRep *)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
   if (rep) {
     // get the data
-    NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
+    NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:nil];
     // set fields and return
     clipboard_image->size = [data length];
     clipboard_image->data = (unsigned char *)[data bytes];
