@@ -75,7 +75,7 @@ void ClipboardGetImage(OSXImage *clipboard_image) {
 void ClipboardSetImage(char *img, int len) {
   NSData *imageData = [[[NSData alloc] initWithBytes:img length:len] autorelease];
   NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithData:imageData] autorelease];
-  NSImage *image = [[NSImage alloc] initWithSize:[imageRep size] autorelease];
+  NSImage *image = [[[NSImage alloc] initWithSize:[imageRep size]] autorelease];
   [image addRepresentation:imageRep];
   [[NSPasteboard generalPasteboard] declareTypes:[NSArray arrayWithObject:NSPasteboardTypeTIFF]
                                            owner:nil];
