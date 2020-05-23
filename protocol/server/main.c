@@ -518,7 +518,7 @@ int32_t SendAudio(void* opaque) {
 }
 
 void update() {
-    if (is_dev_vm()) {
+    if (false && is_dev_vm()) {
         LOG_INFO("dev vm, not auto-updating");
     } else {
         LOG_INFO("Checking for server protocol updates...");
@@ -532,14 +532,24 @@ void update() {
 #endif
             ,
             NULL);
+
+        char cmd[5000];
+        snprintf(cmd, sizeof(cmd),
+                 "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\" %s", get_branch());
+
+        char* response;
+
         runcmd(
 #ifdef _WIN32
-            "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\""
+            cmd
 #else
             "TODO: Linux command?"
 #endif
             ,
-            NULL);
+            &response);
+
+        LOG_INFO("UPDATE RESPONSE: %s", response);
+        free(response);
     }
 }
 
