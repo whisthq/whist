@@ -5,7 +5,7 @@ from .general import *
 from .vms import *
 
 
-def createDiskEntry(disk_name, vm_name, username, location, state="ACTIVE"):
+def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, state="ACTIVE"):
     """Adds a disk to the disks SQL database
 
     Parameters:
@@ -18,8 +18,8 @@ def createDiskEntry(disk_name, vm_name, username, location, state="ACTIVE"):
     with engine.connect() as conn:
         command = text(
             """
-            INSERT INTO disks("disk_name", "vm_name", "username", "location", "state")
-            VALUES(:diskname, :vmname, :username, :location, :state)
+            INSERT INTO disks("disk_name", "vm_name", "username", "location", "state", "disk_size")
+            VALUES(:diskname, :vmname, :username, :location, :state, :disk_size)
             """
         )
         params = {
@@ -28,6 +28,7 @@ def createDiskEntry(disk_name, vm_name, username, location, state="ACTIVE"):
             "username": username,
             "location": location,
             "state": state,
+            "disk_size": disk_size
         }
         with engine.connect() as conn:
             conn.execute(command, **params)
@@ -47,7 +48,10 @@ def genDiskName():
         diskName = genHaiku(1)[0]
         while diskName in oldDisks:
             diskName = genHaiku(1)[0]
-        return str(diskName)
+
+        diskName = str(diskName) + "_disk"
+
+        return diskName
 
 
 def getVMSize(disk_name):

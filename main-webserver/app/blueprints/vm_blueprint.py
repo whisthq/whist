@@ -206,7 +206,13 @@ def vm(action, **kwargs):
         vm_info = fetchVMByIP(vm_ip)
         if vm_info:
             is_dev = vm_info["dev"]
-            return jsonify({"dev": is_dev, "status": 200}), 200
+            disk_name = vm_info["disk_name"]
+            disk_info = fetchUserDisks(username)
+
+            if disk_info:
+                branch = disk_info[0]["branch"]
+
+            return jsonify({"dev": is_dev, "branch": branch, "status": 200}), 200
         return jsonify({"dev": False, "status": 200}), 200
 
     return jsonify({}), 400
