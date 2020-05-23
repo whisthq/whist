@@ -45,12 +45,10 @@ void ClipboardSetString(const char *str) {
 
 void ClipboardGetImage(OSXImage *clipboard_image) {
   // create a bitmap image from the content of the clipboard
-  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSBitmapImageRep *imageRep = [NSBitmapImageRep* imageRepWithPasteboard:pasteboard];
-  NSDictionary *properties = [NSDictionary dictionary];
+  NSBitmapImageRep *imageRep = [NSBitmapImageRep* imageRepWithPasteboard:[NSPasteboard generalPasteboard]];
 
   // attempt to get the image from the clipboard
-  NSData *imageData = [imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:properties];
+  NSData *imageData = [imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:[NSDictionary dictionary]];
   clipboard_image->size = [imageData length];
   clipboard_image->data = [imageData bytes];
   if (clipboard_image->size == 0) {
@@ -72,23 +70,18 @@ void ClipboardSetImage(char *img, int len) {
 }
 
 bool ClipboardHasFiles() {
-  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSArray *classArray = [NSArray arrayWithObject:[NSURL class]];
   NSDictionary *options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
                                                       forKey:NSPasteboardURLReadingFileURLsOnlyKey];
-  return [pasteboard canReadObjectForClasses:classArray options:options];
+  return [[NSPasteboard generalPasteboard] canReadObjectForClasses:[NSArray arrayWithObject:[NSURL class]] options:options];
 }
 
 void ClipboardGetFiles(OSXFilenames *filenames[]) {
-  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSArray *classArray = [NSArray arrayWithObject:[NSURL class]];
-
   // only file URLs
   NSDictionary *options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
                                                       forKey:NSPasteboardURLReadingFileURLsOnlyKey];
 
   // attempt to get the files and return
-  NSArray *fileURLs = [pasteboard readObjectsForClasses:classArray options:options];
+  NSArray *fileURLs = [[NSPasteboard generalPasteboard] readObjectsForClasses:[NSArray arrayWithObject:[NSURL class]] options:options];
   NSUInteger i;
   for (i = 0; i < (NSUInteger)[fileURLs count]; i++) {
     strcpy(filenames[i]->fullPath, [fileURLs[i] fileSystemRepresentation]);
