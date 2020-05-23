@@ -461,7 +461,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 
 			s.update_state(
 				state="PENDING",
-				meta={"msg": "{} extra storage hard drives found on your cloud PC. Running a few extra tests."},
+				meta={"msg": "{} extra storage hard drive(s) were found on your cloud PC. Running a few extra tests.".format(len(secondary_disks))},
 			)
 
 			for secondary_disk in secondary_disks:
