@@ -523,7 +523,7 @@ void update() {
     } else {
         if (!get_branch()) {
             LOG_ERROR("COULD NOT GET BRANCH");
-            return
+            return;
         }
 
         LOG_INFO("Checking for server protocol updates...");
