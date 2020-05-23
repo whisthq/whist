@@ -351,7 +351,7 @@ def payment(action, **kwargs):
 
         return jsonify({"status": 200}), 200
     elif action == "update" and request.method == 'POST':
-        body = request.json()
+        body = request.get_json()
 
         username = body["username"]
         new_plan_type = body["plan"]
