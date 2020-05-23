@@ -55,19 +55,31 @@ void ClipboardSetString(const char *str) {
 }
 
 void ClipboardGetImage(OSXImage *clipboard_image) {
-
-
-
-
+  // create a bitmap image from the content of the clipboard
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] imageRepWithPasteboard:pasteboard] autorelease];
+  NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] imageRepsWithPasteboard:pasteboard] autorelease];
 
-
+  // if the image was created
   if (imageRep) {
     // get the data
-    // NSData *data = [imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
 
-    NSData *imageData = [[[NSData alloc] imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}] autorelease];
+
+    NSData *imageData = [imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
+
+//   NSData *imageData = [[[NSData alloc] initWithBytes:img length:len] autorelease];
+
+//     // NSData *data = [imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
+
+//     NSData *imageData = [[[NSData alloc] imageRep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}] autorelease];
+
+// NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
+
+//     NSImage *image = [[[NSImage alloc] initWithSize:[imageRep size]] autorelease];
+
+
+// NSBitmapImageRep *imgRep = [[image representations] objectAtIndex: 0];
+// NSData *data = [imgRep representationUsingType: NSPNGFileType properties: nil];
+// [data writeToFile: @"/path/to/file.png" atomically: NO];
 
 
     // set fields and return
@@ -79,7 +91,22 @@ void ClipboardGetImage(OSXImage *clipboard_image) {
     return;
   }
 
+  // NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+  // NSBitmapImageRep *rep = (NSBitmapImageRep *)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
 
+
+  // if (rep) {
+  //   // get the data
+  //   NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
+  //   // set fields and return
+  //   clipboard_image->size = [data length];
+  //   clipboard_image->data = (unsigned char *)[data bytes];
+  //   return;
+  // } else {
+  //   // no image in clipboard
+  //   return;
+  // }
+  
 }
 
 void ClipboardSetImage(char *img, int len) {
