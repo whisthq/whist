@@ -200,12 +200,15 @@ def vm(action, **kwargs):
     elif action == "isDev" and request.method == "GET":
         try:
             vm_ip = ''
+            print(request.headers.getlist("X-Forwarded-For"))
+            
             if request.headers.getlist("X-Forwarded-For"):
                 vm_ip = request.headers.getlist("X-Forwarded-For")[0]
             else:
                 vm_ip = request.remote_addr
 
             vm_info = fetchVMByIP(vm_ip)
+            print("ISDEV FETCHED {}".format(str(vm_info)))
             if vm_info:
                 is_dev = vm_info["dev"]
                 disk_name = vm_info["disk_name"]
