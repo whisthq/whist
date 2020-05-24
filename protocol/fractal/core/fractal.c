@@ -191,7 +191,7 @@ bool is_dev_vm() {
     }
 
     char* json_str = NULL;
-    for (int i = 0; i < len - 4; i++) {
+    for (size_t i = 0; i < len - 4; i++) {
         if (memcmp(buf + i, "\r\n\r\n", 4) == 0) {
             json_str = buf + i + 4;
         }
