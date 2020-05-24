@@ -26,7 +26,7 @@ Start the app in the `dev` environment. This starts the renderer process in [**h
 
 `yarn dev`
 
-Before doing this, you will need to run `yarn -i` and might need to run `yarn upgrade` if you haven't upgraded yarn in a while. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
+Before doing this, you will need to run `yarn`, which will create the `yarn.lock` file and install all of the `node_modules`. If you still experience issues with starting the dev environment, you might need to run `yarn upgrade`, which will upgrade all the dependencies. It's a good idea to do so periodically to keep the application up-to-date. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
 
 If you would like to fully test the application, including the launch of the Fractal protocol, you need to run part of the build scripts, listed in the next section, to clone and make the protocol for your platform. Compiling the protocol requires Cmake. In order to make sure that your system has everything needed to compile the protocol, you should refer to the protocol repository readme.
 
