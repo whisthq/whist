@@ -605,7 +605,7 @@ int main() {
         updateStatus(false);
 
         if (CreateUDPContext(&PacketReceiveContext, NULL, PORT_CLIENT_TO_SERVER,
-                             1, 5000) < 0) {
+                             1, 5000, USING_STUN) < 0) {
             LOG_WARNING("Failed to start connection");
 
             // Since we're just idling, let's try updating the server
@@ -615,7 +615,7 @@ int main() {
         }
 
         if (CreateUDPContext(&PacketSendContext, NULL, PORT_SERVER_TO_CLIENT, 1,
-                             500) < 0) {
+                             500, USING_STUN) < 0) {
             LOG_WARNING(
                 "Failed to finish connection (Failed at port server to "
                 "client).");
@@ -623,7 +623,8 @@ int main() {
             continue;
         }
 
-        if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 500) <
+        if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 500,
+                             USING_STUN) <
             0) {
             LOG_WARNING("Failed to finish connection (Failed at TCP context).");
             closesocket(PacketReceiveContext.s);
