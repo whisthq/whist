@@ -17,7 +17,7 @@ def disk(action, **kwargs):
         disk_size = body["disk_size"]
         username = body["username"]
         
-        disks = fetchUserDisks(username)
+        disks = fetchUserDisks(username, main = True)
         if disks:
             location = disks[0]["location"]
             task = createEmptyDisk.apply_async(
