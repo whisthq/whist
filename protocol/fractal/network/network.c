@@ -10,6 +10,9 @@
 
 #include "../utils/aes.h"
 
+#define STUN_IP "52.5.240.234"
+#define STUN_PORT 48800
+
 /*
 ============================
 Private Custom Types
@@ -308,18 +311,13 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     if ((ret = connect(s, (struct sockaddr *)(&addr), sizeof(addr))) < 0) {
         bool worked = GetLastNetworkError() == EINPROGRESS;
 
-        LOG_INFO("Bool TCP worked = %d\n", worked);
-        LOG_INFO("Ret TCP = %d\n", ret);
-
         if (!worked) {
-            LOG_WARNING("Could not connect() over TCP to server %d\n",
-                        GetLastNetworkError());
+            LOG_WARNING("Could not connect() over TCP to server: Returned %d, Error Code %d\n",
+                        ret, GetLastNetworkError());
             closesocket(s);
             return false;
         }
     }
-
-    LOG_WARNING("last network error = %d\n", GetLastNetworkError());
 
     // Select connection
     fd_set set;
@@ -328,9 +326,9 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     struct timeval tv;
     tv.tv_sec = timeout_ms / 1000;
     tv.tv_usec = (timeout_ms % 1000) * 1000;
-    if (select((int)s + 1, NULL, &set, NULL, &tv) <= 0) {
-        LOG_WARNING("Could not select() over TCP to server %d\n",
-                    GetLastNetworkError());
+    if ((ret = select((int)s + 1, NULL, &set, NULL, &tv)) <= 0) {
+        LOG_WARNING("Could not select() over TCP to server: Returned %d, Error Code %d\n",
+                    ret, GetLastNetworkError());
         closesocket(s);
         return false;
     }
@@ -887,30 +885,34 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
 }
 
 int CreateTCPContext(SocketContext *context, char *destination, int port,
-                     int recvfrom_timeout_ms, int stun_timeout_ms) {
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
+                     int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun )  {
+    if( context == NULL )
+    {
+        LOG_WARNING( "Context is NULL" );
         return -1;
     }
     context->mutex = SDL_CreateMutex();
 
     int ret;
 
-#if USING_STUN
-    if (destination == NULL)
-        ret = CreateTCPServerContextStun(context, port, recvfrom_timeout_ms,
+    if( using_stun )
+    {
+        if (destination == NULL)
+            ret = CreateTCPServerContextStun(context, port, recvfrom_timeout_ms,
+                                             stun_timeout_ms);
+        else
+            ret = CreateTCPClientContextStun(context, destination, port,
+                                             recvfrom_timeout_ms, stun_timeout_ms);
+    } else
+    {
+        if (destination == NULL)
+            ret = CreateTCPServerContext(context, port, recvfrom_timeout_ms,
                                          stun_timeout_ms);
-    else
-        ret = CreateTCPClientContextStun(context, destination, port,
+        else
+            ret = CreateTCPClientContext(context, destination, port,
                                          recvfrom_timeout_ms, stun_timeout_ms);
-#else
-    if (destination == NULL)
-        ret = CreateTCPServerContext(context, port, recvfrom_timeout_ms,
-                                     stun_timeout_ms);
-    else
-        ret = CreateTCPClientContext(context, destination, port,
-                                     recvfrom_timeout_ms, stun_timeout_ms);
-#endif
+    }
+
     ClearReadingTCP(context);
     return ret;
 }
@@ -1271,24 +1273,26 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
 }
 
 int CreateUDPContext(SocketContext *context, char *destination, int port,
-                     int recvfrom_timeout_ms, int stun_timeout_ms) {
+                     int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun) {
     context->mutex = SDL_CreateMutex();
 
-#if USING_STUN
-    if (destination == NULL)
-        return CreateUDPServerContextStun(context, port, recvfrom_timeout_ms,
+    if( using_stun )
+    {
+        if( destination == NULL )
+            return CreateUDPServerContextStun( context, port, recvfrom_timeout_ms,
+                                               stun_timeout_ms );
+        else
+            return CreateUDPClientContextStun( context, destination, port,
+                                               recvfrom_timeout_ms, stun_timeout_ms );
+    } else
+    {
+        if (destination == NULL)
+            return CreateUDPServerContext(context, port, recvfrom_timeout_ms,
                                           stun_timeout_ms);
-    else
-        return CreateUDPClientContextStun(context, destination, port,
+        else
+            return CreateUDPClientContext(context, destination, port,
                                           recvfrom_timeout_ms, stun_timeout_ms);
-#else
-    if (destination == NULL)
-        return CreateUDPServerContext(context, port, recvfrom_timeout_ms,
-                                      stun_timeout_ms);
-    else
-        return CreateUDPClientContext(context, destination, port,
-                                      recvfrom_timeout_ms, stun_timeout_ms);
-#endif
+    }
 }
 
 // send JSON post to query the database, authenticate the user and return the VM
