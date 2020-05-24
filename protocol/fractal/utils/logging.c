@@ -240,8 +240,6 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
         SDL_SemPost((SDL_sem *)logger_semaphore);
     }
     SDL_UnlockMutex((SDL_mutex *)logger_mutex);
-
-    va_end(args);
 }
 
 #ifndef _WIN32
@@ -299,7 +297,7 @@ char *get_version() {
     char *version_filepath = "./version";
 #endif
 
-    long length;
+    size_t length;
     FILE *f = fopen(version_filepath, "r");
 
     if (f) {
