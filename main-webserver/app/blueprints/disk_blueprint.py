@@ -15,11 +15,13 @@ def disk(action, **kwargs):
 
         disk_size = body['disk_size']
         username = body['username']
-        location = body['location']
-        task = createEmptyDisk.apply_async([disk_size, username, location])
-        if not task:
-            return jsonify({}), 400
-        return jsonify({'ID': task.id}), 202
+        disks = fetchUserDisks(username)
+        if disks:
+            location = disks[0]["location"]
+            task = createEmptyDisk.apply_async([disk_size, username, location])
+            if not task:
+                return jsonify({}), 400
+            return jsonify({'ID': task.id}), 202
     elif action == 'createFromImage':
         body = request.get_json()
 
