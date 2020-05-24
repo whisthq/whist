@@ -193,6 +193,7 @@ void mprintf(const char *fmtStr, ...) {
     va_start(args, fmtStr);
 
     real_mprintf(WRITE_MPRINTF_TO_LOG, fmtStr, args);
+    va_end(args);
 }
 
 void real_mprintf(bool log, const char *fmtStr, va_list args) {
@@ -239,8 +240,6 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
         SDL_SemPost((SDL_sem *)logger_semaphore);
     }
     SDL_UnlockMutex((SDL_mutex *)logger_mutex);
-
-    va_end(args);
 }
 
 #ifndef _WIN32
@@ -298,7 +297,7 @@ char *get_version() {
     char *version_filepath = "./version";
 #endif
 
-    unsigned long length;
+    size_t length;
     FILE *f = fopen(version_filepath, "r");
 
     if (f) {
@@ -307,7 +306,7 @@ char *get_version() {
         fseek(f, 0, SEEK_SET);
         static char buf[17];
         version = buf;
-        fread(version, 1, min(length, sizeof(buf)), f);
+        fread(version, 1, min(length, (long)sizeof(buf)), f); // cast for compiler warning
         version[16] = '\0';
         fclose(f);
     } else {

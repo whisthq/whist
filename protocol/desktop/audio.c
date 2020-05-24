@@ -309,6 +309,7 @@ int32_t ReceiveAudio(FractalPacket* packet) {
       }
 
       if (last_played_id > 0) {
+        (void) old_last_played_id; // suppress unused variable warning.
         LOG_INFO(
             "Audio packet being overwritten before being played! ID %d "
             "replaced with ID %d, when the Last Played ID was %d. Last "

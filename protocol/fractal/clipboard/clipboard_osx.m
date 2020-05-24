@@ -58,9 +58,11 @@ void ClipboardSetString(const char *str) {
 void ClipboardGetImage(OSXImage *clipboard_image) {
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
   NSBitmapImageRep *rep = (NSBitmapImageRep *)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
+  NSDictionary *properties = [NSDictionary dictionary];
+
   if (rep) {
     // get the data
-    NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:@{}];
+    NSData *data = [rep representationUsingType:NSBitmapImageFileTypeBMP properties:properties];
     // set fields and return
     clipboard_image->size = [data length];
     clipboard_image->data = (unsigned char *)[data bytes];
@@ -74,13 +76,12 @@ void ClipboardGetImage(OSXImage *clipboard_image) {
 void ClipboardSetImage(char *img, int len) {
   NSData *imageData = [[[NSData alloc] initWithBytes:img length:len] autorelease];
   NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithData:imageData] autorelease];
-  NSImage *image = [[NSImage alloc] initWithSize:[imageRep size]];
+  NSImage *image = [[[NSImage alloc] initWithSize:[imageRep size]] autorelease];
   [image addRepresentation:imageRep];
   [[NSPasteboard generalPasteboard] declareTypes:[NSArray arrayWithObject:NSPasteboardTypeTIFF]
                                            owner:nil];
   [[NSPasteboard generalPasteboard] setData:[image TIFFRepresentation]
                                     forType:NSPasteboardTypeTIFF];
-  [image release];
   return;
 }
 

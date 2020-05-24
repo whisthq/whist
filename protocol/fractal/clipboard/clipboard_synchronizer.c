@@ -20,8 +20,8 @@ clock last_clipboard_update;
 SDL_sem* clipboard_semaphore;
 ClipboardData* clipboard;
 SDL_Thread* thread;
-bool connected;
-char* server_ip;
+static bool connected;
+static char* server_ip;
 
 bool pending_clipboard_push;
 
