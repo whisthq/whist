@@ -10,6 +10,9 @@
 
 #include "../utils/aes.h"
 
+#define STUN_IP "52.5.240.234"
+#define STUN_PORT 48800
+
 /*
 ============================
 Private Custom Types

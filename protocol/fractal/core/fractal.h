@@ -66,7 +66,7 @@
 #define PORT_SERVER_TO_CLIENT 32263
 #define PORT_SHARED_TCP 32264
 
-#define USING_STUN false
+#define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
 
 #define USING_SERVERSIDE_SCALE false
