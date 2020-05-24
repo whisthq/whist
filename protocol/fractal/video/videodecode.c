@@ -279,7 +279,7 @@ bool try_next_decoder(video_decoder_t* decoder) {
 	unsigned int i = 0;
     if ( decoder->type != DECODE_TYPE_NONE ) {
 	  for(; i < NUM_DECODER_TYPES; i++) {
-		if ( decoder->type == decoder_precedence[i] ) {
+		if ( decoder->type == (DecodeType) decoder_precedence[i] ) {
 			// Let's begin by trying the next one
 			i++;
 			break;
