@@ -66,7 +66,7 @@ if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
             "--std=c99"
             "--suppress=shiftTooManyBitsSigned"
             "--inline-suppr"
-            "-i /fractal/clipboard/clipboard_osx.m" # cppcheck doesn't support Objective-C
+            "--suppress=*:fractal/clipboard/clipboard_osx.m" # cppcheck doesn't support Objective-C
             )
 endif()
 
