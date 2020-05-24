@@ -519,7 +519,7 @@ int32_t SendAudio(void* opaque) {
 
 void update() {
     if (is_dev_vm()) {
-        LOG_INFO("dev vm, not auto-updating");
+        LOG_INFO("dev vm - not auto-updating");
     } else {
         if (!get_branch()) {
             LOG_ERROR("COULD NOT GET BRANCH");
