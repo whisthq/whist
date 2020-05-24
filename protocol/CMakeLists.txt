@@ -66,7 +66,7 @@ if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
             "--std=c99"
             "--suppress=shiftTooManyBitsSigned"
             "--inline-suppr"
-            "--suppress=*:fractal/clipboard/clipboard_osx.m" # cppcheck doesn't support Objective-C
+            "--suppressions-list=${CMAKE_SOURCE_DIR}/cppcheck_suppressions.txt" # cppcheck doesn't support Objective-C
             )
 endif()
 
