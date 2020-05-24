@@ -40,7 +40,9 @@ could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 #include <process.h>
 #define strtok_r strtok_s
 #else
+#ifndef __ANDROID_API__
 #include <execinfo.h>
+#endif
 #include <signal.h>
 #endif
 
@@ -657,13 +659,25 @@ void crash_handler(int sig) {
     exit(-1);
 }
 #endif
+#endif
 
+<<<<<<< HEAD
 void init_backtrace_handler() {
+<<<<<<< HEAD
     crash_handler_mutex = safe_SDL_CreateMutex();
+=======
+=======
+void initBacktraceHandler() {
+#ifndef _WIN32
+#ifndef __ANDROID_API__
+>>>>>>> Android desktop
+    crash_handler_mutex = SDL_CreateMutex();
+>>>>>>> 3aa8990d4 (Android desktop)
 #ifdef _WIN32
     SetUnhandledExceptionFilter(windows_exception_handler);
 #else
     signal(SIGSEGV, crash_handler);
+#endif
 #endif
 }
 

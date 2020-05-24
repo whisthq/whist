@@ -72,7 +72,13 @@ Defines
 #define LOG_LEVEL DEBUG_LEVEL
 #endif
 
+#ifndef __ANDROID_API__
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
+#else
+#include <android/log.h>
+#define PRINTFUNCTION(format, ...) __android_log_print(ANDROID_LOG_DEBUG, "ANDROID_DEBUG", format, __VA_ARGS__);
+#endif
+
 #define SENTRYBREADCRUMB(tag, format, ...) sentry_send_bread_crumb(tag, format, ##__VA_ARGS__)
 #define SENTRYEVENT(format, ...) sentry_send_event(format, ##__VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-35s | %-30s:%-5d | "
