@@ -198,7 +198,12 @@ bool is_dev_vm() {
     }
 
     json_t json;
-    parse_json(json_str, &json);
+    if( !parse_json( json_str, &json ) )
+    {
+        already_obtained_vm_type = true;
+        is_dev = true;
+        return is_dev;
+    }
 
     kv_pair_t* dev_value = get_kv(json, "dev");
     kv_pair_t* branch_value = get_kv(json, "branch");

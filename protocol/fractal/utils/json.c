@@ -42,6 +42,24 @@ bool parse_json(char* str, json_t* json) {
     while ((c = next_alphanumeric_char(&str)) != '\0') {
         // LOG_INFO("CHAR: %c", c);
 
+        // If we reached the end of the json
+        if( c == '}' )
+        {
+            break;
+        }
+
+        if( num_kv_pairs > 0 )
+        {
+            if( c == ',' )
+            {
+                c = next_alphanumeric_char( &str );
+            } else
+            {
+                LOG_ERROR( "JSON VALUE did not follow with ,! Had %c", *str );
+                return false;
+            }
+        }
+
         kv_pair_t* kv = &kv_pairs[num_kv_pairs];
         num_kv_pairs++;
 
@@ -104,17 +122,6 @@ bool parse_json(char* str, json_t* json) {
             }
         }
         */
-
-        c = next_alphanumeric_char(&str);
-
-        if (c != ',' && c != '}') {
-            LOG_ERROR("JSON VALUE did have a following , or }! Had %c", *str);
-            return false;
-        }
-
-        if (c == '}') {
-            break;
-        }
     }
 
     json->size = num_kv_pairs;
