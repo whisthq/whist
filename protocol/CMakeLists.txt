@@ -69,7 +69,7 @@ if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
             )
     # exclude specific files
     set(CPPCHECK_EXCLUDES
-            "${CMAKE_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # cppcheck not supported on Objective-C files
+            "../fractal/clipboard/clipboard_osx.m" # cppcheck not supported on Objective-C files
             )
 endif()
 
