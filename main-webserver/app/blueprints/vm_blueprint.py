@@ -198,23 +198,26 @@ def vm(action, **kwargs):
 
         return jsonify({"status": 200}), 200
     elif action == "isDev" and request.method == "GET":
-        vm_ip = ''
-        if request.headers.getlist("X-Forwarded-For"):
-            vm_ip = request.headers.getlist("X-Forwarded-For")[0]
-        else:
-            vm_ip = request.environ['HTTP_X_FORWARDED_FOR']
+        try:
+            vm_ip = ''
+            if request.headers.getlist("X-Forwarded-For"):
+                vm_ip = request.headers.getlist("X-Forwarded-For")[0]
+            else:
+                vm_ip = request.remote_addr
 
-        vm_info = fetchVMByIP(vm_ip)
-        if vm_info:
-            is_dev = vm_info["dev"]
-            disk_name = vm_info["disk_name"]
-            disk_info = fetchUserDisks(vm_info["username"])
+            vm_info = fetchVMByIP(vm_ip)
+            if vm_info:
+                is_dev = vm_info["dev"]
+                disk_name = vm_info["disk_name"]
+                disk_info = fetchUserDisks(vm_info["username"])
 
-            if disk_info:
-                branch = disk_info[0]["branch"]
+                if disk_info:
+                    branch = disk_info[0]["branch"]
 
-            return jsonify({"dev": is_dev, "branch": branch, "status": 200}), 200
-        return jsonify({"dev": False, "status": 200}), 200
+                return jsonify({"dev": is_dev, "branch": branch, "status": 200}), 200
+            return jsonify({"dev": False, "status": 200}), 200
+        except Exception as e:
+            print(str(e))
 
     return jsonify({}), 400
 
@@ -222,7 +225,7 @@ def vm(action, **kwargs):
 @vm_bp.route("/tracker/<action>", methods=["POST"])
 @jwt_required
 @generateID
-@logRequestInfo
+@logRequestInfor5
 def tracker(action, **kwargs):
     body = request.get_json()
     time = None
