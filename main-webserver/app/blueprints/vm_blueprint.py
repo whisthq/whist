@@ -108,7 +108,7 @@ def vm(action, **kwargs):
     elif action == "winlogonStatus" and request.method == "POST":
         body = request.get_json()
         ready = body["ready"]
-        vm_ip = None
+        vm_ip = ''
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
@@ -134,7 +134,7 @@ def vm(action, **kwargs):
         body = request.get_json()
         available = body["available"]
 
-        vm_ip = None
+        vm_ip = ''
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
@@ -198,6 +198,7 @@ def vm(action, **kwargs):
 
         return jsonify({"status": 200}), 200
     elif action == "isDev" and request.method == "GET":
+        vm_ip = ''
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
