@@ -297,9 +297,9 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     struct timeval tv;
     tv.tv_sec = timeout_ms / 1000;
     tv.tv_usec = (timeout_ms % 1000) * 1000;
-    if (select((int)s + 1, NULL, &set, NULL, &tv) <= 0) {
-        LOG_WARNING("Could not select() over TCP to server %d\n",
-                    GetLastNetworkError());
+    if ((ret = select((int)s + 1, NULL, &set, NULL, &tv)) <= 0) {
+        LOG_WARNING("Could not select() over TCP to server: Returned %d, Error Code %d\n",
+                    ret, GetLastNetworkError());
         closesocket(s);
         return false;
     }
