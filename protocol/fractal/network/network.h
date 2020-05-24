@@ -120,9 +120,6 @@ Constants
 ============================
 */
 
-#define STUN_IP "52.22.246.213"
-#define STUN_PORT 48800
-
 #define LARGEST_TCP_PACKET 10000000
 #define MAX_PAYLOAD_SIZE 1285
 #define TCP_SEGMENT_SIZE 1024
