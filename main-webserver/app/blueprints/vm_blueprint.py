@@ -112,7 +112,7 @@ def vm(action, **kwargs):
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
-            vm_ip = request.remote_addr
+            vm_ip = request.environ['HTTP_X_FORWARDED_FOR']
 
         sendInfo(
             kwargs["ID"],
@@ -138,7 +138,7 @@ def vm(action, **kwargs):
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
-            vm_ip = request.remote_addr
+            vm_ip = request.environ['HTTP_X_FORWARDED_FOR']
 
         vm_info = fetchVMByIP(vm_ip)
         if vm_info:
@@ -201,7 +201,7 @@ def vm(action, **kwargs):
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
-            vm_ip = request.remote_addr
+            vm_ip = request.environ['HTTP_X_FORWARDED_FOR']
 
         vm_info = fetchVMByIP(vm_ip)
         if vm_info:
