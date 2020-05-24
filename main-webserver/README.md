@@ -52,3 +52,28 @@ Test the webserver by running it on localhost and using Postman to send requests
 Access the SQL database here: https://pgweb-demo.herokuapp.com/
 
 Select Scheme, and for the server URL scheme, copy the DATABASE_URL config var found on the Heroku instance.
+
+## Styling
+
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python black](https://github.com/psf/black). You may find a variety of tutorial online for your personal setup. This README covers how to set it up on VSCode.
+
+### Python Black on VSCode
+
+1. Install it on your virtual env or in your local python with the command:
+
+```
+$ pip install black
+```
+
+2. Now install the python extension for VS-Code, open your VS-Code and type “Ctrl + p”, paste the line bellow and hit enter:
+
+```
+ext install ms-python.python
+```
+
+3. Go to the settings in your VS-Code typing “Ctrl + ,” or clicking at the gear on the bottom left and selecting “Settings [Ctrl+,]” option.
+4. Type “format on save” at the search bar on top of the Settings tab and check the box.
+5. Search for “python formatting provider” and select “black”.
+6. Now open/create a python file, write some code and save(Ctrl+s) it to see the magic happen!
+
+<sub>[Source](https://medium.com/@marcobelo/setting-up-python-black-on-visual-studio-code-5318eba4cd00)</sub>
