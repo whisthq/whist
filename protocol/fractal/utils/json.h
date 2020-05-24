@@ -8,6 +8,10 @@ Includes
 
 #include <stdbool.h>
 
+#if defined(_WIN32)
+#pragma warning(disable : 4201)
+#endif
+
 /*
 ============================
 Custom Types
