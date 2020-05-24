@@ -14,7 +14,7 @@
 
 typedef struct OSXImage {
   int size;
-  const void* data;
+  unsigned char* data;
 } OSXImage;
 
 typedef struct OSXFilenames {
