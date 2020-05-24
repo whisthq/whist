@@ -632,10 +632,15 @@ int main(int argc, char* argv[]) {
 
         // First context: Sending packets to server
 
-        if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
+        if (CreateUDPClientContextStun(&PacketSendContext, (char*)server_ip,
                              PORT_CLIENT_TO_SERVER, 10, 500) < 0) {
-            LOG_WARNING("Failed to connect to server");
-            continue;
+            LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+            if( CreateUDPClientContext( &PacketSendContext, (char*)server_ip,
+                                            PORT_CLIENT_TO_SERVER, 10, 500 ) < 0 )
+            {
+                LOG_WARNING( "Failed to connect to server" );
+                continue;
+            }
         }
 
         SDL_Delay(150);

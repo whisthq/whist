@@ -231,6 +231,10 @@ connection_timeout_ms
 @returns                        Will return -1 on failure, will return 0 on
 success
 */
+int CreateUDPClientContextStun( SocketContext* context, char* destination, int port,
+                      int recvfrom_timeout_s, int connection_timeout_ms );
+int CreateUDPClientContext( SocketContext* context, char* destination, int port,
+                      int recvfrom_timeout_s, int connection_timeout_ms );
 int CreateUDPContext(SocketContext* context, char* destination, int port,
                      int recvfrom_timeout_s, int connection_timeout_ms);
 int CreateTCPContext(SocketContext* context, char* destination, int port,
