@@ -644,7 +644,7 @@ def claimAvailableVM(disk_name, location, os_type = 'Windows', s=None, ID=-1):
             command = text(
                 """
                 UPDATE v_ms 
-                SET lock = :lock, username = :username, disk_name = :disk_name, state = :state
+                SET lock = :lock, username = :username, disk_name = :disk_name, state = :state, last_updated = :last_updated
                 WHERE vm_name = :vm_name
                 """
             )
@@ -655,6 +655,7 @@ def claimAvailableVM(disk_name, location, os_type = 'Windows', s=None, ID=-1):
                 "disk_name": disk_name,
                 "vm_name": available_vm["vm_name"],
                 "state": "ATTACHING",
+                "last_updated": getCurrentTime()
             }
             session.execute(command, params)
 
