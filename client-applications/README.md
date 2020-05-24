@@ -10,7 +10,7 @@ The following desktop (Windows, MacOS, Linux) platforms are supported:
 - Linux Ubuntu
   - Latest release: https://s3.console.aws.amazon.com/s3/buckets/fractal-linux-application-release/?region=us-east-1
 
-The following platforms need to be supported:
+The following platforms have yet to be supported:
 - iOS/iPadOS
 - Android/Chromebook
 - Web
