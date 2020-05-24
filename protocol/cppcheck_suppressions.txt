@@ -1,1 +1,1 @@
-clipboard_osx.m
+*:fractal/clipboard/clipboard_osx.m
