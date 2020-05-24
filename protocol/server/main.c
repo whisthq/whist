@@ -534,9 +534,11 @@ void update() {
             "powershell -command \"iwr -outf 'C:\\Program "
             "Files\\Fractal\\update.bat' "
             "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/update.bat\""
+            ,
+            get_branch()
+#else
+            "TODO: Linux command?"
 #endif
-                  ,
-                 get_branch()
         );
 
         runcmd(cmd, NULL);
