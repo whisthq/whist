@@ -65,24 +65,9 @@ if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
             "--verbose"
             "--std=c99"
             "--suppress=shiftTooManyBitsSigned"
+            "--suppress=*:clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
             "--inline-suppr"
             )
-    # exclude specific files
-
-
-    # set(CPPCHECK_EXCLUDES
-    #         ../fractal/clipboard/clipboard_osx.m # cppcheck not supported on Objective-C files
-    #         )
-
-        if(EXISTS "${CMAKE_SOURCE_DIR}/cppcheck_suppressions.txt")
-            set(CPPCHECK_SUPPRESSIONS "--suppressions-list=${CMAKE_SOURCE_DIR}/cppcheck_suppressions.txt" CACHE STRING "The suppressions file to use")
-        else()
-            set(CPPCHECK_SUPPRESSIONS "" CACHE STRING "The suppressions file to use")
-        endif()
-     
-
-
-
 endif()
 
 
