@@ -225,7 +225,7 @@ def vm(action, **kwargs):
 @vm_bp.route("/tracker/<action>", methods=["POST"])
 @jwt_required
 @generateID
-@logRequestInfor5
+@logRequestInfo
 def tracker(action, **kwargs):
     body = request.get_json()
     time = None
