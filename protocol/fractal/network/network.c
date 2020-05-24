@@ -282,18 +282,13 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     if ((ret = connect(s, (struct sockaddr *)(&addr), sizeof(addr))) < 0) {
         bool worked = GetLastNetworkError() == EINPROGRESS;
 
-        LOG_INFO("Bool TCP worked = %d\n", worked);
-        LOG_INFO("Ret TCP = %d\n", ret);
-
         if (!worked) {
-            LOG_WARNING("Could not connect() over TCP to server %d\n",
-                        GetLastNetworkError());
+            LOG_WARNING("Could not connect() over TCP to server: Returned %d, Error Code %d\n",
+                        ret, GetLastNetworkError());
             closesocket(s);
             return false;
         }
     }
-
-    LOG_WARNING("last network error = %d\n", GetLastNetworkError());
 
     // Select connection
     fd_set set;

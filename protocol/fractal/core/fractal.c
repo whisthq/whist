@@ -200,6 +200,7 @@ bool is_dev_vm() {
     json_t json;
     if( !parse_json( json_str, &json ) )
     {
+        LOG_WARNING( "Failed to parse JSON from /vm/isDev" );
         already_obtained_vm_type = true;
         is_dev = true;
         return is_dev;
