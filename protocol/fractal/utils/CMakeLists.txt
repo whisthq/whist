@@ -3,10 +3,12 @@ add_library(fractalUtils STATIC
         clock.h
         logging.h
         sdlscreeninfo.h
+        json.h
         aes.c
         clock.c
         logging.c
         sdlscreeninfo.c
+        json.c
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

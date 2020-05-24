@@ -120,9 +120,6 @@ Constants
 ============================
 */
 
-#define STUN_IP "52.22.246.213"
-#define STUN_PORT 48800
-
 #define LARGEST_TCP_PACKET 10000000
 #define MAX_PAYLOAD_SIZE 1285
 #define TCP_SEGMENT_SIZE 1024
@@ -232,9 +229,9 @@ connection_timeout_ms
 success
 */
 int CreateUDPContext(SocketContext* context, char* destination, int port,
-                     int recvfrom_timeout_s, int connection_timeout_ms);
+                     int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun);
 int CreateTCPContext(SocketContext* context, char* destination, int port,
-                     int recvfrom_timeout_s, int connection_timeout_ms);
+                     int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun);
 
 /*
 @brief                          This will send a FractalPacket over TCP to the
