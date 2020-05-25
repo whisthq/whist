@@ -56,6 +56,7 @@ struct CaptureDevice {
   int counter;
   int width;
   int height;
+  int pitch;
   char *frame_data;
   struct ScreenshotContainer screenshot;
   bool did_use_map_desktop_surface;

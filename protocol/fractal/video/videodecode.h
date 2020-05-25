@@ -32,11 +32,16 @@ Includes
 
 // define decoder struct to pass as a type
 typedef struct {
+  int width;
+  int height;
+  bool can_use_hardware;
   AVCodec *codec;
   AVCodecContext *context;
   AVFrame *sw_frame;
   AVFrame *hw_frame;
+  AVBufferRef* ref;
   AVPacket packet;
+  enum AVPixelFormat match_fmt;
   DecodeType type;
   enum AVHWDeviceType device_type;
 } video_decoder_t;

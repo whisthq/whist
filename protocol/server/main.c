@@ -265,7 +265,7 @@ int32_t SendVideo(void* opaque) {
             clock t;
             StartTimer(&t);
 
-            video_encoder_encode(encoder, device->frame_data);
+            video_encoder_encode(encoder, device->frame_data, device->pitch);
             frames_since_first_iframe++;
 
             static int frame_stat_number = 0;
@@ -388,7 +388,7 @@ int32_t SendVideo(void* opaque) {
                         id++;
                     }
 
-                    LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n", GetTimer( t ), frame_size );
+                    //LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n", GetTimer( t ), frame_size );
 
                     previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time = GetTimer(server_frame_timer);
@@ -519,22 +519,36 @@ int32_t SendAudio(void* opaque) {
 
 void update() {
     if (is_dev_vm()) {
-        LOG_INFO("dev vm, not auto-updating");
+        LOG_INFO("dev vm - not auto-updating");
     } else {
+        if (!get_branch()) {
+            LOG_ERROR("COULD NOT GET BRANCH");
+            return;
+        }
+
         LOG_INFO("Checking for server protocol updates...");
-        runcmd(
+        char cmd[5000];
+
+        snprintf(cmd, sizeof(cmd),
 #ifdef _WIN32
             "powershell -command \"iwr -outf 'C:\\Program "
             "Files\\Fractal\\update.bat' "
-            "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/update.bat\""
+            "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/update.bat\""
+            ,
+            get_branch()
 #else
             "TODO: Linux command?"
 #endif
-            ,
-            NULL);
+        );
+
+        runcmd(cmd, NULL);
+
+        snprintf(cmd, sizeof(cmd),
+                 "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\" %s", get_branch());
+
         runcmd(
 #ifdef _WIN32
-            "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\""
+            cmd
 #else
             "TODO: Linux command?"
 #endif
@@ -593,7 +607,7 @@ int main() {
         updateStatus(false);
 
         if (CreateUDPContext(&PacketReceiveContext, NULL, PORT_CLIENT_TO_SERVER,
-                             1, 5000) < 0) {
+                             1, 5000, USING_STUN) < 0) {
             LOG_WARNING("Failed to start connection");
 
             // Since we're just idling, let's try updating the server
@@ -603,7 +617,7 @@ int main() {
         }
 
         if (CreateUDPContext(&PacketSendContext, NULL, PORT_SERVER_TO_CLIENT, 1,
-                             500) < 0) {
+                             500, USING_STUN) < 0) {
             LOG_WARNING(
                 "Failed to finish connection (Failed at port server to "
                 "client).");
@@ -611,7 +625,8 @@ int main() {
             continue;
         }
 
-        if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 500) <
+        if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 500,
+                             USING_STUN) <
             0) {
             LOG_WARNING("Failed to finish connection (Failed at TCP context).");
             closesocket(PacketReceiveContext.s);

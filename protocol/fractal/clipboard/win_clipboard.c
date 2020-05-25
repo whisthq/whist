@@ -497,9 +497,13 @@ void SetClipboard(ClipboardData* cb) {
   }
 
   if (cf_type != -1) {
-    if (!OpenClipboard(NULL)) return;
+    if (!OpenClipboard(NULL)) {
+		GlobalFree(hMem);
+		return;
+	}
     EmptyClipboard();
     if (!SetClipboardData(cf_type, hMem)) {
+      GlobalFree(hMem);
       LOG_WARNING("Failed to SetClipboardData");
     }
 

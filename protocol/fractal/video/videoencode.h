@@ -59,7 +59,7 @@ accessed via encoded_frame_size and encoded_frame_data
 
 @param rgb_pixels               The frame to be in encoded
 */
-void video_encoder_encode(encoder_t *encoder, void *rgb_pixels);
+void video_encoder_encode(encoder_t *encoder, void *rgb_pixels, int pitch);
 
 /*
 @brief                          Set the next frame to be an i-frame

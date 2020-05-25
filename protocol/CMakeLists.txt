@@ -65,6 +65,8 @@ if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
             "--verbose"
             "--std=c99"
             "--suppress=shiftTooManyBitsSigned"
+            "--suppress=*:../fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
+            "--inline-suppr"
             )
 endif()
 
@@ -170,6 +172,7 @@ include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
 include_directories(include/ffmpeg)
+
 
 #Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)

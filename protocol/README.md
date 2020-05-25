@@ -102,11 +102,11 @@ disto's package manager.
 If you are running 20.04 the version in the ubuntu package lists is fine. 
 If you are running 18.04 the package lists only has 3.11.  You can install the newest version from the developer with 
 ```
-sudo apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget
+sudo apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget -y
 wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | sudo apt-key add -
 sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
 sudo apt-get update
-sudo apt-get install cmake
+sudo apt-get install cmake -y
 ```
 ##### Windows
 The latest binaries are available [here.](https://cmake.org/download/) 
