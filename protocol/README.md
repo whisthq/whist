@@ -63,55 +63,49 @@ On Windows, in addition to downloading Cmake, of which you can find the latest b
 
 ### Building
 
+If you are on Linux Ubuntu, run `desktop/linux-client-setup.sh` to install the system dependencies.
+
+#### Building in an IDE
+
+We use CMake to build. If you are using VS code, VS or Clion, this is pretty easy to use. You need to either open the root repo folder as a project, or open the root `CMakelist.txt` as a project. On CLion and VS there is a menu to build at the top, on VS code you need the CMake extension and the build command is at the bottom. CMake currently has two types of builds, Debug and Release. You probably want to be building debug builds while developing, since they log more aggressively (Warning levels: Info and above). 
+
+Currently, we use the same compiler flags for Debug and Release because we 
+distribute binaries with debug flags, to better troubleshoot errors and bugs. 
+
+The build target for desktop is "FractalClient" and the sever is "Fractal Server".
+
+#### MacOS/Linux CLI
+
+
+
+
+
+Install cmake and ccmake, ccmake is a TUI for configuring the build. 
+From the root of the repo run ccmake ., you will initially see a blank screen because no cache has been built yet.
+Hit c to configure, this will populate the cache and show you a page with various settings. The three you care about 
+are BUILD_CLIENT, BUILD_SERVER which are both ON or OFF, and CMAKE_BUILD_TYPE which is one of Debug or Release.
+Next hit c again to reconfigure with your possibly new settings, then hit g to generate the makefile. This makefile has all of the build targets,
+including FractalClient, FractalServer and all of our libraries. It also includes CMake targets such as clean, edit_cache and rebuild cache.
+Running just make defaults to building FractalClient and FractalServer if you set both of these to ON in your configuration.
+GCC only supports one type of build at a time, so if you are currently building release, but want to build debug, you need to edit the cache and regenerate the makefile.  
+
+If you would like to keep your repo cleaner, make a build folder in protocol and run cmake from there. e.g cd "build && 
+cmake ../." this way you can just delete the contents of the build folder to start over. 
 
 
 
 
 
 
- ## Building
- If you are on ubuntu/linux run desktop/linux-client-setup.sh to install the dev versions of the dependencies. 
- ### Building in an IDE
- We use CMake to build. If you are using VS code, VS or Clion this is pretty easy to use, 
- you need to either open the root repo folder as a project, or open the root CMakeCache.txt
- as a project. On CLion and VS there is a menu to build at the top, on VS code you need the 
- CMake extension and the build command is at the bottom. The CMake currently has two types of builds
- Debug and Release. You probably want to be building debug builds while developing, since they log more
- aggressively (info and above). Currently, we use the same compiler flags for debug and release because we 
-  distribute binaries with debug flags. The build target for desktop is "FractalClient" and the sever is "Fractal Server".
- 
- 
- #### Linux CLI
- Install cmake and ccmake, ccmake is a TUI for configuring the build. 
- From the root of the repo run ccmake ., you will initially see a blank screen because no cache has been built yet.
- Hit c to configure, this will populate the cache and show you a page with various settings. The three you care about 
- are BUILD_CLIENT, BUILD_SERVER which are both ON or OFF, and CMAKE_BUILD_TYPE which is one of Debug or Release.
- Next hit c again to reconfigure with your possibly new settings, then hit g to generate the makefile. This makefile has all of the build targets,
- including FractalClient, FractalServer and all of our libraries. It also includes CMake targets such as clean, edit_cache and rebuild cache.
- Running just make defaults to building FractalClient and FractalServer if you set both of these to ON in your configuration.
- GCC only supports one type of build at a time, so if you are currently building release, but want to build debug, you need to edit the cache and regenerate the makefile.  
- 
- If you would like to keep your repo cleaner, make a build folder in protocol and run cmake from there. e.g cd "build && 
- cmake ../." this way you can just delete the contents of the build folder to start over. 
- 
- #### Windows CLI
-To build on windows use the command `cmake -G "NMake Makefiles"` at the root directory. This tells CMake to generate 
-NMake style makefiles. Then, run `nmake` in either `server` or `desktop`, depending on which one you want to compile.
 
+#### Windows CLI
+
+To build on Windows, run the command `cmake -G "NMake Makefiles"` at the root directory from an x86_64 Visual Studio Developper Command Prompt, which is obtained through downloading Visual Studio. This tells CMake to generate 
+NMake-style makefiles. Then, run `nmake` in either `/server` or `/desktop`, depending on which one you want to compile.
 
 #### Further documentation
-More documentation is in our [gdrive](https://docs.google.com/document/d/1T9Lc3HVoqhqSjdUbiaFaQU71oV1VH25iFGDNvAYjtOs/edit?usp=sharing)
 
-
-
-
-
-
-
-
-
-
-
+More documentation is in our [Google Drive](https://docs.google.com/document/d/1T9Lc3HVoqhqSjdUbiaFaQU71oV1VH25iFGDNvAYjtOs/edit?usp=sharing), if needed.
 
 ### Continous Integration
  
