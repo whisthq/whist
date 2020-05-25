@@ -28,39 +28,47 @@ TBD.
 
 TBD.
 
-------------
+## Development
+
+We use Cmake to compile, format and run tests. You first need to make sure Cmake 3.15 or higher is installed on your system. We also use cppcheck to run static tests on the code, which you should install as well.
+
+### Installation
+
+#### Linux
+
+If you are using a rolling release distro, e.g. Arch then you can likely install the newest version using pacman or your 
+disto's package manager. 
+If you are running 20.04 the version in the Ubuntu package lists is fine. 
+If you are running 18.04 the package lists only has 3.11.  You can install the newest version from the developer with 
+```
+sudo apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget -y
+wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | sudo apt-key add -
+sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
+sudo apt-get update
+sudo apt-get install cmake -y
+```
+
+You can install cppcheck via your package manager, e.g. `apt-get install cppcheck`.
+
+#### MacOS
+
+You can install both Cmake and cppcheck via Homebrew.
+```
+brew install cmake
+
+brew install cppcheck
+```
+
+##### Windows
+
+On Windows, in addition to downloading Cmake, of which you can find the latest binaries [here.](https://cmake.org/download/), and cppcheck, which you can install via Chocolatey by running `choco install cppcheck --force`, you also need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. In order to compile the protocol, you need to make sure to be using x86_x64 Visual Studio Developer Command Prompt.
+
+### Building
 
 
 
 
 
-
-
-
-
-
-
-
-brew install clang-format
-
-
-
-
-
-
- 
- ------------
- ## GitHub Actions
- 
- We have GitHub Actions enabled on this repository, in conjunction with CMake. Therefore, every time there is a push or a PR, GitHub will automatically compile both FractalClient and FractalServer on Windows, MacOS and Linux Ubuntu, and will outline any warnings and/or errors on the "Actions" tab above. Make sure to verify there after your push or PR. The relevant workflow file for compiling is .github/workflow/build.yaml.
- This workflow also runs cppcheck on linux and Mac (windows is a possible todo), which is a static analysis tool which can catch errors which compilers cannot. e.g accessing uninitialized memory and other undefined behaviour. Not everything it catches is critical, but it does indicate the possibility of unexpected behaviour. 
- To see the warnings in context go to the actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log. 
- 
- Dev status: 
- 
- Master Status: 
- 
-  ------------
 
  ## Building
  If you are on ubuntu/linux run desktop/linux-client-setup.sh to install the dev versions of the dependencies. 
@@ -91,28 +99,38 @@ brew install clang-format
 To build on windows use the command `cmake -G "NMake Makefiles"` at the root directory. This tells CMake to generate 
 NMake style makefiles. Then, run `nmake` in either `server` or `desktop`, depending on which one you want to compile.
 
-#### CMake installation 
-##### Linux
-If you are using a rolling release distro, e.g arch then you can likely install the newest version using pacman or your 
-disto's package manager. 
-If you are running 20.04 the version in the ubuntu package lists is fine. 
-If you are running 18.04 the package lists only has 3.11.  You can install the newest version from the developer with 
-```
-sudo apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget -y
-wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | sudo apt-key add -
-sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
-sudo apt-get update
-sudo apt-get install cmake -y
-```
 
-
-brew install cppcheck
-
-
-##### Windows
-The latest binaries are available [here.](https://cmake.org/download/) 
 #### Further documentation
 More documentation is in our [gdrive](https://docs.google.com/document/d/1T9Lc3HVoqhqSjdUbiaFaQU71oV1VH25iFGDNvAYjtOs/edit?usp=sharing)
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ ------------
+ ## GitHub Actions
+ 
+ We have GitHub Actions enabled on this repository, in conjunction with CMake. Therefore, every time there is a push or a PR, GitHub will automatically compile both FractalClient and FractalServer on Windows, MacOS and Linux Ubuntu, and will outline any warnings and/or errors on the "Actions" tab above. Make sure to verify there after your push or PR. The relevant workflow file for compiling is .github/workflow/build.yaml.
+ This workflow also runs cppcheck on linux and Mac (windows is a possible todo), which is a static analysis tool which can catch errors which compilers cannot. e.g accessing uninitialized memory and other undefined behaviour. Not everything it catches is critical, but it does indicate the possibility of unexpected behaviour. 
+ To see the warnings in context go to the actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log. 
+ 
+ Dev status: 
+ 
+ Master Status: 
+ 
+  ------------
+
+
+
 
 
 
