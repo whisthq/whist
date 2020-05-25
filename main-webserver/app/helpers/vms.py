@@ -1526,7 +1526,7 @@ def waitForWinlogon(vm_name, ID=-1):
         ready = checkWinlogon(vm_name)
         num_tries += 1
 
-        if num_tries > 15:
+        if num_tries > 30:
             sendError(ID, "Waited too long for winlogon. Sending failure message.")
             return -1
 
