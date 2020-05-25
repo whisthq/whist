@@ -1462,6 +1462,10 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
             while winlogon < 0:
                 boot_if_necessary(vm_name, True, ID)
                 winlogon = waitForWinlogon(vm_name, ID)
+                if s:
+                    s.update_state(
+                        state="PENDING", meta={"msg": "Logging you into your cloud PC. This should take less than two minutes."}
+                    )
 
             if s:
                 s.update_state(
@@ -1526,7 +1530,7 @@ def waitForWinlogon(vm_name, ID=-1):
         ready = checkWinlogon(vm_name)
         num_tries += 1
 
-        if num_tries > 15:
+        if num_tries > 25:
             sendError(ID, "Waited too long for winlogon. Sending failure message.")
             return -1
 
