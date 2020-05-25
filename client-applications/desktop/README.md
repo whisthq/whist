@@ -32,11 +32,13 @@ If you would like to fully test the application, including the launch of the Fra
 
 ## Packaging for Production
 
-To package apps for the local platform, including fetching and compiling the latest Fractal protocol:
+To package apps for the local platform, including fetching and compiling the latest Fractal protocol. This will enable you to get an executable that you can install to test your code locally. The installer executables will be in `desktop/release`. If you have already downloaded and compiled the latest Fractal protocol, you can simply run `yarn package`. 
 
-Run `./build.sh` (for MacOS/Linux), or `build.bat` (for Windows). If you have already downloaded and compiled the latest Fractal protocol, you can simply run `yarn package`. The version of the protocol that gets downloaded is the `master` branch, which is our stable production branch. If you want to test another branch, you can do so by modifying the build scripts git commands, but make sure not to commit or publish, as only the master branch should ever be pushed to users.
+**MacOS/Linux**  
+Run `./build.sh` in terminal.
 
-This will enable you to get an executable that you can install to test your code locally. The installer executables will be in `desktop/release`.
+**Windows**  
+Run `build.bat` in an x86_x64 command prompt. One way to get the prompt is to install [Microsoft Visual Studio 2019](https://visualstudio.microsoft.com/downloads/). In the installer, make sure to select the `Desktop developmentwith C++` workload.
 
 ## Publishing to Production
 
