@@ -16,13 +16,18 @@ def disk(action, **kwargs):
 
         disk_size = body["disk_size"]
         username = body["username"]
-        location = body["location"]
-        task = createEmptyDisk.apply_async(
-            [disk_size, username, location, kwargs["ID"]]
-        )
-        if not task:
-            return jsonify({}), 400
-        return jsonify({"ID": task.id}), 202
+        
+        disks = fetchUserDisks(username, main = True)
+        if disks:
+            location = disks[0]["location"]
+            task = createEmptyDisk.apply_async(
+                [disk_size, username, location, kwargs["ID"]]
+            )
+            if not task:
+                return jsonify({}), 400
+            return jsonify({"ID": task.id}), 202
+        else:
+            return jsonify({"ID": None}), 404
     elif action == "createFromImage":
         body = request.get_json()
 
@@ -49,10 +54,15 @@ def disk(action, **kwargs):
         body = request.get_json()
         task = swapDiskSync.apply_async([body["disk_name"], kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
+    elif action == "add":
+        body = request.get_json()
+
+        task = attachDisk.apply_async([body["disk_name"], body["vm_name"], kwargs["ID"]])
+        return jsonify({"ID": task.id}), 202
     elif action == "detach":
-        vm_name = request.get_json()["vm_name"]
-        disk_name = request.get_json()["disk_name"]
-        task = detachDisk.apply_async([vm_name, disk_name, kwargs["ID"]])
+        body = request.get_json()
+        
+        task = detachDisk.apply_async([body["disk_name"], body["vm_name"], kwargs["ID"]])
         if not task:
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202

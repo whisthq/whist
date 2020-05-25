@@ -75,7 +75,7 @@ def genUniqueCode():
         return new_code
 
 
-def registerUser(username, password, token):
+def registerUser(username, password, token, name = None, reason_for_signup = None):
     """Registers a user, and stores it in the users table
 
     Args:
@@ -89,11 +89,12 @@ def registerUser(username, password, token):
     pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
     code = genUniqueCode()
     command = text("""
-        INSERT INTO users("username", "password", "code", "id")
-        VALUES(:userName, :password, :code, :token)
+        INSERT INTO users("username", "password", "code", "id", "name", "reason_for_signup")
+        VALUES(:userName, :password, :code, :token, :name, :reason_for_signup)
         """)
     params = {'userName': username, 'password': pwd_token,
-              'code': code, 'token': token}
+              'code': code, 'token': token,
+              'name': name, 'reason_for_signup': reason_for_signup}
     with engine.connect() as conn:
         try:
             conn.execute(command, **params)

@@ -115,9 +115,8 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
     )
     data_disk = async_disk_creation.result()
 
-    vm_name = ""
-    createDiskEntry(disk_name, vm_name, username, location)
-    attachDisk()
+	vm_name = ""
+	createDiskEntry(disk_name, vm_name, username, location, disk_size=disk_size, main=False)
 
     return disk_name
 
@@ -141,36 +140,56 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, ID=
 
 
 @celery.task(bind=True)
-def attachDisk(self, vm_name, disk_name):
-    _, compute_client, _ = createClients()
-    data_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
-    lunNum = 1
-    attachedDisk = False
-    while not attachedDisk:
-        try:
-            # Get the virtual machine by name
-            sendDebug(ID, "Incrementing lun")
-            virtual_machine = compute_client.virtual_machines.get(
-                os.environ.get("VM_GROUP"), vm_name
-            )
-            virtual_machine.storage_profile.data_disks.append(
-                {
-                    "lun": lunNum,
-                    "name": disk_name,
-                    "create_option": DiskCreateOption.attach,
-                    "managed_disk": {"id": data_disk.id},
-                }
-            )
-            async_disk_attach = compute_client.virtual_machines.create_or_update(
-                os.environ.get("VM_GROUP"), virtual_machine.name, virtual_machine
-            )
-            attachedDisk = True
-        except ClientException:
-            lunNum += 1
+def attachDisk(self, disk_name, vm_name, ID=-1):
+	_, compute_client, _ = createClients()
+	data_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
+	if data_disk.managed_by:
+		old_vm_name = data_disk.managed_by.split("/")[-1]
+		if old_vm_name != vm_name:
+			print('Disk {} already attached to {}. Detaching.'.format(disk_name, old_vm_name))
+			detachDisk(disk_name, old_vm_name)
+		else:
+			return {'status': 200, 'disk_name': disk_name, 'vm_name': vm_name}
 
-    async_disk_attach.wait()
+	lunNum = 1
+	attachedDisk = False
+	while not attachedDisk and lunNum < 15:
+		print('Trying to attach {} to {}'.format(disk_name, vm_name))
+		try:
+			# Get the virtual machine by name
+			print("Incrementing lun")
+			virtual_machine = compute_client.virtual_machines.get(
+				os.environ.get("VM_GROUP"), vm_name
+			)
+			print("Retrieved VM")
+			virtual_machine.storage_profile.data_disks.append(
+				{
+					"lun": lunNum,
+					"name": data_disk.name,
+					"create_option": DiskCreateOption.attach,
+					"managed_disk": {"id": data_disk.id},
+				}
+			)
+			print("Appended data disk")
 
-    command = """
+			async_disk_attach = compute_client.virtual_machines.create_or_update(
+				os.environ.get("VM_GROUP"), virtual_machine.name, virtual_machine
+			)
+			async_disk_attach.wait()
+
+			print("Done appending data disk")
+
+			attachedDisk = True
+		except ClientException as e:
+			print(str(e))
+			lunNum += 1
+
+	if lunNum >= 15:
+		return {'status': 404}
+
+	async_disk_attach.wait()
+
+	command = """
 		Get-Disk | Where partitionstyle -eq 'raw' |
 			Initialize-Disk -PartitionStyle MBR -PassThru |
 			New-Partition -AssignDriveLetter -UseMaximumSize |
@@ -184,34 +203,36 @@ def attachDisk(self, vm_name, disk_name):
         os.environ.get("VM_GROUP"), vm_name, run_command_parameters
     )
 
-    result = poller.result()
-    sendInfo(ID, "Disk attached to LUN#" + str(lunNum))
-    sendDebug(ID, result.value[0].message)
+	result = poller.result()
+	print("Disk attached to LUN#" + str(lunNum))
+	print(result.value[0].message)
+	return {'status': 200, 'disk_name': disk_name, 'vm_name': vm_name}
 
 
 @celery.task(bind=True)
-def detachDisk(self, vm_Name, disk_name, ID=-1):
-    """Detaches disk from vm
+def detachDisk(self, disk_name, vm_name, ID=-1):
+	"""Detaches disk from vm
 
 	Args:
-		vm_Name (str): Name of the vm
+		vm_name (str): Name of the vm
 		disk_name (str): Name of the disk
 		ID (int, optional): Papertrail logging ID. Defaults to -1.
 	"""
-    _, compute_client, _ = createClients()
-    # Detach data disk
-    sendInfo(ID, "\nDetach Data Disk: " + disk_name)
+	_, compute_client, _ = createClients()
+	# Detach data disk
+	sendInfo(ID, "\nDetach Data Disk: " + disk_name)
 
-    virtual_machine = compute_client.virtual_machines.get(
-        os.environ.get("VM_GROUP"), vm_Name
-    )
-    data_disks = virtual_machine.storage_profile.data_disks
-    data_disks[:] = [disk for disk in data_disks if disk.name != disk_name]
-    async_vm_update = compute_client.virtual_machines.create_or_update(
-        os.environ.get("VM_GROUP"), vm_Name, virtual_machine
-    )
-    virtual_machine = async_vm_update.result()
-    sendInfo(ID, "Detach data disk sucessful")
+	virtual_machine = compute_client.virtual_machines.get(
+		os.environ.get("VM_GROUP"), vm_name
+	)
+	data_disks = virtual_machine.storage_profile.data_disks
+	data_disks[:] = [disk for disk in data_disks if disk.name != disk_name]
+	async_vm_update = compute_client.virtual_machines.create_or_update(
+		os.environ.get("VM_GROUP"), vm_name, virtual_machine
+	)
+	virtual_machine = async_vm_update.result()
+	sendInfo(ID, "Detach data disk sucessful")
+	return {'status': 200}
 
 
 @celery.task(bind=True)
@@ -279,9 +300,13 @@ def fetchAll(self, update, ID=-1):
 
 @celery.task(bind=True)
 def deleteVMResources(self, vm_name, delete_disk, ID=-1):
-    if spinLock(vm_name) > 0:
-        status = 200 if deleteResource(vm_name, delete_disk) else 404
-        lockVM(vm_name, False)
+	if spinLock(vm_name) > 0:
+		lockVMAndUpdate(vm_name = vm_name, state = 'DELETING', lock = True, temporary_lock = None, 
+			change_last_updated = True, verbose = False, ID = ID)
+
+		status = 200 if deleteResource(vm_name, delete_disk) else 404
+		
+		lockVM(vm_name, False)
 
         sendInfo(
             ID,
@@ -297,21 +322,18 @@ def deleteVMResources(self, vm_name, delete_disk, ID=-1):
 
 @celery.task(bind=True)
 def restartVM(self, vm_name, ID=-1):
-    sendInfo(ID, "Trying to restart vm {}".format(vm_name))
-    if spinLock(vm_name) > 0:
-        lockVM(vm_name, True)
+	if spinLock(vm_name) > 0:
+		lockVMAndUpdate(vm_name = vm_name, state = 'RESTARTING', lock = True, temporary_lock = None, 
+			change_last_updated = True, verbose = False, ID = ID)
 
         _, compute_client, _ = createClients()
 
         fractalVMStart(vm_name, True)
 
-        lockVM(vm_name, False)
-        sendInfo(ID, "VM {} restarted successfully".format(vm_name))
 
         return {"status": 200}
     else:
         return {"status": 404}
-
 
 @celery.task(bind=True)
 def startVM(self, vm_name, ID=-1):
@@ -408,207 +430,273 @@ def syncDisks(self, ID=-1):
 
 @celery.task(bind=True)
 def swapDiskSync(self, disk_name, ID=-1):
-    def swapDiskAndUpdate(s, disk_name, vm_name):
-        # Pick a VM, attach it to disk
-        sendInfo(ID, "Preparing to attach disk {} to vm {}".format(disk_name, vm_name))
-        hr = swapdisk_name(s, disk_name, vm_name)
-        if hr > 0:
-            updateDisk(disk_name, vm_name, location)
-            associateVMWithDisk(vm_name, disk_name)
-            sendInfo(
-                ID, "Database updated with VM {}, disk {}".format(vm_name, disk_name)
-            )
-            return 1
-        else:
-            return -1
+	def swapDiskAndUpdate(s, disk_name, vm_name, needs_winlogon):
+		# Pick a VM, attach it to disk
+		hr = swapdisk_name(s, disk_name, vm_name, needs_winlogon = needs_winlogon)
+		if hr > 0:
+			updateDisk(disk_name, vm_name, location)
+			associateVMWithDisk(vm_name, disk_name)
+			sendInfo(
+				ID, "Database updated with VM {}, disk {}".format(vm_name, disk_name)
+			)
+			return 1
+		else:
+			return -1
 
-    def updateOldDisk(vm_name):
-        virtual_machine = getVM(vm_name)
-        old_disk = virtual_machine.storage_profile.os_disk
-        updateDisk(old_disk.name, "", None)
+	def updateOldDisk(vm_name):
+		virtual_machine = getVM(vm_name)
+		old_disk = virtual_machine.storage_profile.os_disk
+		updateDisk(old_disk.name, "", None)
 
-    sendInfo(ID, " Swap disk task for disk {} added to Redis queue".format(disk_name))
+	def attachSecondaryDisks(s, username, vm_name):
+		secondary_disks = fetchSecondaryDisks(username)
+		if secondary_disks:
+			# Lock immediately
+			lockVMAndUpdate(
+				vm_name=vm_name,
+				state="ATTACHING",
+				lock=True,
+				temporary_lock=None,
+				change_last_updated=True,
+				verbose=False,
+				ID=ID,
+			)
 
-    # Get the
-    _, compute_client, _ = createClients()
+			s.update_state(
+				state="PENDING",
+				meta={"msg": "{} extra storage hard drive(s) were found on your cloud PC. Running a few extra tests.".format(len(secondary_disks))},
+			)
 
-    os_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
-    os_type = "Windows" if "windows" in str(os_disk.os_type) else "Linux"
-    username = mapDiskToUser(disk_name)
-    vm_name = os_disk.managed_by
+			for secondary_disk in secondary_disks:
+				attachDisk(secondary_disk["disk_name"], vm_name)
 
-    location = os_disk.location
-    vm_attached = True if vm_name else False
+			# Lock immediately
+			lockVMAndUpdate(
+				vm_name=vm_name,
+				state="RUNNING_AVAILABLE",
+				lock=False,
+				temporary_lock=1,
+				change_last_updated=True,
+				verbose=False,
+				ID=ID,
+			)
 
-    if vm_attached:
-        self.update_state(
-            state="PENDING",
-            meta={
-                "msg": "Boot request received successfully. Preparing your cloud PC."
-            },
-        )
-        sendInfo(
-            ID,
-            " Azure says that disk {} belonging to {} is attached to {}".format(
-                disk_name, username, vm_name
-            ),
-        )
-    else:
-        self.update_state(
-            state="PENDING",
-            meta={"msg": "Boot request received successfully. Fetching your cloud PC."},
-        )
-        sendInfo(
-            ID,
-            " Azure says that disk {} belonging to {} is not attached to any VM".format(
-                disk_name, username
-            ),
-        )
+	sendInfo(ID, " Swap disk task for disk {} added to Redis queue".format(disk_name))
 
-    # Update the database to reflect the disk attached to the VM currently
-    if vm_attached:
-        vm_name = vm_name.split("/")[-1]
-        sendInfo(ID, "{}is attached to {}".format(username, vm_name))
+	# Get the
+	_, compute_client, _ = createClients()
 
-        unlocked = False
-        while not unlocked and vm_attached:
-            if spinLock(vm_name, s=self) > 0:
-                unlocked = True
-                # Lock immediately
-                lockVMAndUpdate(
-                    vm_name=vm_name,
-                    state="ATTACHING",
-                    lock=True,
-                    temporary_lock=None,
-                    change_last_updated=True,
-                    verbose=False,
-                    ID=ID,
-                )
-                lockVM(vm_name, True, username=username, disk_name=disk_name, ID=ID)
+	os_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
+	os_type = 'Windows' if 'windows' in str(os_disk.os_type) else 'Linux'
+	needs_winlogon = os_type == 'Windows'
+	username = mapDiskToUser(disk_name)
+	vm_name = os_disk.managed_by
 
-                # Update database with new disk name and VM state
-                sendInfo(
-                    ID,
-                    " Disk {} belongs to user {} and is already attached to VM {}".format(
-                        disk_name, username, vm_name
-                    ),
-                )
-                updateDisk(disk_name, vm_name, location)
+	location = os_disk.location
+	vm_attached = True if vm_name else False
 
-                self.update_state(
-                    state="PENDING",
-                    meta={
-                        "msg": "Database updated. Sending signal to boot your cloud PC."
-                    },
-                )
+	if vm_attached:
+		self.update_state(
+			state="PENDING",
+			meta={
+				"msg": "Boot request received successfully. Preparing your cloud PC."
+			},
+		)
+		sendInfo(
+			ID,
+			" Azure says that disk {} belonging to {} is attached to {}".format(
+				disk_name, username, vm_name
+			),
+		)
+	else:
+		self.update_state(
+			state="PENDING",
+			meta={"msg": "Boot request received successfully. Fetching your cloud PC."},
+		)
+		sendInfo(
+			ID,
+			" Azure says that disk {} belonging to {} is not attached to any VM".format(
+				disk_name, username
+			),
+		)
 
-                sendInfo(
-                    ID, " Database updated with {} and {}".format(disk_name, vm_name)
-                )
+	# Update the database to reflect the disk attached to the VM currently
+	if vm_attached:
+		vm_name = vm_name.split("/")[-1]
+		sendInfo(ID, "{}is attached to {}".format(username, vm_name))
 
-                if fractalVMStart(vm_name, s=self) > 0:
-                    sendInfo(ID, " VM {} is started and ready to use".format(vm_name))
-                    self.update_state(
-                        state="PENDING", meta={"msg": "Cloud PC is ready to use."}
-                    )
-                else:
-                    sendError(ID, " Could not start VM {}".format(vm_name))
-                    self.update_state(
-                        state="FAILURE",
-                        meta={
-                            "msg": "Cloud PC could not be started. Please contact support."
-                        },
-                    )
+		unlocked = False
+		while not unlocked and vm_attached:
+			if spinLock(vm_name, s=self) > 0:
+				unlocked = True
+				# Lock immediately
+				lockVMAndUpdate(
+					vm_name=vm_name,
+					state="ATTACHING",
+					lock=True,
+					temporary_lock=None,
+					change_last_updated=True,
+					verbose=False,
+					ID=ID,
+				)
+				lockVM(vm_name, True, username=username, disk_name=disk_name, ID=ID)
 
-                vm_credentials = fetchVMCredentials(vm_name)
+				# Update database with new disk name and VM state
+				sendInfo(
+					ID,
+					" Disk {} belongs to user {} and is already attached to VM {}".format(
+						disk_name, username, vm_name
+					),
+				)
+				updateDisk(disk_name, vm_name, location)
 
-                lockVMAndUpdate(
-                    vm_name=vm_name,
-                    state="RUNNING_AVAILABLE",
-                    lock=False,
-                    temporary_lock=1,
-                    change_last_updated=True,
-                    verbose=False,
-                    ID=ID,
-                )
+				self.update_state(
+					state="PENDING",
+					meta={
+						"msg": "Database updated. Sending signal to boot your cloud PC."
+					},
+				)
 
-                return vm_credentials
-            else:
-                os_disk = compute_client.disks.get(
-                    os.environ.get("VM_GROUP"), disk_name
-                )
-                vm_name = os_disk.managed_by
-                location = os_disk.location
-                vm_attached = True if vm_name else False
+				sendInfo(
+					ID, " Database updated with {} and {}".format(disk_name, vm_name)
+				)
 
-    if not vm_attached:
-        disk_attached = False
-        while not disk_attached:
-            vm = claimAvailableVM(disk_name, location, os_type, s=self)
-            if vm:
-                try:
-                    vm_name = vm["vm_name"]
-                    sendInfo(
-                        ID,
-                        "Disk {} was unattached. VM {} claimed for {}".format(
-                            disk_name, vm_name, username
-                        ),
-                    )
+				if fractalVMStart(vm_name, needs_winlogon = needs_winlogon, s=self) > 0:
+					sendInfo(ID, " VM {} is started and ready to use".format(vm_name))
+					self.update_state(
+						state="PENDING", meta={"msg": "Cloud PC is ready to use."}
+					)
+				else:
+					sendError(ID, " Could not start VM {}".format(vm_name))
+					self.update_state(
+						state="FAILURE",
+						meta={
+							"msg": "Cloud PC could not be started. Please contact support."
+						},
+					)
 
-                    if swapDiskAndUpdate(self, disk_name, vm_name) > 0:
-                        self.update_state(
-                            state="PENDING",
-                            meta={"msg": "Data successfully uploaded to cloud PC."},
-                        )
-                        free_vm_found = True
-                        updateOldDisk(vm_name)
-                        lockVM(vm_name, False, ID=ID)
-                        updateVMState(vm_name, "RUNNING_AVAILABLE")
-                        return fetchVMCredentials(vm_name)
+				vm_credentials = fetchVMCredentials(vm_name)
 
-                    lockVMAndUpdate(
-                        vm_name=vm_name,
-                        state="RUNNING_AVAILABLE",
-                        lock=False,
-                        temporary_lock=1,
-                        change_last_updated=True,
-                        verbose=False,
-                        ID=ID,
-                    )
+				attachSecondaryDisks(self, username, vm_name)
 
-                    disk_attached = True
-                    sendInfo(
-                        ID,
-                        " VM {} successfully attached to disk {}".format(
-                            vm_name, disk_name
-                        ),
-                    )
+				lockVMAndUpdate(
+					vm_name=vm_name,
+					state="RUNNING_AVAILABLE",
+					lock=False,
+					temporary_lock=1,
+					change_last_updated=True,
+					verbose=False,
+					ID=ID,
+				)
 
-                    vm_credentials = fetchVMCredentials(vm_name)
-                    return vm_credentials
-                except Exception as e:
-                    sendCritical(ID, str(e))
+				return vm_credentials
+			else:
+				os_disk = compute_client.disks.get(
+					os.environ.get("VM_GROUP"), disk_name
+				)
+				vm_name = os_disk.managed_by
+				location = os_disk.location
+				vm_attached = True if vm_name else False
 
-            else:
-                self.update_state(
-                    state="PENDING",
-                    meta={
-                        "msg": "Running performance tests. This could take a few extra minutes."
-                    },
-                )
-                sendInfo(
-                    ID,
-                    "No VMs are available for {} using {}. Going to sleep...".format(
-                        username, disk_name
-                    ),
-                )
-                time.sleep(30)
+	if not vm_attached:
+		disk_attached = False
+		while not disk_attached:
+			vm = claimAvailableVM(disk_name, location, os_type, s=self)
+			if vm:
+				try:
+					vm_name = vm["vm_name"]
 
-    self.update_state(
-        state="FAILURE",
-        meta={"msg": "Cloud PC could not be started. Please contact support."},
-    )
-    return None
+					vm_info = compute_client.virtual_machines.get(os.getenv('VM_GROUP'), vm_name)
+
+					for disk in vm_info.storage_profile.data_disks:
+						if disk.name != disk_name:
+							self.update_state(
+								state="PENDING",
+								meta={"msg": "Making sure that you have a stable connection."},
+							)
+
+							sendInfo(
+								ID,
+								"Detaching disk {} from {}".format(
+									disk_name, vm_name 
+								),
+							)
+
+							detachDisk(disk.name, vm_name)
+
+					sendInfo(
+						ID,
+						"Disk {} was unattached. VM {} claimed for {}".format(
+							disk_name, vm_name, username
+						),
+					)
+
+					if swapDiskAndUpdate(self, disk_name, vm_name, needs_winlogon) > 0:
+						self.update_state(
+							state="PENDING",
+							meta={"msg": "Data successfully uploaded to cloud PC."},
+						)
+						free_vm_found = True
+						updateOldDisk(vm_name)
+						attachSecondaryDisks(self, username, vm_name)
+
+						lockVMAndUpdate(
+							vm_name=vm_name,
+							state="RUNNING_AVAILABLE",
+							lock=False,
+							temporary_lock=1,
+							change_last_updated=True,
+							verbose=False,
+							ID=ID,
+						)
+
+						return fetchVMCredentials(vm_name)
+
+					vm_credentials = fetchVMCredentials(vm_name)
+					attachSecondaryDisks(self, username, vm_name)
+
+					lockVMAndUpdate(
+						vm_name=vm_name,
+						state="RUNNING_AVAILABLE",
+						lock=False,
+						temporary_lock=1,
+						change_last_updated=True,
+						verbose=False,
+						ID=ID,
+					)
+
+					disk_attached = True
+					sendInfo(
+						ID,
+						" VM {} successfully attached to disk {}".format(
+							vm_name, disk_name
+						),
+					)
+
+					return vm_credentials
+				except Exception as e:
+					sendCritical(ID, str(e))
+
+			else:
+				self.update_state(
+					state="PENDING",
+					meta={
+						"msg": "Running performance tests. This could take a few extra minutes."
+					},
+				)
+				sendInfo(
+					ID,
+					"No VMs are available for {} using {}. Going to sleep...".format(
+						username, disk_name
+					),
+				)
+				time.sleep(30)
+
+	self.update_state(
+		state="FAILURE",
+		meta={"msg": "Cloud PC could not be started. Please contact support."},
+	)
+	return None
 
 
 @celery.task(bind=True)

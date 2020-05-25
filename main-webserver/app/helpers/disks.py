@@ -5,7 +5,7 @@ from .general import *
 from .vms import *
 
 
-def createDiskEntry(disk_name, vm_name, username, location, state="ACTIVE"):
+def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, main=True, state="ACTIVE"):
     """Adds a disk to the disks SQL database
 
     Parameters:
@@ -18,8 +18,8 @@ def createDiskEntry(disk_name, vm_name, username, location, state="ACTIVE"):
     with engine.connect() as conn:
         command = text(
             """
-            INSERT INTO disks("disk_name", "vm_name", "username", "location", "state")
-            VALUES(:diskname, :vmname, :username, :location, :state)
+            INSERT INTO disks("disk_name", "vm_name", "username", "location", "state", "disk_size", "main")
+            VALUES(:diskname, :vmname, :username, :location, :state, :disk_size, :main)
             """
         )
         params = {
@@ -28,10 +28,12 @@ def createDiskEntry(disk_name, vm_name, username, location, state="ACTIVE"):
             "username": username,
             "location": location,
             "state": state,
+            "disk_size": disk_size,
+            "main": main
         }
-        with engine.connect() as conn:
-            conn.execute(command, **params)
-            conn.close()
+        
+        conn.execute(command, **params)
+        conn.close()
 
 
 def genDiskName():
@@ -47,7 +49,10 @@ def genDiskName():
         diskName = genHaiku(1)[0]
         while diskName in oldDisks:
             diskName = genHaiku(1)[0]
-        return str(diskName)
+
+        diskName = str(diskName) + "_disk"
+
+        return diskName
 
 
 def getVMSize(disk_name):
@@ -71,7 +76,7 @@ def getVMSize(disk_name):
         return disks_info["vm_size"]
 
 
-def fetchUserDisks(username, show_all=False, ID=-1):
+def fetchUserDisks(username, show_all=False, main=True, ID=-1):
     """Fetches all disks associated with the user
 
     Args:
@@ -106,6 +111,9 @@ def fetchUserDisks(username, show_all=False, ID=-1):
                 else:
                     sendWarning(ID, "No disk found for {}. Postgres connection closed")
 
+                if main:
+                    disks_info = [disk for disk in disks_info if disk["main"]]
+
                 return disks_info
         else:
             sendInfo(
@@ -132,6 +140,9 @@ def fetchUserDisks(username, show_all=False, ID=-1):
                 else:
                     sendWarning(ID, "No disk found for {}. Postgres connection closed")
 
+                if main:
+                    disks_info = [disk for disk in disks_info if disk["main"]]
+
                 return disks_info
     else:
         sendInfo(ID, "Fetching all disks in Postgres")
@@ -153,7 +164,45 @@ def fetchUserDisks(username, show_all=False, ID=-1):
             else:
                 sendWarning(ID, "No disk found in Postgres. Postgres connection closed")
 
+            if main:
+                disks_info = [disk for disk in disks_info if disk["main"]]
+                    
             return disks_info
+
+def fetchSecondaryDisks(username, ID=-1):
+    """Fetches all non-OS disks associated with the user
+
+    Args:
+        username (str): The username. If username is null, it fetches all disks
+        show_all (bool, optional): Whether or not to select all disks regardless of state, vs only disks with ACTIVE state. Defaults to False.
+        ID (int, optional): Papertrail logging ID. Defaults to -1.
+
+    Returns:
+        array: An array of the disks
+    """
+    sendInfo(
+        ID,
+        "Fetching all non-OS disks associated with {} state ACTIVE".format(username),
+    )
+
+    command = text(
+        """
+        SELECT * FROM disks WHERE "username" = :username AND "state" = :state AND "main" = :main
+        """
+    )
+    params = {"username": username, "state": "ACTIVE", "main": False}
+    with engine.connect() as conn:
+        sendInfo(ID, "Connection with Postgres established")
+
+        disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        conn.close()
+
+        if disks_info:
+            sendInfo(ID, "Disk names fetched and Postgres connection closed")
+        else:
+            sendWarning(ID, "No non-OS disks found for {}. Postgres connection closed")
+
+        return disks_info
 
 
 def updateDisk(disk_name, vm_name, location):

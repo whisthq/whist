@@ -38,7 +38,12 @@ def user_fetchvms(**kwargs):
 @logRequestInfo
 def user_fetchdisks(**kwargs):
     body = request.get_json()
-    disks = fetchUserDisks(body["username"], kwargs["ID"])
+
+    main = True 
+    if 'main' in body.keys():
+        main = body['main']
+
+    disks = fetchUserDisks(body["username"], False, main=main, ID=kwargs["ID"])
     return jsonify({"disks": disks, "status": 200}), 200
 
 
@@ -86,9 +91,18 @@ def account_login(**kwargs):
 def account_register(**kwargs):
     body = request.get_json()
     username, password = body["username"], body["password"]
+
+    name = None
+    if "name" in body.keys():
+        name = body["name"]
+
+    reason_for_signup = None
+    if "feedback" in body.keys():
+        reason_for_signup = body["feedback"]
+
     sendInfo(kwargs["ID"], "Registering a new user")
     token = generateToken(username)
-    status = registerUser(username, password, token)
+    status = registerUser(username, password, token, name, reason_for_signup)
     access_token, refresh_token = getAccessTokens(username)
     return (
         jsonify(
@@ -113,6 +127,14 @@ def account_check_verified(**kwargs):
     verified = checkUserVerified(username)
     return jsonify({"status": 200, "verified": verified}), 200
 
+@account_bp.route("/account/lookup", methods=["POST"])
+@generateID
+@logRequestInfo
+def account_lookup(**kwargs):
+    body = request.get_json()
+    username = body["username"]
+
+    return jsonify({"exists": lookup(username)}), 200
 
 @account_bp.route("/account/verifyUser", methods=["POST"])
 @jwt_required

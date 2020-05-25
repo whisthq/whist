@@ -74,18 +74,8 @@ def vm(action, **kwargs):
         return jsonify({"status": 200}), 200
     elif action == "delete" and request.method == "POST":
         body = request.get_json()
-
-        lockVMAndUpdate(
-            vm_name=body["vm_name"],
-            state="DELETING",
-            lock=True,
-            temporary_lock=None,
-            change_last_updated=True,
-            verbose=False,
-            ID=kwargs["ID"],
-        )
-
-        vm_name, delete_disk = body["vm_name"], body["delete_disk"]
+                
+        vm_name, delete_disk = body['vm_name'], body['delete_disk']
         task = deleteVMResources.apply_async([vm_name, delete_disk])
         return jsonify({"ID": task.id}), 202
     elif action == "restart" and request.method == "POST":
@@ -124,11 +114,11 @@ def vm(action, **kwargs):
     elif action == "winlogonStatus" and request.method == "POST":
         body = request.get_json()
         ready = body["ready"]
-        vm_ip = None
+        vm_ip = ''
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
-            vm_ip = request.remote_addr
+            vm_ip = request.environ['HTTP_X_FORWARDED_FOR']
 
         sendInfo(
             kwargs["ID"],
@@ -150,15 +140,18 @@ def vm(action, **kwargs):
         body = request.get_json()
         available = body["available"]
 
-        vm_ip = None
+        vm_ip = ''
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
-            vm_ip = request.remote_addr
+            vm_ip = request.environ['HTTP_X_FORWARDED_FOR']
 
         vm_info = fetchVMByIP(vm_ip)
         if vm_info:
             vm_name = vm_info["vm_name"] if vm_info["vm_name"] else ""
+
+            if vm_info["os"] == 'Linux':
+                vmReadyToConnect(vm_info["vm_name"], True)
 
             version = None
             if "version" in body:
@@ -207,16 +200,28 @@ def vm(action, **kwargs):
 
         return jsonify({"status": 200}), 200
     elif action == "isDev" and request.method == "GET":
-        if request.headers.getlist("X-Forwarded-For"):
-            vm_ip = request.headers.getlist("X-Forwarded-For")[0]
-        else:
-            vm_ip = request.remote_addr
+        try:
+            vm_ip = ''
 
-        vm_info = fetchVMByIP(vm_ip)
-        if vm_info:
-            is_dev = vm_info["dev"]
-            return jsonify({"dev": is_dev, "status": 200}), 200
-        return jsonify({"dev": False, "status": 200}), 200
+            if request.headers.getlist("X-Forwarded-For"):
+                vm_ip = request.headers.getlist("X-Forwarded-For")[0]
+            else:
+                vm_ip = request.remote_addr
+
+            vm_info = fetchVMByIP(vm_ip)
+
+            if vm_info:
+                is_dev = vm_info["dev"]
+                disk_name = vm_info["disk_name"]
+                disk_info = fetchUserDisks(vm_info["username"])
+
+                if disk_info:
+                    branch = disk_info[0]["branch"]
+
+                return jsonify({"dev": is_dev, "branch": branch, "status": 200}), 200
+            return jsonify({"dev": False, "status": 200}), 200
+        except Exception as e:
+            print(str(e))
 
     return jsonify({}), 400
 
