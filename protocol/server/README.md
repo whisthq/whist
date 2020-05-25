@@ -15,25 +15,35 @@ If you're having trouble compiling, make sure that you followed the instructions
 From this directory, `/server`, you can simply run:
 
 ```
-Windows
+Windows:
 FractalServer
 
-MacOS/Linux
+MacOS/Linux:
 ./FractalServer
 ```
 
 ### Updating Fractal Virtual Machines
 
+The Fractal virtual machines run this server executable. We run 3 different types of executables: 
 
+`master`, for the latest release branch | User-facing
 
+`staging`, for the current beta-version release branch | User-facing
 
+`dev`, for the current internal development branch | NOT User-facing
 
+#### Windows
 
+After compiling the server under the appropriate branch by running `nmake`, you can then run one of the following, from a Windows computer, to update the machines running a specific branch:
 
+`update master` to update the VMs running the master branch
 
+`update staging` to update the VMs running the staging branch
 
+`update dev` to update the VMs running the dev branch
 
-### Updating
+You should only do this if you are sure of what you are doing and the team has agreed it is time to push an update.
 
-You can update all Windows virtual machines by running `update.bat`, and all Linux Ubuntu virtual machines by running `update.sh`. This action is only allowed from the stable production branch and needs to be coordinated with the client updating.
+#### Linux Ubuntu
 
+TBD.

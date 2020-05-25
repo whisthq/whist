@@ -15,19 +15,19 @@ If you're having trouble compiling, make sure that you followed the instructions
 From the `/desktop` directory, you can simply run:
 
 ```
-Windows
+Windows:
 desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
 
-MacOS/Linux
+MacOS/Linux:
 ./desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
 ```
 
 Alternatively, if you want to run the executable directly, in the `/desktop/build64` directory or `/desktop/build32`, run:
 
 ```
-Windows
+Windows:
 FractalClient [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
 
-MacOS/Linux
+MacOS/Linux:
 ./FractalClient [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
 ```
