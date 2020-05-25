@@ -78,7 +78,7 @@ def logRequestInfo(f):
                         if isinstance(v, str):
                             body[k] = v[0 : min(100, len(v))]
             except Exception as e:
-                body = None
+                body = {}
 
             sendDebug(
                 kwargs["ID"],
