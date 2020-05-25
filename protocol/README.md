@@ -65,7 +65,7 @@ On Windows, in addition to downloading Cmake, of which you can find the latest b
 
 If you are on Linux Ubuntu, run `desktop/linux-client-setup.sh` to install the system dependencies.
 
-#### Building in an IDE
+#### IDE
 
 We use CMake to build. If you are using VS code, VS or Clion, this is pretty easy to use. You need to either open the root repo folder as a project, or open the root `CMakelist.txt` as a project. On CLion and VS there is a menu to build at the top, on VS code you need the CMake extension and the build command is at the bottom. CMake currently has two types of builds, Debug and Release. You probably want to be building debug builds while developing, since they log more aggressively (Warning levels: Info and above). 
 
