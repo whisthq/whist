@@ -28,19 +28,23 @@ Start the app in the `dev` environment. This starts the renderer process in [**h
 
 Before doing this, you will need to run `yarn`, which will create the `yarn.lock` file and install all of the `node_modules`. If you still experience issues with starting the dev environment, you might need to run `yarn upgrade`, which will upgrade all the dependencies. It's a good idea to do so periodically to keep the application up-to-date. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
 
-If you would like to fully test the application, including the launch of the Fractal protocol, you need to run part of the build scripts, listed in the next section, to clone and make the protocol for your platform. Compiling the protocol requires Cmake. In order to make sure that your system has everything needed to compile the protocol, you should refer to the protocol repository readme.
+If you would like to fully test the application, including the launch of the Fractal protocol, you need to run part of the build scripts, listed in the next section, to clone and make the protocol for your platform. Compiling the protocol requires Cmake, see below for installation instructions. In order to make sure that your system has everything needed to compile the protocol, or if you experience issues with compiling the protocol, you should refer to the protocol repository README for instructions.
 
 ## Packaging for Production
 
-To package apps for the local platform, including fetching and compiling the latest Fractal protocol:
+This section explains how to package apps for the local platform, including fetching and compiling the latest Fractal protocol. This will NOT publish the application to production, but will instead build an installer executable locally that is identical to the one that would be published to production and which you can use to test before deploying. The installer executable will be in `client-applications/desktop/release`. If you have already downloaded and compiled the latest Fractal protocol, you can simply run `yarn package`, else see below:
 
-Run `./build.sh` (for MacOS/Linux), or `build.bat` (for Windows). If you have already downloaded and compiled the latest Fractal protocol, you can simply run `yarn package`. The version of the protocol that gets downloaded is the `master` branch, which is our stable production branch. If you want to test another branch, you can do so by modifying the build scripts git commands, but make sure not to commit or publish, as only the master branch should ever be pushed to users.
+**MacOS/Linux**  
 
-This will enable you to get an executable that you can install to test your code locally. The installer executables will be in `desktop/release`.
+Run `./build.sh` in a terminal. This will delete any prior Fractal protocol folder, pull the recent master branch, and package it locally. You must also install Cmake; refer to the Fractal protocol repository for installation instructions.
+
+**Windows**  
+
+Run `build.bat` in an x86_x64 Visual Studio Developer Command Prompt. This will delete any prior Fractal protocol folder, pull the recent master branch, and package it locally. You MUST use this specific command prompt to compile the protocol; if you do not the Electron application will package anyway, but the protocol will not packaged with it. If you do not have this command prompt, you need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. You must also install [Cmake](https://cmake.org/download/). For more information on compiling on Windows, refer to the Fractal protocol repository.
 
 ## Publishing to Production
 
-Once you are ready to publish for auto-update to the Fractal users, you need to do a few things:
+Before publishing for production, make sure to package for production (see above) and test locally. In order to publish to production, you will run all the steps for packaging and need to make sure all the Cmake and other dependencies listed above are satisfied on your system. Once you are ready to publish for auto-update to the Fractal users, you need to do a few things:
 
 1- Go into `/desktop/package.json` and update the `"bucket":` field to the proper bucket for the operating system you are publishing for:
 
@@ -52,7 +56,7 @@ Once you are ready to publish for auto-update to the Fractal users, you need to 
 
 3- Increment the version number in `desktop/app/package.json` by `0.0.1`, unless it is a major release, in which case increment by `0.1.0` (e.g.: 1.4.6 becomes 1.5.0).
 
-4- Then, run `./publish.sh` (MacOS/Linux) or `publish.bat` (Windows) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run `yarn package-ci` to publish to the S3 bucket.
+4- Then, run `./publish.sh` (MacOS/Linux) or `publish.bat` (Windows - in an x86_64 Visual Studio Developer Command Prompt) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run `yarn package-ci` to publish to the S3 bucket.
 
 5- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
 
