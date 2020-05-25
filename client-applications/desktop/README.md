@@ -44,7 +44,7 @@ Run `build.bat` in an x86_x64 Visual Studio Developer Command Prompt. This will 
 
 ## Publishing to Production
 
-Once you are ready to publish for auto-update to the Fractal users, you need to do a few things:
+Before publishing for production, make sure to package for production (see above) and test locally. In order to publish to production, you will run all the steps for packaging and need to make sure all the Cmake and other dependencies listed above are satisfied on your system. Once you are ready to publish for auto-update to the Fractal users, you need to do a few things:
 
 1- Go into `/desktop/package.json` and update the `"bucket":` field to the proper bucket for the operating system you are publishing for:
 
@@ -56,7 +56,7 @@ Once you are ready to publish for auto-update to the Fractal users, you need to 
 
 3- Increment the version number in `desktop/app/package.json` by `0.0.1`, unless it is a major release, in which case increment by `0.1.0` (e.g.: 1.4.6 becomes 1.5.0).
 
-4- Then, run `./publish.sh` (MacOS/Linux) or `publish.bat` (Windows - x86_64 Visual Studio Developer Command Prompt) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run `yarn package-ci` to publish to the S3 bucket.
+4- Then, run `./publish.sh` (MacOS/Linux) or `publish.bat` (Windows - in an x86_64 Visual Studio Developer Command Prompt) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run `yarn package-ci` to publish to the S3 bucket.
 
 5- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
 
