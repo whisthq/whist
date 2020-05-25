@@ -54,16 +54,15 @@ You can install cppcheck via your package manager, e.g. `apt-get install cppchec
 
 You can install both Cmake and cppcheck via Homebrew.
 ```
-brew install cmake
-
-brew install cppcheck
+brew install cmake cppcheck
 ```
 
 ##### Windows
 
-On Windows, in addition to downloading Cmake, of which you can find the latest binaries [here.](https://cmake.org/download/), and cppcheck, which you can install via Chocolatey by running `choco install cppcheck --force`, you also need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. In order to compile the protocol, you need to make sure to be using x86_x64 Visual Studio Developer Command Prompt.
+On Windows, in addition to downloading Cmake, of which you can find the latest binaries [here](https://cmake.org/download/), and cppcheck, which you can install via Chocolatey by running `choco install cppcheck --force`, you also need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. In order to compile the protocol, you need to make sure to be using x86_x64 Visual Studio Developer Command Prompt.
 
 ### Building
+
 
 
 
@@ -114,29 +113,13 @@ More documentation is in our [gdrive](https://docs.google.com/document/d/1T9Lc3H
 
 
 
-
+### Continous Integration
  
- ------------
- ## GitHub Actions
- 
- We have GitHub Actions enabled on this repository, in conjunction with CMake. Therefore, every time there is a push or a PR, GitHub will automatically compile both FractalClient and FractalServer on Windows, MacOS and Linux Ubuntu, and will outline any warnings and/or errors on the "Actions" tab above. Make sure to verify there after your push or PR. The relevant workflow file for compiling is .github/workflow/build.yaml.
- This workflow also runs cppcheck on linux and Mac (windows is a possible todo), which is a static analysis tool which can catch errors which compilers cannot. e.g accessing uninitialized memory and other undefined behaviour. Not everything it catches is critical, but it does indicate the possibility of unexpected behaviour. 
- To see the warnings in context go to the actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log. 
- 
- Dev status: 
- 
- Master Status: 
- 
-  ------------
+We have GitHub Actions enabled on this repository, in conjunction with CMake. Therefore, every time there is a push or a PR, GitHub will automatically compile both FractalClient and FractalServer on Windows, MacOS and Linux Ubuntu, and will outline any warnings and/or errors on the "Actions" tab above. Make sure to verify there after your push or PR. The relevant workflow file for compiling is `.github/workflow/build.yaml`.
 
+This workflow also runs cppcheck on Windows, MacOS and Linux Ubuntu, which is a static analysis tool which can catch errors which compilers cannot, e.g. accessing uninitialized memory and other undefined behaviour. Not everything it catches is critical, but it does indicate the possibility of unexpected behaviour.
 
-
-
-
-
-
-
-
+To see the warnings in context go to the Actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log, where you can clearly see the warnings/errors generated. 
 
 ## Styling
 
