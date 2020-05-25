@@ -192,28 +192,32 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
 
     // END QSV DECODER
 
-  } else if (decoder->type == DECODE_TYPE_HARDWARE) {
+  } else if (decoder->type == DECODE_TYPE_HARDWARE ||
+             decoder->type == DECODE_TYPE_HARDWARE_OLDER) {
     // BEGIN HARDWARE DECODER
     LOG_INFO("Trying hardware decoder");
     // set the appropriate video decoder format based on PS
 #if defined(_WIN32)
-    decoder->match_fmt = AV_PIX_FMT_DXVA2_VLD;
-    char* device_type = "dxva2";
+    if (decoder->type == DECODE_TYPE_HARDWARE_OLDER) {
+        LOG_INFO("Will be trying older version of hardware encode");
+        decoder->device_type = AV_HWDEVICE_TYPE_DXVA2;
+        decoder->match_fmt = AV_PIX_FMT_DXVA2_VLD;
+    } else {
+        decoder->device_type = AV_HWDEVICE_TYPE_D3D11VA;
+        decoder->match_fmt = AV_PIX_FMT_D3D11;
+    }
 #elif __APPLE__
-    // TODO: Fix because "videotoolbox" doesn't appear to be a valid av_hwdevice_find_type_by_name
-    // See https://github.com/libav/libav/blob/master/libavutil/hwcontext.c av_hwdevice_find_type_by_name
-    // Also, we should use `enum AVHWDeviceType` instead.
+    decoder->device_type = AV_HWDEVICE_TYPE_VIDEOTOOLBOX;
     decoder->match_fmt = AV_PIX_FMT_VIDEOTOOLBOX;
-    char* device_type = "videotoolbox";
 #else  // linux
+    decoder->device_type = AV_HWDEVICE_TYPE_VAAPI;
     decoder->match_fmt = AV_PIX_FMT_VAAPI;
-    char* device_type = "vaapi";
 #endif
 
     // get the appropriate hardware device
-    decoder->device_type = av_hwdevice_find_type_by_name(device_type);
     if (decoder->device_type == AV_HWDEVICE_TYPE_NONE) {
-      LOG_WARNING("Device type %s is not supported.\n", device_type);
+        LOG_WARNING("Device type %s is not supported.\n",
+                    av_hwdevice_get_type_name(decoder->device_type));
       LOG_WARNING("Available device types:");
       while ((decoder->device_type = av_hwdevice_iterate_types(
                   decoder->device_type)) != AV_HWDEVICE_TYPE_NONE) {
@@ -264,7 +268,8 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
 }
 
 #if defined(_WIN32)
-    DecodeType decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE,
+DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE,
+                                   DECODE_TYPE_HARDWARE_OLDER, DECODE_TYPE_QSV,
                                 DECODE_TYPE_SOFTWARE};
 #elif __APPLE__
     DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};

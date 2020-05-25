@@ -27,8 +27,13 @@ Includes
 
 
 
-
-
+typedef enum DecodeType {
+    DECODE_TYPE_NONE = 0,
+    DECODE_TYPE_SOFTWARE = 1,
+    DECODE_TYPE_HARDWARE = 2,
+    DECODE_TYPE_QSV = 3,
+    DECODE_TYPE_HARDWARE_OLDER = 4,
+} DecodeType;
 
 // define decoder struct to pass as a type
 typedef struct {

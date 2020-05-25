@@ -104,13 +104,6 @@ typedef enum EncodeType {
   QSV_ENCODE = 2
 } EncodeType;
 
-typedef enum DecodeType {
-  DECODE_TYPE_NONE = 0,
-  DECODE_TYPE_SOFTWARE = 1,
-  DECODE_TYPE_HARDWARE = 2,
-  DECODE_TYPE_QSV = 3
-} DecodeType;
-
 typedef enum FractalCursorID {
   CURSOR_ID_APPSTARTING = 32650,
   CURSOR_ID_NORMAL = 32512,
