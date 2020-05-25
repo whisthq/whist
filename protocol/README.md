@@ -4,54 +4,50 @@
 |:--:|:--:|
 |![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=master)|![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=dev)|
 
+This repository contains the source code for the Fractal Protocol, which is a low-latency interactive streaming technology that streams audio/video/actions between an OS-like device, whether it is a virtual machine, a container or a regular computer, and a client computer or mobile device.
 
-
-
-
-
-
-
-
-
-https://cmake.org/download/
-
-
-
-This repository contains the source code for the Fractal Protocol, which streams audio and video at ultra-low latency from a virtual machine, OS container or regular computer, and streams back user actions and files.
-
-### Style
-
-For .c and .h files, we are formatting using the clang format `{BasedOnStyle: Google, IndentWidth: 4}`. If using VSCode or Visual Studio, please set this up in your editor to format on save if possible (in Visual Studio, this is through the C/C++ extension settings, as well as the general 'Format on Save' setting/shortcut). Otherwise, please make sure to run your code through `clang` before commits.
-We also have a custom build tagret in the CMake 'clang-format' with will run with this style over all .c and .h files in server/ desktop/ and fractal/
-
-------------
+## Supported Platforms
 
 ### Server
 
-This folder contains the code to run Fractal servers that are streamed to any of the clients listed below. The currently-supported servers are:
-
--   Windows
--   Linux Ubuntu
+This folder builds a server to stream via Fractal. It supports Windows and Linux Ubuntu. See below for basic build instructions, and the folder's README for build and development details.
 
 ### Desktop
 
-This folder contains the code to run Fractal clients on desktop operating systems. The currently-supported servers are:
+This folder builds a client to receive a server stream via Fractal. It supports Windows, MacOS and Linux Ubuntu. See below for basic build instructions, and the folder's README for build and development details.
 
--   Windows
--   MacOS
--   Linux
+### Android
 
-### Android/Chromebook
+This folder builds a client to receive a server stream via Fractal on Android-based devices, including Chromebooks. See the folder's README for build and development details.
 
-TBD.
-
-### iOS/iPadOS
+### iOS
 
 TBD.
 
 ### Web
 
 TBD.
+
+------------
+
+
+
+
+
+
+
+
+
+
+
+
+brew install clang-format
+
+
+
+
+
+
  
  ------------
  ## GitHub Actions
@@ -108,7 +104,37 @@ sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
 sudo apt-get update
 sudo apt-get install cmake -y
 ```
+
+
+brew install cppcheck
+
+
 ##### Windows
 The latest binaries are available [here.](https://cmake.org/download/) 
 #### Further documentation
 More documentation is in our [gdrive](https://docs.google.com/document/d/1T9Lc3HVoqhqSjdUbiaFaQU71oV1VH25iFGDNvAYjtOs/edit?usp=sharing)
+
+
+
+
+
+
+
+## Styling
+
+For `.c` and `.h` files, we are formatting using the clang format `{BasedOnStyle: Google, IndentWidth: 4}`. You can download clang-format via the package manager for your respective OS:
+
+```
+MacOS:
+brew install clang-format
+
+Linux Ubuntu:
+apt-get install clang-format
+
+Windows:
+choco install llvm --force
+```
+
+If using VSCode or Visual Studio, please set this up in your editor to format on save if possible (in Visual Studio, this is through the C/C++ extension settings, as well as the general 'Format on Save' setting/shortcut). Otherwise, please make sure to run your code through `clang` before commits. You can run it from the CLI by running `clang-format <file>`.
+
+We also have a custom build tagret in the CMake 'clang-format' with will run with this style over all `.c` and `.h` files in `server/` `desktop/` and `fractal/`.

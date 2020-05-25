@@ -1,8 +1,21 @@
 ## Fractal Windows/Linux Ubuntu Server
 
-This code turns a Windows or Linux Ubuntu computer into a server listening to receive a client connection to stream its desktop to at ultra-low latency over the Internet.
+
+
+
+
+
+
+This code turns a Windows or Linux Ubuntu computer into a server listening to receive a client connection to stream its desktop at ultra-low latency over the Internet.
 
 ### Development
+
+
+
+
+
+
+
 
 You can run `server.bat` (Windows) or `server.sh` to restart your dev environment.
 
