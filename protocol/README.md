@@ -1,5 +1,22 @@
 # Fractal Protocol
 
+|Master Status|Dev Status|
+|:--:|:--:|
+|![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=master)|![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=dev)|
+
+
+
+
+
+
+
+
+
+
+https://cmake.org/download/
+
+
+
 This repository contains the source code for the Fractal Protocol, which streams audio and video at ultra-low latency from a virtual machine, OS container or regular computer, and streams back user actions and files.
 
 ### Style
@@ -43,9 +60,9 @@ TBD.
  This workflow also runs cppcheck on linux and Mac (windows is a possible todo), which is a static analysis tool which can catch errors which compilers cannot. e.g accessing uninitialized memory and other undefined behaviour. Not everything it catches is critical, but it does indicate the possibility of unexpected behaviour. 
  To see the warnings in context go to the actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log. 
  
- Dev status: ![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=dev)
+ Dev status: 
  
- Master Status: ![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=master)
+ Master Status: 
  
   ------------
 
