@@ -74,29 +74,20 @@ distribute binaries with debug flags, to better troubleshoot errors and bugs.
 
 The build target for desktop is "FractalClient" and the sever is "Fractal Server".
 
-#### MacOS/Linux CLI
+#### MacOS CLI
 
+You can simply run `cmake .` from the root folder, `/protocol/`, which will generate the makefiles. You can then run `make FractalClient` from the root folder, or cd into `/desktop` and run `make` to compile the MacOS client.
 
+#### Linux CLI
 
+Install cmake and ccmake; ccmake is a TUI for configuring the build. From the root of the repo run `ccmake .`. You will initially see a blank screen because no cache has been built yet. Hit `c` to configure. This will populate the cache and show you a page with various settings. The three you care about are `BUILD_CLIENT` and `BUILD_SERVER` which are both `ON` or `OFF`, and `CMAKE_BUILD_TYPE` which is one of `Debug` or `Release`.
 
+Next hit `c` again to reconfigure with your possibly new settings, then hit `g` to generate the makefile. This makefile has all of the build targets, including FractalClient, FractalServer and all of our libraries. It also includes CMake targets such as clean, edit_cache and rebuild cache.
 
-Install cmake and ccmake, ccmake is a TUI for configuring the build. 
-From the root of the repo run ccmake ., you will initially see a blank screen because no cache has been built yet.
-Hit c to configure, this will populate the cache and show you a page with various settings. The three you care about 
-are BUILD_CLIENT, BUILD_SERVER which are both ON or OFF, and CMAKE_BUILD_TYPE which is one of Debug or Release.
-Next hit c again to reconfigure with your possibly new settings, then hit g to generate the makefile. This makefile has all of the build targets,
-including FractalClient, FractalServer and all of our libraries. It also includes CMake targets such as clean, edit_cache and rebuild cache.
-Running just make defaults to building FractalClient and FractalServer if you set both of these to ON in your configuration.
-GCC only supports one type of build at a time, so if you are currently building release, but want to build debug, you need to edit the cache and regenerate the makefile.  
+Only running `make` defaults to building FractalClient and FractalServer if you set both of these to ON in your configuration.
+GCC only supports one type of build at a time, so if you are currently building Release, but want to build Debug, you need to edit the cache and regenerate the makefile.  
 
-If you would like to keep your repo cleaner, make a build folder in protocol and run cmake from there. e.g cd "build && 
-cmake ../." this way you can just delete the contents of the build folder to start over. 
-
-
-
-
-
-
+If you would like to keep your repo cleaner, make a build folder in `/protocol` and run `cmake` from there, e.g. `cd "build & cmake ../."`. This way, you can just delete the contents of the build folder to start over. 
 
 #### Windows CLI
 
