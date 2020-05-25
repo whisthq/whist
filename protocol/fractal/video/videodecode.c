@@ -199,6 +199,7 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     // set the appropriate video decoder format based on PS
 #if defined(_WIN32)
     if (decoder->type == DECODE_TYPE_HARDWARE_OLDER) {
+        LOG_INFO("Will be trying older version of hardware encode");
         decoder->device_type = AV_HWDEVICE_TYPE_DXVA2;
         decoder->match_fmt = AV_PIX_FMT_DXVA2_VLD;
     } else {
