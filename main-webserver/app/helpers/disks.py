@@ -491,6 +491,9 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
                 "creation_data": {
                     "create_option": DiskCreateOption.copy,
                     "source_resource_id": disk_image.id,
+                    "managed_disk": {
+                        "storage_account_type": "StandardSSD_LRS"
+                    }
                 },
             },
         )
