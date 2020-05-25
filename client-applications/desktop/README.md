@@ -40,7 +40,7 @@ Run `./build.sh` in a terminal. This will delete any prior Fractal protocol fold
 
 **Windows**  
 
-Run `build.bat` in an x86_x64 Visual Studio Developer Command Prompt. This will delete any prior Fractal protocol folder, pull the recent master branch, and package it locally. You MUST use this specific command prompt to compile the protocol; if you do not the Electron application will package anyway, but the protocol will not packaged with it. If you do not have this command prompt, you need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. You must also install [Cmake](https://cmake.org/download/). For more information with compiling on Windows, refer to the Fractal protocol repository.
+Run `build.bat` in an x86_x64 Visual Studio Developer Command Prompt. This will delete any prior Fractal protocol folder, pull the recent master branch, and package it locally. You MUST use this specific command prompt to compile the protocol; if you do not the Electron application will package anyway, but the protocol will not packaged with it. If you do not have this command prompt, you need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. You must also install [Cmake](https://cmake.org/download/). For more information on compiling on Windows, refer to the Fractal protocol repository.
 
 ## Publishing to Production
 
