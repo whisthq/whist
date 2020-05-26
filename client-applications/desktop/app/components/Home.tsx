@@ -27,6 +27,8 @@ class Home extends Component {
       studios: false,
       rememberMe: false,
       live: true,
+      update_ping_received: false,
+      needs_autoupdate: false
     };
   }
 
@@ -126,6 +128,10 @@ class Home extends Component {
     const ipc = require("electron").ipcRenderer;
     const storage = require("electron-json-storage");
 
+    ipc.on("update", (event, update) => {
+       component.setState({ update_ping_received: true, needs_autoupdate: update });
+    });
+
     let component = this;
 
     var appVersion = require("../package.json").version;
@@ -150,9 +156,24 @@ class Home extends Component {
               warning: false,
             },
             function () {
-              component.props.dispatch(
-                loginUser(component.state.username, component.state.password)
-              );
+              const sleep = (milliseconds) => {
+                return new Promise(resolve => setTimeout(resolve, milliseconds))
+              }
+
+              const wait_for_autoupdate = async () => {
+                await sleep(2000)
+              }
+
+              while(!component.state.update_ping_received) {
+                wait_for_autoupdate();
+              }
+
+              if(component.state.update_ping_received && !component.state.needs_autoupdate) {
+                wait_for_autoupdate()
+                component.props.dispatch(
+                  loginUser(component.state.username, component.state.password)
+                );
+              }
             }
           );
         }
