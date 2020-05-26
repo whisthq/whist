@@ -373,6 +373,23 @@ def startVM(self, vm_name, ID=-1):
     else:
         return {"status": 400}
 
+@celery.task(bind=True)
+def startVM(self, vm_name, ID=-1):
+    sendInfo(ID, "Trying to stop vm {}".format(vm_name))
+
+    if spinLock(vm_name) > 0:
+        lockVM(vm_name, True)
+
+        _, compute_client, _ = createClients()
+
+        stopVm(vm_name)
+        lockVM(vm_name, False)
+
+        sendInfo(ID, "VM {} stopped successfully".format(vm_name))
+
+        return {"status": 200}
+    else:
+        return {"status": 400}
 
 @celery.task(bind=True)
 def updateVMStates(self, ID=-1):

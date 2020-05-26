@@ -1655,6 +1655,13 @@ def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, ID=-1, s=N
 
     return -1
 
+def stopVm(vm_name, ID=-1):
+    _, compute_client, _ = createClients()
+    async_vm_stop = compute_client.virtual_machines.power_off(resource_group_name=os.getenv("VM_GROUP"), vm_name=vm_name)
+    updateVMState(vm_name, "STOPPING")
+    async_vm_stop.wait()
+    updateVMState(vm_name, "STOPPED")
+    
 
 def spinLock(vm_name, s=None, ID=-1):
     """Waits for vm to be unlocked
