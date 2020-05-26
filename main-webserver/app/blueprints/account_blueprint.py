@@ -16,10 +16,6 @@ def user_login(**kwargs):
     body = request.get_json()
     username = body["username"]
     payload = fetchUserDisks(username, ID=kwargs["ID"])
-    sendInfo(-1, "testInfo")
-    sendError(-1, "testError")
-    sendWarning(-1, "testWarning")
-
     return jsonify({"payload": payload}), 200
 
 
@@ -73,6 +69,9 @@ def account_login(**kwargs):
     vm_status = userVMStatus(username)
     token = fetchUserToken(username)
     access_token, refresh_token = getAccessTokens(username)
+    sendInfo(-1, "testInfo")
+    sendError(-1, "testError")
+    sendWarning(-1, "testWarning")
     return (
         jsonify(
             {
