@@ -1,6 +1,6 @@
 from app import *
 from msrest.exceptions import ClientException
-from .logger import *
+from logger import *
 from .helpers.general import *
 from .helpers.vms import *
 from .helpers.logins import *
