@@ -97,6 +97,7 @@ NMake-style makefiles. Then, run `nmake` in either `/server` or `/desktop`, depe
 #### Further documentation
 
 More documentation is in our [Google Drive](https://docs.google.com/document/d/1T9Lc3HVoqhqSjdUbiaFaQU71oV1VH25iFGDNvAYjtOs/edit?usp=sharing), if needed.
+We also use doxygen in this repo. The Doxy file is docs/Doxyfile. Install doxygen and run doxygen Doxyfile, this will generate the docs and put them in docs/html and docs/latex. You can view the html docs by opening the index.html page with a web browser. 
 
 ### Continous Integration
  

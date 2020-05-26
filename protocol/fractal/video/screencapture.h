@@ -1,11 +1,13 @@
 #ifndef SCREENCAPTURE_H
 #define SCREENCAPTURE_H
 
-/******
+/**
+ Copyright Fractal Computers, Inc. 2020
+ @file dxgicapture.h
+ @date 26 may 2020
+ @brief This file defines the proper header for capturing the screen depending on the local OS.
 
-This file defines the proper header for capturing the screen depending on the local OS.
-
-*****/
+*/
 
 /*
 ============================

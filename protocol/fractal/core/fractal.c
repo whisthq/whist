@@ -156,7 +156,7 @@ char* get_ip() {
         LOG_WARNING("curl ipinfo.io did not return an IP: %s", buf);
         return NULL;
     }
-    kv_pair_t* kv = get_kv(json, "ip");
+    kv_pair_t* kv = get_kv(&json, "ip");
 
     memcpy(ip, kv->str_value, sizeof(ip));
 
@@ -206,8 +206,8 @@ bool is_dev_vm() {
         return is_dev;
     }
 
-    kv_pair_t* dev_value = get_kv(json, "dev");
-    kv_pair_t* branch_value = get_kv(json, "branch");
+    kv_pair_t* dev_value = get_kv(&json, "dev");
+    kv_pair_t* branch_value = get_kv(&json, "branch");
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {
             return false;

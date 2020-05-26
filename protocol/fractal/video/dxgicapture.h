@@ -1,9 +1,11 @@
 #ifndef DXGI_CAPTURE_H
 #define DXGI_CAPTURE_H
 
-/******
-
-This file contains the code to capture a Windows screen in the GPU via Windows DXGI API.
+/**
+ Copyright Fractal Computers, Inc. 2020
+ @file dxgicapture.h
+ @date 26 may 2020
+ @brief This file contains the code to capture a Windows screen in the GPU via Windows DXGI API.
 
 ============================
 Usage
@@ -15,7 +17,7 @@ Usage
 initSDL gets called first to create an SDL window, and destroySDL at the end to close the window.
 
 
-*****/
+*/
 
 /*
 ============================

@@ -1,10 +1,22 @@
-/*
- * GPU screen capture on Linux Ubuntu.
- *
- * Copyright Fractal Computers, Inc. 2020
- **/
 #ifndef CAPTURE_X11CAPTURE_H
 #define CAPTURE_X11CAPTURE_H
+
+/**
+ Copyright Fractal Computers, Inc. 2020
+ @file x11capture.h
+ @date 26 may 2020
+ @brief GPU screen capture on Linux Ubuntu.
+
+
+============================
+Usage
+============================
+
+
+*/
+
+
+
 
 #include <X11/Xlib.h>
 #include <X11/extensions/XShm.h>
