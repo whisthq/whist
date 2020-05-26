@@ -373,8 +373,9 @@ def startVM(self, vm_name, ID=-1):
     else:
         return {"status": 400}
 
+
 @celery.task(bind=True)
-def startVM(self, vm_name, ID=-1):
+def stopVM(self, vm_name, ID=-1):
     sendInfo(ID, "Trying to stop vm {}".format(vm_name))
 
     if spinLock(vm_name) > 0:
@@ -390,6 +391,7 @@ def startVM(self, vm_name, ID=-1):
         return {"status": 200}
     else:
         return {"status": 400}
+
 
 @celery.task(bind=True)
 def updateVMStates(self, ID=-1):
