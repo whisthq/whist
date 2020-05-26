@@ -68,7 +68,12 @@ int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 
 SDL_mutex* packet_mutex;
 
+#define MAX_SPECTATOR_CONNECTIONS 100
+#define PORT_SPECTATOR 32265
+
+int num_spectator_connections;
 SocketContext PacketSendContext = {0};
+SocketContext SpectatorSendContext[MAX_SPECTATOR_CONNECTIONS];
 
 volatile bool wants_iframe;
 volatile bool update_encoder;
@@ -387,6 +392,17 @@ int32_t SendVideo(void* opaque) {
                         // Only increment ID if the send succeeded
                         id++;
                     }
+                    for (int i = 0; i < num_spectator_connections; i++) {
+                        if (SendUDPPacket(
+                                &SpectatorSendContext[num_spectator_connections],
+                                PACKET_VIDEO, (uint8_t*)frame,
+                                frame_size, id, STARTING_BURST_BITRATE,
+                                NULL,
+                                NULL) <
+                            0) {
+                            LOG_WARNING("Could not send video frame ID %d to spectator %d", id, i);
+                        }
+                    }
 
                     //LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n", GetTimer( t ), frame_size );
 
@@ -559,6 +575,21 @@ void update() {
 
 #include <time.h>
 
+int MultithreadedWaitForSpectator( void* opaque ) {
+    opaque;
+    while (connected) {
+        if (CreateUDPContext(&SpectatorSendContext[num_spectator_connections],
+                             NULL, PORT_SPECTATOR + num_spectator_connections,
+                             1, 1000,
+                             USING_STUN) < 0) {
+            LOG_INFO("Waiting for spectator");
+            continue;
+        }
+        num_spectator_connections++;
+    }
+    return 0;
+}
+
 int main() {
 //    static_assert(sizeof(unsigned short) == 2,
 //                  "Error: Unsigned short is not length 2 bytes!\n");
@@ -601,6 +632,7 @@ int main() {
         srand(rand() * (unsigned int)time(NULL) + rand());
         connection_id = rand();
 
+        num_spectator_connections = 0;
         SocketContext PacketReceiveContext = {0};
         SocketContext PacketTCPContext = {0};
 
@@ -682,6 +714,10 @@ int main() {
         SDL_Thread* send_audio =
             SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
         LOG_INFO("Sending video and audio...");
+        SDL_Thread* collect_spectators =
+            SDL_CreateThread(MultithreadedWaitForSpectator,
+                             "MultithreadedWaitForSpectator", NULL);
+        collect_spectators;
 
         input_device_t* input_device = CreateInputDevice();
         if (!input_device) {
