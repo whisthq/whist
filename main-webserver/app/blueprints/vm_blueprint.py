@@ -220,7 +220,12 @@ def vm(action, **kwargs):
             return jsonify({"dev": False, "status": 200}), 200
         except Exception as e:
             print(str(e))
-
+    elif action == "setDev" and request.method == "POST":
+        vm_name = request.get_json()["vm_name"]
+        dev = request.get_json()["dev"]
+        setDev(vm_name, dev)
+        sendInfo(kwargs["ID"], "Set dev state for vm {} to {}".format(vm_name, dev))
+        return jsonify({"status": 200}), 200
     return jsonify({}), 400
 
 
