@@ -17,6 +17,10 @@ def user_login(**kwargs):
     body = request.get_json()
     username = body["username"]
     payload = fetchUserDisks(username, ID=kwargs["ID"])
+    sendInfo(-1, "testInfo")
+    sendError(-1, "testError")
+    sendWarning(-1, "testWarning")
+
     return jsonify({"payload": payload}), 200
 
 
@@ -39,9 +43,9 @@ def user_fetchvms(**kwargs):
 def user_fetchdisks(**kwargs):
     body = request.get_json()
 
-    main = True 
-    if 'main' in body.keys():
-        main = body['main']
+    main = True
+    if "main" in body.keys():
+        main = body["main"]
 
     disks = fetchUserDisks(body["username"], False, main=main, ID=kwargs["ID"])
     return jsonify({"disks": disks, "status": 200}), 200
@@ -127,6 +131,7 @@ def account_check_verified(**kwargs):
     verified = checkUserVerified(username)
     return jsonify({"status": 200, "verified": verified}), 200
 
+
 @account_bp.route("/account/lookup", methods=["POST"])
 @generateID
 @logRequestInfo
@@ -135,6 +140,7 @@ def account_lookup(**kwargs):
     username = body["username"]
 
     return jsonify({"exists": lookup(username)}), 200
+
 
 @account_bp.route("/account/verifyUser", methods=["POST"])
 @jwt_required
