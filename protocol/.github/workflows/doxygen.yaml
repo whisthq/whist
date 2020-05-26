@@ -1,0 +1,17 @@
+name: CMake Build Matrix
+
+on: [pull_request, merge, push]
+
+env:
+  CMAKE_VERSION: 3.15.7
+  NINJA_VERSION: 1.9.0
+  BUILD_TYPE: Debug
+  CCACHE_VERSION: 3.7.7
+
+jobs:
+  create_docs:
+    runs-on: ubuntu-latest
+    uses: mattnotmitt/doxygen-action@v1
+    with:
+      working-directory: '.'
+      doxyfile-path: 'docs/Doxyfile'

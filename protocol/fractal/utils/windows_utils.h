@@ -1,9 +1,9 @@
 #ifndef WINDOWS_UTILS_H
 #define WINDOWS_UTILS_H
 
-/******
+/**
 
-This file contains all code that interacts directly with Windows desktops
+@brief This file contains all code that interacts directly with Windows desktops
 (Winlogon, the login screen, and regular desktops).
 
 ============================
@@ -16,7 +16,7 @@ instance, Winsta0, the default Windows desktop)
     - It can also be used to tell whether the desktop is ready (for instance,
 Winlogon)
 
-*****/
+*/
 
 /*
 ============================
