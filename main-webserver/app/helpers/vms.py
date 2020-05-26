@@ -56,15 +56,19 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
             conn.execute(command, **params)
             conn.close()
 
-            os_profile = {
-                "computer_name": vmName,
-                "admin_username": os.getenv("VM_GROUP"),
-                "admin_password": os.getenv("VM_PASSWORD")
-            } if operating_system == 'Linux' else {
-                "computer_name": vmName,
-                "admin_username": os.getenv("VM_GROUP"),
-                "admin_password": os.getenv("VM_PASSWORD")
-            }
+            os_profile = (
+                {
+                    "computer_name": vmName,
+                    "admin_username": os.getenv("VM_GROUP"),
+                    "admin_password": os.getenv("VM_PASSWORD"),
+                }
+                if operating_system == "Linux"
+                else {
+                    "computer_name": vmName,
+                    "admin_username": os.getenv("VM_GROUP"),
+                    "admin_password": os.getenv("VM_PASSWORD"),
+                }
+            )
 
             return {
                 "params": {
@@ -614,10 +618,12 @@ def claimAvailableVM(disk_name, location, os_type="Windows", s=None, ID=-1):
                 state, location, username
             ),
         )
+        # TODO: AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
+
         command = text(
             """
             SELECT * FROM v_ms
-            WHERE lock = :lock AND state = :state AND dev = :dev AND os = :os_type AND location = :location AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
+            WHERE lock = :lock AND state = :state AND dev = :dev AND os = :os_type AND location = :location 
             """
         )
         params = {
@@ -665,7 +671,7 @@ def claimAvailableVM(disk_name, location, os_type="Windows", s=None, ID=-1):
                 "disk_name": disk_name,
                 "vm_name": available_vm["vm_name"],
                 "state": "ATTACHING",
-                "last_updated": getCurrentTime()
+                "last_updated": getCurrentTime(),
             }
             session.execute(command, params)
             sendInfo(
@@ -1219,7 +1225,7 @@ def createNic(name, location, tries):
             return None
 
 
-def swapdisk_name(s, disk_name, vm_name, needs_winlogon = True, ID=-1):
+def swapdisk_name(s, disk_name, vm_name, needs_winlogon=True, ID=-1):
     """Attaches an OS disk to the VM. If the vm already has an OS disk attached, the vm will detach that and attach this one.
 
     Args:
@@ -1268,7 +1274,7 @@ def swapdisk_name(s, disk_name, vm_name, needs_winlogon = True, ID=-1):
             },
         )
 
-        return fractalVMStart(vm_name, True, needs_winlogon = needs_winlogon, s=s)
+        return fractalVMStart(vm_name, True, needs_winlogon=needs_winlogon, s=s)
     except Exception as e:
         sendCritical(ID, str(e))
         return -1
@@ -1337,7 +1343,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
 
                 createTemporaryLock(vm_name, 12)
 
-                sendInfo(ID, async_vm_start.result(timeout = 180))
+                sendInfo(ID, async_vm_start.result(timeout=180))
 
                 if s:
                     s.update_state(
