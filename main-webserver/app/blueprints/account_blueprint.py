@@ -7,7 +7,6 @@ from app.helpers.disks import *
 from app.logger import *
 
 account_bp = Blueprint("account_bp", __name__)
-logger = logging.getLogger("root")
 
 # TO be deleted
 @account_bp.route("/user/login", methods=["POST"])
