@@ -1698,3 +1698,17 @@ def updateProtocolVersion(vm_name, version):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+def setDev(vm_name, dev):
+    command = text(
+        """
+        UPDATE v_ms
+        SET dev = :dev
+        WHERE
+        "vm_name" = :vm_name
+        """
+    )
+    params = {"dev": dev, "vm_name": vm_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
