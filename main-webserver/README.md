@@ -2,13 +2,14 @@
 
 Webserver to handle interfacing with Fractal cloud computers hosted on Azure, and for interfacing with a variety of website functionalities. Runs Flask with Celery for asynchronous task handling.
 
-Production hosted on Heroku: https://cube-celery-vm.herokuapp.com
-
+Production hosted on Heroku: https://cube-celery-vm.herokuapp.com  
 Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-vm
 
-Staging hosted on Heroku: https://cube-celery-staging.herokuapp.com
-
+Staging hosted on Heroku: https://cube-celery-staging.herokuapp.com  
 Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging
+
+Staging2 hosted on Heroku: https://cube-celery-staging2.herokuapp.com  
+Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging2
 
 ## Setup
 

@@ -69,9 +69,6 @@ def account_login(**kwargs):
     vm_status = userVMStatus(username)
     token = fetchUserToken(username)
     access_token, refresh_token = getAccessTokens(username)
-    sendInfo(-1, "testInfo")
-    sendError(-1, "testError")
-    sendWarning(-1, "testWarning")
     return (
         jsonify(
             {
