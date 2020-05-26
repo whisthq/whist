@@ -415,6 +415,32 @@ def payment(action, **kwargs):
 
 
 
+    elif action == "update" and request.method == 'POST':
+        body = request.get_json()
+
+        username = body["username"]
+        new_plan_type = body["plan"]
+        new_plan_id = None
+        if new_plan_type == 'Hourly':
+            new_plan_id = os.getenv('HOURLY_PLAN_ID')
+        elif new_plan_type == 'Monthly':
+            new_plan_id = os.getenv('MONTHLY_PLAN_ID')
+        elif new_plan_type == 'Unlimited':
+            new_plan_id = os.getenv('UNLIMITED_PLAN_ID')
+        else:
+            return jsonify({'status': 404, 'error': 'Invalid plan type'}), 404
+
+        customer = fetchCustomer(username)
+        if customer:
+            old_subscription = customer['subscription']
+            subscription = stripe.Subscription.retrieve(old_subscription)
+            if subscription:
+                subscription_id = subscription["items"]["data"][0].id
+                stripe.SubscriptionItem.modify(subscription_id, plan=new_plan_id)
+                return jsonify({"status": 200}), 200
+        else:
+            return jsonify({'status': 404, 'error': 'Invalid plan type'}), 404
+
 # REFERRAL endpoint
 
 
