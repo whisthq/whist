@@ -149,10 +149,10 @@ bool parse_json(char* str, json_t* json) {
     return true;
 }
 
-kv_pair_t* get_kv(json_t json, char* key) {
-    for (int i = 0; i < json.size; i++) {
-        if (strcmp(json.pairs[i].key, key) == 0) {
-            return &json.pairs[i];
+kv_pair_t* get_kv(json_t *json, char* key) {
+    for (int i = 0; i < json->size; i++) {
+        if (strcmp(json->pairs[i].key, key) == 0) {
+            return &json->pairs[i];
         }
     }
     return NULL;

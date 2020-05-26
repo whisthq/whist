@@ -47,7 +47,7 @@ Public Functions
 */
 
 bool parse_json(char* str, json_t* json);
-kv_pair_t* get_kv(json_t json, char* key);
+kv_pair_t* get_kv(json_t* json, char* key);
 void free_json(json_t json);
 char* clone(char* str);
 
