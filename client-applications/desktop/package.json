@@ -134,7 +134,7 @@
     },
     "publish": {
       "provider": "s3",
-      "bucket": "fractal-applications-release",
+      "bucket": "fractal-linux-application-release",
       "region": "us-east-1"
     }
   },

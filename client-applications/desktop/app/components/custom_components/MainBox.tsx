@@ -143,8 +143,8 @@ class MainBox extends Component {
           } else if (os.platform() === "linux") {
             // linux
             // path when electron app is packaged as .deb (to use as working directory)
-            var path = process.cwd();
-            var executable = "/opt/Fractal/protocol/desktop/FractalClient";
+            var path = process.cwd() + "/protocol/desktop";
+            var executable = "./FractalClient";
           } else if (os.platform() === "win32") {
             // windows
             // path when electron app is packaged as .nsis (to use as working directory)
