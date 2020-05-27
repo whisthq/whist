@@ -1,7 +1,7 @@
 #ifndef SDL_SCREEN_INFO_H
 #define SDL_SCREEN_INFO_H
 /**
-
+@file sdlscreeninfo.h
 @brief This file contains SDL screen info code. (Requires additional documenting)
 
 ============================

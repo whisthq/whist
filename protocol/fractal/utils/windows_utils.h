@@ -2,7 +2,7 @@
 #define WINDOWS_UTILS_H
 
 /**
-
+@file windows_utils.h
 @brief This file contains all code that interacts directly with Windows desktops
 (Winlogon, the login screen, and regular desktops).
 

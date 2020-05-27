@@ -1,11 +1,11 @@
 /**
 Copyright Fractal Computers, Inc. 2020
+@file mac_utils.h
 @brief MacOS helper functions for clipboard functions.
 
 ============================
 Usage
 ============================
-
 
 */
 

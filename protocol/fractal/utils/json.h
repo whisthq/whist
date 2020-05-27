@@ -1,5 +1,17 @@
 #ifndef JSON_H
 #define JSON_H
+/**
+Copyright Fractal Computers, Inc. 2020
+@file json.h
+@brief JSON helper functions
+
+============================
+Usage
+============================
+
+*/
+
+
 /*
 ============================
 Includes
@@ -46,9 +58,32 @@ Public Functions
 ============================
 */
 
+/**
+ *
+ * @param str
+ * @param json
+ * @return
+ */
 bool parse_json(char* str, json_t* json);
+
+/**
+ *
+ * @param json
+ * @param key
+ * @return
+ */
 kv_pair_t* get_kv(json_t* json, char* key);
+
+/**
+ *
+ * @param json
+ */
 void free_json(json_t json);
+/**
+ *
+ * @param str
+ * @return
+ */
 char* clone(char* str);
 
 #endif

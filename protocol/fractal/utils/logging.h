@@ -1,5 +1,30 @@
 #ifndef LOGGING_H
 #define LOGGING_H
+/**
+Copyright Fractal Computers, Inc. 2020
+@file logging.h
+@brief Logging macros and utils to send win logon status and send the logs to the webserver.
+
+============================
+Usage
+============================
+We have several levels of logging.
+- NO_LOG: self explanatory
+- ERROR_LEVEL: only log errors. Errors are conditions that cause the program to terminate or lead to an irrecoverable state.
+- WARNING_LEVEL: log warnings and above (warnings and errors). Warnings are when things do not work as expected, but we can recover.
+- INFO_LEVEL: log info and above. Info is just for logs that provide additional information on state. e.g decode time
+- DEBUG_LEVEL: log debug and above. For use when actively debugging a problem, but for things that don't need to be logged regularly
+
+The log level defaults to DEBUG_LEVEL, but it can also be passed as a compiler flag, as it is in the root CMakesList.txt,
+ which sets it to DEBUG_LEVEL for Debug builds and WARNING_LEVEL for release builds.
+
+Note that these macros do not need an additional \n character at the end of your format strings.
+
+We also have a LOG_IF(condition, format string) Macro which only logs if the condition is true. This can be used for debugging or
+ if we want to more aggressively log something when a flag changes. For example in this file you could #define LOG_AUDIO True and then
+ use LOG_IF(LOG_AUDIO, "my audio logging").
+
+*/
 
 /*
 ============================
@@ -92,7 +117,7 @@ Public Functions
 ============================
 */
 
-/*
+/**
 @brief                          Initialize the logger
 
 @param log_directory            The directory to store the log files in. Pass
@@ -100,24 +125,24 @@ NULL to not store the logs in a log file.
 */
 void initLogger(char* log_directory);
 
-/*
+/**
 @brief                          Log the given format string.
 
 @param fmtStr            The directory to store the log files in
 */
 void mprintf(const char* fmtStr, ...);
 
-/*
+/**
 @brief                          Destroy the logger
 */
 void destroyLogger();
 
-/*
+/**
 @brief                          Send the log history to the webserver
 */
 bool sendLogHistory();
 
-/*
+/**
 @brief                          Tell the server the WinLogon and connection
 status
 
@@ -126,7 +151,7 @@ Pass true if connected to a client and false otherwise.
 */
 void updateStatus(bool is_connected);
 
-/*
+/**
 @brief                          Get the current server's version number
 
 @returns                        A 16-character hexadecimal version number
