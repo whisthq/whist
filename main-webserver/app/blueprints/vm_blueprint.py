@@ -93,7 +93,7 @@ def vm(action, **kwargs):
         return jsonify({"ID": task.id}), 202
     elif action == "stopvm":
         vm_name = request.get_json()["vm_name"]
-        task = stopVm.apply_async([vm_name, kwargs["ID"]])
+        task = stopVM.apply_async([vm_name, kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
     elif action == "deallocate":
         vm_name = request.get_json()["vm_name"]
