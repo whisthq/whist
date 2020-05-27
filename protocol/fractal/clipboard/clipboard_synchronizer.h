@@ -1,12 +1,13 @@
 #ifndef CLIPBOARD_SYNCHRONIZER_H
 #define CLIPBOARD_SYNCHRONIZER_H
 
-/******
-
-This file contains code meant to be used on the clientside, that will assist in
+/**
+Copyright Fractal Computers, Inc. 2020
+@file clipboard_synchronizer.h
+@brief This file contains code meant to be used on the clientside, that will assist in
 synchronizing the clipboard.
 
-============================
+ ============================
 Usage
 ============================
 
@@ -34,11 +35,11 @@ if ( client_clipboard ) {
 
 destroyClipboardSynchronizer();
 
-*******/
+*/
 
 #include "clipboard.h"
 
-/*
+/**
 @brief                          Initialize the Update Clipboard Helper
 
 @param server_ip				The IP of the server to
@@ -46,7 +47,7 @@ synchronize the clipboard with
 */
 void initClipboardSynchronizer(char* server_ip);
 
-/*
+/**
 @brief                          Set the clipboard to a given clipboard data
 
 @param clipboard				The clipboard data to update the
@@ -57,7 +58,7 @@ on failure
 */
 bool ClipboardSynchronizerSetClipboard(ClipboardData* clipboard);
 
-/*
+/**
 @brief                          Check if the clipboard is in the midst of being
 updated
 
@@ -67,7 +68,7 @@ updateSetClipboard
 */
 bool isClipboardSynchronizing();
 
-/*
+/**
 @brief                          Get a new clipboard, if any
 
 @returns						A pointer to new
@@ -76,7 +77,7 @@ been updated since the last call to the clipboard
 */
 ClipboardData* ClipboardSynchronizerGetNewClipboard();
 
-/*
+/**
 @brief                          Cleanup the clipboard synchronizer
 */
 void destroyClipboardSynchronizer();

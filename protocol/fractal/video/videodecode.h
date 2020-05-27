@@ -3,9 +3,8 @@
 
 /**
  Copyright Fractal Computers, Inc. 2020
- @file dxgicapture.h
- @date 26 may 2020
- @brief This file contains the code to create and destroy SDL windows on the client.
+ @file videodecode.h
+ @brief This file contains the code to create a decoder and use that decoder to decode frames
 
 
 
@@ -13,7 +12,7 @@
 Usage
 ============================
 
-initSDL gets called first to create an SDL window, and destroySDL at the end to close the window.
+
 
 */
 

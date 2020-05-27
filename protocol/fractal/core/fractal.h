@@ -1,8 +1,15 @@
-/*
- * General Fractal helper functions and headers.
- *
- * Copyright Fractal Computers, Inc. 2020
- **/
+/**
+Copyright Fractal Computers, Inc. 2020
+@file fractal.h
+@brief General Fractal helper functions and headers.
+
+============================
+Usage
+============================
+
+*/
+
+
 #ifndef FRACTAL_H
 #define FRACTAL_H
 

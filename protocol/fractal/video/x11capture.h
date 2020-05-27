@@ -4,7 +4,6 @@
 /**
  Copyright Fractal Computers, Inc. 2020
  @file x11capture.h
- @date 26 may 2020
  @brief GPU screen capture on Linux Ubuntu.
 
 

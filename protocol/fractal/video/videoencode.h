@@ -4,7 +4,6 @@
 /**
  Copyright Fractal Computers, Inc. 2020
  @file videoencode.h
- @date 26 may 2020
  @brief This file contains the code to create and destroy Encoders and use them to encode captured screens
 
 
@@ -31,7 +30,7 @@ Custom Types
 ============================
 */
 
-/*
+/**
 @brief                          The encoder
 */
 typedef struct {
@@ -52,7 +51,7 @@ typedef struct {
   AVBufferRef *hw_device_ctx;
 } encoder_t;
 
-/*
+/**
 @brief                          Will create a new encoder
 
 @param in_width                 Width of the frames that the encoder must intake
@@ -69,7 +68,7 @@ will encode to
 encoder_t *create_video_encoder(int in_width, int in_height, int out_width,
                                 int out_height, int bitrate);
 
-/*
+/**
 @brief                          Encode the given frame. The frame can be
 accessed via encoded_frame_size and encoded_frame_data
 
@@ -77,14 +76,14 @@ accessed via encoded_frame_size and encoded_frame_data
 */
 void video_encoder_encode(encoder_t *encoder, void *rgb_pixels, int pitch);
 
-/*
+/**
 @brief                          Set the next frame to be an i-frame
 
 @param encoder                  Encoder to be updated
 */
 void video_encoder_set_iframe(encoder_t *encoder);
 
-/*
+/**
 @brief                          Allow the next frame to be either an i-frame or
 not an i-frame.
 
@@ -92,7 +91,7 @@ not an i-frame.
 */
 void video_encoder_unset_iframe(encoder_t *encoder);
 
-/*
+/**
 @brief                          Destroy encoder
 
 @param encoder                  Encoder to be destroyed

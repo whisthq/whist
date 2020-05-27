@@ -3,8 +3,7 @@
 
 /**
  Copyright Fractal Computers, Inc. 2020
- @file dxgicapture.h
- @date 26 may 2020
+ @file screencapture.h
  @brief This file defines the proper header for capturing the screen depending on the local OS.
 
 */
