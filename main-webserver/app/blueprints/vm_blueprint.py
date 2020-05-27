@@ -144,13 +144,13 @@ def vm(action, **kwargs):
     elif action == "connectionStatus" and request.method == "POST":
         body = request.get_json()
         available = body["available"]
-
+        print("endpoint recieved")
         vm_ip = ""
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
             vm_ip = request.environ["HTTP_X_FORWARDED_FOR"]
-
+        print("vm ip: " + vm_ip)
         vm_info = fetchVMByIP(vm_ip)
         if vm_info:
             vm_name = vm_info["vm_name"] if vm_info["vm_name"] else ""
