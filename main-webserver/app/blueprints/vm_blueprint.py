@@ -74,8 +74,8 @@ def vm(action, **kwargs):
         return jsonify({"status": 200}), 200
     elif action == "delete" and request.method == "POST":
         body = request.get_json()
-                
-        vm_name, delete_disk = body['vm_name'], body['delete_disk']
+
+        vm_name, delete_disk = body["vm_name"], body["delete_disk"]
         task = deleteVMResources.apply_async([vm_name, delete_disk])
         return jsonify({"ID": task.id}), 202
     elif action == "restart" and request.method == "POST":
@@ -91,7 +91,7 @@ def vm(action, **kwargs):
         vm_name = request.get_json()["vm_name"]
         task = startVM.apply_async([vm_name, kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
-    elif action == "stop":
+    elif action == "stopvm":
         vm_name = request.get_json()["vm_name"]
         task = stopVm.apply_async([vm_name, kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
@@ -118,11 +118,11 @@ def vm(action, **kwargs):
     elif action == "winlogonStatus" and request.method == "POST":
         body = request.get_json()
         ready = body["ready"]
-        vm_ip = ''
+        vm_ip = ""
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
-            vm_ip = request.environ['HTTP_X_FORWARDED_FOR']
+            vm_ip = request.environ["HTTP_X_FORWARDED_FOR"]
 
         sendInfo(
             kwargs["ID"],
@@ -144,17 +144,17 @@ def vm(action, **kwargs):
         body = request.get_json()
         available = body["available"]
 
-        vm_ip = ''
+        vm_ip = ""
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
-            vm_ip = request.environ['HTTP_X_FORWARDED_FOR']
+            vm_ip = request.environ["HTTP_X_FORWARDED_FOR"]
 
         vm_info = fetchVMByIP(vm_ip)
         if vm_info:
             vm_name = vm_info["vm_name"] if vm_info["vm_name"] else ""
 
-            if vm_info["os"] == 'Linux':
+            if vm_info["os"] == "Linux":
                 vmReadyToConnect(vm_info["vm_name"], True)
 
             version = None
@@ -205,7 +205,7 @@ def vm(action, **kwargs):
         return jsonify({"status": 200}), 200
     elif action == "isDev" and request.method == "GET":
         try:
-            vm_ip = ''
+            vm_ip = ""
 
             if request.headers.getlist("X-Forwarded-For"):
                 vm_ip = request.headers.getlist("X-Forwarded-For")[0]
