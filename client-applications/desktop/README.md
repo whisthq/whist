@@ -28,11 +28,13 @@ Start the app in the `dev` environment. This starts the renderer process in [**h
 
 Before doing this, you will need to run `yarn`, which will create the `yarn.lock` file and install all of the `node_modules`. If you still experience issues with starting the dev environment, you might need to run `yarn upgrade`, which will upgrade all the dependencies. It's a good idea to do so periodically to keep the application up-to-date. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
 
+To start development with a custom port, run `set PORT={number}&& yarn dev`.
+
 If you would like to fully test the application, including the launch of the Fractal protocol, you need to run part of the build scripts, listed in the next section, to clone and make the protocol for your platform. Compiling the protocol requires Cmake. In order to make sure that your system has everything needed to compile the protocol, you should refer to the protocol repository readme.
 
 ## Packaging for Production
 
-To package apps for the local platform, including fetching and compiling the latest Fractal protocol. This will enable you to get an executable that you can install to test your code locally. The installer executables will be in `desktop/release`. If you have already downloaded and compiled the latest Fractal protocol, you can simply run `yarn package`. 
+To package apps for the local platform, including fetching and compiling the latest Fractal protocol. This will enable you to get an executable that you can install to test your code locally. The installer executables will be in `desktop/release`. If you have already downloaded and compiled the latest Fractal protocol, you can simply run `yarn package`.
 
 **MacOS/Linux**  
 Run `./build.sh` in terminal.
