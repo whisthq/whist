@@ -92,7 +92,7 @@ const createWindow = async () => {
   }
 
   console.log(path.join(__dirname, "/build/icon.png"));
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
   mainWindow.loadURL(`file://${__dirname}/app.html`);
 
   // @TODO: Use 'ready-to-show' event
