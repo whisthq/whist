@@ -17,27 +17,55 @@ def loginUser(username, password):
     bool: True if authentication success, False otherwise
    """
 
-    if password != os.getenv('ADMIN_PASSWORD'):
-        command = text("""
+    if password != os.getenv("ADMIN_PASSWORD"):
+        command = text(
+            """
             SELECT * FROM users WHERE "username" = :userName AND "password" = :password
-            """)
-        pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
-        params = {'userName': username, 'password': pwd_token}
+            """
+        )
+        pwd_token = jwt.encode({"pwd": password}, os.getenv("SECRET_KEY"))
+        params = {"userName": username, "password": pwd_token}
         with engine.connect() as conn:
-            user = cleanFetchedSQL(conn.execute(
-                command, **params).fetchall())
+            user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()
             return True if user else False
     else:
-        command = text("""
+        command = text(
+            """
             SELECT * FROM users WHERE "username" = :userName
-            """)
-        params = {'userName': username}
+            """
+        )
+        params = {"userName": username}
         with engine.connect() as conn:
-            user = cleanFetchedSQL(conn.execute(
-                command, **params).fetchall())
+            user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
             conn.close()
             return True if user else False
+
+
+def isAdmin(username):
+    """Checks whether a user account is an admin
+
+    Args:
+        username (str): The username to check
+
+    Returns:
+        bool: True if they are an admin, False otherwise
+    """
+    command = text(
+        """
+        SELECT * FROM users WHERE "username" = :userName
+        """
+    )
+    params = {"userName": username}
+    with engine.connect() as conn:
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        conn.close()
+        if user:
+            if user["password"] == jwt.encode(
+                {"pwd": os.getenv("ADMIN_PASSWORD")}, os.getenv("SECRET_KEY")
+            ):
+                return True
+        return False
 
 
 def lookup(username):
@@ -50,10 +78,12 @@ def lookup(username):
         bool: True if user exists, False otherwise
     """
 
-    command = text("""
+    command = text(
+        """
         SELECT * FROM users WHERE "username" = :userName
-        """)
-    params = {'userName': username}
+        """
+    )
+    params = {"userName": username}
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
@@ -67,15 +97,14 @@ def genUniqueCode():
         int: The generated code
     """
     with engine.connect() as conn:
-        old_codes = [cell[0]
-                     for cell in list(conn.execute('SELECT "code" FROM users'))]
+        old_codes = [cell[0] for cell in list(conn.execute('SELECT "code" FROM users'))]
         new_code = generateCode()
         while new_code in old_codes:
             new_code = generateCode()
         return new_code
 
 
-def registerUser(username, password, token, name = None, reason_for_signup = None):
+def registerUser(username, password, token, name=None, reason_for_signup=None):
     """Registers a user, and stores it in the users table
 
     Args:
@@ -86,15 +115,22 @@ def registerUser(username, password, token, name = None, reason_for_signup = Non
     Returns:
         int: 200 on success, 400 on fail
     """
-    pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
+    pwd_token = jwt.encode({"pwd": password}, os.getenv("SECRET_KEY"))
     code = genUniqueCode()
-    command = text("""
+    command = text(
+        """
         INSERT INTO users("username", "password", "code", "id", "name", "reason_for_signup")
         VALUES(:userName, :password, :code, :token, :name, :reason_for_signup)
-        """)
-    params = {'userName': username, 'password': pwd_token,
-              'code': code, 'token': token,
-              'name': name, 'reason_for_signup': reason_for_signup}
+        """
+    )
+    params = {
+        "userName": username,
+        "password": pwd_token,
+        "code": code,
+        "token": token,
+        "name": name,
+        "reason_for_signup": reason_for_signup,
+    }
     with engine.connect() as conn:
         try:
             conn.execute(command, **params)
@@ -111,13 +147,15 @@ def resetPassword(username, password):
         username (str): The user to update the password for
         password (str): The new password
     """
-    pwd_token = jwt.encode({'pwd': password}, os.getenv('SECRET_KEY'))
-    command = text("""
+    pwd_token = jwt.encode({"pwd": password}, os.getenv("SECRET_KEY"))
+    command = text(
+        """
         UPDATE users
         SET "password" = :password
         WHERE "username" = :userName
-        """)
-    params = {'userName': username, 'password': pwd_token}
+        """
+    )
+    params = {"userName": username, "password": pwd_token}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
@@ -132,10 +170,12 @@ def deleteUser(username):
     Returns:
         int: 200 for successs, 404 for failure
     """
-    command = text("""
+    command = text(
+        """
         DELETE FROM users WHERE "username" = :username
-        """)
-    params = {'username': username}
+        """
+    )
+    params = {"username": username}
     with engine.connect() as conn:
         try:
             conn.execute(command, **params)
@@ -151,9 +191,11 @@ def fetchAllUsers():
     Returns:
         arr[dict]: The array of users
     """
-    command = text("""
+    command = text(
+        """
         SELECT * FROM users
-        """)
+        """
+    )
     params = {}
     with engine.connect() as conn:
         users = cleanFetchedSQL(conn.execute(command, **params).fetchall())
@@ -169,13 +211,15 @@ def changeUserCredits(username, credits):
         username (str): The username of the user
         credits (int): The credits that the user has outstanding (1 credit = 1 month of use)
     """
-    command = text("""
+    command = text(
+        """
         UPDATE users
         SET "credits_outstanding" = :credits
         WHERE
         "username" = :username
-        """)
-    params = {'credits': credits, 'username': username}
+        """
+    )
+    params = {"credits": credits, "username": username}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
@@ -190,16 +234,18 @@ def getUserCredits(username):
     Returns:
         int: The credits the user has
     """
-    command = text("""
+    command = text(
+        """
         SELECT * FROM users
         WHERE "username" = :username
-        """)
-    params = {'username': username}
+        """
+    )
+    params = {"username": username}
     with engine.connect() as conn:
         users = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if users:
-            return users['credits_outstanding']
+            return users["credits_outstanding"]
     return 0
 
 
@@ -209,14 +255,16 @@ def fetchCodes():
     Returns:
         arr[str]: An array of all the user codes
     """
-    command = text("""
+    command = text(
+        """
         SELECT * FROM users
-        """)
+        """
+    )
     params = {}
     with engine.connect() as conn:
         users = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
-        return [user['code'] for user in users]
+        return [user["code"] for user in users]
     return None
 
 
@@ -229,15 +277,17 @@ def checkUserVerified(username):
     Returns:
         bool: Whether they have verified
     """
-    command = text("""
+    command = text(
+        """
         SELECT * FROM users WHERE "username" = :userName
-        """)
-    params = {'userName': username}
+        """
+    )
+    params = {"userName": username}
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if user:
-            return user['verified']
+            return user["verified"]
         return False
 
 
@@ -248,13 +298,15 @@ def makeUserVerified(username, verified):
         username (str): The username of the user
         verified (bool): The new verification state
     """
-    command = text("""
+    command = text(
+        """
         UPDATE users
         SET verified = :verified
         WHERE
         "username" = :username
-        """)
-    params = {'verified': verified, 'username': username}
+        """
+    )
+    params = {"verified": verified, "username": username}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
@@ -269,15 +321,17 @@ def fetchUserToken(username):
     Returns:
         str: The uid of the user
     """
-    command = text("""
+    command = text(
+        """
         SELECT * FROM users WHERE "username" = :userName
-        """)
-    params = {'userName': username}
+        """
+    )
+    params = {"userName": username}
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if user:
-            return user['id']
+            return user["id"]
         return None
 
 
@@ -290,10 +344,12 @@ def mapCodeToUser(code):
     Returns:
         dict: The user. If there is no match, return None
     """
-    command = text("""
+    command = text(
+        """
         SELECT * FROM users WHERE "code" = :code
-        """)
-    params = {'code': code}
+        """
+    )
+    params = {"code": code}
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
@@ -310,15 +366,16 @@ def fetchUserCode(username):
         str: The referral code
     """
     try:
-        command = text("""
+        command = text(
+            """
             SELECT * FROM users WHERE "username" = :userName
-            """)
-        params = {'userName': username}
+            """
+        )
+        params = {"userName": username}
         with engine.connect() as conn:
-            user = cleanFetchedSQL(conn.execute(
-                command, **params).fetchone())
+            user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
             conn.close()
-            return user['code']
+            return user["code"]
     except:
         return None
 
@@ -331,21 +388,23 @@ def generateIDs(ID=-1):
     """
     try:
         with engine.connect() as conn:
-            for row in list(conn.execute('SELECT * FROM users')):
+            for row in list(conn.execute("SELECT * FROM users")):
                 token = generateToken(row[0])
-                command = text("""
+                command = text(
+                    """
                     UPDATE users
                     SET "id" = :token
                     WHERE "username" = :userName
-                    """)
-                params = {'token': token, 'userName': row[0]}
+                    """
+                )
+                params = {"token": token, "userName": row[0]}
                 conn.execute(command, **params)
             conn.close()
-        sendInfo(ID, 'Generated IDs succesfully')
+        sendInfo(ID, "Generated IDs succesfully")
         return 200
     except:
         error = traceback.format_exc()
-        sendError(ID, 'Failed to generate IDs: ' + error)
+        sendError(ID, "Failed to generate IDs: " + error)
         return 500
 
 
@@ -361,39 +420,43 @@ def userVMStatus(username):
     has_paid = False
     has_disk = False
 
-    command = text("""
+    command = text(
+        """
         SELECT * FROM customers
         WHERE "username" = :username
-        """)
-    params = {'username': username}
+        """
+    )
+    params = {"username": username}
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if user:
             has_paid = True
 
-    command = text("""
+    command = text(
+        """
         SELECT * FROM disks
         WHERE "username" = :username AND "state" = :state
-        """)
+        """
+    )
 
-    params = {'username': username, 'state': 'ACTIVE'}
+    params = {"username": username, "state": "ACTIVE"}
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         if user:
             has_disk = True
 
-            if user['first_time']:
-                return 'is_creating'
+            if user["first_time"]:
+                return "is_creating"
 
     if not has_paid and not has_disk:
-        return 'not_created'
+        return "not_created"
 
     if has_paid and not has_disk:
-        return 'is_creating'
+        return "is_creating"
 
     if has_paid and has_disk:
-        return 'has_created'
+        return "has_created"
 
-    return 'has_not_paid'
+    return "has_not_paid"

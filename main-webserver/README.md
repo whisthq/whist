@@ -43,13 +43,12 @@ Required environment variables
 HEROKU_API_KEY=<heroku-api-key>
 
 You can store all docker env variables in a file such as `.envdocker`
-Then run docker with 
+Then run docker with
 
 `docker run --env-file .envdocker -t vm-webserver:latest`
 
 Or run docker like
 `docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
-
 
 ### Run on Heroku
 
@@ -80,9 +79,11 @@ Select Scheme, and for the server URL scheme, copy the DATABASE_URL config var f
 
 ## Styling
 
-To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python black](https://github.com/psf/black). You may find a variety of tutorial online for your personal setup. This README covers how to set it up on VSCode.
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python black](https://github.com/psf/black) before making any PRs. You may find a variety of tutorial online for your personal setup. This README covers how to set it up on VSCode, Sublime Text and running it from the CLI.
 
-### Python Black on VSCode
+### Python Black
+
+#### [VSCode](https://medium.com/@marcobelo/setting-up-python-black-on-visual-studio-code-5318eba4cd00)
 
 1. Install it on your virtual env or in your local python with the command:
 
@@ -101,4 +102,36 @@ ext install ms-python.python
 5. Search for “python formatting provider” and select “black”.
 6. Now open/create a python file, write some code and save(Ctrl+s) it to see the magic happen!
 
-<sub>[Source](https://medium.com/@marcobelo/setting-up-python-black-on-visual-studio-code-5318eba4cd00)</sub>
+#### [Sublime](https://github.com/jgirardet/sublack)
+
+#### [CLI](https://github.com/psf/black)
+
+Installation:  
+Black can be installed by running `pip install black`. It requires Python 3.6.0+ to run but you can reformat Python 2 code with it, too.
+
+Usage:  
+To get started right away with sensible defaults:
+
+```
+black {source_file_or_directory}
+```
+
+Black doesn't provide many options. You can list them by running `black --help`:
+
+### Sphinx Docstring Generator
+
+https://www.sphinx-doc.org/en/master/
+
+Our methods are commented in Google Docstring format. You can easily set up docstring documentation with Sphinx.
+
+#### VSCode Extension
+
+https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring
+
+Usage:
+
+Press enter after opening docstring with triple quotes (""" or ''')  
+Keyboard shortcut: ctrl+shift+2 or cmd+shift+2 for mac  
+Can be changed in Preferences -> Keyboard Shortcuts -> extension.generateDocstring  
+Command: Generate Docstring  
+Right click menu: Generate Docstring

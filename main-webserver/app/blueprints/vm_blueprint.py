@@ -5,6 +5,7 @@ from app.helpers.vms import *
 from app.helpers.logins import *
 from app.helpers.disks import *
 from app.helpers.s3 import *
+from app.helpers.users import *
 
 vm_bp = Blueprint("vm_bp", __name__)
 
@@ -164,7 +165,71 @@ def vm(action, **kwargs):
 
             vm_state = vm_info["state"] if vm_info["state"] else ""
             intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
+            username = vm_info["username"]
+            is_user = not isAdmin(username)
 
+            # Update the user's login status if it has changed
+            if available and vm_state == "RUNNING_UNAVAILABLE":
+                # THIS IS A LOGOFF EVENT, bc it is now available and the last recorded state was unavailable
+                sendInfo(kwargs["ID"], username + " logged off")
+                customer = fetchCustomer(username)
+                if not customer:
+                    sendCritical(
+                        kwargs["ID"],
+                        "{} logged on/off but is not a registered customer".format(
+                            username
+                        ),
+                    )
+                else:
+                    stripe.api_key = os.getenv("STRIPE_SECRET")
+                    subscription_id = customer["subscription"]
+
+                    try:
+                        payload = stripe.Subscription.retrieve(subscription_id)
+
+                        if (
+                            os.getenv("HOURLY_PLAN_ID")
+                            == payload["items"]["data"][0]["plan"]["id"]
+                        ):
+                            sendInfo(
+                                kwargs["ID"],
+                                "{} is an hourly plan subscriber".format(username),
+                            )
+                            user_activity = getMostRecentActivity(username)
+                            if user_activity["action"] == "logon":
+                                now = dt.now()
+                                logon = dt.strptime(
+                                    user_activity["timestamp"], "%m-%d-%Y, %H:%M:%S"
+                                )
+                                if now - logon > timedelta(minutes=0):
+                                    amount = round(
+                                        79 * (now - logon).total_seconds() / 60 / 60
+                                    )
+                                    addPendingCharge(username, amount)
+                            else:
+                                sendError(
+                                    kwargs["ID"],
+                                    "{} logged off but no logon was recorded".format(
+                                        username
+                                    ),
+                                )
+                    except:
+                        sendError(
+                            kwargs["ID"],
+                            "User {} logged off but there was an issue charging with stripe".format(
+                                username
+                            ),
+                        )
+                    addTimeTable(username, "logoff", is_user, kwargs["ID"])
+            elif not available and vm_state == "RUNNING_AVAILABLE":
+                # THIS IS A LOGON EVENT, bc it is now unavailable and the last recorded state was available
+                sendInfo(kwargs["ID"], username + " logged on")
+                addTimeTable(username, "logon", is_user, kwargs["ID"])
+                vms = fetchUserVMs(username)
+                if vms:
+                    createTemporaryLock(vms[0]["vm_name"], 0, kwargs["ID"])
+
+            # Updates the vm state in the sql database
             if vm_state in intermediate_states:
                 sendWarning(
                     kwargs["ID"],
@@ -194,6 +259,7 @@ def vm(action, **kwargs):
                     verbose=False,
                     ID=kwargs["ID"],
                 )
+
         else:
             sendError(
                 kwargs["ID"],
@@ -241,61 +307,7 @@ def tracker(action, **kwargs):
         time = body["time"]
     except:
         pass
-    if action == "logon":
-        username = body["username"]
-        is_user = body["is_user"]
-        sendInfo(kwargs["ID"], username + " logged on")
-        addTimeTable(username, "logon", time, is_user, kwargs["ID"])
-        vms = fetchUserVMs(username)
-        if vms:
-            createTemporaryLock(vms[0]["vm_name"], 0, kwargs["ID"])
-    elif action == "logoff":
-        username = body["username"]
-        is_user = body["is_user"]
-        sendInfo(kwargs["ID"], username + " logged off")
-        customer = fetchCustomer(username)
-        if not customer:
-            sendCritical(
-                kwargs["ID"],
-                "{} logged on/off but is not a registered customer".format(username),
-            )
-        else:
-            stripe.api_key = os.getenv("STRIPE_SECRET")
-            subscription_id = customer["subscription"]
-
-            try:
-                payload = stripe.Subscription.retrieve(subscription_id)
-
-                if (
-                    os.getenv("HOURLY_PLAN_ID")
-                    == payload["items"]["data"][0]["plan"]["id"]
-                ):
-                    sendInfo(
-                        kwargs["ID"], "{} is an hourly plan subscriber".format(username)
-                    )
-                    user_activity = getMostRecentActivity(username)
-                    if user_activity["action"] == "logon":
-                        now = dt.now()
-                        logon = dt.strptime(
-                            user_activity["timestamp"], "%m-%d-%Y, %H:%M:%S"
-                        )
-                        if now - logon > timedelta(minutes=0):
-                            amount = round(79 * (now - logon).total_seconds() / 60 / 60)
-                            addPendingCharge(username, amount)
-                    else:
-                        sendError(
-                            kwargs["ID"],
-                            "{} logged off but no logon was recorded".format(username),
-                        )
-            except:
-                pass
-
-        addTimeTable(username, "logoff", time, is_user, kwargs["ID"])
-    elif action == "startup":
-        username = body["username"]
-        is_user = body["is_user"]
-        addTimeTable(username, "startup", time, is_user, kwargs["ID"])
-    elif action == "fetch":
+    if action == "fetch":
         activity = fetchLoginActivity(kwargs["ID"])
         return jsonify({"payload": activity}), 200
     elif action == "fetchMostRecent":
