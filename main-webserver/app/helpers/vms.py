@@ -618,19 +618,17 @@ def claimAvailableVM(disk_name, location, os_type="Windows", s=None, ID=-1):
                 state, location, username
             ),
         )
-        # TODO: AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
-
         command = text(
             """
             SELECT * FROM v_ms
-            WHERE lock = :lock AND state = :state AND dev = :dev AND os = :os_type AND location = :location 
+            WHERE lock = :lock AND state = :state AND dev = :dev AND os = :os_type AND location = :location
+            AND (temporary_lock <= :temporary_lock OR temporary_lock IS NULL)
             """
         )
         params = {
             "lock": False,
             "state": state,
-            # TODO: Change back to false
-            "dev": True,
+            "dev": False,
             "location": location,
             "temporary_lock": dateToUnix(getToday()),
             "os_type": os_type,
