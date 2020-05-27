@@ -54,12 +54,11 @@ def isAdmin(username):
     command = text(
         """
         SELECT * FROM users WHERE "username" = :userName
-        LIMIT 1
         """
     )
     params = {"userName": username}
     with engine.connect() as conn:
-        user = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchall())[0]
         conn.close()
         print(user)
         if user:
