@@ -34,6 +34,23 @@ Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging2
 8. Then, in a new terminal, attach the staging branch to cube-celery-staging by typing `git checkout staging`, then `heroku git:remote --app cube-celery-staging -r staging`
 9. Also in the new terminal, attach the master branch to cube-celery-vm by typing `git checkout master`, then `heroku git:remote --app cube-celery-vm -r heroku`
 
+### Build/Run in Docker
+
+To build the docker image
+`docker build -t vm-webserver`
+
+Required environment variables
+HEROKU_API_KEY=<heroku-api-key>
+
+You can store all docker env variables in a file such as `.envdocker`
+Then run docker with 
+
+`docker run --env-file .envdocker -t vm-webserver:latest`
+
+Or run docker like
+`docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
+
+
 ### Run on Heroku
 
 To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. Make sure you are added as a collaborator to any of the Heroku apps you plan to use. You can contact Ming, Phil, or Jonathan to be added.
