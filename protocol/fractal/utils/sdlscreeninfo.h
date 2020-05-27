@@ -1,5 +1,16 @@
 #ifndef SDL_SCREEN_INFO_H
 #define SDL_SCREEN_INFO_H
+/**
+
+@brief This file contains SDL screen info code. (Requires additional documenting)
+
+============================
+Usage
+============================
+
+
+*/
+
 
 #include "../core/fractal.h"
 

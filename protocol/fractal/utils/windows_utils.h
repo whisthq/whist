@@ -50,7 +50,7 @@ Public Functions
 ============================
 */
 
-/*
+/**
 @brief                          Attaches the current thread to the specified
 current input desktop
 
@@ -62,7 +62,7 @@ success
 */
 int setCurrentInputDesktop(HDESK currentInputDesktop);
 
-/*
+/**
 @brief                          Open current or specified Desktop and set its
 information in DesktopContext, and set the current thread to the opened Desktop
 
@@ -79,13 +79,13 @@ opened Desktop
 DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name,
                               bool set_thread);
 
-/*
+/**
 @brief                          Open a Windows window station (a handle to a
 Desktop session), like Winsta0 or Winlogon
 */
 void OpenWindow();
 
-/*
+/**
 @brief                          Call the above functions; logs from Winlogon to
 Winsta0 (the standard Windows desktop) by entering the Fractal password
 
