@@ -37,8 +37,8 @@ typedef struct {
   int in_width, in_height;
   int out_width, out_height;
   int gop_size;
-  int encoded_frame_size;
-  void *encoded_frame_data;
+  int encoded_frame_size; /// <size of encoded frame in bytes
+  void *encoded_frame_data; /// <Pointer to the encoded data
 
   AVCodec *codec;
   AVCodecContext *context;
