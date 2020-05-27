@@ -266,7 +266,6 @@ def vm(action, **kwargs):
                         str(vm_ip)
                     ),
                 )
-            a_value = a_list[3]
         except:
             traceback.print_exc()
 
