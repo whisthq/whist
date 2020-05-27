@@ -133,13 +133,17 @@ class MainBox extends Component {
           const os = require("os");
 
           // check which OS we're on to properly launch the protocol
-          if (os.platform() === "darwin" || os.platform() === "linux") {
+          if (os.platform() === "darwin") {
             // mac
             // path when electron app is packaged as .dmg
             var path = appRootDir + "/protocol/desktop/";
             path = path.replace("/Resources/app.asar", "");
-            path = path.replace("/resources/app.asar", "");
             path = path.replace("/desktop/app", "/desktop");
+            var executable = "./FractalClient";
+          } else if (os.platform() === "linux") {
+            var path = process.cwd() + "/protocol/desktop";
+            path = path.replace("/release", "");
+            console.log(path);
             var executable = "./FractalClient";
           } else if (os.platform() === "win32") {
             // windows
