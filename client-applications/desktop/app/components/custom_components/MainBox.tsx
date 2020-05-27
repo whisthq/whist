@@ -125,7 +125,7 @@ class MainBox extends Component {
       this.props.public_ip != ""
     ) {
       this.setState({ launched: true });
-      this.props.dispatch(changeStatusMessage("Boot request sent to server"));
+      this.props.dispatch(changeStatusMessage("Boot request sent to server. Waiting for a response."));
       if (this.state.launches == 0) {
         this.setState({ launches: 1, reattached: false }, function () {
           var child = require("child_process").spawn;
@@ -133,17 +133,13 @@ class MainBox extends Component {
           const os = require("os");
 
           // check which OS we're on to properly launch the protocol
-          if (os.platform() === "darwin") {
+          if (os.platform() === "darwin" || os.platform() === "linux") {
             // mac
             // path when electron app is packaged as .dmg
             var path = appRootDir + "/protocol/desktop/";
             path = path.replace("/Resources/app.asar", "");
+            path = path.replace("/resources/app.asar", "");
             path = path.replace("/desktop/app", "/desktop");
-            var executable = "./FractalClient";
-          } else if (os.platform() === "linux") {
-            // linux
-            // path when electron app is packaged as .deb (to use as working directory)
-            var path = process.cwd() + "/protocol/desktop";
             var executable = "./FractalClient";
           } else if (os.platform() === "win32") {
             // windows
