@@ -54,6 +54,7 @@ def isAdmin(username):
     command = text(
         """
         SELECT * FROM users WHERE "username" = :userName
+        LIMIT 1
         """
     )
     params = {"userName": username}
