@@ -69,7 +69,6 @@ int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 SDL_mutex* packet_mutex;
 
 #define MAX_SPECTATOR_CONNECTIONS 100
-#define PORT_SPECTATOR 32265
 
 int num_spectator_connections;
 SocketContext PacketSendContext = {0};

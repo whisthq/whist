@@ -552,7 +552,7 @@ int main(int argc, char* argv[]) {
         argc - 1 > num_required_args + num_optional_args) {
         printf(
             "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] "
-            "[[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]\n");
+            "[[OPTIONAL] HEIGHT] [[OPTIONAL] SPECTATE]\n");
         return -1;
     }
 
@@ -569,8 +569,11 @@ int main(int argc, char* argv[]) {
         output_height = atoi(argv[3]);
     }
 
+    bool is_spectator = false;
+
     if (argc == 5) {
-        max_bitrate = atoi(argv[4]);
+        is_spectator = true;
+        //max_bitrate = atoi(argv[4]);
     }
 
     // Write ecdsa key to a local file for ssh to use, for that server ip
@@ -636,49 +639,70 @@ int main(int argc, char* argv[]) {
         // First context: Sending packets to server
 
         bool using_stun = true;
+        SocketContext PacketReceiveContext = { 0 };
 
-        if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
-                             PORT_CLIENT_TO_SERVER, 10, 500, true) < 0) {
-            LOG_INFO( "Server is not on STUN, attempting to connect directly" );
-            using_stun = false;
-            if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
-                                            PORT_CLIENT_TO_SERVER, 10, 500, false ) < 0 )
+        if( is_spectator )
+        {
+            if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
+                                  PORT_SPECTATOR, 10, 500, true ) < 0 )
             {
-                LOG_WARNING( "Failed to connect to server" );
+                LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+                using_stun = false;
+                if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
+                                      PORT_SPECTATOR, 10, 500, false ) < 0 )
+                {
+                    LOG_WARNING( "Failed to connect to server" );
+                    continue;
+                }
+            }
+            PacketSendContext = PacketReceiveContext;
+        } else
+        {
+            if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
+                                  PORT_CLIENT_TO_SERVER, 10, 500, true ) < 0 )
+            {
+                LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+                using_stun = false;
+                if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
+                                      PORT_CLIENT_TO_SERVER, 10, 500, false ) < 0 )
+                {
+                    LOG_WARNING( "Failed to connect to server" );
+                    continue;
+                }
+            }
+
+            SDL_Delay( 150 );
+
+            // Second context: Receiving packets from server
+
+            if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
+                                  PORT_SERVER_TO_CLIENT, 1, 500, using_stun ) < 0 )
+            {
+                LOG_ERROR( "Failed finish connection to server" );
+                closesocket( PacketSendContext.s );
                 continue;
             }
-        }
 
-        SDL_Delay(150);
+            int a = 65535;
+            if( setsockopt( PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof( int ) ) == -1 )
+            {
+                fprintf( stderr, "Error setting socket opts: %s\n", strerror( errno ) );
+            }
 
-        // Second context: Receiving packets from server
+            SDL_Delay( 150 );
 
-        SocketContext PacketReceiveContext = {0};
-        if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
-                             PORT_SERVER_TO_CLIENT, 1, 500, using_stun ) < 0) {
-            LOG_ERROR("Failed finish connection to server");
-            closesocket(PacketSendContext.s);
-            continue;
-        }
+            // Third context: Mutual TCP context for essential but
+            // not-speed-sensitive applications
 
-        int a = 65535;
-        if( setsockopt( PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof( int ) ) == -1 )
-        {
-            fprintf( stderr, "Error setting socket opts: %s\n", strerror( errno ) );
-        }
-
-        SDL_Delay(150);
-
-        // Third context: Mutual TCP context for essential but
-        // not-speed-sensitive applications
-
-        if (CreateTCPContext(&PacketTCPContext, (char*)server_ip,
-                             PORT_SHARED_TCP, 1, tcp_connection_timeout, using_stun ) < 0) {
-            LOG_ERROR("Failed finish connection to server");
-            tcp_connection_timeout += 250;
-            closesocket(PacketSendContext.s);
-            closesocket(PacketReceiveContext.s);
-            continue;
+            if( CreateTCPContext( &PacketTCPContext, (char*)server_ip,
+                                  PORT_SHARED_TCP, 1, tcp_connection_timeout, using_stun ) < 0 )
+            {
+                LOG_ERROR( "Failed finish connection to server" );
+                tcp_connection_timeout += 250;
+                closesocket( PacketSendContext.s );
+                closesocket( PacketReceiveContext.s );
+                continue;
+            }
         }
 
         // Initialize audio and variables
@@ -702,17 +726,22 @@ int main(int argc, char* argv[]) {
         bool lgui_pressed = false;
         bool rgui_pressed = false;
 
-        clock waiting_for_init_timer;
-        StartTimer(&waiting_for_init_timer);
-        while (!received_server_init_message) {
-            // If 500ms and no init timer was received, we should disconnect
-            // because something failed
-            if (GetTimer(waiting_for_init_timer) > 500 / 1000.0) {
-                LOG_ERROR("Took too long for init timer!");
-                exiting = true;
-                break;
+        if( !is_spectator )
+        {
+            clock waiting_for_init_timer;
+            StartTimer( &waiting_for_init_timer );
+            while( !received_server_init_message )
+            {
+                // If 500ms and no init timer was received, we should disconnect
+                // because something failed
+                if( GetTimer( waiting_for_init_timer ) > 500 / 1000.0 )
+                {
+                    LOG_ERROR( "Took too long for init timer!" );
+                    exiting = true;
+                    break;
+                }
+                SDL_Delay( 25 );
             }
-            SDL_Delay(25);
         }
 
         SDL_Event msg;
