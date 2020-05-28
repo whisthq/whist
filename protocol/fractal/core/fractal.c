@@ -181,6 +181,15 @@ void PrintSystemInfo()
         free( old_buf );
     }
 
+    ULARGE_INTEGER usable_space;
+    ULARGE_INTEGER total_space;
+    ULARGE_INTEGER free_space;
+    GetDiskFreeSpaceExW( NULL, &usable_space, &total_space, &free_space );
+
+    double BYTES_IN_GB = 1024 * 1024 * 1024.0;
+
+    LOG_INFO( "  Hard Drive: %fGB/%fGB free, %fGB available to Fractal", free_space.QuadPart / BYTES_IN_GB, total_space.QuadPart / BYTES_IN_GB, usable_space.QuadPart / BYTES_IN_GB );
+
     // Print Monitor
     PrintMonitors();
 #endif
