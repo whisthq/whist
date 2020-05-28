@@ -589,6 +589,8 @@ typedef struct Frame {
 
 void PrintMemoryInfo();
 
+void PrintSystemInfo();
+
 int runcmd(const char* cmdline, char** response);
 
 char* get_ip();

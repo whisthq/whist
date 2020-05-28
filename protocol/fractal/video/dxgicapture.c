@@ -15,6 +15,121 @@ void GetBitmapScreenshot(struct CaptureDevice* device);
 #define USE_GPU 0
 #define USE_MONITOR 0
 
+void PrintMonitors()
+{
+    int num_adapters = 0, num_outputs = 0, i = 0, j = 0;
+    IDXGIFactory1* factory;
+
+#define MAX_NUM_ADAPTERS 10
+#define MAX_NUM_OUTPUTS 10
+    IDXGIOutput* outputs[MAX_NUM_OUTPUTS];
+    IDXGIAdapter1* adapters[MAX_NUM_ADAPTERS];
+
+    HRESULT hr = CreateDXGIFactory1( &IID_IDXGIFactory1, (void**)(&factory) );
+    if( FAILED( hr ) )
+    {
+        LOG_WARNING( "Failed CreateDXGIFactory1: 0x%X %d", hr, GetLastError() );
+        return;
+    }
+
+    IDXGIAdapter1* adapter;
+    // GET ALL GPUS
+    while( factory->lpVtbl->EnumAdapters1( factory, num_adapters,
+                                           &adapter ) !=
+           DXGI_ERROR_NOT_FOUND )
+    {
+        if( num_adapters == MAX_NUM_ADAPTERS )
+        {
+            LOG_WARNING( "Too many adaters!\n" );
+            break;
+        }
+        adapters[num_adapters] = adapter;
+        ++num_adapters;
+    }
+
+    // GET GPU DESCRIPTIONS
+    for( i = 0; i < num_adapters; i++ )
+    {
+        DXGI_ADAPTER_DESC1 desc;
+        hr = adapters[i]->lpVtbl->GetDesc1( adapters[i], &desc );
+        LOG_WARNING( "Adapter %d: %S", i, desc.Description );
+    }
+
+    // Set used GPU
+    if( USE_GPU >= num_adapters )
+    {
+        LOG_WARNING( "No GPU with ID %d, only %d adapters", USE_GPU,
+                     num_adapters );
+        return;
+    }
+
+    LOG_INFO( "Monitor Info:" );
+
+    // GET ALL MONITORS
+    for( i = 0; i < num_adapters; i++ )
+    {
+        IDXGIOutput* output;
+        for( j = 0;
+             adapters[i]->lpVtbl->EnumOutputs(
+                 adapters[i], j, &output ) != DXGI_ERROR_NOT_FOUND;
+             j++ )
+        {
+            DXGI_OUTPUT_DESC output_desc;
+            hr = output->lpVtbl->GetDesc( output, &output_desc );
+            LOG_INFO( "  Found monitor %d on adapter %lu. Monitor %d named %S", j, i, j, output_desc.DeviceName );
+
+            HMONITOR hMonitor = output_desc.Monitor;
+            MONITORINFOEXW monitorInfo;
+            monitorInfo.cbSize = sizeof( MONITORINFOEXW );
+            GetMonitorInfoW( hMonitor, (LPMONITORINFO)&monitorInfo );
+            DEVMODE devMode = { 0 };
+            devMode.dmSize = sizeof( DEVMODE );
+            devMode.dmDriverExtra = 0;
+            EnumDisplaySettingsW( monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode );
+
+            UINT dpiX, dpiY;
+            hr = GetDpiForMonitor( hMonitor, MDT_DEFAULT, &dpiX, &dpiY );
+
+            char* orientation = NULL;
+            switch( devMode.dmDisplayOrientation )
+            {
+            case DMDO_DEFAULT:
+                orientation = "default";
+                break;
+            case DMDO_90:
+                orientation = "90 degrees";
+                break;
+            case DMDO_180:
+                orientation = "180 degrees";
+                break;
+            case DMDO_270:
+                orientation = "270 degrees";
+                break;
+            default:
+                LOG_WARNING( "Orientation did not match: %d", devMode.dmDisplayOrientation );
+                orientation = "";
+                break;
+            }
+
+            LOG_INFO( "  Resolution of %dx%d, Refresh Rate of %d, DPI %d, location (%d,%d), orientation %s", devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmDisplayFrequency, dpiX, devMode.dmPosition.x, devMode.dmPosition.y, orientation );
+
+            if( i == USE_GPU )
+            {
+                if( j == MAX_NUM_OUTPUTS )
+                {
+                    LOG_WARNING( "  Too many adapters on adapter %lu!", i );
+                    break;
+                } else
+                {
+                    outputs[j] = output;
+                    num_outputs++;
+                }
+            }
+        }
+    }
+
+}
+
 int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     LOG_INFO("Creating capture device for resolution %dx%d...", width, height);
     memset(device, 0, sizeof(struct CaptureDevice));
@@ -68,16 +183,20 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     }
     hardware->adapter = adapters[USE_GPU];
 
+    LOG_INFO( "Monitor Info:" );
+
     // GET ALL MONITORS
     for (i = 0; i < num_adapters; i++) {
         for (j = 0;
-             hardware->adapter->lpVtbl->EnumOutputs(
+             adapters[i]->lpVtbl->EnumOutputs(
                  adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND;
              j++) {
-            LOG_INFO("Found monitor %d on adapter %lu", j, i);
+            DXGI_OUTPUT_DESC desc;
+            hr = hardware->output->lpVtbl->GetDesc( hardware->output, &desc );
+            LOG_INFO("  Found monitor %d on adapter %lu. Monitor %d named %S", j, i, j, desc.DeviceName);
             if (i == USE_GPU) {
                 if (j == MAX_NUM_OUTPUTS) {
-                    LOG_WARNING("Too many adapters!");
+                    LOG_WARNING("  Too many adapters on adapter %lu!", i);
                     break;
                 } else {
                     outputs[j] = hardware->output;
@@ -91,7 +210,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     for (i = 0; i < num_outputs; i++) {
         hardware->output = outputs[i];
         hr = hardware->output->lpVtbl->GetDesc(hardware->output, &output_desc);
-        // mprintf("Monitor %d: %s\n", i, output_desc.DeviceName);
+        //mprintf("Monitor %d: %s\n", i, output_desc.DeviceName);
     }
 
     // Set used output

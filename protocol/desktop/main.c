@@ -527,6 +527,10 @@ int ReceiveMessage(FractalPacket* packet) {
     "Zt86r9dOzEcfrhxa+MnVQhNE8="
 
 int main(int argc, char* argv[]) {
+#ifdef _WIN32
+    SetProcessDpiAwareness( PROCESS_PER_MONITOR_DPI_AWARE );
+#endif
+
 #ifndef _WIN32
     runcmd("chmod 600 sshkey", NULL);
     // files can't be written to a macos app bundle, so they need to be
@@ -606,6 +610,8 @@ int main(int argc, char* argv[]) {
     strcat(path, "/.fractal");
     initLogger(path);
 #endif
+
+    PrintSystemInfo();
 
     // Initialize clipboard and video
     initVideo();

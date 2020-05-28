@@ -69,6 +69,8 @@ struct CaptureDevice {
   char *bitmap;
 };
 
+void PrintMonitors();
+
 int CreateCaptureDevice(struct CaptureDevice *device, UINT width, UINT height);
 
 int CaptureScreen(struct CaptureDevice *device);

@@ -9,6 +9,7 @@
 
 // Print Memory Info
 #if defined(_WIN32)
+#include "../video/dxgicapture.h"
 #include <processthreadsapi.h>
 #include <psapi.h>
 #endif
@@ -34,6 +35,156 @@ void PrintMemoryInfo() {
 #endif
 }
 // End Print Memory Info
+
+void cpuID( unsigned i, unsigned regs[4] )
+{
+#ifdef _WIN32
+    __cpuid( (int*)regs, (int)i );
+
+#else
+    asm volatile
+        ("cpuid" : "=a" (regs[0]), "=b" (regs[1]), "=c" (regs[2]), "=d" (regs[3])
+          : "a" (i), "c" (0));
+    // ECX is set to zero for CPUID function 4
+#endif
+}
+
+void PrintCPUInfo()
+{
+    // https://stackoverflow.com/questions/2901694/how-to-detect-the-number-of-physical-processors-cores-on-windows-mac-and-linu
+    unsigned regs[4];
+
+    // Get vendor
+    char cpuVendor[13] = { 0 };
+    cpuID( 0, regs );
+    ((unsigned*)cpuVendor)[0] = regs[1]; // EBX
+    ((unsigned*)cpuVendor)[1] = regs[3]; // EDX
+    ((unsigned*)cpuVendor)[2] = regs[2]; // ECX
+
+    LOG_INFO( "  CPU Vendor: %s", cpuVendor );
+
+    // Get Brand String
+    unsigned int nExIds = 0;
+    char CPUBrandString[0x40];
+    // Get the information associated with each extended ID.
+    cpuID( 0x80000000, regs );
+    nExIds = regs[0];
+    for( unsigned int i = 0x80000000; i <= nExIds; ++i )
+    {
+        cpuID( i, regs );
+        // Interpret CPU brand string
+        if( i == 0x80000002 )
+            memcpy( CPUBrandString, regs, sizeof( regs ) );
+        else if( i == 0x80000003 )
+            memcpy( CPUBrandString + 16, regs, sizeof( regs ) );
+        else if( i == 0x80000004 )
+            memcpy( CPUBrandString + 32, regs, sizeof( regs ) );
+    }
+    //string includes manufacturer, model and clockspeed
+    LOG_INFO( "  CPU Type: %s", CPUBrandString );
+
+    // Logical core count per CPU
+    cpuID( 1, regs );
+    unsigned logical = (regs[1] >> 16) & 0xff; // EBX[23:16]
+    LOG_INFO( "  Logical Cores: %d", logical );
+    unsigned cores = logical;
+
+    if( strcmp(cpuVendor, "GenuineIntel") == 0 )
+    {
+        // Get DCP cache info
+        cpuID( 4, regs );
+        cores = ((regs[0] >> 26) & 0x3f) + 1; // EAX[31:26] + 1
+
+    } else if( strcmp(cpuVendor, "AuthenticAMD") == 0 )
+    {
+        // Get NC: Number of CPU cores - 1
+        cpuID( 0x80000008, regs );
+        cores = ((unsigned)(regs[2] & 0xff)) + 1; // ECX[7:0] + 1
+    } else
+    {
+        LOG_WARNING( "Unrecognized processor: %s", cpuVendor );
+    }
+
+    LOG_INFO( "  Physical Cores: %d", cores );
+
+    // Get CPU features
+    cpuID( 1, regs );
+    unsigned cpuFeatures = regs[3]; // EDX
+
+    // Detect hyper-threads  
+    bool hyperThreads = cpuFeatures & (1 << 28) && cores < logical;
+
+    LOG_INFO( "  HyperThreaded: %s", (hyperThreads ? "true" : "false") );
+}
+
+void PrintSystemInfo()
+{
+    LOG_INFO( "Hardware information:" );
+
+    PrintCPUInfo();
+
+#ifdef _WIN32
+
+    unsigned long long memory_in_kilos = 0;
+    if( !GetPhysicallyInstalledSystemMemory( &memory_in_kilos ) )
+    {
+        LOG_WARNING( "Could not retrieve system memory: %d", GetLastError() );
+    }
+
+    // Display the contents of the SYSTEM_INFO structure. 
+    LOG_INFO( "  Total Physical RAM: %.2f GB",
+              memory_in_kilos / 1024.0 / 1024.0 );
+
+    char* response = NULL;
+    int total_sz = runcmd( "wmic computersystem get model,manufacturer", &response );
+    if( response )
+    {
+        // Get rid of leading whitespace, we jump until right after the \n
+        int find_newline = 0;
+        while( find_newline < total_sz && response[find_newline] != '\n' ) find_newline++;
+        find_newline++;
+        char* old_buf = response;
+        response += find_newline;
+
+        // Get rid of trailing whitespace
+        int sz = (int)strlen( response );
+        while( sz > 0 && response[sz - 1] == ' ' || response[sz - 1] == '\n' || response[sz - 1] == '\r' )
+        {
+            sz--;
+        }
+        response[sz] = '\0';
+
+        // Get rid of consecutive spaces
+        char* tmp = malloc( sz );
+        for( int i = 1; i < sz; i++ )
+        {
+            if( response[i] == ' ' && response[i-1] == ' ' )
+            {
+                int target = i-1;
+                int old_sz = sz;
+                sz--;
+                while( i + 1 < old_sz && response[i+1] == ' ' )
+                {
+                    i++;
+                    sz--;
+                }
+                memcpy( tmp, &response[i], old_sz - i );
+                memcpy( &response[target], tmp, old_sz - i );
+                response[sz] = '\0';
+                i--;
+            }
+        }
+        free( tmp );
+
+        // And now we print the new string
+        LOG_INFO( "  Make and Model: %s", response);
+        free( old_buf );
+    }
+
+    // Print Monitor
+    PrintMonitors();
+#endif
+}
 
 void runcmd_nobuffer(const char* cmdline) {
     // Will run a command on the commandline, simple as that
@@ -95,6 +246,7 @@ int runcmd(const char* cmdline, char** response) {
 #endif
 
     if ((pPipe = popen(cmd, "r")) == NULL) {
+        LOG_WARNING( "Failed to popen %s", cmd );
         free(cmd);
         return -1;
     }
@@ -108,16 +260,13 @@ int runcmd(const char* cmdline, char** response) {
     char* buffer = malloc(max_len);
 
     while (true) {
+
         char c = (char)fgetc(pPipe);
         if (current_len == max_len) {
             int next_max_len = 2 * max_len;
-            char* next_buffer = malloc(next_max_len);
+            buffer = realloc(buffer, next_max_len);
 
-            memcpy(next_buffer, buffer, max_len);
             max_len = next_max_len;
-
-            free(buffer);
-            buffer = next_buffer;
         }
 
         if (c == EOF) {
@@ -135,7 +284,7 @@ int runcmd(const char* cmdline, char** response) {
     if (feof(pPipe)) {
         return current_len;
     } else {
-        printf("Error: Failed to read the pipe to the end.\n");
+        LOG_WARNING("Error: Failed to read the pipe to the end.\n");
         return -1;
     }
 }
