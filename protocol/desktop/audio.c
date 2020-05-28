@@ -58,7 +58,7 @@ void initAudio() {
 
   SDL_zero(wantedSpec);
   SDL_zero(audioSpec);
-  wantedSpec.channels = (Uint8)AudioData.audio_decoder->pCodecCtx->channels;
+  wantedSpec.channels = AudioData.audio_decoder ? (Uint8)AudioData.audio_decoder->pCodecCtx->channels : 2;
   wantedSpec.freq = decoder_frequency;
   LOG_INFO("Freq: %d", wantedSpec.freq);
   wantedSpec.format = AUDIO_F32SYS;

@@ -22,6 +22,7 @@ audio_decoder_t *create_audio_decoder(int sample_rate) {
   if (!decoder->pCodec) {
     LOG_WARNING("AVCodec not found.\n");
     destroy_audio_decoder(decoder);
+    LOG_WARNING("OKAY\n");
     return NULL;
   }
   decoder->pCodecCtx = avcodec_alloc_context3(decoder->pCodec);
@@ -120,6 +121,9 @@ int audio_decoder_get_frame_data_size(audio_decoder_t *decoder) {
 
 int audio_decoder_decode_packet(audio_decoder_t *decoder,
                                 AVPacket *encoded_packet) {
+  if (!decoder) {
+    return -1;
+  }
   // decode a single packet of encoded data
   // mprintf("decoding packet!\n");
   // initialize output frame
@@ -165,19 +169,22 @@ void destroy_audio_decoder(audio_decoder_t *decoder) {
   LOG_INFO("destroying decoder!\n");
 
   // free the ffmpeg context
-  avcodec_free_context(&decoder->pCodecCtx);
+  if(decoder->pCodecCtx)
+    avcodec_free_context(&decoder->pCodecCtx);
 
   LOG_INFO("freed context\n");
 
   // free the frame
-  av_frame_free(&decoder->pFrame);
+  if(decoder->pFrame)
+    av_frame_free(&decoder->pFrame);
 
   LOG_INFO("av_freed frame\n");
   // av_freep(decoder->pFrame);
   LOG_INFO("really freed rame\n");
 
   // free swr
-  swr_free(&decoder->pSwrContext);
+  if(decoder->pSwrContext)
+    swr_free(&decoder->pSwrContext);
 
   LOG_INFO("freed swr\n");
 
