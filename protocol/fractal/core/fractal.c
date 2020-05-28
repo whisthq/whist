@@ -14,6 +14,31 @@
 #include <psapi.h>
 #endif
 
+void PrintRAMInfo()
+{
+#if defined(_WIN32)
+    unsigned long long memory_in_kilos = 0;
+    if( !GetPhysicallyInstalledSystemMemory( &memory_in_kilos ) )
+    {
+        LOG_WARNING( "Could not retrieve system memory: %d", GetLastError() );
+    }
+
+    MEMORYSTATUSEX statex;
+
+    statex.dwLength = sizeof( statex );
+
+    GlobalMemoryStatusEx( &statex );
+
+    size_t total_ram_usage = memory_in_kilos * 1024 - statex.ullAvailPhys;
+
+    // Display the contents of the SYSTEM_INFO structure.
+    LOG_INFO( "  Total RAM Usage: %.2f GB",
+              total_ram_usage / 1024.0 / 1024.0 / 1024.0);
+    LOG_INFO( "  Total Physical RAM: %.2f GB",
+              memory_in_kilos / 1024.0 / 1024.0 );
+#endif
+}
+
 void PrintMemoryInfo() {
 #if defined(_WIN32)
     DWORD processID = GetCurrentProcessId();
@@ -117,23 +142,28 @@ void PrintCPUInfo()
     LOG_INFO( "  HyperThreaded: %s", (hyperThreads ? "true" : "false") );
 }
 
+void PrintHardDriveInfo()
+{
+#ifdef _WIN32
+    ULARGE_INTEGER usable_space;
+    ULARGE_INTEGER total_space;
+    ULARGE_INTEGER free_space;
+    GetDiskFreeSpaceExW( NULL, &usable_space, &total_space, &free_space );
+
+    double BYTES_IN_GB = 1024 * 1024 * 1024.0;
+
+    LOG_INFO( "  Hard Drive: %fGB/%fGB used, %fGB available to Fractal", (total_space.QuadPart - free_space.QuadPart) / BYTES_IN_GB, total_space.QuadPart / BYTES_IN_GB, usable_space.QuadPart / BYTES_IN_GB );
+#endif
+}
+
 void PrintSystemInfo()
 {
     LOG_INFO( "Hardware information:" );
 
     PrintCPUInfo();
+    PrintRAMInfo();
 
 #ifdef _WIN32
-
-    unsigned long long memory_in_kilos = 0;
-    if( !GetPhysicallyInstalledSystemMemory( &memory_in_kilos ) )
-    {
-        LOG_WARNING( "Could not retrieve system memory: %d", GetLastError() );
-    }
-
-    // Display the contents of the SYSTEM_INFO structure. 
-    LOG_INFO( "  Total Physical RAM: %.2f GB",
-              memory_in_kilos / 1024.0 / 1024.0 );
 
     char* response = NULL;
     int total_sz = runcmd( "wmic computersystem get model,manufacturer", &response );
@@ -181,18 +211,11 @@ void PrintSystemInfo()
         free( old_buf );
     }
 
-    ULARGE_INTEGER usable_space;
-    ULARGE_INTEGER total_space;
-    ULARGE_INTEGER free_space;
-    GetDiskFreeSpaceExW( NULL, &usable_space, &total_space, &free_space );
-
-    double BYTES_IN_GB = 1024 * 1024 * 1024.0;
-
-    LOG_INFO( "  Hard Drive: %fGB/%fGB free, %fGB available to Fractal", free_space.QuadPart / BYTES_IN_GB, total_space.QuadPart / BYTES_IN_GB, usable_space.QuadPart / BYTES_IN_GB );
-
     // Print Monitor
     PrintMonitors();
 #endif
+
+    PrintHardDriveInfo();
 }
 
 void runcmd_nobuffer(const char* cmdline) {
