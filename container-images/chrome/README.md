@@ -8,6 +8,16 @@ For reference on the Fractal protocol and streaming, refer to: https://github.co
 
 ## Running
 
+Building the container
+`docker build -t chrome . `
+
+To run the container
+`docker run -it -p 5900:5900 -e VNC_SERVER_PASSWORD=password -t chrome`
+
+Then open up vnc and connect it to 5900 with the VNC_SERVER_PASSWORD
+
+### Ignore the old info below, but it will change
+
 First, start the container and the Fractal server:
 
 ```
