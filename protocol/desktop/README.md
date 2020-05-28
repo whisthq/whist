@@ -1,21 +1,33 @@
-## Fractal Desktop Client
+## Fractal Desktop Clients
 
-This code launches a desktop (Windows, MacOS, Linux) into a client initiating a connection to their cloud virtual machine for interactive usage over the network.
+This folder builds a client to receive a server stream via Fractal. It supports Windows, MacOS and Linux Ubuntu. See below for basic build instructions.
 
 ### Development
 
 You can run `desktop.bat` (Windows) or `desktop.sh` to restart your dev environment.
 
+To compile, you should first run `cmake .` (MacOS/Linux) or `cmake -G "NMake Makefiles"` (Windows) from the root directory, `/protocol/`. You can then cd into this folder and run `make` (MacOS/Linux) or `nmake` (Windows).
+
+If you're having trouble compiling, make sure that you followed the instructions in the root-level README. If still having issue, you should delete the CmakeCache or start from a fresh repository.
+
 ### Running
 
-From the /desktop directory, you can simply run the following:
+From the `/desktop` directory, you can simply run:
 
-```desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```
+```
+Windows:
+desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
 
-Alternatively, if you want to run the code directly, in the /desktop/build64 directory or /desktop/build32, call:
+MacOS/Linux:
+./desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
+```
 
-```FractalClient [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]```
+Alternatively, if you want to run the executable directly, in the `/desktop/build64` directory or `/desktop/build32`, run:
 
+```
+Windows:
+FractalClient [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
 
-### Building (Depreciated)
-It should be easily built via `make` (on MacOS with clang and Linux Ubuntu with gcc) or `nmake` (on Windows with MSVC - requires Visual Studio Desktop Development Extension). Tested with `Visual Studio Community Edition 2019`.
+MacOS/Linux:
+./FractalClient [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
+```

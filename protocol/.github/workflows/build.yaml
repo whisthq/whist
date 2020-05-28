@@ -8,6 +8,7 @@ env:
   BUILD_TYPE: Debug
   CCACHE_VERSION: 3.7.7
 
+
 jobs:
   build:
     name: ${{ matrix.config.name }}

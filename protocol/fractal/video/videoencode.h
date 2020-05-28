@@ -1,6 +1,22 @@
 #ifndef VIDEO_ENCODE_H
 #define VIDEO_ENCODE_H
 
+/**
+ Copyright Fractal Computers, Inc. 2020
+ @file videoencode.h
+ @date 26 may 2020
+ @brief This file contains the code to create and destroy Encoders and use them
+to encode captured screens
+
+
+
+============================
+Usage
+============================
+
+
+*/
+
 /*
 ============================
 Includes

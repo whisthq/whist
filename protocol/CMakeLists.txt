@@ -65,6 +65,8 @@ if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
             "--verbose"
             "--std=c99"
             "--suppress=shiftTooManyBitsSigned"
+            "--suppress=*:../fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
+            "--inline-suppr"
             )
 endif()
 
@@ -177,12 +179,20 @@ if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/")
 endif()
 
+#Set OSX compiler and SDK globally
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    SET(CMAKE_C_COMPILER clang)
+    set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Require MacOS 10.13 or up, to ensure LibObj-C is standard
+endif()
+
 
 # Tell CMake where to look for includes
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
 include_directories(include/ffmpeg)
+
 
 #Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)

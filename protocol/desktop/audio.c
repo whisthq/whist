@@ -318,6 +318,7 @@ int32_t ReceiveAudio(FractalPacket* packet) {
             }
 
             if (last_played_id > 0) {
+                (void)old_last_played_id;  // suppress unused variable warning.
                 LOG_INFO(
                     "Audio packet being overwritten before being played! ID %d "
                     "replaced with ID %d, when the Last Played ID was %d. Last "
@@ -327,50 +328,100 @@ int32_t ReceiveAudio(FractalPacket* packet) {
             }
         }
 
-        if (packet->is_a_nack) {
-            if (audio_pkt->nacked_for == audio_id) {
-                LOG_INFO("NACK for Audio ID %d, Index %d Received!", packet->id,
-                         packet->index);
-            } else if (audio_pkt->nacked_for == -1) {
-                LOG_INFO(
-                    "NACK for Audio ID %d, Index %d Received! But not "
-                    "needed.",
-                    packet->id, packet->index);
-            } else {
-                LOG_WARNING("NACK for Audio ID %d, Index %d Received Wrongly!",
-                            packet->id, packet->index);
-            }
-        }
+        int audio_id = packet->id * MAX_NUM_AUDIO_INDICES + packet->index;
+        audio_packet* audio_pkt =
+            &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
 
-        if (audio_pkt->nacked_for == audio_id) {
-            LOG_INFO(
-                "Packet for Audio ID %d, Index %d Received! But it was already "
-                "NACK'ed!",
-                packet->id, packet->index);
+        if (audio_id == audio_pkt->id) {
+            //         mprintf("Already received audio packet: %d\n", audio_id);
+        } else if (audio_id < audio_pkt->id || audio_id <= last_played_id) {
+            // mprintf("Old audio packet received: %d, last played id is %d\n",
+            // audio_id, last_played_id);
         }
-        audio_pkt->nacked_for = -1;
+        // audio_id > audio_pkt->id && audio_id > last_played_id
+        else {
+            // If a packet already exists there, we're forced to skip it
+            if (audio_pkt->id != -1) {
+                int old_last_played_id = last_played_id;
+
+                if (last_played_id < audio_pkt->id && last_played_id > 0) {
+                    // We'll make it like we already played this packet
+                    last_played_id = audio_pkt->id;
+                    audio_pkt->id = -1;
+                    audio_pkt->nacked_amount = 0;
+
+                    // And we'll skip the whole frame
+                    while (last_played_id % MAX_NUM_AUDIO_INDICES !=
+                           MAX_NUM_AUDIO_INDICES - 1) {
+                        // "Play" that packet
+                        last_played_id++;
+                        receiving_audio[last_played_id % RECV_AUDIO_BUFFER_SIZE]
+                            .id = -1;
+                        receiving_audio[last_played_id % RECV_AUDIO_BUFFER_SIZE]
+                            .nacked_amount = 0;
+                    }
+                }
+
+                if (last_played_id > 0) {
+                    LOG_INFO(
+                        "Audio packet being overwritten before being played! "
+                        "ID %d "
+                        "replaced with ID %d, when the Last Played ID was %d. "
+                        "Last "
+                        "Played ID is Now %d",
+                        audio_pkt->id, audio_id, old_last_played_id,
+                        last_played_id);
+                }
+            }
+
+            if (packet->is_a_nack) {
+                if (audio_pkt->nacked_for == audio_id) {
+                    LOG_INFO("NACK for Audio ID %d, Index %d Received!",
+                             packet->id, packet->index);
+                } else if (audio_pkt->nacked_for == -1) {
+                    LOG_INFO(
+                        "NACK for Audio ID %d, Index %d Received! But not "
+                        "needed.",
+                        packet->id, packet->index);
+                } else {
+                    LOG_WARNING(
+                        "NACK for Audio ID %d, Index %d Received Wrongly!",
+                        packet->id, packet->index);
+                }
+            }
+
+            if (audio_pkt->nacked_for == audio_id) {
+                LOG_INFO(
+                    "Packet for Audio ID %d, Index %d Received! But it was "
+                    "already "
+                    "NACK'ed!",
+                    packet->id, packet->index);
+            }
+            audio_pkt->nacked_for = -1;
 
 #if LOG_AUDIO
-        mprintf(
-            "Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n",
-            audio_id, packet->payload_size, last_played_id + 1,
-            SDL_GetQueuedAudioSize(AudioData.dev));
+            mprintf(
+                "Receiving Audio Packet %d (%d), trying to render %d (Queue: "
+                "%d)\n",
+                audio_id, packet->payload_size, last_played_id + 1,
+                SDL_GetQueuedAudioSize(AudioData.dev));
 #endif
-        audio_pkt->id = audio_id;
-        most_recent_audio_id = max(audio_pkt->id, most_recent_audio_id);
-        audio_pkt->size = packet->payload_size;
-        memcpy(audio_pkt->data, packet->data, packet->payload_size);
+            audio_pkt->id = audio_id;
+            most_recent_audio_id = max(audio_pkt->id, most_recent_audio_id);
+            audio_pkt->size = packet->payload_size;
+            memcpy(audio_pkt->data, packet->data, packet->payload_size);
 
-        if (packet->index + 1 == packet->num_indices) {
-            // mprintf("Audio Packet %d Received! Last Played: %d\n",
-            // packet->id, last_played_id / MAX_NUM_AUDIO_INDICES);
-            for (int i = audio_id + 1; i % MAX_NUM_AUDIO_INDICES != 0; i++) {
-                // mprintf("Receiving %d\n", i);
-                receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id = i;
-                receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].size = 0;
+            if (packet->index + 1 == packet->num_indices) {
+                // mprintf("Audio Packet %d Received! Last Played: %d\n",
+                // packet->id, last_played_id / MAX_NUM_AUDIO_INDICES);
+                for (int i = audio_id + 1; i % MAX_NUM_AUDIO_INDICES != 0;
+                     i++) {
+                    // mprintf("Receiving %d\n", i);
+                    receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id = i;
+                    receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].size = 0;
+                }
             }
         }
-    }
 
-    return 0;
-}
+        return 0;
+    }

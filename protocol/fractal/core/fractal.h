@@ -66,7 +66,7 @@
 #define PORT_SERVER_TO_CLIENT 32263
 #define PORT_SHARED_TCP 32264
 
-#define USING_STUN false
+#define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
 
 #if defined(_WIN32)
@@ -109,13 +109,6 @@ typedef enum EncodeType {
     NVENC_ENCODE = 1,
     QSV_ENCODE = 2
 } EncodeType;
-
-typedef enum DecodeType {
-    DECODE_TYPE_NONE = 0,
-    DECODE_TYPE_SOFTWARE = 1,
-    DECODE_TYPE_HARDWARE = 2,
-    DECODE_TYPE_QSV = 3
-} DecodeType;
 
 typedef enum FractalCursorID {
     CURSOR_ID_APPSTARTING = 32650,
@@ -611,6 +604,8 @@ char* get_ip();
 bool is_dev_vm();
 
 int GetFmsgSize(struct FractalClientMessage* fmsg);
+
+char* get_branch();
 
 /** FRACTAL FUNCTIONS END ***/
 

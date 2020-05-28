@@ -6,6 +6,8 @@
 
 #include "fractal.h"  // header file for this protocol, includes winsock
 
+#include "../utils/json.h"
+
 // Print Memory Info
 #if defined(_WIN32)
 #include <processthreadsapi.h>
@@ -148,35 +150,33 @@ char* get_ip() {
 
     char* buf;
     int len = runcmd("curl ipinfo.io", &buf);
+    len;
 
-    for (int i = 1; i < len; i++) {
-        if (buf[i - 1] != '\n') {
-            continue;
-        }
-        char* psBuffer = &buf[i];
-#define IP_PREFIX_STRING "  \"ip\": \""
-        if (strncmp(IP_PREFIX_STRING, psBuffer, sizeof(IP_PREFIX_STRING) - 1) ==
-            0) {
-            char* ip_start_string = psBuffer + sizeof(IP_PREFIX_STRING) - 1;
-            for (int j = 0;; j++) {
-                if (ip_start_string[j] == '\"') {
-                    ip_start_string[j] = '\0';
-                    break;
-                }
-            }
-            memcpy(ip, ip_start_string, sizeof(ip));
-        }
+    json_t json;
+    if (!parse_json(buf, &json)) {
+        LOG_WARNING("curl ipinfo.io did not return an IP: %s", buf);
+        return NULL;
     }
+    kv_pair_t* kv = get_kv(&json, "ip");
 
-    free(buf);
+    memcpy(ip, kv->str_value, sizeof(ip));
+
+    free_json(json);
 
     already_obtained_ip = true;
     return ip;
 }
 
+static char* branch = NULL;
+static bool is_dev;
+static bool already_obtained_vm_type = false;
+
+char* get_branch() {
+    is_dev_vm();
+    return branch;
+}
+
 bool is_dev_vm() {
-    static bool is_dev;
-    static bool already_obtained_vm_type = false;
     if (already_obtained_vm_type) {
         return is_dev;
     }
@@ -184,31 +184,49 @@ bool is_dev_vm() {
     char buf[4800];
     size_t len = sizeof(buf);
 
-    SendJSONGet("cube-celery-staging.herokuapp.com", "/vm/isDev", buf, len);
+    LOG_INFO("GETTING JSON");
 
-    for (int i = 1; i < (int)len; i++) {
-        if (buf[i - 1] != '\n') {
-            continue;
-        }
-        char* psBuffer = &buf[i];
-#define DEV_VM_PREFIX_STRING "{\"dev\":"
-        if (strncmp(DEV_VM_PREFIX_STRING, psBuffer,
-                    sizeof(DEV_VM_PREFIX_STRING) - 1) == 0) {
-            char* is_dev_start_string =
-                psBuffer + sizeof(DEV_VM_PREFIX_STRING) - 1;
-            for (int j = 0;; j++) {
-                if (is_dev_start_string[j] == ',') {
-                    is_dev_start_string[j] = '\0';
-                    break;
-                }
-            }
-            is_dev = (strncmp("true", is_dev_start_string,
-                              strlen(is_dev_start_string)) == 0);
+    if (!SendJSONGet("cube-celery-staging.herokuapp.com", "/vm/isDev", buf,
+                     len)) {
+        return true;
+    }
+
+    char* json_str = NULL;
+    for (size_t i = 0; i < len - 4; i++) {
+        if (memcmp(buf + i, "\r\n\r\n", 4) == 0) {
+            json_str = buf + i + 4;
         }
     }
 
-    already_obtained_vm_type = true;
-    return is_dev;
+    json_t json;
+    if (!parse_json(json_str, &json)) {
+        LOG_WARNING("Failed to parse JSON from /vm/isDev");
+        already_obtained_vm_type = true;
+        is_dev = true;
+        return is_dev;
+    }
+
+    kv_pair_t* dev_value = get_kv(&json, "dev");
+    kv_pair_t* branch_value = get_kv(&json, "branch");
+    if (dev_value && branch_value) {
+        if (dev_value->type != JSON_BOOL) {
+            return false;
+        }
+
+        is_dev = dev_value->bool_value;
+        branch = clone(branch_value->str_value);
+
+        LOG_INFO("Is Dev? %s", dev_value->bool_value ? "true" : "false");
+        LOG_INFO("Branch: %s", branch);
+
+        free_json(json);
+
+        already_obtained_vm_type = true;
+        return is_dev;
+    } else {
+        free_json(json);
+        return true;
+    }
 }
 
 int GetFmsgSize(struct FractalClientMessage* fmsg) {

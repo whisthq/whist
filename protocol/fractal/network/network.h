@@ -1,9 +1,11 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-/******
-
-This file contains all code that interacts directly with sockets under-the-hood.
+/**
+ Copyright Fractal Computers, Inc. 2020
+ @file network.h
+ @date 26 may 2020
+ @brief This file contains all code that interacts directly with sockets under-the-hood.
 
 ============================
 Usage
@@ -64,7 +66,7 @@ while(!packet) {
 
 printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 
-*****/
+*/
 
 /*
 ============================
@@ -120,9 +122,6 @@ Constants
 ============================
 */
 
-#define STUN_IP "52.22.246.213"
-#define STUN_PORT 48800
-
 #define LARGEST_TCP_PACKET 10000000
 #define MAX_PAYLOAD_SIZE 1285
 #define TCP_SEGMENT_SIZE 1024
@@ -146,7 +145,7 @@ typedef struct SocketContext {
 // replayed
 // TODO: INC integer that must not be used twice
 
-/*
+/**
 @brief                          Data packet description
 */
 typedef enum FractalPacketType {
@@ -155,7 +154,7 @@ typedef enum FractalPacketType {
     PACKET_MESSAGE,
 } FractalPacketType;
 
-/*
+/**
 @brief                          Packet of data to be sent over a SocketContext
 */
 typedef struct FractalPacket {
@@ -202,7 +201,7 @@ Public Functions
 ============================
 */
 
-/*
+/**
 @brief This will set the socket s to have timeout timeout_ms. Use 0 to have a
 non-blocking socket, and -1 for an indefinitely blocking socket
 
@@ -211,7 +210,7 @@ on windows or errno on Linux
 */
 int GetLastNetworkError();
 
-/*
+/**
 @brief                          Initialize a UDP/TCP connection between a server
 and a client
 
@@ -232,11 +231,11 @@ connection_timeout_ms
 success
 */
 int CreateUDPContext(SocketContext* context, char* destination, int port,
-                     int recvfrom_timeout_s, int connection_timeout_ms);
+                     int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun);
 int CreateTCPContext(SocketContext* context, char* destination, int port,
-                     int recvfrom_timeout_s, int connection_timeout_ms);
+                     int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun);
 
-/*
+/**
 @brief                          This will send a FractalPacket over TCP to the
 SocketContext context. A FractalPacketType is also provided to describe the
 packet
@@ -253,7 +252,7 @@ success
 int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data,
                   int len);
 
-/*
+/**
 @brief                          This will send a FractalPacket over UDP to the
 SocketContext context. A FractalPacketType is also provided to the receiving
 end.
@@ -278,7 +277,7 @@ int SendUDPPacket(SocketContext* context, FractalPacketType type, void* data,
                   int len, int id, int burst_bitrate,
                   FractalPacket* packet_buffer, int* packet_len_buffer);
 
-/*
+/**
 @brief                          Replay the sending of a packet that has already
 been sent by the network protocol. (Via a packet_buffer write from
 SendUDPPacket)
@@ -292,7 +291,7 @@ success
 */
 int ReplayPacket(SocketContext* context, FractalPacket* packet, size_t len);
 
-/*
+/**
 @brief                          Send a 0-length packet over the socket. Used to
 keep-alive over NATs, and to check on the validity of the socket
 
@@ -304,7 +303,7 @@ ended, use GetLastNetworkError() to learn more about the error
 */
 int Ack(SocketContext* context);
 
-/*
+/**
 @brief                          Receive a FractalPacket from a SocketContext, if
 any such packet exists
 
@@ -316,7 +315,7 @@ on failure
 FractalPacket* ReadTCPPacket(SocketContext* context);
 FractalPacket* ReadUDPPacket(SocketContext* context);
 
-/*
+/**
 @brief                          Sends a JSON POST request to the Fractal
 webservers
 
@@ -331,7 +330,7 @@ ended, use GetLastNetworkError() to learn more about the error
 */
 bool SendJSONPost(char* host_s, char* path, char* jsonObj);
 
-/*
+/**
 @brief                          Sends a JSON GET request to the Fractal
 webservers
 

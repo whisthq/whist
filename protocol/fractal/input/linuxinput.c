@@ -3,7 +3,14 @@
  *
  * Copyright Fractal Computers, Inc. 2020
  **/
-#include "linuxinput.h"
+#include "input.h"
+
+#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                    \
+    if (ioctl(FD, PARAMS) == -1) {                                           \
+        mprintf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", \
+                strerror(errno));                                            \
+        goto failure;                                                        \
+    }
 
 #define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                    \
     if (ioctl(FD, PARAMS) == -1) {                                           \

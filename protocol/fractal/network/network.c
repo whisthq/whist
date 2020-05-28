@@ -10,6 +10,9 @@
 
 #include "../utils/aes.h"
 
+#define STUN_IP "52.5.240.234"
+#define STUN_PORT 48800
+
 /*
 ============================
 Private Custom Types
@@ -95,6 +98,10 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data,
         LOG_WARNING("Packet too large!");
         return -1;
     }
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
 
     static char packet_buffer[LARGEST_TCP_PACKET];
     static char encrypted_packet_buffer[LARGEST_ENCRYPTED_TCP_PACKET];
@@ -139,7 +146,11 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
                   int len, int id, int burst_bitrate,
                   FractalPacket *packet_buffer, int *packet_len_buffer) {
     if (id <= 0) {
-        mprintf("IDs must be positive!\n");
+        LOG_WARNING("IDs must be positive!");
+        return -1;
+    }
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
         return -1;
     }
 
@@ -240,7 +251,15 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
 
 int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
     if (len > sizeof(FractalPacket)) {
-        mprintf("Len too long!\n");
+        LOG_WARNING("Len too long!\n");
+        return -1;
+    }
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+    if (packet == NULL){
+        LOG_WARNING("packet is NULL");
         return -1;
     }
 
@@ -263,10 +282,23 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
 }
 
 int recvp(SocketContext *context, void *buf, int len) {
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
     return recv(context->s, buf, len, 0);
 }
 
 int sendp(SocketContext *context, void *buf, int len) {
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+    if(len != 0 && buf == NULL){
+        LOG_ERROR("Passed non zero length and a NULL pointer to sendto");
+        return -1;
+    }
+    // cppcheck-suppress nullPointer
     return sendto(context->s, buf, len, 0, (struct sockaddr *)(&context->addr),
                   sizeof(context->addr));
 }
@@ -280,18 +312,13 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     if ((ret = connect(s, (struct sockaddr *)(&addr), sizeof(addr))) < 0) {
         bool worked = GetLastNetworkError() == FRACTAL_EINPROGRESS;
 
-        LOG_INFO("Bool TCP worked = %d\n", worked);
-        LOG_INFO("Ret TCP = %d\n", ret);
-
         if (!worked) {
-            LOG_WARNING("Could not connect() over TCP to server %d\n",
-                        GetLastNetworkError());
+            LOG_WARNING("Could not connect() over TCP to server: Returned %d, Error Code %d\n",
+                        ret, GetLastNetworkError());
             closesocket(s);
             return false;
         }
     }
-
-    LOG_WARNING("last network error = %d\n", GetLastNetworkError());
 
     // Select connection
     fd_set set;
@@ -300,9 +327,9 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     struct timeval tv;
     tv.tv_sec = timeout_ms / 1000;
     tv.tv_usec = (timeout_ms % 1000) * 1000;
-    if (select((int)s + 1, NULL, &set, NULL, &tv) <= 0) {
-        LOG_WARNING("Could not select() over TCP to server %d\n",
-                    GetLastNetworkError());
+    if ((ret = select((int)s + 1, NULL, &set, NULL, &tv)) <= 0) {
+        LOG_WARNING("Could not select() over TCP to server: Returned %d, Error Code %d\n",
+                    ret, GetLastNetworkError());
         closesocket(s);
         return false;
     }
@@ -312,6 +339,10 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
 }
 
 FractalPacket *ReadUDPPacket(SocketContext *context) {
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return NULL;
+    }
     // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
     int encrypted_len =
@@ -357,6 +388,10 @@ void ClearReadingTCP(SocketContext *context) {
 }
 
 FractalPacket *ReadTCPPacket(SocketContext *context) {
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return NULL;
+    }
     if (!context->is_tcp) {
         LOG_WARNING("TryReadingTCPPacket received a context that is NOT TCP!");
         return NULL;
@@ -432,6 +467,11 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
 
 int CreateTCPServerContext(SocketContext *context, int port,
                            int recvfrom_timeout_ms, int stun_timeout_ms) {
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+
     context->is_tcp = true;
 
     int opt;
@@ -516,6 +556,11 @@ int CreateTCPServerContext(SocketContext *context, int port,
 
 int CreateTCPServerContextStun(SocketContext *context, int port,
                                int recvfrom_timeout_ms, int stun_timeout_ms) {
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+
     context->is_tcp = true;
 
     // Init stun_addr
@@ -534,6 +579,7 @@ int CreateTCPServerContextStun(SocketContext *context, int port,
     set_timeout(context->s, stun_timeout_ms);
 
     SOCKET udp_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    // cppcheck-suppress nullPointer
     sendto(udp_s, NULL, 0, 0, (struct sockaddr *)&stun_addr, sizeof(stun_addr));
     closesocket(udp_s);
 
@@ -650,6 +696,14 @@ int CreateTCPServerContextStun(SocketContext *context, int port,
 int CreateTCPClientContext(SocketContext *context, char *destination, int port,
                            int recvfrom_timeout_ms, int stun_timeout_ms) {
     stun_timeout_ms;  // TODO; remove useless parameter
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+    if (destination == NULL){
+        LOG_WARNING("destiniation is NULL");
+        return -1;
+    }
     context->is_tcp = true;
 
     // Create TCP socket
@@ -687,6 +741,14 @@ int CreateTCPClientContext(SocketContext *context, char *destination, int port,
 int CreateTCPClientContextStun(SocketContext *context, char *destination,
                                int port, int recvfrom_timeout_ms,
                                int stun_timeout_ms) {
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+    if (destination == NULL){
+        LOG_WARNING("destiniation is NULL");
+        return -1;
+    }
     context->is_tcp = true;
 
     // Init stun_addr
@@ -706,6 +768,7 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
 
     // Tell the STUN to use TCP
     SOCKET udp_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    // cppcheck-suppress nullPointer
     sendto(udp_s, NULL, 0, 0, (struct sockaddr *)&stun_addr, sizeof(stun_addr));
     closesocket(udp_s);
     // Client connection protocol
@@ -823,32 +886,45 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
 }
 
 int CreateTCPContext(SocketContext *context, char *destination, int port,
-                     int recvfrom_timeout_ms, int stun_timeout_ms) {
+                     int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun )  {
+    if( context == NULL )
+    {
+        LOG_WARNING( "Context is NULL" );
+        return -1;
+    }
     context->mutex = SDL_CreateMutex();
 
     int ret;
 
-#if USING_STUN
-    if (destination == NULL)
-        ret = CreateTCPServerContextStun(context, port, recvfrom_timeout_ms,
+    if( using_stun )
+    {
+        if (destination == NULL)
+            ret = CreateTCPServerContextStun(context, port, recvfrom_timeout_ms,
+                                             stun_timeout_ms);
+        else
+            ret = CreateTCPClientContextStun(context, destination, port,
+                                             recvfrom_timeout_ms, stun_timeout_ms);
+    } else
+    {
+        if (destination == NULL)
+            ret = CreateTCPServerContext(context, port, recvfrom_timeout_ms,
                                          stun_timeout_ms);
-    else
-        ret = CreateTCPClientContextStun(context, destination, port,
+        else
+            ret = CreateTCPClientContext(context, destination, port,
                                          recvfrom_timeout_ms, stun_timeout_ms);
-#else
-    if (destination == NULL)
-        ret = CreateTCPServerContext(context, port, recvfrom_timeout_ms,
-                                     stun_timeout_ms);
-    else
-        ret = CreateTCPClientContext(context, destination, port,
-                                     recvfrom_timeout_ms, stun_timeout_ms);
-#endif
+    }
+
     ClearReadingTCP(context);
     return ret;
 }
 
 int CreateUDPServerContext(SocketContext *context, int port,
                            int recvfrom_timeout_ms, int stun_timeout_ms) {
+    if (context == NULL){
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+
     context->is_tcp = false;
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -1004,6 +1080,8 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
     }
 
     // Wait for client to connect
+    // cppcheck-suppress nullPointer
+    // cppcheck-suppress nullPointer
     if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)(&context->addr),
                  &slen) < 0) {
         LOG_WARNING("Did not receive client confirmation!");
@@ -1075,6 +1153,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
 
     // Receive server's acknowledgement of connection
     socklen_t slen = sizeof(context->addr);
+    // cppcheck-suppress nullPointer
     if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)&context->addr,
                  &slen) < 0) {
         LOG_WARNING("Did not receive response from server! %d\n",
@@ -1177,6 +1256,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
 
     // Receive server's acknowledgement of connection
     socklen_t slen = sizeof(context->addr);
+    // cppcheck-suppress nullPointer
     if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)&context->addr,
                  &slen) < 0) {
         LOG_WARNING("Did not receive response from server! %d\n",
@@ -1194,24 +1274,26 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
 }
 
 int CreateUDPContext(SocketContext *context, char *destination, int port,
-                     int recvfrom_timeout_ms, int stun_timeout_ms) {
+                     int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun) {
     context->mutex = SDL_CreateMutex();
 
-#if USING_STUN
-    if (destination == NULL)
-        return CreateUDPServerContextStun(context, port, recvfrom_timeout_ms,
+    if( using_stun )
+    {
+        if( destination == NULL )
+            return CreateUDPServerContextStun( context, port, recvfrom_timeout_ms,
+                                               stun_timeout_ms );
+        else
+            return CreateUDPClientContextStun( context, destination, port,
+                                               recvfrom_timeout_ms, stun_timeout_ms );
+    } else
+    {
+        if (destination == NULL)
+            return CreateUDPServerContext(context, port, recvfrom_timeout_ms,
                                           stun_timeout_ms);
-    else
-        return CreateUDPClientContextStun(context, destination, port,
+        else
+            return CreateUDPClientContext(context, destination, port,
                                           recvfrom_timeout_ms, stun_timeout_ms);
-#else
-    if (destination == NULL)
-        return CreateUDPServerContext(context, port, recvfrom_timeout_ms,
-                                      stun_timeout_ms);
-    else
-        return CreateUDPClientContext(context, destination, port,
-                                      recvfrom_timeout_ms, stun_timeout_ms);
-#endif
+    }
 }
 
 // send JSON post to query the database, authenticate the user and return the VM

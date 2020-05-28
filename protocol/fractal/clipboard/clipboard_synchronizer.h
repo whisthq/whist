@@ -1,5 +1,5 @@
-#ifndef CLIPBOARD_THREAD_H
-#define CLIPBOARD_THREAD_H
+#ifndef CLIPBOARD_SYNCHRONIZER_H
+#define CLIPBOARD_SYNCHRONIZER_H
 
 /******
 
@@ -81,4 +81,4 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard();
 */
 void destroyClipboardSynchronizer();
 
-#endif
+#endif  // CLIPBOARD_SYNCHRONIZER_H

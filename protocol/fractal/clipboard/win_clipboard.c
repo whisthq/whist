@@ -498,22 +498,124 @@ void SetClipboard(ClipboardData* cb) {
             cf_type = CF_HDROP;
             hMem = getGlobalAlloc(drop, total_len);
 
-            break;
-        default:
-            LOG_WARNING("Unknown clipboard type!");
-            break;
-    }
+            void SetClipboard(ClipboardData * cb) {
+                if (cb->type == CLIPBOARD_NONE) {
+                    return;
+                }
 
-    if (cf_type != -1) {
-        if (!OpenClipboard(NULL)) return;
-        EmptyClipboard();
-        if (!SetClipboardData(cf_type, hMem)) {
-            LOG_WARNING("Failed to SetClipboardData");
-        }
+                int cf_type = -1;
+                HGLOBAL hMem = NULL;
 
-        CloseClipboard();
-    }
+                switch (cb->type) {
+                    case CLIPBOARD_TEXT:
+                        LOG_INFO("SetClipboard to Text: %s", cb->data);
+                        if (cb->size > 0) {
+                            cf_type = CF_TEXT;
+                            hMem = getGlobalAlloc(cb->data, cb->size);
+                        }
+                        break;
+                    case CLIPBOARD_IMAGE:
+                        LOG_INFO("SetClipboard to Image with size %d",
+                                 cb->size);
+                        if (cb->size > 0) {
+                            cf_type = CF_DIB;
+                            hMem = getGlobalAlloc(cb->data, cb->size);
+                        }
+                        break;
+                    case CLIPBOARD_FILES:
+                        LOG_INFO("SetClipboard to Files");
 
-    // Update the status so that this specific update doesn't count
-    hasClipboardUpdated();
-}
+                        WCHAR first_file_path[MAX_PATH] = L"";
+                        wcscat(first_file_path, LSET_CLIPBOARD);
+                        wcscat(first_file_path, L"\\*");
+
+                        WIN32_FIND_DATAW data;
+                        HANDLE hFind = FindFirstFileW(first_file_path, &data);
+
+                        DROPFILES* drop = (DROPFILES*)clipboard_buf;
+                        memset(drop, 0, sizeof(DROPFILES));
+                        WCHAR* file_ptr =
+                            (WCHAR*)(clipboard_buf + sizeof(DROPFILES));
+                        int total_len = sizeof(DROPFILES);
+                        int num_files = 0;
+                        drop->pFiles = total_len;
+                        drop->fWide = true;
+                        drop->fNC = false;
+
+                        WCHAR file_prefix[MAX_PATH] = L"";
+                        wcscat(file_prefix, LSET_CLIPBOARD);
+                        wcscat(file_prefix, L"\\");
+
+                        int file_prefix_len = (int)wcslen(file_prefix);
+
+                        if (hFind != INVALID_HANDLE_VALUE) {
+                            WCHAR* ignore1 = L".";
+                            WCHAR* ignore2 = L"..";
+
+                            do {
+                                if (wcscmp(data.cFileName, ignore1) == 0 ||
+                                    wcscmp(data.cFileName, ignore2) == 0) {
+                                    continue;
+                                }
+
+                                memcpy(file_ptr, file_prefix,
+                                       sizeof(WCHAR) * file_prefix_len);
+                                // file_ptr moves in terms of WCHAR
+                                file_ptr += file_prefix_len;
+                                // total_len moves in terms of bytes
+                                total_len += sizeof(WCHAR) * file_prefix_len;
+
+                                int len = (int)wcslen(data.cFileName) +
+                                          1;  // Including null terminator
+
+                                LOG_INFO("FILENAME: %S", data.cFileName);
+
+                                memcpy(file_ptr, data.cFileName,
+                                       sizeof(WCHAR) * len);
+                                file_ptr += len;
+                                total_len += sizeof(WCHAR) * len;
+
+                                num_files++;
+                            } while (FindNextFileW(hFind, &data));
+                            FindClose(hFind);
+                        }
+
+                        LOG_INFO("File: %S", (char*)drop + drop->pFiles);
+
+                        *file_ptr = L'\0';
+                        total_len += sizeof(L'\0');
+
+                        cf_type = CF_HDROP;
+                        hMem = getGlobalAlloc(drop, total_len);
+
+                        break;
+                    default:
+                        LOG_WARNING("Unknown clipboard type!");
+                        break;
+                }
+
+                if (cf_type != -1) {
+                    if (!OpenClipboard(NULL)) {
+                        GlobalFree(hMem);
+                        return;
+                    }
+                    EmptyClipboard();
+                    if (!SetClipboardData(cf_type, hMem)) {
+                        GlobalFree(hMem);
+                        LOG_WARNING("Failed to SetClipboardData");
+                    }
+
+                    if (cf_type != -1) {
+                        if (!OpenClipboard(NULL)) return;
+                        EmptyClipboard();
+                        if (!SetClipboardData(cf_type, hMem)) {
+                            LOG_WARNING("Failed to SetClipboardData");
+                        }
+
+                        CloseClipboard();
+                    }
+
+                    // Update the status so that this specific update doesn't
+                    // count
+                    hasClipboardUpdated();
+                }

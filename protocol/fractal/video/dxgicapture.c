@@ -155,13 +155,25 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
                      pDescs[k].Height);
             LOG_INFO("FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator,
                      pDescs[k].RefreshRate.Denominator);
+
             if (set_width == 0) {
+                LOG_INFO("Will try using this resolution");
                 set_width = pDescs[k].Width;
                 set_height = pDescs[k].Height;
             }
 
-            // We'd prefer a higher resolution if possible, but not more than 2x
-            if (set_width < pDescs[k].Width && pDescs[k].Width <= 2 * width) {
+            // We'd prefer a higher resolution if possible, if the current
+            // resolution still isn't high enough
+            if (set_width < pDescs[k].Width && set_width < width) {
+                LOG_INFO("This resolution is higher, let's use it");
+                set_width = pDescs[k].Width;
+                set_height = pDescs[k].Height;
+            }
+
+            // We'd prefer a lower resolution if possible, if the potential
+            // resolution is indeed high enough
+            if (pDescs[k].Width < set_width && width < pDescs[k].Width) {
+                LOG_INFO("This resolution is lower, let's use it");
                 set_width = pDescs[k].Width;
                 set_height = pDescs[k].Height;
             }
@@ -279,6 +291,7 @@ void GetBitmapScreenshot(struct CaptureDevice* device) {
     DeleteObject(hBitmap);
 
     device->frame_data = device->bitmap;
+    device->pitch = device->width * 4;
 }
 
 ID3D11Texture2D* CreateTexture(struct CaptureDevice* device) {
@@ -453,6 +466,7 @@ int CaptureScreen(struct CaptureDevice* device) {
 
     if (!device->bitmap) {
         device->frame_data = (char*)screenshot->mapped_rect.pBits;
+        device->pitch = screenshot->mapped_rect.Pitch;
     }
 
     device->released = false;

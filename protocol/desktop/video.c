@@ -149,30 +149,61 @@ bool requestIframe() {
     }
 }
 
+static enum AVPixelFormat sws_input_fmt;
+
+void updateSwsContext()
+{
+    LOG_INFO( "Updating SWS Context" );
+    video_decoder_t* decoder = videoContext.decoder;
+
+    sws_input_fmt = decoder->sw_frame->format;
+
+    mprintf( "Decoder Format: %s\n", av_get_pix_fmt_name( sws_input_fmt ) );
+
+    if( videoContext.sws )
+    {
+        sws_freeContext( videoContext.sws );
+    }
+
+    videoContext.sws = NULL;
+
+    if( sws_input_fmt != AV_PIX_FMT_YUV420P || decoder->width != output_width ||
+        decoder->height != output_height )
+    {
+        videoContext.sws = sws_getContext( decoder->width, decoder->height, sws_input_fmt, output_width,
+                                           output_height, AV_PIX_FMT_YUV420P,
+                                           SWS_FAST_BILINEAR, NULL, NULL, NULL );
+    }
+}
+
+void updatePixelFormat()
+{
+    if( sws_input_fmt != videoContext.decoder->sw_frame->format )
+    {
+        sws_input_fmt = videoContext.decoder->sw_frame->format;
+
+        updateSwsContext();
+    }
+}
+
 void updateWidthAndHeight(int width, int height) {
+    LOG_INFO( "Updating Width & Height to %dx%d", width, height );
+
+    if( videoContext.decoder )
+    {
+        destroy_video_decoder( videoContext.decoder );
+    }
+
     video_decoder_t* decoder =
         create_video_decoder(width, height, USE_HARDWARE);
+
     videoContext.decoder = decoder;
     if (!decoder) {
         LOG_WARNING("ERROR: Decoder could not be created!");
         exit(-1);
     }
 
-    enum AVPixelFormat input_fmt = AV_PIX_FMT_YUV420P;
-    if (decoder->type != DECODE_TYPE_SOFTWARE) {
-        input_fmt = AV_PIX_FMT_NV12;
-    }
-
-    struct SwsContext* sws_ctx = NULL;
-    if (input_fmt != AV_PIX_FMT_YUV420P || width != output_width ||
-        height != output_height) {
-        sws_ctx = sws_getContext(width, height, input_fmt, output_width,
-                                 output_height, AV_PIX_FMT_YUV420P,
-                                 SWS_BILINEAR, NULL, NULL, NULL);
-    }
-    struct SwsContext* old_sws_ctx = videoContext.sws;
-    videoContext.sws = sws_ctx;
-    sws_freeContext(old_sws_ctx);
+    sws_input_fmt = AV_PIX_FMT_NONE;
 
     server_width = width;
     server_height = height;
@@ -239,14 +270,23 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             updateWidthAndHeight(frame->width, frame->height);
         }
 
+        clock decode_timer;
+        StartTimer( &decode_timer );
+
         if (!video_decoder_decode(videoContext.decoder, frame->compressed_frame,
                                   frame->size)) {
             LOG_WARNING("Failed to video_decoder_decode!");
             rendering = false;
             continue;
         }
+        updatePixelFormat();
+
+        //LOG_INFO( "Decode Time: %f\n", GetTimer( decode_timer ) );
 
         if (!skip_render && !resizing) {
+            clock sws_timer;
+            StartTimer( &sws_timer );
+
             if (videoContext.sws) {
                 sws_scale(
                     videoContext.sws,
@@ -261,6 +301,9 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                        videoContext.decoder->sw_frame->linesize,
                        sizeof(videoContext.linesize));
             }
+
+            //LOG_INFO( "SWS Time: %f\n", GetTimer( sws_timer ) );
+
             SDL_UpdateYUVTexture(videoContext.texture, NULL,
                                  videoContext.data[0], videoContext.linesize[0],
                                  videoContext.data[1], videoContext.linesize[1],
@@ -591,9 +634,11 @@ void updateVideo() {
                 rendering = true;
 
                 skip_render = false;
+
                 int after_render_id = next_render_id + 1;
                 int after_index = after_render_id % RECV_FRAMES_BUFFER_SIZE;
                 struct FrameData* after_ctx = &receiving_frames[after_index];
+
                 if (after_ctx->id == after_render_id &&
                     after_ctx->packets_received == after_ctx->num_packets) {
                     skip_render = true;
@@ -649,6 +694,16 @@ void updateVideo() {
                 if (requestIframe()) {
                     LOG_INFO("TOO FAR BEHIND! REQUEST FOR IFRAME!");
                 }
+            }
+        }
+
+        if( VideoData.max_id >
+            VideoData.last_rendered_id +
+            5 )
+        {
+            if( requestIframe() )
+            {
+                LOG_INFO( "WAYY TOO FAR BEHIND! REQUEST FOR IFRAME!" );
             }
         }
     }
