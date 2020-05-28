@@ -280,7 +280,7 @@ class MainBox extends Component {
 
   render() {
     const BigButton = () => {
-      if (this.props.account_locked) {
+      if (this.props.account_locked && this.props.isUser) {
         return (
           <div className={styles.pointerOnHover}>
             <div className={styles.bigButton} onClick={this.OpenDashboard}>

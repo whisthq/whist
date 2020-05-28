@@ -134,7 +134,7 @@
         },
         "publish": {
             "provider": "s3",
-            "bucket": "fractal-mac-application-release",
+            "bucket": "fractal-applications-testing",
             "region": "us-east-1"
         }
     },
