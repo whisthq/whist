@@ -12,16 +12,21 @@
 #include "../video/dxgicapture.h"
 #include <processthreadsapi.h>
 #include <psapi.h>
+#else
+#include <sys/sysinfo.h>
 #endif
 
 void PrintRAMInfo()
 {
+    size_t total_ram;
+    size_t total_ram_usage;
 #if defined(_WIN32)
     unsigned long long memory_in_kilos = 0;
     if( !GetPhysicallyInstalledSystemMemory( &memory_in_kilos ) )
     {
         LOG_WARNING( "Could not retrieve system memory: %d", GetLastError() );
     }
+    total_ram = memory_in_kilos * 1024;
 
     MEMORYSTATUSEX statex;
 
@@ -29,14 +34,20 @@ void PrintRAMInfo()
 
     GlobalMemoryStatusEx( &statex );
 
-    size_t total_ram_usage = memory_in_kilos * 1024 - statex.ullAvailPhys;
+    total_ram_usage = total_ram - statex.ullAvailPhys;
 
     // Display the contents of the SYSTEM_INFO structure.
+#else
+    struct sysinfo info;
+    sysinfo(&info);
+
+    total_ram = info.totalram;
+    total_ram_usage = info.totalram - (info.freeram + info.bufferram);
+#endif
     LOG_INFO( "  Total RAM Usage: %.2f GB",
               total_ram_usage / 1024.0 / 1024.0 / 1024.0);
     LOG_INFO( "  Total Physical RAM: %.2f GB",
-              memory_in_kilos / 1024.0 / 1024.0 );
-#endif
+              total_ram / 1024.0 / 1024.0 / 1024.0 );
 }
 
 void PrintMemoryInfo() {
