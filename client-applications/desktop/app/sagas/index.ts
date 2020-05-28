@@ -262,6 +262,11 @@ function* attachDisk(action) {
     yield call(attachDisk, action);
   }
 
+  if (response && response.status && response.status === 500) {
+    var warning = "Unexpectedly lost connection with server. Please close the app and log back in."
+    yield put(Action.changeStatusMessage(warning));
+  }
+
   if (json && json.ID) {
     yield put(Action.fetchVM(json.ID));
   }
@@ -285,11 +290,17 @@ function* fetchVM(action) {
   );
 
   while (json.state !== "SUCCESS" && json.state !== "FAILURE") {
-    var { json } = yield call(
+    var { json, response } = yield call(
       apiGet,
       (config.url.PRIMARY_SERVER + "/status/").concat(action.id),
       state.counter.access_token
     );
+
+    if (response && response.status && response.status === 500) {
+      var warning = "Unexpectedly lost connection with server. Please close the app and log back in."
+      yield put(Action.changeStatusMessage(warning));
+    }
+
     if (json && json.output && json.state === "PENDING") {
       var now = new Date();
       var message =
@@ -303,7 +314,6 @@ function* fetchVM(action) {
         json.output.msg;
       yield put(Action.changeStatusMessage(message));
     }
-    console.log(json);
 
     yield delay(5000);
   }
@@ -312,8 +322,6 @@ function* fetchVM(action) {
       yield put(Action.storeIP(json.output.ip));
     }
   } else {
-    console.log("WORKER LOST FAILURE");
-    console.log(json);
     var now = new Date();
     var message =
       "(" +
