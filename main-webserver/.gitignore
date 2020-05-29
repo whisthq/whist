@@ -1,11 +1,15 @@
 .env*
 env
+env/
 Test-Environment
 "env" 
 *.pyc
+*.py[cod]
 env3.6
 herokulogs.txtgg
 .venv/
 venv/
-**/__pycache__/
+__pychache__/
 .vagrant
+*.box
+ubuntu-bionic-18.04-cloudimg-console.log

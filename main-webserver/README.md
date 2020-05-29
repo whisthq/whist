@@ -94,3 +94,9 @@ ext install ms-python.python
 6. Now open/create a python file, write some code and save(Ctrl+s) it to see the magic happen!
 
 <sub>[Source](https://medium.com/@marcobelo/setting-up-python-black-on-visual-studio-code-5318eba4cd00)</sub>
+
+
+### Vagrant setup
+
+
+
