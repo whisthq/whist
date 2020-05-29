@@ -198,6 +198,30 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
 
         // END QSV DECODER
 
+    } else if (decoder->type == DECODE_TYPE_MEDIACODEC) {
+        // BEGIN MEDIACODEC DECODER
+
+        LOG_INFO("Trying mediacodec decoder");
+        decoder->codec = avcodec_find_decoder_by_name("h264_mediacodec");
+        LOG_INFO("codec @ %p", decoder->codec);
+        decoder->context = avcodec_alloc_context3(decoder->codec);
+        decoder->context->opaque = decoder;
+        set_decoder_opts( decoder );
+
+        // LOG_INFO( "HWDECODER: %p", decoder->context->hw_frames_ctx );
+        // decoder->match_fmt = AV_PIX_FMT_QSV;
+        // decoder->context->get_format = get_format;
+
+        if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
+            LOG_WARNING( "Failed to open context for stream" );
+            return -1;
+        }
+
+        decoder->sw_frame = av_frame_alloc();
+        // decoder->hw_frame = av_frame_alloc();
+
+        // END MEDIACODEC DECODER
+
     } else if (decoder->type == DECODE_TYPE_HARDWARE ||
                decoder->type == DECODE_TYPE_HARDWARE_OLDER) {
         // BEGIN HARDWARE DECODER
@@ -281,6 +305,8 @@ DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_HARDWARE_OL
                                    DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
 #elif __APPLE__
 DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
+#elif defined(__ANDROID_API__) // android
+    DecodeType decoder_precedence[] = {DECODE_TYPE_MEDIACODEC, DECODE_TYPE_SOFTWARE};
 #else  // linux
 DecodeType decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
 #endif

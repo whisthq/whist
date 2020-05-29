@@ -195,6 +195,14 @@ typedef enum CodecType {
     CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
 } CodecType;
 
+typedef enum DecodeType {
+  DECODE_TYPE_NONE = 0,
+  DECODE_TYPE_SOFTWARE = 1,
+  DECODE_TYPE_HARDWARE = 2,
+  DECODE_TYPE_QSV = 3,
+  DECODE_TYPE_MEDIACODEC = 4
+} DecodeType;
+
 typedef enum FractalCursorID {
     CURSOR_ID_APPSTARTING = 32650,
     CURSOR_ID_NORMAL = 32512,
