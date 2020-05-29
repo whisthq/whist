@@ -36,12 +36,14 @@ Public Functions
 
 
 /**
+ * @brief                          Delete a file on MacOS
  * 
- * @param fpath path to file to be deleted
- * @param sb ?
+ * @param fpath                    Path to file to be deleted
+ * @param sb                        ?
  * @param typeflag ?
  * @param ftwbuf ?
- * @return
+ * 
+ * @returns
  */
 int remove_file(const char* fpath, const struct stat* sb, int typeflag,
                 struct FTW* ftwbuf);

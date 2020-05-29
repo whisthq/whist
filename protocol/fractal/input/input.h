@@ -27,26 +27,22 @@ Public Functions
 ============================
 */
 
-
-
-
-
 /**
- * @brief                          Initialize all cursors
+ * @brief                          Create an input device struct to receive user actions to be replayed on a server
  *
  * @returns                        Initialized input device struct defining mouse and keyboard states
  */
 input_device_t* CreateInputDevice();
 
 /**
- * @brief                          Returns the current cursor image
+ * @brief                          Destroy and free the memory of an input device struct
  *
  * @param input_device             The initialized input device struct to destroy and free the memory of
  */
 void DestroyInputDevice(input_device_t* input_device);
 
 /**
- * @brief                          Returns the current cursor image
+ * @brief                          Replayed a received user action on a server, by sending it to the OS
  *
  * @param input_device             The initialized input device struct defining mouse and keyboard states for the user
  * @param fmsg                     The Fractal message packet, defining one user action event, to replay on the computer
@@ -57,7 +53,7 @@ bool ReplayUserInput(input_device_t* input_device,
                      struct FractalClientMessage* fmsg);
 
 /**
- * @brief                          Returns the current cursor image
+ * @brief                          Updates the keyboard state on the server to match the client's
  *
  * @param input_device             The initialized input device struct defining mouse and keyboard states for the user
  * @param fmsg                     The Fractal message packet, defining one keyboard event, to update the keyboard state

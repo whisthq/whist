@@ -1,3 +1,7 @@
+#ifndef FRACTAL_H
+#define FRACTAL_H
+
+
 /**
 Copyright Fractal Computers, Inc. 2020
 @file fractal.h
@@ -10,8 +14,7 @@ Usage
 */
 
 
-#ifndef FRACTAL_H
-#define FRACTAL_H
+
 
 #include <stdbool.h>
 #include <stdint.h>

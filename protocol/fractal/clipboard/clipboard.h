@@ -1,6 +1,9 @@
 #ifndef CLIPBOARD_H
 #define CLIPBOARD_H
 
+
+
+
 #if defined(_WIN32)
 #pragma warning(disable : 4200)
 #endif

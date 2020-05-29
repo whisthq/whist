@@ -64,37 +64,28 @@ Public Functions
 ============================
 */
 
-
-
-
-
-
 /**
- * @brief                          Send a FractalMessage from client to server
+ * @brief                          Create a DXGI screen capture device using D3D11
  *
- * @param fmsg                     FractalMessage struct to send as packet
+ * @param device                   Capture device struct to hold the capture device
+ * @param width                    Width of the screen to capture, in pixels
+ * @param height                   Height of the screen to capture, in pixels
  *
  * @returns                        0 if succeeded, else -1     
  */
 int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height);
 
-
 /**
- * @brief                          Send a FractalMessage from client to server
+ * @brief                          Capture a bitmap snapshot of the screen, in the GPU, using DXGI
  *
- * @param fmsg                     FractalMessage struct to send as packet
+ * @param device                   The device used to capture the screen
  *
  * @returns                        0 if succeeded, else -1     
  */
 int CaptureScreen(CaptureDevice* device);
 
-
-
-
-
-
 /**
- * @brief                          Release a captured screen snapshot
+ * @brief                          Release a captured screen bitmap snapshot
  *
  * @param fmsg                     The Windows screencapture device holding the screen object captured
  */
