@@ -307,9 +307,17 @@ int runcmd(const char* cmdline, char** response) {
         char c = (char)fgetc(pPipe);
         if (current_len == max_len) {
             int next_max_len = 2 * max_len;
-            buffer = realloc(buffer, next_max_len);
-
-            max_len = next_max_len;
+            char* new_buffer = realloc(buffer, next_max_len);
+            if( new_buffer == NULL )
+            {
+                LOG_ERROR( "Realloc from %d to %d failed!", max_len, next_max_len );
+                buffer[max_len] = '\0';
+                break;
+            } else
+            {
+                buffer = new_buffer;
+                max_len = next_max_len;
+            }
         }
 
         if (c == EOF) {
