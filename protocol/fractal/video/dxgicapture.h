@@ -87,7 +87,7 @@ int CaptureScreen(CaptureDevice* device);
 /**
  * @brief                          Release a captured screen bitmap snapshot
  *
- * @param fmsg                     The Windows screencapture device holding the screen object captured
+ * @param device                   The Windows screencapture device holding the screen object captured
  */
 void ReleaseScreen(CaptureDevice* device);
 

@@ -22,13 +22,13 @@ Includes
 
 #include "../core/fractal.h"
 
+/*
+============================
+Custom Types
+============================
+*/
 
-
-
-
-
-
-struct CaptureDevice {
+typedef struct CaptureDevice {
   Display* display;
   XImage* image;
   XShmSegmentInfo segment;
@@ -42,10 +42,9 @@ struct CaptureDevice {
   int event;
   bool did_use_map_desktop_surface;
   bool released;
-};
+} CaptureDevice;
 
 typedef unsigned int UINT;
-
 
 /*
 ============================
@@ -53,18 +52,38 @@ Public Functions
 ============================
 */
 
+/**
+ * @brief                          Create a XSHM screen capture device
+ *
+ * @param device                   Capture device struct to hold the capture device
+ * @param width                    Width of the screen to capture, in pixels
+ * @param height                   Height of the screen to capture, in pixels
+ *
+ * @returns                        0 if succeeded, else -1     
+ */
+int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height);
 
-int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height);
+/**
+ * @brief                          Capture a bitmap snapshot of the screen, in the GPU, using XSHM
+ *
+ * @param device                   The device used to capture the screen
+ *
+ * @returns                        0 if succeeded, else -1     
+ */
+int CaptureScreen(CaptureDevice* device);
 
-int CaptureScreen(struct CaptureDevice* device);
+/**
+ * @brief                          Release a captured screen bitmap snapshot
+ *
+ * @param device                   The Linux screencapture device holding the screen object captured
+ */
+void ReleaseScreen(CaptureDevice* device);
 
-void ReleaseScreen(struct CaptureDevice* device);
-
-void DestroyCaptureDevice(struct CaptureDevice* device);
-
-
-
-
-
+/**
+ * @brief                          Destroys and frees the memory of a Linux Ubuntu screencapture device
+ *
+ * @param device                   The Linux Ubuntu screencapture device to destroy and free the memory of
+ */
+void DestroyCaptureDevice(CaptureDevice* device);
 
 #endif  // CAPTURE_X11CAPTURE_H

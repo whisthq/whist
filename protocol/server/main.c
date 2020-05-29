@@ -109,8 +109,8 @@ int32_t SendVideo(void* opaque) {
     SocketContext socketContext = *(SocketContext*)opaque;
 
     // Init DXGI Device
-    struct CaptureDevice rdevice;
-    struct CaptureDevice* device = NULL;
+    CaptureDevice rdevice;
+    CaptureDevice* device = NULL;
 
     InitCursors();
 

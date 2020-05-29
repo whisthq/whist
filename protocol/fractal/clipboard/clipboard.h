@@ -123,4 +123,8 @@ bool hasClipboardUpdated();
 #pragma warning(default : 4200)
 #endif
 
+
+
+
+
 #endif  // CLIPBOARD_H
