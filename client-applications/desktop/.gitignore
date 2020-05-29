@@ -64,12 +64,6 @@ npm-debug.log.*
 *.env
 
 # protocol files
-.fractal-protocol
-fractal-protocol
-fractal-protocol/desktop
-.protocol
-protocol
-protocol/desktop
 clipboard/
 log.txt
 connection_id.txt

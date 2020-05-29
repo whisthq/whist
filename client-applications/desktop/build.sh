@@ -1,26 +1,40 @@
-rm -rf .protocol
-git clone --depth 1 https://github.com/fractalcomputers/protocol .protocol
-cd .protocol
-git reset --hard
-git fetch --depth 25 origin master:master
-git checkout master
+#!/bin/bash
+echo -e "Updating protocol submodule to latest master"
+git submodule update --remote
+cd protocol
+echo -e "\n\n"
+git --no-pager log -1 --pretty
+echo -e ""
+
+read -r -p "Please ensure that the protocol commit is the one you want to build off of [Y/n] " input
+input=${input:="y"}
+case $input in
+    [yY][eE][sS]|[yY])
+		echo "Yes"
+		;;
+    [nN][oO]|[nN])
+		echo "No"
+       		;;
+    *)
+	echo "Invalid input..."
+	exit 1
+	;;
+esac
+
 cmake .
 make FractalClient
 cd ..
-rm -rf protocol
-mkdir protocol
-cd protocol
-mkdir desktop
-cd ..
-cp .protocol/desktop/build64/FractalClient protocol/desktop
+cp protocol/desktop/build64/FractalClient protocol/desktop
 cp -R loading protocol/desktop
-cp .protocol/desktop/build64/sshkey protocol/desktop
-cp .protocol/desktop/build64/sshkey.pub protocol/desktop
-sudo chmod 600 protocol/desktop/sshkey # was previously in protocol, but operation not permitted from protocol
+cp protocol/desktop/build64/sshkey protocol/desktop
+cp protocol/desktop/build64/sshkey.pub protocol/desktop
+chmod 600 protocol/desktop/sshkey # was previously in protocol, but operation not permitted from protocol
+
+echo -e "OSTYPE=$OSTYPE"
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
   # Linux Ubuntu
   # copy over the Unison executable and make executable files executable
-  cp .protocol/desktop/build64/linux_unison protocol/desktop
+  cp protocol/desktop/build64/linux_unison protocol/desktop
   sudo chmod +x protocol/desktop/FractalClient
   sudo chmod +x protocol/desktop/linux_unison
 elif [[ "$OSTYPE" == "darwin"* ]]; then
@@ -32,17 +46,35 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
   SetFile -a C protocol/desktop/FractalClient # use the resource to set the icon
   rm tmpicns.rsrc # clean up
   # copy over the Unison executable and FFmpeg dylibs
-  cp .protocol/desktop/build64/mac_unison protocol/desktop
-  cp .protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/Darwin/libavdevice.58.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/Darwin/libavfilter.7.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/Darwin/libavformat.58.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/Darwin/libavutil.56.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/Darwin/libpostproc.55.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/Darwin/libswresample.3.dylib protocol/desktop
-  cp .protocol/lib/64/ffmpeg/Darwin/libswscale.5.dylib protocol/desktop
+  cp protocol/desktop/build64/mac_unison protocol/desktop
+  cp protocol/lib/64/ffmpeg/Darwin/* protocol/desktop
+  
   # codesign the FractalClient executable
   codesign -s "Fractal Computers, Inc." protocol/desktop/FractalClient
 fi
 yarn -i
-yarn package
+
+DEV=${DEV:=no}
+if [ $DEV = yes ]; then
+  echo -e "Running local client..."
+  sleep 3
+  yarn dev
+  exit
+fi
+
+PUBLISH=${PUBLISH:=no}
+if [ $PUBLISH = yes ]; then
+  echo -e "Building signed release and publishing..."
+  sleep 3
+  yarn package-ci
+  exit
+fi
+
+RELEASE=${RELEASE:=yes}
+if [ $RELEASE = yes ]; then
+  echo -e "Building signed release.  Not publishing..."
+  sleep 3
+  yarn package
+  exit
+fi
+
