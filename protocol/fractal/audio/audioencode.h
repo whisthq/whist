@@ -51,24 +51,16 @@ Public Functions
 ============================
 */
 
-
-
-
-
-
 /**
- * @brief                          This will initialize the FFmpeg AAC audio decoder, and set the proper
+ * @brief                          This will initialize the FFmpeg AAC audio encoder, and set the proper
  *                                 audio parameters for receiving from the server
  * 
- * @param bit_rate                 The 
+ * @param bit_rate                 The amount of bits/seconds that the audio will be encoded to (higher 
+ *                                 means higher quality encoding, and more bandwidth usage)
  * @param sample_rate              The sample rate, in Hertz, of the audio to encode
  * 
- * @returns                        The initialized FFmpeg audio decoder struct
+ * @returns                        The initialized FFmpeg audio encoder struct
  */
-
-
-
-
 audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate);
 
 /**
