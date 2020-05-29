@@ -144,41 +144,38 @@ typedef enum FractalPacketType {
  * @brief                          Packet of data to be sent over a SocketContext
  */
 typedef struct FractalPacket {
-  // Hash of the rest of the packet
-  char hash[16];
+  char hash[16];           // Hash of the rest of the packet
 
   // hash[16] is a signature for everything below this line
 
   // Encrypted packet data
-  int cipher_len;  // The length of the encrypted segment
-  char iv[16];     // One-time pad for encrypted data
+  int cipher_len;          // The length of the encrypted segment
+  char iv[16];             // One-time pad for encrypted data
 
   // Everything below this line gets encrypted
 
   // Metadata
   FractalPacketType type;  // Video, Audio, or Message
-  int id;  // Unique identifier (Two packets with the same type and id, from the
-           // same IP, will be the same)
-  short index;        // Handle separation of large datagrams
-  short num_indices;  // The total datagram consists of data packets with
-                      // indices from 0 to payload_size - 1
-  int payload_size;   // size of data[] that is of interest
-  bool is_a_nack;     // True if this is a replay'ed packet
+  int id;                  // Unique identifier (Two packets with the same type and id, from the
+                           // same IP, will be the same)
+  short index;             // Handle separation of large datagrams
+  short num_indices;       // The total datagram consists of data packets with
+                           // indices from 0 to payload_size - 1
+  int payload_size;        // size of data[] that is of interest
+  bool is_a_nack;          // True if this is a replay'ed packet
 
   // Data
   uint8_t data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
                                    // bytes beyond payload_size / cipher_len
-  uint8_t overflow[16];  // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16, as
-                         // the encrypted packet might be slightly larger than
-                         // the unencrypted packet
+  uint8_t overflow[16];            // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16, as
+                                   // the encrypted packet might be slightly larger than
+                                   // the unencrypted packet
 } FractalPacket;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
 #define PACKET_HEADER_SIZE (sizeof(FractalPacket) - MAX_PAYLOAD_SIZE - 16)
-// Real packet size = PACKET_HEADER_SIZE + FractalPacket.payload_size    (If
-// Unencrypted)
-//                  = PACKET_HEADER_SIZE + cipher_len                    (If
-//                  Encrypted)
+// Real packet size = PACKET_HEADER_SIZE + FractalPacket.payload_size (If Unencrypted)
+//                  = PACKET_HEADER_SIZE + cipher_len (If Encrypted)
 
 /*
 ============================
@@ -187,55 +184,50 @@ Public Functions
 */
 
 /**
- * @brief This will set the socket s to have timeout timeout_ms. Use 0 to have a
- *        non-blocking socket, and -1 for an indefinitely blocking socket
+ * @brief                          This will set the socket s to have timeout timeout_ms. Use 0 to have a
+ *                                 non-blocking socket, and -1 for an indefinitely blocking socket
  *
- * @returns The network error that most recently occured, through WSAGetLastError
- *          on windows or errno on Linux
+ * @returns                        The network error that most recently occured, through WSAGetLastError
+ *                                 on Windows or errno on Linux
  */
 int GetLastNetworkError();
 
 /**
-@brief                          Initialize a UDP/TCP connection between a server
-and a client
-
-@param context                  The socket context that will be initialized
-@param destination              The server IP address to connect to. Passing
-NULL will wait for another client to connect to the socket
-@param port                     The port to connect to. This will be a real port
-if USING_STUN is false, and it will be a virtual port if USING_STUN is true.
-(The real port will be some randomly chosen port if USING_STUN is true)
-@param recvfrom_timeout_s       The timeout that the socketcontext will use
-after being initialized
-@param connection_timeout_ms    The timeout that will be used when attempting to
-connect. The handshake sends a few packets back and forth, so the upper bound of
-how long CreateXContext will take is some small constant times
-connection_timeout_ms
-
-@returns                        Will return -1 on failure, will return 0 on
-success
-*/
+ * @brief                          Initialize a UDP/TCP connection between a server and a client
+ *
+ * @param context                  The socket context that will be initialized
+ * @param destination              The server IP address to connect to. Passing NULL will wait for 
+ *                                 another client to connect to the socket
+ * @param port                     The port to connect to. This will be a real port if USING_STUN is 
+ *                                 false, and it will be a virtual port if USING_STUN is true; (The real 
+ *                                 port will be some randomly chosen port if USING_STUN is true)
+ * @param recvfrom_timeout_s       The timeout that the socketcontext will use after being initialized
+ * @param connection_timeout_ms    The timeout that will be used when attempting to connect. The handshake
+ *                                 sends a few packets back and forth, so the upper bound of how long 
+ *                                 CreateXContext will take is some small constant times connection_timeout_ms
+ *
+ * @returns                        Will return -1 on failure, will return 0 on success
+ */
 int CreateUDPContext(SocketContext* context, char* destination, int port,
                      int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun);
 int CreateTCPContext(SocketContext* context, char* destination, int port,
                      int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun);
 
 /**
-@brief                          This will send a FractalPacket over TCP to the
-SocketContext context. A FractalPacketType is also provided to describe the
-packet
+ * @brief                          This will send a FractalPacket over TCP to the SocketContext 
+ *                                 context. A FractalPacketType is also provided to describe the packet
+ * 
+ * @param context                  The socket context
+ * @param type                     The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
+ * @param data                     A pointer to the data to be sent
+ * @param len                      The nubmer of bytes to send
+ * 
+ * @returns                        Will return -1 on failure, will return 0 on success
+ */
+int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data, int len);
 
-@param context                  The socket context
-@param type                     The FractalPacketType, either VIDEO, AUDIO, or
-MESSAGE
-@param data                     A pointer to the data to be sent
-@param len                      The nubmer of bytes to send
 
-@returns                        Will return -1 on failure, will return 0 on
-success
-*/
-int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data,
-                  int len);
+
 
 /**
 @brief                          This will send a FractalPacket over UDP to the
@@ -330,5 +322,9 @@ ended, use GetLastNetworkError() to learn more about the error
 */
 bool SendJSONGet(char* host_s, char* path, char* json_res,
                  size_t json_res_size);
+
+
+
+
 
 #endif  // NETWORK_H
