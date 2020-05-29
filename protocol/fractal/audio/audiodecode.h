@@ -49,20 +49,75 @@ typedef struct audio_decoder_t {
   uint8_t* out_buffer;
 } audio_decoder_t;
 
+/*
+============================
+Public Functions
+============================
+*/
 
-
-
-
-
+/**
+ * @brief                          Initialize a FFmpeg AAC audio decoder for a specific sample rate
+ * 
+ * @param sample_rate              The sample rate, in Hertz, of the audio to decode
+ * 
+ * @returns                        The initialized FFmpeg AAC audio decoder
+ */
 audio_decoder_t* create_audio_decoder(int sample_rate);
+
+
+
+
+
+
+
+/**
+ * @brief                          Initialize a FFmpeg AAC audio decoder for a specific sample rate
+ * 
+ * @param decoder                  The audio decoder The sample rate, in Hertz, of the audio to decode
+ * 
+ * @returns                        The initialized FFmpeg AAC audio decoder
+ */
 
 int init_av_frame(audio_decoder_t* decoder);
 
+/**
+ * @brief                          Initialize a FFmpeg AAC audio decoder for a specific sample rate
+ * 
+ * @param decoder                  The audio decoder The sample rate, in Hertz, of the audio to decode
+ * 
+ * @returns                        The initialized FFmpeg AAC audio decoder
+ */
+
 int audio_decoder_get_frame_data_size(audio_decoder_t* decoder);
+
+
+/**
+ * @brief                          Initialize a FFmpeg AAC audio decoder for a specific sample rate
+ * 
+ * @param decoder                  The audio decoder The sample rate, in Hertz, of the audio to decode
+ * 
+ * @returns                        The initialized FFmpeg AAC audio decoder
+ */
 
 void audio_decoder_packet_readout(audio_decoder_t* decoder, uint8_t* data);
 
+/**
+ * @brief                          Initialize a FFmpeg AAC audio decoder for a specific sample rate
+ * 
+ * @param decoder                  The audio decoder The sample rate, in Hertz, of the audio to decode
+ * 
+ * @returns                        The initialized FFmpeg AAC audio decoder
+ */
+
 int audio_decoder_decode_packet(audio_decoder_t* decoder, AVPacket* encoded_packet);
+
+/**
+ * @brief                          Initialize a FFmpeg AAC audio decoder for a specific sample rate
+ * 
+ * @param decoder                  The audio decoder The sample rate, in Hertz, of the audio to decode
+ * 
+ * @returns                        The initialized FFmpeg AAC audio decoder
+ */
 
 void destroy_audio_decoder(audio_decoder_t* decoder);
 

@@ -9,25 +9,22 @@
 Usage
 ============================
 
-
-
-
 initClipboardSynchronizer("76.106.92.11");
 
 ClipboardData server_clipboard;
 
-ClipboardSynchronizerSetClipboard(&server_clipboard);           // Will set the
-client clipboard to that data
+// Will set the client clipboard to that data
+ClipboardSynchronizerSetClipboard(&server_clipboard);
 
-mprintf("Is Synchronizing? %d\n", isClipboardSynchronizing());  // Will likely
-return true because it's waiting on server_clipboard to be set
+// Will likely return true because it's waiting on server_clipboard to be set
+mprintf("Is Synchronizing? %d\n", isClipboardSynchronizing());
 
-while(isClipboardSynchronizing());                              // Wait for
-clipboard to be done synchronizing
+// Wait for clipboard to be done synchronizing
+while(isClipboardSynchronizing());
 
 ClipboardData* client_clipboard = ClipboardSynchronizerGetNewClipboard();
 
-if ( client_clipboard ) {
+if (client_clipboard) {
   // We have a new clipboard, this should be sent to the server
   Send(client_clipboard);
 } else {
@@ -37,53 +34,55 @@ if ( client_clipboard ) {
 destroyClipboardSynchronizer();
 */
 
-
-
-
+/*
+============================
+Includes
+============================
+*/
 
 #include "clipboard.h"
 
-/**
-@brief                          Initialize the Update Clipboard Helper
-
-@param server_ip				The IP of the server to
-synchronize the clipboard with
+/*
+============================
+Public Functions
+============================
 */
+
+/**
+ * @brief                          Initialize the Update Clipboard Helper
+ * 
+ * @param server_ip			           The IP of the server to synchronize the clipboard with
+ */
 void initClipboardSynchronizer(char* server_ip);
 
 /**
-@brief                          Set the clipboard to a given clipboard data
-
-@param clipboard				The clipboard data to update the
-clipboard with
-
-@returns						true on success, false
-on failure
-*/
+ * @brief                          Set the clipboard to a given clipboard data
+ * 
+ * @param clipboard				         The clipboard data to update the clipboard with
+ * 
+ * @returns						             true on success, false on failure
+ */
 bool ClipboardSynchronizerSetClipboard(ClipboardData* clipboard);
 
 /**
-@brief                          Check if the clipboard is in the midst of being
-updated
-
-@returns						True if the clipboard is
-currently busy being updated. This will be true for a some period of time after
-updateSetClipboard
-*/
+ * @brief                          Check if the clipboard is in the midst of being updated
+ * 
+ * @returns						             True if the clipboard is currently busy being updated. This will be
+ *                                 true for a some period of time after updateSetClipboard
+ */
 bool isClipboardSynchronizing();
 
 /**
-@brief                          Get a new clipboard, if any
-
-@returns						A pointer to new
-clipboard data that should be sent to the server. NULL if the clipboard has not
-been updated since the last call to the clipboard
-*/
+ * @brief                          Get a new clipboard, if any
+ * 
+ * @returns						             A pointer to new clipboard data that should be sent to the server. NULL if 
+ *                                 the clipboard has not been updated since the last call to the clipboard
+ */
 ClipboardData* ClipboardSynchronizerGetNewClipboard();
 
 /**
-@brief                          Cleanup the clipboard synchronizer
-*/
+ * @brief                          Cleanup the clipboard synchronizer
+ */
 void destroyClipboardSynchronizer();
 
 #endif  // CLIPBOARD_SYNCHRONIZER_H
