@@ -16,8 +16,8 @@ def disk(action, **kwargs):
 
         disk_size = body["disk_size"]
         username = body["username"]
-        
-        disks = fetchUserDisks(username, main = True)
+
+        disks = fetchUserDisks(username, main=True)
         if disks:
             location = disks[0]["location"]
             task = createEmptyDisk.apply_async(
@@ -57,12 +57,16 @@ def disk(action, **kwargs):
     elif action == "add":
         body = request.get_json()
 
-        task = attachDisk.apply_async([body["disk_name"], body["vm_name"], kwargs["ID"]])
+        task = attachDisk.apply_async(
+            [body["disk_name"], body["vm_name"], kwargs["ID"]]
+        )
         return jsonify({"ID": task.id}), 202
     elif action == "detach":
         body = request.get_json()
-        
-        task = detachDisk.apply_async([body["disk_name"], body["vm_name"], kwargs["ID"]])
+
+        task = detachDisk.apply_async(
+            [body["disk_name"], body["vm_name"], kwargs["ID"]]
+        )
         if not task:
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202
@@ -98,3 +102,7 @@ def disk(action, **kwargs):
         task_id = task.id
         sendInfo(kwargs["ID"], "Disk deletion complete")
         return jsonify({"ID": task_id}), 202
+    elif action == "setVersion":
+        body = request.get_json()
+        setDiskVersion(body["disk_name"], body["branch"])
+        return jsonify({"status": 200}), 200
