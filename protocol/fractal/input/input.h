@@ -50,7 +50,7 @@ void DestroyInputDevice(input_device_t* input_device);
  * @returns                        True if it replayed the event, False otherwise
  */
 bool ReplayUserInput(input_device_t* input_device,
-                     struct FractalClientMessage* fmsg);
+                     FractalClientMessage* fmsg);
 
 /**
  * @brief                          Updates the keyboard state on the server to match the client's
@@ -59,6 +59,6 @@ bool ReplayUserInput(input_device_t* input_device,
  * @param fmsg                     The Fractal message packet, defining one keyboard event, to update the keyboard state
  */
 void UpdateKeyboardState(input_device_t* input_device,
-                         struct FractalClientMessage* fmsg);
+                         FractalClientMessage* fmsg);
 
 #endif  // INPUT_H

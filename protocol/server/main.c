@@ -688,8 +688,8 @@ int main() {
             LOG_WARNING("Failed to create input device for playback.");
         }
 
-        struct FractalClientMessage local_fmsg;
-        struct FractalClientMessage* fmsg;
+        FractalClientMessage local_fmsg;
+        FractalClientMessage* fmsg;
 
         clock last_ping;
         StartTimer(&last_ping);

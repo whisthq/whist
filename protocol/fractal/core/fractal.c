@@ -229,7 +229,7 @@ bool is_dev_vm() {
     }
 }
 
-int GetFmsgSize(struct FractalClientMessage* fmsg) {
+int GetFmsgSize(FractalClientMessage* fmsg) {
     if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
         return sizeof(*fmsg);
     } else if (fmsg->type == CMESSAGE_CLIPBOARD) {

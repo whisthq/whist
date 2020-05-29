@@ -221,7 +221,7 @@ void update() {
 // sub-packets to send, it not supported (If low latency large
 // FractalClientMessage packets are needed, then this will have to be
 // implemented)
-int SendFmsg(struct FractalClientMessage* fmsg) {
+int SendFmsg(FractalClientMessage* fmsg) {
     if (fmsg->type == CMESSAGE_CLIPBOARD) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg,
                              GetFmsgSize(fmsg));

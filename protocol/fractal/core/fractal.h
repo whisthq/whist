@@ -255,11 +255,6 @@ typedef enum FractalKeycode {
   FK_MEDIASELECT = 263,  ///< 263
 } FractalKeycode;
 
-
-
-
-
-
 /// @brief Modifier keys applied to keyboard input.
 /// @details Codes for when keyboard input is modified. These values may be
 /// bitwise OR'd together.
@@ -286,18 +281,6 @@ typedef enum FractalMouseButton {
   __MOUSE_MAKE_32 = 0x7FFFFFFF,
 } FractalMouseButton;
 
-
-
-
-
-
-
-
-
-
-
-
-
 /// @brief Cursor properties.
 /// @details Track important information on cursor.
 typedef struct FractalCursor {
@@ -323,8 +306,6 @@ typedef struct FractalCursor {
                      ///< absolute screen coordinates.
   uint8_t __pad[1];
 } FractalCursor;
-
-
 
 /// @brief Keyboard message.
 /// @details Messages related to keyboard usage.
@@ -362,21 +343,16 @@ typedef struct FractalMouseWheelMessage {
 /// affected by FractalClientSetDimensions and move the cursor with a signed
 /// delta value from its previous location.
 typedef struct FractalMouseMotionMessage {
-  int32_t x;  ///< The absolute horizontal screen coordinate of the cursor  if
-              ///< `relative` is `false`, or the delta (can be negative) if
-              ///< `relative` is `true`.
-  int32_t y;  ///< The absolute vertical screen coordinate of the cursor if
-              ///< `relative` is `false`, or the delta (can be negative) if
-              ///< `relative` is `true`.
+  int32_t x;      ///< The absolute horizontal screen coordinate of the cursor  if
+                  ///< `relative` is `false`, or the delta (can be negative) if
+                  ///< `relative` is `true`.
+  int32_t y;      ///< The absolute vertical screen coordinate of the cursor if
+                  ///< `relative` is `false`, or the delta (can be negative) if
+                  ///< `relative` is `true`.
   bool relative;  ///< `true` for relative mode, `false` for absolute mode.
                   ///< See details.
   uint8_t __pad[3];
 } FractalMouseMotionMessage;
-
-
-
-
-
 
 typedef enum FractalClientMessageType {
   CMESSAGE_NONE = 0,         ///< No Message
@@ -388,12 +364,12 @@ typedef enum FractalClientMessageType {
                              ///< valid in FractClientMessage.
   MESSAGE_MOUSE_MOTION = 4,  ///< `mouseMotion` FractalMouseMotionMessage is
                              ///< valid in FractClientMessage.
-  MESSAGE_RELEASE = 5,  ///< Message instructing the host to release all input
-                        ///< that is currently pressed.
-  MESSAGE_MBPS = 6,     ///< `mbps` double is valid in FractClientMessage.
+  MESSAGE_RELEASE = 5,       ///< Message instructing the host to release all input
+                             ///< that is currently pressed.
+  MESSAGE_MBPS = 6,          ///< `mbps` double is valid in FractClientMessage.
   MESSAGE_PING = 7,
-  MESSAGE_DIMENSIONS = 8,  ///< `dimensions.width` int and `dimensions.height`
-                           ///< int is valid in FractClientMessage
+  MESSAGE_DIMENSIONS = 8,    ///< `dimensions.width` int and `dimensions.height`
+                             ///< int is valid in FractClientMessage
   MESSAGE_VIDEO_NACK = 9,
   MESSAGE_AUDIO_NACK = 10,
   MESSAGE_KEYBOARD_STATE = 11,
@@ -486,29 +462,55 @@ typedef struct Frame {
   unsigned char compressed_frame[];
 } Frame;
 
+/*
+============================
+Public Functions
+============================
+*/
 
-
-
-
-
+/**
+ * @brief                          Print the memory trace of a process
+ */
 void PrintMemoryInfo();
 
+/**
+ * @brief                          Run a system command via command prompt or terminal
+ * 
+ * @param cmdline                  String of the system command to run
+ * @param response                 Terminal output from the cmdline
+ * 
+ * @returns                        0 or value of pipe if success, else -1
+ */
 int runcmd(const char* cmdline, char** response);
 
+/**
+ * @brief                          Retrieves the public IPv4 of the computer it is run on
+ * 
+ * @returns                        The string of the public IPv4 address of the computer
+ */
 char* get_ip();
 
+/**
+ * @brief                          Queries the webserver to ask if a VM is development VM
+ * 
+ * @returns                        True if a VM is a "development" VM (dev protocol branch), False otherwise
+ */
 bool is_dev_vm();
 
-int GetFmsgSize(struct FractalClientMessage* fmsg);
+/**
+ * @brief                          Calculate the size of a FractalClientMessage struct
+ * 
+ * @param fmsg                     The Fractal Client Message to find the size of
+ * 
+ * @returns                        The size of the Fractal Client Message struct
+ */
+int GetFmsgSize(FractalClientMessage* fmsg);
 
+/**
+ * @brief                          Retrieves the protocol branch this program is running by asking the webserver
+ * 
+ * @returns                        The string of the branch name
+ */
 char* get_branch();
-
-
-
-
-
-
-
-
 
 #endif  // FRACTAL_H

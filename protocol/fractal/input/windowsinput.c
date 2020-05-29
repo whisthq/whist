@@ -314,7 +314,7 @@ void KeyUp(int windows_keycode) {
 }
 
 void UpdateKeyboardState(input_device_t* input_device,
-                         struct FractalClientMessage* fmsg) {
+                         FractalClientMessage* fmsg) {
   input_device;
   if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
     LOG_WARNING(
@@ -418,7 +418,7 @@ void UpdateKeyboardState(input_device_t* input_device,
 }
 
 bool ReplayUserInput(input_device_t* input_device,
-                     struct FractalClientMessage* fmsg) {
+                     FractalClientMessage* fmsg) {
   input_device;
   // get screen width and height for mouse cursor
   // int sWidth = GetSystemMetrics( SM_CXSCREEN ) - 1; is this still needed?
