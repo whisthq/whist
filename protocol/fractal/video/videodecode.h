@@ -17,9 +17,11 @@ Includes
 
 #include "../core/fractal.h"
 
-
-
-
+/*
+============================
+Includes
+============================
+*/
 
 typedef enum DecodeType {
     DECODE_TYPE_NONE = 0,
@@ -45,10 +47,34 @@ typedef struct video_decoder_t {
   enum AVHWDeviceType device_type;
 } video_decoder_t;
 
+/*
+============================
+Public Functions
+============================
+*/
+
+
+
+
+
+
+
+/**
+ * @brief                          This will initialize the FFmpeg AAC audio decoder, and set the proper
+ *                                 audio parameters for receiving from the server
+ */
+
+
+
 video_decoder_t* create_video_decoder(int width, int height, bool use_hardware);
 
 void destroy_video_decoder(video_decoder_t* decoder);
 
 bool video_decoder_decode(video_decoder_t* decoder, void* buffer, int buffer_size);
+
+
+
+
+
 
 #endif  // VIDEO_DECODE_H

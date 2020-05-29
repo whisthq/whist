@@ -226,105 +226,85 @@ int CreateTCPContext(SocketContext* context, char* destination, int port,
  */
 int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data, int len);
 
-
-
-
 /**
-@brief                          This will send a FractalPacket over UDP to the
-SocketContext context. A FractalPacketType is also provided to the receiving
-end.
-
-@param context                  The socket context
-@param type                     The FractalPacketType, either VIDEO, AUDIO, or
-MESSAGE
-@param data                     A pointer to the data to be sent
-@param len                      The nubmer of bytes to send
-@param id                       An ID for the UDP data.
-@param burst_bitrate            The maximum bitrate that packets will be sent
-over. -1 will imply sending as fast as possible
-@param packet_buffer            An array of RTPPacket's, each sub-packet of the
-UDPPacket will be stored in packet_buffer[i]
-@param packet_len_buffer        An array of int's, defining the length of each
-sub-packet located in packet_buffer[i]
-
-@returns                        Will return -1 on failure, will return 0 on
-success
-*/
+ * @brief                          This will send a FractalPacket over UDP to the SocketContext
+ *                                 context. A FractalPacketType is also provided to the receiving end
+ * 
+ * @param context                  The socket context
+ * @param type                     The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
+ * @param data                     A pointer to the data to be sent
+ * @param len                      The nubmer of bytes to send
+ * @param id                       An ID for the UDP data.
+ * @param burst_bitrate            The maximum bitrate that packets will be sent over. -1 will imply sending
+ *                                 as fast as possible
+ * @param packet_buffer            An array of RTPPacket's, each sub-packet of the UDPPacket will be stored in packet_buffer[i]
+ * @param packet_len_buffer        An array of int's, defining the length of each sub-packet located in packet_buffer[i]
+ * 
+ * @returns                        Will return -1 on failure, will return 0 on success
+ */
 int SendUDPPacket(SocketContext* context, FractalPacketType type, void* data,
                   int len, int id, int burst_bitrate,
                   FractalPacket* packet_buffer, int* packet_len_buffer);
 
 /**
-@brief                          Replay the sending of a packet that has already
-been sent by the network protocol. (Via a packet_buffer write from
-SendUDPPacket)
-
-@param context                  The socket context
-@param packet                   The packet to resend
-@param len                      The length of the packet to resend
-
-@returns                        Will return -1 on failure, will return 0 on
-success
-*/
+ * @brief                          Replay the sending of a packet that has already been sent by the network
+ *                                 protocol. (Via a packet_buffer write from SendUDPPacket)
+ * 
+ * @param context                  The socket context
+ * @param packet                   The packet to resend
+ * @param len                      The length of the packet to resend
+ * 
+ * @returns                        Will return -1 on failure, will return 0 on success
+ */
 int ReplayPacket(SocketContext* context, FractalPacket* packet, size_t len);
 
 /**
-@brief                          Send a 0-length packet over the socket. Used to
-keep-alive over NATs, and to check on the validity of the socket
-
-@param context                  The socket context
-
-@returns                        Will return -1 on failure, will return 0 on
-success Failure implies that the socket is broken or the TCP connection has
-ended, use GetLastNetworkError() to learn more about the error
-*/
+ * @brief                          Send a 0-length packet over the socket. Used to keep-alive over NATs,
+ *                                 and to check on the validity of the socket
+ * 
+ * @param context                  The socket context
+ * 
+ * @returns                        Will return -1 on failure, will return 0 on success Failure implies that
+ *                                 the socket is broken or the TCP connection has ended, use GetLastNetworkError()
+ *                                 to learn more about the error
+ */
 int Ack(SocketContext* context);
 
 /**
-@brief                          Receive a FractalPacket from a SocketContext, if
-any such packet exists
-
-@param context                  The socket context
-
-@returns                        A pointer to the FractalPacket on success, NULL
-on failure
-*/
+ * @brief                          Receive a FractalPacket from a SocketContext, if any such packet exists
+ * 
+ * @param context                  The socket context
+ * 
+ * @returns                        A pointer to the FractalPacket on success, NULL on failure
+ */
 FractalPacket* ReadTCPPacket(SocketContext* context);
 FractalPacket* ReadUDPPacket(SocketContext* context);
 
 /**
-@brief                          Sends a JSON POST request to the Fractal
-webservers
-
-@param host_s                   The hostname IP address
-@param path                     The /path/to/the/endpoint
-@param jsonObj                  A string consisting of the JSON-complient
-datastream to send to the webserver
-
-@returns                        Will return false on failure, will return true
-on success Failure implies that the socket is broken or the TCP connection has
-ended, use GetLastNetworkError() to learn more about the error
-*/
+ * @brief                          Sends a JSON POST request to the Fractal webservers
+ * 
+ * @param host_s                   The hostname IP address
+ * @param path                     The /path/to/the/endpoint
+ * @param jsonObj                  A string consisting of the JSON-complient datastream to send to the webserver
+ * 
+ * @returns                        Will return false on failure, will return true on success Failure implies that
+ *                                 the socket is broken or the TCP connection has ended, use GetLastNetworkError()
+ *                                 to learn more about the error
+ */
 bool SendJSONPost(char* host_s, char* path, char* jsonObj);
 
 /**
-@brief                          Sends a JSON GET request to the Fractal
-webservers
-
-@param host_s                   The hostname IP address
-@param path                     The /path/to/the/endpoint
-@param json_res                 The buffer in which to store the JSON response
-@param json_res_size            The size of the response buffer
-
-@returns                        Will return false on failure, will return true
-on success Failure implies that the socket is broken or the TCP connection has
-ended, use GetLastNetworkError() to learn more about the error
-*/
-bool SendJSONGet(char* host_s, char* path, char* json_res,
-                 size_t json_res_size);
-
-
-
-
+ * @brief                          Sends a JSON GET request to the Fractal webservers
+ *
+ * @param host_s                   The hostname IP address
+ * @param path                     The /path/to/the/endpoint
+ * @param json_res                 The buffer in which to store the JSON response
+ * @param json_res_size            The size of the response buffer
+ * 
+ * @returns                        Will return false on failure, will return true on success
+ *                                 Failure implies that the socket is broken or the TCP connection
+ *                                 has ended, use GetLastNetworkError() to learn more about the error
+ */
+bool SendJSONGet(char* host_s, char* path, char* json_res, size_t json_res_size);
 
 #endif  // NETWORK_H

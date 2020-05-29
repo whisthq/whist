@@ -1,10 +1,15 @@
+#ifndef AUDIO_DECODE_H
+#define AUDIO_DECODE_H
+
+
+
+
 /*
  * Audio decoding via FFmpeg library.
  *
  * Copyright Fractal Computers, Inc. 2020
  **/
-#ifndef AUDIO_DECODE_H
-#define AUDIO_DECODE_H
+
 
 #include <libavcodec/avcodec.h>
 #include <libavdevice/avdevice.h>

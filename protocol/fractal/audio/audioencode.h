@@ -1,10 +1,16 @@
+#ifndef AUDIO_ENCODE_H
+#define AUDIO_ENCODE_H
+
+
+
+
+
 /*
  * Audio encoding via FFmpeg library.
  *
  * Copyright Fractal Computers, Inc. 2020
  **/
-#ifndef AUDIO_ENCODE_H
-#define AUDIO_ENCODE_H
+
 
 #include <libavformat/avformat.h>
 #include <libavutil/audio_fifo.h>
