@@ -10,20 +10,20 @@
 // To link IID_'s
 #pragma comment(lib, "dxguid.lib")
 
-void GetBitmapScreenshot(struct CaptureDevice* device);
+void GetBitmapScreenshot(CaptureDevice* device);
 
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
+int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     LOG_INFO("Creating capture device for resolution %dx%d...", width, height);
-    memset(device, 0, sizeof(struct CaptureDevice));
+    memset(device, 0, sizeof(CaptureDevice));
 
     device->hardware =
-        (struct DisplayHardware*)malloc(sizeof(struct DisplayHardware));
-    memset(device->hardware, 0, sizeof(struct DisplayHardware));
+        (DisplayHardware*) malloc(sizeof(DisplayHardware));
+    memset(device->hardware, 0, sizeof(DisplayHardware));
 
-    struct DisplayHardware* hardware = device->hardware;
+    DisplayHardware* hardware = device->hardware;
 
     int num_adapters = 0, num_outputs = 0, i = 0, j = 0;
     IDXGIFactory1* factory;
@@ -263,7 +263,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     return 0;
 }
 
-void GetBitmapScreenshot(struct CaptureDevice* device) {
+void GetBitmapScreenshot(CaptureDevice* device) {
     HDC hScreenDC = CreateDCW(device->monitorInfo.szDevice, NULL, NULL, NULL);
     HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
 
@@ -290,10 +290,10 @@ void GetBitmapScreenshot(struct CaptureDevice* device) {
     device->pitch = device->width * 4;
 }
 
-ID3D11Texture2D* CreateTexture(struct CaptureDevice* device) {
+ID3D11Texture2D* CreateTexture(CaptureDevice* device) {
     HRESULT hr;
 
-    struct DisplayHardware* hardware = device->hardware;
+    DisplayHardware* hardware = device->hardware;
 
     D3D11_TEXTURE2D_DESC tDesc;
 
@@ -331,7 +331,7 @@ ID3D11Texture2D* CreateTexture(struct CaptureDevice* device) {
     return texture;
 }
 
-void ReleaseScreenshot(struct ScreenshotContainer* screenshot) {
+void ReleaseScreenshot(ScreenshotContainer* screenshot) {
     if (screenshot->final_texture != NULL) {
         screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
         screenshot->final_texture = NULL;
@@ -355,12 +355,12 @@ void ReleaseScreenshot(struct ScreenshotContainer* screenshot) {
     }
 }
 
-int CaptureScreen(struct CaptureDevice* device) {
+int CaptureScreen(CaptureDevice* device) {
     ReleaseScreen(device);
 
     HRESULT hr;
 
-    struct ScreenshotContainer* screenshot = &device->screenshot;
+    ScreenshotContainer* screenshot = &device->screenshot;
 
     hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
@@ -469,7 +469,7 @@ int CaptureScreen(struct CaptureDevice* device) {
     return accumulated_frames;
 }
 
-void ReleaseScreen(struct CaptureDevice* device) {
+void ReleaseScreen(CaptureDevice* device) {
     if (device->released) {
         return;
     }
@@ -482,7 +482,7 @@ void ReleaseScreen(struct CaptureDevice* device) {
                       hr, GetLastError());
         }
     } else {
-        struct ScreenshotContainer* screenshot = &device->screenshot;
+        ScreenshotContainer* screenshot = &device->screenshot;
         hr = screenshot->surface->lpVtbl->Unmap(screenshot->surface);
         if (FAILED(hr)) {
             LOG_ERROR("Failed to unmap screenshot surface 0x%X %d", hr,
@@ -492,7 +492,7 @@ void ReleaseScreen(struct CaptureDevice* device) {
     device->released = true;
 }
 
-void DestroyCaptureDevice(struct CaptureDevice* device) {
+void DestroyCaptureDevice(CaptureDevice* device) {
     HRESULT hr;
 
     hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);

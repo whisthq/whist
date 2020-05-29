@@ -1,10 +1,14 @@
+#ifndef CLIPBOARD_OSX_H
+#define CLIPBOARD_OSX_H
+
+
+
 /*
  * Objective-C MacOS clipboard setting and getting functions.
  *
  * Copyright Fractal Computers, Inc. 2020
  **/
-#ifndef CLIPBOARD_OSX_H
-#define CLIPBOARD_OSX_H
+
 
 #include "../core/fractal.h"
 

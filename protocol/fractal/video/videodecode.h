@@ -1,19 +1,12 @@
 #ifndef VIDEO_DECODE_H
 #define VIDEO_DECODE_H
-
 /**
- Copyright Fractal Computers, Inc. 2020
- @file videodecode.h
- @brief This file contains the code to create a decoder and use that decoder to decode frames
-
-
-
+ * Copyright Fractal Computers, Inc. 2020
+ * @file videodecode.h
+ * @brief This file contains the code to create a decoder and use that decoder to decode frames.
 ============================
 Usage
 ============================
-
-
-
 */
 
 /*
@@ -27,6 +20,7 @@ Includes
 
 
 
+
 typedef enum DecodeType {
     DECODE_TYPE_NONE = 0,
     DECODE_TYPE_SOFTWARE = 1,
@@ -36,14 +30,14 @@ typedef enum DecodeType {
 } DecodeType;
 
 // define decoder struct to pass as a type
-typedef struct {
+typedef struct video_decoder_t {
   int width;
   int height;
   bool can_use_hardware;
-  AVCodec *codec;
-  AVCodecContext *context;
-  AVFrame *sw_frame;
-  AVFrame *hw_frame;
+  AVCodec* codec;
+  AVCodecContext* context;
+  AVFrame* sw_frame;
+  AVFrame* hw_frame;
   AVBufferRef* ref;
   AVPacket packet;
   enum AVPixelFormat match_fmt;
@@ -51,11 +45,10 @@ typedef struct {
   enum AVHWDeviceType device_type;
 } video_decoder_t;
 
-video_decoder_t *create_video_decoder(int width, int height, bool use_hardware);
+video_decoder_t* create_video_decoder(int width, int height, bool use_hardware);
 
-void destroy_video_decoder(video_decoder_t *decoder);
+void destroy_video_decoder(video_decoder_t* decoder);
 
-bool video_decoder_decode(video_decoder_t *decoder, void *buffer,
-                          int buffer_size);
+bool video_decoder_decode(video_decoder_t* decoder, void* buffer, int buffer_size);
 
 #endif  // VIDEO_DECODE_H

@@ -1,12 +1,10 @@
 #ifndef NETWORK_H
 #define NETWORK_H
-
 /**
- Copyright Fractal Computers, Inc. 2020
- @file network.h
- @date 26 may 2020
- @brief This file contains all code that interacts directly with sockets under-the-hood.
-
+ * Copyright Fractal Computers, Inc. 2020
+ * @file network.h
+ * @date 26 may 2020
+ * @brief This file contains all code that interacts directly with sockets under-the-hood.
 ============================
 Usage
 ============================
@@ -65,7 +63,6 @@ while(!packet) {
 }
 
 printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
-
 */
 
 /*
@@ -75,9 +72,6 @@ Includes
 */
 
 #if defined(_WIN32)
-// TODO: second opinion on whether this is fine.
-// moved this to #include winsock2.h to fractal.h because it needs to come
-// before windows.h
 #pragma comment(lib, "ws2_32.lib")
 #include <windows.h>
 #include <winsock2.h>
@@ -141,13 +135,12 @@ typedef struct SocketContext {
   SDL_mutex* mutex;
 } SocketContext;
 
-// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
-// replayed
+// TODO: Unique PRIVATE_KEY for every session, so that old packets can't be replayed
 // TODO: INC integer that must not be used twice
 
 /**
-@brief                          Data packet description
-*/
+ * @brief                          Data packet description
+ */
 typedef enum FractalPacketType {
   PACKET_AUDIO,
   PACKET_VIDEO,
@@ -155,8 +148,8 @@ typedef enum FractalPacketType {
 } FractalPacketType;
 
 /**
-@brief                          Packet of data to be sent over a SocketContext
-*/
+ * @brief                          Packet of data to be sent over a SocketContext
+ */
 typedef struct FractalPacket {
   // Hash of the rest of the packet
   char hash[16];
@@ -202,12 +195,12 @@ Public Functions
 */
 
 /**
-@brief This will set the socket s to have timeout timeout_ms. Use 0 to have a
-non-blocking socket, and -1 for an indefinitely blocking socket
-
-@returns The network error that most recently occured, through WSAGetLastError
-on windows or errno on Linux
-*/
+ * @brief This will set the socket s to have timeout timeout_ms. Use 0 to have a
+ *        non-blocking socket, and -1 for an indefinitely blocking socket
+ *
+ * @returns The network error that most recently occured, through WSAGetLastError
+ *          on windows or errno on Linux
+ */
 int GetLastNetworkError();
 
 /**

@@ -1,16 +1,19 @@
+#ifndef MAC_UTILS_H
+#define MAC_UTILS_H
 /**
-Copyright Fractal Computers, Inc. 2020
-@file mac_utils.h
-@brief MacOS helper functions for clipboard functions.
-
+ * Copyright Fractal Computers, Inc. 2020
+ * @file mac_utils.h
+ * @brief This file contains the MacOS helper functions for clipboard functions.
 ============================
 Usage
 ============================
-
 */
 
-#ifndef MAC_UTILS_H
-#define MAC_UTILS_H
+/*
+============================
+Includes
+============================
+*/
 
 #include <fts.h>
 #include <ftw.h>
@@ -19,7 +22,21 @@ Usage
 #include <sys/types.h>
 #include <unistd.h>
 
+/*
+============================
+Public Functions
+============================
+*/
+
+
+
+
+
+
+
+
 /**
+ * 
  * @param fpath path to file to be deleted
  * @param sb ?
  * @param typeflag ?
@@ -36,22 +53,34 @@ int remove_file(const char* fpath, const struct stat* sb, int typeflag,
 void mac_rm_rf(const char* path);
 
 /**
+ * @brief                          List the files in a directory
  * @brief uses strcmp to compare two file names
+ * 
  * @param first file
  * @param second file
+ * 
  * @return same return values as strcmp, e.g 0 for equality.
  */
 int cmp_files(const FTSENT** first, const FTSENT** second);
 
+
+
+
+
 /**
- * @param dir list files from dir
- * @param filenames allocated array of char*s to store found file names in
+ * @brief                          List the files in a directory
+ * 
+ * @param dir                      The directory to list the files from
+ * @param filenames                An allocated array of char*'s to store the found file names in
  */
 void get_filenames(char* dir, char* filenames[]);
 
 /**
- * @param path to directory to check existence
- * @return 1 if dir exists, -1 otherwise
+ * @brief                          Check if a directory exists on MacOS
+ * 
+ * @param path                     The directory to check the existence of
+ * 
+ * @return                          1 if dir exists, -1 otherwise
  */
 int dir_exists(const char* path);
 

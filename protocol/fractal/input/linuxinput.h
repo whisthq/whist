@@ -1,14 +1,12 @@
 #ifndef LINUX_INPUT_H
 #define LINUX_INPUT_H
 /**
-Copyright Fractal Computers, Inc. 2020
-@file linuxinput.h
-@brief Linux input device type
-
+ * Copyright Fractal Computers, Inc. 2020
+ * @file linuxinput.h
+ * @brief This file defines the Linux input device type.
 ============================
 Usage
 ============================
-
 */
 
 /*
