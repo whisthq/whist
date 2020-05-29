@@ -165,7 +165,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         Integer widthPixels = metrics.widthPixels - 100;
         Integer heightPixels = metrics.heightPixels - 100;
-        return /*new String[5] = */new String[]{"52.170.41.191", widthPixels.toString(), heightPixels.toString()};
+        return /*new String[5] = */new String[]{"52.168.66.248", widthPixels.toString(), heightPixels.toString()};
     }
 
     public static void initialize() {
