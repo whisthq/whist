@@ -42,8 +42,21 @@ typedef struct OSXFilenames {
   char* filename;
 } OSXFilenames;
 
+/*
+============================
+Public Functions
+============================
+*/
 
 
+
+
+
+
+/**
+ * @brief                          This will initialize the FFmpeg AAC audio decoder, and set the proper
+ *                                 audio parameters for receiving from the server
+ */
 
 
 

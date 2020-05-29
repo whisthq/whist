@@ -3,7 +3,8 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file clipboard_synchronizer.h
- * @brief This file contains code meant to be used on the clientside, that will assist in synchronizing the clipboard.
+ * @brief This file contains code meant, to be used on the clientside, that will assist in 
+ *        synchronizing the client-server clipboard.
 ============================
 Usage
 ============================

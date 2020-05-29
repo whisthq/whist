@@ -1,12 +1,13 @@
 #ifndef CLIPBOARD_H
 #define CLIPBOARD_H
-
-
-
-
-#if defined(_WIN32)
-#pragma warning(disable : 4200)
-#endif
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file clipboard.h
+ * @brief This file contains the general clipboard functions for a shared client-server clipboard. 
+============================
+Usage
+============================
+*/
 
 /*
 ============================
@@ -18,6 +19,7 @@ Includes
 
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
+#pragma warning(disable : 4200)
 #include <windows.h>
 #endif
 
@@ -26,6 +28,10 @@ Includes
 Custom types
 ============================
 */
+
+
+
+
 
 /*
 @brief                          The type of data that a clipboard might be
