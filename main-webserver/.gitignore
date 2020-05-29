@@ -8,3 +8,4 @@ herokulogs.txtgg
 .venv/
 venv/
 **/__pycache__/
+.vagrant
