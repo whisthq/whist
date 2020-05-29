@@ -405,7 +405,7 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
       if( (ret = avcodec_receive_frame( decoder->context, decoder->hw_frame )) < 0 )
       {
           LOG_WARNING( "Failed to avcodec_receive_frame! %d %s", ret, av_err2str(ret) );
-	      destroy_video_decoder(decoder);
+	      //destroy_video_decoder(decoder);
           return false;
       }
 
