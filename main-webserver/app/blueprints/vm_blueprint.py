@@ -149,125 +149,123 @@ def vm(action, **kwargs):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
             vm_ip = request.environ["HTTP_X_FORWARDED_FOR"]
-        try:
-            vm_info = fetchVMByIP(vm_ip)
-            if vm_info:
-                vm_name = vm_info["vm_name"] if vm_info["vm_name"] else ""
 
-                if vm_info["os"] == "Linux":
-                    vmReadyToConnect(vm_info["vm_name"], True)
+        vm_info = fetchVMByIP(vm_ip)
+        if vm_info:
+            vm_name = vm_info["vm_name"] if vm_info["vm_name"] else ""
 
-                version = None
-                if "version" in body:
-                    version = body["version"]
-                    updateProtocolVersion(vm_name, version)
+            if vm_info["os"] == "Linux":
+                vmReadyToConnect(vm_info["vm_name"], True)
 
-                vm_state = vm_info["state"] if vm_info["state"] else ""
-                intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
-                username = vm_info["username"]
-                is_user = not isAdmin(username)
+            version = None
+            if "version" in body:
+                version = body["version"]
+                updateProtocolVersion(vm_name, version)
 
-                # Update the user's login status if it has changed
-                if available and vm_state == "RUNNING_UNAVAILABLE":
-                    # THIS IS A LOGOFF EVENT, bc it is now available and the last recorded state was unavailable
-                    sendInfo(kwargs["ID"], username + " logged off")
-                    customer = fetchCustomer(username)
-                    if not customer:
-                        sendCritical(
+            vm_state = vm_info["state"] if vm_info["state"] else ""
+            intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
+            username = vm_info["username"]
+            is_user = not isAdmin(username)
+
+            # Update the user's login status if it has changed
+            if available and vm_state == "RUNNING_UNAVAILABLE":
+                # THIS IS A LOGOFF EVENT, bc it is now available and the last recorded state was unavailable
+                sendInfo(kwargs["ID"], username + " logged off")
+                customer = fetchCustomer(username)
+                if not customer:
+                    sendCritical(
+                        kwargs["ID"],
+                        "{} logged on/off but is not a registered customer".format(
+                            username
+                        ),
+                    )
+                else:
+                    stripe.api_key = os.getenv("STRIPE_SECRET")
+                    subscription_id = customer["subscription"]
+
+                    try:
+                        payload = stripe.Subscription.retrieve(subscription_id)
+
+                        if (
+                            os.getenv("HOURLY_PLAN_ID")
+                            == payload["items"]["data"][0]["plan"]["id"]
+                        ):
+                            sendInfo(
+                                kwargs["ID"],
+                                "{} is an hourly plan subscriber".format(username),
+                            )
+                            user_activity = getMostRecentActivity(username)
+                            if user_activity["action"] == "logon":
+                                now = dt.now()
+                                logon = dt.strptime(
+                                    user_activity["timestamp"], "%m-%d-%Y, %H:%M:%S"
+                                )
+                                if now - logon > timedelta(minutes=0):
+                                    amount = round(
+                                        79 * (now - logon).total_seconds() / 60 / 60
+                                    )
+                                    addPendingCharge(username, amount)
+                            else:
+                                sendError(
+                                    kwargs["ID"],
+                                    "{} logged off but no logon was recorded".format(
+                                        username
+                                    ),
+                                )
+                    except:
+                        sendError(
                             kwargs["ID"],
-                            "{} logged on/off but is not a registered customer".format(
+                            "User {} logged off but there was an issue charging with stripe".format(
                                 username
                             ),
                         )
-                    else:
-                        stripe.api_key = os.getenv("STRIPE_SECRET")
-                        subscription_id = customer["subscription"]
+                    addTimeTable(username, "logoff", is_user, kwargs["ID"])
+            elif not available and vm_state == "RUNNING_AVAILABLE":
+                # THIS IS A LOGON EVENT, bc it is now unavailable and the last recorded state was available
+                sendInfo(kwargs["ID"], username + " logged on")
+                addTimeTable(username, "logon", is_user, kwargs["ID"])
+                vms = fetchUserVMs(username)
+                if vms:
+                    createTemporaryLock(vms[0]["vm_name"], 0, kwargs["ID"])
 
-                        try:
-                            payload = stripe.Subscription.retrieve(subscription_id)
-
-                            if (
-                                os.getenv("HOURLY_PLAN_ID")
-                                == payload["items"]["data"][0]["plan"]["id"]
-                            ):
-                                sendInfo(
-                                    kwargs["ID"],
-                                    "{} is an hourly plan subscriber".format(username),
-                                )
-                                user_activity = getMostRecentActivity(username)
-                                if user_activity["action"] == "logon":
-                                    now = dt.now()
-                                    logon = dt.strptime(
-                                        user_activity["timestamp"], "%m-%d-%Y, %H:%M:%S"
-                                    )
-                                    if now - logon > timedelta(minutes=0):
-                                        amount = round(
-                                            79 * (now - logon).total_seconds() / 60 / 60
-                                        )
-                                        addPendingCharge(username, amount)
-                                else:
-                                    sendError(
-                                        kwargs["ID"],
-                                        "{} logged off but no logon was recorded".format(
-                                            username
-                                        ),
-                                    )
-                        except:
-                            sendError(
-                                kwargs["ID"],
-                                "User {} logged off but there was an issue charging with stripe".format(
-                                    username
-                                ),
-                            )
-                        addTimeTable(username, "logoff", is_user, kwargs["ID"])
-                elif not available and vm_state == "RUNNING_AVAILABLE":
-                    # THIS IS A LOGON EVENT, bc it is now unavailable and the last recorded state was available
-                    sendInfo(kwargs["ID"], username + " logged on")
-                    addTimeTable(username, "logon", is_user, kwargs["ID"])
-                    vms = fetchUserVMs(username)
-                    if vms:
-                        createTemporaryLock(vms[0]["vm_name"], 0, kwargs["ID"])
-
-                # Updates the vm state in the sql database
-                if vm_state in intermediate_states:
-                    sendWarning(
-                        kwargs["ID"],
-                        "Trying to change connection status to {}, but VM {} is in intermediate state {}. Not changing state.".format(
-                            "RUNNING_AVAILABLE" if available else "RUNNING_UNAVAILABLE",
-                            vm_name,
-                            vm_state,
-                        ),
-                    )
-                if available and not vm_state in intermediate_states:
-                    lockVMAndUpdate(
-                        vm_name=vm_name,
-                        state="RUNNING_AVAILABLE",
-                        lock=False,
-                        temporary_lock=None,
-                        change_last_updated=False,
-                        verbose=False,
-                        ID=kwargs["ID"],
-                    )
-                elif not available and not vm_state in intermediate_states:
-                    lockVMAndUpdate(
-                        vm_name=vm_name,
-                        state="RUNNING_UNAVAILABLE",
-                        lock=True,
-                        temporary_lock=0,
-                        change_last_updated=False,
-                        verbose=False,
-                        ID=kwargs["ID"],
-                    )
-
-            else:
-                sendError(
+            # Updates the vm state in the sql database
+            if vm_state in intermediate_states:
+                sendWarning(
                     kwargs["ID"],
-                    "Trying to change connection status, but no VM found for IP {}".format(
-                        str(vm_ip)
+                    "Trying to change connection status to {}, but VM {} is in intermediate state {}. Not changing state.".format(
+                        "RUNNING_AVAILABLE" if available else "RUNNING_UNAVAILABLE",
+                        vm_name,
+                        vm_state,
                     ),
                 )
-        except:
-            traceback.print_exc()
+            if available and not vm_state in intermediate_states:
+                lockVMAndUpdate(
+                    vm_name=vm_name,
+                    state="RUNNING_AVAILABLE",
+                    lock=False,
+                    temporary_lock=None,
+                    change_last_updated=False,
+                    verbose=False,
+                    ID=kwargs["ID"],
+                )
+            elif not available and not vm_state in intermediate_states:
+                lockVMAndUpdate(
+                    vm_name=vm_name,
+                    state="RUNNING_UNAVAILABLE",
+                    lock=True,
+                    temporary_lock=0,
+                    change_last_updated=False,
+                    verbose=False,
+                    ID=kwargs["ID"],
+                )
+
+        else:
+            sendError(
+                kwargs["ID"],
+                "Trying to change connection status, but no VM found for IP {}".format(
+                    str(vm_ip)
+                ),
+            )
 
         return jsonify({"status": 200}), 200
     elif action == "isDev" and request.method == "GET":
