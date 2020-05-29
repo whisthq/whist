@@ -3,8 +3,8 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file clipboard_synchronizer.h
- * @brief This file contains code meant, to be used on the clientside, that will assist in 
- *        synchronizing the client-server clipboard.
+ * @brief This file contains code meant, to be used on the clientside, that will
+ *        assist in synchronizing the client-server clipboard.
 ============================
 Usage
 ============================
@@ -50,33 +50,41 @@ Public Functions
 
 /**
  * @brief                          Initialize the Update Clipboard Helper
- * 
- * @param server_ip			           The IP of the server to synchronize the clipboard with
+ *
+ * @param server_ip			           The IP of the server to synchronize the
+ *                                 clipboard with
  */
 void initClipboardSynchronizer(char* server_ip);
 
 /**
  * @brief                          Set the clipboard to a given clipboard data
- * 
- * @param clipboard				         The clipboard data to update the clipboard with
- * 
+ *
+ * @param clipboard				         The clipboard data to update the
+ *                                 clipboard with
+ *
  * @returns						             true on success, false on failure
  */
 bool ClipboardSynchronizerSetClipboard(ClipboardData* clipboard);
 
 /**
- * @brief                          Check if the clipboard is in the midst of being updated
- * 
- * @returns						             True if the clipboard is currently busy being updated. This will be
- *                                 true for a some period of time after updateSetClipboard
+ * @brief                          Check if the clipboard is in the midst of
+ *                                 being updated
+ *
+ * @returns						             True if the clipboard is currently
+ *                                 busy being updated. This will be true
+ *                                 for a some period of time after
+ *                                 updateSetClipboard
  */
 bool isClipboardSynchronizing();
 
 /**
  * @brief                          Get a new clipboard, if any
- * 
- * @returns						             A pointer to new clipboard data that should be sent to the server. NULL if 
- *                                 the clipboard has not been updated since the last call to the clipboard
+ *
+ * @returns						             A pointer to new clipboard data
+ *                                 that should be sent to the server.
+ *                                 NULL if the clipboard has not been
+ *                                 updated since the last call to the
+ *                                 clipboard
  */
 ClipboardData* ClipboardSynchronizerGetNewClipboard();
 

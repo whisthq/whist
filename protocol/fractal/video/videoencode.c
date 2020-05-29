@@ -98,8 +98,9 @@ int try_setup_video_encoder(encoder_t *encoder, int bitrate) {
         encoder->sw_frame->pts = 0;
 
         // set frame size and allocate memory for it
-        int frame_size = av_image_get_buffer_size(
-            out_format, encoder->sw_frame->width, encoder->sw_frame->height, 64);
+        int frame_size =
+            av_image_get_buffer_size(out_format, encoder->sw_frame->width,
+                                     encoder->sw_frame->height, 64);
         encoder->frame_buffer = malloc(frame_size);
 
         // fill picture with empty frame buffer

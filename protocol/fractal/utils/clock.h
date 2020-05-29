@@ -41,21 +41,24 @@ Public Functions
 */
 
 /**
- * @brief                          Start the given timer at the current time, as a stopwatch
+ * @brief                          Start the given timer at the current time, as
+ *                                 a stopwatch
  *
  * @param timer		               Pointer to the the timer in question
-*/
+ */
 void StartTimer(clock* timer);
 
 /**
- * @brief                          Get the amount of elapsed time since the last StartTimer
+ * @brief                          Get the amount of elapsed time since the last
+ *                                 StartTimer
  *
  * @param timer		               The timer in question
  */
 double GetTimer(clock timer);
 
 /**
- * @brief                          Create a clock that represents the given timeout in milliseconds
+ * @brief                          Create a clock that represents the given
+ *                                 timeout in milliseconds
  *
  * @param timeout_ms	           The number of milliseconds for the clock
  *

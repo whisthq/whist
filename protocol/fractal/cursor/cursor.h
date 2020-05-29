@@ -35,19 +35,19 @@ Custom Types
 */
 
 typedef enum FractalCursorState {
-  CURSOR_STATE_HIDDEN = 0,
-  CURSOR_STATE_VISIBLE = 1
+    CURSOR_STATE_HIDDEN = 0,
+    CURSOR_STATE_VISIBLE = 1
 } FractalCursorState;
 
 typedef struct FractalCursorImage {
-  SDL_SystemCursor cursor_id;
-  FractalCursorState cursor_state;
-  bool cursor_use_bmp;
-  unsigned short cursor_bmp_width;
-  unsigned short cursor_bmp_height;
-  unsigned short cursor_bmp_hot_x;
-  unsigned short cursor_bmp_hot_y;
-  uint32_t cursor_bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
+    SDL_SystemCursor cursor_id;
+    FractalCursorState cursor_state;
+    bool cursor_use_bmp;
+    unsigned short cursor_bmp_width;
+    unsigned short cursor_bmp_height;
+    unsigned short cursor_bmp_hot_x;
+    unsigned short cursor_bmp_hot_y;
+    uint32_t cursor_bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
 } FractalCursorImage;
 
 /*

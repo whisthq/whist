@@ -3,7 +3,8 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file windowsinput.h
- * @brief This file defines the Windows input device type and function to enter string on Winlogon screen.
+ * @brief This file defines the Windows input device type and function to enter
+ *        string on Winlogon screen.
 ============================
 Usage
 ============================
@@ -32,10 +33,12 @@ Public Functions
 */
 
 /**
- * @brief                          Inputs a provided series of character to Winlogon, to log in to the computer
+ * @brief                          Inputs a provided series of character to
+ *                                 Winlogon, to log in to the computer
  *
- * @param keycodes                 Enumeration of every character to enter, sequentially
- * @param len                      Number of characters to enter                         
+ * @param keycodes                 Enumeration of every character to enter,
+ *                                 sequentially
+ * @param len                      Number of characters to enter
  */
 void EnterWinString(FractalKeycode* keycodes, int len);
 
