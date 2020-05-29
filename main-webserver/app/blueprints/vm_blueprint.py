@@ -333,7 +333,7 @@ def info(action, **kwargs):
 @generateID
 @logRequestInfo
 def logs(**kwargs):
-    body = request.get_json()
+    body = json.loads(request.data)
 
     vm_ip = None
     if "vm_ip" in body:
