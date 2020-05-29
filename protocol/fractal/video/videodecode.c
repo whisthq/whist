@@ -380,6 +380,8 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
   clock t;
   StartTimer(&t);
 
+  int ret;
+
   // init packet to prepare decoding
   av_init_packet(&decoder->packet);
 
@@ -400,9 +402,9 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
   // If frame was computed on the CPU
   if (decoder->context->hw_frames_ctx) {
       // If frame was computed on the GPU
-      if( avcodec_receive_frame( decoder->context, decoder->hw_frame ) < 0 )
+      if( (ret = avcodec_receive_frame( decoder->context, decoder->hw_frame )) < 0 )
       {
-          LOG_WARNING( "Failed to avcodec_receive_frame!" );
+          LOG_WARNING( "Failed to avcodec_receive_frame! %d %s", ret, av_err2str(ret) );
 	      destroy_video_decoder(decoder);
           return false;
       }
