@@ -98,5 +98,24 @@ ext install ms-python.python
 
 ### Vagrant setup
 
+First make sure you initialized submodules
+`git submodule update --init --recursive`
 
+After submodules are initialized you will find the vagrant configs in `vagrant/`
+You will first need to download the win10-dev.box image.  To do so, run
+`aws s3 cp s3://fractal-private-dev/win10-dev.box win10-dev.box` as detailed in `vagrant/README.md`
+If you don't have s3 permissions you can download this box from the website or you'll need to be permissioned
+
+Then you can follow the instructions in `vagrant/README.md` for running vms.  
+
+Quick Commands
+```
+# vagrant up commands will take some time
+vagrant up
+vagrant up win10 # only win10
+vagrant ssh win10
+vagrant ssh ubuntu
+# code is located under /vagrant
+vagrant destroy # destroys vms and cleans up
+```
 
