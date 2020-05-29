@@ -1,25 +1,25 @@
 #ifndef FRACTAL_H
 #define FRACTAL_H
-
-
 /**
-Copyright Fractal Computers, Inc. 2020
-@file fractal.h
-@brief General Fractal helper functions and headers.
-
+ * Copyright Fractal Computers, Inc. 2020
+ * @file fractal.h
+ * @brief This file contains the core of Fractal custom structs and definitions used throughout. 
 ============================
 Usage
 ============================
-
 */
 
-
-
+/*
+============================
+Includes
+============================
+*/
 
 #include <stdbool.h>
 #include <stdint.h>
 
 #if defined(_WIN32)
+#pragma warning(disable : 4200)
 #define _WINSOCKAPI_
 #include <Audioclient.h>
 #include <D3D11.h>
@@ -32,11 +32,8 @@ Usage
 #include <process.h>
 #include <synchapi.h>
 #include <windows.h>
-//#include <winsock2.h>
 #include <winuser.h>
-
 #include "shellscalingapi.h"
-
 #else
 #include <dirent.h>
 #include <errno.h>
@@ -68,9 +65,13 @@ Usage
 #include "../network/network.h"
 #include "../utils/logging.h"
 
-#define NUM_KEYCODES 265
+/*
+============================
+Defines
+============================
+*/
 
-/*** DEFINITIONS START ***/
+#define NUM_KEYCODES 265
 
 #define PORT_CLIENT_TO_SERVER 32262
 #define PORT_SERVER_TO_CLIENT 32263
@@ -78,7 +79,6 @@ Usage
 
 #define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
-
 #define USING_SERVERSIDE_SCALE false
 
 #define MAXIMUM_BITRATE 30000000
@@ -102,11 +102,11 @@ Usage
 
 #define WRITE_MPRINTF_TO_LOG true
 
-#if defined(_WIN32)
-#pragma warning(disable : 4200)
-#endif
-
-/*** ENUMERATIONS START ***/
+/*
+============================
+Custom Types
+============================
+*/
 
 typedef enum EncodeType {
   SOFTWARE_ENCODE = 0,
@@ -131,8 +131,6 @@ typedef enum FractalCursorID {
   CURSOR_ID_WAIT = 32514
 } FractalCursorID;
 
-/// @brief Keyboard input.
-/// @details Integer code for each of the user keyboard inputs.
 typedef enum FractalKeycode {
   FK_A = 4,              ///< 4
   FK_B = 5,              ///< 5
@@ -257,6 +255,11 @@ typedef enum FractalKeycode {
   FK_MEDIASELECT = 263,  ///< 263
 } FractalKeycode;
 
+
+
+
+
+
 /// @brief Modifier keys applied to keyboard input.
 /// @details Codes for when keyboard input is modified. These values may be
 /// bitwise OR'd together.
@@ -283,89 +286,17 @@ typedef enum FractalMouseButton {
   __MOUSE_MAKE_32 = 0x7FFFFFFF,
 } FractalMouseButton;
 
-/// @brief Color formats for raw image data.
-/// @details Used to encode/decode images.
-typedef enum FractalColorFormat {
-  FORMAT_UNKNOWN = 0,
-  FORMAT_NV12 = 1,  ///< 4:2:0 full width/height Y plane followed by an
-                    ///< interleaved half width/height UV plane.
-  FORMAT_I420 =
-      2,  ///< 4:2:0 full width/height Y plane followed by a half width/height
-          ///< U plane followed by a half width/height V plane.
-  FORMAT_NV16 = 3,  ///< 4:2:2 full width/height Y plane followed by an
-                    ///< interleaved half width full height UV plane.
-  FORMAT_I422 =
-      4,  ///< 4:2:2 full width/height Y plane followed by a half width full
-          ///< height U plane followed by a half width full height V plane.
-  FORMAT_BGRA = 5,  ///< 32-bits per pixel, 8-bits per channel BGRA.
-  FORMAT_RGBA = 6,  ///< 32-bits per pixel, 8-bits per channel RGBA.
-  __FORMAT_MAKE_32 = 0x7FFFFFFF,
-} FractalColorFormat;
 
-/// @brief Network protocol used for peer-to-peer connections.
-/// @details Two modes depending on whther this is web or native
-typedef enum FractalProtocol {
-  PROTO_MODE_UDP = 1,   ///< Fractal's low-latency optimized UDP protocol.
-  PROTO_MODE_SCTP = 2,  ///< SCTP protocol compatible with WebRTC data channels.
-  __PROTO_MODE_MAKE_32 = 0x7FFFFFFF,
-} FractalProtocol;
 
-/// @brief Video stream container.
-/// @details Used for the client configuration
-typedef enum FractalContainer {
-  CONTAINER_FRACTAL =
-      0,  ///< Fractal's custom container compatible with native decoding.
-  CONTAINER_MP4 = 2,  ///< MP4 box container compatible with web browser Media
-                      ///< Source Extensions.
-  __CONTAINER_MAKE_32 = 0x7FFFFFFF,
-} FractalContainer;
 
-/// @brief PCM audio format.
-/// @details Passed to audio submission on host.
-typedef enum FractalPCMFormat {
-  PCM_FORMAT_FLOAT = 1,  ///< 32-bit floating point samples.
-  PCM_FORMAT_INT16 = 2,  ///< 16-bit signed integer samples.
-  __PCM_FORMAT_MAKE_32 = 0x7FFFFFFF,
-} FractalPCMFormat;
 
-/*** ENUMERATIONS END ***/
 
-/*** STRUCTS START ***/
 
-/// @brief Fractal instance configuration.
-/// @details Passed to FractalInit to generate config
-/// serve as the first port used when the `bind` call is made internally. If the
-/// port is already in use, the next port will be tried until an open port has
-/// been found or 50 attempts have been made.
-typedef struct FractalDimension {
-  int width;
-  int height;
-} FractalDimension;
 
-typedef struct FractalConfig {
-  int32_t upnp;  ///< `1` enables and maintains UPnP to assist NAT traversal,
-                 ///< `0` disables it.
-  int32_t clientPortRECV;  ///< First port tried for client connections. A
-                           ///< value of `0` uses a pseudo random default.
-  int32_t clientPortSEND;  ///< First port tried for client connections. A
-                           ///< value of `0` uses a pseudo random default.
-  int32_t serverPortRECV;  ///< First port used to accept host connections. A
-                           ///< value of `0` uses a pseudo random default.
-  int32_t serverPortSEND;  ///< First port used to accept host connections. A
-                           ///< value of `0` uses a pseudo random default.
-} FractalConfig;
 
-/// @brief Video frame properties.
-/// @details Used for rendering frames
-typedef struct FractalFrame {
-  FractalColorFormat format;  ///< Color format.
-  uint32_t size;        ///< Size in bytes of the `image` buffer parameter of
-                        ///< FrameCallback
-  uint32_t width;       ///< Width in pixels of the visible area of the frame.
-  uint32_t height;      ///< Height in pixels of the visible area of the frame.
-  uint32_t fullWidth;   ///< Actual width of the frame including padding.
-  uint32_t fullHeight;  ///< Actual height of the frame including padding.
-} FractalFrame;
+
+
+
 
 /// @brief Cursor properties.
 /// @details Track important information on cursor.
@@ -393,16 +324,7 @@ typedef struct FractalCursor {
   uint8_t __pad[1];
 } FractalCursor;
 
-/// @brief Latency performance metrics.
-/// @details Latency metrics for the client
-typedef struct FractalMetrics {
-  float encodeLatency;   ///< Average time in milliseconds for the host to
-                         ///< encode a frame.
-  float decodeLatency;   ///< Average time in milliseconds for the client to
-                         ///< decode a frame.
-  float networkLatency;  ///< Average round trip time between the client and
-                         ///< host.
-} FractalMetrics;
+
 
 /// @brief Keyboard message.
 /// @details Messages related to keyboard usage.
@@ -451,39 +373,10 @@ typedef struct FractalMouseMotionMessage {
   uint8_t __pad[3];
 } FractalMouseMotionMessage;
 
-/// @brief Client configuration.
-/// @details Passed to FractalClientConnect. Regarding `resolutionX`,
-/// `resolutionY`, and `refreshRate`: These settings apply only in HOST_DESKTOP
-/// if the client is the first client to connect, and that client is the owner
-/// of the computer. Setting `resolutionX` or `resolutionY` to `0` will leave
-/// the host resolution unaffected, otherwise the host will attempt to find the
-/// closest matching resolution / refresh rate.
-typedef struct FractalClientConfig {
-  int32_t decoderSoftware;  ///< `true` to force decoding of video frames via
-                            ///< a software implementation.
-  int32_t mediaContainer;   ///< ::FractalContainer value.
-  int32_t protocol;         ///< ::FractalProtocol value.
-  int32_t resolutionX;      ///< See details.
-  int32_t resolutionY;      ///< See details.
-  int32_t refreshRate;      ///< See details.
-  uint32_t
-      audioBuffer;  ///< Audio buffer in 20ms packets, i.e. a setting of `6`
-                    ///< would be a 120ms buffer. When audio received exceeds
-                    ///< this buffer, the client will fast forward the audio
-                    ///< to the size of the buffer divided by `2`.
-  bool pngCursor;   ///< `true` to return compressed PNG cursor images during
-                    ///< FractalClientPollEvents, `false` to return a 32-bit
-                    ///< RGBA image.
-  uint8_t __pad[3];
-} FractalClientConfig;
 
-/// @brief Cursor mode/image update event.
-/// @details Member of FractalClientEvent.
-typedef struct FractalClientCursorEvent {
-  FractalCursor cursor;  ///< Cursor properties.
-  uint32_t key;  ///< Buffer lookup key passed to FractalGetBuffer to retrieve
-                 ///< the cursor image, if available.
-} FractalClientCursorEvent;
+
+
+
 
 typedef enum FractalClientMessageType {
   CMESSAGE_NONE = 0,         ///< No Message
@@ -593,9 +486,10 @@ typedef struct Frame {
   unsigned char compressed_frame[];
 } Frame;
 
-/*** STRUCTS END ***/
 
-/*** FRACTAL FUNCTIONS START ***/
+
+
+
 
 void PrintMemoryInfo();
 
@@ -609,6 +503,12 @@ int GetFmsgSize(struct FractalClientMessage* fmsg);
 
 char* get_branch();
 
-/** FRACTAL FUNCTIONS END ***/
+
+
+
+
+
+
+
 
 #endif  // FRACTAL_H
