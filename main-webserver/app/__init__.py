@@ -71,7 +71,7 @@ def logRequestInfo(f):
             # 	papertrail = False
 
             try:
-                body = json.loads(request.data)
+                body = request.get_json()
 
                 if body:
                     for k, v in body.items():
