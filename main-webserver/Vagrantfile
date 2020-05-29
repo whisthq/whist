@@ -17,7 +17,7 @@ Vagrant.configure("2") do |config|
 
   # This definition is used to create the local vm box, win10-dev.box
   # To create another box https://www.vagrantup.com/docs/virtualbox/boxes.html
-  config.vm.define "win10-download" do |wincfgdown|
+  config.vm.define "win10-download", autostart: false do |wincfgdown|
     wincfgdown.vm.box = "gusztavvargadr/windows-10"
     wincfgdown.vm.communicator = "winrm"
     wincfgdown.vm.provision "shell", path: "vagrant/scripts/install.ps1"
@@ -61,5 +61,5 @@ Vagrant.configure("2") do |config|
     v.cpus = 6
     v.customize ["modifyvm", :id, "--vram", "64"]
   end
-  
+
 end
