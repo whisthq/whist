@@ -3,7 +3,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file network.h
- * @date 26 may 2020
  * @brief This file contains all code that interacts directly with sockets
  *        under-the-hood.
 ============================
@@ -23,8 +22,8 @@ FractalPacket: This type represents a packet of information
      to be increasing monotonically, with a gap implying that a packet was lost
    - FractalPackets that were thought to have been sent may not arrive, and
      FractalPackets may arrive out-of-order, in the case of UDP. This will not
-be the case for TCP, however TCP sockets may lose connection if there is a
-problem.
+     be the case for TCP, however TCP sockets may lose connection if there is a
+     problem.
    - A given block of data will, during transmission, be split up into packets
      with the same type and ID, but indicies ranging from 0 to num_indices - 1
    - A missing index implies that a packet was lost
@@ -33,13 +32,13 @@ problem.
      in-fact point to invalid memory to save space and bandwidth
    - A FractalPacket may be sent twice in the case of packet recovery, but any
      two FractalPackets found that are of the same type and ID will be expected
-to have the same data (To be specific, the Client should never legally send two
+     to have the same data (To be specific, the Client should never legally send two
      distinct packets with same ID/Type, and neither should the Server, but if
      the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
-they can be different)
+     they can be different)
    - To reconstruct the original datagram from a sequence of FractalPackets,
      concatenated the data[] streams (From 0 to payload_size - 1) for each index
-from 0 to num_indices - 1
+     from 0 to num_indices - 1
 
 -----
 Client
@@ -198,11 +197,11 @@ Public Functions
 /**
  * @brief                          This will set the socket s to have timeout
  *                                 timeout_ms. Use 0 to have a non-blocking
- * socket, and -1 for an indefinitely blocking socket
+ *                                 socket, and -1 for an indefinitely blocking socket
  *
  * @returns                        The network error that most recently occured,
  *                                 through WSAGetLastError on Windows or errno
- * on Linux
+ *                                 on Linux
  */
 int GetLastNetworkError();
 
@@ -218,7 +217,7 @@ int GetLastNetworkError();
  *                                 port if USING_STUN is false, and it will be a
  *                                 virtual port if USING_STUN is
  *                                 true; (The real port will be some randomly
- * chosen port if USING_STUN is true)
+ *                                 chosen port if USING_STUN is true)
  * @param recvfrom_timeout_s       The timeout that the socketcontext will use
  *                                 after being initialized
  * @param connection_timeout_ms    The timeout that will be used when attempting
@@ -226,7 +225,7 @@ int GetLastNetworkError();
  *                                 back and forth, so the upper
  *                                 bound of how long CreateXContext will take is
  *                                 some small constant times
- * connection_timeout_ms
+ *                                 connection_timeout_ms
  *
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
@@ -241,7 +240,8 @@ int CreateTCPContext(SocketContext* context, char* destination, int port,
 /**
  * @brief                          This will send a FractalPacket over TCP to
  *                                 the SocketContext context. A
- * FractalPacketType is also provided to describe the packet
+ *                                 FractalPacketType is also provided to 
+ *                                 describe the packet
  *
  * @param context                  The socket context
  * @param type                     The FractalPacketType, either VIDEO, AUDIO,
@@ -258,7 +258,8 @@ int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data,
 /**
  * @brief                          This will send a FractalPacket over UDP to
  *                                 the SocketContext context. A
- * FractalPacketType is also provided to the receiving end
+ *                                 FractalPacketType is also provided to the
+ *                                 receiving end
  *
  * @param context                  The socket context
  * @param type                     The FractalPacketType, either VIDEO, AUDIO,
@@ -268,10 +269,10 @@ int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data,
  * @param id                       An ID for the UDP data.
  * @param burst_bitrate            The maximum bitrate that packets will be sent
  *                                 over. -1 will imply sending as fast as
- * possible
+ *                                 possible
  * @param packet_buffer            An array of RTPPacket's, each sub-packet of
  *                                 the UDPPacket will be stored in
- * packet_buffer[i]
+ *                                 packet_buffer[i]
  * @param packet_len_buffer        An array of int's, defining the length of
  *                                 each sub-packet located in packet_buffer[i]
  *
@@ -286,7 +287,7 @@ int SendUDPPacket(SocketContext* context, FractalPacketType type, void* data,
  * @brief                          Replay the sending of a packet that has
  *                                 already been sent by the network protocol.
  *                                 (Via a packet_buffer write from
- * SendUDPPacket)
+ *                                 SendUDPPacket)
  *
  * @param context                  The socket context
  * @param packet                   The packet to resend
@@ -308,7 +309,7 @@ int ReplayPacket(SocketContext* context, FractalPacket* packet, size_t len);
  *                                 success Failure implies that the socket is
  *                                 broken or the TCP connection has ended, use
  *                                 GetLastNetworkError() to learn more about the
- * error
+ *                                 error
  */
 int Ack(SocketContext* context);
 
@@ -335,8 +336,9 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  *
  * @returns                        Will return false on failure, will return
  *                                 true on success Failure implies that the
- * socket is broken or the TCP connection has ended, use GetLastNetworkError()
- * to learn more about the error
+ *                                 socket is broken or the TCP connection has 
+ *                                 ended, use GetLastNetworkError() to learn 
+ *                                 more about the error
  */
 bool SendJSONPost(char* host_s, char* path, char* jsonObj);
 
@@ -354,7 +356,7 @@ bool SendJSONPost(char* host_s, char* path, char* jsonObj);
  *                                 true on success Failure implies that the
  *                                 socket is broken or the TCP connection has
  *                                 ended, use GetLastNetworkError() to learn
- * more about the error
+ *                                 more about the error
  */
 bool SendJSONGet(char* host_s, char* path, char* json_res,
                  size_t json_res_size);

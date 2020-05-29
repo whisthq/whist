@@ -58,7 +58,7 @@ Public Functions
  *
  * @param bit_rate                 The amount of bits/seconds that the audio
  *                                 will be encoded to (higher means higher
- * quality encoding, and more bandwidth usage)
+ *                                 quality encoding, and more bandwidth usage)
  * @param sample_rate              The sample rate, in Hertz, of the audio to
  *                                 encode
  *
@@ -69,7 +69,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate);
 /**
  * @brief                          Feeds raw audio data to the FIFO queue, which
  *                                 is pulled from by the encoder to encode AAC
- * frames
+ *                                 frames
  *
  * @param encoder                  The audio encoder struct used to AAC encode a
  *                                 frame

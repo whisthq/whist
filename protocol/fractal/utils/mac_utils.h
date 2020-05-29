@@ -64,7 +64,7 @@ int cmp_files(const FTSENT** first, const FTSENT** second);
  *
  * @param dir                     The directory to list the files from
  * @param filenames               An allocated array of char*'s to store the
- * found file names in
+ *                                found file names in
  */
 void get_filenames(char* dir, char* filenames[]);
 

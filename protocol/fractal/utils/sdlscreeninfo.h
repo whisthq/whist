@@ -81,7 +81,7 @@ int get_virtual_screen_width();
 /**
  * @brief                          Get the virtual height of a monitor/screen,
  *                                 in pixels (i.e. 1440x900 instead of
- * 2880x1800)
+ *                                 2880x1800)
  *
  * @returns                        The virtual height of the monitor/screen, in
  *                                 pixels
