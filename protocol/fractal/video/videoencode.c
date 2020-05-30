@@ -292,8 +292,8 @@ encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width,
                          encoder->out_width, encoder->out_height, 1);
 
     // init hw_device_ctx
-    if (av_hwdevice_ctx_create(&encoder->hw_device_ctx, AV_HWDEVICE_TYPE_CUDA,
-                               "CUDA", NULL, 0) < 0) {
+    if (av_hwdevice_ctx_create(&encoder->hw_device_ctx, AV_HWDEVICE_TYPE_QSV,
+                               NULL, NULL, 0) < 0) {
         LOG_WARNING("Failed to create hardware device context");
         destroy_video_encoder(encoder);
         return NULL;
