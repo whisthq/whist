@@ -32,8 +32,8 @@ FractalPacket: This type represents a packet of information
      in-fact point to invalid memory to save space and bandwidth
    - A FractalPacket may be sent twice in the case of packet recovery, but any
      two FractalPackets found that are of the same type and ID will be expected
-     to have the same data (To be specific, the Client should never legally send two
-     distinct packets with same ID/Type, and neither should the Server, but if
+     to have the same data (To be specific, the Client should never legally send
+two distinct packets with same ID/Type, and neither should the Server, but if
      the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
      they can be different)
    - To reconstruct the original datagram from a sequence of FractalPackets,
@@ -197,7 +197,8 @@ Public Functions
 /**
  * @brief                          This will set the socket s to have timeout
  *                                 timeout_ms. Use 0 to have a non-blocking
- *                                 socket, and -1 for an indefinitely blocking socket
+ *                                 socket, and -1 for an indefinitely blocking
+ * socket
  *
  * @returns                        The network error that most recently occured,
  *                                 through WSAGetLastError on Windows or errno
@@ -240,7 +241,7 @@ int CreateTCPContext(SocketContext* context, char* destination, int port,
 /**
  * @brief                          This will send a FractalPacket over TCP to
  *                                 the SocketContext context. A
- *                                 FractalPacketType is also provided to 
+ *                                 FractalPacketType is also provided to
  *                                 describe the packet
  *
  * @param context                  The socket context
@@ -336,8 +337,8 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  *
  * @returns                        Will return false on failure, will return
  *                                 true on success Failure implies that the
- *                                 socket is broken or the TCP connection has 
- *                                 ended, use GetLastNetworkError() to learn 
+ *                                 socket is broken or the TCP connection has
+ *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
 bool SendJSONPost(char* host_s, char* path, char* jsonObj);
