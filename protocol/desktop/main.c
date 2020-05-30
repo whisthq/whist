@@ -220,7 +220,7 @@ void update() {
 // sub-packets to send, it not supported (If low latency large
 // FractalClientMessage packets are needed, then this will have to be
 // implemented)
-int SendFmsg(struct FractalClientMessage* fmsg) {
+int SendFmsg(FractalClientMessage* fmsg) {
     if (fmsg->type == CMESSAGE_CLIPBOARD) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg,
                              GetFmsgSize(fmsg));
@@ -294,7 +294,8 @@ int ReceivePackets(void* opaque) {
         // Handle all pending updates
         update();
 
-        //TODO hash_time is never updated, leaving it in here in case it is used in the future
+        // TODO hash_time is never updated, leaving it in here in case it is
+        // used in the future
         // casting to suppress warnings.
         (void)hash_time;
         // Post statistics every 5 seconds
@@ -638,12 +639,11 @@ int main(int argc, char* argv[]) {
 
         if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
                              PORT_CLIENT_TO_SERVER, 10, 500, true) < 0) {
-            LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+            LOG_INFO("Server is not on STUN, attempting to connect directly");
             using_stun = false;
-            if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
-                                            PORT_CLIENT_TO_SERVER, 10, 500, false ) < 0 )
-            {
-                LOG_WARNING( "Failed to connect to server" );
+            if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
+                                 PORT_CLIENT_TO_SERVER, 10, 500, false) < 0) {
+                LOG_WARNING("Failed to connect to server");
                 continue;
             }
         }
@@ -654,7 +654,7 @@ int main(int argc, char* argv[]) {
 
         SocketContext PacketReceiveContext = {0};
         if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
-                             PORT_SERVER_TO_CLIENT, 1, 500, using_stun ) < 0) {
+                             PORT_SERVER_TO_CLIENT, 1, 500, using_stun) < 0) {
             LOG_ERROR("Failed finish connection to server");
             closesocket(PacketSendContext.s);
             continue;
@@ -672,7 +672,8 @@ int main(int argc, char* argv[]) {
         // not-speed-sensitive applications
 
         if (CreateTCPContext(&PacketTCPContext, (char*)server_ip,
-                             PORT_SHARED_TCP, 1, tcp_connection_timeout, using_stun ) < 0) {
+                             PORT_SHARED_TCP, 1, tcp_connection_timeout,
+                             using_stun) < 0) {
             LOG_ERROR("Failed finish connection to server");
             tcp_connection_timeout += 250;
             closesocket(PacketSendContext.s);

@@ -18,7 +18,7 @@ int handler(Display* d, XErrorEvent* a) {
     return 0;
 }
 
-void get_wh(struct CaptureDevice* device, int* w, int* h) {
+void get_wh(CaptureDevice* device, int* w, int* h) {
     XWindowAttributes window_attributes;
     if (!XGetWindowAttributes(device->display, device->root,
                               &window_attributes)) {
@@ -29,13 +29,13 @@ void get_wh(struct CaptureDevice* device, int* w, int* h) {
     *h = window_attributes.height;
 }
 
-bool is_same_wh(struct CaptureDevice* device) {
+bool is_same_wh(CaptureDevice* device) {
     int w, h;
     get_wh(device, &w, &h);
     return device->width == w && device->height == h;
 }
 
-int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
+int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     device->display = XOpenDisplay(NULL);
     if (!device->display) {
         mprintf("ERROR: CreateCaptureDevice display did not open\n");
@@ -117,7 +117,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     return 0;
 }
 
-int CaptureScreen(struct CaptureDevice* device) {
+int CaptureScreen(CaptureDevice* device) {
     static bool first = true;
 
     XLockDisplay(device->display);
@@ -171,9 +171,9 @@ int CaptureScreen(struct CaptureDevice* device) {
     return update;
 }
 
-void ReleaseScreen(struct CaptureDevice* device) {}
+void ReleaseScreen(CaptureDevice* device) {}
 
-void DestroyCaptureDevice(struct CaptureDevice* device) {
+void DestroyCaptureDevice(CaptureDevice* device) {
     if (device->image) {
         XFree(device->image);
     }

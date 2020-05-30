@@ -1,5 +1,13 @@
 #ifndef CURSOR_H
 #define CURSOR_H
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file cursor.h
+ * @brief This file defines the cursor types, functions, init and get.
+============================
+Usage
+============================
+*/
 
 /*
 ============================
@@ -48,16 +56,16 @@ Public Functions
 ============================
 */
 
-/*
-@brief                          Initialize all cursors
-*/
+/**
+ * @brief                          Initialize all cursors
+ */
 void InitCursors();
 
-/*
-@brief                          Returns the current cursor image
-
-@returns                        Current FractalCursorImage
-*/
+/**
+ * @brief                          Returns the current cursor image
+ *
+ * @returns                        Current FractalCursorImage
+ */
 FractalCursorImage GetCurrentCursor();
 
 #endif  // CURSOR_H
