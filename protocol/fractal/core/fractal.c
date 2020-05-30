@@ -6,6 +6,7 @@
 
 #include "fractal.h"  // header file for this protocol, includes winsock
 #include "../utils/json.h"
+#include <stdio.h>
 
 // Print Memory Info
 #if defined(_WIN32)
@@ -15,6 +16,74 @@
 #else
 #include <sys/sysinfo.h>
 #endif
+
+void PrintOSInfo()
+{
+    char buf[1024];
+
+#ifdef _WIN32
+
+    OSVERSIONINFOEXW version = {0};
+    char szOS[512];
+
+    version.dwOSVersionInfoSize = sizeof( version );
+#pragma warning(suppress : 4996) 
+    GetVersionExW( (OSVERSIONINFO*)&version );
+
+    int major_version = -1;
+    for( int i = 0; i < 256; i++ )
+    {
+        OSVERSIONINFOEXW osVersionInfo = { 0 };
+        osVersionInfo.dwOSVersionInfoSize = sizeof( OSVERSIONINFOEX );
+        osVersionInfo.dwMajorVersion = i;
+        ULONGLONG maskCondition = VerSetConditionMask( 0, VER_MAJORVERSION, VER_EQUAL );
+        if( VerifyVersionInfoW( &osVersionInfo, VER_MAJORVERSION, maskCondition ) )
+        {
+            major_version = i;
+        }
+    }
+
+    int minor_version = -1;
+    for( int i = 0; i < 256; i++ )
+    {
+        OSVERSIONINFOEXW osVersionInfo = { 0 };
+        osVersionInfo.dwOSVersionInfoSize = sizeof( OSVERSIONINFOEX );
+        osVersionInfo.dwMajorVersion = i;
+        ULONGLONG maskCondition = VerSetConditionMask( 0, VER_MINORVERSION, VER_EQUAL );
+        if( VerifyVersionInfoW( &osVersionInfo, VER_MINORVERSION, maskCondition ) )
+        {
+            minor_version = i;
+        }
+    }
+
+    snprintf( szOS, sizeof(szOS), "Microsoft Windows %d.%d", major_version, minor_version );
+
+#endif
+
+#ifdef _WIN32
+    snprintf( buf, sizeof(buf), "32-bit %s", szOS );
+#elif _WIN64
+    snprintf( buf, sizeof( buf ), "64-bit %s", szOS );
+#elif __APPLE__ || __MACH__
+    buf = "Mac OSX";
+#elif __linux__
+    struct utsname uts;
+    uname( &uts );
+    snprintf( buf, sizeof( buf ), "Linux %s", uts.sysname );
+#elif __FreeBSD__
+    struct utsname uts;
+    uname( &uts );
+    snprintf( buf, sizeof( buf ), "FreeBSD %s", uts.sysname );
+#elif __unix || __unix__
+    struct utsname uts;
+    uname( &uts );
+    snprintf( buf, sizeof( buf ), "Unix %s", uts.sysname );
+#else
+    buf = "Other";
+#endif
+
+    LOG_INFO( "  OS: %s", buf );
+}
 
 void PrintRAMInfo()
 {
@@ -171,6 +240,7 @@ void PrintSystemInfo()
 {
     LOG_INFO( "Hardware information:" );
 
+    PrintOSInfo();
     PrintCPUInfo();
     PrintRAMInfo();
 
