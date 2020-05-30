@@ -5,6 +5,7 @@
  **/
 
 #include "fractal.h"  // header file for this protocol, includes winsock
+
 #include "../utils/json.h"
 
 // Print Memory Info
@@ -198,9 +199,8 @@ bool is_dev_vm() {
     }
 
     json_t json;
-    if( !parse_json( json_str, &json ) )
-    {
-        LOG_WARNING( "Failed to parse JSON from /vm/isDev" );
+    if (!parse_json(json_str, &json)) {
+        LOG_WARNING("Failed to parse JSON from /vm/isDev");
         already_obtained_vm_type = true;
         is_dev = true;
         return is_dev;
@@ -229,7 +229,7 @@ bool is_dev_vm() {
     }
 }
 
-int GetFmsgSize(struct FractalClientMessage* fmsg) {
+int GetFmsgSize(FractalClientMessage* fmsg) {
     if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
         return sizeof(*fmsg);
     } else if (fmsg->type == CMESSAGE_CLIPBOARD) {

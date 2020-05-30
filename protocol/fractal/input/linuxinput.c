@@ -309,7 +309,7 @@ int GetLinuxMouseButton(FractalMouseButton fractal_code) {
 
 // void KeyUp(int x11_keysym) { SendKeyInput(x11_keysym, 0); }
 
-// void updateKeyboardState(struct FractalClientMessage* fmsg) {
+// void updateKeyboardState(FractalClientMessage* fmsg) {
 //     if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
 //         mprintf(
 //             "updateKeyboardState requires fmsg.type to be "
@@ -545,8 +545,7 @@ void EmitInputEvent(int fd, int type, int code, int val) {
 
 /// @brief replays a user action taken on the client and sent to the server
 /// @details parses the FractalClientMessage struct and send input to Windows OS
-bool ReplayUserInput(input_device_t* input_device,
-                     struct FractalClientMessage* fmsg) {
+bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
     // switch to fill in the event depending on the FractalClientMessage type
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:

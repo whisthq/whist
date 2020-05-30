@@ -99,18 +99,16 @@ int32_t MultithreadedDestroyEncoder(void* opaque) {
 int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
-
 #if defined(_WIN32)
     // set Windows DPI
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 #endif
 
-
     SocketContext socketContext = *(SocketContext*)opaque;
 
     // Init DXGI Device
-    struct CaptureDevice rdevice;
-    struct CaptureDevice* device = NULL;
+    CaptureDevice rdevice;
+    CaptureDevice* device = NULL;
 
     InitCursors();
 
@@ -210,7 +208,7 @@ int32_t SendVideo(void* opaque) {
                     update_encoder = false;
                 } else {
                     SDL_CreateThread(MultithreadedEncoderFactory,
-                                    "MultithreadedEncoderFactory", NULL);
+                                     "MultithreadedEncoderFactory", NULL);
                 }
             }
         }
@@ -275,17 +273,16 @@ int32_t SendVideo(void* opaque) {
             static double max_frame_size = 0.0;
 
             frame_stat_number++;
-            total_frame_time += GetTimer( t );
-            max_frame_time = max( max_frame_time, GetTimer( t ) );
+            total_frame_time += GetTimer(t);
+            max_frame_time = max(max_frame_time, GetTimer(t));
             total_frame_sizes += encoder->encoded_frame_size;
-            max_frame_size = max( max_frame_size, encoder->encoded_frame_size );
+            max_frame_size = max(max_frame_size, encoder->encoded_frame_size);
 
-            if( frame_stat_number % 30 == 0 )
-            {
-                LOG_INFO( "Longest Encode Time: %f\n", max_frame_time );
-                LOG_INFO( "Average Encode Time: %f\n", total_frame_time / 30 );
-                LOG_INFO( "Longest Encode Size: %f\n", max_frame_size );
-                LOG_INFO( "Average Encode Size: %f\n", total_frame_sizes / 30 );
+            if (frame_stat_number % 30 == 0) {
+                LOG_INFO("Longest Encode Time: %f\n", max_frame_time);
+                LOG_INFO("Average Encode Time: %f\n", total_frame_time / 30);
+                LOG_INFO("Longest Encode Size: %f\n", max_frame_size);
+                LOG_INFO("Average Encode Size: %f\n", total_frame_sizes / 30);
                 total_frame_time = 0.0;
                 max_frame_time = 0.0;
                 total_frame_sizes = 0.0;
@@ -373,7 +370,7 @@ int32_t SendVideo(void* opaque) {
                     // "(I-frame)" :
                     // "");
 
-                    StartTimer( &t );
+                    StartTimer(&t);
 
                     // Send video packet to client
                     if (SendUDPPacket(
@@ -388,7 +385,8 @@ int32_t SendVideo(void* opaque) {
                         id++;
                     }
 
-                    //LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n", GetTimer( t ), frame_size );
+                    // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
+                    // GetTimer( t ), frame_size );
 
                     previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time = GetTimer(server_frame_timer);
@@ -409,7 +407,7 @@ int32_t SendVideo(void* opaque) {
 #endif
     DestroyCaptureDevice(device);
     device = NULL;
-    MultithreadedDestroyEncoder( encoder );
+    MultithreadedDestroyEncoder(encoder);
     encoder = NULL;
 
     return 0;
@@ -531,20 +529,21 @@ void update() {
 
         snprintf(cmd, sizeof(cmd),
 #ifdef _WIN32
-            "powershell -command \"iwr -outf 'C:\\Program "
-            "Files\\Fractal\\update.bat' "
-            "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/update.bat\""
-            ,
-            get_branch()
+                 "powershell -command \"iwr -outf 'C:\\Program "
+                 "Files\\Fractal\\update.bat' "
+                 "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/"
+                 "update.bat\"",
+                 get_branch()
 #else
-            "TODO: Linux command?"
+                 "TODO: Linux command?"
 #endif
         );
 
         runcmd(cmd, NULL);
 
         snprintf(cmd, sizeof(cmd),
-                 "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\" %s", get_branch());
+                 "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\" %s",
+                 get_branch());
 
         runcmd(
 #ifdef _WIN32
@@ -560,8 +559,8 @@ void update() {
 #include <time.h>
 
 int main() {
-//    static_assert(sizeof(unsigned short) == 2,
-//                  "Error: Unsigned short is not length 2 bytes!\n");
+    //    static_assert(sizeof(unsigned short) == 2,
+    //                  "Error: Unsigned short is not length 2 bytes!\n");
 
 #if defined(_WIN32)
     // set Windows DPI
@@ -626,8 +625,7 @@ int main() {
         }
 
         if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 500,
-                             USING_STUN) <
-            0) {
+                             USING_STUN) < 0) {
             LOG_WARNING("Failed to finish connection (Failed at TCP context).");
             closesocket(PacketReceiveContext.s);
             closesocket(PacketSendContext.s);
@@ -688,8 +686,8 @@ int main() {
             LOG_WARNING("Failed to create input device for playback.");
         }
 
-        struct FractalClientMessage local_fmsg;
-        struct FractalClientMessage* fmsg;
+        FractalClientMessage local_fmsg;
+        FractalClientMessage* fmsg;
 
         clock last_ping;
         StartTimer(&last_ping);
@@ -842,7 +840,7 @@ int main() {
                     LOG_INFO("MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps);
                     max_mbps =
                         max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
-                    //update_encoder = true;
+                    // update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
                     LOG_INFO("Ping Received - ID %d", fmsg->ping_id);
 
