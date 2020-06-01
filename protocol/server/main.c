@@ -612,6 +612,8 @@ int main() {
     }
 #endif
 
+    update();
+
     while (true) {
         srand(rand() * (unsigned int)time(NULL) + rand());
         connection_id = rand();
