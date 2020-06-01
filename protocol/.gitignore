@@ -52,3 +52,8 @@ CTestTestfile.cmake
 #docs
 docs/html/
 docs/latex/
+
+#vagrant
+.vagrant
+*.box
+ubuntu-bionic-18.04-cloudimg-console.log
