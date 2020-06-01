@@ -82,6 +82,12 @@ def disk(action, **kwargs):
         body = request.get_json()
         setUpdateAccepted(body["disk_name"], body["accepted"], kwargs["ID"])
         return jsonify({"status": 200}), 200
+    elif action == "acceptedUpdateFetch":
+        body = request.get_json()
+        accepted = setUpdateAccepted(body["disk_name"], kwargs["ID"])
+        if accepted is None:
+            return jsonify({}), 400
+        return jsonify({"accepted": accepted}), 200
     elif action == "delete":
         body = request.get_json()
         username = body["username"]
@@ -113,10 +119,23 @@ def disk(action, **kwargs):
         return jsonify({"status": 200}), 200
 
 
-@disk_bp.route("/version", methods=["POST"])
+@disk_bp.route("/version/<action>", methods=["POST"])
 @generateID
 @logRequestInfo
-def version(**kwargs):
-    body = request.get_json()
-    setBranchVersion(body["branch"], body["version"], kwargs["ID"])
-    return jsonify({"status": 200}), 200
+def version(action, **kwargs):
+    if action == "set":
+        body = request.get_json()
+        setBranchVersion(body["branch"], body["version"], kwargs["ID"])
+        return jsonify({"status": 200}), 200
+    elif action == "get":
+        body = request.get_json()
+        branch = body["branch"]
+        try:
+            version = getBranchVersion(branch, kwargs["ID"])
+            sendInfo(kwargs["ID"], "Version found for branch {}".format(branch))
+            return ({"version": version}), 200
+        except:
+            sendError(
+                kwargs["ID"], "Version found not found for branch {}".format(branch)
+            )
+            return ({"version": None}), 404
