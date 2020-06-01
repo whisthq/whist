@@ -393,7 +393,7 @@ int32_t SendVideo(void* opaque) {
                     }
                     for (int i = 0; i < num_spectator_connections; i++) {
                         if (SendUDPPacket(
-                                &SpectatorSendContext[num_spectator_connections],
+                                &SpectatorSendContext[i],
                                 PACKET_VIDEO, (uint8_t*)frame,
                                 frame_size, id, STARTING_BURST_BITRATE,
                                 NULL,
@@ -579,11 +579,12 @@ int MultithreadedWaitForSpectator( void* opaque ) {
     while (connected) {
         if (CreateUDPContext(&SpectatorSendContext[num_spectator_connections],
                              NULL, PORT_SPECTATOR + num_spectator_connections,
-                             1, 1000,
+                             1, 5000,
                              USING_STUN) < 0) {
             LOG_INFO("Waiting for spectator");
             continue;
         }
+        LOG_INFO("SPECTATOR #%d CONNECTED!", num_spectator_connections);
         num_spectator_connections++;
     }
     return 0;
@@ -749,6 +750,9 @@ int main() {
                 Ack(&PacketTCPContext);
                 Ack(&PacketSendContext);
                 Ack(&PacketReceiveContext);
+                for (int i = 0; i < num_spectator_connections; i++) {
+                    Ack(&SpectatorSendContext[i]);
+                }
 #endif
                 updateStatus(true);
                 StartTimer(&ack_timer);
@@ -818,6 +822,19 @@ int main() {
 
                 FractalPacket* decrypted_packet =
                     ReadUDPPacket(&PacketReceiveContext);
+
+                for (int i = 0;
+                     i < num_spectator_connections && !decrypted_packet; i++) {
+                    LOG_INFO("READING FROM %d", i);
+                    SDL_Delay(50);
+                    FractalPacket* spectator_decrypted_packet =
+                        ReadUDPPacket(&SpectatorSendContext[i]);
+                    if (spectator_decrypted_packet->type ==
+                        MESSAGE_IFRAME_REQUEST) {
+                        LOG_INFO("Iframe requested from spectator!");
+                        decrypted_packet = spectator_decrypted_packet;
+                    }
+                }
 
                 if (decrypted_packet) {
                     // Copy data into an fmsg
