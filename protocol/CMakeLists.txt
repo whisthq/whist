@@ -118,7 +118,12 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
     endforeach(LIB)
     message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
-    include_directories(include/ffmpeg)
+    find_path(FFMPEG_AVCODEC_INCLUDE_DIR
+            NAMES libavcodec/avcodec.h
+            PATHS ${_FFMPEG_AVCODEC_INCLUDE_DIRS} /usr/include /usr/local/include /opt/local/include /sw/include
+            PATH_SUFFIXES ffmpeg libav
+            )
+    include_directories(${FFMPEG_AVCODEC_INCLUDE_DIR})
 else()
     FOREACH(LIB ${FFMPEG_LIBS})
         message(STATUS "Looking for lib ${LIB}")
