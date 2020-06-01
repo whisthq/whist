@@ -24,6 +24,8 @@ Custom Types
 ============================
 */
 
+#define MAX_ENCODER_PACKETS 20
+
 typedef struct encoder_t {
     AVCodec* pCodec;
     AVCodecContext* pCodecCtx;
@@ -33,7 +35,7 @@ typedef struct encoder_t {
     AVBufferRef* hw_device_ctx;
 
     int num_packets;
-    AVPacket packets[20];
+    AVPacket packets[MAX_ENCODER_PACKETS];
 
     int in_width, in_height;
     int out_width, out_height;
