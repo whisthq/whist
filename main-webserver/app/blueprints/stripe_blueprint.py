@@ -168,6 +168,42 @@ def payment(action, **kwargs):
                 return jsonify({"status": 200}), 200
         return jsonify({"status": 400}), 400
 
+    # Changes a stripe subscription
+    elif action == "changeSubscription":
+        body = request.get_json()
+
+        email = body["email"]
+        newPlan = body["plan"]
+        customers = fetchCustomers()
+        for customer in customers:
+            if email == customer["username"]:
+                subscriptionId = customer["subscription"]
+                try:
+                    subscription = stripe.Subscription.retrieve(subscriptionId)
+                    payload = stripe.Subscription.modify(
+                        subscription.id,
+                        cancel_at_period_end=False,
+                        proration_behavior="create_prorations",
+                        items=[
+                            {
+                                "id": subscription["items"]["data"][0].id,
+                                "price": "price_CBb6IXqvTLXp3f",
+                            }
+                        ],
+                    )
+                    sendInfo(
+                        kwargs["ID"],
+                        "Subscription changed to {} for account {}".format(
+                            newPlan, email
+                        ),
+                    )
+                except Exception as e:
+                    sendError(kwargs["ID"], e)
+                    pass
+                deleteCustomer(email)
+                return jsonify({"status": 200}), 200
+        return jsonify({"status": 400}), 400
+
     elif action == "discount":
         body = request.get_json()
 
@@ -228,6 +264,7 @@ def payment(action, **kwargs):
 
         return jsonify({"status": 200}), 200
 
+    # Inserts a customer to the table
     elif action == "insert":
         body = request.get_json()
         trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1)
@@ -377,6 +414,32 @@ def payment(action, **kwargs):
             return jsonify({'status': 404, 'error': 'Invalid plan type'}), 404
 
 
+
+    elif action == "update" and request.method == 'POST':
+        body = request.get_json()
+
+        username = body["username"]
+        new_plan_type = body["plan"]
+        new_plan_id = None
+        if new_plan_type == 'Hourly':
+            new_plan_id = os.getenv('HOURLY_PLAN_ID')
+        elif new_plan_type == 'Monthly':
+            new_plan_id = os.getenv('MONTHLY_PLAN_ID')
+        elif new_plan_type == 'Unlimited':
+            new_plan_id = os.getenv('UNLIMITED_PLAN_ID')
+        else:
+            return jsonify({'status': 404, 'error': 'Invalid plan type'}), 404
+
+        customer = fetchCustomer(username)
+        if customer:
+            old_subscription = customer['subscription']
+            subscription = stripe.Subscription.retrieve(old_subscription)
+            if subscription:
+                subscription_id = subscription["items"]["data"][0].id
+                stripe.SubscriptionItem.modify(subscription_id, plan=new_plan_id)
+                return jsonify({"status": 200}), 200
+        else:
+            return jsonify({'status': 404, 'error': 'Invalid plan type'}), 404
 
 # REFERRAL endpoint
 
