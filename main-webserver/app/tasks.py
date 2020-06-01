@@ -851,9 +851,27 @@ def deallocateVM(self, vm_name, ID=-1):
 	return {"status": 200}
 
 @celery.task(bind=True)
-def installApplications(self, disk_name, vm_name, apps, ID=-1):
+def installApplications(self, vm_name, apps, ID=-1):
+    _, compute_client, _ = createClients()
 
-	return {"status": 200}
+    for app in apps:
+        print("TASK: Starting to install " + app)
+        command = "choco install blender --force"  # TODO: based on application
+
+        run_command_parameters = {
+            "command_id": "RunPowerShellScript",
+            "script": [command],
+        }
+        poller = compute_client.virtual_machines.run_command(
+            os.environ.get("VM_GROUP"), vm_name, run_command_parameters
+        )
+
+        result = poller.result()
+        print(app + " installed to " + vm_name)
+        print(result.value[0].message)
+
+    return {"status": 200}
+
 
 
 @celery.task(bind=True)
