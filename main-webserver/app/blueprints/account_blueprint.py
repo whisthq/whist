@@ -135,16 +135,6 @@ def account_check_verified(**kwargs):
     return jsonify({"status": 200, "verified": verified}), 200
 
 
-@account_bp.route("/account/lookup", methods=["POST"])
-@generateID
-@logRequestInfo
-def account_lookup(**kwargs):
-    body = request.get_json()
-    username = body["username"]
-
-    return jsonify({"exists": lookup(username)}), 200
-
-
 @account_bp.route("/account/verifyUser", methods=["POST"])
 @jwt_required
 @generateID

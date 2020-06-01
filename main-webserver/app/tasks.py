@@ -916,7 +916,7 @@ def installApplications(self, vm_name, apps, ID=-1):
         )
 
         result = poller.result()
-        print(app + " installed to " + vm_name)
+        print("SUCCESS: " + app + " installed to " + vm_name)
         print(result.value[0].message)
 
     return {"status": 200}

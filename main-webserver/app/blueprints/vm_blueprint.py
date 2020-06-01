@@ -296,16 +296,15 @@ def vm(action, **kwargs):
 
         task = installApplications.apply_async(
             [
-                body["disk_name"],
                 body["vm_name"],
-                body["apps"]
-                kwargs["ID"],
+                body["apps"],
+                kwargs["ID"]
             ]
         )
 
         if not task:
             sendError(kwargs["ID"], "Error installing applications")
-            return jsonify({}), 400
+            return jsonify({"error": "Error creating task"}), 400 # TODO: change later
         return jsonify({"ID": task.id}), 202
 
     return jsonify({}), 400
