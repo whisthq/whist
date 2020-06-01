@@ -696,11 +696,21 @@ int video_encoder_encode(encoder_t *encoder, void *rgb_pixels, int pitch) {
 
     encoder->encoded_frame_size = 4;
     encoder->num_packets = 0;
-    while (video_encoder_receive_packet(
-               encoder, &encoder->packets[encoder->num_packets]) == 0) {
+    int res;
+
+    while ((res = video_encoder_receive_packet(
+               encoder, &encoder->packets[encoder->num_packets])) == 0) {
+        if (res < 0) {
+            LOG_ERROR("PACKET RETURNED AN ERROR");
+            return -1;
+        }
         encoder->encoded_frame_size +=
             4 + encoder->packets[encoder->num_packets].size;
         encoder->num_packets++;
+        if (encoder->num_packets == MAX_ENCODER_PACKETS) {
+            LOG_ERROR("TOO MANY PACKETS: REACHED %d", encoder->num_packets);
+            return -1;
+        }
     }
 
     return 0;

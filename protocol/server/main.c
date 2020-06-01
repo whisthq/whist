@@ -270,6 +270,7 @@ int32_t SendVideo(void* opaque) {
             {
                 // bad boy error
                 LOG_ERROR( "Error encoding video frame!" );
+                connected = false;
                 break;
             } else if( res > 0 )
             {
