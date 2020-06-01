@@ -422,11 +422,20 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
             if( !try_next_decoder( decoder ) )
             {
                 destroy_video_decoder( decoder );
+                for( int i = 0; i < num_packets; i++ )
+                {
+                    av_packet_unref( &packets[i] );
+                }
+                free( packets );
                 return false;
             }
         }
     }
 
+    for( int i = 0; i < num_packets; i++ )
+    {
+        av_packet_unref( &packets[i] );
+    }
     free( packets );
 
     // If frame was computed on the CPU
