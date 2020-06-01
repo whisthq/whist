@@ -11,6 +11,9 @@ Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging
 Staging2 hosted on Heroku: https://cube-celery-staging2.herokuapp.com  
 Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging2
 
+Staging3 hosted on Heroku: https://cube-celery-staging3.herokuapp.com  
+Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging3
+
 ## Setup
 
 ### Local setup (Windows/MacOS)
@@ -57,7 +60,7 @@ To push to the Heroku production/staging servers, you’ll first need to set up 
 **Staging**
 
 Add the heroku app as a remote: `git remote add staging https://git.heroku.com/cube-celery-staging.git`  
-We have a secondary heroku staging app if two people want to deploy and test at the same time: `git remote add staging2 https://git.heroku.com/cube-celery-staging2.git`
+We have a secondary heroku staging app if two people want to deploy and test at the same time: `git remote add staging2 https://git.heroku.com/cube-celery-staging2.git`. We also have a tertiary staging app.
 
 To push to the primary staging server, first make sure you’re in the staging branch, then type `git add .`, then `git commit -m “COMMIT MESSAGE”`, then finally `git push staging staging:master`. If you are using another branch with name as {branchName}, you push via: `git push staging {branchName}:master`. If you get a git pull error, git pull by typing `git pull staging master` to pull from Heroku or `git pull origin staging` to pull from Github. To view the server logs, type `heroku logs --tail --remote staging`.
 
