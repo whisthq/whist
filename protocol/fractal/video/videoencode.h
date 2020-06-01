@@ -31,7 +31,9 @@ typedef struct encoder_t {
     AVFilterContext* pFilterGraphSource;
     AVFilterContext* pFilterGraphSink;
     AVBufferRef* hw_device_ctx;
-    AVPacket packet;
+
+    int num_packets;
+    AVPacket packets[20];
 
     int in_width, in_height;
     int out_width, out_height;
@@ -82,6 +84,8 @@ encoder_t* create_video_encoder(int in_width, int in_height, int out_width,
  * @param pitch                    The number of bytes per line
  */
 int video_encoder_encode(encoder_t* encoder, void* rgb_pixels, int pitch);
+
+void video_encoder_write_buffer(encoder_t* encoder, int* buf);
 
 /**
  * @brief                          Set the next frame to be an i-frame

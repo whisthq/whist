@@ -9,6 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void video_encoder_filter_graph_intake(encoder_t *encoder, void *rgb_pixels,
+                                       int pitch);
+int video_encoder_receive_packet(encoder_t *encoder, AVPacket *packet);
+
 #define GOP_SIZE 9999
 
 void set_opt(encoder_t *encoder, char *option, char *value) {
@@ -20,12 +24,10 @@ void set_opt(encoder_t *encoder, char *option, char *value) {
 
 typedef encoder_t *(*video_encoder_creator)(int, int, int, int, int);
 
-encoder_t *create_nvenc_encoder(int in_width, int in_height,
-                                      int out_width, int out_height,
-                                      int bitrate) {
+encoder_t *create_nvenc_encoder(int in_width, int in_height, int out_width,
+                                int out_height, int bitrate) {
     LOG_INFO("Trying NVENC encoder...");
-    encoder_t *encoder =
-        (encoder_t *)malloc(sizeof(encoder_t));
+    encoder_t *encoder = (encoder_t *)malloc(sizeof(encoder_t));
     memset(encoder, 0, sizeof(encoder_t));
 
     encoder->in_width = in_width;
@@ -258,10 +260,9 @@ encoder_t *create_nvenc_encoder(int in_width, int in_height,
 }
 
 encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width,
-                                    int out_height, int bitrate) {
+                              int out_height, int bitrate) {
     LOG_INFO("Trying QSV encoder...");
-    encoder_t *encoder =
-        (encoder_t *)malloc(sizeof(encoder_t));
+    encoder_t *encoder = (encoder_t *)malloc(sizeof(encoder_t));
     memset(encoder, 0, sizeof(encoder_t));
 
     encoder->in_width = in_width;
@@ -448,10 +449,9 @@ encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width,
 }
 
 encoder_t *create_sw_encoder(int in_width, int in_height, int out_width,
-                                   int out_height, int bitrate) {
+                             int out_height, int bitrate) {
     LOG_INFO("Trying software encoder...");
-    encoder_t *encoder =
-        (encoder_t *)malloc(sizeof(encoder_t));
+    encoder_t *encoder = (encoder_t *)malloc(sizeof(encoder_t));
     memset(encoder, 0, sizeof(encoder_t));
 
     encoder->in_width = in_width;
@@ -610,9 +610,8 @@ encoder_t *create_sw_encoder(int in_width, int in_height, int out_width,
 
 // Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the
 // next one when the previous one doesn't work
-encoder_t *create_video_encoder(int in_width, int in_height,
-                                      int out_width, int out_height,
-                                      int bitrate) {
+encoder_t *create_video_encoder(int in_width, int in_height, int out_width,
+                                int out_height, int bitrate) {
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only linux uses FFmpeg 3.4.x because of canonical system packages
@@ -688,8 +687,37 @@ void video_encoder_unset_iframe(encoder_t *encoder) {
     encoder->sw_frame->key_frame = 0;
 }
 
-void video_encoder_filter_graph_intake(encoder_t *encoder,
-                                       void *rgb_pixels, int pitch) {
+int video_encoder_encode(encoder_t *encoder, void *rgb_pixels, int pitch) {
+    video_encoder_filter_graph_intake(encoder, rgb_pixels, pitch);
+
+    encoder->encoded_frame_size = 4;
+    encoder->num_packets = 0;
+    while (video_encoder_receive_packet(
+               encoder, &encoder->packets[encoder->num_packets]) == 0) {
+        encoder->encoded_frame_size +=
+            4 + encoder->packets[encoder->num_packets].size;
+        encoder->num_packets++;
+    }
+
+    return 0;
+}
+
+void video_encoder_write_buffer(encoder_t *encoder, int *buf) {
+    *buf = encoder->num_packets;
+    buf++;
+    for (int i = 0; i < encoder->num_packets; i++) {
+        *buf = encoder->packets[i].size;
+        buf++;
+    }
+    char *char_buf = buf;
+    for (int i = 0; i < encoder->num_packets; i++) {
+        memcpy(char_buf, encoder->packets[i].data, encoder->packets[i].size);
+        char_buf += encoder->packets[i].size;
+    }
+}
+
+void video_encoder_filter_graph_intake(encoder_t *encoder, void *rgb_pixels,
+                                       int pitch) {
     memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
     memset(encoder->sw_frame->linesize, 0, sizeof(encoder->sw_frame->linesize));
     encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
@@ -715,10 +743,7 @@ void video_encoder_filter_graph_intake(encoder_t *encoder,
     }
 }
 
-int video_encoder_encode(encoder_t *encoder, void* rgb_pixels, int pitch ) {
-
-    video_encoder_filter_graph_intake( encoder, rgb_pixels, pitch );
-
+int video_encoder_receive_packet(encoder_t *encoder, AVPacket *packet) {
     int res_buffer, res_encoder;
 
     // submit all available frames to the encoder
@@ -742,9 +767,8 @@ int video_encoder_encode(encoder_t *encoder, void* rgb_pixels, int pitch ) {
         return -1;
     }
 
-    av_packet_unref(&encoder->packet);
-    av_init_packet(&encoder->packet);
-    res_encoder = avcodec_receive_packet(encoder->pCodecCtx, &encoder->packet);
+    av_init_packet(packet);
+    res_encoder = avcodec_receive_packet(encoder->pCodecCtx, packet);
     if (res_encoder == AVERROR(EAGAIN) || res_encoder == AVERROR(EOF)) {
         return 1;
     } else if (res_encoder < 0) {
@@ -752,9 +776,6 @@ int video_encoder_encode(encoder_t *encoder, void* rgb_pixels, int pitch ) {
                     av_err2str(res_encoder));
         return -1;
     }
-
-    encoder->encoded_frame_size = encoder->packet.size;
-    encoder->encoded_frame_data = encoder->packet.data;
 
     return 0;
 }
