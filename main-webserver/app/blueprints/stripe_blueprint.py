@@ -168,6 +168,42 @@ def payment(action, **kwargs):
                 return jsonify({"status": 200}), 200
         return jsonify({"status": 400}), 400
 
+    # Changes a stripe subscription
+    elif action == "changeSubscription":
+        body = request.get_json()
+
+        email = body["email"]
+        newPlan = body["plan"]
+        customers = fetchCustomers()
+        for customer in customers:
+            if email == customer["username"]:
+                subscriptionId = customer["subscription"]
+                try:
+                    subscription = stripe.Subscription.retrieve(subscriptionId)
+                    payload = stripe.Subscription.modify(
+                        subscription.id,
+                        cancel_at_period_end=False,
+                        proration_behavior="create_prorations",
+                        items=[
+                            {
+                                "id": subscription["items"]["data"][0].id,
+                                "price": "price_CBb6IXqvTLXp3f",
+                            }
+                        ],
+                    )
+                    sendInfo(
+                        kwargs["ID"],
+                        "Subscription changed to {} for account {}".format(
+                            newPlan, email
+                        ),
+                    )
+                except Exception as e:
+                    sendError(kwargs["ID"], e)
+                    pass
+                deleteCustomer(email)
+                return jsonify({"status": 200}), 200
+        return jsonify({"status": 400}), 400
+
     elif action == "discount":
         body = request.get_json()
 
@@ -228,6 +264,7 @@ def payment(action, **kwargs):
 
         return jsonify({"status": 200}), 200
 
+    # Inserts a customer to the table
     elif action == "insert":
         body = request.get_json()
         trial_end = shiftUnixByWeek(dateToUnix(getToday()), 1)

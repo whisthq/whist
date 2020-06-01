@@ -2,13 +2,14 @@
 
 Webserver to handle interfacing with Fractal cloud computers hosted on Azure, and for interfacing with a variety of website functionalities. Runs Flask with Celery for asynchronous task handling.
 
-Production hosted on Heroku: https://cube-celery-vm.herokuapp.com
-
+Production hosted on Heroku: https://cube-celery-vm.herokuapp.com  
 Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-vm
 
-Staging hosted on Heroku: https://cube-celery-staging.herokuapp.com
-
+Staging hosted on Heroku: https://cube-celery-staging.herokuapp.com  
 Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging
+
+Staging2 hosted on Heroku: https://cube-celery-staging2.herokuapp.com  
+Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging2
 
 ## Setup
 
@@ -21,7 +22,8 @@ Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging
   - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
 - If you have Python >3.6 or Python <3.0:
   - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
-  - Find the directory where python.exe is installed. Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
+  - Find the directory where python 3 is installed. On linux, this can be done by typing into the terminal: `which python3`.
+  - Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
   - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
 
 3. Install everything by typing `pip install -r requirements.txt`. Make sure you're in the virtual environment when doing this.
@@ -41,20 +43,25 @@ Required environment variables
 HEROKU_API_KEY=<heroku-api-key>
 
 You can store all docker env variables in a file such as `.envdocker`
-Then run docker with 
+Then run docker with
 
 `docker run --env-file .envdocker -t vm-webserver:latest`
 
 Or run docker like
 `docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
 
-
 ### Run on Heroku
 
-**Staging**
-`https://git.heroku.com/cube-celery-staging.git`
+To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. Make sure you are added as a collaborator to any of the Heroku apps you plan to use. You can contact Ming, Phil, or Jonathan to be added.
 
-To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. To push to the staging server, first make sure you’re in the staging branch, then type `git add .`, then `git commit -m “COMMIT MESSAGE”`, then finally `git push staging staging:master`. If you are using another branch with name as {branchName}, you push via: `git push staging {branchName}:master`. If you get a git pull error, git pull by typing `git pull staging master` to pull from Heroku or `git pull origin staging` to pull from Github. To view the server logs, type `heroku logs --tail --remote staging`.
+**Staging**
+
+Add the heroku app as a remote: `git remote add staging https://git.heroku.com/cube-celery-staging.git`  
+We have a secondary heroku staging app if two people want to deploy and test at the same time: `git remote add staging2 https://git.heroku.com/cube-celery-staging2.git`
+
+To push to the primary staging server, first make sure you’re in the staging branch, then type `git add .`, then `git commit -m “COMMIT MESSAGE”`, then finally `git push staging staging:master`. If you are using another branch with name as {branchName}, you push via: `git push staging {branchName}:master`. If you get a git pull error, git pull by typing `git pull staging master` to pull from Heroku or `git pull origin staging` to pull from Github. To view the server logs, type `heroku logs --tail --remote staging`.
+
+To push to the secondary staging server, the steps are all the same, except you replace the remote with `staging2`.
 
 To push to the Github production/staging repo, run `git add .`, `git commit -m "COMMIT MESSAGE"`, and finally `git push origin staging` to push to the staging repo, and `git push origin master` to push to the production repo.
 
@@ -72,9 +79,11 @@ Select Scheme, and for the server URL scheme, copy the DATABASE_URL config var f
 
 ## Styling
 
-To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python black](https://github.com/psf/black). You may find a variety of tutorial online for your personal setup. This README covers how to set it up on VSCode.
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python black](https://github.com/psf/black) before making any PRs. You may find a variety of tutorial online for your personal setup. This README covers how to set it up on VSCode, Sublime Text and running it from the CLI.
 
-### Python Black on VSCode
+### Python Black
+
+#### [VSCode](https://medium.com/@marcobelo/setting-up-python-black-on-visual-studio-code-5318eba4cd00)
 
 1. Install it on your virtual env or in your local python with the command:
 
@@ -93,4 +102,40 @@ ext install ms-python.python
 5. Search for “python formatting provider” and select “black”.
 6. Now open/create a python file, write some code and save(Ctrl+s) it to see the magic happen!
 
-<sub>[Source](https://medium.com/@marcobelo/setting-up-python-black-on-visual-studio-code-5318eba4cd00)</sub>
+#### [Sublime](https://github.com/jgirardet/sublack)
+
+#### [CLI](https://github.com/psf/black)
+
+Installation:  
+Black can be installed by running `pip install black`. It requires Python 3.6.0+ to run but you can reformat Python 2 code with it, too.
+
+Usage:  
+To get started right away with sensible defaults:
+
+```
+black {source_file_or_directory}
+```
+
+Black doesn't provide many options. You can list them by running `black --help`:
+
+### Sphinx Docstring Generator
+
+https://www.sphinx-doc.org/en/master/
+
+Our methods are commented in Google Docstring format. You can easily set up docstring documentation with Sphinx.
+
+#### VSCode Extension
+
+https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring
+
+Usage:
+
+Press enter after opening docstring with triple quotes (""" or ''')  
+Keyboard shortcut: ctrl+shift+2 or cmd+shift+2 for mac  
+Can be changed in Preferences -> Keyboard Shortcuts -> extension.generateDocstring  
+Command: Generate Docstring  
+Right click menu: Generate Docstring
+
+## Resources
+
+**Copying Config vars to another Heorku app**: https://emirkarsiyakali.com/heroku-copying-environment-variables-from-an-existing-app-to-another-9253929198d9

@@ -1,6 +1,7 @@
 from app.tasks import *
 from app import *
 from app.helpers.disks import *
+from app.helpers.versions import *
 from app.logger import *
 
 disk_bp = Blueprint("disk_bp", __name__)
@@ -16,8 +17,8 @@ def disk(action, **kwargs):
 
         disk_size = body["disk_size"]
         username = body["username"]
-        
-        disks = fetchUserDisks(username, main = True)
+
+        disks = fetchUserDisks(username, main=True)
         if disks:
             location = disks[0]["location"]
             task = createEmptyDisk.apply_async(
@@ -44,25 +45,29 @@ def disk(action, **kwargs):
                 kwargs["ID"],
             ]
         )
-        
+
         if not task:
             sendError(kwargs["ID"], "Error creating disk from image")
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202
     elif action == "attach":
+        # Attaches a disk to an available vm in the region. If an available vm has a disk, swap the disks.
         body = request.get_json()
-
         task = swapDiskSync.apply_async([body["disk_name"], kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
     elif action == "add":
         body = request.get_json()
 
-        task = attachDisk.apply_async([body["disk_name"], body["vm_name"], kwargs["ID"]])
+        task = attachDisk.apply_async(
+            [body["disk_name"], body["vm_name"], kwargs["ID"]]
+        )
         return jsonify({"ID": task.id}), 202
     elif action == "detach":
         body = request.get_json()
-        
-        task = detachDisk.apply_async([body["disk_name"], body["vm_name"], kwargs["ID"]])
+
+        task = detachDisk.apply_async(
+            [body["disk_name"], body["vm_name"], kwargs["ID"]]
+        )
         if not task:
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202
@@ -73,10 +78,16 @@ def disk(action, **kwargs):
         body = request.get_json()
         assignUserToDisk(body["disk_name"], body["username"])
         return jsonify({"status": 200}), 200
+    elif action == "acceptedUpdate":
+        body = request.get_json()
+        setUpdateAccepted(body["disk_name"], body["accepted"], kwargs["ID"])
+        return jsonify({"status": 200}), 200
     elif action == "delete":
         body = request.get_json()
         username = body["username"]
-        sendInfo(kwargs["ID"], "Deleting disks associated with users...")
+        sendInfo(
+            kwargs["ID"], "Deleting disks associated with user {}".format(username)
+        )
         disks = fetchUserDisks(username, True)
         task_id = None
 
@@ -86,3 +97,26 @@ def disk(action, **kwargs):
                 task_id = task.id
         sendInfo(kwargs["ID"], "User disk deletion complete")
         return jsonify({"ID": task_id}), 202
+    elif action == "deleteSpecific":
+        body = request.get_json()
+        disk_name = body["disk_name"]
+        sendInfo(kwargs["ID"], "Deleting disk {}".format(disk_name))
+        task_id = None
+
+        task = deleteDisk.apply_async(disk_name)
+        task_id = task.id
+        sendInfo(kwargs["ID"], "Disk deletion complete")
+        return jsonify({"ID": task_id}), 202
+    elif action == "setVersion":
+        body = request.get_json()
+        setDiskVersion(body["disk_name"], body["branch"])
+        return jsonify({"status": 200}), 200
+
+
+@disk_bp.route("/version", methods=["POST"])
+@generateID
+@logRequestInfo
+def version(**kwargs):
+    body = request.get_json()
+    setBranchVersion(body["branch"], body["version"], kwargs["ID"])
+    return jsonify({"status": 200}), 200
