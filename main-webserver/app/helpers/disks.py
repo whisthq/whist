@@ -525,7 +525,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
 
 
 def setDiskVersion(disk_name, branch):
-    """Sets the version of the protocol running on the disk. Master is latest stable verions, staging, is dev version
+    """Sets the version of the protocol running on the disk. Master is latest stable version, staging is second latest version
 
     Args:
         disk_name (str): The name of the disk

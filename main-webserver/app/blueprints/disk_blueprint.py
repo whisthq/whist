@@ -1,6 +1,7 @@
 from app.tasks import *
 from app import *
 from app.helpers.disks import *
+from app.helpers.versions import *
 from app.logger import *
 
 disk_bp = Blueprint("disk_bp", __name__)
@@ -106,3 +107,15 @@ def disk(action, **kwargs):
         body = request.get_json()
         setDiskVersion(body["disk_name"], body["branch"])
         return jsonify({"status": 200}), 200
+
+
+@disk_bp.route("/version", methods=["POST"])
+@generateID
+@logRequestInfo
+def version(**kwargs):
+    body = request.get_json()
+    branch = body["branch"]
+    version = body["version"]
+    setBranchVersion(branch, version)
+    sendInfo(kwargs["ID"], "Set version for {} to {}".format(branch, version))
+    return jsonify({"status": 200}), 200
