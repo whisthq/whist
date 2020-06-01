@@ -68,7 +68,7 @@ def vm(action, **kwargs):
             return ({"public_ip": None}), 404
     elif action == "delete" and request.method == "POST":
         body = request.get_json()
-                
+
         vm_name, delete_disk = body['vm_name'], body['delete_disk']
         task = deleteVMResources.apply_async([vm_name, delete_disk])
         return jsonify({'ID': task.id}), 202
@@ -220,6 +220,22 @@ def vm(action, **kwargs):
             return jsonify({"dev": False, "status": 200}), 200
         except Exception as e:
             print(str(e))
+    elif action == "installApps" and request.method == "POST":
+        body = request.get_json()
+
+        task = installApplications.apply_async(
+            [
+                body["disk_name"],
+                body["vm_name"],
+                body["apps"]
+                kwargs["ID"],
+            ]
+        )
+        
+        if not task:
+            sendError(kwargs["ID"], "Error installing applications")
+            return jsonify({}), 400
+        return jsonify({"ID": task.id}), 202
 
     return jsonify({}), 400
 
