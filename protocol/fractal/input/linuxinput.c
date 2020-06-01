@@ -12,6 +12,13 @@
         goto failure;                                                        \
     }
 
+#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                    \
+    if (ioctl(FD, PARAMS) == -1) {                                           \
+        mprintf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", \
+                strerror(errno));                                            \
+        goto failure;                                                        \
+    }
+
 // @brief Linux keycodes for replaying SDL user inputs on server
 // @details index is SDL keycode, value is Linux keycode.
 // To debug specific keycodes, use 'sudo showkey --keycodes'.

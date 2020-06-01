@@ -92,14 +92,10 @@ Defines
 */
 
 #if defined(_WIN32)
-#undef ETIMEDOUT
-#define ETIMEDOUT WSAETIMEDOUT
-#undef EWOULDBLOCK
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#undef EAGAIN
-#define EAGAIN WSAEWOULDBLOCK
-#undef EINPROGRESS
-#define EINPROGRESS WSAEWOULDBLOCK
+#define FRACTAL_ETIMEDOUT WSAETIMEDOUT
+#define FRACTAL_EWOULDBLOCK WSAEWOULDBLOCK
+#define FRACTAL_EAGAIN WSAEWOULDBLOCK
+#define FRACTAL_EINPROGRESS WSAEWOULDBLOCK
 #define socklen_t int
 #define FRACTAL_IOCTL_SOCKET ioctlsocket
 #define FRACTAL_CLOSE_SOCKET closesocket
@@ -108,6 +104,10 @@ Defines
 #define closesocket close
 #define FRACTAL_IOCTL_SOCKET ioctl
 #define FRACTAL_CLOSE_SOCKET close
+#define FRACTAL_ETIMEDOUT ETIMEDOUT
+#define FRACTAL_EWOULDBLOCK EWOULDBLOCK
+#define FRACTAL_EAGAIN EAGAIN
+#define FRACTAL_EINPROGRESS EINPROGRESS
 #endif
 
 /*
@@ -154,7 +154,6 @@ typedef enum FractalPacketType {
  */
 typedef struct FractalPacket {
     char hash[16];  // Hash of the rest of the packet
-
     // hash[16] is a signature for everything below this line
 
     // Encrypted packet data

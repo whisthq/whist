@@ -25,20 +25,26 @@ Custom Types
 */
 
 typedef struct encoder_t {
+    AVCodec* pCodec;
+    AVCodecContext* pCodecCtx;
+    AVFilterGraph* pFilterGraph;
+    AVFilterContext* pFilterGraphSource;
+    AVFilterContext* pFilterGraphSink;
+    AVBufferRef* hw_device_ctx;
+    AVPacket packet;
+
     int in_width, in_height;
     int out_width, out_height;
     int gop_size;
-    int encoded_frame_size;    /// <size of encoded frame in bytes
-    void* encoded_frame_data;  /// <Pointer to the encoded data
-    AVCodec* codec;
-    AVCodecContext* context;
-    AVFrame* sw_frame;
+    void* sw_frame_buffer;
+    void* encoded_frame_data; /// <Pointer to the encoded data
+    int encoded_frame_size;   /// <size of encoded frame in bytes
+
     AVFrame* hw_frame;
-    void* frame_buffer;
-    AVPacket packet;
-    struct SwsContext* sws;
+    AVFrame* sw_frame;
+    AVFrame* filtered_frame;
+
     EncodeType type;
-    AVBufferRef* hw_device_ctx;
 } encoder_t;
 
 /*
@@ -66,14 +72,16 @@ Public Functions
 encoder_t* create_video_encoder(int in_width, int in_height, int out_width,
                                 int out_height, int bitrate);
 
+
 /**
  * @brief                          Encode the given frame. The frame can be
  *                                 accessed via encoded_frame_size and
  *                                 encoded_frame_data
  *
  * @param rgb_pixels               The frame to be in encoded
+ * @param pitch                    The number of bytes per line
  */
-void video_encoder_encode(encoder_t* encoder, void* rgb_pixels, int pitch);
+int video_encoder_encode(encoder_t* encoder, void* rgb_pixels, int pitch);
 
 /**
  * @brief                          Set the next frame to be an i-frame

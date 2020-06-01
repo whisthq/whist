@@ -23,10 +23,10 @@
 version
 **/build32
 **/build64
-fractal/*/*.lib
-fractal/*/*.a
 desktop/log.txt
 server/log.txt
+lib/
+share/
 
 # CMake
 *.cmake

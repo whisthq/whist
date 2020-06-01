@@ -81,7 +81,14 @@ Defines
 
 #define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
+
+#if defined(_WIN32)
+// possible on windows, so let's do it
+#define USING_SERVERSIDE_SCALE true
+#else
+// not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
+#endif
 
 #define MAXIMUM_BITRATE 30000000
 #define MINIMUM_BITRATE 2000000
