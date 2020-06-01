@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void video_encoder_filter_graph_intake(video_encoder_t *encoder, void *rgb_pixels,
+int video_encoder_filter_graph_intake(video_encoder_t *encoder, void *rgb_pixels,
                                        int pitch);
 int video_encoder_receive_packet(video_encoder_t *encoder, AVPacket *packet);
 
@@ -686,7 +686,10 @@ void video_encoder_unset_iframe(video_encoder_t *encoder) {
 }
 
 int video_encoder_encode(video_encoder_t *encoder, void *rgb_pixels, int pitch) {
-    video_encoder_filter_graph_intake(encoder, rgb_pixels, pitch);
+    if( video_encoder_filter_graph_intake( encoder, rgb_pixels, pitch ) < 0 )
+    {
+        return -1;
+    }
 
     if (encoder->num_packets) {
         for (int i = 0; i < encoder->num_packets; i++) {
@@ -730,7 +733,7 @@ void video_encoder_write_buffer(video_encoder_t *encoder, int *buf) {
     }
 }
 
-void video_encoder_filter_graph_intake(video_encoder_t *encoder, void *rgb_pixels,
+int video_encoder_filter_graph_intake(video_encoder_t *encoder, void *rgb_pixels,
                                        int pitch) {
     memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
     memset(encoder->sw_frame->linesize, 0, sizeof(encoder->sw_frame->linesize));
@@ -755,31 +758,39 @@ void video_encoder_filter_graph_intake(video_encoder_t *encoder, void *rgb_pixel
         av_hwframe_get_buffer(encoder->pCodecCtx->hw_frames_ctx,
                               encoder->hw_frame, 0);
     }
+
+    int res_buffer;
+
+    // submit all available frames to the encoder
+    while( (res_buffer = av_buffersink_get_frame(
+        encoder->pFilterGraphSink, encoder->filtered_frame )) >= 0 )
+    {
+        int res_encoder =
+            avcodec_send_frame( encoder->pCodecCtx, encoder->filtered_frame );
+
+        // unref the frame so it may be reused
+        av_frame_unref( encoder->filtered_frame );
+
+        if( res_encoder < 0 )
+        {
+            LOG_WARNING( "Error sending frame for encoding: %s",
+                         av_err2str( res_encoder ) );
+            return -1;
+        }
+    }
+    if( res_buffer < 0 && res_buffer != AVERROR( EAGAIN ) &&
+        res_buffer != AVERROR_EOF )
+    {
+        LOG_WARNING( "Error getting frame from the filter graph: %d -- %s",
+                     res_buffer, av_err2str( res_buffer ) );
+        return -1;
+    }
+
+    return 0;
 }
 
 int video_encoder_receive_packet(video_encoder_t *encoder, AVPacket *packet) {
-    int res_buffer, res_encoder;
-
-    // submit all available frames to the encoder
-    while ((res_buffer = av_buffersink_get_frame(
-                encoder->pFilterGraphSink, encoder->filtered_frame)) >= 0) {
-        res_encoder =
-            avcodec_send_frame(encoder->pCodecCtx, encoder->filtered_frame);
-
-        // unref the frame so it may be reused
-        av_frame_unref(encoder->filtered_frame);
-
-        if (res_encoder < 0) {
-            LOG_WARNING("Error sending frame for encoding: %s",
-                        av_err2str(res_encoder));
-        }
-    }
-    if (res_buffer < 0 && res_buffer != AVERROR(EAGAIN) &&
-        res_buffer != AVERROR_EOF) {
-        LOG_WARNING("Error getting frame from the filter graph: %d -- %s",
-                    res_buffer, av_err2str(res_buffer));
-        return -1;
-    }
+    int res_encoder;
 
     av_init_packet(packet);
     res_encoder = avcodec_receive_packet(encoder->pCodecCtx, packet);
