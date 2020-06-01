@@ -11,6 +11,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <libavcodec/jni.h>
+#include <jni.h>
 
 void destroy_video_decoder_members(VideoDecoder* decoder);
 
@@ -24,6 +26,8 @@ void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
     vprintf(fmt, vargs);
 }
 #endif
+
+static bool mediacodec_extradata_initialized = false;
 
 static void set_opt(VideoDecoder* decoder, char* option, char* value) {
     int ret = av_opt_set(decoder->context->priv_data, option, value, 0);
@@ -123,6 +127,30 @@ enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix
 
     return match;
 }
+
+
+#if defined(__ANDROID_API__)
+// register the java vm to avcodec in the callback (?)
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* aReserved) {
+    LOG_INFO("hello! jni called! vm @ %p", vm);
+    av_jni_set_java_vm(vm, NULL);
+    return JNI_VERSION_1_6;
+}
+
+static int h264_extradata_length(uint8_t* data, int len) {
+    if (data[4] != 0x67) {
+        return 0;
+    }
+    uint8_t end_flag[6] = {0x0, 0x0, 0x0, 0x1, 0x65, 0x0};
+    for (int i = 0; i < min(100, len - 5); ++i) {
+        if (!memcmp(data + i, end_flag + 1, 4) || !memcmp(data + i, end_flag, 5)) {
+            return i;
+        }
+    }
+    LOG_WARNING("extradata length not found from packet data!");
+    return -1;
+}
+#endif
 
 int try_setup_video_decoder(VideoDecoder* decoder) {
     // setup the AVCodec and AVFormatContext
@@ -423,6 +451,25 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     int computed_size = 4;
 
     AVPacket* packets = safe_malloc(num_packets * sizeof(AVPacket));
+
+#if defined(__ANDROID_API__)
+  if (decoder->type == DECODE_TYPE_MEDIACODEC && !mediacodec_extradata_initialized) {
+      decoder->context->extradata = av_malloc(buffer_size);
+      memcpy(decoder->context->extradata, buffer, buffer_size);
+      decoder->context->extradata_size = buffer_size;
+      int res = avcodec_open2(decoder->context, decoder->codec, NULL);
+      if (res < 0) {
+          LOG_WARNING( "Failed to open context for stream (%d): %s", res, av_err2str(res));
+          return -1;
+      }
+      mediacodec_extradata_initialized = true;
+  }
+#endif
+
+  // copy the received packet back into the decoder AVPacket
+  // memcpy(&decoder->packet.data, &buffer, buffer_size);
+  // decoder->packet.data = buffer;
+  // decoder->packet.size = buffer_size;
 
     for (int i = 0; i < num_packets; i++) {
         av_init_packet(&packets[i]);
