@@ -422,9 +422,9 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
             if( !try_next_decoder( decoder ) )
             {
                 destroy_video_decoder( decoder );
-                for( int i = 0; i < num_packets; i++ )
+                for( int j = 0; j < num_packets; j++ )
                 {
-                    av_packet_unref( &packets[i] );
+                    av_packet_unref( &packets[j] );
                 }
                 free( packets );
                 return false;
