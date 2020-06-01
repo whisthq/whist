@@ -75,7 +75,7 @@ volatile bool update_encoder;
 
 bool pending_encoder;
 bool encoder_finished;
-encoder_t* encoder_factory_result = NULL;
+video_encoder_t* encoder_factory_result = NULL;
 
 int encoder_factory_server_w;
 int encoder_factory_server_h;
@@ -92,7 +92,7 @@ int32_t MultithreadedEncoderFactory(void* opaque) {
     return 0;
 }
 int32_t MultithreadedDestroyEncoder(void* opaque) {
-    encoder_t* encoder = (encoder_t*)opaque;
+    video_encoder_t* encoder = (video_encoder_t*)opaque;
     destroy_video_encoder(encoder);
     return 0;
 }
@@ -115,7 +115,7 @@ int32_t SendVideo(void* opaque) {
 
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
-    encoder_t* encoder = NULL;
+    video_encoder_t* encoder = NULL;
 
     double worst_fps = 40.0;
     int ideal_bitrate = current_bitrate;
