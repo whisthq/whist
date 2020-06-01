@@ -666,8 +666,6 @@ void destroy_video_encoder(encoder_t *encoder) {
     av_frame_free(&encoder->sw_frame);
     av_frame_free(&encoder->filtered_frame);
 
-    av_packet_unref(&encoder->packet);
-
     // free the buffer and encoder
     free(encoder->sw_frame_buffer);
     free(encoder);
@@ -690,6 +688,12 @@ void video_encoder_unset_iframe(encoder_t *encoder) {
 int video_encoder_encode(encoder_t *encoder, void *rgb_pixels, int pitch) {
     video_encoder_filter_graph_intake(encoder, rgb_pixels, pitch);
 
+    if (encoder->num_packets) {
+        for (int i = 0; i < encoder->num_packets; i++) {
+            av_packet_unref(&encoder->packets[i]);
+        }
+    }
+
     encoder->encoded_frame_size = 4;
     encoder->num_packets = 0;
     while (video_encoder_receive_packet(
@@ -709,7 +713,7 @@ void video_encoder_write_buffer(encoder_t *encoder, int *buf) {
         *buf = encoder->packets[i].size;
         buf++;
     }
-    char *char_buf = buf;
+    char *char_buf = (void*)buf;
     for (int i = 0; i < encoder->num_packets; i++) {
         memcpy(char_buf, encoder->packets[i].data, encoder->packets[i].size);
         char_buf += encoder->packets[i].size;

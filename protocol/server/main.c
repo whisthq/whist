@@ -380,7 +380,7 @@ int32_t SendVideo(void* opaque) {
                     // True if this frame does not require previous frames to
                     // render
                     frame->is_iframe = is_iframe;
-                    video_encoder_write_buffer(encoder, frame->compressed_frame);
+                    video_encoder_write_buffer(encoder, (void*)frame->compressed_frame);
 
                     // mprintf("Sent video packet %d (Size: %d) %s\n", id,
                     // encoder->encoded_frame_size, frame->is_iframe ?
