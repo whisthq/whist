@@ -543,3 +543,49 @@ def setDiskVersion(disk_name, branch):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+
+def setDiskVersion(disk_name, branch, ID=-1):
+    """Sets the version of the protocol running on the disk. Master is latest stable version, staging is second latest version
+
+    Args:
+        disk_name (str): The name of the disk
+        branch (str): "master", "staging"
+    """
+
+    command = text(
+        """
+        UPDATE disks
+        SET branch = :branch
+        WHERE
+        "disk_name" = :disk_name
+        """
+    )
+    params = {"branch": branch, "disk_name": disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
+def setUpdateAccepted(disk_name, accepted, ID=-1):
+    """Sets the version of the protocol running on the disk. Master is latest stable version, staging is second latest version
+
+    Args:
+        disk_name (str): The name of the disk
+        accepted (str): Boolean if they have been accepted
+    """
+
+    sendInfo(ID, "Disk {} has set acceptedUpdate to {}".format(disk_name, accepted))
+
+    command = text(
+        """
+        UPDATE disks
+        SET has_accepted_update = :accepted
+        WHERE
+        "disk_name" = :disk_name
+        """
+    )
+    params = {"accepted": accepted, "disk_name": disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()

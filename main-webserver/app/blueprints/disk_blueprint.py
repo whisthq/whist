@@ -78,6 +78,10 @@ def disk(action, **kwargs):
         body = request.get_json()
         assignUserToDisk(body["disk_name"], body["username"])
         return jsonify({"status": 200}), 200
+    elif action == "acceptedUpdate":
+        body = request.get_json()
+        setUpdateAccepted(body["disk_name"], body["accepted"], kwargs["ID"])
+        return jsonify({"status": 200}), 200
     elif action == "delete":
         body = request.get_json()
         username = body["username"]
@@ -114,8 +118,5 @@ def disk(action, **kwargs):
 @logRequestInfo
 def version(**kwargs):
     body = request.get_json()
-    branch = body["branch"]
-    version = body["version"]
-    setBranchVersion(branch, version)
-    sendInfo(kwargs["ID"], "Set version for {} to {}".format(branch, version))
+    setBranchVersion(body["branch"], body["version"], kwargs["ID"])
     return jsonify({"status": 200}), 200

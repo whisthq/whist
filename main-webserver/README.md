@@ -135,3 +135,7 @@ Keyboard shortcut: ctrl+shift+2 or cmd+shift+2 for mac
 Can be changed in Preferences -> Keyboard Shortcuts -> extension.generateDocstring  
 Command: Generate Docstring  
 Right click menu: Generate Docstring
+
+## Resources
+
+**Copying Config vars to another Heorku app**: https://emirkarsiyakali.com/heroku-copying-environment-variables-from-an-existing-app-to-another-9253929198d9
