@@ -23,10 +23,10 @@
 version
 **/build32
 **/build64
-fractal/*/*.lib
-fractal/*/*.a
 desktop/log.txt
 server/log.txt
+lib/
+share/
 
 # CMake
 *.cmake
@@ -52,3 +52,8 @@ CTestTestfile.cmake
 #docs
 docs/html/
 docs/latex/
+
+#vagrant
+.vagrant
+*.box
+ubuntu-bionic-18.04-cloudimg-console.log
