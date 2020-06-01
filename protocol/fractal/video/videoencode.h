@@ -24,14 +24,18 @@ Custom Types
 ============================
 */
 
-typedef struct encoder_t {
+#define MAX_ENCODER_PACKETS 20
+
+typedef struct video_encoder_t {
     AVCodec* pCodec;
     AVCodecContext* pCodecCtx;
     AVFilterGraph* pFilterGraph;
     AVFilterContext* pFilterGraphSource;
     AVFilterContext* pFilterGraphSink;
     AVBufferRef* hw_device_ctx;
-    AVPacket packet;
+
+    int num_packets;
+    AVPacket packets[MAX_ENCODER_PACKETS];
 
     int in_width, in_height;
     int out_width, out_height;
@@ -45,7 +49,7 @@ typedef struct encoder_t {
     AVFrame* filtered_frame;
 
     EncodeType type;
-} encoder_t;
+} video_encoder_t;
 
 /*
 ============================
@@ -69,7 +73,7 @@ Public Functions
  *
  * @returns                        The newly created encoder
  */
-encoder_t* create_video_encoder(int in_width, int in_height, int out_width,
+video_encoder_t* create_video_encoder(int in_width, int in_height, int out_width,
                                 int out_height, int bitrate);
 
 
@@ -81,14 +85,16 @@ encoder_t* create_video_encoder(int in_width, int in_height, int out_width,
  * @param rgb_pixels               The frame to be in encoded
  * @param pitch                    The number of bytes per line
  */
-int video_encoder_encode(encoder_t* encoder, void* rgb_pixels, int pitch);
+int video_encoder_encode(video_encoder_t* encoder, void* rgb_pixels, int pitch);
+
+void video_encoder_write_buffer(video_encoder_t* encoder, int* buf);
 
 /**
  * @brief                          Set the next frame to be an i-frame
  *
  * @param encoder                  Encoder to be updated
  */
-void video_encoder_set_iframe(encoder_t* encoder);
+void video_encoder_set_iframe(video_encoder_t* encoder);
 
 /**
  * @brief                          Allow the next frame to be either an i-frame
@@ -96,13 +102,13 @@ void video_encoder_set_iframe(encoder_t* encoder);
  *
  * @param encoder                  Encoder to be updated
  */
-void video_encoder_unset_iframe(encoder_t* encoder);
+void video_encoder_unset_iframe(video_encoder_t* encoder);
 
 /**
  * @brief                          Destroy encoder
  *
  * @param encoder                  Encoder to be destroyed
  */
-void destroy_video_encoder(encoder_t* encoder);
+void destroy_video_encoder(video_encoder_t* encoder);
 
 #endif  // ENCODE_H
