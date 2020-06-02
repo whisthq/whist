@@ -11,8 +11,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#if defined(__ANDROID_API__)
 #include <libavcodec/jni.h>
 #include <jni.h>
+#endif
 
 void destroy_video_decoder_members(VideoDecoder* decoder);
 
