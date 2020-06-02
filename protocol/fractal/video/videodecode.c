@@ -232,6 +232,11 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
     } else if (decoder->type == DECODE_TYPE_MEDIACODEC) {
         // BEGIN MEDIACODEC DECODER
 
+        if (mediacodec_extradata_initialized) {
+          LOG_INFO("We already tried mediacodec after receiving the first packet, don't try again!");
+          return -1;
+        }
+
         LOG_INFO("Trying mediacodec decoder");
         decoder->codec = avcodec_find_decoder_by_name("h264_mediacodec");
         LOG_INFO("codec @ %p", decoder->codec);
