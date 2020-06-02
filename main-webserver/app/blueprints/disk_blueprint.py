@@ -119,23 +119,19 @@ def disk(action, **kwargs):
         return jsonify({"status": 200}), 200
 
 
-@disk_bp.route("/version/<action>", methods=["POST"])
+@disk_bp.route("/version", methods=["POST", "GET"])
 @generateID
 @logRequestInfo
-def version(action, **kwargs):
-    if action == "set":
+def version(**kwargs):
+    if request.method == "POST":
         body = request.get_json()
         setBranchVersion(body["branch"], body["version"], kwargs["ID"])
         return jsonify({"status": 200}), 200
-    elif action == "get":
-        body = request.get_json()
-        branch = body["branch"]
+    elif request.method == "GET":
         try:
-            version = getBranchVersion(branch, kwargs["ID"])
-            sendInfo(kwargs["ID"], "Version found for branch {}".format(branch))
-            return ({"version": version}), 200
+            versions = getAllVersions(kwargs["ID"])
+            sendInfo(kwargs["ID"], "Versions found")
+            return (versions), 200
         except:
-            sendError(
-                kwargs["ID"], "Version found not found for branch {}".format(branch)
-            )
-            return ({"version": None}), 404
+            sendError(kwargs["ID"], "Versions not found")
+            return (None), 404
