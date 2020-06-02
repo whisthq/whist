@@ -123,6 +123,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             PATHS ${_FFMPEG_AVCODEC_INCLUDE_DIRS} /usr/include /usr/local/include /opt/local/include /sw/include
             PATH_SUFFIXES ffmpeg libav
             )
+    message(VERBOSE "FFmpeg include dir: ${FFMPEG_AVCODEC_INCLUDE_DIR}")
     include_directories(${FFMPEG_AVCODEC_INCLUDE_DIR})
 else()
     FOREACH(LIB ${FFMPEG_LIBS})
@@ -194,9 +195,10 @@ endif()
 
 # Tell CMake where to look for includes
 include_directories(fractal)
-include_directories(include)
+include_directories(include/openssl)
 include_directories(include/SDL2)
-include_directories(include/ffmpeg)
+include_directories(include/mfx)
+
 
 
 #Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
