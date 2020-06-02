@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void destroy_video_decoder_members( video_decoder_t* decoder );
+
 #define SHOW_DECODER_LOGS false
 
 #if SHOW_DECODER_LOGS
@@ -136,6 +138,8 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
 #if LIBAVCODEC_VERSION_MAJOR < 58
     avcodec_register_all();
 #endif
+
+    destroy_video_decoder_members( decoder );
 
     int width = decoder->width;
     int height = decoder->height;
@@ -347,30 +351,36 @@ video_decoder_t* create_video_decoder(int width, int height,
 /// @details frees FFmpeg decoder memory
 
 void destroy_video_decoder(video_decoder_t* decoder) {
+    destroy_video_decoder_members( decoder );
+
+    // free the buffer and decoder
+    free(decoder);
+    return;
+}
+
+void destroy_video_decoder_members( video_decoder_t* decoder )
+{
     // check if decoder decoder exists
-    if (decoder == NULL) {
-        LOG_WARNING("Cannot destroy decoder decoder.");
+    if( decoder == NULL )
+    {
+        LOG_WARNING( "Cannot destroy decoder decoder." );
         return;
     }
 
     /* flush the decoder */
     decoder->packet.data = NULL;
     decoder->packet.size = 0;
-    av_packet_unref(&decoder->packet);
-    avcodec_free_context(&decoder->context);
+    av_packet_unref( &decoder->packet );
+    avcodec_free_context( &decoder->context );
 
     // free the ffmpeg contextes
-    avcodec_close(decoder->context);
+    avcodec_close( decoder->context );
 
     // free the decoder context and frame
-    av_free(decoder->context);
-    av_frame_free(&decoder->sw_frame);
-    av_frame_free(&decoder->hw_frame);
-    av_buffer_unref(&decoder->ref);
-
-    // free the buffer and decoder
-    free(decoder);
-    return;
+    av_free( decoder->context );
+    av_frame_free( &decoder->sw_frame );
+    av_frame_free( &decoder->hw_frame );
+    av_buffer_unref( &decoder->ref );
 }
 
 /// @brief decode a frame using the decoder decoder
