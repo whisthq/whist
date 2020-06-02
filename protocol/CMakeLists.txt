@@ -195,9 +195,8 @@ endif()
 
 # Tell CMake where to look for includes
 include_directories(fractal)
-include_directories(include/openssl)
+include_directories(include)
 include_directories(include/SDL2)
-include_directories(include/mfx)
 
 
 
