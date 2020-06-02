@@ -386,17 +386,58 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
 
     // copy the received packet back into the decoder AVPacket
     // memcpy(&decoder->packet.data, &buffer, buffer_size);
-    decoder->packet.data = buffer;
-    decoder->packet.size = buffer_size;
+    int* int_buffer = buffer;
+    int num_packets = *int_buffer;
+    int_buffer++;
 
-    // decode the frame
-    while (avcodec_send_packet(decoder->context, &decoder->packet) < 0) {
-        LOG_WARNING("Failed to avcodec_send_packet!");
-        if (!try_next_decoder(decoder)) {
-            destroy_video_decoder(decoder);
-            return false;
+    int computed_size = 4;
+
+    AVPacket* packets = malloc( num_packets * sizeof( AVPacket ) );
+
+    for( int i = 0; i < num_packets; i++ )
+    {
+        av_init_packet( &packets[i] );
+        packets[i].size = *int_buffer;
+        computed_size += 4 + packets[i].size;
+        int_buffer++;
+    }
+
+    if( buffer_size != computed_size )
+    {
+        LOG_ERROR( "Given Buffer Size did not match computed buffer size: given %d vs computed %d", buffer_size, computed_size );
+    }
+
+    char* char_buffer = (void*)int_buffer;
+    for( int i = 0; i < num_packets; i++ )
+    {
+        packets[i].data = (void*)char_buffer;
+        char_buffer += packets[i].size;
+    }
+
+    for( int i = 0; i < num_packets; i++ )
+    {
+        // decode the frame
+        while( avcodec_send_packet( decoder->context, &packets[i] ) < 0 )
+        {
+            LOG_WARNING( "Failed to avcodec_send_packet!" );
+            if( !try_next_decoder( decoder ) )
+            {
+                destroy_video_decoder( decoder );
+                for( int j = 0; j < num_packets; j++ )
+                {
+                    av_packet_unref( &packets[j] );
+                }
+                free( packets );
+                return false;
+            }
         }
     }
+
+    for( int i = 0; i < num_packets; i++ )
+    {
+        av_packet_unref( &packets[i] );
+    }
+    free( packets );
 
     // If frame was computed on the CPU
     if (decoder->context->hw_frames_ctx) {
