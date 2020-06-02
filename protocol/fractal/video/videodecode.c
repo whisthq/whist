@@ -134,6 +134,7 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only Linux uses FFmpeg 3.4.x because of canonical system packages
 #if LIBAVCODEC_VERSION_MAJOR < 58
+    LOG_INFO("OLD VERSON FFMPEG: %d.%d.%d", LIBAVCODEC_VERSION_MAJOR, LIBAVCODEC_VERSION_MINOR, LIBAVCODEC_VERSION_MICRO);
     avcodec_register_all();
 #endif
 
