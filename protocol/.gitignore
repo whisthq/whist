@@ -1,4 +1,5 @@
 # general files
+*.a
 *.o
 *.obj
 *.iml
