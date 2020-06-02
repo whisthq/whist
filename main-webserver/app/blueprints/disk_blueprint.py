@@ -131,7 +131,7 @@ def version(**kwargs):
         try:
             versions = getAllVersions(kwargs["ID"])
             sendInfo(kwargs["ID"], "Versions found")
-            return (versions), 200
+            return ({"versions": versions}), 200
         except:
             sendError(kwargs["ID"], "Versions not found")
-            return (None), 404
+            return ({"versions": None}), 404
