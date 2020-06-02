@@ -59,7 +59,7 @@ brew install cmake cppcheck
 
 ##### Windows
 
-First you will have to install [gitbash](https://git-scm.com/downloads). You can installe cmake with the latest binaries [here](https://cmake.org/download/), and cppcheck, which you can install via Chocolatey by running `choco install cppcheck --force`. You also need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. In order to compile the protocol, you need to make sure to be using x86_x64 Visual Studio Developer Command Prompt.
+First you will have to install [gitbash](https://git-scm.com/downloads). You can install cmake with the latest binaries [here](https://cmake.org/download/), and cppcheck, which you can install via Chocolatey by running `choco install cppcheck --force`. You also need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. In order to compile the protocol, you need to make sure to be using x86_x64 Visual Studio Developer Command Prompt.
 
 ### Building
 
