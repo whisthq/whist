@@ -537,6 +537,7 @@ typedef struct FractalClientMessage {
 } FractalClientMessage;
 
 typedef enum FractalServerMessageType {
+<<<<<<< HEAD
     SMESSAGE_NONE = 0,  ///< No Message
     MESSAGE_PONG = 1,
     MESSAGE_AUDIO_FREQUENCY = 2,
@@ -544,6 +545,15 @@ typedef enum FractalServerMessageType {
     SMESSAGE_WINDOW_TITLE = 4,
     MESSAGE_DISCOVERY_REPLY = 5,
     SMESSAGE_QUIT = 100,
+=======
+  SMESSAGE_NONE = 0,  ///< No Message
+  MESSAGE_PONG = 1,
+  MESSAGE_AUDIO_FREQUENCY = 2,
+  SMESSAGE_CLIPBOARD = 3,
+  MESSAGE_INIT = 4,
+  MESSAGE_H264_EXTRADATA = 5,  
+  SMESSAGE_QUIT = 100,
+>>>>>>> more progress on extradata
 } FractalServerMessageType;
 
 typedef struct FractalDiscoveryReplyMessage {
@@ -565,6 +575,7 @@ typedef struct PeerUpdateMessage {
 } PeerUpdateMessage;
 
 typedef struct FractalServerMessage {
+<<<<<<< HEAD
     FractalServerMessageType type;  ///< Input message type.
     union {
         int ping_id;
@@ -576,6 +587,19 @@ typedef struct FractalServerMessage {
         char discovery_reply[0];
         char init_msg[0];
     };
+=======
+  FractalServerMessageType type;  ///< Input message type.
+  union {
+    int ping_id;
+    int frequency;
+    int h264_extradata_size;
+  };
+  union {
+    ClipboardData clipboard;
+    char init_msg[0];
+    uint8_t h264_extradata[0];
+  };
+>>>>>>> more progress on extradata
 } FractalServerMessage;
 
 typedef struct FractalDestination {
