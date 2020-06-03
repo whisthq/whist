@@ -44,6 +44,26 @@ or
 
 `docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
 
+### Build/Run in Vagrant
+
+Vagrant allows you to build local VMs which can be used to run code seamlessly. It is done via the Git submodule to the `fractalcomputers/vagrant` repo.
+
+First, make sure you initialized submodules via: `git submodule update --init --recursive`. After the submodules are initialized you will find the Vagrant configs in `vagrant/`.
+
+You will first need to download the win10-dev.box image. To do so, run `aws s3 cp s3://fractal-private-dev/win10-dev.box win10-dev.box` as detailed in `vagrant/README.md`, or you can also manually download it from the S3 bucket. If you try to download it via the AWS CLI, you will first need to install the CLI and configure permissions, which is explained the the Vagrant repo README. You can then follow the instructions in `vagrant/README.md` for running VMs with the vm-webserver repo in them.  
+
+Quick Commands:
+```
+# vagrant up commands will take some time
+vagrant up
+vagrant up win10 # only win10
+vagrant ssh win10
+vagrant ssh ubuntu
+
+# code is located under /vagrant
+vagrant destroy # destroys vms and cleans up
+```
+
 ### Run on Heroku
 
 **Staging**
@@ -60,8 +80,8 @@ To push to the live server, git add and commit and type git push heroku master. 
 
 Test the webserver by running it on localhost and using Postman to send requests to the localhost address, and if that works, push to staging. To view the server logs, type `heroku logs --tail --app cube-celery-vm`.
 
-**Database Scheme**
-Access the SQL database here: https://pgweb-demo.herokuapp.com/
+**SQL Database Scheme**
+`https://pgweb-demo.herokuapp.com/`
 
 Select Scheme, and for the server URL scheme, copy the DATABASE_URL config var found on the Heroku instance.
 
@@ -107,33 +127,3 @@ black {source_file_or_directory}
 ```
 
 Black doesn't provide many options. You can list them by running `black --help`:
-
-
-
-
-
-
-
-### Vagrant setup
-
-First make sure you initialized submodules
-`git submodule update --init --recursive`
-
-After submodules are initialized you will find the vagrant configs in `vagrant/`
-You will first need to download the win10-dev.box image.  To do so, run
-`aws s3 cp s3://fractal-private-dev/win10-dev.box win10-dev.box` as detailed in `vagrant/README.md`
-If you don't have s3 permissions you can download this box from the website or you'll need to be permissioned
-
-Then you can follow the instructions in `vagrant/README.md` for running vms.  
-
-Quick Commands
-```
-# vagrant up commands will take some time
-vagrant up
-vagrant up win10 # only win10
-vagrant ssh win10
-vagrant ssh ubuntu
-# code is located under /vagrant
-vagrant destroy # destroys vms and cleans up
-```
-
