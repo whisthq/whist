@@ -526,26 +526,7 @@ int ReceiveMessage(FractalPacket* packet) {
     "I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/"     \
     "Zt86r9dOzEcfrhxa+MnVQhNE8="
 
-int main(int argc, char* argv[]) {
-#ifndef _WIN32
-    runcmd("chmod 600 sshkey", NULL);
-    // files can't be written to a macos app bundle, so they need to be
-    // cached in /Users/USERNAME/.APPNAME, here .fractal directory
-    // attempt to create fractal cache directory, it will fail if it
-    // already exists, which is fine
-    // for Linux, this is in /home/USERNAME/.fractal, the cache is also needed
-    // for the same reason
-    runcmd("mkdir ~/.fractal", NULL);
-    runcmd("chmod 0755 ~/.fractal", NULL);
-
-    // the mkdir command won't do anything if the folder already exists, in
-    // which case we make sure to clear the previous logs and connection id
-    runcmd("rm -f ~/.fractal/log.txt", NULL);
-    runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
-#endif
-
-    // Parse all command-line arguments
-
+int parseArgs(int argc, char *argv[]) {
     int num_required_args = 1;
     int num_optional_args = 3;
     if (argc - 1 < num_required_args ||
@@ -572,6 +553,29 @@ int main(int argc, char* argv[]) {
     if (argc == 5) {
         max_bitrate = atoi(argv[4]);
     }
+    return 0;
+}
+
+int main(int argc, char* argv[]) {
+#ifndef _WIN32
+    runcmd("chmod 600 sshkey", NULL);
+    // files can't be written to a macos app bundle, so they need to be
+    // cached in /Users/USERNAME/.APPNAME, here .fractal directory
+    // attempt to create fractal cache directory, it will fail if it
+    // already exists, which is fine
+    // for Linux, this is in /home/USERNAME/.fractal, the cache is also needed
+    // for the same reason
+    runcmd("mkdir ~/.fractal", NULL);
+    runcmd("chmod 0755 ~/.fractal", NULL);
+
+    // the mkdir command won't do anything if the folder already exists, in
+    // which case we make sure to clear the previous logs and connection id
+    runcmd("rm -f ~/.fractal/log.txt", NULL);
+    runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
+#endif
+
+    int ret = parseArgs(argc, argv);
+    if (ret != 0) return ret;
 
     // Write ecdsa key to a local file for ssh to use, for that server ip
     // This will identify the connecting server as the correct server and not an
