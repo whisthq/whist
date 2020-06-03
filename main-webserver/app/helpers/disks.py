@@ -591,3 +591,17 @@ def setUpdateAccepted(disk_name, accepted, ID=-1):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+def fetchAllDisks(ID=-1):
+    """Fetches all disks in database
+    """
+    command = text(
+        """
+        SELECT * FROM disks
+        """
+    )
+    params = {}
+    with engine.connect() as conn:
+        disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        conn.close()
+        return disks

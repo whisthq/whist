@@ -111,6 +111,9 @@ def disk(action, **kwargs):
         body = request.get_json()
         setDiskVersion(body["disk_name"], body["branch"])
         return jsonify({"status": 200}), 200
+    elif action == "fetchAll":
+        disks = fetchAllDisks()
+        return jsonify({"status": 200, "disks": disks}), 200
 
 
 @disk_bp.route("/version", methods=["POST"])

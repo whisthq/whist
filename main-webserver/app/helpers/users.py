@@ -60,7 +60,7 @@ def isAdmin(username):
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchall())[0]
         conn.close()
-        print(user)
+
         if user:
             if user["password"] == jwt.encode(
                 {"pwd": os.getenv("ADMIN_PASSWORD")}, os.getenv("SECRET_KEY")
