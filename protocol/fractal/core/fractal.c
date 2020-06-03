@@ -186,7 +186,7 @@ bool is_dev_vm() {
 
     LOG_INFO("GETTING JSON");
 
-    if (!SendJSONGet("cube-celery-staging.herokuapp.com", "/vm/isDev", buf,
+    if (!SendJSONGet(PRODUCTION_HOST, "/vm/isDev", buf,
                      len)) {
         return true;
     }
