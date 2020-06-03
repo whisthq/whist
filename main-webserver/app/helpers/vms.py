@@ -658,7 +658,7 @@ def claimAvailableVM(disk_name, location, os_type="Windows", s=None, ID=-1):
             )
             command = text(
                 """
-                UPDATE v_ms 
+                UPDATE v_ms
                 SET lock = :lock, username = :username, disk_name = :disk_name, state = :state, last_updated = :last_updated
                 WHERE vm_name = :vm_name
                 """
@@ -937,7 +937,7 @@ def deleteVMFromTable(vm_name):
     """
     command = text(
         """
-        DELETE FROM v_ms WHERE "vm_name" = :vm_name 
+        DELETE FROM v_ms WHERE "vm_name" = :vm_name
         """
     )
     params = {"vm_name": vm_name}
@@ -1732,3 +1732,23 @@ def updateProtocolVersion(vm_name, version):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+def fetchInstallCommand(app_name):
+    """Fetches an install command from the install_commands sql table
+
+    Args:
+        app_name (str): The app name of the install command to fetch
+
+    Returns:
+        dict: An object respresenting the respective row in the table
+    """
+    command = text(
+        """
+        SELECT * FROM install_commands WHERE "app_name" = :app_name
+        """
+    )
+    params = {"app_name": app_name}
+    with engine.connect() as conn:
+        install_command = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        return install-comand

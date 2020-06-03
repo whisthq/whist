@@ -909,14 +909,13 @@ def installApplications(self, username, apps, ID=-1):
         for vm in vms:
             for app in apps:
                 print("TASK: Starting to install {} for VM {}".format(app, vm["vm_name"]))
-                command = "choco install blender --force"  # TODO: based on application
+                install_command = fetchInstallCommand(app)
 
                 run_command_parameters = {
                     "command_id": "RunPowerShellScript",
-                    "script": [command],
+                    "script": [install_command["command"]],
                 }
 
-                # TODO: fetch virtual machine from username
                 poller = compute_client.virtual_machines.run_command(
                     os.environ.get("VM_GROUP"), vm["vm_name"], run_command_parameters
                 )
