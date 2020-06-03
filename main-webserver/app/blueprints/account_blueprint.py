@@ -115,6 +115,14 @@ def account_register(**kwargs):
         status,
     )
 
+@account_bp.route("/account/lookup", methods=["POST"])
+@generateID
+@logRequestInfo
+def account_lookup(**kwargs):
+    body = request.get_json()
+    username = body["username"]
+
+    return jsonify({"exists": lookup(username)}), 200
 
 @account_bp.route("/account/checkVerified", methods=["POST"])
 @generateID
