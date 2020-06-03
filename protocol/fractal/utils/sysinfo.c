@@ -12,6 +12,8 @@
 #include <psapi.h>
 #else
 #include <sys/sysinfo.h>
+#include <sys/utsname.h>
+#include <sys/statvfs.h>
 #endif
 
 #include <stdio.h>
@@ -21,12 +23,10 @@ void PrintOSInfo()
     char buf[1024];
 
 #ifdef _WIN32
-
     OSVERSIONINFOEXW version = { 0 };
-    char szOS[512];
 
     version.dwOSVersionInfoSize = sizeof( version );
-#pragma warning(suppress : 4996) 
+#pragma warning(suppress : 4996)
     GetVersionExW( (OSVERSIONINFO*)&version );
 
     int major_version = -1;
@@ -55,28 +55,20 @@ void PrintOSInfo()
         }
     }
 
-    snprintf( szOS, sizeof( szOS ), "Microsoft Windows %d.%d", major_version, minor_version );
-
+    char winOSstring[512];
+    snprintf( winOSstring, sizeof( winOSstring ), "Microsoft Windows %d.%d", major_version, minor_version );
 #endif
 
 #ifdef _WIN32
-    snprintf( buf, sizeof( buf ), "32-bit %s", szOS );
+    snprintf( buf, sizeof( buf ), "32-bit %s", winOSstring );
 #elif _WIN64
-    snprintf( buf, sizeof( buf ), "64-bit %s", szOS );
+    snprintf( buf, sizeof( buf ), "64-bit %s", winOSstring );
 #elif __APPLE__ || __MACH__
     buf = "Mac OSX";
 #elif __linux__
     struct utsname uts;
     uname( &uts );
-    snprintf( buf, sizeof( buf ), "Linux %s", uts.sysname );
-#elif __FreeBSD__
-    struct utsname uts;
-    uname( &uts );
-    snprintf( buf, sizeof( buf ), "FreeBSD %s", uts.sysname );
-#elif __unix || __unix__
-    struct utsname uts;
-    uname( &uts );
-    snprintf( buf, sizeof( buf ), "Unix %s", uts.sysname );
+    snprintf( buf, sizeof(buf), "%s %s %s %s %s", uts.machine, uts.sysname, uts.nodename, uts.release, uts.version);
 #else
     buf = "Other";
 #endif
@@ -131,6 +123,25 @@ void PrintModelInfo()
         // And now we print the new string
         LOG_INFO( "  Make and Model: %s", response );
         free( old_buf );
+        free( response );
+    }
+#else
+    char* vendor = NULL;
+    runcmd("cat /sys/devices/virtual/dmi/id/sys_vendor", &vendor);
+    if(vendor) {
+        vendor[strlen(vendor) - 1] = '\0';
+        char* product = NULL;
+        runcmd("cat /sys/devices/virtual/dmi/id/product_name", &product);
+        if(product) {
+            product[strlen(product) - 1] = '\0';
+            LOG_INFO( "  Make and Model: %s %s", vendor, product );
+            free(product);
+        } else {
+            LOG_WARNING("PRODUCT FAILED");
+        }
+        free(vendor);
+    } else {
+        LOG_WARNING("SYS VENDOR FAILED");
     }
 #endif
 }
@@ -368,14 +379,27 @@ void PrintCPUInfo()
 
 void PrintHardDriveInfo()
 {
+    double used_space;
+    double total_space;
+    double available_space;
 #ifdef _WIN32
-    ULARGE_INTEGER usable_space;
-    ULARGE_INTEGER total_space;
-    ULARGE_INTEGER free_space;
-    GetDiskFreeSpaceExW( NULL, &usable_space, &total_space, &free_space );
+    ULARGE_INTEGER ltotal_space;
+    ULARGE_INTEGER lusable_space;
+    ULARGE_INTEGER lfree_space;
+    GetDiskFreeSpaceExW( NULL, &lusable_space, &ltotal_space, &lfree_space );
+
+    used_space = ltotal_space.QuadPart - lfree_space.QuadPart;
+    total_space = ltotal_space.QuadPart;
+    available_space = lusable_space.QuadPart;
+#else
+    struct statvfs buf;
+    statvfs("/", &buf);
+    total_space = buf.f_blocks * buf.f_frsize;
+    used_space = total_space - buf.f_bfree * buf.f_bsize;
+    available_space = buf.f_bavail * buf.f_bsize;
+#endif
 
     double BYTES_IN_GB = 1024 * 1024 * 1024.0;
-
-    LOG_INFO( "  Hard Drive: %fGB/%fGB used, %fGB available to Fractal", (total_space.QuadPart - free_space.QuadPart) / BYTES_IN_GB, total_space.QuadPart / BYTES_IN_GB, usable_space.QuadPart / BYTES_IN_GB );
-#endif
+    LOG_INFO( "  Hard Drive: %fGB/%fGB used, %fGB available to Fractal", used_space / BYTES_IN_GB, total_space / BYTES_IN_GB, available_space / BYTES_IN_GB );
 }
+
