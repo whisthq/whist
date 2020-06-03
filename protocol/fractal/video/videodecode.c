@@ -144,7 +144,7 @@ int extract_extradata(video_decoder_t* decoder, AVPacket* packet) {
     int ret = -1;
     AVBSFContext* bitstream_filter_context;
     AVPacket* filter_packet;
-    AVBitStreamFilter* extradata_filter =
+    const AVBitStreamFilter* extradata_filter =
         av_bsf_get_by_name("extract_extradata");
     if (!extradata_filter) {
         LOG_WARNING(
