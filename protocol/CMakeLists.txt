@@ -78,6 +78,26 @@ else()
     set(arch 32)
 endif()
 
+#download libs from S3
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    MESSAGE(STATUS "Downloading libs from s3")
+    execute_process(COMMAND CMD /C "get-shared-libs.bat"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    RESULT_VARIABLE dl_libs_res)
+    if (NOT ${dl_libs_res} EQUAL "0")
+        message(FATAL_ERROR "Failed to download libs from s3: exitcode: ${dl_libs_res}")
+    endif()
+else()
+    MESSAGE(STATUS "Downloading libs from s3")
+    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get-shared-libs.sh
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    RESULT_VARIABLE dl_libs_res)
+    if (NOT ${dl_libs_res} EQUAL "0")
+        message(FATAL_ERROR "Failed to download libs from s3: exitcode: ${dl_libs_res}")
+    endif()
+endif()
+
+
 
 # ffmpeg: using our provided libs on mac and windows and system on linux.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -98,7 +118,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
     endforeach(LIB)
     message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
-    include_directories(include/ffmpeg)
+    find_path(FFMPEG_AVCODEC_INCLUDE_DIR
+            NAMES libavcodec/avcodec.h
+            PATHS ${_FFMPEG_AVCODEC_INCLUDE_DIRS} /usr/include /usr/local/include /opt/local/include /sw/include
+            PATH_SUFFIXES ffmpeg libav
+            )
+    message(VERBOSE "FFmpeg include dir: ${FFMPEG_AVCODEC_INCLUDE_DIR}")
+    include_directories(${FFMPEG_AVCODEC_INCLUDE_DIR})
 else()
     FOREACH(LIB ${FFMPEG_LIBS})
         message(STATUS "Looking for lib ${LIB}")
@@ -171,7 +197,7 @@ endif()
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
-include_directories(include/ffmpeg)
+
 
 
 #Here is where we tell cmake to look in subdirectories for further CMakeLists.txt

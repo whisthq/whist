@@ -306,7 +306,8 @@ char *get_version() {
         fseek(f, 0, SEEK_SET);
         static char buf[17];
         version = buf;
-        fread(version, 1, min(length, (long)sizeof(buf)), f); // cast for compiler warning
+        fread(version, 1, min(length, (long)sizeof(buf)),
+              f);  // cast for compiler warning
         version[16] = '\0';
         fclose(f);
     } else {

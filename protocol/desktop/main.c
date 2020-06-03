@@ -124,16 +124,15 @@ void update() {
     // clipboard
     if (received_server_init_message) {
         ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
-        if( clipboard )
-        {
+        if (clipboard) {
             FractalClientMessage* fmsg_clipboard =
-                malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) +
-                        clipboard->size );
+                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) +
+                       clipboard->size);
             fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
-            memcpy( &fmsg_clipboard->clipboard, clipboard,
-                    sizeof( ClipboardData ) + clipboard->size );
-            SendFmsg( fmsg_clipboard );
-            free( fmsg_clipboard );
+            memcpy(&fmsg_clipboard->clipboard, clipboard,
+                   sizeof(ClipboardData) + clipboard->size);
+            SendFmsg(fmsg_clipboard);
+            free(fmsg_clipboard);
         }
     }
 
@@ -158,7 +157,7 @@ void update() {
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_bitrate / 1024.0 / 1024.0;
-        LOG_INFO( "Asking for server MBPS to be %f", fmsg.mbps );
+        LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
         SendFmsg(&fmsg);
     }
 
@@ -221,7 +220,7 @@ void update() {
 // sub-packets to send, it not supported (If low latency large
 // FractalClientMessage packets are needed, then this will have to be
 // implemented)
-int SendFmsg(struct FractalClientMessage* fmsg) {
+int SendFmsg(FractalClientMessage* fmsg) {
     if (fmsg->type == CMESSAGE_CLIPBOARD) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg,
                              GetFmsgSize(fmsg));
@@ -295,7 +294,8 @@ int ReceivePackets(void* opaque) {
         // Handle all pending updates
         update();
 
-        //TODO hash_time is never updated, leaving it in here in case it is used in the future
+        // TODO hash_time is never updated, leaving it in here in case it is
+        // used in the future
         // casting to suppress warnings.
         (void)hash_time;
         // Post statistics every 5 seconds
@@ -645,12 +645,11 @@ int main(int argc, char* argv[]) {
 
         if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
                              PORT_CLIENT_TO_SERVER, 10, 500, true) < 0) {
-            LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+            LOG_INFO("Server is not on STUN, attempting to connect directly");
             using_stun = false;
-            if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
-                                            PORT_CLIENT_TO_SERVER, 10, 500, false ) < 0 )
-            {
-                LOG_WARNING( "Failed to connect to server" );
+            if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
+                                 PORT_CLIENT_TO_SERVER, 10, 500, false) < 0) {
+                LOG_WARNING("Failed to connect to server");
                 continue;
             }
         }
@@ -661,16 +660,16 @@ int main(int argc, char* argv[]) {
 
         SocketContext PacketReceiveContext = {0};
         if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
-                             PORT_SERVER_TO_CLIENT, 1, 500, using_stun ) < 0) {
+                             PORT_SERVER_TO_CLIENT, 1, 500, using_stun) < 0) {
             LOG_ERROR("Failed finish connection to server");
             closesocket(PacketSendContext.s);
             continue;
         }
 
         int a = 65535;
-        if( setsockopt( PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof( int ) ) == -1 )
-        {
-            fprintf( stderr, "Error setting socket opts: %s\n", strerror( errno ) );
+        if (setsockopt(PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF,
+                       (const char*)&a, sizeof(int)) == -1) {
+            fprintf(stderr, "Error setting socket opts: %s\n", strerror(errno));
         }
 
         SDL_Delay(150);
@@ -679,7 +678,8 @@ int main(int argc, char* argv[]) {
         // not-speed-sensitive applications
 
         if (CreateTCPContext(&PacketTCPContext, (char*)server_ip,
-                             PORT_SHARED_TCP, 1, tcp_connection_timeout, using_stun ) < 0) {
+                             PORT_SHARED_TCP, 1, tcp_connection_timeout,
+                             using_stun) < 0) {
             LOG_ERROR("Failed finish connection to server");
             tcp_connection_timeout += 250;
             closesocket(PacketSendContext.s);
