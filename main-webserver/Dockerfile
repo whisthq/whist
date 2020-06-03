@@ -1,4 +1,3 @@
-
 FROM ubuntu:20.04
 
 # Install python
@@ -24,14 +23,12 @@ RUN apt-get install -y vim curl
 # Install heroku cli
 RUN curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
 
-
 RUN python --version
 
 USER fractal
 WORKDIR /home/fractal
 
 COPY --chown=fractal . .
-
 
 CMD /bin/bash
 ENTRYPOINT [ "/home/fractal/entrypoint.sh" ]

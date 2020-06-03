@@ -112,6 +112,7 @@ def fetchUserDisks(username, show_all=False, main=True, ID=-1):
                     sendInfo(ID, "Disk names fetched and Postgres connection closed")
                 else:
                     sendWarning(ID, "No disk found for {}. Postgres connection closed")
+                    return []
 
                 if main:
                     disks_info = [disk for disk in disks_info if disk["main"]]
@@ -141,6 +142,7 @@ def fetchUserDisks(username, show_all=False, main=True, ID=-1):
                     sendInfo(ID, "Disk names fetched and Postgres connection closed")
                 else:
                     sendWarning(ID, "No disk found for {}. Postgres connection closed")
+                    return []
 
                 if main:
                     disks_info = [disk for disk in disks_info if disk["main"]]
