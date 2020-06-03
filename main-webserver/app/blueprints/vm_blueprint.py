@@ -304,7 +304,7 @@ def vm(action, **kwargs):
 
         if not task:
             sendError(kwargs["ID"], "Error installing applications")
-            return jsonify({"error": "Error creating task"}), 400 # TODO: change later
+            return jsonify({"error": "Error installing applications"}), 400 
         return jsonify({"ID": task.id}), 202
 
     return jsonify({}), 400

@@ -905,24 +905,27 @@ def installApplications(self, username, apps, ID=-1):
 
     vms = fetchUserVMs(username, ID)
 
-    for vm in vms:
-        for app in apps:
-            print("TASK: Starting to install {} for VM {}", app, vm["vm_name"])
-            command = "choco install blender --force"  # TODO: based on application
+    try:
+        for vm in vms:
+            for app in apps:
+                print("TASK: Starting to install {} for VM {}".format(app, vm["vm_name"]))
+                command = "choco install blender --force"  # TODO: based on application
 
-            run_command_parameters = {
-                "command_id": "RunPowerShellScript",
-                "script": [command],
-            }
+                run_command_parameters = {
+                    "command_id": "RunPowerShellScript",
+                    "script": [command],
+                }
 
-            # TODO: fetch virtual machine from username
-            poller = compute_client.virtual_machines.run_command(
-                os.environ.get("VM_GROUP"), vm["vm_name"], run_command_parameters
-            )
+                # TODO: fetch virtual machine from username
+                poller = compute_client.virtual_machines.run_command(
+                    os.environ.get("VM_GROUP"), vm["vm_name"], run_command_parameters
+                )
 
-            result = poller.result()
-            print("SUCCESS: " + app + " installed to " + vm_name)
-            print(result.value[0].message)
+                result = poller.result()
+                print("SUCCESS: " + app + " installed to " + vm["vm_name"])
+                print(result.value[0].message)
+    except Exception as e:
+        sendError(ID, "ERROR: " + str(e))
 
     return {"status": 200}
 
