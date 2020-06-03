@@ -13,8 +13,8 @@
 #include <stdlib.h>
 
 #if defined(__ANDROID_API__)
-#include <libavcodec/jni.h>
 #include <jni.h>
+#include <libavcodec/jni.h>
 #endif
 
 void destroy_video_decoder_members(VideoDecoder* decoder);
@@ -139,19 +139,86 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* aReserved) {
     av_jni_set_java_vm(vm, NULL);
     return JNI_VERSION_1_6;
 }
-
-static int h264_extradata_length(uint8_t* data, int len) {
-    if (data[4] != 0x67) {
-        return 0;
+#else
+int extract_extradata(video_decoder_t* decoder, AVPacket* packet) {
+    int ret = -1;
+    AVBSFContext* bitstream_filter_context;
+    AVPacket* filter_packet;
+    AVBitStreamFilter* extradata_filter =
+        av_bsf_get_by_name("extract_extradata");
+    if (!extradata_filter) {
+        LOG_WARNING(
+            "Unable to initialize bitstream filter: 'extract_extradata'");
+        goto cleanup;
     }
-    uint8_t end_flag[6] = {0x0, 0x0, 0x0, 0x1, 0x65, 0x0};
-    for (int i = 0; i < min(100, len - 5); ++i) {
-        if (!memcmp(data + i, end_flag + 1, 4) || !memcmp(data + i, end_flag, 5)) {
-            return i;
+
+    if (av_bsf_alloc(extradata_filter, &bitstream_filter_context) < 0) {
+        LOG_WARNING("Unable to allocate bitstream_filter_context.");
+        goto cleanup;
+    }
+
+    if (avcodec_parameters_from_context(bitstream_filter_context->par_out,
+                                        decoder->context) < 0) {
+        LOG_WARNING(
+            "Unable to copy parameters from decoder to "
+            "bitstream_filter_context.");
+        goto cleanup;
+    }
+
+    if (av_bsf_init(bitstream_filter_context) < 0) {
+        LOG_WARNING("Unable to initialize bitstream_filter_context.");
+        goto cleanup;
+    }
+
+    filter_packet = av_packet_alloc();
+    if (av_packet_ref(filter_packet, packet) < 0) {
+        LOG_WARNING("Unable to ref input packet.");
+        goto cleanup;
+    }
+
+    if (av_bsf_send_packet(bitstream_filter_context, filter_packet) < 0) {
+        LOG_WARNING("Unable to send packet for filtering.");
+        goto cleanup;
+    }
+
+    uint8_t* extradata;
+    int extradata_size;
+    int res;
+
+    while (true) {
+        res = av_bsf_receive_packet(bitstream_filter_context, filter_packet);
+        if (res < 0) {
+            if (res != AVERROR(EAGAIN) && res != AVERROR_EOF) {
+                // bad boy error
+                LOG_WARNING(
+                    "Unable to receive packet from bitstream filter: (%d) %s",
+                    res, av_err2str(res));
+                goto cleanup;
+            }
+            // not bad boy error
+            continue;
+        }
+
+        extradata = av_packet_get_side_data(
+            filter_packet, AV_PKT_DATA_NEW_EXTRADATA, &extradata_size);
+
+        if (extradata) {
+            decoder->context->extradata =
+                av_mallocz(extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
+            memcpy(decoder->context->extradata, extradata, extradata_size);
+            decoder->context->extradata_size = extradata_size;
+            av_packet_unref(filter_packet);
+            LOG_INFO("Success extracting extradata of size %d from packet!",
+                     extradata_size);
+            ret = 0;
+            goto cleanup;
         }
     }
-    LOG_WARNING("extradata length not found from packet data!");
-    return -1;
+
+cleanup:
+    av_bsf_free(&bitstream_filter_context);
+    av_packet_free(&filter_packet);
+    return ret;
 }
 #endif
 
@@ -342,12 +409,13 @@ DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_HARDWARE_OL
 #elif __APPLE__
 DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
 #elif defined(__ANDROID_API__) // android
-    DecodeType decoder_precedence[] = {DECODE_TYPE_MEDIACODEC, DECODE_TYPE_SOFTWARE};
+DecodeType decoder_precedence[] = {DECODE_TYPE_MEDIACODEC, DECODE_TYPE_SOFTWARE};
 #else  // linux
 DecodeType decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
 #endif
 
-#define NUM_DECODER_TYPES (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
+#define NUM_DECODER_TYPES \
+    (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
 
 bool try_next_decoder(VideoDecoder* decoder) {
     if (decoder->can_use_hardware) {
@@ -461,17 +529,19 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     AVPacket* packets = safe_malloc(num_packets * sizeof(AVPacket));
 
 #if defined(__ANDROID_API__)
-  if (decoder->type == DECODE_TYPE_MEDIACODEC && !mediacodec_extradata_initialized) {
-      decoder->context->extradata = av_malloc(buffer_size);
-      memcpy(decoder->context->extradata, buffer, buffer_size);
-      decoder->context->extradata_size = buffer_size;
-      int res = avcodec_open2(decoder->context, decoder->codec, NULL);
-      if (res < 0) {
-          LOG_WARNING( "Failed to open context for stream (%d): %s", res, av_err2str(res));
-          return -1;
-      }
-      mediacodec_extradata_initialized = true;
-  }
+    // try to set extradata on android if necessary
+    if (decoder->type == DECODE_TYPE_MEDIACODEC &&
+        !decoder->context->extradata) {
+        if (extract_extradata(decoder, &decoder->packet) < 0) {
+            LOG_WARNING("Unable to extract and set extradata!");
+            if (!try_next_decoder(decoder)) {
+                destroy_video_decoder(decoder);
+                return false;
+            }
+        } else {
+            LOG_INFO("Successfully set extradata!");
+        }
+    }
 #endif
 
   // copy the received packet back into the decoder AVPacket
