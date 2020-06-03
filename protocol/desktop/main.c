@@ -550,21 +550,21 @@ int parseArgs(int argc, char *argv[]) {
     if (argc >= 3) {
         errno = 0;
         ret = strtol(argv[2], &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret <= 0) {
+        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
             printf("%s", usage);
             return -1;
         }
-        output_width = (int) ret;
+        if (ret != 0) output_width = (int) ret;
     }
 
     if (argc >= 4) {
         errno = 0;
         ret = strtol(argv[3], &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret <= 0) {
+        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
             printf("%s", usage);
             return -1;
         }
-        output_height = (int) ret;
+        if (ret != 0) output_height = (int) ret;
     }
 
     if (argc == 5) {
