@@ -900,24 +900,29 @@ def deallocateVM(self, vm_name, ID=-1):
     return {"status": 200}
 
 @celery.task(bind=True)
-def installApplications(self, vm_name, apps, ID=-1):
+def installApplications(self, username, apps, ID=-1):
     _, compute_client, _ = createClients()
 
-    for app in apps:
-        print("TASK: Starting to install " + app)
-        command = "choco install blender --force"  # TODO: based on application
+    vms = fetchUserVMs(username, ID)
 
-        run_command_parameters = {
-            "command_id": "RunPowerShellScript",
-            "script": [command],
-        }
-        poller = compute_client.virtual_machines.run_command(
-            os.environ.get("VM_GROUP"), vm_name, run_command_parameters
-        )
+    for vm in vms:
+        for app in apps:
+            print("TASK: Starting to install {} for VM {}", app, vm["vm_name"])
+            command = "choco install blender --force"  # TODO: based on application
 
-        result = poller.result()
-        print("SUCCESS: " + app + " installed to " + vm_name)
-        print(result.value[0].message)
+            run_command_parameters = {
+                "command_id": "RunPowerShellScript",
+                "script": [command],
+            }
+
+            # TODO: fetch virtual machine from username
+            poller = compute_client.virtual_machines.run_command(
+                os.environ.get("VM_GROUP"), vm["vm_name"], run_command_parameters
+            )
+
+            result = poller.result()
+            print("SUCCESS: " + app + " installed to " + vm_name)
+            print(result.value[0].message)
 
     return {"status": 200}
 

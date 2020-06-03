@@ -296,7 +296,7 @@ def vm(action, **kwargs):
 
         task = installApplications.apply_async(
             [
-                body["vm_name"],
+                body["username"],
                 body["apps"],
                 kwargs["ID"]
             ]
