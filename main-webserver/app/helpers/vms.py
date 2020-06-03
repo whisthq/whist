@@ -1751,4 +1751,4 @@ def fetchInstallCommand(app_name):
     with engine.connect() as conn:
         install_command = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
-        return install_comand
+        return install_command
