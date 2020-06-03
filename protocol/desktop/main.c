@@ -9,6 +9,8 @@
 
 #include "main.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -527,13 +529,13 @@ int ReceiveMessage(FractalPacket* packet) {
     "Zt86r9dOzEcfrhxa+MnVQhNE8="
 
 int parseArgs(int argc, char *argv[]) {
+    char *usage = "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH]"
+                  " [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]\n";
     int num_required_args = 1;
     int num_optional_args = 3;
     if (argc - 1 < num_required_args ||
         argc - 1 > num_required_args + num_optional_args) {
-        printf(
-            "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] "
-            "[[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]\n");
+        printf("%s", usage);
         return -1;
     }
 
@@ -542,16 +544,37 @@ int parseArgs(int argc, char *argv[]) {
     output_width = -1;
     output_height = -1;
 
-    if (argc >= 3 && (atoi(argv[2]) > 0)) {
-        output_width = atoi(argv[2]);
+    long int ret;
+    char *endptr;
+
+    if (argc >= 3) {
+        errno = 0;
+        ret = strtol(argv[2], &endptr, 10);
+        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret <= 0) {
+            printf("%s", usage);
+            return -1;
+        }
+        output_width = (int) ret;
     }
 
-    if (argc >= 4 && (atoi(argv[3]) > 0)) {
-        output_height = atoi(argv[3]);
+    if (argc >= 4) {
+        errno = 0;
+        ret = strtol(argv[3], &endptr, 10);
+        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret <= 0) {
+            printf("%s", usage);
+            return -1;
+        }
+        output_height = (int) ret;
     }
 
     if (argc == 5) {
-        max_bitrate = atoi(argv[4]);
+        errno = 0;
+        ret = strtol(argv[4], &endptr, 10);
+        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret <= 0) {
+            printf("%s", usage);
+            return -1;
+        }
+        max_bitrate = (int) ret;
     }
     return 0;
 }
