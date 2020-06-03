@@ -23,40 +23,20 @@ void PrintOSInfo()
     char buf[1024];
 
 #ifdef _WIN32
-    OSVERSIONINFOEXW version = { 0 };
+    char product[256];
+    char version[256];
+    char buildlab[512];
+    DWORD product_size = sizeof(product);
+    DWORD version_size = sizeof( version );
+    DWORD buildlab_size = sizeof( buildlab );
+    RegGetValueA( HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ProductName", RRF_RT_ANY, NULL, &product, &product_size );
+    RegGetValueA( HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentVersion", RRF_RT_ANY, NULL, &version, &version_size );
+    RegGetValueA( HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "BuildLab", RRF_RT_ANY, NULL, &buildlab, &buildlab_size );
 
-    version.dwOSVersionInfoSize = sizeof( version );
-#pragma warning(suppress : 4996)
-    GetVersionExW( (OSVERSIONINFO*)&version );
-
-    int major_version = -1;
-    for( int i = 0; i < 256; i++ )
-    {
-        OSVERSIONINFOEXW osVersionInfo = { 0 };
-        osVersionInfo.dwOSVersionInfoSize = sizeof( OSVERSIONINFOEX );
-        osVersionInfo.dwMajorVersion = i;
-        ULONGLONG maskCondition = VerSetConditionMask( 0, VER_MAJORVERSION, VER_EQUAL );
-        if( VerifyVersionInfoW( &osVersionInfo, VER_MAJORVERSION, maskCondition ) )
-        {
-            major_version = i;
-        }
-    }
-
-    int minor_version = -1;
-    for( int i = 0; i < 256; i++ )
-    {
-        OSVERSIONINFOEXW osVersionInfo = { 0 };
-        osVersionInfo.dwOSVersionInfoSize = sizeof( OSVERSIONINFOEX );
-        osVersionInfo.dwMajorVersion = i;
-        ULONGLONG maskCondition = VerSetConditionMask( 0, VER_MINORVERSION, VER_EQUAL );
-        if( VerifyVersionInfoW( &osVersionInfo, VER_MINORVERSION, maskCondition ) )
-        {
-            minor_version = i;
-        }
-    }
+    LOG_INFO( "PROD NAME: %S", product );
 
     char winOSstring[512];
-    snprintf( winOSstring, sizeof( winOSstring ), "Microsoft Windows %d.%d", major_version, minor_version );
+    snprintf( winOSstring, sizeof( winOSstring ), "%s %s.%s", product, version, buildlab );
 #endif
 
 #ifdef _WIN32
@@ -87,42 +67,41 @@ void PrintModelInfo()
         int find_newline = 0;
         while( find_newline < total_sz && response[find_newline] != '\n' ) find_newline++;
         find_newline++;
-        char* old_buf = response;
-        response += find_newline;
+        char* make_model = response;
+        make_model += find_newline;
 
         // Get rid of trailing whitespace
-        int sz = (int)strlen( response );
-        while( sz > 0 && response[sz - 1] == ' ' || response[sz - 1] == '\n' || response[sz - 1] == '\r' )
+        int sz = (int)strlen( make_model );
+        while( sz > 0 && make_model[sz - 1] == ' ' || make_model[sz - 1] == '\n' || make_model[sz - 1] == '\r' )
         {
             sz--;
         }
-        response[sz] = '\0';
+        make_model[sz] = '\0';
 
         // Get rid of consecutive spaces
         char* tmp = malloc( sz );
         for( int i = 1; i < sz; i++ )
         {
-            if( response[i] == ' ' && response[i-1] == ' ' )
+            if( make_model[i] == ' ' && make_model[i-1] == ' ' )
             {
                 int target = i-1;
                 int old_sz = sz;
                 sz--;
-                while( i + 1 < old_sz && response[i+1] == ' ' )
+                while( i + 1 < old_sz && make_model[i+1] == ' ' )
                 {
                     i++;
                     sz--;
                 }
-                memcpy( tmp, &response[i], old_sz - i );
-                memcpy( &response[target], tmp, old_sz - i );
-                response[sz] = '\0';
+                memcpy( tmp, &make_model[i], old_sz - i );
+                memcpy( &make_model[target], tmp, old_sz - i );
+                make_model[sz] = '\0';
                 i--;
             }
         }
         free( tmp );
 
         // And now we print the new string
-        LOG_INFO( "  Make and Model: %s", response );
-        free( old_buf );
+        LOG_INFO( "  Make and Model: %s", make_model );
         free( response );
     }
 #else
@@ -388,9 +367,9 @@ void PrintHardDriveInfo()
     ULARGE_INTEGER lfree_space;
     GetDiskFreeSpaceExW( NULL, &lusable_space, &ltotal_space, &lfree_space );
 
-    used_space = ltotal_space.QuadPart - lfree_space.QuadPart;
-    total_space = ltotal_space.QuadPart;
-    available_space = lusable_space.QuadPart;
+    used_space = (double)(ltotal_space.QuadPart - lfree_space.QuadPart);
+    total_space = (double)ltotal_space.QuadPart;
+    available_space = (double)lusable_space.QuadPart;
 #else
     struct statvfs buf;
     statvfs("/", &buf);
