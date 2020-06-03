@@ -1,5 +1,7 @@
 # Google Chrome Container Image
 
+![Docker Image CI](https://github.com/fractalcomputers/container-images/workflows/Docker%20Image%20CI/badge.svg)
+
 This folder contains the container image for the streaming Google Chrome via Fractal. The Dockerfile is based on an Ubuntu 18.04 image and installs all required 
 
 For reference on the bash functions called in the Docker image, refer to: https://github.com/fractalcomputers/setup-scripts
