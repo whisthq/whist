@@ -6,7 +6,7 @@ This repository contains the base Docker images for the various single-applicati
 
 Here is a list of the existing Fractal single-application images, alongside their base container OS:
 
-- Google Chrome | Ubuntu 20.04
+TBD
 
 ## Development
 
