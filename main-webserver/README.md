@@ -2,10 +2,7 @@
 
 ![Python App CI](https://github.com/fractalcomputers/vm-webserver/workflows/Python%20App%20CI/badge.svg)
 
-
-
-
-Webserver to handle interfacing with Fractal cloud computers hosted on Azure, and for interfacing with a variety of website functionalities. Runs Flask with Celery for asynchronous task handling.
+This repo contains the code for the VM and user webserver, which handles interfacing between users and the Fractal cloud computers hosted on Azure (currently), and for interfacing with a variety of website functionalities. Runs Flask with Celery for asynchronous task handling.
 
 Production hosted on Heroku: https://cube-celery-vm.herokuapp.com
 
@@ -15,20 +12,20 @@ Staging hosted on Heroku: https://cube-celery-staging.herokuapp.com
 
 Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging
 
-## Setup
+## Development
 
-### Local setup (Windows/MacOS)
+Here are the main setups to run this webserver locally and on Heroku. If developing mainly in Heroku, you should make sure to commit your latest code to GitHub, since this is where our development happens. We have basic continuous integration set via GitHub Actions. For every push or PR to master, the commit will be built and formatted via Python Black, see below. You should always make sure that your code passes the tests in the Actions tab.
+
+### Local Setup (Windows/MacOS)
 
 1. Set up the Heroku CLI on your computer
 2. Check your python version by typing `python -V`.
-
-- If you have python 3.6.X:
-  - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
-- If you have Python >3.6 or Python <3.0:
-  - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
-  - Find the directory where python.exe is installed. Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
-  - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
-
+  - If you have python 3.6.X:
+    - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
+  - If you have Python >3.6 or Python <3.0:
+    - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
+    - Find the directory where python.exe is installed. Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
+    - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
 3. Install everything by typing `pip install -r requirements.txt`. Make sure you're in the virtual environment when doing this.
 4. Tell the local environment what the entry point is to the webserver by typing `set FLASK_APP=run.py`.
 5. Import the environment variables into your computer by typing `heroku config -s --app <APP> >> .env`. App is either `cube-celery-vm` if you are working on the production webserver, or `cube-celery-staging` if you are working on the staging webserver.
@@ -39,20 +36,13 @@ Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging
 
 ### Build/Run in Docker
 
-To build the docker image
-`docker build -t vm-webserver`
-
-Required environment variables
-HEROKU_API_KEY=<heroku-api-key>
-
-You can store all docker env variables in a file such as `.envdocker`
-Then run docker with 
+To build the Docker image, run: `docker build -t vm-webserver`. You will require the Heroku API key as an environment variable, `HEROKU_API_KEY=<heroku-api-key>`. You can store all Docker environment variables in a file such as `.envdocker`, to save yourself time between runs. You can then run Docker with:
 
 `docker run --env-file .envdocker -t vm-webserver:latest`
 
-Or run docker like
-`docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
+or 
 
+`docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
 
 ### Run on Heroku
 
@@ -75,11 +65,15 @@ Access the SQL database here: https://pgweb-demo.herokuapp.com/
 
 Select Scheme, and for the server URL scheme, copy the DATABASE_URL config var found on the Heroku instance.
 
+## Publishing
+
+Once you are ready to deploy to production, you can merge your code into master and then run `./update.sh`. The script will push your local code to Heroku on the master branch, and notify the team via Slack.
+
 ## Styling
 
 To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python black](https://github.com/psf/black). You may find a variety of tutorial online for your personal setup. This README covers how to set it up on VSCode.
 
-### Python Black on VSCode
+#### [VSCode](https://medium.com/@marcobelo/setting-up-python-black-on-visual-studio-code-5318eba4cd00)
 
 1. Install it on your virtual env or in your local python with the command:
 
@@ -98,7 +92,26 @@ ext install ms-python.python
 5. Search for “python formatting provider” and select “black”.
 6. Now open/create a python file, write some code and save(Ctrl+s) it to see the magic happen!
 
-<sub>[Source](https://medium.com/@marcobelo/setting-up-python-black-on-visual-studio-code-5318eba4cd00)</sub>
+#### [Sublime](https://github.com/jgirardet/sublack)
+
+#### [CLI](https://github.com/psf/black)
+
+Installation:  
+Black can be installed by running `pip install black`. It requires Python 3.6.0+ to run but you can reformat Python 2 code with it, too.
+
+Usage:  
+To get started right away with sensible defaults:
+
+```
+black {source_file_or_directory}
+```
+
+Black doesn't provide many options. You can list them by running `black --help`:
+
+
+
+
+
 
 
 ### Vagrant setup
