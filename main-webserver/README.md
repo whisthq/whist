@@ -1,4 +1,9 @@
-# Fractal Users & VM Webserver
+# Fractal User & VM Webserver
+
+![Python App CI](https://github.com/fractalcomputers/vm-webserver/workflows/Python%20App%20CI/badge.svg)
+
+
+
 
 Webserver to handle interfacing with Fractal cloud computers hosted on Azure, and for interfacing with a variety of website functionalities. Runs Flask with Celery for asynchronous task handling.
 
