@@ -4,4 +4,3 @@ from app.celery_utils import init_celery
 app, jwtManager = create_app()
 app = init_app(app)
 init_celery(celery, app)
-
