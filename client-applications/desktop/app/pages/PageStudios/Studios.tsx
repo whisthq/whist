@@ -1,15 +1,15 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import styles from "./Counter.css";
-import { history } from "../store/configureStore";
+import styles from "../PageDashboard/Dashboard.css";
+import { history } from "store/configureStore";
 
 import Titlebar from "react-electron-titlebar";
-import Logo from "../../resources/images/logo.svg";
-import WifiBox from "./custom_components/WifiBox";
-import DistanceBox from "./custom_components/DistanceBox";
-import CPUBox from "./custom_components/CPUBox";
-import Typeform from "./custom_components/Typeform";
-import MainBox from "./custom_components/MainBox";
+import Logo from "resources/images/logo.svg";
+import WifiBox from "../PageDashboard/components/WifiBox";
+import DistanceBox from "../PageDashboard/components/DistanceBox";
+import CPUBox from "../PageDashboard/components/CPUBox";
+import Typeform from "../PageDashboard/components/Typeform";
+import MainBox from "../PageDashboard/components/MainBox";
 
 import { Offline, Online } from "react-detect-offline";
 import Popup from "reactjs-popup";
@@ -20,7 +20,7 @@ import {
   askFeedback,
   changeWindow,
   pingIPInfo,
-} from "../actions/counter";
+} from "actions/counter";
 
 class Studios extends Component {
   constructor(props) {

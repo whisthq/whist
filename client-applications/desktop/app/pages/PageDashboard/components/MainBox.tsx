@@ -4,7 +4,7 @@ import Popup from "reactjs-popup";
 import ToggleButton from "react-toggle-button";
 import Slider from "react-input-slider";
 
-import styles from "../Counter.css";
+import styles from "pages/PageDashboard/Dashboard.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
@@ -18,10 +18,10 @@ import {
   faUpload,
 } from "@fortawesome/free-solid-svg-icons";
 
-import Window from "../../../resources/images/window.svg";
-import Speedometer from "../../../resources/images/speedometer.svg";
-import Mountain from "../../../resources/images/mountain.jpg";
-import Scale from "../../../resources/images/scale.svg";
+import Window from "resources/images/window.svg";
+import Speedometer from "resources/images/speedometer.svg";
+import Mountain from "resources/images/mountain.jpg";
+import Scale from "resources/images/scale.svg";
 
 import {
   askFeedback,
@@ -32,7 +32,7 @@ import {
   sendLogs,
   changeStatusMessage,
   readyToConnect,
-} from "../../actions/counter";
+} from "actions/counter";
 
 class MainBox extends Component {
   constructor(props) {
@@ -50,10 +50,6 @@ class MainBox extends Component {
       vmRestarting: false,
     };
   }
-
-  TrackActivity = (action: any) => {
-    this.props.dispatch(trackUserActivity(action));
-  };
 
   ExitSettings = () => {
     this.props.dispatch(changeWindow(this.props.default));
@@ -166,10 +162,6 @@ class MainBox extends Component {
             this.state.mbps,
           ];
 
-          if (this.state.launches == 1) {
-            this.TrackActivity(true);
-          }
-
           // Starts the protocol
           const protocol = child(executable, parameters, {
             cwd: path,
@@ -178,7 +170,6 @@ class MainBox extends Component {
           });
           //Listener for closing the stream window
           protocol.on("close", (code) => {
-            this.TrackActivity(false);
             this.SendLogs();
             this.setState({
               launches: 0,

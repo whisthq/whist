@@ -1,7 +1,7 @@
 import { put, takeEvery, all, call, select, delay } from "redux-saga/effects";
 import { apiPost, apiGet } from "../utils/api.ts";
-import * as Action from "../actions/counter";
-import { history } from "../store/configureStore";
+import * as Action from "actions/counter";
+import { history } from "store/configureStore";
 
 import { config } from "../constants/config.ts";
 
@@ -35,7 +35,7 @@ function* loginUser(action) {
     yield put(Action.storeIsUser(json.is_user));
     yield put(Action.storeJWT(json.access_token, json.refresh_token));
     yield call(getPromoCode, action);
-    history.push("/counter");
+    history.push("/dashboard");
   } else {
     yield put(Action.loginFailed(true));
   }
@@ -124,38 +124,6 @@ function* loginStudio(action) {
   }
 }
 
-function* trackUserActivity(action) {
-  const state = yield select();
-  if (action.logon) {
-    const { json, response } = yield call(
-      apiPost,
-      config.url.PRIMARY_SERVER + "/tracker/logon",
-      {
-        username: state.counter.username,
-        is_user: state.counter.isUser,
-      },
-      state.counter.access_token
-    );
-    if (json && json.status && json.status === 401) {
-      yield call(refreshAccess);
-      yield call(trackUserActivity, action);
-    }
-  } else {
-    const { json, response } = yield call(
-      apiPost,
-      config.url.PRIMARY_SERVER + "/tracker/logoff",
-      {
-        username: state.counter.username,
-        is_user: state.counter.isUser,
-      },
-      state.counter.access_token
-    );
-    if (json && json.status && json.status === 401) {
-      yield call(refreshAccess);
-      yield call(trackUserActivity, action);
-    }
-  }
-}
 
 function* sendFeedback(action) {
   const state = yield select();
@@ -399,7 +367,6 @@ function* sendLogs(action) {
 
 export default function* rootSaga() {
   yield all([
-    takeEvery(Action.TRACK_USER_ACTIVITY, trackUserActivity),
     takeEvery(Action.LOGIN_USER, loginUser),
     takeEvery(Action.SEND_FEEDBACK, sendFeedback),
     takeEvery(Action.LOGIN_STUDIO, loginStudio),

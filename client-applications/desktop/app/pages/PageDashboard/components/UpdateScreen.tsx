@@ -1,7 +1,7 @@
 import React, { Component } from "react";
-import styles from "../Home.css";
+import styles from "pages/PageLogin/Login.css";
 import Titlebar from "react-electron-titlebar";
-import Logo from "../../../resources/images/logo.svg";
+import Logo from "resources/images/logo.svg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
 

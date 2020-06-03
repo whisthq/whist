@@ -4,7 +4,7 @@ import { createHashHistory } from "history";
 import { routerMiddleware, routerActions } from "connected-react-router";
 import { createLogger } from "redux-logger";
 import createRootReducer from "../reducers";
-import * as counterActions from "../actions/counter";
+import * as counterActions from "actions/counter";
 import { counterStateType } from "../reducers/types";
 import rootSaga from "../sagas";
 

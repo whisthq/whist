@@ -1,22 +1,22 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import styles from "./Counter.css";
-import { history } from "../store/configureStore";
+import styles from "pages/PageDashboard/Dashboard.css";
+import { history } from "store/configureStore";
 
 import Titlebar from "react-electron-titlebar";
-import Logo from "../../resources/images/logo.svg";
-import WifiBox from "./custom_components/WifiBox.tsx";
-import DistanceBox from "./custom_components/DistanceBox.tsx";
-import CPUBox from "./custom_components/CPUBox.tsx";
-import Typeform from "./custom_components/Typeform.tsx";
-import MainBox from "./custom_components/MainBox.tsx";
-import UpdateScreen from "./custom_components/UpdateScreen.tsx";
+import Logo from "resources/images/logo.svg";
+import WifiBox from "pages/PageDashboard/components/WifiBox.tsx";
+import DistanceBox from "pages/PageDashboard/components/DistanceBox.tsx";
+import CPUBox from "pages/PageDashboard/components/CPUBox.tsx";
+import Typeform from "pages/PageDashboard/components/Typeform.tsx";
+import MainBox from "pages/PageDashboard/components/MainBox.tsx";
+import UpdateScreen from "pages/PageDashboard/components/UpdateScreen.tsx";
 
 import Popup from "reactjs-popup";
 
-import { askFeedback, changeWindow, logout } from "../actions/counter";
+import { askFeedback, changeWindow, logout } from "actions/counter";
 
-class Counter extends Component {
+class Dashboard extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -98,8 +98,7 @@ class Counter extends Component {
   }
 
   ReturnToDashboard = () => {
-    history.push("/counter");
-    // changeWindow('main');
+    history.push("/dashboard");
   };
 
   render() {
@@ -328,4 +327,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(mapStateToProps)(Counter);
+export default connect(mapStateToProps)(Dashboard);
