@@ -178,7 +178,7 @@ def feedback():
     body = request.get_json()
     user = body["username"]
     feedback_type = body["type"]
-    title = "[{}] Feedback from " + user.format(feedback_type)
+    title = "[{}] Feedback from {}".format(feedback_type, user)
 
     message = SendGridMail(
         from_email="noreply@fractalcomputers.com",
