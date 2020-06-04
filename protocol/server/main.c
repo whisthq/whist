@@ -402,7 +402,6 @@ int32_t SendVideo(void* opaque) {
                             video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) <
                         0) {
                         LOG_WARNING("Could not send video frame ID %d", id);
-<<<<<<< HEAD
                     } else {
                         // Only increment ID if the send succeeded
                         id++;
@@ -418,12 +417,6 @@ int32_t SendVideo(void* opaque) {
                             LOG_WARNING("Could not send video frame ID %d to spectator %d", id, i);
                         }
                     }
-=======
-                        } else {
-                            // Only increment ID if the send succeeded
-                            id++;
-                        }
->>>>>>> dev
 
                     // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
                     // GetTimer( t ), frame_size );
@@ -852,7 +845,8 @@ int main() {
                     SDL_Delay(50);
                     FractalPacket* spectator_decrypted_packet =
                         ReadUDPPacket(&SpectatorSendContext[i]);
-                    if (spectator_decrypted_packet->type ==
+                    FractalClientMessage* fcmsg = (void*)spectator_decrypted_packet->data;
+                    if (fcmsg->type ==
                         MESSAGE_IFRAME_REQUEST) {
                         LOG_INFO("Iframe requested from spectator!");
                         decrypted_packet = spectator_decrypted_packet;
