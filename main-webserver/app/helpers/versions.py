@@ -22,3 +22,23 @@ def setBranchVersion(branch, version, ID=-1):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+
+def getAllVersions(ID=-1):
+    """Gets the client versions
+
+    Args:
+        ID (int, optional): Papertrail logging id. Defaults to -1.
+    """
+    command = text(
+        """
+        SELECT * FROM versions
+        """
+    )
+    params = {}
+    with engine.connect() as conn:
+        versions = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        result = {}
+        for item in versions:
+            result[item["branch"]] = item["version"]
+        return result
