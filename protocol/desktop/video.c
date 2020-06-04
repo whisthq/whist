@@ -300,8 +300,6 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             StartTimer(&sws_timer);
 
             if (videoContext.sws) {
-                LOG_INFO( "SW FRAME: %d vs %d vs %d, SDL %d", frame->width, videoContext.decoder->width, videoContext.decoder->sw_frame->width, get_window_pixel_width((SDL_Window*)window) );
-
                 sws_scale(
                     videoContext.sws,
                     (uint8_t const* const*)videoContext.decoder->sw_frame->data,
@@ -309,7 +307,6 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                     videoContext.decoder->height, videoContext.data,
                     videoContext.linesize);
             } else {
-                LOG_INFO( "Killing swscale!!!!!" );
                 memcpy(videoContext.data, videoContext.decoder->sw_frame->data,
                        sizeof(videoContext.data));
                 memcpy(videoContext.linesize,
@@ -375,13 +372,12 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         // GetTimer(renderContext.client_frame_timer));
 
         if (!skip_render && can_render) {
-            SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
-            SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
-            // printf("Before, %x\n", renderer);
+            //SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160, SDL_ALPHA_OPAQUE);
+            //SDL_RenderClear((SDL_Renderer*)renderer);
+            
             SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL,
                            NULL);
-            // SDL_RenderCopy((SDL_Renderer*)renderer, NULL, NULL, NULL);
-            // printf("After\n");
+            
             SDL_RenderPresent((SDL_Renderer*)renderer);
         }
 
