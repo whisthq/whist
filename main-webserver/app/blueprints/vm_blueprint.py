@@ -173,7 +173,7 @@ def vm(action, **kwargs):
                 sendInfo(kwargs["ID"], username + " logged off")
                 customer = fetchCustomer(username)
                 if not customer:
-                    sendCritical(
+                    sendWarning(
                         kwargs["ID"],
                         "{} logged on/off but is not a registered customer".format(
                             username
