@@ -136,6 +136,8 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, app
         hr = payload["status"]
         sendInfo(ID, "Disk created with status {}".format(hr))
 
+    sendInfo(ID, "Trying to install {}".format(apps))
+
     if hr == 200 and len(apps) > 0:
         sendInfo(ID, "Disk created, installing applications {} for {}".format(apps, username))
         installApplications.apply_async(
