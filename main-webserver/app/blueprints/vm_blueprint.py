@@ -284,6 +284,7 @@ def vm(action, **kwargs):
                 disk_name = vm_info["disk_name"]
                 disk_info = fetchUserDisks(vm_info["username"])
 
+                branch = None
                 if disk_info:
                     branch = disk_info[0]["branch"]
 
