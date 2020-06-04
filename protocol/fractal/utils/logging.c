@@ -318,7 +318,7 @@ char *get_version() {
 }
 
 bool sendLogHistory() {
-    char *host = "cube-celery-staging.herokuapp.com";
+    char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
     char *path = "/logs";
 
     char *logs_raw = get_logger_history();
@@ -397,7 +397,9 @@ int32_t MultithreadedUpdateStatus(void *data) {
             \"ready\" : true\
     }");
 
-    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus", json);
+    char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
+
+    SendJSONPost(host, "/vm/winlogonStatus", json);
 
     snprintf(json, sizeof(json),
              "{\
@@ -405,7 +407,7 @@ int32_t MultithreadedUpdateStatus(void *data) {
             \"available\" : %s\
     }",
              get_version(), d->is_connected ? "false" : "true");
-    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
+    SendJSONPost(host, "/vm/connectionStatus", json);
 
     free(d);
     return 0;

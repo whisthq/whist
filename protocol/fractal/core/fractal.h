@@ -80,6 +80,9 @@ Defines
 #define PORT_SHARED_TCP 32264
 #define PORT_SPECTATOR 32265
 
+#define PRODUCTION_HOST "cube-celery-vm.herokuapp.com"
+#define STAGING_HOST "cube-celery-staging.herokuapp.com"
+
 #define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
 
