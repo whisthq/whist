@@ -541,8 +541,8 @@ int parseArgs(int argc, char *argv[]) {
 
     server_ip = argv[1];
 
-    output_width = -1;
-    output_height = -1;
+    output_width = 0;
+    output_height = 0;
 
     long int ret;
     char *endptr;
