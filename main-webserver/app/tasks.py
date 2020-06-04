@@ -136,8 +136,15 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, app
         hr = payload["status"]
         sendInfo(ID, "Disk created with status {}".format(hr))
 
-    if hr == 200:
-        installApplications.apply_async([username, apps, ID]) # better task handling?
+    if hr == 200 and len(apps) > 0:
+        sendInfo(ID, "Disk created, installing applications {} for {}".format(apps, username))
+        installApplications.apply_async(
+            [
+                username,
+                apps,
+                ID
+            ]
+        ) # better task handling?
 
     sendDebug(ID, payload)
     payload["location"] = location
@@ -911,7 +918,7 @@ def installApplications(self, username, apps, ID=-1):
     try:
         for vm in vms:
             for app in apps:
-                print("TASK: Starting to install {} for VM {}".format(app, vm["vm_name"]))
+                sendInfo(ID, "Starting to install {} for VM {}".format(app, vm["vm_name"]))
                 install_command = fetchInstallCommand(app)
 
                 run_command_parameters = {
@@ -924,8 +931,8 @@ def installApplications(self, username, apps, ID=-1):
                 )
 
                 result = poller.result()
-                print("SUCCESS: " + app + " installed to " + vm["vm_name"])
-                print(result.value[0].message)
+                sendInfo(ID, app + " installed to " + vm["vm_name"])
+                sendInfo(ID, result.value[0].message)
     except Exception as e:
         sendError(ID, "ERROR: " + str(e))
 
