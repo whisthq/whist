@@ -552,7 +552,7 @@ int main(int argc, char* argv[]) {
         argc - 1 > num_required_args + num_optional_args) {
         printf(
             "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] "
-            "[[OPTIONAL] HEIGHT] [[OPTINAL] bitrate] [[OPTIONAL] SPECTATE]\n");
+            "[[OPTIONAL] HEIGHT] [[OPTINAL] BITRATE] [[OPTIONAL] SPECTATE]\n");
         return -1;
     }
 
@@ -569,11 +569,11 @@ int main(int argc, char* argv[]) {
         output_height = atoi(argv[3]);
     }
 
-    bool is_spectator = false;
-
     if (argc == 5) {
         max_bitrate = atoi(argv[4]);
     }
+
+    bool is_spectator = false;
 
     if (argc == 6) {
         is_spectator = true;

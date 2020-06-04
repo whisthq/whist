@@ -348,16 +348,10 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
         return NULL;
     }
 
-    printf("waiting for recvp!\n");
-    SDL_Delay(50);
-
     // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
     int encrypted_len =
         recvp(context, &encrypted_packet, sizeof(encrypted_packet));
-
-    printf("waiting for recvp 2! %d\n", encrypted_len);
-    SDL_Delay(50);
 
     static FractalPacket decrypted_packet;
 
@@ -372,7 +366,7 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
         if (decrypted_len < 0) {
             if (encrypted_len == sizeof(stun_entry_t)) {
                 stun_entry_t* e;
-                e = &encrypted_packet;
+                e = (void*)&encrypted_packet;
                 LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port), ntohs(e->private_port));
             }
             LOG_WARNING("Failed to decrypt packet");
@@ -392,8 +386,8 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
                     break;
             }
         }
+        return NULL;
     }
-    return NULL;
 }
 
 static int reading_packet_len;
