@@ -79,6 +79,9 @@ Defines
 #define PORT_SERVER_TO_CLIENT 32263
 #define PORT_SHARED_TCP 32264
 
+#define PRODUCTION_HOST "cube-celery-vm.herokuapp.com"
+#define STAGING_HOST "cube-celery-staging.herokuapp.com"
+
 #define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
 
