@@ -124,7 +124,7 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
 
 
 @celery.task(bind=True)
-def createDiskFromImage(self, username, location, vm_size, operating_system, apps, ID=-1):
+def createDiskFromImage(self, username, location, vm_size, operating_system, apps=[], ID=-1):
     hr = 400
     payload = None
 
@@ -135,8 +135,6 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, app
         )
         hr = payload["status"]
         sendInfo(ID, "Disk created with status {}".format(hr))
-
-    sendInfo(ID, "Trying to install {}".format(apps))
 
     if hr == 200 and len(apps) > 0:
         sendInfo(ID, "Disk created, installing applications {} for {}".format(apps, username))
