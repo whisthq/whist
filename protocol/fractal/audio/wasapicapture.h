@@ -1,15 +1,30 @@
-/*
- * Audio capture on Windows.
- *
- * Copyright Fractal Computers, Inc. 2020
- **/
 #ifndef WASAPICAPTURE_H
 #define WASAPICAPTURE_H
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file wasapicapture.h
+ * @brief This file contains the code to capture audio on Windows using WASAPI.
+============================
+Usage
+============================
+*/
+
+/*
+============================
+Includes
+============================
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "../core/fractal.h"
+
+/*
+============================
+Custom Types
+============================
+*/
 
 DEFINE_GUID(CLSID_MMDeviceEnumerator, 0xBCDE0395, 0xE52F, 0x467C, 0x8E, 0x3D,
             0xC4, 0x57, 0x92, 0x91, 0x69, 0x2E);
@@ -23,22 +38,22 @@ DEFINE_GUID(IID_IAudioCaptureClient, 0xc8adbd64, 0xe71e, 0x48a0, 0xa4, 0xde,
             0x18, 0x5c, 0x39, 0x5c, 0xd3, 0x17);
 
 typedef struct audio_device_t {
-  IMMDevice *device;
-  IMMDeviceEnumerator *pMMDeviceEnumerator;
-  IAudioClient3 *pAudioClient;
-  REFERENCE_TIME hnsDefaultDevicePeriod;
-  WAVEFORMATEX *pwfx;
-  IAudioCaptureClient *pAudioCaptureClient;
-  HANDLE hWakeUp;
-  BYTE *buffer;
-  LONG buffer_size;
-  UINT32 nNumFramesToRead;
-  UINT32 frames_available;
-  DWORD dwWaitResult;
-  DWORD dwFlags;
-  UINT32 sample_rate;
-  UINT32 nNextPacketSize;
-  HRESULT hNextPacketResult;
+    IMMDevice* device;
+    IMMDeviceEnumerator* pMMDeviceEnumerator;
+    IAudioClient3* pAudioClient;
+    REFERENCE_TIME hnsDefaultDevicePeriod;
+    WAVEFORMATEX* pwfx;
+    IAudioCaptureClient* pAudioCaptureClient;
+    HANDLE hWakeUp;
+    BYTE* buffer;
+    LONG buffer_size;
+    UINT32 nNumFramesToRead;
+    UINT32 frames_available;
+    DWORD dwWaitResult;
+    DWORD dwFlags;
+    UINT32 sample_rate;
+    UINT32 nNextPacketSize;
+    HRESULT hNextPacketResult;
 } audio_device_t;
 
 #endif  // WASAPICAPTURE_H

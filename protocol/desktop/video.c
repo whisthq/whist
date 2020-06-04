@@ -151,35 +151,31 @@ bool requestIframe() {
 
 static enum AVPixelFormat sws_input_fmt;
 
-void updateSwsContext()
-{
-    LOG_INFO( "Updating SWS Context" );
+void updateSwsContext() {
+    LOG_INFO("Updating SWS Context");
     video_decoder_t* decoder = videoContext.decoder;
 
     sws_input_fmt = decoder->sw_frame->format;
 
-    mprintf( "Decoder Format: %s\n", av_get_pix_fmt_name( sws_input_fmt ) );
+    mprintf("Decoder Format: %s\n", av_get_pix_fmt_name(sws_input_fmt));
 
-    if( videoContext.sws )
-    {
-        sws_freeContext( videoContext.sws );
+    if (videoContext.sws) {
+        sws_freeContext(videoContext.sws);
     }
 
     videoContext.sws = NULL;
 
-    if( sws_input_fmt != AV_PIX_FMT_YUV420P || decoder->width != output_width ||
-        decoder->height != output_height )
-    {
-        videoContext.sws = sws_getContext( decoder->width, decoder->height, sws_input_fmt, output_width,
-                                           output_height, AV_PIX_FMT_YUV420P,
-                                           SWS_FAST_BILINEAR, NULL, NULL, NULL );
+    if (sws_input_fmt != AV_PIX_FMT_YUV420P || decoder->width != output_width ||
+        decoder->height != output_height) {
+        videoContext.sws =
+            sws_getContext(decoder->width, decoder->height, sws_input_fmt,
+                           output_width, output_height, AV_PIX_FMT_YUV420P,
+                           SWS_FAST_BILINEAR, NULL, NULL, NULL);
     }
 }
 
-void updatePixelFormat()
-{
-    if( sws_input_fmt != videoContext.decoder->sw_frame->format )
-    {
+void updatePixelFormat() {
+    if (sws_input_fmt != videoContext.decoder->sw_frame->format) {
         sws_input_fmt = videoContext.decoder->sw_frame->format;
 
         updateSwsContext();
@@ -187,11 +183,10 @@ void updatePixelFormat()
 }
 
 void updateWidthAndHeight(int width, int height) {
-    LOG_INFO( "Updating Width & Height to %dx%d", width, height );
+    LOG_INFO("Updating Width & Height to %dx%d", width, height);
 
-    if( videoContext.decoder )
-    {
-        destroy_video_decoder( videoContext.decoder );
+    if (videoContext.decoder) {
+        destroy_video_decoder(videoContext.decoder);
     }
 
     video_decoder_t* decoder =
@@ -271,7 +266,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         clock decode_timer;
-        StartTimer( &decode_timer );
+        StartTimer(&decode_timer);
 
         if (!video_decoder_decode(videoContext.decoder, frame->compressed_frame,
                                   frame->size)) {
@@ -281,11 +276,11 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
         updatePixelFormat();
 
-        //LOG_INFO( "Decode Time: %f\n", GetTimer( decode_timer ) );
+        // LOG_INFO( "Decode Time: %f\n", GetTimer( decode_timer ) );
 
         if (!skip_render && !resizing) {
             clock sws_timer;
-            StartTimer( &sws_timer );
+            StartTimer(&sws_timer);
 
             if (videoContext.sws) {
                 sws_scale(
@@ -302,7 +297,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                        sizeof(videoContext.linesize));
             }
 
-            //LOG_INFO( "SWS Time: %f\n", GetTimer( sws_timer ) );
+            // LOG_INFO( "SWS Time: %f\n", GetTimer( sws_timer ) );
 
             SDL_UpdateYUVTexture(videoContext.texture, NULL,
                                  videoContext.data[0], videoContext.linesize[0],
@@ -366,8 +361,8 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
 #if LOG_VIDEO
         LOG_DEBUG("Rendered %d (Size: %d) (Age %f)\n", renderContext.id,
-                renderContext.frame_size,
-                GetTimer(renderContext.frame_creation_timer));
+                  renderContext.frame_size,
+                  GetTimer(renderContext.frame_creation_timer));
 #endif
 
         if (frame->is_iframe) {
@@ -532,7 +527,8 @@ void updateVideo() {
         VideoData.nack_by_bitrate[VideoData.bucket] += VideoData.num_nacked;
         VideoData.seconds_by_bitrate[VideoData.bucket] += time;
 
-        mprintf( "====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====\n", VideoData.bucket*BITRATE_BUCKET_SIZE, time, nack_per_second );
+        mprintf("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====\n",
+                VideoData.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
 
         // Print statistics
 
@@ -566,8 +562,7 @@ void updateVideo() {
             working_mbps = max(VideoData.target_mbps * 1.05, working_mbps);
             VideoData.target_mbps =
                 (VideoData.target_mbps + working_mbps) / 2.0;
-            VideoData.target_mbps =
-                min(VideoData.target_mbps, MAXIMUM_BITRATE);
+            VideoData.target_mbps = min(VideoData.target_mbps, MAXIMUM_BITRATE);
             update_mbps = true;
         }
 
@@ -697,13 +692,9 @@ void updateVideo() {
             }
         }
 
-        if( VideoData.max_id >
-            VideoData.last_rendered_id +
-            5 )
-        {
-            if( requestIframe() )
-            {
-                LOG_INFO( "WAYY TOO FAR BEHIND! REQUEST FOR IFRAME!" );
+        if (VideoData.max_id > VideoData.last_rendered_id + 5) {
+            if (requestIframe()) {
+                LOG_INFO("WAYY TOO FAR BEHIND! REQUEST FOR IFRAME!");
             }
         }
     }

@@ -5,12 +5,12 @@ Includes
 ============================
 */
 
-
 #include "json.h"
-#include "logging.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "logging.h"
 
 /*
 ============================
@@ -43,19 +43,15 @@ bool parse_json(char* str, json_t* json) {
         // LOG_INFO("CHAR: %c", c);
 
         // If we reached the end of the json
-        if( c == '}' )
-        {
+        if (c == '}') {
             break;
         }
 
-        if( num_kv_pairs > 0 )
-        {
-            if( c == ',' )
-            {
-                c = next_alphanumeric_char( &str );
-            } else
-            {
-                LOG_ERROR( "JSON VALUE did not follow with ,! Had %c", *str );
+        if (num_kv_pairs > 0) {
+            if (c == ',') {
+                c = next_alphanumeric_char(&str);
+            } else {
+                LOG_ERROR("JSON VALUE did not follow with ,! Had %c", *str);
                 return false;
             }
         }
@@ -149,7 +145,7 @@ bool parse_json(char* str, json_t* json) {
     return true;
 }
 
-kv_pair_t* get_kv(json_t *json, char* key) {
+kv_pair_t* get_kv(json_t* json, char* key) {
     for (int i = 0; i < json->size; i++) {
         if (strcmp(json->pairs[i].key, key) == 0) {
             return &json->pairs[i];

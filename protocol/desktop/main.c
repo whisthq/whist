@@ -124,16 +124,15 @@ void update() {
     // clipboard
     if (received_server_init_message) {
         ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
-        if( clipboard )
-        {
+        if (clipboard) {
             FractalClientMessage* fmsg_clipboard =
-                malloc( sizeof( FractalClientMessage ) + sizeof( ClipboardData ) +
-                        clipboard->size );
+                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) +
+                       clipboard->size);
             fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
-            memcpy( &fmsg_clipboard->clipboard, clipboard,
-                    sizeof( ClipboardData ) + clipboard->size );
-            SendFmsg( fmsg_clipboard );
-            free( fmsg_clipboard );
+            memcpy(&fmsg_clipboard->clipboard, clipboard,
+                   sizeof(ClipboardData) + clipboard->size);
+            SendFmsg(fmsg_clipboard);
+            free(fmsg_clipboard);
         }
     }
 
@@ -158,7 +157,7 @@ void update() {
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
         fmsg.mbps = max_bitrate / 1024.0 / 1024.0;
-        LOG_INFO( "Asking for server MBPS to be %f", fmsg.mbps );
+        LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
         SendFmsg(&fmsg);
     }
 
@@ -221,7 +220,7 @@ void update() {
 // sub-packets to send, it not supported (If low latency large
 // FractalClientMessage packets are needed, then this will have to be
 // implemented)
-int SendFmsg(struct FractalClientMessage* fmsg) {
+int SendFmsg(FractalClientMessage* fmsg) {
     if (fmsg->type == CMESSAGE_CLIPBOARD) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg,
                              GetFmsgSize(fmsg));
@@ -295,7 +294,8 @@ int ReceivePackets(void* opaque) {
         // Handle all pending updates
         update();
 
-        //TODO hash_time is never updated, leaving it in here in case it is used in the future
+        // TODO hash_time is never updated, leaving it in here in case it is
+        // used in the future
         // casting to suppress warnings.
         (void)hash_time;
         // Post statistics every 5 seconds
@@ -552,14 +552,14 @@ int main(int argc, char* argv[]) {
         argc - 1 > num_required_args + num_optional_args) {
         printf(
             "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] "
-            "[[OPTIONAL] HEIGHT] [[OPTIONAL] SPECTATE]\n");
+            "[[OPTIONAL] HEIGHT] [[OPTINAL] bitrate] [[OPTIONAL] SPECTATE]\n");
         return -1;
     }
 
     server_ip = argv[1];
 
-    output_width = -1;
-    output_height = -1;
+    output_width = 0;
+    output_height = 0;
 
     if (argc >= 3 && (atoi(argv[2]) > 0)) {
         output_width = atoi(argv[2]);
@@ -572,8 +572,11 @@ int main(int argc, char* argv[]) {
     bool is_spectator = false;
 
     if (argc == 5) {
+        max_bitrate = atoi(argv[4]);
+    }
+
+    if (argc == 6) {
         is_spectator = true;
-        //max_bitrate = atoi(argv[4]);
     }
 
     // Write ecdsa key to a local file for ssh to use, for that server ip

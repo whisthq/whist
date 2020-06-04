@@ -59,7 +59,7 @@ brew install cmake cppcheck
 
 ##### Windows
 
-On Windows, in addition to downloading Cmake, of which you can find the latest binaries [here](https://cmake.org/download/), and cppcheck, which you can install via Chocolatey by running `choco install cppcheck --force`, you also need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. In order to compile the protocol, you need to make sure to be using x86_x64 Visual Studio Developer Command Prompt.
+First you will have to install [gitbash](https://git-scm.com/downloads). You can install cmake with the latest binaries [here](https://cmake.org/download/), and cppcheck, which you can install via Chocolatey by running `choco install cppcheck --force`. You also need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. In order to compile the protocol, you need to make sure to be using x86_x64 Visual Studio Developer Command Prompt.
 
 ### Building
 
@@ -121,6 +121,6 @@ Windows:
 choco install llvm --force
 ```
 
-If using VSCode or Visual Studio, please set this up in your editor to format on save if possible (in Visual Studio, this is through the C/C++ extension settings, as well as the general 'Format on Save' setting/shortcut). Otherwise, please make sure to run your code through `clang` before commits. You can run it from the CLI by running `clang-format <file>`.
+If using VSCode or Visual Studio, please set this up in your editor to format on save if possible (in Visual Studio, this is through the C/C++ extension settings, as well as the general 'Format on Save' setting/shortcut). Otherwise, please make sure to run your code through `clang` before commits. You can run it from the CLI by running `cmake . && make clang-format`, on MacOS/Linux, or `cmake -G "NMake Makefiles" && make clang-format`, on Windows.
 
 We also have a custom build tagret in the CMake 'clang-format' with will run with this style over all `.c` and `.h` files in `server/` `desktop/` and `fractal/`.

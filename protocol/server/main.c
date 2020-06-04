@@ -79,7 +79,8 @@ volatile bool update_encoder;
 
 bool pending_encoder;
 bool encoder_finished;
-encoder_t* encoder_factory_result = NULL;
+video_encoder_t* encoder_factory_result = NULL;
+
 int encoder_factory_server_w;
 int encoder_factory_server_h;
 int encoder_factory_client_w;
@@ -95,7 +96,7 @@ int32_t MultithreadedEncoderFactory(void* opaque) {
     return 0;
 }
 int32_t MultithreadedDestroyEncoder(void* opaque) {
-    encoder_t* encoder = (encoder_t*)opaque;
+    video_encoder_t* encoder = (video_encoder_t*)opaque;
     destroy_video_encoder(encoder);
     return 0;
 }
@@ -103,24 +104,22 @@ int32_t MultithreadedDestroyEncoder(void* opaque) {
 int32_t SendVideo(void* opaque) {
     SDL_Delay(500);
 
-
 #if defined(_WIN32)
     // set Windows DPI
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 #endif
 
-
     SocketContext socketContext = *(SocketContext*)opaque;
 
     // Init DXGI Device
-    struct CaptureDevice rdevice;
-    struct CaptureDevice* device = NULL;
+    CaptureDevice rdevice;
+    CaptureDevice* device = NULL;
 
     InitCursors();
 
     // Init FFMPEG Encoder
     int current_bitrate = STARTING_BITRATE;
-    encoder_t* encoder = NULL;
+    video_encoder_t* encoder = NULL;
 
     double worst_fps = 40.0;
     int ideal_bitrate = current_bitrate;
@@ -214,7 +213,7 @@ int32_t SendVideo(void* opaque) {
                     update_encoder = false;
                 } else {
                     SDL_CreateThread(MultithreadedEncoderFactory,
-                                    "MultithreadedEncoderFactory", NULL);
+                                     "MultithreadedEncoderFactory", NULL);
                 }
             }
         }
@@ -266,10 +265,24 @@ int32_t SendVideo(void* opaque) {
                 is_iframe = true;
             }
 
+
             clock t;
             StartTimer(&t);
 
-            video_encoder_encode(encoder, device->frame_data, device->pitch);
+            int res = video_encoder_encode( encoder, device->frame_data, device->pitch );
+            if( res < 0 )
+            {
+                // bad boy error
+                LOG_ERROR( "Error encoding video frame!" );
+                connected = false;
+                break;
+            } else if( res > 0 )
+            {
+                // filter graph is empty
+                break;
+            }
+            // else we have an encoded frame, so handle it!
+
             frames_since_first_iframe++;
 
             static int frame_stat_number = 0;
@@ -279,17 +292,16 @@ int32_t SendVideo(void* opaque) {
             static double max_frame_size = 0.0;
 
             frame_stat_number++;
-            total_frame_time += GetTimer( t );
-            max_frame_time = max( max_frame_time, GetTimer( t ) );
+            total_frame_time += GetTimer(t);
+            max_frame_time = max(max_frame_time, GetTimer(t));
             total_frame_sizes += encoder->encoded_frame_size;
-            max_frame_size = max( max_frame_size, encoder->encoded_frame_size );
+            max_frame_size = max(max_frame_size, encoder->encoded_frame_size);
 
-            if( frame_stat_number % 30 == 0 )
-            {
-                LOG_INFO( "Longest Encode Time: %f\n", max_frame_time );
-                LOG_INFO( "Average Encode Time: %f\n", total_frame_time / 30 );
-                LOG_INFO( "Longest Encode Size: %f\n", max_frame_size );
-                LOG_INFO( "Average Encode Size: %f\n", total_frame_sizes / 30 );
+            if (frame_stat_number % 30 == 0) {
+                LOG_INFO("Longest Encode Time: %f\n", max_frame_time);
+                LOG_INFO("Average Encode Time: %f\n", total_frame_time / 30);
+                LOG_INFO("Longest Encode Size: %f\n", max_frame_size);
+                LOG_INFO("Average Encode Size: %f\n", total_frame_sizes / 30);
                 total_frame_time = 0.0;
                 max_frame_time = 0.0;
                 total_frame_sizes = 0.0;
@@ -311,36 +323,40 @@ int32_t SendVideo(void* opaque) {
                 if (previous_frame_size > 0) {
                     double frame_time = GetTimer(previous_frame_time);
                     StartTimer(&previous_frame_time);
-                    // double mbps = previous_frame_size * 8.0 / 1024.0 / 1024.0
-                    // / frame_time; TODO: bitrate throttling alg
-                    // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime =
-                    // max_mbps previousFrameSize * 8.0 / 1024.0 / 1024.0 /
-                    // max_mbps = IdealTime
-                    double transmit_time =
-                        previous_frame_size * 8.0 / 1024.0 / 1024.0 / max_mbps;
+                    // double mbps = previous_frame_size * 8.0 / 1024.0 /
+                    // 1024.0 / frame_time; TODO: bitrate throttling alg
+                    // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime
+                    // = max_mbps previousFrameSize * 8.0 / 1024.0 / 1024.0
+                    // / max_mbps = IdealTime
+                    double transmit_time = previous_frame_size * 8.0 /
+                                            1024.0 / 1024.0 / max_mbps;
 
-                    // double average_frame_size = 1.0 * bytes_tested_frames /
-                    // bitrate_tested_frames;
-                    double current_trasmit_time =
-                        previous_frame_size * 8.0 / 1024.0 / 1024.0 / max_mbps;
+                    // double average_frame_size = 1.0 * bytes_tested_frames
+                    // / bitrate_tested_frames;
+                    double current_trasmit_time = previous_frame_size *
+                                                    8.0 / 1024.0 / 1024.0 /
+                                                    max_mbps;
                     double current_fps = 1.0 / current_trasmit_time;
 
                     delay = transmit_time - frame_time;
                     delay = min(delay, 0.004);
 
-                    // mprintf("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time: %f,
-                    // Transmit Time: %f, Delay: %f\n", previous_frame_size,
-                    // mbps, max_mbps, frame_time, transmit_time, delay);
+                    // mprintf("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time:
+                    // %f, Transmit Time: %f, Delay: %f\n",
+                    // previous_frame_size, mbps, max_mbps, frame_time,
+                    // transmit_time, delay);
 
                     if ((current_fps < worst_fps ||
-                         ideal_bitrate > current_bitrate) &&
+                            ideal_bitrate > current_bitrate) &&
                         bitrate_tested_frames > 20) {
-                        // Rather than having lower than the worst acceptable
-                        // fps, find the ratio for what the bitrate should be
+                        // Rather than having lower than the worst
+                        // acceptable fps, find the ratio for what the
+                        // bitrate should be
                         double ratio_bitrate = current_fps / worst_fps;
                         int new_bitrate =
                             (int)(ratio_bitrate * current_bitrate);
-                        if (abs(new_bitrate - current_bitrate) / new_bitrate >
+                        if (abs(new_bitrate - current_bitrate) /
+                                new_bitrate >
                             0.05) {
                             // LOG_INFO("Updating bitrate from %d to %d",
                             //        current_bitrate, new_bitrate);
@@ -361,23 +377,22 @@ int32_t SendVideo(void* opaque) {
                     // Create frame struct with compressed frame data and
                     // metadata
                     Frame* frame = (Frame*)buf;
-                    frame->width = encoder->context->width;
-                    frame->height = encoder->context->height;
+                    frame->width = encoder->pCodecCtx->width;
+                    frame->height = encoder->pCodecCtx->height;
 
                     frame->size = encoder->encoded_frame_size;
                     frame->cursor = GetCurrentCursor();
                     // True if this frame does not require previous frames to
                     // render
                     frame->is_iframe = is_iframe;
-                    memcpy(frame->compressed_frame, encoder->encoded_frame_data,
-                           encoder->encoded_frame_size);
+                    video_encoder_write_buffer(encoder, (void*)frame->compressed_frame);
 
                     // mprintf("Sent video packet %d (Size: %d) %s\n", id,
                     // encoder->encoded_frame_size, frame->is_iframe ?
                     // "(I-frame)" :
                     // "");
 
-                    StartTimer( &t );
+                    StartTimer(&t);
 
                     // Send video packet to client
                     if (SendUDPPacket(
@@ -387,6 +402,7 @@ int32_t SendVideo(void* opaque) {
                             video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) <
                         0) {
                         LOG_WARNING("Could not send video frame ID %d", id);
+<<<<<<< HEAD
                     } else {
                         // Only increment ID if the send succeeded
                         id++;
@@ -402,16 +418,21 @@ int32_t SendVideo(void* opaque) {
                             LOG_WARNING("Could not send video frame ID %d to spectator %d", id, i);
                         }
                     }
+=======
+                        } else {
+                            // Only increment ID if the send succeeded
+                            id++;
+                        }
+>>>>>>> dev
 
-                    //LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n", GetTimer( t ), frame_size );
+                    // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
+                    // GetTimer( t ), frame_size );
 
                     previous_frame_size = encoder->encoded_frame_size;
-                    // double server_frame_time = GetTimer(server_frame_timer);
-                    // mprintf("Server Frame Time for ID %d: %f\n", id,
-                    // server_frame_time);
+                    // double server_frame_time =
+                    // GetTimer(server_frame_timer); mprintf("Server Frame
+                    // Time for ID %d: %f\n", id, server_frame_time);
                 }
-            } else {
-                LOG_WARNING("Empty encoder packet");
             }
         }
     }
@@ -424,7 +445,7 @@ int32_t SendVideo(void* opaque) {
 #endif
     DestroyCaptureDevice(device);
     device = NULL;
-    MultithreadedDestroyEncoder( encoder );
+    MultithreadedDestroyEncoder(encoder);
     encoder = NULL;
 
     return 0;
@@ -546,20 +567,21 @@ void update() {
 
         snprintf(cmd, sizeof(cmd),
 #ifdef _WIN32
-            "powershell -command \"iwr -outf 'C:\\Program "
-            "Files\\Fractal\\update.bat' "
-            "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/update.bat\""
-            ,
-            get_branch()
+                 "powershell -command \"iwr -outf 'C:\\Program "
+                 "Files\\Fractal\\update.bat' "
+                 "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/"
+                 "update.bat\"",
+                 get_branch()
 #else
-            "TODO: Linux command?"
+                 "TODO: Linux command?"
 #endif
         );
 
         runcmd(cmd, NULL);
 
         snprintf(cmd, sizeof(cmd),
-                 "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\" %s", get_branch());
+                 "cmd.exe /C \"C:\\Program Files\\Fractal\\update.bat\" %s",
+                 get_branch());
 
         runcmd(
 #ifdef _WIN32
@@ -591,8 +613,8 @@ int MultithreadedWaitForSpectator( void* opaque ) {
 }
 
 int main() {
-//    static_assert(sizeof(unsigned short) == 2,
-//                  "Error: Unsigned short is not length 2 bytes!\n");
+    //    static_assert(sizeof(unsigned short) == 2,
+    //                  "Error: Unsigned short is not length 2 bytes!\n");
 
 #if defined(_WIN32)
     // set Windows DPI
@@ -628,6 +650,8 @@ int main() {
     }
 #endif
 
+    update();
+
     while (true) {
         srand(rand() * (unsigned int)time(NULL) + rand());
         connection_id = rand();
@@ -658,8 +682,7 @@ int main() {
         }
 
         if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 500,
-                             USING_STUN) <
-            0) {
+                             USING_STUN) < 0) {
             LOG_WARNING("Failed to finish connection (Failed at TCP context).");
             closesocket(PacketReceiveContext.s);
             closesocket(PacketSendContext.s);
@@ -724,8 +747,8 @@ int main() {
             LOG_WARNING("Failed to create input device for playback.");
         }
 
-        struct FractalClientMessage local_fmsg;
-        struct FractalClientMessage* fmsg;
+        FractalClientMessage local_fmsg;
+        FractalClientMessage* fmsg;
 
         clock last_ping;
         StartTimer(&last_ping);
@@ -894,7 +917,7 @@ int main() {
                     LOG_INFO("MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps);
                     max_mbps =
                         max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
-                    //update_encoder = true;
+                    // update_encoder = true;
                 } else if (fmsg->type == MESSAGE_PING) {
                     LOG_INFO("Ping Received - ID %d", fmsg->ping_id);
 
