@@ -169,7 +169,9 @@ void init_update() {
     ping_id = 1;
     ping_failures = -2;
 
+#ifndef __ANDROID_API__
     init_clipboard_synchronizer();
+#endif
 }
 
 void destroy_update() {
@@ -179,7 +181,9 @@ void destroy_update() {
         destroyed.
     */
 
+#ifndef __ANDROID_API__
     destroy_clipboard_synchronizer();
+#endif
 }
 
 void update() {
@@ -192,6 +196,7 @@ void update() {
 
     FractalClientMessage fmsg;
 
+#ifndef __ANDROID_API__
     // Check for a new clipboard update from the server, if it's been 25ms since
     // the last time we checked the TCP socket, and the clipboard isn't actively
     // busy
@@ -214,6 +219,7 @@ void update() {
         // Update the last tcp check timer
         start_timer((clock*)&update_data.last_tcp_check_timer);
     }
+#endif
 
     // If we haven't yet tried to update the dimension, and the dimensions don't
     // line up, then request the proper dimension
@@ -490,7 +496,9 @@ int receive_packets(void* opaque) {
                 case PACKET_AUDIO:
                     // Audio packet
                     start_timer(&audio_timer);
+#ifndef __ANDROID_API__
                     receive_audio(packet);
+#endif                    
                     audio_time += get_timer(audio_timer);
                     max_audio_time = max(max_audio_time, get_timer(audio_timer));
                     break;
@@ -730,7 +738,9 @@ int main(int argc, char* argv[]) {
 
         // Initialize audio and variables
         is_timing_latency = false;
+#ifndef __ANDROID_API__
         init_audio();
+#endif
 
         // Create thread to receive all packets and handle them as needed
         run_receive_packets = true;

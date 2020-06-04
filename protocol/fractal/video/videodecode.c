@@ -133,13 +133,50 @@ enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix
 
 
 #if defined(__ANDROID_API__)
+
+static int pfd[2];
+static SDL_Thread * thr;
+static const char *tag = "";
+
+static void *thread_func(void* opaque)
+{
+    ssize_t rdsz;
+    char buf[128];
+    while((rdsz = read(pfd[0], buf, sizeof buf - 1)) > 0) {
+        if(buf[rdsz - 1] == '\n') --rdsz;
+        buf[rdsz] = 0;  /* add null-terminator */
+        __android_log_write(ANDROID_LOG_DEBUG, tag, buf);
+    }
+    return 0;
+}
+
+int redir_stderr(const char *app_name)
+{
+    tag = app_name;
+
+    /* make stdout line-buffered and stderr unbuffered */
+    setvbuf(stderr, 0, _IONBF, 0);
+
+    /* create the pipe and redirect stdout and stderr */
+    pipe(pfd);
+    dup2(pfd[1], 2);
+
+    /* spawn the logging thread */
+    thr = SDL_CreateThread(thread_func, "log_redir", NULL);
+    SDL_DetachThread(thr);
+    return 0;
+}
+
 // register the java vm to avcodec in the callback (?)
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* aReserved) {
     LOG_INFO("hello! jni called! vm @ %p", vm);
+//    av_log_set_level(AV_LOG_TRACE);
+//    redir_stderr("fractalapp");
     av_jni_set_java_vm(vm, NULL);
     return JNI_VERSION_1_6;
 }
-#else
+
+
 int extract_extradata(video_decoder_t* decoder, AVPacket* packet) {
     int ret = -1;
     AVBSFContext* bitstream_filter_context;
@@ -157,7 +194,7 @@ int extract_extradata(video_decoder_t* decoder, AVPacket* packet) {
         goto cleanup;
     }
 
-    if (avcodec_parameters_from_context(bitstream_filter_context->par_out,
+    if (avcodec_parameters_from_context(bitstream_filter_context->par_in,
                                         decoder->context) < 0) {
         LOG_WARNING(
             "Unable to copy parameters from decoder to "
@@ -539,7 +576,14 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
                 return false;
             }
         } else {
-            LOG_INFO("Successfully set extradata!");
+//            decoder->context->profile = FF_PROFILE_H264_BASELINE;
+            LOG_INFO("Successfully set extradata! Opening context...");
+            int res = avcodec_open2(decoder->context, decoder->codec, NULL);
+            if (res < 0) {
+                LOG_WARNING("Failed to open context for stream (%d): %s", res,
+                            av_err2str(res));
+                return -1;
+            }
         }
     }
 #endif
@@ -599,12 +643,27 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
         }
 
         av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
+    } else if (decoder->type == DECODE_TYPE_MEDIACODEC) {
+        bool worked = false;
+        while (true) {
+            if (avcodec_receive_frame(decoder->context, decoder->sw_frame) < 0) {
+                // LOG_WARNING("Failed to avcodec_receive_frame attempt %d!", i);
+            } else {
+                worked = true;
+                break;
+            }
+        }
+        if (!worked) {
+            LOG_WARNING("Didn't work! Destroying decoder.");
+            destroy_video_decoder(decoder);
+            return false;
+        }
+
     } else {
         if (decoder->type != DECODE_TYPE_SOFTWARE) {
             LOG_INFO("Decoder cascaded from hardware to software");
             decoder->type = DECODE_TYPE_SOFTWARE;
         }
-
         if (avcodec_receive_frame(decoder->context, decoder->sw_frame) < 0) {
             LOG_WARNING("Failed to avcodec_receive_frame!");
             destroy_video_decoder(decoder);
