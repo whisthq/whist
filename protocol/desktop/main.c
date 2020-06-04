@@ -547,7 +547,7 @@ int main(int argc, char* argv[]) {
     // Parse all command-line arguments
 
     int num_required_args = 1;
-    int num_optional_args = 3;
+    int num_optional_args = 4;
     if (argc - 1 < num_required_args ||
         argc - 1 > num_required_args + num_optional_args) {
         printf(
