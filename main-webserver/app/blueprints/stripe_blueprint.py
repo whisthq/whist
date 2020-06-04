@@ -1,6 +1,7 @@
 from app.helpers.customers import *
 from app.helpers.users import *
 from app.helpers.disks import *
+from app.helpers.mail import *
 from app.logger import *
 
 stripe_bp = Blueprint("stripe_bp", __name__)
@@ -257,10 +258,7 @@ def payment(action, **kwargs):
             changeUserCredits(email, creditsOutstanding + 1)
             sendInfo(kwargs["ID"], "Applied discount and updated credits outstanding")
 
-        headers = {"content-type": "application/json"}
-        url = "https://fractal-mail-server.herokuapp.com/creditApplied"
-        data = {"username": email}
-        requests.post(url=url, data=json.dumps(data), headers=headers)
+        creditAppliedMail(email, kwargs["ID"])
 
         return jsonify({"status": 200}), 200
 
@@ -296,32 +294,7 @@ def payment(action, **kwargs):
             customer = fetchCustomerById(custId)
 
             if customer:
-                headers = {"content-type": "application/json"}
-                url = "https://fractal-mail-server.herokuapp.com/charge/failed"
-                data = {"username": customer["username"]}
-                resp = requests.post(url=url, data=json.dumps(data), headers=headers)
-
-                if resp.status_code == 200:
-                    sendInfo(kwargs["ID"], "Sent charge failed email to customer")
-                else:
-                    sendError(
-                        kwargs["ID"], "Mail send failed: Error code " + resp.status_code
-                    )
-
-                message = SendGridMail(
-                    from_email="noreply@fractalcomputers.com",
-                    to_emails=["support@fractalcomputers.com"],
-                    subject="Payment is overdue for " + customer["username"],
-                    html_content="<div>The charge has failed for account "
-                    + custId
-                    + "</div>",
-                )
-                try:
-                    sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
-                    response = sg.send(message)
-                    sendInfo(kwargs["ID"], "Sent charge failed email to support")
-                except Exception as e:
-                    sendError(kwargs["ID"], e.message)
+                chargeFailedMail(user, custId, kwargs["ID"])
 
                 # Schedule disk deletion in 7 days
                 disks = fetchUserDisks(customer["username"])
@@ -356,90 +329,63 @@ def payment(action, **kwargs):
             status = event.data.object.status
             if customer:
                 if status == "trialing":
-                    headers = {"content-type": "application/json"}
-                    url = "https://fractal-mail-server.herokuapp.com/trial/ending"
-                    data = {"username": customer["username"]}
-                    resp = requests.post(
-                        url=url, data=json.dumps(data), headers=headers
-                    )
-
-                    if resp.status_code == 200:
-                        sendInfo(kwargs["ID"], "Sent trial ending email to customer")
-                    else:
-                        sendError(
-                            kwargs["ID"],
-                            "Mail send failed: Error code " + resp.status_code,
-                        )
+                    trialEndingMail(customer["username"], kwargs["ID"])
                 else:
-                    headers = {"content-type": "application/json"}
-                    url = "https://fractal-mail-server.herokuapp.com/trial/ended"
-                    data = {"username": customer["username"]}
-                    resp = requests.post(
-                        url=url, data=json.dumps(data), headers=headers
-                    )
-
-                    if resp.status_code == 200:
-                        sendInfo(kwargs["ID"], "Sent trial ended email to customer")
-                    else:
-                        sendError(
-                            kwargs["ID"],
-                            "Mail send failed: Error code " + resp.status_code,
-                        )
+                    trialEndedMail(customer["username"], kwargs["ID"])
 
         return jsonify({"status": 200}), 200
-    elif action == "update" and request.method == 'POST':
+    elif action == "update" and request.method == "POST":
         body = request.get_json()
 
         username = body["username"]
         new_plan_type = body["plan"]
         new_plan_id = None
-        if new_plan_type == 'Hourly':
-            new_plan_id = os.getenv('HOURLY_PLAN_ID')
-        elif new_plan_type == 'Monthly':
-            new_plan_id = os.getenv('MONTHLY_PLAN_ID')
-        elif new_plan_type == 'Unlimited':
-            new_plan_id = os.getenv('UNLIMITED_PLAN_ID')
+        if new_plan_type == "Hourly":
+            new_plan_id = os.getenv("HOURLY_PLAN_ID")
+        elif new_plan_type == "Monthly":
+            new_plan_id = os.getenv("MONTHLY_PLAN_ID")
+        elif new_plan_type == "Unlimited":
+            new_plan_id = os.getenv("UNLIMITED_PLAN_ID")
         else:
-            return jsonify({'status': 404, 'error': 'Invalid plan type'}), 404
+            return jsonify({"status": 404, "error": "Invalid plan type"}), 404
 
         customer = fetchCustomer(username)
         if customer:
-            old_subscription = customer['subscription']
+            old_subscription = customer["subscription"]
             subscription = stripe.Subscription.retrieve(old_subscription)
             if subscription:
                 subscription_id = subscription["items"]["data"][0].id
                 stripe.SubscriptionItem.modify(subscription_id, plan=new_plan_id)
                 return jsonify({"status": 200}), 200
         else:
-            return jsonify({'status': 404, 'error': 'Invalid plan type'}), 404
+            return jsonify({"status": 404, "error": "Invalid plan type"}), 404
 
-
-
-    elif action == "update" and request.method == 'POST':
+    elif action == "update" and request.method == "POST":
         body = request.get_json()
 
         username = body["username"]
         new_plan_type = body["plan"]
         new_plan_id = None
-        if new_plan_type == 'Hourly':
-            new_plan_id = os.getenv('HOURLY_PLAN_ID')
-        elif new_plan_type == 'Monthly':
-            new_plan_id = os.getenv('MONTHLY_PLAN_ID')
-        elif new_plan_type == 'Unlimited':
-            new_plan_id = os.getenv('UNLIMITED_PLAN_ID')
+        if new_plan_type == "Hourly":
+            new_plan_id = os.getenv("HOURLY_PLAN_ID")
+        elif new_plan_type == "Monthly":
+            new_plan_id = os.getenv("MONTHLY_PLAN_ID")
+        elif new_plan_type == "Unlimited":
+            new_plan_id = os.getenv("UNLIMITED_PLAN_ID")
         else:
-            return jsonify({'status': 404, 'error': 'Invalid plan type'}), 404
+            return jsonify({"status": 404, "error": "Invalid plan type"}), 404
 
         customer = fetchCustomer(username)
         if customer:
-            old_subscription = customer['subscription']
+            old_subscription = customer["subscription"]
             subscription = stripe.Subscription.retrieve(old_subscription)
             if subscription:
                 subscription_id = subscription["items"]["data"][0].id
                 stripe.SubscriptionItem.modify(subscription_id, plan=new_plan_id)
                 return jsonify({"status": 200}), 200
         else:
-            return jsonify({'status': 404, 'error': 'Invalid plan type'}), 404
+            return jsonify({"status": 404, "error": "Invalid plan type"}), 404
+
 
 # REFERRAL endpoint
 
