@@ -64,6 +64,7 @@ void initAudio() {
                                         SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (AudioData.dev == 0) {
         LOG_ERROR("Failed to open audio");
+        destroyLogger();
         exit(1);
     }
 
