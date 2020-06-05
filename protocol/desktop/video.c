@@ -207,6 +207,7 @@ void updateWidthAndHeight(int width, int height) {
     videoContext.decoder = decoder;
     if (!decoder) {
         LOG_WARNING("ERROR: Decoder could not be created!");
+        destroyLogger();
         exit(-1);
     }
 
@@ -493,6 +494,7 @@ int initMultithreadedVideo(void* opaque) {
                                 output_height);
     if (!texture) {
         LOG_ERROR("SDL: could not create texture - exiting");
+        destroyLogger();
         exit(1);
     }
 
