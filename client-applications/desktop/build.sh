@@ -27,11 +27,17 @@ cd ..
 cp -R loading protocol/desktop
 echo -e "\n\nFinished makind FractalClient...\n\nPackaging...\n"
 echo -e "OSTYPE=$OSTYPE"
+
+rm protocol-build || echo "Already removed protocol-build"
+
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
   # Linux Ubuntu
   # copy over the Unison executable and make executable files executable
   sudo chmod +x protocol/desktop/build64/FractalClient
   sudo chmod +x protocol/desktop/build64/linux_unison
+
+  # Change to linux folder after builds are separated by os
+  ln -s protocol-build protocol/desktop/build64
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Mac OSX
 
@@ -50,6 +56,9 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
   
   # codesign the FractalClient executable
   codesign -s "Fractal Computers, Inc." protocol/desktop/build64/FractalClient
+
+  # Change to macos folder after builds are separated by os
+  ln -s protocol-build protocol/desktop/build64
 fi
 yarn -i
 

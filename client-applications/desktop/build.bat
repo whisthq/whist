@@ -1,7 +1,16 @@
+<<<<<<< HEAD
 
 echo "Updating protocol submodule to latest master"
 git submodule update --remote
 cd protocol
+=======
+rmdir /S/Q .protocol
+git clone --depth 1 https://github.com/fractalcomputers/protocol .protocol
+cd .protocol
+git reset --hard
+git fetch --depth 25 origin %1:%1
+git checkout %1
+>>>>>>> master
 cmake -G "NMake Makefiles"
 nmake FractalClient
 cd ..

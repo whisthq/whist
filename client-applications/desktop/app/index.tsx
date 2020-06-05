@@ -10,10 +10,10 @@ const store = configureStore();
 const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer;
 
 document.addEventListener("DOMContentLoaded", () =>
-  render(
-    <AppContainer>
-      <Root store={store} history={history} />
-    </AppContainer>,
-    document.getElementById("root")
-  )
+    render(
+        <AppContainer>
+            <Root store={store} history={history} />
+        </AppContainer>,
+        document.getElementById("root")
+    )
 );
