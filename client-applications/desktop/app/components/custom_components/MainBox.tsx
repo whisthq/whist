@@ -104,12 +104,12 @@ class MainBox extends Component {
       // windows
       // get logs from the executable directory, no cache on Windows
       var logs = fs
-        .readFileSync(process.cwd() + "\\protocol\\desktop\\log.txt")
+        .readFileSync(process.cwd() + "\\protocol\\desktop\\build64\\log.txt")
         .toString();
       var connection_id = parseInt(
         fs
           .readFileSync(
-            process.cwd() + "\\protocol\\desktop\\connection_id.txt"
+            process.cwd() + "\\protocol\\desktop\\build64\\connection_id.txt"
           )
           .toString()
       );
@@ -136,7 +136,7 @@ class MainBox extends Component {
           if (os.platform() === "darwin") {
             // mac
             // path when electron app is packaged as .dmg
-            var path = appRootDir + "/protocol/desktop/";
+            var path = appRootDir + "/protocol/desktop/build64";
             path = path.replace("/Resources/app.asar", "");
             path = path.replace("/desktop/app", "/desktop");
             var executable = "./FractalClient";
@@ -144,11 +144,11 @@ class MainBox extends Component {
             // linux
             // path when electron app is packaged as .deb (to use as working directory)
             var path = process.cwd();
-            var executable = "/opt/Fractal/protocol/desktop/FractalClient";
+            var executable = "/opt/Fractal/protocol/desktop/build64/FractalClient";
           } else if (os.platform() === "win32") {
             // windows
             // path when electron app is packaged as .nsis (to use as working directory)
-            var path = process.cwd() + "\\protocol\\desktop";
+            var path = process.cwd() + "\\protocol\\desktop\\build64";
             var executable = "FractalClient.exe";
           }
 
