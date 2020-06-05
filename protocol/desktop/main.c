@@ -687,7 +687,43 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
             }
-            PacketSendContext = PacketReceiveContext;
+
+            FractalPacket* init_spectator = ReadUDPPacket( &PacketReceiveContext );
+            clock init_spectator_timer;
+            StartTimer( &init_spectator_timer );
+            while( !init_spectator && GetTimer( init_spectator_timer ) < 1.0 )
+            {
+                SDL_Delay( 5 );
+                init_spectator = ReadUDPPacket( &PacketReceiveContext );
+            }
+
+            if( init_spectator )
+            {
+                FractalServerMessage* fmsg = init_spectator->data;
+                LOG_INFO( "SPECTATOR PORT: %d", fmsg->spectator_port );
+
+                closesocket( PacketReceiveContext.s );
+
+                if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
+                                      fmsg->spectator_port, 10, 500, true ) < 0 )
+                {
+                    LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+                    using_stun = false;
+                    if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
+                                          fmsg->spectator_port, 10, 500, false ) < 0 )
+                    {
+                        LOG_WARNING( "Failed to connect to server" );
+                        continue;
+                    }
+                }
+
+                PacketSendContext = PacketReceiveContext;
+            } else
+            {
+                closesocket( PacketReceiveContext.s );
+                LOG_WARNING( "DID NOT RECEIVE SPECTATOR INIT FROM SERVER" );
+                continue;
+            }
         } else
         {
             if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
