@@ -607,7 +607,7 @@ def fetchDiskApps(disk_name, ID=-1):
     if disk_name:
         command = text(
             """
-            SELECT * FROM disk_apps WHERE "disk_name" = :disk_name
+            SELECT "app_name" FROM disk_apps WHERE "disk_name" = :disk_name
             """
         )
         params = {"disk_name": disk_name}
@@ -640,7 +640,7 @@ def insertDiskApps(disk_name, apps, ID=-1):
 
 
                     conn.execute(command, **params)
-                                                    
+
         except:
             return 400
 
