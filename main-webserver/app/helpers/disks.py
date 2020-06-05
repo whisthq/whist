@@ -591,3 +591,53 @@ def setUpdateAccepted(disk_name, accepted, ID=-1):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+def fetchDiskApps(disk_name, ID=-1):
+    """Fetches user's desired apps for a disk
+
+    Args:
+        disk_name (str): The name of the disk
+        ID (int, optional): The papertrail logging ID. Defaults to -1.
+
+    Returns:
+        list: representing the app names of the user's desired apps in the disk_apps sql database
+    """
+    sendInfo(ID, "Fetching apps for disk {}".format(disk_name))
+
+    if username:
+        command = text(
+            """
+            SELECT * FROM disk_apps WHERE "disk_name" = :disk_name
+            """
+        )
+        params = {"disk_name": disk_name}
+        with engine.connect() as conn:
+            apps = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            conn.close()
+            return apps
+
+def insertDiskApps(disk_name, apps, ID=-1):
+    """Fetches user's desired apps
+
+    Args:
+        disk_name (str): The disk_name
+        apps (list): The list of apps
+        ID (int, optional): The papertrail logging ID. Defaults to -1.
+    """
+    sendInfo(ID, "Inserting apps for disk {}".format(disk_name))
+
+    if disk_name:
+        for app in apps:
+            command = text(
+                """
+                INSERT INTO disk_apps (disk_name, app_name) VALUES (:disk_name, :app_name)
+                """
+            )
+            params = {"disk_name": username, "app_name": app}
+            with engine.connect() as conn:
+                try:
+                    conn.execute(command, **params)
+                    conn.close()
+                    return 200
+                except:
+                    return 400

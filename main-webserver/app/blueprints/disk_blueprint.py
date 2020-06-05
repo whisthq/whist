@@ -42,6 +42,7 @@ def disk(action, **kwargs):
                 body["location"],
                 body["vm_size"],
                 operating_system,
+                body["apps"],
                 kwargs["ID"],
             ]
         )

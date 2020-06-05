@@ -128,6 +128,7 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, app
     hr = 400
     payload = None
     attempts = 0
+    disk_name = None
 
     while hr == 400 and attempts < 10:
         sendInfo(ID, "Creating {} disk for {}".format(operating_system, username))
@@ -135,18 +136,13 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, app
             username, location, vm_size, operating_system
         )
         hr = payload["status"]
-        sendInfo(ID, "Disk created with status {}".format(hr))
+        disk_name = payload["disk_name"]
+        sendInfo(ID, "Disk {} created with status {}".format(disk_name, hr))
         attempts += 1
 
-    if hr == 200 and len(apps) > 0:
-        sendInfo(ID, "Disk created, installing applications {} for {}".format(apps, username))
-        installApplications.apply_async(
-            [
-                username,
-                apps,
-                ID
-            ]
-        ) # better task handling?
+    if hr == 200 and disk_name and len(apps) > 0:
+        sendInfo(ID, "Disk created, inserting apps {} for {}".format(apps, disk_name))
+        insertDiskApps(disk_name, apps)
 
     sendDebug(ID, payload)
     payload["location"] = location
