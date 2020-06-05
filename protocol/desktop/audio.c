@@ -44,36 +44,37 @@ clock test_timer;
 double test_time;
 
 void initAudio() {
-  StartTimer(&nack_timer);
+    StartTimer(&nack_timer);
 
-  // cast socket and SDL variables back to their data type for usage
-  SDL_AudioSpec wantedSpec = {0}, audioSpec = {0};
+    // cast socket and SDL variables back to their data type for usage
+    SDL_AudioSpec wantedSpec = {0}, audioSpec = {0};
 
-  AudioData.audio_decoder = create_audio_decoder(decoder_frequency);
+    AudioData.audio_decoder = create_audio_decoder(decoder_frequency);
 
-  SDL_zero(wantedSpec);
-  SDL_zero(audioSpec);
-  wantedSpec.channels = AudioData.audio_decoder ? (Uint8)AudioData.audio_decoder->pCodecCtx->channels : 2;
-  wantedSpec.freq = decoder_frequency;
-  LOG_INFO("Freq: %d", wantedSpec.freq);
-  wantedSpec.format = AUDIO_F32SYS;
-  wantedSpec.silence = 0;
-  wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
+    SDL_zero(wantedSpec);
+    SDL_zero(audioSpec);
+    wantedSpec.channels = 2;
+    wantedSpec.freq = decoder_frequency;
+    LOG_INFO("Freq: %d", wantedSpec.freq);
+    wantedSpec.format = AUDIO_F32SYS;
+    wantedSpec.silence = 0;
+    wantedSpec.samples = SDL_AUDIO_BUFFER_SIZE;
 
-  AudioData.dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec,
-                                      SDL_AUDIO_ALLOW_FORMAT_CHANGE);
-  if (AudioData.dev == 0) {
-    LOG_ERROR("Failed to open audio");
-    exit(1);
-  }
+    AudioData.dev = SDL_OpenAudioDevice(NULL, 0, &wantedSpec, &audioSpec,
+                                        SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+    if (AudioData.dev == 0) {
+        LOG_ERROR("Failed to open audio");
+        destroyLogger();
+        exit(1);
+    }
 
-  SDL_PauseAudioDevice(AudioData.dev, 0);
+    SDL_PauseAudioDevice(AudioData.dev, 0);
 
-  for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
-    receiving_audio[i].id = -1;
-    receiving_audio[i].nacked_amount = 0;
-    receiving_audio[i].nacked_for = -1;
-  }
+    for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
+        receiving_audio[i].id = -1;
+        receiving_audio[i].nacked_amount = 0;
+        receiving_audio[i].nacked_for = -1;
+    }
 }
 
 void destroyAudio() {
