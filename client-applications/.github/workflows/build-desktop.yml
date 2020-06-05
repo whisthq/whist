@@ -1,0 +1,44 @@
+# Workflow to build and test an Electron app
+
+name: Electron CI
+
+# only run CI on the master branch
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+# CI job
+jobs:
+  electron-build:
+    # this app runs on Windows, Mac and Ubuntu
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+        working-directory: desktop
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10
+        working-directory: desktop
+
+      - name: Build Electron app
+        uses: samuelmeuli/action-electron-builder@v1
+        with:
+          # GitHub token, automatically provided to the action
+          # (No need to define this secret in the repo settings)
+          github_token: ${{ secrets.github_token }}
+        working-directory: desktop
+
+      - name: "Format with Prettier"
+        run: yarn format
+        working-directory: desktop
+
