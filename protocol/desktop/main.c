@@ -105,7 +105,7 @@ void update() {
     // the last time we checked the TCP socket, and the clipboard isn't actively
     // busy
     if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 &&
-        !isClipboardSynchronizing()) {
+        !isClipboardSynchronizing() && !is_spectator) {
         // Check if TCP connction is active
         int result = Ack(&PacketTCPContext);
         if (result < 0) {
@@ -788,7 +788,10 @@ int main(int argc, char* argv[]) {
             // Send acks to sockets every 5 seconds
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);
-                Ack(&PacketTCPContext);
+                if( !is_spectator )
+                {
+                    Ack( &PacketTCPContext );
+                }
                 StartTimer(&ack_timer);
             }
 
@@ -957,7 +960,10 @@ int main(int argc, char* argv[]) {
         // Close all open sockets
         closesocket(PacketSendContext.s);
         closesocket(PacketReceiveContext.s);
-        closesocket(PacketTCPContext.s);
+        if( !is_spectator )
+        {
+            closesocket( PacketTCPContext.s );
+        }
 
 #if defined(_WIN32)
         WSACleanup();
