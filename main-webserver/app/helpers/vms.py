@@ -1772,8 +1772,8 @@ def installApplications(vm_name, apps, ID=-1):
     _, compute_client, _ = createClients()
     try:
         for app in apps:
-            sendInfo(ID, "Starting to install {} for VM {}".format(app, vm_name))
-            install_command = fetchInstallCommand(app)
+            sendInfo(ID, "Starting to install {} for VM {}".format(app["app_name"], vm_name))
+            install_command = fetchInstallCommand(app["app_name"])
 
             run_command_parameters = {
                 "command_id": "RunPowerShellScript",
