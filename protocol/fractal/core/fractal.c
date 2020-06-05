@@ -6,35 +6,23 @@
 
 #include "fractal.h"  // header file for this protocol, includes winsock
 
+#include <stdio.h>
+
 #include "../utils/json.h"
+#include "../utils/sysinfo.h"
 
 // Print Memory Info
-#if defined(_WIN32)
-#include <processthreadsapi.h>
-#include <psapi.h>
-#endif
 
-void PrintMemoryInfo() {
-#if defined(_WIN32)
-    DWORD processID = GetCurrentProcessId();
-    HANDLE hProcess;
-    PROCESS_MEMORY_COUNTERS pmc;
+void PrintSystemInfo() {
+    LOG_INFO("Hardware information:");
 
-    // Print information about the memory usage of the process.
-
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE,
-                           processID);
-    if (NULL == hProcess) return;
-
-    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
-        LOG_INFO("PeakWorkingSetSize: %lld", (long long)pmc.PeakWorkingSetSize);
-        LOG_INFO("WorkingSetSize: %lld", (long long)pmc.WorkingSetSize);
-    }
-
-    CloseHandle(hProcess);
-#endif
+    PrintOSInfo();
+    PrintModelInfo();
+    PrintCPUInfo();
+    PrintRAMInfo();
+    PrintMonitors();
+    PrintHardDriveInfo();
 }
-// End Print Memory Info
 
 void runcmd_nobuffer(const char* cmdline) {
     // Will run a command on the commandline, simple as that
@@ -96,6 +84,7 @@ int runcmd(const char* cmdline, char** response) {
 #endif
 
     if ((pPipe = popen(cmd, "r")) == NULL) {
+        LOG_WARNING("Failed to popen %s", cmd);
         free(cmd);
         return -1;
     }
@@ -112,13 +101,16 @@ int runcmd(const char* cmdline, char** response) {
         char c = (char)fgetc(pPipe);
         if (current_len == max_len) {
             int next_max_len = 2 * max_len;
-            char* next_buffer = malloc(next_max_len);
-
-            memcpy(next_buffer, buffer, max_len);
-            max_len = next_max_len;
-
-            free(buffer);
-            buffer = next_buffer;
+            char* new_buffer = realloc(buffer, next_max_len);
+            if (new_buffer == NULL) {
+                LOG_ERROR("Realloc from %d to %d failed!", max_len,
+                          next_max_len);
+                buffer[max_len] = '\0';
+                break;
+            } else {
+                buffer = new_buffer;
+                max_len = next_max_len;
+            }
         }
 
         if (c == EOF) {
@@ -136,7 +128,7 @@ int runcmd(const char* cmdline, char** response) {
     if (feof(pPipe)) {
         return current_len;
     } else {
-        printf("Error: Failed to read the pipe to the end.\n");
+        LOG_WARNING("Error: Failed to read the pipe to the end.\n");
         return -1;
     }
 }

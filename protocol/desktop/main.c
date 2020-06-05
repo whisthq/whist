@@ -634,6 +634,8 @@ int main(int argc, char* argv[]) {
     initLogger(path);
 #endif
 
+    PrintSystemInfo();
+
     // Initialize clipboard and video
     initVideo();
     exiting = false;
