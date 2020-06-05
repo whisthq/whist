@@ -24,41 +24,45 @@ esac
 cmake .
 make FractalClient
 cd ..
-cp -R loading protocol/desktop
 echo -e "\n\nFinished makind FractalClient...\n\nPackaging...\n"
 echo -e "OSTYPE=$OSTYPE"
 
-rm protocol-build || echo "Already removed protocol-build"
+rm -rf protocol-build || echo "Already removed protocol-build"
+mkdir protocol-build
+
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
+  # Change to linux folder after builds are separated by os
+  cp -R protocol/desktop/build64/ protocol-build/
+  cp -R loading protocol-build/
+
   # Linux Ubuntu
   # copy over the Unison executable and make executable files executable
-  sudo chmod +x protocol/desktop/build64/FractalClient
-  sudo chmod +x protocol/desktop/build64/linux_unison
+  sudo chmod +x protocol-build/FractalClient
+  sudo chmod +x protocol-build/linux_unison
 
-  # Change to linux folder after builds are separated by os
-  ln -s protocol-build protocol/desktop/build64
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Mac OSX
+  # Change to macos folder after builds are separated by os
+  cp -R protocol/desktop/build64/ protocol-build/
+  cp -R loading protocol-build/
 
   # macOS needs to copy .dylib s to build folder
   # Issue (https://github.com/fractalcomputers/protocol/issues/87)
   # Temporary workaround
-  cp protocol/lib/64/ffmpeg/Darwin/lib* protocol/desktop/build64/
+  cp protocol/lib/64/ffmpeg/Darwin/lib* protocol-build/
 
   # add logo to the FractalClient executable
   sips -i build/icon.png # take an image and make the image its own icon
   DeRez -only icns build/icon.png > tmpicns.rsrc # extract the icon to its own resource file
-  Rez -append tmpicns.rsrc -o protocol/desktop/build64/FractalClient # append this resource to the file you want to icon-ize
-  SetFile -a C protocol/desktop/build64/FractalClient # use the resource to set the icon
+  Rez -append tmpicns.rsrc -o protocol-build/FractalClient # append this resource to the file you want to icon-ize
+  SetFile -a C protocol-build/FractalClient # use the resource to set the icon
   rm tmpicns.rsrc # clean up
   
   
   # codesign the FractalClient executable
-  codesign -s "Fractal Computers, Inc." protocol/desktop/build64/FractalClient
+  codesign -s "Fractal Computers, Inc." protocol-build/FractalClient
 
-  # Change to macos folder after builds are separated by os
-  ln -s protocol-build protocol/desktop/build64
 fi
 yarn -i
 
