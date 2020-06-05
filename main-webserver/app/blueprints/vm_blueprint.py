@@ -294,7 +294,7 @@ def vm(action, **kwargs):
     elif action == "installApps" and request.method == "POST":
         body = request.get_json()
 
-        status = insertUserApps(body["username"], body["apps"])
+        status = insertDiskApps(body["disk_name"], body["apps"])
 
         return jsonify({}), status
 

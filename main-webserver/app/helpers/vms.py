@@ -1439,15 +1439,20 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
         if first_time:
             print("First time! Going to boot {} times".format(str(num_boots)))
 
+            if s:
+                s.update_state(
+                    state="PENDING",
+                    meta={
+                        "msg": "Pre-installing your applications now. This could take several minutes."
+                    },
+                )
 
+            apps = fetchDiskApps(disk_name)
 
-            task = installApplications.apply_async(
-                [
-                    body["username"],
-                    body["apps"],
-                    kwargs["ID"]
-                ]
-            )
+            installation = installApplications(vm_name, apps, ID)
+
+            if installation["status"] != 200:
+                sendError(ID, "Error installing applications!")
 
         for i in range(0, num_boots):
             if i == 1 and s:
@@ -1762,3 +1767,28 @@ def fetchInstallCommand(app_name):
         install_command = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         return install_command
+
+def installApplications(vm_name, apps, ID=-1):
+    _, compute_client, _ = createClients()
+    try:
+        for app in apps:
+            sendInfo(ID, "Starting to install {} for VM {}".format(app, vm_name))
+            install_command = fetchInstallCommand(app)
+
+            run_command_parameters = {
+                "command_id": "RunPowerShellScript",
+                "script": [install_command["command"]],
+            }
+
+            poller = compute_client.virtual_machines.run_command(
+                os.environ.get("VM_GROUP"), vm_name, run_command_parameters
+            )
+
+            result = poller.result()
+            sendInfo(ID, app + " installed to " + vm_name)
+            sendInfo(ID, result.value[0].message)
+    except Exception as e:
+        sendError(ID, "ERROR: " + str(e))
+        return {"status": 400}
+
+    return {"status": 200}

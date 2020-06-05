@@ -906,37 +906,7 @@ def deallocateVM(self, vm_name, ID=-1):
     sendInfo(ID, "VM {} deallocated successfully".format(vm_name))
 
     return {"status": 200}
-
-@celery.task(bind=True)
-def installApplications(self, username, apps, ID=-1):
-    _, compute_client, _ = createClients()
-
-    vms = fetchUserVMs(username, ID)
-
-    try:
-        for vm in vms:
-            for app in apps:
-                sendInfo(ID, "Starting to install {} for VM {}".format(app, vm["vm_name"]))
-                install_command = fetchInstallCommand(app)
-
-                run_command_parameters = {
-                    "command_id": "RunPowerShellScript",
-                    "script": [install_command["command"]],
-                }
-
-                poller = compute_client.virtual_machines.run_command(
-                    os.environ.get("VM_GROUP"), vm["vm_name"], run_command_parameters
-                )
-
-                result = poller.result()
-                sendInfo(ID, app + " installed to " + vm["vm_name"])
-                sendInfo(ID, result.value[0].message)
-    except Exception as e:
-        sendError(ID, "ERROR: " + str(e))
-
-    return {"status": 200}
-
-
+    
 
 @celery.task(bind=True)
 def storeLogs(self, sender, connection_id, logs, vm_ip, version, ID=-1):
