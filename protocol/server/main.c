@@ -845,11 +845,13 @@ int main() {
                     SDL_Delay(50);
                     FractalPacket* spectator_decrypted_packet =
                         ReadUDPPacket(&SpectatorSendContext[i]);
-                    FractalClientMessage* fcmsg = (void*)spectator_decrypted_packet->data;
-                    if (fcmsg->type ==
-                        MESSAGE_IFRAME_REQUEST) {
-                        LOG_INFO("Iframe requested from spectator!");
-                        decrypted_packet = spectator_decrypted_packet;
+                    if (spectator_decrypted_packet) {
+                        FractalClientMessage* fcmsg =
+                            (void*)spectator_decrypted_packet->data;
+                        if (fcmsg->type == MESSAGE_IFRAME_REQUEST) {
+                            LOG_INFO("Iframe requested from spectator!");
+                            decrypted_packet = spectator_decrypted_packet;
+                        }
                     }
                 }
 
