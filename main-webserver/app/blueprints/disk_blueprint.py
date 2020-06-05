@@ -109,7 +109,7 @@ def disk(action, **kwargs):
         sendInfo(kwargs["ID"], "Deleting disk {}".format(disk_name))
         task_id = None
 
-        task = deleteDisk.apply_async(disk_name)
+        task = deleteDisk.apply_async([disk_name])
         task_id = task.id
         sendInfo(kwargs["ID"], "Disk deletion complete")
         return jsonify({"ID": task_id}), 202
