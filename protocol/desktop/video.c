@@ -273,11 +273,15 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         if (frame->width != server_width || frame->height != server_height) {
-            LOG_INFO(
-                "Updating client rendering to match server's width and height! "
-                "From %dx%d to %dx%d",
-                server_width, server_height, frame->width, frame->height);
-            updateWidthAndHeight(frame->width, frame->height);
+            if (frame->is_iframe) {
+                LOG_INFO(
+                    "Updating client rendering to match server's width and height! "
+                    "From %dx%d to %dx%d",
+                    server_width, server_height, frame->width, frame->height);
+                updateWidthAndHeight(frame->width, frame->height);
+            } else {
+                LOG_INFO("Wants to change resolution, but not an i-frame!");
+            }
         }
 
         clock decode_timer;
