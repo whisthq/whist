@@ -33,7 +33,7 @@ button {
 
 .feedbackBox ::placeholder {
   font-size: 24;
-  color: #5ec4eb;
+  color: #0980b0;
   opacity: 0.5;
   font-family: "Maven Pro";
 }

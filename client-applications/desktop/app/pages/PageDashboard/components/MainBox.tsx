@@ -222,6 +222,11 @@ class MainBox extends Component {
     this.props.dispatch(restartPC());
   };
 
+  OpenSupport = () => {
+    this.props.dispatch(askFeedback(true));
+    this.setState({restartPopup: false});
+  }
+
   componentDidMount() {
     const storage = require("electron-json-storage");
     let component = this;
@@ -237,6 +242,8 @@ class MainBox extends Component {
       if (error) throw error;
       component.setState({ windowMode: data.windowMode });
     });
+
+    this.props.dispatch(askFeedback(false))
   }
 
   componentDidUpdate(prevProps) {
@@ -572,7 +579,7 @@ class MainBox extends Component {
                     borderRadius: 5,
                     backgroundColor: "white",
                     border: "none",
-                    height: 150,
+                    height: 125,
                     padding: 30,
                   }}
                 >
@@ -587,23 +594,20 @@ class MainBox extends Component {
                   <div
                     style={{
                       fontSize: 14,
-                      lineHeight: 1.4,
+                      lineHeight: 1.5,
                       width: 300,
                       margin: "20px auto",
                     }}
                   >
                     Boot your cloud PC first by selecting the "Launch My Cloud
-                    PC" button.
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      lineHeight: 1.4,
-                      width: 300,
-                      margin: "20px auto",
-                    }}
-                  >
-                    If you need more specific help, you can email us at support@fractalcomputers.com.
+                    PC" button. You can also send a message to our support team{" "}
+                    <span 
+                      className = {styles.pointerOnHover}
+                      style = {{fontWeight: "bold"}}
+                      onClick = {this.OpenSupport}
+                    >
+                      here
+                    </span>.
                   </div>
                 </Popup>
               )}

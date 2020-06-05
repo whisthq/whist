@@ -13,12 +13,11 @@ import {
 class Typeform extends Component {
   constructor(props: any) {
     super(props);
-    this.state = { feedback: "", feedbackThankYou: false, step: 1 };
+    this.state = { feedback: "", step: 1 };
   }
 
   componentDidMount() {
     this.setState({step: 1});
-    document.addEventListener("keydown", this._HandleKeyDown);
   }
 
   componentDidUpdate(prevProps) {
@@ -39,50 +38,41 @@ class Typeform extends Component {
     );
   };
 
-  _HandleKeyDown = (evt: any) => {
-    if (this.props.askFeedback) {
+  SubmitFeedback = (evt, feedback_type) => {
+    if (this.state.feedback !== "") {
       if (evt.key === "Enter") {
-        if (this.state.feedback) {
-          this.setState({ feedbackThankYou: true });
-        } else {
-          this.setState({ feedbackThankYou: false });
-        }
+        this.setState({step: 1})
+        this.props.dispatch(sendFeedback(this.state.feedback, feedback_type));
         this.props.dispatch(askFeedback(false));
       }
-    } else if (this.state.feedbackThankYou) {
-      if (evt.key === "Enter") {
-        this.setState({ feedbackThankYou: false });
-        this.props.dispatch(askFeedback(false));
-        if (this.state.feedback) {
-          this.props.dispatch(sendFeedback(this.state.feedback));
-        }
-      } else {
-        this.setState({ feedbackThankYou: false });
-        this.props.dispatch(askFeedback(true));
-      }
+    } else if (this.state.feedback === "" && evt.key === "Enter") {
+      this.setState({step: 1});
+      this.props.dispatch(askFeedback(false));
     }
   };
 
   ForwardFeedbackButton = () => {
-    if (this.state.feedback) {
-      this.setState({ feedbackThankYou: true, step: 1 });
-    } else {
-      this.setState({ feedbackThankYou: false, step: 1 });
-    }
+    this.setState({step: 1})
     this.props.dispatch(askFeedback(false));
   };
 
-  SubmitFeedbackButton = () => {
-    this.setState({ feedbackThankYou: false });
+  SubmitFeedbackButton = (feedback_type) => {
+    this.setState({step: 1})
+
     this.props.dispatch(askFeedback(false));
     if (this.state.feedback) {
-      this.props.dispatch(sendFeedback(this.state.feedback));
+      this.props.dispatch(sendFeedback(this.state.feedback, feedback_type));
     }
   };
 
   NextStep = (evt) => {
-    if(evt.key.value === "A") {
-      console.log("A")
+    console.log(evt.key)
+    if(evt.key === "A") {
+      this.setState({step: 2.1})
+    } else if(evt.key === "B") {
+      this.setState({step: 2.2})
+    } else if(evt.eky === "C") {
+      this.props.dispatch(askFeedback(false))
     }
   }
 
@@ -113,8 +103,8 @@ class Typeform extends Component {
                 Thanks for using Fractal! How was it?
               </div>
               <div style = {{marginTop: 40}}>
-                <button className = {styles.typeformButton}>
-                  <div className = {styles.key} onClick = {() => this.setState({step: 2.1})}>
+                <button className = {styles.typeformButton} onClick = {() => this.setState({step: 2.1})}>
+                  <div className = {styles.key}>
                     A
                   </div>
                   <div className = {styles.text}>
@@ -126,7 +116,7 @@ class Typeform extends Component {
                     B
                   </div>
                   <div className = {styles.text}>
-                    I would like to provide feedback
+                    I'd like to provide feedback
                   </div>
                 </button>
                 <button className = {styles.typeformButton}>
@@ -144,14 +134,15 @@ class Typeform extends Component {
     } else if (this.state.step === 2.1 && this.props.askFeedback) {
       return (
           <div
-            onKeyDown={this.SubmitFeedback}
+            tabIndex="0"
+            onKeyDown={(evt) => this.SubmitFeedback(evt, "bug")}
             style={{
               position: "absolute",
               top: 0,
               left: 0,
               width: 900,
               height: 600,
-              background: "#0B172B",
+              background: "#EEEEEE",
               zIndex: 2,
               textAlign: "left",
             }}
@@ -160,27 +151,28 @@ class Typeform extends Component {
               <div
                 style={{
                   fontSize: 24,
-                  color: "#5EC4EB",
+                  color: "#0980b0",
                   fontWeight: "bold",
                 }}
               >
-                How Was Your Experience?
+                We're sorry that you experienced a bug.
               </div>
               <div
                 style={{
                   marginTop: 20,
                   fontSize: 15,
-                  color: "#5EC4EB",
+                  color: "#0980b0",
                   opacity: 0.6,
+                  lineHeight: 1.4
                 }}
               >
-                Our engineers rely on the bugs, feature suggestions, and general
-                feedback you provide to build a better product!
+                Our engineers rely on the bugs that you report to build a better product,
+                and will address your issue promptly.
               </div>
               <input
                 type="text"
                 value={this.state.feedback}
-                placeholder="Type your answer here"
+                placeholder="Please be as descriptive as possible!"
                 onChange={this.UpdateFeedback}
                 style={{
                   marginTop: 35,
@@ -191,7 +183,7 @@ class Typeform extends Component {
                   outline: "none",
                   padding: "10px 10px 10px 0px",
                   fontSize: 24,
-                  color: "#5EC4EB",
+                  color: "#0980b0",
                 }}
               ></input>
               {this.state.feedback === "" ? (
@@ -218,7 +210,7 @@ class Typeform extends Component {
                       display: "inline",
                       fontSize: 12,
                       marginTop: 40,
-                      color: "#5EC4EB",
+                      color: "#0980b0",
                       marginLeft: 12,
                     }}
                   >
@@ -236,7 +228,7 @@ class Typeform extends Component {
               ) : (
                 <div>
                   <button
-                    onClick={this.SubmitFeedbackButton}
+                    onClick={() => this.SubmitFeedbackButton("bug")}
                     className={styles.feedbackButton}
                     style={{
                       display: "inline",
@@ -257,7 +249,7 @@ class Typeform extends Component {
                       display: "inline",
                       fontSize: 12,
                       marginTop: 40,
-                      color: "#5EC4EB",
+                      color: "#0980b0",
                       marginLeft: 12,
                     }}
                   >
@@ -279,14 +271,15 @@ class Typeform extends Component {
     } else if (this.state.step === 2.2 && this.props.askFeedback) {
       return (
           <div
-            onKeyDown={this.SubmitFeedback}
+            tabIndex="0"
+            onKeyDown={(evt) => this.SubmitFeedback(evt, "feedback")}
             style={{
               position: "absolute",
               top: 0,
               left: 0,
               width: 900,
               height: 600,
-              background: "#0B172B",
+              background: "#EEEEEE",
               zIndex: 2,
               textAlign: "left",
             }}
@@ -295,7 +288,7 @@ class Typeform extends Component {
               <div
                 style={{
                   fontSize: 24,
-                  color: "#5EC4EB",
+                  color: "#0980b0",
                   fontWeight: "bold",
                 }}
               >
@@ -305,12 +298,13 @@ class Typeform extends Component {
                 style={{
                   marginTop: 20,
                   fontSize: 15,
-                  color: "#5EC4EB",
+                  color: "#0980b0",
                   opacity: 0.6,
+                  lineHeight: 1.4
                 }}
               >
-                Our engineers rely on the bugs, feature suggestions, and general
-                feedback you provide to build a better product!
+                From feature suggestions, general feedback, to questions and concerns,
+                we'd love to hear from you and will respond promptly.
               </div>
               <input
                 type="text"
@@ -326,7 +320,7 @@ class Typeform extends Component {
                   outline: "none",
                   padding: "10px 10px 10px 0px",
                   fontSize: 24,
-                  color: "#5EC4EB",
+                  color: "#0980b0",
                 }}
               ></input>
               {this.state.feedback === "" ? (
@@ -353,7 +347,7 @@ class Typeform extends Component {
                       display: "inline",
                       fontSize: 12,
                       marginTop: 40,
-                      color: "#5EC4EB",
+                      color: "#0980b0",
                       marginLeft: 12,
                     }}
                   >
@@ -371,7 +365,7 @@ class Typeform extends Component {
               ) : (
                 <div>
                   <button
-                    onClick={this.SubmitFeedbackButton}
+                    onClick={() => this.SubmitFeedbackButton("feedback")}
                     className={styles.feedbackButton}
                     style={{
                       display: "inline",
@@ -392,7 +386,7 @@ class Typeform extends Component {
                       display: "inline",
                       fontSize: 12,
                       marginTop: 40,
-                      color: "#5EC4EB",
+                      color: "#0980b0",
                       marginLeft: 12,
                     }}
                   >

@@ -41,13 +41,6 @@ const installExtensions = async () => {
 };
 
 const createWindow = async () => {
-  if (
-    process.env.NODE_ENV === "development" ||
-    process.env.DEBUG_PROD === "true"
-  ) {
-    await installExtensions();
-  }
-
   const os = require("os");
   if (os.platform() === "win32") {
     mainWindow = new BrowserWindow({
@@ -92,12 +85,17 @@ const createWindow = async () => {
   }
 
   console.log(path.join(__dirname, "/build/icon.png"));
-  // mainWindow.webContents.openDevTools();
   mainWindow.loadURL(`file://${__dirname}/app.html`);
 
   // @TODO: Use 'ready-to-show' event
   //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
-  mainWindow.webContents.on("did-finish-load", () => {
+  mainWindow.webContents.on("did-frame-finish-load", () => {
+    if (
+      process.env.NODE_ENV === "development" ||
+      process.env.DEBUG_PROD === "true"
+    ) {
+      mainWindow.webContents.openDevTools();
+    }
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
