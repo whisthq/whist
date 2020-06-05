@@ -36,6 +36,7 @@ node_modules
 # Yarn
 yarn.lock
 app/yarn.lock
+.yarnclean
 
 # App packaged
 release

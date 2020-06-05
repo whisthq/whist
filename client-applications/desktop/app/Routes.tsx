@@ -7,13 +7,13 @@ import Dashboard from "containers/Dashboard";
 import Studios from "containers/Studios";
 
 export default function Routes() {
-  return (
-    <App>
-      <Switch>
-        <Route path={routes.STUDIOS} component={Studios} />
-        <Route path={routes.DASHBOARD} component={Dashboard} />
-        <Route path={routes.HOME} component={LoginContainer} />
-      </Switch>
-    </App>
-  );
+    return (
+        <App>
+            <Switch>
+                <Route path={routes.STUDIOS} component={Studios} />
+                <Route path={routes.DASHBOARD} component={Dashboard} />
+                <Route path={routes.HOME} component={LoginContainer} />
+            </Switch>
+        </App>
+    );
 }
