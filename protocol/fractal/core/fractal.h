@@ -455,6 +455,7 @@ typedef struct FractalServerMessage {
     union {
         int ping_id;
         int frequency;
+        int spectator_port;
     };
     union {
         ClipboardData clipboard;

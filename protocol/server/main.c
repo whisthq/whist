@@ -592,14 +592,35 @@ void update() {
 int MultithreadedWaitForSpectator( void* opaque ) {
     opaque;
     while (connected) {
-        if (CreateUDPContext(&SpectatorSendContext[num_spectator_connections],
-                             NULL, PORT_SPECTATOR + num_spectator_connections,
+        SocketContext socket;
+        if (CreateUDPContext(&socket,
+                             NULL, PORT_SPECTATOR,
                              1, 5000,
                              USING_STUN) < 0) {
             LOG_INFO("Waiting for spectator");
             continue;
         }
+
+        FractalServerMessage fmsg;
+        fmsg.type = MESSAGE_INIT;
+        fmsg.spectator_port = PORT_SPECTATOR + 1 + num_spectator_connections;
+
+        if (SendUDPPacket(&socket, PACKET_MESSAGE,
+                          (uint8_t*)&fmsg,
+                          sizeof(FractalServerMessage), 1, -1, NULL, NULL) < 0) {
+            LOG_ERROR("Could not send spectator init message!");
+            return -1;
+        }
+
+        LOG_INFO("SPECTATOR #%d HANDSHAKE!", num_spectator_connections);
+        if (CreateUDPContext(&SpectatorSendContext[num_spectator_connections],
+                             NULL, PORT_SPECTATOR + 1 + num_spectator_connections,
+                             1, 5000, USING_STUN) < 0) {
+            LOG_INFO("Waiting for spectator");
+            continue;
+        }
         LOG_INFO("SPECTATOR #%d CONNECTED!", num_spectator_connections);
+
         num_spectator_connections++;
     }
     return 0;
