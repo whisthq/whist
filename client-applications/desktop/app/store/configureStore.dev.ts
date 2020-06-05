@@ -3,10 +3,10 @@ import createSagaMiddleware from "redux-saga";
 import { createHashHistory } from "history";
 import { routerMiddleware, routerActions } from "connected-react-router";
 import { createLogger } from "redux-logger";
-import createRootReducer from "../reducers";
-import * as counterActions from "../actions/counter";
-import { counterStateType } from "../reducers/types";
-import rootSaga from "../sagas";
+import createRootReducer from "reducers/index";
+import * as counterActions from "actions/counter";
+import { counterStateType } from "reducers/types";
+import rootSaga from "sagas/index";
 
 declare global {
   interface Window {

@@ -1,21 +1,21 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { history } from "../store/configureStore";
+import { history } from "store/configureStore";
 
-import styles from "./Home.css";
+import styles from "pages/PageLogin/Login.css";
 import Titlebar from "react-electron-titlebar";
-import Background from "../../resources/images/background.jpg";
-import Logo from "../../resources/images/logo.svg";
-import UserIcon from "../../resources/images/user.svg";
-import LockIcon from "../../resources/images/lock.svg";
-import UpdateScreen from "./custom_components/UpdateScreen.tsx";
+import Background from "resources/images/background.jpg";
+import Logo from "resources/images/logo.svg";
+import UserIcon from "resources/images/user.svg";
+import LockIcon from "resources/images/lock.svg";
+import UpdateScreen from "pages/PageDashboard/components/UpdateScreen.tsx";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
 
-import { loginUser, setOS, loginStudio, loginFailed } from "../actions/counter";
+import { loginUser, setOS, loginStudio, loginFailed } from "actions/counter";
 
-class Home extends Component {
+class Login extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -134,7 +134,7 @@ class Home extends Component {
 
     let component = this;
 
-    var appVersion = require("../package.json").version;
+    var appVersion = require("../../package.json").version;
     const os = require("os");
     this.props.dispatch(setOS(os.platform()));
     this.setState({ version: appVersion });
@@ -181,7 +181,8 @@ class Home extends Component {
     });
 
     if (this.props.username && this.props.public_ip && component.state.live) {
-      history.push("/counter");
+      console.log("REDIRECTING TO DASHBOARD")
+      history.push("/dashboard");
     }
   }
 
@@ -485,4 +486,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(mapStateToProps)(Home);
+export default connect(mapStateToProps)(Login);

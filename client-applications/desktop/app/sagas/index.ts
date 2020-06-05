@@ -1,9 +1,9 @@
 import { put, takeEvery, all, call, select, delay } from "redux-saga/effects";
-import { apiPost, apiGet } from "../utils/api.ts";
-import * as Action from "../actions/counter";
-import { history } from "../store/configureStore";
+import { apiPost, apiGet } from "utils/api";
+import * as Action from "actions/counter";
+import { history } from "store/configureStore";
 
-import { config } from "../constants/config.ts";
+import { config } from "constants/config";
 
 function* refreshAccess(action) {
   const state = yield select();
@@ -19,23 +19,27 @@ function* refreshAccess(action) {
 }
 
 function* loginUser(action) {
-  const { json, response } = yield call(
-    apiPost,
-    config.url.PRIMARY_SERVER + "/account/login",
-    {
-      username: action.username,
-      password: action.password,
-    }
-  );
+  if(action.username !== "" && action.password !== "") {
+    const { json, response } = yield call(
+      apiPost,
+      config.url.PRIMARY_SERVER + "/account/login",
+      {
+        username: action.username,
+        password: action.password,
+      }
+    );
 
-  if (json && json.verified) {
-    yield put(Action.fetchDisk(action.username));
-    yield call(fetchPaymentInfo, action);
-    yield put(Action.storeUsername(action.username));
-    yield put(Action.storeIsUser(json.is_user));
-    yield put(Action.storeJWT(json.access_token, json.refresh_token));
-    yield call(getPromoCode, action);
-    history.push("/counter");
+    if (json && json.verified) {
+      yield put(Action.fetchDisk(action.username));
+      yield call(fetchPaymentInfo, action);
+      yield put(Action.storeUsername(action.username));
+      yield put(Action.storeIsUser(json.is_user));
+      yield put(Action.storeJWT(json.access_token, json.refresh_token));
+      yield call(getPromoCode, action);
+      history.push("/dashboard");
+    } else {
+      yield put(Action.loginFailed(true));
+    }
   } else {
     yield put(Action.loginFailed(true));
   }
@@ -124,50 +128,21 @@ function* loginStudio(action) {
   }
 }
 
-function* trackUserActivity(action) {
-  const state = yield select();
-  if (action.logon) {
-    const { json, response } = yield call(
-      apiPost,
-      config.url.PRIMARY_SERVER + "/tracker/logon",
-      {
-        username: state.counter.username,
-        is_user: state.counter.isUser,
-      },
-      state.counter.access_token
-    );
-    if (json && json.status && json.status === 401) {
-      yield call(refreshAccess);
-      yield call(trackUserActivity, action);
-    }
-  } else {
-    const { json, response } = yield call(
-      apiPost,
-      config.url.PRIMARY_SERVER + "/tracker/logoff",
-      {
-        username: state.counter.username,
-        is_user: state.counter.isUser,
-      },
-      state.counter.access_token
-    );
-    if (json && json.status && json.status === 401) {
-      yield call(refreshAccess);
-      yield call(trackUserActivity, action);
-    }
-  }
-}
 
 function* sendFeedback(action) {
   const state = yield select();
-  const { json, response } = yield call(
+  const { json } = yield call(
     apiPost,
-    config.url.MAIL_SERVER + "/feedback",
+    config.url.PRIMARY_SERVER + "/feedback",
     {
       username: state.counter.username,
       feedback: action.feedback,
+      type: action.feedback_type
     },
     state.counter.access_token
   );
+
+  console.log(json)
 
   if (json && json.status && json.status === 401) {
     yield call(refreshAccess);
@@ -399,9 +374,8 @@ function* sendLogs(action) {
 
 export default function* rootSaga() {
   yield all([
-    takeEvery(Action.TRACK_USER_ACTIVITY, trackUserActivity),
-    takeEvery(Action.LOGIN_USER, loginUser),
     takeEvery(Action.SEND_FEEDBACK, sendFeedback),
+    takeEvery(Action.LOGIN_USER, loginUser),
     takeEvery(Action.LOGIN_STUDIO, loginStudio),
     takeEvery(Action.PING_IPINFO, pingIPInfo),
     takeEvery(Action.STORE_IPINFO, storeIPInfo),

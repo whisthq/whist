@@ -33,7 +33,7 @@ button {
 
 .feedbackBox ::placeholder {
   font-size: 24;
-  color: #5ec4eb;
+  color: #0980b0;
   opacity: 0.5;
   font-family: "Maven Pro";
 }
@@ -250,4 +250,35 @@ button {
   color: #333333;
   font-size: 12px;
   line-height: 1.4;
+}
+
+.typeformButton {
+  padding: 8px 20px;
+  background: rgba(94, 196, 235, 0.1); 
+  border-radius: 3px;
+  border: solid 1px #0980b0; 
+  color: #0980b0; 
+  font-size: 15px;
+  margin-bottom: 17px;
+  font-weight: bold;
+  display: flex;
+}
+
+.typeformButton:hover {
+  cursor: pointer;
+  color: #5EC3EB;
+  border: solid 1px #5EC3EB;
+}
+
+.typeformButton .key {
+  border: solid 0.5px #0980b0;
+  background: rgba(9, 128, 176, 0.2);
+  padding: 5px 8px;
+  border-radius: 2px;
+}
+
+.typeformButton .text {
+  position: relative; 
+  top: 5.5px; 
+  padding-left: 16px;
 }

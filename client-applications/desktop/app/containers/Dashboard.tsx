@@ -1,6 +1,6 @@
 import { bindActionCreators, Dispatch } from "redux";
 import { connect } from "react-redux";
-import Counter from "../components/Counter";
+import Dashboard from "../pages/PageDashboard/Dashboard";
 import { counterStateType } from "../reducers/types";
 
 function mapStateToProps(state: counterStateType) {
@@ -13,4 +13,4 @@ function mapDispatchToProps(dispatch: Dispatch) {
   return bindActionCreators({}, dispatch);
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Counter);
+export default connect(mapStateToProps, mapDispatchToProps)(Dashboard);

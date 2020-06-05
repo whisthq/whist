@@ -4,7 +4,7 @@ import Popup from "reactjs-popup";
 import ToggleButton from "react-toggle-button";
 import Slider from "react-input-slider";
 
-import styles from "../Counter.css";
+import styles from "pages/PageDashboard/Dashboard.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
@@ -18,10 +18,10 @@ import {
   faUpload,
 } from "@fortawesome/free-solid-svg-icons";
 
-import Window from "../../../resources/images/window.svg";
-import Speedometer from "../../../resources/images/speedometer.svg";
-import Mountain from "../../../resources/images/mountain.jpg";
-import Scale from "../../../resources/images/scale.svg";
+import Window from "resources/images/window.svg";
+import Speedometer from "resources/images/speedometer.svg";
+import Mountain from "resources/images/mountain.jpg";
+import Scale from "resources/images/scale.svg";
 
 import {
   askFeedback,
@@ -32,7 +32,7 @@ import {
   sendLogs,
   changeStatusMessage,
   readyToConnect,
-} from "../../actions/counter";
+} from "actions/counter";
 
 class MainBox extends Component {
   constructor(props) {
@@ -50,10 +50,6 @@ class MainBox extends Component {
       vmRestarting: false,
     };
   }
-
-  TrackActivity = (action: any) => {
-    this.props.dispatch(trackUserActivity(action));
-  };
 
   ExitSettings = () => {
     this.props.dispatch(changeWindow(this.props.default));
@@ -166,10 +162,6 @@ class MainBox extends Component {
             this.state.mbps,
           ];
 
-          if (this.state.launches == 1) {
-            this.TrackActivity(true);
-          }
-
           // Starts the protocol
           const protocol = child(executable, parameters, {
             cwd: path,
@@ -178,7 +170,6 @@ class MainBox extends Component {
           });
           //Listener for closing the stream window
           protocol.on("close", (code) => {
-            this.TrackActivity(false);
             this.SendLogs();
             this.setState({
               launches: 0,
@@ -231,6 +222,11 @@ class MainBox extends Component {
     this.props.dispatch(restartPC());
   };
 
+  OpenSupport = () => {
+    this.props.dispatch(askFeedback(true));
+    this.setState({restartPopup: false});
+  }
+
   componentDidMount() {
     const storage = require("electron-json-storage");
     let component = this;
@@ -246,6 +242,8 @@ class MainBox extends Component {
       if (error) throw error;
       component.setState({ windowMode: data.windowMode });
     });
+
+    this.props.dispatch(askFeedback(false))
   }
 
   componentDidUpdate(prevProps) {
@@ -581,7 +579,7 @@ class MainBox extends Component {
                     borderRadius: 5,
                     backgroundColor: "white",
                     border: "none",
-                    height: 150,
+                    height: 125,
                     padding: 30,
                   }}
                 >
@@ -596,23 +594,20 @@ class MainBox extends Component {
                   <div
                     style={{
                       fontSize: 14,
-                      lineHeight: 1.4,
+                      lineHeight: 1.5,
                       width: 300,
                       margin: "20px auto",
                     }}
                   >
                     Boot your cloud PC first by selecting the "Launch My Cloud
-                    PC" button.
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      lineHeight: 1.4,
-                      width: 300,
-                      margin: "20px auto",
-                    }}
-                  >
-                    If you need more specific help, you can email us at support@fractalcomputers.com.
+                    PC" button. You can also send a message to our support team{" "}
+                    <span 
+                      className = {styles.pointerOnHover}
+                      style = {{fontWeight: "bold"}}
+                      onClick = {this.OpenSupport}
+                    >
+                      here
+                    </span>.
                   </div>
                 </Popup>
               )}

@@ -1,5 +1,5 @@
 import { Action } from "redux";
-import * as MainAction from "../actions/counter";
+import * as MainAction from "actions/counter";
 
 const DEFAULT = {
   username: "",

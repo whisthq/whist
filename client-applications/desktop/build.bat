@@ -2,8 +2,7 @@ rmdir /S/Q .protocol
 git clone --depth 1 https://github.com/fractalcomputers/protocol .protocol
 cd .protocol
 git reset --hard
-git fetch --depth 25 origin master:master
-git checkout master
+git fetch --depth 25 origin %1:%1
 git checkout %1
 cmake -G "NMake Makefiles"
 nmake FractalClient
