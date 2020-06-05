@@ -67,7 +67,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     }
     hardware->adapter = adapters[USE_GPU];
 
-    LOG_INFO( "Monitor Info:" );
+    LOG_INFO("Monitor Info:");
 
     // GET ALL MONITORS
     for (i = 0; i < num_adapters; i++) {
@@ -76,8 +76,9 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
                  adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND;
              j++) {
             DXGI_OUTPUT_DESC desc;
-            hr = hardware->output->lpVtbl->GetDesc( hardware->output, &desc );
-            LOG_INFO("  Found monitor %d on adapter %lu. Monitor %d named %S", j, i, j, desc.DeviceName);
+            hr = hardware->output->lpVtbl->GetDesc(hardware->output, &desc);
+            LOG_INFO("  Found monitor %d on adapter %lu. Monitor %d named %S",
+                     j, i, j, desc.DeviceName);
             if (i == USE_GPU) {
                 if (j == MAX_NUM_OUTPUTS) {
                     LOG_WARNING("  Too many adapters on adapter %lu!", i);
@@ -94,7 +95,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     for (i = 0; i < num_outputs; i++) {
         hardware->output = outputs[i];
         hr = hardware->output->lpVtbl->GetDesc(hardware->output, &output_desc);
-        //mprintf("Monitor %d: %s\n", i, output_desc.DeviceName);
+        // mprintf("Monitor %d: %s\n", i, output_desc.DeviceName);
     }
 
     // Set used output

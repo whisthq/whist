@@ -6,15 +6,15 @@
 
 #include "fractal.h"  // header file for this protocol, includes winsock
 
+#include <stdio.h>
+
 #include "../utils/json.h"
 #include "../utils/sysinfo.h"
-#include <stdio.h>
 
 // Print Memory Info
 
-void PrintSystemInfo()
-{
-    LOG_INFO( "Hardware information:" );
+void PrintSystemInfo() {
+    LOG_INFO("Hardware information:");
 
     PrintOSInfo();
     PrintModelInfo();
@@ -84,7 +84,7 @@ int runcmd(const char* cmdline, char** response) {
 #endif
 
     if ((pPipe = popen(cmd, "r")) == NULL) {
-        LOG_WARNING( "Failed to popen %s", cmd );
+        LOG_WARNING("Failed to popen %s", cmd);
         free(cmd);
         return -1;
     }
@@ -98,18 +98,16 @@ int runcmd(const char* cmdline, char** response) {
     char* buffer = malloc(max_len);
 
     while (true) {
-
         char c = (char)fgetc(pPipe);
         if (current_len == max_len) {
             int next_max_len = 2 * max_len;
             char* new_buffer = realloc(buffer, next_max_len);
-            if( new_buffer == NULL )
-            {
-                LOG_ERROR( "Realloc from %d to %d failed!", max_len, next_max_len );
+            if (new_buffer == NULL) {
+                LOG_ERROR("Realloc from %d to %d failed!", max_len,
+                          next_max_len);
                 buffer[max_len] = '\0';
                 break;
-            } else
-            {
+            } else {
                 buffer = new_buffer;
                 max_len = next_max_len;
             }

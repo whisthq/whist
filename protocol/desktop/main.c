@@ -528,7 +528,7 @@ int ReceiveMessage(FractalPacket* packet) {
 
 int main(int argc, char* argv[]) {
 #ifdef _WIN32
-    SetProcessDpiAwareness( PROCESS_PER_MONITOR_DPI_AWARE );
+    SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 #endif
 
 #ifndef _WIN32
