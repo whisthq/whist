@@ -34,6 +34,8 @@ To start development with a custom port, run `set PORT={number}&& yarn dev`.
 
 If you would like to fully test the application, including the launch of the Fractal protocol, you need to run part of the build scripts, listed in the next section, to clone and make the protocol for your platform. Compiling the protocol requires Cmake, see below for installation instructions. In order to make sure that your system has everything needed to compile the protocol, or if you experience issues with compiling the protocol, you should refer to the protocol repository README for instructions.
 
+This repository has basic continuous integration through GitHub Actions. For every commit or PR to the master branch, it will attempt to build the Electron application on Windows, Mac and Ubuntu, and format the code with Prettier. You should make sure that all tests pass under the Actions tab. If you need help with the CI, check [here](https://github.com/samuelmeuli/action-electron-builder).
+
 ## Packaging for Production
 
 This section explains how to package apps for the local platform, including fetching and compiling the latest Fractal protocol. This will NOT publish the application to production, but will instead build an installer executable locally that is identical to the one that would be published to production and which you can use to test before deploying. The installer executable will be in `client-applications/desktop/release`. If you have already downloaded and compiled the latest Fractal protocol, you can simply run `yarn package`, else see below:

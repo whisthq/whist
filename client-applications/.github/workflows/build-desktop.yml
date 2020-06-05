@@ -36,7 +36,6 @@ jobs:
           github_token: ${{ secrets.github_token }}
           mac_certs: ${{ secrets.mac_certs }}
           mac_certs_password: ${{ secrets.mac_certs_password }}
-
           package_root: desktop
 
       - name: "Format with Prettier"
