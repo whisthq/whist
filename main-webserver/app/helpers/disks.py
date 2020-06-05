@@ -625,20 +625,24 @@ def insertDiskApps(disk_name, apps, ID=-1):
         ID (int, optional): The papertrail logging ID. Defaults to -1.
     """
 
-    if disk_name:
-        for app_name in apps:
-            sendInfo(ID, "Inserting app {} for disk {}".format(app_name, disk_name))
+    with engine.connect() as conn:
+        try:
+            if disk_name:
+                for app_name in apps:
+                    sendInfo(ID, "Inserting app {} for disk {}".format(app_name, disk_name))
 
-            command = text(
-                """
-                INSERT INTO disk_apps (disk_name, app_name) VALUES (:disk_name, :app_name)
-                """
-            )
-            params = {"disk_name": disk_name, "app_name": app_name}
-            with engine.connect() as conn:
-                try:
+                    command = text(
+                        """
+                        INSERT INTO disk_apps (disk_name, app_name) VALUES (:disk_name, :app_name)
+                        """
+                    )
+                    params = {"disk_name": disk_name, "app_name": app_name}
+
+
                     conn.execute(command, **params)
-                    conn.close()
-                    return 200
-                except:
-                    return 400
+                                                    
+        except:
+            return 400
+
+        conn.close()
+        return 200
