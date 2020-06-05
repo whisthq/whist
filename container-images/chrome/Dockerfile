@@ -41,28 +41,28 @@ RUN /bin/bash -c "source utils.sh \
 # Split into multiple steps for caching
 RUN /bin/bash -c "source utils.sh \ 
     && Update-Linux \
-    && Set-Time
+    && Set-Time"
 RUN /bin/bash -c "source utils.sh \ 
     && Install-7Zip \
     && Install-Curl \
-    && Install-GoogleChrome
+    && Install-GoogleChrome"
 RUN /bin/bash -c "source utils.sh \ 
     && Install-NvidiaTeslaPublicDrivers \
     && Disable-TCC \
-    && Set-OptimalGPUSettings
+    && Set-OptimalGPUSettings"
 RUN /bin/bash -c "source utils.sh \ 
     && Install-CustomGDMConfiguration \
-    && Install-CustomX11Configuration
+    && Install-CustomX11Configuration"
 RUN /bin/bash -c "source utils.sh \ 
     && Set-FractalDirectory \
     && Install-FractalServer \
-    && Install-ProcessManager
+    && Install-ProcessManager"
 RUN /bin/bash -c "source utils.sh \ 
     && Install-FractalExitScript \
     && Install-FractalAutoUpdate \
     && Install-FractalLinuxInputDriver \
     && Install-FractalWallpaper \
-    && Enable-FractalFirewallRule
+    && Enable-FractalFirewallRule"
 RUN /bin/bash -c "source utils.sh \ 
     && Install-Unison \
     && Enable-SSHKey \
