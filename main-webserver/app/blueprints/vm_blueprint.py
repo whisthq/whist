@@ -294,18 +294,9 @@ def vm(action, **kwargs):
     elif action == "installApps" and request.method == "POST":
         body = request.get_json()
 
-        task = installApplications.apply_async(
-            [
-                body["username"],
-                body["apps"],
-                kwargs["ID"]
-            ]
-        )
+        status = insertUserApps(body["username"], body["apps"])
 
-        if not task:
-            sendError(kwargs["ID"], "Error installing applications")
-            return jsonify({"error": "Error installing applications"}), 400 
-        return jsonify({"ID": task.id}), 202
+        return jsonify({}), status
 
     return jsonify({}), 400
 

@@ -1752,3 +1752,53 @@ def fetchInstallCommand(app_name):
         install_command = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         return install_command
+
+def fetchUserApps(username, ID=-1):
+    """Fetches user's desired apps
+
+    Args:
+        username (str): The username
+        ID (int, optional): The papertrail logging ID. Defaults to -1.
+
+    Returns:
+        list: representing the app names of the user's desired apps in the user_apps sql database
+    """
+    sendInfo(ID, "Fetching vms for user {}".format(username))
+
+    if username:
+        command = text(
+            """
+            SELECT * FROM user_apps WHERE "username" = :username
+            """
+        )
+        params = {"username": username}
+        with engine.connect() as conn:
+            apps = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            conn.close()
+            return apps
+
+def insertUserApps(username, apps, ID=-1):
+    """Fetches user's desired apps
+
+    Args:
+        username (str): The username
+        apps (list): The list of apps
+        ID (int, optional): The papertrail logging ID. Defaults to -1.
+    """
+    sendInfo(ID, "Fetching vms for user {}".format(username))
+
+    if username:
+        for app in apps:
+            command = text(
+                """
+                INSET INTO user_apps (username, app_name) VALUES (:username, :app_name)
+                """
+            )
+            params = {"username": username, "app_name": app}
+            with engine.connect() as conn:
+                try:
+                    conn.execute(command, **params)
+                    conn.close()
+                    return 200
+                except:
+                    return 400
