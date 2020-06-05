@@ -172,6 +172,10 @@ int32_t SendVideo(void* opaque) {
                      device->width, device->height);
 
             update_encoder = true;
+            if (encoder) {
+                MultithreadedDestroyEncoder(encoder);
+                encoder = NULL;
+            }
         }
 
         // Update encoder with new parameters
