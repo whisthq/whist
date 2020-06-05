@@ -186,8 +186,7 @@ bool is_dev_vm() {
 
     LOG_INFO("GETTING JSON");
 
-    if (!SendJSONGet(PRODUCTION_HOST, "/vm/isDev", buf,
-                     len)) {
+    if (!SendJSONGet(PRODUCTION_HOST, "/vm/isDev", buf, len)) {
         return true;
     }
 

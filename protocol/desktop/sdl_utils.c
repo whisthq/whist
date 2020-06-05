@@ -51,8 +51,7 @@ SDL_Window* initSDL(int output_width, int output_height) {
     int full_width = get_virtual_screen_width();
     int full_height = get_virtual_screen_height();
 
-    bool is_fullscreen =
-        output_width == 0 && output_height == 0;
+    bool is_fullscreen = output_width == 0 && output_height == 0;
 
     // Default output dimensions will be full screen
     if (output_width == 0) {

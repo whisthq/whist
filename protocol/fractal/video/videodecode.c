@@ -134,7 +134,8 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only Linux uses FFmpeg 3.4.x because of canonical system packages
 #if LIBAVCODEC_VERSION_MAJOR < 58
-    LOG_INFO("OLD VERSON FFMPEG: %d.%d.%d", LIBAVCODEC_VERSION_MAJOR, LIBAVCODEC_VERSION_MINOR, LIBAVCODEC_VERSION_MICRO);
+    LOG_INFO("OLD VERSON FFMPEG: %d.%d.%d", LIBAVCODEC_VERSION_MAJOR,
+             LIBAVCODEC_VERSION_MINOR, LIBAVCODEC_VERSION_MICRO);
     avcodec_register_all();
 #endif
 
@@ -392,52 +393,47 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
 
     int computed_size = 4;
 
-    AVPacket* packets = malloc( num_packets * sizeof( AVPacket ) );
+    AVPacket* packets = malloc(num_packets * sizeof(AVPacket));
 
-    for( int i = 0; i < num_packets; i++ )
-    {
-        av_init_packet( &packets[i] );
+    for (int i = 0; i < num_packets; i++) {
+        av_init_packet(&packets[i]);
         packets[i].size = *int_buffer;
         computed_size += 4 + packets[i].size;
         int_buffer++;
     }
 
-    if( buffer_size != computed_size )
-    {
-        LOG_ERROR( "Given Buffer Size did not match computed buffer size: given %d vs computed %d", buffer_size, computed_size );
+    if (buffer_size != computed_size) {
+        LOG_ERROR(
+            "Given Buffer Size did not match computed buffer size: given %d vs "
+            "computed %d",
+            buffer_size, computed_size);
     }
 
     char* char_buffer = (void*)int_buffer;
-    for( int i = 0; i < num_packets; i++ )
-    {
+    for (int i = 0; i < num_packets; i++) {
         packets[i].data = (void*)char_buffer;
         char_buffer += packets[i].size;
     }
 
-    for( int i = 0; i < num_packets; i++ )
-    {
+    for (int i = 0; i < num_packets; i++) {
         // decode the frame
-        while( avcodec_send_packet( decoder->context, &packets[i] ) < 0 )
-        {
-            LOG_WARNING( "Failed to avcodec_send_packet!" );
-            if( !try_next_decoder( decoder ) )
-            {
-                destroy_video_decoder( decoder );
-                for( int j = 0; j < num_packets; j++ )
-                {
-                    av_packet_unref( &packets[j] );
+        while (avcodec_send_packet(decoder->context, &packets[i]) < 0) {
+            LOG_WARNING("Failed to avcodec_send_packet!");
+            if (!try_next_decoder(decoder)) {
+                destroy_video_decoder(decoder);
+                for (int j = 0; j < num_packets; j++) {
+                    av_packet_unref(&packets[j]);
                 }
-                free( packets );
+                free(packets);
                 return false;
             }
         }
     }
 
-    for( int i = 0; i < num_packets; i++ )
-    {
-        av_packet_unref( &packets[i] );
+    for (int i = 0; i < num_packets; i++) {
+        av_packet_unref(&packets[i]);
     }
-    free( packets );
+    free(packets);
 
     // If frame was computed on the CPU
     if (decoder->context->hw_frames_ctx) {

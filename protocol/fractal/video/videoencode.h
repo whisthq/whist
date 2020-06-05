@@ -41,8 +41,8 @@ typedef struct video_encoder_t {
     int out_width, out_height;
     int gop_size;
     void* sw_frame_buffer;
-    void* encoded_frame_data; /// <Pointer to the encoded data
-    int encoded_frame_size;   /// <size of encoded frame in bytes
+    void* encoded_frame_data;  /// <Pointer to the encoded data
+    int encoded_frame_size;    /// <size of encoded frame in bytes
 
     AVFrame* hw_frame;
     AVFrame* sw_frame;
@@ -73,9 +73,9 @@ Public Functions
  *
  * @returns                        The newly created encoder
  */
-video_encoder_t* create_video_encoder(int in_width, int in_height, int out_width,
-                                int out_height, int bitrate);
-
+video_encoder_t* create_video_encoder(int in_width, int in_height,
+                                      int out_width, int out_height,
+                                      int bitrate);
 
 /**
  * @brief                          Encode the given frame. The frame can be
