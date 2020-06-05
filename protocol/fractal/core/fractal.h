@@ -80,6 +80,7 @@ Defines
 
 #define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
+#define USING_H265 true
 
 #if defined(_WIN32)
 // possible on windows, so let's do it

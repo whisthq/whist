@@ -69,7 +69,11 @@ video_encoder_t *create_nvenc_encoder(int in_width, int in_height,
 
     // init encoder format in pCodecCtx
 
+#if !USING_H265
     encoder->pCodec = avcodec_find_encoder_by_name("h264_nvenc");
+#else
+    encoder->pCodec = avcodec_find_encoder_by_name("hevc_nvenc");
+#endif
 
     encoder->pCodecCtx = avcodec_alloc_context3(encoder->pCodec);
     encoder->pCodecCtx->width = encoder->out_width;
@@ -305,7 +309,11 @@ video_encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width,
 
     // init encoder format in pCodecCtx
 
+#if !USING_H265
     encoder->pCodec = avcodec_find_encoder_by_name("h264_qsv");
+#else
+    encoder->pCodec = avcodec_find_encoder_by_name("hevc_qsv");
+#endif
 
     encoder->pCodecCtx = avcodec_alloc_context3(encoder->pCodec);
     encoder->pCodecCtx->width = encoder->out_width;
@@ -585,7 +593,11 @@ video_encoder_t *create_sw_encoder(int in_width, int in_height, int out_width,
 
     // init encoder format in pCodecCtx
 
+#if !USING_H265
     encoder->pCodec = avcodec_find_encoder_by_name("libx264");
+#else
+    encoder->pCodec = avcodec_find_encoder_by_name("libx265");
+#endif
 
     encoder->pCodecCtx = avcodec_alloc_context3(encoder->pCodec);
     encoder->pCodecCtx->width = encoder->out_width;

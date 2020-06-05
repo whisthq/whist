@@ -145,7 +145,11 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     if (decoder->type == DECODE_TYPE_SOFTWARE) {
         // BEGIN SOFTWARE DECODER
         LOG_INFO("Trying software decoder");
+#if !USING_H265
         decoder->codec = avcodec_find_decoder_by_name("h264");
+#else
+        decoder->codec = avcodec_find_decoder_by_name("hevc");
+#endif
         if (!decoder->codec) {
             LOG_WARNING("Could not find video codec");
             return -1;
@@ -170,7 +174,12 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     } else if (decoder->type == DECODE_TYPE_QSV) {
         // BEGIN QSV DECODER
         LOG_INFO("Trying QSV decoder");
+#if !USING_H265
         decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
+
+#else
+        decoder->codec = avcodec_find_decoder_by_name("hevc_qsv");
+#endif
         decoder->context = avcodec_alloc_context3(decoder->codec);
         decoder->context->opaque = decoder;
         set_decoder_opts(decoder);
@@ -226,7 +235,11 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
             return -1;
         }
 
+#if !USING_H265
         decoder->codec = avcodec_find_decoder_by_name("h264");
+#else
+        decoder->codec = avcodec_find_decoder_by_name("hevc");
+#endif
 
         if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
             LOG_WARNING("alloccontext3 failed w/ error code: %d\n",
