@@ -155,11 +155,13 @@ class MainBox extends Component {
                         var executable = "FractalClient.exe";
                     }
 
+                    // 0 dimensions is full-screen in protocol, windowed-mode starts at half screen
+                    // and can be resized in the protocol directly. DPI calculation done in protocol
                     var screenWidth = this.state.windowMode
-                        ? window.screen.width * window.devicePixelRatio
+                        ? window.screen.width / 2
                         : 0;
                     var screenHeight = this.state.windowMode
-                        ? (window.screen.height - 80) * window.devicePixelRatio
+                        ? window.screen.height / 2
                         : 0;
 
                     var parameters = [
