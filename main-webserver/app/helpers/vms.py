@@ -1785,7 +1785,7 @@ def installApplications(vm_name, apps, ID=-1):
             )
 
             result = poller.result()
-            sendInfo(ID, app + " installed to " + vm_name)
+            sendInfo(ID, app["app_name"] + " installed to " + vm_name)
             sendInfo(ID, result.value[0].message)
     except Exception as e:
         sendError(ID, "ERROR: " + str(e))
