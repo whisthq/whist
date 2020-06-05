@@ -604,7 +604,7 @@ def fetchDiskApps(disk_name, ID=-1):
     """
     sendInfo(ID, "Fetching apps for disk {}".format(disk_name))
 
-    if username:
+    if disk_name:
         command = text(
             """
             SELECT * FROM disk_apps WHERE "disk_name" = :disk_name
@@ -633,7 +633,7 @@ def insertDiskApps(disk_name, apps, ID=-1):
                 INSERT INTO disk_apps (disk_name, app_name) VALUES (:disk_name, :app_name)
                 """
             )
-            params = {"disk_name": username, "app_name": app}
+            params = {"disk_name": disk_name, "app_name": app}
             with engine.connect() as conn:
                 try:
                     conn.execute(command, **params)
