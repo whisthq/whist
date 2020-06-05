@@ -71,7 +71,7 @@ Defines
 #endif
 
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
-#define LOG_FMT "%s | %-7s | %-15s | %s:%d | "
+#define LOG_FMT "%s | %-7s | %-15s | %30s:%-5d | "
 #define LOG_ARGS(LOG_TAG) \
     CurrentTimeStr(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 

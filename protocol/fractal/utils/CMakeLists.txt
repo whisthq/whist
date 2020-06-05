@@ -9,6 +9,7 @@ add_library(fractalUtils STATIC
         logging.c
         sdlscreeninfo.c
         json.c
+	sysinfo.c
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

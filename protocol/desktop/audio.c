@@ -53,7 +53,8 @@ void initAudio() {
 
     SDL_zero(wantedSpec);
     SDL_zero(audioSpec);
-    wantedSpec.channels = 2;//2;//(Uint8)AudioData.audio_decoder->pCodecCtx->channels;
+    wantedSpec.channels =
+        2;  // 2;//(Uint8)AudioData.audio_decoder->pCodecCtx->channels;
     wantedSpec.freq = decoder_frequency;
     LOG_INFO("Freq: %d", wantedSpec.freq);
     wantedSpec.format = AUDIO_F32SYS;
@@ -64,6 +65,7 @@ void initAudio() {
                                         SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (AudioData.dev == 0) {
         LOG_ERROR("Failed to open audio");
+        destroyLogger();
         exit(1);
     }
 
