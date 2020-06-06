@@ -528,9 +528,10 @@ int ReceiveMessage(FractalPacket* packet) {
     "I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/"     \
     "Zt86r9dOzEcfrhxa+MnVQhNE8="
 
-int parseArgs(int argc, char *argv[]) {
-    char *usage = "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH]"
-                  " [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]\n";
+int parseArgs(int argc, char* argv[]) {
+    char* usage =
+        "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH]"
+        " [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]\n";
     int num_required_args = 1;
     int num_optional_args = 3;
     if (argc - 1 < num_required_args ||
@@ -545,7 +546,7 @@ int parseArgs(int argc, char *argv[]) {
     output_height = 0;
 
     long int ret;
-    char *endptr;
+    char* endptr;
 
     if (argc >= 3) {
         errno = 0;
@@ -554,7 +555,7 @@ int parseArgs(int argc, char *argv[]) {
             printf("%s", usage);
             return -1;
         }
-        if (ret != 0) output_width = (int) ret;
+        if (ret != 0) output_width = (int)ret;
     }
 
     if (argc >= 4) {
@@ -564,7 +565,7 @@ int parseArgs(int argc, char *argv[]) {
             printf("%s", usage);
             return -1;
         }
-        if (ret != 0) output_height = (int) ret;
+        if (ret != 0) output_height = (int)ret;
     }
 
     if (argc == 5) {
@@ -574,7 +575,7 @@ int parseArgs(int argc, char *argv[]) {
             printf("%s", usage);
             return -1;
         }
-        max_bitrate = (int) ret;
+        max_bitrate = (int)ret;
     }
     return 0;
 }
