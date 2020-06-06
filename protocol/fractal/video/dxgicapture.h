@@ -16,6 +16,11 @@ Includes
 ============================
 */
 
+#include <D3D11.h>
+#include <D3d11_1.h>
+#include <DXGITYPE.h>
+#include <dxgi1_2.h>
+
 #include "../core/fractal.h"
 
 /*

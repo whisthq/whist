@@ -9,6 +9,8 @@
 
 #include "main.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -526,6 +528,57 @@ int ReceiveMessage(FractalPacket* packet) {
     "I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/"     \
     "Zt86r9dOzEcfrhxa+MnVQhNE8="
 
+int parseArgs(int argc, char *argv[]) {
+    char *usage = "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH]"
+                  " [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]\n";
+    int num_required_args = 1;
+    int num_optional_args = 3;
+    if (argc - 1 < num_required_args ||
+        argc - 1 > num_required_args + num_optional_args) {
+        printf("%s", usage);
+        return -1;
+    }
+
+    server_ip = argv[1];
+
+    output_width = 0;
+    output_height = 0;
+
+    long int ret;
+    char *endptr;
+
+    if (argc >= 3) {
+        errno = 0;
+        ret = strtol(argv[2], &endptr, 10);
+        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+            printf("%s", usage);
+            return -1;
+        }
+        if (ret != 0) output_width = (int) ret;
+    }
+
+    if (argc >= 4) {
+        errno = 0;
+        ret = strtol(argv[3], &endptr, 10);
+        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+            printf("%s", usage);
+            return -1;
+        }
+        if (ret != 0) output_height = (int) ret;
+    }
+
+    if (argc == 5) {
+        errno = 0;
+        ret = strtol(argv[4], &endptr, 10);
+        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret <= 0) {
+            printf("%s", usage);
+            return -1;
+        }
+        max_bitrate = (int) ret;
+    }
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
 #ifndef _WIN32
     runcmd("chmod 600 sshkey", NULL);
@@ -544,34 +597,8 @@ int main(int argc, char* argv[]) {
     runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
 #endif
 
-    // Parse all command-line arguments
-
-    int num_required_args = 1;
-    int num_optional_args = 3;
-    if (argc - 1 < num_required_args ||
-        argc - 1 > num_required_args + num_optional_args) {
-        printf(
-            "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH] "
-            "[[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]\n");
-        return -1;
-    }
-
-    server_ip = argv[1];
-
-    output_width = -1;
-    output_height = -1;
-
-    if (argc >= 3 && (atoi(argv[2]) > 0)) {
-        output_width = atoi(argv[2]);
-    }
-
-    if (argc >= 4 && (atoi(argv[3]) > 0)) {
-        output_height = atoi(argv[3]);
-    }
-
-    if (argc == 5) {
-        max_bitrate = atoi(argv[4]);
-    }
+    int ret = parseArgs(argc, argv);
+    if (ret != 0) return ret;
 
     // Write ecdsa key to a local file for ssh to use, for that server ip
     // This will identify the connecting server as the correct server and not an
@@ -606,6 +633,8 @@ int main(int argc, char* argv[]) {
     strcat(path, "/.fractal");
     initLogger(path);
 #endif
+
+    PrintSystemInfo();
 
     // Initialize clipboard and video
     initVideo();
