@@ -23,11 +23,7 @@ Includes
 #pragma warning(disable : 4200)
 #define _WINSOCKAPI_
 #include <Audioclient.h>
-#include <D3D11.h>
-#include <D3d11_1.h>
-#include <DXGITYPE.h>
 #include <avrt.h>
-#include <dxgi1_2.h>
 #include <initguid.h>
 #include <mmdeviceapi.h>
 #include <process.h>
@@ -485,6 +481,11 @@ Public Functions
  * @brief                          Print the memory trace of a process
  */
 void PrintMemoryInfo();
+
+/**
+ * @brief                          Print the system info of the computer
+ */
+void PrintSystemInfo();
 
 /**
  * @brief                          Run a system command via command prompt or

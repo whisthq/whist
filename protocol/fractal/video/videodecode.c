@@ -476,7 +476,6 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
         max_time = 0.0;
         num_times = 0;
     }
-
     return true;
 }
 
