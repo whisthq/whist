@@ -2,8 +2,6 @@ FROM ubuntu:20.04
 
 RUN apt-get update && apt-get clean && apt-get install -y \
     x11vnc \
-    xvfb \
-    fluxbox \
     wmctrl \
     wget \
     gnupg2 \
@@ -28,7 +26,7 @@ RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/ut
 # Uses UTC
 ENV DEBIAN_FRONTEND="noninteractive"
 ENV LOCAL="yes"
-RUN apt-get -y install tzdata keyboard-configuration
+RUN apt-get -y install tzdata keyboard-configuration ufw
 
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
@@ -37,11 +35,16 @@ RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 RUN /bin/bash -c "source utils.sh \ 
     && Install-VirtualDisplay"
 
+RUN useradd --create-home fractal \
+    && usermod -aG sudo fractal \ 
+    && echo 'fractal:password1234567.' | chpasswd
+
 # Install all required components for Fractal to perform well
 # Split into multiple steps for caching
 RUN /bin/bash -c "source utils.sh \ 
     && Update-Linux \
-    && Set-Time"
+    && Set-Time \
+    && Install-VirtualDisplay"
 RUN /bin/bash -c "source utils.sh \ 
     && Install-7Zip \
     && Install-Curl \
@@ -55,11 +58,11 @@ RUN /bin/bash -c "source utils.sh \
     && Install-CustomX11Configuration"
 RUN /bin/bash -c "source utils.sh \ 
     && Set-FractalDirectory \
-    && Install-FractalServer \
-    && Install-ProcessManager"
+    && Install-FractalServer master \
+    && Install-FractalService"
 RUN /bin/bash -c "source utils.sh \ 
     && Install-FractalExitScript \
-    && Install-FractalAutoUpdate \
+    && Install-FractalAutoUpdate master \
     && Install-FractalLinuxInputDriver \
     && Install-FractalWallpaper \
     && Enable-FractalFirewallRule"
@@ -67,12 +70,10 @@ RUN /bin/bash -c "source utils.sh \
     && Install-Unison \
     && Enable-SSHKey \
     && Disable-Shutdown \
-    && Add-AutoLogin"
+    && Add-AutoLogin \ 
+    && Disable-AutomaticLockScreen "
 
 
-RUN useradd --create-home fractal \
-    && usermod -aG sudo fractal \ 
-    && echo 'fractal:password' | chpasswd
 
 ADD bootstrap.sh /home/fractal
 
