@@ -622,6 +622,7 @@ video_encoder_t *create_video_encoder(int in_width, int in_height,
     // only linux uses FFmpeg 3.4.x because of canonical system packages
 #if LIBAVCODEC_VERSION_MAJOR < 58
     avcodec_register_all();
+    avfilter_register_all();
 #endif
 
 #if !USING_SERVERSIDE_SCALE
