@@ -2,6 +2,8 @@ FROM ubuntu:20.04
 
 RUN apt-get update && apt-get clean && apt-get install -y \
     x11vnc \
+    xvfb \
+    fluxbox \
     wmctrl \
     wget \
     gnupg2 \
@@ -19,9 +21,6 @@ RUN apt-get update && apt-get clean && apt-get install -y \
     && apt-get update && apt-get -y install google-chrome-stable \
     && apt-get clean
 
-
-RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils2.sh >>/dev/null 2>&1
-
 # Avoids interactive installation for tzdata
 # Uses UTC
 ENV DEBIAN_FRONTEND="noninteractive"
@@ -31,9 +30,8 @@ RUN apt-get -y install tzdata keyboard-configuration ufw
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
-# install virtual display 
-RUN /bin/bash -c "source utils.sh \ 
-    && Install-VirtualDisplay"
+RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils2.sh >>/dev/null 2>&1
+
 
 RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \ 
