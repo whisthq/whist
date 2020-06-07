@@ -78,7 +78,7 @@ else()
     set(arch 32)
 endif()
 
-#download libs from S3
+#download libs from AWS S3
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     MESSAGE(STATUS "Downloading libs from AWS S3")
     execute_process(COMMAND CMD /C "get-shared-libs.bat"
