@@ -165,7 +165,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         Integer widthPixels = metrics.widthPixels - 100;
         Integer heightPixels = metrics.heightPixels - 100;
-        return /*new String[5] = */new String[]{"52.168.66.248", widthPixels.toString(), heightPixels.toString()};
+        return /*new String[5] = */new String[]{"40.127.168.152", widthPixels.toString(), heightPixels.toString()};
     }
 
     public static void initialize() {
@@ -1655,6 +1655,7 @@ class SDLMain implements Runnable {
 
         Log.v("SDL", "Running main function " + function + " from library " + library);
 
+        init_jni();
         SDLActivity.nativeRunMain(library, function, arguments);
 
         Log.v("SDL", "Finished main function");
@@ -1667,6 +1668,8 @@ class SDLMain implements Runnable {
             SDLActivity.mSingleton.finish();
         }
     }
+
+    public native String init_jni();
 }
 
 

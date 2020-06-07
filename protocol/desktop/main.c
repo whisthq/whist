@@ -51,6 +51,11 @@ Includes
 #include "native_window_utils.h"
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
+#ifdef __ANDROID_API__
+#include <jni.h>
+JavaVM* javaVM = NULL;
+#endif
+
 #ifdef __APPLE__
 #include "../fractal/utils/mac_utils.h"
 #endif  // __APPLE__
@@ -589,7 +594,16 @@ int read_piped_arguments_thread_function(void* keep_piping) {
     return ret;
 }
 
+#ifndef __ANDROID_API__
 int main(int argc, char* argv[]) {
+#else
+
+JNIEXPORT jstring JNICALL Java_org_libsdl_app_SDLMain_init_1jni(JNIEnv *env, jobject this) {
+    (*env)->GetJavaVM(env, &javaVM);
+}
+
+int SDL_main(int argc, char* argv[]) {
+#endif
     init_default_port_mappings();
 
     srand(rand() * (unsigned int)time(NULL) + rand());
