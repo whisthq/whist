@@ -130,6 +130,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             crypt32
             d3d11
             dxgi
+            dxguid
             shcore
             )
 endif()
