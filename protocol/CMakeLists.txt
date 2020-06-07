@@ -80,20 +80,20 @@ endif()
 
 #download libs from S3
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    MESSAGE(STATUS "Downloading libs from s3")
+    MESSAGE(STATUS "Downloading libs from AWS S3")
     execute_process(COMMAND CMD /C "get-shared-libs.bat"
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     RESULT_VARIABLE dl_libs_res)
     if (NOT ${dl_libs_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to download libs from s3: exitcode: ${dl_libs_res}")
+        message(FATAL_ERROR "Failed to download libs from AWS S3: exitcode: ${dl_libs_res}")
     endif()
 else()
-    MESSAGE(STATUS "Downloading libs from s3")
+    MESSAGE(STATUS "Downloading libs from AWS S3")
     execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get-shared-libs.sh
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     RESULT_VARIABLE dl_libs_res)
     if (NOT ${dl_libs_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to download libs from s3: exitcode: ${dl_libs_res}")
+        message(FATAL_ERROR "Failed to download libs from AWS S3: exitcode: ${dl_libs_res}")
     endif()
 endif()
 
