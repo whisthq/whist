@@ -435,11 +435,11 @@ int32_t SendAudio(void* opaque) {
     int id = 1;
 
     audio_device_t* audio_device = CreateAudioDevice();
-    LOG_INFO("Created audio device!");
     if (!audio_device) {
         LOG_ERROR("Failed to create audio device...");
         return -1;
     }
+    LOG_INFO("Created audio device!");
     StartAudioDevice(audio_device);
     audio_encoder_t* audio_encoder =
         create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
