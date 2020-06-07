@@ -198,7 +198,8 @@ void mprintf(const char *fmtStr, ...) {
 
 void real_mprintf(bool log, const char *fmtStr, va_list args) {
     if (mprintf_thread == NULL) {
-        printf("initLogger has not been called!\n");
+        vprintf(fmtStr, args);
+        // printf("initLogger has not been called!\n");
         return;
     }
 

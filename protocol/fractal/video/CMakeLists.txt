@@ -8,6 +8,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(fractalVideo PRIVATE x11capture.c x11capture.h)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(fractalVideo PRIVATE dxgicapture.c dxgicapture.h)
+    target_sources(fractalVideo PRIVATE dxgicudabridge.cu dxgicudabridge.h)
 endif ()
 
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

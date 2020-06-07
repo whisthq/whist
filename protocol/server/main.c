@@ -33,6 +33,7 @@
 
 #ifdef _WIN32
 #include "../fractal/utils/windows_utils.h"
+#include "../fractal/video/dxgicudabridge.h"
 #endif
 
 #ifdef _WIN32
@@ -263,6 +264,15 @@ int32_t SendVideo(void* opaque) {
 
             clock t;
             StartTimer(&t);
+
+            int i = 0;
+            i = i + 30;
+            i = i * 2;
+            i = i / 3;
+            i = i - 20;
+            if (i > 0) {
+                dxgi_cuda_transfer_data(NULL, NULL);
+            }
 
             int res = video_encoder_encode(encoder, device->frame_data,
                                            device->pitch);
@@ -574,7 +584,6 @@ void update() {
 int main() {
     //    static_assert(sizeof(unsigned short) == 2,
     //                  "Error: Unsigned short is not length 2 bytes!\n");
-
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
