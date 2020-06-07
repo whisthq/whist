@@ -16,6 +16,7 @@ Includes
 ============================
 */
 
+#pragma warning(disable : 4201)
 #include <D3D11.h>
 #include <D3d11_1.h>
 #include <DXGITYPE.h>
