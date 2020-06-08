@@ -16,7 +16,7 @@ def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, main=
     state (str): The state of the disk (default is "ACTIVE")
    """
 
-   rand_password = secrets.token_hex(32)
+    rand_password = secrets.token_hex(32)
 
     with engine.connect() as conn:
         command = text(
