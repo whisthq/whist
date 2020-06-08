@@ -15,11 +15,14 @@ def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, main=
     location (str): The Azure region of the vm
     state (str): The state of the disk (default is "ACTIVE")
    """
+
+   rand_password = secrets.token_hex(32)
+
     with engine.connect() as conn:
         command = text(
             """
-            INSERT INTO disks("disk_name", "vm_name", "username", "location", "state", "disk_size", "main")
-            VALUES(:diskname, :vmname, :username, :location, :state, :disk_size, :main)
+            INSERT INTO disks("disk_name", "vm_name", "username", "location", "state", "disk_size", "main", "vm_password")
+            VALUES(:diskname, :vmname, :username, :location, :state, :disk_size, :main, :vm_password)
             """
         )
         params = {
@@ -29,9 +32,10 @@ def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, main=
             "location": location,
             "state": state,
             "disk_size": disk_size,
-            "main": main
+            "main": main,
+            "vm_password": rand_password
         }
-        
+
         conn.execute(command, **params)
         conn.close()
 
@@ -168,7 +172,7 @@ def fetchUserDisks(username, show_all=False, main=True, ID=-1):
 
             if main:
                 disks_info = [disk for disk in disks_info if disk["main"]]
-                    
+
             return disks_info
 
 def fetchSecondaryDisks(username, ID=-1):
@@ -252,7 +256,7 @@ def updateDisk(disk_name, vm_name, location):
             if location:
                 command = text(
                     """
-                    INSERT INTO disks("disk_name", "vm_name", "location") 
+                    INSERT INTO disks("disk_name", "vm_name", "location")
                     VALUES(:disk_name, :vm_name, :location)
                     """
                 )
@@ -264,7 +268,7 @@ def updateDisk(disk_name, vm_name, location):
             else:
                 command = text(
                     """
-                    INSERT INTO disks("disk_name", "vm_name") 
+                    INSERT INTO disks("disk_name", "vm_name")
                     VALUES(:disk_name, :vm_name)
                     """
                 )
@@ -314,6 +318,23 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.execute(command, **params)
         conn.close()
 
+def genPasswordForDisk(disk_name):
+    """Generates a password for a disk
+
+    Args:
+        disk_name (str): The name of the disk
+    """
+
+    rand_password = secrets.token_hex(32)
+    command = text(
+        """
+        UPDATE disks SET "vm_password" = :vm_password WHERE "disk_name" = :disk_name
+        """
+    )
+    params = {"vm_password": rand_password, "disk_name": disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
 
 def fetchAllDisks():
     """Fetches all the disks
@@ -343,7 +364,7 @@ def deleteDiskFromTable(disk_name):
     """
     command = text(
         """
-        DELETE FROM disks WHERE "disk_name" = :disk_name 
+        DELETE FROM disks WHERE "disk_name" = :disk_name
         """
     )
     params = {"disk_name": disk_name}
@@ -506,6 +527,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
         updateDisk(disk_name, "", location)
         assignUserToDisk(disk_name, username)
         assignVMSizeToDisk(disk_name, vm_size)
+        genPasswordForDisk(disk_name)
 
         return {"status": 200, "disk_name": disk_name}
     except Exception as e:
@@ -523,4 +545,3 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
 
         time.sleep(30)
         return {"status": 400, "disk_name": None}
-
