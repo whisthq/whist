@@ -904,6 +904,10 @@ void set_video_active_resizing(bool is_resizing) {
     {
         SDL_LockMutex( render_mutex );
         can_render = !is_resizing;
+        SDL_RenderCopy( (SDL_Renderer*)videoContext.renderer, videoContext.texture, NULL,
+                        NULL );
+
+        SDL_RenderPresent( (SDL_Renderer*)videoContext.renderer );
         SDL_UnlockMutex( render_mutex );
     }
 }
