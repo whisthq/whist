@@ -13,6 +13,6 @@ The following desktop (Windows, MacOS, Linux) platforms are supported:
 The following platforms have yet to be supported:
 - iOS/iPadOS
 - Android/Chromebook
-- Web
+- Web (Note that the web client will be hosted on the website repository, not here)
 
 Each folder contains its own readme with proper information on development for each application.
