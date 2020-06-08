@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void destroy_video_decoder_members( video_decoder_t* decoder );
+
 #define SHOW_DECODER_LOGS false
 
 #if SHOW_DECODER_LOGS
@@ -134,8 +136,12 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only Linux uses FFmpeg 3.4.x because of canonical system packages
 #if LIBAVCODEC_VERSION_MAJOR < 58
+    LOG_INFO("OLD VERSON FFMPEG: %d.%d.%d", LIBAVCODEC_VERSION_MAJOR,
+             LIBAVCODEC_VERSION_MINOR, LIBAVCODEC_VERSION_MICRO);
     avcodec_register_all();
 #endif
+
+    destroy_video_decoder_members( decoder );
 
     int width = decoder->width;
     int height = decoder->height;
@@ -347,30 +353,36 @@ video_decoder_t* create_video_decoder(int width, int height,
 /// @details frees FFmpeg decoder memory
 
 void destroy_video_decoder(video_decoder_t* decoder) {
+    destroy_video_decoder_members( decoder );
+
+    // free the buffer and decoder
+    free(decoder);
+    return;
+}
+
+void destroy_video_decoder_members( video_decoder_t* decoder )
+{
     // check if decoder decoder exists
-    if (decoder == NULL) {
-        LOG_WARNING("Cannot destroy decoder decoder.");
+    if( decoder == NULL )
+    {
+        LOG_WARNING( "Cannot destroy decoder decoder." );
         return;
     }
 
     /* flush the decoder */
     decoder->packet.data = NULL;
     decoder->packet.size = 0;
-    av_packet_unref(&decoder->packet);
-    avcodec_free_context(&decoder->context);
+    av_packet_unref( &decoder->packet );
+    avcodec_free_context( &decoder->context );
 
     // free the ffmpeg contextes
-    avcodec_close(decoder->context);
+    avcodec_close( decoder->context );
 
     // free the decoder context and frame
-    av_free(decoder->context);
-    av_frame_free(&decoder->sw_frame);
-    av_frame_free(&decoder->hw_frame);
-    av_buffer_unref(&decoder->ref);
-
-    // free the buffer and decoder
-    free(decoder);
-    return;
+    av_free( decoder->context );
+    av_frame_free( &decoder->sw_frame );
+    av_frame_free( &decoder->hw_frame );
+    av_buffer_unref( &decoder->ref );
 }
 
 /// @brief decode a frame using the decoder decoder
@@ -385,17 +397,53 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
 
     // copy the received packet back into the decoder AVPacket
     // memcpy(&decoder->packet.data, &buffer, buffer_size);
-    decoder->packet.data = buffer;
-    decoder->packet.size = buffer_size;
+    int* int_buffer = buffer;
+    int num_packets = *int_buffer;
+    int_buffer++;
 
-    // decode the frame
-    while (avcodec_send_packet(decoder->context, &decoder->packet) < 0) {
-        LOG_WARNING("Failed to avcodec_send_packet!");
-        if (!try_next_decoder(decoder)) {
-            destroy_video_decoder(decoder);
-            return false;
+    int computed_size = 4;
+
+    AVPacket* packets = malloc(num_packets * sizeof(AVPacket));
+
+    for (int i = 0; i < num_packets; i++) {
+        av_init_packet(&packets[i]);
+        packets[i].size = *int_buffer;
+        computed_size += 4 + packets[i].size;
+        int_buffer++;
+    }
+
+    if (buffer_size != computed_size) {
+        LOG_ERROR(
+            "Given Buffer Size did not match computed buffer size: given %d vs "
+            "computed %d",
+            buffer_size, computed_size);
+    }
+
+    char* char_buffer = (void*)int_buffer;
+    for (int i = 0; i < num_packets; i++) {
+        packets[i].data = (void*)char_buffer;
+        char_buffer += packets[i].size;
+    }
+
+    for (int i = 0; i < num_packets; i++) {
+        // decode the frame
+        while (avcodec_send_packet(decoder->context, &packets[i]) < 0) {
+            LOG_WARNING("Failed to avcodec_send_packet!");
+            if (!try_next_decoder(decoder)) {
+                destroy_video_decoder(decoder);
+                for (int j = 0; j < num_packets; j++) {
+                    av_packet_unref(&packets[j]);
+                }
+                free(packets);
+                return false;
+            }
         }
     }
+
+    for (int i = 0; i < num_packets; i++) {
+        av_packet_unref(&packets[i]);
+    }
+    free(packets);
 
     // If frame was computed on the CPU
     if (decoder->context->hw_frames_ctx) {
@@ -438,7 +486,6 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
         max_time = 0.0;
         num_times = 0;
     }
-
     return true;
 }
 

@@ -196,6 +196,7 @@ void updateWidthAndHeight(int width, int height) {
     videoContext.decoder = decoder;
     if (!decoder) {
         LOG_WARNING("ERROR: Decoder could not be created!");
+        destroyLogger();
         exit(-1);
     }
 
@@ -464,6 +465,7 @@ int initMultithreadedVideo(void* opaque) {
                                 output_height);
     if (!texture) {
         LOG_ERROR("SDL: could not create texture - exiting");
+        destroyLogger();
         exit(1);
     }
 
@@ -714,7 +716,8 @@ int32_t ReceiveVideo(FractalPacket* packet) {
 
     // Check if we have to initialize the frame buffer
     if (packet->id < ctx->id) {
-        LOG_INFO("Old packet received!");
+        LOG_INFO("Old packet received! %d is less than the previous %d",
+                 packet->id, ctx->id);
         return -1;
     } else if (packet->id > ctx->id) {
         if (rendering && renderContext.id == ctx->id) {

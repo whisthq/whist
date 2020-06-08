@@ -54,6 +54,7 @@ jobs:
             set(cmake_suffix "win64-x64.zip")
             set(cmake_dir "cmake-${cmake_version}-win64-x64/bin")
             message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\msvc_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\msvc_linker_matcher.json\n")
           elseif ("${{ runner.os }}" STREQUAL "Linux")
             set(ninja_suffix "linux.zip")
             set(cmake_suffix "Linux-x86_64.tar.gz")
@@ -207,6 +208,3 @@ jobs:
           endif()
 
           execute_process(COMMAND ccache -s)
-
-
-
