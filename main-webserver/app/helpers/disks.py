@@ -80,6 +80,27 @@ def getVMSize(disk_name):
         return disks_info["vm_size"]
 
 
+def getVMPassword(disk_name):
+    """Gets the password forthe vm
+
+    Args:
+        disk_name (str): Name of the disk attached to the vm
+
+    Returns:
+        str: The password for the disk attached to the vm
+    """
+    command = text(
+        """
+        SELECT * FROM disks WHERE "disk_name" = :disk_name
+        """
+    )
+    params = {"disk_name": disk_name}
+    with engine.connect() as conn:
+        disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        return disks_info["vm_password"]
+
+
 def fetchUserDisks(username, show_all=False, main=True, ID=-1):
     """Fetches all disks associated with the user
 
