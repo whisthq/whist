@@ -47,8 +47,10 @@ target_link_libraries(FractalClient
         fractalClipboard
         fractalNetwork
         fractalUtils
+        ${STATIC_SDL_IMAGE}
         ${STATIC_SDL2}
         ${STATIC_OPENSSL}
+
         )
 
 #[[

@@ -4,7 +4,8 @@
  * Copyright Fractal Computers, Inc. 2020
  **/
 #include "video.h"
-
+#include "SDL_image.h"
+#include "SDL2/SDL.h"
 #include <stdio.h>
 
 #define USE_HARDWARE true
@@ -390,14 +391,14 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
 
         char frame_name[24];
         if (gif_frame_index < 10) {
-            snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.bmp",
+            snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png",
                      gif_frame_index);
         } else {
-            snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.bmp",
+            snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png",
                      gif_frame_index);
         }
 
-        SDL_Surface* loading_screen = SDL_LoadBMP(frame_name);
+        SDL_Surface* loading_screen = IMG_Load(frame_name);
         loading_screen_texture =
             SDL_CreateTextureFromSurface(renderer, loading_screen);
         SDL_FreeSurface(loading_screen);
