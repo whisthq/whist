@@ -164,12 +164,12 @@ void updateSwsContext() {
     mprintf("Decoder Format: %s\n", av_get_pix_fmt_name(sws_input_fmt));
 
     if (videoContext.sws) {
+        av_freep( &videoContext.data[0] );
         sws_freeContext(videoContext.sws);
     }
 
     videoContext.sws = NULL;
 
-    av_freep( &videoContext.data[0] );
     memset( videoContext.data, 0, sizeof( videoContext.data ) );
 
     if (sws_input_fmt != AV_PIX_FMT_YUV420P || decoder->width != output_width ||
@@ -502,7 +502,9 @@ int initMultithreadedVideo(void* opaque) {
         exit(1);
     }
 
+    sws_input_fmt = AV_PIX_FMT_NONE;
     videoContext.texture = texture;
+    videoContext.sws = NULL;
 
     max_bitrate = STARTING_BITRATE;
     VideoData.target_mbps = STARTING_BITRATE;
