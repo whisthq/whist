@@ -799,11 +799,11 @@ int main(int argc, char* argv[]) {
                         if (msg.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
                             // Let video thread know about the resizing to
                             // reinitialize display dimensions
-                            set_video_active_resizing(false);
                             output_width =
                                 get_window_pixel_width((SDL_Window*)window);
                             output_height =
                                 get_window_pixel_height((SDL_Window*)window);
+                            set_video_active_resizing( false );
 
                             // Let the server know the new dimensions so that it
                             // can change native dimensions for monitor
