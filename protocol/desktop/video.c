@@ -26,6 +26,7 @@ extern volatile int output_height;
 volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* cursor = NULL;
 volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
+volatile bool pending_sws_update = false;
 
 #define LOG_VIDEO false
 
@@ -187,9 +188,9 @@ void updateSwsContext() {
 }
 
 void updatePixelFormat() {
-    if (sws_input_fmt != videoContext.decoder->sw_frame->format) {
+    if (sws_input_fmt != videoContext.decoder->sw_frame->format || pending_sws_update) {
         sws_input_fmt = videoContext.decoder->sw_frame->format;
-
+        pending_sws_update = false;
         updateSwsContext();
     }
 }
@@ -215,8 +216,6 @@ void updateWidthAndHeight(int width, int height) {
 
     server_width = width;
     server_height = height;
-
-    updatePixelFormat();
 }
 
 int32_t RenderScreen(SDL_Renderer* renderer) {
@@ -293,11 +292,11 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             rendering = false;
             continue;
         }
-        updatePixelFormat();
 
         // LOG_INFO( "Decode Time: %f\n", GetTimer( decode_timer ) );
 
         SDL_LockMutex( render_mutex );
+        updatePixelFormat();
 
         if (!skip_render && can_render) {
 
@@ -502,6 +501,7 @@ int initMultithreadedVideo(void* opaque) {
         exit(1);
     }
 
+    pending_sws_update = false;
     sws_input_fmt = AV_PIX_FMT_NONE;
     videoContext.texture = texture;
     videoContext.sws = NULL;
@@ -895,7 +895,7 @@ void set_video_active_resizing(bool is_resizing) {
         SDL_DestroyTexture( videoContext.texture );
         videoContext.texture = texture;
 
-        updateSwsContext();
+        pending_sws_update = true;
 
         can_render = !is_resizing;
 
