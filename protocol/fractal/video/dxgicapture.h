@@ -40,8 +40,6 @@ typedef struct ScreenshotContainer {
 
 typedef struct DisplayHardware {
     IDXGIAdapter1* adapter;
-    IDXGIAdapter1* adapters[10];
-    int n;
     IDXGIOutput* output;
     DXGI_OUTPUT_DESC final_output_desc;
 } DisplayHardware;

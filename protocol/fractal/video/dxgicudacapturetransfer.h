@@ -25,7 +25,7 @@ BEGIN_EXTERN_C
 
 int dxgi_cuda_start_transfer_context(CaptureDevice* device);
 void dxgi_cuda_close_transfer_context();
-int dxgi_cuda_transfer_data(CaptureDevice* device, video_encoder_t* encoder);
+int dxgi_cuda_transfer_capture(CaptureDevice* device, video_encoder_t* encoder);
 END_EXTERN_C
 
 #endif  // DXGI_CUDA_CAPTURE_TRANSFER_H

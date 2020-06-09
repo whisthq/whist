@@ -144,6 +144,7 @@ int32_t SendVideo(void* opaque) {
 
     pending_encoder = false;
     encoder_finished = false;
+    bool dxgi_cuda_available = false;
 
     while (connected) {
         if (client_width < 0 || client_height < 0) {
@@ -178,7 +179,9 @@ int32_t SendVideo(void* opaque) {
                      device->width, device->height);
 #ifdef _WIN32
             // reinitialize cuda transfer context
-            dxgi_cuda_start_transfer_context(device);
+            if (!dxgi_cuda_start_transfer_context(device)) {
+                dxgi_cuda_available = true;
+            }
 #endif
 
             update_encoder = true;
@@ -272,12 +275,19 @@ int32_t SendVideo(void* opaque) {
             }
 
             // transfer the screen to a buffer
-            if (device->texture_on_gpu &&
-                dxgi_cuda_transfer_data(device, encoder) &&
-                cpu_transfer_capture(device, encoder)) {
-                connected = false;
-                break;
-            } else if (cpu_transfer_capture(device, encoder)) {
+            int transfer_res = 2;  // haven't tried anything yet
+#if defined(_WIN32)
+            if (dxgi_cuda_available && device->texture_on_gpu) {
+                // if dxgi_cuda is setup and we have a dxgi texture on the gpu
+                transfer_res = dxgi_cuda_transfer_capture(device, encoder);
+            }
+#endif
+            if (transfer_res) {
+                // if previous attempt failed or we need to use cpu
+                transfer_res = cpu_transfer_capture(device, encoder);
+            }
+            if (transfer_res) {
+                // if there was a failure
                 connected = false;
                 break;
             }

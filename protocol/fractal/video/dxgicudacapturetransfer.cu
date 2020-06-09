@@ -6,45 +6,27 @@
 #include "dxgicudacapturetransfer.h"
 
 extern "C" {
-bool cuda_is_available = true;
+bool cuda_is_available = false;
 cudaGraphicsResource_t resource = NULL;
 
 int dxgi_cuda_start_transfer_context(CaptureDevice* device) {
     static bool tried_cuda_check = false;
-    if (!tried_cuda_check && cudaDeviceSynchronize() != cudaSuccess) {
-        LOG_INFO("CUDA requested but not available on this device.");
-        cuda_is_available = false;
+    if (!tried_cuda_check) {
         tried_cuda_check = true;
-        return 1;  // cuda unavailable
-    }
-
-    for (int i = 0; i < device->hardware->n; ++i) {
-        DXGI_ADAPTER_DESC1 desc;
-        device->hardware->adapters[i]->GetDesc1(&desc);
-        LOG_INFO("Adapter %d: %S", i, desc.Description);
-        int res1;
-        cudaError_t res2;
-        res2 = cudaD3D11GetDevice(&res1, device->hardware->adapters[i]);
-        if (res2 != cudaSuccess) {
-            LOG_INFO("%d NO CUDA SUPPORT: %s | %s", i, cudaGetErrorName(res2),
-                     cudaGetErrorString(res2));
+        if (cudaDeviceSynchronize() != cudaSuccess) {
+            LOG_INFO("CUDA requested but not available on this device.");
+            return 1;  // cuda unavailable
         } else {
-            LOG_INFO("%d has cuda device %d", res1);
+            cuda_is_available = true;
         }
     }
-
-    unsigned int num = 0;
-
-    int* list = NULL;
-    cudaD3D11GetDevices(&num, list, 0, device->D3D11device,
-                        cudaD3D11DeviceListAll);
-    LOG_INFO("num %d", num);
 
     cudaError_t res = cudaGraphicsD3D11RegisterResource(
         &resource, device->screenshot.staging_texture, 0);
     if (res != cudaSuccess) {
         LOG_ERROR("Error: %s | %s", cudaGetErrorName(res),
                   cudaGetErrorString(res));
+        return -1;
     }
 
     return 0;
@@ -56,23 +38,31 @@ void dxgi_cuda_close_transfer_context() {
     }
 }
 
-int dxgi_cuda_transfer_data(CaptureDevice* device, video_encoder_t* encoder) {
+int dxgi_cuda_transfer_capture(CaptureDevice* device,
+                               video_encoder_t* encoder) {
     if (cuda_is_available) {
         cudaError_t res;
         cudaArray_t mappedArray;
 
-        LOG_INFO("a");
-        LOG_INFO("resource @ %p", resource);
+        static int times_measured = 0;
+        static double time_spent = 0.;
 
-        if (!resource) {
-            return -1;  // failure
+        clock dxgi_cuda_transfer_timer;
+        StartTimer(&dxgi_cuda_transfer_timer);
+
+        res = cudaGraphicsResourceSetMapFlags(resource,
+                                              cudaGraphicsMapFlagsReadOnly);
+        if (res != cudaSuccess) {
+            LOG_ERROR("Error: %s | %s", cudaGetErrorName(res),
+                      cudaGetErrorString(res));
+            return -1;
         }
 
-        cudaGraphicsResourceSetMapFlags(resource, cudaGraphicsMapFlagsReadOnly);
         res = cudaGraphicsMapResources(1, &resource, 0);
         if (res != cudaSuccess) {
             LOG_ERROR("Error: %s | %s", cudaGetErrorName(res),
                       cudaGetErrorString(res));
+            return -1;
         }
 
         res =
@@ -80,30 +70,38 @@ int dxgi_cuda_transfer_data(CaptureDevice* device, video_encoder_t* encoder) {
         if (res != cudaSuccess) {
             LOG_ERROR("Error: %s | %s", cudaGetErrorName(res),
                       cudaGetErrorString(res));
+            return -1;
         }
 
-        LOG_INFO("a");
+        res = cudaGraphicsUnmapResources(1, &resource, 0);
+        if (res != cudaSuccess) {
+            LOG_ERROR("Error: %s | %s", cudaGetErrorName(res),
+                      cudaGetErrorString(res));
+            return -1;
+        }
 
-        cudaGraphicsUnmapResources(1, &resource, 0);
+        res = cudaMemcpy2DFromArray(
+            encoder->hw_frame->data[0], encoder->hw_frame->linesize[0],
+            mappedArray, 0, 0, encoder->hw_frame->width * 4,
+            encoder->hw_frame->height, cudaMemcpyDefault);
+        if (res != cudaSuccess) {
+            LOG_ERROR("Error: %s | %s", cudaGetErrorName(res),
+                      cudaGetErrorString(res));
+            return -1;
+        }
 
-        LOG_INFO("a");
+        times_measured++;
+        time_spent += GetTimer(dxgi_cuda_transfer_timer);
 
-        LOG_INFO("hwframe @ %p", encoder->hw_frame);
-        LOG_INFO("data @ %p, val %p", encoder->hw_frame->data,
-                 encoder->hw_frame->data[0]);
-        LOG_INFO("linesize @ %p, val %d", encoder->hw_frame->linesize,
-                 encoder->hw_frame->linesize[0]);
-        LOG_INFO("w %d h %d", encoder->hw_frame->width,
-                 encoder->hw_frame->height);
-        LOG_INFO("mappedArray @ %p", mappedArray);
-
-        cudaMemcpy2DFromArray(encoder->hw_frame->data[0],
-                              encoder->hw_frame->linesize[0], mappedArray, 0, 0,
-                              encoder->hw_frame->width * 4,
-                              encoder->hw_frame->height, cudaMemcpyDefault);
-
-        LOG_INFO("a");
-
+        if (times_measured == 10) {
+            LOG_INFO(
+                "Average time transferring dxgi data to encoder frame on CUDA "
+                "GPU: "
+                "%f",
+                time_spent / times_measured);
+            times_measured = 0;
+            time_spent = 0.0;
+        }
         return 0;
     } else {
         return 1;  // cuda unavailable

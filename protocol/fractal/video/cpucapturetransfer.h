@@ -8,6 +8,6 @@
 #include "x11capture.h"
 #endif
 
-bool cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder);
+int cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder);
 
 #endif  // CPU_CAPTURE_TRANSFER_H

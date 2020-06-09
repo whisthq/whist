@@ -51,13 +51,11 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
         adapters[num_adapters] = hardware->adapter;
         ++num_adapters;
     }
-    hardware->n = num_adapters;
 
     // GET GPU DESCRIPTIONS
     for (i = 0; i < num_adapters; i++) {
         DXGI_ADAPTER_DESC1 desc;
         hardware->adapter = adapters[i];
-        hardware->adapters[i] = adapters[i];
         hr = hardware->adapter->lpVtbl->GetDesc1(hardware->adapter, &desc);
         LOG_WARNING("Adapter %d: %S", i, desc.Description);
     }
@@ -433,21 +431,8 @@ int TransferScreen(CaptureDevice* device) {
         return -1;
     }
 
-    static int times_measured = 0;
-    static double time_spent = 0.0;
-
-    clock dxgi_copy_timer;
-    StartTimer(&dxgi_copy_timer);
     hr = screenshot->surface->lpVtbl->Map(
         screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
-    times_measured++;
-    time_spent += GetTimer(dxgi_copy_timer);
-    if (times_measured == 10) {
-        LOG_INFO("Average Time Spent Moving DXGI to CPU: %f\n",
-                 time_spent / times_measured);
-        times_measured = 0;
-        time_spent = 0.0;
-    }
 
     if (FAILED(hr)) {
         LOG_ERROR("Map Failed!");
