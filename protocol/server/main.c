@@ -404,19 +404,21 @@ int32_t SendVideo(void* opaque) {
                         0) {
                         LOG_WARNING("Could not send video frame ID %d", id);
                     } else {
-                        // Only increment ID if the send succeeded
-                        id++;
-                    }
-                    for (int i = 0; i < num_spectator_connections; i++) {
-                        if (SendUDPPacket(
+                        for( int i = 0; i < num_spectator_connections; i++ )
+                        {
+                            if( SendUDPPacket(
                                 &SpectatorSendContext[i],
                                 PACKET_VIDEO, (uint8_t*)frame,
                                 frame_size, id, STARTING_BURST_BITRATE,
                                 NULL,
-                                NULL) <
-                            0) {
-                            LOG_WARNING("Could not send video frame ID %d to spectator %d", id, i);
+                                NULL ) <
+                                0 )
+                            {
+                                LOG_WARNING( "Could not send video frame ID %d to spectator %d", id, i );
+                            }
                         }
+                        // Only increment ID if the send succeeded
+                        id++;
                     }
 
                     // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
