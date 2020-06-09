@@ -578,7 +578,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
         time.sleep(30)
         return {"status": 400, "disk_name": None}
 
-def setAutoLogin(disk_name):
+def setAutoLogin(disk_name, ID=-1):
     """
         Adds auto-login credentials to a disk's VM, using the disk's unique vm_password
 
