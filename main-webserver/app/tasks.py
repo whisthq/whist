@@ -126,12 +126,7 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, ID 
 			username, location, vm_size, operating_system
 		)
 		hr = payload["status"]
-		print("Disk created with status {}".format(hr))
-
-	if hr == 200:
-		print("Setting auto-login for {}".format(payload["disk_name"]))
-		setAutoLogin(payload["disk_name"], ID)
-		print("Auto-login set for {}".format(payload["disk_name"]))
+		print("Disk created with status {}".format(hr))		
 
 	print(payload)
 	payload["location"] = location

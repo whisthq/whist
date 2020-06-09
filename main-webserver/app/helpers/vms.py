@@ -643,7 +643,7 @@ def claimAvailableVM(disk_name, location, os_type = 'Windows', s=None, ID=-1):
 
             command = text(
                 """
-                UPDATE v_ms 
+                UPDATE v_ms
                 SET lock = :lock, username = :username, disk_name = :disk_name, state = :state, last_updated = :last_updated
                 WHERE vm_name = :vm_name
                 """
@@ -923,7 +923,7 @@ def deleteVMFromTable(vm_name):
     """
     command = text(
         """
-        DELETE FROM v_ms WHERE "vm_name" = :vm_name 
+        DELETE FROM v_ms WHERE "vm_name" = :vm_name
         """
     )
     params = {"vm_name": vm_name}
@@ -1419,6 +1419,10 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
         if first_time:
             print("First time! Going to boot {} times".format(str(num_boots)))
 
+            print("Setting auto-login for {}".format(disk_name))
+            setAutoLogin(disk_name, vm_name, ID)
+            print("Auto-login set for {}".format(disk_name))
+
         for i in range(0, num_boots):
             if i == 1 and s:
                 s.update_state(
@@ -1475,7 +1479,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                 if s:
                     s.update_state(state='PENDING', meta={"msg": "Running final performance checks. This will take two minutes."})
                 time.sleep(60)
-                
+
                 lockVMAndUpdate(
                     vm_name,
                     "RUNNING_AVAILABLE",
@@ -1694,3 +1698,44 @@ def updateProtocolVersion(vm_name, version):
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
+def setAutoLogin(disk_name, vm_name, ID=-1):
+    """
+        Adds auto-login credentials to a disk's VM, using the disk's unique vm_password
+
+        Args:
+            vm_name (str): The name of the vm to set credentials for
+            disk_name (str): The name of the disk associated with the vm
+
+        Returns:
+            int: 200 for success, 400 for error
+    """
+    _, compute_client, _ = createClients()
+    try:
+        print("TASK: Starting to run Powershell scripts")
+
+        vm_password = getVMPassword(disk_name)
+
+        command = """
+        Add-AutoLogin "Fractal" (ConvertTo-SecureString "{vm_password}." -AsPlainText -Force)
+        """.format(
+        vm_password=vm_password
+        )
+        run_command_parameters = {
+        "command_id": "RunPowerShellScript",
+        "script": [command],
+        }
+
+        poller = compute_client.virtual_machines.run_command(
+        os.environ.get("VM_GROUP"), vm_name, run_command_parameters
+        )
+        # poller.wait()
+        result = poller.result()
+        print("SUCCESS: Powershell scripts finished running")
+        print(result.value[0].message)
+
+        return {"status": 200}
+
+    except Exception as e:
+        sendCritical(ID, str(e))
+        return {"status": 400}
