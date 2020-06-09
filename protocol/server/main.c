@@ -176,6 +176,10 @@ int32_t SendVideo(void* opaque) {
                      device->width, device->height);
 
             update_encoder = true;
+            if (encoder) {
+                MultithreadedDestroyEncoder(encoder);
+                encoder = NULL;
+            }
         }
 
         // Update encoder with new parameters
@@ -265,19 +269,17 @@ int32_t SendVideo(void* opaque) {
                 is_iframe = true;
             }
 
-
             clock t;
             StartTimer(&t);
 
-            int res = video_encoder_encode( encoder, device->frame_data, device->pitch );
-            if( res < 0 )
-            {
+            int res = video_encoder_encode(encoder, device->frame_data,
+                                           device->pitch);
+            if (res < 0) {
                 // bad boy error
-                LOG_ERROR( "Error encoding video frame!" );
+                LOG_ERROR("Error encoding video frame!");
                 connected = false;
                 break;
-            } else if( res > 0 )
-            {
+            } else if (res > 0) {
                 // filter graph is empty
                 break;
             }
@@ -328,14 +330,13 @@ int32_t SendVideo(void* opaque) {
                     // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime
                     // = max_mbps previousFrameSize * 8.0 / 1024.0 / 1024.0
                     // / max_mbps = IdealTime
-                    double transmit_time = previous_frame_size * 8.0 /
-                                            1024.0 / 1024.0 / max_mbps;
+                    double transmit_time =
+                        previous_frame_size * 8.0 / 1024.0 / 1024.0 / max_mbps;
 
                     // double average_frame_size = 1.0 * bytes_tested_frames
                     // / bitrate_tested_frames;
-                    double current_trasmit_time = previous_frame_size *
-                                                    8.0 / 1024.0 / 1024.0 /
-                                                    max_mbps;
+                    double current_trasmit_time =
+                        previous_frame_size * 8.0 / 1024.0 / 1024.0 / max_mbps;
                     double current_fps = 1.0 / current_trasmit_time;
 
                     delay = transmit_time - frame_time;
@@ -347,7 +348,7 @@ int32_t SendVideo(void* opaque) {
                     // transmit_time, delay);
 
                     if ((current_fps < worst_fps ||
-                            ideal_bitrate > current_bitrate) &&
+                         ideal_bitrate > current_bitrate) &&
                         bitrate_tested_frames > 20) {
                         // Rather than having lower than the worst
                         // acceptable fps, find the ratio for what the
@@ -355,8 +356,7 @@ int32_t SendVideo(void* opaque) {
                         double ratio_bitrate = current_fps / worst_fps;
                         int new_bitrate =
                             (int)(ratio_bitrate * current_bitrate);
-                        if (abs(new_bitrate - current_bitrate) /
-                                new_bitrate >
+                        if (abs(new_bitrate - current_bitrate) / new_bitrate >
                             0.05) {
                             // LOG_INFO("Updating bitrate from %d to %d",
                             //        current_bitrate, new_bitrate);
@@ -385,7 +385,8 @@ int32_t SendVideo(void* opaque) {
                     // True if this frame does not require previous frames to
                     // render
                     frame->is_iframe = is_iframe;
-                    video_encoder_write_buffer(encoder, (void*)frame->compressed_frame);
+                    video_encoder_write_buffer(encoder,
+                                               (void*)frame->compressed_frame);
 
                     // mprintf("Sent video packet %d (Size: %d) %s\n", id,
                     // encoder->encoded_frame_size, frame->is_iframe ?
@@ -449,11 +450,11 @@ int32_t SendAudio(void* opaque) {
     int id = 1;
 
     audio_device_t* audio_device = CreateAudioDevice();
-    LOG_INFO("Created audio device!");
     if (!audio_device) {
         LOG_ERROR("Failed to create audio device...");
         return -1;
     }
+    LOG_INFO("Created audio device!");
     StartAudioDevice(audio_device);
     audio_encoder_t* audio_encoder =
         create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);

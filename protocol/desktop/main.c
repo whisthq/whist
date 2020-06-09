@@ -546,7 +546,7 @@ int parseArgs(int argc, char *argv[]) {
     output_height = 0;
 
     long int ret;
-    char *endptr;
+    char* endptr;
 
     if (argc >= 3) {
         errno = 0;
@@ -555,7 +555,7 @@ int parseArgs(int argc, char *argv[]) {
             printf("%s", usage);
             return -1;
         }
-        if (ret != 0) output_width = (int) ret;
+        if (ret != 0) output_width = (int)ret;
     }
 
     if (argc >= 4) {
@@ -565,7 +565,7 @@ int parseArgs(int argc, char *argv[]) {
             printf("%s", usage);
             return -1;
         }
-        if (ret != 0) output_height = (int) ret;
+        if (ret != 0) output_height = (int)ret;
     }
 
     if (argc == 5) {
@@ -575,7 +575,7 @@ int parseArgs(int argc, char *argv[]) {
             printf("%s", usage);
             return -1;
         }
-        max_bitrate = (int) ret;
+        max_bitrate = (int)ret;
     }
 
     is_spectator = false;
@@ -641,6 +641,8 @@ int main(int argc, char* argv[]) {
     strcat(path, "/.fractal");
     initLogger(path);
 #endif
+
+    PrintSystemInfo();
 
     // Initialize clipboard and video
     initVideo();
@@ -869,11 +871,11 @@ int main(int argc, char* argv[]) {
                         if (msg.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
                             // Let video thread know about the resizing to
                             // reinitialize display dimensions
-                            set_video_active_resizing(false);
                             output_width =
                                 get_window_pixel_width((SDL_Window*)window);
                             output_height =
                                 get_window_pixel_height((SDL_Window*)window);
+                            set_video_active_resizing( false );
 
                             // Let the server know the new dimensions so that it
                             // can change native dimensions for monitor

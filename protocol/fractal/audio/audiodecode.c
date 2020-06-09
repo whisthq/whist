@@ -90,7 +90,7 @@ int init_av_frame(audio_decoder_t *decoder) {
 }
 
 void audio_decoder_packet_readout(audio_decoder_t *decoder, uint8_t *data) {
-    if(!decoder) return;
+    if (!decoder) return;
     // convert samples from the AVFrame and return
 
     // initialize

@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int video_encoder_filter_graph_intake(video_encoder_t *encoder, void *rgb_pixels,
-                                       int pitch);
+int video_encoder_filter_graph_intake(video_encoder_t *encoder,
+                                      void *rgb_pixels, int pitch);
 int video_encoder_receive_packet(video_encoder_t *encoder, AVPacket *packet);
 
 #define GOP_SIZE 9999
@@ -24,10 +24,12 @@ void set_opt(video_encoder_t *encoder, char *option, char *value) {
 
 typedef video_encoder_t *(*video_encoder_creator)(int, int, int, int, int);
 
-video_encoder_t *create_nvenc_encoder(int in_width, int in_height, int out_width,
-                                int out_height, int bitrate) {
+video_encoder_t *create_nvenc_encoder(int in_width, int in_height,
+                                      int out_width, int out_height,
+                                      int bitrate) {
     LOG_INFO("Trying NVENC encoder...");
-    video_encoder_t *encoder = (video_encoder_t *)malloc(sizeof(video_encoder_t));
+    video_encoder_t *encoder =
+        (video_encoder_t *)malloc(sizeof(video_encoder_t));
     memset(encoder, 0, sizeof(video_encoder_t));
 
     encoder->in_width = in_width;
@@ -260,9 +262,10 @@ video_encoder_t *create_nvenc_encoder(int in_width, int in_height, int out_width
 }
 
 video_encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width,
-                              int out_height, int bitrate) {
+                                    int out_height, int bitrate) {
     LOG_INFO("Trying QSV encoder...");
-    video_encoder_t *encoder = (video_encoder_t *)malloc(sizeof(video_encoder_t));
+    video_encoder_t *encoder =
+        (video_encoder_t *)malloc(sizeof(video_encoder_t));
     memset(encoder, 0, sizeof(video_encoder_t));
 
     encoder->in_width = in_width;
@@ -449,9 +452,10 @@ video_encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width,
 }
 
 video_encoder_t *create_sw_encoder(int in_width, int in_height, int out_width,
-                             int out_height, int bitrate) {
+                                   int out_height, int bitrate) {
     LOG_INFO("Trying software encoder...");
-    video_encoder_t *encoder = (video_encoder_t *)malloc(sizeof(video_encoder_t));
+    video_encoder_t *encoder =
+        (video_encoder_t *)malloc(sizeof(video_encoder_t));
     memset(encoder, 0, sizeof(video_encoder_t));
 
     encoder->in_width = in_width;
@@ -610,13 +614,15 @@ video_encoder_t *create_sw_encoder(int in_width, int in_height, int out_width,
 
 // Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the
 // next one when the previous one doesn't work
-video_encoder_t *create_video_encoder(int in_width, int in_height, int out_width,
-                                int out_height, int bitrate) {
+video_encoder_t *create_video_encoder(int in_width, int in_height,
+                                      int out_width, int out_height,
+                                      int bitrate) {
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only linux uses FFmpeg 3.4.x because of canonical system packages
 #if LIBAVCODEC_VERSION_MAJOR < 58
     avcodec_register_all();
+    avfilter_register_all();
 #endif
 
 #if !USING_SERVERSIDE_SCALE
@@ -685,9 +691,9 @@ void video_encoder_unset_iframe(video_encoder_t *encoder) {
     encoder->sw_frame->key_frame = 0;
 }
 
-int video_encoder_encode(video_encoder_t *encoder, void *rgb_pixels, int pitch) {
-    if( video_encoder_filter_graph_intake( encoder, rgb_pixels, pitch ) < 0 )
-    {
+int video_encoder_encode(video_encoder_t *encoder, void *rgb_pixels,
+                         int pitch) {
+    if (video_encoder_filter_graph_intake(encoder, rgb_pixels, pitch) < 0) {
         return -1;
     }
 
@@ -702,7 +708,7 @@ int video_encoder_encode(video_encoder_t *encoder, void *rgb_pixels, int pitch) 
     int res;
 
     while ((res = video_encoder_receive_packet(
-               encoder, &encoder->packets[encoder->num_packets])) == 0) {
+                encoder, &encoder->packets[encoder->num_packets])) == 0) {
         if (res < 0) {
             LOG_ERROR("PACKET RETURNED AN ERROR");
             return -1;
@@ -726,15 +732,15 @@ void video_encoder_write_buffer(video_encoder_t *encoder, int *buf) {
         *buf = encoder->packets[i].size;
         buf++;
     }
-    char *char_buf = (void*)buf;
+    char *char_buf = (void *)buf;
     for (int i = 0; i < encoder->num_packets; i++) {
         memcpy(char_buf, encoder->packets[i].data, encoder->packets[i].size);
         char_buf += encoder->packets[i].size;
     }
 }
 
-int video_encoder_filter_graph_intake(video_encoder_t *encoder, void *rgb_pixels,
-                                       int pitch) {
+int video_encoder_filter_graph_intake(video_encoder_t *encoder,
+                                      void *rgb_pixels, int pitch) {
     memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
     memset(encoder->sw_frame->linesize, 0, sizeof(encoder->sw_frame->linesize));
     encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
@@ -762,27 +768,24 @@ int video_encoder_filter_graph_intake(video_encoder_t *encoder, void *rgb_pixels
     int res_buffer;
 
     // submit all available frames to the encoder
-    while( (res_buffer = av_buffersink_get_frame(
-        encoder->pFilterGraphSink, encoder->filtered_frame )) >= 0 )
-    {
+    while ((res_buffer = av_buffersink_get_frame(
+                encoder->pFilterGraphSink, encoder->filtered_frame)) >= 0) {
         int res_encoder =
-            avcodec_send_frame( encoder->pCodecCtx, encoder->filtered_frame );
+            avcodec_send_frame(encoder->pCodecCtx, encoder->filtered_frame);
 
         // unref the frame so it may be reused
-        av_frame_unref( encoder->filtered_frame );
+        av_frame_unref(encoder->filtered_frame);
 
-        if( res_encoder < 0 )
-        {
-            LOG_WARNING( "Error sending frame for encoding: %s",
-                         av_err2str( res_encoder ) );
+        if (res_encoder < 0) {
+            LOG_WARNING("Error sending frame for encoding: %s",
+                        av_err2str(res_encoder));
             return -1;
         }
     }
-    if( res_buffer < 0 && res_buffer != AVERROR( EAGAIN ) &&
-        res_buffer != AVERROR_EOF )
-    {
-        LOG_WARNING( "Error getting frame from the filter graph: %d -- %s",
-                     res_buffer, av_err2str( res_buffer ) );
+    if (res_buffer < 0 && res_buffer != AVERROR(EAGAIN) &&
+        res_buffer != AVERROR_EOF) {
+        LOG_WARNING("Error getting frame from the filter graph: %d -- %s",
+                    res_buffer, av_err2str(res_buffer));
         return -1;
     }
 
