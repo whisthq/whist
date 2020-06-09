@@ -58,7 +58,6 @@ target_link_libraries(FractalClient
         ${STATIC_SDL_IMAGE}
         ${STATIC_SDL2}
         ${STATIC_OPENSSL}
-
         )
 
 #[[
