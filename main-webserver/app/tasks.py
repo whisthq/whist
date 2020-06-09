@@ -128,6 +128,11 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, ID 
 		hr = payload["status"]
 		print("Disk created with status {}".format(hr))
 
+	if hr == 200:
+		print("Setting auto-login for {}".format(payload["disk_name"]))
+		setAutoLogin(payload["disk_name"])
+		print("Auto-login set for {}".format(payload["disk_name"]))
+
 	print(payload)
 	payload["location"] = location
 	return payload
@@ -809,36 +814,6 @@ def runPowershell(self, vm_name):
 		print(result.value[0].message)
 
 	return {"status": 200}
-
-@celery.task(bind=True)
-def setAutoLogin(self, disk_name):
-	_, compute_client, _ = createClients()
-
-	print("TASK: Starting to run Powershell scripts")
-
-	vm_password = getVMPassword(disk_name)
-	vm_name = mapDiskToVM(disk_name)
-
-	command = """
-		Add-AutoLogin "Fractal" "{vm_password}"
-		""".format(
-		vm_password=vm_password
-	)
-	run_command_parameters = {
-		"command_id": "RunPowerShellScript",
-		"script": [command],
-	}
-
-	poller = compute_client.virtual_machines.run_command(
-		os.environ.get("VM_GROUP"), vm_name, run_command_parameters
-	)
-	# poller.wait()
-	result = poller.result()
-	print("SUCCESS: Powershell scripts finished running")
-	print(result.value[0].message)
-
-	return {"status": 200}
-
 
 @celery.task(bind=True)
 def deleteDisk(self, disk_name):
