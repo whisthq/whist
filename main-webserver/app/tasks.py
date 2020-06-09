@@ -295,11 +295,11 @@ def fetchAll(self, update, ID=-1):
 @celery.task(bind=True)
 def deleteVMResources(self, vm_name, delete_disk, ID=-1):
 	if spinLock(vm_name) > 0:
-		lockVMAndUpdate(vm_name = vm_name, state = 'DELETING', lock = True, temporary_lock = None, 
+		lockVMAndUpdate(vm_name = vm_name, state = 'DELETING', lock = True, temporary_lock = None,
 			change_last_updated = True, verbose = False, ID = ID)
 
 		status = 200 if deleteResource(vm_name, delete_disk) else 404
-		
+
 		lockVM(vm_name, False)
 
 		sendInfo(
@@ -317,14 +317,14 @@ def deleteVMResources(self, vm_name, delete_disk, ID=-1):
 @celery.task(bind=True)
 def restartVM(self, vm_name, ID=-1):
 	if spinLock(vm_name) > 0:
-		lockVMAndUpdate(vm_name = vm_name, state = 'RESTARTING', lock = True, temporary_lock = None, 
+		lockVMAndUpdate(vm_name = vm_name, state = 'RESTARTING', lock = True, temporary_lock = None,
 			change_last_updated = True, verbose = False, ID = ID)
 
 		_, compute_client, _ = createClients()
 
 		fractalVMStart(vm_name, True)
 
-		lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_AVAILABLE', lock = False, temporary_lock = 1, 
+		lockVMAndUpdate(vm_name = vm_name, state = 'RUNNING_AVAILABLE', lock = False, temporary_lock = 1,
 			change_last_updated = True, verbose = False, ID = ID)
 
 		sendInfo(ID, 'VM {} restarted successfully'.format(vm_name))
@@ -615,7 +615,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 							sendInfo(
 								ID,
 								"Detaching disk {} from {}".format(
-									disk_name, vm_name 
+									disk_name, vm_name
 								),
 							)
 
@@ -807,6 +807,35 @@ def runPowershell(self, vm_name):
 		result = poller.result()
 		print("SUCCESS: Powershell scripts finished running")
 		print(result.value[0].message)
+
+	return {"status": 200}
+
+@celery.task(bind=True)
+def setAutoLogin(self, disk_name):
+	_, compute_client, _ = createClients()
+
+	print("TASK: Starting to run Powershell scripts")
+
+	vm_password = getVMPassword(disk_name)
+	vm_name = mapDiskToVM(disk_name)
+
+	command = """
+		Add-AutoLogin "Fractal" "{vm_password}"
+		""".format(
+		vm_password=vm_password
+	)
+	run_command_parameters = {
+		"command_id": "RunPowerShellScript",
+		"script": [command],
+	}
+
+	poller = compute_client.virtual_machines.run_command(
+		os.environ.get("VM_GROUP"), vm_name, run_command_parameters
+	)
+	# poller.wait()
+	result = poller.result()
+	print("SUCCESS: Powershell scripts finished running")
+	print(result.value[0].message)
 
 	return {"status": 200}
 

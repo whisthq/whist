@@ -92,7 +92,7 @@ def getVMSize(disk_name):
 
 
 def getVMPassword(disk_name):
-    """Gets the password forthe vm
+    """Gets the password for the vm
 
     Args:
         disk_name (str): Name of the disk attached to the vm
@@ -350,7 +350,7 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.execute(command, **params)
         conn.close()
 
-def assignPasswordForDisk(disk_name):
+def assignPasswordToDisk(disk_name):
     """Generates a password for a disk
 
     Args:
@@ -559,7 +559,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
         updateDisk(disk_name, "", location)
         assignUserToDisk(disk_name, username)
         assignVMSizeToDisk(disk_name, vm_size)
-        assignPasswordForDisk(disk_name)
+        assignPasswordToDisk(disk_name)
 
         return {"status": 200, "disk_name": disk_name}
     except Exception as e:
