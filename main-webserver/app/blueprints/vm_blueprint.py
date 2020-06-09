@@ -165,7 +165,12 @@ def vm(action, **kwargs):
             vm_state = vm_info["state"] if vm_info["state"] else ""
             intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
             username = vm_info["username"]
+
+            disks = fetchUserDisks(vm_info["username"], ID = kwargs["ID"])
             is_user = True
+            if disks:
+                disk = disks[0]
+                is_user = not disks["branch"] == "dev" and not vm_info["dev"]
 
             # Update the user's login status if it has changed
             if available and vm_state == "RUNNING_UNAVAILABLE":
