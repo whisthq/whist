@@ -615,6 +615,8 @@ int MultithreadedWaitForSpectator( void* opaque ) {
             return -1;
         }
 
+        closesocket( socket.s );
+
         LOG_INFO("SPECTATOR #%d HANDSHAKE!", num_spectator_connections);
         if (CreateUDPContext(&SpectatorSendContext[num_spectator_connections],
                              NULL, PORT_SPECTATOR + 1 + num_spectator_connections,
