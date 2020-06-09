@@ -80,42 +80,22 @@ endif()
 
 #download unison binary from AWS S3
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    MESSAGE(STATUS "Downloading unison binary from AWS S3")
-    execute_process(COMMAND CMD /C "get-unison.bat"
+    MESSAGE(STATUS "Downloading binaries from AWS S3")
+    execute_process(COMMAND CMD /C "download-binaries.bat"
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE unison_res)
-    if (NOT ${unison_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${unison_res}")
+                    RESULT_VARIABLE download_res)
+    if (NOT ${download_res} EQUAL "0")
+        message(FATAL_ERROR "Failed to binaries from AWS S3: exitcode: ${download_res}")
     endif()
 else()
-    MESSAGE(STATUS "Downloading unison binary from AWS S3")
-    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get-unison.sh
+    MESSAGE(STATUS "Downloading binaries from AWS S3")
+    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE unison_res)
-    if (NOT ${unison_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${unison_res}")
+                    RESULT_VARIABLE download)
+    if (NOT ${download} EQUAL "0")
+        message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${download}")
     endif()
 endif()
-
-#download libs from AWS S3
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    MESSAGE(STATUS "Downloading libs from AWS S3")
-    execute_process(COMMAND CMD /C "get-shared-libs.bat"
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE dl_libs_res)
-    if (NOT ${dl_libs_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to download libs from AWS S3: exitcode: ${dl_libs_res}")
-    endif()
-else()
-    MESSAGE(STATUS "Downloading libs from AWS S3")
-    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get-shared-libs.sh
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE dl_libs_res)
-    if (NOT ${dl_libs_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to download libs from AWS S3: exitcode: ${dl_libs_res}")
-    endif()
-endif()
-
 
 
 # ffmpeg: using our provided libs on mac and windows and system on linux.
