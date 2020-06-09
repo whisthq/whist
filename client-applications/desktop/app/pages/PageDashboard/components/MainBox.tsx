@@ -25,7 +25,6 @@ import Scale from "resources/images/scale.svg";
 
 import {
     askFeedback,
-    trackUserActivity,
     changeWindow,
     attachDisk,
     restartPC,
