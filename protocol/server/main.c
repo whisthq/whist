@@ -179,7 +179,8 @@ int32_t SendVideo(void* opaque) {
                      device->width, device->height);
 #ifdef _WIN32
             // reinitialize cuda transfer context
-            if (!dxgi_cuda_start_transfer_context(device)) {
+            if (encoder->type == NVENC_ENCODE &&
+                !dxgi_cuda_start_transfer_context(device)) {
                 dxgi_cuda_available = true;
             }
 #endif
@@ -277,7 +278,8 @@ int32_t SendVideo(void* opaque) {
             // transfer the screen to a buffer
             int transfer_res = 2;  // haven't tried anything yet
 #if defined(_WIN32)
-            if (dxgi_cuda_available && device->texture_on_gpu) {
+            if (encoder->type == NVENC_ENCODE && dxgi_cuda_available &&
+                device->texture_on_gpu) {
                 // if dxgi_cuda is setup and we have a dxgi texture on the gpu
                 transfer_res = dxgi_cuda_transfer_capture(device, encoder);
             }

@@ -31,6 +31,7 @@ video_encoder_t *create_nvenc_encoder(int in_width, int in_height,
         (video_encoder_t *)malloc(sizeof(video_encoder_t));
     memset(encoder, 0, sizeof(video_encoder_t));
 
+    encoder->type = NVENC_ENCODE;
     encoder->in_width = in_width;
     encoder->in_height = in_height;
     encoder->out_width = out_width;
@@ -267,6 +268,7 @@ video_encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width,
         (video_encoder_t *)malloc(sizeof(video_encoder_t));
     memset(encoder, 0, sizeof(video_encoder_t));
 
+    encoder->type = QSV_ENCODE;
     encoder->in_width = in_width;
     encoder->in_height = in_height;
     encoder->out_width = out_width;
@@ -453,6 +455,7 @@ video_encoder_t *create_sw_encoder(int in_width, int in_height, int out_width,
         (video_encoder_t *)malloc(sizeof(video_encoder_t));
     memset(encoder, 0, sizeof(video_encoder_t));
 
+    encoder->type = SOFTWARE_ENCODE;
     encoder->in_width = in_width;
     encoder->in_height = in_height;
     encoder->out_width = out_width;
