@@ -11,6 +11,7 @@
 #pragma comment(lib, "dxguid.lib")
 
 void GetBitmapScreenshot(CaptureDevice* device);
+ID3D11Texture2D* CreateTexture(CaptureDevice* device);
 
 #define USE_GPU 0
 #define USE_MONITOR 0
@@ -50,11 +51,13 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
         adapters[num_adapters] = hardware->adapter;
         ++num_adapters;
     }
+    hardware->n = num_adapters;
 
     // GET GPU DESCRIPTIONS
     for (i = 0; i < num_adapters; i++) {
         DXGI_ADAPTER_DESC1 desc;
         hardware->adapter = adapters[i];
+        hardware->adapters[i] = adapters[i];
         hr = hardware->adapter->lpVtbl->GetDesc1(hardware->adapter, &desc);
         LOG_WARNING("Adapter %d: %S", i, desc.Description);
     }
@@ -268,6 +271,8 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
 
     GetBitmapScreenshot(device);
 
+    device->screenshot.staging_texture = CreateTexture(device);
+
     return 0;
 }
 
@@ -296,6 +301,7 @@ void GetBitmapScreenshot(CaptureDevice* device) {
 
     device->frame_data = device->bitmap;
     device->pitch = device->width * 4;
+    device->texture_on_gpu = false;
 }
 
 ID3D11Texture2D* CreateTexture(CaptureDevice* device) {
@@ -349,12 +355,6 @@ void ReleaseScreenshot(ScreenshotContainer* screenshot) {
         screenshot->desktop_resource->lpVtbl->Release(
             screenshot->desktop_resource);
         screenshot->desktop_resource = NULL;
-    }
-
-    if (screenshot->staging_texture != NULL) {
-        screenshot->staging_texture->lpVtbl->Release(
-            screenshot->staging_texture);
-        screenshot->staging_texture = NULL;
     }
 
     if (screenshot->surface != NULL) {
@@ -411,61 +411,47 @@ int CaptureScreen(CaptureDevice* device) {
     if (accumulated_frames > 0 && device->bitmap) {
         free(device->bitmap);
         device->bitmap = NULL;
+        device->texture_on_gpu = true;
     }
 
-    device->counter++;
-    hr =
-        DXGI_ERROR_UNSUPPORTED;  // device->duplication->lpVtbl->MapDesktopSurface(
-                                 // device->duplication,
-                                 // &screenshot->mapped_rect );
+    device->D3D11context->lpVtbl->CopySubresourceRegion(
+        device->D3D11context, (ID3D11Resource*)screenshot->staging_texture, 0,
+        0, 0, 0, (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
 
-    // If MapDesktopSurface doesn't work, then do it manually
-    if (hr == DXGI_ERROR_UNSUPPORTED) {
-        screenshot->staging_texture = CreateTexture(device);
-        if (screenshot->staging_texture == NULL) {
-            // Error already printed inside of CreateTexture
-            return -1;
-        }
+    return accumulated_frames;
+}
 
-        device->D3D11context->lpVtbl->CopySubresourceRegion(
-            device->D3D11context, (ID3D11Resource*)screenshot->staging_texture,
-            0, 0, 0, 0, (ID3D11Resource*)screenshot->final_texture, 0,
-            &device->Box);
+int TransferScreen(CaptureDevice* device) {
+    HRESULT hr;
+    ScreenshotContainer* screenshot = &device->screenshot;
 
-        hr = screenshot->staging_texture->lpVtbl->QueryInterface(
-            screenshot->staging_texture, &IID_IDXGISurface,
-            (void**)&screenshot->surface);
-        if (FAILED(hr)) {
-            LOG_ERROR("Query Interface Failed! 0x%X %d", hr, GetLastError());
-            return -1;
-        }
-
-        static int times_measured = 0;
-        static double time_spent = 0.0;
-
-        clock dxgi_copy_timer;
-        StartTimer(&dxgi_copy_timer);
-        hr = screenshot->surface->lpVtbl->Map(
-            screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
-        times_measured++;
-        time_spent += GetTimer(dxgi_copy_timer);
-        if (times_measured == 10) {
-            LOG_INFO("Average Time Spent Moving DXGI to CPU: %f\n",
-                     time_spent / times_measured);
-            times_measured = 0;
-            time_spent = 0.0;
-        }
-
-        if (FAILED(hr)) {
-            LOG_ERROR("Map Failed!");
-            return -1;
-        }
-        device->did_use_map_desktop_surface = false;
-    } else if (FAILED(hr)) {
-        LOG_ERROR("MapDesktopSurface Failed! 0x%X %d", hr, GetLastError());
+    hr = screenshot->staging_texture->lpVtbl->QueryInterface(
+        screenshot->staging_texture, &IID_IDXGISurface,
+        (void**)&screenshot->surface);
+    if (FAILED(hr)) {
+        LOG_ERROR("Query Interface Failed! 0x%X %d", hr, GetLastError());
         return -1;
-    } else {
-        device->did_use_map_desktop_surface = true;
+    }
+
+    static int times_measured = 0;
+    static double time_spent = 0.0;
+
+    clock dxgi_copy_timer;
+    StartTimer(&dxgi_copy_timer);
+    hr = screenshot->surface->lpVtbl->Map(
+        screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
+    times_measured++;
+    time_spent += GetTimer(dxgi_copy_timer);
+    if (times_measured == 10) {
+        LOG_INFO("Average Time Spent Moving DXGI to CPU: %f\n",
+                 time_spent / times_measured);
+        times_measured = 0;
+        time_spent = 0.0;
+    }
+
+    if (FAILED(hr)) {
+        LOG_ERROR("Map Failed!");
+        return -1;
     }
 
     if (!device->bitmap) {
@@ -474,7 +460,7 @@ int CaptureScreen(CaptureDevice* device) {
     }
 
     device->released = false;
-    return accumulated_frames;
+    return 0;
 }
 
 void ReleaseScreen(CaptureDevice* device) {
@@ -482,21 +468,14 @@ void ReleaseScreen(CaptureDevice* device) {
         return;
     }
     HRESULT hr;
-    if (device->did_use_map_desktop_surface) {
-        hr = device->duplication->lpVtbl->UnMapDesktopSurface(
-            device->duplication);
-        if (FAILED(hr)) {
-            LOG_ERROR("Failed to unmap duplication's desktop surface 0x%X %d",
-                      hr, GetLastError());
-        }
-    } else {
-        ScreenshotContainer* screenshot = &device->screenshot;
-        hr = screenshot->surface->lpVtbl->Unmap(screenshot->surface);
-        if (FAILED(hr)) {
-            LOG_ERROR("Failed to unmap screenshot surface 0x%X %d", hr,
-                      GetLastError());
-        }
+
+    ScreenshotContainer* screenshot = &device->screenshot;
+    hr = screenshot->surface->lpVtbl->Unmap(screenshot->surface);
+    if (FAILED(hr)) {
+        LOG_ERROR("Failed to unmap screenshot surface 0x%X %d", hr,
+                  GetLastError());
     }
+
     device->released = true;
 }
 
@@ -506,6 +485,12 @@ void DestroyCaptureDevice(CaptureDevice* device) {
     hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
     ReleaseScreenshot(&device->screenshot);
+
+    if (device->screenshot.staging_texture != NULL) {
+        device->screenshot.staging_texture->lpVtbl->Release(
+            device->screenshot.staging_texture);
+        device->screenshot.staging_texture = NULL;
+    }
 
     if (device->duplication) {
         device->duplication->lpVtbl->Release(device->duplication);

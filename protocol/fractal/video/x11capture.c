@@ -113,6 +113,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     device->image = NULL;
     CaptureScreen(device);
 #endif
+    device->texture_on_gpu = false;
 
     return 0;
 }
@@ -170,6 +171,8 @@ int CaptureScreen(CaptureDevice* device) {
     XUnlockDisplay(device->display);
     return update;
 }
+
+int TransferScreen(CaptureDevice* device) { return 0; }
 
 void ReleaseScreen(CaptureDevice* device) {}
 

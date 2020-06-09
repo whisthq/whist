@@ -40,6 +40,8 @@ typedef struct ScreenshotContainer {
 
 typedef struct DisplayHardware {
     IDXGIAdapter1* adapter;
+    IDXGIAdapter1* adapters[10];
+    int n;
     IDXGIOutput* output;
     DXGI_OUTPUT_DESC final_output_desc;
 } DisplayHardware;
@@ -57,7 +59,7 @@ typedef struct CaptureDevice {
     int pitch;
     char* frame_data;
     struct ScreenshotContainer screenshot;
-    bool did_use_map_desktop_surface;
+    bool texture_on_gpu;
     struct DisplayHardware* hardware;
     bool released;
     MONITORINFOEXW monitorInfo;
@@ -89,9 +91,20 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height);
  *
  * @param device                   The device used to capture the screen
  *
- * @returns                        0 if succeeded, else -1
+ * @returns                        The number of accumulated frames on success,
+ *                                 else -1
  */
 int CaptureScreen(CaptureDevice* device);
+
+/**
+ * @brief                          Copy a captured bitmap snapshot to a new CPU
+ *                                 buffer
+ *
+ * @param device                   The device used to capture the screen
+ *
+ * @returns                        0 if succeeded, else -1
+ */
+int TransferScreen(CaptureDevice* device);
 
 /**
  * @brief                          Release a captured screen bitmap snapshot

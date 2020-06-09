@@ -28,12 +28,13 @@
 #include "../fractal/network/network.h"
 #include "../fractal/utils/aes.h"
 #include "../fractal/utils/logging.h"
+#include "../fractal/video/cpucapturetransfer.h"
 #include "../fractal/video/screencapture.h"
 #include "../fractal/video/videoencode.h"
 
 #ifdef _WIN32
 #include "../fractal/utils/windows_utils.h"
-#include "../fractal/video/dxgicudabridge.h"
+#include "../fractal/video/dxgicudacapturetransfer.h"
 #endif
 
 #ifdef _WIN32
@@ -157,6 +158,10 @@ int32_t SendVideo(void* opaque) {
             if (device) {
                 DestroyCaptureDevice(device);
                 device = NULL;
+#ifdef _WIN32
+                // need to reinitialize this, so close it
+                dxgi_cuda_close_transfer_context();
+#endif
             }
 
             device = &rdevice;
@@ -171,6 +176,10 @@ int32_t SendVideo(void* opaque) {
 
             LOG_INFO("Created Capture Device of dimensions %dx%d",
                      device->width, device->height);
+#ifdef _WIN32
+            // reinitialize cuda transfer context
+            dxgi_cuda_start_transfer_context(device);
+#endif
 
             update_encoder = true;
         }
@@ -262,20 +271,21 @@ int32_t SendVideo(void* opaque) {
                 is_iframe = true;
             }
 
+            // transfer the screen to a buffer
+            if (device->texture_on_gpu &&
+                dxgi_cuda_transfer_data(device, encoder) &&
+                cpu_transfer_capture(device, encoder)) {
+                connected = false;
+                break;
+            } else if (cpu_transfer_capture(device, encoder)) {
+                connected = false;
+                break;
+            }
+
             clock t;
             StartTimer(&t);
 
-            int i = 0;
-            i = i + 30;
-            i = i * 2;
-            i = i / 3;
-            i = i - 20;
-            if (i > 0) {
-                dxgi_cuda_transfer_data(NULL, NULL);
-            }
-
-            int res = video_encoder_encode(encoder, device->frame_data,
-                                           device->pitch);
+            int res = video_encoder_encode(encoder);
             if (res < 0) {
                 // bad boy error
                 LOG_ERROR("Error encoding video frame!");
@@ -582,8 +592,12 @@ void update() {
 #include <time.h>
 
 int main() {
-    //    static_assert(sizeof(unsigned short) == 2,
-    //                  "Error: Unsigned short is not length 2 bytes!\n");
+    // int d = 0;
+    // int e = 0;
+    // LOG_INFO("d starts at %d, e starts at %d", d, e);
+    // dxgi_cuda_transfer_data(&d, &e);
+    // LOG_INFO("d set to %d, e set to %d", d, e);
+    // return 0;
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);

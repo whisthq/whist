@@ -78,14 +78,26 @@ video_encoder_t* create_video_encoder(int in_width, int in_height,
                                       int bitrate);
 
 /**
- * @brief                          Encode the given frame. The frame can be
- *                                 accessed via encoded_frame_size and
- *                                 encoded_frame_data
+ * @brief                          Put the input data into a software frame, and
+ *                                 upload to a hardware frame if applicable.
  *
  * @param rgb_pixels               The frame to be in encoded
  * @param pitch                    The number of bytes per line
+ *
+ * @returns                        0 on success, else -1
  */
-int video_encoder_encode(video_encoder_t* encoder, void* rgb_pixels, int pitch);
+int video_encoder_frame_intake(video_encoder_t* encoder, void* rgb_pixels,
+                               int pitch);
+
+/**
+ * @brief                          Encode the frame in `encoder->sw_frame` or
+ *                                 `encoder->hw_frame`. The encoded packet can
+ *                                 be accessed via encoded_frame_size and
+ *                                 encoded_frame_data
+ *
+ * @returns                        0 on success, else -1
+ */
+int video_encoder_encode(video_encoder_t* encoder);
 
 void video_encoder_write_buffer(video_encoder_t* encoder, int* buf);
 

@@ -40,7 +40,7 @@ typedef struct CaptureDevice {
     char* frame_data;
     Damage damage;
     int event;
-    bool did_use_map_desktop_surface;
+    bool texture_on_gpu;
     bool released;
 } CaptureDevice;
 
@@ -73,6 +73,15 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height);
  * @returns                        0 if succeeded, else -1
  */
 int CaptureScreen(CaptureDevice* device);
+
+/**
+ * @brief                          Dummy function for API compatibility.
+ *
+ * @param device                   The device used to capture the screen
+ *
+ * @returns                        0 always
+ */
+int TransferScreen(CaptureDevice* device);
 
 /**
  * @brief                          Release a captured screen bitmap snapshot

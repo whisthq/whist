@@ -9,9 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int video_encoder_filter_graph_intake(video_encoder_t *encoder,
-                                      void *rgb_pixels, int pitch);
 int video_encoder_receive_packet(video_encoder_t *encoder, AVPacket *packet);
+int video_encoder_send_frame(video_encoder_t *encoder);
 
 #define GOP_SIZE 9999
 
@@ -686,9 +685,9 @@ void video_encoder_unset_iframe(video_encoder_t *encoder) {
     encoder->sw_frame->key_frame = 0;
 }
 
-int video_encoder_encode(video_encoder_t *encoder, void *rgb_pixels,
-                         int pitch) {
-    if (video_encoder_filter_graph_intake(encoder, rgb_pixels, pitch) < 0) {
+int video_encoder_encode(video_encoder_t *encoder) {
+    if (video_encoder_send_frame(encoder)) {
+        LOG_ERROR("Unable to send frame to encoder!");
         return -1;
     }
 
@@ -734,18 +733,30 @@ void video_encoder_write_buffer(video_encoder_t *encoder, int *buf) {
     }
 }
 
-int video_encoder_filter_graph_intake(video_encoder_t *encoder,
-                                      void *rgb_pixels, int pitch) {
+int video_encoder_frame_intake(video_encoder_t *encoder, void *rgb_pixels,
+                               int pitch) {
     memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
     memset(encoder->sw_frame->linesize, 0, sizeof(encoder->sw_frame->linesize));
     encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
     encoder->sw_frame->linesize[0] = pitch;
     encoder->sw_frame->pts++;
-    AVFrame *active_frame = encoder->sw_frame;
 
     if (encoder->hw_frame) {
-        av_hwframe_transfer_data(encoder->hw_frame, encoder->sw_frame, 0);
+        int res =
+            av_hwframe_transfer_data(encoder->hw_frame, encoder->sw_frame, 0);
+        if (res < 0) {
+            LOG_ERROR("Unable to transfer frame to hardware frame: %s",
+                      av_err2str(res));
+            return -1;
+        }
         encoder->hw_frame->pict_type = encoder->sw_frame->pict_type;
+    }
+    return 0;
+}
+
+int video_encoder_send_frame(video_encoder_t *encoder) {
+    AVFrame *active_frame = encoder->sw_frame;
+    if (encoder->hw_frame) {
         active_frame = encoder->hw_frame;
     }
 
@@ -756,6 +767,7 @@ int video_encoder_filter_graph_intake(video_encoder_t *encoder,
     }
 
     if (encoder->hw_frame) {
+        // have to re-create buffers after sending to filter graph
         av_hwframe_get_buffer(encoder->pCodecCtx->hw_frames_ctx,
                               encoder->hw_frame, 0);
     }
