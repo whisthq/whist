@@ -10,7 +10,6 @@
 #include "main.h"
 
 #include <errno.h>
-#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,6 +21,9 @@
 #include "../fractal/utils/aes.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "audio.h"
+#include "desktop_utils.h"
+#include "network.h"
+#include "sdl_event_handler.h"
 #include "sdl_utils.h"
 #include "video.h"
 
@@ -53,14 +55,21 @@ volatile int output_width;
 volatile int output_height;
 volatile char* server_ip;
 
+// Keyboard state variables
+bool alt_pressed = false;
+bool ctrl_pressed = false;
+bool lgui_pressed = false;
+bool rgui_pressed = false;
+
 // Function Declarations
 
 int ReceivePackets(void* opaque);
 int ReceiveMessage(FractalPacket* packet);
 bool received_server_init_message;
 
-SocketContext PacketSendContext;
-SocketContext PacketTCPContext;
+SocketContext PacketSendContext = {0};
+SocketContext PacketReceiveContext = {0};
+SocketContext PacketTCPContext = {0};
 
 volatile bool connected = true;
 volatile bool exiting = false;
@@ -523,307 +532,122 @@ int ReceiveMessage(FractalPacket* packet) {
     return 0;
 }
 
-#define HOST_PUBLIC_KEY                                           \
-    "ecdsa-sha2-nistp256 "                                        \
-    "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOT1KV+" \
-    "I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/"     \
-    "Zt86r9dOzEcfrhxa+MnVQhNE8="
+int syncKeyboardState(void) {
+    FractalClientMessage fmsg = {0};
 
-int parseArgs(int argc, char *argv[]) {
-    char *usage = "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH]"
-                  " [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE] [[OPTIONAL] SPECTATE]\n";
-    int num_required_args = 1;
-    int num_optional_args = 4;
-    if (argc - 1 < num_required_args ||
-        argc - 1 > num_required_args + num_optional_args) {
-        printf("%s", usage);
-        return -1;
-    }
+    SDL_Delay(5);
 
-    server_ip = argv[1];
+    fmsg.type = MESSAGE_KEYBOARD_STATE;
 
-    output_width = 0;
-    output_height = 0;
+    int num_keys;
+    Uint8* state = (Uint8*)SDL_GetKeyboardState(&num_keys);
+#if defined(_WIN32)
+    fmsg.num_keycodes = (short)min(NUM_KEYCODES, num_keys);
+#else
+    fmsg.num_keycodes = fmin(NUM_KEYCODES, num_keys);
+#endif
 
-    long int ret;
-    char* endptr;
+    // lgui/rgui don't work with SDL_GetKeyboardState for some
+    // reason, so set manually
+    state[FK_LGUI] = lgui_pressed;
+    state[FK_RGUI] = rgui_pressed;
+    // Copy keyboard state
+    memcpy(fmsg.keyboard_state, state, fmsg.num_keycodes);
 
-    if (argc >= 3) {
-        errno = 0;
-        ret = strtol(argv[2], &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-            printf("%s", usage);
-            return -1;
-        }
-        if (ret != 0) output_width = (int)ret;
-    }
+    // Also send caps lock and num lock status for syncronization
+    fmsg.caps_lock = SDL_GetModState() & KMOD_CAPS;
+    fmsg.num_lock = SDL_GetModState() & KMOD_NUM;
 
-    if (argc >= 4) {
-        errno = 0;
-        ret = strtol(argv[3], &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-            printf("%s", usage);
-            return -1;
-        }
-        if (ret != 0) output_height = (int)ret;
-    }
-
-    if (argc == 5) {
-        errno = 0;
-        ret = strtol(argv[4], &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret <= 0) {
-            printf("%s", usage);
-            return -1;
-        }
-        max_bitrate = (int)ret;
-    }
-
-    is_spectator = false;
-    if( argc == 6 )
-    {
-        is_spectator = true;
-    }
+    SendFmsg(&fmsg);
 
     return 0;
 }
 
 int main(int argc, char* argv[]) {
-#ifndef _WIN32
-    runcmd("chmod 600 sshkey", NULL);
-    // files can't be written to a macos app bundle, so they need to be
-    // cached in /Users/USERNAME/.APPNAME, here .fractal directory
-    // attempt to create fractal cache directory, it will fail if it
-    // already exists, which is fine
-    // for Linux, this is in /home/USERNAME/.fractal, the cache is also needed
-    // for the same reason
-    runcmd("mkdir ~/.fractal", NULL);
-    runcmd("chmod 0755 ~/.fractal", NULL);
+    if (parseArgs(argc, argv) != 0) {
+        return -1;
+    }
 
-    // the mkdir command won't do anything if the folder already exists, in
-    // which case we make sure to clear the previous logs and connection id
-    runcmd("rm -f ~/.fractal/log.txt", NULL);
-    runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
-#endif
+    char *log_dir = getLogDir();
+    if (log_dir == NULL) {
+        return -1;
+    }
+    initLogger(log_dir);
+    free(log_dir);
 
-    int ret = parseArgs(argc, argv);
-    if (ret != 0) return ret;
+    if (configureSSHKeys() != 0) {
+        LOG_ERROR("Failed to configure SSH keys.");
+        destroyLogger();
+        return -1;
+    }
 
-    // Write ecdsa key to a local file for ssh to use, for that server ip
-    // This will identify the connecting server as the correct server and not an
-    // imposter
-    FILE* ssh_key_host = fopen("ssh_host_ecdsa_key.pub", "w");
-    fprintf(ssh_key_host, "%s %s\n", server_ip, HOST_PUBLIC_KEY);
-    fclose(ssh_key_host);
+    if (configureCache() != 0) {
+        LOG_ERROR("Failed to configure cache.");
+        destroyLogger();
+        return -1;
+    }
+
+    if (initSocketLibrary() != 0) {
+        LOG_ERROR("Failed to initialize socket library.");
+        destroyLogger();
+        return -1;
+    }
 
     // Initialize the SDL window
     window = initSDL(output_width, output_height);
     if (!window) {
-        LOG_ERROR("Failed to initialized SDL");
+        LOG_ERROR("Failed to initialize SDL");
+        destroySocketLibrary();
+        destroyLogger();
         return -1;
     }
 
-    // After creating the window, we will grab DPI-adjusted dimensions in real
-    // pixels
-    output_width = get_window_pixel_width((SDL_Window*)window);
-    output_height = get_window_pixel_height((SDL_Window*)window);
-
-    // Set all threads to highest priority
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-
-#ifdef _WIN32
-    // no cache needed on windows, use local directory
-    initLogger(".");
-#else  // macos, linux
-    // apple cache, can't be in the same folder as bundled app
-    // this stores log.txt in Users/USERNAME/.fractal/log.txt
-    char path[100] = "";
-    strcat(path, getenv("HOME"));
-    strcat(path, "/.fractal");
-    initLogger(path);
-#endif
-
     PrintSystemInfo();
 
-    // Initialize clipboard and video
     initVideo();
+
     exiting = false;
+    bool failed = false;
 
-    int tcp_connection_timeout = 250;
-
-    // Try 3 times if a failure to connect occurs
-    for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
-        // If this is a retry, wait a bit more for the server to recover
+    for (try_amount = 0; try_amount < MAX_NUM_CONNECTION_ATTEMPTS && !exiting
+                && !failed; try_amount++) {
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
         }
-
-#if defined(_WIN32)
-        // Initialize the windows socket library if this is a windows client
-        WSADATA wsa;
-        if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-            mprintf("Failed to initialize Winsock with error code: %d.\n",
-                    WSAGetLastError());
-            return -1;
+        if (!is_spectator) {
+            if (establishConnections() != 0) continue;
+        } else {
+            if (establishSpectatorConnections() != 0) continue;
         }
-#endif
-
-        // Create connection contexts to the server application
-
-        // First context: Sending packets to server
-
-        bool using_stun = true;
-        SocketContext PacketReceiveContext = { 0 };
-
-        if( is_spectator )
-        {
-            if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                  PORT_SPECTATOR, 10, 500, true ) < 0 )
-            {
-                LOG_INFO( "Server is not on STUN, attempting to connect directly" );
-                using_stun = false;
-                if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                      PORT_SPECTATOR, 10, 500, false ) < 0 )
-                {
-                    LOG_WARNING( "Failed to connect to server" );
-                    continue;
-                }
-            }
-
-            FractalPacket* init_spectator = ReadUDPPacket( &PacketReceiveContext );
-            clock init_spectator_timer;
-            StartTimer( &init_spectator_timer );
-            while( !init_spectator && GetTimer( init_spectator_timer ) < 1.0 )
-            {
-                SDL_Delay( 5 );
-                init_spectator = ReadUDPPacket( &PacketReceiveContext );
-            }
-
-            if( init_spectator )
-            {
-                FractalServerMessage* fmsg = init_spectator->data;
-                LOG_INFO( "SPECTATOR PORT: %d", fmsg->spectator_port );
-
-                closesocket( PacketReceiveContext.s );
-
-                if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                      fmsg->spectator_port, 10, 500, true ) < 0 )
-                {
-                    LOG_INFO( "Server is not on STUN, attempting to connect directly" );
-                    using_stun = false;
-                    if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                          fmsg->spectator_port, 10, 500, false ) < 0 )
-                    {
-                        LOG_WARNING( "Failed to connect to server" );
-                        continue;
-                    }
-                }
-
-                PacketSendContext = PacketReceiveContext;
-            } else
-            {
-                closesocket( PacketReceiveContext.s );
-                LOG_WARNING( "DID NOT RECEIVE SPECTATOR INIT FROM SERVER" );
-                continue;
-            }
-        } else
-        {
-            if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
-                                  PORT_CLIENT_TO_SERVER, 10, 500, true ) < 0 )
-            {
-                LOG_INFO( "Server is not on STUN, attempting to connect directly" );
-                using_stun = false;
-                if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
-                                      PORT_CLIENT_TO_SERVER, 10, 500, false ) < 0 )
-                {
-                    LOG_WARNING( "Failed to connect to server" );
-                    continue;
-                }
-            }
-
-            SDL_Delay( 150 );
-
-            // Second context: Receiving packets from server
-
-            if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                  PORT_SERVER_TO_CLIENT, 1, 500, using_stun ) < 0 )
-            {
-                LOG_ERROR( "Failed finish connection to server" );
-                closesocket( PacketSendContext.s );
-                continue;
-            }
-
-            int a = 65535;
-            if( setsockopt( PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof( int ) ) == -1 )
-            {
-                fprintf( stderr, "Error setting socket opts: %s\n", strerror( errno ) );
-            }
-
-            SDL_Delay( 150 );
-
-            // Third context: Mutual TCP context for essential but
-            // not-speed-sensitive applications
-
-            if( CreateTCPContext( &PacketTCPContext, (char*)server_ip,
-                                  PORT_SHARED_TCP, 1, tcp_connection_timeout, using_stun ) < 0 )
-            {
-                LOG_ERROR( "Failed finish connection to server" );
-                tcp_connection_timeout += 250;
-                closesocket( PacketSendContext.s );
-                closesocket( PacketReceiveContext.s );
-                continue;
-            }
-        }
+        connected = true;
 
         // Initialize audio and variables
         is_timing_latency = false;
-        connected = true;
         initAudio();
 
         // Create thread to receive all packets and handle them as needed
         run_receive_packets = true;
-        SDL_Thread* receive_packets_thread;
         received_server_init_message = false;
-        receive_packets_thread = SDL_CreateThread(
+        SDL_Thread* receive_packets_thread = SDL_CreateThread(
             ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
-        clock keyboard_sync_timer;
-        StartTimer(&keyboard_sync_timer);
-
-        // Initialize keyboard state variables
-        bool alt_pressed = false;
-        bool ctrl_pressed = false;
-        bool lgui_pressed = false;
-        bool rgui_pressed = false;
-
-        if( !is_spectator )
-        {
-            clock waiting_for_init_timer;
-            StartTimer( &waiting_for_init_timer );
-            while( !received_server_init_message )
-            {
-                // If 500ms and no init timer was received, we should disconnect
-                // because something failed
-                if( GetTimer( waiting_for_init_timer ) > 500 / 1000.0 )
-                {
-                    LOG_ERROR( "Took too long for init timer!" );
-                    exiting = true;
-                    break;
-                }
-                SDL_Delay( 25 );
+        if (!is_spectator) {
+            if (waitForServerInitMessage(500) != 0) {
+                LOG_WARNING("Did not receive init message from server.");
+                failed = true;
+                break;
             }
         }
 
-        SDL_Event msg;
-        FractalClientMessage fmsg = {0};
-
-        clock ack_timer;
+        clock ack_timer, keyboard_sync_timer;
         StartTimer(&ack_timer);
+        StartTimer(&keyboard_sync_timer);
 
-        // Poll input for as long as we are connected and not exiting
+        SDL_Event sdl_msg;
+
         // This code will run once every millisecond
-        while (connected && !exiting) {
-            // Send acks to sockets every 5 seconds
+        while (connected && !exiting && !failed) {
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);
                 if( !is_spectator )
@@ -833,188 +657,40 @@ int main(int argc, char* argv[]) {
                 StartTimer(&ack_timer);
             }
 
-            // Every 50ms we should syncronize the keyboard state
             if (GetTimer(keyboard_sync_timer) > 50.0 / 1000.0) {
-                SDL_Delay(5);
-                fmsg.type = MESSAGE_KEYBOARD_STATE;
-
-                int num_keys;
-                Uint8* state = (Uint8*)SDL_GetKeyboardState(&num_keys);
-#if defined(_WIN32)
-                fmsg.num_keycodes = (short)min(NUM_KEYCODES, num_keys);
-#else
-                fmsg.num_keycodes = fmin(NUM_KEYCODES, num_keys);
-#endif
-
-                // lgui/rgui don't work with SDL_GetKeyboardState for some
-                // reason, so set manually
-                state[FK_LGUI] = lgui_pressed;
-                state[FK_RGUI] = rgui_pressed;
-                // Copy keyboard state
-                memcpy(fmsg.keyboard_state, state, fmsg.num_keycodes);
-
-                // Also send caps lock and num lock status for syncronization
-                fmsg.caps_lock = SDL_GetModState() & KMOD_CAPS;
-                fmsg.num_lock = SDL_GetModState() & KMOD_NUM;
-
-                SendFmsg(&fmsg);
-
+                if (syncKeyboardState() != 0) {
+                    failed = true;
+                    break;
+                }
                 StartTimer(&keyboard_sync_timer);
             }
-
-            // Check if event is waiting
-            fmsg.type = 0;
-            if (SDL_PollEvent(&msg)) {
-                // Grab SDL event and handle the various input and window events
-                switch (msg.type) {
-                    case SDL_WINDOWEVENT:
-                        if (msg.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                            // Let video thread know about the resizing to
-                            // reinitialize display dimensions
-                            output_width =
-                                get_window_pixel_width((SDL_Window*)window);
-                            output_height =
-                                get_window_pixel_height((SDL_Window*)window);
-                            set_video_active_resizing( false );
-
-                            // Let the server know the new dimensions so that it
-                            // can change native dimensions for monitor
-                            fmsg.type = MESSAGE_DIMENSIONS;
-                            fmsg.dimensions.width = output_width;
-                            fmsg.dimensions.height = output_height;
-                            fmsg.dimensions.dpi =
-                                (int)(96.0 * output_width /
-                                      get_virtual_screen_width());
-
-                            LOG_INFO(
-                                "Window %d resized to %dx%d (Physical %dx%d)\n",
-                                msg.window.windowID, msg.window.data1,
-                                msg.window.data2, output_width, output_height);
-                        }
-                        break;
-                    case SDL_KEYDOWN:
-                    case SDL_KEYUP:
-                        // Send a keyboard press for this event
-                        fmsg.type = MESSAGE_KEYBOARD;
-                        fmsg.keyboard.code =
-                            (FractalKeycode)msg.key.keysym.scancode;
-                        fmsg.keyboard.mod = msg.key.keysym.mod;
-                        fmsg.keyboard.pressed = msg.key.type == SDL_KEYDOWN;
-
-                        // Keep memory of alt/ctrl/lgui/rgui status
-                        if (fmsg.keyboard.code == FK_LALT) {
-                            alt_pressed = fmsg.keyboard.pressed;
-                        }
-                        if (fmsg.keyboard.code == FK_LCTRL) {
-                            ctrl_pressed = fmsg.keyboard.pressed;
-                        }
-                        if (fmsg.keyboard.code == FK_LGUI) {
-                            lgui_pressed = fmsg.keyboard.pressed;
-                        }
-                        if (fmsg.keyboard.code == FK_RGUI) {
-                            rgui_pressed = fmsg.keyboard.pressed;
-                        }
-
-                        if (ctrl_pressed && alt_pressed &&
-                            fmsg.keyboard.code == FK_F4) {
-                            LOG_INFO("Quitting...");
-                            exiting = true;
-                        }
-
-                        break;
-                    case SDL_MOUSEMOTION:
-                        // Relative motion is the delta x and delta y from last
-                        // mouse position Absolute mouse position is where it is
-                        // on the screen We multiply by scaling factor so that
-                        // integer division doesn't destroy accuracy
-                        fmsg.type = MESSAGE_MOUSE_MOTION;
-                        fmsg.mouseMotion.relative = SDL_GetRelativeMouseMode();
-                        fmsg.mouseMotion.x = fmsg.mouseMotion.relative
-                                                 ? msg.motion.xrel
-                                                 : msg.motion.x *
-                                                       MOUSE_SCALING_FACTOR /
-                                                       get_window_virtual_width(
-                                                           (SDL_Window*)window);
-                        fmsg.mouseMotion.y =
-                            fmsg.mouseMotion.relative
-                                ? msg.motion.yrel
-                                : msg.motion.y * MOUSE_SCALING_FACTOR /
-                                      get_window_virtual_height(
-                                          (SDL_Window*)window);
-                        break;
-                    case SDL_MOUSEBUTTONDOWN:
-                    case SDL_MOUSEBUTTONUP:
-                        // Handle mouse click
-                        fmsg.type = MESSAGE_MOUSE_BUTTON;
-                        // Record if left / right / middle button
-                        fmsg.mouseButton.button = msg.button.button;
-                        fmsg.mouseButton.pressed =
-                            msg.button.type == SDL_MOUSEBUTTONDOWN;
-                        break;
-                    case SDL_MOUSEWHEEL:
-                        // Record mousewheel x/y change
-                        fmsg.type = MESSAGE_MOUSE_WHEEL;
-                        fmsg.mouseWheel.x = msg.wheel.x;
-                        fmsg.mouseWheel.y = msg.wheel.y;
-                        break;
-                    case SDL_QUIT:
-                        // Quit if SDL_QUIT received
-                        LOG_ERROR("Forcefully Quitting...");
-                        exiting = true;
-                        break;
-                }
-
-                if (fmsg.type != 0) {
-                    SendFmsg(&fmsg);
-                } else {
-                    SDL_Delay(1);
+            if (SDL_PollEvent(&sdl_msg)) {
+                if (handleSDLEvent(&sdl_msg) != 0) {
+                    failed = true;
+                    break;
                 }
             }
+            SDL_Delay(1);
         }
 
         LOG_INFO("Disconnecting...");
-
-        // Send quit message to server so that it can efficiently disconnect
-        // from the protocol and start accepting new connections
-        if (exiting) {
-            // Send a couple times just to more sure it gets sent
-            fmsg.type = CMESSAGE_QUIT;
-            SDL_Delay(50);
-            SendFmsg(&fmsg);
-            SDL_Delay(50);
-            SendFmsg(&fmsg);
-            SDL_Delay(50);
-            SendFmsg(&fmsg);
-            SDL_Delay(50);
-        }
-
-        // Trigger end of ReceivePackets thread
+        if (exiting || failed || try_amount + 1 == MAX_NUM_CONNECTION_ATTEMPTS)
+            sendServerQuitMessages(3);
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
-
-        // Destroy audio
         destroyAudio();
-
-        // Close all open sockets
-        closesocket(PacketSendContext.s);
-        closesocket(PacketReceiveContext.s);
-        if( !is_spectator )
-        {
-            closesocket( PacketTCPContext.s );
+        if (is_spectator) {
+            closeSpectatorConnections();
+        } else {
+            closeConnections();
         }
-
-#if defined(_WIN32)
-        WSACleanup();
-#endif
     }
 
-    // Destroy video, logger, and SDL
-
-    destroyVideo();
     LOG_INFO("Closing Client...");
-
+    destroyVideo();
     destroySDL((SDL_Window*)window);
+    destroySocketLibrary();
     destroyLogger();
 
-    return 0;
+    return (try_amount < 3 && !failed) ? 0 : -1;
 }

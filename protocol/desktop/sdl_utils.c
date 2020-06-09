@@ -1,5 +1,8 @@
 #include "sdl_utils.h"
 
+extern volatile int output_width;
+extern volatile int output_height;
+
 #if defined(_WIN32)
 HHOOK g_hKeyboardHook;
 LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam);
@@ -30,7 +33,7 @@ int resizingEventWatcher(void* data, SDL_Event* event) {
     return 0;
 }
 
-SDL_Window* initSDL(int output_width, int output_height) {
+SDL_Window* initSDL(int target_output_width, int target_output_height) {
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
@@ -51,15 +54,15 @@ SDL_Window* initSDL(int output_width, int output_height) {
     int full_width = get_virtual_screen_width();
     int full_height = get_virtual_screen_height();
 
-    bool is_fullscreen = output_width == 0 && output_height == 0;
+    bool is_fullscreen = target_output_width == 0 && target_output_height == 0;
 
     // Default output dimensions will be full screen
-    if (output_width == 0) {
-        output_width = full_width;
+    if (target_output_width == 0) {
+        target_output_width = full_width;
     }
 
-    if (output_height == 0) {
-        output_height = full_height;
+    if (target_output_height == 0) {
+        target_output_height = full_height;
     }
 
     SDL_Window* window;
@@ -74,8 +77,8 @@ SDL_Window* initSDL(int output_width, int output_height) {
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
     window = SDL_CreateWindow(
-        "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, output_width,
-        output_height,
+        "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        target_output_width, target_output_height,
         SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : 0));
 
     if (!is_fullscreen) {
@@ -88,6 +91,13 @@ SDL_Window* initSDL(int output_width, int output_height) {
         }
         SDL_SetWindowResizable((SDL_Window*)window, true);
     }
+
+    // After creating the window, we will grab DPI-adjusted dimensions in real
+    // pixels
+    output_width = get_window_pixel_width((SDL_Window*)window);
+    output_height = get_window_pixel_height((SDL_Window*)window);
+
+    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
     return window;
 }
