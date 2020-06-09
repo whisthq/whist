@@ -43,6 +43,8 @@ This section explains how to package apps for the local platform, including fetc
 **MacOS/Linux**
 
 Run `./build.sh` in a terminal. This will delete any prior Fractal protocol folder, pull the recent master branch, and package it locally. You must also install Cmake; refer to the Fractal protocol repository for installation instructions.
+`build.sh` now has cli arguments.  By default `build.sh` will create a release and sign it.  To build a fractal client without signing it and running it in dev, use `DEV=yes ./build.sh`.  It also starts the dev client after building.
+To build a release of the client, sign it, and upload it, use `RELEASE=yes ./build.sh`  ensure that you follow the "Publishing to Production" instructions beforehand.
 
 **Windows**
 
@@ -62,7 +64,7 @@ Before publishing for production, make sure to package for production (see above
 
 3- Increment the version number in `desktop/app/package.json` by `0.0.1`, unless it is a major release, in which case increment by `0.1.0` (e.g.: 1.4.6 becomes 1.5.0).
 
-4- Then, run `./publish.sh` (MacOS/Linux) or `publish.bat` (Windows - in an x86_64 Visual Studio Developer Command Prompt) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run `yarn package-ci` to publish to the S3 bucket.
+4- Then, run `RELEASE=yes ./build.sh` (MacOS/Linux) or `publish.bat` (Windows - in an x86_64 Visual Studio Developer Command Prompt) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run `yarn package-ci` to publish to the S3 bucket.
 
 5- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
 
