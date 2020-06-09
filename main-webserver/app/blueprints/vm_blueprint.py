@@ -170,7 +170,7 @@ def vm(action, **kwargs):
             is_user = True
             if disks:
                 disk = disks[0]
-                is_user = not disks["branch"] == "dev" and not vm_info["dev"]
+                is_user = not disk["branch"] == "dev" and not vm_info["dev"]
 
             # Update the user's login status if it has changed
             if available and vm_state == "RUNNING_UNAVAILABLE":
