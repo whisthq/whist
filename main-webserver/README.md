@@ -22,13 +22,15 @@ Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging3
 
 1. Set up the Heroku CLI on your computer
 2. Check your python version by typing `python -V`.
-  - If you have python 3.6.X:
-    - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
-  - If you have Python >3.6 or Python <3.0:
-    - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
-    - Find the directory where python 3 is installed. On linux, this can be done by typing into the terminal: `which python3`.
-    - Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
-    - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
+
+- If you have python 3.6.X:
+  - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
+- If you have Python >3.6 or Python <3.0:
+  - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
+  - Find the directory where python 3 is installed. On linux, this can be done by typing into the terminal: `which python3`.
+  - Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
+  - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
+
 3. Install everything by typing `pip install -r requirements.txt`. Make sure you're in the virtual environment when doing this.
 4. Tell the local environment what the entry point is to the webserver by typing `set FLASK_APP=run.py`.
 5. Import the environment variables into your computer by typing `heroku config -s --app <APP> >> .env`. App is either `cube-celery-vm` if you are working on the production webserver, or `cube-celery-staging` if you are working on the staging webserver.
@@ -43,7 +45,7 @@ To build the Docker image, run: `docker build -t vm-webserver`. You will require
 
 `docker run --env-file .envdocker -t vm-webserver:latest`
 
-or 
+or
 
 `docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
 
@@ -53,9 +55,10 @@ Vagrant allows you to build local VMs which can be used to run code seamlessly. 
 
 First, make sure you initialized submodules via: `git submodule update --init --recursive`. After the submodules are initialized you will find the Vagrant configs in `vagrant/`.
 
-You will first need to download the win10-dev.box image. To do so, run `aws s3 cp s3://fractal-private-dev/win10-dev.box win10-dev.box` as detailed in `vagrant/README.md`, or you can also manually download it from the S3 bucket. If you try to download it via the AWS CLI, you will first need to install the CLI and configure permissions, which is explained the the Vagrant repo README. You can then follow the instructions in `vagrant/README.md` for running VMs with the vm-webserver repo in them.  
+You will first need to download the win10-dev.box image. To do so, run `aws s3 cp s3://fractal-private-dev/win10-dev.box win10-dev.box` as detailed in `vagrant/README.md`, or you can also manually download it from the S3 bucket. If you try to download it via the AWS CLI, you will first need to install the CLI and configure permissions, which is explained the the Vagrant repo README. You can then follow the instructions in `vagrant/README.md` for running VMs with the vm-webserver repo in them.
 
 Quick Commands:
+
 ```
 # vagrant up commands will take some time
 vagrant up
@@ -93,6 +96,12 @@ Test the webserver by running it on localhost and using Postman to send requests
 `https://pgweb-demo.herokuapp.com/`
 
 Select Scheme, and for the server URL scheme, copy the DATABASE_URL config var found on the Heroku instance.
+
+## Testing
+
+We have created a Postman workspace for a variety of API endpionts in vm-webserver, which can be used for testing in the Staging and Staging2 environments.
+
+Postman Team link: https://app.getpostman.com/join-team?invite_code=29d49d2365850ccfb50fc09723a45a93
 
 ## Publishing
 
