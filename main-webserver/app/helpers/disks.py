@@ -16,7 +16,7 @@ def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, main=
     state (str): The state of the disk (default is "ACTIVE")
    """
 
-    rand_password = secrets.token_hex(32)
+    rand_password = genPassword()
 
     with engine.connect() as conn:
         command = text(
@@ -58,6 +58,17 @@ def genDiskName():
 
         return diskName
 
+def genPassword():
+    """Generates a random password for a disk, from an alphabet of lowercase letters, numbers, and acceptable punctuation
+
+    Returns:
+        str: The generated password
+    """
+
+    alphabet = string.ascii_lowercase + string.digits + ',./;[]'
+    password = ''.join(secrets.choice(alphabet) for i in range(24))
+
+    return password
 
 def getVMSize(disk_name):
     """Gets the size of the vm
@@ -339,14 +350,14 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.execute(command, **params)
         conn.close()
 
-def genPasswordForDisk(disk_name):
+def assignPasswordForDisk(disk_name):
     """Generates a password for a disk
 
     Args:
         disk_name (str): The name of the disk
     """
 
-    rand_password = secrets.token_hex(32)
+    rand_password = genPassword()
     command = text(
         """
         UPDATE disks SET "vm_password" = :vm_password WHERE "disk_name" = :disk_name
@@ -548,7 +559,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
         updateDisk(disk_name, "", location)
         assignUserToDisk(disk_name, username)
         assignVMSizeToDisk(disk_name, vm_size)
-        genPasswordForDisk(disk_name)
+        assignPasswordForDisk(disk_name)
 
         return {"status": 200, "disk_name": disk_name}
     except Exception as e:
