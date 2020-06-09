@@ -9,7 +9,7 @@ from .helpers.s3 import *
 
 
 @celery.task(bind=True)
-def createVM(self, vm_size, location, operating_system, ID=-1):
+def createVM(self, vm_size, location, operating_system, admin_password = None, ID=-1):
     """Creates a windows vm of size vm_size in Azure region location
 
     Args:
@@ -42,7 +42,7 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         sendError(ID, "Nic does not exist, aborting")
         return
     vmParameters = createVMParameters(
-        vmName, nic.id, vm_size, location, operating_system
+        vmName, nic.id, vm_size, location, operating_system, admin_password
     )
 
     async_vm_creation = compute_client.virtual_machines.create_or_update(

@@ -5,7 +5,7 @@ from .general import *
 from .disks import *
 
 
-def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Windows"):
+def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Windows", admin_password = None):
     """Adds a vm entry to the SQL database
 
     Parameters:
@@ -14,6 +14,7 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
     vm_size (str): The type of vm in terms of specs(default is NV6)
     location (str): The Azure region of the vm
     operating_system (str): The operating system of the vm (default is 'Windows')
+    admin_password (str): The admin password (default is set in .env)
 
     Returns:
     dict: Parameters that will be used in Azure sdk
@@ -55,6 +56,8 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
         with engine.connect() as conn:
             conn.execute(command, **params)
             conn.close()
+
+            admin_password = os.getenv("VM_PASSWORD") if not admin_password else admin_password 
 
             os_profile = (
                 {
