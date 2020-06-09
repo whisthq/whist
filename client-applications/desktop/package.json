@@ -58,12 +58,10 @@
         "copyright": "Copyright © Fractal Computers, Inc.",
         "artifactName": "Fractal.${ext}",
         "files": [
-            "**/*",
-            "**/**/*",
             "dist/",
             "node_modules/",
             "resources/",
-            "protocol/",
+            "protocol-build/",
             "app.html",
             "main.prod.js",
             "main.prod.js.map",
@@ -72,7 +70,7 @@
             "loading/"
         ],
         "extraFiles": [
-            "protocol/"
+            "protocol-build/"
         ],
         "dmg": {
             "sign": false,

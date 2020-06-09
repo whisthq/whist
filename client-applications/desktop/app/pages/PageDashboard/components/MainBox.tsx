@@ -102,12 +102,12 @@ class MainBox extends Component {
             // windows
             // get logs from the executable directory, no cache on Windows
             var logs = fs
-                .readFileSync(process.cwd() + "\\protocol\\desktop\\log.txt")
+                .readFileSync(process.cwd() + "\\protocol-build\\log.txt")
                 .toString();
             var connection_id = parseInt(
                 fs
                     .readFileSync(
-                        process.cwd() + "\\protocol\\desktop\\connection_id.txt"
+                        process.cwd() + "\\protocol-build\\connection_id.txt"
                     )
                     .toString()
             );
@@ -138,19 +138,19 @@ class MainBox extends Component {
                     if (os.platform() === "darwin") {
                         // mac
                         // path when electron app is packaged as .dmg
-                        var path = appRootDir + "/protocol/desktop/";
+                        var path = appRootDir + "/protocol-build/";
                         path = path.replace("/Resources/app.asar", "");
                         path = path.replace("/desktop/app", "/desktop");
                         var executable = "./FractalClient";
                     } else if (os.platform() === "linux") {
-                        var path = process.cwd() + "/protocol/desktop";
+                        var path = process.cwd() + "/protocol-build";
                         path = path.replace("/release", "");
                         console.log(path);
                         var executable = "./FractalClient";
                     } else if (os.platform() === "win32") {
                         // windows
                         // path when electron app is packaged as .nsis (to use as working directory)
-                        var path = process.cwd() + "\\protocol\\desktop";
+                        var path = process.cwd() + "\\protocol-build";
                         var executable = "FractalClient.exe";
                     }
 
