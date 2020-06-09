@@ -14,4 +14,5 @@ cp share/32/Windows/* server/build32/Windows/
 cp share/64/Windows/* desktop/build64/Windows/
 cp share/64/Windows/* server/build64/Windows/
 cp share/64/Darwin/* desktop/build64/Darwin/
+ls desktop/build64/Darwin/
 echo "done"
