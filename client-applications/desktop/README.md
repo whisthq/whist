@@ -1,5 +1,7 @@
 # Fractal Desktop Applications
 
+![Electron CI](https://github.com/fractalcomputers/client-applications/workflows/Electron%20CI/badge.svg)
+
 This folder contains the code for the Fractal desktop applications running on Windows, MacOS and Linux Ubuntu. The applications are built cross-platform using ElectronJS. This repository contains all the directions for building the applications locally and for publishing them for production.
 
 Currently supported:
@@ -31,6 +33,8 @@ Before doing this, you will need to run `yarn`, which will create the `yarn.lock
 To start development with a custom port, run `set PORT={number}&& yarn dev`.
 
 If you would like to fully test the application, including the launch of the Fractal protocol, you need to run part of the build scripts, listed in the next section, to clone and make the protocol for your platform. Compiling the protocol requires Cmake, see below for installation instructions. In order to make sure that your system has everything needed to compile the protocol, or if you experience issues with compiling the protocol, you should refer to the protocol repository README for instructions.
+
+This repository has basic continuous integration through GitHub Actions. For every commit or PR to the master branch, it will attempt to build the Electron application on Windows, Mac and Ubuntu, and format the code with Prettier. You should make sure that all tests pass under the Actions tab. If you need help with the CI, check [here](https://github.com/samuelmeuli/action-electron-builder).
 
 ## Packaging for Production
 
