@@ -78,6 +78,25 @@ else()
     set(arch 32)
 endif()
 
+#download unison binary from AWS S3
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    MESSAGE(STATUS "Downloading unison binary from AWS S3")
+    execute_process(COMMAND CMD /C "get-unison.bat"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    RESULT_VARIABLE unison_res)
+    if (NOT ${unison_res} EQUAL "0")
+        message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${unison_res}")
+    endif()
+else()
+    MESSAGE(STATUS "Downloading unison binary from AWS S3")
+    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get-unison.sh
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    RESULT_VARIABLE unison_res)
+    if (NOT ${unison_res} EQUAL "0")
+        message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${unison_res}")
+    endif()
+endif()
+
 #download libs from AWS S3
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     MESSAGE(STATUS "Downloading libs from AWS S3")
