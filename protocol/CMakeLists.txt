@@ -20,7 +20,6 @@ set (CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
 
 project(FractalProtocol LANGUAGES C)
 
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     enable_language(CUDA)
 endif()
