@@ -5,6 +5,7 @@ from app.helpers.vms import *
 from app.helpers.logins import *
 from app.helpers.disks import *
 from app.helpers.s3 import *
+from app.helpers.users import *
 
 vm_bp = Blueprint("vm_bp", __name__)
 
@@ -66,14 +67,20 @@ def vm(action, **kwargs):
         except:
             sendError(kwargs["ID"], "Ip not found for VM {}".format(vm_name))
             return ({"public_ip": None}), 404
+    elif action == "setDev" and request.method == "POST":
+        vm_name = request.get_json()["vm_name"]
+        dev = request.get_json()["dev"]
+        setDev(vm_name, dev)
+        sendInfo(kwargs["ID"], "Set dev state for vm {} to {}".format(vm_name, dev))
+        return jsonify({"status": 200}), 200
     elif action == "delete" and request.method == "POST":
         body = request.get_json()
-                
-        vm_name, delete_disk = body['vm_name'], body['delete_disk']
+
+        vm_name, delete_disk = body["vm_name"], body["delete_disk"]
         task = deleteVMResources.apply_async([vm_name, delete_disk])
-        return jsonify({'ID': task.id}), 202
-    elif action == 'restart' and request.method == 'POST':
-        username = request.get_json()['username']
+        return jsonify({"ID": task.id}), 202
+    elif action == "restart" and request.method == "POST":
+        username = request.get_json()["username"]
         vm = fetchUserVMs(username)
         if vm:
             vm_name = vm[0]["vm_name"]
@@ -84,6 +91,10 @@ def vm(action, **kwargs):
     elif action == "start":
         vm_name = request.get_json()["vm_name"]
         task = startVM.apply_async([vm_name, kwargs["ID"]])
+        return jsonify({"ID": task.id}), 202
+    elif action == "stopvm":
+        vm_name = request.get_json()["vm_name"]
+        task = stopVM.apply_async([vm_name, kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
     elif action == "deallocate":
         vm_name = request.get_json()["vm_name"]
@@ -108,11 +119,11 @@ def vm(action, **kwargs):
     elif action == "winlogonStatus" and request.method == "POST":
         body = request.get_json()
         ready = body["ready"]
-        vm_ip = ''
+        vm_ip = ""
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
-            vm_ip = request.environ['HTTP_X_FORWARDED_FOR']
+            vm_ip = request.environ["HTTP_X_FORWARDED_FOR"]
 
         sendInfo(
             kwargs["ID"],
@@ -133,18 +144,17 @@ def vm(action, **kwargs):
     elif action == "connectionStatus" and request.method == "POST":
         body = request.get_json()
         available = body["available"]
-
-        vm_ip = ''
+        vm_ip = ""
         if request.headers.getlist("X-Forwarded-For"):
             vm_ip = request.headers.getlist("X-Forwarded-For")[0]
         else:
-            vm_ip = request.environ['HTTP_X_FORWARDED_FOR']
+            vm_ip = request.environ["HTTP_X_FORWARDED_FOR"]
 
         vm_info = fetchVMByIP(vm_ip)
         if vm_info:
             vm_name = vm_info["vm_name"] if vm_info["vm_name"] else ""
 
-            if vm_info["os"] == 'Linux':
+            if vm_info["os"] == "Linux":
                 vmReadyToConnect(vm_info["vm_name"], True)
 
             version = None
@@ -153,12 +163,77 @@ def vm(action, **kwargs):
                 updateProtocolVersion(vm_name, version)
 
             vm_state = vm_info["state"] if vm_info["state"] else ""
-            intermediate_states = [
-                "STOPPING",
-                "DEALLOCATING",
-                "ATTACHING"
-            ]
+            intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
+            username = vm_info["username"]
 
+            disks = fetchUserDisks(vm_info["username"], ID = kwargs["ID"])
+            is_user = True
+            if disks:
+                disk = disks[0]
+                is_user = not disk["branch"] == "dev" and not vm_info["dev"]
+
+            # Update the user's login status if it has changed
+            if available and vm_state == "RUNNING_UNAVAILABLE":
+                # THIS IS A LOGOFF EVENT, bc it is now available and the last recorded state was unavailable
+                sendInfo(kwargs["ID"], username + " logged off")
+                customer = fetchCustomer(username)
+                if not customer:
+                    sendWarning(
+                        kwargs["ID"],
+                        "{} logged on/off but is not a registered customer".format(
+                            username
+                        ),
+                    )
+                else:
+                    stripe.api_key = os.getenv("STRIPE_SECRET")
+                    subscription_id = customer["subscription"]
+
+                    try:
+                        payload = stripe.Subscription.retrieve(subscription_id)
+
+                        if (
+                            os.getenv("HOURLY_PLAN_ID")
+                            == payload["items"]["data"][0]["plan"]["id"]
+                        ):
+                            sendInfo(
+                                kwargs["ID"],
+                                "{} is an hourly plan subscriber".format(username),
+                            )
+                            user_activity = getMostRecentActivity(username)
+                            if user_activity["action"] == "logon":
+                                now = dt.now()
+                                logon = dt.strptime(
+                                    user_activity["timestamp"], "%m-%d-%Y, %H:%M:%S"
+                                )
+                                if now - logon > timedelta(minutes=0):
+                                    amount = round(
+                                        79 * (now - logon).total_seconds() / 60 / 60
+                                    )
+                                    addPendingCharge(username, amount)
+                            else:
+                                sendError(
+                                    kwargs["ID"],
+                                    "{} logged off but no logon was recorded".format(
+                                        username
+                                    ),
+                                )
+                    except:
+                        sendError(
+                            kwargs["ID"],
+                            "User {} logged off but there was an issue charging with stripe".format(
+                                username
+                            ),
+                        )
+                    addTimeTable(username, "logoff", is_user, kwargs["ID"])
+            elif not available and vm_state == "RUNNING_AVAILABLE":
+                # THIS IS A LOGON EVENT, bc it is now unavailable and the last recorded state was available
+                sendInfo(kwargs["ID"], username + " logged on")
+                addTimeTable(username, "logon", is_user, kwargs["ID"])
+                vms = fetchUserVMs(username)
+                if vms:
+                    createTemporaryLock(vms[0]["vm_name"], 0, kwargs["ID"])
+
+            # Updates the vm state in the sql database
             if vm_state in intermediate_states:
                 sendWarning(
                     kwargs["ID"],
@@ -188,6 +263,7 @@ def vm(action, **kwargs):
                     verbose=False,
                     ID=kwargs["ID"],
                 )
+
         else:
             sendError(
                 kwargs["ID"],
@@ -199,7 +275,7 @@ def vm(action, **kwargs):
         return jsonify({"status": 200}), 200
     elif action == "isDev" and request.method == "GET":
         try:
-            vm_ip = ''
+            vm_ip = ""
 
             if request.headers.getlist("X-Forwarded-For"):
                 vm_ip = request.headers.getlist("X-Forwarded-For")[0]
@@ -213,6 +289,7 @@ def vm(action, **kwargs):
                 disk_name = vm_info["disk_name"]
                 disk_info = fetchUserDisks(vm_info["username"])
 
+                branch = None
                 if disk_info:
                     branch = disk_info[0]["branch"]
 
@@ -220,7 +297,12 @@ def vm(action, **kwargs):
             return jsonify({"dev": False, "status": 200}), 200
         except Exception as e:
             print(str(e))
-
+    elif action == "setDev" and request.method == "POST":
+        vm_name = request.get_json()["vm_name"]
+        dev = request.get_json()["dev"]
+        setDev(vm_name, dev)
+        sendInfo(kwargs["ID"], "Set dev state for vm {} to {}".format(vm_name, dev))
+        return jsonify({"status": 200}), 200
     return jsonify({}), 400
 
 
@@ -235,61 +317,7 @@ def tracker(action, **kwargs):
         time = body["time"]
     except:
         pass
-    if action == "logon":
-        username = body["username"]
-        is_user = body["is_user"]
-        sendInfo(kwargs["ID"], username + " logged on")
-        addTimeTable(username, "logon", time, is_user, kwargs["ID"])
-        vms = fetchUserVMs(username)
-        if vms:
-            createTemporaryLock(vms[0]["vm_name"], 0, kwargs["ID"])
-    elif action == "logoff":
-        username = body["username"]
-        is_user = body["is_user"]
-        sendInfo(kwargs["ID"], username + " logged off")
-        customer = fetchCustomer(username)
-        if not customer:
-            sendCritical(
-                kwargs["ID"],
-                "{} logged on/off but is not a registered customer".format(username),
-            )
-        else:
-            stripe.api_key = os.getenv("STRIPE_SECRET")
-            subscription_id = customer["subscription"]
-
-            try:
-                payload = stripe.Subscription.retrieve(subscription_id)
-
-                if (
-                    os.getenv("HOURLY_PLAN_ID")
-                    == payload["items"]["data"][0]["plan"]["id"]
-                ):
-                    sendInfo(
-                        kwargs["ID"], "{} is an hourly plan subscriber".format(username)
-                    )
-                    user_activity = getMostRecentActivity(username)
-                    if user_activity["action"] == "logon":
-                        now = dt.now()
-                        logon = dt.strptime(
-                            user_activity["timestamp"], "%m-%d-%Y, %H:%M:%S"
-                        )
-                        if now - logon > timedelta(minutes=0):
-                            amount = round(79 * (now - logon).total_seconds() / 60 / 60)
-                            addPendingCharge(username, amount)
-                    else:
-                        sendError(
-                            kwargs["ID"],
-                            "{} logged off but no logon was recorded".format(username),
-                        )
-            except:
-                pass
-
-        addTimeTable(username, "logoff", time, is_user, kwargs["ID"])
-    elif action == "startup":
-        username = body["username"]
-        is_user = body["is_user"]
-        addTimeTable(username, "startup", time, is_user, kwargs["ID"])
-    elif action == "fetch":
+    if action == "fetch":
         activity = fetchLoginActivity(kwargs["ID"])
         return jsonify({"payload": activity}), 200
     elif action == "fetchMostRecent":
@@ -328,7 +356,7 @@ def info(action, **kwargs):
 @generateID
 @logRequestInfo
 def logs(**kwargs):
-    body = request.get_json()
+    body = json.loads(request.data)
 
     vm_ip = None
     if "vm_ip" in body:

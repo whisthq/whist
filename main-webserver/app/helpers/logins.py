@@ -5,13 +5,12 @@ from .vms import *
 from .disks import *
 
 
-def addTimeTable(username, action, time, is_user, ID=-1):
+def addTimeTable(username, action, is_user, ID=-1):
     """Adds a user action to the login_history sql table
 
     Args:
         username (str): The username of the user
         action (str): ['logon', 'logoff']
-        time (str): Time in the format mm-dd-yyyy, hh:mm:ss
         is_user (bool): Whether an actual user did the action, vs admin
         ID (int, optional): Papertrail loggind ID. Defaults to -1.
     """
@@ -22,6 +21,7 @@ def addTimeTable(username, action, time, is_user, ID=-1):
         """
     )
 
+    # TODO: Standardize time formats
     aware = dt.now()
     now = aware.strftime("%m-%d-%Y, %H:%M:%S")
 

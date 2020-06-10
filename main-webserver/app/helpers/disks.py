@@ -5,7 +5,9 @@ from .general import *
 from .vms import *
 
 
-def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, main=True, state="ACTIVE"):
+def createDiskEntry(
+    disk_name, vm_name, username, location, disk_size=120, main=True, state="ACTIVE"
+):
     """Adds a disk to the disks SQL database
 
     Parameters:
@@ -29,9 +31,9 @@ def createDiskEntry(disk_name, vm_name, username, location, disk_size=120, main=
             "location": location,
             "state": state,
             "disk_size": disk_size,
-            "main": main
+            "main": main,
         }
-        
+
         conn.execute(command, **params)
         conn.close()
 
@@ -168,8 +170,9 @@ def fetchUserDisks(username, show_all=False, main=True, ID=-1):
 
             if main:
                 disks_info = [disk for disk in disks_info if disk["main"]]
-                    
+
             return disks_info
+
 
 def fetchSecondaryDisks(username, ID=-1):
     """Fetches all non-OS disks associated with the user
@@ -493,9 +496,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
                 "creation_data": {
                     "create_option": DiskCreateOption.copy,
                     "source_resource_id": disk_image.id,
-                    "managed_disk": {
-                        "storage_account_type": "StandardSSD_LRS"
-                    }
+                    "managed_disk": {"storage_account_type": "StandardSSD_LRS"},
                 },
             },
         )
@@ -524,3 +525,83 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
         time.sleep(30)
         return {"status": 400, "disk_name": None}
 
+
+def setDiskVersion(disk_name, branch):
+    """Sets the version of the protocol running on the disk. Master is latest stable version, staging is second latest version
+
+    Args:
+        disk_name (str): The name of the disk
+        branch (str): "master", "staging"
+    """
+    command = text(
+        """
+        UPDATE disks
+        SET branch = :branch
+        WHERE
+        "disk_name" = :disk_name
+        """
+    )
+    params = {"branch": branch, "disk_name": disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
+def setDiskVersion(disk_name, branch, ID=-1):
+    """Sets the version of the protocol running on the disk. Master is latest stable version, staging is second latest version
+
+    Args:
+        disk_name (str): The name of the disk
+        branch (str): "master", "staging"
+    """
+
+    command = text(
+        """
+        UPDATE disks
+        SET branch = :branch
+        WHERE
+        "disk_name" = :disk_name
+        """
+    )
+    params = {"branch": branch, "disk_name": disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
+def setUpdateAccepted(disk_name, accepted, ID=-1):
+    """Sets the version of the protocol running on the disk. Master is latest stable version, staging is second latest version
+
+    Args:
+        disk_name (str): The name of the disk
+        accepted (str): Boolean if they have been accepted
+    """
+
+    sendInfo(ID, "Disk {} has set acceptedUpdate to {}".format(disk_name, accepted))
+
+    command = text(
+        """
+        UPDATE disks
+        SET has_accepted_update = :accepted
+        WHERE
+        "disk_name" = :disk_name
+        """
+    )
+    params = {"accepted": accepted, "disk_name": disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+def fetchAllDisks(ID=-1):
+    """Fetches all disks in database
+    """
+    command = text(
+        """
+        SELECT * FROM disks
+        """
+    )
+    params = {}
+    with engine.connect() as conn:
+        disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        conn.close()
+        return disks
