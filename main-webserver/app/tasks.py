@@ -95,7 +95,15 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, I
 
     fractalVMStart(vmParameters["vm_name"], needs_winlogon=False, s = self)
 
-    time.sleep(30)
+    lockVMAndUpdate(
+        vm_name=vm_name,
+        state="RUNNING_AVAILABLE",
+        lock=True,
+        temporary_lock=None,
+        change_last_updated=False,
+        verbose=False,
+        ID=kwargs["ID"],
+    )
 
     extension_parameters = (
         {
@@ -148,6 +156,16 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, I
     updateVMOS(vmParameters["vm_name"], operating_system)
 
     sendInfo(ID, "SUCCESS: VM {} created and updated".format(vmName))
+
+    lockVMAndUpdate(
+        vm_name=vm_name,
+        state="RUNNING_AVAILABLE",
+        lock=False,
+        temporary_lock=0,
+        change_last_updated=False,
+        verbose=False,
+        ID=kwargs["ID"],
+    )
 
     return fetchVMCredentials(vmParameters["vm_name"])
 

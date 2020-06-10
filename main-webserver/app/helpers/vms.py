@@ -1515,15 +1515,15 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                         meta={"msg": "Logged into your cloud PC successfully."},
                     )
 
-                lockVMAndUpdate(
-                    vm_name,
-                    "RUNNING_AVAILABLE",
-                    False,
-                    temporary_lock=1,
-                    change_last_updated=True,
-                    verbose=False,
-                    ID=ID,
-                )
+            lockVMAndUpdate(
+                vm_name,
+                "RUNNING_AVAILABLE",
+                False,
+                temporary_lock=2,
+                change_last_updated=True,
+                verbose=False,
+                ID=ID,
+            )
 
             if i == 1:
                 changeFirstTime(disk_name)
