@@ -5,6 +5,8 @@ int parseArgs(int argc, char* argv[]);
 
 char *getLogDir(void);
 
+int logConnectionID(int connection_id);
+
 int initSocketLibrary(void);
 
 int destroySocketLibrary(void);

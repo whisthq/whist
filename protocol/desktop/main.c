@@ -19,12 +19,15 @@
 #include "../fractal/core/fractal.h"
 #include "../fractal/network/network.h"
 #include "../fractal/utils/aes.h"
+#include "../fractal/utils/clock.h"
+#include "../fractal/utils/logging.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "audio.h"
 #include "desktop_utils.h"
 #include "network.h"
 #include "sdl_event_handler.h"
 #include "sdl_utils.h"
+#include "server_message_handler.h"
 #include "video.h"
 
 #ifdef __APPLE__
@@ -64,8 +67,7 @@ bool rgui_pressed = false;
 // Function Declarations
 
 int ReceivePackets(void* opaque);
-int ReceiveMessage(FractalPacket* packet);
-bool received_server_init_message;
+volatile bool received_server_init_message;
 
 SocketContext PacketSendContext = {0};
 SocketContext PacketReceiveContext = {0};
@@ -125,7 +127,9 @@ void update() {
         // Receive tcp buffer, if a full packet has been received
         FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
         if (tcp_packet) {
-            ReceiveMessage(tcp_packet);
+            handleServerMessage(
+                (FractalServerMessage *) tcp_packet->data,
+                (size_t) tcp_packet->payload_size);
         }
 
         // Update the last tcp check timer
@@ -409,7 +413,9 @@ int ReceivePackets(void* opaque) {
                 case PACKET_MESSAGE:
                     // A FractalServerMessage for other information
                     StartTimer(&message_timer);
-                    ReceiveMessage(packet);
+                    handleServerMessage(
+                        (FractalServerMessage *) packet->data,
+                        (size_t) packet->payload_size);
                     message_time += GetTimer(message_timer);
                     break;
                 default:
@@ -428,107 +434,6 @@ int ReceivePackets(void* opaque) {
 
     destroyUpdate();
 
-    return 0;
-}
-
-// Receiving a FractalServerMessage
-int ReceiveMessage(FractalPacket* packet) {
-    // Extract fmsg from the packet
-    FractalServerMessage* fmsg = (FractalServerMessage*)packet->data;
-
-    // Verify packet size
-    if (fmsg->type == MESSAGE_INIT) {
-        if (packet->payload_size !=
-            sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit)) {
-            LOG_ERROR(
-                "Incorrect payload size for a server message (type "
-                "MESSAGE_INIT)!");
-            return -1;
-        }
-    } else if (fmsg->type == SMESSAGE_CLIPBOARD) {
-        if ((unsigned int)packet->payload_size !=
-            sizeof(FractalServerMessage) + fmsg->clipboard.size) {
-            LOG_ERROR(
-                "Incorrect payload size for a server message (type "
-                "SMESSAGE_CLIPBOARD)!");
-            return -1;
-        }
-    } else {
-        if (packet->payload_size != sizeof(FractalServerMessage)) {
-            LOG_ERROR("Incorrect payload size for a server message! (type: %d)",
-                      (int)packet->type);
-            return -1;
-        }
-    }
-
-    // Case on FractalServerMessage and handle each unique server message
-    switch (fmsg->type) {
-        case MESSAGE_PONG:
-            // Received a response to our pings
-            if (ping_id == fmsg->ping_id) {
-                // Post latency since the last ping
-                LOG_INFO("Latency: %f", GetTimer(latency_timer));
-                is_timing_latency = false;
-                ping_failures = 0;
-                try_amount = 0;
-            } else {
-                LOG_INFO("Old Ping ID found: Got %d but expected %d",
-                         fmsg->ping_id, ping_id);
-            }
-            break;
-        case MESSAGE_AUDIO_FREQUENCY:
-            // Update audio frequency
-            LOG_INFO("Changing audio frequency to %d", fmsg->frequency);
-            audio_frequency = fmsg->frequency;
-            break;
-        case SMESSAGE_CLIPBOARD:
-            // Receiving a clipboard update
-            LOG_INFO("Received %d byte clipboard message from server!",
-                     packet->payload_size);
-            ClipboardSynchronizerSetClipboard(&fmsg->clipboard);
-            break;
-        case MESSAGE_INIT:
-            // Receiving a bunch of initializing server data for a new
-            // connection
-            LOG_INFO("Received init message!\n");
-            FractalServerMessageInit* msg_init =
-                (FractalServerMessageInit*)fmsg->init_msg;
-            memcpy(filename, msg_init->filename,
-                   min(sizeof(filename), sizeof(msg_init->filename)));
-            memcpy(username, msg_init->username,
-                   min(sizeof(username), sizeof(msg_init->username)));
-
-#ifdef _WIN32
-            char* path = "connection_id.txt";
-#else
-            // mac apps can't save files into the bundled app package,
-            // need to save into hidden folder under account
-            // this stores connection_id in
-            // Users/USERNAME/.fractal/connection_id.txt
-            // same for Linux, but will be in
-            // /home/USERNAME/.fractal/connection_id.txt
-            char path[200] = "";
-            strcat(path, getenv("HOME"));
-            strcat(path, "/.fractal/connection_id.txt");
-
-#endif
-
-            FILE* f = fopen(path, "w");
-            fprintf(f, "%d", msg_init->connection_id);
-            fclose(f);
-
-            received_server_init_message = true;
-            break;
-        case SMESSAGE_QUIT:
-            // Server wants to quit
-            LOG_INFO("Server signaled a quit!");
-            exiting = true;
-            break;
-        default:
-            // Invalid FractalServerMessage type
-            LOG_WARNING("Unknown FractalServerMessage Received");
-            return -1;
-    }
     return 0;
 }
 

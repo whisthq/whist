@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../fractal/utils/logging.h"
 #include "main.h"
 
 extern volatile char *server_ip;
@@ -72,19 +73,7 @@ int parseArgs(int argc, char* argv[]) {
     return 0;
 }
 
-#ifdef _WIN32
-char *getLogDir(void) {
-    char *log_dir = malloc(2 * sizeof *log_dir);
-    if (log_dir == NULL) {
-        return NULL;
-    }
-    if (sprintf(log_dir, "%s", ".") < 0) {
-        free(log_dir);
-        return NULL;
-    }
-    return log_dir;
-}
-#else
+#ifndef _WIN32
 static char *appendPathToHome(char *path) {
     char *home, *new_path;
     int len;
@@ -102,11 +91,58 @@ static char *appendPathToHome(char *path) {
 
     return new_path;
 }
+#endif
 
+char *dupstring(char *s1) {
+    size_t len = strlen(s1);
+    char *s2 = malloc(len * sizeof *s2);
+    if (s2 == NULL) return NULL;
+    for (; *s1; s1++, s2++)  *s2 = *s1;
+    *s2 = *s1;
+    return s2;
+}
+
+#ifdef _WIN32
+char *getLogDir(void) {
+    return dupstring(".");
+}
+#else
 char *getLogDir(void) {
     return appendPathToHome(".fractal");
 }
 #endif
+
+#ifdef _WIN32
+static char *getConnectionIDLogPath(void) {
+    return dupstring("connection_id.txt");
+}
+#else
+static char *getConnectionIDLogPath(void) {
+    return appendPathToHome(".fractal/connection_id.txt");
+}
+#endif
+
+int logConnectionID(int connection_id) {
+    char *path = getConnectionIDLogPath();
+    if (path == NULL) {
+        LOG_ERROR("Failed to get connection log path.");
+        return -1;
+    }
+
+    FILE* f = fopen(path, "w");
+    free(path);
+    if (f == NULL) {
+        LOG_ERROR("Failed to open connection id log file.");
+        return -1;
+    }
+    if (fprintf(f, "%d", connection_id) < 0) {
+        LOG_ERROR("Failed to write connection id to log file.");
+        fclose(f);
+        return -1;
+    }
+    fclose(f);
+    return 0;
+}
 
 #ifdef _WIN32
 int initSocketLibrary(void) {
