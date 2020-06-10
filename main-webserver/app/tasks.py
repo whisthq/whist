@@ -101,8 +101,7 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, I
         lock=True,
         temporary_lock=None,
         change_last_updated=False,
-        verbose=False,
-        ID=kwargs["ID"],
+        verbose=False
     )
 
     extension_parameters = (
@@ -163,8 +162,7 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, I
         lock=False,
         temporary_lock=0,
         change_last_updated=False,
-        verbose=False,
-        ID=kwargs["ID"],
+        verbose=False
     )
 
     return fetchVMCredentials(vmParameters["vm_name"])
