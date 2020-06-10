@@ -331,7 +331,6 @@ def tracker(action, **kwargs):
 
 # INFO endpoint
 
-
 @vm_bp.route("/info/<action>", methods=["GET", "POST"])
 @jwt_required
 @generateID
