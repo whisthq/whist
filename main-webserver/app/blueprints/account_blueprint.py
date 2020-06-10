@@ -75,7 +75,7 @@ def google_login(**kwargs):
             return (
                 jsonify(
                     {
-                        "verified": True,
+                        "new_user": False,
                         "is_user": True,
                         "vm_status": vm_status,
                         "access_token": access_token,
@@ -97,7 +97,7 @@ def google_login(**kwargs):
         jsonify(
             {
                 "status": status,
-                "verified": True,
+                "new_user": True,
                 "is_user": True,
                 "access_token": access_token,
                 "refresh_token": refresh_token,
@@ -105,6 +105,21 @@ def google_login(**kwargs):
         ),
         status,
     )
+
+@account_bp.route("/account/googleReason", methods=["POST"])
+@jwt_required
+@generateID
+@logRequestInfo
+def google_reason(**kwargs):
+    body = request.get_json()
+    username, reason_for_signup = body["username"], body["feedback"]
+    setUserReason(username, reason_for_signup)
+    makeUserVerified(username, True)
+
+    return (
+        jsonify({}), 200
+    )
+
 
 # When people log into their account
 @account_bp.route("/account/login", methods=["POST"])

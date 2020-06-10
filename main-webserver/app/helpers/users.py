@@ -179,8 +179,8 @@ def registerGoogleUser(username, name, reason_for_signup=None):
     code = genUniqueCode()
     command = text(
         """
-        INSERT INTO users("username", "password", "code", "id", "name", "reason_for_signup", "google_login")
-        VALUES(:userName, :password, :code, :token, :name, :reason_for_signup, :google_login)
+        INSERT INTO users("username", "password", "code", "id", "name", "reason_for_signup", "google_login", "verified")
+        VALUES(:userName, :password, :code, :token, :name, :reason_for_signup, :google_login, :verified)
         """
     )
     params = {
@@ -190,7 +190,8 @@ def registerGoogleUser(username, name, reason_for_signup=None):
         "token": None,
         "name": name,
         "reason_for_signup": reason_for_signup,
-        "google_login": True
+        "google_login": True,
+        "verified": True
     }
     with engine.connect() as conn:
         try:
@@ -520,3 +521,22 @@ def userVMStatus(username):
         return "has_created"
 
     return "has_not_paid"
+
+def setUserReason(username, reason_for_signup=None):
+    """Updates the reason for signup for a user in the users SQL table
+
+    Args:
+        username (str): The user to update the password for
+        reason_for_signup (str): The reason the user signed up
+    """
+    command = text(
+        """
+        UPDATE users
+        SET "reason_for_signup" = :reason_for_signup
+        WHERE "username" = :userName
+        """
+    )
+    params = {"userName": username, "reason_for_signup": reason_for_signup}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
