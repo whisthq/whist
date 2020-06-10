@@ -109,7 +109,7 @@ def disk(action, **kwargs):
         sendInfo(kwargs["ID"], "Deleting disk {}".format(disk_name))
         task_id = None
 
-        task = deleteDisk.apply_async(disk_name)
+        task = deleteDisk.apply_async([disk_name])
         task_id = task.id
         sendInfo(kwargs["ID"], "Disk deletion complete")
         return jsonify({"ID": task_id}), 202
@@ -120,6 +120,10 @@ def disk(action, **kwargs):
     elif action == "fetchAll":
         disks = fetchAllDisks()
         return jsonify({"status": 200, "disks": disks}), 200
+    elif action == "swap":
+        body = json.loads(request.data)
+        task = swapSpecificDisk([body["disk_name"], body["vm_name"], kwargs["ID"]])
+        return jsonify({"ID": task_id}), 202
 
 
 @disk_bp.route("/version", methods=["POST", "GET"])
