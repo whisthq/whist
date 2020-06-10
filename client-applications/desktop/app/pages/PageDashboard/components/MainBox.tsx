@@ -102,12 +102,12 @@ class MainBox extends Component {
             // windows
             // get logs from the executable directory, no cache on Windows
             var logs = fs
-                .readFileSync(process.cwd() + "\\protocol-build\\log.txt")
+                .readFileSync(process.cwd() + "\\protocol\\desktop\\log.txt")
                 .toString();
             var connection_id = parseInt(
                 fs
                     .readFileSync(
-                        process.cwd() + "\\protocol-build\\connection_id.txt"
+                        process.cwd() + "\\protocol\\desktop\\connection_id.txt"
                     )
                     .toString()
             );
@@ -150,7 +150,7 @@ class MainBox extends Component {
                     } else if (os.platform() === "win32") {
                         // windows
                         // path when electron app is packaged as .nsis (to use as working directory)
-                        var path = process.cwd() + "\\protocol-build";
+                        var path = process.cwd() + "\\protocol\\desktop";
                         var executable = "FractalClient.exe";
                     }
 
