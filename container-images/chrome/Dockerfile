@@ -30,7 +30,7 @@ RUN apt-get -y install tzdata keyboard-configuration ufw
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
-RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils2.sh >>/dev/null 2>&1
+RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.sh >>/dev/null 2>&1
 
 
 RUN useradd --create-home fractal \
@@ -71,10 +71,7 @@ RUN /bin/bash -c "source utils.sh \
     && Add-AutoLogin \ 
     && Disable-AutomaticLockScreen "
 
-
-
 ADD bootstrap.sh /home/fractal
-
 
 RUN chmod +x /home/fractal/bootstrap.sh \
     && chown -v -R fractal:fractal /home/fractal
