@@ -108,10 +108,7 @@ def fetchUserDisks(username, show_all=False, main=True, ID=-1):
                 disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
                 conn.close()
 
-                if disks_info:
-                    sendInfo(ID, "Disk names fetched and Postgres connection closed")
-                else:
-                    sendWarning(ID, "No disk found for {}. Postgres connection closed")
+                if not disks_info:
                     return []
 
                 if main:
