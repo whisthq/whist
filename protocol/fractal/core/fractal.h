@@ -74,6 +74,7 @@ Defines
 #define PORT_CLIENT_TO_SERVER 32262
 #define PORT_SERVER_TO_CLIENT 32263
 #define PORT_SHARED_TCP 32264
+#define PORT_SPECTATOR 32265
 
 #define PRODUCTION_HOST "cube-celery-vm.herokuapp.com"
 #define STAGING_HOST "cube-celery-staging.herokuapp.com"
@@ -450,6 +451,7 @@ typedef struct FractalServerMessage {
     union {
         int ping_id;
         int frequency;
+        int spectator_port;
     };
     union {
         ClipboardData clipboard;
