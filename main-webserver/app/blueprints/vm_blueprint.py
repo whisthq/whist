@@ -56,9 +56,7 @@ def vm(action, **kwargs):
         if "operating_system" in body.keys():
             operating_system = body["operating_system"]
 
-        task = createVM.apply_async([vm_size, location, operating_system,
-            admin_password = admin_password, 
-            ID = kwargs["ID"]])
+        task = createVM.apply_async([vm_size, location, operating_system, admin_password, kwargs["ID"]])
         if not task:
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202
