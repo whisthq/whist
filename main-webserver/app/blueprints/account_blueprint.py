@@ -56,6 +56,22 @@ def user_reset(**kwargs):
     resetVMCredentials(username, vm_name)
     return jsonify({"status": 200}), 200
 
+@account_bp.route("/account/googleLogin", methods=["POST"])
+@generateID
+@logRequestInfo
+def google_login(**kwargs):
+    body = request.get_json()
+    code = body["code"]
+    getGoogleTokens(code)
+
+    return (
+        jsonify(
+            {
+
+            }
+        ),
+        200,
+    )
 
 # When people log into their account
 @account_bp.route("/account/login", methods=["POST"])
