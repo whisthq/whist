@@ -209,4 +209,4 @@ jobs:
             message(FATAL_ERROR "Bad exit status")
           endif()
 
-          execute_process(COMMAND ccache -s)SS
+          execute_process(COMMAND ccache -s)
