@@ -26,6 +26,15 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         ),
     )
 
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "Creating VM of size {}, location {}, operating system {}".format(
+                vm_size, location, operating_system
+            )
+        },
+    )
+
     _, compute_client, _ = createClients()
     vmName = genVMName()
     nic = createNic(vmName, location, 0)
@@ -35,13 +44,37 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     vmParameters = createVMParameters(
         vmName, nic.id, vm_size, location, operating_system
     )
+
     async_vm_creation = compute_client.virtual_machines.create_or_update(
         os.environ["VM_GROUP"], vmParameters["vm_name"], vmParameters["params"]
     )
+
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "Waiting on async VM creation"
+        },
+    )
+
     sendDebug(ID, "Waiting on async_vm_creation")
     async_vm_creation.wait()
 
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "VM {} created".format(vmParameters["vm_name"])
+        },
+    )
+
+
     time.sleep(10)
+
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "VM {} starting".format(vmParameters["vm_name"])
+        },
+    )
 
     async_vm_start = compute_client.virtual_machines.start(
         os.environ["VM_GROUP"], vmParameters["vm_name"]
@@ -49,11 +82,18 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     sendDebug(ID, "Waiting on async_vm_start")
     async_vm_start.wait()
 
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "VM {} started".format(vmParameters["vm_name"])
+        },
+    )
+
     time.sleep(30)
 
     sendInfo(ID, "The VM created is called {}".format(vmParameters["vm_name"]))
 
-    fractalVMStart(vmParameters["vm_name"], needs_winlogon=False)
+    fractalVMStart(vmParameters["vm_name"], needs_winlogon=False, s = self)
 
     time.sleep(30)
 
@@ -75,6 +115,14 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         }
     )
 
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "VM {} installing NVIDIA extension".format(vmParameters["vm_name"])
+        },
+    )
+
+
     async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(
         os.environ["VM_GROUP"],
         vmParameters["vm_name"],
@@ -84,6 +132,13 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 
     sendDebug(ID, "Waiting on async_vm_extension")
     async_vm_extension.wait()
+
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "VM {} successfully installed NVIDIA extension".format(vmParameters["vm_name"])
+        },
+    )
 
     vm = getVM(vmParameters["vm_name"])
     vm_ip = getIP(vm)

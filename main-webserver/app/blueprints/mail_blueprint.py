@@ -177,7 +177,8 @@ def validateToken(**kwargs):
 def feedback():
     body = request.get_json()
     user = body["username"]
-    title = "Feedback from " + user
+    feedback_type = body["type"]
+    title = "[{}] Feedback from {}".format(feedback_type, user)
 
     message = SendGridMail(
         from_email="noreply@fractalcomputers.com",

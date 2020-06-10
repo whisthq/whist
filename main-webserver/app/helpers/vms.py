@@ -1351,6 +1351,8 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
 
                 sendInfo(ID, "VM {} started successfully".format(vm_name))
 
+                return 1
+
             if needs_restart:
                 if s:
                     s.update_state(
@@ -1392,6 +1394,10 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
 
                 sendInfo(ID, "VM {} restarted successfully".format(vm_name))
 
+                return 1
+
+            return 1
+
         def checkFirstTime(disk_name):
             session = Session()
             command = text(
@@ -1429,7 +1435,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
         if s:
             s.update_state(
                 state="PENDING",
-                meta={"msg": "Cloud PC currently executing boot request."},
+                meta={"msg": "Cloud PC started executing boot request."},
             )
 
         disk_name = fetchVMCredentials(vm_name)["disk_name"]
@@ -1462,7 +1468,16 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
             if i == 1:
                 needs_restart = True
 
+            if s:
+                s.update_state(
+                    state="PENDING",
+                    meta={
+                        "msg": "Cloud PC still executing boot request."
+                    },
+                )
+
             boot_if_necessary(vm_name, needs_restart, ID)
+
             lockVMAndUpdate(
                 vm_name,
                 "RUNNING_AVAILABLE",
@@ -1481,15 +1496,30 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                     },
                 )
 
-            winlogon = waitForWinlogon(vm_name, ID)
-            while winlogon < 0:
-                boot_if_necessary(vm_name, True, ID)
+            if needs_winlogon:
                 winlogon = waitForWinlogon(vm_name, ID)
+                while winlogon < 0:
+                    boot_if_necessary(vm_name, True, ID)
+                    if s:
+                        s.update_state(
+                            state="PENDING", meta={"msg": "Logging you into your cloud PC. This should take less than two minutes."}
+                        )
+                    winlogon = waitForWinlogon(vm_name, ID)
 
-            if s:
-                s.update_state(
-                    state="PENDING",
-                    meta={"msg": "Logged into your cloud PC successfully."},
+                if s:
+                    s.update_state(
+                        state="PENDING",
+                        meta={"msg": "Logged into your cloud PC successfully."},
+                    )
+
+                lockVMAndUpdate(
+                    vm_name,
+                    "RUNNING_AVAILABLE",
+                    False,
+                    temporary_lock=1,
+                    change_last_updated=True,
+                    verbose=False,
+                    ID=ID,
                 )
 
             if i == 1:
@@ -1729,6 +1759,20 @@ def updateProtocolVersion(vm_name, version):
     )
     params = {"version": version, "disk_name": os_disk}
 
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+def setDev(vm_name, dev):
+    command = text(
+        """
+        UPDATE v_ms
+        SET dev = :dev
+        WHERE
+        "vm_name" = :vm_name
+        """
+    )
+    params = {"dev": dev, "vm_name": vm_name}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()

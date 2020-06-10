@@ -7,7 +7,6 @@ from .logger import *
 def make_celery(app_name=__name__):
     backend = os.getenv("REDIS_URL")
     broker = os.getenv("REDIS_URL")
-    print('Created celery with URL {}'.format(os.getenv("REDIS_URL")))
     return Celery(app_name, backend=backend, broker=broker)
 
 
@@ -72,7 +71,7 @@ def logRequestInfo(f):
             # 	papertrail = False
 
             try:
-                body = json.loads(request.data)
+                body = request.get_json()
 
                 if body:
                     for k, v in body.items():

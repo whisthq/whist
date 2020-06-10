@@ -25,6 +25,7 @@ def init_app(app):
     from .blueprints.disk_blueprint import disk_bp
     from .blueprints.mail_blueprint import mail_bp
     from .blueprints.report_blueprint import report_bp
+    from .blueprints.version_blueprint import version_bp
 
     app.register_blueprint(vm_bp)
     app.register_blueprint(account_bp)
@@ -33,5 +34,6 @@ def init_app(app):
     app.register_blueprint(disk_bp)
     app.register_blueprint(mail_bp)
     app.register_blueprint(report_bp)
+    app.register_blueprint(version_bp)
 
     return app

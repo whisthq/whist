@@ -67,7 +67,7 @@ def statusReport(action, **kwargs):
             traceback.print_exc()
     elif action == "userReport" and request.method == "POST":
         body = request.get_json()
-        today = datetime.date.today()
+        today = dt.now()
         command = text("")
         params = {}
         if body["timescale"] == "day":
@@ -85,7 +85,10 @@ def statusReport(action, **kwargs):
             ORDER BY timestamp ASC
             """
             )
-            params = {"username": body["username"], "date": lastWeek.strftime("%m-%d-%y")}
+            params = {
+                "username": body["username"],
+                "date": lastWeek.strftime("%m-%d-%y"),
+            }
         elif body["timescale"] == "month":
             lastMonth = today - datetime.timedelta(days=30)
             command = text(
@@ -96,7 +99,10 @@ def statusReport(action, **kwargs):
             ORDER BY timestamp ASC
             """
             )
-            params = {"username": body["username"], "date": lastMonth.strftime("%m-%d-%y")}
+            params = {
+                "username": body["username"],
+                "date": lastMonth.strftime("%m-%d-%y"),
+            }
         try:
             with engine.connect() as conn:
                 report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
@@ -124,7 +130,7 @@ def loginsToMinutes(report):
     output = []
     minutesOnline = 0
 
-    while index < len(report):
+    while report is not None and index < len(report):
         earlyTime = dt.strptime(report[index - 1]["timestamp"], "%m-%d-%Y, %H:%M:%S")
         lateTime = dt.strptime(report[index]["timestamp"], "%m-%d-%Y, %H:%M:%S")
 
@@ -161,7 +167,7 @@ def loginsToMinutes(report):
 
         if index == len(report) - 1:  # Last entry
             if report[index]["action"] == "logon":
-                deltaTime = datetime.date.today() - lateTime
+                deltaTime = dt.now() - lateTime
                 minutesOnline += deltaTime.seconds / 60
             if minutesOnline > 1:
                 output.append(
