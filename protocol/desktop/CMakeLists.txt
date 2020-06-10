@@ -55,7 +55,8 @@ target_link_libraries(FractalClient
         fractalClipboard
         fractalNetwork
         fractalUtils
-
+        ${STATIC_SDL2}
+        ${STATIC_SDL_IMAGE}
         ${STATIC_OPENSSL}
         )
 
@@ -81,8 +82,6 @@ endif()
 ]]
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_link_libraries(FractalClient
-        ${STATIC_SDL2}
-        ${STATIC_SDL_IMAGE}
         "-framework OpenGL"
         "-framework VideoToolbox"
         "-framework CoreMedia"
