@@ -78,25 +78,24 @@ else()
     set(arch 32)
 endif()
 
-#download libs from AWS S3
+#download unison binary from AWS S3
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    MESSAGE(STATUS "Downloading libs from AWS S3")
-    execute_process(COMMAND CMD /C "get-shared-libs.bat"
+    MESSAGE(STATUS "Downloading binaries from AWS S3")
+    execute_process(COMMAND CMD /C "download-binaries.bat"
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE dl_libs_res)
-    if (NOT ${dl_libs_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to download libs from AWS S3: exitcode: ${dl_libs_res}")
+                    RESULT_VARIABLE download_res)
+    if (NOT ${download_res} EQUAL "0")
+        message(FATAL_ERROR "Failed to binaries from AWS S3: exitcode: ${download_res}")
     endif()
 else()
-    MESSAGE(STATUS "Downloading libs from AWS S3")
-    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get-shared-libs.sh
+    MESSAGE(STATUS "Downloading binaries from AWS S3")
+    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE dl_libs_res)
-    if (NOT ${dl_libs_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to download libs from AWS S3: exitcode: ${dl_libs_res}")
+                    RESULT_VARIABLE download)
+    if (NOT ${download} EQUAL "0")
+        message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${download}")
     endif()
 endif()
-
 
 
 # ffmpeg: using our provided libs on mac and windows and system on linux.
