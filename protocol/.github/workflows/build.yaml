@@ -40,6 +40,12 @@ jobs:
         uses: crazy-max/ghaction-chocolatey@v1
         with:
           args: install cppcheck cuda --force
+      - name: Update Windows PATH for CUDA NVCC Install
+        if: runner.os == 'Windows'
+        run: |
+          $env:ChocolateyInstall = Convert-Path "$((Get-Command choco).Path)\..\.."   
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+          refreshenv
       - uses: actions/checkout@v2
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
