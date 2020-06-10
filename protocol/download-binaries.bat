@@ -6,9 +6,9 @@ if not exist desktop\build32 mkdir desktop\build32
 if not exist desktop\build64 mkdir desktop\build64
 
 xcopy /e /Y /c share\32\Windows\* desktop\build32\Windows\
-xcopy /e /Y /c share\32\Windows\* server\build32\Windows\
+xcopy /e /Y /c share\32\Windows\* server\build32\
 xcopy /e /Y /c share\64\Windows\* desktop\build64\Windows\
-xcopy /e /Y /c share\64\Windows\* server\build64\Windows\
+xcopy /e /Y /c share\64\Windows\* server\build64\
 
 REM  Get Unison binary
 curl -s -O "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/unison.exe"
