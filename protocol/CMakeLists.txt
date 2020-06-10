@@ -18,7 +18,12 @@ cmake_policy(SET CMP0091 NEW)
 #set default compiler flags
 set (CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
 
-project(FractalProtocol LANGUAGES C CXX CUDA)
+project(FractalProtocol LANGUAGES C)
+
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    enable_language(CUDA)
+endif()
 
 set(META_PROJECT_NAME        "FractalProtocol")
 set(META_PROJECT_DESCRIPTION "CMake Project for the Fractal client protocol clients on mac, linux and windows
