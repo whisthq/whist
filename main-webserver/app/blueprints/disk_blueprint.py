@@ -123,7 +123,7 @@ def disk(action, **kwargs):
     elif action == "swap":
         body = json.loads(request.data)
         task = swapSpecificDisk.apply_async([body["disk_name"], body["vm_name"], kwargs["ID"]])
-        return jsonify({"ID": task_id}), 202
+        return jsonify({"ID": task.id}), 202
 
 
 @disk_bp.route("/version", methods=["POST", "GET"])
