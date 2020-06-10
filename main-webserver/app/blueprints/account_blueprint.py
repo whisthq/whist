@@ -62,15 +62,48 @@ def user_reset(**kwargs):
 def google_login(**kwargs):
     body = request.get_json()
     code = body["code"]
-    getGoogleTokens(code)
+    userObj = getGoogleTokens(code)
+
+    username, name = userObj["email"], userObj["name"]
+    access_token, refresh_token = userObj["access_token"], userObj["refresh_token"]
+
+    if lookup(username):
+        if isGoogle(username):
+            # User logging in again with Google
+            vm_status = userVMStatus(username)
+
+            return (
+                jsonify(
+                    {
+                        "verified": True,
+                        "is_user": True,
+                        "vm_status": vm_status,
+                        "access_token": access_token,
+                        "refresh_token": refresh_token
+                    }
+                ),
+                200,
+            )
+        else:
+            return (
+                jsonify({"error": "Email already used for non-Google account!"}),
+                403
+            )
+
+    sendInfo(kwargs["ID"], "Registering a new user with Google")
+    status = registerGoogleUser(username, name)
 
     return (
         jsonify(
             {
-
+                "status": status,
+                "verified": True,
+                "is_user": True,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
             }
         ),
-        200,
+        status,
     )
 
 # When people log into their account
@@ -237,6 +270,7 @@ def admin(action, **kwargs):
 
 
 # TOKEN endpoint (for access tokens)
+# TODO: work for Google
 @account_bp.route("/token/refresh", methods=["POST"])
 @jwt_refresh_token_required
 @generateID
