@@ -267,7 +267,7 @@ def updateDisk(disk_name, vm_name, location):
             if location:
                 command = text(
                     """
-                    INSERT INTO disks("disk_name", "vm_name", "location") 
+                    INSERT INTO disks("disk_name", "vm_name", "location")
                     VALUES(:disk_name, :vm_name, :location)
                     """
                 )
@@ -279,7 +279,7 @@ def updateDisk(disk_name, vm_name, location):
             else:
                 command = text(
                     """
-                    INSERT INTO disks("disk_name", "vm_name") 
+                    INSERT INTO disks("disk_name", "vm_name")
                     VALUES(:disk_name, :vm_name)
                     """
                 )
@@ -358,7 +358,7 @@ def deleteDiskFromTable(disk_name):
     """
     command = text(
         """
-        DELETE FROM disks WHERE "disk_name" = :disk_name 
+        DELETE FROM disks WHERE "disk_name" = :disk_name
         """
     )
     params = {"disk_name": disk_name}
@@ -604,20 +604,60 @@ def setUpdateAccepted(disk_name, accepted, ID=-1):
         conn.execute(command, **params)
         conn.close()
 
-def fetchAllDisks(ID=-1):
-    """Fetches all disks in database
-    """
-    command = text(
-        """
-        SELECT * FROM disks
-        """
-    )
-    params = {}
-    with engine.connect() as conn:
-        disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-        conn.close()
-        return disks
+def fetchDiskApps(disk_name, ID=-1):
+    """Fetches user's desired apps for a disk
 
+    Args:
+        disk_name (str): The name of the disk
+        ID (int, optional): The papertrail logging ID. Defaults to -1.
+
+    Returns:
+        list: representing the app names of the user's desired apps in the disk_apps sql database
+    """
+    sendInfo(ID, "Fetching apps for disk {}".format(disk_name))
+
+    if disk_name:
+        command = text(
+            """
+            SELECT "app_name" FROM disk_apps WHERE "disk_name" = :disk_name
+            """
+        )
+        params = {"disk_name": disk_name}
+        with engine.connect() as conn:
+            apps = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            conn.close()
+            return apps
+
+def insertDiskApps(disk_name, apps, ID=-1):
+    """Fetches user's desired apps
+
+    Args:
+        disk_name (str): The disk_name
+        apps (list): The list of apps
+        ID (int, optional): The papertrail logging ID. Defaults to -1.
+    """
+
+    with engine.connect() as conn:
+        try:
+            if disk_name:
+                for app_name in apps:
+                    sendInfo(ID, "Inserting app {} for disk {}".format(app_name, disk_name))
+
+                    command = text(
+                        """
+                        INSERT INTO disk_apps (disk_name, app_name) VALUES (:disk_name, :app_name)
+                        """
+                    )
+                    params = {"disk_name": disk_name, "app_name": app_name}
+
+
+                    conn.execute(command, **params)
+
+        except:
+            return 400
+
+        conn.close()
+        return 200
 
 def insertDiskSetting(disk_name, branch, using_stun):
     with engine.connect() as conn:

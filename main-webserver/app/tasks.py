@@ -196,17 +196,25 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
 
 
 @celery.task(bind=True)
-def createDiskFromImage(self, username, location, vm_size, operating_system, ID=-1):
+def createDiskFromImage(self, username, location, vm_size, operating_system, apps=[], ID=-1):
     hr = 400
     payload = None
+    attempts = 0
+    disk_name = None
 
-    while hr == 400:
+    while hr == 400 and attempts < 10:
         sendInfo(ID, "Creating {} disk for {}".format(operating_system, username))
         payload = createDiskFromImageHelper(
             username, location, vm_size, operating_system
         )
         hr = payload["status"]
-        sendInfo(ID, "Disk created with status {}".format(hr))
+        disk_name = payload["disk_name"]
+        sendInfo(ID, "Disk {} created with status {}".format(disk_name, hr))
+        attempts += 1
+
+    if hr == 200 and disk_name and len(apps) > 0:
+        sendInfo(ID, "Disk created, inserting apps {} for {}".format(apps, disk_name))
+        insertDiskApps(disk_name, apps)
 
     sendDebug(ID, payload)
     payload["location"] = location
@@ -973,7 +981,7 @@ def deallocateVM(self, vm_name, ID=-1):
     sendInfo(ID, "VM {} deallocated successfully".format(vm_name))
 
     return {"status": 200}
-
+    
 
 @celery.task(bind=True)
 def storeLogs(self, sender, connection_id, logs, vm_ip, version, ID=-1):

@@ -127,7 +127,6 @@ def account_check_verified(**kwargs):
     return jsonify({"status": 200, "verified": verified}), 200
 
 
-
 @account_bp.route("/account/verifyUser", methods=["POST"])
 @jwt_required
 @generateID

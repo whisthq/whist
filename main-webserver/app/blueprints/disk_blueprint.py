@@ -42,6 +42,7 @@ def disk(action, **kwargs):
                 body["location"],
                 body["vm_size"],
                 operating_system,
+                body["apps"],
                 kwargs["ID"],
             ]
         )
@@ -53,7 +54,12 @@ def disk(action, **kwargs):
     elif action == "attach":
         # Attaches a disk to an available vm in the region. If an available vm has a disk, swap the disks.
         body = request.get_json()
-        task = swapDiskSync.apply_async([body["disk_name"], kwargs["ID"]])
+        task = swapDiskSync.apply_async(
+            [
+                body["disk_name"],
+                kwargs["ID"]
+            ]
+        )
         return jsonify({"ID": task.id}), 202
     elif action == "add":
         body = request.get_json()

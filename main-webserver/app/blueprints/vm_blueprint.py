@@ -310,6 +310,12 @@ def vm(action, **kwargs):
             return jsonify({"dev": False, "status": 200}), 200
         except Exception as e:
             print(str(e))
+    elif action == "installApps" and request.method == "POST":
+        body = request.get_json()
+
+        status = insertDiskApps(body["disk_name"], body["apps"])
+
+        return jsonify({}), status
     elif action == "setDev" and request.method == "POST":
         vm_name = request.get_json()["vm_name"]
         dev = request.get_json()["dev"]
