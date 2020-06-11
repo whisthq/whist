@@ -674,7 +674,7 @@ def modifyDiskSetting(disk_name, settings_dict):
                 SET {} = :{}
                 WHERE
                 "disk_name" = :disk_name
-                """.format(setting_name)
+                """.format(setting_name, setting_name)
             )
 
             params = {
