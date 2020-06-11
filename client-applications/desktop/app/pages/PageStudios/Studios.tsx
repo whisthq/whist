@@ -51,7 +51,7 @@ class Studios extends Component {
     };
 
     ReturnToDashboard = () => {
-      this.props.dispatch(changeWindow("main"));
+        this.props.dispatch(changeWindow("main"));
     };
 
     LogOut = () => {
@@ -93,21 +93,21 @@ class Studios extends Component {
                     <div>
                         <Typeform />
                         <div className={styles.landingHeader}>
-                        <div
-                              className={styles.landingHeaderLeft}
-                              onClick={this.ReturnToDashboard}
-                          >
-                              <img src={Logo} width="20" height="20" />
-                              <span
-                                  className={styles.logoTitle}
-                                  style={{
-                                      color: "#111111",
-                                      fontWeight: "bold",
-                                  }}
-                              >
-                                  Fractal
-                              </span>
-                          </div>
+                            <div
+                                className={styles.landingHeaderLeft}
+                                onClick={this.ReturnToDashboard}
+                            >
+                                <img src={Logo} width="20" height="20" />
+                                <span
+                                    className={styles.logoTitle}
+                                    style={{
+                                        color: "#111111",
+                                        fontWeight: "bold",
+                                    }}
+                                >
+                                    Fractal
+                                </span>
+                            </div>
                             <div className={styles.landingHeaderRight}>
                                 <span
                                     className={styles.headerButton}

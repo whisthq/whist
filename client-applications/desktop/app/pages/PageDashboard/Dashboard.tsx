@@ -52,7 +52,7 @@ class Dashboard extends Component {
     };
 
     ReturnToDashboard = () => {
-      this.props.dispatch(changeWindow("main"));
+        this.props.dispatch(changeWindow("main"));
     };
 
     LogOut = () => {
