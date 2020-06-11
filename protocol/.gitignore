@@ -27,6 +27,11 @@ version
 desktop/log.txt
 server/log.txt
 share/
+desktop/external_utils/Darwin/mac_unison
+desktop/external_utils/Linux/linux_unison
+desktop/external_utils/Windows/unison.exe
+desktop/external_utils/Windows/ssh.exe
+desktop/loading/
 
 # CMake
 *.cmake
