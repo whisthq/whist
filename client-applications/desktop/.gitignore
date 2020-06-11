@@ -32,6 +32,7 @@ node_modules
 
 # VS Code
 .vscode
+.vs
 
 # Yarn
 yarn.lock
@@ -64,8 +65,8 @@ npm-debug.log.*
 # .env for MacOS notarizing credentials
 *.env
 
-protocol-build
 # protocol files
+protocol-build
 clipboard/
 log.txt
 connection_id.txt
