@@ -667,7 +667,7 @@ def insertDiskSetting(disk_name, branch, using_stun):
 
 def modifyDiskSetting(disk_name, settings_dict):
     with engine.connect() as conn:
-        for setting_name, setting in settings_dict:
+        for setting_name, setting in settings_dict.items():
             command = text(
                 """
                 UPDATE disk_settings
