@@ -602,3 +602,50 @@ def fetchAllDisks(ID=-1):
         disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
         conn.close()
         return disks
+
+
+def insertDiskSetting(disk_name, branch, using_stun):
+    with engine.connect() as conn:
+        command = text(
+            """
+            SELECT * FROM disk_settings WHERE "disk_name" = :disk_name
+            """
+        )
+
+        params = {
+            "disk_name": disk_name 
+        }
+
+        disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+
+        if disks:
+            command = text(
+                """
+                UPDATE disk_settings
+                SET branch = :branch, using_stun = :using_stun
+                WHERE
+                "disk_name" = :disk_name
+                """
+            )
+            params = {
+                "disk_name": disk_name,
+                "branch": branch,
+                "using_stun": using_stun 
+            }         
+            conn.execute(command, **params)
+            conn.close()
+        else:
+            command = text(
+                """
+                INSERT INTO disk_settings("disk_name", "branch", "using_stun")
+                VALUES(:disk_name, :branch, :using_stun)
+                """
+            )
+            params = {
+                "disk_name": disk_name,
+                "branch": branch,
+                "using_stun": using_stun 
+            }
+
+            conn.execute(command, **params)
+            conn.close()
