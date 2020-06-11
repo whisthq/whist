@@ -8,6 +8,7 @@ if not exist desktop\build64 mkdir desktop\build64
 xcopy /e /Y /c share\32\Windows\* desktop\build32\Windows\
 xcopy /e /Y /c share\32\Windows\* server\build32\
 xcopy /e /Y /c share\64\Windows\* desktop\build64\Windows\
+xcopy /e /Y /c share\64\Darwin\* desktop\build64\Darwin\
 xcopy /e /Y /c share\64\Windows\* server\build64\
 
 REM  Get Unison binary
