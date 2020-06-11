@@ -93,8 +93,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "-framework AppKit"
         "-framework Metal"
         "-framework QuartzCore"
-	"-framework cocoa"
-
+	    "-framework cocoa"
         objc
         iconv
         )
