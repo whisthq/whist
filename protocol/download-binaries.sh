@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get shared libs
-curl -s "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz" | tar xz
+curl -s "https://fractal-protocol-shared-libs.s3.amazonaws.com/share.tar.gz" | tar xz
 
 mkdir -p desktop/build32/Windows
 mkdir -p server/build32/Windows
@@ -13,6 +13,7 @@ cp share/32/Windows/* desktop/build32/Windows/
 cp share/32/Windows/* server/build32
 cp share/64/Windows/* desktop/build64/Windows/
 cp share/64/Windows/* server/build64
+cp share/64/Darwin/* desktop/build64/Darwin/
 
 # Get Unison binary
 if [ "$(uname)" == "Darwin" ]; then
