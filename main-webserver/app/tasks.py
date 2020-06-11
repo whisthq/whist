@@ -533,7 +533,10 @@ def syncDisks(self, ID=-1):
     for stored_disk in stored_disks:
         if not stored_disk["disk_name"] in disk_names:
             deleteDiskFromTable(stored_disk["disk_name"])
-
+            stored_disks.remove(stored_disk) 
+        else:
+            insertDiskSetting(stored_disk["disk_name"], stored_disk["branch"], False)
+            
     sendInfo(ID, "Sync disks complete")
 
     return {"status": 200}
