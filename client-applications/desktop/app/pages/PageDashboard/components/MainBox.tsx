@@ -40,7 +40,7 @@ class MainBox extends Component {
         this.state = {
             launches: 0,
             windowMode: false,
-            mbps: 50,
+            mbps: 500,
             nickname: "",
             editNickname: -1,
             diskAttaching: false,
@@ -209,6 +209,9 @@ class MainBox extends Component {
         const storage = require("electron-json-storage");
 
         this.setState({ mbps: parseFloat(mbps.toFixed(2)) });
+        if(mbps === 50) { // set to unlimited, aka 500, is a user chooses Unlimited
+          mbps = 500
+        }
         storage.set("settings", { mbps: mbps });
     };
 
@@ -1135,7 +1138,7 @@ class MainBox extends Component {
                                             }}
                                         />
                                     </div>
-                                    <br />
+                                    <br/>
                                     <div
                                         style={{
                                             fontSize: 11,
@@ -1144,7 +1147,17 @@ class MainBox extends Component {
                                             marginTop: 5,
                                         }}
                                     >
-                                        {this.state.mbps} Mbps
+                                        {
+                                        this.state.mbps < 50
+                                        ?
+                                        <div>
+                                          {this.state.mbps}{" "}mbps
+                                        </div>
+                                        :
+                                        <div>
+                                          Unlimited
+                                        </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
