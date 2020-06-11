@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get shared libs
-curl -s "https://fractal-protocol-shared-libs.s3.amazonaws.com/share.tar.gz" | tar xz
+curl -s "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz" | tar xz
 
 mkdir -p desktop/build32/Windows
 mkdir -p server/build32/Windows

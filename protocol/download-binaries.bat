@@ -1,5 +1,5 @@
 REM  Get shared libs
-curl -s "https://fractal-protocol-shared-libs.s3.amazonaws.com/share.tar.gz" | tar xzf -
+curl -s "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz" | tar xz
 if not exist server\build32 mkdir server\build32
 if not exist server\build64 mkdir server\build64
 if not exist desktop\build32 mkdir desktop\build32
