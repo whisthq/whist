@@ -671,14 +671,15 @@ def modifyDiskSetting(disk_name, settings_dict):
             command = text(
                 """
                 UPDATE disk_settings
-                SET {} = :{}
+                SET '{setting_name}' = :'{setting_name}'
                 WHERE
                 "disk_name" = :disk_name
-                """.format(setting_name, setting_name)
+                """.format(setting_name = setting_name)
             )
 
             params = {
-                setting_name: setting 
+                setting_name: setting,
+                "disk_name": disk_name
             }
 
             conn.execute(command, **params)
