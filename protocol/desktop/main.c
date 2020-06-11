@@ -224,7 +224,7 @@ void update() {
 // FractalClientMessage packets are needed, then this will have to be
 // implemented)
 int SendFmsg(FractalClientMessage* fmsg) {
-    if (fmsg->type == CMESSAGE_CLIPBOARD) {
+    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_TIME) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg,
                              GetFmsgSize(fmsg));
     } else {
@@ -588,6 +588,7 @@ int parseArgs(int argc, char *argv[]) {
 }
 
 int main(int argc, char* argv[]) {
+
 #ifndef _WIN32
     runcmd("chmod 600 sshkey", NULL);
     // files can't be written to a macos app bundle, so they need to be
@@ -816,6 +817,11 @@ int main(int argc, char* argv[]) {
 
         SDL_Event msg;
         FractalClientMessage fmsg = {0};
+
+        // send a TCP packet with local UTC time offset.
+        fmsg.type = MESSAGE_TIME;
+        fmsg.UTC_Offset = GetUTCOffset();
+        SendFmsg(&fmsg);
 
         clock ack_timer;
         StartTimer(&ack_timer);

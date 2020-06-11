@@ -1036,6 +1036,9 @@ int main() {
                     // Client requested to exit, it's time to disconnect
                     LOG_INFO("Client Quit");
                     connected = false;
+                } else if (fmsg->type == MESSAGE_TIME){
+                    LOG_INFO("Recieving a message time packet, client has offset: %d", fmsg->UTC_Offset );
+                    printf("Client UTC offset %d", fmsg->UTC_Offset);
                 }
             }
         }

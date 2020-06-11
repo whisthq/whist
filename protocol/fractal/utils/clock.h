@@ -73,4 +73,10 @@ clock CreateClock(int timeout_ms);
  */
 char* CurrentTimeStr();
 
+/**
+ * @brief                          Returns the current UTC offset as a string
+ * @return                         int of current utc offset
+ */
+int GetUTCOffset();
+
 #endif

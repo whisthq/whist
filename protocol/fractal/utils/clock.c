@@ -2,6 +2,12 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+#if _WIN32
+#    define timegm _mkgmtime
+#endif
 
 #if defined(_WIN32)
 LARGE_INTEGER frequency;
@@ -81,3 +87,11 @@ char* CurrentTimeStr() {
 
     return buffer;
 }
+
+int GetUTCOffset(){
+    time_t t = time(NULL);
+    struct tm lt = {0};
+    localtime_r(&t, &lt);
+
+    return lt.tm_gmtoff / (60 * 60);
+    }
