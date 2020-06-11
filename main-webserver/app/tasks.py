@@ -9,7 +9,7 @@ from .helpers.s3 import *
 
 
 @celery.task(bind=True)
-def createVM(self, vm_size, location, operating_system, ID=-1):
+def createVM(self, vm_size, location, operating_system, admin_password = None, ID=-1):
     """Creates a windows vm of size vm_size in Azure region location
 
     Args:
@@ -26,6 +26,15 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         ),
     )
 
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "Creating VM of size {}, location {}, operating system {}".format(
+                vm_size, location, operating_system
+            )
+        },
+    )
+
     _, compute_client, _ = createClients()
     vmName = genVMName()
     nic = createNic(vmName, location, 0)
@@ -33,15 +42,40 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         sendError(ID, "Nic does not exist, aborting")
         return
     vmParameters = createVMParameters(
-        vmName, nic.id, vm_size, location, operating_system
+        vmName, nic.id, vm_size, location, operating_system, 
+        admin_password = admin_password
     )
+
     async_vm_creation = compute_client.virtual_machines.create_or_update(
         os.environ["VM_GROUP"], vmParameters["vm_name"], vmParameters["params"]
     )
+
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "Waiting on async VM creation"
+        },
+    )
+
     sendDebug(ID, "Waiting on async_vm_creation")
     async_vm_creation.wait()
 
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "VM {} created".format(vmParameters["vm_name"])
+        },
+    )
+
+
     time.sleep(10)
+
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "VM {} starting".format(vmParameters["vm_name"])
+        },
+    )
 
     async_vm_start = compute_client.virtual_machines.start(
         os.environ["VM_GROUP"], vmParameters["vm_name"]
@@ -49,13 +83,27 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     sendDebug(ID, "Waiting on async_vm_start")
     async_vm_start.wait()
 
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "VM {} started".format(vmParameters["vm_name"])
+        },
+    )
+
     time.sleep(30)
 
     sendInfo(ID, "The VM created is called {}".format(vmParameters["vm_name"]))
 
-    fractalVMStart(vmParameters["vm_name"], needs_winlogon=False)
+    fractalVMStart(vmParameters["vm_name"], needs_winlogon=False, s = self)
 
-    time.sleep(30)
+    lockVMAndUpdate(
+        vm_name=vmParameters["vm_name"],
+        state="RUNNING_AVAILABLE",
+        lock=True,
+        temporary_lock=None,
+        change_last_updated=False,
+        verbose=False
+    )
 
     extension_parameters = (
         {
@@ -75,6 +123,14 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         }
     )
 
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "VM {} installing NVIDIA extension".format(vmParameters["vm_name"])
+        },
+    )
+
+
     async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(
         os.environ["VM_GROUP"],
         vmParameters["vm_name"],
@@ -85,6 +141,13 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     sendDebug(ID, "Waiting on async_vm_extension")
     async_vm_extension.wait()
 
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "VM {} successfully installed NVIDIA extension".format(vmParameters["vm_name"])
+        },
+    )
+
     vm = getVM(vmParameters["vm_name"])
     vm_ip = getIP(vm)
     updateVMIP(vmParameters["vm_name"], vm_ip)
@@ -93,6 +156,15 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     updateVMOS(vmParameters["vm_name"], operating_system)
 
     sendInfo(ID, "SUCCESS: VM {} created and updated".format(vmName))
+
+    lockVMAndUpdate(
+        vm_name=vmParameters["vm_name"],
+        state="RUNNING_AVAILABLE",
+        lock=False,
+        temporary_lock=0,
+        change_last_updated=False,
+        verbose=False
+    )
 
     return fetchVMCredentials(vmParameters["vm_name"])
 
@@ -469,6 +541,9 @@ def syncDisks(self, ID=-1):
     for stored_disk in stored_disks:
         if not stored_disk["disk_name"] in disk_names:
             deleteDiskFromTable(stored_disk["disk_name"])
+            stored_disks.remove(stored_disk) 
+        # else:
+        #     insertDiskSetting(stored_disk["disk_name"], stored_disk["branch"], False)
 
     sendInfo(ID, "Sync disks complete")
 

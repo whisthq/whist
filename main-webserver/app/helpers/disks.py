@@ -35,6 +35,21 @@ def createDiskEntry(
         }
 
         conn.execute(command, **params)
+
+        command = text(
+            """
+            INSERT INTO disk_settings("disk_name", "branch", "using_stun")
+            VALUES(:disk_name, :branch, :using_stun)
+            """
+        )
+
+        params = {
+            "disk_name": disk_name,
+            "branch": "master",
+            "using_stun": False 
+        }
+
+        conn.execute(command, **params)    
         conn.close()
 
 
@@ -108,10 +123,7 @@ def fetchUserDisks(username, show_all=False, main=True, ID=-1):
                 disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
                 conn.close()
 
-                if disks_info:
-                    sendInfo(ID, "Disk names fetched and Postgres connection closed")
-                else:
-                    sendWarning(ID, "No disk found for {}. Postgres connection closed")
+                if not disks_info:
                     return []
 
                 if main:
@@ -646,3 +658,89 @@ def insertDiskApps(disk_name, apps, ID=-1):
 
         conn.close()
         return 200
+
+def insertDiskSetting(disk_name, branch, using_stun):
+    with engine.connect() as conn:
+        command = text(
+            """
+            SELECT * FROM disk_settings WHERE "disk_name" = :disk_name
+            """
+        )
+
+        params = {
+            "disk_name": disk_name 
+        }
+
+        disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+
+        if disks:
+            command = text(
+                """
+                UPDATE disk_settings
+                SET branch = :branch, using_stun = :using_stun
+                WHERE
+                "disk_name" = :disk_name
+                """
+            )
+            params = {
+                "disk_name": disk_name,
+                "branch": branch,
+                "using_stun": using_stun 
+            }         
+            conn.execute(command, **params)
+            conn.close()
+        else:
+            command = text(
+                """
+                INSERT INTO disk_settings("disk_name", "branch", "using_stun")
+                VALUES(:disk_name, :branch, :using_stun)
+                """
+            )
+            params = {
+                "disk_name": disk_name,
+                "branch": branch,
+                "using_stun": using_stun 
+            }
+
+            conn.execute(command, **params)
+            conn.close()
+
+def modifyDiskSetting(disk_name, settings_dict):
+    with engine.connect() as conn:
+        for setting_name, setting in settings_dict.items():
+            command = text(
+                """
+                UPDATE disk_settings
+                SET {setting_name} = :{setting_name}
+                WHERE
+                "disk_name" = :disk_name
+                """.format(setting_name = setting_name)
+            )
+
+            params = {
+                setting_name: setting,
+                "disk_name": disk_name
+            }
+
+            conn.execute(command, **params)
+        
+        conn.close()
+
+def fetchDiskSetting(disk_name, setting_name):
+    with engine.connect() as conn:
+        command = text(
+            """
+            SELECT * FROM disk_settings WHERE "disk_name" = :disk_name
+            """
+        )
+
+        params = {
+            "disk_name": disk_name 
+        }
+
+        disk_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+
+        if disk_info:
+            return disk_info[setting_name]
+        else:
+            return None

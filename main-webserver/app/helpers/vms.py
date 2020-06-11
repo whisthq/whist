@@ -5,7 +5,7 @@ from .general import *
 from .disks import *
 
 
-def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Windows"):
+def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Windows", admin_password = None):
     """Adds a vm entry to the SQL database
 
     Parameters:
@@ -14,6 +14,7 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
     vm_size (str): The type of vm in terms of specs(default is NV6)
     location (str): The Azure region of the vm
     operating_system (str): The operating system of the vm (default is 'Windows')
+    admin_password (str): The admin password (default is set in .env)
 
     Returns:
     dict: Parameters that will be used in Azure sdk
@@ -56,17 +57,19 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
             conn.execute(command, **params)
             conn.close()
 
+            admin_password = os.getenv("VM_PASSWORD") if not admin_password else admin_password 
+
             os_profile = (
                 {
                     "computer_name": vmName,
                     "admin_username": os.getenv("VM_GROUP"),
-                    "admin_password": os.getenv("VM_PASSWORD"),
+                    "admin_password": admin_password,
                 }
                 if operating_system == "Linux"
                 else {
                     "computer_name": vmName,
                     "admin_username": os.getenv("VM_GROUP"),
-                    "admin_password": os.getenv("VM_PASSWORD"),
+                    "admin_password": admin_password,
                 }
             )
 
@@ -1351,6 +1354,8 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
 
                 sendInfo(ID, "VM {} started successfully".format(vm_name))
 
+                return 1
+
             if needs_restart:
                 if s:
                     s.update_state(
@@ -1392,6 +1397,10 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
 
                 sendInfo(ID, "VM {} restarted successfully".format(vm_name))
 
+                return 1
+
+            return 1
+
         def checkFirstTime(disk_name):
             session = Session()
             command = text(
@@ -1429,7 +1438,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
         if s:
             s.update_state(
                 state="PENDING",
-                meta={"msg": "Cloud PC currently executing boot request."},
+                meta={"msg": "Cloud PC started executing boot request."},
             )
 
         disk_name = fetchVMCredentials(vm_name)["disk_name"]
@@ -1477,7 +1486,16 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
             if i == 1:
                 needs_restart = True
 
+            if s:
+                s.update_state(
+                    state="PENDING",
+                    meta={
+                        "msg": "Cloud PC still executing boot request."
+                    },
+                )
+
             boot_if_necessary(vm_name, needs_restart, ID)
+
             lockVMAndUpdate(
                 vm_name,
                 "RUNNING_AVAILABLE",
@@ -1496,16 +1514,31 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                     },
                 )
 
-            winlogon = waitForWinlogon(vm_name, ID)
-            while winlogon < 0:
-                boot_if_necessary(vm_name, True, ID)
+            if needs_winlogon:
                 winlogon = waitForWinlogon(vm_name, ID)
+                while winlogon < 0:
+                    boot_if_necessary(vm_name, True, ID)
+                    if s:
+                        s.update_state(
+                            state="PENDING", meta={"msg": "Logging you into your cloud PC. This should take less than two minutes."}
+                        )
+                    winlogon = waitForWinlogon(vm_name, ID)
 
-            if s:
-                s.update_state(
-                    state="PENDING",
-                    meta={"msg": "Logged into your cloud PC successfully."},
-                )
+                if s:
+                    s.update_state(
+                        state="PENDING",
+                        meta={"msg": "Logged into your cloud PC successfully."},
+                    )
+
+            lockVMAndUpdate(
+                vm_name,
+                "RUNNING_AVAILABLE",
+                False,
+                temporary_lock=2,
+                change_last_updated=True,
+                verbose=False,
+                ID=ID,
+            )
 
             if i == 1:
                 changeFirstTime(disk_name)

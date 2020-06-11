@@ -49,11 +49,14 @@ def vm(action, **kwargs):
         vm_size = body["vm_size"]
         location = body["location"]
         operating_system = "Windows"
+        admin_password = None
+        if "admin_password" in body.keys():
+            admin_password = body["admin_password"]
 
         if "operating_system" in body.keys():
             operating_system = body["operating_system"]
 
-        task = createVM.apply_async([vm_size, location, operating_system, kwargs["ID"]])
+        task = createVM.apply_async([vm_size, location, operating_system, admin_password, kwargs["ID"]])
         if not task:
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202
@@ -165,7 +168,12 @@ def vm(action, **kwargs):
             vm_state = vm_info["state"] if vm_info["state"] else ""
             intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
             username = vm_info["username"]
-            is_user = not isAdmin(username)
+
+            disks = fetchUserDisks(vm_info["username"], ID = kwargs["ID"])
+            is_user = True
+            if disks:
+                disk = disks[0]
+                is_user = not disk["branch"] == "dev" and not vm_info["dev"]
 
             # Update the user's login status if it has changed
             if available and vm_state == "RUNNING_UNAVAILABLE":
@@ -173,7 +181,7 @@ def vm(action, **kwargs):
                 sendInfo(kwargs["ID"], username + " logged off")
                 customer = fetchCustomer(username)
                 if not customer:
-                    sendCritical(
+                    sendWarning(
                         kwargs["ID"],
                         "{} logged on/off but is not a registered customer".format(
                             username
@@ -284,10 +292,21 @@ def vm(action, **kwargs):
                 disk_name = vm_info["disk_name"]
                 disk_info = fetchUserDisks(vm_info["username"])
 
+                branch = None
                 if disk_info:
                     branch = disk_info[0]["branch"]
 
-                return jsonify({"dev": is_dev, "branch": branch, "status": 200}), 200
+                using_stun = fetchDiskSetting(
+                    disk_name,
+                    "using_stun"
+                )
+
+                return jsonify({
+                    "dev": is_dev, 
+                    "branch": branch, 
+                    "status": 200,
+                    "using_stun": using_stun if using_stun else False
+                }), 200
             return jsonify({"dev": False, "status": 200}), 200
         except Exception as e:
             print(str(e))
@@ -297,6 +316,13 @@ def vm(action, **kwargs):
         status = insertDiskApps(body["disk_name"], body["apps"])
 
         return jsonify({}), status
+    elif action == "setDev" and request.method == "POST":
+        vm_name = request.get_json()["vm_name"]
+        dev = request.get_json()["dev"]
+        setDev(vm_name, dev)
+        sendInfo(kwargs["ID"], "Set dev state for vm {} to {}".format(vm_name, dev))
+        return jsonify({"status": 200}), 200
+
 
     return jsonify({}), 400
 
@@ -322,7 +348,6 @@ def tracker(action, **kwargs):
 
 
 # INFO endpoint
-
 
 @vm_bp.route("/info/<action>", methods=["GET", "POST"])
 @jwt_required
@@ -351,7 +376,7 @@ def info(action, **kwargs):
 @generateID
 @logRequestInfo
 def logs(**kwargs):
-    body = request.get_json()
+    body = json.loads(request.data)
 
     vm_ip = None
     if "vm_ip" in body:

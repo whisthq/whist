@@ -11,29 +11,31 @@ def genHaiku(n):
         arr: An array of haikus
     """
     haikunator = Haikunator()
-    haikus = [haikunator.haikunate(
-        delimiter='') + str(np.random.randint(0, 10000)) for _ in range(0, n)]
-    haikus = [haiku[0: np.min([15, len(haiku)])] for haiku in haikus]
+    haikus = [
+        haikunator.haikunate(delimiter="") + str(np.random.randint(0, 10000))
+        for _ in range(0, n)
+    ]
+    haikus = [haiku[0 : np.min([15, len(haiku)])] for haiku in haikus]
     return haikus
 
 
 def generatePassword():
     upperCase = string.ascii_uppercase
     lowerCase = string.ascii_lowercase
-    specialChars = '!@#$%^*'
-    numbers = '1234567890'
-    c1 = ''.join([random.choice(upperCase) for _ in range(0, 3)])
-    c2 = ''.join([random.choice(lowerCase) for _ in range(0, 9)]) + c1
-    c3 = ''.join([random.choice(lowerCase) for _ in range(0, 5)]) + c2
-    c4 = ''.join([random.choice(numbers) for _ in range(0, 4)]) + c3
-    return ''.join(random.sample(c4, len(c4)))
+    specialChars = "!@#$%^*"
+    numbers = "1234567890"
+    c1 = "".join([random.choice(upperCase) for _ in range(0, 3)])
+    c2 = "".join([random.choice(lowerCase) for _ in range(0, 9)]) + c1
+    c3 = "".join([random.choice(lowerCase) for _ in range(0, 5)]) + c2
+    c4 = "".join([random.choice(numbers) for _ in range(0, 4)]) + c3
+    return "".join(random.sample(c4, len(c4)))
 
 
 def generateCode():
     upperCase = string.ascii_uppercase
-    numbers = '1234567890'
-    c1 = ''.join([random.choice(numbers) for _ in range(0, 3)])
-    c2 = ''.join([random.choice(upperCase) for _ in range(0, 3)]) + '-' + c1
+    numbers = "1234567890"
+    c1 = "".join([random.choice(numbers) for _ in range(0, 3)])
+    c2 = "".join([random.choice(upperCase) for _ in range(0, 3)]) + "-" + c1
     return c2
 
 
@@ -42,7 +44,7 @@ def unixToDate(utc):
 
 
 def dateToString(time):
-    return time.strftime('%m/%d/%Y, %H:%M')
+    return time.strftime("%m/%d/%Y, %H:%M")
 
 
 def getCurrentTime():
@@ -67,16 +69,18 @@ def shiftUnixByWeek(utc, num_weeks):
     date = unixToDate(utc)
     return round(dateToUnix(date + relativedelta(weeks=num_weeks)))
 
+
 def shiftUnixByMinutes(utc, num_minutes):
     date = unixToDate(utc)
     return round(dateToUnix(date + relativedelta(minutes=num_minutes)))
 
+
 def generateToken(user):
-    token = jwt.encode({'email': user}, os.getenv('SECRET_KEY'))
+    token = jwt.encode({"email": user}, os.getenv("SECRET_KEY"))
     if len(token) > 15:
         token = token[-15:]
     else:
-        token = token[-1 * len(pwd_token):]
+        token = token[-1 * len(pwd_token) :]
 
     return token
 
@@ -96,16 +100,6 @@ def getAccessTokens(user):
     access_token = create_access_token(identity=user, expires_delta=False)
     refresh_token = create_refresh_token(identity=user, expires_delta=False)
     return (access_token, refresh_token)
-
-
-def serverLog(logMsg):
-    if (logMsg.startswith("FRACTAL ERROR")):
-        headers = {'content-type': 'application/json'}
-        url = "https://fractal-mail-server.herokuapp.com/logError"
-        data = {'error': logMsg}
-        requests.post(url=url, data=json.dumps(data), headers=headers)
-    else:
-        print(logMsg)
 
 
 def yieldNumber():
