@@ -51,6 +51,10 @@ class Dashboard extends Component {
         this.props.dispatch(changeWindow("settings"));
     };
 
+    ReturnToDashboard = () => {
+      this.props.dispatch(changeWindow("main"));
+    };
+
     LogOut = () => {
         this.props.dispatch(logout());
         const storage = require("electron-json-storage");
@@ -98,10 +102,6 @@ class Dashboard extends Component {
             }
         }
     }
-
-    ReturnToDashboard = () => {
-        history.push("/dashboard");
-    };
 
     render() {
         const barHeight = 5;
@@ -168,6 +168,12 @@ class Dashboard extends Component {
                                     </span>
                                 </div>
                                 <div className={styles.landingHeaderRight}>
+                                    <span
+                                        className={styles.headerButton}
+                                        onClick={this.ReturnToDashboard}
+                                    >
+                                        Home
+                                    </span>
                                     <span
                                         className={styles.headerButton}
                                         onClick={this.OpenFeedback}
