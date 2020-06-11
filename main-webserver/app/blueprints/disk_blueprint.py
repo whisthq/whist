@@ -124,6 +124,12 @@ def disk(action, **kwargs):
         body = json.loads(request.data)
         task = swapSpecificDisk.apply_async([body["disk_name"], body["vm_name"], kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
+    elif action == "usingStun":
+        body = json.loads(request.data)
+        modifyDiskSetting(body["disk_name"], {
+            "using_stun": body["using_stun"]
+        })
+        return jsonify({"status": 200}), 200
 
 
 @disk_bp.route("/version", methods=["POST", "GET"])

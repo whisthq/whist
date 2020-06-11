@@ -296,7 +296,17 @@ def vm(action, **kwargs):
                 if disk_info:
                     branch = disk_info[0]["branch"]
 
-                return jsonify({"dev": is_dev, "branch": branch, "status": 200}), 200
+                using_stun = fetchDiskSetting(
+                    disk_name,
+                    "using_stun"
+                )
+
+                return jsonify({
+                    "dev": is_dev, 
+                    "branch": branch, 
+                    "status": 200,
+                    "using_stun": using_stun
+                }), 200
             return jsonify({"dev": False, "status": 200}), 200
         except Exception as e:
             print(str(e))
@@ -306,6 +316,8 @@ def vm(action, **kwargs):
         setDev(vm_name, dev)
         sendInfo(kwargs["ID"], "Set dev state for vm {} to {}".format(vm_name, dev))
         return jsonify({"status": 200}), 200
+
+
     return jsonify({}), 400
 
 

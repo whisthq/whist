@@ -35,6 +35,21 @@ def createDiskEntry(
         }
 
         conn.execute(command, **params)
+
+        command = text(
+            """
+            INSERT INTO disk_settings("disk_name", "branch", "using_stun")
+            VALUES(:disk_name, :branch, :using_stun)
+            """
+        )
+
+        params = {
+            "disk_name": disk_name,
+            "branch": "master",
+            "using_stun": False 
+        }
+
+        conn.execute(command, **params)    
         conn.close()
 
 
@@ -649,3 +664,40 @@ def insertDiskSetting(disk_name, branch, using_stun):
 
             conn.execute(command, **params)
             conn.close()
+
+def modifyDiskSetting(disk_name, settings_dict):
+    with engine.connect() as conn:
+        for setting_name, setting in settings_dict:
+            command = text(
+                """
+                UPDATE disk_settings
+                SET {} = :{}
+                WHERE
+                "disk_name" = :disk_name
+                """.format(setting_name)
+            )
+
+            params = {
+                setting_name: setting 
+            }
+
+            conn.execute(command, **params)
+        
+        conn.close()
+
+def fetchDiskSetting(disk_name, setting_name):
+    with engine.connect() as conn:
+        command = text(
+            """
+            SELECT * FROM disk_settings WHERE "disk_name" = :disk_name
+            """
+        )
+
+        params = {
+            "disk_name": disk_name 
+        }
+
+        disk_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+
+        if disk_info:
+            return disk_info[setting_name]
