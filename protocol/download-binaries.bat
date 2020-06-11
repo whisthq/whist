@@ -1,5 +1,5 @@
 REM  Get shared libs
-curl -s "https://fractal-protocol-shared-libs.s3.amazonaws.com/shared-libs.tar.gz" | tar xz
+curl -s "https://fractal-protocol-shared-libs.s3.amazonaws.com/share.tar.gz" | tar xz
 if not exist server\build32 mkdir server\build32
 if not exist server\build64 mkdir server\build64
 if not exist desktop\build32 mkdir desktop\build32
@@ -22,6 +22,6 @@ if not exist desktop\external_utils\Windows mkdir desktop\external_utils\Windows
 move ssh.exe desktop\external_utils\Windows
 
 REM  Get loading bitmaps
-curl -s "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/loading.tar.gz" | tar xzf -
+curl -s "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/loading.tar.gz" | tar xz
 if exist desktop\loading rmdir /s /q desktop\loading
 move loading desktop
