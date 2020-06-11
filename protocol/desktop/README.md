@@ -22,7 +22,7 @@ MacOS/Linux:
 ./desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
 ```
 
-Alternatively, if you want to run the executable directly, in the `/desktop/build64` directory or `/desktop/build32`, run:
+Alternatively, if you want to run the executable directly, in the `/desktop/build64/[Windows/Darwin/Linux]` directory or `/desktop/build32/Windows`, run:
 
 ```
 Windows:

@@ -70,7 +70,11 @@ int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 
 SDL_mutex* packet_mutex;
 
+#define MAX_SPECTATOR_CONNECTIONS 100
+
+int num_spectator_connections;
 SocketContext PacketSendContext = {0};
+SocketContext SpectatorSendContext[MAX_SPECTATOR_CONNECTIONS];
 
 volatile bool wants_iframe;
 volatile bool update_encoder;
@@ -186,6 +190,10 @@ int32_t SendVideo(void* opaque) {
 #endif
 
             update_encoder = true;
+            if (encoder) {
+                MultithreadedDestroyEncoder(encoder);
+                encoder = NULL;
+            }
         }
 
         // Update encoder with new parameters
@@ -428,6 +436,19 @@ int32_t SendVideo(void* opaque) {
                         0) {
                         LOG_WARNING("Could not send video frame ID %d", id);
                     } else {
+                        for( int i = 0; i < num_spectator_connections; i++ )
+                        {
+                            if( SendUDPPacket(
+                                &SpectatorSendContext[i],
+                                PACKET_VIDEO, (uint8_t*)frame,
+                                frame_size, id, STARTING_BURST_BITRATE,
+                                NULL,
+                                NULL ) <
+                                0 )
+                            {
+                                LOG_WARNING( "Could not send video frame ID %d to spectator %d", id, i );
+                            }
+                        }
                         // Only increment ID if the send succeeded
                         id++;
                     }
@@ -463,11 +484,11 @@ int32_t SendAudio(void* opaque) {
     int id = 1;
 
     audio_device_t* audio_device = CreateAudioDevice();
-    LOG_INFO("Created audio device!");
     if (!audio_device) {
         LOG_ERROR("Failed to create audio device...");
         return -1;
     }
+    LOG_INFO("Created audio device!");
     StartAudioDevice(audio_device);
     audio_encoder_t* audio_encoder =
         create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
@@ -603,6 +624,45 @@ void update() {
 
 #include <time.h>
 
+int MultithreadedWaitForSpectator( void* opaque ) {
+    opaque;
+    while (connected) {
+        SocketContext socket;
+        if (CreateUDPContext(&socket,
+                             NULL, PORT_SPECTATOR,
+                             1, 5000,
+                             USING_STUN) < 0) {
+            LOG_INFO("Waiting for spectator");
+            continue;
+        }
+
+        FractalServerMessage fmsg;
+        fmsg.type = MESSAGE_INIT;
+        fmsg.spectator_port = PORT_SPECTATOR + 1 + num_spectator_connections;
+
+        if (SendUDPPacket(&socket, PACKET_MESSAGE,
+                          (uint8_t*)&fmsg,
+                          sizeof(FractalServerMessage), 1, -1, NULL, NULL) < 0) {
+            LOG_ERROR("Could not send spectator init message!");
+            return -1;
+        }
+
+        closesocket( socket.s );
+
+        LOG_INFO("SPECTATOR #%d HANDSHAKE!", num_spectator_connections);
+        if (CreateUDPContext(&SpectatorSendContext[num_spectator_connections],
+                             NULL, PORT_SPECTATOR + 1 + num_spectator_connections,
+                             1, 5000, USING_STUN) < 0) {
+            LOG_INFO("Waiting for spectator");
+            continue;
+        }
+        LOG_INFO("SPECTATOR #%d CONNECTED!", num_spectator_connections);
+
+        num_spectator_connections++;
+    }
+    return 0;
+}
+
 int main() {
     // int d = 0;
     // int e = 0;
@@ -650,6 +710,7 @@ int main() {
         srand(rand() * (unsigned int)time(NULL) + rand());
         connection_id = rand();
 
+        num_spectator_connections = 0;
         SocketContext PacketReceiveContext = {0};
         SocketContext PacketTCPContext = {0};
 
@@ -730,6 +791,10 @@ int main() {
         SDL_Thread* send_audio =
             SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
         LOG_INFO("Sending video and audio...");
+        SDL_Thread* collect_spectators =
+            SDL_CreateThread(MultithreadedWaitForSpectator,
+                             "MultithreadedWaitForSpectator", NULL);
+        collect_spectators;
 
         input_device_t* input_device = CreateInputDevice();
         if (!input_device) {
@@ -762,6 +827,9 @@ int main() {
                 Ack(&PacketTCPContext);
                 Ack(&PacketSendContext);
                 Ack(&PacketReceiveContext);
+                for (int i = 0; i < num_spectator_connections; i++) {
+                    Ack(&SpectatorSendContext[i]);
+                }
 #endif
                 updateStatus(true);
                 StartTimer(&ack_timer);
@@ -831,6 +899,22 @@ int main() {
 
                 FractalPacket* decrypted_packet =
                     ReadUDPPacket(&PacketReceiveContext);
+
+                for (int i = 0;
+                     i < num_spectator_connections && !decrypted_packet; i++) {
+                    LOG_INFO("READING FROM %d", i);
+                    SDL_Delay(50);
+                    FractalPacket* spectator_decrypted_packet =
+                        ReadUDPPacket(&SpectatorSendContext[i]);
+                    if (spectator_decrypted_packet) {
+                        FractalClientMessage* fcmsg =
+                            (void*)spectator_decrypted_packet->data;
+                        if (fcmsg->type == MESSAGE_IFRAME_REQUEST) {
+                            LOG_INFO("Iframe requested from spectator!");
+                            decrypted_packet = spectator_decrypted_packet;
+                        }
+                    }
+                }
 
                 if (decrypted_packet) {
                     // Copy data into an fmsg
