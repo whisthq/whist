@@ -347,6 +347,7 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
         LOG_WARNING("Context is NULL");
         return NULL;
     }
+
     // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
     int encrypted_len =
@@ -363,6 +364,11 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
         // If there was an issue decrypting it, post warning and then
         // ignore the problem
         if (decrypted_len < 0) {
+            if (encrypted_len == sizeof(stun_entry_t)) {
+                stun_entry_t* e;
+                e = (void*)&encrypted_packet;
+                LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port), ntohs(e->private_port));
+            }
             LOG_WARNING("Failed to decrypt packet");
             return NULL;
         }

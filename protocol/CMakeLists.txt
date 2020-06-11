@@ -78,25 +78,24 @@ else()
     set(arch 32)
 endif()
 
-#download libs from AWS S3
+#download unison binary from AWS S3
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    MESSAGE(STATUS "Downloading libs from AWS S3")
-    execute_process(COMMAND CMD /C "get-shared-libs.bat"
+    MESSAGE(STATUS "Downloading binaries from AWS S3")
+    execute_process(COMMAND CMD /C "download-binaries.bat"
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE dl_libs_res)
-    if (NOT ${dl_libs_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to download libs from AWS S3: exitcode: ${dl_libs_res}")
+                    RESULT_VARIABLE download_res)
+    if (NOT ${download_res} EQUAL "0")
+        message(FATAL_ERROR "Failed to binaries from AWS S3: exitcode: ${download_res}")
     endif()
 else()
-    MESSAGE(STATUS "Downloading libs from AWS S3")
-    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get-shared-libs.sh
+    MESSAGE(STATUS "Downloading binaries from AWS S3")
+    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE dl_libs_res)
-    if (NOT ${dl_libs_res} EQUAL "0")
-        message(FATAL_ERROR "Failed to download libs from AWS S3: exitcode: ${dl_libs_res}")
+                    RESULT_VARIABLE download)
+    if (NOT ${download} EQUAL "0")
+        message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${download}")
     endif()
 endif()
-
 
 
 # ffmpeg: using our provided libs on mac and windows and system on linux.
@@ -161,6 +160,17 @@ if(NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
+find_library(STATIC_SDL_IMAGE NAMES SDL2_image PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL_image/${CMAKE_SYSTEM_NAME}"
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+if(NOT STATIC_SDL_IMAGE)
+    message(FATAL_ERROR "Library STATIC_SDL_IMAGE was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL_image/${CMAKE_SYSTEM_NAME}")
+endif()
+
 find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT PATH
@@ -197,6 +207,7 @@ endif()
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
+include_directories(include/SDL_image)
 
 
 

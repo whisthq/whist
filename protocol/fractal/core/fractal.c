@@ -162,6 +162,7 @@ char* get_ip() {
 static char* branch = NULL;
 static bool is_dev;
 static bool already_obtained_vm_type = false;
+static clock last_vm_info_check_time;
 
 char* get_branch() {
     is_dev_vm();
@@ -169,7 +170,7 @@ char* get_branch() {
 }
 
 bool is_dev_vm() {
-    if (already_obtained_vm_type) {
+    if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 5.0) {
         return is_dev;
     }
 
@@ -193,6 +194,7 @@ bool is_dev_vm() {
     if (!parse_json(json_str, &json)) {
         LOG_WARNING("Failed to parse JSON from /vm/isDev");
         already_obtained_vm_type = true;
+        StartTimer(&last_vm_info_check_time);
         is_dev = true;
         return is_dev;
     }
@@ -213,10 +215,15 @@ bool is_dev_vm() {
         free_json(json);
 
         already_obtained_vm_type = true;
+        StartTimer(&last_vm_info_check_time);
         return is_dev;
     } else {
+        LOG_WARNING("COULD NOT GET JSON FROM: %s", json_str);
         free_json(json);
-        return true;
+        already_obtained_vm_type = true;
+        StartTimer(&last_vm_info_check_time);
+        is_dev = true;
+        return is_dev;
     }
 }
 
