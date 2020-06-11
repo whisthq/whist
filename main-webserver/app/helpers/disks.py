@@ -702,3 +702,5 @@ def fetchDiskSetting(disk_name, setting_name):
 
         if disk_info:
             return disk_info[setting_name]
+        else:
+            return None

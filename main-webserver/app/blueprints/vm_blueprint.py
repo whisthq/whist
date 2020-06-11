@@ -305,7 +305,7 @@ def vm(action, **kwargs):
                     "dev": is_dev, 
                     "branch": branch, 
                     "status": 200,
-                    "using_stun": using_stun
+                    "using_stun": using_stun if using_stun else False
                 }), 200
             return jsonify({"dev": False, "status": 200}), 200
         except Exception as e:
