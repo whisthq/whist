@@ -1423,6 +1423,8 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
             setAutoLogin(disk_name, vm_name, ID)
             print("Auto-login set for {}".format(disk_name))
 
+            # TODO: set admin credentials using Azure
+
         for i in range(0, num_boots):
             if i == 1 and s:
                 s.update_state(
