@@ -123,7 +123,7 @@ def google_reason(**kwargs):
     makeUserVerified(username, True)
 
     return (
-        jsonify({}), 200
+        jsonify({"status": 200}), 200
     )
 
 
