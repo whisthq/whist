@@ -73,17 +73,17 @@ def statusReport(action, **kwargs):
         if body["timescale"] == "day":
             command = text(
                 """
-            """
+                """
             )
         elif body["timescale"] == "week":
             lastWeek = today - datetime.timedelta(days=7)
             command = text(
                 """
-            SELECT *
-            FROM login_history
-            WHERE "username" = :username AND timestamp > :date AND is_user = true
-            ORDER BY timestamp ASC
-            """
+                SELECT *
+                FROM login_history
+                WHERE "username" = :username AND timestamp > :date AND is_user = true
+                ORDER BY timestamp ASC
+                """
             )
             params = {
                 "username": body["username"],
@@ -93,11 +93,11 @@ def statusReport(action, **kwargs):
             lastMonth = today - datetime.timedelta(days=30)
             command = text(
                 """
-            SELECT *
-            FROM login_history
-            WHERE "username" = :username AND timestamp > :date AND is_user = true
-            ORDER BY timestamp ASC
-            """
+                SELECT *
+                FROM login_history
+                WHERE "username" = :username AND timestamp > :date AND is_user = true
+                ORDER BY timestamp ASC
+                """
             )
             params = {
                 "username": body["username"],
