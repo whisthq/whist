@@ -50,13 +50,22 @@ def vm(action, **kwargs):
         location = body["location"]
         operating_system = "Windows"
         admin_password = None
+        admin_username = None
+
         if "admin_password" in body.keys():
             admin_password = body["admin_password"]
+
+        if "admin_username" in body.keys():
+            admin_username = body["admin_username"]
 
         if "operating_system" in body.keys():
             operating_system = body["operating_system"]
 
-        task = createVM.apply_async([vm_size, location, operating_system, admin_password, kwargs["ID"]])
+        task = createVM.apply_async([
+            vm_size, location, operating_system, admin_password, 
+            admin_username, kwargs["ID"]]
+        )
+        
         if not task:
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202

@@ -9,7 +9,7 @@ from .helpers.s3 import *
 
 
 @celery.task(bind=True)
-def createVM(self, vm_size, location, operating_system, admin_password = None, ID=-1):
+def createVM(self, vm_size, location, operating_system, admin_password = None, admin_username = None, ID=-1):
     """Creates a windows vm of size vm_size in Azure region location
 
     Args:
@@ -43,7 +43,8 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, I
         return
     vmParameters = createVMParameters(
         vmName, nic.id, vm_size, location, operating_system, 
-        admin_password = admin_password
+        admin_password = admin_password,
+        admin_username = admin_username
     )
 
     async_vm_creation = compute_client.virtual_machines.create_or_update(

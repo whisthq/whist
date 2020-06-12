@@ -53,22 +53,24 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
             """
         )
         params = {"vmName": vmName, "username": userName, "disk_name": None}
+        
         with engine.connect() as conn:
             conn.execute(command, **params)
             conn.close()
 
             admin_password = os.getenv("VM_PASSWORD") if not admin_password else admin_password 
+            admin_username = os.getenv("VM_GROUP") if not admin_username else admin_username
 
             os_profile = (
                 {
                     "computer_name": vmName,
-                    "admin_username": os.getenv("VM_GROUP"),
+                    "admin_username": admin_username,
                     "admin_password": admin_password,
                 }
                 if operating_system == "Linux"
                 else {
                     "computer_name": vmName,
-                    "admin_username": os.getenv("VM_GROUP"),
+                    "admin_username": admin_username,
                     "admin_password": admin_password,
                 }
             )
