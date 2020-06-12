@@ -96,10 +96,11 @@ static char *appendPathToHome(char *path) {
 char *dupstring(char *s1) {
     size_t len = strlen(s1);
     char *s2 = malloc(len * sizeof *s2);
+    char *ret = s2;
     if (s2 == NULL) return NULL;
     for (; *s1; s1++, s2++)  *s2 = *s1;
     *s2 = *s1;
-    return s2;
+    return ret;
 }
 
 #ifdef _WIN32
