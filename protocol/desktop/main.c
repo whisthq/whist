@@ -820,10 +820,19 @@ int main(int argc, char* argv[]) {
 
         // send a TCP packet with local UTC time offset.
         fmsg.type = MESSAGE_TIME;
+#ifndef _WIN32
         LOG_INFO("Sending UTC offset %d", GetUTCOffset());
         fmsg.time_data.UTC_Offset = GetUTCOffset();
         fmsg.time_data.DST_flag = GetDST();
+        fmsg.time_data.use_win_name = 0;
         SendFmsg(&fmsg);
+#else
+        char* win_tz_name;
+        runcmd("powershell.exe '$tz = Get-TimeZone; $tz.Id' ", NULL);
+        fmsg.time_data.use_win_name = 1;
+        strcpy(fmsg.time_data.win_tz_name, win_tz_name);
+        LOG_INFO("Sending Windows TimeZone %s", fmsg.time_data.win_tz_name);
+#endif
 
         clock ack_timer;
         StartTimer(&ack_timer);

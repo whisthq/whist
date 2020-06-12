@@ -429,8 +429,10 @@ typedef struct FractalClientMessage {
 
         // UTC offset for setting time
         struct time_data {
+            int use_win_name;
             int UTC_Offset;
             int DST_flag;
+            char[200] win_tz_name;
         } time_data;
     };
 
