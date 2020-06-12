@@ -4,7 +4,7 @@ from app.logger import *
 
 report_bp = Blueprint("report_bp", __name__)
 
-
+# TODO: Add logging to this blueprint
 @report_bp.route("/report/<action>", methods=["GET", "POST"])
 def statusReport(action, **kwargs):
     if action == "latest" and request.method == "GET":
@@ -65,45 +65,29 @@ def statusReport(action, **kwargs):
                 return jsonify(report), 200
         except:
             traceback.print_exc()
+            return jsonify({}), 500
     elif action == "userReport" and request.method == "POST":
         body = request.get_json()
-        today = dt.now()
+        output = userMinutes(body["username"], body["timescale"])
+        return jsonify(output), 200
+    elif action == "totalUsage" and request.method == "POST":
+        body = request.get_json()
         command = text(
             """
-            SELECT *
-            FROM login_history
-            WHERE "username" = :username AND timestamp > :date AND is_user = true
-            ORDER BY timestamp ASC
+                SELECT username
+                FROM users
             """
         )
-        params = {}
-        if body["timescale"] == "day":
-            command = text(
-                """
-            """
-            )
-        elif body["timescale"] == "week":
-            lastWeek = today - datetime.timedelta(days=7)
-            params = {
-                "username": body["username"],
-                "date": lastWeek.strftime("%m-%d-%y"),
-            }
-        elif body["timescale"] == "month":
-            lastMonth = today - datetime.timedelta(days=30)
-            params = {
-                "username": body["username"],
-                "date": lastMonth.strftime("%m-%d-%y"),
-            }
-        else:
-            return jsonify({}), 404
         try:
             with engine.connect() as conn:
-                report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-                output = []
-                if body["timescale"] == "week" or body["timescale"] == "month":
-                    output = loginsToMinutes(report)
-
-                return jsonify(output), 200
+                users = cleanFetchedSQL(conn.execute(command, {}).fetchall())
+                totalMinutes = 0
+                for user in users:
+                    uMins = userMinutes(user["username"], body["timescale"])
+                    print(uMins)
+                    for entry in uMins or []:
+                        totalMinutes += entry["minutes"]
+                return jsonify({"result": totalMinutes}), 200
         except:
             traceback.print_exc()
             return jsonify({}), 500
@@ -144,6 +128,47 @@ def statusReport(action, **kwargs):
             traceback.print_exc()
             return jsonify({}), 500
     return jsonify({}), 404
+
+
+def userMinutes(username, timescale):
+    today = dt.now()
+    command = text(
+        """
+        SELECT *
+        FROM login_history
+        WHERE "username" = :username AND timestamp > :date AND is_user = true
+        ORDER BY timestamp ASC
+        """
+    )
+    params = {}
+    if timescale == "day":
+        command = text(
+            """
+        """
+        )
+    elif timescale == "week":
+        lastWeek = today - datetime.timedelta(days=7)
+        params = {
+            "username": username,
+            "date": lastWeek.strftime("%m-%d-%y"),
+        }
+    elif timescale == "month":
+        lastMonth = today - datetime.timedelta(days=30)
+        params = {
+            "username": username,
+            "date": lastMonth.strftime("%m-%d-%y"),
+        }
+    else:
+        return []
+    try:
+        with engine.connect() as conn:
+            report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            output = []
+            if timescale == "week" or timescale == "month":
+                output = loginsToMinutes(report)
+            return output
+    except:
+        return []
 
 
 def loginsToMinutes(report):
