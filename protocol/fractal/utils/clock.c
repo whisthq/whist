@@ -101,8 +101,12 @@ int GetUTCOffset(){
     }
 
 int GetDST(){
+#if defined(_WIN32)
+    return 0;
+#else
     time_t t = time(NULL);
     struct tm lt = {0};
     localtime_r(&t, &lt);
     return lt.tm_isdst;
+#endif
 }
