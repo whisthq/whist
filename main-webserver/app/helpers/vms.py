@@ -1714,12 +1714,15 @@ def setAutoLogin(disk_name, vm_name, ID=-1):
     try:
         print("TASK: Starting to run Powershell scripts")
 
-        vm_password = getVMPassword(disk_name)
+        disk_settings = getDiskSettings(disk_name)
+        admin_username = disk_settings["admin_username"]
+        admin_password = disk_settings["admin_password"]
 
         command = """
-        Add-AutoLogin "Fractal" (ConvertTo-SecureString "{vm_password}." -AsPlainText -Force)
+        Add-AutoLogin "{admin_username}" (ConvertTo-SecureString "{admin_password}." -AsPlainText -Force)
         """.format(
-        vm_password=vm_password
+        admin_username=admin_username,
+        admin_password=admin_password
         )
         run_command_parameters = {
         "command_id": "RunPowerShellScript",
