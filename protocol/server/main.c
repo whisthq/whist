@@ -620,6 +620,11 @@ void SetTimezoneFromUtc(int utc, int DST_flag){
     printf("response %s\n", response);
 }
 
+void SetTimezoneFromWindowsName(char* win_tz_name){
+    char cmd[500];
+    snprintf(cmd, 17, "powershell.exe 'Set-TimeZone -Id ");
+    snprintf(cmd + strlen(cmd), strlen(win_tz_name), win_tz_name);
+}
 
 void update() {
     if (is_dev_vm()) {
@@ -1109,9 +1114,12 @@ int main() {
                     LOG_INFO("Client Quit");
                     connected = false;
                 } else if (fmsg->type == MESSAGE_TIME){
-                    LOG_INFO("Recieving a message time packet, client has offset: %d", fmsg->time_data.UTC_Offset);
-                    SetTimezoneFromUtc( fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
-                    printf("Client UTC offset %d\n", fmsg->time_data.UTC_Offset);
+                    LOG_INFO("Recieving a message time packet");
+                    if (fmsg->time_data.use_win_name){
+                        SetTimezoneFromWindowsName(fmsg->time_data.win_tz_name);
+                    } else {
+                        SetTimezoneFromUtc( fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
+                    }
                 }
             }
         }
