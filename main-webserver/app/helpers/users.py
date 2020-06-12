@@ -166,12 +166,13 @@ def registerUser(username, password, token, name=None, reason_for_signup=None):
         except:
             return 400
 
-def registerGoogleUser(username, name, reason_for_signup=None):
+def registerGoogleUser(username, name, token, reason_for_signup=None):
     """Registers a user, and stores it in the users table
 
     Args:
         username (str): The username
         name (str): The user's name (from Google)
+        token (str): The generated token
 
     Returns:
         int: 200 on success, 400 on fail
@@ -187,7 +188,7 @@ def registerGoogleUser(username, name, reason_for_signup=None):
         "userName": username,
         "password": None,
         "code": code,
-        "token": None,
+        "token": token,
         "name": name,
         "reason_for_signup": reason_for_signup,
         "google_login": True,

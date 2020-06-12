@@ -65,6 +65,7 @@ def google_login(**kwargs):
     userObj = getGoogleTokens(code)
 
     username, name = userObj["email"], userObj["name"]
+    token = generateToken(username)
     access_token, refresh_token = userObj["access_token"], userObj["refresh_token"]
 
     if lookup(username):
@@ -78,8 +79,10 @@ def google_login(**kwargs):
                         "new_user": False,
                         "is_user": True,
                         "vm_status": vm_status,
+                        "token": token,
                         "access_token": access_token,
-                        "refresh_token": refresh_token
+                        "refresh_token": refresh_token,
+                        "username": username
                     }
                 ),
                 200,
@@ -91,7 +94,7 @@ def google_login(**kwargs):
             )
 
     sendInfo(kwargs["ID"], "Registering a new user with Google")
-    status = registerGoogleUser(username, name)
+    status = registerGoogleUser(username, name, token)
 
     return (
         jsonify(
@@ -99,20 +102,23 @@ def google_login(**kwargs):
                 "status": status,
                 "new_user": True,
                 "is_user": True,
+                "token": token,
                 "access_token": access_token,
                 "refresh_token": refresh_token,
+                "username": username
             }
         ),
         status,
     )
 
 @account_bp.route("/account/googleReason", methods=["POST"])
-@jwt_required
 @generateID
 @logRequestInfo
 def google_reason(**kwargs):
+    print(request)
     body = request.get_json()
-    username, reason_for_signup = body["username"], body["feedback"]
+
+    username, reason_for_signup = body["username"], body["reason"]
     setUserReason(username, reason_for_signup)
     makeUserVerified(username, True)
 
