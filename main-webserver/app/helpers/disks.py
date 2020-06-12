@@ -404,6 +404,23 @@ def deleteDiskFromTable(disk_name):
         conn.close()
 
 
+def deleteDiskSettingsFromTable(disk_name):
+    """Deletes a disk from the disk_settings sql table
+
+    Args:
+        disk_name (str): The name of the disk to delete settings for
+    """
+    command = text(
+        """
+        DELETE FROM disk_settings WHERE "disk_name" = :disk_name
+        """
+    )
+    params = {"disk_name": disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
 def scheduleDiskDelete(disk_name, date, ID=-1):
     """Schedule a disk to be deleted later
 

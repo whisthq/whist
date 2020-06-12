@@ -126,7 +126,7 @@ def createDiskFromImage(self, username, location, vm_size, operating_system, ID 
 			username, location, vm_size, operating_system
 		)
 		hr = payload["status"]
-		print("Disk created with status {}".format(hr))		
+		print("Disk created with status {}".format(hr))
 
 	print(payload)
 	payload["location"] = location
@@ -817,6 +817,7 @@ def deleteDisk(self, disk_name):
 		print("Attempting to delete the OS disk...")
 		os_disk_delete = compute_client.disks.delete(os.getenv("VM_GROUP"), disk_name)
 		os_disk_delete.wait()
+		deleteDiskSettingsFromTable(disk_name)
 		deleteDiskFromTable(disk_name)
 		print("OS disk deleted")
 	except Exception as e:
