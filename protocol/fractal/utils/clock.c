@@ -3,10 +3,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <string.h>
-#if _WIN32
-#    define timegm _mkgmtime
+
+#ifndef _WIN32
+#include <time.h>
 #endif
 
 #if defined(_WIN32)
@@ -89,9 +89,14 @@ char* CurrentTimeStr() {
 }
 
 int GetUTCOffset(){
+#if defined(_WIN32)
+    return 0;
+#else
     time_t t = time(NULL);
     struct tm lt = {0};
     localtime_r(&t, &lt);
 
     return lt.tm_gmtoff / (60 * 60);
+#endif
     }
+
