@@ -82,14 +82,15 @@ def google_login(**kwargs):
                         "token": token,
                         "access_token": access_token,
                         "refresh_token": refresh_token,
-                        "username": username
+                        "username": username,
+                        "status": 200
                     }
                 ),
                 200,
             )
         else:
             return (
-                jsonify({"error": "Email already used for non-Google account!"}),
+                jsonify({"status": 403, "error": "Email already used for non-Google account!"}),
                 403
             )
 
@@ -105,7 +106,8 @@ def google_login(**kwargs):
                 "token": token,
                 "access_token": access_token,
                 "refresh_token": refresh_token,
-                "username": username
+                "username": username,
+                "status": 200
             }
         ),
         status,
