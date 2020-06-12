@@ -107,8 +107,7 @@ def statusReport(action, **kwargs):
         except:
             traceback.print_exc()
             return jsonify({}), 500
-    elif action == "totalUsage" and request.method == "POST":
-        body = request.get_json()
+    elif action == "totalUsage" and request.method == "GET":
         today = dt.now()
         command = text(
             """
@@ -118,39 +117,32 @@ def statusReport(action, **kwargs):
             ORDER BY timestamp ASC
             """
         )
-        params = {}
-        if body["timescale"] == "day":
-            command = text(
-                """
-            """
-            )
-        elif body["timescale"] == "week":
-            lastWeek = today - datetime.timedelta(days=7)
-            params = {
-                "date": lastWeek.strftime("%m-%d-%y"),
-            }
-        elif body["timescale"] == "month":
-            lastMonth = today - datetime.timedelta(days=30)
-            params = {
-                "date": lastMonth.strftime("%m-%d-%y"),
-            }
-        else:
-            return jsonify({}), 404
         try:
             with engine.connect() as conn:
+                params = {
+                    "date": dt.combine(today.date(), dt.min.time()).strftime(
+                        "%m-%d-%y"
+                    ),
+                }
                 report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-                reportByUser = {}
-                for entry in report:
-                    if entry["username"] in reportByUser:
-                        reportByUser[entry["username"]].append(entry)
-                    else:
-                        reportByUser[entry["username"]] = [entry]
-                totalMinutes = 0
-                for userReport in reportByUser.values():
-                    userMinutes = loginsToMinutes(userReport)
-                    for userMinutesEntry in userMinutes:
-                        totalMinutes += userMinutesEntry["minutes"]
-                return jsonify({"result": totalMinutes}), 200
+                dayMins = totalMinutes(report)
+
+                params = {
+                    "date": (today - datetime.timedelta(days=7)).strftime("%m-%d-%y"),
+                }
+                report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                weekMins = totalMinutes(report)
+
+                params = {
+                    "date": (today - datetime.timedelta(days=30)).strftime("%m-%d-%y"),
+                }
+                report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                monthMins = totalMinutes(report)
+
+                return (
+                    jsonify({"day": dayMins, "week": weekMins, "month": monthMins}),
+                    200,
+                )
         except:
             traceback.print_exc()
             return jsonify({}), 500
@@ -191,6 +183,21 @@ def statusReport(action, **kwargs):
             traceback.print_exc()
             return jsonify({}), 500
     return jsonify({}), 404
+
+
+def totalMinutes(report):
+    reportByUser = {}
+    for entry in report:
+        if entry["username"] in reportByUser:
+            reportByUser[entry["username"]].append(entry)
+        else:
+            reportByUser[entry["username"]] = [entry]
+    totalMinutes = 0
+    for userReport in reportByUser.values():
+        userMinutes = loginsToMinutes(userReport)
+        for userMinutesEntry in userMinutes:
+            totalMinutes += userMinutesEntry["minutes"]
+    return totalMinutes
 
 
 def loginsToMinutes(report):
