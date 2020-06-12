@@ -85,7 +85,7 @@ def statusReport(action, **kwargs):
                 for user in users:
                     uMins = userMinutes(user["username"], body["timescale"])
                     print(uMins)
-                    for entry in uMins or []:
+                    for entry in uMins:
                         totalMinutes += entry["minutes"]
                 return jsonify({"result": totalMinutes}), 200
         except:
