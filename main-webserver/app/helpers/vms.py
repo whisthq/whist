@@ -5,7 +5,10 @@ from .general import *
 from .disks import *
 
 
-def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Windows", admin_password = None):
+def createVMParameters(vmName, nic_id, vm_size, location, 
+    operating_system="Windows", 
+    admin_password = None,
+    admin_username = None):
     """Adds a vm entry to the SQL database
 
     Parameters:
@@ -53,7 +56,7 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
             """
         )
         params = {"vmName": vmName, "username": userName, "disk_name": None}
-        
+
         with engine.connect() as conn:
             conn.execute(command, **params)
             conn.close()
