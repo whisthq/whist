@@ -131,7 +131,7 @@ def fetchUserDisks(username, show_all=False, main=True, ID=-1):
 
             command = text(
                 """
-                SELECT disks.*, disk_settings.* FROM disks LEFT JOIN disk_settings ON disks.disk_name = disk_settings.disk_name WHERE "username" = :username AND "state" = :state 
+                SELECT disks.*, disk_settings.* FROM disks LEFT JOIN disk_settings ON disks.disk_name = disk_settings.disk_name WHERE "username" = :username AND "state" = :state
                 """
             )
             params = {"username": username, "state": "ACTIVE"}
@@ -359,8 +359,7 @@ def assignCredentialsToDisk(disk_name, admin_username):
     rand_password = genPassword()
     command = text(
         """
-        UPDATE disk_settings SET "admin_username" = :admin_username, "admin_password" = :admin_password
-        WHERE "disk_name" = :disk_name
+        INSERT INTO disk_settings ("admin_username", "admin_password", "disk_name") VALUES (:admin_username, :admin_password, :disk_name)
         """
     )
     params = {"admin_username": admin_username, "admin_password": rand_password, "disk_name": disk_name}
