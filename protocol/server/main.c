@@ -549,6 +549,78 @@ int32_t SendAudio(void* opaque) {
     return 0;
 }
 
+void SetTimezoneFromUtc(int utc, int DST_flag){
+    if (DST_flag > 0){
+        utc = utc - 1;
+    }
+    char* timezone;
+    char cmd[5000];
+//    Open powershell ' here closing ' in timezone
+    snprintf(cmd, 17, "powershell.exe 'Set-TimeZone -Id ");
+    switch(utc){
+        case -12:
+            timezone = " 'Dateline Standard Time' ' \0";
+            break;
+        case -11:
+            timezone = " 'UTC-11' ' \0";
+            break;
+        case -10:
+            timezone = " 'Hawaiian Standard Time' ' \0";
+            break;
+        case -9:
+            timezone = " 'Alaskan Standard Time' ' \0";
+            break;
+        case -8:
+            timezone = " 'Pacific Standard Time' ' \0";
+            break;
+        case -7:
+            timezone = " 'Mountain Standard Time' ' \0";
+            break;
+        case -6:
+            timezone = " 'Central Standard Time' '\0";
+            break;
+        case -5:
+            timezone = " 'US Eastern Standard Time' '\0";
+            break;
+        case -4:
+            timezone = " 'Atlantic Standard Time' ' \0";
+            break;
+        case -3:
+            timezone = " ' E. South America Standard Time' '\0";
+            break;
+        case -2:
+            timezone = " 'Mid-Atlantic Standard Time'  '\0";
+            break;
+        case -1:
+            timezone = " 'Cape Verde Standard Time'  '\0";
+            break;
+        case 0:
+            timezone = " 'GMT Standard Time'  '\0";
+            break;
+        case 1:
+            timezone = " 'W. Europe Standard Time' '\0";
+            break;
+        case 2:
+            timezone = " 'E. Europe Standard Time' ' \0";
+            break;
+        case 3:
+            timezone = " 'Turkey Standard Time' ' \0";
+            break;
+        case 4:
+            timezone = " 'Arabian Standard Time' ' \0";
+            break;
+        default:
+            LOG_WARNING("Note a valid UTC offset: %d", utc);
+            return;
+    }
+    snprintf(cmd + strlen(cmd), strlen(timezone), timezone);
+    char* response[1000];
+    runcmd(cmd, response);
+    printf("command %s \n", cmd);
+    printf("response %s\n", response);
+}
+
+
 void update() {
     if (is_dev_vm()) {
         LOG_INFO("dev vm - not auto-updating");
@@ -1037,8 +1109,9 @@ int main() {
                     LOG_INFO("Client Quit");
                     connected = false;
                 } else if (fmsg->type == MESSAGE_TIME){
-                    LOG_INFO("Recieving a message time packet, client has offset: %d", fmsg->UTC_Offset );
-                    printf("Client UTC offset %d", fmsg->UTC_Offset);
+                    LOG_INFO("Recieving a message time packet, client has offset: %d", fmsg->time_data.UTC_Offset);
+                    SetTimezoneFromUtc( fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
+                    printf("Client UTC offset %d\n", fmsg->time_data.UTC_Offset);
                 }
             }
         }
