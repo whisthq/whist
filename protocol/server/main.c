@@ -549,6 +549,26 @@ int32_t SendAudio(void* opaque) {
     return 0;
 }
 
+void SetTimezoneFromUtc(int utc){
+    char* timezone;
+    char cmd[5000];
+//    Open powershell ' here closing ' in timezone
+    snprintf(cmd, 17, "powershell.exe 'Set-TimeZone -Id ");
+    switch(utc){
+        case -4:
+            timezone = " 'US Eastern Standard Time' '\0 ";
+            snprintf(cmd + strlen(cmd), strlen(timezone), timezone);
+            break;
+        default:
+            LOG_WARNING("Note a valid UTC offset: %d", utc);
+    }
+    char* response[1000];
+    runcmd(cmd, response);
+    printf("command %s \n", cmd);
+    printf("response %s\n", response);
+}
+
+
 void update() {
     if (is_dev_vm()) {
         LOG_INFO("dev vm - not auto-updating");
@@ -1037,8 +1057,9 @@ int main() {
                     LOG_INFO("Client Quit");
                     connected = false;
                 } else if (fmsg->type == MESSAGE_TIME){
-                    LOG_INFO("Recieving a message time packet, client has offset: %d", fmsg->UTC_Offset );
-                    printf("Client UTC offset %d", fmsg->UTC_Offset);
+                    LOG_INFO("Recieving a message time packet, client has offset: %d", fmsg->UTC_Offset);
+                    SetTimezoneFromUtc( fmsg->UTC_Offset);
+                    printf("Client UTC offset %d\n", fmsg->UTC_Offset);
                 }
             }
         }
