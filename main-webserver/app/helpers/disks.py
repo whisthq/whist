@@ -578,7 +578,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
         updateDisk(disk_name, "", location)
         assignUserToDisk(disk_name, username)
         assignVMSizeToDisk(disk_name, vm_size)
-        assignCredentialsToDisk(disk_name, username)
+        assignCredentialsToDisk(disk_name, admin_username)
 
         return {"status": 200, "disk_name": disk_name}
     except Exception as e:
