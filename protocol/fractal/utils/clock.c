@@ -92,6 +92,14 @@ int GetUTCOffset(){
     time_t t = time(NULL);
     struct tm lt = {0};
     localtime_r(&t, &lt);
+    printf("dst flag %d \n \n", lt.tm_isdst);
 
     return lt.tm_gmtoff / (60 * 60);
     }
+
+int GetDST(){
+    time_t t = time(NULL);
+    struct tm lt = {0};
+    localtime_r(&t, &lt);
+    return lt.tm_isdst;
+}

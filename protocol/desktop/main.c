@@ -820,7 +820,9 @@ int main(int argc, char* argv[]) {
 
         // send a TCP packet with local UTC time offset.
         fmsg.type = MESSAGE_TIME;
-        fmsg.UTC_Offset = GetUTCOffset();
+        LOG_INFO("Sending UTC offset %d", GetUTCOffset());
+        fmsg.time_data.UTC_Offset = GetUTCOffset();
+        fmsg.time_data.DST_flag = GetDST();
         SendFmsg(&fmsg);
 
         clock ack_timer;

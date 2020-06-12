@@ -428,7 +428,10 @@ typedef struct FractalClientMessage {
         bool reinitialize_encoder;
 
         // UTC offset for setting time
-        int UTC_Offset;
+        struct time_data {
+            int UTC_Offset;
+            int DST_flag;
+        } time_data;
     };
 
     // CMESSAGE_CLIPBOARD
