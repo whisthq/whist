@@ -79,4 +79,10 @@ char* CurrentTimeStr();
  */
 int GetUTCOffset();
 
+/**
+ * @brief                          Returns a flag for whether DST is on or off
+ * @return                         Positive int for on 0 for off.
+ */
+int GetDST();
+
 #endif

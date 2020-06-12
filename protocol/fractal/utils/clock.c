@@ -4,9 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifndef _WIN32
-#include <time.h>
+#if _WIN32
+int GetUTCOffset();
 #endif
 
 #if defined(_WIN32)
@@ -95,8 +94,15 @@ int GetUTCOffset(){
     time_t t = time(NULL);
     struct tm lt = {0};
     localtime_r(&t, &lt);
+    printf("dst flag %d \n \n", lt.tm_isdst);
 
     return lt.tm_gmtoff / (60 * 60);
 #endif
     }
 
+int GetDST(){
+    time_t t = time(NULL);
+    struct tm lt = {0};
+    localtime_r(&t, &lt);
+    return lt.tm_isdst;
+}
