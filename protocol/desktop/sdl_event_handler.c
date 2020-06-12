@@ -19,52 +19,50 @@ extern volatile SDL_Window* window;
 extern volatile int output_width;
 extern volatile int output_height;
 
-int handleWindowSizeChanged(SDL_Event *in_msg, FractalClientMessage *out_fmsg);
-int handleKeyUpDown(SDL_Event *in_msg, FractalClientMessage *out_fmsg);
-int handleMouseMotion(SDL_Event *in_msg, FractalClientMessage *out_fmsg);
-int handleMouseWheel(SDL_Event *in_msg, FractalClientMessage *out_fmsg);
-int handleMouseButtonUpDown(SDL_Event *in_msg, FractalClientMessage *out_fmsg);
+int handleWindowSizeChanged(SDL_Event *event);
+int handleKeyUpDown(SDL_Event *event);
+int handleMouseMotion(SDL_Event *event);
+int handleMouseWheel(SDL_Event *event);
+int handleMouseButtonUpDown(SDL_Event *event);
 
 int tryHandleSDLEvent(void) {
-    SDL_Event in_msg;
-    if (SDL_PollEvent(&in_msg)) {
-        if (handleSDLEvent(&in_msg) != 0) {
+    SDL_Event event;
+    if (SDL_PollEvent(&event)) {
+        if (handleSDLEvent(&event) != 0) {
             return -1;
         }
     }
     return 0;
 }
 
-int handleSDLEvent(SDL_Event *in_msg) {
-    FractalClientMessage out_fmsg = {0};
-
-    switch (in_msg->type) {
+int handleSDLEvent(SDL_Event *event) {
+    switch (event->type) {
         case SDL_WINDOWEVENT:
-            if (in_msg->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                if (handleWindowSizeChanged(in_msg, &out_fmsg) != 0) {
+            if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                if (handleWindowSizeChanged(event) != 0) {
                     return -1;
                 }
             }
             break;
         case SDL_KEYDOWN:
         case SDL_KEYUP:
-            if (handleKeyUpDown(in_msg, &out_fmsg) != 0) {
+            if (handleKeyUpDown(event) != 0) {
                 return -1;
             }
             break;
         case SDL_MOUSEMOTION:
-            if (handleMouseMotion(in_msg, &out_fmsg) != 0) {
+            if (handleMouseMotion(event) != 0) {
                 return -1;
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
-            if (handleMouseButtonUpDown(in_msg, &out_fmsg) != 0) {
+            if (handleMouseButtonUpDown(event) != 0) {
                 return -1;
             }
             break;
         case SDL_MOUSEWHEEL:
-            if (handleMouseWheel(in_msg, &out_fmsg) != 0) {
+            if (handleMouseWheel(event) != 0) {
                 return -1;
             }
             break;
@@ -73,104 +71,111 @@ int handleSDLEvent(SDL_Event *in_msg) {
             exiting = true;
             break;
     }
-    if (out_fmsg.type != 0) {
-        SendFmsg(&out_fmsg);
-    }
     return 0;
 }
 
-int handleWindowSizeChanged(SDL_Event *in_msg, FractalClientMessage *out_fmsg) {
+int handleWindowSizeChanged(SDL_Event *event) {
     // Let video thread know about the resizing to
     // reinitialize display dimensions
     set_video_active_resizing(false);
-    output_width =
-        get_window_pixel_width((SDL_Window*)window);
-    output_height =
-        get_window_pixel_height((SDL_Window*)window);
+    output_width = get_window_pixel_width((SDL_Window *) window);
+    output_height = get_window_pixel_height((SDL_Window *) window);
+    LOG_INFO(
+        "Window %d resized to %dx%d (Physical %dx%d)\n",
+        event->window.windowID, event->window.data1,
+        event->window.data2, output_width, output_height);
 
     // Let the server know the new dimensions so that it
     // can change native dimensions for monitor
-    out_fmsg->type = MESSAGE_DIMENSIONS;
-    out_fmsg->dimensions.width = output_width;
-    out_fmsg->dimensions.height = output_height;
-    out_fmsg->dimensions.dpi =
-        (int)(96.0 * output_width /
-              get_virtual_screen_width());
-
-    LOG_INFO(
-        "Window %d resized to %dx%d (Physical %dx%d)\n",
-        in_msg->window.windowID, in_msg->window.data1,
-        in_msg->window.data2, output_width, output_height);
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_DIMENSIONS;
+    fmsg.dimensions.width = output_width;
+    fmsg.dimensions.height = output_height;
+    fmsg.dimensions.dpi =
+        (int) (96.0 * output_width / get_virtual_screen_width());
+    SendFmsg(&fmsg);
 
     return 0;
 }
 
-int handleKeyUpDown(SDL_Event *in_msg, FractalClientMessage *out_fmsg) {
-    // Send a keyboard press for this event
-    out_fmsg->type = MESSAGE_KEYBOARD;
-    out_fmsg->keyboard.code =
-        (FractalKeycode)in_msg->key.keysym.scancode;
-    out_fmsg->keyboard.mod = in_msg->key.keysym.mod;
-    out_fmsg->keyboard.pressed = in_msg->key.type == SDL_KEYDOWN;
+int handleKeyUpDown(SDL_Event *event) {
+    FractalKeycode keycode = (FractalKeycode) event->key.keysym.scancode;
+    bool is_pressed = event->key.type == SDL_KEYDOWN;
 
     // Keep memory of alt/ctrl/lgui/rgui status
-    if (out_fmsg->keyboard.code == FK_LALT) {
-        alt_pressed = out_fmsg->keyboard.pressed;
+    if (keycode == FK_LALT) {
+        alt_pressed = is_pressed;
     }
-    if (out_fmsg->keyboard.code == FK_LCTRL) {
-        ctrl_pressed = out_fmsg->keyboard.pressed;
+    if (keycode == FK_LCTRL) {
+        ctrl_pressed = is_pressed;
     }
-    if (out_fmsg->keyboard.code == FK_LGUI) {
-        lgui_pressed = out_fmsg->keyboard.pressed;
+    if (keycode == FK_LGUI) {
+        lgui_pressed = is_pressed;
     }
-    if (out_fmsg->keyboard.code == FK_RGUI) {
-        rgui_pressed = out_fmsg->keyboard.pressed;
+    if (keycode == FK_RGUI) {
+        rgui_pressed = is_pressed;
     }
 
-    if (ctrl_pressed && alt_pressed &&
-        out_fmsg->keyboard.code == FK_F4) {
+    if (ctrl_pressed && alt_pressed && keycode == FK_F4) {
         LOG_INFO("Quitting...");
         exiting = true;
     }
+
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_KEYBOARD;
+    fmsg.keyboard.code = keycode;
+    fmsg.keyboard.pressed = is_pressed;
+    fmsg.keyboard.mod = event->key.keysym.mod;
+    SendFmsg(&fmsg);
+
     return 0;
 }
 
-int handleMouseMotion(SDL_Event *in_msg, FractalClientMessage *out_fmsg) {
-    // Relative motion is the delta x and delta y from last
-    // mouse position Absolute mouse position is where it is
-    // on the screen We multiply by scaling factor so that
-    // integer division doesn't destroy accuracy
-    out_fmsg->type = MESSAGE_MOUSE_MOTION;
-    out_fmsg->mouseMotion.relative = SDL_GetRelativeMouseMode();
-    out_fmsg->mouseMotion.x = out_fmsg->mouseMotion.relative
-                             ? in_msg->motion.xrel
-                             : in_msg->motion.x *
-                                   MOUSE_SCALING_FACTOR /
-                                   get_window_virtual_width(
-                                       (SDL_Window*)window);
-    out_fmsg->mouseMotion.y =
-        out_fmsg->mouseMotion.relative
-            ? in_msg->motion.yrel
-            : in_msg->motion.y * MOUSE_SCALING_FACTOR /
-                  get_window_virtual_height(
-                      (SDL_Window*)window);
+// Relative motion is the delta x and delta y from last
+// mouse position Absolute mouse position is where it is
+// on the screen We multiply by scaling factor so that
+// integer division doesn't destroy accuracy
+int handleMouseMotion(SDL_Event *event) {
+    bool is_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
+    int x, y, height, width;
+
+    if (is_relative) {
+        x = event->motion.xrel;
+        y = event->motion.yrel;
+    } else {
+        width = get_window_virtual_width((SDL_Window *) window);
+        height = get_window_virtual_height((SDL_Window *) window);
+        x = event->motion.x * MOUSE_SCALING_FACTOR / width;
+        y = event->motion.y * MOUSE_SCALING_FACTOR / height;
+    }
+
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_MOUSE_MOTION;
+    fmsg.mouseMotion.relative = is_relative;
+    fmsg.mouseMotion.x = x;
+    fmsg.mouseMotion.y = y;
+    SendFmsg(&fmsg);
+
     return 0;
 }
 
-
-int handleMouseButtonUpDown(SDL_Event *in_msg, FractalClientMessage *out_fmsg) {
-    out_fmsg->type = MESSAGE_MOUSE_BUTTON;
+int handleMouseButtonUpDown(SDL_Event *event) {
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_MOUSE_BUTTON;
     // Record if left / right / middle button
-    out_fmsg->mouseButton.button = in_msg->button.button;
-    out_fmsg->mouseButton.pressed =
-        in_msg->button.type == SDL_MOUSEBUTTONDOWN;
+    fmsg.mouseButton.button = event->button.button;
+    fmsg.mouseButton.pressed = event->button.type == SDL_MOUSEBUTTONDOWN;
+    SendFmsg(&fmsg);
+
     return 0;
 }
 
-int handleMouseWheel(SDL_Event *in_msg, FractalClientMessage *out_fmsg) {
-    // Record mousewheel x/y change
-    out_fmsg->type = MESSAGE_MOUSE_WHEEL;
-    out_fmsg->mouseWheel.x = in_msg->wheel.x;
-    out_fmsg->mouseWheel.y = in_msg->wheel.y;
+int handleMouseWheel(SDL_Event *event) {
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_MOUSE_WHEEL;
+    fmsg.mouseWheel.x = event->wheel.x;
+    fmsg.mouseWheel.y = event->wheel.y;
+    SendFmsg(&fmsg);
+
     return 0;
 }

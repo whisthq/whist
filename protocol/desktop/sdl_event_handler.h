@@ -3,6 +3,6 @@
 
 int tryHandleSDLEvent(void);
 
-int handleSDLEvent(SDL_Event *in_msg);
+int handleSDLEvent(SDL_Event *event);
 
 #endif  // SDL_EVENT_HANDLER_H
