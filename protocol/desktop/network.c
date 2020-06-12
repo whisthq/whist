@@ -93,6 +93,7 @@ int establishSpectatorConnections(void) {
             return -1;
         }
     }
+    PacketReceiveContext = PacketSendContext;
     return 0;
 }
 
