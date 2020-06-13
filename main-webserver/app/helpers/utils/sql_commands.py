@@ -113,3 +113,39 @@ def fractalSQLUpdate(table_name, conditional_params, new_params):
     conditional_params.update(new_params)
 
     return fractalRunSQL(command, conditional_params)
+
+
+def fractalSQLInsert(table_name, params, unique_keys=None):
+    if unique_keys:
+        output = fractalSQLSelect(table_name, unique_keys)
+        if output["success"] and output["rows"]:
+            output = {
+                "success": False,
+                "returns_rows": False,
+                "rows": None,
+                "error": "A row with column values {unique_keys} already exists in {table_name}".format(
+                    unique_keys=str(unique_keys), table_name=table_name
+                ),
+            }
+
+    columns = values = "("
+    number_of_params = len(params.keys())
+    current_param_number = 1
+
+    for param_name, param_value in params.items():
+        if current_param_number == number_of_params:
+            columns += '"{param_name}")'.format(param_name=param_name)
+            values += ":{param_name})".format(param_name=param_name)
+        else:
+            columns += '"{param_name}", '.format(param_name=param_name)
+            values += ":{param_name}, ".format(param_name=param_name)
+
+        current_param_number += 1
+
+    command = """
+        INSERT INTO {table_name}{columns} VALUES{values}""".format(
+        table_name=table_name, columns=columns, values=values
+    )
+
+    command = text(command)
+    return fractalRunSQL(command, params)

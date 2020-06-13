@@ -1,5 +1,6 @@
 from .imports import *
 from .factory import *
+from .helpers.utils.logs import *
 
 
 def make_celery(app_name=__name__):

@@ -1,3 +1,4 @@
+from app import *
 from app.helpers.utils.sql_commands import *
 from app.helpers.utils.tokens import *
 
@@ -63,7 +64,7 @@ def loginHelper(username, password):
     }
 
 
-def registerHelper(username, password):
+def registerHelper(username, password, name, reason_for_signup):
     """Stores username and password in the database and generates user metadata, like their
     user ID and promo code
 
@@ -78,18 +79,57 @@ def registerHelper(username, password):
    """
 
     # First, generate a user ID
+
     user_id = generateToken(username)
 
     # Second, JWT encode their password
+
     pwd_token = jwt.encode({"pwd": password}, os.getenv("SECRET_KEY"))
 
     # Third, generate a promo code for the user
+
     def generateUniquePromoCode():
         output = fractalSQLSelect("users", {})
-        old_codes = [user["code"] for user in output]
-        new_code = generateCode()
+        old_codes = []
+        if output["rows"]:
+            old_codes = [user["code"] for user in output["rows"]]
+        new_code = generatePromoCode()
         while new_code in old_codes:
-            new_code = generateCode()
+            new_code = generatePromoCode()
         return new_code
 
     promo_code = generateUniquePromoCode()
+
+    # Add the user to the database
+
+    params = {
+        "username": username,
+        "password": pwd_token,
+        "code": promo_code,
+        "id": user_id,
+        "name": name,
+        "reason_for_signup": reason_for_signup,
+        "created": dt.now(datetime.timezone.utc).timestamp(),
+    }
+
+    unique_keys = {"username": username}
+
+    output = fractalSQLInsert("users", params, unique_keys=unique_keys)
+    status = 200
+    access_token, refresh_token = getAccessTokens(username)
+
+    # Check for errors in adding the user to the database
+
+    if not output["success"] and "already exists" in output["error"]:
+        status = 409
+        user_id = access_token = refresh_token = None
+    elif not output["success"]:
+        status = 400
+        user_id = access_token = refresh_token = None
+
+    return {
+        "status": status,
+        "token": user_id,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+    }
