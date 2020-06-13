@@ -1,5 +1,6 @@
 from app import *
 from app.helpers.utils.sql_commands import *
+from app.helpers.utils.logs import *
 
 
 def disksHelper(username, main):
@@ -8,6 +9,8 @@ def disksHelper(username, main):
             username=username, main=str(main)
         )
     )
+
+    print("test")
 
     params = {"username": username, "state": "ACTIVE"}
 

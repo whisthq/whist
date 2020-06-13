@@ -1,25 +1,12 @@
-from app.imports import *
 import logging
+import timber
 
+logger = logging.getLogger(__name__)
 
-class ContextFilter(logging.Filter):
-    hostname = socket.gethostname()
+API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwczovL2FwaS50aW1iZXIuaW8vIiwiZXhwIjpudWxsLCJpYXQiOjE1OTIwNjk3MTAsImlzcyI6Imh0dHBzOi8vYXBpLnRpbWJlci5pby9hcGlfa2V5cyIsInByb3ZpZGVyX2NsYWltcyI6eyJhcGlfa2V5X2lkIjo4MzIyLCJ1c2VyX2lkIjoiYXBpX2tleXw4MzIyIn0sInN1YiI6ImFwaV9rZXl8ODMyMiJ9.EW4XNnjmW21Wy4b38GWR7Tx7GHNi700-C6pHuq_3a70"
+SOURCE_ID = 38863
 
-    def filter(self, record):
-        record.hostname = ContextFilter.hostname
-        return True
+timber_handler = timber.TimberHandler(api_key=API_KEY, source_id="test")
+logger.addHandler(timber_handler)
 
-
-syslog = SysLogHandler(
-    address=(os.getenv("PAPERTRAIL_URL"), int(os.getenv("PAPERTRAIL_PORT")))
-)
-syslog.addFilter(ContextFilter())
-
-log_format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d][{} WEBSERVER] %(message)s".format(
-    os.getenv("SERVER_TYPE")
-)
-formatter = logging.Formatter(log_format, datefmt="%b %d %H:%M:%S")
-syslog.setFormatter(formatter)
-
-logger = logging.getLogger()
-logger.addHandler(syslog)
+logger.info("TIMBER??")
