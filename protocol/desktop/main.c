@@ -827,11 +827,13 @@ int main(int argc, char* argv[]) {
         fmsg.time_data.use_win_name = 0;
         SendFmsg(&fmsg);
 #else
-        char* win_tz_name;
-        runcmd("powershell.exe '$tz = Get-TimeZone; $tz.Id' ", NULL);
+        char* win_tz_name = malloc(sizeof(char) * 200);
+        runcmd("powershell.exe '$tz = Get-TimeZone; $tz.Id' ", &win_tz_name);
         fmsg.time_data.use_win_name = 1;
         strcpy(fmsg.time_data.win_tz_name, win_tz_name);
+        SendFmsg(&fmsg);
         LOG_INFO("Sending Windows TimeZone %s", fmsg.time_data.win_tz_name);
+        free(win_tz_name);
 #endif
 
         clock ack_timer;

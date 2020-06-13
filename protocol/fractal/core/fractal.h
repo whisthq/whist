@@ -432,7 +432,7 @@ typedef struct FractalClientMessage {
             int use_win_name;
             int UTC_Offset;
             int DST_flag;
-            char[200] win_tz_name;
+            char win_tz_name[200];
         } time_data;
     };
 

@@ -614,10 +614,11 @@ void SetTimezoneFromUtc(int utc, int DST_flag){
             return;
     }
     snprintf(cmd + strlen(cmd), strlen(timezone), timezone);
-    char* response[1000];
-    runcmd(cmd, response);
+    char* response = malloc(sizeof(char) * 200);
+    runcmd(cmd, &response);
     printf("command %s \n", cmd);
     printf("response %s\n", response);
+    free(response);
 }
 
 void SetTimezoneFromWindowsName(char* win_tz_name){
