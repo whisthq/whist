@@ -12,7 +12,10 @@ def account_no_auth(action, **kwargs):
         # Login endpoint
 
         username, password = kwargs["body"]["username"], kwargs["body"]["password"]
-        return jsonify(loginHelper(username, password)), 200
+
+        output = loginHelper(username, password)
+
+        return jsonify(output), 200
 
     elif action == "register":
         # Account creation endpoint
@@ -25,14 +28,40 @@ def account_no_auth(action, **kwargs):
 
         return jsonify(output), output["status"]
 
-    elif action == "reset":
-        print("Hello world")
+    elif action == "verify":
+        # Email verification endpoint
+
+        username, token = kwargs["body"]["username"], kwargs["body"]["token"]
+
+        output = verifyHelper(username, token)
+
+        return jsonify(output), output["status"]
+
+    elif action == "delete":
+        # Account deletion endpoint
+
+        username = kwargs["body"]["username"]
+
+        output = deleteHelper(username)
+
+        return jsonify(output), output["status"]
 
 
 @account_bp.route("/account/<action>", methods=["GET"])
 @fractalPreProcess
 def account_get(action, **kwargs):
-    if action == "disks":
+    if action == "code":
+        # Get the user's promo code
+
+        username = request.args.get("username")
+
+        output = codeHelper(username)
+
+        return jsonify(output), output["status"]
+
+    elif action == "disks":
+        # Get all the user's disks
+
         username = request.args.get("username")
 
         main = True
@@ -40,5 +69,14 @@ def account_get(action, **kwargs):
             main = str(request.args.get("main")).upper() == "TRUE"
 
         output = disksHelper(username, main)
+
+        return jsonify(output), output["status"]
+
+    elif action == "verified":
+        # Check if the user's email has been verified
+
+        username = request.args.get("username")
+
+        output = verifiedHelper(username)
 
         return jsonify(output), output["status"]

@@ -149,3 +149,22 @@ def fractalSQLInsert(table_name, params, unique_keys=None):
 
     command = text(command)
     return fractalRunSQL(command, params)
+
+
+def fractalSQLDelete(table_name, params, and_or="AND"):
+    conditions = ""
+    number_of_params = len(params.keys())
+    current_param = 1
+
+    for param_name, param_value in params.items():
+        conditions += '"{param_name}" = :{param_name}'.format(param_name=param_name)
+        if not current_param == number_of_params:
+            conditions += " {} ".format(and_or.upper())
+        current_param += 1
+
+    command = "DELETE FROM {table_name} WHERE {conditions}".format(
+        table_name=table_name, conditions=conditions
+    )
+
+    command = text(command)
+    return fractalRunSQL(command, params)

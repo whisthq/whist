@@ -1,6 +1,7 @@
 from .imports import *
 from .factory import *
 from .helpers.utils.logs import *
+from .constants.error_codes import *
 
 
 def make_celery(app_name=__name__):
@@ -42,10 +43,5 @@ app.config["MAIL_SERVER"] = "ming@fractalcomputers.com"
 app.config["MAIL_PORT"] = 465
 app.config["MAIL_USE_SSL"] = True
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
-app.config["PAPERTRAIL_HOST"] = os.getenv("PAPERTRAIL_URL")
-app.config["PAPERTRAIL_PORT"] = os.getenv("PAPERTRAIL_PORT")
-
-papertrail = PaperTrail()
-papertrail.init_app(app)
 
 CORS(app)

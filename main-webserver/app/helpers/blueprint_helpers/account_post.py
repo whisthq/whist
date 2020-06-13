@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.logs import *
 from app.helpers.utils.sql_commands import *
 from app.helpers.utils.tokens import *
 
@@ -115,16 +116,16 @@ def registerHelper(username, password, name, reason_for_signup):
     unique_keys = {"username": username}
 
     output = fractalSQLInsert("users", params, unique_keys=unique_keys)
-    status = 200
+    status = SUCCESS
     access_token, refresh_token = getAccessTokens(username)
 
     # Check for errors in adding the user to the database
 
     if not output["success"] and "already exists" in output["error"]:
-        status = 409
+        status = CONFLICT
         user_id = access_token = refresh_token = None
     elif not output["success"]:
-        status = 400
+        status = BAD_REQUEST
         user_id = access_token = refresh_token = None
 
     return {
@@ -133,3 +134,56 @@ def registerHelper(username, password, name, reason_for_signup):
         "access_token": access_token,
         "refresh_token": refresh_token,
     }
+
+
+def verifyHelper(username, provided_user_id):
+    """Checks provided verification token against database token. If they match, we verify the 
+    user's email.
+
+    Parameters:
+    username (str): The username
+    token (str): Email verification token
+
+    Returns:
+    json: Success/failure of email verification
+   """
+
+    # Select the user's ID
+
+    user_id = None
+
+    output = fractalSQLSelect(table_name="users", params={"username": username})
+
+    if output["success"] and output["rows"]:
+        user_id = output["rows"][0]["id"]
+
+    # Check to see if the provided user ID matches the selected user ID
+
+    if provided_user_id == user_id:
+        fractalSQLUpdate(
+            table_name="users",
+            conditional_params={"username": username},
+            new_params={"verified": True},
+        )
+
+        return {"status": SUCCESS, "verified": True}
+    else:
+        return {"status": UNAUTHORIZED, "verified": False}
+
+
+def deleteHelper(username):
+    """Deletes a user's account from the database
+
+    Parameters:
+    username (str): The username
+
+    Returns:
+    json: Success/failure of deletion
+   """
+
+    output = fractalSQLDelete("users", {"username": username})
+
+    if not output["success"]:
+        return {"status": BAD_REQUEST, "error": output["error"]}
+
+    return {"status": SUCCESS, "error": None}
