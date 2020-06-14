@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.azure.azure_general import *
 
 
 def createNic(vm_name, location, tries):
