@@ -1,9 +1,9 @@
 from app import *
 from app.helpers.utils.azure.azure_general import *
-from app.helpers.utils.azure_resource_locks import *
+from app.helpers.utils.azure.azure_resource_locks import *
 
 
-def boot_if_necessary(vm_name, needs_restart, s=s):
+def boot_if_necessary(vm_name, needs_restart, s=None):
     _, compute_client, _ = createClients()
 
     power_state = "PowerState/deallocated"
@@ -141,7 +141,7 @@ def waitForWinlogon(vm_name, s=None):
                 "msg": "Logging you into your cloud PC. This should take less than two minutes."
             },
         )
-                        
+
     has_winlogoned = checkWinlogon(vm_name)
     num_tries = 0
 
@@ -181,12 +181,15 @@ def waitForWinlogon(vm_name, s=None):
     )
     return 1
 
+
 def installApplications(vm_name, apps):
     _, compute_client, _ = createClients()
     try:
         for app in apps:
             fractalLog(
-                "installApplications() Installing {app} onto VM {vm_name}".format(app=app["app_name"], vm_name)
+                "installApplications() Installing {app} onto VM {vm_name}".format(
+                    app=app["app_name"], vm_name=vm_name
+                )
             )
             install_command = fetchInstallCommand(app["app_name"])
 
@@ -202,12 +205,16 @@ def installApplications(vm_name, apps):
             result = poller.result()
 
             fractalLog(
-                "installApplications() app installation finished with message: {result}".format(result=str(result.value[0].message))
+                "installApplications() app installation finished with message: {result}".format(
+                    result=str(result.value[0].message)
+                )
             )
 
     except Exception as e:
         fractalLog(
-            "installApplications() encountered an error while installing apps onto VM {vm_name}: {error}".format(vm_name=vm_name, error=str(e))
+            "installApplications() encountered an error while installing apps onto VM {vm_name}: {error}".format(
+                vm_name=vm_name, error=str(e)
+            )
         )
         return -1
     return 1
