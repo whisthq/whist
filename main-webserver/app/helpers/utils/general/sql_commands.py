@@ -1,5 +1,8 @@
 from app.imports import *
-from app import *
+
+
+engine = db.create_engine(os.getenv("DATABASE_URL"), echo=False, pool_pre_ping=True)
+Session = sessionmaker(bind=engine, autocommit=False)
 
 
 def fractalCleanSQLOutput(output):

@@ -36,8 +36,6 @@ def fractalPreProcess(f):
 
 
 celery_instance = make_celery()
-engine = db.create_engine(os.getenv("DATABASE_URL"), echo=False, pool_pre_ping=True)
-Session = sessionmaker(bind=engine, autocommit=False)
 
 app, jwtManager = create_app(celery=celery_instance)
 app = init_app(app)
