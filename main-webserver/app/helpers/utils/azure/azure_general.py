@@ -40,6 +40,8 @@ def createVMName():
     while vm_name in old_names:
         vm_name = genHaiku(1)[0]
 
+    return vm_name
+
 
 def createVMInstance(vm_name):
     """Retrieves information about the model view or the instance view of an Azure virtual machine
