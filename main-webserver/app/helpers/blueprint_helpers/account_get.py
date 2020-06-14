@@ -1,6 +1,6 @@
 from app import *
-from app.helpers.utils.logs import *
-from app.helpers.utils.sql_commands import *
+from app.helpers.utils.general.logs import *
+from app.helpers.utils.general.sql_commands import *
 
 
 def codeHelper(username):

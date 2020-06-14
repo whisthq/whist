@@ -44,6 +44,7 @@ from sendgrid.helpers.mail import Mail as SendGridMail
 from logging.handlers import SysLogHandler
 from functools import wraps
 from botocore.exceptions import NoCredentialsError
+from msrest.exceptions import ClientException
 
 
 load_dotenv()

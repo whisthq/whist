@@ -1,7 +1,7 @@
 from app import *
-from app.helpers.utils.logs import *
-from app.helpers.utils.sql_commands import *
-from app.helpers.utils.tokens import *
+from app.helpers.utils.general.logs import *
+from app.helpers.utils.general.sql_commands import *
+from app.helpers.utils.general.tokens import *
 
 
 def loginHelper(username, password):

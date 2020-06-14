@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.utils.general.tokens import *
 
 token_bp = Blueprint("token_bp", __name__)
 
@@ -6,7 +7,7 @@ token_bp = Blueprint("token_bp", __name__)
 @token_bp.route("/token/<action>", methods=["POST"])
 @jwt_refresh_token_required
 @fractalPreProcess
-def (action, **kwargs):
+def token(action, **kwargs):
     if action == "refresh":
         username = get_jwt_identity()
         access_token, refresh_token = getAccessTokens(username)

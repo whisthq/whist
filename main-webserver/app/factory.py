@@ -15,7 +15,11 @@ def create_app(app_name=PKG_NAME, **kwargs):
 
 def init_app(app):
     from .blueprints.account_blueprint import account_bp
+    from .blueprints.token_blueprint import token_bp
+    from .blueprints.azure_vm_blueprint import azure_vm_bp
 
     app.register_blueprint(account_bp)
+    app.register_blueprint(token_bp)
+    app.register_blueprint(azure_vm_bp)
 
     return app
