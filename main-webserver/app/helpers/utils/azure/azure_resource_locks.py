@@ -1,5 +1,4 @@
 from app import *
-from app.helpers.utils.general.sql_commands import *
 
 
 def lockVMAndUpdate(vm_name, state, lock, temporary_lock):

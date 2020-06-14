@@ -17,6 +17,7 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
     Returns:
         json: The json representing the vm in the v_ms sql table
     """
+
     fractalLog(
         "Creating VM of size {}, location {}, operating system {}".format(
             vm_size, location, operating_system
@@ -35,12 +36,12 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
     _, compute_client, _ = createClients()
     vm_name = createVMName()
 
-    nic = createNic(vm_name, location, 0)
-
     self.update_state(
         state="PENDING",
         meta={"msg": "Creating NIC for VM {vm_name}".format(vm_name=vm_name)},
     )
+
+    nic = createNic(vm_name, location, 0)
 
     if not nic:
         self.update_state(
@@ -50,7 +51,7 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
 
         return
 
-    vmParameters = createVMParameters(
+    vm_parameters = createVMParameters(
         vm_name,
         nic.id,
         vm_size,
@@ -65,7 +66,7 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
     )
 
     async_vm_creation = compute_client.virtual_machines.create_or_update(
-        os.getenv("VM_GROUP"), vm_name, vmParameters["params"]
+        os.getenv("VM_GROUP"), vm_name, vm_parameters["params"]
     )
 
     async_vm_creation.wait()
@@ -83,7 +84,7 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
     async_vm_start = compute_client.virtual_machines.start(
         os.getenv("VM_GROUP"), vm_name
     )
-    sendDebug(ID, "Waiting on async_vm_start")
+
     async_vm_start.wait()
 
     self.update_state(
@@ -92,7 +93,21 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
 
     time.sleep(30)
 
-    sendInfo(ID, "The VM created is called {}".format(vm_name))
+    # Store VM in v_ms database
+
+    ip_address = getIP(vm_name)
+    fractalSQLInsert(
+        table_name="v_ms",
+        params={
+            "vm_name": vm_name,
+            "ip": ip_address,
+            "state": "CREATING",
+            "location": location,
+            "dev": False,
+            "os": operating_system,
+            "lock": True,
+        },
+    )
 
     fractalVMStart(vm_name, needs_winlogon=False, s=self)
 
@@ -126,7 +141,6 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
         extension_parameters,
     )
 
-    sendDebug(ID, "Waiting on async_vm_extension")
     async_vm_extension.wait()
 
     self.update_state(
@@ -134,13 +148,13 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
         meta={"msg": "VM {} successfully installed NVIDIA extension".format(vm_name)},
     )
 
-    vm = getVM(vm_name)
-    vm_ip = getIP(vm)
-    updateVMIP(vm_name, vm_ip)
-    updateVMState(vm_name, "RUNNING_AVAILABLE")
-    updateVMLocation(vm_name, location)
-    updateVMOS(vm_name, operating_system)
+    output = fractalSQLSelect("v_ms", {"vm_name": vm_name})
 
-    sendInfo(ID, "SUCCESS: VM {} created and updated".format(vm_name))
-
-    return fetchVMCredentials(vm_name)
+    if output["success"] and output["rows"]:
+        fractalLog(
+            "{operating_system} VM {vm_name} successfully created in {location}".format(
+                operating_system=operating_system, vm_name=vm_name, location=location
+            ),
+        )
+        return output["rows"][0]
+    return None

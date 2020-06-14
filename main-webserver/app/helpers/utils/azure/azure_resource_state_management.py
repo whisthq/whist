@@ -1,5 +1,6 @@
 from app import *
 from app.helpers.utils.azure.azure_general import *
+from app.helpers.utils.azure.azure_resource_locks import *
 from app.helpers.utils.azure.azure_helpers.azure_resource_state_management_helpers import *
 
 
@@ -131,3 +132,99 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=None):
             level=logging.CRITICAL,
         )
         return -1
+
+
+def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, s=None):
+    """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary 
+    (big brain thoughts from Ming)
+
+    Args:
+        vm_name (str): Name of the vm to start
+        needs_restart (bool, optional): Whether the vm needs to restart after. Defaults to False.
+
+    Returns:
+        int: 1 for success, -1 for failure
+    """
+    fractalLog(
+        "fractalVMStart() called on VM {vm_name}, need_restart is {needs_restart}, needs_winlogon is {needs_winlogon}".format(
+            vm_name=vm_name,
+            needs_restart=str(needs_restart),
+            needs_winlogon=str(needs_winlogon),
+        )
+    )
+
+    _, compute_client, _ = createClients()
+
+    started = False
+    start_attempts = 0
+
+    # We will try to start/restart the VM and wait for it three times in total before giving up
+    while not started and start_attempts < 3:
+        start_command_tries = 0
+
+        # First, send a basic start or restart command. Try three times, if it fails, give up
+
+        if s:
+            s.update_state(
+                state="PENDING",
+                meta={"msg": "Cloud PC successfully received boot request."},
+            )
+
+        while (
+            sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=s) < 0
+            and start_command_tries < 4
+        ):
+            time.sleep(10)
+            start_command_tries += 1
+
+        if start_command_tries >= 4:
+            return -1
+
+        wake_retries = 0
+
+        # After the VM has been started/restarted, query the state. Try 12 times for the state to be running. If it is not running,
+        # give up and go to the top of the while loop to send another start/restart command
+
+        vm_state = compute_client.virtual_machines.instance_view(
+            resource_group_name=os.getenv("VM_GROUP"), vm_name=vm_name
+        )
+
+        # Success! VM is running and ready to use
+
+        if "running" in vm_state.statuses[1].code:
+            lockVMAndUpdate(
+                vm_name, "RUNNING_AVAILABLE", False, temporary_lock=None,
+            )
+            started = True
+            return 1
+
+        # Wait a minute to see if the state changes to running
+
+        while not "running" in vm_state.statuses[1].code and wake_retries < 12:
+            fractalLog(
+                "fractalVMStart() found that, after sending a start command, VM {vm_name} is still in state {state}".format(
+                    vm_name=vm_name, state=vm_state.statuses[1].code
+                ),
+                level=logging.WARNING,
+            )
+
+            time.sleep(5)
+
+            vm_state = compute_client.virtual_machines.instance_view(
+                resource_group_name=os.getenv("VM_GROUP"), vm_name=vm_name
+            )
+
+            # Success! VM is running and ready to use
+
+            if "running" in vm_state.statuses[1].code:
+                lockVMAndUpdate(
+                    vm_name, "RUNNING_AVAILABLE", False, temporary_lock=None,
+                )
+                started = True
+                return 1
+
+            wake_retries += 1
+
+        start_attempts += 1
+
+    return -1

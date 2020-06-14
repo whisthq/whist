@@ -13,13 +13,15 @@ def azure_vm_post(action, **kwargs):
     if action == "create":
         vm_size = kwargs["body"]["vm_size"]
         location = kwargs["body"]["location"]
-        operating_system = "Windows"
+        operating_system = (
+            "Windows"
+            if kwargs["body"]["operating_system"].upper() == "Windows"
+            else "Linux"
+        )
+
         admin_password = None
         if "admin_password" in kwargs["body"].keys():
             admin_password = kwargs["body"]["admin_password"]
-
-        if "operating_system" in kwargs["body"].keys():
-            operating_system = kwargs["body"]["operating_system"]
 
         task = createVM.apply_async(
             [vm_size, location, operating_system, admin_password]
