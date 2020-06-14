@@ -30,7 +30,7 @@ from haikunator import Haikunator
 from dotenv import *
 from flask_sqlalchemy import *
 from flask_migrate import Migrate
-from celery import Celery, uuid
+from celery import Celery, uuid, task
 from flask import *
 from sqlalchemy.sql import text
 from jose import jwt

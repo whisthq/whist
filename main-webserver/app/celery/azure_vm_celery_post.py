@@ -4,7 +4,7 @@ from app.helpers.utils.azure.azure_resource_creation import *
 from app.helpers.utils.azure.azure_resource_state_management import *
 
 
-@celery.task(bind=True)
+@celery_instance.task(bind=True)
 def createVM(self, vm_size, location, operating_system, admin_password=None):
     """Creates a windows vm of size vm_size in Azure region location
 
