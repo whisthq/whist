@@ -20,22 +20,6 @@ Includes
 
 /*
 ============================
-Defines
-============================
-*/
-
-#define HOST_PUBLIC_KEY                                           \
-    "ecdsa-sha2-nistp256 "                                        \
-    "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOT1KV+" \
-    "I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/"     \
-    "Zt86r9dOzEcfrhxa+MnVQhNE8="
-
-#define HOST_PUBLIC_KEY_PATH "ssh_host_ecdsa_key.pub"
-#define CLIENT_PRIVATE_KEY_PATH "sshkey"
-#define MAX_NUM_CONNECTION_ATTEMPTS (3)
-
-/*
-============================
 Public Functions
 ============================
 */

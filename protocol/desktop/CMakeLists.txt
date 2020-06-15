@@ -5,13 +5,9 @@
 add_executable(FractalClient
         main.c
         main.h
+        video.c
         audio.c
-        desktop_utils.c
-        network.c
-        sdl_event_handler.c
-        sdl_utils.c
-        server_message_handler.c
-        video.c)
+        sdl_utils.c)
 
 # set the build directory
 set_target_properties(FractalClient PROPERTIES
