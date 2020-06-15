@@ -548,7 +548,7 @@ int32_t SendAudio(void* opaque) {
 }
 
 void SetTimezoneFromUtc(int utc, int DST_flag) {
-#ifndef _WIN_32
+#ifndef _WIN32
     // TODO come back to this when we have sudo password on linux server
     //    char cmd[5000];
     //    // Negative one because UNIX UTC values are flipped from usual. West
