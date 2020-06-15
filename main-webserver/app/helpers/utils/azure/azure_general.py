@@ -69,19 +69,22 @@ def getVMIP(vm_name):
     Returns:
         str: The ipv4 address
     """
-    vm = createVMInstance(vm_name)
+    try:
+        vm = createVMInstance(vm_name)
 
-    _, _, network_client = createClients()
-    ni_reference = vm.network_profile.network_interfaces[0]
-    ni_reference = ni_reference.id.split("/")
-    ni_group = ni_reference[4]
-    ni_name = ni_reference[8]
+        _, _, network_client = createClients()
+        ni_reference = vm.network_profile.network_interfaces[0]
+        ni_reference = ni_reference.id.split("/")
+        ni_group = ni_reference[4]
+        ni_name = ni_reference[8]
 
-    net_interface = network_client.network_interfaces.get(ni_group, ni_name)
-    ip_reference = net_interface.ip_configurations[0].public_ip_address
-    ip_reference = ip_reference.id.split("/")
-    ip_group = ip_reference[4]
-    ip_name = ip_reference[8]
+        net_interface = network_client.network_interfaces.get(ni_group, ni_name)
+        ip_reference = net_interface.ip_configurations[0].public_ip_address
+        ip_reference = ip_reference.id.split("/")
+        ip_group = ip_reference[4]
+        ip_name = ip_reference[8]
 
-    public_ip = network_client.public_ip_addresses.get(ip_group, ip_name)
-    return public_ip.ip_address
+        public_ip = network_client.public_ip_addresses.get(ip_group, ip_name)
+        return public_ip.ip_address
+    except Exception as e:
+        return str(e)

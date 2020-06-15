@@ -31,3 +31,16 @@ def azure_vm_post(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+
+
+@azure_vm_bp.route("/azure_vm", methods=["GET"])
+@fractalPreProcess
+def azure_vm_get(action, **kwargs):
+    if action == "ip":
+        # Gets the IP address of a VM using Azure SDK
+
+        vm_name = request.args.get("vm_name")
+
+        output = ipHelper(vm_name)
+
+        return jsonify(output), output["status"]

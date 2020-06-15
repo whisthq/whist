@@ -7,13 +7,24 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock):
     new_params = {"state": state, "lock": lock}
 
     if temporary_lock:
-        temporary_lock = min(MAX_LOCK_TIME, temporary_lock)
-        temporary_lock = shiftUnixByMinutes(dateToUnix(getToday()), temporary_lock)
+        new_temporary_lock = min(MAX_LOCK_TIME, temporary_lock)
+        new_temporary_lock = shiftUnixByMinutes(dateToUnix(getToday()), temporary_lock)
 
-        new_params["temporary_lock"] = temporary_lock
+        new_params["temporary_lock"] = new_temporary_lock
 
-    fractalSQLUpdate(
+    fractalLog(
+        "lockVMAndUpdate() | VM {vm_name} | State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
+            vm_name=vm_name,
+            state=state,
+            lock=str(lock),
+            temporary_lock=str(temporary_lock),
+        )
+    )
+
+    output = fractalSQLUpdate(
         table_name="v_ms",
         conditional_params={"vm_name": "vm_name"},
-        new_params={"state": state, "lock": lock,},
+        new_params=new_params,
     )
+
+    print(str(output))
