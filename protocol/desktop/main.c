@@ -827,7 +827,7 @@ int main(int argc, char* argv[]) {
 #else
         char* response = malloc(sizeof(char) * 200);
         runcmd("cat /etc/timezone", &response);
-        strcpy(&fmsg.time_data.linux_tz_name, response);
+        strcpy(fmsg.time_data.linux_tz_name, response);
         free(response);
 #endif
         SendFmsg(&fmsg);
