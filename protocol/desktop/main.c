@@ -825,18 +825,11 @@ int main(int argc, char* argv[]) {
         fmsg.time_data.UTC_Offset = GetUTCOffset();
         fmsg.time_data.DST_flag = GetDST();
         fmsg.time_data.use_win_name = 0;
-        fmsg.time_data.use_linux_name = 1;
-#ifdef __APPLE__
-        runcmd("path=$(readlink /etc/localtime); echo ${path#\"/var/db/timezone/zoneinfo\"}", &fmsg.time_data.use_linux_name);
-#else
-        runcmd("cat /etc/timezone", &fmsg.time_data.use_linux_name);
-#endif
         SendFmsg(&fmsg);
 #else
         char* win_tz_name = malloc(sizeof(char) * 200);
         runcmd("powershell.exe '$tz = Get-TimeZone; $tz.Id' ", &win_tz_name);
         fmsg.time_data.use_win_name = 1;
-        fmsg.time_data.use_linux_name = 0;
         strcpy(fmsg.time_data.win_tz_name, win_tz_name);
         SendFmsg(&fmsg);
         LOG_INFO("Sending Windows TimeZone %s", fmsg.time_data.win_tz_name);
