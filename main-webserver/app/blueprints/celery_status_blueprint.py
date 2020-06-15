@@ -7,7 +7,7 @@ celery_status_bp = Blueprint("celery_status_bp", __name__)
 @fractalPreProcess
 def celery_status(task_id, **kwargs):
     try:
-        result = celery.AsyncResult(task_id)
+        result = celery_instance.AsyncResult(task_id)
         if result.status == "SUCCESS":
             response = {
                 "state": result.status,
@@ -17,9 +17,11 @@ def celery_status(task_id, **kwargs):
         else:
             response = {"state": result.status, "output": str(result.info)}
             return make_response(jsonify(response), 200)
-    except:
+    except Exception as e:
         response = {
             "state": "FAILURE",
-            "output": "Received an Exception that could not be processed",
+            "output": "Received an Exception that could not be processed: {error}".format(
+                error=str(e)
+            ),
         }
         return make_response(jsonify(response), 400)
