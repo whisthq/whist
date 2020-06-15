@@ -529,9 +529,10 @@ int ReceiveMessage(FractalPacket* packet) {
     "I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/"     \
     "Zt86r9dOzEcfrhxa+MnVQhNE8="
 
-int parseArgs(int argc, char *argv[]) {
-    char *usage = "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH]"
-                  " [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE] [[OPTIONAL] SPECTATE]\n";
+int parseArgs(int argc, char* argv[]) {
+    char* usage =
+        "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH]"
+        " [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE] [[OPTIONAL] SPECTATE]\n";
     int num_required_args = 1;
     int num_optional_args = 4;
     if (argc - 1 < num_required_args ||
@@ -579,8 +580,7 @@ int parseArgs(int argc, char *argv[]) {
     }
 
     is_spectator = false;
-    if( argc == 6 )
-    {
+    if (argc == 6) {
         is_spectator = true;
     }
 
@@ -588,7 +588,6 @@ int parseArgs(int argc, char *argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-
 #ifndef _WIN32
     runcmd("chmod 600 sshkey", NULL);
     // files can't be written to a macos app bundle, so they need to be
@@ -674,104 +673,101 @@ int main(int argc, char* argv[]) {
         // First context: Sending packets to server
 
         bool using_stun = true;
-        SocketContext PacketReceiveContext = { 0 };
+        SocketContext PacketReceiveContext = {0};
 
-        if( is_spectator )
-        {
-            if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                  PORT_SPECTATOR, 10, 500, true ) < 0 )
-            {
-                LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+        if (is_spectator) {
+            if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
+                                 PORT_SPECTATOR, 10, 500, true) < 0) {
+                LOG_INFO(
+                    "Server is not on STUN, attempting to connect directly");
                 using_stun = false;
-                if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                      PORT_SPECTATOR, 10, 500, false ) < 0 )
-                {
-                    LOG_WARNING( "Failed to connect to server" );
+                if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
+                                     PORT_SPECTATOR, 10, 500, false) < 0) {
+                    LOG_WARNING("Failed to connect to server");
                     continue;
                 }
             }
 
-            FractalPacket* init_spectator = ReadUDPPacket( &PacketReceiveContext );
+            FractalPacket* init_spectator =
+                ReadUDPPacket(&PacketReceiveContext);
             clock init_spectator_timer;
-            StartTimer( &init_spectator_timer );
-            while( !init_spectator && GetTimer( init_spectator_timer ) < 1.0 )
-            {
-                SDL_Delay( 5 );
-                init_spectator = ReadUDPPacket( &PacketReceiveContext );
+            StartTimer(&init_spectator_timer);
+            while (!init_spectator && GetTimer(init_spectator_timer) < 1.0) {
+                SDL_Delay(5);
+                init_spectator = ReadUDPPacket(&PacketReceiveContext);
             }
 
-            if( init_spectator )
-            {
+            if (init_spectator) {
                 FractalServerMessage* fmsg = init_spectator->data;
-                LOG_INFO( "SPECTATOR PORT: %d", fmsg->spectator_port );
+                LOG_INFO("SPECTATOR PORT: %d", fmsg->spectator_port);
 
-                closesocket( PacketReceiveContext.s );
+                closesocket(PacketReceiveContext.s);
 
-                if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                      fmsg->spectator_port, 10, 500, true ) < 0 )
-                {
-                    LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+                if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
+                                     fmsg->spectator_port, 10, 500, true) < 0) {
+                    LOG_INFO(
+                        "Server is not on STUN, attempting to connect "
+                        "directly");
                     using_stun = false;
-                    if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                          fmsg->spectator_port, 10, 500, false ) < 0 )
-                    {
-                        LOG_WARNING( "Failed to connect to server" );
+                    if (CreateUDPContext(&PacketReceiveContext,
+                                         (char*)server_ip, fmsg->spectator_port,
+                                         10, 500, false) < 0) {
+                        LOG_WARNING("Failed to connect to server");
                         continue;
                     }
                 }
 
                 PacketSendContext = PacketReceiveContext;
-            } else
-            {
-                closesocket( PacketReceiveContext.s );
-                LOG_WARNING( "DID NOT RECEIVE SPECTATOR INIT FROM SERVER" );
+            } else {
+                closesocket(PacketReceiveContext.s);
+                LOG_WARNING("DID NOT RECEIVE SPECTATOR INIT FROM SERVER");
                 continue;
             }
-        } else
-        {
-            if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
-                                  PORT_CLIENT_TO_SERVER, 10, 500, true ) < 0 )
-            {
-                LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+        } else {
+            if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
+                                 PORT_CLIENT_TO_SERVER, 10, 500, true) < 0) {
+                LOG_INFO(
+                    "Server is not on STUN, attempting to connect directly");
                 using_stun = false;
-                if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
-                                      PORT_CLIENT_TO_SERVER, 10, 500, false ) < 0 )
-                {
-                    LOG_WARNING( "Failed to connect to server" );
+                if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
+                                     PORT_CLIENT_TO_SERVER, 10, 500,
+                                     false) < 0) {
+                    LOG_WARNING("Failed to connect to server");
                     continue;
                 }
             }
 
-            SDL_Delay( 150 );
+            SDL_Delay(150);
 
             // Second context: Receiving packets from server
 
-            if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                  PORT_SERVER_TO_CLIENT, 1, 500, using_stun ) < 0 )
-            {
-                LOG_ERROR( "Failed finish connection to server" );
-                closesocket( PacketSendContext.s );
+            if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
+                                 PORT_SERVER_TO_CLIENT, 1, 500,
+                                 using_stun) < 0) {
+                LOG_ERROR("Failed finish connection to server");
+                closesocket(PacketSendContext.s);
                 continue;
             }
 
             int a = 65535;
-            if( setsockopt( PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof( int ) ) == -1 )
-            {
-                fprintf( stderr, "Error setting socket opts: %s\n", strerror( errno ) );
+            if (setsockopt(PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF,
+                           (const char*)&a, sizeof(int)) == -1) {
+                fprintf(stderr, "Error setting socket opts: %s\n",
+                        strerror(errno));
             }
 
-            SDL_Delay( 150 );
+            SDL_Delay(150);
 
             // Third context: Mutual TCP context for essential but
             // not-speed-sensitive applications
 
-            if( CreateTCPContext( &PacketTCPContext, (char*)server_ip,
-                                  PORT_SHARED_TCP, 1, tcp_connection_timeout, using_stun ) < 0 )
-            {
-                LOG_ERROR( "Failed finish connection to server" );
+            if (CreateTCPContext(&PacketTCPContext, (char*)server_ip,
+                                 PORT_SHARED_TCP, 1, tcp_connection_timeout,
+                                 using_stun) < 0) {
+                LOG_ERROR("Failed finish connection to server");
                 tcp_connection_timeout += 250;
-                closesocket( PacketSendContext.s );
-                closesocket( PacketReceiveContext.s );
+                closesocket(PacketSendContext.s);
+                closesocket(PacketReceiveContext.s);
                 continue;
             }
         }
@@ -797,21 +793,18 @@ int main(int argc, char* argv[]) {
         bool lgui_pressed = false;
         bool rgui_pressed = false;
 
-        if( !is_spectator )
-        {
+        if (!is_spectator) {
             clock waiting_for_init_timer;
-            StartTimer( &waiting_for_init_timer );
-            while( !received_server_init_message )
-            {
+            StartTimer(&waiting_for_init_timer);
+            while (!received_server_init_message) {
                 // If 500ms and no init timer was received, we should disconnect
                 // because something failed
-                if( GetTimer( waiting_for_init_timer ) > 500 / 1000.0 )
-                {
-                    LOG_ERROR( "Took too long for init timer!" );
+                if (GetTimer(waiting_for_init_timer) > 500 / 1000.0) {
+                    LOG_ERROR("Took too long for init timer!");
                     exiting = true;
                     break;
                 }
-                SDL_Delay( 25 );
+                SDL_Delay(25);
             }
         }
 
@@ -825,11 +818,24 @@ int main(int argc, char* argv[]) {
         fmsg.time_data.UTC_Offset = GetUTCOffset();
         fmsg.time_data.DST_flag = GetDST();
         fmsg.time_data.use_win_name = 0;
+        fmsg.time_data.use_linux_name = 1;
+#ifdef __APPLE__
+        runcmd(
+            "path=$(readlink /etc/localtime); echo "
+            "${path#\"/var/db/timezone/zoneinfo\"}",
+            &fmsg.time_data.use_linux_name);
+#else
+        char* response = malloc(sizeof(char) * 200);
+        runcmd("cat /etc/timezone", &response);
+        strcpy(fmsg.time_data.linux_tz_name, response);
+        free(response);
+#endif
         SendFmsg(&fmsg);
 #else
         char* win_tz_name = malloc(sizeof(char) * 200);
         runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
         fmsg.time_data.use_win_name = 1;
+        fmsg.time_data.use_linux_name = 0;
         strcpy(fmsg.time_data.win_tz_name, win_tz_name);
         SendFmsg(&fmsg);
         LOG_INFO("Sending Windows TimeZone %s", fmsg.time_data.win_tz_name);
@@ -845,9 +851,8 @@ int main(int argc, char* argv[]) {
             // Send acks to sockets every 5 seconds
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);
-                if( !is_spectator )
-                {
-                    Ack( &PacketTCPContext );
+                if (!is_spectator) {
+                    Ack(&PacketTCPContext);
                 }
                 StartTimer(&ack_timer);
             }
@@ -894,7 +899,7 @@ int main(int argc, char* argv[]) {
                                 get_window_pixel_width((SDL_Window*)window);
                             output_height =
                                 get_window_pixel_height((SDL_Window*)window);
-                            set_video_active_resizing( false );
+                            set_video_active_resizing(false);
 
                             // Let the server know the new dimensions so that it
                             // can change native dimensions for monitor
@@ -1017,9 +1022,8 @@ int main(int argc, char* argv[]) {
         // Close all open sockets
         closesocket(PacketSendContext.s);
         closesocket(PacketReceiveContext.s);
-        if( !is_spectator )
-        {
-            closesocket( PacketTCPContext.s );
+        if (!is_spectator) {
+            closesocket(PacketTCPContext.s);
         }
 
 #if defined(_WIN32)

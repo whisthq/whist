@@ -404,17 +404,15 @@ int32_t SendVideo(void* opaque) {
                         0) {
                         LOG_WARNING("Could not send video frame ID %d", id);
                     } else {
-                        for( int i = 0; i < num_spectator_connections; i++ )
-                        {
-                            if( SendUDPPacket(
-                                &SpectatorSendContext[i],
-                                PACKET_VIDEO, (uint8_t*)frame,
-                                frame_size, id, STARTING_BURST_BITRATE,
-                                NULL,
-                                NULL ) <
-                                0 )
-                            {
-                                LOG_WARNING( "Could not send video frame ID %d to spectator %d", id, i );
+                        for (int i = 0; i < num_spectator_connections; i++) {
+                            if (SendUDPPacket(
+                                    &SpectatorSendContext[i], PACKET_VIDEO,
+                                    (uint8_t*)frame, frame_size, id,
+                                    STARTING_BURST_BITRATE, NULL, NULL) < 0) {
+                                LOG_WARNING(
+                                    "Could not send video frame ID %d to "
+                                    "spectator %d",
+                                    id, i);
                             }
                         }
                         // Only increment ID if the send succeeded
@@ -549,15 +547,24 @@ int32_t SendAudio(void* opaque) {
     return 0;
 }
 
-void SetTimezoneFromUtc(int utc, int DST_flag){
+void SetTimezoneFromUtc(int utc, int DST_flag) {
+#ifndef _WIN_32
+    // TODO come back to this when we have sudo password on linux server
+    //    char cmd[5000];
+    //    // Negative one because UNIX UTC values are flipped from usual. West
+    //    is positive and east is negative. sprintf(cmd,"echo {INSERT PASSWORD
+    //    HERE WHEN WE CAN} | sudo -S timedatectl set-timezoneEtc/GMT%d\0",
+    //    -1*utc);
+    return;
+#else
     LOG_INFO("UTC iffset start of function %d", utc);
-    if (DST_flag > 0){
+    if (DST_flag > 0) {
         utc = utc - 1;
     }
     char* timezone;
     //    Open powershell " here closing " in timezone
     char cmd[5000] = "powershell.exe \"Set-TimeZone -Id \0";
-    switch(utc){
+    switch (utc) {
         case -12:
             timezone = " 'Dateline Standard Time' \" \0";
             break;
@@ -616,12 +623,23 @@ void SetTimezoneFromUtc(int utc, int DST_flag){
     snprintf(cmd + strlen(cmd), strlen(timezone), timezone);
     char* response = malloc(sizeof(char) * 200);
     runcmd(cmd, &response);
-    printf("command: %s \n", cmd);
-    printf("response: %s \n", response);
+    LOG_INFO("Timezone powershell command: %s \n", cmd);
     free(response);
+#endif
 }
 
-void SetTimezoneFromWindowsName(char* win_tz_name){
+void SetTimezoneFromIANAName(char* linux_tz_name) {
+    // TODO we need the sudo password on the server to set the time
+    // when we get around to implementing that we should update this function to
+    // actually work
+    //    char cmd[500] = "echo {INSERT PASSWORD HERE WHEN WE CAN} | sudo -S
+    //    timedatectl set-timezone "; snprintf(cmd + strlen(cmd),
+    //    strlen(linux_tz_name), linux_tz_name);
+    (void*)linux_tz_name;  // silence unused variable warning
+    return;
+}
+
+void SetTimezoneFromWindowsName(char* win_tz_name) {
     char cmd[500] = "powershell.exe 'Set-TimeZone -Id \0";
     snprintf(cmd + strlen(cmd), strlen(win_tz_name), win_tz_name);
 }
@@ -669,13 +687,11 @@ void update() {
 
 #include <time.h>
 
-int MultithreadedWaitForSpectator( void* opaque ) {
+int MultithreadedWaitForSpectator(void* opaque) {
     opaque;
     while (connected) {
         SocketContext socket;
-        if (CreateUDPContext(&socket,
-                             NULL, PORT_SPECTATOR,
-                             1, 5000,
+        if (CreateUDPContext(&socket, NULL, PORT_SPECTATOR, 1, 5000,
                              USING_STUN) < 0) {
             LOG_INFO("Waiting for spectator");
             continue;
@@ -685,19 +701,20 @@ int MultithreadedWaitForSpectator( void* opaque ) {
         fmsg.type = MESSAGE_INIT;
         fmsg.spectator_port = PORT_SPECTATOR + 1 + num_spectator_connections;
 
-        if (SendUDPPacket(&socket, PACKET_MESSAGE,
-                          (uint8_t*)&fmsg,
-                          sizeof(FractalServerMessage), 1, -1, NULL, NULL) < 0) {
+        if (SendUDPPacket(&socket, PACKET_MESSAGE, (uint8_t*)&fmsg,
+                          sizeof(FractalServerMessage), 1, -1, NULL,
+                          NULL) < 0) {
             LOG_ERROR("Could not send spectator init message!");
             return -1;
         }
 
-        closesocket( socket.s );
+        closesocket(socket.s);
 
         LOG_INFO("SPECTATOR #%d HANDSHAKE!", num_spectator_connections);
         if (CreateUDPContext(&SpectatorSendContext[num_spectator_connections],
-                             NULL, PORT_SPECTATOR + 1 + num_spectator_connections,
-                             1, 5000, USING_STUN) < 0) {
+                             NULL,
+                             PORT_SPECTATOR + 1 + num_spectator_connections, 1,
+                             5000, USING_STUN) < 0) {
             LOG_INFO("Waiting for spectator");
             continue;
         }
@@ -1113,15 +1130,31 @@ int main() {
                     // Client requested to exit, it's time to disconnect
                     LOG_INFO("Client Quit");
                     connected = false;
-                } else if (fmsg->type == MESSAGE_TIME){
+                } else if (fmsg->type == MESSAGE_TIME) {
                     LOG_INFO("Recieving a message time packet");
-                    if (fmsg->time_data.use_win_name){
-                        LOG_INFO("Setting time from windows time zone %s", fmsg->time_data.win_tz_name);
+#ifdef _WIN32
+                    if (fmsg->time_data.use_win_name) {
+                        LOG_INFO("Setting time from windows time zone %s",
+                                 fmsg->time_data.win_tz_name);
                         SetTimezoneFromWindowsName(fmsg->time_data.win_tz_name);
                     } else {
-                        LOG_INFO("Setting time from UTC offset %d", fmsg->time_data.win_tz_name);
-                        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
+                        LOG_INFO("Setting time from UTC offset %d",
+                                 fmsg->time_data.win_tz_name);
+                        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset,
+                                           fmsg->time_data.DST_flag);
                     }
+#else
+                    if (fmsg->time_data.use_linux_name) {
+                        LOG_INFO("Setting time from IANA time zone %s",
+                                 fmsg->time_data.win_tz_name);
+                        SetTimezoneFromIANAName(fmsg->time_data.win_tz_name);
+                    } else {
+                        LOG_INFO("Setting time from UTC offset %d",
+                                 fmsg->time_data.win_tz_name);
+                        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset,
+                                           fmsg->time_data.DST_flag);
+                    }
+#endif
                 }
             }
         }
