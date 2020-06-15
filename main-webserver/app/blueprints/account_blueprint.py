@@ -15,7 +15,7 @@ def account_no_auth(action, **kwargs):
 
         output = loginHelper(username, password)
 
-        return jsonify(output), 200
+        return jsonify(output), SUCCESS
 
     elif action == "register":
         # Account creation endpoint
