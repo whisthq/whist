@@ -14,14 +14,8 @@ def celery_status(task_id, **kwargs):
                 "output": result.result,
             }
             return make_response(jsonify(response), 200)
-        elif result.status == "FAILURE":
-            response = {"state": result.status, "output": result.info}
-            return make_response(jsonify(response), 200)
-        elif result.status == "PENDING":
-            response = {"state": result.status, "output": result.info}
-            return make_response(jsonify(response), 200)
         else:
-            response = {"state": result.status, "output": None}
+            response = {"state": result.status, "output": str(result.info)}
             return make_response(jsonify(response), 200)
     except:
         response = {

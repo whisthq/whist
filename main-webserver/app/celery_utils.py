@@ -3,7 +3,7 @@ def init_celery(celery, app):
         task_track_started=True,
         accept_content=["json"],
         result_accept_content=["json"],
-        worker_hijack_root_logger=True,
+        worker_hijack_root_logger=False,
     )
     TaskBase = celery.Task
 

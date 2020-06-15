@@ -15,7 +15,7 @@ def azure_vm_post(action, **kwargs):
         location = kwargs["body"]["location"]
         operating_system = (
             "Windows"
-            if kwargs["body"]["operating_system"].upper() == "Windows"
+            if kwargs["body"]["operating_system"].upper() == "WINDOWS"
             else "Linux"
         )
 
