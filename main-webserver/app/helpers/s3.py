@@ -52,6 +52,11 @@ def SendLogsToS3(content, sender, connection_id, vm_ip, version, ID=-1):
         file_name = file_name if file_name else ""
 
         if sender == "CLIENT":
+            print(
+                "CLIENT logs came from IP {} with username {}".format(
+                    str(vm_ip), str(username)
+                )
+            )
             command = text(
                 """
 				SELECT * FROM logs WHERE "connection_id" = :connection_id
@@ -95,6 +100,11 @@ def SendLogsToS3(content, sender, connection_id, vm_ip, version, ID=-1):
                 conn.execute(command, **params)
 
         elif sender == "SERVER":
+            print(
+                "SERVER logs came from IP {} with username {}".format(
+                    str(vm_ip), str(username)
+                )
+            )
             command = text(
                 """
 				SELECT * FROM logs WHERE "connection_id" = :connection_id

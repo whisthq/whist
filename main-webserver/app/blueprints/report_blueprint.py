@@ -68,7 +68,14 @@ def statusReport(action, **kwargs):
     elif action == "userReport" and request.method == "POST":
         body = request.get_json()
         today = dt.now()
-        command = text("")
+        command = text(
+            """
+            SELECT *
+            FROM login_history
+            WHERE "username" = :username AND timestamp > :date AND is_user = true
+            ORDER BY timestamp ASC
+            """
+        )
         params = {}
         if body["timescale"] == "day":
             command = text(
@@ -77,32 +84,18 @@ def statusReport(action, **kwargs):
             )
         elif body["timescale"] == "week":
             lastWeek = today - datetime.timedelta(days=7)
-            command = text(
-                """
-                SELECT *
-                FROM login_history
-                WHERE "username" = :username AND timestamp > :date AND is_user = true
-                ORDER BY timestamp ASC
-                """
-            )
             params = {
                 "username": body["username"],
                 "date": lastWeek.strftime("%m-%d-%y"),
             }
         elif body["timescale"] == "month":
             lastMonth = today - datetime.timedelta(days=30)
-            command = text(
-                """
-                SELECT *
-                FROM login_history
-                WHERE "username" = :username AND timestamp > :date AND is_user = true
-                ORDER BY timestamp ASC
-                """
-            )
             params = {
                 "username": body["username"],
                 "date": lastMonth.strftime("%m-%d-%y"),
             }
+        else:
+            return jsonify({}), 404
         try:
             with engine.connect() as conn:
                 report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
@@ -114,7 +107,97 @@ def statusReport(action, **kwargs):
         except:
             traceback.print_exc()
             return jsonify({}), 500
+    elif action == "totalUsage" and request.method == "GET":
+        today = dt.now()
+        command = text(
+            """
+            SELECT *
+            FROM login_history
+            WHERE timestamp > :date AND is_user = true
+            ORDER BY timestamp ASC
+            """
+        )
+        try:
+            with engine.connect() as conn:
+                params = {
+                    "date": dt.combine(today.date(), dt.min.time()).strftime(
+                        "%m-%d-%y"
+                    ),
+                }
+                report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                dayMins = totalMinutes(report)
+
+                params = {
+                    "date": (today - datetime.timedelta(days=7)).strftime("%m-%d-%y"),
+                }
+                report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                weekMins = totalMinutes(report)
+
+                params = {
+                    "date": (today - datetime.timedelta(days=30)).strftime("%m-%d-%y"),
+                }
+                report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                monthMins = totalMinutes(report)
+
+                return (
+                    jsonify({"day": dayMins, "week": weekMins, "month": monthMins}),
+                    200,
+                )
+        except:
+            traceback.print_exc()
+            return jsonify({}), 500
+    elif action == "signups" and request.method == "GET":
+        today = dt.now()
+        command = text(
+            """
+                SELECT COUNT(created)
+                FROM users
+                WHERE created > :timestamp
+            """
+        )
+        try:
+            with engine.connect() as conn:
+                params = {
+                    "timestamp": dt.combine(today.date(), dt.min.time()).timestamp(),
+                }
+                dayCount = cleanFetchedSQL(conn.execute(command, **params).fetchall())[
+                    0
+                ]["count"]
+                params = {
+                    "timestamp": (today - datetime.timedelta(days=7)).timestamp(),
+                }
+                weekCount = cleanFetchedSQL(conn.execute(command, **params).fetchall())[
+                    0
+                ]["count"]
+                params = {
+                    "timestamp": (today - datetime.timedelta(days=30)).timestamp()
+                }
+                monthCount = cleanFetchedSQL(
+                    conn.execute(command, **params).fetchall()
+                )[0]["count"]
+                return (
+                    jsonify({"day": dayCount, "week": weekCount, "month": monthCount}),
+                    200,
+                )
+        except:
+            traceback.print_exc()
+            return jsonify({}), 500
     return jsonify({}), 404
+
+
+def totalMinutes(report):
+    reportByUser = {}
+    for entry in report:
+        if entry["username"] in reportByUser:
+            reportByUser[entry["username"]].append(entry)
+        else:
+            reportByUser[entry["username"]] = [entry]
+    totalMinutes = 0
+    for userReport in reportByUser.values():
+        userMinutes = loginsToMinutes(userReport)
+        for userMinutesEntry in userMinutes:
+            totalMinutes += userMinutesEntry["minutes"]
+    return totalMinutes
 
 
 def loginsToMinutes(report):

@@ -120,8 +120,8 @@ def registerUser(username, password, token, name=None, reason_for_signup=None):
     code = genUniqueCode()
     command = text(
         """
-        INSERT INTO users("username", "password", "code", "id", "name", "reason_for_signup")
-        VALUES(:userName, :password, :code, :token, :name, :reason_for_signup)
+        INSERT INTO users("username", "password", "code", "id", "name", "reason_for_signup", "created")
+        VALUES(:userName, :password, :code, :token, :name, :reason_for_signup, :created)
         """
     )
     params = {
@@ -131,6 +131,7 @@ def registerUser(username, password, token, name=None, reason_for_signup=None):
         "token": token,
         "name": name,
         "reason_for_signup": reason_for_signup,
+        "created": dt.now(datetime.timezone.utc).timestamp(),
     }
     with engine.connect() as conn:
         try:
