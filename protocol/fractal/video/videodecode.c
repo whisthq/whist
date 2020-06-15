@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void destroy_video_decoder_members( video_decoder_t* decoder );
+void destroy_video_decoder_members(video_decoder_t* decoder);
 
 #define SHOW_DECODER_LOGS false
 
@@ -141,7 +141,7 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     avcodec_register_all();
 #endif
 
-    destroy_video_decoder_members( decoder );
+    destroy_video_decoder_members(decoder);
 
     int width = decoder->width;
     int height = decoder->height;
@@ -149,11 +149,13 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     if (decoder->type == DECODE_TYPE_SOFTWARE) {
         // BEGIN SOFTWARE DECODER
         LOG_INFO("Trying software decoder");
-#if !USING_H265
-        decoder->codec = avcodec_find_decoder_by_name("h264");
-#else
-        decoder->codec = avcodec_find_decoder_by_name("hevc");
-#endif
+
+        if (decoder->codec_type == CODEC_TYPE_H264) {
+            decoder->codec = avcodec_find_decoder_by_name("h264");
+        } else if (decoder->codec_type == CODEC_TYPE_H265) {
+            decoder->codec = avcodec_find_decoder_by_name("hevc");
+        }
+
         if (!decoder->codec) {
             LOG_WARNING("Could not find video codec");
             return -1;
@@ -178,12 +180,12 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     } else if (decoder->type == DECODE_TYPE_QSV) {
         // BEGIN QSV DECODER
         LOG_INFO("Trying QSV decoder");
-#if !USING_H265
-        decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
+        if (decoder->codec_type == CODEC_TYPE_H264) {
+            decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
+        } else if (decoder->codec_type == CODEC_TYPE_H265) {
+            decoder->codec = avcodec_find_decoder_by_name("hevc_qsv");
+        }
 
-#else
-        decoder->codec = avcodec_find_decoder_by_name("hevc_qsv");
-#endif
         decoder->context = avcodec_alloc_context3(decoder->codec);
         decoder->context->opaque = decoder;
         set_decoder_opts(decoder);
@@ -239,11 +241,11 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
             return -1;
         }
 
-#if !USING_H265
-        decoder->codec = avcodec_find_decoder_by_name("h264");
-#else
-        decoder->codec = avcodec_find_decoder_by_name("hevc");
-#endif
+        if (decoder->codec_type == CODEC_TYPE_H264) {
+            decoder->codec = avcodec_find_decoder_by_name("h264");
+        } else if (decoder->codec_type == CODEC_TYPE_H265) {
+            decoder->codec = avcodec_find_decoder_by_name("hevc");
+        }
 
         if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
             LOG_WARNING("alloccontext3 failed w/ error code: %d\n",
@@ -338,8 +340,8 @@ bool try_next_decoder(video_decoder_t* decoder) {
     }
 }
 
-video_decoder_t* create_video_decoder(int width, int height,
-                                      bool use_hardware) {
+video_decoder_t* create_video_decoder(int width, int height, bool use_hardware,
+                                      CodecType codec_type) {
 #if SHOW_DECODER_LOGS
     // av_log_set_level( AV_LOG_ERROR );
     av_log_set_callback(swap_decoder);
@@ -353,6 +355,7 @@ video_decoder_t* create_video_decoder(int width, int height,
     decoder->height = height;
     decoder->can_use_hardware = use_hardware;
     decoder->type = DECODE_TYPE_NONE;
+    decoder->codec_type = codec_type;
 
     if (!try_next_decoder(decoder)) {
         destroy_video_decoder(decoder);
@@ -366,36 +369,34 @@ video_decoder_t* create_video_decoder(int width, int height,
 /// @details frees FFmpeg decoder memory
 
 void destroy_video_decoder(video_decoder_t* decoder) {
-    destroy_video_decoder_members( decoder );
+    destroy_video_decoder_members(decoder);
 
     // free the buffer and decoder
     free(decoder);
     return;
 }
 
-void destroy_video_decoder_members( video_decoder_t* decoder )
-{
+void destroy_video_decoder_members(video_decoder_t* decoder) {
     // check if decoder decoder exists
-    if( decoder == NULL )
-    {
-        LOG_WARNING( "Cannot destroy decoder decoder." );
+    if (decoder == NULL) {
+        LOG_WARNING("Cannot destroy decoder decoder.");
         return;
     }
 
     /* flush the decoder */
     decoder->packet.data = NULL;
     decoder->packet.size = 0;
-    av_packet_unref( &decoder->packet );
-    avcodec_free_context( &decoder->context );
+    av_packet_unref(&decoder->packet);
+    avcodec_free_context(&decoder->context);
 
     // free the ffmpeg contextes
-    avcodec_close( decoder->context );
+    avcodec_close(decoder->context);
 
     // free the decoder context and frame
-    av_free( decoder->context );
-    av_frame_free( &decoder->sw_frame );
-    av_frame_free( &decoder->hw_frame );
-    av_buffer_unref( &decoder->ref );
+    av_free(decoder->context);
+    av_frame_free(&decoder->sw_frame);
+    av_frame_free(&decoder->hw_frame);
+    av_buffer_unref(&decoder->ref);
 }
 
 /// @brief decode a frame using the decoder decoder

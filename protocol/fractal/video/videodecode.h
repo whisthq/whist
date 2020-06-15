@@ -44,6 +44,7 @@ typedef struct video_decoder_t {
     AVPacket packet;
     enum AVPixelFormat match_fmt;
     DecodeType type;
+    CodecType codec_type;
     enum AVHWDeviceType device_type;
 } video_decoder_t;
 
@@ -61,10 +62,12 @@ Public Functions
  * @param width                    Width of the frames to decode
  * @param height                   Height of the frames to decode
  * @param use_hardware             Toggle whether to try to decode in hardware
+ * @param codec_type               Which codec type (h264 or h265) to use
  *
  * @returns                        The FFmpeg video decoder struct
  */
-video_decoder_t* create_video_decoder(int width, int height, bool use_hardware);
+video_decoder_t* create_video_decoder(int width, int height, bool use_hardware,
+                                      CodecType codec_type);
 
 /**
  * @brief                          Destroys an initialized FFmpeg video decoder

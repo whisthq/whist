@@ -81,7 +81,6 @@ Defines
 
 #define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
-#define USING_H265 true
 
 #if defined(_WIN32)
 // possible on windows, so let's do it
@@ -123,6 +122,8 @@ typedef enum EncodeType {
     NVENC_ENCODE = 1,
     QSV_ENCODE = 2
 } EncodeType;
+
+typedef enum CodecType { CODEC_TYPE_H264 = 1, CODEC_TYPE_H265 = 2 } CodecType;
 
 typedef enum FractalCursorID {
     CURSOR_ID_APPSTARTING = 32650,
@@ -408,6 +409,7 @@ typedef struct FractalClientMessage {
             int width;
             int height;
             int dpi;
+            CodecType codec_type;
         } dimensions;
 
         // MESSAGE_VIDEO_NACK or MESSAGE_AUDIO_NACK
