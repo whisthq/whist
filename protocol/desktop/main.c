@@ -825,7 +825,10 @@ int main(int argc, char* argv[]) {
             "${path#\"/var/db/timezone/zoneinfo\"}",
             &fmsg.time_data.use_linux_name);
 #else
-        runcmd("cat /etc/timezone", &fmsg.time_data.use_linux_name);
+        char* response = malloc(sizeof(char) * 200);
+        runcmd("cat /etc/timezone", &response);
+        strcpy(&fmsg.time_data.linux_tz_name, response);
+        free(response);
 #endif
         SendFmsg(&fmsg);
 #else
