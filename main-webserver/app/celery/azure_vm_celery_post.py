@@ -95,7 +95,7 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
 
     # Store VM in v_ms database
 
-    ip_address = getIP(vm_name)
+    ip_address = getVMIP(vm_name)
     fractalSQLInsert(
         table_name="v_ms",
         params={
