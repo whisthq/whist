@@ -23,8 +23,6 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock):
 
     output = fractalSQLUpdate(
         table_name="v_ms",
-        conditional_params={"vm_name": "vm_name"},
+        conditional_params={"vm_name": vm_name},
         new_params=new_params,
     )
-
-    print(str(output))
