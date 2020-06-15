@@ -1419,12 +1419,6 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
         if first_time:
             print("First time! Going to boot {} times".format(str(num_boots)))
 
-            print("Setting auto-login for {}".format(disk_name))
-            setAutoLogin(disk_name, vm_name, ID)
-            print("Auto-login set for {}".format(disk_name))
-
-            # TODO: set admin credentials using Azure
-
         for i in range(0, num_boots):
             if i == 1 and s:
                 s.update_state(
@@ -1458,6 +1452,11 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                 verbose=False,
                 ID=ID,
             )
+
+            if first_time:
+                print("Setting auto-login for {}".format(disk_name))
+                setAutoLogin(disk_name, vm_name, ID)
+                print("Auto-login set for {}".format(disk_name))
 
             if s:
                 s.update_state(
