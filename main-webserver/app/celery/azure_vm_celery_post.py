@@ -92,13 +92,19 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
 
     async_vm_start.wait()
 
-    self.update_state(
-        state="PENDING", meta={"msg": "VM {} started".format(vm_name)},
-    )
-
-    time.sleep(30)
-
     # Store VM in v_ms database
+
+    vm_instance = createVMInstance(vm_name)
+    disk_name = vm_instance.storage_profile.os_disk.name
+
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "VM {vm_name} with disk {disk_name} started".format(
+                vm_name=vm_name, disk_name=disk_name
+            )
+        },
+    )
 
     ip_address = getVMIP(vm_name)
     fractalSQLInsert(
@@ -111,6 +117,17 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
             "dev": False,
             "os": operating_system,
             "lock": True,
+            "disk_name": disk_name,
+        },
+    )
+
+    fractalSQLInsert(
+        table_name="disks",
+        params={
+            "disk_name": disk_name,
+            "location": location,
+            "state": "TO_BE_DELETED",
+            "disk_size": 120,
         },
     )
 
