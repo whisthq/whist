@@ -2,6 +2,7 @@ from app import *
 from app.helpers.utils.azure.azure_general import *
 from app.helpers.utils.azure.azure_resource_creation import *
 from app.helpers.utils.azure.azure_resource_state_management import *
+from app.helpers.utils.azure.azure_resource_locks import *
 
 
 @celery_instance.task(bind=True)
@@ -33,6 +34,8 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
         },
     )
 
+    # Generate a random VM name
+
     _, compute_client, _ = createClients()
     vm_name = createVMName()
 
@@ -40,6 +43,8 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
         state="PENDING",
         meta={"msg": "Creating NIC for VM {vm_name}".format(vm_name=vm_name)},
     )
+
+    # Create network resources
 
     nic = createNic(vm_name, location, 0)
 
@@ -65,6 +70,8 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
         meta={"msg": "Command to create VM {vm_name} started".format(vm_name=vm_name)},
     )
 
+    # Create VM
+
     async_vm_creation = compute_client.virtual_machines.create_or_update(
         os.getenv("VM_GROUP"), vm_name, vm_parameters["params"]
     )
@@ -77,9 +84,7 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
 
     time.sleep(10)
 
-    self.update_state(
-        state="PENDING", meta={"msg": "VM {} starting".format(vm_name)},
-    )
+    # Start VM
 
     async_vm_start = compute_client.virtual_machines.start(
         os.getenv("VM_GROUP"), vm_name
@@ -109,7 +114,11 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
         },
     )
 
+    # Make sure VM is started
+
     fractalVMStart(vm_name, needs_winlogon=False, s=self)
+
+    # Install NVIDIA GRID driver
 
     extension_parameters = (
         {
@@ -148,7 +157,11 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
         meta={"msg": "VM {} successfully installed NVIDIA extension".format(vm_name)},
     )
 
+    # Fetch VM columns from SQL and return
+
     output = fractalSQLSelect("v_ms", {"vm_name": vm_name})
+
+    lockVMAndUpdate(vm_name, "RUNNING_AVAILABLE", False, temporary_lock=None)
 
     if output["success"] and output["rows"]:
         fractalLog(

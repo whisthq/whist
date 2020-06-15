@@ -15,7 +15,11 @@ def celery_status(task_id, **kwargs):
             }
             return make_response(jsonify(response), 200)
         else:
-            response = {"state": result.status, "output": str(result.info)}
+            output = result.info
+            if isinstance(result.info, dict):
+                if "msg" in result.info.keys():
+                    output = result.info["msg"]
+            response = {"state": result.status, "output": str(output)}
             return make_response(jsonify(response), 200)
     except Exception as e:
         response = {
