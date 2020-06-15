@@ -554,9 +554,8 @@ void SetTimezoneFromUtc(int utc, int DST_flag){
         utc = utc - 1;
     }
     char* timezone;
-    char cmd[5000];
-//    Open powershell ' here closing ' in timezone
-    snprintf(cmd, 17, "powershell.exe 'Set-TimeZone -Id ");
+    //    Open powershell ' here closing ' in timezone
+    char cmd[5000] = "powershell.exe 'Set-TimeZone -Id \0";
     switch(utc){
         case -12:
             timezone = " 'Dateline Standard Time' ' \0";
@@ -622,8 +621,7 @@ void SetTimezoneFromUtc(int utc, int DST_flag){
 }
 
 void SetTimezoneFromWindowsName(char* win_tz_name){
-    char cmd[500];
-    snprintf(cmd, 17, "powershell.exe 'Set-TimeZone -Id ");
+    char cmd[500] = "powershell.exe 'Set-TimeZone -Id \0";
     snprintf(cmd + strlen(cmd), strlen(win_tz_name), win_tz_name);
 }
 
