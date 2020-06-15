@@ -550,6 +550,13 @@ int32_t SendAudio(void* opaque) {
 }
 
 void SetTimezoneFromUtc(int utc, int DST_flag){
+#ifndef  _WIN_32
+//TODO come back to this when we have sudo password on linux server
+//    char cmd[5000];
+//    // Negative one because UNIX UTC values are flipped from usual. West is positive and east is negative.
+//    sprintf(cmd,"echo {INSERT PASSWORD HERE WHEN WE CAN} | sudo -S timedatectl set-timezoneEtc/GMT%d\0", -1*utc);
+    return;
+#else
     LOG_INFO("UTC iffset start of function %d", utc);
     if (DST_flag > 0){
         utc = utc - 1;
@@ -616,9 +623,18 @@ void SetTimezoneFromUtc(int utc, int DST_flag){
     snprintf(cmd + strlen(cmd), strlen(timezone), timezone);
     char* response = malloc(sizeof(char) * 200);
     runcmd(cmd, &response);
-    printf("command: %s \n", cmd);
-    printf("response: %s \n", response);
+    LOG_INFO("Timezone powershell command: %s \n", cmd);
     free(response);
+#endif
+}
+
+void SetTimezoneFromIANAName(char* linux_tz_name){
+//TODO we need the sudo password on the server to set the time
+// when we get around to implementing that we should update this function to actually work
+//    char cmd[500] = "echo {INSERT PASSWORD HERE WHEN WE CAN} | sudo -S timedatectl set-timezone ";
+//    snprintf(cmd + strlen(cmd), strlen(linux_tz_name), linux_tz_name);
+    (void*) linux_tz_name; // silence unused variable warning
+    return;
 }
 
 void SetTimezoneFromWindowsName(char* win_tz_name){
@@ -1115,6 +1131,7 @@ int main() {
                     connected = false;
                 } else if (fmsg->type == MESSAGE_TIME){
                     LOG_INFO("Recieving a message time packet");
+#ifdef  _WIN32
                     if (fmsg->time_data.use_win_name){
                         LOG_INFO("Setting time from windows time zone %s", fmsg->time_data.win_tz_name);
                         SetTimezoneFromWindowsName(fmsg->time_data.win_tz_name);
@@ -1122,6 +1139,15 @@ int main() {
                         LOG_INFO("Setting time from UTC offset %d", fmsg->time_data.win_tz_name);
                         SetTimezoneFromUtc(fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
                     }
+#else
+                    if (fmsg->time_data.use_linux_name){
+                        LOG_INFO("Setting time from IANA time zone %s", fmsg->time_data.win_tz_name);
+                        SetTimezoneFromIANAName(fmsg->time_data.win_tz_name);
+                    } else {
+                        LOG_INFO("Setting time from UTC offset %d", fmsg->time_data.win_tz_name);
+                        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
+                    }
+#endif
                 }
             }
         }
