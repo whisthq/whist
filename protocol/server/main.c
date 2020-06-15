@@ -557,8 +557,8 @@ void SetTimezoneFromUtc(int utc, int DST_flag) {
     //    -1*utc);
     return;
 #else
-    LOG_INFO("UTC iffset start of function %d", utc);
     if (DST_flag > 0) {
+        LOG_INFO("DST active");
         utc = utc - 1;
     }
     char* timezone;
