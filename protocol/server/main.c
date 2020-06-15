@@ -550,63 +550,64 @@ int32_t SendAudio(void* opaque) {
 }
 
 void SetTimezoneFromUtc(int utc, int DST_flag){
+    LOG_INFO("UTC iffset start of function %d", utc);
     if (DST_flag > 0){
         utc = utc - 1;
     }
     char* timezone;
-    //    Open powershell ' here closing ' in timezone
-    char cmd[5000] = "powershell.exe 'Set-TimeZone -Id \0";
+    //    Open powershell " here closing " in timezone
+    char cmd[5000] = "powershell.exe \"Set-TimeZone -Id \0";
     switch(utc){
         case -12:
-            timezone = " 'Dateline Standard Time' ' \0";
+            timezone = " 'Dateline Standard Time' \" \0";
             break;
         case -11:
-            timezone = " 'UTC-11' ' \0";
+            timezone = " 'UTC-11' \" \0";
             break;
         case -10:
-            timezone = " 'Hawaiian Standard Time' ' \0";
+            timezone = " 'Hawaiian Standard Time' \" \0";
             break;
         case -9:
-            timezone = " 'Alaskan Standard Time' ' \0";
+            timezone = " 'Alaskan Standard Time' \" \0";
             break;
         case -8:
-            timezone = " 'Pacific Standard Time' ' \0";
+            timezone = " 'Pacific Standard Time' \" \0";
             break;
         case -7:
-            timezone = " 'Mountain Standard Time' ' \0";
+            timezone = " 'Mountain Standard Time' \" \0";
             break;
         case -6:
-            timezone = " 'Central Standard Time' '\0";
+            timezone = " 'Central Standard Time' \" \0";
             break;
         case -5:
-            timezone = " 'US Eastern Standard Time' '\0";
+            timezone = " 'US Eastern Standard Time' \" \0";
             break;
         case -4:
-            timezone = " 'Atlantic Standard Time' ' \0";
+            timezone = " 'Atlantic Standard Time' \" \0";
             break;
         case -3:
-            timezone = " ' E. South America Standard Time' '\0";
+            timezone = " ' E. South America Standard Time' \" \0";
             break;
         case -2:
-            timezone = " 'Mid-Atlantic Standard Time'  '\0";
+            timezone = " 'Mid-Atlantic Standard Time'  \" \0";
             break;
         case -1:
-            timezone = " 'Cape Verde Standard Time'  '\0";
+            timezone = " 'Cape Verde Standard Time'  \" \0";
             break;
         case 0:
-            timezone = " 'GMT Standard Time'  '\0";
+            timezone = " 'GMT Standard Time'  \" \0";
             break;
         case 1:
-            timezone = " 'W. Europe Standard Time' '\0";
+            timezone = " 'W. Europe Standard Time' \" \0";
             break;
         case 2:
-            timezone = " 'E. Europe Standard Time' ' \0";
+            timezone = " 'E. Europe Standard Time' \" \0";
             break;
         case 3:
-            timezone = " 'Turkey Standard Time' ' \0";
+            timezone = " 'Turkey Standard Time' \" \0";
             break;
         case 4:
-            timezone = " 'Arabian Standard Time' ' \0";
+            timezone = " 'Arabian Standard Time' \" \0";
             break;
         default:
             LOG_WARNING("Note a valid UTC offset: %d", utc);
@@ -615,8 +616,8 @@ void SetTimezoneFromUtc(int utc, int DST_flag){
     snprintf(cmd + strlen(cmd), strlen(timezone), timezone);
     char* response = malloc(sizeof(char) * 200);
     runcmd(cmd, &response);
-    printf("command %s \n", cmd);
-    printf("response %s\n", response);
+    printf("command: %s \n", cmd);
+    printf("response: %s \n", response);
     free(response);
 }
 
@@ -1115,9 +1116,11 @@ int main() {
                 } else if (fmsg->type == MESSAGE_TIME){
                     LOG_INFO("Recieving a message time packet");
                     if (fmsg->time_data.use_win_name){
+                        LOG_INFO("Setting time from windows time zone %s", fmsg->time_data.win_tz_name);
                         SetTimezoneFromWindowsName(fmsg->time_data.win_tz_name);
                     } else {
-                        SetTimezoneFromUtc( fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
+                        LOG_INFO("Setting time from UTC offset %d", fmsg->time_data.win_tz_name);
+                        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
                     }
                 }
             }
