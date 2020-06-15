@@ -57,23 +57,23 @@ logger.addHandler(syslog)
 
 
 def sendDebug(ID, log, papertrail=True):
-    print("[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log))
-    if papertrail:
-        logger.debug("[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log))
+    # print("[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log))
+    # if papertrail:
+    #     logger.debug("[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log))
 
 
 def sendInfo(ID, log, papertrail=True):
     print("Sending info: {}".format(log))
-    if papertrail:
-        logger.info("[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log))
+    # if papertrail:
+    #     logger.info("[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log))
 
 
 def sendWarning(ID, log, papertrail=True):
-    print("Sending warning: {}".format(log))
-    if papertrail:
-        logger.warning(
-            "[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log)
-        )
+    # print("Sending warning: {}".format(log))
+    # if papertrail:
+    #     logger.warning(
+    #         "[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log)
+    #     )
 
 
 def sendError(ID, log, papertrail=True):
