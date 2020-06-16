@@ -111,6 +111,7 @@ Flask-Migrate==2.5.2
 Flask-SQLAlchemy==2.4.1
 flower==0.9.3
 future==0.17.1
+google-auth-oauthlib==0.4.1
 haikunator==2.1.0
 idna==2.8
 importlib-metadata==0.23

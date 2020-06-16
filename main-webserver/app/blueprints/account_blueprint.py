@@ -56,6 +56,77 @@ def user_reset(**kwargs):
     resetVMCredentials(username, vm_name)
     return jsonify({"status": 200}), 200
 
+@account_bp.route("/account/googleLogin", methods=["POST"])
+@generateID
+@logRequestInfo
+def google_login(**kwargs):
+    body = request.get_json()
+    code = body["code"]
+    userObj = getGoogleTokens(code)
+
+    username, name = userObj["email"], userObj["name"]
+    token = generateToken(username)
+    access_token, refresh_token = userObj["access_token"], userObj["refresh_token"]
+
+    if lookup(username):
+        if isGoogle(username):
+            # User logging in again with Google
+            vm_status = userVMStatus(username)
+
+            return (
+                jsonify(
+                    {
+                        "new_user": False,
+                        "is_user": True,
+                        "vm_status": vm_status,
+                        "token": token,
+                        "access_token": access_token,
+                        "refresh_token": refresh_token,
+                        "username": username,
+                        "status": 200
+                    }
+                ),
+                200,
+            )
+        else:
+            return (
+                jsonify({"status": 403, "error": "Email already used for non-Google account"}),
+                403
+            )
+
+    sendInfo(kwargs["ID"], "Registering a new user with Google")
+    status = registerGoogleUser(username, name, token)
+
+    return (
+        jsonify(
+            {
+                "status": status,
+                "new_user": True,
+                "is_user": True,
+                "token": token,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "username": username,
+            }
+        ),
+        status,
+    )
+
+@account_bp.route("/account/googleReason", methods=["POST"])
+@generateID
+@logRequestInfo
+def google_reason(**kwargs):
+    print(request)
+    body = request.get_json()
+
+    username, reason_for_signup = body["username"], body["reason"]
+    setUserReason(username, reason_for_signup)
+    makeUserVerified(username, True)
+
+    return (
+        jsonify({"status": 200}), 200
+    )
+
 
 # When people log into their account
 @account_bp.route("/account/login", methods=["POST"])
@@ -64,6 +135,10 @@ def user_reset(**kwargs):
 def account_login(**kwargs):
     body = request.get_json()
     username, password = body["username"], body["password"]
+
+    if lookup(username) and isGoogle(username):
+        return ( jsonify({ "error": "Email used for login with Google", "status": 403}), 403)
+
     is_user = password != os.getenv("ADMIN_PASSWORD")
     verified = loginUser(username, password)
     vm_status = userVMStatus(username)
@@ -115,6 +190,14 @@ def account_register(**kwargs):
         status,
     )
 
+@account_bp.route("/account/lookup", methods=["POST"])
+@generateID
+@logRequestInfo
+def account_lookup(**kwargs):
+    body = request.get_json()
+    username = body["username"]
+
+    return jsonify({"exists": lookup(username)}), 200
 
 @account_bp.route("/account/checkVerified", methods=["POST"])
 @generateID
@@ -220,6 +303,7 @@ def admin(action, **kwargs):
 
 
 # TOKEN endpoint (for access tokens)
+# TODO: work for Google
 @account_bp.route("/token/refresh", methods=["POST"])
 @jwt_refresh_token_required
 @generateID
