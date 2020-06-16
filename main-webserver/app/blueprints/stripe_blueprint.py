@@ -335,6 +335,7 @@ def payment(action, **kwargs):
 
         return jsonify({"status": 200}), 200
     elif action == "update" and request.method == "POST":
+        # When a customer requests to change their plan type
         body = request.get_json()
 
         username = body["username"]
@@ -356,6 +357,7 @@ def payment(action, **kwargs):
             if subscription:
                 subscription_id = subscription["items"]["data"][0].id
                 stripe.SubscriptionItem.modify(subscription_id, plan=new_plan_id)
+                planChangeMail(username, new_plan_type, kwargs["ID"])
                 return jsonify({"status": 200}), 200
         else:
             return jsonify({"status": 404, "error": "Invalid plan type"}), 404

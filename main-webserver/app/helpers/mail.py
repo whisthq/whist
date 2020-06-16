@@ -81,3 +81,20 @@ def creditAppliedMail(username, ID=-1):
         )
 
     return jsonify({"status": 200}), 200
+
+
+def planChangeMail(username, newPlan, ID=-1):
+    message = SendGridMail(
+        from_email="noreply@fractalcomputers.com",
+        to_emails=username,
+        subject="Your plan change was successful",
+        html_content=render_template("plan_changed.html", plan=newPlan),
+    )
+    try:
+        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        response = sg.send(message)
+        sendInfo(ID, "Sent plan changed email to {}".format(username))
+    except Exception as e:
+        sendError(
+            ID, "Mail send failed: Error code " + e.message,
+        )
