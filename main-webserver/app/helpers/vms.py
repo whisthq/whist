@@ -5,10 +5,15 @@ from .general import *
 from .disks import *
 
 
-def createVMParameters(vmName, nic_id, vm_size, location, 
-    operating_system="Windows", 
-    admin_password = None,
-    admin_username = None):
+def createVMParameters(
+    vmName,
+    nic_id,
+    vm_size,
+    location,
+    operating_system="Windows",
+    admin_password=None,
+    admin_username=None,
+):
     """Adds a vm entry to the SQL database
 
     Parameters:
@@ -61,8 +66,12 @@ def createVMParameters(vmName, nic_id, vm_size, location,
             conn.execute(command, **params)
             conn.close()
 
-            admin_password = os.getenv("VM_PASSWORD") if not admin_password else admin_password 
-            admin_username = os.getenv("VM_GROUP") if not admin_username else admin_username
+            admin_password = (
+                os.getenv("VM_PASSWORD") if not admin_password else admin_password
+            )
+            admin_username = (
+                os.getenv("VM_GROUP") if not admin_username else admin_username
+            )
 
             os_profile = (
                 {
@@ -1450,24 +1459,6 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
         first_time = checkFirstTime(disk_name)
         num_boots = 1 if not first_time else 2
 
-        if first_time:
-            print("First time! Going to boot {} times".format(str(num_boots)))
-
-            if s:
-                s.update_state(
-                    state="PENDING",
-                    meta={
-                        "msg": "Pre-installing your applications now. This could take several minutes."
-                    },
-                )
-
-            apps = fetchDiskApps(disk_name)
-
-            installation = installApplications(vm_name, apps, ID)
-
-            if installation["status"] != 200:
-                sendError(ID, "Error installing applications!")
-
         for i in range(0, num_boots):
             if i == 1 and s:
                 s.update_state(
@@ -1494,9 +1485,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
             if s:
                 s.update_state(
                     state="PENDING",
-                    meta={
-                        "msg": "Cloud PC still executing boot request."
-                    },
+                    meta={"msg": "Cloud PC still executing boot request."},
                 )
 
             boot_if_necessary(vm_name, needs_restart, ID)
@@ -1525,7 +1514,10 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                     boot_if_necessary(vm_name, True, ID)
                     if s:
                         s.update_state(
-                            state="PENDING", meta={"msg": "Logging you into your cloud PC. This should take less than two minutes."}
+                            state="PENDING",
+                            meta={
+                                "msg": "Logging you into your cloud PC. This should take less than two minutes."
+                            },
                         )
                     winlogon = waitForWinlogon(vm_name, ID)
 
@@ -1547,6 +1539,23 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
 
             if i == 1:
                 changeFirstTime(disk_name)
+
+                print("First time! Going to boot {} times".format(str(num_boots)))
+
+                if s:
+                    s.update_state(
+                        state="PENDING",
+                        meta={
+                            "msg": "Pre-installing your applications now. This could take several minutes."
+                        },
+                    )
+
+                apps = fetchDiskApps(disk_name)
+
+                installation = installApplications(vm_name, apps, ID)
+
+                if installation["status"] != 200:
+                    sendError(ID, "Error installing applications!")
 
                 if s:
                     s.update_state(
@@ -1786,6 +1795,7 @@ def updateProtocolVersion(vm_name, version):
         conn.execute(command, **params)
         conn.close()
 
+
 def fetchInstallCommand(app_name):
     """Fetches an install command from the install_commands sql table
 
@@ -1806,11 +1816,14 @@ def fetchInstallCommand(app_name):
         conn.close()
         return install_command
 
+
 def installApplications(vm_name, apps, ID=-1):
     _, compute_client, _ = createClients()
     try:
         for app in apps:
-            sendInfo(ID, "Starting to install {} for VM {}".format(app["app_name"], vm_name))
+            sendInfo(
+                ID, "Starting to install {} for VM {}".format(app["app_name"], vm_name)
+            )
             install_command = fetchInstallCommand(app["app_name"])
 
             run_command_parameters = {

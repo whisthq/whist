@@ -70,12 +70,11 @@ def sendInfo(ID, log, papertrail=True):
 
 
 def sendWarning(ID, log, papertrail=True):
-    # print("Sending warning: {}".format(log))
+    print("Sending warning: {}".format(log))
     # if papertrail:
     #     logger.warning(
     #         "[{} WEBSERVER][{}]: {}".format(os.getenv("SERVER_TYPE"), ID, log)
     #     )
-    return
 
 
 def sendError(ID, log, papertrail=True):
