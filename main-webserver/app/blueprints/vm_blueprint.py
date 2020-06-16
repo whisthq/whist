@@ -49,11 +49,23 @@ def vm(action, **kwargs):
         vm_size = body["vm_size"]
         location = body["location"]
         operating_system = "Windows"
+        admin_password = None
+        admin_username = None
+
+        if "admin_password" in body.keys():
+            admin_password = body["admin_password"]
+
+        if "admin_username" in body.keys():
+            admin_username = body["admin_username"]
 
         if "operating_system" in body.keys():
             operating_system = body["operating_system"]
 
-        task = createVM.apply_async([vm_size, location, operating_system, kwargs["ID"]])
+        task = createVM.apply_async([
+            vm_size, location, operating_system, admin_password, 
+            admin_username, kwargs["ID"]]
+        )
+        
         if not task:
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202
@@ -293,16 +305,34 @@ def vm(action, **kwargs):
                 if disk_info:
                     branch = disk_info[0]["branch"]
 
-                return jsonify({"dev": is_dev, "branch": branch, "status": 200}), 200
+                using_stun = fetchDiskSetting(
+                    disk_name,
+                    "using_stun"
+                )
+
+                return jsonify({
+                    "dev": is_dev, 
+                    "branch": branch, 
+                    "status": 200,
+                    "using_stun": using_stun if using_stun else False
+                }), 200
             return jsonify({"dev": False, "status": 200}), 200
         except Exception as e:
             print(str(e))
+    elif action == "installApps" and request.method == "POST":
+        body = request.get_json()
+
+        status = insertDiskApps(body["disk_name"], body["apps"])
+
+        return jsonify({}), status
     elif action == "setDev" and request.method == "POST":
         vm_name = request.get_json()["vm_name"]
         dev = request.get_json()["dev"]
         setDev(vm_name, dev)
         sendInfo(kwargs["ID"], "Set dev state for vm {} to {}".format(vm_name, dev))
         return jsonify({"status": 200}), 200
+
+
     return jsonify({}), 400
 
 
@@ -327,7 +357,6 @@ def tracker(action, **kwargs):
 
 
 # INFO endpoint
-
 
 @vm_bp.route("/info/<action>", methods=["GET", "POST"])
 @jwt_required

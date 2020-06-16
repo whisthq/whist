@@ -157,6 +157,7 @@ def registerUser(username, password, token, name=None, reason_for_signup=None):
         "name": name,
         "reason_for_signup": reason_for_signup,
         "google_login": False
+        "created": dt.now(datetime.timezone.utc).timestamp(),
     }
     with engine.connect() as conn:
         try:
