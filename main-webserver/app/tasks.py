@@ -9,7 +9,7 @@ from .helpers.s3 import *
 
 
 @celery.task(bind=True)
-def createVM(self, vm_size, location, operating_system, ID=-1):
+def createVM(self, vm_size, location, operating_system, admin_password = None, admin_username = None, ID=-1):
     """Creates a windows vm of size vm_size in Azure region location
 
     Args:
@@ -42,7 +42,9 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         sendError(ID, "Nic does not exist, aborting")
         return
     vmParameters = createVMParameters(
-        vmName, nic.id, vm_size, location, operating_system
+        vmName, nic.id, vm_size, location, operating_system, 
+        admin_password = admin_password,
+        admin_username = admin_username
     )
 
     async_vm_creation = compute_client.virtual_machines.create_or_update(
@@ -95,7 +97,14 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 
     fractalVMStart(vmParameters["vm_name"], needs_winlogon=False, s = self)
 
-    time.sleep(30)
+    lockVMAndUpdate(
+        vm_name=vmParameters["vm_name"],
+        state="RUNNING_AVAILABLE",
+        lock=True,
+        temporary_lock=None,
+        change_last_updated=False,
+        verbose=False
+    )
 
     extension_parameters = (
         {
@@ -149,6 +158,15 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 
     sendInfo(ID, "SUCCESS: VM {} created and updated".format(vmName))
 
+    lockVMAndUpdate(
+        vm_name=vmParameters["vm_name"],
+        state="RUNNING_AVAILABLE",
+        lock=False,
+        temporary_lock=0,
+        change_last_updated=False,
+        verbose=False
+    )
+
     return fetchVMCredentials(vmParameters["vm_name"])
 
 
@@ -179,17 +197,25 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
 
 
 @celery.task(bind=True)
-def createDiskFromImage(self, username, location, vm_size, operating_system, ID=-1):
+def createDiskFromImage(self, username, location, vm_size, operating_system, apps=[], ID=-1):
     hr = 400
     payload = None
+    attempts = 0
+    disk_name = None
 
-    while hr == 400:
+    while hr == 400 and attempts < 10:
         sendInfo(ID, "Creating {} disk for {}".format(operating_system, username))
         payload = createDiskFromImageHelper(
             username, location, vm_size, operating_system
         )
         hr = payload["status"]
-        sendInfo(ID, "Disk created with status {}".format(hr))
+        disk_name = payload["disk_name"]
+        sendInfo(ID, "Disk {} created with status {}".format(disk_name, hr))
+        attempts += 1
+
+    if hr == 200 and disk_name and len(apps) > 0:
+        sendInfo(ID, "Disk created, inserting apps {} for {}".format(apps, disk_name))
+        insertDiskApps(disk_name, apps)
 
     sendDebug(ID, payload)
     payload["location"] = location
@@ -516,6 +542,9 @@ def syncDisks(self, ID=-1):
     for stored_disk in stored_disks:
         if not stored_disk["disk_name"] in disk_names:
             deleteDiskFromTable(stored_disk["disk_name"])
+            stored_disks.remove(stored_disk) 
+        # else:
+        #     insertDiskSetting(stored_disk["disk_name"], stored_disk["branch"], False)
 
     sendInfo(ID, "Sync disks complete")
 
@@ -953,7 +982,7 @@ def deallocateVM(self, vm_name, ID=-1):
     sendInfo(ID, "VM {} deallocated successfully".format(vm_name))
 
     return {"status": 200}
-
+    
 
 @celery.task(bind=True)
 def storeLogs(self, sender, connection_id, logs, vm_ip, version, ID=-1):

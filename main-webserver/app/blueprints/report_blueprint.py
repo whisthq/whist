@@ -80,7 +80,7 @@ def statusReport(action, **kwargs):
         if body["timescale"] == "day":
             command = text(
                 """
-            """
+                """
             )
         elif body["timescale"] == "week":
             lastWeek = today - datetime.timedelta(days=7)

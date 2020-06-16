@@ -42,6 +42,7 @@ def disk(action, **kwargs):
                 body["location"],
                 body["vm_size"],
                 operating_system,
+                body["apps"],
                 kwargs["ID"],
             ]
         )
@@ -53,7 +54,12 @@ def disk(action, **kwargs):
     elif action == "attach":
         # Attaches a disk to an available vm in the region. If an available vm has a disk, swap the disks.
         body = request.get_json()
-        task = swapDiskSync.apply_async([body["disk_name"], kwargs["ID"]])
+        task = swapDiskSync.apply_async(
+            [
+                body["disk_name"],
+                kwargs["ID"]
+            ]
+        )
         return jsonify({"ID": task.id}), 202
     elif action == "add":
         body = request.get_json()
@@ -109,7 +115,7 @@ def disk(action, **kwargs):
         sendInfo(kwargs["ID"], "Deleting disk {}".format(disk_name))
         task_id = None
 
-        task = deleteDisk.apply_async(disk_name)
+        task = deleteDisk.apply_async([disk_name])
         task_id = task.id
         sendInfo(kwargs["ID"], "Disk deletion complete")
         return jsonify({"ID": task_id}), 202
@@ -120,6 +126,16 @@ def disk(action, **kwargs):
     elif action == "fetchAll":
         disks = fetchAllDisks()
         return jsonify({"status": 200, "disks": disks}), 200
+    elif action == "swap":
+        body = json.loads(request.data)
+        task = swapSpecificDisk.apply_async([body["disk_name"], body["vm_name"], kwargs["ID"]])
+        return jsonify({"ID": task.id}), 202
+    elif action == "usingStun":
+        body = json.loads(request.data)
+        modifyDiskSetting(body["disk_name"], {
+            "using_stun": body["using_stun"]
+        })
+        return jsonify({"status": 200}), 200
 
 
 @disk_bp.route("/version", methods=["POST", "GET"])
