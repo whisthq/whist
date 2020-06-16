@@ -160,6 +160,17 @@ if(NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
+find_library(STATIC_SDL_IMAGE NAMES SDL2_image PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL_image/${CMAKE_SYSTEM_NAME}"
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+if(NOT STATIC_SDL_IMAGE)
+    message(FATAL_ERROR "Library STATIC_SDL_IMAGE was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL_image/${CMAKE_SYSTEM_NAME}")
+endif()
+
 find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT PATH
@@ -196,6 +207,7 @@ endif()
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
+include_directories(include/SDL_image)
 
 
 

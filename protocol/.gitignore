@@ -26,7 +26,6 @@ version
 **/build64
 desktop/log.txt
 server/log.txt
-lib/
 share/
 desktop/external_utils/Darwin/mac_unison
 desktop/external_utils/Linux/linux_unison
@@ -40,7 +39,7 @@ desktop/loading/
 *.marks
 *.internal
 *.includecache
-*.lib
+fractal/**/*.lib
 CMakeSettings.json
 
 cmake-build-*
