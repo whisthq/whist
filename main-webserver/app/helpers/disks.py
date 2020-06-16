@@ -43,13 +43,9 @@ def createDiskEntry(
             """
         )
 
-        params = {
-            "disk_name": disk_name,
-            "branch": "master",
-            "using_stun": False 
-        }
+        params = {"disk_name": disk_name, "branch": "master", "using_stun": False}
 
-        conn.execute(command, **params)    
+        conn.execute(command, **params)
         conn.close()
 
 
@@ -331,15 +327,16 @@ def associateVMWithDisk(vm_name, disk_name):
 
 
 def fetchAllDisks():
-    """Fetches all the disks
+    """Fetches all the disks from disks table, LEFT joined with disk_settings
 
     Returns:
         arr[dict]: An array of all the disks in the disks sql table
     """
     command = text(
         """
-        SELECT *
+        SELECT disks.*, disk_settings.using_stun
         FROM disks
+        LEFT JOIN disk_settings ON disks.disk_name = disk_settings.disk_name
         """
     )
 
@@ -604,6 +601,7 @@ def setUpdateAccepted(disk_name, accepted, ID=-1):
         conn.execute(command, **params)
         conn.close()
 
+
 def fetchDiskApps(disk_name, ID=-1):
     """Fetches user's desired apps for a disk
 
@@ -628,6 +626,7 @@ def fetchDiskApps(disk_name, ID=-1):
             conn.close()
             return apps
 
+
 def insertDiskApps(disk_name, apps, ID=-1):
     """Fetches user's desired apps
 
@@ -641,7 +640,9 @@ def insertDiskApps(disk_name, apps, ID=-1):
         try:
             if disk_name:
                 for app_name in apps:
-                    sendInfo(ID, "Inserting app {} for disk {}".format(app_name, disk_name))
+                    sendInfo(
+                        ID, "Inserting app {} for disk {}".format(app_name, disk_name)
+                    )
 
                     command = text(
                         """
@@ -649,7 +650,6 @@ def insertDiskApps(disk_name, apps, ID=-1):
                         """
                     )
                     params = {"disk_name": disk_name, "app_name": app_name}
-
 
                     conn.execute(command, **params)
 
@@ -659,6 +659,7 @@ def insertDiskApps(disk_name, apps, ID=-1):
         conn.close()
         return 200
 
+
 def insertDiskSetting(disk_name, branch, using_stun):
     with engine.connect() as conn:
         command = text(
@@ -667,9 +668,7 @@ def insertDiskSetting(disk_name, branch, using_stun):
             """
         )
 
-        params = {
-            "disk_name": disk_name 
-        }
+        params = {"disk_name": disk_name}
 
         disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
 
@@ -685,8 +684,8 @@ def insertDiskSetting(disk_name, branch, using_stun):
             params = {
                 "disk_name": disk_name,
                 "branch": branch,
-                "using_stun": using_stun 
-            }         
+                "using_stun": using_stun,
+            }
             conn.execute(command, **params)
             conn.close()
         else:
@@ -699,11 +698,12 @@ def insertDiskSetting(disk_name, branch, using_stun):
             params = {
                 "disk_name": disk_name,
                 "branch": branch,
-                "using_stun": using_stun 
+                "using_stun": using_stun,
             }
 
             conn.execute(command, **params)
             conn.close()
+
 
 def modifyDiskSetting(disk_name, settings_dict):
     with engine.connect() as conn:
@@ -714,17 +714,17 @@ def modifyDiskSetting(disk_name, settings_dict):
                 SET {setting_name} = :{setting_name}
                 WHERE
                 "disk_name" = :disk_name
-                """.format(setting_name = setting_name)
+                """.format(
+                    setting_name=setting_name
+                )
             )
 
-            params = {
-                setting_name: setting,
-                "disk_name": disk_name
-            }
+            params = {setting_name: setting, "disk_name": disk_name}
 
             conn.execute(command, **params)
-        
+
         conn.close()
+
 
 def fetchDiskSetting(disk_name, setting_name):
     with engine.connect() as conn:
@@ -734,9 +734,7 @@ def fetchDiskSetting(disk_name, setting_name):
             """
         )
 
-        params = {
-            "disk_name": disk_name 
-        }
+        params = {"disk_name": disk_name}
 
         disk_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
 
