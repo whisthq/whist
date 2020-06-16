@@ -22,6 +22,7 @@
 #include "../fractal/utils/aes.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "audio.h"
+#include "getopt.h"
 #include "sdl_utils.h"
 #include "video.h"
 
@@ -238,7 +239,7 @@ int SendFmsg(FractalClientMessage* fmsg) {
 }
 
 int ReceivePackets(void* opaque) {
-    LOG_INFO("ReceivePackets running on Thread %d", SDL_GetThreadID(NULL));
+    LOG_INFO("ReceivePackets running on Thread %p", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
     SocketContext socketContext = *(SocketContext*)opaque;
@@ -531,59 +532,70 @@ int ReceiveMessage(FractalPacket* packet) {
     "I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/"     \
     "Zt86r9dOzEcfrhxa+MnVQhNE8="
 
+const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
+                                     {"height", required_argument, NULL, 'h'},
+                                     {"bitrate", required_argument, NULL, 'b'},
+                                     {"spectate", no_argument, NULL, 's'},
+                                     {"codec", required_argument, NULL, 'c'},
+                                     {0, 0, 0, 0}};
+#define OPTION_STRING "w:h:b:sc:"
+
 int parseArgs(int argc, char* argv[]) {
     char* usage =
         "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH]"
         " [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE] [[OPTIONAL] SPECTATE]\n";
-    int num_required_args = 1;
-    int num_optional_args = 5;
-    if (argc - 1 < num_required_args ||
-        argc - 1 > num_required_args + num_optional_args) {
-        printf("%s", usage);
-        return -1;
-    }
-
-    server_ip = argv[1];
-
-    output_width = 0;
-    output_height = 0;
-
+    int opt;
     long int ret;
     char* endptr;
-
-    if (argc >= 3) {
+    while (opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL),
+           opt != -1) {
         errno = 0;
-        ret = strtol(argv[2], &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-            printf("%s", usage);
-            return -1;
+        switch (opt) {
+            case 'w':
+                ret = strtol(optarg, &endptr, 10);
+                if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+                    printf("%s", usage);
+                    return -1;
+                }
+                output_width = (int)ret;
+                break;
+            case 'h':
+                ret = strtol(optarg, &endptr, 10);
+                if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+                    printf("%s", usage);
+                    return -1;
+                }
+                output_height = (int)ret;
+                break;
+            case 'b':
+                ret = strtol(optarg, &endptr, 10);
+                if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+                    printf("%s", usage);
+                    return -1;
+                }
+                max_bitrate = (int)ret;
+                break;
+            case 's':
+                is_spectator = true;
+                break;
+            case 'c':
+                if (!strcmp(optarg, "h264")) {
+                    codec_type = CODEC_TYPE_H264;
+                } else if (!strcmp(optarg, "h265")) {
+                    codec_type = CODEC_TYPE_H265;
+                } else {
+                    printf("Invalid codec type: '%s'\n", optarg);
+                    printf("%s", usage);
+                    return -1;
+                }
         }
-        if (ret != 0) output_width = (int)ret;
     }
 
-    if (argc >= 4) {
-        errno = 0;
-        ret = strtol(argv[3], &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-            printf("%s", usage);
-            return -1;
-        }
-        if (ret != 0) output_height = (int)ret;
-    }
-
-    if (argc == 5) {
-        errno = 0;
-        ret = strtol(argv[4], &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret <= 0) {
-            printf("%s", usage);
-            return -1;
-        }
-        max_bitrate = (int)ret;
-    }
-
-    is_spectator = false;
-    if (argc == 6) {
-        is_spectator = true;
+    if (optind < argc) {
+        server_ip = argv[optind];
+    } else {
+        printf("%s", usage);
+        return -1;
     }
 
     return 0;
@@ -598,7 +610,7 @@ int main(int argc, char* argv[]) {
     // already exists, which is fine
     // for Linux, this is in /home/USERNAME/.fractal, the cache is also needed
     // for the same reason
-    runcmd("mkdir ~/.fractal", NULL);
+    runcmd("mkdir -p ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
 
     // the mkdir command won't do anything if the folder already exists, in
@@ -700,7 +712,8 @@ int main(int argc, char* argv[]) {
             }
 
             if (init_spectator) {
-                FractalServerMessage* fmsg = init_spectator->data;
+                FractalServerMessage* fmsg =
+                    (FractalServerMessage*)init_spectator->data;
                 LOG_INFO("SPECTATOR PORT: %d", fmsg->spectator_port);
 
                 closesocket(PacketReceiveContext.s);
