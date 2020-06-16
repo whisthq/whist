@@ -513,12 +513,14 @@ def userVMStatus(username):
             has_disk = True
 
             if user["first_time"]:
+                print("USER {} FIRST TIME DETECTED".format(username))
                 return "is_creating"
 
     if not has_paid and not has_disk:
         return "not_created"
 
     if has_paid and not has_disk:
+        print("CUSTOMER {} EXISTS BUT NO DISK".format(username))
         return "is_creating"
 
     if has_paid and has_disk:
