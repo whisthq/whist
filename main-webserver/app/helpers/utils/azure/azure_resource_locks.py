@@ -2,6 +2,20 @@ from app import *
 
 
 def lockVMAndUpdate(vm_name, state, lock, temporary_lock):
+    """Changes the state, lock, and temporary lock of a VM
+
+    Args:
+        vm_name (str): Name of VM
+        state (str): Desired state of VM
+            [RUNNING_AVAILABLE, RUNNING_UNAVAILABLE, DEALLOCATED, DEALLOCATING, STOPPED, STOPPING, 
+            DELETING, CREATING, RESTARTING, STARTING]
+        lock (bool): True if VM is locked, False otherwise
+        temporary_lock (int): Number of minutes, starting from now, to lock the VM (max is 10)
+         
+
+    Returns:
+        int: 1 = vm is unlocked, -1 = giving up
+    """
     MAX_LOCK_TIME = 10
 
     new_params = {"state": state, "lock": lock}
@@ -25,3 +39,81 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock):
         conditional_params={"vm_name": vm_name},
         new_params=new_params,
     )
+
+
+def spinLock(vm_name, s=None):
+    """Waits for vm to be unlocked
+
+    Args:
+        vm_name (str): Name of vm of interest
+        ID (int, optional): Unique papertrail logging id. Defaults to -1.
+
+    Returns:
+        int: 1 = vm is unlocked, -1 = giving up
+    """
+    # Check if VM is currently locked
+
+    output = fractalSQLSelect(table_name="v_ms", param={"vm_name": vm_name})
+
+    locked = False
+    username = None
+
+    if output["success"] and output["rows"]:
+        locked = output["rows"][0]["lock"]
+        username = output["rows"][0]["username"]
+    else:
+        return -1
+
+    num_tries = 0
+
+    if not locked:
+        fractalLog(
+            function="spinLock",
+            label=str(username),
+            logs="VM {vm_name} found unlocked on first try.".format(vm_name=vm_name),
+        )
+        return 1
+    else:
+        fractalLog(
+            function="spinLock",
+            label=str(username),
+            logs="VM {vm_name} found locked on first try. Proceeding to wait...".format(
+                vm_name=vm_name
+            ),
+        )
+        if s:
+            s.update_state(
+                state="PENDING",
+                meta={
+                    "msg": "Cloud PC is downloading an update. This could take a few minutes."
+                },
+            )
+
+    while locked:
+        time.sleep(5)
+        locked = checkLock(vm_name, s=s)
+        num_tries += 1
+
+        if num_tries > 40:
+            fractalLog(
+                function="spinLock",
+                label=str(username),
+                logs="VM {vm_name} locked after waiting 200 seconds. Giving up...".format(
+                    vm_name=vm_name
+                ),
+                level=logging.ERROR,
+            )
+            return -1
+
+    if s:
+        s.update_state(state="PENDING", meta={"msg": "Update successfully downloaded."})
+
+    fractalLog(
+        function="spinLock",
+        label=str(username),
+        logs="After waiting {seconds} seconds, VM {vm_name} is unlocked".format(
+            seconds=str(num_tries * 5), vm_name=vm_name
+        ),
+    )
+
+    return 1

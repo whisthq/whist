@@ -1,12 +1,11 @@
 from app import *
 from app.helpers.utils.azure.azure_general import *
-from app.helpers.utils.azure.azure_resource_creation import *
 from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_locks import *
 
 
 @celery_instance.task(bind=True)
-def createVM(self, vm_name, delete_disk):
+def deleteVM(self, vm_name, delete_disk):
     """Deletes an Azure VM
 
     Args:
@@ -16,6 +15,11 @@ def createVM(self, vm_name, delete_disk):
     Returns:
         json: Success/failure
     """
+
+    if spinLock(vm_name) < 0:
+        return {"status": REQUEST_TIMEOUT}
+
+    lockVMAndUpdate(vm_name=vm_name, state="DELETING", lock=True, temporary_lock=10)
 
     _, compute_client, network_client = createClients()
     vnetName, subnetName, ipName, nicName = (
@@ -111,7 +115,7 @@ def createVM(self, vm_name, delete_disk):
         hr = -1
 
     if delete_disk:
-        # step 6, delete the OS disk -- not needed anymore (OS disk swapping)
+        # step 6, delete the OS disk
         try:
             os_disk_delete = compute_client.disks.delete(
                 os.getenv("VM_GROUP"), os_disk_name
@@ -120,4 +124,4 @@ def createVM(self, vm_name, delete_disk):
         except Exception as e:
             hr = -1
 
-    return hr
+    return {"status": SUCCESS} if hr > 0 else {"status": PARTIAL_CONTENT}
