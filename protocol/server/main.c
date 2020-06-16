@@ -31,6 +31,9 @@
 #include "../fractal/video/cpucapturetransfer.h"
 #include "../fractal/video/screencapture.h"
 #include "../fractal/video/videoencode.h"
+#include "client.h"
+#include "handle_client_message.h"
+#include "network.h"
 
 #ifdef _WIN32
 #include "../fractal/utils/windows_utils.h"
@@ -47,17 +50,21 @@
 #define DEFAULT_WIDTH 1920
 #define DEFAULT_HEIGHT 1080
 
+extern Client clients[MAX_NUM_CLIENTS];
+
 volatile int connection_id;
 static volatile bool connected;
-static volatile double max_mbps;
+static volatile bool running;
+volatile double max_mbps;
 volatile int client_width = -1;
 volatile int client_height = -1;
 volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
+input_device_t *input_device = NULL;
 // volatile
 
-char buf[LARGEST_FRAME_SIZE];
+char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
 
 #define VIDEO_BUFFER_SIZE 25
 #define MAX_VIDEO_INDEX 500
@@ -70,12 +77,6 @@ FractalPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 
 SDL_mutex* packet_mutex;
-
-#define MAX_SPECTATOR_CONNECTIONS 100
-
-int num_spectator_connections;
-SocketContext PacketSendContext = {0};
-SocketContext SpectatorSendContext[MAX_SPECTATOR_CONNECTIONS];
 
 volatile bool wants_iframe;
 volatile bool update_encoder;
@@ -106,14 +107,13 @@ int32_t MultithreadedDestroyEncoder(void* opaque) {
 }
 
 int32_t SendVideo(void* opaque) {
+    opaque;
     SDL_Delay(500);
 
 #if defined(_WIN32)
     // set Windows DPI
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 #endif
-
-    SocketContext socketContext = *(SocketContext*)opaque;
 
     // Init DXGI Device
     CaptureDevice rdevice;
@@ -437,32 +437,44 @@ int32_t SendVideo(void* opaque) {
                     // encoder->encoded_frame_size, frame->is_iframe ?
                     // "(I-frame)" :
                     // "");
+                    PeerUpdateMessage *peer_update_msgs = (PeerUpdateMessage *) (((char *) frame->compressed_frame) + frame->size);
 
-                    StartTimer(&t);
-
-                    // Send video packet to client
-                    if (SendUDPPacket(
-                            &socketContext, PACKET_VIDEO, (uint8_t*)frame,
-                            frame_size, id, STARTING_BURST_BITRATE,
-                            video_buffer[id % VIDEO_BUFFER_SIZE],
-                            video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) <
-                        0) {
-                        LOG_WARNING("Could not send video frame ID %d", id);
-                    } else {
-                        for (int i = 0; i < num_spectator_connections; i++) {
-                            if (SendUDPPacket(
-                                    &SpectatorSendContext[i], PACKET_VIDEO,
-                                    (uint8_t*)frame, frame_size, id,
-                                    STARTING_BURST_BITRATE, NULL, NULL) < 0) {
-                                LOG_WARNING(
-                                    "Could not send video frame ID %d to "
-                                    "spectator %d",
-                                    id, i);
-                            }
+                    size_t num_msgs;
+                    if (readLock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-acquire is active RW lock.");
+                    } else if (SDL_LockMutex(state_lock) != 0) {
+                        LOG_ERROR("Failed to lock state lock");
+                        if (readUnlock(&is_active_rwlock) != 0) {
+                            LOG_ERROR("Failed to read-release is active RW lock.");
                         }
-                        // Only increment ID if the send succeeded
-                        id++;
+                    } else {
+                        if (fillPeerUpdateMessages(peer_update_msgs, &num_msgs) != 0) {
+                            LOG_ERROR("Failed to copy peer update messages.");
+                        }
+                        frame->num_peer_update_msgs = (int) num_msgs;
+
+                        StartTimer(&t);
+
+                        // Send video packet to client
+                        if (broadcastUDPPacket(
+                                PACKET_VIDEO, (uint8_t*)frame,
+                                frame_size + sizeof(PeerUpdateMessage) * num_msgs, id, STARTING_BURST_BITRATE,
+                                video_buffer[id % VIDEO_BUFFER_SIZE],
+                                video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) !=
+                            0) {
+                            LOG_WARNING("Could not broadcast video frame ID %d", id);
+                        } else {
+                            // Only increment ID if the send succeeded
+                            id++;
+                        }
+                        if (SDL_UnlockMutex(state_lock) != 0) {
+                            LOG_ERROR("Failed to unlock state lock");
+                        }
+                        if (readUnlock(&is_active_rwlock) != 0) {
+                            LOG_ERROR("Failed to read-release is active RW lock.");
+                        }
                     }
+
 
                     // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
                     // GetTimer( t ), frame_size );
@@ -491,7 +503,7 @@ int32_t SendVideo(void* opaque) {
 }
 
 int32_t SendAudio(void* opaque) {
-    SocketContext context = *(SocketContext*)opaque;
+    opaque;
     int id = 1;
 
     audio_device_t* audio_device = CreateAudioDevice();
@@ -510,8 +522,19 @@ int32_t SendAudio(void* opaque) {
     FractalServerMessage fmsg;
     fmsg.type = MESSAGE_AUDIO_FREQUENCY;
     fmsg.frequency = audio_device->sample_rate;
-    SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, (uint8_t*)&fmsg,
-                  sizeof(fmsg), 1, STARTING_BURST_BITRATE, NULL, NULL);
+    if (readLock(&is_active_rwlock) != 0) {
+        LOG_ERROR("Failed to read-acquire is active RW lock.");
+    } else {
+        if (broadcastUDPPacket(PACKET_MESSAGE,
+                               (uint8_t*) &fmsg,
+                               sizeof(fmsg), 1,
+                               STARTING_BURST_BITRATE, NULL, NULL) != 0) {
+            LOG_ERROR("Failed to broadcast audio packet.");
+         }
+        if (readUnlock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to read-release is active RW lock.");
+        }
+    }
     LOG_INFO("Audio Frequency: %d", audio_device->sample_rate);
 
     // setup
@@ -552,16 +575,22 @@ int32_t SendAudio(void* opaque) {
                     //         audio_encoder->encoded_frame_size);
 
                     // Send packet
-
-                    if (SendUDPPacket(
-                            &context, PACKET_AUDIO,
-                            audio_encoder->encoded_frame_data,
-                            audio_encoder->encoded_frame_size, id,
-                            STARTING_BURST_BITRATE,
-                            audio_buffer[id % AUDIO_BUFFER_SIZE],
-                            audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) <
-                        0) {
-                        LOG_WARNING("Could not send audio frame");
+                    if (readLock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-acquire is active RW lock.");
+                    } else {
+                        if (broadcastUDPPacket(
+                                PACKET_AUDIO,
+                                audio_encoder->encoded_frame_data,
+                                audio_encoder->encoded_frame_size, id,
+                                STARTING_BURST_BITRATE,
+                                audio_buffer[id % AUDIO_BUFFER_SIZE],
+                                audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) <
+                            0) {
+                            LOG_WARNING("Could not send audio frame");
+                        }
+                        if (readUnlock(&is_active_rwlock) != 0) {
+                            LOG_ERROR("Failed to read-release is active RW lock.");
+                        }
                     }
                     // mprintf("sent audio frame %d\n", id);
                     id++;
@@ -571,12 +600,19 @@ int32_t SendAudio(void* opaque) {
                     av_packet_unref(&audio_encoder->packet);
                 }
 #else
-                if (SendUDPPacket(
-                        &context, PACKET_AUDIO, audio_device->buffer,
-                        audio_device->buffer_size, id, STARTING_BURST_BITRATE,
-                        audio_buffer[id % AUDIO_BUFFER_SIZE],
-                        audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
-                    mprintf("Could not send audio frame\n");
+                if (readLock(&is_active_rwlock) != 0) {
+                    LOG_ERROR("Failed to read-acquire is active RW lock.");
+                } else {
+                    if (broadcastUDPPacket(
+                            PACKET_AUDIO, audio_device->buffer,
+                            audio_device->buffer_size, id, STARTING_BURST_BITRATE,
+                            audio_buffer[id % AUDIO_BUFFER_SIZE],
+                            audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
+                        mprintf("Could not send audio frame\n");
+                    }
+                    if (readUnlock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-release is active RW lock.");
+                    }
                 }
                 id++;
 #endif
@@ -590,109 +626,6 @@ int32_t SendAudio(void* opaque) {
     // destroy_audio_encoder(audio_encoder);
     DestroyAudioDevice(audio_device);
     return 0;
-}
-
-void SetTimezoneFromUtc(int utc, int DST_flag) {
-#ifndef _WIN32
-    // TODO come back to this when we have sudo password on linux server
-    //    char cmd[5000];
-    //    // Negative one because UNIX UTC values are flipped from usual. West
-    //    is positive and east is negative. sprintf(cmd,"echo {INSERT PASSWORD
-    //    HERE WHEN WE CAN} | sudo -S timedatectl set-timezoneEtc/GMT%d\0",
-    //    -1*utc);
-    return;
-#else
-    if (DST_flag > 0) {
-        LOG_INFO("DST active");
-        utc = utc - 1;
-    }
-    char* timezone;
-    //    Open powershell " here closing " in timezone
-    char cmd[5000] = "powershell.exe \"Set-TimeZone -Id \0";
-    switch (utc) {
-        case -12:
-            timezone = " 'Dateline Standard Time' \" \0";
-            break;
-        case -11:
-            timezone = " 'UTC-11' \" \0";
-            break;
-        case -10:
-            timezone = " 'Hawaiian Standard Time' \" \0";
-            break;
-        case -9:
-            timezone = " 'Alaskan Standard Time' \" \0";
-            break;
-        case -8:
-            timezone = " 'Pacific Standard Time' \" \0";
-            break;
-        case -7:
-            timezone = " 'Mountain Standard Time' \" \0";
-            break;
-        case -6:
-            timezone = " 'Central Standard Time' \" \0";
-            break;
-        case -5:
-            timezone = " 'US Eastern Standard Time' \" \0";
-            break;
-        case -4:
-            timezone = " 'Atlantic Standard Time' \" \0";
-            break;
-        case -3:
-            timezone = " ' E. South America Standard Time' \" \0";
-            break;
-        case -2:
-            timezone = " 'Mid-Atlantic Standard Time'  \" \0";
-            break;
-        case -1:
-            timezone = " 'Cape Verde Standard Time'  \" \0";
-            break;
-        case 0:
-            timezone = " 'GMT Standard Time'  \" \0";
-            break;
-        case 1:
-            timezone = " 'W. Europe Standard Time' \" \0";
-            break;
-        case 2:
-            timezone = " 'E. Europe Standard Time' \" \0";
-            break;
-        case 3:
-            timezone = " 'Turkey Standard Time' \" \0";
-            break;
-        case 4:
-            timezone = " 'Arabian Standard Time' \" \0";
-            break;
-        default:
-            LOG_WARNING("Note a valid UTC offset: %d", utc);
-            return;
-    }
-    snprintf(cmd + strlen(cmd), strlen(timezone), timezone);
-    char* response = malloc(sizeof(char) * 200);
-    runcmd(cmd, &response);
-    LOG_INFO("Timezone powershell command: %s \n", cmd);
-    free(response);
-#endif
-}
-
-void SetTimezoneFromIANAName(char* linux_tz_name) {
-    // TODO we need the sudo password on the server to set the time
-    // when we get around to implementing that we should update this function to
-    // actually work
-    //    char cmd[500] = "echo {INSERT PASSWORD HERE WHEN WE CAN} | sudo -S
-    //    timedatectl set-timezone "; snprintf(cmd + strlen(cmd),
-    //    strlen(linux_tz_name), linux_tz_name);
-    (void*)linux_tz_name;  // silence unused variable warning
-    return;
-}
-
-void SetTimezoneFromWindowsName(char* win_tz_name) {
-    char cmd[500];
-    snprintf(cmd, sizeof(cmd), "powershell -command \"Set-TimeZone -Id '%s'\"",
-             win_tz_name);
-    char* response = NULL;
-    runcmd(cmd, &response);
-    LOG_INFO("Timezone powershell command: %s -> %s\n", cmd, response);
-    free(response);
-    return;
 }
 
 void update() {
@@ -738,41 +671,183 @@ void update() {
 
 #include <time.h>
 
-int MultithreadedWaitForSpectator(void* opaque) {
-    opaque;
-    while (connected) {
-        SocketContext socket;
-        if (CreateUDPContext(&socket, NULL, PORT_SPECTATOR, 1, 5000,
-                             USING_STUN) < 0) {
-            LOG_INFO("Waiting for spectator");
-            continue;
-        }
+int doDiscoveryHandshake(SocketContext *context, int *client_id) {
+    FractalPacket *packet;
+    clock timer;
+    StartTimer(&timer);
+    do {
+        packet = ReadTCPPacket(context);
+        SDL_Delay(5);
+    } while (packet == NULL && GetTimer(timer) < 3.0);
+    if (packet == NULL) {
+        LOG_WARNING("Did not receive discovery request from client.");
+        closesocket(context->s);
+        return -1;
+    }
 
-        FractalServerMessage fmsg;
-        fmsg.type = MESSAGE_INIT;
-        fmsg.spectator_port = PORT_SPECTATOR + 1 + num_spectator_connections;
+    FractalClientMessage *fcmsg = (FractalClientMessage *) packet->data;
+    int username = fcmsg->discoveryRequest.username;
 
-        if (SendUDPPacket(&socket, PACKET_MESSAGE, (uint8_t*)&fmsg,
-                          sizeof(FractalServerMessage), 1, -1, NULL,
-                          NULL) < 0) {
-            LOG_ERROR("Could not send spectator init message!");
+    if (readLock(&is_active_rwlock) != 0) {
+        LOG_ERROR("Failed to read-acquire is active RW lock.");
+        return -1;
+    }
+    bool found;
+    int ret;
+    if ((ret = tryFindClientIdByUsername(username, &found, client_id)) != 0) {
+        LOG_ERROR("Failed to try to find client ID by username. "
+                  " (Username: %s)", username);
+    }
+    if (ret == 0 && found) {
+        if (readUnlock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to read-release is active RW lock.");
+            closesocket(context->s);
             return -1;
         }
+        if (writeLock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-acquire is active RW lock.");
+            closesocket(context->s);
+            return -1;
+        }
+        ret = quitClient(*client_id);
+        if (ret != 0) {
+            LOG_ERROR("Failed to quit client. (ID: %d)", *client_id);
+        }
+        if (writeUnlock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-release is active RW lock.");
+            closesocket(context->s);
+            if (ret == 0) ret = -1;
+        }
+        if (ret != 0) return ret;
+    } else {
+        ret = getAvailableClientID(client_id);
+        if (ret != 0) {
+            LOG_ERROR("Failed to find available client ID.");
+            closesocket(context->s);
+        }
+        if (readUnlock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to read-release is active RW lock.");
+            return -1;
+        }
+        if (ret != 0) return -1;
+    }
 
-        closesocket(socket.s);
+    clients[*client_id].username = username;
+    LOG_INFO("Found ID for client. (ID: %d)", *client_id);
 
-        LOG_INFO("SPECTATOR #%d HANDSHAKE!", num_spectator_connections);
-        if (CreateUDPContext(&SpectatorSendContext[num_spectator_connections],
-                             NULL,
-                             PORT_SPECTATOR + 1 + num_spectator_connections, 1,
-                             5000, USING_STUN) < 0) {
-            LOG_INFO("Waiting for spectator");
+    size_t fsmsg_size =
+           sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
+
+    FractalServerMessage *fsmsg = malloc(fsmsg_size);
+    if (fsmsg == NULL) {
+      LOG_ERROR("Failed to malloc server message.");
+      return -1;
+    }
+    fsmsg->type = MESSAGE_DISCOVERY_REPLY;
+
+    FractalDiscoveryReplyMessage *reply_msg =
+        (FractalDiscoveryReplyMessage *) fsmsg->discovery_reply;
+
+    reply_msg->client_id = *client_id;
+    reply_msg->UDP_port = clients[*client_id].UDP_port;
+    reply_msg->TCP_port = clients[*client_id].TCP_port;
+
+    reply_msg->connection_id = connection_id;
+    char* server_username = "Fractal";
+    memcpy(reply_msg->username, server_username, strlen(server_username) + 1);
+    #ifdef _WIN32
+            reply_msg->filename[0] = '\0';
+            strcat(reply_msg->filename, "C:\\ProgramData\\FractalCache");
+    #else  // Linux
+            char* cwd = getcwd(NULL, 0);
+            memcpy(reply_msg->filename, cwd, strlen(cwd) + 1);
+            free(cwd);
+    #endif
+
+    LOG_INFO("Sending discovery packet");
+    if (SendTCPPacket(context, PACKET_MESSAGE,
+                      (uint8_t*) fsmsg, (int) fsmsg_size) < 0) {
+        LOG_ERROR("Failed to send send discovery reply message.");
+        closesocket(context->s);
+        free(fsmsg);
+        return -1;
+    }
+
+    closesocket(context->s);
+    free(fsmsg);
+    return 0;
+}
+
+int MultithreadedWaitForClient(void* opaque) {
+    opaque;
+    SocketContext discovery_context;
+    int client_id;
+
+    while (running) {
+        if (CreateTCPContext(&discovery_context,
+                             NULL, PORT_DISCOVERY,
+                             1, 5000,
+                             USING_STUN) < 0) {
             continue;
         }
-        LOG_INFO("SPECTATOR #%d CONNECTED!", num_spectator_connections);
 
-        num_spectator_connections++;
+        if (doDiscoveryHandshake(&discovery_context, &client_id) != 0) {
+            LOG_WARNING("Discovery handshake failed.");
+            continue;
+        }
+
+        LOG_INFO("Discovery handshake succeeded. (ID: %d)", client_id);
+
+        // Client is not in use so we don't need to worry about anyone else touching it
+        if (connectClient(client_id) != 0) {
+            LOG_WARNING("Failed to establish connection with client. "
+                      "(ID: %d)", client_id);
+            continue;
+        }
+
+        LOG_INFO("Client connected. (ID: %d)", client_id);
+
+        // We probably need to lock these. Argh.
+        if (host_id == -1) {
+            host_id = client_id;
+        }
+        num_active_clients++;
+        if (num_controlling_clients == 0) {
+            clients[client_id].is_controlling = true;
+            num_controlling_clients++;
+        }
+
+        StartTimer(&(clients[client_id].last_ping));
+
+        if (writeLock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-acquire is active RW lock.");
+            if (quitClient(client_id) != 0) {
+                LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
+            }
+            if (host_id == client_id) {
+                // if (randomlyAssignHost() != 0) {
+                //     LOG_ERROR("Failed to randomly assigned host.");
+                // }
+            }
+            continue;
+        }
+        clients[client_id].is_active = true;
+        if (writeUnlock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-release is active RW lock.");
+            LOG_ERROR("VERY BAD. IRRECOVERABLE.");
+            if (quitClient(client_id) != 0) {
+                LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
+            }
+            if (host_id == client_id) {
+                // if (randomlyAssignHost() != 0) {
+                //     LOG_ERROR("Failed to randomly assigned host.");
+                // }
+            }
+            // MAYBE RETURN (?)
+            continue;
+        }
     }
+
     return 0;
 }
 
@@ -807,6 +882,7 @@ int main() {
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         mprintf("Failed to initialize Winsock with error code: %d.\n",
                 WSAGetLastError());
+        destroyLogger();
         return -1;
     }
 #endif
@@ -814,112 +890,48 @@ int main() {
 #ifdef _WIN32
     if (!InitDesktop()) {
         LOG_WARNING("Could not winlogon!\n");
+        destroyLogger();
         return 0;
     }
 #endif
 
+    if (initClients() != 0) {
+      LOG_ERROR("Failed to initialize client objects.");
+      destroyLogger();
+      return 1;
+    }
+
     update();
 
     while (true) {
-        srand(rand() * (unsigned int)time(NULL) + rand());
-        connection_id = rand();
-
-        num_spectator_connections = 0;
-        SocketContext PacketReceiveContext = {0};
-        SocketContext PacketTCPContext = {0};
-
-        updateStatus(false);
-
-        if (CreateUDPContext(&PacketReceiveContext, NULL, PORT_CLIENT_TO_SERVER,
-                             1, 5000, USING_STUN) < 0) {
-            LOG_WARNING("Failed to start connection");
-
-            // Since we're just idling, let's try updating the server
-            update();
-
-            continue;
-        }
-
-        if (CreateUDPContext(&PacketSendContext, NULL, PORT_SERVER_TO_CLIENT, 1,
-                             500, USING_STUN) < 0) {
-            LOG_WARNING(
-                "Failed to finish connection (Failed at port server to "
-                "client).");
-            closesocket(PacketReceiveContext.s);
-            continue;
-        }
-
-        if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 750,
-                             USING_STUN) < 0) {
-            LOG_WARNING("Failed to finish connection (Failed at TCP context).");
-            closesocket(PacketReceiveContext.s);
-            closesocket(PacketSendContext.s);
-            continue;
-        }
-
         updateStatus(true);
-
-        // Give client time to setup before sending it with packets
-        SDL_Delay(150);
-
-        FractalServerMessage* msg_init_whole = malloc(
-            sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit));
-        msg_init_whole->type = MESSAGE_INIT;
-        FractalServerMessageInit* msg_init =
-            (FractalServerMessageInit*)msg_init_whole->init_msg;
-#ifdef _WIN32
-        msg_init->filename[0] = '\0';
-        strcat(msg_init->filename, "C:\\ProgramData\\FractalCache");
-        char* username = "Fractal";
-#else  // Linux
-        char* cwd = getcwd(NULL, 0);
-        memcpy(msg_init->filename, cwd, strlen(cwd) + 1);
-        free(cwd);
-        char* username = "Fractal";
-#endif
-        msg_init->connection_id = connection_id;
-        memcpy(msg_init->username, username, strlen(username) + 1);
-        LOG_INFO("SIZE: %d", sizeof(FractalServerMessage) +
-                                 sizeof(FractalServerMessageInit));
-        packet_mutex = SDL_CreateMutex();
-
-        if (SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE,
-                          (uint8_t*)msg_init_whole,
-                          sizeof(FractalServerMessage) +
-                              sizeof(FractalServerMessageInit)) < 0) {
-            LOG_ERROR("Could not send server init message!");
-            return -1;
-        }
-        free(msg_init_whole);
 
         clock startup_time;
         StartTimer(&startup_time);
 
-        connected = true;
+        running = true;
         max_mbps = STARTING_BITRATE;
         wants_iframe = false;
         update_encoder = false;
 
-        SDL_Thread* send_video =
-            SDL_CreateThread(SendVideo, "SendVideo", &PacketSendContext);
-        SDL_Thread* send_audio =
-            SDL_CreateThread(SendAudio, "SendAudio", &PacketSendContext);
-        LOG_INFO("Sending video and audio...");
-        SDL_Thread* collect_spectators =
-            SDL_CreateThread(MultithreadedWaitForSpectator,
-                             "MultithreadedWaitForSpectator", NULL);
-        collect_spectators;
+        SDL_Thread* wait_for_client =
+            SDL_CreateThread(MultithreadedWaitForClient,
+                             "MultithreadedWaitForClient", NULL);
+        wait_for_client;
+        while (num_active_clients == 0) SDL_Delay(500);
+        connected = true;
+        SDL_Delay(500);
 
-        input_device_t* input_device = CreateInputDevice();
+        SDL_Thread* send_video =
+            SDL_CreateThread(SendVideo, "SendVideo", NULL);
+        SDL_Thread* send_audio =
+            SDL_CreateThread(SendAudio, "SendAudio", NULL);
+        LOG_INFO("Sending video and audio...");
+
+        input_device = CreateInputDevice();
         if (!input_device) {
             LOG_WARNING("Failed to create input device for playback.");
         }
-
-        FractalClientMessage local_fmsg;
-        FractalClientMessage* fmsg;
-
-        clock last_ping;
-        StartTimer(&last_ping);
 
         clock totaltime;
         StartTimer(&totaltime);
@@ -927,9 +939,11 @@ int main() {
         clock last_exit_check;
         StartTimer(&last_exit_check);
 
+        clock last_ping_check;
+        StartTimer(&last_ping_check);
+
         LOG_INFO("Receiving packets...");
 
-        int last_input_id = -1;
         initClipboard();
 
         clock ack_timer;
@@ -938,11 +952,16 @@ int main() {
         while (connected) {
             if (GetTimer(ack_timer) > 5) {
 #if USING_STUN
-                Ack(&PacketTCPContext);
-                Ack(&PacketSendContext);
-                Ack(&PacketReceiveContext);
-                for (int i = 0; i < num_spectator_connections; i++) {
-                    Ack(&SpectatorSendContext[i]);
+                // Broadcast ack
+                if (readLock(&is_active_rwlock) != 0) {
+                    LOG_ERROR("Failed to read-acquire is active RW lock.");
+                } else {
+                    if (broadcastAck() != 0) {
+                        LOG_ERROR("Failed to broadcast acks.");
+                    }
+                    if (readUnlock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-release is active RW lock.");
+                    }
                 }
 #endif
                 updateStatus(true);
@@ -958,20 +977,54 @@ int main() {
                 memcpy(&fmsg_response->clipboard, cb,
                        sizeof(ClipboardData) + cb->size);
                 LOG_INFO("Received clipboard trigger! Sending to client");
-                if (SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE,
-                                  (uint8_t*)fmsg_response,
-                                  sizeof(FractalServerMessage) + cb->size) <
-                    0) {
-                    LOG_WARNING("Could not send Clipboard Message");
+                if (readLock(&is_active_rwlock) != 0) {
+                    LOG_ERROR("Failed to read-acquire is active RW lock.");
                 } else {
-                    LOG_INFO("Send clipboard message!");
+                    if (broadcastTCPPacket(PACKET_MESSAGE,
+                                (uint8_t*)fmsg_response,
+                                sizeof(FractalServerMessage) + cb->size) < 0) {
+                        LOG_WARNING("Could not broadcast Clipboard Message");
+                    } else {
+                        LOG_INFO("Send clipboard message!");
+                    }
+                    if (readUnlock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-release is active RW lock.");
+                    }
                 }
                 free(fmsg_response);
             }
 
-            if (GetTimer(last_ping) > 3.0) {
-                LOG_WARNING("Client connection dropped.");
-                connected = false;
+            if (GetTimer(last_ping_check) > 20.0) {
+                for (;;) {
+                    if (readLock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-acquire is active RW lock.");
+                        break;
+                    }
+                    bool exists, should_reap = false;
+                    if (existsTimedOutClient(3.0, &exists) != 0) {
+                        LOG_ERROR("Failed to find if a client has timed out.");
+                    } else {
+                        should_reap = exists;
+                    }
+                    if (readUnlock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-release is active RW lock.");
+                        break;
+                    }
+                    if (should_reap) {
+                        if (writeLock(&is_active_rwlock) != 0) {
+                            LOG_ERROR("Failed to write-acquire is active RW lock.");
+                            break;
+                        }
+                        if (reapTimedOutClients(3.0) != 0) {
+                            LOG_ERROR("Failed to reap timed out clients.");
+                        }
+                        if (writeUnlock(&is_active_rwlock) != 0) {
+                            LOG_ERROR("Failed to write-release is active RW lock.");
+                        }
+                    }
+                    break;
+                }
+                StartTimer(&last_ping_check);
             }
 
             if (GetTimer(last_exit_check) > 15.0 / 1000.0) {
@@ -981,11 +1034,19 @@ int main() {
                     LOG_INFO("Exiting due to button press...");
                     FractalServerMessage fmsg_response = {0};
                     fmsg_response.type = SMESSAGE_QUIT;
-                    if (SendUDPPacket(&PacketSendContext, PACKET_MESSAGE,
-                                      (uint8_t*)&fmsg_response,
-                                      sizeof(FractalServerMessage), 1,
-                                      STARTING_BURST_BITRATE, NULL, NULL) < 0) {
-                        LOG_WARNING("Could not send Quit Message");
+                    if (readLock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-acquire is active RW lock.");
+                    } else {
+                        if (broadcastUDPPacket(PACKET_MESSAGE,
+                                          (uint8_t*)&fmsg_response,
+                                          sizeof(FractalServerMessage), 1,
+                                          STARTING_BURST_BITRATE,
+                                          NULL, NULL) != 0) {
+                            LOG_WARNING("Could not send Quit Message");
+                        }
+                        if (readUnlock(&is_active_rwlock) != 0) {
+                            LOG_ERROR("Failed to read-release is active RW lock.");
+                        }
                     }
                     // Give a bit of time to make sure no one is touching it
                     SDL_Delay(50);
@@ -998,221 +1059,45 @@ int main() {
                 StartTimer(&last_exit_check);
             }
 
-            // START Get Packet
-            FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
-            if (tcp_packet) {
-                fmsg = (FractalClientMessage*)tcp_packet->data;
-                LOG_INFO("Received TCP BUF!!!! Size %d",
-                         tcp_packet->payload_size);
-                LOG_INFO("Received %d byte clipboard message from client.",
-                         tcp_packet->payload_size);
-            } else {
-                memset(&local_fmsg, 0, sizeof(local_fmsg));
+            if (readLock(&is_active_rwlock) != 0) {
+                LOG_ERROR("Failed to write-acquire is active lock.");
+                continue;
+            }
+            for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
+                if (!clients[id].is_active) continue;
 
-                fmsg = &local_fmsg;
-
-                FractalPacket* decrypted_packet =
-                    ReadUDPPacket(&PacketReceiveContext);
-
-                for (int i = 0;
-                     i < num_spectator_connections && !decrypted_packet; i++) {
-                    LOG_INFO("READING FROM %d", i);
-                    SDL_Delay(50);
-                    FractalPacket* spectator_decrypted_packet =
-                        ReadUDPPacket(&SpectatorSendContext[i]);
-                    if (spectator_decrypted_packet) {
-                        FractalClientMessage* fcmsg =
-                            (void*)spectator_decrypted_packet->data;
-                        if (fcmsg->type == MESSAGE_IFRAME_REQUEST) {
-                            LOG_INFO("Iframe requested from spectator!");
-                            decrypted_packet = spectator_decrypted_packet;
-                        }
+                // Get packet!
+                FractalClientMessage *fmsg;
+                FractalClientMessage local_fcmsg;
+                size_t fcmsg_size;
+                if (tryGetNextMessageTCP(id, &fmsg, &fcmsg_size) != 0
+                        || fcmsg_size == 0) {
+                    if (tryGetNextMessageUDP(id, &local_fcmsg, &fcmsg_size) != 0
+                            || fcmsg_size == 0) {
+                        continue;
                     }
+                    fmsg = &local_fcmsg;
                 }
 
-                if (decrypted_packet) {
-                    // Copy data into an fmsg
-                    memcpy(fmsg, decrypted_packet->data,
-                           max(sizeof(*fmsg),
-                               (size_t)decrypted_packet->payload_size));
-
-                    // Check to see if decrypted packet is of valid size
-                    if (decrypted_packet->payload_size != GetFmsgSize(fmsg)) {
-                        LOG_WARNING("Packet is of the wrong size!: %d",
-                                    decrypted_packet->payload_size);
-                        LOG_WARNING("Type: %d", fmsg->type);
-                        fmsg->type = 0;
-                    }
-
-                    // Make sure that keyboard events are played in order
-                    if (fmsg->type == MESSAGE_KEYBOARD ||
-                        fmsg->type == MESSAGE_KEYBOARD_STATE) {
-                        // Check that id is in order
-                        if (decrypted_packet->id > last_input_id) {
-                            decrypted_packet->id = last_input_id;
-                        } else {
-                            // Received keyboard input out of order, just
-                            // ignore
-                            fmsg->type = 0;
-                        }
-                    }
+                // HANDLE FRACTAL CLIENT MESSAGE
+                if (SDL_LockMutex(state_lock) != 0) {
+                    LOG_ERROR("Failed to lock state lock.");
+                    continue;
+                }
+                bool is_controlling = clients[id].is_controlling;
+                SDL_UnlockMutex(state_lock);
+                if (handleClientMessage(fmsg, id, is_controlling) != 0) {
+                    LOG_ERROR("Failed to handle message from client. "
+                              "(ID: %d)", id);
                 } else {
-                    fmsg->type = 0;
+                    // if (handleSpectatorMessage(fmsg, id) != 0) {
+                    //     LOG_ERROR("Failed to handle message from spectator");
+                    // }
                 }
             }
-            // END Get Packet
-
-            if (fmsg->type != 0) {
-                if (fmsg->type == MESSAGE_KEYBOARD ||
-                    fmsg->type == MESSAGE_MOUSE_BUTTON ||
-                    fmsg->type == MESSAGE_MOUSE_WHEEL ||
-                    fmsg->type == MESSAGE_MOUSE_MOTION) {
-                    // Replay user input (keyboard or mouse presses)
-                    if (input_device) {
-                        if (!ReplayUserInput(input_device, fmsg)) {
-                            LOG_WARNING("Failed to replay input!");
-#ifdef _WIN32
-                            InitDesktop();
-#endif
-                        }
-                    }
-
-                } else if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
-// TODO: Unix version missing
-// Synchronize client and server keyboard state
-#ifdef _WIN32
-                    UpdateKeyboardState(input_device, fmsg);
-#endif
-                } else if (fmsg->type == MESSAGE_MBPS) {
-                    // Update mbps
-                    LOG_INFO("MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps);
-                    max_mbps =
-                        max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
-                    // update_encoder = true;
-                } else if (fmsg->type == MESSAGE_PING) {
-                    LOG_INFO("Ping Received - ID %d", fmsg->ping_id);
-
-                    // Response to ping with pong
-                    FractalServerMessage fmsg_response = {0};
-                    fmsg_response.type = MESSAGE_PONG;
-                    fmsg_response.ping_id = fmsg->ping_id;
-                    StartTimer(&last_ping);
-                    if (SendUDPPacket(&PacketSendContext, PACKET_MESSAGE,
-                                      (uint8_t*)&fmsg_response,
-                                      sizeof(fmsg_response), 1,
-                                      STARTING_BURST_BITRATE, NULL, NULL) < 0) {
-                        LOG_WARNING("Could not send Ping");
-                    }
-                } else if (fmsg->type == MESSAGE_DIMENSIONS) {
-                    LOG_INFO("Request to use dimensions %dx%d received",
-                             fmsg->dimensions.width, fmsg->dimensions.height);
-                    // Update knowledge of client monitor dimensions
-                    if (client_width != fmsg->dimensions.width ||
-                        client_height != fmsg->dimensions.height ||
-                        client_codec_type != fmsg->dimensions.codec_type) {
-                        client_width = fmsg->dimensions.width;
-                        client_height = fmsg->dimensions.height;
-                        client_codec_type = fmsg->dimensions.codec_type;
-                        // Update device if knowledge changed
-                        update_device = true;
-                    }
-                } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
-                    // Update clipboard with message
-                    LOG_INFO("Received Clipboard Data! %d",
-                             fmsg->clipboard.type);
-                    SetClipboard(&fmsg->clipboard);
-                } else if (fmsg->type == MESSAGE_AUDIO_NACK) {
-                    // Audio nack received, relay the packet
-
-                    // mprintf("Audio NACK requested for: ID %d Index %d\n",
-                    // fmsg->nack_data.id, fmsg->nack_data.index);
-                    FractalPacket* audio_packet =
-                        &audio_buffer[fmsg->nack_data.id % AUDIO_BUFFER_SIZE]
-                                     [fmsg->nack_data.index];
-                    int len = audio_buffer_packet_len[fmsg->nack_data.id %
-                                                      AUDIO_BUFFER_SIZE]
-                                                     [fmsg->nack_data.index];
-                    if (audio_packet->id == fmsg->nack_data.id) {
-                        LOG_INFO(
-                            "NACKed audio packet %d found of length %d. "
-                            "Relaying!",
-                            fmsg->nack_data.id, len);
-                        ReplayPacket(&PacketSendContext, audio_packet, len);
-                    }
-                    // If we were asked for an invalid index, just ignore it
-                    else if (fmsg->nack_data.index <
-                             audio_packet->num_indices) {
-                        LOG_WARNING(
-                            "NACKed audio packet %d %d not found, ID %d %d was "
-                            "located instead.",
-                            fmsg->nack_data.id, fmsg->nack_data.index,
-                            audio_packet->id, audio_packet->index);
-                    }
-                } else if (fmsg->type == MESSAGE_VIDEO_NACK) {
-                    // Video nack received, relay the packet
-
-                    // mprintf("Video NACK requested for: ID %d Index %d\n",
-                    // fmsg->nack_data.id, fmsg->nack_data.index);
-                    FractalPacket* video_packet =
-                        &video_buffer[fmsg->nack_data.id % VIDEO_BUFFER_SIZE]
-                                     [fmsg->nack_data.index];
-                    int len = video_buffer_packet_len[fmsg->nack_data.id %
-                                                      VIDEO_BUFFER_SIZE]
-                                                     [fmsg->nack_data.index];
-                    if (video_packet->id == fmsg->nack_data.id) {
-                        LOG_INFO(
-                            "NACKed video packet ID %d Index %d found of "
-                            "length %d. Relaying!",
-                            fmsg->nack_data.id, fmsg->nack_data.index, len);
-                        ReplayPacket(&PacketSendContext, video_packet, len);
-                    }
-
-                    // If we were asked for an invalid index, just ignore it
-                    else if (fmsg->nack_data.index <
-                             video_packet->num_indices) {
-                        LOG_WARNING(
-                            "NACKed video packet %d %d not found, ID %d %d was "
-                            "located instead.",
-                            fmsg->nack_data.id, fmsg->nack_data.index,
-                            video_packet->id, video_packet->index);
-                    }
-                } else if (fmsg->type == MESSAGE_IFRAME_REQUEST) {
-                    LOG_INFO("Request for i-frame found: Creating iframe");
-                    if (fmsg->reinitialize_encoder) {
-                        update_encoder = true;
-                    } else {
-                        wants_iframe = true;
-                    }
-                } else if (fmsg->type == CMESSAGE_QUIT) {
-                    // Client requested to exit, it's time to disconnect
-                    LOG_INFO("Client Quit");
-                    connected = false;
-                } else if (fmsg->type == MESSAGE_TIME) {
-                    LOG_INFO("Recieving a message time packet");
-#ifdef _WIN32
-                    if (fmsg->time_data.use_win_name) {
-                        LOG_INFO("Setting time from windows time zone %s",
-                                 fmsg->time_data.win_tz_name);
-                        SetTimezoneFromWindowsName(fmsg->time_data.win_tz_name);
-                    } else {
-                        LOG_INFO("Setting time from UTC offset %d",
-                                 fmsg->time_data.UTC_Offset);
-                        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset,
-                                           fmsg->time_data.DST_flag);
-                    }
-#else
-                    if (fmsg->time_data.use_linux_name) {
-                        LOG_INFO("Setting time from IANA time zone %s",
-                                 fmsg->time_data.win_tz_name);
-                        SetTimezoneFromIANAName(fmsg->time_data.win_tz_name);
-                    } else {
-                        LOG_INFO("Setting time from UTC offset %d",
-                                 fmsg->time_data.win_tz_name);
-                        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset,
-                                           fmsg->time_data.DST_flag);
-                    }
-#endif
-                }
+            if (readUnlock(&is_active_rwlock) != 0) {
+                LOG_ERROR("Failed to write-release is active lock.");
+                continue;
             }
         }
 
@@ -1226,9 +1111,26 @@ int main() {
         SDL_WaitThread(send_audio, NULL);
         SDL_DestroyMutex(packet_mutex);
 
-        closesocket(PacketReceiveContext.s);
-        closesocket(PacketSendContext.s);
-        closesocket(PacketTCPContext.s);
+        if (writeLock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-acquire is active RW lock.");
+            continue;
+        }
+        if (SDL_LockMutex(state_lock) != 0) {
+            LOG_ERROR("Failed to lock state lock");
+            if (writeUnlock(&is_active_rwlock) != 0) {
+                LOG_ERROR("Failed to write-release is active RW lock.");
+            }
+            continue;
+        }
+        if (quitClients() != 0) {
+            LOG_ERROR("Failed to quit clients.");
+        }
+        if (SDL_UnlockMutex(state_lock) != 0) {
+            LOG_ERROR("Failed to unlock state lock");
+        }
+        if (writeUnlock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-release is active RW lock.");
+        }
     }
 
 #ifdef _WIN32
@@ -1236,6 +1138,7 @@ int main() {
 #endif
 
     destroyLogger();
+    destroyClients();
 
     return 0;
 }

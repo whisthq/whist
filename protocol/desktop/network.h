@@ -9,72 +9,16 @@
 Usage
 ============================
 
-establishConnections() must be called for the non-spectator client to send and
-receive UDP and TCP packets from the server. establishSpectatorConnections()
-must be called to do the same for spectator clients. If establishConnections()
-or establishSpectatorConnections() succeeds, closeConnections() or
-closeSpectatorConnections(), respectively, must be called before the application
-exits for a safe exit. If establishConnections() or
-establishSpectatorConnections() fails, either function may be called again to
-safely re-attempt connecting.
 */
+// must be called before connectToServer()
+int discoverPorts(void);
 
-/**
- * @brief                          Establishes TCP and UDP connections between
- *                                 server and non-spectator client, on client-
- *                                 side.
- *
- * @details                        Makes global variables PacketSendContext,
- *                                 PacketReceiveContext, and PacketTCPContext
- *                                 contexts available for communication, on
- *                                 success. Global variable server_ip must be
- *                                 set. Logs errors.
- *
- * @returns                        Returns -1 on failure to connect or error,
- *                                 0 on success
- */
-int establishConnections(void);
+// must be called after discoverPorts()
+int connectToServer(void);
 
-/**
- * @brief                          Closes TCP and UDP connections between
- *                                 server and non-spectator client, on client-
- *                                 side.
- *
- * @details                        Should only be called after
- *                                 establishConnections(). Destroys
- *                                 PacketSendContext, PacketReceiveContext,
- *                                 and PacketTCPContext.
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
 int closeConnections(void);
 
-/**
- * @brief                          Establishes UDP connection between
- *                                 server and spectator client, from client-
- *                                 side.
- *
- * @details                        Makes global variables PacketSendContext and
- *                                 PacketReceiveContext contexts available for
- *                                 communication, on success. Global variable
- *                                 server_ip must be set. Logs errors.
- *
- * @returns                        Returns -1 on failure to connect or error,
- *                                 0 on success
- */
-int establishSpectatorConnections(void);
-
-/**
- * @brief                          Closes UDP connection between server and
- *                                 spectator client, on client-side
- *
- * @details                        Should only be called after
- *                                 establishSpectatorConnections(). Destroys
- *                                 PacketSendContext and PacketReceiveContext.
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
-int closeSpectatorConnections(void);
+int waitForServerInitMessage(int timeout);
 
 /**
  * @brief                          Sends quit messages to the server
@@ -88,22 +32,5 @@ int closeSpectatorConnections(void);
  * @returns                        Returns -1 on failure, 0 on success
  */
 int sendServerQuitMessages(int num_messages);
-
-/**
- * @brief                          Waits until client receives init message from
- *                                 server
- *
- * @details                        Waits for global variable
- *                                 receieved_server_init_message to be true.
- *                                 Sleeps between checking the variable.
- *                                 Returns -1 if not true after timeout many
- *                                 milliseconds.
- *
- * @param timeout                  Maximum time (in milliseconds) to wait before
- *                                 returning
- *
- * @returns                        Returns -1 on timeout or error, 0 on success
- */
-int waitForServerInitMessage(int timeout);
 
 #endif  // DESKTOP_NETWORK_H

@@ -361,4 +361,6 @@ bool SendJSONPost(char* host_s, char* path, char* jsonObj);
 bool SendJSONGet(char* host_s, char* path, char* json_res,
                  size_t json_res_size);
 
+int sendp(SocketContext *context, void *buf, int len);
+
 #endif  // NETWORK_H

@@ -10,6 +10,7 @@
 #include "../fractal/utils/png.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "SDL2/SDL.h"
+#include "peer.h"
 
 #define USE_HARDWARE true
 
@@ -299,6 +300,8 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)renderContext.frame_buffer;
+        PeerUpdateMessage *peer_update_msgs = (PeerUpdateMessage *) (((char *) frame->compressed_frame) + frame->size);
+        size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
 #if LOG_VIDEO
         mprintf("Rendering ID %d (Age %f) (Packets %d) %s\n", renderContext.id,
@@ -313,9 +316,9 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                 renderContext.num_packets, frame->is_iframe ? "(I-Frame)" : "");
         }
 
-        if ((int)(sizeof(Frame) + frame->size) != renderContext.frame_size) {
-            LOG_WARNING("Incorrect Frame Size! %d instead of %d\n",
-                        sizeof(Frame) + frame->size, renderContext.frame_size);
+        if ((int)(sizeof(Frame) + frame->size + sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs) != renderContext.frame_size) {
+            mprintf("Incorrect Frame Size! %d instead of %d\n",
+                    sizeof(Frame) + frame->size + sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs, renderContext.frame_size);
         }
 
         if (frame->width != server_width || frame->height != server_height ||
@@ -427,12 +430,14 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         // GetTimer(renderContext.client_frame_timer));
 
         if (!skip_render && can_render) {
-            // SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
-            // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
+            //SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160, SDL_ALPHA_OPAQUE);
+            //SDL_RenderClear((SDL_Renderer*)renderer);
 
             SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL,
                            NULL);
-
+            if (renderPeers((SDL_Renderer *) renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
+              LOG_ERROR("Failed to render peers.");
+            }
             SDL_RenderPresent((SDL_Renderer*)renderer);
         }
 

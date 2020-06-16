@@ -2,128 +2,140 @@
 
 #include "../fractal/core/fractal.h"
 #include "main.h"
+#include "network.h"
+#include "desktop_utils.h"
 
+// Data
+extern char filename[300];
+extern char username[50];
+extern int UDP_port;
+extern int TCP_port;
+extern int client_id;
 extern SocketContext PacketSendContext;
 extern SocketContext PacketReceiveContext;
 extern SocketContext PacketTCPContext;
 extern char *server_ip;
 extern bool received_server_init_message;
+extern int uid;
 
-static int connectUDPOutgoing(int port, bool using_stun) {
-    if (CreateUDPContext(&PacketSendContext, (char *)server_ip, port, 10, 500,
-                         using_stun) < 0) {
-        LOG_WARNING("Failed establish outgoing UDP connection to server");
+
+bool using_stun;
+
+int discoverPorts(void) {
+    SocketContext context;
+    using_stun = true;
+    if (CreateTCPContext(&context, server_ip,
+                        PORT_DISCOVERY, 1, 500, using_stun) < 0) {
+        using_stun = false;
+        if (CreateTCPContext(&context, server_ip,
+                            PORT_DISCOVERY, 1, 750, using_stun) < 0) {
+            LOG_WARNING("Failed to connect to server's discovery port.");
+            return -1;
+        }
+    }
+
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_DISCOVERY_REQUEST;
+    fcmsg.discoveryRequest.username = uid;
+
+    if (SendTCPPacket(&context, PACKET_MESSAGE,
+                      (uint8_t*) &fcmsg, (int) sizeof(fcmsg)) < 0) {
+        LOG_ERROR("Failed to send discovery request message.");
+        closesocket(context.s);
         return -1;
     }
+    LOG_INFO("Sent discovery packet");
+
+    FractalPacket *packet;
+    clock timer;
+    StartTimer(&timer);
+    do {
+        packet = ReadTCPPacket(&context);
+        SDL_Delay(5);
+    } while (packet == NULL && GetTimer(timer) < 5.0);
+
+    if (packet == NULL) {
+        LOG_WARNING("Did not receive discovery packet from server.");
+        closesocket(context.s);
+        return -1;
+    }
+
+    FractalServerMessage *fsmsg = (FractalServerMessage *) packet->data;
+    if (packet->payload_size != sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage)) {
+        LOG_ERROR("Incorrect discovery reply message size. Expected: %d, Received: %d",
+            sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage),
+            packet->payload_size);
+    }
+    if (fsmsg->type != MESSAGE_DISCOVERY_REPLY) {
+        LOG_ERROR("Message not of discovery reply type (Type: %d)", fsmsg->type);
+        closesocket(context.s);
+        return -1;
+    }
+
+    LOG_INFO("Received discovery info packet from server!");
+
+    FractalDiscoveryReplyMessage *reply_msg = (FractalDiscoveryReplyMessage *) fsmsg->discovery_reply;
+    if (reply_msg->client_id == -1) {
+        LOG_ERROR("Not awarded a client id from server.");
+        closesocket(context.s);
+        return -1;
+    }
+
+    client_id = reply_msg->client_id;
+    UDP_port = reply_msg->UDP_port;
+    TCP_port = reply_msg->TCP_port;
+    LOG_INFO("Assigned client ID: %d. UDP Port: %d, TCP Port: %d", client_id, UDP_port, TCP_port);
+
+    memcpy(filename, reply_msg->filename,
+           min(sizeof(filename), sizeof(reply_msg->filename)));
+    memcpy(username, reply_msg->username,
+           min(sizeof(username), sizeof(reply_msg->username)));
+
+    if (logConnectionID(reply_msg->connection_id) < 0) {
+        LOG_ERROR("Failed to log connection ID.");
+        closesocket(context.s);
+        return -1;
+    }
+
+    received_server_init_message = true;
+    closesocket(context.s);
+
     return 0;
 }
 
-static int connectUDPIncoming(int port, bool using_stun) {
-    if (CreateUDPContext(&PacketReceiveContext, (char *)server_ip, port, 1, 500,
-                         using_stun) < 0) {
-        LOG_WARNING("Failed establish incoming UDP connection from server");
+// must be called after
+int connectToServer(void) {
+    if (UDP_port < 0) {
+        LOG_ERROR("Trying to connect UDP but port not set.");
+        return -1;
+    }
+    if (TCP_port < 0) {
+        LOG_ERROR("Trying to connect TCP but port not set.");
+        return -1;
+    }
+
+    if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10,
+                        500, using_stun) < 0) {
+        LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
 
     int a = 65535;
-    if (setsockopt(PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF,
-
-                   (const char *)&a, sizeof(int)) == -1) {
-        LOG_ERROR("Error setting socket opts: %d\n", GetLastNetworkError());
-        return -1;
-    }
-    return 0;
-}
-
-static int connectTCP(int port, bool using_stun) {
-    if (CreateTCPContext(&PacketTCPContext, (char *)server_ip, port, 1, 750,
-                         using_stun) < 0) {
-        return -1;
-    }
-    return 0;
-}
-
-static int getSpectatorServerPort(void) {
-    int port;
-    bool using_stun = true;
-
-    if (connectUDPIncoming(PORT_SPECTATOR, using_stun) != 0) {
-        using_stun = false;
-        if (connectUDPIncoming(PORT_SPECTATOR, using_stun) != 0) {
-            return -1;
-        }
-    }
-
-    FractalPacket *init_spectator;
-    clock init_spectator_timer;
-    StartTimer(&init_spectator_timer);
-    do {
-        SDL_Delay(5);
-        init_spectator = ReadUDPPacket(&PacketReceiveContext);
-    } while (init_spectator == NULL && GetTimer(init_spectator_timer) < 1.0);
-
-    if (init_spectator == NULL) {
-        LOG_ERROR("Did not receive spectator init packet from server.");
-        closesocket(PacketReceiveContext.s);
+    if (setsockopt(PacketSendContext.s, SOL_SOCKET, SO_RCVBUF,
+                   (const char*)&a, sizeof(int)) == -1) {
+        LOG_ERROR("Error setting socket opts: %s\n", strerror(errno));
         return -1;
     }
 
-    FractalServerMessage *fmsg = (FractalServerMessage *)init_spectator->data;
-    port = fmsg->spectator_port;
-
-    closesocket(PacketReceiveContext.s);
-
-    return port;
-}
-
-int establishSpectatorConnections(void) {
-    int server_port = getSpectatorServerPort();
-    if (server_port < 0) {
-        LOG_ERROR("Failed to get spectator's port on server.");
+    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, 750,
+                        using_stun) < 0) {
+        LOG_ERROR("Failed to establish TCP connection with server.");
+        closesocket(PacketSendContext.s);
         return -1;
     }
 
-    bool using_stun = true;
-
-    if (connectUDPOutgoing(server_port, using_stun) != 0) {
-        using_stun = false;
-        if (connectUDPOutgoing(server_port, using_stun) != 0) {
-            return -1;
-        }
-    }
     PacketReceiveContext = PacketSendContext;
-    return 0;
-}
 
-int closeSpectatorConnections(void) {
-    closesocket(PacketSendContext.s);
-    return 0;
-}
-
-int establishConnections(void) {
-    bool using_stun = true;
-
-    if (connectUDPOutgoing(PORT_CLIENT_TO_SERVER, using_stun) != 0) {
-        using_stun = false;
-        if (connectUDPOutgoing(PORT_CLIENT_TO_SERVER, using_stun) != 0) {
-            return -1;
-        }
-    }
-
-    SDL_Delay(150);
-
-    if (connectUDPIncoming(PORT_SERVER_TO_CLIENT, using_stun) != 0) {
-        closesocket(PacketSendContext.s);
-        return -1;
-    }
-
-    SDL_Delay(150);
-
-    if (connectTCP(PORT_SHARED_TCP, using_stun) != 0) {
-        closesocket(PacketSendContext.s);
-        closesocket(PacketReceiveContext.s);
-        return -1;
-    }
     return 0;
 }
 
@@ -131,21 +143,6 @@ int closeConnections(void) {
     closesocket(PacketSendContext.s);
     closesocket(PacketReceiveContext.s);
     closesocket(PacketTCPContext.s);
-    return 0;
-}
-
-int waitForServerInitMessage(int timeout) {
-    clock waiting_for_init_timer;
-    StartTimer(&waiting_for_init_timer);
-    while (!received_server_init_message) {
-        // If 500ms and no init timer was received, we should disconnect
-        // because something failed
-        if (GetTimer(waiting_for_init_timer) > timeout / 1000.0) {
-            LOG_ERROR("Took too long for init timer!");
-            return -1;
-        }
-        SDL_Delay(25);
-    }
     return 0;
 }
 
