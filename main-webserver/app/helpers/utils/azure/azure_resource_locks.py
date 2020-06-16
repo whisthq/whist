@@ -28,7 +28,7 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock):
 
     fractalLog(
         function="lockVMAndUpdate",
-        label="VM {vm_name}".format(vm_name),
+        label=str(vm_name),
         logs="State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
             state=state, lock=str(lock), temporary_lock=str(temporary_lock),
         ),
