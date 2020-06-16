@@ -52,6 +52,14 @@ def azure_vm_post(action, **kwargs):
         output = devHelper(vm_name, dev)
 
         return jsonify(output), output["status"]
+    elif action == "connectionStatus":
+        # Receives pings from active VMs
+
+        available, vm_ip = kwargs["body"]["available"], kwargs["received_from"]
+
+        output = connectionStatusHelper(available, vm_ip)
+
+        return jsonify(output), output["status"]
 
 
 @azure_vm_bp.route("/azure_vm/<action>", methods=["GET"])
