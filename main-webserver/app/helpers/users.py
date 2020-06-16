@@ -68,6 +68,7 @@ def isAdmin(username):
                 return True
         return False
 
+
 def isGoogle(username):
     """Checks whether a user account used Google signup
 
@@ -91,7 +92,6 @@ def isGoogle(username):
             if user["google_login"] == True:
                 return True
         return False
-
 
 
 def lookup(username):
@@ -156,7 +156,7 @@ def registerUser(username, password, token, name=None, reason_for_signup=None):
         "token": token,
         "name": name,
         "reason_for_signup": reason_for_signup,
-        "google_login": False
+        "google_login": False,
         "created": dt.now(datetime.timezone.utc).timestamp(),
     }
     with engine.connect() as conn:
@@ -166,6 +166,7 @@ def registerUser(username, password, token, name=None, reason_for_signup=None):
             return 200
         except:
             return 400
+
 
 def registerGoogleUser(username, name, token, reason_for_signup=None):
     """Registers a user, and stores it in the users table
@@ -193,7 +194,7 @@ def registerGoogleUser(username, name, token, reason_for_signup=None):
         "name": name,
         "reason_for_signup": reason_for_signup,
         "google_login": True,
-        "verified": True
+        "verified": True,
     }
     with engine.connect() as conn:
         try:
@@ -202,6 +203,7 @@ def registerGoogleUser(username, name, token, reason_for_signup=None):
             return 200
         except:
             return 400
+
 
 def resetPassword(username, password):
     """Updates the password for a user in the users SQL table
@@ -523,6 +525,7 @@ def userVMStatus(username):
         return "has_created"
 
     return "has_not_paid"
+
 
 def setUserReason(username, reason_for_signup=None):
     """Updates the reason for signup for a user in the users SQL table
