@@ -53,7 +53,7 @@ def spinLock(vm_name, s=None):
     """
     # Check if VM is currently locked
 
-    output = fractalSQLSelect(table_name="v_ms", param={"vm_name": vm_name})
+    output = fractalSQLSelect(table_name="v_ms", params={"vm_name": vm_name})
 
     locked = False
     username = None
