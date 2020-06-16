@@ -3,7 +3,7 @@ import timber
 import os
 
 
-def fractalLog(logs, level=logging.INFO):
+def fractalLog(function, label, logs, level=logging.INFO):
     format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
     logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
 
@@ -16,13 +16,17 @@ def fractalLog(logs, level=logging.INFO):
     logger.setLevel(logging.DEBUG)
     logger.addHandler(timber_handler)
 
+    output = "{function} | {label} | {logs}".format(
+        function=str(function), label=str(label), logs=str(logs)
+    )
+
     if level == logging.CRITICAL:
-        logger.critical(logs)
+        logger.critical(output)
     elif level == logging.ERROR:
-        logger.error(logs)
+        logger.error(output)
     elif level == logging.WARNING:
-        logger.warning(logs)
+        logger.warning(output)
     elif level == logging.INFO:
-        logger.info(logs)
+        logger.info(output)
     else:
-        logger.debug(logs)
+        logger.debug(output)

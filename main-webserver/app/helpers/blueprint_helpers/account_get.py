@@ -42,9 +42,11 @@ def disksHelper(username, main):
     # Send SQL disk select command
 
     fractalLog(
-        "Disk helper function looking for disks associated with {username} and main {main}".format(
+        function="disksHelper",
+        label="{username}".format(username=username),
+        logs="Disk helper function looking for disks associated with {username} and main {main}".format(
             username=username, main=str(main)
-        )
+        ),
     )
 
     params = {"username": username, "state": "ACTIVE"}
@@ -58,18 +60,22 @@ def disksHelper(username, main):
 
     if output["success"]:
         fractalLog(
-            "Disk helper function found disks {disks} associated with {username} and main {main}".format(
+            function="disksHelper",
+            label="{username}".format(username=username),
+            logs="Disk helper function found disks {disks} associated with {username} and main {main}".format(
                 disks=str([disk["disk_name"] for disk in output["rows"]]),
                 username=username,
                 main=str(main),
-            )
+            ),
         )
         return {"disks": output["rows"], "status": SUCCESS}
     else:
         fractalLog(
-            "Disk helper function failed for username {username} and main {main} with error {error}".format(
+            function="disksHelper",
+            label="{username}".format(username=username),
+            logs="Disk helper function failed for username {username} and main {main} with error {error}".format(
                 username=username, main=str(main), error=output["error"]
-            )
+            ),
         )
         return {"disks": None, "status": BAD_REQUEST}
 

@@ -73,9 +73,9 @@ def createNic(vm_name, location, tries):
     except Exception as e:
         if tries < 5:
             fractalLog(
-                "NIC creation for VM {vm_name} encountered a retryable error. Trying again.".format(
-                    vm_name
-                )
+                function="createNic",
+                label="VM {vm_name}".format(vm_name),
+                logs="NIC creation encountered a retryable error. Trying again.",
             )
 
             time.sleep(3)
@@ -117,12 +117,6 @@ def createVMParameters(
             "sku": "18.04-LTS",
             "version": "latest",
         }
-    )
-
-    fractalLog(
-        "VM {vm_name} has operating system {vm_reference}".format(
-            vm_name=vm_name, vm_reference=vm_reference
-        )
     )
 
     # Set computer name, admin username, and admin password (for autologin and RDP)

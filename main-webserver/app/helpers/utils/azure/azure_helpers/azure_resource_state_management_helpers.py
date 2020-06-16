@@ -15,9 +15,9 @@ def boot_if_necessary(vm_name, needs_restart, s=None):
         power_state = vm_state.statuses[1].code
     except Exception as e:
         fractalLog(
-            "sendVMStartcommand() was not able to retrieve state for {vm_name}".format(
-                vm_name
-            ),
+            function="sendVMStartCommand",
+            label="VM {vm_name}".format(vm_name=vm_name),
+            logs="Not able to retrieve state for {vm_name}".format(vm_name),
             level=logging.ERROR,
         )
         pass
@@ -32,9 +32,11 @@ def boot_if_necessary(vm_name, needs_restart, s=None):
             )
 
         fractalLog(
-            "sendVMStartCommand() detected that VM {vm_name} is in state {power_state}. starting to boot.".format(
+            function="sendVMStartCommand",
+            label="VM {vm_name}".format(vm_name=vm_name),
+            logs="Detected that VM {vm_name} is in state {power_state}. starting to boot.".format(
                 vm_name=vm_name, power_state=power_state
-            )
+            ),
         )
 
         lockVMAndUpdate(vm_name, "STARTING", True, temporary_lock=10)
@@ -63,9 +65,11 @@ def boot_if_necessary(vm_name, needs_restart, s=None):
             )
 
         fractalLog(
-            "sendVMStartCommand() detected that VM {vm_name} needs to be restarted".format(
+            function="sendVMStartCommand",
+            label="VM {vm_name}".format(vm_name=vm_name),
+            logs="Detected that VM {vm_name} needs to be restarted".format(
                 vm_name=vm_name
-            )
+            ),
         )
 
         lockVMAndUpdate(vm_name, "RESTARTING", True, temporary_lock=10)
@@ -151,9 +155,11 @@ def waitForWinlogon(vm_name, s=None):
         return 1
     else:
         fractalLog(
-            "waitForWinlogon() has detected that VM {vm_name} has not winlogon'ed. Waiting...".format(
+            function="sendVMStartCommand",
+            label="VM {vm_name}".format(vm_name=vm_name),
+            logs="Detected that VM {vm_name} has not winlogon'ed. Waiting...".format(
                 vm_name=vm_name
-            )
+            ),
         )
 
     # Loop 30 times at 5 second intervals, waiting for a winlogon to come in
@@ -167,7 +173,9 @@ def waitForWinlogon(vm_name, s=None):
 
         if num_tries > 30:
             fractalLog(
-                "VM {vm_name} did not winlogon after 30 tries. Giving up...".format(
+                function="sendVMStartCommand",
+                label="VM {vm_name}".format(vm_name=vm_name),
+                logs="VM {vm_name} did not winlogon after 30 tries. Giving up...".format(
                     vm_name=vm_name
                 ),
                 level=logging.WARNING,
@@ -175,7 +183,9 @@ def waitForWinlogon(vm_name, s=None):
             return -1
 
     fractalLog(
-        "VM {vm_name} winlogoned successfully after {} tries".format(
+        function="sendVMStartCommand",
+        label="VM {vm_name}".format(vm_name=vm_name),
+        logs="VM {vm_name} winlogoned successfully after {} tries".format(
             vm_name=vm_name, num_tries=str(num_tries)
         ),
     )
@@ -187,9 +197,11 @@ def installApplications(vm_name, apps):
     try:
         for app in apps:
             fractalLog(
-                "installApplications() Installing {app} onto VM {vm_name}".format(
+                function="installApplications",
+                label="VM {vm_name}".format(vm_name=vm_name),
+                logs="Installing {app} onto VM {vm_name}".format(
                     app=app["app_name"], vm_name=vm_name
-                )
+                ),
             )
             install_command = fetchInstallCommand(app["app_name"])
 
@@ -205,16 +217,20 @@ def installApplications(vm_name, apps):
             result = poller.result()
 
             fractalLog(
-                "installApplications() app installation finished with message: {result}".format(
+                function="installApplications",
+                label="VM {vm_name}".format(vm_name=vm_name),
+                logs="App installation finished with message: {result}".format(
                     result=str(result.value[0].message)
-                )
+                ),
             )
 
     except Exception as e:
         fractalLog(
-            "installApplications() encountered an error while installing apps onto VM {vm_name}: {error}".format(
+            function="installApplications",
+            label="VM {vm_name}".format(vm_name=vm_name),
+            logs="Encountered an error while installing apps onto VM {vm_name}: {error}".format(
                 vm_name=vm_name, error=str(e)
-            )
+            ),
         )
         return -1
     return 1

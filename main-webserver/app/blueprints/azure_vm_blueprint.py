@@ -1,8 +1,8 @@
 from app import *
 from app.helpers.blueprint_helpers.azure_vm_get import *
 from app.helpers.blueprint_helpers.azure_vm_post import *
-from app.celery.azure_vm_celery_get import *
-from app.celery.azure_vm_celery_post import *
+from app.celery.azure_resource_creation import *
+from app.celery.azure_resource_deletion import *
 
 azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 
@@ -11,6 +11,8 @@ azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 @fractalPreProcess
 def azure_vm_post(action, **kwargs):
     if action == "create":
+        # Creates an Azure VM
+
         vm_size = kwargs["body"]["vm_size"]
         location = kwargs["body"]["location"]
         operating_system = (
@@ -31,9 +33,28 @@ def azure_vm_post(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+    elif action == "delete":
+        # Deletes an Azure VM
+
+        vm_name, delete_disk = kwargs["body"]["vm_name"], kwargs["body"]["delete_disk"]
+
+        task = deleteVM.apply_async([vm_name, delete_disk])
+
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
+    elif action == "dev":
+        # Toggles dev mode for a specified VM
+
+        vm_name, dev = kwargs["body"]["vm_name"], kwargs["body"]["dev"]
+
+        output = devHelper(vm_name, dev)
+
+        return jsonify(output), output["status"]
 
 
-@azure_vm_bp.route("/azure_vm", methods=["GET"])
+@azure_vm_bp.route("/azure_vm/<action>", methods=["GET"])
 @fractalPreProcess
 def azure_vm_get(action, **kwargs):
     if action == "ip":

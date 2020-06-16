@@ -7,7 +7,7 @@ from app.helpers.utils.azure.azure_resource_locks import *
 
 @celery_instance.task(bind=True)
 def createVM(self, vm_size, location, operating_system, admin_password=None):
-    """Creates a windows vm of size vm_size in Azure region location
+    """Creates a Windows/Linux VM of size vm_size in Azure region location
 
     Args:
         vm_size (str): The size of the vm to create
@@ -20,8 +20,10 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
     """
 
     fractalLog(
-        "Creating VM of size {}, location {}, operating system {}".format(
-            vm_size, location, operating_system
+        function="createVM",
+        label="None",
+        logs="Creating VM of size {vm_size}, location {location}, operating system {operating_system}".format(
+            vm_size=vm_size, location=location, operating_system=operating_system
         ),
     )
 
@@ -182,8 +184,10 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
 
     if output["success"] and output["rows"]:
         fractalLog(
-            "{operating_system} VM {vm_name} successfully created in {location}".format(
-                operating_system=operating_system, vm_name=vm_name, location=location
+            function="createVM",
+            label="VM {vm_name}".format(vm_name),
+            logs="{operating_system} VM successfully created in {location}".format(
+                operating_system=operating_system, location=location
             ),
         )
         return output["rows"][0]

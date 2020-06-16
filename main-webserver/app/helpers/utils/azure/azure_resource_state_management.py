@@ -29,8 +29,10 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=None):
         output = fractalSQLSelect(table_name="v_ms", params={"vm_name": vm_name})
 
         disk_name = None
+        username = None
         if output["success"] and output["rows"]:
             disk_name = output["rows"][0]["disk_name"]
+            username = output["rows"][0]["username"]
         else:
             return -1
 
@@ -76,7 +78,9 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=None):
                 while winlogon < 0:
                     if number_of_winlogon_tries > 4:
                         fractalLog(
-                            "sendVMStartCommand() could not detect a winlogon on VM {vm_name} with disk {disk_name} after 4 tries".format(
+                            function="sendVMStartCommand",
+                            label=str(username),
+                            logs="Could not detect a winlogon on VM {vm_name} with disk {disk_name} after 4 tries".format(
                                 vm_name=vm_name, disk_name=disk_name
                             ),
                             level=logging.CRITICAL,
@@ -112,7 +116,9 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=None):
                 if output["success"] and output["rows"]:
                     if installApplications(vm_name, output["rows"]) < 0:
                         fractalLog(
-                            "VM {vm_name} errored out while installing applications".format(
+                            function="sendVMStartCommand",
+                            label=str(username),
+                            logs="VM {vm_name} errored out while installing applications".format(
                                 vm_name=vm_name
                             ),
                             level=logging.ERROR,
@@ -126,7 +132,9 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=None):
         return 1
     except Exception as e:
         fractalLog(
-            "sendVMStartCommand() encountered a critical error while starting VM {vm_name}: {error}".format(
+            function="sendVMStartCommand",
+            label=str(username),
+            logs="Encountered a critical error while starting VM {vm_name}: {error}".format(
                 vm_name=vm_name, error=str(e)
             ),
             level=logging.CRITICAL,
@@ -146,11 +154,13 @@ def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, s=None):
         int: 1 for success, -1 for failure
     """
     fractalLog(
-        "fractalVMStart() called on VM {vm_name}, need_restart is {needs_restart}, needs_winlogon is {needs_winlogon}".format(
+        function="fractalVMStart",
+        label="VM {vm_name}".format(vm_name=vm_name),
+        logs="Starting VM {vm_name}, need_restart is {needs_restart}, needs_winlogon is {needs_winlogon}".format(
             vm_name=vm_name,
             needs_restart=str(needs_restart),
             needs_winlogon=str(needs_winlogon),
-        )
+        ),
     )
 
     _, compute_client, _ = createClients()
@@ -202,7 +212,9 @@ def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, s=None):
 
         while not "running" in vm_state.statuses[1].code and wake_retries < 12:
             fractalLog(
-                "fractalVMStart() found that, after sending a start command, VM {vm_name} is still in state {state}".format(
+                function="fractalVMStart",
+                label="VM {vm_name}".format(vm_name=vm_name),
+                logs="After sending a start command, VM {vm_name} is still in state {state}".format(
                     vm_name=vm_name, state=vm_state.statuses[1].code
                 ),
                 level=logging.WARNING,

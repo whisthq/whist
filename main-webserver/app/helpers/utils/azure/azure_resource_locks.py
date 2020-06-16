@@ -13,12 +13,11 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock):
         new_params["temporary_lock"] = new_temporary_lock
 
     fractalLog(
-        "lockVMAndUpdate() | VM {vm_name} | State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
-            vm_name=vm_name,
-            state=state,
-            lock=str(lock),
-            temporary_lock=str(temporary_lock),
-        )
+        function="lockVMAndUpdate",
+        label="VM {vm_name}".format(vm_name),
+        logs="State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
+            state=state, lock=str(lock), temporary_lock=str(temporary_lock),
+        ),
     )
 
     output = fractalSQLUpdate(
