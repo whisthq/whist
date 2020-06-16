@@ -501,11 +501,11 @@ def userVMStatus(username):
     command = text(
         """
         SELECT * FROM disks
-        WHERE "username" = :username AND "state" = :state
+        WHERE "username" = :username AND "state" = :state AND "main" = :main
         """
     )
 
-    params = {"username": username, "state": "ACTIVE"}
+    params = {"username": username, "state": "ACTIVE", "main": True}
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
