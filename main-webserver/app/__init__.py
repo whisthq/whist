@@ -25,6 +25,7 @@ def fractalPreProcess(f):
         try:
             body = json.loads(request.data) if request.method == "POST" else None
         except Exception as e:
+            print(str(e))
             body = None
 
         kwargs["body"] = body

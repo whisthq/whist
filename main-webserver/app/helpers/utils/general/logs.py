@@ -16,7 +16,7 @@ def fractalLog(function, label, logs, level=logging.INFO):
     logger.setLevel(logging.DEBUG)
     logger.addHandler(timber_handler)
 
-    if not logs.endswith("."):
+    if not logs.endswith(".") and not logs.endswith("!") and not logs.endswith("?"):
         logs = "{logs}.".format(logs=logs)
 
     output = "{function} | {label} | {logs}".format(
