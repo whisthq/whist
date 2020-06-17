@@ -290,7 +290,7 @@ def payment(action, **kwargs):
             return jsonify({"status": "Invalid payload"}), 400
         except stripe.error.SignatureVerificationError as e:
             # Invalid signature
-            jsonify({"status": "Invalid signature"}), 400
+            return jsonify({"status": "Invalid signature"}), 400
 
         # Handle the event
         if event.type == "charge.failed":  # https://stripe.com/docs/api/charges
