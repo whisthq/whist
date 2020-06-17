@@ -94,6 +94,8 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
 
     async_vm_start.wait()
 
+    time.sleep(30)
+
     # Store VM in v_ms database
 
     vm_instance = createVMInstance(vm_name)
@@ -157,6 +159,8 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
         }
     )
 
+    time.sleep(30)
+
     self.update_state(
         state="PENDING",
         meta={"msg": "VM {} installing NVIDIA extension".format(vm_name)},
@@ -169,11 +173,16 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
         extension_parameters,
     )
 
+    fractalLog(
+        function="createVM",
+        label=str(vm_name),
+        logs="Started to install NVIDIA extension",
+    )
+
     async_vm_extension.wait()
 
-    self.update_state(
-        state="PENDING",
-        meta={"msg": "VM {} successfully installed NVIDIA extension".format(vm_name)},
+    fractalLog(
+        function="createVM", label=str(vm_name), logs="NVIDIA extension done installing"
     )
 
     # Fetch VM columns from SQL and return
