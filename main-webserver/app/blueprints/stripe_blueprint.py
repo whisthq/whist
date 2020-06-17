@@ -279,7 +279,7 @@ def payment(action, **kwargs):
     # Endpoint for stripe webhooks
     elif action == "hooks":
         body = request.get_json()
-        sigHeader = request.headers["HTTP_STRIPE_SIGNATURE"]
+        sigHeader = request.headers["STRIPE_SIGNATURE"]
         endpointSecret = "whsec_dlppdwofxgW17XsboVetpX9CvGMq9geQ"
         event = None
 
