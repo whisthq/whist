@@ -280,7 +280,7 @@ def payment(action, **kwargs):
     elif action == "hooks":
         body = request.get_json()
         print(request.headers)
-        sigHeader = request.headers["STRIPE_SIGNATURE"]
+        sigHeader = request.headers["Stripe-Signature:"]
         endpointSecret = "whsec_dlppdwofxgW17XsboVetpX9CvGMq9geQ"
         event = None
 
