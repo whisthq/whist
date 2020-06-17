@@ -76,6 +76,17 @@ vagrant destroy # destroys vms and cleans up
 
 To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. Make sure you are added as a collaborator to any of the Heroku apps you plan to use. You can contact Ming, Phil, or Jonathan to be added.
 
+### Create new Heroku server
+
+1. Inside your virtual environment, run the command `heroku create -a [DESIRED HEROKU SERVER NAME]`.
+2. `git checkout` to the branch you want to connect the new server to, and run the command `heroku git:remote -a [HEROKU SERVER NAME] -r [DESIRED LOCAL NICKNAME]`. For instance, if the app you created is called `cube-celery-staging5`, you could run `heroku git:remote -a cube-celery-staging5 -r staging5`.
+3. To transfer the environment variables over automatically, run the  command `heroku config -s -a [EXISTING SERVER] > config.txt` and then `cat config.txt | tr '\n' ' ' | xargs heroku config:set -a [HEROKU SERVER NAME]`. Note that you need to be on a Mac or Linux computer to run the second command; I could not find a suitable workaround for Windows.
+4. Copy the environment variables locally by running `heroku config -s -a [HEROKU SERVER NAME]` >> .env`
+5. Install a Redis task Queue by going to the Heroku dashboard, finding the app you created, and navigating to Resources > Find More Addons > Heroku Redis. Follow the Heroku setup instructions and select the free plan.
+6. Under the Resources tab, make sure that the "web" and "celery" workers are both toggled on.
+7. All good to go! To push live, commit your branch and type `git push [LOCAL NICKNAME] [BRANCH NAME]:master`. For instance, if my nickname from step 2 is `staging5` and my branch name is `test-branch`, I will do `git push staging5 test-branch:master`.
+
+
 **Staging**
 
 Add the heroku app as a remote: `git remote add staging https://git.heroku.com/cube-celery-staging.git`  
