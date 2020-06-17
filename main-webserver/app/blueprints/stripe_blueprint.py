@@ -278,10 +278,10 @@ def payment(action, **kwargs):
 
     # Endpoint for stripe webhooks
     elif action == "hooks":
-        body = request.get_json()
+        body = request.get_data()
         sigHeader = request.headers["Stripe-Signature"]
         print(sigHeader)
-        endpointSecret = "whsec_dlppdwofxgW17XsboVetpX9CvGMq9geQ"
+        endpointSecret = "whsec_0JYLIKngOmXW37t5ofPbruDDnIaCZEuM"
         event = None
 
         try:
@@ -338,6 +338,8 @@ def payment(action, **kwargs):
                     trialEndingMail(customer["username"], kwargs["ID"])
                 else:
                     trialEndedMail(customer["username"], kwargs["ID"])
+        else:
+            return jsonify({}), 400
 
         return jsonify({"status": 200}), 200
     elif action == "update" and request.method == "POST":
