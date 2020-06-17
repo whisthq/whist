@@ -32,7 +32,7 @@ from dotenv import *
 from flask_sqlalchemy import *
 from flask_migrate import Migrate
 from celery import Celery, uuid, task
-from flask import Flask, request, jsonify, Blueprint
+from flask import Flask, request, jsonify, Blueprint, make_response
 from sqlalchemy.sql import text
 from jose import jwt
 from flask_cors import CORS
