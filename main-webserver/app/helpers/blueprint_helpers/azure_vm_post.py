@@ -33,4 +33,12 @@ def connectionStatusHelper(available, vm_ip):
     Returns:
         json: Success/failure
     """
-    return "test"
+
+    # Retrieve VM data based on VM IP
+
+    vm_info = None
+
+    output = fractalSQLSelect(table_name="v_ms", params={"ip": vm_ip})
+
+    if output["success"] and output["rows"]:
+        vm_info = output["rows"][0]["ip"]

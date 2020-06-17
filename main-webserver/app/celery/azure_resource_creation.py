@@ -84,7 +84,7 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
         state="PENDING", meta={"msg": "VM {} created successfully".format(vm_name)},
     )
 
-    time.sleep(10)
+    time.sleep(30)
 
     # Start VM
 
@@ -190,7 +190,7 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
     if output["success"] and output["rows"]:
         fractalLog(
             function="createVM",
-            label="VM {vm_name}".format(vm_name),
+            label=str(vm_name),
             logs="{operating_system} VM successfully created in {location}".format(
                 operating_system=operating_system, location=location
             ),
