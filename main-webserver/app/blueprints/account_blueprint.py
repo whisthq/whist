@@ -68,7 +68,7 @@ def google_login(**kwargs):
     username, name = userObj["email"], userObj["name"]
 
     token = generateToken(username)
-    access_token, refresh_token = userObj["access_token"], userObj["refresh_token"]
+    access_token, refresh_token = getAccessTokens(username)
 
     if lookup(username):
         if isGoogle(username):
@@ -92,12 +92,7 @@ def google_login(**kwargs):
             )
         else:
             return (
-                jsonify(
-                    {
-                        "status": 403,
-                        "error": "Email already used for non-Google account",
-                    }
-                ),
+                jsonify({"status": 403, "error": "Try using non-Google login",}),
                 403,
             )
 
@@ -144,7 +139,7 @@ def account_login(**kwargs):
 
     if lookup(username) and isGoogle(username):
         return (
-            jsonify({"error": "Email used for login with Google", "status": 403}),
+            jsonify({"error": "Try using Google login instead", "status": 403}),
             403,
         )
 
