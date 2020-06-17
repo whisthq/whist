@@ -66,7 +66,6 @@ def google_login(**kwargs):
     userObj = getGoogleTokens(code)
 
     username, name = userObj["email"], userObj["name"]
-    print("GOOGLE USERNAME IS {}".format(username))
 
     token = generateToken(username)
     access_token, refresh_token = userObj["access_token"], userObj["refresh_token"]
