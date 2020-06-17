@@ -135,10 +135,6 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
         },
     )
 
-    # Make sure VM is started
-
-    fractalVMStart(vm_name, needs_winlogon=False, s=self)
-
     # Install NVIDIA GRID driver
 
     extension_parameters = (
