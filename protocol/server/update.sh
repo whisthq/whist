@@ -1,11 +1,14 @@
-#!/bin/bash          
-bytes=64
-rndbytes=hexdump -n 64 -e '4/4 "%08X" 1 "\n"' /dev/random
-EncodedText= $rndbytes
+#!/bin/bash    
+rndbytes=$(hexdump -n 4 -e '"%08X"' /dev/random)
+gitcommit=$(git rev-parse --short HEAD)
+version=$gitcommit-$rndbytes
 
-version=$EncodedText
+cd build64
 
-aws s3 cp server.exe s3://arn:aws:s3:us-east-1:747391415460:accesspoint/fractal-cloud-setup/FractalServer
-aws s3 cp version s3://arn:aws:s3:us-east-1:747391415460:accesspoint/fractal-cloud-setup/version
+echo $version > version
 
-type version
+aws s3 cp update.sh s3://arn:aws:s3:us-east-1:747391415460:accesspoint/fractal-cloud-setup/Linux/update.sh
+aws s3 cp FractalServer s3://arn:aws:s3:us-east-1:747391415460:accesspoint/fractal-cloud-setup/Linux/FractalServer
+aws s3 cp version s3://arn:aws:s3:us-east-1:747391415460:accesspoint/fractal-cloud-setup/Linux/version
+
+echo version
