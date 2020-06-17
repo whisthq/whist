@@ -1527,20 +1527,20 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                         meta={"msg": "Logged into your cloud PC successfully."},
                     )
 
-            lockVMAndUpdate(
-                vm_name,
-                "RUNNING_AVAILABLE",
-                False,
-                temporary_lock=2,
-                change_last_updated=True,
-                verbose=False,
-                ID=ID,
-            )
-
             if i == 1:
                 changeFirstTime(disk_name)
 
                 print("First time! Going to boot {} times".format(str(num_boots)))
+
+                lockVMAndUpdate(
+                    vm_name,
+                    "ATTACHING",
+                    True,
+                    temporary_lock=None,
+                    change_last_updated=True,
+                    verbose=False,
+                    ID=ID,
+                )
 
                 if s:
                     s.update_state(
@@ -1552,7 +1552,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
 
                 apps = fetchDiskApps(disk_name)
 
-                installation = installApplications(vm_name, apps, ID)
+                installation = installApplications(vm_name, apps, s, ID)
 
                 if installation["status"] != 200:
                     sendError(ID, "Error installing applications!")
@@ -1564,17 +1564,18 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                             "msg": "Running final performance checks. This will take two minutes."
                         },
                     )
-                time.sleep(60)
 
-                lockVMAndUpdate(
-                    vm_name,
-                    "RUNNING_AVAILABLE",
-                    False,
-                    temporary_lock=3,
-                    change_last_updated=True,
-                    verbose=False,
-                    ID=ID,
-                )
+                time.sleep(20)
+
+        lockVMAndUpdate(
+            vm_name,
+            "RUNNING_AVAILABLE",
+            False,
+            temporary_lock=2,
+            change_last_updated=True,
+            verbose=False,
+            ID=ID,
+        )
 
         return 1
     except Exception as e:
@@ -1817,10 +1818,19 @@ def fetchInstallCommand(app_name):
         return install_command
 
 
-def installApplications(vm_name, apps, ID=-1):
+def installApplications(vm_name, apps, s=None, ID=-1):
     _, compute_client, _ = createClients()
     try:
         for app in apps:
+            if s:
+                s.update_state(
+                    state="PENDING",
+                    meta={
+                        "msg": "Installing {app} onto your computer.".format(
+                            app=str(app["app_name"])
+                        )
+                    },
+                )
             sendInfo(
                 ID, "Starting to install {} for VM {}".format(app["app_name"], vm_name)
             )
