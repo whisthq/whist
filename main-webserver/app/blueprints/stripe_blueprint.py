@@ -280,8 +280,7 @@ def payment(action, **kwargs):
     elif action == "hooks":
         body = request.get_data()
         sigHeader = request.headers["Stripe-Signature"]
-        # Endpoint secret for our stripe webhook. Toggle between ENDTPOINT_SECRET and TEST_ENDPOINT_SECRET
-        endpointSecret = os.getenv("TEST_ENDPOINT_SECRET")
+        endpointSecret = os.getenv("ENDPOINT_SECRET")
         event = None
 
         try:
