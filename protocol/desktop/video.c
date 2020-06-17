@@ -213,6 +213,7 @@ void updateTexture() {
         }
 
         SDL_DestroyTexture(videoContext.texture);
+        pending_resize_render = false;
         videoContext.texture = texture;
         pending_texture_update = false;
     }
