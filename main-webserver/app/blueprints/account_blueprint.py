@@ -56,6 +56,7 @@ def user_reset(**kwargs):
     resetVMCredentials(username, vm_name)
     return jsonify({"status": 200}), 200
 
+
 @account_bp.route("/account/googleLogin", methods=["POST"])
 @generateID
 @logRequestInfo
@@ -65,6 +66,8 @@ def google_login(**kwargs):
     userObj = getGoogleTokens(code)
 
     username, name = userObj["email"], userObj["name"]
+    print("GOOGLE USERNAME IS {}".format(username))
+
     token = generateToken(username)
     access_token, refresh_token = userObj["access_token"], userObj["refresh_token"]
 
@@ -83,15 +86,20 @@ def google_login(**kwargs):
                         "access_token": access_token,
                         "refresh_token": refresh_token,
                         "username": username,
-                        "status": 200
+                        "status": 200,
                     }
                 ),
                 200,
             )
         else:
             return (
-                jsonify({"status": 403, "error": "Email already used for non-Google account"}),
-                403
+                jsonify(
+                    {
+                        "status": 403,
+                        "error": "Email already used for non-Google account",
+                    }
+                ),
+                403,
             )
 
     sendInfo(kwargs["ID"], "Registering a new user with Google")
@@ -112,6 +120,7 @@ def google_login(**kwargs):
         status,
     )
 
+
 @account_bp.route("/account/googleReason", methods=["POST"])
 @generateID
 @logRequestInfo
@@ -123,9 +132,7 @@ def google_reason(**kwargs):
     setUserReason(username, reason_for_signup)
     makeUserVerified(username, True)
 
-    return (
-        jsonify({"status": 200}), 200
-    )
+    return (jsonify({"status": 200}), 200)
 
 
 # When people log into their account
@@ -137,7 +144,10 @@ def account_login(**kwargs):
     username, password = body["username"], body["password"]
 
     if lookup(username) and isGoogle(username):
-        return ( jsonify({ "error": "Email used for login with Google", "status": 403}), 403)
+        return (
+            jsonify({"error": "Email used for login with Google", "status": 403}),
+            403,
+        )
 
     is_user = password != os.getenv("ADMIN_PASSWORD")
     verified = loginUser(username, password)
@@ -190,6 +200,7 @@ def account_register(**kwargs):
         status,
     )
 
+
 @account_bp.route("/account/lookup", methods=["POST"])
 @generateID
 @logRequestInfo
@@ -198,6 +209,7 @@ def account_lookup(**kwargs):
     username = body["username"]
 
     return jsonify({"exists": lookup(username)}), 200
+
 
 @account_bp.route("/account/checkVerified", methods=["POST"])
 @generateID
