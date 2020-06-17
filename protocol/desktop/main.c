@@ -787,6 +787,9 @@ int main(int argc, char* argv[]) {
         clock keyboard_sync_timer;
         StartTimer(&keyboard_sync_timer);
 
+        clock window_resize_timer;
+        StartTimer(&window_resize_timer);
+
         // Initialize keyboard state variables
         bool alt_pressed = false;
         bool ctrl_pressed = false;
@@ -867,14 +870,19 @@ int main(int argc, char* argv[]) {
 
                             set_video_active_resizing(false);
 
-                            // Let the server know the new dimensions so that it
-                            // can change native dimensions for monitor
-                            fmsg.type = MESSAGE_DIMENSIONS;
-                            fmsg.dimensions.width = output_width;
-                            fmsg.dimensions.height = output_height;
-                            fmsg.dimensions.dpi =
-                                (int)(96.0 * output_width /
-                                      get_virtual_screen_width());
+                            if (GetTimer(window_resize_timer) > 0.5) {
+                                // Let the server know the new dimensions so
+                                // that it can change native dimensions for
+                                // monitor
+                                fmsg.type = MESSAGE_DIMENSIONS;
+                                fmsg.dimensions.width = output_width;
+                                fmsg.dimensions.height = output_height;
+                                fmsg.dimensions.dpi =
+                                    (int)(96.0 * output_width /
+                                          get_virtual_screen_width());
+
+                                StartTimer(&window_resize_timer);
+                            }
 
                             LOG_INFO(
                                 "Window %d resized to %dx%d (Physical %dx%d)\n",
