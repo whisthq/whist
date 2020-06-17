@@ -281,7 +281,7 @@ def payment(action, **kwargs):
         body = request.get_data()
         sigHeader = request.headers["Stripe-Signature"]
         print(sigHeader)
-        endpointSecret = "whsec_0JYLIKngOmXW37t5ofPbruDDnIaCZEuM"
+        endpointSecret = "whsec_dlppdwofxgW17XsboVetpX9CvGMq9geQ"
         event = None
 
         try:
