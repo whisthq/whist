@@ -100,7 +100,7 @@ def createVM(
 
     # Store VM in v_ms database
 
-    vm_instance = createVMInstance(vm_name)
+    vm_instance = createVMInstance(vm_name, resource_group=resource_group)
     disk_name = vm_instance.storage_profile.os_disk.name
 
     self.update_state(

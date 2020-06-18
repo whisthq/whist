@@ -41,7 +41,7 @@ def createVMName():
     return vm_name
 
 
-def createVMInstance(vm_name):
+def createVMInstance(vm_name, resource_group=None):
     """Retrieves information about the model view or the instance view of an Azure virtual machine
 
     Parameters:
@@ -50,10 +50,12 @@ def createVMInstance(vm_name):
     Returns:
     VirtualMachine: The instance view of the virtual machine
    """
+   resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+   
     _, compute_client, _ = createClients()
     try:
         virtual_machine = compute_client.virtual_machines.get(
-            os.environ.get("VM_GROUP"), vm_name
+            resource_group, vm_name
         )
         return virtual_machine
     except:
