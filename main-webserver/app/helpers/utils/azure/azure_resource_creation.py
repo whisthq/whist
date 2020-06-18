@@ -2,7 +2,7 @@ from app import *
 from app.helpers.utils.azure.azure_general import *
 
 
-def createNic(vm_name, location, tries):
+def createNic(vm_name, location, tries, resource_group=None):
     """Creates a network id
 
     Args:
@@ -13,6 +13,9 @@ def createNic(vm_name, location, tries):
     Returns:
         dict: The network id object
     """
+
+    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+
     _, _, network_client = createClients()
     vnet_name, subnet_name, ip_name, nic_name = (
         vm_name + "_vnet",
@@ -22,7 +25,7 @@ def createNic(vm_name, location, tries):
     )
     try:
         async_vnet_creation = network_client.virtual_networks.create_or_update(
-            os.getenv("VM_GROUP"),
+            resource_group,
             vnet_name,
             {
                 "location": location,
@@ -33,10 +36,7 @@ def createNic(vm_name, location, tries):
 
         # Create Subnet
         async_subnet_creation = network_client.subnets.create_or_update(
-            os.getenv("VM_GROUP"),
-            vnet_name,
-            subnet_name,
-            {"address_prefix": "10.0.0.0/24"},
+            resource_group, vnet_name, subnet_name, {"address_prefix": "10.0.0.0/24"},
         )
         subnet_info = async_subnet_creation.result()
 
@@ -46,16 +46,16 @@ def createNic(vm_name, location, tries):
             "public_ip_allocation_method": "Static",
         }
         creation_result = network_client.public_ip_addresses.create_or_update(
-            os.getenv("VM_GROUP"), ip_name, public_ip_addess_params
+            resource_group, ip_name, public_ip_addess_params
         )
 
         public_ip_address = network_client.public_ip_addresses.get(
-            os.getenv("VM_GROUP"), ip_name
+            resource_group, ip_name
         )
 
         # Create NIC
         async_nic_creation = network_client.network_interfaces.create_or_update(
-            os.getenv("VM_GROUP"),
+            resource_group,
             nic_name,
             {
                 "location": location,
@@ -125,9 +125,7 @@ def createVMParameters(
 
     os_profile = {
         "computer_name": vm_name,
-        "admin_username": os.getenv("VM_GROUP")
-        if operating_system == "Windows"
-        else os.getenv("VM_GROUP").lower(),
+        "admin_username": "Fractal" if operating_system == "Windows" else "fractal",
         "admin_password": admin_password,
     }
 

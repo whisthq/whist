@@ -6,7 +6,9 @@ from app.helpers.utils.azure.azure_resource_locks import *
 
 
 @celery_instance.task(bind=True)
-def createVM(self, vm_size, location, operating_system, admin_password=None):
+def createVM(
+    self, vm_size, location, operating_system, admin_password=None, resource_group=None
+):
     """Creates a Windows/Linux VM of size vm_size in Azure region location
 
     Args:
@@ -74,8 +76,10 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
 
     # Create VM
 
+    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+
     async_vm_creation = compute_client.virtual_machines.create_or_update(
-        os.getenv("VM_GROUP"), vm_name, vm_parameters["params"]
+        resource_group, vm_name, vm_parameters["params"]
     )
 
     async_vm_creation.wait()
@@ -88,9 +92,7 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
 
     # Start VM
 
-    async_vm_start = compute_client.virtual_machines.start(
-        os.getenv("VM_GROUP"), vm_name
-    )
+    async_vm_start = compute_client.virtual_machines.start(resource_group, vm_name)
 
     async_vm_start.wait()
 
@@ -163,7 +165,7 @@ def createVM(self, vm_size, location, operating_system, admin_password=None):
     )
 
     async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(
-        os.getenv("VM_GROUP"),
+        resource_group,
         vm_name,
         extension_parameters["vm_extension_name"],
         extension_parameters,
