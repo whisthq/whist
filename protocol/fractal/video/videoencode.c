@@ -35,7 +35,7 @@ video_encoder_t *create_nvenc_encoder(int in_width, int in_height,
     encoder->in_width = in_width;
     encoder->in_height = in_height;
     if (out_width <= 32) out_width = 33;
-    if (out_height <= 16) out_height = 16;
+    if (out_height <= 16) out_height = 17;
     encoder->out_width = out_width;
     encoder->out_height = out_height;
     encoder->gop_size = GOP_SIZE;
