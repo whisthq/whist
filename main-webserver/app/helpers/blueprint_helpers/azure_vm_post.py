@@ -1,4 +1,6 @@
 from app import *
+from app.helpers.utils.azure.azure_resource_locks import *
+from app.helpers.utils.stripe.stripe_payments import *
 
 
 def devHelper(vm_name, dev):
@@ -71,9 +73,73 @@ def connectionStatusHelper(available, vm_ip, version=None):
             }
         )
         
+    # Define states where we don't change the VM state
+    
+    intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
+    
     # Detect and handle disconnect event
     
     if vm_info["state"] == "RUNNING_UNAVAILABLE" and available:
         
-        # Add pending charge
+        # Add pending charge if the user is an hourly subscriber
         
+        stripeChargeHourly(username)
+        
+        # Add logoff event to timetable
+        
+        fractalSQLInsert(
+            table_name="login_history",
+            params={
+                "username": username,
+                "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
+                "action": "logoff"
+            }
+        )
+        
+        fractalLog(
+            function="connectionStatus",
+            label=str(username),
+            logs="{username} just disconnected from their cloud PC".format(username=username)
+        )
+    
+    # Detect and handle logon event
+    
+    if vm_info["state"] == "RUNNING_AVAILABLE" and not available:
+        
+        # Add logon event to timetable
+        
+        fractalSQLInsert(
+            table_name="login_history",
+            params={
+                "username": username,
+                "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
+                "action": "logoff"
+            }
+        )
+        
+        fractalLog(
+            function="connectionStatus",
+            label=str(username),
+            logs="{username} just connected to their cloud PC".format(username=username)
+        )
+        
+        
+    # Change VM states accordingly
+    
+    if not vm_info["state"] in intermediate_states and not available:
+        lockVMAndUpdate(
+            vm_name=vm_info["vm_name"],
+            state="RUNNING_UNAVAILABLE",
+            lock=True,
+            temporary_lock=0
+        )
+        
+    if not vm_info["state"] in intermediate_states and available:
+        lockVMAndUpdate(
+            vm_name=vm_info["vm_name"],
+            state="RUNNING_AVAILABLE",
+            lock=False,
+            temporary_lock=None 
+        )
+        
+    return {"status": SUCCESS}

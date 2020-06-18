@@ -41,6 +41,17 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock):
     )
 
 
+def checkLock(vm_name):
+    output = fractalSQLSelect(table_name="v_ms", params={"vm_name": vm_name})
+
+    locked = False
+
+    if output["success"] and output["rows"]:
+        locked = output["rows"][0]["lock"]
+
+    return locked
+
+
 def spinLock(vm_name, s=None):
     """Waits for vm to be unlocked
 
@@ -55,15 +66,12 @@ def spinLock(vm_name, s=None):
 
     output = fractalSQLSelect(table_name="v_ms", params={"vm_name": vm_name})
 
-    locked = False
-    username = None
-
     if output["success"] and output["rows"]:
-        locked = output["rows"][0]["lock"]
         username = output["rows"][0]["username"]
     else:
         return -1
 
+    locked = checkLock(vm_mame)
     num_tries = 0
 
     if not locked:
@@ -91,7 +99,7 @@ def spinLock(vm_name, s=None):
 
     while locked:
         time.sleep(5)
-        locked = checkLock(vm_name, s=s)
+        locked = checkLock(vm_name)
         num_tries += 1
 
         if num_tries > 40:
