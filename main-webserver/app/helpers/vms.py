@@ -1528,8 +1528,6 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                     )
 
             if i == 1:
-                changeFirstTime(disk_name)
-
                 print("First time! Going to boot {} times".format(str(num_boots)))
 
                 lockVMAndUpdate(
@@ -1564,6 +1562,8 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                             "msg": "Running final performance checks. This will take two minutes."
                         },
                     )
+
+                changeFirstTime(disk_name)
 
                 time.sleep(20)
 
