@@ -46,100 +46,95 @@ def connectionStatusHelper(available, vm_ip, version=None):
         vm_info = output["rows"][0]["ip"]
     else:
         return {"status": BAD_REQUEST}
-    
+
     # Bypass Winlogon if VM is Linux
-    
+
     if vm_info["os"] == "Linux":
         fractalSQLUpdate(
             table_name="v_ms",
-            conditional_params={
-                "vm_name": vm_info["vm_name"]
-            },
-            new_params {
-                "ready_to_connect": dateToUnix(getToday())
-            }
+            conditional_params={"vm_name": vm_info["vm_name"]},
+            new_params={"ready_to_connect": dateToUnix(getToday())},
         )
-    
+
     # Update disk version
-    
+
     if version:
         fractalSQLUpdate(
             table_name="disks",
-            conditional_params={
-                "disk_name": vm_info["disk_name"]
-            },
-            new_params={
-                "version": version
-            }
+            conditional_params={"disk_name": vm_info["disk_name"]},
+            new_params={"version": version},
         )
-        
+
     # Define states where we don't change the VM state
-    
+
     intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
-    
+
     # Detect and handle disconnect event
-    
+
     if vm_info["state"] == "RUNNING_UNAVAILABLE" and available:
-        
+
         # Add pending charge if the user is an hourly subscriber
-        
+
         stripeChargeHourly(username)
-        
+
         # Add logoff event to timetable
-        
+
         fractalSQLInsert(
             table_name="login_history",
             params={
                 "username": username,
                 "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
-                "action": "logoff"
-            }
+                "action": "logoff",
+            },
         )
-        
+
         fractalLog(
             function="connectionStatus",
             label=str(username),
-            logs="{username} just disconnected from their cloud PC".format(username=username)
+            logs="{username} just disconnected from their cloud PC".format(
+                username=username
+            ),
         )
-    
+
     # Detect and handle logon event
-    
+
     if vm_info["state"] == "RUNNING_AVAILABLE" and not available:
-        
+
         # Add logon event to timetable
-        
+
         fractalSQLInsert(
             table_name="login_history",
             params={
                 "username": username,
                 "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
-                "action": "logoff"
-            }
+                "action": "logoff",
+            },
         )
-        
+
         fractalLog(
             function="connectionStatus",
             label=str(username),
-            logs="{username} just connected to their cloud PC".format(username=username)
+            logs="{username} just connected to their cloud PC".format(
+                username=username
+            ),
         )
-        
-        
+
     # Change VM states accordingly
-    
+
     if not vm_info["state"] in intermediate_states and not available:
         lockVMAndUpdate(
             vm_name=vm_info["vm_name"],
             state="RUNNING_UNAVAILABLE",
             lock=True,
-            temporary_lock=0
+            temporary_lock=0,
         )
-        
+
     if not vm_info["state"] in intermediate_states and available:
         lockVMAndUpdate(
             vm_name=vm_info["vm_name"],
             state="RUNNING_AVAILABLE",
             lock=False,
-            temporary_lock=None 
+            temporary_lock=None,
         )
-        
+
     return {"status": SUCCESS}
