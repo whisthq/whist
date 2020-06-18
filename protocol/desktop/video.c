@@ -4,10 +4,10 @@
  * Copyright Fractal Computers, Inc. 2020
  **/
 #include "video.h"
-#include "SDL_image.h"
 #include "SDL2/SDL.h"
 #include <stdio.h>
 #include "../fractal/utils/sdlscreeninfo.h"
+#include "../fractal/utils/png.h"
 
 #define USE_HARDWARE true
 
@@ -409,54 +409,60 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
 // Make the screen black
 void loadingSDL(SDL_Renderer* renderer, int loading_index) {
-    static SDL_Texture* loading_screen_texture = NULL;
-    int imgFlags = IMG_INIT_PNG;
-    int initted=IMG_Init(imgFlags);
-    if((initted&imgFlags) != imgFlags) {
-        LOG_INFO("IMG_Init: Failed to init required png support!\n");
-        LOG_INFO("IMG_Init: %s\n", IMG_GetError());
-    }
     int gif_frame_index = loading_index % 83;
 
-    while (true) {
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(renderer);
+    clock c;
+    StartTimer( &c );
 
-        char frame_name[24];
-        if (gif_frame_index < 10) {
-            snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png",
-                     gif_frame_index);
+    char frame_name[24];
+    if (gif_frame_index < 10) {
+        snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png",
+                    gif_frame_index);
 //            LOG_INFO("Frame loading/frame_0%d.png", gif_frame_index);
-        } else {
-            snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png",
-                     gif_frame_index);
+    } else {
+        snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png",
+                    gif_frame_index);
 //            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
-        }
-
-        SDL_Surface* loading_screen = IMG_Load(frame_name);
-        if (loading_screen == NULL){
-            LOG_INFO("IMG_Load: %s\n", IMG_GetError());
-        }
-        loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
-//        SDL_FreeSurface(loading_screen);
-
-        int w = 200;
-        int h = 200;
-        SDL_Rect dstrect;
-
-        // SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
-        dstrect.x = output_width / 2 - w / 2;
-        dstrect.y = output_height / 2 - h / 2;
-        dstrect.w = w;
-        dstrect.h = h;
-        SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
-        SDL_RenderPresent(renderer);
-
-        SDL_Delay(30);  // sleep 30 ms
-        gif_frame_index += 1;
-        gif_frame_index %= 83;  // number of loading frames
-        break;
     }
+
+    AVPacket pkt;
+    av_init_packet( &pkt );
+    png_to_bmp( frame_name, &pkt );
+    //LOG_INFO( "Test: %f", GetTimer(c) );
+
+    SDL_RWops* rw = SDL_RWFromMem( pkt.data, pkt.size );
+
+    SDL_Surface* loading_screen = SDL_LoadBMP_RW(rw, 1);
+    if (loading_screen == NULL){
+        LOG_INFO("IMG_Load");
+        return;
+    }
+    free( pkt.data );
+    SDL_Texture* loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
+
+    int w = 200;
+    int h = 200;
+    SDL_Rect dstrect;
+
+    // SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
+    dstrect.x = output_width / 2 - w / 2;
+    dstrect.y = output_height / 2 - h / 2;
+    dstrect.w = w;
+    dstrect.h = h;
+
+    SDL_SetRenderDrawColor( renderer, 0, 0, 0, SDL_ALPHA_OPAQUE );
+    SDL_RenderClear( renderer );
+    SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
+    SDL_RenderPresent(renderer);
+    SDL_DestroyTexture( loading_screen_texture );
+
+    int remaining_ms = 30 - (int)GetTimer( c );
+    if( remaining_ms > 0 )
+    {
+        SDL_Delay( remaining_ms );
+    }
+    gif_frame_index += 1;
+    gif_frame_index %= 83;  // number of loading frames
 }
 
 void clearSDL(SDL_Renderer* renderer) {
