@@ -71,7 +71,7 @@ def spinLock(vm_name, s=None):
     else:
         return -1
 
-    locked = checkLock(vm_mame)
+    locked = checkLock(vm_name)
     num_tries = 0
 
     if not locked:
