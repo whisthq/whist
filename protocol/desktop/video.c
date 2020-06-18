@@ -258,12 +258,12 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                 loading_index++;
                 loadingSDL(renderer, loading_index);
             }
+
             if (pending_resize_render) {
-                SDL_RenderCopy((SDL_Renderer*)videoContext.renderer,
-                               videoContext.texture, NULL, NULL);
                 SDL_RenderPresent((SDL_Renderer*)videoContext.renderer);
                 pending_resize_render = false;
             }
+
             SDL_Delay(1);
             continue;
         }
@@ -440,8 +440,8 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 void loadingSDL(SDL_Renderer* renderer, int loading_index) {
     static SDL_Texture* loading_screen_texture = NULL;
     int imgFlags = IMG_INIT_PNG;
-    int initted=IMG_Init(imgFlags);
-    if((initted&imgFlags) != imgFlags) {
+    int initted = IMG_Init(imgFlags);
+    if ((initted & imgFlags) != imgFlags) {
         LOG_INFO("IMG_Init: Failed to init required png support!\n");
         LOG_INFO("IMG_Init: %s\n", IMG_GetError());
     }
@@ -455,19 +455,22 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
         if (gif_frame_index < 10) {
             snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png",
                      gif_frame_index);
-//            LOG_INFO("Frame loading/frame_0%d.png", gif_frame_index);
+            //            LOG_INFO("Frame loading/frame_0%d.png",
+            //            gif_frame_index);
         } else {
             snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png",
                      gif_frame_index);
-//            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
+            //            LOG_INFO("Frame loading/frame_%d.png",
+            //            gif_frame_index);
         }
 
         SDL_Surface* loading_screen = IMG_Load(frame_name);
-        if (loading_screen == NULL){
+        if (loading_screen == NULL) {
             LOG_INFO("IMG_Load: %s\n", IMG_GetError());
         }
-        loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
-//        SDL_FreeSurface(loading_screen);
+        loading_screen_texture =
+            SDL_CreateTextureFromSurface(renderer, loading_screen);
+        //        SDL_FreeSurface(loading_screen);
 
         int w = 200;
         int h = 200;
@@ -933,12 +936,8 @@ void set_video_active_resizing(bool is_resizing) {
     } else {
         SDL_LockMutex(render_mutex);
         can_render = false;
-        pending_resize_render = true;
         SDL_UnlockMutex(render_mutex);
 
-        // while (pending_resize_render) {
-        //     LOG_INFO("LOOPY");
-        //     SDL_Delay(1);
-        // }
+        pending_resize_render = true;
     }
 }
