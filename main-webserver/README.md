@@ -1,22 +1,16 @@
 # Fractal User & VM Webserver
 
-![Python App CI](https://github.com/fractalcomputers/vm-webserver/workflows/Python%20App%20CI/badge.svg)
+![Python Webserver CI](https://github.com/fractalcomputers/vm-webserver/workflows/Python%20App%20CI/badge.svg)
 
-This repo contains the code for the VM and user webserver, which handles interfacing between users and the Fractal cloud computers hosted on Azure (currently), and for interfacing with a variety of website functionalities. Runs Flask with Celery for asynchronous task handling.
+This repository contains the code for the VM and user webserver, which handles interfacing between users, the Fractal cloud computers hosted on Azure (currently), and a variety of website & client applications functionalities. Runs Flask with Celery for asynchronous task handling.
 
-Production hosted on Heroku: https://cube-celery-vm.herokuapp.com  
-Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-vm
+Our webservers are hosted on Heroku:
+- [Production](https://cube-celery-vm.herokuapp.com)
+- [Staging](https://cube-celery-staging.herokuapp.com)
+- [Staging2](https://cube-celery-staging2.herokuapp.com)
+- [Staging3](https://cube-celery-staging3.herokuapp.com)
 
-Staging hosted on Heroku: https://cube-celery-staging.herokuapp.com  
-Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging
-
-Staging2 hosted on Heroku: https://cube-celery-staging2.herokuapp.com  
-Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging2
-
-Staging3 hosted on Heroku: https://cube-celery-staging3.herokuapp.com  
-Heroku Dashboard: https://dashboard.heroku.com/apps/cube-celery-staging3
-
-## Setup
+## Development
 
 ### Local Setup (Windows/MacOS)
 
@@ -51,7 +45,7 @@ or
 
 ### Build/Run in Vagrant
 
-Vagrant allows you to build local VMs which can be used to run code seamlessly. It is done via the Git submodule to the `fractalcomputers/vagrant` repo.
+Vagrant allows you to build local VMs which can be used to run code seamlessly. It is done via the Git submodule to the `fractalcomputers/vagrant` repository.
 
 First, make sure you initialized submodules via: `git submodule update --init --recursive`. After the submodules are initialized you will find the Vagrant configs in `vagrant/`.
 
@@ -74,7 +68,17 @@ vagrant destroy # destroys vms and cleans up
 
 To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. Make sure you are added as a collaborator to any of the Heroku apps you plan to use. You can contact Ming, Phil, or Jonathan to be added.
 
-**Staging**
+#### Create new Heroku server
+
+1. Inside your virtual environment, run the command `heroku create -a [DESIRED HEROKU SERVER NAME]`.
+2. `git checkout` to the branch you want to connect the new server to, and run the command `heroku git:remote -a [HEROKU SERVER NAME] -r [DESIRED LOCAL NICKNAME]`. For instance, if the app you created is called `cube-celery-staging5`, you could run `heroku git:remote -a cube-celery-staging5 -r staging5`.
+3. To transfer the environment variables over automatically, run the  command `heroku config -s -a [EXISTING SERVER] > config.txt` and then `cat config.txt | tr '\n' ' ' | xargs heroku config:set -a [HEROKU SERVER NAME]`. Note that you need to be on a Mac or Linux computer to run the second command; I could not find a suitable workaround for Windows.
+4. Copy the environment variables locally by running `heroku config -s -a [HEROKU SERVER NAME]` >> .env`
+5. Install a Redis task Queue by going to the Heroku dashboard, finding the app you created, and navigating to Resources > Find More Addons > Heroku Redis. Follow the Heroku setup instructions and select the free plan.
+6. Under the Resources tab, make sure that the "web" and "celery" workers are both toggled on.
+7. All good to go! To push live, commit your branch and type `git push [LOCAL NICKNAME] [BRANCH NAME]:master`. For instance, if my nickname from step 2 is `staging5` and my branch name is `test-branch`, I will do `git push staging5 test-branch:master`.
+
+#### [Staging](https://cube-celery-staging.herokuapp.com)
 
 Add the heroku app as a remote: `git remote add staging https://git.heroku.com/cube-celery-staging.git`  
 We have a secondary heroku staging app if two people want to deploy and test at the same time: `git remote add staging2 https://git.heroku.com/cube-celery-staging2.git`. We also have a tertiary staging app.
@@ -85,15 +89,13 @@ To push to the secondary staging server, the steps are all the same, except you 
 
 To push to the Github production/staging repo, run `git add .`, `git commit -m "COMMIT MESSAGE"`, and finally `git push origin staging` to push to the staging repo, and `git push origin master` to push to the production repo.
 
-**Production**
-`https://git.heroku.com/cube-celery-vm.git`
+#### [Production](https://git.heroku.com/cube-celery-vm.git)
 
 To push to the live server, git add and commit and type git push heroku master. (Obviously, DO NOT push to the production server until we’ve all agreed that staging is stable).
 
 Test the webserver by running it on localhost and using Postman to send requests to the localhost address, and if that works, push to staging. To view the server logs, type `heroku logs --tail --app cube-celery-vm`.
 
-**SQL Database Scheme**
-`https://pgweb-demo.herokuapp.com/`
+#### [SQL Database Scheme](https://pgweb-demo.herokuapp.com/)
 
 Select Scheme, and for the server URL scheme, copy the DATABASE_URL config var found on the Heroku instance.
 
@@ -111,9 +113,7 @@ Once you are ready to deploy to production, you can merge your code into master 
 
 To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Python black](https://github.com/psf/black) before making any PRs. You may find a variety of tutorial online for your personal setup. This README covers how to set it up on VSCode, Sublime Text and running it from the CLI.
 
-### Python Black
-
-#### [VSCode](https://medium.com/@marcobelo/setting-up-python-black-on-visual-studio-code-5318eba4cd00)
+### [VSCode](https://medium.com/@marcobelo/setting-up-python-black-on-visual-studio-code-5318eba4cd00)
 
 1. Install it on your virtual env or in your local python with the command:
 
@@ -132,9 +132,7 @@ ext install ms-python.python
 5. Search for “python formatting provider” and select “black”.
 6. Now open/create a python file, write some code and save(Ctrl+s) it to see the magic happen!
 
-#### [Sublime](https://github.com/jgirardet/sublack)
-
-#### [CLI](https://github.com/psf/black)
+### [CLI](https://github.com/psf/black)
 
 Installation:  
 Black can be installed by running `pip install black`. It requires Python 3.6.0+ to run but you can reformat Python 2 code with it, too.

@@ -61,11 +61,17 @@ def vm(action, **kwargs):
         if "operating_system" in body.keys():
             operating_system = body["operating_system"]
 
-        task = createVM.apply_async([
-            vm_size, location, operating_system, admin_password, 
-            admin_username, kwargs["ID"]]
+        task = createVM.apply_async(
+            [
+                vm_size,
+                location,
+                operating_system,
+                admin_password,
+                admin_username,
+                kwargs["ID"],
+            ]
         )
-        
+
         if not task:
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202
@@ -178,7 +184,7 @@ def vm(action, **kwargs):
             intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
             username = vm_info["username"]
 
-            disks = fetchUserDisks(vm_info["username"], ID = kwargs["ID"])
+            disks = fetchUserDisks(vm_info["username"], ID=kwargs["ID"])
             is_user = True
             if disks:
                 disk = disks[0]
@@ -305,17 +311,19 @@ def vm(action, **kwargs):
                 if disk_info:
                     branch = disk_info[0]["branch"]
 
-                using_stun = fetchDiskSetting(
-                    disk_name,
-                    "using_stun"
-                )
+                using_stun = fetchDiskSetting(disk_name, "using_stun")
 
-                return jsonify({
-                    "dev": is_dev, 
-                    "branch": branch, 
-                    "status": 200,
-                    "using_stun": using_stun if using_stun else False
-                }), 200
+                return (
+                    jsonify(
+                        {
+                            "dev": is_dev,
+                            "branch": branch,
+                            "status": 200,
+                            "using_stun": using_stun if using_stun else False,
+                        }
+                    ),
+                    200,
+                )
             return jsonify({"dev": False, "status": 200}), 200
         except Exception as e:
             print(str(e))
@@ -325,13 +333,6 @@ def vm(action, **kwargs):
         status = insertDiskApps(body["disk_name"], body["apps"])
 
         return jsonify({}), status
-    elif action == "setDev" and request.method == "POST":
-        vm_name = request.get_json()["vm_name"]
-        dev = request.get_json()["dev"]
-        setDev(vm_name, dev)
-        sendInfo(kwargs["ID"], "Set dev state for vm {} to {}".format(vm_name, dev))
-        return jsonify({"status": 200}), 200
-
 
     return jsonify({}), 400
 
@@ -357,6 +358,7 @@ def tracker(action, **kwargs):
 
 
 # INFO endpoint
+
 
 @vm_bp.route("/info/<action>", methods=["GET", "POST"])
 @jwt_required
