@@ -410,7 +410,12 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 // Make the screen black
 void loadingSDL(SDL_Renderer* renderer, int loading_index) {
     static SDL_Texture* loading_screen_texture = NULL;
-
+    int imgFlags = IMG_INIT_PNG;
+    int initted=IMG_Init(imgFlags);
+    if((initted&imgFlags) != imgFlags) {
+        LOG_INFO("IMG_Init: Failed to init required png support!\n");
+        LOG_INFO("IMG_Init: %s\n", IMG_GetError());
+    }
     int gif_frame_index = loading_index % 83;
 
     while (true) {
@@ -421,15 +426,19 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
         if (gif_frame_index < 10) {
             snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png",
                      gif_frame_index);
+//            LOG_INFO("Frame loading/frame_0%d.png", gif_frame_index);
         } else {
             snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png",
                      gif_frame_index);
+//            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
         }
 
         SDL_Surface* loading_screen = IMG_Load(frame_name);
-        loading_screen_texture =
-            SDL_CreateTextureFromSurface(renderer, loading_screen);
-        SDL_FreeSurface(loading_screen);
+        if (loading_screen == NULL){
+            LOG_INFO("IMG_Load: %s\n", IMG_GetError());
+        }
+        loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
+//        SDL_FreeSurface(loading_screen);
 
         int w = 200;
         int h = 200;
