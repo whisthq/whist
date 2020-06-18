@@ -50,13 +50,11 @@ def createVMInstance(vm_name, resource_group=None):
     Returns:
     VirtualMachine: The instance view of the virtual machine
    """
-   resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
-   
+    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+
     _, compute_client, _ = createClients()
     try:
-        virtual_machine = compute_client.virtual_machines.get(
-            resource_group, vm_name
-        )
+        virtual_machine = compute_client.virtual_machines.get(resource_group, vm_name)
         return virtual_machine
     except:
         return None
