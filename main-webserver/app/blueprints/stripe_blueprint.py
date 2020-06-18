@@ -278,14 +278,19 @@ def payment(action, **kwargs):
 
     # Endpoint for stripe webhooks
     elif action == "hooks":
-        body = request.get_json()
+        body = request.get_data()
+        sigHeader = request.headers["Stripe-Signature"]
+        endpointSecret = os.getenv("ENDPOINT_SECRET")
         event = None
 
         try:
-            event = stripe.Event.construct_from(body, stripe.api_key)
+            event = stripe.Webhook.construct_event(body, sigHeader, endpointSecret)
         except ValueError as e:
             # Invalid payload
-            return jsonify({"status": 400}), 400
+            return jsonify({"status": "Invalid payload"}), 400
+        except stripe.error.SignatureVerificationError as e:
+            # Invalid signature
+            return jsonify({"status": "Invalid signature"}), 400
 
         # Handle the event
         if event.type == "charge.failed":  # https://stripe.com/docs/api/charges
@@ -332,6 +337,8 @@ def payment(action, **kwargs):
                     trialEndingMail(customer["username"], kwargs["ID"])
                 else:
                     trialEndedMail(customer["username"], kwargs["ID"])
+        else:
+            return jsonify({}), 400
 
         return jsonify({"status": 200}), 200
     elif action == "update" and request.method == "POST":
