@@ -62,6 +62,10 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
             "disk_name": disk_name
         }
     )
+    
+    username=None 
+    if output["success"] and output["rows"]:
+        username=output["rows"][0]["username"]
 
     if output["success"] and output["rows"]:
         fractalSQLUpdate(
@@ -71,7 +75,7 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
             },
             new_params={
                 "disk_name": disk_name,
-                "username": str(output["rows"][0]["username"])
+                "username": str(username)
             }
         )
         
