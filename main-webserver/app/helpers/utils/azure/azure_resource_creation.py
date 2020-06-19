@@ -79,7 +79,7 @@ def createNic(vm_name, location, tries, resource_group=None):
             )
 
             time.sleep(3)
-            return createNic(name, location, tries + 1)
+            return createNic(vm_name, location, tries + 1)
         else:
             return None
 
