@@ -101,26 +101,33 @@ def getAccessTokens(user):
     refresh_token = create_refresh_token(identity=user, expires_delta=False)
     return (access_token, refresh_token)
 
+
 def getGoogleTokens(code):
     flow = Flow.from_client_secrets_file(
-    'google_client_secret.json',
-    scopes=['https://www.googleapis.com/auth/userinfo.email', 'openid', 'https://www.googleapis.com/auth/userinfo.profile'],
-    redirect_uri='postmessage')
+        "google_client_secret.json",
+        scopes=[
+            "https://www.googleapis.com/auth/userinfo.email",
+            "openid",
+            "https://www.googleapis.com/auth/userinfo.profile",
+        ],
+        redirect_uri="postmessage",
+    )
 
     flow.fetch_token(code=code)
 
     credentials = flow.credentials
 
     session = flow.authorized_session()
-    profile = session.get('https://www.googleapis.com/userinfo/v2/me').json()
+    profile = session.get("https://www.googleapis.com/userinfo/v2/me").json()
 
     return {
         "access_token": credentials.token,
         "refresh_token": credentials.refresh_token,
         "google_id": profile["id"],
         "email": profile["email"],
-        "name": profile["given_name"]
+        "name": profile["given_name"],
     }
+
 
 def yieldNumber():
     num = 0
