@@ -88,3 +88,16 @@ def getVMIP(vm_name, resource_group=None):
         return public_ip.ip_address
     except Exception as e:
         return str(e)
+
+
+def resourceGroupToTable(resource_group):
+    try:
+        table_mapping = {
+            "Fractal": "v_ms",
+            "FractalProtocolCI": "VMs_FractalProtocolCI",
+        }
+
+        return table_mapping[resource_group]
+    except:
+        return None
+

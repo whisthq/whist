@@ -50,7 +50,7 @@ def createVM(
 
     # Create network resources
 
-    nic = createNic(vm_name, location, 0)
+    nic = createNic(vm_name, location, 0, resource_group=resource_group)
 
     if not nic:
         self.update_state(
@@ -114,7 +114,7 @@ def createVM(
 
     ip_address = getVMIP(vm_name, resource_group)
     fractalSQLInsert(
-        table_name="v_ms",
+        table_name=resourceGroupToTable(resource_group),
         params={
             "vm_name": vm_name,
             "ip": ip_address,
@@ -185,7 +185,9 @@ def createVM(
 
     # Fetch VM columns from SQL and return
 
-    output = fractalSQLSelect("v_ms", {"vm_name": vm_name})
+    output = fractalSQLSelect(
+        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
+    )
 
     lockVMAndUpdate(vm_name, "RUNNING_AVAILABLE", False, temporary_lock=None)
 
