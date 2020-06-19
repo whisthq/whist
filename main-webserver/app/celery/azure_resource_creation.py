@@ -112,7 +112,7 @@ def createVM(
         },
     )
 
-    ip_address = getVMIP(vm_name)
+    ip_address = getVMIP(vm_name, resource_group)
     fractalSQLInsert(
         table_name="v_ms",
         params={

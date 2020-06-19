@@ -60,7 +60,7 @@ def createVMInstance(vm_name, resource_group=None):
         return None
 
 
-def getVMIP(vm_name):
+def getVMIP(vm_name, resource_group=None):
     """Gets the IP address for a vm
 
     Args:
@@ -70,7 +70,7 @@ def getVMIP(vm_name):
         str: The ipv4 address
     """
     try:
-        vm = createVMInstance(vm_name)
+        vm = createVMInstance(vm_name, resource_group)
 
         _, _, network_client = createClients()
         ni_reference = vm.network_profile.network_interfaces[0]
