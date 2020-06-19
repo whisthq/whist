@@ -52,7 +52,7 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
     )
 
     async_disk_attach = compute_client.virtual_machines.create_or_update(
-        "Fractal", vm.name, vm
+        resource_group, vm.name, vm
     )
     async_disk_attach.wait()
 
