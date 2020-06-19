@@ -648,8 +648,6 @@ int main(int argc, char* argv[]) {
     initVideo();
     exiting = false;
 
-    int tcp_connection_timeout = 250;
-
     // Try 3 times if a failure to connect occurs
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         // If this is a retry, wait a bit more for the server to recover
@@ -701,7 +699,7 @@ int main(int argc, char* argv[]) {
 
             if( init_spectator )
             {
-                FractalServerMessage* fmsg = init_spectator->data;
+                FractalServerMessage* fmsg = (void*)init_spectator->data;
                 LOG_INFO( "SPECTATOR PORT: %d", fmsg->spectator_port );
 
                 closesocket( PacketReceiveContext.s );
@@ -765,10 +763,9 @@ int main(int argc, char* argv[]) {
             // not-speed-sensitive applications
 
             if( CreateTCPContext( &PacketTCPContext, (char*)server_ip,
-                                  PORT_SHARED_TCP, 1, tcp_connection_timeout, using_stun ) < 0 )
+                                  PORT_SHARED_TCP, 1, 750, using_stun ) < 0 )
             {
                 LOG_ERROR( "Failed finish connection to server" );
-                tcp_connection_timeout += 250;
                 closesocket( PacketSendContext.s );
                 closesocket( PacketReceiveContext.s );
                 continue;

@@ -881,8 +881,6 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
 
     LOG_INFO("Connecting to server...");
 
-    SDL_Delay(200);
-
     // Connect to TCP server
     if (!tcp_connect(context->s, context->addr, stun_timeout_ms)) {
         LOG_WARNING("Could not connect to server over TCP");
