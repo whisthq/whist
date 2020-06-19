@@ -12,11 +12,13 @@ def storeFeedback(username, feedback):
     """
 
     if feedback:
-        command = text("""
+        command = text(
+            """
             INSERT INTO feedback("username", "feedback")
             VALUES(:email, :feedback)
-            """)
-        params = {'email': username, 'feedback': feedback}
+            """
+        )
+        params = {"email": username, "feedback": feedback}
         with engine.connect() as conn:
             conn.execute(command, **params)
             conn.close()
