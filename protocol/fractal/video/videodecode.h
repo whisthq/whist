@@ -41,7 +41,6 @@ typedef struct video_decoder_t {
     AVFrame* sw_frame;
     AVFrame* hw_frame;
     AVBufferRef* ref;
-    AVPacket packet;
     enum AVPixelFormat match_fmt;
     DecodeType type;
     enum AVHWDeviceType device_type;

@@ -700,7 +700,7 @@ int main() {
             continue;
         }
 
-        if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 500,
+        if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 750,
                              USING_STUN) < 0) {
             LOG_WARNING("Failed to finish connection (Failed at TCP context).");
             closesocket(PacketReceiveContext.s);
