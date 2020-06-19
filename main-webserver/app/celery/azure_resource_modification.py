@@ -20,23 +20,19 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
 
     if spinLock(vm_name) < 0:
         return {"status": REQUEST_TIMEOUT, "payload": None}
-    
-    lockVMAndUpdate(
-        vm_name=vm_name,
-        state="ATTACHING",
-        lock=True,
-        temporary_lock=3
-    )
-    
+
+    lockVMAndUpdate(vm_name=vm_name, state="ATTACHING", lock=True, temporary_lock=3)
+
     fractalLog(
         function="swapSpecificDisk",
         label=str(vm_name),
-        logs="Beginning function to swap disk {disk_name} into VM {vm_name}".format(disk_name=disk_name, vm_name=vm_name)
+        logs="Beginning function to swap disk {disk_name} into VM {vm_name}".format(
+            disk_name=disk_name, vm_name=vm_name
         ),
     )
-    
-    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group 
-    
+
+    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+
     _, compute_client, _ = createClients()
     new_os_disk = compute_client.disks.get(resource_group, disk_name)
 
@@ -47,7 +43,8 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
     fractalLog(
         function="swapSpecificDisk",
         label=str(vm_name),
-        logs="Sending Azure command to swap disk {disk_name} into VM {vm_name}".format(disk_name=disk_name, vm_name=vm_name)
+        logs="Sending Azure command to swap disk {disk_name} into VM {vm_name}".format(
+            disk_name=disk_name, vm_name=vm_name
         ),
     )
 
@@ -56,46 +53,27 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
     )
     async_disk_attach.wait()
 
-    output = fractalSQLSelect(
-        table_name="disks",
-        params={
-            "disk_name": disk_name
-        }
-    )
-    
-    username=None 
+    output = fractalSQLSelect(table_name="disks", params={"disk_name": disk_name})
+
+    username = None
     if output["success"] and output["rows"]:
-        username=output["rows"][0]["username"]
+        username = output["rows"][0]["username"]
 
     if output["success"] and output["rows"]:
         fractalSQLUpdate(
             table_name=resourceGroupToTable(resource_group),
-            conditional_params={
-                "vm_name": vm_name
-            },
-            new_params={
-                "disk_name": disk_name,
-                "username": str(username)
-            }
+            conditional_params={"vm_name": vm_name},
+            new_params={"disk_name": disk_name, "username": str(username)},
         )
-        
-    fractalVMStart(vm_name, s = self)
+
+    fractalVMStart(vm_name, s=self)
 
     lockVMAndUpdate(
-        vm_name=vm_name,
-        state="RUNNING_AVAILABLE",
-        lock=False,
-        temporary_lock=0
+        vm_name=vm_name, state="RUNNING_AVAILABLE", lock=False, temporary_lock=0
     )
-    
+
     output = fractalSQLSelect(
-        table_name=resourceGroupToTable(resource_group),
-        params={
-            "vm_name": vm_name
-        }
+        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
     )
-    
-    return {
-        "status": SUCCESS,
-        "payload": output["rows"][0]
-    }
+    return {"status": SUCCESS, "payload": output["rows"][0]}
+
