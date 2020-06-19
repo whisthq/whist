@@ -1,5 +1,8 @@
 {
   "environments": {
+    "review": {
+      "addons": ["heroku-redis:hobby-dev"]
+    },
     "test": {
       "scripts": {
         "test": "py.test"
