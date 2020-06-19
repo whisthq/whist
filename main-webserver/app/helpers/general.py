@@ -12,11 +12,11 @@ def createClients():
     ResourceManagementClient, ComputeManagementClient, NetworkManagementClient
 
    """
-    subscription_id = os.getenv('AZURE_SUBSCRIPTION_ID')
+    subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
     credentials = ServicePrincipalCredentials(
-        client_id=os.getenv('AZURE_CLIENT_ID'),
-        secret=os.getenv('AZURE_CLIENT_SECRET'),
-        tenant=os.getenv('AZURE_TENANT_ID')
+        client_id=os.getenv("AZURE_CLIENT_ID"),
+        secret=os.getenv("AZURE_CLIENT_SECRET"),
+        tenant=os.getenv("AZURE_TENANT_ID"),
     )
     r = ResourceManagementClient(credentials, subscription_id)
     c = ComputeManagementClient(credentials, subscription_id)
