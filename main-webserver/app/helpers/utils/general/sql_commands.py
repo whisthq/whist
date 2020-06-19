@@ -1,4 +1,5 @@
 from app.imports import *
+from app.helpers.utils.general.logs import *
 
 
 engine = db.create_engine(os.getenv("DATABASE_URL"), echo=False, pool_pre_ping=True)
@@ -43,6 +44,15 @@ def fractalRunSQL(command, params):
             "error": str(e),
         }
 
+        fractalLog(
+            function="fractalRunSQL",
+            label="None",
+            logs="Error executing SQL command [{command}]: {error}".format(
+                command=str(command), error=str(e)
+            ),
+            level=logging.ERROR,
+        )
+
     session.commit()
     session.close()
 
@@ -51,13 +61,13 @@ def fractalRunSQL(command, params):
 
 def fractalSQLSelect(table_name, params):
     command = """
-        SELECT * FROM {table_name} WHERE""".format(
+        SELECT * FROM \"{table_name}\" WHERE""".format(
         table_name=table_name
     )
 
     if not params:
         command = """
-            SELECT * FROM {table_name}""".format(
+            SELECT * FROM \"{table_name}\"""".format(
             table_name=table_name
         )
     else:
@@ -84,7 +94,7 @@ def fractalSQLUpdate(table_name, conditional_params, new_params):
     number_of_new_params = number_of_conditional_params = 1
 
     command = """
-        UPDATE {table_name} SET""".format(
+        UPDATE \"{table_name}\" SET""".format(
         table_name=table_name
     )
 
@@ -146,7 +156,7 @@ def fractalSQLInsert(table_name, params, unique_keys=None):
         current_param_number += 1
 
     command = """
-        INSERT INTO {table_name}{columns} VALUES{values}""".format(
+        INSERT INTO \"{table_name}\"{columns} VALUES{values}""".format(
         table_name=table_name, columns=columns, values=values
     )
 
@@ -165,7 +175,7 @@ def fractalSQLDelete(table_name, params, and_or="AND"):
             conditions += " {} ".format(and_or.upper())
         current_param += 1
 
-    command = "DELETE FROM {table_name} WHERE {conditions}".format(
+    command = 'DELETE FROM "{table_name}" WHERE {conditions}'.format(
         table_name=table_name, conditions=conditions
     )
 
