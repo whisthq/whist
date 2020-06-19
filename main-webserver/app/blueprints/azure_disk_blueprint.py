@@ -14,9 +14,13 @@ def azure_disk_post(action, **kwargs):
     if action == "clone":
         return "test"
     elif action == "swap":
-        disk_name, vm_name = kwargs["body"]["disk_name"], kwargs["body"]["vm_name"]
+        disk_name, vm_name, resource_group = (
+            kwargs["body"]["disk_name"],
+            kwargs["body"]["vm_name"],
+            kwargs["body"]["resource_group"],
+        )
 
-        task = swapSpecificDisk.apply_async([vm_name, disk_name])
+        task = swapSpecificDisk.apply_async([vm_name, disk_name, resource_group])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
