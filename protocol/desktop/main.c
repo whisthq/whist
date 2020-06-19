@@ -870,7 +870,7 @@ int main(int argc, char* argv[]) {
 
                             set_video_active_resizing(false);
 
-                            if (GetTimer(window_resize_timer) > 0.5) {
+                            if (GetTimer(window_resize_timer) > 0.2) {
                                 // Let the server know the new dimensions so
                                 // that it can change native dimensions for
                                 // monitor

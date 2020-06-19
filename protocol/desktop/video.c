@@ -259,10 +259,19 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                 loadingSDL(renderer, loading_index);
             }
 
+            SDL_LockMutex(render_mutex);
             if (pending_resize_render) {
+                SDL_UpdateYUVTexture(
+                    videoContext.texture, NULL, videoContext.data[0],
+                    videoContext.linesize[0], videoContext.data[1],
+                    videoContext.linesize[1], videoContext.data[2],
+                    videoContext.linesize[2]);
+                SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture,
+                               NULL, NULL);
                 SDL_RenderPresent((SDL_Renderer*)videoContext.renderer);
                 pending_resize_render = false;
             }
+            SDL_UnlockMutex(render_mutex);
 
             SDL_Delay(1);
             continue;
@@ -936,8 +945,7 @@ void set_video_active_resizing(bool is_resizing) {
     } else {
         SDL_LockMutex(render_mutex);
         can_render = false;
-        SDL_UnlockMutex(render_mutex);
-
         pending_resize_render = true;
+        SDL_UnlockMutex(render_mutex);
     }
 }
