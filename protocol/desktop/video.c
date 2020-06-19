@@ -59,6 +59,7 @@ struct VideoData {
     bool run_render_screen_thread;
 
     SDL_sem* renderscreen_semaphore;
+    SDL_sem* resize_render_semaphore;
 
     double target_mbps;
     int num_nacked;
@@ -252,26 +253,22 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
     while (VideoData.run_render_screen_thread) {
         int ret = SDL_SemTryWait(VideoData.renderscreen_semaphore);
+        if (pending_resize_render) {
+            SDL_RenderPresent((SDL_Renderer*)videoContext.renderer);
+            SDL_RenderCopy((SDL_Renderer*)videoContext.renderer,
+                           videoContext.texture, NULL, NULL);
+            SDL_RenderPresent((SDL_Renderer*)videoContext.renderer);
+            pending_resize_render = false;
+            rendering = false;
+            SDL_SemPost(VideoData.resize_render_semaphore);
+            continue;
+        }
 
         if (ret == SDL_MUTEX_TIMEDOUT) {
             if (loading_index >= 0) {
                 loading_index++;
                 loadingSDL(renderer, loading_index);
             }
-
-            SDL_LockMutex(render_mutex);
-            if (pending_resize_render) {
-                SDL_UpdateYUVTexture(
-                    videoContext.texture, NULL, videoContext.data[0],
-                    videoContext.linesize[0], videoContext.data[1],
-                    videoContext.linesize[1], videoContext.data[2],
-                    videoContext.linesize[2]);
-                SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture,
-                               NULL, NULL);
-                SDL_RenderPresent((SDL_Renderer*)videoContext.renderer);
-                pending_resize_render = false;
-            }
-            SDL_UnlockMutex(render_mutex);
 
             SDL_Delay(1);
             continue;
@@ -518,6 +515,11 @@ int initMultithreadedVideo(void* opaque) {
              output_height);
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
+
+    // configure renderer
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+
     SDL_Renderer* renderer = SDL_CreateRenderer(
         (SDL_Window*)window, -1,
         SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
@@ -527,9 +529,6 @@ int initMultithreadedVideo(void* opaque) {
                     SDL_GetError());
         return -1;
     }
-
-    // configure texture
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
     // mbps that currently works
     working_mbps = STARTING_BITRATE;
@@ -575,6 +574,7 @@ int initMultithreadedVideo(void* opaque) {
         receiving_frames[i].id = -1;
     }
 
+    VideoData.resize_render_semaphore = SDL_CreateSemaphore(0);
     VideoData.renderscreen_semaphore = SDL_CreateSemaphore(0);
     VideoData.run_render_screen_thread = true;
 
@@ -725,7 +725,6 @@ void updateVideo() {
                     skip_render = true;
                     LOG_INFO("Skip this render");
                 }
-
                 SDL_SemPost(VideoData.renderscreen_semaphore);
             } else {
                 if ((GetTimer(ctx->last_packet_timer) > 6.0 / 1000.0) &&
@@ -939,13 +938,15 @@ void set_video_active_resizing(bool is_resizing) {
             output_width = new_width;
             output_height = new_height;
         }
-
         can_render = true;
         SDL_UnlockMutex(render_mutex);
     } else {
         SDL_LockMutex(render_mutex);
         can_render = false;
-        pending_resize_render = true;
         SDL_UnlockMutex(render_mutex);
+
+        pending_resize_render = true;
+
+        SDL_SemWait(VideoData.resize_render_semaphore);
     }
 }
