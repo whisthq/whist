@@ -26,12 +26,12 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
         ),
     )
 
-    if spinLock(vm_name) < 0:
+    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+
+    if spinLock(vm_name, resource_group=resource_group) < 0:
         return {"status": REQUEST_TIMEOUT, "payload": None}
 
     lockVMAndUpdate(vm_name=vm_name, state="ATTACHING", lock=True, temporary_lock=3)
-
-    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
 
     _, compute_client, _ = createClients()
     new_os_disk = compute_client.disks.get(resource_group, disk_name)
