@@ -189,7 +189,13 @@ def createVM(
         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
     )
 
-    lockVMAndUpdate(vm_name, "RUNNING_AVAILABLE", False, temporary_lock=None)
+    lockVMAndUpdate(
+        vm_name,
+        "RUNNING_AVAILABLE",
+        False,
+        temporary_lock=None,
+        resource_group=resource_group,
+    )
 
     if output["success"] and output["rows"]:
         fractalLog(

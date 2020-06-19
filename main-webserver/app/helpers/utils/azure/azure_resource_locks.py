@@ -1,7 +1,8 @@
 from app import *
+from app.helpers.utils.azure.azure_general import *
 
 
-def lockVMAndUpdate(vm_name, state, lock, temporary_lock):
+def lockVMAndUpdate(vm_name, state, lock, temporary_lock, resource_group=None):
     """Changes the state, lock, and temporary lock of a VM
 
     Args:
@@ -16,6 +17,9 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock):
     Returns:
         int: 1 = vm is unlocked, -1 = giving up
     """
+
+    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+
     MAX_LOCK_TIME = 10
 
     new_params = {"state": state, "lock": lock}
@@ -35,14 +39,18 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock):
     )
 
     output = fractalSQLUpdate(
-        table_name="v_ms",
+        table_name=resourceGroupToTable(resource_group),
         conditional_params={"vm_name": vm_name},
         new_params=new_params,
     )
 
 
-def checkLock(vm_name):
-    output = fractalSQLSelect(table_name="v_ms", params={"vm_name": vm_name})
+def checkLock(vm_name, resource_group=None):
+    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+
+    output = fractalSQLSelect(
+        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
+    )
 
     locked = False
 
@@ -52,7 +60,7 @@ def checkLock(vm_name):
     return locked
 
 
-def spinLock(vm_name, s=None):
+def spinLock(vm_name, resource_group=None, s=None):
     """Waits for vm to be unlocked
 
     Args:
@@ -62,16 +70,21 @@ def spinLock(vm_name, s=None):
     Returns:
         int: 1 = vm is unlocked, -1 = giving up
     """
+
+    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+
     # Check if VM is currently locked
 
-    output = fractalSQLSelect(table_name="v_ms", params={"vm_name": vm_name})
+    output = fractalSQLSelect(
+        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
+    )
 
     if output["success"] and output["rows"]:
         username = output["rows"][0]["username"]
     else:
         return -1
 
-    locked = checkLock(vm_name)
+    locked = checkLock(vm_name, resource_group=resource_group)
     num_tries = 0
 
     if not locked:

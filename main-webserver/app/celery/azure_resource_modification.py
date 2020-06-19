@@ -18,11 +18,6 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
         json: VM info
     """
 
-    if spinLock(vm_name) < 0:
-        return {"status": REQUEST_TIMEOUT, "payload": None}
-
-    lockVMAndUpdate(vm_name=vm_name, state="ATTACHING", lock=True, temporary_lock=3)
-
     fractalLog(
         function="swapSpecificDisk",
         label=str(vm_name),
@@ -30,6 +25,11 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
             disk_name=disk_name, vm_name=vm_name
         ),
     )
+
+    if spinLock(vm_name) < 0:
+        return {"status": REQUEST_TIMEOUT, "payload": None}
+
+    lockVMAndUpdate(vm_name=vm_name, state="ATTACHING", lock=True, temporary_lock=3)
 
     resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
 

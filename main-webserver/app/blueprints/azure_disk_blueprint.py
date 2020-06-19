@@ -11,7 +11,9 @@ azure_disk_bp = Blueprint("azure_disk_bp", __name__)
 @azure_disk_bp.route("/azure_disk/<action>", methods=["POST"])
 @fractalPreProcess
 def azure_disk_post(action, **kwargs):
-    if action == "swap":
+    if action == "clone":
+        return "test"
+    elif action == "swap":
         disk_name, vm_name = kwargs["body"]["disk_name"], kwargs["body"]["vm_name"]
 
         task = swapSpecificDisk.apply_async([vm_name, disk_name])
