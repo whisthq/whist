@@ -129,6 +129,7 @@ jmespath==0.9.5
 kombu==4.6.8
 Mako==1.1.0
 MarkupSafe==1.1.1
+mirakuru==2.3.0
 more-itertools==5.0.0
 msrest==0.6.10
 msrestazure==0.6.2
@@ -139,6 +140,8 @@ pathlib2==2.3.5
 pathspec==0.8.0
 pg8000==1.15.3
 pluggy==0.13.1
+port-for==0.4
+psutil==5.7.0
 psycopg2-binary==2.8.5
 py==1.8.2
 pyasn1==0.4.7
