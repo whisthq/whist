@@ -81,8 +81,10 @@ def spinLock(vm_name, resource_group=None, s=None):
 
     print(output)
 
+    username = None
     if output["success"] and output["rows"]:
         username = output["rows"][0]["username"]
+
     else:
         fractalLog(
             function="spinLock",
