@@ -79,9 +79,18 @@ def spinLock(vm_name, resource_group=None, s=None):
         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
     )
 
+    print(output)
+
     if output["success"] and output["rows"]:
         username = output["rows"][0]["username"]
     else:
+        fractalLog(
+            function="spinLock",
+            label=str(username),
+            logs="spinLock errored with error: {error}.".format(
+                error=str(output["error"])
+            ),
+        )
         return -1
 
     locked = checkLock(vm_name, resource_group=resource_group)
