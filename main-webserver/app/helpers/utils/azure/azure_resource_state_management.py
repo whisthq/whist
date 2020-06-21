@@ -64,7 +64,9 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=None):
 
             # Power Azure VM on if it's not currently running
 
-            boot_if_necessary(vm_name, needs_restart, s=s)
+            boot_if_necessary(
+                vm_name, needs_restart, resource_group=resource_group, s=s
+            )
 
             # If a Windows VM, wait for a winlogon ping, which indicates that the server-side protocol is running
 
@@ -142,7 +144,9 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=None):
         return -1
 
 
-def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, s=None):
+def fractalVMStart(
+    vm_name, needs_restart=False, needs_winlogon=True, resource_group=None, s=None
+):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary 
     (big brain thoughts from Ming)
 
@@ -153,6 +157,9 @@ def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, s=None):
     Returns:
         int: 1 for success, -1 for failure
     """
+
+    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+
     fractalLog(
         function="fractalVMStart",
         label="VM {vm_name}".format(vm_name=vm_name),
@@ -196,7 +203,7 @@ def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, s=None):
         # give up and go to the top of the while loop to send another start/restart command
 
         vm_state = compute_client.virtual_machines.instance_view(
-            resource_group_name=os.getenv("VM_GROUP"), vm_name=vm_name
+            resource_group_name=resource_group, vm_name=vm_name
         )
 
         # Success! VM is running and ready to use
@@ -223,7 +230,7 @@ def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, s=None):
             time.sleep(5)
 
             vm_state = compute_client.virtual_machines.instance_view(
-                resource_group_name=os.getenv("VM_GROUP"), vm_name=vm_name
+                resource_group_name=resource_group, vm_name=vm_name
             )
 
             # Success! VM is running and ready to use

@@ -60,7 +60,7 @@ def checkLock(vm_name, resource_group=None):
     return locked
 
 
-def spinLock(vm_name, resource_group=None, s=None):
+def spinLock(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
     """Waits for vm to be unlocked
 
     Args:
@@ -71,15 +71,11 @@ def spinLock(vm_name, resource_group=None, s=None):
         int: 1 = vm is unlocked, -1 = giving up
     """
 
-    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
-
     # Check if VM is currently locked
 
     output = fractalSQLSelect(
         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
     )
-
-    print(output)
 
     username = None
     if output["success"] and output["rows"]:

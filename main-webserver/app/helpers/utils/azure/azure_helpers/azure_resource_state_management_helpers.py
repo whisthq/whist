@@ -3,12 +3,14 @@ from app.helpers.utils.azure.azure_general import *
 from app.helpers.utils.azure.azure_resource_locks import *
 
 
-def boot_if_necessary(vm_name, needs_restart, s=None):
+def boot_if_necessary(
+    vm_name, needs_restart, resource_group=os.getenv("VM_GROUP"), s=None
+):
     _, compute_client, _ = createClients()
 
     power_state = "PowerState/deallocated"
     vm_state = compute_client.virtual_machines.instance_view(
-        resource_group_name=os.getenv("VM_GROUP"), vm_name=vm_name
+        resource_group_name=resource_group, vm_name=vm_name
     )
 
     try:
@@ -41,9 +43,7 @@ def boot_if_necessary(vm_name, needs_restart, s=None):
 
         lockVMAndUpdate(vm_name, "STARTING", True, temporary_lock=10)
 
-        async_vm_start = compute_client.virtual_machines.start(
-            os.environ.get("VM_GROUP"), vm_name
-        )
+        async_vm_start = compute_client.virtual_machines.start(resource_group, vm_name)
 
         async_vm_start.wait()
 
@@ -75,7 +75,7 @@ def boot_if_necessary(vm_name, needs_restart, s=None):
         lockVMAndUpdate(vm_name, "RESTARTING", True, temporary_lock=10)
 
         async_vm_restart = compute_client.virtual_machines.restart(
-            os.environ.get("VM_GROUP"), vm_name
+            resource_group, vm_name
         )
 
         if s:

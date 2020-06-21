@@ -75,5 +75,6 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
     output = fractalSQLSelect(
         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
     )
+
     return {"status": SUCCESS, "payload": output["rows"][0]}
 

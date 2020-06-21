@@ -41,6 +41,24 @@ def createVMName():
     return vm_name
 
 
+def createDiskName():
+    """Generates a unique name for a disk
+
+    Returns:
+        str: The generated name
+    """
+    output = fractalSQLSelect("disks", {})
+    old_names = []
+    if output["rows"]:
+        old_names = [disk["disk_name"] for disk in output["rows"]]
+    disk_name = genHaiku(1)[0] + "_disk"
+
+    while disk_name in old_names:
+        disk_name = genHaiku(1)[0] + "_disk"
+
+    return disk_name
+
+
 def createVMInstance(vm_name, resource_group=None):
     """Retrieves information about the model view or the instance view of an Azure virtual machine
 

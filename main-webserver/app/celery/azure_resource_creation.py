@@ -7,7 +7,12 @@ from app.helpers.utils.azure.azure_resource_locks import *
 
 @celery_instance.task(bind=True)
 def createVM(
-    self, vm_size, location, operating_system, admin_password=None, resource_group=None
+    self,
+    vm_size,
+    location,
+    operating_system,
+    admin_password=None,
+    resource_group=os.getenv("VM_GROUP"),
 ):
     """Creates a Windows/Linux VM of size vm_size in Azure region location
 
@@ -75,8 +80,6 @@ def createVM(
     )
 
     # Create VM
-
-    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
 
     async_vm_creation = compute_client.virtual_machines.create_or_update(
         resource_group, vm_name, vm_parameters["params"]
@@ -207,3 +210,128 @@ def createVM(
         )
         return output["rows"][0]
     return None
+
+
+@celery_instance.task(bind=True)
+def cloneDisk(
+    self,
+    username,
+    location,
+    vm_size,
+    operating_system,
+    apps=[],
+    resource_group=os.getenv("VM_GROUP"),
+):
+    """Clones a Windows/Linux Fractal disk
+
+    Args:
+        username (str): The size of the vm to create
+        location (str): The Azure region (eastus, northcentralus, southcentralus)
+        vm_size (str): Azure VM type (Standard_NV6_Promo)
+        operating_system (str): Windows or Linux
+        apps (list): List of apps to pre-install
+
+    Returns:
+        json: Cloned disk metadata
+    """
+
+    fractalLog(
+        function="cloneDisk",
+        label=str(username),
+        logs="Starting to clone {operating_system} disk in {location}".format(
+            operating_system=operating_system, location=location
+        ),
+    )
+
+    disk_name = createDiskName()
+
+    fractalLog(
+        function="cloneDisk",
+        label=str(username),
+        logs="Cloned disk will be called {disk_name}".format(disk_name=disk_name),
+    )
+
+    _, compute_client, _ = createClients()
+
+    # Start disk creation
+
+    try:
+        # Retrieve Fractal template disk
+
+        location_disk_map = {
+            "eastus": "Fractal_Disk_Eastus",
+            "southcentralus": "Fractal_Disk_Southcentralus",
+            "northcentralus": "Fractal_Disk_Northcentralus",
+        }
+
+        try:
+            original_disk_name = location_disk_map[location]
+        except:
+            return {
+                "status": BAD_REQUEST,
+                "error": "Location {location} is not valid. Valid locations are eastus, southcentralus, and northcentralus".format(
+                    location=location
+                ),
+            }
+
+        if operating_system == "Linux":
+            original_disk_name = original_disk_name + "_Linux"
+
+        original_disk = compute_client.disks.get(resource_group, original_disk_name)
+
+        fractalLog(
+            function="cloneDisk",
+            label=str(username),
+            logs="Sending Azure command to create disk {disk_name}".format(
+                disk_name=disk_name
+            ),
+        )
+
+        async_disk_creation = compute_client.disks.create_or_update(
+            resource_group,
+            disk_name,
+            {
+                "location": location,
+                "creation_data": {
+                    "create_option": DiskCreateOption.copy,
+                    "source_resource_id": original_disk.id,
+                    "managed_disk": {"storage_account_type": "StandardSSD_LRS"},
+                },
+            },
+        )
+
+        async_disk_creation.wait()
+
+        fractalLog(
+            function="cloneDisk",
+            label=str(username),
+            logs="Disk {disk_name} created successfully in resource group {resource_group}".format(
+                disk_name=disk_name, resource_group=resource_group
+            ),
+        )
+
+        fractalSQLInsert(
+            table_name="disks",
+            params={
+                "disk_name": disk_name,
+                "username": username,
+                "location": location,
+                "vm_size": vm_size,
+            },
+        )
+
+        return {"status": SUCCESS, "disk_name": disk_name}
+
+    except Exception as e:
+        fractalLog(
+            function="cloneDisk",
+            label=str(username),
+            logs="Disk cloning failed with error: {error}".format(error=str(e)),
+            level=logging.CRITICAL,
+        )
+
+        async_disk_deletion = compute_client.disk.delete(resource_group, disk_name)
+        async_disk_deletion.wait()
+
+        return {"status": BAD_REQUEST, "error": str(e)}
+
