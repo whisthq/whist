@@ -77,4 +77,3 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
     )
 
     return {"status": SUCCESS, "payload": output["rows"][0]}
-

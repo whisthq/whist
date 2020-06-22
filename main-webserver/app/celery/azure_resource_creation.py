@@ -334,4 +334,3 @@ def cloneDisk(
         async_disk_deletion.wait()
 
         return {"status": BAD_REQUEST, "error": str(e)}
-

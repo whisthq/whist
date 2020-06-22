@@ -129,4 +129,3 @@ def getVMUser(vm_name, resource_group=os.getenv("VM_GROUP")):
         return str(output["rows"][0]["username"])
 
     return "None"
-

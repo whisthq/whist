@@ -267,4 +267,3 @@ def deleteDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
     )
 
     return {"status": SUCCESS}
-
