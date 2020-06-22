@@ -46,6 +46,35 @@ def azure_vm_post(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+    elif action == "start":
+        # Starts an Azure VM
+
+        vm_name = kwargs["body"]["vm_name"]
+        resource_group = os.getenv("VM_GROUP")
+        if "resource_group" in kwargs["body"].keys():
+            resource_group = kwargs["body"]["resource_group"]
+
+        task = startVM.apply_async([vm_name, resource_group])
+
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
+    elif action == "deallocate":
+        # Deallocates an Azure VM
+
+        vm_name = kwargs["body"]["vm_name"]
+        resource_group = os.getenv("VM_GROUP")
+        if "resource_group" in kwargs["body"].keys():
+            resource_group = kwargs["body"]["resource_group"]
+
+        task = deallocateVM.apply_async([vm_name, resource_group])
+
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
+
     elif action == "dev":
         # Toggles dev mode for a specified VM
 

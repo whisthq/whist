@@ -145,7 +145,11 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=None):
 
 
 def fractalVMStart(
-    vm_name, needs_restart=False, needs_winlogon=True, resource_group=None, s=None
+    vm_name,
+    needs_restart=False,
+    needs_winlogon=True,
+    resource_group=os.getenv("VM_GROUP"),
+    s=None,
 ):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary 
     (big brain thoughts from Ming)
@@ -158,11 +162,9 @@ def fractalVMStart(
         int: 1 for success, -1 for failure
     """
 
-    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
-
     fractalLog(
         function="fractalVMStart",
-        label="VM {vm_name}".format(vm_name=vm_name),
+        label=getVMUser(vm_name, resource_group),
         logs="Starting VM {vm_name}, need_restart is {needs_restart}, needs_winlogon is {needs_winlogon}".format(
             vm_name=vm_name,
             needs_restart=str(needs_restart),
@@ -220,7 +222,7 @@ def fractalVMStart(
         while not "running" in vm_state.statuses[1].code and wake_retries < 12:
             fractalLog(
                 function="fractalVMStart",
-                label="VM {vm_name}".format(vm_name=vm_name),
+                label=getVMUser(vm_name, resource_group),
                 logs="After sending a start command, VM {vm_name} is still in state {state}".format(
                     vm_name=vm_name, state=vm_state.statuses[1].code
                 ),

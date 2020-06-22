@@ -119,3 +119,14 @@ def resourceGroupToTable(resource_group):
     except:
         return None
 
+
+def getVMUser(vm_name, resource_group=os.getenv("VM_GROUP")):
+    output = fractalSQLSelect(
+        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
+    )
+
+    if output["success"] and output["rows"]:
+        return str(output["rows"][0]["username"])
+
+    return "None"
+

@@ -74,7 +74,7 @@ def createNic(vm_name, location, tries, resource_group=None):
         if tries < 5:
             fractalLog(
                 function="createNic",
-                label="VM {vm_name}".format(vm_name=vm_name),
+                label=str(vm_name),
                 logs="NIC creation encountered a retryable error. Trying again.",
             )
 
