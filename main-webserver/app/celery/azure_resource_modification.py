@@ -129,4 +129,4 @@ def deployArtifact(
             ),
         )
 
-    return {"status": SUCCESS, "payload": result.value[0]}
+    return {"status": SUCCESS, "payload": str(result.value[0])}
