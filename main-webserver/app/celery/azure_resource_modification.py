@@ -96,7 +96,7 @@ def deployArtifact(
 
     _, compute_client, _ = createClients()
 
-    with open("deployArtifact.txt", "r") as file:
+    with open("scripts/deployArtifact.txt", "r") as file:
         fractalLog(
             function="deployArtifact",
             label=str(vm_name),
