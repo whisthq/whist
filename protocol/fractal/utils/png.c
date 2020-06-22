@@ -140,40 +140,6 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
     return 0;
 }
 
-struct buffer_data {
-    const char* ptr;
-    size_t size;
-};
-static int read_open(void* opaque, uint8_t* buf, int buf_size) {
-    struct buffer_data* bd = (struct buffer_data*)opaque;
-    buf_size = FFMIN(buf_size, (int)bd->size);
-    if (!buf_size) return AVERROR_EOF;
-    memcpy(buf, bd->ptr, buf_size);
-    bd->ptr += buf_size;
-    bd->size -= buf_size;
-    return buf_size;
-}
-
-int read_char_open(AVFormatContext** pctx, const char* data, int data_size) {
-    static AVInputFormat* infmt = NULL;
-    if (!infmt) infmt = av_find_input_format("png");
-    *pctx = avformat_alloc_context();
-    uint8_t* buffer = av_malloc(data_size);
-
-    struct buffer_data opaque;
-    opaque.ptr = data;
-    opaque.size = data_size;
-
-    AVIOContext* pbctx = avio_alloc_context(buffer, data_size, 0, &opaque,
-                                            read_open, NULL, NULL);
-    (*pctx)->pb = pbctx;
-
-    avformat_open_input(pctx, NULL, NULL, NULL);
-    avformat_find_stream_info(*pctx, NULL);
-    av_free(pbctx);
-    return 0;
-}
-
 int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
              unsigned int* h, enum AVPixelFormat* pix_fmt, char* png_filename) {
     AVFormatContext* format_ctx = NULL;
