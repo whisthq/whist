@@ -157,13 +157,18 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
 
     codec = avcodec_find_decoder(format_ctx->streams[0]->codecpar->codec_id);
 
-    codec_ctx = avcodec_alloc_context3(codec);
-
-    avcodec_parameters_to_context(codec_ctx, format_ctx->streams[0]->codecpar);
-
     if (!codec) {
         LOG_ERROR("avcodec_find_decoder failed");
         ret = AVERROR(EINVAL);
+        goto end;
+    }
+
+    codec_ctx = avcodec_alloc_context3(codec);
+
+    ret = avcodec_parameters_to_context(codec_ctx,
+                                        format_ctx->streams[0]->codecpar);
+    if (ret < 0) {
+        LOG_ERROR("avcodec_parameters_to_context failed");
         goto end;
     }
 
@@ -187,16 +192,16 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
     ret = avcodec_send_packet(codec_ctx, &pkt);
 
     if (ret < 0) {
-        LOG_ERROR("avcodec_decode_video2 failed");
+        LOG_ERROR("avcodec_send_packet failed");
         goto end;
     }
 
     // TODO: for now we correctly assume only one frame pops out per packet, but
-    // to be robust we could try to handle more
+    // to be robust we could try to handle more as in videoencode.c
     ret = avcodec_receive_frame(codec_ctx, frame);
 
     if (ret < 0) {
-        printf("Fails 6\n");
+        LOG_ERROR("avcodec_receive_frame failed");
         goto end;
     }
 
