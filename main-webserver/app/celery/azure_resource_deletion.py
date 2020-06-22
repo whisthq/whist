@@ -247,7 +247,7 @@ def deleteDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
 
     fractalLog(
         function="deleteDisk",
-        label=str(vm_name),
+        label=str(disk_name),
         logs="Sending Azure command to delete disk {disk_name}".format(
             disk_name=disk_name
         ),
@@ -260,7 +260,7 @@ def deleteDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
 
     fractalLog(
         function="deleteDisk",
-        label=str(vm_name),
+        label=str(disk_name),
         logs="Disk {disk_name} successfully deleted. Goodbye {disk_name}!".format(
             disk_name=disk_name
         ),
