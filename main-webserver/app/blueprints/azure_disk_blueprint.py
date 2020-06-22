@@ -47,36 +47,30 @@ def azure_disk_post(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
-    
-    elif action == "delete"
+
+    elif action == "delete":
         # Delete a disk from Azure and database
-        
-        resource_group = None
-        
+
+        resource_group = os.getenv("VM_GROUP")
+        if "resource_group" in kwargs["body"].keys():
+            resource_group = kwargs["body"]["resource_group"]
+
         if "username" in kwargs["body"].keys():
             username = kwargs["body"]["username"]
-            
-            output = fractalSQLSelect(
-                table_name="disks",
-                params={
-                    "username": username 
-                }
-            )
-            
+
+            output = fractalSQLSelect(table_name="disks", params={"username": username})
+
             if output["success"] and output["rows"]:
                 task = None
                 for disk in output["rows"]:
-                    task = deleteDisk.apply_async([disk["disk_name"]])
-                
+                    task = deleteDisk.apply_async([disk["disk_name"], resource_group])
+
                 return jsonify({"ID": task.id}), ACCEPTED
-            
+
         elif "disk_name" in kwargs["body"].keys():
             disk_name = kwargs["body"]["disk_name"]
-            
-            task = deleteDisk.apply_async([disk_name])
+
+            task = deleteDisk.apply_async([disk_name, resource_group])
             return jsonify({"ID": task.id}), ACCEPTED
-        
+
         return jsonify({"ID": None}), BAD_REQUEST
-            
-                    
-                    
