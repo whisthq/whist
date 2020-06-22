@@ -37,7 +37,7 @@ export const READY_TO_CONNECT = "READY_TO_CONNECT";
 export function googleLogin(code: any) {
     return {
         type: GOOGLE_LOGIN,
-        code
+        code,
     };
 }
 
@@ -45,56 +45,56 @@ export function loginUser(username: any, password: any) {
     return {
         type: LOGIN_USER,
         username,
-        password
+        password,
     };
 }
 
 export function storeUsername(username: null) {
     return {
         type: STORE_USERNAME,
-        username
+        username,
     };
 }
 
 export function storeIP(ip: string) {
     return {
         type: STORE_IP,
-        ip
+        ip,
     };
 }
 
 export function storeIsUser(isUser: any) {
     return {
         type: STORE_IS_USER,
-        isUser
+        isUser,
     };
 }
 
 export function trackUserActivity(logon: any) {
     return {
         type: TRACK_USER_ACTIVITY,
-        logon
+        logon,
     };
 }
 
 export function loginFailed(warning: boolean) {
     return {
         type: LOGIN_FAILED,
-        warning
+        warning,
     };
 }
 
 export function calculateDistance(public_ip: any) {
     return {
         type: CALCULATE_DISTANCE,
-        public_ip
+        public_ip,
     };
 }
 
 export function storeDistance(distance: any) {
     return {
         type: STORE_DISTANCE,
-        distance
+        distance,
     };
 }
 
@@ -102,35 +102,35 @@ export function sendFeedback(feedback, feedback_type) {
     return {
         type: SEND_FEEDBACK,
         feedback,
-        feedback_type
+        feedback_type,
     };
 }
 
 export function resetFeedback(reset: boolean) {
     return {
         type: RESET_FEEDBACK,
-        reset
+        reset,
     };
 }
 
 export function setOS(os: any) {
     return {
         type: SET_OS,
-        os
+        os,
     };
 }
 
 export function askFeedback(ask: boolean) {
     return {
         type: ASK_FEEDBACK,
-        ask
+        ask,
     };
 }
 
 export function changeWindow(window: string) {
     return {
         type: CHANGE_WINDOW,
-        window
+        window,
     };
 }
 
@@ -138,14 +138,14 @@ export function loginStudio(username: any, password: any) {
     return {
         type: LOGIN_STUDIO,
         username,
-        password
+        password,
     };
 }
 
 export function pingIPInfo(id: string) {
     return {
         type: PING_IPINFO,
-        id
+        id,
     };
 }
 
@@ -153,34 +153,34 @@ export function storeIPInfo(payload: any, id: any) {
     return {
         type: STORE_IPINFO,
         payload,
-        id
+        id,
     };
 }
 
 export function fetchComputers() {
     return {
-        type: FETCH_COMPUTERS
+        type: FETCH_COMPUTERS,
     };
 }
 
 export function storeComputers(payload: any) {
     return {
         type: STORE_COMPUTERS,
-        payload
+        payload,
     };
 }
 
 export function fetchDisk(username: any) {
     return {
         type: FETCH_DISK,
-        username
+        username,
     };
 }
 
 export function fetchDiskStatus(status: boolean) {
     return {
         type: FETCH_DISK_STATUS,
-        status
+        status,
     };
 }
 
@@ -188,20 +188,20 @@ export function storeDiskName(disk: string, location: string) {
     return {
         type: STORE_DISK_NAME,
         disk,
-        location
+        location,
     };
 }
 
 export function attachDisk() {
     return {
-        type: ATTACH_DISK
+        type: ATTACH_DISK,
     };
 }
 
 export function fetchVM(id: any) {
     return {
         type: FETCH_VM,
-        id
+        id,
     };
 }
 
@@ -209,39 +209,39 @@ export function storeJWT(access_token: any, refresh_token: any) {
     return {
         type: STORE_JWT,
         access_token,
-        refresh_token
+        refresh_token,
     };
 }
 
 export function createDisk() {
     return {
-        type: CREATE_DISK
+        type: CREATE_DISK,
     };
 }
 
 export function storePaymentInfo(account_locked: any) {
     return {
         type: STORE_PAYMENT_INFO,
-        account_locked
+        account_locked,
     };
 }
 
 export function storePromoCode(code: any) {
     return {
         type: STORE_PROMO_CODE,
-        code
+        code,
     };
 }
 
 export function logout() {
     return {
-        type: LOGOUT
+        type: LOGOUT,
     };
 }
 
 export function restartPC() {
     return {
-        type: RESTART_PC
+        type: RESTART_PC,
     };
 }
 
@@ -249,7 +249,7 @@ export function vmRestarted(status: number) {
     console.log("VM STATUS IS NOW");
     console.log(status);
     return {
-        type: VM_RESTARTED
+        type: VM_RESTARTED,
     };
 }
 
@@ -257,27 +257,27 @@ export function sendLogs(connection_id: number, logs: any) {
     return {
         type: SEND_LOGS,
         connection_id,
-        logs
+        logs,
     };
 }
 
 export function changeStatusMessage(status_message: string) {
     return {
         type: CHANGE_STATUS_MESSAGE,
-        status_message
+        status_message,
     };
 }
 
 export function updateFound(update: any) {
     return {
         type: UPDATE_FOUND,
-        update
+        update,
     };
 }
 
 export function readyToConnect(update: boolean) {
     return {
         type: READY_TO_CONNECT,
-        update
+        update,
     };
 }

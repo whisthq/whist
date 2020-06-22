@@ -28,7 +28,7 @@ function* googleLogin(action) {
             apiPost,
             `${config.url.PRIMARY_SERVER}/account/googleLogin`,
             {
-                code: action.code
+                code: action.code,
             }
         );
         if (json) {
@@ -61,7 +61,7 @@ function* loginUser(action) {
             `${config.url.PRIMARY_SERVER}/account/login`,
             {
                 username: action.username,
-                password: action.password
+                password: action.password,
             }
         );
 
@@ -87,7 +87,7 @@ function* getPromoCode(action) {
         apiPost,
         `${config.url.PRIMARY_SERVER}/account/fetchCode`,
         {
-            username: action.username
+            username: action.username,
         },
         ""
     );
@@ -102,7 +102,7 @@ function* fetchPaymentInfo(action) {
         apiPost,
         `${config.url.PRIMARY_SERVER}/stripe/retrieve`,
         {
-            email: action.username
+            email: action.username,
         }
     );
 
@@ -117,7 +117,7 @@ function* fetchDisk(action) {
         apiPost,
         `${config.url.PRIMARY_SERVER}/user/login`,
         {
-            username: action.username
+            username: action.username,
         },
         state.counter.access_token
     );
@@ -147,7 +147,7 @@ function* loginStudio(action) {
         `${config.url.PRIMARY_SERVER}/account/login`,
         {
             username: action.username,
-            password: action.password
+            password: action.password,
         },
         state.counter.access_token
     );
@@ -175,7 +175,7 @@ function* sendFeedback(action) {
         {
             username: state.counter.username,
             feedback: action.feedback,
-            type: action.feedback_type
+            type: action.feedback_type,
         },
         state.counter.access_token
     );
@@ -209,7 +209,7 @@ function* storeIPInfo(action) {
         `${config.url.PRIMARY_SERVER}/account/checkComputer`,
         {
             id: action.id,
-            username: state.counter.username
+            username: state.counter.username,
         },
         state.counter.access_token
     );
@@ -230,7 +230,7 @@ function* storeIPInfo(action) {
                     id: action.id,
                     username: state.counter.username,
                     location,
-                    nickname: json.computers[0].nickname
+                    nickname: json.computers[0].nickname,
                 },
                 state.counter.access_token
             );
@@ -245,7 +245,7 @@ function* fetchComputers(action) {
         apiPost,
         `${config.url.PRIMARY_SERVER}/account/fetchComputers`,
         {
-            username: state.counter.username
+            username: state.counter.username,
         },
         state.counter.access_token
     );
@@ -265,7 +265,7 @@ function* attachDisk(action) {
         apiPost,
         `${config.url.PRIMARY_SERVER}/disk/attach`,
         {
-            disk_name: state.counter.disk
+            disk_name: state.counter.disk,
         },
         state.counter.access_token
     );
@@ -348,7 +348,7 @@ function* restartPC(action) {
         apiPost,
         `${config.url.PRIMARY_SERVER}/vm/restart`,
         {
-            username: state.counter.username
+            username: state.counter.username,
         },
         state.counter.access_token
     );
@@ -397,7 +397,7 @@ function* sendLogs(action) {
             connection_id: action.connection_id,
             logs: action.logs,
             sender: "client",
-            vm_ip: public_ip
+            vm_ip: public_ip,
         }
     );
 }
@@ -414,6 +414,6 @@ export default function* rootSaga() {
         takeEvery(Action.ATTACH_DISK, attachDisk),
         takeEvery(Action.FETCH_VM, fetchVM),
         takeEvery(Action.RESTART_PC, restartPC),
-        takeEvery(Action.SEND_LOGS, sendLogs)
+        takeEvery(Action.SEND_LOGS, sendLogs),
     ]);
 }
