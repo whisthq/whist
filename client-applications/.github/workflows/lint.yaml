@@ -19,7 +19,7 @@ jobs:
       - name: Install prettier
         run: yarn global add prettier
 
-      - run: yarn format --write
+      - run: yarn format desktop / --write
       - name: Commit files
         run: |
           git config --local user.email "linter@fractalcomputers.com"
