@@ -43,8 +43,8 @@ This section explains how to package apps for the local platform, including fetc
 **MacOS/Linux**
 
 Run `./build.sh` in a terminal. This will delete any prior Fractal protocol folder, pull the recent master branch, and package it locally. You must also install Cmake; refer to the Fractal protocol repository for installation instructions.
-`build.sh` now has cli arguments.  By default `build.sh` will create a release and sign it.  To build a fractal client without signing it and running it in dev, use `DEV=yes ./build.sh`.  It also starts the dev client after building.
-To build a release of the client, sign it, and upload it, use `RELEASE=yes ./build.sh`  ensure that you follow the "Publishing to Production" instructions beforehand.
+`build.sh` now has cli arguments. By default `build.sh` will create a release and sign it. To build a fractal client without signing it and running it in dev, use `DEV=yes ./build.sh`. It also starts the dev client after building.
+To build a release of the client, sign it, and upload it, use `RELEASE=yes ./build.sh` ensure that you follow the "Publishing to Production" instructions beforehand.
 
 **Windows**
 
@@ -72,9 +72,7 @@ Before publishing for production, make sure to package for production (see above
 
 To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. You may find a variety of tutorial online for your personal setup. This README covers how to set it up on VSCode and Sublime.
 
-### Sublime
-
-https://packagecontrol.io/packages/JsPrettier
+### [Sublime](https://packagecontrol.io/packages/JsPrettier)
 
 Install prettier if you haven't yet.
 
@@ -94,9 +92,7 @@ Usage
 
 We recommend setting `auto_format` to `true` in Sublime so you won't need to worry about the usage methods.
 
-### VSCode
-
-https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode
+### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 
 Launch VS Code Quick Open (Ctrl+P), paste the following command, and press enter.
 

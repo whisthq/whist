@@ -1,0 +1,32 @@
+# Workflow to lint an Electron app
+
+name: Yarn Lint
+
+on: push
+
+jobs:
+  yarn-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10
+      - name: Install prettier
+        run: yarn global add prettier
+
+      - run: cd desktop && yarn format --write --ignore-file ../.prettierignore
+      - name: Commit files
+        run: |
+          git config --local user.email "linter@fractalcomputers.com"
+          git config --local user.name "fractal linter"
+          git diff-index --quiet HEAD || git commit -m "Linted with prettier" -a
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
