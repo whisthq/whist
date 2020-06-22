@@ -96,7 +96,9 @@ def deployArtifact(
 
     _, compute_client, _ = createClients()
 
-    with open("scripts/deployArtifact.txt", "r") as file:
+    with open(
+        os.path.join(app.config["ROOT_DIRECTORY"], "scripts/deployArtifact.txt"), "r"
+    ) as file:
         fractalLog(
             function="deployArtifact",
             label=str(vm_name),
@@ -105,8 +107,8 @@ def deployArtifact(
 
         command = (
             file.read()
-            .replace("ARTIFACT_NAME", "windows_server_build")
-            .replace("RUN_ID", "141169749")
+            .replace("ARTIFACT_NAME", artifact_name)
+            .replace("RUN_ID", str(run_id))
         )
         run_command_parameters = {
             "command_id": "RunPowerShellScript",
@@ -114,7 +116,7 @@ def deployArtifact(
         }
 
         poller = compute_client.virtual_machines.run_command(
-            "FractalProtocolCI", "crimsonbonus543", run_command_parameters
+            resource_group, vm_name, run_command_parameters
         )
 
         result = poller.result()

@@ -47,5 +47,6 @@ app.config["MAIL_SERVER"] = "ming@fractalcomputers.com"
 app.config["MAIL_PORT"] = 465
 app.config["MAIL_USE_SSL"] = True
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+app.config["ROOT_DIRECTORY"] = os.path.dirname(os.path.abspath(__file__))
 
 CORS(app)
