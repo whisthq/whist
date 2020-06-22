@@ -9,7 +9,15 @@ from .helpers.s3 import *
 
 
 @celery.task(bind=True)
-def createVM(self, vm_size, location, operating_system, admin_password = None, admin_username = None, ID=-1):
+def createVM(
+    self,
+    vm_size,
+    location,
+    operating_system,
+    admin_password=None,
+    admin_username=None,
+    ID=-1,
+):
     """Creates a windows vm of size vm_size in Azure region location
 
     Args:
@@ -42,9 +50,13 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, a
         sendError(ID, "Nic does not exist, aborting")
         return
     vmParameters = createVMParameters(
-        vmName, nic.id, vm_size, location, operating_system, 
-        admin_password = admin_password,
-        admin_username = admin_username
+        vmName,
+        nic.id,
+        vm_size,
+        location,
+        operating_system,
+        admin_password=admin_password,
+        admin_username=admin_username,
     )
 
     async_vm_creation = compute_client.virtual_machines.create_or_update(
@@ -52,30 +64,20 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, a
     )
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Waiting on async VM creation"
-        },
+        state="PENDING", meta={"msg": "Waiting on async VM creation"},
     )
 
     sendDebug(ID, "Waiting on async_vm_creation")
     async_vm_creation.wait()
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "VM {} created".format(vmParameters["vm_name"])
-        },
+        state="PENDING", meta={"msg": "VM {} created".format(vmParameters["vm_name"])},
     )
-
 
     time.sleep(10)
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "VM {} starting".format(vmParameters["vm_name"])
-        },
+        state="PENDING", meta={"msg": "VM {} starting".format(vmParameters["vm_name"])},
     )
 
     async_vm_start = compute_client.virtual_machines.start(
@@ -85,17 +87,14 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, a
     async_vm_start.wait()
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "VM {} started".format(vmParameters["vm_name"])
-        },
+        state="PENDING", meta={"msg": "VM {} started".format(vmParameters["vm_name"])},
     )
 
     time.sleep(30)
 
     sendInfo(ID, "The VM created is called {}".format(vmParameters["vm_name"]))
 
-    fractalVMStart(vmParameters["vm_name"], needs_winlogon=False, s = self)
+    fractalVMStart(vmParameters["vm_name"], needs_winlogon=False, s=self)
 
     lockVMAndUpdate(
         vm_name=vmParameters["vm_name"],
@@ -103,7 +102,7 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, a
         lock=True,
         temporary_lock=None,
         change_last_updated=False,
-        verbose=False
+        verbose=False,
     )
 
     extension_parameters = (
@@ -131,7 +130,6 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, a
         },
     )
 
-
     async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(
         os.environ["VM_GROUP"],
         vmParameters["vm_name"],
@@ -145,7 +143,9 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, a
     self.update_state(
         state="PENDING",
         meta={
-            "msg": "VM {} successfully installed NVIDIA extension".format(vmParameters["vm_name"])
+            "msg": "VM {} successfully installed NVIDIA extension".format(
+                vmParameters["vm_name"]
+            )
         },
     )
 
@@ -164,7 +164,7 @@ def createVM(self, vm_size, location, operating_system, admin_password = None, a
         lock=False,
         temporary_lock=0,
         change_last_updated=False,
-        verbose=False
+        verbose=False,
     )
 
     return fetchVMCredentials(vmParameters["vm_name"])
@@ -197,7 +197,9 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
 
 
 @celery.task(bind=True)
-def createDiskFromImage(self, username, location, vm_size, operating_system, apps=[], ID=-1):
+def createDiskFromImage(
+    self, username, location, vm_size, operating_system, apps=[], ID=-1
+):
     hr = 400
     payload = None
     attempts = 0
@@ -542,7 +544,7 @@ def syncDisks(self, ID=-1):
     for stored_disk in stored_disks:
         if not stored_disk["disk_name"] in disk_names:
             deleteDiskFromTable(stored_disk["disk_name"])
-            stored_disks.remove(stored_disk) 
+            stored_disks.remove(stored_disk)
         # else:
         #     insertDiskSetting(stored_disk["disk_name"], stored_disk["branch"], False)
 
@@ -982,7 +984,7 @@ def deallocateVM(self, vm_name, ID=-1):
     sendInfo(ID, "VM {} deallocated successfully".format(vm_name))
 
     return {"status": 200}
-    
+
 
 @celery.task(bind=True)
 def storeLogs(self, sender, connection_id, logs, vm_ip, version, ID=-1):
