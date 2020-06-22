@@ -59,7 +59,6 @@ struct VideoData {
     bool run_render_screen_thread;
 
     SDL_sem* renderscreen_semaphore;
-    SDL_sem* resize_render_semaphore;
 
     double target_mbps;
     int num_nacked;
@@ -253,16 +252,13 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
     while (VideoData.run_render_screen_thread) {
         int ret = SDL_SemTryWait(VideoData.renderscreen_semaphore);
+        SDL_LockMutex(render_mutex);
         if (pending_resize_render) {
-            SDL_RenderPresent((SDL_Renderer*)videoContext.renderer);
             SDL_RenderCopy((SDL_Renderer*)videoContext.renderer,
                            videoContext.texture, NULL, NULL);
             SDL_RenderPresent((SDL_Renderer*)videoContext.renderer);
-            pending_resize_render = false;
-            rendering = false;
-            SDL_SemPost(VideoData.resize_render_semaphore);
-            continue;
         }
+        SDL_UnlockMutex(render_mutex);
 
         if (ret == SDL_MUTEX_TIMEDOUT) {
             if (loading_index >= 0) {
@@ -303,8 +299,8 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         if ((int)(sizeof(Frame) + frame->size) != renderContext.frame_size) {
-            mprintf("Incorrect Frame Size! %d instead of %d\n",
-                    sizeof(Frame) + frame->size, renderContext.frame_size);
+            LOG_WARNING("Incorrect Frame Size! %d instead of %d\n",
+                        sizeof(Frame) + frame->size, renderContext.frame_size);
         }
 
         if (frame->width != server_width || frame->height != server_height) {
@@ -334,11 +330,12 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
         SDL_LockMutex(render_mutex);
         updatePixelFormat();
-        updateTexture();
 
         if (!skip_render && can_render) {
             clock sws_timer;
             StartTimer(&sws_timer);
+
+            updateTexture();
 
             if (videoContext.sws) {
                 sws_scale(
@@ -574,7 +571,6 @@ int initMultithreadedVideo(void* opaque) {
         receiving_frames[i].id = -1;
     }
 
-    VideoData.resize_render_semaphore = SDL_CreateSemaphore(0);
     VideoData.renderscreen_semaphore = SDL_CreateSemaphore(0);
     VideoData.run_render_screen_thread = true;
 
@@ -943,10 +939,17 @@ void set_video_active_resizing(bool is_resizing) {
     } else {
         SDL_LockMutex(render_mutex);
         can_render = false;
+        pending_resize_render = true;
         SDL_UnlockMutex(render_mutex);
 
-        pending_resize_render = true;
+        for (int i = 0; pending_resize_render && (i < 30); ++i) {
+            SDL_Delay(1);
+        }
 
-        SDL_SemWait(VideoData.resize_render_semaphore);
+        if (pending_resize_render) {
+            SDL_LockMutex(render_mutex);
+            pending_resize_render = false;
+            SDL_UnlockMutex(render_mutex);
+        }
     }
 }
