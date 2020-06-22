@@ -85,8 +85,8 @@ def SendLogsToS3(content, sender, connection_id, vm_ip, version, ID=-1):
             else:
                 command = text(
                     """
-					INSERT INTO logs("username", "ip", "last_updated", "client_logs", "connection_id", "username") 
-					VALUES(:username, :ip, :last_updated, :file_name, :connection_id, :username)
+					INSERT INTO logs("username", "ip", "last_updated", "client_logs", "connection_id") 
+					VALUES(:username, :ip, :last_updated, :file_name, :connection_id)
 					"""
                 )
 
