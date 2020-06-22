@@ -37,10 +37,16 @@ class Typeform extends Component {
     SubmitFeedback = (evt, feedback_type) => {
         if (this.state.feedback !== "") {
             if (evt.key === "Enter") {
-              const os = require("os");
+                const os = require("os");
                 this.setState({ step: 1 });
                 this.props.dispatch(
-                    sendFeedback("User OS: " + os.platform() + "<p></p> User Feedback: " + this.state.feedback, feedback_type)
+                    sendFeedback(
+                        "User OS: " +
+                            os.platform() +
+                            "<p></p> User Feedback: " +
+                            this.state.feedback,
+                        feedback_type
+                    )
                 );
                 this.props.dispatch(askFeedback(false));
             }
@@ -62,7 +68,13 @@ class Typeform extends Component {
         if (this.state.feedback) {
             const os = require("os");
             this.props.dispatch(
-                sendFeedback("User OS: " + os.platform() + "<p></p> User Feedback: " + this.state.feedback, feedback_type)
+                sendFeedback(
+                    "User OS: " +
+                        os.platform() +
+                        "<p></p> User Feedback: " +
+                        this.state.feedback,
+                    feedback_type
+                )
             );
         }
     };
