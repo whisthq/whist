@@ -18,6 +18,7 @@ def fetchvms(username):
     ))
 
 def test_fetchvms():
+    print(os.getenv("HEROKU_APP_NAME"))
     email = 'isa.zheng@gmail.com'
     rv = fetchvms(email)
     assert rv.status_code == 200
