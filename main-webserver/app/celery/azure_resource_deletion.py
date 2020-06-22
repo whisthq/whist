@@ -258,3 +258,13 @@ def deleteDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
 
     fractalSQLDelete(table_name="disks", params={"disk_name": disk_name})
 
+    fractalLog(
+        function="deleteDisk",
+        label=str(vm_name),
+        logs="Disk {disk_name} successfully deleted. Goodbye {disk_name}!".format(
+            disk_name=disk_name
+        ),
+    )
+
+    return {"status": SUCCESS}
+
