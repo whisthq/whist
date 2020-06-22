@@ -30,7 +30,7 @@ Public Functions
 ============================
 */
 
-char* read_file(const char* filename, int* char_nb);
+char* read_file(const char* filename, size_t* char_nb);
 
 int bmp_to_png(char* bmp, int size, AVPacket* pkt);
 

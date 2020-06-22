@@ -13,10 +13,12 @@
 #define ERROR_OPEN_FILE "the file %s could not be opened"
 #define ERROR_READ_FILE "the file %s could not be read"
 
+#if defined(_WIN32)
 #pragma warning(disable : 4996)
 #pragma warning(disable : 4706)
 // Check Later
 #pragma warning(disable : 4244)
+#endif
 
 void error(const char* msg, ...) {
     va_list args;
@@ -35,7 +37,7 @@ void* xcalloc(size_t nmemb, size_t size) {
     return p;
 }
 
-char* read_file(const char* filename, int* char_nb) {
+char* read_file(const char* filename, size_t* char_nb) {
     FILE* file;
     char* code;
     // We try to open the file with the given filename
@@ -188,7 +190,7 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
     AVCodec* codec;
     AVCodecContext* codec_ctx;
     AVFrame* frame;
-    int frame_decoded, ret = 0;
+    int ret = 0;
     AVPacket pkt;
 
     if ((ret = avformat_open_input(&format_ctx, png_filename, NULL, NULL)) <
@@ -197,8 +199,12 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
         return ret;
     }
 
-    codec_ctx = format_ctx->streams[0]->codec;
-    codec = avcodec_find_decoder(codec_ctx->codec_id);
+    codec = avcodec_find_decoder(format_ctx->streams[0]->codecpar->codec_id);
+
+    codec_ctx = avcodec_alloc_context3(codec);
+
+    avcodec_parameters_to_context(codec_ctx, format_ctx->streams[0]->codecpar);
+
     if (!codec) {
         printf("Fails 1\n");
         ret = AVERROR(EINVAL);
@@ -222,12 +228,22 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
         goto end;
     }
 
-    ret = avcodec_decode_video2(codec_ctx, frame, &frame_decoded, &pkt);
+    ret = avcodec_send_packet(codec_ctx, &pkt);
 
-    if (ret < 0 || !frame_decoded) {
+    if (ret < 0) {
         printf("Fails 5\n");
         goto end;
     }
+
+    // TODO: for now we correctly assume only one frame pops out per packet, but
+    // to be robust we could try to handle more
+    ret = avcodec_receive_frame(codec_ctx, frame);
+
+    if (ret < 0) {
+        printf("Fails 6\n");
+        goto end;
+    }
+
     ret = 0;
 
     *w = frame->width;
@@ -242,10 +258,12 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
     struct SwsContext* swsContext = sws_getContext(
         *w, *h, *pix_fmt, *w, *h, AV_PIX_FMT_RGB24, 0, NULL, NULL, NULL);
 
-    sws_scale(swsContext, frame->data, frame->linesize, 0, *h, data, linesize);
+    sws_scale(swsContext, (uint8_t const* const*)frame->data, frame->linesize,
+              0, *h, data, linesize);
 
 end:
     avcodec_close(codec_ctx);
+    avcodec_free_context(&codec_ctx);
     avformat_close_input(&format_ctx);
     av_freep(&frame);
     return ret;
