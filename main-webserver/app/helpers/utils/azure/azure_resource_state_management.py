@@ -4,7 +4,9 @@ from app.helpers.utils.azure.azure_resource_locks import *
 from app.helpers.utils.azure.azure_helpers.azure_resource_state_management_helpers import *
 
 
-def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=None):
+def sendVMStartCommand(
+    vm_name, needs_restart, needs_winlogon, resource_group=os.getenv("VM_GROUP"), s=None
+):
     """Starts a VM
 
     Args:
@@ -190,7 +192,10 @@ def fractalVMStart(
             )
 
         while (
-            sendVMStartCommand(vm_name, needs_restart, needs_winlogon, s=s) < 0
+            sendVMStartCommand(
+                vm_name, needs_restart, needs_winlogon, resource_group, s=s
+            )
+            < 0
             and start_command_tries < 4
         ):
             time.sleep(10)
