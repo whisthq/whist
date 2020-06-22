@@ -78,3 +78,53 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=None):
 
     return {"status": SUCCESS, "payload": output["rows"][0]}
 
+
+@celery_instance.task(bind=True)
+def deployArtifact(
+    self, vm_name, artifact_name, run_id, resource_group="FractalProtocolCI"
+):
+    """Swaps out a disk in a vm
+
+    Args:
+        vm_name (str): The name of the vm
+        artifact_name (str): Name of artifact
+        run_id (str): Run ID
+
+    Returns:
+        json: Success/failure
+    """
+
+    _, compute_client, _ = createClients()
+
+    with open("deployArtifact.txt", "r") as file:
+        fractalLog(
+            function="deployArtifact",
+            label=str(vm_name),
+            logs="Starting to run deploy artifact script",
+        )
+
+        command = (
+            file.read()
+            .replace("ARTIFACT_NAME", "windows_server_build")
+            .replace("RUN_ID", "141169749")
+        )
+        run_command_parameters = {
+            "command_id": "RunPowerShellScript",
+            "script": [command],
+        }
+
+        poller = compute_client.virtual_machines.run_command(
+            "FractalProtocolCI", "crimsonbonus543", run_command_parameters
+        )
+
+        result = poller.result()
+
+        fractalLog(
+            function="deployArtifact",
+            label=str(vm_name),
+            logs="Artifact script finished running. Output: {output}".format(
+                output=str(result.value[0])
+            ),
+        )
+
+    return {"status": SUCCESS, "payload": result.value[0]}
