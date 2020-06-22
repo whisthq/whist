@@ -73,12 +73,12 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
     AVFrame* frame;
     AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_PNG);
     if (!codec) {
-        LOG_ERROR("Codec not found\n");
+        LOG_ERROR("Codec not found");
         exit(1);
     }
     AVCodecContext* c = avcodec_alloc_context3(codec);
     if (!c) {
-        LOG_ERROR("Could not allocate video codec context\n");
+        LOG_ERROR("Could not allocate video codec context");
         exit(1);
     }
 
@@ -90,13 +90,13 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
     c->pix_fmt = AV_PIX_FMT_RGB24;
 
     if (avcodec_open2(c, codec, NULL) < 0) {
-        LOG_ERROR("Could not open codec\n");
+        LOG_ERROR("Could not open codec");
         exit(1);
     }
 
     frame = av_frame_alloc();
     if (!frame) {
-        LOG_ERROR("Could not allocate video frame\n");
+        LOG_ERROR("Could not allocate video frame");
         exit(1);
     }
     frame->format = c->pix_fmt;
@@ -106,7 +106,7 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
     ret = av_image_alloc(frame->data, frame->linesize, c->width, c->height,
                          c->pix_fmt, 32);
     if (ret < 0) {
-        LOG_ERROR("Could not allocate raw picture buffer\n");
+        LOG_ERROR("Could not allocate raw picture buffer");
         exit(1);
     }
 
@@ -130,7 +130,7 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
     avcodec_send_frame(c, frame);
     ret = avcodec_receive_packet(c, pkt);
     if (ret < 0) {
-        LOG_ERROR("Error encoding frame\n");
+        LOG_ERROR("Error encoding frame");
         exit(1);
     }
     avcodec_close(c);
@@ -185,39 +185,39 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
 
     if ((ret = avformat_open_input(&format_ctx, png_filename, NULL, NULL)) <
         0) {
-        LOG_ERROR("Fails 0\n");
+        LOG_ERROR("avformat_open_input failed");
         return ret;
     }
 
     codec_ctx = format_ctx->streams[0]->codec;
     codec = avcodec_find_decoder(codec_ctx->codec_id);
     if (!codec) {
-        LOG_ERROR("Fails 1\n");
+        LOG_ERROR("avcodec_find_decoder failed");
         ret = AVERROR(EINVAL);
         goto end;
     }
 
     if ((ret = avcodec_open2(codec_ctx, codec, NULL)) < 0) {
-        LOG_ERROR("Fails 2\n");
+        LOG_ERROR("avcodec_open2 failed");
         goto end;
     }
 
     if (!(frame = av_frame_alloc())) {
-        LOG_ERROR("Fails 3\n");
+        LOG_ERROR("av_frame_alloc failed");
         ret = AVERROR(ENOMEM);
         goto end;
     }
 
     ret = av_read_frame(format_ctx, &pkt);
     if (ret < 0) {
-        LOG_ERROR("Fails 4\n");
+        LOG_ERROR("av_read_frame failed");
         goto end;
     }
 
     ret = avcodec_decode_video2(codec_ctx, frame, &frame_decoded, &pkt);
 
     if (ret < 0 || !frame_decoded) {
-        LOG_ERROR("Fails 5\n");
+        LOG_ERROR("avcodec_decode_video2 failed");
         goto end;
     }
     ret = 0;
@@ -227,8 +227,9 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
     *pix_fmt = frame->format;
 
     if ((ret = av_image_alloc(data, linesize, (int)*w, (int)*h,
-                              AV_PIX_FMT_RGB24, 32)) < 0)
+                              AV_PIX_FMT_RGB24, 32)) < 0) {
         goto end;
+    }
     ret = 0;
 
     struct SwsContext* swsContext = sws_getContext(
