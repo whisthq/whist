@@ -942,7 +942,7 @@ void set_video_active_resizing(bool is_resizing) {
         pending_resize_render = true;
         SDL_UnlockMutex(render_mutex);
 
-        for (int i = 0; pending_resize_render && (i < 30); ++i) {
+        for (int i = 0; pending_resize_render && (i < 10); ++i) {
             SDL_Delay(1);
         }
 
