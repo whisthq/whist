@@ -145,7 +145,6 @@ class MainBox extends Component {
                     } else if (os.platform() === "linux") {
                         var path = process.cwd() + "/protocol-build";
                         path = path.replace("/release", "");
-                        console.log(path);
                         var executable = "./FractalClient";
                     } else if (os.platform() === "win32") {
                         // windows
