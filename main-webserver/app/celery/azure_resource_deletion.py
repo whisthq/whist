@@ -231,3 +231,30 @@ def deleteVM(self, vm_name, delete_disk):
             hr = -1
 
     return {"status": SUCCESS} if hr > 0 else {"status": PARTIAL_CONTENT}
+
+
+@celery_instance.task(bind=True)
+def deleteDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
+    """Deletes an Azure disk
+
+    Args:
+        disk_name (str): The name of the disk
+
+    Returns:
+        json: Success/failure
+    """
+    _, compute_client, _ = createClients()
+
+    fractalLog(
+        function="deleteDisk",
+        label=str(vm_name),
+        logs="Sending Azure command to delete disk {disk_name}".format(
+            disk_name=disk_name
+        ),
+    )
+
+    async_disk_deletion = compute_client.disks.delete(resource_group, disk_name)
+    async_disk_deletion.wait()
+
+    fractalSQLDelete(table_name="disks", params={"disk_name": disk_name})
+

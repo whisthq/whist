@@ -1,6 +1,4 @@
 from app import *
-from app.helpers.blueprint_helpers.azure_vm_get import *
-from app.helpers.blueprint_helpers.azure_vm_post import *
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_modification import *
@@ -15,7 +13,7 @@ def azure_disk_post(action, **kwargs):
         # Clone a Fractal disk
 
         resource_group = os.getenv("VM_GROUP")
-        if "resource_group" in body.keys():
+        if "resource_group" in kwargs["body"].keys():
             resource_group = kwargs["body"]["resource_group"]
 
         task = cloneDisk.apply_async(
@@ -49,3 +47,36 @@ def azure_disk_post(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+    
+    elif action == "delete"
+        # Delete a disk from Azure and database
+        
+        resource_group = None
+        
+        if "username" in kwargs["body"].keys():
+            username = kwargs["body"]["username"]
+            
+            output = fractalSQLSelect(
+                table_name="disks",
+                params={
+                    "username": username 
+                }
+            )
+            
+            if output["success"] and output["rows"]:
+                task = None
+                for disk in output["rows"]:
+                    task = deleteDisk.apply_async([disk["disk_name"]])
+                
+                return jsonify({"ID": task.id}), ACCEPTED
+            
+        elif "disk_name" in kwargs["body"].keys():
+            disk_name = kwargs["body"]["disk_name"]
+            
+            task = deleteDisk.apply_async([disk_name])
+            return jsonify({"ID": task.id}), ACCEPTED
+        
+        return jsonify({"ID": None}), BAD_REQUEST
+            
+                    
+                    
