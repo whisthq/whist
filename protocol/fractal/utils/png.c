@@ -9,31 +9,19 @@
 
 #include "logging.h"
 
-#define ERROR_ALLOC "the memory could not be allocated"
-#define ERROR_OPEN_FILE "the file %s could not be opened"
-#define ERROR_READ_FILE "the file %s could not be read"
-
-#if defined(_WIN32)
+#ifdef _WIN32
 #pragma warning(disable : 4996)
 #pragma warning(disable : 4706)
 // Check Later
 #pragma warning(disable : 4244)
 #endif
 
-void error(const char* msg, ...) {
-    va_list args;
-    va_start(args, msg);
-    fprintf(stderr, "\nError : ");
-    vfprintf(stderr, msg, args);
-    fprintf(stderr, "\n");
-    va_end(args);
-    exit(EXIT_FAILURE);
-}
-
 void* xcalloc(size_t nmemb, size_t size) {
     void* p;
 
-    if (!(p = calloc(nmemb, size))) error(ERROR_ALLOC);
+    if (!(p = calloc(nmemb, size))) {
+        LOG_ERROR("the memory could not be allocated");
+    }
     return p;
 }
 
@@ -41,8 +29,9 @@ char* read_file(const char* filename, size_t* char_nb) {
     FILE* file;
     char* code;
     // We try to open the file with the given filename
-    if (!(file = fopen((const char*)filename, "rb")))
-        error(ERROR_OPEN_FILE, filename);
+    if (!(file = fopen((const char*)filename, "rb"))) {
+        LOG_ERROR("the file %s could not be opened", filename);
+    }
 
     /*
      * We count the number of characters in the file
@@ -56,8 +45,9 @@ char* read_file(const char* filename, size_t* char_nb) {
     code = xcalloc((*char_nb) + 1, sizeof(unsigned char));
 
     // We copy the content of the file into the char *code
-    if (fread(code, 1, *char_nb, file) < *char_nb)
-        error(ERROR_READ_FILE, filename);
+    if (fread(code, 1, *char_nb, file) < *char_nb) {
+        LOG_ERROR("the file %s could not be read", filename);
+    }
     fclose(file);
 
     return code;
@@ -83,12 +73,12 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
     AVFrame* frame;
     AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_PNG);
     if (!codec) {
-        printf("Codec not found\n");
+        LOG_ERROR("Codec not found");
         exit(1);
     }
     AVCodecContext* c = avcodec_alloc_context3(codec);
     if (!c) {
-        printf("Could not allocate video codec context\n");
+        LOG_ERROR("Could not allocate video codec context");
         exit(1);
     }
 
@@ -100,13 +90,13 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
     c->pix_fmt = AV_PIX_FMT_RGB24;
 
     if (avcodec_open2(c, codec, NULL) < 0) {
-        printf("Could not open codec\n");
+        LOG_ERROR("Could not open codec");
         exit(1);
     }
 
     frame = av_frame_alloc();
     if (!frame) {
-        printf("Could not allocate video frame\n");
+        LOG_ERROR("Could not allocate video frame");
         exit(1);
     }
     frame->format = c->pix_fmt;
@@ -116,7 +106,7 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
     ret = av_image_alloc(frame->data, frame->linesize, c->width, c->height,
                          c->pix_fmt, 32);
     if (ret < 0) {
-        printf("Could not allocate raw picture buffer\n");
+        LOG_ERROR("Could not allocate raw picture buffer");
         exit(1);
     }
 
@@ -140,47 +130,13 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
     avcodec_send_frame(c, frame);
     ret = avcodec_receive_packet(c, pkt);
     if (ret < 0) {
-        printf("Error encoding frame\n");
+        LOG_ERROR("Error encoding frame");
         exit(1);
     }
     avcodec_close(c);
     av_free(c);
     av_freep(&frame->data[0]);
     av_frame_free(&frame);
-    return 0;
-}
-
-struct buffer_data {
-    const char* ptr;
-    size_t size;
-};
-static int read_open(void* opaque, uint8_t* buf, int buf_size) {
-    struct buffer_data* bd = (struct buffer_data*)opaque;
-    buf_size = FFMIN(buf_size, (int)bd->size);
-    if (!buf_size) return AVERROR_EOF;
-    memcpy(buf, bd->ptr, buf_size);
-    bd->ptr += buf_size;
-    bd->size -= buf_size;
-    return buf_size;
-}
-
-int read_char_open(AVFormatContext** pctx, const char* data, int data_size) {
-    static AVInputFormat* infmt = NULL;
-    if (!infmt) infmt = av_find_input_format("png");
-    *pctx = avformat_alloc_context();
-    uint8_t* buffer = av_malloc(data_size);
-
-    struct buffer_data opaque;
-    opaque.ptr = data;
-    opaque.size = data_size;
-
-    AVIOContext* pbctx = avio_alloc_context(buffer, data_size, 0, &opaque,
-                                            read_open, NULL, NULL);
-    (*pctx)->pb = pbctx;
-
-    avformat_open_input(pctx, NULL, NULL, NULL);
-    avformat_find_stream_info(*pctx, NULL);
-    av_free(pbctx);
     return 0;
 }
 
@@ -195,7 +151,7 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
 
     if ((ret = avformat_open_input(&format_ctx, png_filename, NULL, NULL)) <
         0) {
-        printf("Fails 0\n");
+        LOG_ERROR("avformat_open_input failed");
         return ret;
     }
 
@@ -206,32 +162,32 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
     avcodec_parameters_to_context(codec_ctx, format_ctx->streams[0]->codecpar);
 
     if (!codec) {
-        printf("Fails 1\n");
+        LOG_ERROR("avcodec_find_decoder failed");
         ret = AVERROR(EINVAL);
         goto end;
     }
 
     if ((ret = avcodec_open2(codec_ctx, codec, NULL)) < 0) {
-        printf("Fails 2\n");
+        LOG_ERROR("avcodec_open2 failed");
         goto end;
     }
 
     if (!(frame = av_frame_alloc())) {
-        printf("Fails 3\n");
+        LOG_ERROR("av_frame_alloc failed");
         ret = AVERROR(ENOMEM);
         goto end;
     }
 
     ret = av_read_frame(format_ctx, &pkt);
     if (ret < 0) {
-        printf("Fails 4\n");
+        LOG_ERROR("av_read_frame failed");
         goto end;
     }
 
     ret = avcodec_send_packet(codec_ctx, &pkt);
 
     if (ret < 0) {
-        printf("Fails 5\n");
+        LOG_ERROR("avcodec_decode_video2 failed");
         goto end;
     }
 
@@ -251,8 +207,9 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
     *pix_fmt = frame->format;
 
     if ((ret = av_image_alloc(data, linesize, (int)*w, (int)*h,
-                              AV_PIX_FMT_RGB24, 32)) < 0)
+                              AV_PIX_FMT_RGB24, 32)) < 0) {
         goto end;
+    }
     ret = 0;
 
     struct SwsContext* swsContext = sws_getContext(
@@ -323,32 +280,3 @@ int png_to_bmp(char* png, AVPacket* pkt) {
     av_freep(input);
     return 0;
 }
-
-/*
-int main()
-{
-#ifdef TIMER
-    clock read, bmp_timer, png_timer;
-    StartTimer( &read );
-#endif
-    unsigned int size;
-    unsigned  char* bmp = read_file( "capture.bmp", &size );
-#ifdef TIMER
-    printf( "read file timer: %fs\n", GetTimer( read ) );
-    StartTimer( &bmp_timer );
-#endif
-    AVPacket png_pkg, bmp_pkg;
-    bmp_to_png( bmp, size, &png_pkg );
-#ifdef TIMER
-    printf( "bmp timer: %fs\n", GetTimer( bmp_timer ) );
-    StartTimer( &png_timer );
-#endif
-    png_to_bmp( png_pkg.data, png_pkg.size, &bmp_pkg );
-#ifdef TIMER
-    printf( "png timer: %fs\n", GetTimer( png_timer ) );
-#endif
-    FILE* f = fopen( "copy.bmp", "wb" );
-    fwrite( bmp_pkg.data, 1, bmp_pkg.size, f );
-    return 0;
-}
-*/
