@@ -2,7 +2,9 @@ from app import *
 from app.helpers.utils.azure.azure_general import *
 
 
-def lockVMAndUpdate(vm_name, state, lock, temporary_lock, resource_group=None):
+def lockVMAndUpdate(
+    vm_name, state, lock, temporary_lock, resource_group=os.getenv("VM_GROUP")
+):
     """Changes the state, lock, and temporary lock of a VM
 
     Args:
@@ -18,8 +20,6 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock, resource_group=None):
         int: 1 = vm is unlocked, -1 = giving up
     """
 
-    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
-
     MAX_LOCK_TIME = 10
 
     new_params = {"state": state, "lock": lock}
@@ -32,7 +32,7 @@ def lockVMAndUpdate(vm_name, state, lock, temporary_lock, resource_group=None):
 
     fractalLog(
         function="lockVMAndUpdate",
-        label=str(vm_name),
+        label=getVMUser(vm_name, resource_group),
         logs="State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
             state=state, lock=str(lock), temporary_lock=str(temporary_lock),
         ),

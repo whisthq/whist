@@ -16,7 +16,7 @@ def startVM(self, vm_name, resource_group=os.getenv("VM_GROUP")):
         json: Success/failure
     """
 
-    if spinLock(vm_name) < 0:
+    if spinLock(vm_name, resource_group) < 0:
         return {"status": REQUEST_TIMEOUT}
 
     fractalLog(
@@ -57,7 +57,7 @@ def deallocateVM(self, vm_name, resource_group=os.getenv("VM_GROUP")):
         json: Success/failure
     """
 
-    if spinLock(vm_name) < 0:
+    if spinLock(vm_name, resource_group) < 0:
         return {"status": REQUEST_TIMEOUT}
 
     fractalLog(

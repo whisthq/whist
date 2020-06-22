@@ -19,11 +19,13 @@ def init_app(app):
     from .blueprints.azure_vm_blueprint import azure_vm_bp
     from .blueprints.celery_status_blueprint import celery_status_bp
     from .blueprints.azure_disk_blueprint import azure_disk_bp
+    from .blueprints.artifact_blueprint import artifact_bp
 
     app.register_blueprint(account_bp)
     app.register_blueprint(token_bp)
     app.register_blueprint(azure_vm_bp)
     app.register_blueprint(celery_status_bp)
     app.register_blueprint(azure_disk_bp)
+    app.register_blueprint(artifact_bp)
 
     return app
