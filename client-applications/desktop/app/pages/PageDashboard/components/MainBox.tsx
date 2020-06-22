@@ -209,8 +209,9 @@ class MainBox extends Component {
         const storage = require("electron-json-storage");
 
         this.setState({ mbps: parseFloat(mbps.toFixed(2)) });
-        if(mbps === 50) { // set to unlimited, aka 500, is a user chooses Unlimited
-          mbps = 500
+        if (mbps === 50) {
+            // set to unlimited, aka 500, is a user chooses Unlimited
+            mbps = 500;
         }
         storage.set("settings", { mbps: mbps });
     };
@@ -1138,7 +1139,7 @@ class MainBox extends Component {
                                             }}
                                         />
                                     </div>
-                                    <br/>
+                                    <br />
                                     <div
                                         style={{
                                             fontSize: 11,
@@ -1147,17 +1148,11 @@ class MainBox extends Component {
                                             marginTop: 5,
                                         }}
                                     >
-                                        {
-                                        this.state.mbps < 50
-                                        ?
-                                        <div>
-                                          {this.state.mbps}{" "}mbps
-                                        </div>
-                                        :
-                                        <div>
-                                          Unlimited
-                                        </div>
-                                        }
+                                        {this.state.mbps < 50 ? (
+                                            <div>{this.state.mbps} mbps</div>
+                                        ) : (
+                                            <div>Unlimited</div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
