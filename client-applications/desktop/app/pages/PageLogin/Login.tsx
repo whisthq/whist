@@ -13,7 +13,17 @@ import UpdateScreen from "pages/PageDashboard/components/UpdateScreen.tsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
 
-import { loginUser, setOS, loginStudio, loginFailed } from "actions/counter";
+import { GoogleLogin } from "react-google-login";
+
+import {
+    loginUser,
+    setOS,
+    loginStudio,
+    loginFailed,
+    googleLogin
+} from "actions/counter";
+
+import { GOOGLE_CLIENT_ID } from "constants/config.ts";
 
 class Login extends Component {
     constructor(props) {
@@ -28,33 +38,33 @@ class Login extends Component {
             rememberMe: false,
             live: true,
             update_ping_received: false,
-            needs_autoupdate: false,
+            needs_autoupdate: false
         };
     }
 
     CloseWindow = () => {
-        const remote = require("electron").remote;
-        let win = remote.getCurrentWindow();
+        const { remote } = require("electron");
+        const win = remote.getCurrentWindow();
 
         win.close();
     };
 
     MinimizeWindow = () => {
-        const remote = require("electron").remote;
-        let win = remote.getCurrentWindow();
+        const { remote } = require("electron");
+        const win = remote.getCurrentWindow();
 
         win.minimize();
     };
 
     UpdateUsername = (evt: any) => {
         this.setState({
-            username: evt.target.value,
+            username: evt.target.value
         });
     };
 
     UpdatePassword = (evt: any) => {
         this.setState({
-            password: evt.target.value,
+            password: evt.target.value
         });
     };
 
@@ -65,7 +75,7 @@ class Login extends Component {
         if (this.state.rememberMe) {
             storage.set("credentials", {
                 username: this.state.username,
-                password: this.state.password,
+                password: this.state.password
             });
         } else {
             storage.set("credentials", { username: "", password: "" });
@@ -95,15 +105,15 @@ class Login extends Component {
     };
 
     CloseWindow = () => {
-        const remote = require("electron").remote;
-        let win = remote.getCurrentWindow();
+        const { remote } = require("electron");
+        const win = remote.getCurrentWindow();
 
         win.close();
     };
 
     MinimizeWindow = () => {
-        const remote = require("electron").remote;
-        let win = remote.getCurrentWindow();
+        const { remote } = require("electron");
+        const win = remote.getCurrentWindow();
 
         win.minimize();
     };
@@ -120,7 +130,7 @@ class Login extends Component {
     };
 
     changeRememberMe = (event: any) => {
-        const target = event.target;
+        const { target } = event;
         if (target.checked) {
             this.setState({ rememberMe: true });
         } else {
@@ -135,13 +145,13 @@ class Login extends Component {
         ipc.on("update", (event, update) => {
             component.setState({
                 update_ping_received: true,
-                needs_autoupdate: update,
+                needs_autoupdate: update
             });
         });
 
         let component = this;
 
-        var appVersion = require("../../package.json").version;
+        const appVersion = require("../../package.json").version;
         const os = require("os");
         this.props.dispatch(setOS(os.platform()));
         this.setState({ version: appVersion });
@@ -160,7 +170,7 @@ class Login extends Component {
                             username: data.username,
                             password: data.password,
                             loggingIn: true,
-                            warning: false,
+                            warning: false
                         },
                         function () {
                             const sleep = (milliseconds) => {
@@ -210,7 +220,7 @@ class Login extends Component {
             <div
                 className={styles.container}
                 data-tid="container"
-                style={{ backgroundImage: "url(" + Background + ")" }}
+                style={{ backgroundImage: `url(${Background})` }}
             >
                 <UpdateScreen />
                 <div
@@ -219,7 +229,7 @@ class Login extends Component {
                         bottom: 15,
                         right: 15,
                         fontSize: 11,
-                        color: "#D1D1D1",
+                        color: "#D1D1D1"
                     }}
                 >
                     Version: {this.state.version}
@@ -265,7 +275,7 @@ class Login extends Component {
                                         margin: "auto",
                                         display: "flex",
                                         alignItems: "center",
-                                        justifyContent: "center",
+                                        justifyContent: "center"
                                     }}
                                 >
                                     <div
@@ -275,7 +285,7 @@ class Login extends Component {
                                             color: "#DADADA",
                                             marginRight: 20,
                                             paddingBottom: 8,
-                                            width: 90,
+                                            width: 90
                                         }}
                                     >
                                         Personal
@@ -289,7 +299,7 @@ class Login extends Component {
                                             marginLeft: 20,
                                             borderBottom: "solid 3px #5EC4EB",
                                             paddingBottom: 8,
-                                            width: 90,
+                                            width: 90
                                         }}
                                     >
                                         Teams
@@ -301,7 +311,7 @@ class Login extends Component {
                                         margin: "auto",
                                         display: "flex",
                                         alignItems: "center",
-                                        justifyContent: "center",
+                                        justifyContent: "center"
                                     }}
                                 >
                                     <div
@@ -313,7 +323,7 @@ class Login extends Component {
                                             marginRight: 20,
                                             borderBottom: "solid 3px #5EC4EB",
                                             paddingBottom: 8,
-                                            width: 90,
+                                            width: 90
                                         }}
                                     >
                                         Personal
@@ -325,7 +335,7 @@ class Login extends Component {
                                             color: "#DADADA",
                                             marginLeft: 20,
                                             paddingBottom: 8,
-                                            width: 90,
+                                            width: 90
                                         }}
                                     >
                                         Teams
@@ -333,6 +343,35 @@ class Login extends Component {
                                 </div>
                             )}
                             <div className={styles.loginContainer}>
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        width: "100%",
+                                        margin: "auto",
+                                        marginTop: 20,
+                                        maxWidth: 300,
+                                        borderRadius: 4,
+                                        background: "rgba(76, 139, 245, 0.1)"
+                                    }}
+                                    className="google-button-wrapper"
+                                >
+                                    <GoogleLogin
+                                        clientId={GOOGLE_CLIENT_ID}
+                                        buttonText="Sign in with Google"
+                                        responseType="code"
+                                        accessType="offline"
+                                        onSuccess={this.responseGoogleSuccess}
+                                        onFailure={this.responseGoogleFailure}
+                                        cookiePolicy="single_host_origin"
+                                        redirectUri="postmessage"
+                                        prompt="consent"
+                                        style={{
+                                            width: "100%",
+                                            fontWeight: "bold"
+                                        }}
+                                    />
+                                </div>
                                 <div>
                                     <img
                                         src={UserIcon}
@@ -375,7 +414,7 @@ class Login extends Component {
                                                 id="login-button"
                                                 style={{
                                                     opacity: 0.6,
-                                                    textAlign: "center",
+                                                    textAlign: "center"
                                                 }}
                                             >
                                                 <FontAwesomeIcon
@@ -386,7 +425,7 @@ class Login extends Component {
                                                         width: 12,
                                                         marginRight: 5,
                                                         position: "relative",
-                                                        top: 0.5,
+                                                        top: 0.5
                                                     }}
                                                 />{" "}
                                                 Processing
@@ -410,7 +449,7 @@ class Login extends Component {
                                                 opacity: 0.5,
                                                 background:
                                                     "linear-gradient(258.54deg, #5ec3eb 0%, #5ec3eb 100%)",
-                                                borderRadius: 5,
+                                                borderRadius: 5
                                             }}
                                         >
                                             START
@@ -422,7 +461,7 @@ class Login extends Component {
                                         marginTop: 25,
                                         display: "flex",
                                         justifyContent: "center",
-                                        alignItems: "center",
+                                        alignItems: "center"
                                     }}
                                 >
                                     <label className={styles.termsContainer}>
@@ -431,9 +470,7 @@ class Login extends Component {
                                             onChange={this.changeRememberMe}
                                             onKeyPress={this.LoginKeyPress}
                                         />
-                                        <span
-                                            className={styles.checkmark}
-                                        ></span>
+                                        <span className={styles.checkmark} />
                                     </label>
 
                                     <div style={{ fontSize: 12 }}>
@@ -446,7 +483,7 @@ class Login extends Component {
                                         color: "#D6D6D6",
                                         width: 250,
                                         margin: "auto",
-                                        marginTop: 15,
+                                        marginTop: 15
                                     }}
                                 >
                                     {this.props.warning ? (
@@ -464,7 +501,7 @@ class Login extends Component {
                                                     }
                                                     style={{
                                                         display: "inline",
-                                                        fontWeight: "bold",
+                                                        fontWeight: "bold"
                                                     }}
                                                 >
                                                     Fractal website.
@@ -484,7 +521,7 @@ class Login extends Component {
                                                     }
                                                     style={{
                                                         display: "inline",
-                                                        fontWeight: "bold",
+                                                        fontWeight: "bold"
                                                     }}
                                                 >
                                                     Fractal website.
@@ -492,7 +529,7 @@ class Login extends Component {
                                             </div>
                                         )
                                     ) : (
-                                        <div></div>
+                                        <div />
                                     )}
                                 </div>
                             </div>
@@ -503,7 +540,7 @@ class Login extends Component {
                         style={{
                             lineHeight: 1.5,
                             margin: "150px auto",
-                            maxWidth: 400,
+                            maxWidth: 400
                         }}
                     >
                         {" "}
@@ -522,7 +559,7 @@ function mapStateToProps(state) {
         username: state.counter.username,
         public_ip: state.counter.public_ip,
         warning: state.counter.warning,
-        os: state.counter.os,
+        os: state.counter.os
     };
 }
 

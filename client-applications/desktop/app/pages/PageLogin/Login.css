@@ -258,3 +258,23 @@ button {
 .removeDrag {
     -webkit-app-region: no-drag;
 }
+
+.google-button-wrapper button {
+    font-family: "Maven Pro" !important;
+    box-shadow: none !important;
+    background: none !important;
+    color: #111111 !important;
+    font-weight: bold !important;
+    padding: 2px 20px !important;
+    outline: none !important;
+}
+
+.google-button-wrapper button > div {
+    background: none !important;
+    padding-right: 5px !important;
+}
+
+.google-button-wrapper button > div > svg {
+    width: 18px !important;
+    height: 18px !important;
+}
