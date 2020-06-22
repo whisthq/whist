@@ -4,7 +4,7 @@ import tempfile
 import pytest
 import requests
 
-SERVER_URL = "https://" + os.getenv("HEROKU_APP_NAME") + ".herokuapp.com" if os.getenv("HEROKU_APP_NAME") else "http://localhost:5000"
+SERVER_URL = "https://" + os.getenv("HEROKU_APP_NAME") + ".herokuapp.com"
 
 def login(username, password):
     return requests.post((SERVER_URL + '/account/login'), json=dict(
@@ -18,7 +18,7 @@ def fetchvms(username):
     ))
 
 def test_fetchvms():
-    print(os.getenv("HEROKU_APP_NAME"))
+    print(SERVER_URL)
     email = 'isa.zheng@gmail.com'
     rv = fetchvms(email)
     assert rv.status_code == 200
