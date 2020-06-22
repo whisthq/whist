@@ -490,7 +490,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
                 }
             ORIGINAL_DISK = ORIGINAL_DISK + "_Linux"
 
-        disk_image = compute_client.disks.get("Fractal", ORIGINAL_DISK)
+        disk_image = compute_client.disks.get(os.environ["VM_GROUP"], ORIGINAL_DISK)
         sendInfo(
             ID,
             "Image found. Preparing to create {} disk {} with location {} under {} attached to a {} VM".format(
@@ -498,7 +498,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
             ),
         )
         async_disk_creation = compute_client.disks.create_or_update(
-            "Fractal",
+            os.environ["VM_GROUP"],
             disk_name,
             {
                 "location": location,
