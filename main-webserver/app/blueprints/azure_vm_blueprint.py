@@ -3,6 +3,7 @@ from app.helpers.blueprint_helpers.azure_vm_get import *
 from app.helpers.blueprint_helpers.azure_vm_post import *
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
+from app.celery.azure_resource_state import *
 
 azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 
