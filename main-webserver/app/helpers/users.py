@@ -146,11 +146,11 @@ def registerUser(username, password, token, name=None, reason_for_signup=None):
     command = text(
         """
         INSERT INTO users("username", "password", "code", "id", "name", "reason_for_signup", "google_login")
-        VALUES(:userName, :password, :code, :token, :name, :reason_for_signup, :google_login)
+        VALUES(:username, :password, :code, :token, :name, :reason_for_signup, :google_login)
         """
     )
     params = {
-        "userName": username,
+        "username": username,
         "password": pwd_token,
         "code": code,
         "token": token,
@@ -164,7 +164,8 @@ def registerUser(username, password, token, name=None, reason_for_signup=None):
             conn.execute(command, **params)
             conn.close()
             return 200
-        except:
+        except Exception as e:
+            print("Error registering user: {error}".format(error=str(e)))
             return 400
 
 
