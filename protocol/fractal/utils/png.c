@@ -143,9 +143,9 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
 int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
              unsigned int* h, enum AVPixelFormat* pix_fmt, char* png_filename) {
     AVFormatContext* format_ctx = NULL;
-    AVCodec* codec;
-    AVCodecContext* codec_ctx;
-    AVFrame* frame;
+    AVCodec* codec = NULL;
+    AVCodecContext* codec_ctx = NULL;
+    AVFrame* frame = NULL;
     int ret = 0;
     AVPacket pkt;
 
