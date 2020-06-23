@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "postdeploy": "py.test"
+  },
   "environments": {
     "review": {
       "addons": ["heroku-redis:hobby-dev"]
