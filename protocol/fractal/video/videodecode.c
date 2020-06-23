@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void destroy_video_decoder_members( video_decoder_t* decoder );
+void destroy_video_decoder_members(video_decoder_t* decoder);
 
 #define SHOW_DECODER_LOGS false
 
@@ -141,7 +141,7 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     avcodec_register_all();
 #endif
 
-    destroy_video_decoder_members( decoder );
+    destroy_video_decoder_members(decoder);
 
     int width = decoder->width;
     int height = decoder->height;
@@ -353,36 +353,31 @@ video_decoder_t* create_video_decoder(int width, int height,
 /// @details frees FFmpeg decoder memory
 
 void destroy_video_decoder(video_decoder_t* decoder) {
-    destroy_video_decoder_members( decoder );
+    destroy_video_decoder_members(decoder);
 
     // free the buffer and decoder
     free(decoder);
     return;
 }
 
-void destroy_video_decoder_members( video_decoder_t* decoder )
-{
+void destroy_video_decoder_members(video_decoder_t* decoder) {
     // check if decoder decoder exists
-    if( decoder == NULL )
-    {
-        LOG_WARNING( "Cannot destroy decoder decoder." );
+    if (decoder == NULL) {
+        LOG_WARNING("Cannot destroy decoder decoder.");
         return;
     }
 
     /* flush the decoder */
-    decoder->packet.data = NULL;
-    decoder->packet.size = 0;
-    av_packet_unref( &decoder->packet );
-    avcodec_free_context( &decoder->context );
+    avcodec_free_context(&decoder->context);
 
     // free the ffmpeg contextes
-    avcodec_close( decoder->context );
+    avcodec_close(decoder->context);
 
     // free the decoder context and frame
-    av_free( decoder->context );
-    av_frame_free( &decoder->sw_frame );
-    av_frame_free( &decoder->hw_frame );
-    av_buffer_unref( &decoder->ref );
+    av_free(decoder->context);
+    av_frame_free(&decoder->sw_frame);
+    av_frame_free(&decoder->hw_frame);
+    av_buffer_unref(&decoder->ref);
 }
 
 /// @brief decode a frame using the decoder decoder
@@ -391,9 +386,6 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
                           int buffer_size) {
     clock t;
     StartTimer(&t);
-
-    // init packet to prepare decoding
-    av_init_packet(&decoder->packet);
 
     // copy the received packet back into the decoder AVPacket
     // memcpy(&decoder->packet.data, &buffer, buffer_size);
@@ -467,8 +459,6 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
             return false;
         }
     }
-
-    av_packet_unref(&decoder->packet);
 
     double time = GetTimer(t);
 

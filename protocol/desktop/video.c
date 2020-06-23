@@ -4,10 +4,12 @@
  * Copyright Fractal Computers, Inc. 2020
  **/
 #include "video.h"
-#include "SDL_image.h"
-#include "SDL2/SDL.h"
+
 #include <stdio.h>
+
+#include "../fractal/utils/png.h"
 #include "../fractal/utils/sdlscreeninfo.h"
+#include "SDL2/SDL.h"
 
 #define USE_HARDWARE true
 
@@ -28,6 +30,8 @@ volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* cursor = NULL;
 volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
 volatile bool pending_sws_update = false;
+volatile bool pending_texture_update = false;
+volatile bool pending_resize_render = false;
 
 #define LOG_VIDEO false
 
@@ -166,21 +170,21 @@ void updateSwsContext() {
     mprintf("Decoder Format: %s\n", av_get_pix_fmt_name(sws_input_fmt));
 
     if (videoContext.sws) {
-        av_freep( &videoContext.data[0] );
+        av_freep(&videoContext.data[0]);
         sws_freeContext(videoContext.sws);
     }
 
     videoContext.sws = NULL;
 
-    memset( videoContext.data, 0, sizeof( videoContext.data ) );
+    memset(videoContext.data, 0, sizeof(videoContext.data));
 
     if (sws_input_fmt != AV_PIX_FMT_YUV420P || decoder->width != output_width ||
         decoder->height != output_height) {
+        av_image_alloc(videoContext.data, videoContext.linesize, output_width,
+                       output_height, AV_PIX_FMT_YUV420P, 32);
 
-        av_image_alloc( videoContext.data, videoContext.linesize, output_width,
-                        output_height, AV_PIX_FMT_YUV420P, 32 );
-
-        LOG_INFO( "Will be resizing from %dx%d to %dx%d", decoder->width, decoder->height, output_width, output_height );
+        LOG_INFO("Will be resizing from %dx%d to %dx%d", decoder->width,
+                 decoder->height, output_width, output_height);
         videoContext.sws =
             sws_getContext(decoder->width, decoder->height, sws_input_fmt,
                            output_width, output_height, AV_PIX_FMT_YUV420P,
@@ -189,10 +193,29 @@ void updateSwsContext() {
 }
 
 void updatePixelFormat() {
-    if (sws_input_fmt != videoContext.decoder->sw_frame->format || pending_sws_update) {
+    if (sws_input_fmt != videoContext.decoder->sw_frame->format ||
+        pending_sws_update) {
         sws_input_fmt = videoContext.decoder->sw_frame->format;
         pending_sws_update = false;
         updateSwsContext();
+    }
+}
+
+void updateTexture() {
+    if (pending_texture_update) {
+        LOG_INFO("Beginning to use %d x %d", output_width, output_height);
+        SDL_Texture* texture = SDL_CreateTexture(
+            (SDL_Renderer*)videoContext.renderer, SDL_PIXELFORMAT_YV12,
+            SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
+        if (!texture) {
+            LOG_ERROR("SDL: could not create texture - exiting");
+            exit(1);
+        }
+
+        SDL_DestroyTexture(videoContext.texture);
+        pending_resize_render = false;
+        videoContext.texture = texture;
+        pending_texture_update = false;
     }
 }
 
@@ -229,12 +252,20 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
     while (VideoData.run_render_screen_thread) {
         int ret = SDL_SemTryWait(VideoData.renderscreen_semaphore);
+        SDL_LockMutex(render_mutex);
+        if (pending_resize_render) {
+            SDL_RenderCopy((SDL_Renderer*)videoContext.renderer,
+                           videoContext.texture, NULL, NULL);
+            SDL_RenderPresent((SDL_Renderer*)videoContext.renderer);
+        }
+        SDL_UnlockMutex(render_mutex);
 
         if (ret == SDL_MUTEX_TIMEDOUT) {
             if (loading_index >= 0) {
                 loading_index++;
                 loadingSDL(renderer, loading_index);
             }
+
             SDL_Delay(1);
             continue;
         }
@@ -268,14 +299,15 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         }
 
         if ((int)(sizeof(Frame) + frame->size) != renderContext.frame_size) {
-            mprintf("Incorrect Frame Size! %d instead of %d\n",
-                    sizeof(Frame) + frame->size, renderContext.frame_size);
+            LOG_WARNING("Incorrect Frame Size! %d instead of %d\n",
+                        sizeof(Frame) + frame->size, renderContext.frame_size);
         }
 
         if (frame->width != server_width || frame->height != server_height) {
             if (frame->is_iframe) {
                 LOG_INFO(
-                    "Updating client rendering to match server's width and height! "
+                    "Updating client rendering to match server's width and "
+                    "height! "
                     "From %dx%d to %dx%d",
                     server_width, server_height, frame->width, frame->height);
                 updateWidthAndHeight(frame->width, frame->height);
@@ -296,13 +328,14 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
         // LOG_INFO( "Decode Time: %f\n", GetTimer( decode_timer ) );
 
-        SDL_LockMutex( render_mutex );
+        SDL_LockMutex(render_mutex);
         updatePixelFormat();
 
         if (!skip_render && can_render) {
-
             clock sws_timer;
             StartTimer(&sws_timer);
+
+            updateTexture();
 
             if (videoContext.sws) {
                 sws_scale(
@@ -327,10 +360,9 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                                  videoContext.data[2],
                                  videoContext.linesize[2]);
 
-            if( !videoContext.sws )
-            {
+            if (!videoContext.sws) {
                 // Clear out bits that aren't used from av_alloc_frame
-                memset( videoContext.data, 0, sizeof( videoContext.data ) );
+                memset(videoContext.data, 0, sizeof(videoContext.data));
             }
         }
 
@@ -377,16 +409,16 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         // GetTimer(renderContext.client_frame_timer));
 
         if (!skip_render && can_render) {
-            //SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160, SDL_ALPHA_OPAQUE);
-            //SDL_RenderClear((SDL_Renderer*)renderer);
-            
+            // SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
+            // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
+
             SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL,
                            NULL);
-            
+
             SDL_RenderPresent((SDL_Renderer*)renderer);
         }
 
-        SDL_UnlockMutex( render_mutex );
+        SDL_UnlockMutex(render_mutex);
 
 #if LOG_VIDEO
         LOG_DEBUG("Rendered %d (Size: %d) (Age %f)\n", renderContext.id,
@@ -409,45 +441,60 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
 // Make the screen black
 void loadingSDL(SDL_Renderer* renderer, int loading_index) {
-    static SDL_Texture* loading_screen_texture = NULL;
-
     int gif_frame_index = loading_index % 83;
 
-    while (true) {
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(renderer);
+    clock c;
+    StartTimer(&c);
 
-        char frame_name[24];
-        if (gif_frame_index < 10) {
-            snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png",
-                     gif_frame_index);
-        } else {
-            snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png",
-                     gif_frame_index);
-        }
-
-        SDL_Surface* loading_screen = IMG_Load(frame_name);
-        loading_screen_texture =
-            SDL_CreateTextureFromSurface(renderer, loading_screen);
-        SDL_FreeSurface(loading_screen);
-
-        int w = 200;
-        int h = 200;
-        SDL_Rect dstrect;
-
-        // SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
-        dstrect.x = output_width / 2 - w / 2;
-        dstrect.y = output_height / 2 - h / 2;
-        dstrect.w = w;
-        dstrect.h = h;
-        SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
-        SDL_RenderPresent(renderer);
-
-        SDL_Delay(30);  // sleep 30 ms
-        gif_frame_index += 1;
-        gif_frame_index %= 83;  // number of loading frames
-        break;
+    char frame_name[24];
+    if (gif_frame_index < 10) {
+        snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png",
+                 gif_frame_index);
+        //            LOG_INFO("Frame loading/frame_0%d.png", gif_frame_index);
+    } else {
+        snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png",
+                 gif_frame_index);
+        //            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
     }
+
+    AVPacket pkt;
+    av_init_packet(&pkt);
+    png_to_bmp(frame_name, &pkt);
+    // LOG_INFO( "Test: %f", GetTimer(c) );
+
+    SDL_RWops* rw = SDL_RWFromMem(pkt.data, pkt.size);
+
+    SDL_Surface* loading_screen = SDL_LoadBMP_RW(rw, 1);
+    if (loading_screen == NULL) {
+        LOG_INFO("IMG_Load");
+        return;
+    }
+    free(pkt.data);
+    SDL_Texture* loading_screen_texture =
+        SDL_CreateTextureFromSurface(renderer, loading_screen);
+
+    int w = 200;
+    int h = 200;
+    SDL_Rect dstrect;
+
+    // SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
+    dstrect.x = output_width / 2 - w / 2;
+    dstrect.y = output_height / 2 - h / 2;
+    dstrect.w = w;
+    dstrect.h = h;
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
+    SDL_RenderPresent(renderer);
+    SDL_DestroyTexture(loading_screen_texture);
+
+    int remaining_ms = 30 - (int)GetTimer(c);
+    if (remaining_ms > 0) {
+        SDL_Delay(remaining_ms);
+    }
+    gif_frame_index += 1;
+    gif_frame_index %= 83;  // number of loading frames
 }
 
 void clearSDL(SDL_Renderer* renderer) {
@@ -460,7 +507,7 @@ int initMultithreadedVideo(void* opaque) {
     opaque;
 
     can_render = true;
-    memset( videoContext.data, 0, sizeof( videoContext.data ) );
+    memset(videoContext.data, 0, sizeof(videoContext.data));
 
     render_mutex = SDL_CreateMutex();
 
@@ -468,6 +515,11 @@ int initMultithreadedVideo(void* opaque) {
              output_height);
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
+
+    // configure renderer
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+
     SDL_Renderer* renderer = SDL_CreateRenderer(
         (SDL_Window*)window, -1,
         SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
@@ -477,9 +529,6 @@ int initMultithreadedVideo(void* opaque) {
                     SDL_GetError());
         return -1;
     }
-
-    // configure texture
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
     // mbps that currently works
     working_mbps = STARTING_BITRATE;
@@ -675,7 +724,6 @@ void updateVideo() {
                     skip_render = true;
                     LOG_INFO("Skip this render");
                 }
-
                 SDL_SemPost(VideoData.renderscreen_semaphore);
             } else {
                 if ((GetTimer(ctx->last_packet_timer) > 6.0 / 1000.0) &&
@@ -869,7 +917,7 @@ void destroyVideo() {
     VideoData.run_render_screen_thread = false;
     SDL_WaitThread(VideoData.render_screen_thread, NULL);
     SDL_DestroySemaphore(VideoData.renderscreen_semaphore);
-    SDL_DestroyMutex( render_mutex );
+    SDL_DestroyMutex(render_mutex);
 
     //    SDL_DestroyTexture(videoContext.texture); not needed, the renderer
     //    destroys it
@@ -879,36 +927,32 @@ void destroyVideo() {
 }
 
 void set_video_active_resizing(bool is_resizing) {
-    if( !is_resizing )
-    {
-        SDL_LockMutex( render_mutex );
+    if (!is_resizing) {
+        SDL_LockMutex(render_mutex);
+        int new_width = get_window_pixel_width((SDL_Window*)window);
+        int new_height = get_window_pixel_height((SDL_Window*)window);
+        if (new_width != output_width || new_height != output_height) {
+            pending_texture_update = true;
+            pending_sws_update = true;
+            output_width = new_width;
+            output_height = new_height;
+        }
+        can_render = true;
+        SDL_UnlockMutex(render_mutex);
+    } else {
+        SDL_LockMutex(render_mutex);
+        can_render = false;
+        pending_resize_render = true;
+        SDL_UnlockMutex(render_mutex);
 
-        LOG_INFO( "Beginning to use %d x %d", output_width, output_height );
-        SDL_Texture* texture = SDL_CreateTexture( (SDL_Renderer*)videoContext.renderer, SDL_PIXELFORMAT_YV12,
-                                                  SDL_TEXTUREACCESS_STREAMING, output_width,
-                                                  output_height );
-        if( !texture )
-        {
-            LOG_ERROR( "SDL: could not create texture - exiting" );
-            exit( 1 );
+        for (int i = 0; pending_resize_render && (i < 10); ++i) {
+            SDL_Delay(1);
         }
 
-        SDL_DestroyTexture( videoContext.texture );
-        videoContext.texture = texture;
-
-        pending_sws_update = true;
-
-        can_render = !is_resizing;
-
-        SDL_UnlockMutex( render_mutex );
-    } else
-    {
-        SDL_LockMutex( render_mutex );
-        can_render = !is_resizing;
-        SDL_RenderCopy( (SDL_Renderer*)videoContext.renderer, videoContext.texture, NULL,
-                        NULL );
-
-        SDL_RenderPresent( (SDL_Renderer*)videoContext.renderer );
-        SDL_UnlockMutex( render_mutex );
+        if (pending_resize_render) {
+            SDL_LockMutex(render_mutex);
+            pending_resize_render = false;
+            SDL_UnlockMutex(render_mutex);
+        }
     }
 }
