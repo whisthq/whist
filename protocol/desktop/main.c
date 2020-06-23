@@ -890,11 +890,12 @@ int main(int argc, char* argv[]) {
 
 // if we are on windows we get the windows timezone name
 #ifdef  _WIN32
-        char* win_tz_name = malloc(sizeof(char) * 200);
+        char* win_tz_name = NULL;
         runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
         fmsg.time_data.use_win_name = 1;
         fmsg.time_data.use_linux_name = 0;
         strcpy(fmsg.time_data.win_tz_name, win_tz_name);
+        fmsg.time_data.win_tz_name[strlen( fmsg.time_data.win_tz_name ) - 1] = '\0';
         SendFmsg(&fmsg);
         LOG_INFO("Sending Windows TimeZone %s", fmsg.time_data.win_tz_name);
         free(win_tz_name);
