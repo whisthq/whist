@@ -4,7 +4,7 @@ import tempfile
 import pytest
 import requests
 
-SERVER_URL = "http://localhost:" + os.getenv("PORT") if os.getenv("CI") else "http://localhost:5000"
+SERVER_URL = "https://" + os.getenv("HEROKU_APP_NAME") + ".herokuapp.com" if os.getenv("HEROKU_APP_NAME") else "http://localhost:5000"
 
 def login(username, password):
     return requests.post((SERVER_URL + '/account/login'), json=dict(
