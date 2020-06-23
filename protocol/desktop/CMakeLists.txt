@@ -58,7 +58,6 @@ target_link_libraries(FractalClient
         fractalNetwork
         fractalUtils
         ${STATIC_SDL2}
-        ${STATIC_SDL_IMAGE}
         ${STATIC_OPENSSL}
         )
 
@@ -95,7 +94,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "-framework AppKit"
         "-framework Metal"
         "-framework QuartzCore"
-	    "-framework cocoa"
         objc
         iconv
         )
