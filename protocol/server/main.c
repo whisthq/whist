@@ -643,11 +643,12 @@ void SetTimezoneFromIANAName(char* linux_tz_name) {
 }
 
 void SetTimezoneFromWindowsName(char* win_tz_name) {
-    char cmd[500] = "powershell.exe 'Set-TimeZone -Id \0";
-    snprintf(cmd + strlen(cmd), strlen(win_tz_name), win_tz_name);
-    char* response = malloc(sizeof(char) * 200);
+    char cmd[500];
+    snprintf(cmd, sizeof(cmd),
+             "powershell -command \"Set-TimeZone -Id '%s'\"", win_tz_name);
+    char* response = NULL;
     runcmd(cmd, &response);
-    LOG_INFO("Timezone powershell command: %s \n", cmd);
+    LOG_INFO("Timezone powershell command: %s -> %s\n", cmd, response);
     free(response);
     return;
 }
