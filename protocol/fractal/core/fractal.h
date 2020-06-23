@@ -123,6 +123,11 @@ typedef enum EncodeType {
     QSV_ENCODE = 2
 } EncodeType;
 
+typedef enum CodecType {
+    CODEC_TYPE_H264 = 264,
+    CODEC_TYPE_H265 = 265
+} CodecType;
+
 typedef enum FractalCursorID {
     CURSOR_ID_APPSTARTING = 32650,
     CURSOR_ID_NORMAL = 32512,
@@ -407,6 +412,7 @@ typedef struct FractalClientMessage {
             int width;
             int height;
             int dpi;
+            CodecType codec_type;
         } dimensions;
 
         // MESSAGE_VIDEO_NACK or MESSAGE_AUDIO_NACK
