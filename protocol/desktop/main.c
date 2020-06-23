@@ -22,7 +22,7 @@
 #include "../fractal/utils/aes.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "audio.h"
-#include "getopt.h"
+#include "fractalgetopt.h"
 #include "sdl_utils.h"
 #include "video.h"
 
@@ -52,7 +52,7 @@ volatile int ping_failures;
 
 volatile int output_width;
 volatile int output_height;
-volatile CodecType codec_type;
+volatile CodecType codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 
 // Function Declarations

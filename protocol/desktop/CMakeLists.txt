@@ -8,7 +8,7 @@ add_executable(FractalClient
         video.c
         audio.c
         sdl_utils.c
-        getoptlong.c
+        fractalgetopt.c
         )
 
 # set the build directory
