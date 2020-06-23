@@ -814,11 +814,15 @@ int main(int argc, char* argv[]) {
         // send a TCP packet with local UTC time offset.
         fmsg.type = MESSAGE_TIME;
 #ifndef _WIN32
+//        if not windows we get UTC info
         LOG_INFO("Sending UTC offset %d", GetUTCOffset());
         fmsg.time_data.UTC_Offset = GetUTCOffset();
         fmsg.time_data.DST_flag = GetDST();
         fmsg.time_data.use_win_name = 0;
         fmsg.time_data.use_linux_name = 1;
+#endif
+
+//        if on apple or linux we get IANA timezone name
 #ifdef __APPLE__
         runcmd(
             "path=$(readlink /etc/localtime); echo "
@@ -830,8 +834,9 @@ int main(int argc, char* argv[]) {
         strcpy(fmsg.time_data.linux_tz_name, response);
         free(response);
 #endif
-        SendFmsg(&fmsg);
-#else
+
+// if we are on windows we get the windows timezone name
+#ifdef  _WIN32
         char* win_tz_name = malloc(sizeof(char) * 200);
         runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
         fmsg.time_data.use_win_name = 1;
@@ -841,6 +846,8 @@ int main(int argc, char* argv[]) {
         LOG_INFO("Sending Windows TimeZone %s", fmsg.time_data.win_tz_name);
         free(win_tz_name);
 #endif
+        SendFmsg(&fmsg);
+
 
         clock ack_timer;
         StartTimer(&ack_timer);
