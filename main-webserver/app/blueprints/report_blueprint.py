@@ -90,19 +90,22 @@ def statusReport(action, **kwargs):
             }
         elif body["timescale"] == "month":
             lastMonth = today - datetime.timedelta(days=30)
+            print(lastMonth.strftime("%m-%d-%y"))
             params = {
                 "username": body["username"],
                 "date": lastMonth.strftime("%m-%d-%y"),
             }
         elif body["timescale"] == "beginningMonth":
+            beginning_month = dt.strptime(
+                "{year}-{month}-{day}".format(
+                    year=today.year, month=today.month, day="1"
+                ),
+                "%Y-%m-%d",
+            ).strftime("%m-%d-%y")
+            print(beginning_month)
             params = {
                 "username": body["username"],
-                "date": dt.strptime(
-                    "{year}-{month}-{day}".format(
-                        year=today.year, month=today.month, day="1"
-                    ),
-                    "%Y-%m-%d",
-                ),
+                "date": beginning_month,
             }
         else:
             return jsonify({}), 404
@@ -110,7 +113,11 @@ def statusReport(action, **kwargs):
             with engine.connect() as conn:
                 report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
                 output = []
-                if body["timescale"] == "week" or body["timescale"] == "month":
+                if (
+                    body["timescale"] == "week"
+                    or body["timescale"] == "month"
+                    or body["timescale"] == "beginningMonth"
+                ):
                     output = loginsToMinutes(report)
 
                 return jsonify(output), 200
@@ -247,6 +254,7 @@ def loginsToMinutes(report):
                 output.append(
                     {
                         "timestamp": int(dt.timestamp(earlyTime)),
+                        "timestamp_datetime": unixToDate(int(dt.timestamp(earlyTime))),
                         "minutes": int(minutesOnline),
                     }
                 )
@@ -266,6 +274,7 @@ def loginsToMinutes(report):
                 output.append(
                     {
                         "timestamp": int(dt.timestamp(earlyTime)),
+                        "timestamp_datetime": unixToDate(int(dt.timestamp(earlyTime))),
                         "minutes": int(minutesOnline),
                     }
                 )
