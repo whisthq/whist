@@ -13,7 +13,9 @@
 
 // Print Memory Info
 
-void PrintSystemInfo() {
+int MultithreadedPrintSystemInfo(void* opaque) {
+    opaque;
+
     LOG_INFO("Hardware information:");
 
     PrintOSInfo();
@@ -22,6 +24,12 @@ void PrintSystemInfo() {
     PrintRAMInfo();
     PrintMonitors();
     PrintHardDriveInfo();
+
+    return 0;
+}
+
+void PrintSystemInfo() {
+    SDL_CreateThread(MultithreadedPrintSystemInfo, "PrintSystemInfo", NULL);
 }
 
 void runcmd_nobuffer(const char* cmdline) {

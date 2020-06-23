@@ -669,8 +669,14 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // After creating the window, we will grab DPI-adjusted dimensions in real
-    // pixels
+    SDL_Event cur_event;
+    while (SDL_PollEvent(&cur_event)) {
+        // spin to clear SDL event queue
+        // this effectively waits for window load on Mac
+    }
+
+    // After creating the window, we will grab DPI-adjusted dimensions in
+    // real pixels
     output_width = get_window_pixel_width((SDL_Window*)window);
     output_height = get_window_pixel_height((SDL_Window*)window);
 
@@ -688,12 +694,12 @@ int main(int argc, char* argv[]) {
     strcat(path, "/.fractal");
     initLogger(path);
 #endif
-    
-    PrintSystemInfo();
 
     // Initialize clipboard and video
     initVideo();
     exiting = false;
+
+    PrintSystemInfo();
 
     // Try 3 times if a failure to connect occurs
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
