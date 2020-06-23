@@ -48,7 +48,10 @@ int optopt;     /* character checked for validity */
 int optreset;   /* reset getopt */
 char *optarg;   /* argument associated with option */
 
+#ifndef __P
 #define __P(x) x
+#endif
+
 #define _DIAGASSERT(x) assert(x)
 
 static char *__progname __P((char *));
@@ -151,8 +154,8 @@ getopt2(nargc, nargv, ostr)
  * getopt_long --
  *	Parse argc/argv argument vector.
  */
-int getopt_long(int nargc, char **nargv, char *options,
-                struct option *long_options, int *index) {
+int getopt_long(int nargc, char *const *nargv, const char *options,
+                const struct option *long_options, int *index) {
     int retval;
 
     _DIAGASSERT(nargv != NULL);

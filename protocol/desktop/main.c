@@ -532,18 +532,44 @@ int ReceiveMessage(FractalPacket* packet) {
     "I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/"     \
     "Zt86r9dOzEcfrhxa+MnVQhNE8="
 
-const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
-                                     {"height", required_argument, NULL, 'h'},
-                                     {"bitrate", required_argument, NULL, 'b'},
-                                     {"spectate", no_argument, NULL, 's'},
-                                     {"codec", required_argument, NULL, 'c'},
-                                     {0, 0, 0, 0}};
+// standard for POSIX programs
+#define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
+#define FRACTAL_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
+
+const struct option cmd_options[] = {
+    {"width", required_argument, NULL, 'w'},
+    {"height", required_argument, NULL, 'h'},
+    {"bitrate", required_argument, NULL, 'b'},
+    {"spectate", no_argument, NULL, 's'},
+    {"codec", required_argument, NULL, 'c'},
+    // these are standard for POSIX programs
+    {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
+    {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
+    // end with NULL-termination
+    {0, 0, 0, 0}};
 #define OPTION_STRING "w:h:b:sc:"
 
 int parseArgs(int argc, char* argv[]) {
     char* usage =
-        "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH]"
-        " [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE] [[OPTIONAL] SPECTATE]\n";
+        "Usage: desktop [OPTION]... [IP ADDRESS]\n"
+        "Try 'desktop --help' for more information.\n";
+    char* usage_details =
+        "Usage: desktop [OPTION]... [IP ADDRESS]\n"
+        "\n"
+        "All arguments to both long and short options are mandatory.\n"
+        "  -w, --width=WIDTH             set the width for the windowed-mode\n"
+        "                                  window, if both width and height\n"
+        "                                  are specified\n"
+        "  -h, --height=HEIGHT           set the height for the windowed-mode\n"
+        "                                  window, if both width and height\n"
+        "                                  are specified\n"
+        "  -b, --bitrate=BITRATE         set the maximum bitrate to use\n"
+        "  -s, --spectate                launch the protocol as a spectator\n"
+        "  -c, --codec=CODEC             launch the protocol using the codec\n"
+        "                                  specified: h264 (default) or h265\n"
+        "      --help     display this help and exit\n"
+        "      --version  output version information and exit\n";
+
     int opt;
     long int ret;
     char* endptr;
@@ -588,6 +614,13 @@ int parseArgs(int argc, char* argv[]) {
                     printf("%s", usage);
                     return -1;
                 }
+                break;
+            case FRACTAL_GETOPT_HELP_CHAR:
+                printf("%s", usage_details);
+                return 1;
+            case FRACTAL_GETOPT_VERSION_CHAR:
+                printf("No version information specified.\n");
+                return 1;
         }
     }
 
