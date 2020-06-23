@@ -150,7 +150,10 @@ int32_t SendVideo(void* opaque) {
 
     pending_encoder = false;
     encoder_finished = false;
+    
+#ifdef _WIN32
     bool dxgi_cuda_available = false;
+#endif
 
     while (connected) {
         if (client_width < 0 || client_height < 0) {
