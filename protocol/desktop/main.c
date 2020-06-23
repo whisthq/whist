@@ -551,10 +551,10 @@ const struct option cmd_options[] = {
 
 int parseArgs(int argc, char* argv[]) {
     char* usage =
-        "Usage: desktop [OPTION]... [IP ADDRESS]\n"
+        "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "Try 'desktop --help' for more information.\n";
     char* usage_details =
-        "Usage: desktop [OPTION]... [IP ADDRESS]\n"
+        "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
         "  -w, --width=WIDTH             set the width for the windowed-mode\n"
