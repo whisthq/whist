@@ -59,7 +59,7 @@ def createDiskName():
     return disk_name
 
 
-def createVMInstance(vm_name, resource_group=None):
+def createVMInstance(vm_name, resource_group=os.getenv("VM_GROUP")):
     """Retrieves information about the model view or the instance view of an Azure virtual machine
 
     Parameters:
@@ -68,17 +68,24 @@ def createVMInstance(vm_name, resource_group=None):
     Returns:
     VirtualMachine: The instance view of the virtual machine
    """
-    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
 
     _, compute_client, _ = createClients()
     try:
-        virtual_machine = compute_client.virtual_machines.get(resource_group, vm_name)
+        virtual_machine = compute_client.virtual_machines.get(
+            resource_group_name=resource_group, vm_name=vm_name
+        )
         return virtual_machine
-    except:
+    except Exception as e:
+        fractalLog(
+            function="createVMInstance",
+            label=str(vm_name),
+            logs="Error creating VM instance: {error}".format(error=str(e)),
+        )
+
         return None
 
 
-def getVMIP(vm_name, resource_group=None):
+def getVMIP(vm_name, resource_group=os.getenv("VM_GROUP")):
     """Gets the IP address for a vm
 
     Args:
@@ -88,6 +95,14 @@ def getVMIP(vm_name, resource_group=None):
         str: The ipv4 address
     """
     try:
+        fractalLog(
+            function="getVMIP",
+            label=str(vm_name),
+            logs="Getting IP for {vm_name} in resource group {resource_group}".format(
+                vm_name=vm_name, resource_group=resource_group
+            ),
+        )
+
         vm = createVMInstance(vm_name, resource_group)
 
         _, _, network_client = createClients()

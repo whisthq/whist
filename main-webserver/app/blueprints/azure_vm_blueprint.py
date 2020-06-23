@@ -104,7 +104,8 @@ def azure_vm_get(action, **kwargs):
         # Gets the IP address of a VM using Azure SDK
 
         vm_name = request.args.get("vm_name")
+        resource_group = request.args.get("resource_group")
 
-        output = ipHelper(vm_name)
+        output = ipHelper(vm_name, resource_group)
 
         return jsonify(output), output["status"]
