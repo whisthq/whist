@@ -50,6 +50,7 @@ static volatile bool connected;
 static volatile double max_mbps;
 volatile int client_width = -1;
 volatile int client_height = -1;
+volatile CodecType client_codec_type = CODEC_TYPE_H264;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
 // volatile
@@ -86,12 +87,13 @@ int encoder_factory_server_h;
 int encoder_factory_client_w;
 int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
+CodecType encoder_factory_codec_type;
 int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
-    encoder_factory_result =
-        create_video_encoder(encoder_factory_server_w, encoder_factory_server_h,
-                             encoder_factory_client_w, encoder_factory_client_h,
-                             encoder_factory_current_bitrate);
+    encoder_factory_result = create_video_encoder(
+        encoder_factory_server_w, encoder_factory_server_h,
+        encoder_factory_client_w, encoder_factory_client_h,
+        encoder_factory_current_bitrate, encoder_factory_codec_type);
     encoder_finished = true;
     return 0;
 }
@@ -207,6 +209,7 @@ int32_t SendVideo(void* opaque) {
                 encoder_factory_server_h = device->height;
                 encoder_factory_client_w = (int)client_width;
                 encoder_factory_client_h = (int)client_height;
+                encoder_factory_codec_type = (CodecType)client_codec_type;
                 encoder_factory_current_bitrate = current_bitrate;
                 if (encoder == NULL) {
                     // Run on this thread bc we have to wait for it anyway
@@ -404,17 +407,15 @@ int32_t SendVideo(void* opaque) {
                         0) {
                         LOG_WARNING("Could not send video frame ID %d", id);
                     } else {
-                        for( int i = 0; i < num_spectator_connections; i++ )
-                        {
-                            if( SendUDPPacket(
-                                &SpectatorSendContext[i],
-                                PACKET_VIDEO, (uint8_t*)frame,
-                                frame_size, id, STARTING_BURST_BITRATE,
-                                NULL,
-                                NULL ) <
-                                0 )
-                            {
-                                LOG_WARNING( "Could not send video frame ID %d to spectator %d", id, i );
+                        for (int i = 0; i < num_spectator_connections; i++) {
+                            if (SendUDPPacket(
+                                    &SpectatorSendContext[i], PACKET_VIDEO,
+                                    (uint8_t*)frame, frame_size, id,
+                                    STARTING_BURST_BITRATE, NULL, NULL) < 0) {
+                                LOG_WARNING(
+                                    "Could not send video frame ID %d to "
+                                    "spectator %d",
+                                    id, i);
                             }
                         }
                         // Only increment ID if the send succeeded
@@ -592,13 +593,11 @@ void update() {
 
 #include <time.h>
 
-int MultithreadedWaitForSpectator( void* opaque ) {
+int MultithreadedWaitForSpectator(void* opaque) {
     opaque;
     while (connected) {
         SocketContext socket;
-        if (CreateUDPContext(&socket,
-                             NULL, PORT_SPECTATOR,
-                             1, 5000,
+        if (CreateUDPContext(&socket, NULL, PORT_SPECTATOR, 1, 5000,
                              USING_STUN) < 0) {
             LOG_INFO("Waiting for spectator");
             continue;
@@ -608,19 +607,20 @@ int MultithreadedWaitForSpectator( void* opaque ) {
         fmsg.type = MESSAGE_INIT;
         fmsg.spectator_port = PORT_SPECTATOR + 1 + num_spectator_connections;
 
-        if (SendUDPPacket(&socket, PACKET_MESSAGE,
-                          (uint8_t*)&fmsg,
-                          sizeof(FractalServerMessage), 1, -1, NULL, NULL) < 0) {
+        if (SendUDPPacket(&socket, PACKET_MESSAGE, (uint8_t*)&fmsg,
+                          sizeof(FractalServerMessage), 1, -1, NULL,
+                          NULL) < 0) {
             LOG_ERROR("Could not send spectator init message!");
             return -1;
         }
 
-        closesocket( socket.s );
+        closesocket(socket.s);
 
         LOG_INFO("SPECTATOR #%d HANDSHAKE!", num_spectator_connections);
         if (CreateUDPContext(&SpectatorSendContext[num_spectator_connections],
-                             NULL, PORT_SPECTATOR + 1 + num_spectator_connections,
-                             1, 5000, USING_STUN) < 0) {
+                             NULL,
+                             PORT_SPECTATOR + 1 + num_spectator_connections, 1,
+                             5000, USING_STUN) < 0) {
             LOG_INFO("Waiting for spectator");
             continue;
         }
@@ -959,9 +959,11 @@ int main() {
                              fmsg->dimensions.width, fmsg->dimensions.height);
                     // Update knowledge of client monitor dimensions
                     if (client_width != fmsg->dimensions.width ||
-                        client_height != fmsg->dimensions.height) {
+                        client_height != fmsg->dimensions.height ||
+                        client_codec_type != fmsg->dimensions.codec_type) {
                         client_width = fmsg->dimensions.width;
                         client_height = fmsg->dimensions.height;
+                        client_codec_type = fmsg->dimensions.codec_type;
                         // Update device if knowledge changed
                         update_device = true;
                     }

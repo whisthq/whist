@@ -22,6 +22,7 @@
 #include "../fractal/utils/aes.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "audio.h"
+#include "fractalgetopt.h"
 #include "sdl_utils.h"
 #include "video.h"
 
@@ -51,6 +52,7 @@ volatile int ping_failures;
 
 volatile int output_width;
 volatile int output_height;
+volatile CodecType codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 
 // Function Declarations
@@ -143,11 +145,12 @@ void update() {
     // line up, then request the proper dimension
     if (!UpdateData.tried_to_update_dimension &&
         (server_width != output_width || server_height != output_height)) {
-        LOG_INFO("Asking for server dimension to be %dx%d", output_width,
-                 output_height);
+        LOG_INFO("Asking for server dimension to be %dx%d with codec type h%d",
+                 output_width, output_height, codec_type);
         fmsg.type = MESSAGE_DIMENSIONS;
-        fmsg.dimensions.width = output_width;
-        fmsg.dimensions.height = output_height;
+        fmsg.dimensions.width = (int)output_width;
+        fmsg.dimensions.height = (int)output_height;
+        fmsg.dimensions.codec_type = (CodecType)codec_type;
         fmsg.dimensions.dpi =
             (int)(96.0 * output_width / get_virtual_screen_width());
         SendFmsg(&fmsg);
@@ -236,7 +239,7 @@ int SendFmsg(FractalClientMessage* fmsg) {
 }
 
 int ReceivePackets(void* opaque) {
-    LOG_INFO("ReceivePackets running on Thread %d", SDL_GetThreadID(NULL));
+    LOG_INFO("ReceivePackets running on Thread %p", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
     SocketContext socketContext = *(SocketContext*)opaque;
@@ -529,59 +532,103 @@ int ReceiveMessage(FractalPacket* packet) {
     "I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/"     \
     "Zt86r9dOzEcfrhxa+MnVQhNE8="
 
-int parseArgs(int argc, char *argv[]) {
-    char *usage = "Usage: desktop [IP ADDRESS] [[OPTIONAL] WIDTH]"
-                  " [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE] [[OPTIONAL] SPECTATE]\n";
-    int num_required_args = 1;
-    int num_optional_args = 4;
-    if (argc - 1 < num_required_args ||
-        argc - 1 > num_required_args + num_optional_args) {
-        printf("%s", usage);
-        return -1;
-    }
+// standard for POSIX programs
+#define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
+#define FRACTAL_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
 
-    server_ip = argv[1];
+const struct option cmd_options[] = {
+    {"width", required_argument, NULL, 'w'},
+    {"height", required_argument, NULL, 'h'},
+    {"bitrate", required_argument, NULL, 'b'},
+    {"spectate", no_argument, NULL, 's'},
+    {"codec", required_argument, NULL, 'c'},
+    // these are standard for POSIX programs
+    {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
+    {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
+    // end with NULL-termination
+    {0, 0, 0, 0}};
+#define OPTION_STRING "w:h:b:sc:"
 
-    output_width = 0;
-    output_height = 0;
+int parseArgs(int argc, char* argv[]) {
+    char* usage =
+        "Usage: desktop [OPTION]... [IP ADDRESS]\n"
+        "Try 'desktop --help' for more information.\n";
+    char* usage_details =
+        "Usage: desktop [OPTION]... [IP ADDRESS]\n"
+        "\n"
+        "All arguments to both long and short options are mandatory.\n"
+        "  -w, --width=WIDTH             set the width for the windowed-mode\n"
+        "                                  window, if both width and height\n"
+        "                                  are specified\n"
+        "  -h, --height=HEIGHT           set the height for the windowed-mode\n"
+        "                                  window, if both width and height\n"
+        "                                  are specified\n"
+        "  -b, --bitrate=BITRATE         set the maximum bitrate to use\n"
+        "  -s, --spectate                launch the protocol as a spectator\n"
+        "  -c, --codec=CODEC             launch the protocol using the codec\n"
+        "                                  specified: h264 (default) or h265\n"
+        "      --help     display this help and exit\n"
+        "      --version  output version information and exit\n";
 
+    int opt;
     long int ret;
     char* endptr;
-
-    if (argc >= 3) {
+    while (opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL),
+           opt != -1) {
         errno = 0;
-        ret = strtol(argv[2], &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-            printf("%s", usage);
-            return -1;
+        switch (opt) {
+            case 'w':
+                ret = strtol(optarg, &endptr, 10);
+                if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+                    printf("%s", usage);
+                    return -1;
+                }
+                output_width = (int)ret;
+                break;
+            case 'h':
+                ret = strtol(optarg, &endptr, 10);
+                if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+                    printf("%s", usage);
+                    return -1;
+                }
+                output_height = (int)ret;
+                break;
+            case 'b':
+                ret = strtol(optarg, &endptr, 10);
+                if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+                    printf("%s", usage);
+                    return -1;
+                }
+                max_bitrate = (int)ret;
+                break;
+            case 's':
+                is_spectator = true;
+                break;
+            case 'c':
+                if (!strcmp(optarg, "h264")) {
+                    codec_type = CODEC_TYPE_H264;
+                } else if (!strcmp(optarg, "h265")) {
+                    codec_type = CODEC_TYPE_H265;
+                } else {
+                    printf("Invalid codec type: '%s'\n", optarg);
+                    printf("%s", usage);
+                    return -1;
+                }
+                break;
+            case FRACTAL_GETOPT_HELP_CHAR:
+                printf("%s", usage_details);
+                return 1;
+            case FRACTAL_GETOPT_VERSION_CHAR:
+                printf("No version information specified.\n");
+                return 1;
         }
-        if (ret != 0) output_width = (int)ret;
     }
 
-    if (argc >= 4) {
-        errno = 0;
-        ret = strtol(argv[3], &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-            printf("%s", usage);
-            return -1;
-        }
-        if (ret != 0) output_height = (int)ret;
-    }
-
-    if (argc == 5) {
-        errno = 0;
-        ret = strtol(argv[4], &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret <= 0) {
-            printf("%s", usage);
-            return -1;
-        }
-        max_bitrate = (int)ret;
-    }
-
-    is_spectator = false;
-    if( argc == 6 )
-    {
-        is_spectator = true;
+    if (optind < argc) {
+        server_ip = argv[optind];
+    } else {
+        printf("%s", usage);
+        return -1;
     }
 
     return 0;
@@ -596,7 +643,7 @@ int main(int argc, char* argv[]) {
     // already exists, which is fine
     // for Linux, this is in /home/USERNAME/.fractal, the cache is also needed
     // for the same reason
-    runcmd("mkdir ~/.fractal", NULL);
+    runcmd("mkdir -p ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
 
     // the mkdir command won't do anything if the folder already exists, in
@@ -622,8 +669,14 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // After creating the window, we will grab DPI-adjusted dimensions in real
-    // pixels
+    SDL_Event cur_event;
+    while (SDL_PollEvent(&cur_event)) {
+        // spin to clear SDL event queue
+        // this effectively waits for window load on Mac
+    }
+
+    // After creating the window, we will grab DPI-adjusted dimensions in
+    // real pixels
     output_width = get_window_pixel_width((SDL_Window*)window);
     output_height = get_window_pixel_height((SDL_Window*)window);
 
@@ -642,11 +695,11 @@ int main(int argc, char* argv[]) {
     initLogger(path);
 #endif
 
-    PrintSystemInfo();
-
     // Initialize clipboard and video
     initVideo();
     exiting = false;
+
+    PrintSystemInfo();
 
     // Try 3 times if a failure to connect occurs
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
@@ -671,103 +724,99 @@ int main(int argc, char* argv[]) {
         // First context: Sending packets to server
 
         bool using_stun = true;
-        SocketContext PacketReceiveContext = { 0 };
+        SocketContext PacketReceiveContext = {0};
 
-        if( is_spectator )
-        {
-            if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                  PORT_SPECTATOR, 10, 500, true ) < 0 )
-            {
-                LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+        if (is_spectator) {
+            if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
+                                 PORT_SPECTATOR, 10, 500, true) < 0) {
+                LOG_INFO(
+                    "Server is not on STUN, attempting to connect directly");
                 using_stun = false;
-                if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                      PORT_SPECTATOR, 10, 500, false ) < 0 )
-                {
-                    LOG_WARNING( "Failed to connect to server" );
+                if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
+                                     PORT_SPECTATOR, 10, 500, false) < 0) {
+                    LOG_WARNING("Failed to connect to server");
                     continue;
                 }
             }
 
-            FractalPacket* init_spectator = ReadUDPPacket( &PacketReceiveContext );
+            FractalPacket* init_spectator =
+                ReadUDPPacket(&PacketReceiveContext);
             clock init_spectator_timer;
-            StartTimer( &init_spectator_timer );
-            while( !init_spectator && GetTimer( init_spectator_timer ) < 1.0 )
-            {
-                SDL_Delay( 5 );
-                init_spectator = ReadUDPPacket( &PacketReceiveContext );
+            StartTimer(&init_spectator_timer);
+            while (!init_spectator && GetTimer(init_spectator_timer) < 1.0) {
+                SDL_Delay(5);
+                init_spectator = ReadUDPPacket(&PacketReceiveContext);
             }
 
-            if( init_spectator )
-            {
+            if (init_spectator) {
                 FractalServerMessage* fmsg = (void*)init_spectator->data;
-                LOG_INFO( "SPECTATOR PORT: %d", fmsg->spectator_port );
+                LOG_INFO("SPECTATOR PORT: %d", fmsg->spectator_port);
 
-                closesocket( PacketReceiveContext.s );
+                closesocket(PacketReceiveContext.s);
 
-                if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                      fmsg->spectator_port, 10, 500, true ) < 0 )
-                {
-                    LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+                if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
+                                     fmsg->spectator_port, 10, 500, true) < 0) {
+                    LOG_INFO(
+                        "Server is not on STUN, attempting to connect "
+                        "directly");
                     using_stun = false;
-                    if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                          fmsg->spectator_port, 10, 500, false ) < 0 )
-                    {
-                        LOG_WARNING( "Failed to connect to server" );
+                    if (CreateUDPContext(&PacketReceiveContext,
+                                         (char*)server_ip, fmsg->spectator_port,
+                                         10, 500, false) < 0) {
+                        LOG_WARNING("Failed to connect to server");
                         continue;
                     }
                 }
 
                 PacketSendContext = PacketReceiveContext;
-            } else
-            {
-                closesocket( PacketReceiveContext.s );
-                LOG_WARNING( "DID NOT RECEIVE SPECTATOR INIT FROM SERVER" );
+            } else {
+                closesocket(PacketReceiveContext.s);
+                LOG_WARNING("DID NOT RECEIVE SPECTATOR INIT FROM SERVER");
                 continue;
             }
-        } else
-        {
-            if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
-                                  PORT_CLIENT_TO_SERVER, 10, 500, true ) < 0 )
-            {
-                LOG_INFO( "Server is not on STUN, attempting to connect directly" );
+        } else {
+            if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
+                                 PORT_CLIENT_TO_SERVER, 10, 500, true) < 0) {
+                LOG_INFO(
+                    "Server is not on STUN, attempting to connect directly");
                 using_stun = false;
-                if( CreateUDPContext( &PacketSendContext, (char*)server_ip,
-                                      PORT_CLIENT_TO_SERVER, 10, 500, false ) < 0 )
-                {
-                    LOG_WARNING( "Failed to connect to server" );
+                if (CreateUDPContext(&PacketSendContext, (char*)server_ip,
+                                     PORT_CLIENT_TO_SERVER, 10, 500,
+                                     false) < 0) {
+                    LOG_WARNING("Failed to connect to server");
                     continue;
                 }
             }
 
-            SDL_Delay( 150 );
+            SDL_Delay(150);
 
             // Second context: Receiving packets from server
 
-            if( CreateUDPContext( &PacketReceiveContext, (char*)server_ip,
-                                  PORT_SERVER_TO_CLIENT, 1, 500, using_stun ) < 0 )
-            {
-                LOG_ERROR( "Failed finish connection to server" );
-                closesocket( PacketSendContext.s );
+            if (CreateUDPContext(&PacketReceiveContext, (char*)server_ip,
+                                 PORT_SERVER_TO_CLIENT, 1, 500,
+                                 using_stun) < 0) {
+                LOG_ERROR("Failed finish connection to server");
+                closesocket(PacketSendContext.s);
                 continue;
             }
 
             int a = 65535;
-            if( setsockopt( PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof( int ) ) == -1 )
-            {
-                fprintf( stderr, "Error setting socket opts: %s\n", strerror( errno ) );
+            if (setsockopt(PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF,
+                           (const char*)&a, sizeof(int)) == -1) {
+                fprintf(stderr, "Error setting socket opts: %s\n",
+                        strerror(errno));
             }
 
-            SDL_Delay( 150 );
+            SDL_Delay(150);
 
             // Third context: Mutual TCP context for essential but
             // not-speed-sensitive applications
 
-            if( CreateTCPContext( &PacketTCPContext, (char*)server_ip,
-                                  PORT_SHARED_TCP, 1, 750, using_stun ) < 0 )
-            {
-                LOG_ERROR( "Failed finish connection to server" );
-                closesocket( PacketSendContext.s );
-                closesocket( PacketReceiveContext.s );
+            if (CreateTCPContext(&PacketTCPContext, (char*)server_ip,
+                                 PORT_SHARED_TCP, 1, 750, using_stun) < 0) {
+                LOG_ERROR("Failed finish connection to server");
+                closesocket(PacketSendContext.s);
+                closesocket(PacketReceiveContext.s);
                 continue;
             }
         }
@@ -787,27 +836,27 @@ int main(int argc, char* argv[]) {
         clock keyboard_sync_timer;
         StartTimer(&keyboard_sync_timer);
 
+        clock window_resize_timer;
+        StartTimer(&window_resize_timer);
+
         // Initialize keyboard state variables
         bool alt_pressed = false;
         bool ctrl_pressed = false;
         bool lgui_pressed = false;
         bool rgui_pressed = false;
 
-        if( !is_spectator )
-        {
+        if (!is_spectator) {
             clock waiting_for_init_timer;
-            StartTimer( &waiting_for_init_timer );
-            while( !received_server_init_message )
-            {
+            StartTimer(&waiting_for_init_timer);
+            while (!received_server_init_message) {
                 // If 500ms and no init timer was received, we should disconnect
                 // because something failed
-                if( GetTimer( waiting_for_init_timer ) > 500 / 1000.0 )
-                {
-                    LOG_ERROR( "Took too long for init timer!" );
+                if (GetTimer(waiting_for_init_timer) > 500 / 1000.0) {
+                    LOG_ERROR("Took too long for init timer!");
                     exiting = true;
                     break;
                 }
-                SDL_Delay( 25 );
+                SDL_Delay(25);
             }
         }
 
@@ -823,9 +872,8 @@ int main(int argc, char* argv[]) {
             // Send acks to sockets every 5 seconds
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);
-                if( !is_spectator )
-                {
-                    Ack( &PacketTCPContext );
+                if (!is_spectator) {
+                    Ack(&PacketTCPContext);
                 }
                 StartTimer(&ack_timer);
             }
@@ -868,20 +916,23 @@ int main(int argc, char* argv[]) {
                         if (msg.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
                             // Let video thread know about the resizing to
                             // reinitialize display dimensions
-                            output_width =
-                                get_window_pixel_width((SDL_Window*)window);
-                            output_height =
-                                get_window_pixel_height((SDL_Window*)window);
-                            set_video_active_resizing( false );
+                            set_video_active_resizing(false);
 
-                            // Let the server know the new dimensions so that it
-                            // can change native dimensions for monitor
-                            fmsg.type = MESSAGE_DIMENSIONS;
-                            fmsg.dimensions.width = output_width;
-                            fmsg.dimensions.height = output_height;
-                            fmsg.dimensions.dpi =
-                                (int)(96.0 * output_width /
-                                      get_virtual_screen_width());
+                            if (GetTimer(window_resize_timer) > 0.2) {
+                                // Let the server know the new dimensions so
+                                // that it can change native dimensions for
+                                // monitor
+                                fmsg.type = MESSAGE_DIMENSIONS;
+                                fmsg.dimensions.width = output_width;
+                                fmsg.dimensions.height = output_height;
+                                fmsg.dimensions.codec_type =
+                                    (CodecType)codec_type;
+                                fmsg.dimensions.dpi =
+                                    (int)(96.0 * output_width /
+                                          get_virtual_screen_width());
+
+                                StartTimer(&window_resize_timer);
+                            }
 
                             LOG_INFO(
                                 "Window %d resized to %dx%d (Physical %dx%d)\n",
@@ -995,9 +1046,8 @@ int main(int argc, char* argv[]) {
         // Close all open sockets
         closesocket(PacketSendContext.s);
         closesocket(PacketReceiveContext.s);
-        if( !is_spectator )
-        {
-            closesocket( PacketTCPContext.s );
+        if (!is_spectator) {
+            closesocket(PacketTCPContext.s);
         }
 
 #if defined(_WIN32)
