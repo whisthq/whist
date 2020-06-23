@@ -20,7 +20,7 @@ jobs:
           - {
             name: "Windows Latest MSVC", artifact: "Windows-MSVC.tar.xz",
             os: windows-latest,
-            cc: "cl", cxx: "cl", cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.2/bin/nvcc",
+            cc: "cl", cxx: "cl", cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           }
           - {
@@ -35,12 +35,12 @@ jobs:
           }
 
     steps:
+      - uses: actions/checkout@v2
       - name: Chocolatey install cppcheck and CUDA Toolkit if windows
         if: runner.os == 'Windows'
         uses: crazy-max/ghaction-chocolatey@v1
         with:
-          args: install cppcheck cuda --force
-      - uses: actions/checkout@v2
+          args: install "${{ github.workspace }}\.github\choco-install.config" --force
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
         shell: cmake -P {0}
