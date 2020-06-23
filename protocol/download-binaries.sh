@@ -14,7 +14,6 @@ cp share/32/Windows/* desktop/build32/Windows/
 cp share/32/Windows/* server/build32
 cp share/64/Windows/* desktop/build64/Windows/
 cp share/64/Windows/* server/build64
-cp share/64/Darwin/* desktop/build64/Darwin/
 # copy OSX ffmpeg which is in lib/
 cp lib/64/ffmpeg/Darwin/* desktop/build64/Darwin/
 
