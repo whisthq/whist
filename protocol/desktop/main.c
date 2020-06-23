@@ -689,11 +689,11 @@ int main(int argc, char* argv[]) {
     initLogger(path);
 #endif
 
-    PrintSystemInfo();
-
     // Initialize clipboard and video
     initVideo();
     exiting = false;
+
+    PrintSystemInfo();
 
     // Try 3 times if a failure to connect occurs
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
