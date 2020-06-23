@@ -863,7 +863,6 @@ int main(int argc, char* argv[]) {
                         if (msg.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
                             // Let video thread know about the resizing to
                             // reinitialize display dimensions
-
                             set_video_active_resizing(false);
 
                             if (GetTimer(window_resize_timer) > 0.2) {
