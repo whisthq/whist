@@ -97,7 +97,7 @@ def mail(action, **kwargs):
             sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
             response = sg.send(internal_message)
         except Exception as e:
-            sendError(kwargs["ID"], "Mail send failed: Error code " + e.message)
+            print("Mail send failed: Error code " + e.message)
 
         return jsonify({"status": 200}), 200
     elif action == "verification":
@@ -118,9 +118,9 @@ def mail(action, **kwargs):
         try:
             sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
             response = sg.send(internal_message)
-            sendInfo(kwargs["ID"], "Sent email to {}".format(user))
+            print("Sent email to {}".format(user))
         except Exception as e:
-            sendError(kwargs["ID"], "Mail send failed: Error code " + e.message)
+            print("Mail send failed: Error code " + e.message)
 
         return jsonify({"status": 200}), 200
     elif action == "referral":
