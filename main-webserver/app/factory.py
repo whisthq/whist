@@ -6,11 +6,7 @@ PKG_NAME = os.path.dirname(os.path.realpath(__file__)).split("/")[-1]
 
 
 def create_app(app_name=PKG_NAME, **kwargs):
-    template_dir = os.path.dirname(
-        os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-    )
-    template_dir = os.path.join(template_dir, "vm-webserver")
-    template_dir = os.path.join(template_dir, "app")
+    template_dir = os.path.dirname(os.path.realpath(__file__))
     template_dir = os.path.join(template_dir, "templates")
     print(template_dir)
     app = Flask(app_name, template_folder=template_dir)
