@@ -102,13 +102,19 @@ def statusReport(action, **kwargs):
                 ),
                 "%Y-%m-%d",
             ).strftime("%m-%d-%y")
-            print(beginning_month)
             params = {
                 "username": body["username"],
                 "date": beginning_month,
             }
         else:
             return jsonify({}), 404
+
+        if "start_date" in body.keys():
+            params = {
+                "username": body["username"],
+                "date": unixToDate(body["start_date"]).strftime("%m-%d-%y"),
+            }
+
         try:
             with engine.connect() as conn:
                 report = cleanFetchedSQL(conn.execute(command, **params).fetchall())
@@ -117,6 +123,7 @@ def statusReport(action, **kwargs):
                     body["timescale"] == "week"
                     or body["timescale"] == "month"
                     or body["timescale"] == "beginningMonth"
+                    or "start_date" in body.keys()
                 ):
                     output = loginsToMinutes(report)
 
