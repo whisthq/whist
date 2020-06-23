@@ -149,7 +149,13 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     if (decoder->type == DECODE_TYPE_SOFTWARE) {
         // BEGIN SOFTWARE DECODER
         LOG_INFO("Trying software decoder");
-        decoder->codec = avcodec_find_decoder_by_name("h264");
+
+        if (decoder->codec_type == CODEC_TYPE_H264) {
+            decoder->codec = avcodec_find_decoder_by_name("h264");
+        } else if (decoder->codec_type == CODEC_TYPE_H265) {
+            decoder->codec = avcodec_find_decoder_by_name("hevc");
+        }
+
         if (!decoder->codec) {
             LOG_WARNING("Could not find video codec");
             return -1;
@@ -174,7 +180,12 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     } else if (decoder->type == DECODE_TYPE_QSV) {
         // BEGIN QSV DECODER
         LOG_INFO("Trying QSV decoder");
-        decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
+        if (decoder->codec_type == CODEC_TYPE_H264) {
+            decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
+        } else if (decoder->codec_type == CODEC_TYPE_H265) {
+            decoder->codec = avcodec_find_decoder_by_name("hevc_qsv");
+        }
+
         decoder->context = avcodec_alloc_context3(decoder->codec);
         decoder->context->opaque = decoder;
         set_decoder_opts(decoder);
@@ -230,7 +241,11 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
             return -1;
         }
 
-        decoder->codec = avcodec_find_decoder_by_name("h264");
+        if (decoder->codec_type == CODEC_TYPE_H264) {
+            decoder->codec = avcodec_find_decoder_by_name("h264");
+        } else if (decoder->codec_type == CODEC_TYPE_H265) {
+            decoder->codec = avcodec_find_decoder_by_name("hevc");
+        }
 
         if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
             LOG_WARNING("alloccontext3 failed w/ error code: %d\n",
@@ -325,8 +340,8 @@ bool try_next_decoder(video_decoder_t* decoder) {
     }
 }
 
-video_decoder_t* create_video_decoder(int width, int height,
-                                      bool use_hardware) {
+video_decoder_t* create_video_decoder(int width, int height, bool use_hardware,
+                                      CodecType codec_type) {
 #if SHOW_DECODER_LOGS
     // av_log_set_level( AV_LOG_ERROR );
     av_log_set_callback(swap_decoder);
@@ -340,6 +355,7 @@ video_decoder_t* create_video_decoder(int width, int height,
     decoder->height = height;
     decoder->can_use_hardware = use_hardware;
     decoder->type = DECODE_TYPE_NONE;
+    decoder->codec_type = codec_type;
 
     if (!try_next_decoder(decoder)) {
         destroy_video_decoder(decoder);

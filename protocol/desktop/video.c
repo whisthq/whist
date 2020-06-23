@@ -18,6 +18,9 @@ extern volatile SDL_Window* window;
 
 extern volatile int server_width;
 extern volatile int server_height;
+
+extern volatile CodecType codec_type;
+
 // Keeping track of max mbps
 extern volatile int max_bitrate;
 extern volatile bool update_mbps;
@@ -226,8 +229,8 @@ void updateWidthAndHeight(int width, int height) {
         destroy_video_decoder(videoContext.decoder);
     }
 
-    video_decoder_t* decoder =
-        create_video_decoder(width, height, USE_HARDWARE);
+    video_decoder_t* decoder = create_video_decoder(width, height, USE_HARDWARE,
+                                                    (CodecType)codec_type);
 
     videoContext.decoder = decoder;
     if (!decoder) {

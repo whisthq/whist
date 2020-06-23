@@ -49,6 +49,7 @@ typedef struct video_encoder_t {
     AVFrame* filtered_frame;
 
     EncodeType type;
+    CodecType codec_type;
 } video_encoder_t;
 
 /*
@@ -70,12 +71,13 @@ Public Functions
  *                                 output
  * @param bitrate                  The number of bits per second that this
  *                                 encoder will encode to
+ * @param codec_type               Which codec type (h264 or h265) to use
  *
  * @returns                        The newly created encoder
  */
 video_encoder_t* create_video_encoder(int in_width, int in_height,
                                       int out_width, int out_height,
-                                      int bitrate);
+                                      int bitrate, CodecType codec_type);
 
 /**
  * @brief                          Encode the given frame. The frame can be
