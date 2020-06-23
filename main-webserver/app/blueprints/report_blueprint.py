@@ -94,6 +94,16 @@ def statusReport(action, **kwargs):
                 "username": body["username"],
                 "date": lastMonth.strftime("%m-%d-%y"),
             }
+        elif body["timescale"] == "beginningMonth":
+            params = {
+                "username": body["username"],
+                "date": dt.strptime(
+                    "{year}-{month}-{day}".format(
+                        year=today.year, month=today.month, day="1"
+                    ),
+                    "%Y-%m-%d",
+                ),
+            }
         else:
             return jsonify({}), 404
         try:
