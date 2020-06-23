@@ -365,9 +365,10 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
         // ignore the problem
         if (decrypted_len < 0) {
             if (encrypted_len == sizeof(stun_entry_t)) {
-                stun_entry_t* e;
-                e = (void*)&encrypted_packet;
-                LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port), ntohs(e->private_port));
+                stun_entry_t *e;
+                e = (void *)&encrypted_packet;
+                LOG_INFO("Maybe a map from public %d to private %d?",
+                         ntohs(e->private_port), ntohs(e->private_port));
             }
             LOG_WARNING("Failed to decrypt packet");
             return NULL;
@@ -880,8 +881,6 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
     context->addr.sin_port = entry.private_port;
 
     LOG_INFO("Connecting to server...");
-
-    SDL_Delay(200);
 
     // Connect to TCP server
     if (!tcp_connect(context->s, context->addr, stun_timeout_ms)) {

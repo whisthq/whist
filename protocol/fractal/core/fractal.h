@@ -123,7 +123,10 @@ typedef enum EncodeType {
     QSV_ENCODE = 2
 } EncodeType;
 
-typedef enum CodecType { CODEC_TYPE_H264 = 1, CODEC_TYPE_H265 = 2 } CodecType;
+typedef enum CodecType {
+    CODEC_TYPE_H264 = 264,
+    CODEC_TYPE_H265 = 265
+} CodecType;
 
 typedef enum FractalCursorID {
     CURSOR_ID_APPSTARTING = 32650,

@@ -145,8 +145,8 @@ void update() {
     // line up, then request the proper dimension
     if (!UpdateData.tried_to_update_dimension &&
         (server_width != output_width || server_height != output_height)) {
-        LOG_INFO("Asking for server dimension to be %dx%d", output_width,
-                 output_height);
+        LOG_INFO("Asking for server dimension to be %dx%d with codec type h%d",
+                 output_width, output_height, codec_type);
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = (int)output_width;
         fmsg.dimensions.height = (int)output_height;
@@ -662,8 +662,6 @@ int main(int argc, char* argv[]) {
     initVideo();
     exiting = false;
 
-    int tcp_connection_timeout = 250;
-
     // Try 3 times if a failure to connect occurs
     for (try_amount = 0; try_amount < 3 && !exiting; try_amount++) {
         // If this is a retry, wait a bit more for the server to recover
@@ -712,8 +710,7 @@ int main(int argc, char* argv[]) {
             }
 
             if (init_spectator) {
-                FractalServerMessage* fmsg =
-                    (FractalServerMessage*)init_spectator->data;
+                FractalServerMessage* fmsg = (void*)init_spectator->data;
                 LOG_INFO("SPECTATOR PORT: %d", fmsg->spectator_port);
 
                 closesocket(PacketReceiveContext.s);
@@ -777,10 +774,8 @@ int main(int argc, char* argv[]) {
             // not-speed-sensitive applications
 
             if (CreateTCPContext(&PacketTCPContext, (char*)server_ip,
-                                 PORT_SHARED_TCP, 1, tcp_connection_timeout,
-                                 using_stun) < 0) {
+                                 PORT_SHARED_TCP, 1, 750, using_stun) < 0) {
                 LOG_ERROR("Failed finish connection to server");
-                tcp_connection_timeout += 250;
                 closesocket(PacketSendContext.s);
                 closesocket(PacketReceiveContext.s);
                 continue;
@@ -801,6 +796,9 @@ int main(int argc, char* argv[]) {
 
         clock keyboard_sync_timer;
         StartTimer(&keyboard_sync_timer);
+
+        clock window_resize_timer;
+        StartTimer(&window_resize_timer);
 
         // Initialize keyboard state variables
         bool alt_pressed = false;
@@ -879,21 +877,24 @@ int main(int argc, char* argv[]) {
                         if (msg.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
                             // Let video thread know about the resizing to
                             // reinitialize display dimensions
-                            output_width =
-                                get_window_pixel_width((SDL_Window*)window);
-                            output_height =
-                                get_window_pixel_height((SDL_Window*)window);
+
                             set_video_active_resizing(false);
 
-                            // Let the server know the new dimensions so that it
-                            // can change native dimensions for monitor
-                            fmsg.type = MESSAGE_DIMENSIONS;
-                            fmsg.dimensions.width = output_width;
-                            fmsg.dimensions.height = output_height;
-                            fmsg.dimensions.codec_type = (CodecType)codec_type;
-                            fmsg.dimensions.dpi =
-                                (int)(96.0 * output_width /
-                                      get_virtual_screen_width());
+                            if (GetTimer(window_resize_timer) > 0.2) {
+                                // Let the server know the new dimensions so
+                                // that it can change native dimensions for
+                                // monitor
+                                fmsg.type = MESSAGE_DIMENSIONS;
+                                fmsg.dimensions.width = output_width;
+                                fmsg.dimensions.height = output_height;
+                                fmsg.dimensions.codec_type =
+                                    (CodecType)codec_type;
+                                fmsg.dimensions.dpi =
+                                    (int)(96.0 * output_width /
+                                          get_virtual_screen_width());
+
+                                StartTimer(&window_resize_timer);
+                            }
 
                             LOG_INFO(
                                 "Window %d resized to %dx%d (Physical %dx%d)\n",

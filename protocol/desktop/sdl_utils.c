@@ -76,7 +76,17 @@ SDL_Window* initSDL(int output_width, int output_height) {
     window = SDL_CreateWindow(
         "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, output_width,
         output_height,
-        SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : 0));
+        SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : 0) |
+            SDL_WINDOW_OPENGL);
+
+    // immediately go to black screen using a fast software renderer
+    SDL_Renderer* renderer =
+        SDL_CreateRenderer((SDL_Window*)window, -1, SDL_RENDERER_SOFTWARE);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
+
+    SDL_DestroyRenderer(renderer);
 
     if (!is_fullscreen) {
         // Resize event handling

@@ -123,12 +123,12 @@ int audio_decoder_get_frame_data_size(audio_decoder_t *decoder) {
 
 int audio_decoder_decode_packet(audio_decoder_t *decoder,
                                 AVPacket *encoded_packet) {
-  if (!decoder) {
-    return -1;
-  }
-  // decode a single packet of encoded data
-  // mprintf("decoding packet!\n");
-  // initialize output frame
+    if (!decoder) {
+        return -1;
+    }
+    // decode a single packet of encoded data
+    // mprintf("decoding packet!\n");
+    // initialize output frame
 
     // if (init_av_frame(decoder)) {
     //     LOG_WARNING("Could not initialize output AVFrame for decoding.\n");
@@ -170,19 +170,19 @@ void destroy_audio_decoder(audio_decoder_t *decoder) {
     }
     LOG_INFO("destroying decoder!\n");
 
-  // free the ffmpeg context
+    // free the ffmpeg context
     avcodec_free_context(&decoder->pCodecCtx);
 
     LOG_INFO("freed context\n");
 
-  // free the frame
+    // free the frame
     av_frame_free(&decoder->pFrame);
 
     LOG_INFO("av_freed frame\n");
     // av_freep(decoder->pFrame);
     LOG_INFO("really freed rame\n");
 
-  // free swr
+    // free swr
     swr_free(&decoder->pSwrContext);
 
     LOG_INFO("freed swr\n");

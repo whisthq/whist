@@ -35,6 +35,8 @@ video_encoder_t *create_nvenc_encoder(int in_width, int in_height,
 
     encoder->in_width = in_width;
     encoder->in_height = in_height;
+    if (out_width <= 32) out_width = 33;
+    if (out_height <= 16) out_height = 17;
     encoder->out_width = out_width;
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
@@ -473,6 +475,8 @@ video_encoder_t *create_sw_encoder(int in_width, int in_height, int out_width,
 
     encoder->in_width = in_width;
     encoder->in_height = in_height;
+    if (out_width % 2) out_width = out_width + 1;
+    if (out_height % 2) out_height = out_height + 1;
     encoder->out_width = out_width;
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;

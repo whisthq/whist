@@ -384,9 +384,6 @@ void destroy_video_decoder_members(video_decoder_t* decoder) {
     }
 
     /* flush the decoder */
-    decoder->packet.data = NULL;
-    decoder->packet.size = 0;
-    av_packet_unref(&decoder->packet);
     avcodec_free_context(&decoder->context);
 
     // free the ffmpeg contextes
@@ -405,9 +402,6 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
                           int buffer_size) {
     clock t;
     StartTimer(&t);
-
-    // init packet to prepare decoding
-    av_init_packet(&decoder->packet);
 
     // copy the received packet back into the decoder AVPacket
     // memcpy(&decoder->packet.data, &buffer, buffer_size);
@@ -481,8 +475,6 @@ bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
             return false;
         }
     }
-
-    av_packet_unref(&decoder->packet);
 
     double time = GetTimer(t);
 
