@@ -149,6 +149,11 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
     int ret = 0;
     AVPacket pkt;
 
+#if LIBAVCODEC_VERSION_MAJOR < 58
+    avcodec_register_all();
+    avfilter_register_all();
+#endif
+
     char err_buf[1000];
 
     if ((ret = avformat_open_input(&format_ctx, png_filename, NULL, NULL)) <
