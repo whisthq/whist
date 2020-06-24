@@ -864,44 +864,46 @@ int main(int argc, char* argv[]) {
         SDL_Event msg;
         FractalClientMessage fmsg = {0};
 
-        // send a TCP packet with local UTC time offset.
-        fmsg.type = MESSAGE_TIME;
+        // only non spectators change the time zone
+        if (!is_spectator) {
+            // send a TCP packet with local UTC time offset.
+            fmsg.type = MESSAGE_TIME;
 #ifndef _WIN32
 //        if not windows we get UTC info
-        LOG_INFO("Sending UTC offset %d", GetUTCOffset());
-        fmsg.time_data.UTC_Offset = GetUTCOffset();
-        fmsg.time_data.DST_flag = GetDST();
-        fmsg.time_data.use_win_name = 0;
-        fmsg.time_data.use_linux_name = 1;
+            LOG_INFO("Sending UTC offset %d", GetUTCOffset());
+            fmsg.time_data.UTC_Offset = GetUTCOffset();
+            fmsg.time_data.DST_flag = GetDST();
+            fmsg.time_data.use_win_name = 0;
+            fmsg.time_data.use_linux_name = 1;
 #endif
 
 //        if on apple or linux we get IANA timezone name
 #ifdef __APPLE__
-        runcmd(
-            "path=$(readlink /etc/localtime); echo "
-            "${path#\"/var/db/timezone/zoneinfo\"}",
-            &fmsg.time_data.use_linux_name);
+            runcmd(
+                "path=$(readlink /etc/localtime); echo "
+                "${path#\"/var/db/timezone/zoneinfo\"}",
+                &fmsg.time_data.use_linux_name);
 #else
-        char* response = malloc(sizeof(char) * 200);
-        runcmd("cat /etc/timezone", &response);
-        strcpy(fmsg.time_data.linux_tz_name, response);
-        free(response);
+            char *response = malloc(sizeof(char) * 200);
+            runcmd("cat /etc/timezone", &response);
+            strcpy(fmsg.time_data.linux_tz_name, response);
+            free(response);
 #endif
 
 // if we are on windows we get the windows timezone name
 #ifdef  _WIN32
-        char* win_tz_name = NULL;
-        runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
-        fmsg.time_data.use_win_name = 1;
-        fmsg.time_data.use_linux_name = 0;
-        strcpy(fmsg.time_data.win_tz_name, win_tz_name);
-        fmsg.time_data.win_tz_name[strlen( fmsg.time_data.win_tz_name ) - 1] = '\0';
-        SendFmsg(&fmsg);
-        LOG_INFO("Sending Windows TimeZone %s", fmsg.time_data.win_tz_name);
-        free(win_tz_name);
+            char* win_tz_name = NULL;
+            runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
+            fmsg.time_data.use_win_name = 1;
+            fmsg.time_data.use_linux_name = 0;
+            strcpy(fmsg.time_data.win_tz_name, win_tz_name);
+            fmsg.time_data.win_tz_name[strlen( fmsg.time_data.win_tz_name ) - 1] = '\0';
+            SendFmsg(&fmsg);
+            LOG_INFO("Sending Windows TimeZone %s", fmsg.time_data.win_tz_name);
+            free(win_tz_name);
 #endif
-        SendFmsg(&fmsg);
-
+            SendFmsg(&fmsg);
+        }
 
         clock ack_timer;
         StartTimer(&ack_timer);
