@@ -870,8 +870,9 @@ int main(int argc, char* argv[]) {
             fmsg.type = MESSAGE_TIME;
 #ifndef _WIN32
 //        if not windows we get UTC info
-            LOG_INFO("Sending UTC offset %d", GetUTCOffset());
+
             fmsg.time_data.UTC_Offset = GetUTCOffset();
+            LOG_INFO("Sending UTC offset %d", fmsg.time_data.UTC_Offset));
             fmsg.time_data.DST_flag = GetDST();
             fmsg.time_data.use_win_name = 0;
             fmsg.time_data.use_linux_name = 1;
