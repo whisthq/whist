@@ -1150,7 +1150,7 @@ int main() {
                         SetTimezoneFromWindowsName(fmsg->time_data.win_tz_name);
                     } else {
                         LOG_INFO("Setting time from UTC offset %d",
-                                 fmsg->time_data.win_tz_name);
+                                 fmsg->time_data.UTC_Offset);
                         SetTimezoneFromUtc(fmsg->time_data.UTC_Offset,
                                            fmsg->time_data.DST_flag);
                     }

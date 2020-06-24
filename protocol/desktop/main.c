@@ -882,7 +882,7 @@ int main(int argc, char* argv[]) {
             runcmd(
                 "path=$(readlink /etc/localtime); echo "
                 "${path#\"/var/db/timezone/zoneinfo\"}",
-                &fmsg.time_data.use_linux_name);
+                &fmsg.time_data.linux_tz_name);
 #else
             char *response = malloc(sizeof(char) * 200);
             runcmd("cat /etc/timezone", &response);
