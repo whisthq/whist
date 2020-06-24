@@ -27,10 +27,16 @@ def register(username, password, name, feedback):
     })
 
 def test_register(input_token):
-    resp = register("fakefake@delete.com", "password", "Delete Me", "Two men walk into a bar. Knock knock.")
-    if resp.status_code == 200: # Delete test account if successful
+    register("fakefake@delete.com", "password", "Delete Me", "Two men walk into a bar. Knock knock.")
+    resp = requests.post((SERVER_URL + '/account/fetchUser'), json={
+        "username": "fakefake@delete.com"
+    }, headers={
+        "Authorization": "Bearer " + input_token
+    })
+    success = resp.json()["user"] is not None
+    if success: # Delete test account if successful
         delete("fakefake@delete.com", input_token)
-    assert resp.status_code == 200
+    assert success
 
 def delete(username, authToken):
     return requests.post((SERVER_URL + '/account/delete'), json={
@@ -43,5 +49,22 @@ def test_delete(input_token):
     """Creates a test user and deletes it
     """
     register("fakefake@delete.com", "password", "Delete Me", "Two men walk into a bar. Knock knock.")
-    resp = delete("fakefake@delete.com", input_token)
+    delete("fakefake@delete.com", input_token)
+    resp = requests.post((SERVER_URL + '/account/fetchUser'), json={
+        "username": "fakefake@delete.com"
+    }, headers={
+        "Authorization": "Bearer " + input_token
+    })
+    assert resp.json()["user"] is None
+
+def adminLogin(username, password):
+    return requests.post((SERVER_URL + '/admin/login'), json=dict(
+        username=username,
+        password=password
+    ))
+
+def test_adminLogin():
+    resp = adminLogin('example@example.com', 'password')
+    assert resp.status_code == 422
+    resp = adminLogin(os.getenv("DASHBOARD_USERNAME"), os.getenv("DASHBOARD_PASSWORD"))
     assert resp.status_code == 200
