@@ -38,22 +38,22 @@ class ContextFilter(logging.Filter):
         return True
 
 
-syslog = SysLogHandler(
-    address=(os.getenv("PAPERTRAIL_URL"), int(os.getenv("PAPERTRAIL_PORT")))
-)
-syslog.addFilter(ContextFilter())
+# syslog = SysLogHandler(
+#     address=(os.getenv("PAPERTRAIL_URL"), int(os.getenv("PAPERTRAIL_PORT")))
+# )
+# syslog.addFilter(ContextFilter())
 
 format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
 # format = "%(asctime)s [%(pathname)s:%(lineno)d] %(message)s"
 formatter = logging.Formatter(format, datefmt="%b %d %H:%M:%S")
-syslog.setFormatter(formatter)
+# syslog.setFormatter(formatter)
 # logging.setLoggerClass(MyLogger)
 
 
 logger = logging.getLogger()
 # Sets the minimum logging priority to actually log (DEBUG < INFO < WARNING < ERROR < CRITICAL)
 logger.setLevel(logging.DEBUG)
-logger.addHandler(syslog)
+# logger.addHandler(syslog)
 
 
 def sendDebug(ID, log, papertrail=True):
