@@ -22,4 +22,7 @@ cmd.exe /c aws s3 cp update.bat s3://arn:aws:s3:us-east-1:747391415460:accesspoi
 cmd.exe /c aws s3 cp FractalServer.exe s3://arn:aws:s3:us-east-1:747391415460:accesspoint/fractal-cloud-setup/${branch}/Windows/FractalServer.exe
 cmd.exe /c aws s3 cp version s3://arn:aws:s3:us-east-1:747391415460:accesspoint/fractal-cloud-setup/${branch}/Windows/version
 
+# notify Slack
+cmd.exe /c 'curl -X POST --data-urlencode "payload={\"channel\": \"#general\", \"username\": \"fractal-bot\", \"text\": \"Windows Server Auto-update Pushed to Production VMs\", \"icon_emoji\": \":fractal:\"}" https://hooks.slack.com/services/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'
+
 type version
