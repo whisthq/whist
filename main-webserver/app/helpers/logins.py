@@ -55,8 +55,6 @@ def addTimeTable(username, action, is_user, ID=-1):
                         disk_name
                     ),
                 )
-        else:
-            sendCritical(ID, "Could not find a disk belong to user {}".format(username))
 
         conn.close()
 
