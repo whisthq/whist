@@ -251,6 +251,16 @@ def account_fetch_users(**kwargs):
     return jsonify({"status": 200, "users": users}), 200
 
 
+@account_bp.route("/account/fetchUser", methods=["POST"])
+@jwt_required
+@generateID
+@logRequestInfo
+def account_fetch_user(**kwargs):
+    body = request.get_json()
+    user = fetchUser(body["username"])
+    return jsonify({"user": user}), 200
+
+
 @account_bp.route("/account/delete", methods=["POST"])
 @jwt_required
 @generateID
