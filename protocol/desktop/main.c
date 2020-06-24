@@ -875,19 +875,19 @@ int main(int argc, char* argv[]) {
             fmsg.time_data.DST_flag = GetDST();
             fmsg.time_data.use_win_name = 0;
             fmsg.time_data.use_linux_name = 1;
-#endif
 
 //        if on apple or linux we get IANA timezone name
-#ifdef __APPLE__
+#if __APPLE__
             runcmd(
                 "path=$(readlink /etc/localtime); echo "
                 "${path#\"/var/db/timezone/zoneinfo\"}",
                 &fmsg.time_data.linux_tz_name);
 #else
-            char *response = malloc(sizeof(char) * 200);
+            char *response = NULL;
             runcmd("cat /etc/timezone", &response);
             strcpy(fmsg.time_data.linux_tz_name, response);
             free(response);
+#endif
 #endif
 
 // if we are on windows we get the windows timezone name
