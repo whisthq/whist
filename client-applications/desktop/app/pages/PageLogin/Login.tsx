@@ -200,7 +200,6 @@ class Login extends Component {
             this.props.public_ip &&
             component.state.live
         ) {
-            console.log("REDIRECTING TO DASHBOARD");
             history.push("/dashboard");
         }
     }
@@ -235,7 +234,7 @@ class Login extends Component {
                     <div className={styles.removeDrag}>
                         <div className={styles.landingHeader}>
                             <div className={styles.landingHeaderLeft}>
-                                <img src={Logo} width="20" height="20" />
+                                <img src={Logo} width="18" height="18" />
                                 <span className={styles.logoTitle}>
                                     Fractal
                                 </span>
@@ -258,7 +257,40 @@ class Login extends Component {
                                 </button>
                             </div>
                         </div>
-                        <div style={{ marginTop: 50 }}>
+                        <div style={{ marginTop: 70 }}>
+                            {this.state.warning && (
+                                <div
+                                    style={{
+                                        textAlign: "center",
+                                        fontSize: 12,
+                                        color: "#f9000b",
+                                        background: "rgba(253, 240, 241, 0.9)",
+                                        width: "100%",
+                                        padding: 15,
+                                        borderRadius: 2,
+                                        margin: "auto",
+                                        marginBottom: 30,
+                                        width: 265,
+                                    }}
+                                >
+                                    <div>
+                                        Invalid credentials. If you lost your
+                                        password, you can reset it on the&nbsp;
+                                        <div
+                                            onClick={this.ForgotPassword}
+                                            className={styles.pointerOnHover}
+                                            style={{
+                                                display: "inline",
+                                                fontWeight: "bold",
+                                                textDecoration: "underline",
+                                            }}
+                                        >
+                                            website
+                                        </div>
+                                        .
+                                    </div>
+                                </div>
+                            )}
                             {this.state.studios ? (
                                 <div
                                     style={{
@@ -439,61 +471,6 @@ class Login extends Component {
                                     <div style={{ fontSize: 12 }}>
                                         Remember Me
                                     </div>
-                                </div>
-                                <div
-                                    style={{
-                                        fontSize: 12,
-                                        color: "#D6D6D6",
-                                        width: 250,
-                                        margin: "auto",
-                                        marginTop: 15,
-                                    }}
-                                >
-                                    {this.props.warning ? (
-                                        this.state.studios ? (
-                                            <div>
-                                                Invalid credentials. If you lost
-                                                your password, you can reset it
-                                                on the&nbsp;
-                                                <div
-                                                    onClick={
-                                                        this.ForgotPassword
-                                                    }
-                                                    className={
-                                                        styles.pointerOnHover
-                                                    }
-                                                    style={{
-                                                        display: "inline",
-                                                        fontWeight: "bold",
-                                                    }}
-                                                >
-                                                    Fractal website.
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                Invalid credentials. If you lost
-                                                your password, you can reset it
-                                                on the&nbsp;
-                                                <div
-                                                    onClick={
-                                                        this.ForgotPassword
-                                                    }
-                                                    className={
-                                                        styles.pointerOnHover
-                                                    }
-                                                    style={{
-                                                        display: "inline",
-                                                        fontWeight: "bold",
-                                                    }}
-                                                >
-                                                    Fractal website.
-                                                </div>
-                                            </div>
-                                        )
-                                    ) : (
-                                        <div></div>
-                                    )}
                                 </div>
                             </div>
                         </div>

@@ -408,27 +408,36 @@ class MainBox extends Component {
                     }
                 } else {
                     return (
-                        <div
-                            onClick={this.OpenDashboard}
-                            className={styles.bigButton}
-                        >
-                            <div className={styles.centerContent}>
-                                <div>
-                                    <FontAwesomeIcon
-                                        icon={faPlus}
-                                        style={{ height: 30, color: "#111111" }}
-                                    />
-                                </div>
-                                <div
-                                    style={{ marginTop: 25, color: "#111111" }}
-                                >
-                                    <span className={styles.blueGradient}>
-                                        Create My Cloud PC
-                                    </span>
-                                </div>
-                                <div className={styles.centerSubtext}>
-                                    Transform your computer into a GPU-powered
-                                    workstation.
+                        <div className={styles.pointerOnHover}>
+                            <div
+                                onClick={this.OpenDashboard}
+                                className={styles.bigButton}
+                            >
+                                <div className={styles.centerContent}>
+                                    <div>
+                                        <FontAwesomeIcon
+                                            icon={faPlus}
+                                            style={{
+                                                height: 30,
+                                                color: "#111111",
+                                            }}
+                                        />
+                                    </div>
+                                    <div
+                                        style={{
+                                            marginTop: 25,
+                                            color: "#111111",
+                                        }}
+                                        className={styles.centerText}
+                                    >
+                                        <span className={styles.blueGradient}>
+                                            Create My Cloud PC
+                                        </span>
+                                    </div>
+                                    <div className={styles.centerSubtext}>
+                                        Transform your computer into a
+                                        GPU-powered workstation.
+                                    </div>
                                 </div>
                             </div>
                         </div>

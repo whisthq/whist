@@ -55,9 +55,8 @@ button {
 .logoTitle {
     font-family: "Maven Pro";
     position: relative;
-    bottom: 3px;
-    left: 10px;
-    font-weight: "bold";
+    bottom: 2px;
+    left: 12px;
     font-size: 20px;
 }
 
@@ -68,7 +67,7 @@ button {
     border: solid 2px #5ec4eb;
     background: none;
     font-weight: bold;
-    border-radius: 5px;
+    border-radius: 2px;
     padding: 10px 30px;
     color: #5ec4eb;
     font-weight: "bold";
@@ -80,7 +79,7 @@ button {
     color: white;
     background: linear-gradient(258.54deg, #5ec3eb 0%, #d023eb 100%);
     margin-left: 0px;
-    width: 275px;
+    width: 300px;
 }
 
 .signupButton:hover,
@@ -94,7 +93,7 @@ button {
 }
 
 .inputBox {
-    width: 175px;
+    width: 200px;
     background-color: rgba(20, 20, 20, 0.7);
     padding: 15px 50px;
     border-radius: 30px;

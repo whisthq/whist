@@ -260,7 +260,7 @@ class Dashboard extends Component {
                             >
                                 <div
                                     style={{
-                                        width: "60%",
+                                        width: "70%",
                                         textAlign: "left",
                                         paddingRight: 20,
                                     }}

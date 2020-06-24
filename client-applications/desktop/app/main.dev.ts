@@ -47,8 +47,8 @@ const createWindow = async () => {
     if (os.platform() === "win32") {
         mainWindow = new BrowserWindow({
             show: false,
-            width: 900,
-            height: 600,
+            width: 1000,
+            height: 680,
             frame: false,
             center: true,
             resizable: false,
@@ -59,8 +59,8 @@ const createWindow = async () => {
     } else if (os.platform() === "darwin") {
         mainWindow = new BrowserWindow({
             show: false,
-            width: 900,
-            height: 600,
+            width: 1000,
+            height: 680,
             titleBarStyle: "hidden",
             center: true,
             resizable: false,
@@ -73,8 +73,8 @@ const createWindow = async () => {
         // if (os.platform() === "linux") case
         mainWindow = new BrowserWindow({
             show: false,
-            width: 900,
-            height: 600,
+            width: 1000,
+            height: 680,
             titleBarStyle: "hidden",
             center: true,
             resizable: false,
