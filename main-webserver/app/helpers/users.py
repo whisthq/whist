@@ -138,7 +138,7 @@ def registerUser(username, password, token, name=None, reason_for_signup=None):
             conn.close()
             return 200
         except:
-            return 400
+            return 500
 
 
 def resetPassword(username, password):
@@ -335,6 +335,27 @@ def fetchUserToken(username):
             return user["id"]
         return None
 
+def fetchUser(username):
+    """Returns row for the user
+
+    Args:
+        username (str): The username of the user
+
+    Returns:
+        str: The uid of the user
+    """
+    command = text(
+        """
+        SELECT * FROM users WHERE "username" = :userName
+        """
+    )
+    params = {"userName": username}
+    with engine.connect() as conn:
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        if user:
+            return user
+        return None
 
 def mapCodeToUser(code):
     """Returns the user with the respective referral code. 

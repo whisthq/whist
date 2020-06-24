@@ -3,14 +3,10 @@ import os
 import tempfile
 import pytest
 import requests
+from dotenv import load_dotenv
 
-SERVER_URL = "http://localhost:" + os.getenv("PORT") if os.getenv("CI") else "http://localhost:5000"
-
-def login(username, password):
-    return requests.post((SERVER_URL + '/account/login'), json=dict(
-        username=username,
-        password=password
-    ))
+load_dotenv()
+SERVER_URL = "https://" + os.getenv("HEROKU_APP_NAME") + ".herokuapp.com" 
 
 def fetchvms(username):
     return requests.post((SERVER_URL + "/user/login"), json=dict(
@@ -21,11 +17,4 @@ def test_fetchvms():
     print(SERVER_URL)
     email = 'isa.zheng@gmail.com'
     rv = fetchvms(email)
-    assert rv.status_code == 200
-
-def test_login():
-    email = 'example@example.com'
-    rv = login(email, 'password')
-    json_data = rv.json()
-    print(json_data)
     assert rv.status_code == 200
