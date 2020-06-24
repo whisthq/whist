@@ -10,6 +10,7 @@ add_library(fractalUtils STATIC
         sdlscreeninfo.c
         json.c
 	sysinfo.c
+        png.c
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

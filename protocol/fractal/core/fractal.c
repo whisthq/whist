@@ -13,7 +13,9 @@
 
 // Print Memory Info
 
-void PrintSystemInfo() {
+int MultithreadedPrintSystemInfo(void* opaque) {
+    opaque;
+
     LOG_INFO("Hardware information:");
 
     PrintOSInfo();
@@ -22,6 +24,12 @@ void PrintSystemInfo() {
     PrintRAMInfo();
     PrintMonitors();
     PrintHardDriveInfo();
+
+    return 0;
+}
+
+void PrintSystemInfo() {
+    SDL_CreateThread(MultithreadedPrintSystemInfo, "PrintSystemInfo", NULL);
 }
 
 void runcmd_nobuffer(const char* cmdline) {
@@ -179,7 +187,7 @@ bool is_dev_vm() {
 
     LOG_INFO("GETTING JSON");
 
-    if (!SendJSONGet(PRODUCTION_HOST, "/vm/isDev", buf, len)) {
+    if (!SendJSONGet(STAGING_HOST, "/vm/isDev", buf, len)) {
         return true;
     }
 
@@ -207,7 +215,13 @@ bool is_dev_vm() {
         }
 
         is_dev = dev_value->bool_value;
-        branch = clone(branch_value->str_value);
+        if (branch_value->type == JSON_STRING) {
+            branch = clone(branch_value->str_value);
+        } else if (branch_value->type == JSON_NULL) {
+            branch = "[NULL]";
+        } else {
+            branch = "";
+        }
 
         LOG_INFO("Is Dev? %s", dev_value->bool_value ? "true" : "false");
         LOG_INFO("Branch: %s", branch);

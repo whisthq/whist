@@ -7,7 +7,9 @@ add_executable(FractalClient
         main.h
         video.c
         audio.c
-        sdl_utils.c)
+        sdl_utils.c
+        fractalgetopt.c
+        )
 
 # set the build directory
 set_target_properties(FractalClient PROPERTIES
@@ -56,7 +58,6 @@ target_link_libraries(FractalClient
         fractalNetwork
         fractalUtils
         ${STATIC_SDL2}
-        ${STATIC_SDL_IMAGE}
         ${STATIC_OPENSSL}
         )
 
@@ -93,7 +94,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "-framework AppKit"
         "-framework Metal"
         "-framework QuartzCore"
-	    "-framework cocoa"
         objc
         iconv
         )

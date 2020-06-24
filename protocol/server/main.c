@@ -50,6 +50,7 @@ static volatile bool connected;
 static volatile double max_mbps;
 volatile int client_width = -1;
 volatile int client_height = -1;
+volatile CodecType client_codec_type = CODEC_TYPE_H264;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
 // volatile
@@ -86,12 +87,13 @@ int encoder_factory_server_h;
 int encoder_factory_client_w;
 int encoder_factory_client_h;
 int encoder_factory_current_bitrate;
+CodecType encoder_factory_codec_type;
 int32_t MultithreadedEncoderFactory(void* opaque) {
     opaque;
-    encoder_factory_result =
-        create_video_encoder(encoder_factory_server_w, encoder_factory_server_h,
-                             encoder_factory_client_w, encoder_factory_client_h,
-                             encoder_factory_current_bitrate);
+    encoder_factory_result = create_video_encoder(
+        encoder_factory_server_w, encoder_factory_server_h,
+        encoder_factory_client_w, encoder_factory_client_h,
+        encoder_factory_current_bitrate, encoder_factory_codec_type);
     encoder_finished = true;
     return 0;
 }
@@ -207,6 +209,7 @@ int32_t SendVideo(void* opaque) {
                 encoder_factory_server_h = device->height;
                 encoder_factory_client_w = (int)client_width;
                 encoder_factory_client_h = (int)client_height;
+                encoder_factory_codec_type = (CodecType)client_codec_type;
                 encoder_factory_current_bitrate = current_bitrate;
                 if (encoder == NULL) {
                     // Run on this thread bc we have to wait for it anyway
@@ -640,8 +643,14 @@ void SetTimezoneFromIANAName(char* linux_tz_name) {
 }
 
 void SetTimezoneFromWindowsName(char* win_tz_name) {
-    char cmd[500] = "powershell.exe 'Set-TimeZone -Id \0";
-    snprintf(cmd + strlen(cmd), strlen(win_tz_name), win_tz_name);
+    char cmd[500];
+    snprintf(cmd, sizeof(cmd),
+             "powershell -command \"Set-TimeZone -Id '%s'\"", win_tz_name);
+    char* response = NULL;
+    runcmd(cmd, &response);
+    LOG_INFO("Timezone powershell command: %s -> %s\n", cmd, response);
+    free(response);
+    return;
 }
 
 void update() {
@@ -794,7 +803,7 @@ int main() {
             continue;
         }
 
-        if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 500,
+        if (CreateTCPContext(&PacketTCPContext, NULL, PORT_SHARED_TCP, 1, 750,
                              USING_STUN) < 0) {
             LOG_WARNING("Failed to finish connection (Failed at TCP context).");
             closesocket(PacketReceiveContext.s);
@@ -1053,9 +1062,11 @@ int main() {
                              fmsg->dimensions.width, fmsg->dimensions.height);
                     // Update knowledge of client monitor dimensions
                     if (client_width != fmsg->dimensions.width ||
-                        client_height != fmsg->dimensions.height) {
+                        client_height != fmsg->dimensions.height ||
+                        client_codec_type != fmsg->dimensions.codec_type) {
                         client_width = fmsg->dimensions.width;
                         client_height = fmsg->dimensions.height;
+                        client_codec_type = fmsg->dimensions.codec_type;
                         // Update device if knowledge changed
                         update_device = true;
                     }
