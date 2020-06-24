@@ -400,6 +400,7 @@ def fetchUserToken(username):
             return user["id"]
         return None
 
+
 def fetchUser(username):
     """Returns row for the user
 
@@ -421,6 +422,7 @@ def fetchUser(username):
         if user:
             return user
         return None
+
 
 def mapCodeToUser(code):
     """Returns the user with the respective referral code.
