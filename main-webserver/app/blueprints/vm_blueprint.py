@@ -131,9 +131,12 @@ def vm(action, **kwargs):
         task = updateVMTable.apply_async([kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
     elif action == "fetchall" and request.method == "POST":
-        body = request.get_json()
         vms = fetchUserVMs(None, kwargs["ID"])
         return jsonify({"payload": vms, "status": 200}), 200
+    elif action == "fetchVm" and request.method == "POST":
+        body = request.get_json()
+        vm = fetchVm(body["vm_name"])
+        return jsonify({"vm": vm}), 200
     elif action == "winlogonStatus" and request.method == "POST":
         body = request.get_json()
         ready = body["ready"]
