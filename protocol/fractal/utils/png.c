@@ -149,16 +149,19 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
     int ret = 0;
     AVPacket pkt;
 
+    char err_buf[1000];
+
     if ((ret = avformat_open_input(&format_ctx, png_filename, NULL, NULL)) <
         0) {
-        LOG_ERROR("avformat_open_input failed");
+        av_make_error_string( err_buf, sizeof( err_buf ), ret );
+        LOG_ERROR("avformat_open_input failed: %s", err_buf);
         return ret;
     }
 
     codec = avcodec_find_decoder(format_ctx->streams[0]->codecpar->codec_id);
 
     if (!codec) {
-        LOG_ERROR("avcodec_find_decoder failed");
+        LOG_ERROR("avcodec_find_decoder failed" );
         ret = AVERROR(EINVAL);
         goto end;
     }
@@ -168,12 +171,14 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
     ret = avcodec_parameters_to_context(codec_ctx,
                                         format_ctx->streams[0]->codecpar);
     if (ret < 0) {
-        LOG_ERROR("avcodec_parameters_to_context failed");
+        av_make_error_string( err_buf, sizeof( err_buf ), ret );
+        LOG_ERROR("avcodec_parameters_to_context failed: %s", err_buf);
         goto end;
     }
 
     if ((ret = avcodec_open2(codec_ctx, codec, NULL)) < 0) {
-        LOG_ERROR("avcodec_open2 failed");
+        av_make_error_string( err_buf, sizeof( err_buf ), ret );
+        LOG_ERROR("avcodec_open2 failed: %s", err_buf);
         goto end;
     }
 
@@ -185,14 +190,16 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
 
     ret = av_read_frame(format_ctx, &pkt);
     if (ret < 0) {
-        LOG_ERROR("av_read_frame failed");
+        av_make_error_string( err_buf, sizeof( err_buf ), ret );
+        LOG_ERROR("av_read_frame failed: %s", err_buf);
         goto end;
     }
 
     ret = avcodec_send_packet(codec_ctx, &pkt);
 
     if (ret < 0) {
-        LOG_ERROR("avcodec_send_packet failed");
+        av_make_error_string( err_buf, sizeof( err_buf ), ret );
+        LOG_ERROR("avcodec_send_packet failed: %s", err_buf);
         goto end;
     }
 
@@ -201,7 +208,8 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
     ret = avcodec_receive_frame(codec_ctx, frame);
 
     if (ret < 0) {
-        LOG_ERROR("avcodec_receive_frame failed");
+        av_make_error_string( err_buf, sizeof( err_buf ), ret );
+        LOG_ERROR("avcodec_receive_frame failed: %s", err_buf);
         goto end;
     }
 
@@ -213,6 +221,8 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
 
     if ((ret = av_image_alloc(data, linesize, (int)*w, (int)*h,
                               AV_PIX_FMT_RGB24, 32)) < 0) {
+        av_make_error_string( err_buf, sizeof( err_buf ), ret );
+        LOG_ERROR( "av_image_alloc failed: %s", err_buf );
         goto end;
     }
     ret = 0;
