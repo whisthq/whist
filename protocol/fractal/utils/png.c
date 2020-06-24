@@ -151,6 +151,7 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
 
 #if LIBAVCODEC_VERSION_MAJOR < 58
     avcodec_register_all();
+    avformat_register_all();
     avfilter_register_all();
 #endif
 
