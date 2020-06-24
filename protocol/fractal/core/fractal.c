@@ -242,7 +242,7 @@ bool is_dev_vm() {
 }
 
 int GetFmsgSize(FractalClientMessage* fmsg) {
-    if (fmsg->type == MESSAGE_KEYBOARD_STATE) {
+    if (fmsg->type == MESSAGE_KEYBOARD_STATE || fmsg->type == MESSAGE_TIME) {
         return sizeof(*fmsg);
     } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
         return sizeof(*fmsg) + fmsg->clipboard.size;
