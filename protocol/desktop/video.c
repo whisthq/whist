@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 
+
 #include "../fractal/utils/png.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "SDL2/SDL.h"
@@ -932,6 +933,7 @@ void destroyVideo() {
 void set_video_active_resizing(bool is_resizing) {
     if (!is_resizing) {
         SDL_LockMutex(render_mutex);
+
         int new_width = get_window_pixel_width((SDL_Window*)window);
         int new_height = get_window_pixel_height((SDL_Window*)window);
         if (new_width != output_width || new_height != output_height) {
@@ -939,6 +941,7 @@ void set_video_active_resizing(bool is_resizing) {
             pending_sws_update = true;
             output_width = new_width;
             output_height = new_height;
+
         }
         can_render = true;
         SDL_UnlockMutex(render_mutex);
