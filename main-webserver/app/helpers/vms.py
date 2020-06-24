@@ -212,6 +212,25 @@ def fetchVMByIP(vm_ip):
         conn.close()
         return vm_info
 
+def fetchVm(vm_name):
+    """Fetches 1 vm from the table
+
+    Args:
+        vm_name (str): Name of vm
+
+    Returns:
+        dict: Dict for vm
+    """    
+    command = text(
+        """
+        SELECT * FROM v_ms WHERE "vm_name" = :vm_name
+        """
+    )
+    params = {"vm_name": vm_name}
+    with engine.connect() as conn:
+        vm_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        return vm_info
 
 def genVMName():
     """Generates a unique name for a vm
