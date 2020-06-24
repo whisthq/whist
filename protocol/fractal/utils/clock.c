@@ -96,7 +96,7 @@ int GetUTCOffset(){
     localtime_r(&t, &lt);
     printf("dst flag %d \n \n", lt.tm_isdst);
 
-    return lt.tm_gmtoff / (60 * 60);
+    return (int) lt.tm_gmtoff / (60 * 60);
 #endif
     }
 
