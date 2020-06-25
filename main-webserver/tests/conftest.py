@@ -18,6 +18,6 @@ def setup(request):
     while getVersions().status_code != 200:
         time.sleep(3)
         i += 1
-        LOGGER.info(i + " times pinging server")
+        LOGGER.info(str(i) + " times pinging server")
     LOGGER.info("Server deployed! Tests starting now.")
     return
