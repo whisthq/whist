@@ -41,6 +41,8 @@ desktop/loading/
 *.internal
 *.includecache
 fractal/**/*.lib
+desktop/*.lib
+server/*.lib
 CMakeSettings.json
 
 cmake-build-*
