@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "postdeploy": "py.test"
+    "postdeploy": "pytest --log-cli-level=10"
   },
   "environments": {
     "review": {
@@ -8,7 +8,7 @@
     },
     "test": {
       "scripts": {
-        "test": "py.test",
+        "test": "pytest --log-cli-level=10",
         "addons": ["heroku-postgresql:in-dyno", "heroku-redis:in-dyno"]
       }
     }
