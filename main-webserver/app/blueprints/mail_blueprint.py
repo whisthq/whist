@@ -274,15 +274,14 @@ def purchase():
 @mail_bp.route("/signup", methods=["POST"])
 def signup():
     body = request.get_json()
-    user, code, token = body["username"], body["code"], body["token"]
+    user, code, token = body["username"], body["code"]
     title = "Welcome to Fractal"
-    url = os.getenv("FRONTEND_URL") + "/verify?" + token
 
     internal_message = SendGridMail(
         from_email="phil@fractalcomputers.com",
         to_emails=user,
         subject=title,
-        html_content=render_template("on_signup.html", code=code, url=url),
+        html_content=render_template("on_signup.html", code=code),
     )
 
     try:
