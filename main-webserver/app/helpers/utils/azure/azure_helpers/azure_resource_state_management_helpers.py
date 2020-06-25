@@ -130,9 +130,12 @@ def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
 
         has_winlogoned = False
         if output["success"] and output["rows"]:
-            has_winlogoned = (
-                dateToUnix(getToday()) - output["rows"][0]["ready_to_connect"] < 10
-            )
+            if not output["rows"][0]["ready_to_connect"]:
+                return False
+            else:
+                has_winlogoned = (
+                    dateToUnix(getToday()) - output["rows"][0]["ready_to_connect"] < 10
+                )
 
         return has_winlogoned
 
