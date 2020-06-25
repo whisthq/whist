@@ -162,16 +162,13 @@ char *getLogDir(void) {
 #endif
 }
 
-static char *getConnectionIDLogPath(void) {
-#ifdef _WIN32
-    return dupstring("connection_id.txt");
-#else
-    return appendPathToHome(".fractal/connection_id.txt");
-#endif
-}
-
 int logConnectionID(int connection_id) {
-    char *path = getConnectionIDLogPath();
+    char *path;
+    #ifdef _WIN32
+        path = dupstring("connection_id.txt");
+    #else
+        path = appendPathToHome(".fractal/connection_id.txt");
+    #endif
     if (path == NULL) {
         LOG_ERROR("Failed to get connection log path.");
         return -1;
@@ -203,6 +200,7 @@ int initSocketLibrary(void) {
 #endif
     return 0;
 }
+
 int destroySocketLibrary(void) {
 #ifdef _WIN32
     WSACleanup();
@@ -215,24 +213,18 @@ int destroySocketLibrary(void) {
    This will identify the connecting server as the correct server and not an
    imposter
 */
-static int writePublicSSHKey(void) {
+int configureSSHKeys(void) {
     FILE* ssh_key_host = fopen(HOST_PUBLIC_KEY_PATH, "w");
     if (ssh_key_host == NULL) {
+        LOG_ERROR("Failed to open public ssh key file.");
         return -1;
     }
     if (fprintf(ssh_key_host, "%s %s\n", server_ip, HOST_PUBLIC_KEY) < 0) {
         fclose(ssh_key_host);
+        LOG_ERROR("Failed to write public ssh key to file.");
         return -1;
     }
     fclose(ssh_key_host);
-    return 0;
-}
-
-int configureSSHKeys(void) {
-    if (writePublicSSHKey() != 0) {
-        LOG_ERROR("Failed to write public ssh key to disk.");
-        return -1;
-    }
 
     #ifndef _WIN32
     if (chmod(CLIENT_PRIVATE_KEY_PATH, 600) != 0) {
@@ -253,7 +245,6 @@ int configureSSHKeys(void) {
 // for the same reason
 // the mkdir command won't do anything if the folder already exists, in
 // which case we make sure to clear the previous logs and connection id
-
 int configureCache(void) {
 #ifndef _WIN32
     runcmd("mkdir ~/.fractal", NULL);
