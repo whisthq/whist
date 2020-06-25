@@ -743,6 +743,7 @@ def fetchDiskSetting(disk_name, setting_name):
         else:
             return None
 
+
 def fetchDiskInfo(disk_name, show_all=False, main=True, ID=-1):
     """Fetches all disks associated with the user
 
