@@ -156,24 +156,24 @@ class Dashboard extends Component {
                                     className={styles.landingHeaderLeft}
                                     onClick={this.ReturnToDashboard}
                                 >
-                                    <img src={Logo} width="20" height="20" />
-                                    <span
-                                        className={styles.logoTitle}
-                                        style={{
-                                            color: "#111111",
-                                            fontWeight: "bold",
-                                        }}
-                                    >
-                                        Fractal
-                                    </span>
+                                    <div className={styles.pointerOnHover}>
+                                        <img
+                                            src={Logo}
+                                            width="20"
+                                            height="20"
+                                        />
+                                        <span
+                                            className={styles.logoTitle}
+                                            style={{
+                                                color: "#111111",
+                                                fontWeight: "bold",
+                                            }}
+                                        >
+                                            Fractal
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className={styles.landingHeaderRight}>
-                                    <span
-                                        className={styles.headerButton}
-                                        onClick={this.ReturnToDashboard}
-                                    >
-                                        Home
-                                    </span>
                                     <span
                                         className={styles.headerButton}
                                         onClick={this.OpenFeedback}
@@ -260,7 +260,7 @@ class Dashboard extends Component {
                             >
                                 <div
                                     style={{
-                                        width: "60%",
+                                        width: "70%",
                                         textAlign: "left",
                                         paddingRight: 20,
                                     }}

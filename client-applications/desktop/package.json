@@ -61,7 +61,7 @@
             "dist/",
             "node_modules/",
             "resources/",
-            "protocol-build/",
+            "protocol/",
             "app.html",
             "main.prod.js",
             "main.prod.js.map",
@@ -70,7 +70,7 @@
             "loading/"
         ],
         "extraFiles": [
-            "protocol-build/"
+            "protocol/"
         ],
         "dmg": {
             "sign": false,

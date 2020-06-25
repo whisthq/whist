@@ -220,7 +220,7 @@ button {
         ),
         url("../../resources/images/mountain.jpg");
     width: 100%;
-    height: 275px;
+    height: 360px;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
@@ -239,16 +239,16 @@ button {
 }
 
 .bigButton .centerText {
-    margin-top: 10px;
+    margin-top: 15px;
     color: #333333;
-    font-size: 16px;
+    font-size: 22px;
     line-height: 1.4;
 }
 
 .bigButton .centerSubtext {
-    margin-top: 5px;
+    margin-top: 10px;
     color: #333333;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.4;
 }
 
