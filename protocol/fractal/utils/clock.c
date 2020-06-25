@@ -141,7 +141,7 @@ int GetTimeData(FractalTimeData *time_data) {
     runcmd(
         "path=$(readlink /etc/localtime); echo "
         "${path#\"/var/db/timezone/zoneinfo\"}",
-        &time_data->linux_tz_name);
+        &response);
     strcpy(time_data->linux_tz_name, response);
     free(response);
 
