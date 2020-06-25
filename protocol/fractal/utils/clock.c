@@ -113,8 +113,8 @@ int GetDST(){
 #endif
 }
 
-#ifdef _WIN32
 int GetTimeData(FractalTimeData *time_data) {
+#ifdef _WIN32
     time_data->use_win_name = 1;
     time_data->use_linux_name = 0;
 
@@ -127,9 +127,7 @@ int GetTimeData(FractalTimeData *time_data) {
     LOG_INFO("Sending Windows TimeZone %s", time_data->win_tz_name);
 
     return 0;
-}
 #elif __APPLE__
-int GetTimeData(FractalTimeData *time_data) {
     time_data->use_win_name = 0;
     time_data->use_linux_name = 1;
 
@@ -146,9 +144,7 @@ int GetTimeData(FractalTimeData *time_data) {
     free(response);
 
     return 0;
-}
 #else
-int GetTimeData(FractalTimeData *time_data) {
     time_data->use_win_name = 0;
     time_data->use_linux_name = 1;
 
@@ -162,5 +158,5 @@ int GetTimeData(FractalTimeData *time_data) {
     free(response);
 
     return 0;
-}
 #endif
+}
