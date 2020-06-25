@@ -115,6 +115,7 @@ class Login extends Component {
                     "^(?:Success code=)(.+?)(?:&.+)$"
                 );
                 const code = pageTitle.match(codeRegexp)[1];
+                this.setState({ loggingIn: true });
                 this.props.dispatch(googleLogin(code));
             }
         });
@@ -369,14 +370,43 @@ class Login extends Component {
                                 </div>
                             )}
                             <div className={styles.loginContainer}>
-                                <button
-                                    onClick={() => this.GoogleLogin()}
-                                    type="button"
-                                    className={styles.googleButton}
-                                    id="google-button"
-                                >
-                                    LOGIN WITH GOOGLE
-                                </button>
+                                <div style={{ marginBottom: 20 }}>
+                                    {this.state.loggingIn &&
+                                    !this.props.warning ? (
+                                        <button
+                                            type="button"
+                                            className={styles.googleButton}
+                                            id="google-button"
+                                            style={{
+                                                opacity: 0.6,
+                                                textAlign: "center"
+                                            }}
+                                        >
+                                            <FontAwesomeIcon
+                                                icon={faCircleNotch}
+                                                spin
+                                                style={{
+                                                    color: "white",
+                                                    width: 12,
+                                                    marginRight: 5,
+                                                    position: "relative",
+                                                    top: 0.5
+                                                }}
+                                            />{" "}
+                                            Processing
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => this.GoogleLogin()}
+                                            type="button"
+                                            className={styles.googleButton}
+                                            id="google-button"
+                                        >
+                                            LOGIN WITH GOOGLE
+                                        </button>
+                                    )}
+                                </div>
+
                                 <div>
                                     <img
                                         src={UserIcon}
