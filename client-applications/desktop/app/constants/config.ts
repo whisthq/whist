@@ -36,7 +36,7 @@ const development = {
 };
 
 export const config =
-    process.env.NODE_ENV === "development" ? staging : production;
+    process.env.NODE_ENV === "development" ? development : development;
 
 export const GOOGLE_CLIENT_ID =
-    "581514545734-7k820154jdfp0ov2ifk4ju3vodg0oec2.apps.googleusercontent.com";
+    "581514545734-gml44hupfv9shlj68703s67crnbgjuoe.apps.googleusercontent.com";

@@ -94,6 +94,33 @@ class Login extends Component {
         }
     };
 
+    GoogleLogin = () => {
+        const { BrowserWindow } = require("electron").remote;
+
+        const authWindow = new BrowserWindow({
+            width: 800,
+            height: 600,
+            show: false,
+            "node-integration": false,
+            "web-security": false,
+        });
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=urn:ietf:wg:oauth:2.0:oob:auto&client_id=${GOOGLE_CLIENT_ID}&origin=https%3A//fractalcomputers.com`;
+        authWindow.loadURL(authUrl, { userAgent: "Chrome" });
+        authWindow.show();
+
+        authWindow.webContents.on("page-title-updated", (event, newUrl) => {
+            const pageTitle = authWindow.getTitle();
+            if (pageTitle.includes("Success")) {
+                const codeRegexp = new RegExp(
+                    "^(?:Success code=)(.+?)(?:&.+)$"
+                );
+                const code = pageTitle.match(codeRegexp)[1];
+                this.setState({ loggingIn: true });
+                this.props.dispatch(googleLogin(code));
+            }
+        });
+    };
+
     ForgotPassword = () => {
         const { shell } = require("electron");
         shell.openExternal("https://www.fractalcomputers.com/reset");
@@ -343,35 +370,43 @@ class Login extends Component {
                                 </div>
                             )}
                             <div className={styles.loginContainer}>
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        width: "100%",
-                                        margin: "auto",
-                                        marginTop: 20,
-                                        maxWidth: 300,
-                                        borderRadius: 4,
-                                        background: "rgba(76, 139, 245, 0.1)",
-                                    }}
-                                    className="google-button-wrapper"
-                                >
-                                    <GoogleLogin
-                                        clientId={GOOGLE_CLIENT_ID}
-                                        buttonText="Sign in with Google"
-                                        responseType="code"
-                                        accessType="offline"
-                                        onSuccess={this.responseGoogleSuccess}
-                                        onFailure={this.responseGoogleFailure}
-                                        cookiePolicy="single_host_origin"
-                                        redirectUri="postmessage"
-                                        prompt="consent"
-                                        style={{
-                                            width: "100%",
-                                            fontWeight: "bold",
-                                        }}
-                                    />
+                                <div style={{ marginBottom: 20 }}>
+                                    {this.state.loggingIn &&
+                                    !this.props.warning ? (
+                                        <button
+                                            type="button"
+                                            className={styles.googleButton}
+                                            id="google-button"
+                                            style={{
+                                                opacity: 0.6,
+                                                textAlign: "center",
+                                            }}
+                                        >
+                                            <FontAwesomeIcon
+                                                icon={faCircleNotch}
+                                                spin
+                                                style={{
+                                                    color: "white",
+                                                    width: 12,
+                                                    marginRight: 5,
+                                                    position: "relative",
+                                                    top: 0.5,
+                                                }}
+                                            />{" "}
+                                            Processing
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => this.GoogleLogin()}
+                                            type="button"
+                                            className={styles.googleButton}
+                                            id="google-button"
+                                        >
+                                            LOGIN WITH GOOGLE
+                                        </button>
+                                    )}
                                 </div>
+
                                 <div>
                                     <img
                                         src={UserIcon}
