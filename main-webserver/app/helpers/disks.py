@@ -742,3 +742,42 @@ def fetchDiskSetting(disk_name, setting_name):
             return disk_info[setting_name]
         else:
             return None
+
+
+def fetchDiskInfo(disk_name, show_all=False, main=True, ID=-1):
+    """Fetches all disks associated with the user
+
+    Args:
+        username (str): The username. If username is null, it fetches all disks
+        show_all (bool, optional): Whether or not to select all disks regardless of state, vs only disks with ACTIVE state. Defaults to False.
+        ID (int, optional): Papertrail logging ID. Defaults to -1.
+
+    Returns:
+        array: An array of the disks
+    """
+    if username:
+        if not show_all:
+            sendInfo(
+                ID,
+                "Fetching all disks associated with {} state ACTIVE".format(username),
+            )
+
+            command = text(
+                """
+                SELECT * FROM disks WHERE "username" = :username AND "state" = :state
+                """
+            )
+            params = {"username": username, "state": "ACTIVE"}
+            with engine.connect() as conn:
+                sendInfo(ID, "Connection with Postgres established")
+
+                disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+
+                if not disks_info:
+                    return []
+
+                if main:
+                    disks_info = [disk for disk in disks_info if disk["main"]]
+
+                return disks_info
