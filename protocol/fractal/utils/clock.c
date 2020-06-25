@@ -2,6 +2,11 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#if _WIN32
+int GetUTCOffset();
+#endif
 
 #if defined(_WIN32)
 LARGE_INTEGER frequency;
@@ -80,4 +85,28 @@ char* CurrentTimeStr() {
     //    strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
 
     return buffer;
+}
+
+int GetUTCOffset(){
+#if defined(_WIN32)
+    return 0;
+#else
+    time_t t = time(NULL);
+    struct tm lt = {0};
+    localtime_r(&t, &lt);
+    printf("dst flag %d \n \n", lt.tm_isdst);
+
+    return (int) lt.tm_gmtoff / (60 * 60);
+#endif
+    }
+
+int GetDST(){
+#if defined(_WIN32)
+    return 0;
+#else
+    time_t t = time(NULL);
+    struct tm lt = {0};
+    localtime_r(&t, &lt);
+    return lt.tm_isdst;
+#endif
 }

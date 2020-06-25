@@ -227,7 +227,7 @@ void update() {
 // FractalClientMessage packets are needed, then this will have to be
 // implemented)
 int SendFmsg(FractalClientMessage* fmsg) {
-    if (fmsg->type == CMESSAGE_CLIPBOARD) {
+    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_TIME) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg,
                              GetFmsgSize(fmsg));
     } else {
@@ -749,6 +749,7 @@ int main(int argc, char* argv[]) {
             }
 
             if (init_spectator) {
+
                 FractalServerMessage* fmsg = (void*)init_spectator->data;
                 LOG_INFO("SPECTATOR PORT: %d", fmsg->spectator_port);
 
@@ -863,6 +864,48 @@ int main(int argc, char* argv[]) {
         SDL_Event msg;
         FractalClientMessage fmsg = {0};
 
+        // only non spectators change the time zone
+        if (!is_spectator) {
+            // send a TCP packet with local UTC time offset.
+            fmsg.type = MESSAGE_TIME;
+#ifndef _WIN32
+//        if not windows we get UTC info
+
+            fmsg.time_data.UTC_Offset = GetUTCOffset();
+            LOG_INFO("Sending UTC offset %d", fmsg.time_data.UTC_Offset);
+            fmsg.time_data.DST_flag = GetDST();
+            fmsg.time_data.use_win_name = 0;
+            fmsg.time_data.use_linux_name = 1;
+
+//        if on apple or linux we get IANA timezone name
+#if __APPLE__
+            runcmd(
+                "path=$(readlink /etc/localtime); echo "
+                "${path#\"/var/db/timezone/zoneinfo\"}",
+                &fmsg.time_data.linux_tz_name);
+#else
+            char *response = NULL;
+            runcmd("cat /etc/timezone", &response);
+            strcpy(fmsg.time_data.linux_tz_name, response);
+            free(response);
+#endif
+#endif
+
+// if we are on windows we get the windows timezone name
+#ifdef  _WIN32
+            char* win_tz_name = NULL;
+            runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
+            fmsg.time_data.use_win_name = 1;
+            fmsg.time_data.use_linux_name = 0;
+            strcpy(fmsg.time_data.win_tz_name, win_tz_name);
+            fmsg.time_data.win_tz_name[strlen( fmsg.time_data.win_tz_name ) - 1] = '\0';
+            SendFmsg(&fmsg);
+            LOG_INFO("Sending Windows TimeZone %s", fmsg.time_data.win_tz_name);
+            free(win_tz_name);
+#endif
+            SendFmsg(&fmsg);
+        }
+
         clock ack_timer;
         StartTimer(&ack_timer);
 
@@ -933,6 +976,7 @@ int main(int argc, char* argv[]) {
 
                                 StartTimer(&window_resize_timer);
                             }
+
 
                             LOG_INFO(
                                 "Window %d resized to %dx%d (Physical %dx%d)\n",
