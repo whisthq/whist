@@ -94,6 +94,44 @@ class Login extends Component {
         }
     };
 
+    // https://accounts.google.com/signin/oauth/oauthchooseaccount?redirect_uri=storagerelay%3A%2F%2Fhttp%2Flocalhost%3A3000%3Fid%3Dauth451374&response_type=code%20permission%20id_token&scope=openid%20profile%20email&openid.realm&client_id=581514545734-7k820154jdfp0ov2ifk4ju3vodg0oec2.apps.googleusercontent.com&ss_domain=http%3A%2F%2Flocalhost%3A3000&access_type=offline&include_granted_scopes=true&prompt=consent&origin=http%3A%2F%2Flocalhost%3A3000&gsiwebsdk=2&o2v=1&as=yy3gAN-b5EavdiDls10R6Q&flowName=GeneralOAuthFlow
+
+    // https://accounts.google.com/signin/oauth/legacy/consent?authuser=0&part=AJi8hANHjwZHK7CU7JssRYVUZ9C22rUdqarccUDVHirsgacoaKuPjx6HQMIe4wfPK2gAEuFNIVMj7HYso6oASXZDjuEaixFYR8Fjgko763lyVfy_nkiKYoEbvCUDkhwpt49p9k1m3D-dl0TY8rybxDqiMxApq2HoiF8Zt66T-Kd9baVH0up51n6upnXLLOQLiWLlKxgX7Q2IWzQlO6Buz2zmxyKpMQcNJydkCxfWI_SZnjJNeAw3MShZty_XIBjRaeFyOyKx916io0OFDRh3rQLElCsPRdjGzADyOogOGq80esJ3hz-yCCWLVmCdJHIOwX-NoxpgZ47-grE2gNeXF2wgEKIPrabNNfljS0-41jC_ukt8GvB8FY7oNZ40uHDbOTWps0n1rut8uHasjHUXfe4n-tG1iVbey-WlLHaJT-9kKulRNNfgNj5_htHjRy_GVwmQlx8N2Shq&as=6lsiB9S_il26HjbrdaQe-w&pli=1#
+
+    GoogleLogin = () => {
+        const { BrowserWindow } = require("electron").remote;
+
+        const authWindow = new BrowserWindow({
+            width: 800,
+            height: 600,
+            show: false,
+            "node-integration": false,
+            "web-security": false
+        });
+        const authUrl =
+            "https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=urn:ietf:wg:oauth:2.0:oob:auto&client_id=581514545734-gml44hupfv9shlj68703s67crnbgjuoe.apps.googleusercontent.com&origin=https%3A//fractalcomputers.com";
+        authWindow.loadURL(authUrl, { userAgent: "Chrome" });
+        authWindow.show();
+
+        authWindow.webContents.on("page-title-updated", function (
+            event,
+            newUrl
+        ) {
+            const pageTitle = authWindow.getTitle();
+            console.log(pageTitle);
+            console.log(pageTitle.includes("Success"));
+            if (pageTitle.includes("Success")) {
+                const codeRegexp = new RegExp(
+                    "^(?:Success code=)(.+?)(?:&.+)$"
+                );
+                console.log(pageTitle.match(codeRegexp));
+                const code = pageTitle.match(codeRegexp)[1];
+                console.log(code);
+            }
+            // More complex code to handle tokens goes here
+        });
+    };
+
     ForgotPassword = () => {
         const { shell } = require("electron");
         shell.openExternal("https://www.fractalcomputers.com/reset");
@@ -343,35 +381,14 @@ class Login extends Component {
                                 </div>
                             )}
                             <div className={styles.loginContainer}>
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        width: "100%",
-                                        margin: "auto",
-                                        marginTop: 20,
-                                        maxWidth: 300,
-                                        borderRadius: 4,
-                                        background: "rgba(76, 139, 245, 0.1)"
-                                    }}
-                                    className="google-button-wrapper"
+                                <button
+                                    onClick={() => this.GoogleLogin()}
+                                    type="button"
+                                    className={styles.googleButton}
+                                    id="google-button"
                                 >
-                                    <GoogleLogin
-                                        clientId={GOOGLE_CLIENT_ID}
-                                        buttonText="Sign in with Google"
-                                        responseType="code"
-                                        accessType="offline"
-                                        onSuccess={this.responseGoogleSuccess}
-                                        onFailure={this.responseGoogleFailure}
-                                        cookiePolicy="single_host_origin"
-                                        redirectUri="postmessage"
-                                        prompt="consent"
-                                        style={{
-                                            width: "100%",
-                                            fontWeight: "bold"
-                                        }}
-                                    />
-                                </div>
+                                    LOGIN WITH GOOGLE
+                                </button>
                                 <div>
                                     <img
                                         src={UserIcon}
