@@ -21,20 +21,19 @@ function* refreshAccess(action) {
 function* googleLogin(action) {
     yield select();
 
-    console.log(action);
-
     if (action.code) {
         const { json } = yield call(
             apiPost,
             `${config.url.PRIMARY_SERVER}/account/googleLogin`,
             {
-                code: action.code
+                code: action.code,
+                clientApp: true
             }
         );
         if (json) {
             if (json.status === 200) {
-                yield put(Action.fetchDisk(action.username));
-                yield call(fetchPaymentInfo, action);
+                yield put(Action.fetchDisk(json.username));
+                yield call(fetchPaymentInfo, { username: json.username });
 
                 yield put(Action.storeUsername(json.username));
                 yield put(Action.storeIsUser(json.is_user));
@@ -42,7 +41,7 @@ function* googleLogin(action) {
                     Action.storeJWT(json.access_token, json.refresh_token)
                 );
 
-                yield call(getPromoCode, action);
+                yield call(getPromoCode, { username: json.username });
 
                 history.push("/dashboard");
             } else {
@@ -406,6 +405,7 @@ export default function* rootSaga() {
     yield all([
         takeEvery(Action.SEND_FEEDBACK, sendFeedback),
         takeEvery(Action.LOGIN_USER, loginUser),
+        takeEvery(Action.GOOGLE_LOGIN, googleLogin),
         takeEvery(Action.LOGIN_STUDIO, loginStudio),
         takeEvery(Action.PING_IPINFO, pingIPInfo),
         takeEvery(Action.STORE_IPINFO, storeIPInfo),

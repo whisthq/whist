@@ -94,10 +94,6 @@ class Login extends Component {
         }
     };
 
-    // https://accounts.google.com/signin/oauth/oauthchooseaccount?redirect_uri=storagerelay%3A%2F%2Fhttp%2Flocalhost%3A3000%3Fid%3Dauth451374&response_type=code%20permission%20id_token&scope=openid%20profile%20email&openid.realm&client_id=581514545734-7k820154jdfp0ov2ifk4ju3vodg0oec2.apps.googleusercontent.com&ss_domain=http%3A%2F%2Flocalhost%3A3000&access_type=offline&include_granted_scopes=true&prompt=consent&origin=http%3A%2F%2Flocalhost%3A3000&gsiwebsdk=2&o2v=1&as=yy3gAN-b5EavdiDls10R6Q&flowName=GeneralOAuthFlow
-
-    // https://accounts.google.com/signin/oauth/legacy/consent?authuser=0&part=AJi8hANHjwZHK7CU7JssRYVUZ9C22rUdqarccUDVHirsgacoaKuPjx6HQMIe4wfPK2gAEuFNIVMj7HYso6oASXZDjuEaixFYR8Fjgko763lyVfy_nkiKYoEbvCUDkhwpt49p9k1m3D-dl0TY8rybxDqiMxApq2HoiF8Zt66T-Kd9baVH0up51n6upnXLLOQLiWLlKxgX7Q2IWzQlO6Buz2zmxyKpMQcNJydkCxfWI_SZnjJNeAw3MShZty_XIBjRaeFyOyKx916io0OFDRh3rQLElCsPRdjGzADyOogOGq80esJ3hz-yCCWLVmCdJHIOwX-NoxpgZ47-grE2gNeXF2wgEKIPrabNNfljS0-41jC_ukt8GvB8FY7oNZ40uHDbOTWps0n1rut8uHasjHUXfe4n-tG1iVbey-WlLHaJT-9kKulRNNfgNj5_htHjRy_GVwmQlx8N2Shq&as=6lsiB9S_il26HjbrdaQe-w&pli=1#
-
     GoogleLogin = () => {
         const { BrowserWindow } = require("electron").remote;
 
@@ -112,22 +108,15 @@ class Login extends Component {
         authWindow.loadURL(authUrl, { userAgent: "Chrome" });
         authWindow.show();
 
-        authWindow.webContents.on("page-title-updated", function (
-            event,
-            newUrl
-        ) {
+        authWindow.webContents.on("page-title-updated", (event, newUrl) => {
             const pageTitle = authWindow.getTitle();
-            console.log(pageTitle);
-            console.log(pageTitle.includes("Success"));
             if (pageTitle.includes("Success")) {
                 const codeRegexp = new RegExp(
                     "^(?:Success code=)(.+?)(?:&.+)$"
                 );
-                console.log(pageTitle.match(codeRegexp));
                 const code = pageTitle.match(codeRegexp)[1];
-                console.log(code);
+                this.props.dispatch(googleLogin(code));
             }
-            // More complex code to handle tokens goes here
         });
     };
 
