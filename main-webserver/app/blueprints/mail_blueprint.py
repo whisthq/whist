@@ -274,7 +274,7 @@ def purchase():
 @mail_bp.route("/signup", methods=["POST"])
 def signup():
     body = request.get_json()
-    user, code, token = body["username"], body["code"]
+    user, code = body["username"], body["code"]
     title = "Welcome to Fractal"
 
     internal_message = SendGridMail(
