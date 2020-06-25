@@ -742,3 +742,19 @@ def fetchDiskSetting(disk_name, setting_name):
             return disk_info[setting_name]
         else:
             return None
+
+def fetchDisk(disk_name):
+    with engine.connect() as conn:
+        command = text(
+            """
+            SELECT * FROM disks WHERE "disk_name" = :disk_name
+            """
+        )
+
+        params = {"disk_name": disk_name}
+        disk_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+
+        if disk_info:
+            return disk_info
+        else:
+            return None

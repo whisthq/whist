@@ -121,6 +121,10 @@ def disk(action, **kwargs):
     elif action == "fetchAll":
         disks = fetchAllDisks()
         return jsonify({"status": 200, "disks": disks}), 200
+    elif action == "fetchDisk":
+        body = request.get_json()
+        disk = fetchDisk(body["disk_name"])
+        return jsonify({"disk":disk}), 200
     elif action == "swap":
         body = json.loads(request.data)
         task = swapSpecificDisk.apply_async(
