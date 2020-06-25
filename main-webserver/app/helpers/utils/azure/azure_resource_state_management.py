@@ -154,6 +154,12 @@ def sendVMStartCommand(
             ),
             level=logging.CRITICAL,
         )
+        fractalLog(
+            function="sendVMStartCommand",
+            label=str(username),
+            logs="Traceback: {traceback}".format(traceback=str(traceback.format_exc())),
+            level=logging.CRITICAL,
+        )
         return -1
 
 
