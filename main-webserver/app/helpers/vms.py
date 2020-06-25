@@ -1528,6 +1528,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                 )
 
             if needs_winlogon:
+                print("Winlogon 1")
                 winlogon = waitForWinlogon(vm_name, ID)
                 while winlogon < 0:
                     boot_if_necessary(vm_name, True, ID)
@@ -1538,6 +1539,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                                 "msg": "Logging you into your cloud PC. This should take less than two minutes."
                             },
                         )
+                    print("Winlogon 2")
                     winlogon = waitForWinlogon(vm_name, ID)
 
                 if s:

@@ -55,9 +55,17 @@ def test_vm(input_token):
 
     # Test start
     print("Testing start...")
+    requests.post((SERVER_URL + '/vm/setDev'), json={
+        "vm_name":vm_name,
+	    "dev":True
+    })
     # requests.post((SERVER_URL + '/vm/start'), json={
     #     "vm_name":vm_name,
     # })
+    requests.post((SERVER_URL + '/vm/setDev'), json={
+        "vm_name":vm_name,
+	    "dev":False
+    })
 
     # Test delete
     print("Testing create...")
