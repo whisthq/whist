@@ -1411,7 +1411,8 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
     // create the struct for the webserver address socket we will query
     webserver_socketAddress.sin_family = AF_INET;
     webserver_socketAddress.sin_port = htons(80);  // HTTP port
-    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr);
+    webserver_socketAddress.sin_addr.s_addr =
+        *((unsigned long *)host->h_addr_list[0]);
 
     // connect to the web server before sending the POST request packet
     int connect_status =
