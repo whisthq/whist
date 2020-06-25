@@ -84,7 +84,7 @@ def sendVMStartCommand(
             # If a Windows VM, wait for a winlogon ping, which indicates that the server-side protocol is running
 
             if needs_winlogon:
-                winlogon = waitForWinlogon(vm_name)
+                winlogon = waitForWinlogon(vm_name, resource_group)
 
                 # If we did not receive a winlogon ping, reboot the VM and keep waiting
 
@@ -103,7 +103,7 @@ def sendVMStartCommand(
                         return -1
 
                     boot_if_necessary(vm_name, True)
-                    winlogon = waitForWinlogon(vm_name)
+                    winlogon = waitForWinlogon(vm_name, resource_group)
 
                 if s:
                     s.update_state(

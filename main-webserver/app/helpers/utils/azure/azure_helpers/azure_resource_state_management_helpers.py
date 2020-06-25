@@ -35,7 +35,7 @@ def boot_if_necessary(
 
         fractalLog(
             function="sendVMStartCommand",
-            label="VM {vm_name}".format(vm_name=vm_name),
+            label=getVMUser(vm_name, resource_group),
             logs="Detected that VM {vm_name} is in state {power_state}. starting to boot.".format(
                 vm_name=vm_name, power_state=power_state
             ),
@@ -46,6 +46,12 @@ def boot_if_necessary(
         async_vm_start = compute_client.virtual_machines.start(resource_group, vm_name)
 
         async_vm_start.wait()
+
+        fractalLog(
+            function="sendVMStartCommand",
+            label=getVMUser(vm_name, resource_group),
+            logs="VM {vm_name} started successfully.".format(vm_name=vm_name),
+        )
 
         if s:
             s.update_state(
@@ -105,7 +111,7 @@ def changeFirstTime(disk_name, first_time=False):
     )
 
 
-def waitForWinlogon(vm_name, s=None):
+def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
     """Periodically checks and sleeps until winlogon succeeds
 
     Args:
@@ -117,8 +123,10 @@ def waitForWinlogon(vm_name, s=None):
 
     # Check if a VM has winlogon'ed within the last 10 seconds
 
-    def checkWinlogon(vm_name):
-        output = fractalSQLSelect(table_name="v_ms", params={"vm_name": vm_name})
+    def checkWinlogon(vm_name, resource_group):
+        output = fractalSQLSelect(
+            table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
+        )
 
         has_winlogoned = False
         if output["success"] and output["rows"]:
@@ -130,8 +138,10 @@ def waitForWinlogon(vm_name, s=None):
 
     # Check if a VM is a dev machine
 
-    def checkDev(vm_name):
-        output = fractalSQLSelect(table_name="v_ms", params={"vm_name": vm_name})
+    def checkDev(vm_name, resource_group):
+        output = fractalSQLSelect(
+            table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
+        )
 
         if output["success"] and output["rows"]:
             return output["rows"][0]["dev"]
@@ -146,12 +156,16 @@ def waitForWinlogon(vm_name, s=None):
             },
         )
 
-    has_winlogoned = checkWinlogon(vm_name)
+    has_winlogoned = checkWinlogon(vm_name, resource_group)
     num_tries = 0
 
     # Return success if a winlogon has been detected within the last 10 seconds
 
-    if has_winlogoned or checkDev(vm_name):
+    if (
+        has_winlogoned
+        or checkDev(vm_name, resource_group)
+        or resource_group != os.getenv("VM_GROUP")
+    ):
         return 1
     else:
         fractalLog(
@@ -166,7 +180,7 @@ def waitForWinlogon(vm_name, s=None):
 
     while not has_winlogoned:
         time.sleep(5)
-        has_winlogoned = checkWinlogon(vm_name)
+        has_winlogoned = checkWinlogon(vm_name, resource_group)
         num_tries += 1
 
         # Give up if we've waited too long
