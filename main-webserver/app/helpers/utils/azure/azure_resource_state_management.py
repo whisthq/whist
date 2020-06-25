@@ -38,6 +38,15 @@ def sendVMStartCommand(
             disk_name = output["rows"][0]["disk_name"]
             username = output["rows"][0]["username"]
         else:
+            fractalLog(
+                function="sendVMStartCommand",
+                label=vm_name,
+                logs="Could not find a VM named {vm_name} in table {table_name}".format(
+                    vm_name=vm_name,
+                    table_name=str(resourceGroupToTable(resource_group)),
+                ),
+                level=logging.ERROR,
+            )
             return -1
 
         # Check if the disk has been initially set up
