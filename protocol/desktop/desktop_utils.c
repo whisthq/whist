@@ -154,25 +154,21 @@ char *dupstring(char *s1) {
     return ret;
 }
 
-#ifdef _WIN32
 char *getLogDir(void) {
+#ifdef _WIN32
     return dupstring(".");
-}
 #else
-char *getLogDir(void) {
     return appendPathToHome(".fractal");
-}
 #endif
+}
 
+static char *getConnectionIDLogPath(void) {
 #ifdef _WIN32
-static char *getConnectionIDLogPath(void) {
     return dupstring("connection_id.txt");
-}
 #else
-static char *getConnectionIDLogPath(void) {
     return appendPathToHome(".fractal/connection_id.txt");
-}
 #endif
+}
 
 int logConnectionID(int connection_id) {
     char *path = getConnectionIDLogPath();
@@ -196,24 +192,23 @@ int logConnectionID(int connection_id) {
     return 0;
 }
 
-#ifdef _WIN32
 int initSocketLibrary(void) {
+#ifdef _WIN32
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         mprintf("Failed to initialize Winsock with error code: %d.\n",
                 WSAGetLastError());
         return -1;
     }
+#endif
     return 0;
 }
 int destroySocketLibrary(void) {
+#ifdef _WIN32
     WSACleanup();
+#endif
     return 0;
 }
-#else
-int initSocketLibrary(void) { return 0; };
-int destroySocketLibrary(void) { return 0; };
-#endif
 
 /*
    Write ecdsa key to a local file for ssh to use, for that server ip
@@ -259,17 +254,15 @@ int configureSSHKeys(void) {
 // the mkdir command won't do anything if the folder already exists, in
 // which case we make sure to clear the previous logs and connection id
 
-#ifdef _WIN32
-int configureCache(void) { return 0; }
-#else
 int configureCache(void) {
+#ifndef _WIN32
     runcmd("mkdir ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
     runcmd("rm -f ~/.fractal/log.txt", NULL);
     runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
+#endif
     return 0;
 }
-#endif
 
 int sendTimeToServer(void) {
     FractalClientMessage fmsg = {0};
