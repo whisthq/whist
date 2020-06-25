@@ -258,7 +258,7 @@ class Login extends Component {
                             </div>
                         </div>
                         <div style={{ marginTop: 70 }}>
-                            {this.state.warning && (
+                            {this.props.warning && (
                                 <div
                                     style={{
                                         textAlign: "center",

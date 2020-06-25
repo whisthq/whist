@@ -984,8 +984,8 @@ class MainBox extends Component {
                     <div
                         style={{
                             position: "relative",
-                            width: 800,
-                            height: 410,
+                            width: 900,
+                            height: 490,
                             borderRadius: 5,
                             boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.2)",
                             background: "white",
@@ -1053,8 +1053,72 @@ class MainBox extends Component {
                                     >
                                         When activated, a titlebar will appear
                                         at the top of your cloud PC, so you can
-                                        adjust your cloud PC's position on your
-                                        screen.
+                                        adjust and resize your cloud PC window.
+                                    </div>
+                                </div>
+                                <div style={{ width: "25%" }}>
+                                    <div style={{ float: "right" }}>
+                                        <ToggleButton
+                                            value={this.state.windowMode}
+                                            onToggle={this.toggleWindow}
+                                            colors={{
+                                                active: {
+                                                    base: "#5EC4EB",
+                                                },
+                                                inactive: {
+                                                    base: "#161936",
+                                                },
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            style={{
+                                padding: "30px 30px",
+                                borderBottom: "solid 0.5px #EFEFEF",
+                            }}
+                        >
+                            <div style={{ display: "flex" }}>
+                                <div style={{ width: "75%" }}>
+                                    <div
+                                        style={{
+                                            color: "#111111",
+                                            fontSize: 16,
+                                            fontWeight: "bold",
+                                        }}
+                                    >
+                                        <img
+                                            src={Window}
+                                            style={{
+                                                color: "#111111",
+                                                height: 14,
+                                                marginRight: 12,
+                                                position: "relative",
+                                                top: 2,
+                                                width: 16,
+                                            }}
+                                        />
+                                        Low Internet Mode
+                                    </div>
+                                    <div
+                                        style={{
+                                            fontSize: 13,
+                                            color: "#333333",
+                                            marginTop: 10,
+                                            marginLeft: 28,
+                                            lineHeight: 1.4,
+                                        }}
+                                    >
+                                        If you have low Internet speeds (less
+                                        than 15 Mbps) and are experiencing
+                                        stuttering, low Internet mode will
+                                        reduce Fractal's Internet speed
+                                        requirement. Note that this will
+                                        increase your latency by a very small
+                                        amount, so we don't recommend activating
+                                        it unless necessary.
                                     </div>
                                 </div>
                                 <div style={{ width: "25%" }}>
