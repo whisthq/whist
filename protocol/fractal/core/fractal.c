@@ -58,7 +58,7 @@ dynamic_buffer init_dynamic_buffer()
 
 void resize_dynamic_buffer( dynamic_buffer db, int new_size )
 {
-    if( new_size > db->size )
+    if( new_size > db->capacity )
     {
         int new_capacity = new_size * 2;
         char* new_buffer = realloc( db->buf, new_capacity );
@@ -74,6 +74,9 @@ void resize_dynamic_buffer( dynamic_buffer db, int new_size )
             db->size = new_size;
             db->buf = new_buffer;
         }
+    } else
+    {
+        db->size = new_size;
     }
 }
 
