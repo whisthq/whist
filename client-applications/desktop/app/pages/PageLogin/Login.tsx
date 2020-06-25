@@ -11,9 +11,9 @@ import LockIcon from "resources/images/lock.svg";
 import UpdateScreen from "pages/PageDashboard/components/UpdateScreen.tsx";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
+import { faCircleNotch, faGoogle } from "@fortawesome/free-solid-svg-icons";
 
-import { GoogleLogin } from "react-google-login";
+import { FaGoogle } from "react-icons/fa";
 
 import {
     loginUser,
@@ -402,43 +402,6 @@ class Login extends Component {
                                 </div>
                             )}
                             <div className={styles.loginContainer}>
-                                <div style={{ marginBottom: 20 }}>
-                                    {this.state.loggingIn &&
-                                    !this.props.warning ? (
-                                        <button
-                                            type="button"
-                                            className={styles.googleButton}
-                                            id="google-button"
-                                            style={{
-                                                opacity: 0.6,
-                                                textAlign: "center",
-                                            }}
-                                        >
-                                            <FontAwesomeIcon
-                                                icon={faCircleNotch}
-                                                spin
-                                                style={{
-                                                    color: "white",
-                                                    width: 12,
-                                                    marginRight: 5,
-                                                    position: "relative",
-                                                    top: 0.5,
-                                                }}
-                                            />{" "}
-                                            Processing
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => this.GoogleLogin()}
-                                            type="button"
-                                            className={styles.googleButton}
-                                            id="google-button"
-                                        >
-                                            LOGIN WITH GOOGLE
-                                        </button>
-                                    )}
-                                </div>
-
                                 <div>
                                     <img
                                         src={UserIcon}
@@ -504,7 +467,7 @@ class Login extends Component {
                                                 className={styles.loginButton}
                                                 id="login-button"
                                             >
-                                                START
+                                                Get Started
                                             </button>
                                         )
                                     ) : (
@@ -519,9 +482,55 @@ class Login extends Component {
                                                 borderRadius: 5,
                                             }}
                                         >
-                                            START
+                                            Get Started
                                         </button>
                                     )}
+                                    <div style={{ marginBottom: 20 }}>
+                                        {this.state.loggingIn &&
+                                        !this.props.warning ? (
+                                            <button
+                                                type="button"
+                                                className={styles.googleButton}
+                                                id="google-button"
+                                                style={{
+                                                    opacity: 0.6,
+                                                    textAlign: "center",
+                                                }}
+                                            >
+                                                <FontAwesomeIcon
+                                                    icon={faCircleNotch}
+                                                    spin
+                                                    style={{
+                                                        color: "white",
+                                                        width: 12,
+                                                        marginRight: 5,
+                                                        position: "relative",
+                                                        top: 0.5,
+                                                    }}
+                                                />{" "}
+                                                Processing
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() =>
+                                                    this.GoogleLogin()
+                                                }
+                                                type="button"
+                                                className={styles.googleButton}
+                                                id="google-button"
+                                            >
+                                                <FaGoogle
+                                                    style={{
+                                                        fontSize: 16,
+                                                        marginRight: 10,
+                                                        position: "relative",
+                                                        top: 3,
+                                                    }}
+                                                />
+                                                Login with Google
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                                 <div
                                     style={{
