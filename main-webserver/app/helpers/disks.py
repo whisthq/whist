@@ -744,7 +744,7 @@ def fetchDiskSetting(disk_name, setting_name):
             return None
 
 
-def fetchDiskInfo(disk_name, show_all=False, main=True, ID=-1):
+def fetchDiskInfo(disk_name):
     """Fetches all disks associated with the user
 
     Args:
@@ -755,29 +755,14 @@ def fetchDiskInfo(disk_name, show_all=False, main=True, ID=-1):
     Returns:
         array: An array of the disks
     """
-    if username:
-        if not show_all:
-            sendInfo(
-                ID,
-                "Fetching all disks associated with {} state ACTIVE".format(username),
-            )
+    command = text(
+        """
+        SELECT * FROM disks WHERE "disk_name" = :disk_name
+        """
+    )
+    params = {"disk_name": disk_name}
+    with engine.connect() as conn:
+        disk_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
 
-            command = text(
-                """
-                SELECT * FROM disks WHERE "username" = :username AND "state" = :state
-                """
-            )
-            params = {"username": username, "state": "ACTIVE"}
-            with engine.connect() as conn:
-                sendInfo(ID, "Connection with Postgres established")
-
-                disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-                conn.close()
-
-                if not disks_info:
-                    return []
-
-                if main:
-                    disks_info = [disk for disk in disks_info if disk["main"]]
-
-                return disks_info
+        return disk_info

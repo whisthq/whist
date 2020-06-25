@@ -308,11 +308,11 @@ def vm(action, **kwargs):
             if vm_info:
                 is_dev = vm_info["dev"]
                 disk_name = vm_info["disk_name"]
-                disk_info = fetchUserDisks(vm_info["username"])
+                disk_info = fetchDiskInfo(disk_name)
 
                 branch = None
                 if disk_info:
-                    branch = disk_info[0]["branch"]
+                    branch = disk_info["branch"]
 
                 using_stun = fetchDiskSetting(disk_name, "using_stun")
 
