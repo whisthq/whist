@@ -37,14 +37,19 @@ def register(username, password, name, feedback):
 
 
 def test_register(input_token):
-    register("fakefake@delete.com", "password", "Delete Me", "Two men walk into a bar. Knock knock.")
-    resp = requests.post((SERVER_URL + '/account/fetchUser'), json={
-        "username": "fakefake@delete.com"
-    }, headers={
-        "Authorization": "Bearer " + input_token
-    })
+    register(
+        "fakefake@delete.com",
+        "password",
+        "Delete Me",
+        "Two men walk into a bar. Knock knock.",
+    )
+    resp = requests.post(
+        (SERVER_URL + "/account/fetchUser"),
+        json={"username": "fakefake@delete.com"},
+        headers={"Authorization": "Bearer " + input_token},
+    )
     success = resp.json()["user"] is not None
-    if success: # Delete test account if successful
+    if success:  # Delete test account if successful
         delete("fakefake@delete.com", input_token)
     assert success
 
@@ -60,23 +65,29 @@ def delete(username, authToken):
 def test_delete(input_token):
     """Creates a test user and deletes it
     """
-    register("fakefake@delete.com", "password", "Delete Me", "Two men walk into a bar. Knock knock.")
+    register(
+        "fakefake@delete.com",
+        "password",
+        "Delete Me",
+        "Two men walk into a bar. Knock knock.",
+    )
     delete("fakefake@delete.com", input_token)
-    resp = requests.post((SERVER_URL + '/account/fetchUser'), json={
-        "username": "fakefake@delete.com"
-    }, headers={
-        "Authorization": "Bearer " + input_token
-    })
+    resp = requests.post(
+        (SERVER_URL + "/account/fetchUser"),
+        json={"username": "fakefake@delete.com"},
+        headers={"Authorization": "Bearer " + input_token},
+    )
     assert resp.json()["user"] is None
 
+
 def adminLogin(username, password):
-    return requests.post((SERVER_URL + '/admin/login'), json=dict(
-        username=username,
-        password=password
-    ))
+    return requests.post(
+        (SERVER_URL + "/admin/login"), json=dict(username=username, password=password)
+    )
+
 
 def test_adminLogin():
-    resp = adminLogin('example@example.com', 'password')
+    resp = adminLogin("example@example.com", "password")
     assert resp.status_code == 422
     resp = adminLogin(os.getenv("DASHBOARD_USERNAME"), os.getenv("DASHBOARD_PASSWORD"))
     assert resp.status_code == 200
