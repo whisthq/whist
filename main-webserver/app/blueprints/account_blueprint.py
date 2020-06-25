@@ -104,10 +104,7 @@ def google_login(**kwargs):
             )
 
     if clientApp:
-        return (
-            jsonify({"status": 401, "error": "User has not registered"}),
-            401
-        )
+        return (jsonify({"status": 401, "error": "User has not registered"}), 401)
 
     sendInfo(kwargs["ID"], "Registering a new user with Google")
     status = registerGoogleUser(username, name, token)
