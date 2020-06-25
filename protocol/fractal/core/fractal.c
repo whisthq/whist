@@ -65,7 +65,6 @@ void resize_dynamic_buffer( dynamic_buffer db, int new_size )
         if( !new_buffer )
         {
             LOG_ERROR( "Could not realloc from %d to %d!", db->capacity, new_capacity );
-            free( db->buf );
             SDL_Delay( 50 );
             exit(-1);
         } else
