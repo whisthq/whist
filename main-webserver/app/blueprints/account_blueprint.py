@@ -62,7 +62,14 @@ def user_reset(**kwargs):
 def google_login(**kwargs):
     body = request.get_json()
     code = body["code"]
-    userObj = getGoogleTokens(code)
+
+    clientApp = False
+    if "clientApp" in body.keys():
+        clientApp = body["clientApp"]
+
+    userObj = getGoogleTokens(code, clientApp)
+
+    sendInfo(kwargs["ID"], userObj)
 
     username, name = userObj["email"], userObj["name"]
     token = generateToken(username)
@@ -93,6 +100,12 @@ def google_login(**kwargs):
                 jsonify({"status": 403, "error": "Email already used for non-Google account"}),
                 403
             )
+
+    if clientApp:
+        return (
+            jsonify({"status": 401, "error": "User has not registered"}),
+            401
+        )
 
     sendInfo(kwargs["ID"], "Registering a new user with Google")
     status = registerGoogleUser(username, name, token)
