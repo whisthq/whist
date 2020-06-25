@@ -28,7 +28,9 @@ def sendVMStartCommand(
 
         # Fetch the name of the disk currently attached to the VM
 
-        output = fractalSQLSelect(table_name="v_ms", params={"vm_name": vm_name})
+        output = fractalSQLSelect(
+            table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
+        )
 
         disk_name = None
         username = None
@@ -167,8 +169,9 @@ def fractalVMStart(
     fractalLog(
         function="fractalVMStart",
         label=getVMUser(vm_name, resource_group),
-        logs="Starting VM {vm_name}, need_restart is {needs_restart}, needs_winlogon is {needs_winlogon}".format(
+        logs="Starting VM {vm_name} in resource group {resource_group}, need_restart is {needs_restart}, needs_winlogon is {needs_winlogon}".format(
             vm_name=vm_name,
+            resource_group=resource_group,
             needs_restart=str(needs_restart),
             needs_winlogon=str(needs_winlogon),
         ),

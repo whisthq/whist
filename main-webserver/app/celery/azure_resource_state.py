@@ -22,7 +22,9 @@ def startVM(self, vm_name, resource_group=os.getenv("VM_GROUP")):
     fractalLog(
         function="startVM",
         label=getVMUser(vm_name, resource_group),
-        logs="Starting VM {vm_name}.".format(vm_name=vm_name),
+        logs="Starting VM {vm_name} in resource group {resource_group}.".format(
+            vm_name=vm_name, resource_group=resource_group
+        ),
     )
 
     lockVMAndUpdate(vm_name=vm_name, state="STARTING", lock=True, temporary_lock=3)
