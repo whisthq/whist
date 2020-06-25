@@ -9,9 +9,12 @@ load_dotenv()
 SERVER_URL = "https://" + os.getenv("HEROKU_APP_NAME") + ".herokuapp.com" if os.getenv("HEROKU_APP_NAME") else "http://localhost:5000"
 
 def getStatus(id):
-    print(id)
     resp = requests.get((SERVER_URL + "/status/" + id))
     return resp.json()
+
+def getVm(vm_name):
+    resp = requests.get((SERVER_URL + "/vm/fetchVm"), json={"vm_name":vm_name})
+    return resp.json()["vm"]
 
 def create(vm_size, location, operating_system, admin_password, input_token):
     return requests.post((SERVER_URL + '/vm/create'), json={
@@ -31,6 +34,7 @@ def delete(vm_name, delete_disk):
 
 def test_vm(input_token):
     # Testing create
+    print("Testing create...")
     resp = create("Standard_NV6_Promo", "eastus", "Windows", 'fractal123456789.',input_token)
     id = resp.json()["ID"]
     status = "PENDING"
@@ -40,9 +44,24 @@ def test_vm(input_token):
     if status != "SUCCESS":
         delete(getStatus(id)["output"]["vm_name"], True)
     assert status == "SUCCESS"
+    vm_name = getStatus(id)["output"]["vm_name"]
+    
+    # Test stop
+    print("Testing stop...")
+    requests.post((SERVER_URL + '/vm/stopvm'), json={
+        "vm_name":vm_name,
+    })
+    assert getVm(vm_name)["state"] == "STOPPED"
+
+    # Test start
+    print("Testing start...")
+    # requests.post((SERVER_URL + '/vm/start'), json={
+    #     "vm_name":vm_name,
+    # })
 
     # Test delete
-    resp = delete(getStatus(id)["output"]["vm_name"], True)
+    print("Testing create...")
+    resp = delete(vm_name, True)
     id = resp.json()["ID"]
     status = "PENDING"
     while(status == "PENDING"):

@@ -441,6 +441,12 @@ def restartVM(self, vm_name, ID=-1):
 @celery.task(bind=True)
 def startVM(self, vm_name, ID=-1):
     sendInfo(ID, "Trying to start vm {}".format(vm_name))
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": "Starting vm"
+        },
+    )
 
     if spinLock(vm_name) > 0:
         lockVM(vm_name, True)
@@ -451,9 +457,21 @@ def startVM(self, vm_name, ID=-1):
         lockVM(vm_name, False)
 
         sendInfo(ID, "VM {} started successfully".format(vm_name))
+        self.update_state(
+            state="SUCCESS",
+            meta={
+                "msg": "Vm start success"
+            },
+        )
 
         return {"status": 200}
     else:
+        self.update_state(
+        state="FAILURE",
+        meta={
+            "msg": "Failed to start vm"
+        },
+    )
         return {"status": 400}
 
 
