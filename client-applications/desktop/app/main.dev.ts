@@ -53,8 +53,8 @@ const createWindow = async () => {
             center: true,
             resizable: false,
             webPreferences: {
-                nodeIntegration: true
-            }
+                nodeIntegration: true,
+            },
         });
     } else if (os.platform() === "darwin") {
         mainWindow = new BrowserWindow({
@@ -66,8 +66,8 @@ const createWindow = async () => {
             resizable: false,
             maximizable: false,
             webPreferences: {
-                nodeIntegration: true
-            }
+                nodeIntegration: true,
+            },
         });
     } else {
         // if (os.platform() === "linux") case
@@ -80,9 +80,9 @@ const createWindow = async () => {
             resizable: false,
             maximizable: false,
             webPreferences: {
-                nodeIntegration: true
+                nodeIntegration: true,
             },
-            icon: path.join(__dirname, "/build/icon.png")
+            icon: path.join(__dirname, "/build/icon.png"),
         });
     }
 
