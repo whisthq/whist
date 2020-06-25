@@ -7,6 +7,7 @@ mkdir -p desktop/build32/Windows
 mkdir -p server/build32/Windows
 mkdir -p desktop/build64/Windows
 mkdir -p server/build64/Windows
+mkdir -p desktop/build64/Darwin
 
 # in case we want to target Windows
 cp share/32/Windows/* desktop/build32/Windows/

@@ -73,4 +73,16 @@ clock CreateClock(int timeout_ms);
  */
 char* CurrentTimeStr();
 
+/**
+ * @brief                          Returns the current UTC offset as a string
+ * @return                         int of current utc offset
+ */
+int GetUTCOffset();
+
+/**
+ * @brief                          Returns a flag for whether DST is on or off
+ * @return                         Positive int for on 0 for off.
+ */
+int GetDST();
+
 #endif

@@ -390,6 +390,7 @@ typedef enum FractalClientMessageType {
     MESSAGE_KEYBOARD_STATE = 11,
     CMESSAGE_CLIPBOARD = 12,
     MESSAGE_IFRAME_REQUEST = 13,
+    MESSAGE_TIME = 14,
     CMESSAGE_QUIT = 100,
 } FractalClientMessageType;
 
@@ -431,6 +432,16 @@ typedef struct FractalClientMessage {
 
         // MESSAGE_IFRAME_REQUEST
         bool reinitialize_encoder;
+
+        // UTC offset for setting time
+        struct time_data {
+            int use_win_name; /**< Flag if win_tz_name is to be used */
+            int use_linux_name;/**< FLag if linux_tz_name is to be used */
+            int UTC_Offset; /**< UTC offset for osx/linux -> windows */
+            int DST_flag; /**< DST flag, 1 DST, 0 no DST used in conjunction with UTC offset */
+            char win_tz_name[200]; /**< A windows timezone name: e.g Eastern Standard Time */
+            char linux_tz_name[200]; /**< A linux/IANA timezone name: e.g America/New_York  */
+        } time_data;
     };
 
     // CMESSAGE_CLIPBOARD
