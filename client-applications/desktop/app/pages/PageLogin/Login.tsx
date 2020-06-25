@@ -108,8 +108,7 @@ class Login extends Component {
             "node-integration": false,
             "web-security": false
         });
-        const authUrl =
-            "https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=urn:ietf:wg:oauth:2.0:oob:auto&client_id=581514545734-gml44hupfv9shlj68703s67crnbgjuoe.apps.googleusercontent.com&origin=https%3A//fractalcomputers.com";
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=urn:ietf:wg:oauth:2.0:oob:auto&client_id=${GOOGLE_CLIENT_ID}&origin=https%3A//fractalcomputers.com`;
         authWindow.loadURL(authUrl, { userAgent: "Chrome" });
         authWindow.show();
 
