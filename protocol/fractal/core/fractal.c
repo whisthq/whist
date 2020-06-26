@@ -32,113 +32,240 @@ void PrintSystemInfo() {
     SDL_CreateThread(MultithreadedPrintSystemInfo, "PrintSystemInfo", NULL);
 }
 
-void runcmd_nobuffer(const char* cmdline) {
-    // Will run a command on the commandline, simple as that
+struct dynamic_buffer_struct
+{
+    int size;
+    int capacity;
+    char* buf;
+};
+
+typedef struct dynamic_buffer_struct* dynamic_buffer;
+
+dynamic_buffer init_dynamic_buffer()
+{
+    dynamic_buffer db = malloc(sizeof(struct dynamic_buffer_struct));
+    db->size = 0;
+    db->capacity = 128;
+    db->buf = malloc( db->capacity );
+    if( !db->buf )
+    {
+        LOG_ERROR( "Could not malloc size %d!", db->capacity );
+        SDL_Delay( 50 );
+        exit( -1 );
+    }
+    return db;
+}
+
+void resize_dynamic_buffer( dynamic_buffer db, int new_size )
+{
+    if( new_size > db->capacity )
+    {
+        int new_capacity = new_size * 2;
+        char* new_buffer = realloc( db->buf, new_capacity );
+        if( !new_buffer )
+        {
+            LOG_ERROR( "Could not realloc from %d to %d!", db->capacity, new_capacity );
+            SDL_Delay( 50 );
+            exit(-1);
+        } else
+        {
+            db->capacity = new_capacity;
+            db->size = new_size;
+            db->buf = new_buffer;
+        }
+    } else
+    {
+        db->size = new_size;
+    }
+}
+
+void free_dynamic_buffer( dynamic_buffer db )
+{
+    free( db->buf );
+    free( db );
+}
+
+int runcmd( const char* cmdline, char** response )
+{
 #ifdef _WIN32
-    // Windows makes this hard
+    HANDLE hChildStd_IN_Rd = NULL;
+    HANDLE hChildStd_IN_Wr = NULL;
+    HANDLE hChildStd_OUT_Rd = NULL;
+    HANDLE hChildStd_OUT_Wr = NULL;
+
+    SECURITY_ATTRIBUTES saAttr;
+
+    // Set the bInheritHandle flag so pipe handles are inherited. 
+
+    saAttr.nLength = sizeof( SECURITY_ATTRIBUTES );
+    saAttr.bInheritHandle = TRUE;
+    saAttr.lpSecurityDescriptor = NULL;
+
+    // Create a pipe for the child process's STDOUT. 
+
+    if( response )
+    {
+        if( !CreatePipe( &hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0 ) )
+        {
+            LOG_ERROR( "StdoutRd CreatePipe failed" );
+            *response = NULL;
+            return -1;
+        }
+        if( !SetHandleInformation( hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0 ) )
+        {
+            LOG_ERROR( "Stdout SetHandleInformation failed" );
+            *response = NULL;
+            return -1;
+        }
+        if( !CreatePipe( &hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0 ) )
+        {
+            LOG_ERROR( "Stdin CreatePipe failed" );
+            *response = NULL;
+            return -1;
+        }
+        if( !SetHandleInformation( hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0 ) )
+        {
+            LOG_ERROR( "Stdin SetHandleInformation failed" );
+            *response = NULL;
+            return -1;
+        }
+    }
+
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
 
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
-    ZeroMemory(&pi, sizeof(pi));
+    ZeroMemory( &si, sizeof( si ) );
+    si.cb = sizeof( si );
+    if( response )
+    {
+        si.hStdError = hChildStd_OUT_Wr;
+        si.hStdOutput = hChildStd_OUT_Wr;
+        si.hStdInput = hChildStd_IN_Rd;
+        si.dwFlags |= STARTF_USESTDHANDLES;
+    }
+    ZeroMemory( &pi, sizeof( pi ) );
 
     char cmd_buf[1000];
 
-    if (strlen((const char*)cmdline) + 1 > sizeof(cmd_buf)) {
-        mprintf("runcmd cmdline too long!\n");
-        return;
-    }
-
-    memcpy(cmd_buf, cmdline, strlen((const char*)cmdline) + 1);
-
-    SetEnvironmentVariableW((LPCWSTR)L"UNISON", (LPCWSTR)L"./.unison");
-
-    if (CreateProcessA(NULL, (LPSTR)cmd_buf, NULL, NULL, FALSE,
-                       CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
-        WaitForSingleObject(pi.hProcess, INFINITE);
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
-    }
-#else
-    // For Linux / MACOSX we make the system syscall
-    system(cmdline);
-#endif
-}
-
-int runcmd(const char* cmdline, char** response) {
-    if (response == NULL) {
-        runcmd_nobuffer(cmdline);
-        return 0;
-    }
-
-    FILE* pPipe;
-
-    /* Run DIR so that it writes its output to a pipe. Open this
-     * pipe with read text attribute so that we can read it
-     * like a text file.
-     */
-
-#ifdef _WIN32
-#define popen _popen
-#define pclose _pclose
-#endif
-
-    char* cmd = malloc(strlen(cmdline) + 128);
-#ifdef _WIN32
-    snprintf(cmd, strlen(cmdline) + 128, "%s 2>nul", cmdline);
-#else
-    snprintf(cmd, strlen(cmdline) + 128, "%s 2>/dev/null", cmdline);
-#endif
-
-    if ((pPipe = popen(cmd, "r")) == NULL) {
-        LOG_WARNING("Failed to popen %s", cmd);
-        free(cmd);
+    if( strlen( (const char*)cmdline ) + 1 > sizeof( cmd_buf ) )
+    {
+        mprintf( "runcmd cmdline too long!\n" );
         return -1;
     }
-    free(cmd);
 
-    /* Read pipe until end of file, or an error occurs. */
+    memcpy( cmd_buf, cmdline, strlen( (const char*)cmdline ) + 1 );
 
-    int current_len = 0;
+    SetEnvironmentVariableW( (LPCWSTR)L"UNISON", (LPCWSTR)L"./.unison" );
 
-    int max_len = 128;
-    char* buffer = malloc(max_len);
+    if( CreateProcessA( NULL, (LPSTR)cmd_buf, NULL, NULL, TRUE,
+                        CREATE_NO_WINDOW, NULL, NULL, &si, &pi ) )
+    {
+    } else
+    {
+        LOG_ERROR( "CreateProcessA failed!" );
+        *response = NULL;
+        return -1;
+    }
 
-    while (true) {
-        char c = (char)fgetc(pPipe);
-        if (current_len == max_len) {
-            int next_max_len = 2 * max_len;
-            char* new_buffer = realloc(buffer, next_max_len);
-            if (new_buffer == NULL) {
-                LOG_ERROR("Realloc from %d to %d failed!", max_len,
-                          next_max_len);
-                buffer[max_len] = '\0';
+    if( response )
+    {
+        CloseHandle( hChildStd_OUT_Wr );
+        CloseHandle( hChildStd_IN_Rd );
+
+        CloseHandle( hChildStd_IN_Wr );
+
+        DWORD dwRead;
+        CHAR chBuf[2048];
+        BOOL bSuccess = FALSE;
+
+        dynamic_buffer db = init_dynamic_buffer();
+        for( ;;)
+        {
+            bSuccess = ReadFile( hChildStd_OUT_Rd, chBuf, sizeof(chBuf), &dwRead, NULL );
+            if( !bSuccess || dwRead == 0 ) break;
+
+            int original_size = db->size;
+            resize_dynamic_buffer( db, original_size + dwRead );
+            memcpy( db->buf + original_size, chBuf, dwRead );
+            if( !bSuccess ) break;
+        }
+
+        WaitForSingleObject( pi.hProcess, INFINITE );
+        CloseHandle( pi.hProcess );
+        CloseHandle( pi.hThread );
+
+        resize_dynamic_buffer( db, db->size + 1 );
+        db->buf[db->size] = '\0';
+        resize_dynamic_buffer( db, db->size - 1 );
+        int size = db->size;
+        *response = db->buf;
+        free( db );
+        return size;
+    } else
+    {
+        return 0;
+    } 
+#else
+    if( response == NULL )
+    {
+        system( cmdline );
+        return 0;
+    } else
+    {
+        FILE* pPipe;
+
+        /* Run DIR so that it writes its output to a pipe. Open this
+         * pipe with read text attribute so that we can read it
+         * like a text file.
+         */
+
+        char* cmd = malloc( strlen( cmdline ) + 128 );
+        snprintf( cmd, strlen( cmdline ) + 128, "%s 2>/dev/null", cmdline );
+
+        if( (pPipe = popen( cmd, "r" )) == NULL )
+        {
+            LOG_WARNING( "Failed to popen %s", cmd );
+            free( cmd );
+            return -1;
+        }
+        free( cmd );
+
+        /* Read pipe until end of file, or an error occurs. */
+
+        int current_len = 0;
+        dynamic_buffer db = init_dynamic_buffer();
+
+        while( true )
+        {
+            char c = (char)fgetc( pPipe );
+
+            resize_dynamic_buffer( db, current_len + 1 );
+
+            if( c == EOF )
+            {
+                db->buf[current_len] = '\0';
                 break;
-            } else {
-                buffer = new_buffer;
-                max_len = next_max_len;
+            } else
+            {
+                db->buf[current_len] = c;
+                current_len++;
             }
         }
 
-        if (c == EOF) {
-            buffer[current_len] = '\0';
-            break;
-        } else {
-            buffer[current_len] = c;
-            current_len++;
+        *response = db->buf;
+        free( db );
+
+        /* Close pipe and print return value of pPipe. */
+        if( feof( pPipe ) )
+        {
+            return current_len;
+        } else
+        {
+            LOG_WARNING( "Error: Failed to read the pipe to the end.\n" );
+            return -1;
         }
     }
-
-    *response = buffer;
-
-    /* Close pipe and print return value of pPipe. */
-    if (feof(pPipe)) {
-        return current_len;
-    } else {
-        LOG_WARNING("Error: Failed to read the pipe to the end.\n");
-        return -1;
-    }
+#endif
 }
 
 char* get_ip() {
