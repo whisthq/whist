@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
+
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
