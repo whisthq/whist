@@ -309,13 +309,15 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                         sizeof(Frame) + frame->size, renderContext.frame_size);
         }
 
-        if (frame->width != server_width || frame->height != server_height) {
+        if (frame->width != server_width || frame->height != server_height ||
+            frame->codec_type != server_codec_type) {
             if (frame->is_iframe) {
                 LOG_INFO(
                     "Updating client rendering to match server's width and "
-                    "height! "
-                    "From %dx%d to %dx%d",
-                    server_width, server_height, frame->width, frame->height);
+                    "height and codec! "
+                    "From %dx%d, codec %d to %dx%d, codec %d",
+                    server_width, server_height, server_codec_type,
+                    frame->width, frame->height, frame->codec_type);
                 updateDecoderParameters(frame->width, frame->height,
                                         frame->codec_type);
             } else {
