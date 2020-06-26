@@ -1,3 +1,5 @@
+#include "../core/fractal.h"
+#include "../utils/logging.h"
 #include "clock.h"
 
 #include <stdbool.h>
@@ -108,5 +110,53 @@ int GetDST(){
     struct tm lt = {0};
     localtime_r(&t, &lt);
     return lt.tm_isdst;
+#endif
+}
+
+int GetTimeData(FractalTimeData *time_data) {
+#ifdef _WIN32
+    time_data->use_win_name = 1;
+    time_data->use_linux_name = 0;
+
+    char* win_tz_name = NULL;
+    runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
+    strcpy(time_data->win_tz_name, win_tz_name);
+    time_data->win_tz_name[strlen(time_data->win_tz_name) - 1] = '\0';
+    free(win_tz_name);
+
+    LOG_INFO("Sending Windows TimeZone %s", time_data->win_tz_name);
+
+    return 0;
+#elif __APPLE__
+    time_data->use_win_name = 0;
+    time_data->use_linux_name = 1;
+
+    time_data->UTC_Offset = GetUTCOffset();
+    LOG_INFO("Sending UTC offset %d", time_data->UTC_Offset);
+    time_data->DST_flag = GetDST();
+
+    char *response = NULL;
+    runcmd(
+        "path=$(readlink /etc/localtime); echo "
+        "${path#\"/var/db/timezone/zoneinfo\"}",
+        &response);
+    strcpy(time_data->linux_tz_name, response);
+    free(response);
+
+    return 0;
+#else
+    time_data->use_win_name = 0;
+    time_data->use_linux_name = 1;
+
+    time_data->UTC_Offset = GetUTCOffset();
+    LOG_INFO("Sending UTC offset %d", time_data->UTC_Offset);
+    time_data->DST_flag = GetDST();
+
+    char *response = NULL;
+    runcmd("cat /etc/timezone", &response);
+    strcpy(time_data->linux_tz_name, response);
+    free(response);
+
+    return 0;
 #endif
 }
