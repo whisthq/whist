@@ -164,11 +164,11 @@ char *getLogDir(void) {
 
 int logConnectionID(int connection_id) {
     char *path;
-    #ifdef _WIN32
+#ifdef _WIN32
         path = dupstring("connection_id.txt");
-    #else
+#else
         path = appendPathToHome(".fractal/connection_id.txt");
-    #endif
+#endif
     if (path == NULL) {
         LOG_ERROR("Failed to get connection log path.");
         return -1;
@@ -226,13 +226,13 @@ int configureSSHKeys(void) {
     }
     fclose(ssh_key_host);
 
-    #ifndef _WIN32
+#ifndef _WIN32
     if (chmod(CLIENT_PRIVATE_KEY_PATH, 600) != 0) {
         LOG_ERROR("Failed to make host's private ssh (at %s) readable and"
             "writable. (Error: %s)", CLIENT_PRIVATE_KEY_PATH, strerror(errno));
         return -1;
     }
-    #endif
+#endif
     return 0;
 }
 
