@@ -30,9 +30,11 @@ target_metadata = None
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+
 def get_url():
     print(os.environ)
     return os.getenv("DATABASE_URL")
+
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
@@ -48,9 +50,7 @@ def run_migrations_offline():
     """
     url = get_url()
     context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        literal_binds=True,
+        url=url, target_metadata=target_metadata, literal_binds=True,
     )
 
     with context.begin_transaction():
@@ -67,9 +67,7 @@ def run_migrations_online():
     connectable = create_engine(get_url())
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
