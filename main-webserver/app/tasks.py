@@ -636,7 +636,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 
     os_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
     os_type = "Windows" if "windows" in str(os_disk.os_type) else "Linux"
-    needs_winlogon = os_type == "Windows"
+    needs_winlogon = os_type == "Windows" and os.environ.get("VM_GROUP") == "Fractal"
     username = mapDiskToUser(disk_name)
     vm_name = os_disk.managed_by
 
