@@ -66,8 +66,7 @@ int parseArgs(int argc, char *argv[]) {
     bool ip_set = false;
     char *endptr;
     for (int opt;;
-         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL),
-         opt != -1) {
+         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL)) {
         errno = 0;
         switch (opt) {
             case 'w':
