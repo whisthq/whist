@@ -13,7 +13,7 @@ def getVersions():
 
 @pytest.fixture(scope="session")
 def setup(request):
-    time.sleep(60)
+    time.sleep(300)
     LOGGER.info("Waiting for server to deploy...")
     i = 1
     while getVersions().status_code != 200:
