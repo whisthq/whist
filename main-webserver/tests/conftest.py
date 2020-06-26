@@ -13,12 +13,14 @@ def getVersions():
 
 @pytest.fixture(scope="session")
 def setup(request):
-    time.sleep(300)
-    LOGGER.info("Waiting for server to deploy...")
-    i = 1
-    while getVersions().status_code != 200:
-        time.sleep(10)
-        i += 1
-        LOGGER.info(str(i) + " times pinging server")
-    LOGGER.info("Server deployed! Tests starting now.")
+    # only wait for deployment if not local
+    if os.getenv("HEROKU_APP_NAME"):
+        LOGGER.info("Waiting for server to deploy...")
+        time.sleep(360)
+        i = 1
+        while getVersions().status_code != 200:
+            time.sleep(10)
+            i += 1
+            LOGGER.info(str(i) + " times pinging server")
+        LOGGER.info("Server deployed! Tests starting now.")
     return
