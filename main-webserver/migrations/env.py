@@ -31,7 +31,6 @@ target_metadata = None
 # ... etc.
 
 def get_url():
-    print(os.environ)
     return os.getenv("DATABASE_URL")
 
 def run_migrations_offline():
