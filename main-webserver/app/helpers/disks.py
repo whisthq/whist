@@ -743,6 +743,7 @@ def fetchDiskSetting(disk_name, setting_name):
         else:
             return None
 
+
 def fetchDisk(disk_name):
     with engine.connect() as conn:
         command = text(
