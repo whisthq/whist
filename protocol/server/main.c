@@ -50,7 +50,7 @@ static volatile bool connected;
 static volatile double max_mbps;
 volatile int client_width = -1;
 volatile int client_height = -1;
-volatile CodecType client_codec_type = CODEC_TYPE_H264;
+volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
 // volatile
@@ -382,6 +382,7 @@ int32_t SendVideo(void* opaque) {
                     Frame* frame = (Frame*)buf;
                     frame->width = encoder->pCodecCtx->width;
                     frame->height = encoder->pCodecCtx->height;
+                    frame->codec_type = encoder->codec_type;
 
                     frame->size = encoder->encoded_frame_size;
                     frame->cursor = GetCurrentCursor();
@@ -644,8 +645,8 @@ void SetTimezoneFromIANAName(char* linux_tz_name) {
 
 void SetTimezoneFromWindowsName(char* win_tz_name) {
     char cmd[500];
-    snprintf(cmd, sizeof(cmd),
-             "powershell -command \"Set-TimeZone -Id '%s'\"", win_tz_name);
+    snprintf(cmd, sizeof(cmd), "powershell -command \"Set-TimeZone -Id '%s'\"",
+             win_tz_name);
     char* response = NULL;
     runcmd(cmd, &response);
     LOG_INFO("Timezone powershell command: %s -> %s\n", cmd, response);

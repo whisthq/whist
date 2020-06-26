@@ -13,6 +13,18 @@ handleSDLEvent() must be called on any SDL event that occurs. Any action
 trigged an SDL event must be triggered in sdl_event_handler.c
 */
 
+/*
+============================
+Includes
+============================
+*/
+#include "../fractal/core/fractal.h"
+
+/*
+============================
+Public Functions
+============================
+*/
 /**
  * @brief                          Pops latest client-side SDL event,
  *                                 if there is one, and handles the event, on
