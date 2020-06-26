@@ -4,12 +4,18 @@ import os
 import logging
 import time
 
-SERVER_URL = "https://" + os.getenv("HEROKU_APP_NAME") + ".herokuapp.com" if os.getenv("HEROKU_APP_NAME") else "http://localhost:5000"
+SERVER_URL = (
+    "https://" + os.getenv("HEROKU_APP_NAME") + ".herokuapp.com"
+    if os.getenv("HEROKU_APP_NAME")
+    else "http://localhost:5000"
+)
 
 LOGGER = logging.getLogger(__name__)
 
+
 def getVersions():
     return requests.get((SERVER_URL + "/version"))
+
 
 @pytest.fixture(scope="session")
 def setup(request):
@@ -24,6 +30,7 @@ def setup(request):
             LOGGER.info(str(i) + " times pinging server")
         LOGGER.info("Server deployed! Tests starting now.")
     return
+
 
 @pytest.fixture
 def input_token():
