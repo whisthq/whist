@@ -10,6 +10,6 @@ taskkill /IM "FractalService.exe" /F ;
 taskkill /IM "FractalServer.exe" /F ;
 Expand-Archive .\build.zip -Force ;
 Copy-item -Force -Recurse build\* -Destination 'C:\Program Files\Fractal' ;
-net start fractal service ;
 Remove-Item C:\ProgramData\FractalCache\log.txt ;
-shutdown /r ;
+net start fractal service ;
+shutdown /r 
