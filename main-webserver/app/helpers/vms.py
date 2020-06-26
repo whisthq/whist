@@ -1654,7 +1654,7 @@ def waitForWinlogon(vm_name, ID=-1):
     return 1
 
 
-def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, ID=-1, s=None):
+def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=os.environ.get("VM_GROUP") == "Fractal", ID=-1, s=None):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary (big brain thoughts from Ming)
 
     Args:
