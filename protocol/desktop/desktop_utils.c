@@ -62,11 +62,12 @@ int parseArgs(int argc, char *argv[]) {
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
+    int opt;
     long int ret;
     bool ip_set = false;
     char *endptr;
-    for (int opt;;
-         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL)) {
+    while (true) {
+        opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
         errno = 0;
         switch (opt) {
             case 'w':
