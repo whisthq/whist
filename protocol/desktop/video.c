@@ -527,6 +527,10 @@ int initMultithreadedVideo(void* opaque) {
     SDL_Renderer* renderer = SDL_CreateRenderer(
         (SDL_Window*)window, -1,
         SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+    SDL_SetRenderDrawColor( renderer, 0, 0, 0, SDL_ALPHA_OPAQUE );
+    SDL_RenderClear( renderer );
+    SDL_RenderPresent( renderer );
+
     videoContext.renderer = renderer;
     if (!renderer) {
         LOG_WARNING("SDL: could not create renderer - exiting: %s",
