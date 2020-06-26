@@ -752,6 +752,7 @@ int main() {
     initLogger(".");
 #endif
     LOG_INFO("Version Number: %s", get_version());
+    LOG_INFO("Fractal server revision %s", FRACTAL_GIT_REVISION);
 
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_Init(SDL_INIT_VIDEO);

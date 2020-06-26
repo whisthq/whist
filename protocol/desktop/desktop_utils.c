@@ -112,7 +112,7 @@ int parseArgs(int argc, char *argv[]) {
                 printf("%s", usage_details);
                 return 1;
             case FRACTAL_GETOPT_VERSION_CHAR:
-                printf("No version information specified.\n");
+                printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
                 return 1;
         }
         if (opt == -1) {

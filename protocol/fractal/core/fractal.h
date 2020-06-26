@@ -63,6 +63,7 @@ Includes
 #include "../network/network.h"
 #include "../utils/clock.h"
 #include "../utils/logging.h"
+#include "fractal.version"
 
 /*
 ============================
