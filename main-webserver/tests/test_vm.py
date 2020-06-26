@@ -93,8 +93,7 @@ def test_vm(input_token):
 
     # Test attach disk
     print("Testing attach disk...")
-    # Still debugging disk attach
-    # resp = requests.post((SERVER_URL + "/disk/attach"), json={"disk_name": disk_name}, headers={"Authorization": "Bearer " + input_token})
+    # resp = requests.post((SERVER_URL + "/disk/attachSpecific"), json={"disk_name": disk_name, "vm_name": vm_name}, headers={"Authorization": "Bearer " + input_token})
     # id = resp.json()["ID"]
     # while(status == "PENDING" or status == "STARTED"):
     #     time.sleep(5)
