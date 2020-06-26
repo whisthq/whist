@@ -13,10 +13,11 @@ def getVersions():
 
 @pytest.fixture(scope="session")
 def setup(request):
+    sleep(60)
     LOGGER.info("Waiting for server to deploy...")
     i = 1
     while getVersions().status_code != 200:
-        time.sleep(3)
+        time.sleep(10)
         i += 1
         LOGGER.info(str(i) + " times pinging server")
     LOGGER.info("Server deployed! Tests starting now.")
