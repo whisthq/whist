@@ -271,7 +271,9 @@ def analytics(action, **kwargs):
         # Read and clean logs into Pandas dataframe
 
         try:
-            df = pd.read_csv(body["filename"], sep="|", header=None)
+            df = pd.read_csv(
+                body["filename"], sep="|", header=None, error_bad_lines=False
+            )
             df.columns = ["time", "level", "file", "location", "contents"]
             r = df.time.apply(
                 lambda x: ":".join(x.split(":")[:-1]) + "." + x.split(":")[-1]
