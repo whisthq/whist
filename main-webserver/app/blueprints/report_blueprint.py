@@ -279,7 +279,7 @@ def analytics(action, **kwargs):
             df.time = pd.to_datetime(r, errors="coerce")
             cleaned_df = df[df.time.notnull()]
         except Exception as e:
-            print("Error reading {filename}".format(body["filename"]))
+            print("Error reading {filename}".format(filename=body["filename"]))
             return (
                 jsonify({}),
                 400,
