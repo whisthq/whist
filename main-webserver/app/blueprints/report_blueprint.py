@@ -241,8 +241,17 @@ def analytics(action, **kwargs):
                     "standard_deviation": feature_std,
                     "range": feature_range,
                 },
-                "time": list(transformed_df["time"]),
-                "values": list(transformed_df["contents"]),
+                "output": [
+                    {
+                        "time": transformed_df.iloc[
+                            i, transformed_df.columns.get_loc("time")
+                        ],
+                        "value": transformed_df.iloc[
+                            i, transformed_df.columns.get_loc("contents")
+                        ],
+                    }
+                    for i in range(0, transformed_df.shape[0])
+                ],
             }
 
         body = json.loads(request.data)
