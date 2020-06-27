@@ -270,13 +270,20 @@ def analytics(action, **kwargs):
 
         # Read and clean logs into Pandas dataframe
 
-        df = pd.read_csv(body["filename"], sep="|", header=None)
-        df.columns = ["time", "level", "file", "location", "contents"]
-        r = df.time.apply(
-            lambda x: ":".join(x.split(":")[:-1]) + "." + x.split(":")[-1]
-        )
-        df.time = pd.to_datetime(r, errors="coerce")
-        cleaned_df = df[df.time.notnull()]
+        try:
+            df = pd.read_csv(body["filename"], sep="|", header=None)
+            df.columns = ["time", "level", "file", "location", "contents"]
+            r = df.time.apply(
+                lambda x: ":".join(x.split(":")[:-1]) + "." + x.split(":")[-1]
+            )
+            df.time = pd.to_datetime(r, errors="coerce")
+            cleaned_df = df[df.time.notnull()]
+        except Exception as e:
+            print("Error reading {filename}".format(body["filename"]))
+            return (
+                jsonify({}),
+                400,
+            )
 
         # Get number of errors
         error_df = cleaned_df[
