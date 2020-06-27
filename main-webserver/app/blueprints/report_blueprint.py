@@ -226,33 +226,45 @@ def analytics(action, **kwargs):
             ]
             transformed_df.loc[:, ["contents", "time"]]
 
-            feature_std = np.std(transformed_df["contents"])
-            feature_median = np.median(transformed_df["contents"])
-            feature_mean = np.mean(transformed_df["contents"])
-            feature_range = [
-                min(transformed_df["contents"]),
-                max(transformed_df["contents"]),
-            ]
+            if transformed_df.shape[0] > 1:
+                feature_std = np.std(transformed_df["contents"])
+                feature_median = np.median(transformed_df["contents"])
+                feature_mean = np.mean(transformed_df["contents"])
+                feature_range = [
+                    min(transformed_df["contents"]),
+                    max(transformed_df["contents"]),
+                ]
 
-            return {
-                "summary_statistics": {
-                    "mean": feature_mean,
-                    "median": feature_median,
-                    "standard_deviation": feature_std,
-                    "range": feature_range,
-                },
-                "output": [
-                    {
-                        "time": transformed_df.iloc[
-                            i, transformed_df.columns.get_loc("time")
-                        ],
-                        "value": transformed_df.iloc[
-                            i, transformed_df.columns.get_loc("contents")
-                        ],
-                    }
-                    for i in range(0, transformed_df.shape[0])
-                ],
-            }
+                return {
+                    "summary_statistics": {
+                        "mean": feature_mean,
+                        "median": feature_median,
+                        "standard_deviation": feature_std,
+                        "range": feature_range,
+                    },
+                    "output": [
+                        {
+                            "time": transformed_df.iloc[
+                                i, transformed_df.columns.get_loc("time")
+                            ],
+                            "value": transformed_df.iloc[
+                                i, transformed_df.columns.get_loc("contents")
+                            ]
+                            * 1000,
+                        }
+                        for i in range(0, transformed_df.shape[0])
+                    ],
+                }
+            else:
+                return {
+                    "summary_statistics": {
+                        "mean": None,
+                        "median": None,
+                        "standard_deviation": None,
+                        "range": None,
+                    },
+                    "output": [],
+                }
 
         body = json.loads(request.data)
 
