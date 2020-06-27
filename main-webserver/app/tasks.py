@@ -1018,7 +1018,7 @@ def fetchLogs(self, username, fetch_all=False, ID=-1):
             """
         )
 
-        params = {"username": username}
+        params = {}
 
         with engine.connect() as conn:
             sendInfo(ID, "Fetching all logs from Postgres".format(username))

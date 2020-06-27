@@ -439,8 +439,33 @@ def logs_actions(action, **kwargs):
         except:
             fetch_all = False
 
-        task = fetchLogs.apply_async([body["username"], fetch_all, kwargs["ID"]])
-        return jsonify({"ID": task.id}), 202
+        if not fetch_all:
+            command = text(
+                """
+                SELECT * FROM logs WHERE "username" = :username ORDER BY last_updated DESC
+                """
+            )
+            params = {"username": username}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+        else:
+            command = text(
+                """
+                SELECT * FROM logs ORDER BY last_updated DESC
+                """
+            )
+
+            params = {}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+        return jsonify({"logs": None}), 400
+
     # delete logs action
     elif action == "delete" and request.method == "POST":
         try:
