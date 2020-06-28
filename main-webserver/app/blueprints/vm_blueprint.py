@@ -457,10 +457,10 @@ def logs_actions(action, **kwargs):
         if not fetch_all:
             command = text(
                 """
-                SELECT * FROM logs WHERE "username" = :username ORDER BY last_updated DESC
+                SELECT * FROM logs WHERE "username" LIKE :username ORDER BY last_updated DESC
                 """
             )
-            params = {"username": username}
+            params = {"username": username + "%"}
 
             with engine.connect() as conn:
                 logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
