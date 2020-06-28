@@ -435,9 +435,11 @@ def logs_actions(action, **kwargs):
     # fetch logs action
     if action == "fetch" and request.method == "POST":
         try:
+            username = body["username"]
             fetch_all = body["fetch_all"]
         except:
             fetch_all = False
+            username = None
 
         if not fetch_all:
             command = text(
