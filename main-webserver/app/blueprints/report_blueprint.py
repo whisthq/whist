@@ -213,7 +213,7 @@ def statusReport(action, **kwargs):
 def analytics(action, **kwargs):
     if action == "logs":
 
-        def extractFeature(feature_name, cleaned_df):
+        def extractFeature(feature_name, cleaned_df, scale):
             transformed_df = cleaned_df[
                 cleaned_df.contents.str.contains(feature_name, na=False, regex=False)
             ]
@@ -249,7 +249,8 @@ def analytics(action, **kwargs):
                             ],
                             "value": transformed_df.iloc[
                                 i, transformed_df.columns.get_loc("contents")
-                            ],
+                            ]
+                            * scale,
                         }
                         for i in range(0, transformed_df.shape[0])
                     ],
@@ -294,8 +295,12 @@ def analytics(action, **kwargs):
         error_rate = float(number_of_errors) / float(cleaned_df.shape[0])
 
         if body["sender"].upper() == "SERVER":
-            encode_time_stats = extractFeature("Average Encode Time", cleaned_df)
-            encode_size_stats = extractFeature("Average Encode Size", cleaned_df)
+            encode_time_stats = extractFeature(
+                "Average Encode Time", cleaned_df, body["scale"]
+            )
+            encode_size_stats = extractFeature(
+                "Average Encode Size", cleaned_df, body["scale"]
+            )
 
             return (
                 jsonify(
