@@ -295,12 +295,8 @@ def analytics(action, **kwargs):
         error_rate = float(number_of_errors) / float(cleaned_df.shape[0])
 
         if body["sender"].upper() == "SERVER":
-            encode_time_stats = extractFeature(
-                "Average Encode Time", cleaned_df, body["scale"]
-            )
-            encode_size_stats = extractFeature(
-                "Average Encode Size", cleaned_df, body["scale"]
-            )
+            encode_time_stats = extractFeature("Average Encode Time", cleaned_df, 1000)
+            encode_size_stats = extractFeature("Average Encode Size", cleaned_df, 1)
 
             return (
                 jsonify(
@@ -317,8 +313,8 @@ def analytics(action, **kwargs):
                 200,
             )
         else:
-            decode_time_stats = extractFeature("Avg Decode Time", cleaned_df)
-            latency_stats = extractFeature("Latency", cleaned_df)
+            decode_time_stats = extractFeature("Avg Decode Time", cleaned_df, 1000)
+            latency_stats = extractFeature("Latency", cleaned_df, 1000)
 
             return (
                 jsonify(
