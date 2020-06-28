@@ -249,8 +249,7 @@ def analytics(action, **kwargs):
                             ],
                             "value": transformed_df.iloc[
                                 i, transformed_df.columns.get_loc("contents")
-                            ]
-                            * 1000,
+                            ],
                         }
                         for i in range(0, transformed_df.shape[0])
                     ],
