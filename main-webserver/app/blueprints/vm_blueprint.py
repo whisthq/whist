@@ -441,6 +441,19 @@ def logs_actions(action, **kwargs):
             fetch_all = False
             username = None
 
+        if "connection_id" in body.keys():
+            command = text(
+                """
+                SELECT * FROM logs WHERE "connection_id" = :connection_id ORDER BY last_updated DESC
+                """
+            )
+            params = {"connection_id": body["connection_id"]}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+
         if not fetch_all:
             command = text(
                 """
