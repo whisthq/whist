@@ -16,4 +16,4 @@ else()
 endif()
 
 # generate version.h
-configure_file("${CMAKE_SOURCE_DIR}/fractal/core/version.h.in" "${CMAKE_SOURCE_DIR}/fractal/core/fractal.version" @ONLY)
+configure_file("${CMAKE_SOURCE_DIR}/fractal/core/fractal.v.in" "${CMAKE_SOURCE_DIR}/fractal/core/fractal.v" @ONLY)

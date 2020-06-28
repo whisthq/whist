@@ -32,7 +32,7 @@ desktop/external_utils/Linux/linux_unison
 desktop/external_utils/Windows/unison.exe
 desktop/external_utils/Windows/ssh.exe
 desktop/loading/
-*.version
+*.v
 
 # CMake
 *.cmake
