@@ -543,9 +543,13 @@ def logs_get(action, **kwargs):
 
         with engine.connect() as conn:
             connection_ids = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-            print(connection_ids)
+
+            if connection_ids:
+                connection_ids = [
+                    element["connection_id"] for element in connection_ids
+                ]
             conn.close()
 
-        return jsonify(connection_ids), 200
+        return jsonify({"connection_ids": connection_ids}), 200
 
     return jsonify({}), 200
