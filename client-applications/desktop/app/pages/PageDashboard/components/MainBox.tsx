@@ -132,6 +132,8 @@ class MainBox extends Component {
             );
             if (this.state.launches == 0) {
                 this.setState({ launches: 1, reattached: false }, function () {
+                    console.log("ENTERING LAUCH");
+
                     var child = require("child_process").spawn;
                     var appRootDir = require("electron").remote.app.getAppPath();
                     const os = require("os");
@@ -157,17 +159,25 @@ class MainBox extends Component {
 
                     // 0 dimensions is full-screen in protocol, windowed-mode starts at half screen
                     // and can be resized in the protocol directly. DPI calculation done in protocol
-                    var screenWidth = this.state.windowMode ? "-w 1280" : 0;
-                    var screenHeight = this.state.windowMode ? "-h 720" : 0;
-                    var codec = this.state.h265Mode ? "-c h265" : "-c h264";
+                    var screenWidth = this.state.windowMode ? "1280" : 0;
+                    var screenHeight = this.state.windowMode ? "720" : 0;
+                    var codec = this.state.h265Mode ? "h265" : "h264";
 
                     var parameters = [
+                        "-w",
                         screenWidth,
+                        "-h",
                         screenHeight,
-                        "-b ".concat(this.state.mbps.toString()),
+                        "-c",
                         codec,
+                        "-b",
+                        this.state.mbps,
                         this.props.public_ip,
                     ];
+
+                    console.log(parameters);
+
+                    console.log("STARTING PROTOCOL");
 
                     // Starts the protocol
                     const protocol = child(executable, parameters, {
