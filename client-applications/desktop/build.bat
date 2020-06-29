@@ -13,20 +13,7 @@ cd protocol
 mkdir desktop
 mkdir desktop\loading
 cd ..
-copy .protocol\desktop\build64\Windows\FractalClient.exe protocol\desktop\FractalClient.exe
-copy .protocol\desktop\build64\Windows\unison.exe protocol\desktop\unison.exe
-copy .protocol\desktop\build64\Windows\ssh.exe protocol\desktop\ssh.exe
-copy .protocol\desktop\build64\Windows\sshkey protocol\desktop\sshkey
-copy .protocol\desktop\build64\Windows\sshkey.pub protocol\desktop\sshkey.pub
-copy .protocol\desktop\build64\Windows\avcodec-58.dll protocol\desktop\avcodec-58.dll
-copy .protocol\desktop\build64\Windows\avdevice-58.dll protocol\desktop\avdevice-58.dll
-copy .protocol\desktop\build64\Windows\avfilter-7.dll protocol\desktop\avfilter-7.dll
-copy .protocol\desktop\build64\Windows\avformat-58.dll protocol\desktop\avformat-58.dll
-copy .protocol\desktop\build64\Windows\avutil-56.dll protocol\desktop\avutil-56.dll
-copy .protocol\desktop\build64\Windows\postproc-55.dll protocol\desktop\postproc-55.dll
-copy .protocol\desktop\build64\Windows\swresample-3.dll protocol\desktop\swresample-3.dll
-copy .protocol\desktop\build64\Windows\swscale-5.dll protocol\desktop\swscale-5.dll
-copy loading protocol\desktop\loading
+xcopy /s .protocol\desktop\build64\Windows protocol\desktop
 powershell -Command "(New-Object Net.WebClient).DownloadFile('https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe', 'rcedit-x64.exe')"
 powershell -Command "Invoke-WebRequest https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe -OutFile rcedit-x64.exe"
 rcedit-x64.exe protocol\desktop\FractalClient.exe --set-icon build\icon.ico
