@@ -289,13 +289,25 @@ bool is_dev_vm() {
     LOG_INFO("GETTING JSON");
 
     if (!SendJSONGet(STAGING_HOST, "/vm/isDev", buf, len)) {
-        return true;
+        if (already_obtained_vm_type) {
+            return is_dev;
+        } else {
+            return true;
+        }
     }
 
     char* json_str = NULL;
     for (size_t i = 0; i < len - 4; i++) {
         if (memcmp(buf + i, "\r\n\r\n", 4) == 0) {
             json_str = buf + i + 4;
+        }
+    }
+
+    if (!json_str) {
+        if (already_obtained_vm_type) {
+            return is_dev;
+        } else {
+            return true;
         }
     }
 
