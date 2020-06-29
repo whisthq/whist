@@ -39,6 +39,7 @@ int audio_frequency = -1;
 // Width and Height
 volatile int server_width = -1;
 volatile int server_height = -1;
+volatile CodecType server_codec_type = CODEC_TYPE_UNKNOWN;
 
 // maximum mbps
 volatile int max_bitrate = STARTING_BITRATE;
@@ -56,7 +57,7 @@ volatile int ping_failures;
 
 volatile int output_width;
 volatile int output_height;
-volatile CodecType codec_type = CODEC_TYPE_H264;
+volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 
 // Keyboard state variables
@@ -130,9 +131,8 @@ void update() {
         // Receive tcp buffer, if a full packet has been received
         FractalPacket* tcp_packet = ReadTCPPacket(&PacketTCPContext);
         if (tcp_packet) {
-            handleServerMessage(
-                (FractalServerMessage *) tcp_packet->data,
-                (size_t) tcp_packet->payload_size);
+            handleServerMessage((FractalServerMessage*)tcp_packet->data,
+                                (size_t)tcp_packet->payload_size);
         }
 
         // Update the last tcp check timer
@@ -158,13 +158,14 @@ void update() {
     // If we haven't yet tried to update the dimension, and the dimensions don't
     // line up, then request the proper dimension
     if (!UpdateData.tried_to_update_dimension &&
-        (server_width != output_width || server_height != output_height)) {
+        (server_width != output_width || server_height != output_height ||
+         server_codec_type != output_codec_type)) {
         LOG_INFO("Asking for server dimension to be %dx%d with codec type h%d",
-                 output_width, output_height, codec_type);
+                 output_width, output_height, output_codec_type);
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = (int)output_width;
         fmsg.dimensions.height = (int)output_height;
-        fmsg.dimensions.codec_type = (CodecType)codec_type;
+        fmsg.dimensions.codec_type = (CodecType)output_codec_type;
         fmsg.dimensions.dpi =
             (int)(96.0 * output_width / get_virtual_screen_width());
         SendFmsg(&fmsg);
@@ -417,9 +418,8 @@ int ReceivePackets(void* opaque) {
                 case PACKET_MESSAGE:
                     // A FractalServerMessage for other information
                     StartTimer(&message_timer);
-                    handleServerMessage(
-                        (FractalServerMessage *) packet->data,
-                        (size_t) packet->payload_size);
+                    handleServerMessage((FractalServerMessage*)packet->data,
+                                        (size_t)packet->payload_size);
                     message_time += GetTimer(message_timer);
                     break;
                 default:
@@ -477,7 +477,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    char *log_dir = getLogDir();
+    char* log_dir = getLogDir();
     if (log_dir == NULL) {
         return -1;
     }
@@ -516,12 +516,14 @@ int main(int argc, char* argv[]) {
     initVideo();
 
     PrintSystemInfo();
+    LOG_INFO("Fractal client revision %s", FRACTAL_GIT_REVISION);
 
     exiting = false;
     bool failed = false;
 
-    for (try_amount = 0; try_amount < MAX_NUM_CONNECTION_ATTEMPTS && !exiting
-                && !failed; try_amount++) {
+    for (try_amount = 0;
+         try_amount < MAX_NUM_CONNECTION_ATTEMPTS && !exiting && !failed;
+         try_amount++) {
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
@@ -554,7 +556,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (!is_spectator) {
-            if(sendTimeToServer() != 0) {
+            if (sendTimeToServer() != 0) {
                 LOG_ERROR("Failed to synchronize time with server.");
             }
         }

@@ -61,8 +61,9 @@ Includes
 #include "../clipboard/clipboard_synchronizer.h"
 #include "../cursor/cursor.h"
 #include "../network/network.h"
-#include "../utils/logging.h"
 #include "../utils/clock.h"
+#include "../utils/logging.h"
+#include "fractal.v"
 
 /*
 ============================
@@ -125,8 +126,10 @@ typedef enum EncodeType {
 } EncodeType;
 
 typedef enum CodecType {
+    CODEC_TYPE_UNKNOWN = 0,
     CODEC_TYPE_H264 = 264,
-    CODEC_TYPE_H265 = 265
+    CODEC_TYPE_H265 = 265,
+    __CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
 } CodecType;
 
 typedef enum FractalCursorID {
@@ -478,6 +481,7 @@ typedef struct Frame {
     FractalCursorImage cursor;
     int width;
     int height;
+    CodecType codec_type;
     int size;
     bool is_iframe;
     unsigned char compressed_frame[];
