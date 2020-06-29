@@ -93,9 +93,13 @@ def test_vm(input_token):
 
     # Test attach disk
     print("Testing attach disk...")
-    resp = requests.post((SERVER_URL + "/disk/attachSpecific"), json={"disk_name": disk_name, "vm_name": vm_name}, headers={"Authorization": "Bearer " + input_token})
+    resp = requests.post(
+        (SERVER_URL + "/disk/attachSpecific"),
+        json={"disk_name": disk_name, "vm_name": vm_name},
+        headers={"Authorization": "Bearer " + input_token},
+    )
     id = resp.json()["ID"]
-    while(status == "PENDING" or status == "STARTED"):
+    while status == "PENDING" or status == "STARTED":
         time.sleep(5)
         status = getStatus(id)["state"]
     assert status == "SUCCESS"
