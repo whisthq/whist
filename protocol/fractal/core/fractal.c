@@ -279,7 +279,7 @@ char* get_branch() {
 }
 
 bool is_dev_vm() {
-    if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 5.0) {
+    if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 60.0) {
         return is_dev;
     }
 
