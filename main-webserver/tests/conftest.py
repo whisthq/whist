@@ -17,7 +17,7 @@ def getVersions():
 @pytest.fixture(scope="session")
 def setup(request):
     # only wait for deployment if not local
-    if os.getenv("HEROKU_APP_NAME"):
+    if SERVER_URL:
         LOGGER.info("Waiting for server to deploy...")
         time.sleep(360)
         i = 1
