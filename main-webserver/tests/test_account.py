@@ -162,10 +162,7 @@ def reset(username, new_password):
 def test_reset(input_token):
     username = "testReset@example.com"
     register(
-        username,
-        "password",
-        "Test Reset",
-        "Here is some feedback.",
+        username, "password", "Test Reset", "Here is some feedback.",
     )
     new_password = "new_password123"
     resp = login(username, new_password)
@@ -176,24 +173,34 @@ def test_reset(input_token):
     assert resp.json()["verified"]
     delete(username, input_token)
 
+
 def createFromImage(username):
-    return requests.post((SERVER_URL + "/disk/createFromImage"),
-        json={"username": username, "location": "southcentralus", "vm_size": 10, "apps": []})
+    return requests.post(
+        (SERVER_URL + "/disk/createFromImage"),
+        json={
+            "username": username,
+            "location": "southcentralus",
+            "vm_size": 10,
+            "apps": [],
+        },
+    )
+
 
 def getStatus(id):
     resp = requests.get((SERVER_URL + "/status/" + id))
     return resp.json()
 
+
 def fetchDisks(username):
-    return requests.post((SERVER_URL + "/user/fetchdisks"), json={"username": username}).json()
+    return requests.post(
+        (SERVER_URL + "/user/fetchdisks"), json={"username": username}
+    ).json()
+
 
 def test_fetchDisks(input_token):
     username = "testDisks@example.com"
     register(
-        username,
-        "password",
-        "Test fetchDisks",
-        "Some more feedback.",
+        username, "password", "Test fetchDisks", "Some more feedback.",
     )
 
     resp = fetchDisks(username)
