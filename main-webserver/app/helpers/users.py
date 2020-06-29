@@ -69,6 +69,31 @@ def isAdmin(username):
         return False
 
 
+def isGoogle(username):
+    """Checks whether a user account used Google signup
+
+    Args:
+        username (str): The username to check
+
+    Returns:
+        bool: True if they used Google to signup, False otherwise
+    """
+    command = text(
+        """
+        SELECT * FROM users WHERE "username" = :userName
+        """
+    )
+    params = {"userName": username}
+    with engine.connect() as conn:
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchall())[0]
+        conn.close()
+
+        if user:
+            if user["google_login"] == True:
+                return True
+        return False
+
+
 def lookup(username):
     """Looks up the username in the users SQL table
 
@@ -120,17 +145,57 @@ def registerUser(username, password, token, name=None, reason_for_signup=None):
     code = genUniqueCode()
     command = text(
         """
-        INSERT INTO users("username", "password", "code", "id", "name", "reason_for_signup")
-        VALUES(:userName, :password, :code, :token, :name, :reason_for_signup)
+        INSERT INTO users("username", "password", "code", "id", "name", "reason_for_signup", "google_login")
+        VALUES(:username, :password, :code, :token, :name, :reason_for_signup, :google_login)
         """
     )
     params = {
-        "userName": username,
+        "username": username,
         "password": pwd_token,
         "code": code,
         "token": token,
         "name": name,
         "reason_for_signup": reason_for_signup,
+        "google_login": False,
+        "created": dt.now(datetime.timezone.utc).timestamp(),
+    }
+    with engine.connect() as conn:
+        try:
+            conn.execute(command, **params)
+            conn.close()
+            return 200
+        except Exception as e:
+            print("Error registering user: {error}".format(error=str(e)))
+            return 400
+
+
+def registerGoogleUser(username, name, token, reason_for_signup=None):
+    """Registers a user, and stores it in the users table
+
+    Args:
+        username (str): The username
+        name (str): The user's name (from Google)
+        token (str): The generated token
+
+    Returns:
+        int: 200 on success, 400 on fail
+    """
+    code = genUniqueCode()
+    command = text(
+        """
+        INSERT INTO users("username", "password", "code", "id", "name", "reason_for_signup", "google_login", "verified")
+        VALUES(:userName, :password, :code, :token, :name, :reason_for_signup, :google_login, :verified)
+        """
+    )
+    params = {
+        "userName": username,
+        "password": None,
+        "code": code,
+        "token": token,
+        "name": name,
+        "reason_for_signup": reason_for_signup,
+        "google_login": True,
+        "verified": True,
     }
     with engine.connect() as conn:
         try:
@@ -138,7 +203,7 @@ def registerUser(username, password, token, name=None, reason_for_signup=None):
             conn.close()
             return 200
         except:
-            return 400
+            return 500
 
 
 def resetPassword(username, password):
@@ -293,7 +358,7 @@ def checkUserVerified(username):
 
 
 def makeUserVerified(username, verified):
-    """Sets the user's verification 
+    """Sets the user's verification
 
     Args:
         username (str): The username of the user
@@ -336,8 +401,31 @@ def fetchUserToken(username):
         return None
 
 
+def fetchUser(username):
+    """Returns row for the user
+
+    Args:
+        username (str): The username of the user
+
+    Returns:
+        str: The uid of the user
+    """
+    command = text(
+        """
+        SELECT * FROM users WHERE "username" = :userName
+        """
+    )
+    params = {"userName": username}
+    with engine.connect() as conn:
+        user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        if user:
+            return user
+        return None
+
+
 def mapCodeToUser(code):
-    """Returns the user with the respective referral code. 
+    """Returns the user with the respective referral code.
 
     Args:
         code (str): The user's referral code
@@ -416,7 +504,7 @@ def userVMStatus(username):
         username (string): The username of the user of interest
 
     Returns:
-        str: vm status ['not_created', 'is_creating', 'has_created', 'has_not_paid'] 
+        str: vm status ['not_created', 'is_creating', 'has_created', 'has_not_paid']
     """
     has_paid = False
     has_disk = False
@@ -437,11 +525,11 @@ def userVMStatus(username):
     command = text(
         """
         SELECT * FROM disks
-        WHERE "username" = :username AND "state" = :state
+        WHERE "username" = :username AND "state" = :state AND "main" = :main
         """
     )
 
-    params = {"username": username, "state": "ACTIVE"}
+    params = {"username": username, "state": "ACTIVE", "main": True}
     with engine.connect() as conn:
         user = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
@@ -449,15 +537,37 @@ def userVMStatus(username):
             has_disk = True
 
             if user["first_time"]:
+                print("USER {} FIRST TIME DETECTED".format(username))
                 return "is_creating"
 
     if not has_paid and not has_disk:
         return "not_created"
 
     if has_paid and not has_disk:
+        print("CUSTOMER {} EXISTS BUT NO DISK".format(username))
         return "is_creating"
 
     if has_paid and has_disk:
         return "has_created"
 
     return "has_not_paid"
+
+
+def setUserReason(username, reason_for_signup=None):
+    """Updates the reason for signup for a user in the users SQL table
+
+    Args:
+        username (str): The user to update the password for
+        reason_for_signup (str): The reason the user signed up
+    """
+    command = text(
+        """
+        UPDATE users
+        SET "reason_for_signup" = :reason_for_signup
+        WHERE "username" = :userName
+        """
+    )
+    params = {"userName": username, "reason_for_signup": reason_for_signup}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()

@@ -9,7 +9,15 @@ from .helpers.s3 import *
 
 
 @celery.task(bind=True)
-def createVM(self, vm_size, location, operating_system, ID=-1):
+def createVM(
+    self,
+    vm_size,
+    location,
+    operating_system,
+    admin_password=None,
+    admin_username=None,
+    ID=-1,
+):
     """Creates a windows vm of size vm_size in Azure region location
 
     Args:
@@ -42,7 +50,13 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         sendError(ID, "Nic does not exist, aborting")
         return
     vmParameters = createVMParameters(
-        vmName, nic.id, vm_size, location, operating_system
+        vmName,
+        nic.id,
+        vm_size,
+        location,
+        operating_system,
+        admin_password=admin_password,
+        admin_username=admin_username,
     )
 
     async_vm_creation = compute_client.virtual_machines.create_or_update(
@@ -50,30 +64,20 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     )
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Waiting on async VM creation"
-        },
+        state="PENDING", meta={"msg": "Waiting on async VM creation"},
     )
 
     sendDebug(ID, "Waiting on async_vm_creation")
     async_vm_creation.wait()
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "VM {} created".format(vmParameters["vm_name"])
-        },
+        state="PENDING", meta={"msg": "VM {} created".format(vmParameters["vm_name"])},
     )
-
 
     time.sleep(10)
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "VM {} starting".format(vmParameters["vm_name"])
-        },
+        state="PENDING", meta={"msg": "VM {} starting".format(vmParameters["vm_name"])},
     )
 
     async_vm_start = compute_client.virtual_machines.start(
@@ -83,19 +87,23 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     async_vm_start.wait()
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "VM {} started".format(vmParameters["vm_name"])
-        },
+        state="PENDING", meta={"msg": "VM {} started".format(vmParameters["vm_name"])},
     )
 
     time.sleep(30)
 
     sendInfo(ID, "The VM created is called {}".format(vmParameters["vm_name"]))
 
-    fractalVMStart(vmParameters["vm_name"], needs_winlogon=False, s = self)
+    fractalVMStart(vmParameters["vm_name"], needs_winlogon=False, s=self)
 
-    time.sleep(30)
+    lockVMAndUpdate(
+        vm_name=vmParameters["vm_name"],
+        state="RUNNING_AVAILABLE",
+        lock=True,
+        temporary_lock=None,
+        change_last_updated=False,
+        verbose=False,
+    )
 
     extension_parameters = (
         {
@@ -122,7 +130,6 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         },
     )
 
-
     async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(
         os.environ["VM_GROUP"],
         vmParameters["vm_name"],
@@ -136,7 +143,9 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     self.update_state(
         state="PENDING",
         meta={
-            "msg": "VM {} successfully installed NVIDIA extension".format(vmParameters["vm_name"])
+            "msg": "VM {} successfully installed NVIDIA extension".format(
+                vmParameters["vm_name"]
+            )
         },
     )
 
@@ -148,6 +157,15 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     updateVMOS(vmParameters["vm_name"], operating_system)
 
     sendInfo(ID, "SUCCESS: VM {} created and updated".format(vmName))
+
+    lockVMAndUpdate(
+        vm_name=vmParameters["vm_name"],
+        state="RUNNING_AVAILABLE",
+        lock=False,
+        temporary_lock=0,
+        change_last_updated=False,
+        verbose=False,
+    )
 
     return fetchVMCredentials(vmParameters["vm_name"])
 
@@ -179,17 +197,27 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
 
 
 @celery.task(bind=True)
-def createDiskFromImage(self, username, location, vm_size, operating_system, ID=-1):
+def createDiskFromImage(
+    self, username, location, vm_size, operating_system, apps=[], ID=-1
+):
     hr = 400
     payload = None
+    attempts = 0
+    disk_name = None
 
-    while hr == 400:
+    while hr == 400 and attempts < 10:
         sendInfo(ID, "Creating {} disk for {}".format(operating_system, username))
         payload = createDiskFromImageHelper(
             username, location, vm_size, operating_system
         )
         hr = payload["status"]
-        sendInfo(ID, "Disk created with status {}".format(hr))
+        disk_name = payload["disk_name"]
+        sendInfo(ID, "Disk {} created with status {}".format(disk_name, hr))
+        attempts += 1
+
+    if hr == 200 and disk_name and len(apps) > 0:
+        sendInfo(ID, "Disk created, inserting apps {} for {}".format(apps, disk_name))
+        insertDiskApps(disk_name, apps)
 
     sendDebug(ID, payload)
     payload["location"] = location
@@ -516,6 +544,9 @@ def syncDisks(self, ID=-1):
     for stored_disk in stored_disks:
         if not stored_disk["disk_name"] in disk_names:
             deleteDiskFromTable(stored_disk["disk_name"])
+            stored_disks.remove(stored_disk)
+        # else:
+        #     insertDiskSetting(stored_disk["disk_name"], stored_disk["branch"], False)
 
     sendInfo(ID, "Sync disks complete")
 
@@ -1228,41 +1259,6 @@ def storeLogs(self, sender, connection_id, logs, vm_ip, version, ID=-1):
     if SendLogsToS3(logs, sender, connection_id, vm_ip, version, ID) > 0:
         return {"status": 200}
     return {"status": 422}
-
-
-@celery.task(bind=True)
-def fetchLogs(self, username, fetch_all=False, ID=-1):
-    if not fetch_all:
-        sendInfo(ID, "Fetch log for {} sent to Redis queue".format(username))
-        command = text(
-            """
-            SELECT * FROM logs WHERE "username" = :username ORDER BY last_updated DESC
-            """
-        )
-        params = {"username": username}
-
-        with engine.connect() as conn:
-            sendInfo(ID, "Fetching logs for {} from Postgres".format(username))
-            logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-            sendInfo(ID, "Logs fetched for {} successfully".format(username))
-            conn.close()
-            return logs
-    else:
-        sendInfo(ID, "Fetch all logs sent to Redis queue")
-        command = text(
-            """
-            SELECT * FROM logs ORDER BY last_updated DESC
-            """
-        )
-
-        params = {"username": username}
-
-        with engine.connect() as conn:
-            sendInfo(ID, "Fetching all logs from Postgres".format(username))
-            logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-            sendInfo(ID, "All logs fetched successfully".format(username))
-            conn.close()
-            return logs
 
 
 @celery.task(bind=True)

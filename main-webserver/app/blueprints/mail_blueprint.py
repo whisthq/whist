@@ -97,7 +97,7 @@ def mail(action, **kwargs):
             sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
             response = sg.send(internal_message)
         except Exception as e:
-            sendError(kwargs["ID"], "Mail send failed: Error code " + e.message)
+            print("Mail send failed: Error code " + e.message)
 
         return jsonify({"status": 200}), 200
     elif action == "verification":
@@ -105,8 +105,6 @@ def mail(action, **kwargs):
         user, token = body["username"], body["token"]
         title = "[Fractal] Please Verify Your Email"
         url = os.getenv("FRONTEND_URL") + "/verify?" + token
-
-        print("THE URL IS {}".format(url))
 
         internal_message = SendGridMail(
             from_email="noreply@fractalcomputers.com",
@@ -118,9 +116,9 @@ def mail(action, **kwargs):
         try:
             sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
             response = sg.send(internal_message)
-            sendInfo(kwargs["ID"], "Sent email to {}".format(user))
+            print("Sent email to {}".format(user))
         except Exception as e:
-            sendError(kwargs["ID"], "Mail send failed: Error code " + e.message)
+            print("Mail send failed: Error code " + e.message)
 
         return jsonify({"status": 200}), 200
     elif action == "referral":
@@ -289,7 +287,6 @@ def signup():
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
         response = sg.send(internal_message)
-        print("Email sent to {}".format(user))
         print(response)
     except Exception as e:
         print(e.message)

@@ -49,11 +49,29 @@ def vm(action, **kwargs):
         vm_size = body["vm_size"]
         location = body["location"]
         operating_system = "Windows"
+        admin_password = None
+        admin_username = None
+
+        if "admin_password" in body.keys():
+            admin_password = body["admin_password"]
+
+        if "admin_username" in body.keys():
+            admin_username = body["admin_username"]
 
         if "operating_system" in body.keys():
             operating_system = body["operating_system"]
 
-        task = createVM.apply_async([vm_size, location, operating_system, kwargs["ID"]])
+        task = createVM.apply_async(
+            [
+                vm_size,
+                location,
+                operating_system,
+                admin_password,
+                admin_username,
+                kwargs["ID"],
+            ]
+        )
+
         if not task:
             return jsonify({}), 400
         return jsonify({"ID": task.id}), 202
@@ -113,9 +131,12 @@ def vm(action, **kwargs):
         task = updateVMTable.apply_async([kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
     elif action == "fetchall" and request.method == "POST":
-        body = request.get_json()
         vms = fetchUserVMs(None, kwargs["ID"])
         return jsonify({"payload": vms, "status": 200}), 200
+    elif action == "fetchVm" and request.method == "POST":
+        body = request.get_json()
+        vm = fetchVm(body["vm_name"])
+        return jsonify({"vm": vm}), 200
     elif action == "winlogonStatus" and request.method == "POST":
         body = request.get_json()
         ready = body["ready"]
@@ -166,7 +187,7 @@ def vm(action, **kwargs):
             intermediate_states = ["STOPPING", "DEALLOCATING", "ATTACHING"]
             username = vm_info["username"]
 
-            disks = fetchUserDisks(vm_info["username"], ID = kwargs["ID"])
+            disks = fetchUserDisks(vm_info["username"], ID=kwargs["ID"])
             is_user = True
             if disks:
                 disk = disks[0]
@@ -287,22 +308,35 @@ def vm(action, **kwargs):
             if vm_info:
                 is_dev = vm_info["dev"]
                 disk_name = vm_info["disk_name"]
-                disk_info = fetchUserDisks(vm_info["username"])
+                disk_info = fetchDiskInfo(disk_name)
 
                 branch = None
                 if disk_info:
-                    branch = disk_info[0]["branch"]
+                    branch = disk_info["branch"]
 
-                return jsonify({"dev": is_dev, "branch": branch, "status": 200}), 200
+                using_stun = fetchDiskSetting(disk_name, "using_stun")
+
+                return (
+                    jsonify(
+                        {
+                            "dev": is_dev,
+                            "branch": branch,
+                            "status": 200,
+                            "using_stun": using_stun if using_stun else False,
+                        }
+                    ),
+                    200,
+                )
             return jsonify({"dev": False, "status": 200}), 200
         except Exception as e:
             print(str(e))
-    elif action == "setDev" and request.method == "POST":
-        vm_name = request.get_json()["vm_name"]
-        dev = request.get_json()["dev"]
-        setDev(vm_name, dev)
-        sendInfo(kwargs["ID"], "Set dev state for vm {} to {}".format(vm_name, dev))
-        return jsonify({"status": 200}), 200
+    elif action == "installApps" and request.method == "POST":
+        body = request.get_json()
+
+        status = insertDiskApps(body["disk_name"], body["apps"])
+
+        return jsonify({}), status
+
     return jsonify({}), 400
 
 
@@ -401,12 +435,52 @@ def logs_actions(action, **kwargs):
     # fetch logs action
     if action == "fetch" and request.method == "POST":
         try:
+            username = body["username"]
             fetch_all = body["fetch_all"]
         except:
             fetch_all = False
+            username = None
 
-        task = fetchLogs.apply_async([body["username"], fetch_all, kwargs["ID"]])
-        return jsonify({"ID": task.id}), 202
+        if "connection_id" in body.keys():
+            command = text(
+                """
+                SELECT * FROM logs WHERE "connection_id" = :connection_id ORDER BY last_updated DESC
+                """
+            )
+            params = {"connection_id": body["connection_id"]}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+
+        if not fetch_all:
+            command = text(
+                """
+                SELECT * FROM logs WHERE "username" LIKE :username ORDER BY last_updated DESC
+                """
+            )
+            params = {"username": username + "%"}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+        else:
+            command = text(
+                """
+                SELECT * FROM logs ORDER BY last_updated DESC
+                """
+            )
+
+            params = {}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+        return jsonify({"logs": None}), 400
+
     # delete logs action
     elif action == "delete" and request.method == "POST":
         try:

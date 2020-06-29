@@ -5,7 +5,15 @@ from .general import *
 from .disks import *
 
 
-def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Windows"):
+def createVMParameters(
+    vmName,
+    nic_id,
+    vm_size,
+    location,
+    operating_system="Windows",
+    admin_password=None,
+    admin_username=None,
+):
     """Adds a vm entry to the SQL database
 
     Parameters:
@@ -14,6 +22,7 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
     vm_size (str): The type of vm in terms of specs(default is NV6)
     location (str): The Azure region of the vm
     operating_system (str): The operating system of the vm (default is 'Windows')
+    admin_password (str): The admin password (default is set in .env)
 
     Returns:
     dict: Parameters that will be used in Azure sdk
@@ -52,21 +61,29 @@ def createVMParameters(vmName, nic_id, vm_size, location, operating_system="Wind
             """
         )
         params = {"vmName": vmName, "username": userName, "disk_name": None}
+
         with engine.connect() as conn:
             conn.execute(command, **params)
             conn.close()
 
+            admin_password = (
+                os.getenv("VM_PASSWORD") if not admin_password else admin_password
+            )
+            admin_username = (
+                os.getenv("VM_GROUP") if not admin_username else admin_username
+            )
+
             os_profile = (
                 {
                     "computer_name": vmName,
-                    "admin_username": os.getenv("VM_GROUP"),
-                    "admin_password": os.getenv("VM_PASSWORD"),
+                    "admin_username": admin_username,
+                    "admin_password": admin_password,
                 }
                 if operating_system == "Linux"
                 else {
                     "computer_name": vmName,
-                    "admin_username": os.getenv("VM_GROUP"),
-                    "admin_password": os.getenv("VM_PASSWORD"),
+                    "admin_username": admin_username,
+                    "admin_password": admin_password,
                 }
             )
 
@@ -190,6 +207,27 @@ def fetchVMByIP(vm_ip):
         """
     )
     params = {"vm_ip": vm_ip}
+    with engine.connect() as conn:
+        vm_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        return vm_info
+
+
+def fetchVm(vm_name):
+    """Fetches 1 vm from the table
+
+    Args:
+        vm_name (str): Name of vm
+
+    Returns:
+        dict: Dict for vm
+    """
+    command = text(
+        """
+        SELECT * FROM v_ms WHERE "vm_name" = :vm_name
+        """
+    )
+    params = {"vm_name": vm_name}
     with engine.connect() as conn:
         vm_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
@@ -1442,9 +1480,6 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
         first_time = checkFirstTime(disk_name)
         num_boots = 1 if not first_time else 2
 
-        if first_time:
-            print("First time! Going to boot {} times".format(str(num_boots)))
-
         for i in range(0, num_boots):
             if i == 1 and s:
                 s.update_state(
@@ -1471,9 +1506,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
             if s:
                 s.update_state(
                     state="PENDING",
-                    meta={
-                        "msg": "Cloud PC still executing boot request."
-                    },
+                    meta={"msg": "Cloud PC still executing boot request."},
                 )
 
             boot_if_necessary(vm_name, needs_restart, ID)
@@ -1507,7 +1540,10 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                     boot_if_necessary(vm_name, True, ID)
                     if s:
                         s.update_state(
-                            state="PENDING", meta={"msg": "Logging you into your cloud PC. This should take less than two minutes."}
+                            state="PENDING",
+                            meta={
+                                "msg": "Logging you into your cloud PC. This should take less than two minutes."
+                            },
                         )
                     winlogon = waitForWinlogon(vm_name, ID)
 
@@ -1517,18 +1553,33 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                         meta={"msg": "Logged into your cloud PC successfully."},
                     )
 
+            if i == 1:
+                print("First time! Going to boot {} times".format(str(num_boots)))
+
                 lockVMAndUpdate(
                     vm_name,
-                    "RUNNING_AVAILABLE",
-                    False,
-                    temporary_lock=1,
+                    "ATTACHING",
+                    True,
+                    temporary_lock=None,
                     change_last_updated=True,
                     verbose=False,
                     ID=ID,
                 )
 
-            if i == 1:
-                changeFirstTime(disk_name)
+                if s:
+                    s.update_state(
+                        state="PENDING",
+                        meta={
+                            "msg": "Pre-installing your applications now. This could take several minutes."
+                        },
+                    )
+
+                apps = fetchDiskApps(disk_name)
+
+                installation = installApplications(vm_name, apps, s, ID)
+
+                if installation["status"] != 200:
+                    sendError(ID, "Error installing applications!")
 
                 if s:
                     s.update_state(
@@ -1537,17 +1588,20 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                             "msg": "Running final performance checks. This will take two minutes."
                         },
                     )
-                time.sleep(60)
 
-                lockVMAndUpdate(
-                    vm_name,
-                    "RUNNING_AVAILABLE",
-                    False,
-                    temporary_lock=3,
-                    change_last_updated=True,
-                    verbose=False,
-                    ID=ID,
-                )
+                changeFirstTime(disk_name)
+
+                time.sleep(20)
+
+        lockVMAndUpdate(
+            vm_name,
+            "RUNNING_AVAILABLE",
+            False,
+            temporary_lock=2,
+            change_last_updated=True,
+            verbose=False,
+            ID=ID,
+        )
 
         return 1
     except Exception as e:
@@ -1813,16 +1867,60 @@ def setAutoLogin(disk_name, vm_name, ID=-1):
         sendCritical(ID, str(e))
         return {"status": 400}
 
-def setDev(vm_name, dev):
+def fetchInstallCommand(app_name):
+    """Fetches an install command from the install_commands sql table
+
+    Args:
+        app_name (str): The app name of the install command to fetch
+
+    Returns:
+        dict: An object respresenting the respective row in the table
+    """
     command = text(
         """
-        UPDATE v_ms
-        SET dev = :dev
-        WHERE
-        "vm_name" = :vm_name
+        SELECT * FROM install_commands WHERE "app_name" = :app_name
         """
     )
-    params = {"dev": dev, "vm_name": vm_name}
+    params = {"app_name": app_name}
     with engine.connect() as conn:
-        conn.execute(command, **params)
+
+        install_command = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
+        return install_command
+
+
+def installApplications(vm_name, apps, s=None, ID=-1):
+    _, compute_client, _ = createClients()
+    try:
+        for app in apps:
+            if s:
+                s.update_state(
+                    state="PENDING",
+                    meta={
+                        "msg": "Installing {app} onto your computer.".format(
+                            app=str(app["app_name"])
+                        )
+                    },
+                )
+            sendInfo(
+                ID, "Starting to install {} for VM {}".format(app["app_name"], vm_name)
+            )
+            install_command = fetchInstallCommand(app["app_name"])
+
+            run_command_parameters = {
+                "command_id": "RunPowerShellScript",
+                "script": [install_command["command"]],
+            }
+
+            poller = compute_client.virtual_machines.run_command(
+                os.environ.get("VM_GROUP"), vm_name, run_command_parameters
+            )
+
+            result = poller.result()
+            sendInfo(ID, app["app_name"] + " installed to " + vm_name)
+            sendInfo(ID, result.value[0].message)
+    except Exception as e:
+        sendError(ID, "ERROR: " + str(e))
+        return {"status": 400}
+
+    return {"status": 200}

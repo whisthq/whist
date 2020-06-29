@@ -39,6 +39,10 @@ def createDiskEntry(
 
         conn.close()
 
+        assignSettingsToDisk(disk_name, "Fractal")
+
+        # TODO: this method should take the OS
+
 
 def genDiskName():
     """Generates a unique name for a disk
@@ -69,7 +73,7 @@ def genPassword():
     # alphabet = string.ascii_lowercase + string.digits + ',./;[]'
     # password = ''.join(secrets.choice(alphabet) for i in range(24))
     password = '6ifq59b;c],c6t.kh.5iw,m/vp.3a;;i'
-    
+
     return password
 
 def getVMSize(disk_name):
@@ -144,10 +148,7 @@ def fetchUserDisks(username, show_all=False, main=True, ID=-1):
                 disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchall())
                 conn.close()
 
-                if disks_info:
-                    sendInfo(ID, "Disk names fetched and Postgres connection closed")
-                else:
-                    sendWarning(ID, "No disk found for {}. Postgres connection closed")
+                if not disks_info:
                     return []
 
                 if main:
@@ -353,8 +354,8 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.execute(command, **params)
         conn.close()
 
-def assignCredentialsToDisk(disk_name, admin_username):
-    """Assigns an admin username and password for a disk
+def assignSettingsToDisk(disk_name, admin_username):
+    """Assigns settings for a disk
 
     Args:
         disk_name (str): The name of the disk
@@ -363,24 +364,26 @@ def assignCredentialsToDisk(disk_name, admin_username):
     rand_password = genPassword()
     command = text(
         """
-        INSERT INTO disk_settings ("admin_username", "admin_password", "disk_name") VALUES (:admin_username, :admin_password, :disk_name)
+        INSERT INTO disk_settings ("admin_username", "admin_password", "disk_name", "branch", "using_stun") VALUES (:admin_username, :admin_password, :disk_name, :branch, :using_stun)
         """
     )
-    params = {"admin_username": admin_username, "admin_password": rand_password, "disk_name": disk_name}
+
+    params = {"admin_username": admin_username, "admin_password": rand_password, "disk_name": disk_name, "branch": "master", "using_stun": False}
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
 
 def fetchAllDisks():
-    """Fetches all the disks
+    """Fetches all the disks from disks table, LEFT joined with disk_settings
 
     Returns:
         arr[dict]: An array of all the disks in the disks sql table
     """
     command = text(
         """
-        SELECT *
+        SELECT disks.*, disk_settings.using_stun
         FROM disks
+        LEFT JOIN disk_settings ON disks.disk_name = disk_settings.disk_name
         """
     )
 
@@ -562,7 +565,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
             ),
         )
         async_disk_creation = compute_client.disks.create_or_update(
-            "Fractal",
+            os.environ["VM_GROUP"],
             disk_name,
             {
                 "location": location,
@@ -580,7 +583,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
         updateDisk(disk_name, "", location)
         assignUserToDisk(disk_name, username)
         assignVMSizeToDisk(disk_name, vm_size)
-        assignCredentialsToDisk(disk_name, admin_username)
+        assignSettingsToDisk(disk_name, admin_username)
 
         return {"status": 200, "disk_name": disk_name}
     except Exception as e:
@@ -666,16 +669,168 @@ def setUpdateAccepted(disk_name, accepted, ID=-1):
         conn.execute(command, **params)
         conn.close()
 
-def fetchAllDisks(ID=-1):
-    """Fetches all disks in database
+
+def fetchDiskApps(disk_name, ID=-1):
+    """Fetches user's desired apps for a disk
+
+    Args:
+        disk_name (str): The name of the disk
+        ID (int, optional): The papertrail logging ID. Defaults to -1.
+
+    Returns:
+        list: representing the app names of the user's desired apps in the disk_apps sql database
+    """
+    sendInfo(ID, "Fetching apps for disk {}".format(disk_name))
+
+    if disk_name:
+        command = text(
+            """
+            SELECT "app_name" FROM disk_apps WHERE "disk_name" = :disk_name
+            """
+        )
+        params = {"disk_name": disk_name}
+        with engine.connect() as conn:
+            apps = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+            conn.close()
+            return apps
+
+
+def insertDiskApps(disk_name, apps, ID=-1):
+    """Fetches user's desired apps
+
+    Args:
+        disk_name (str): The disk_name
+        apps (list): The list of apps
+        ID (int, optional): The papertrail logging ID. Defaults to -1.
+    """
+
+    with engine.connect() as conn:
+        try:
+            if disk_name:
+                for app_name in apps:
+                    sendInfo(
+                        ID, "Inserting app {} for disk {}".format(app_name, disk_name)
+                    )
+
+                    command = text(
+                        """
+                        INSERT INTO disk_apps (disk_name, app_name) VALUES (:disk_name, :app_name)
+                        """
+                    )
+                    params = {"disk_name": disk_name, "app_name": app_name}
+
+                    conn.execute(command, **params)
+
+        except:
+            return 400
+
+        conn.close()
+        return 200
+
+
+def insertDiskSetting(disk_name, branch, using_stun):
+    with engine.connect() as conn:
+        command = text(
+            """
+            SELECT * FROM disk_settings WHERE "disk_name" = :disk_name
+            """
+        )
+
+        params = {"disk_name": disk_name}
+
+        disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+
+        if disks:
+            command = text(
+                """
+                UPDATE disk_settings
+                SET branch = :branch, using_stun = :using_stun
+                WHERE
+                "disk_name" = :disk_name
+                """
+            )
+            params = {
+                "disk_name": disk_name,
+                "branch": branch,
+                "using_stun": using_stun,
+            }
+            conn.execute(command, **params)
+            conn.close()
+        else:
+            command = text(
+                """
+                INSERT INTO disk_settings("disk_name", "branch", "using_stun")
+                VALUES(:disk_name, :branch, :using_stun)
+                """
+            )
+            params = {
+                "disk_name": disk_name,
+                "branch": branch,
+                "using_stun": using_stun,
+            }
+
+            conn.execute(command, **params)
+            conn.close()
+
+
+def modifyDiskSetting(disk_name, settings_dict):
+    with engine.connect() as conn:
+        for setting_name, setting in settings_dict.items():
+            command = text(
+                """
+                UPDATE disk_settings
+                SET {setting_name} = :{setting_name}
+                WHERE
+                "disk_name" = :disk_name
+                """.format(
+                    setting_name=setting_name
+                )
+            )
+
+            params = {setting_name: setting, "disk_name": disk_name}
+
+            conn.execute(command, **params)
+
+        conn.close()
+
+
+def fetchDiskSetting(disk_name, setting_name):
+    with engine.connect() as conn:
+        command = text(
+            """
+            SELECT * FROM disk_settings WHERE "disk_name" = :disk_name
+            """
+        )
+
+        params = {"disk_name": disk_name}
+
+        disk_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+
+        if disk_info:
+            return disk_info[setting_name]
+        else:
+            return None
+
+
+def fetchDiskInfo(disk_name):
+    """Fetches all disks associated with the user
+
+    Args:
+        username (str): The username. If username is null, it fetches all disks
+        show_all (bool, optional): Whether or not to select all disks regardless of state, vs only disks with ACTIVE state. Defaults to False.
+        ID (int, optional): Papertrail logging ID. Defaults to -1.
+
+    Returns:
+        array: An array of the disks
     """
     command = text(
         """
-        SELECT * FROM disks
+        SELECT * FROM disks WHERE "disk_name" = :disk_name
         """
     )
-    params = {}
+    params = {"disk_name": disk_name}
     with engine.connect() as conn:
-        disks = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+        disk_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
-        return disks
+
+        return disk_info
