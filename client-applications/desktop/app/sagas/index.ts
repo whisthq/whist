@@ -41,7 +41,10 @@ function* googleLogin(action) {
                     Action.storeJWT(json.access_token, json.refresh_token)
                 );
 
-                yield call(getPromoCode, { username: json.username });
+                yield call(getPromoCode, {
+                    username: json.username,
+                    token: "",
+                });
 
                 history.push("/dashboard");
             } else {
