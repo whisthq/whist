@@ -2,6 +2,7 @@
 echo -e "Updating protocol submodule to latest master"
 git submodule update --remote
 cd protocol
+git checkout $1
 echo -e "\n\n"
 git --no-pager log -1 --pretty
 echo -e ""
