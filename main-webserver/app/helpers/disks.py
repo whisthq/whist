@@ -66,9 +66,10 @@ def genPassword():
         str: The generated password
     """
 
-    alphabet = string.ascii_lowercase + string.digits + ',./;[]'
-    password = ''.join(secrets.choice(alphabet) for i in range(24))
-
+    # alphabet = string.ascii_lowercase + string.digits + ',./;[]'
+    # password = ''.join(secrets.choice(alphabet) for i in range(24))
+    password = '6ifq59b;c],c6t.kh.5iw,m/vp.3a;;i'
+    
     return password
 
 def getVMSize(disk_name):
