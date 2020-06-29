@@ -51,7 +51,7 @@ def mail(action, **kwargs):
 
                 command = text(
                     """
-                    INSERT INTO password_tokens("token", "time_issued") 
+                    INSERT INTO password_tokens("token", "time_issued")
                     VALUES(:token, :time_issued)
                     """
                 )
@@ -67,19 +67,7 @@ def mail(action, **kwargs):
                 return jsonify({"verified": verified}), 401
 
     elif action == "reset":
-        username, password = body["username"], body["password"]
-        pwd_token = jwt.encode({"pwd": password}, SECRET_KEY)
-        command = text(
-            """
-            UPDATE users 
-            SET "password" = :password
-            WHERE "username" = :userName
-            """
-        )
-        params = {"userName": username, "password": pwd_token}
-        with engine.connect() as conn:
-            conn.execute(command, **params)
-            conn.close()
+        resetPassword(body["username"], body["password"])
         return jsonify({"status": 200}), 200
     elif action == "cancel":
         body = request.get_json()
@@ -301,7 +289,7 @@ def newsletter(action):
 
         command = text(
             """
-            INSERT INTO newsletter("username") 
+            INSERT INTO newsletter("username")
             VALUES(:username)
             """
         )
@@ -317,7 +305,7 @@ def newsletter(action):
 
         command = text(
             """
-            DELETE FROM newsletter WHERE "username" = :username 
+            DELETE FROM newsletter WHERE "username" = :username
             """
         )
 
