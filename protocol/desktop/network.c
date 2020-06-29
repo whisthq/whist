@@ -1,7 +1,3 @@
-#if defined(_WIN32)
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 #include "network.h"
 
 #include "../fractal/core/fractal.h"
@@ -31,8 +27,9 @@ static int connectUDPIncoming(int port, bool using_stun) {
 
     int a = 65535;
     if (setsockopt(PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF,
-                   (const char *)&a, sizeof(int)) == -1) {
-        LOG_ERROR("Error setting socket opts: %s\n", strerror(errno));
+
+                   (const char*)&a, sizeof(int)) == -1) {
+        LOG_ERROR("Error setting socket opts: %d\n", GetLastNetworkError());
         return -1;
     }
     return 0;

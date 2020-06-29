@@ -142,5 +142,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             dxgi
             dxguid
             shcore
+            DbgHelp
             )
 endif()
