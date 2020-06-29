@@ -30,7 +30,7 @@ Our webservers are hosted on Heroku:
 7. [NOTE: Currently buggy] If you plan on calling endpoints that require celery, you will want to view the celery task queue locally. To do this, open a new terminal, cd into the vm-webserver folder, and type `celery -A app.tasks worker --loglevel=info`.
 8. Then, in a new terminal, attach the staging branch to cube-celery-staging by typing `git checkout staging`, then `heroku git:remote --app cube-celery-staging -r staging`
 9. Also in the new terminal, attach the master branch to cube-celery-vm by typing `git checkout master`, then `heroku git:remote --app cube-celery-vm -r heroku`
-10. [OPTIONAL] We are starting to build out support for AWS EC2 instances. If you don't plan on testing our EC2 endpoints, you don't need to worry about this, but if you are, then here's what you will need to do:
+10. **[OPTIONAL]** We are starting to build out support for AWS EC2 instances. If you don't plan on testing our EC2 endpoints, you don't need to worry about this, but if you are, then here's what you will need to do:
     - Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html).
     - Once installed, open up a terminal and type `aws configure`.
     - When prompted, enter access key `AKIA24A776SSMH6JRSNH` and secret ID `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`. You can leave the other fields blank.
