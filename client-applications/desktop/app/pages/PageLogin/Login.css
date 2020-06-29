@@ -78,7 +78,7 @@ button {
 .loginButton {
     border: none;
     color: white;
-    background: rgba(27, 158, 245, 0.8);
+    background: rgba(66, 175, 235, 0.8);
     margin-left: 0px;
     width: 300px;
 }
@@ -106,7 +106,7 @@ button {
 
 .inputBox {
     width: 200px;
-    background-color: rgba(20, 20, 20, 0.7);
+    background-color: rgba(77, 77, 92, 0.6);
     padding: 20px 50px;
     border-radius: 30px;
     margin-bottom: 20px;
@@ -114,6 +114,10 @@ button {
     outline: none !important;
     color: white;
     font-family: "Maven Pro";
+}
+
+input.inputBox::placeholder {
+    color: white;
 }
 
 .inputIcon {

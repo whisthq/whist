@@ -11,7 +11,11 @@ import LockIcon from "resources/images/lock.svg";
 import UpdateScreen from "pages/PageDashboard/components/UpdateScreen.tsx";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleNotch, faGoogle } from "@fortawesome/free-solid-svg-icons";
+import {
+    faCircleNotch,
+    faUser,
+    faLock,
+} from "@fortawesome/free-solid-svg-icons";
 
 import { FaGoogle } from "react-icons/fa";
 
@@ -294,40 +298,9 @@ class Login extends Component {
                                 </button>
                             </div>
                         </div>
-                        <div style={{ marginTop: 70 }}>
-                            {this.props.warning && (
-                                <div
-                                    style={{
-                                        textAlign: "center",
-                                        fontSize: 12,
-                                        color: "#f9000b",
-                                        background: "rgba(253, 240, 241, 0.9)",
-                                        width: "100%",
-                                        padding: 15,
-                                        borderRadius: 2,
-                                        margin: "auto",
-                                        marginBottom: 30,
-                                        width: 265,
-                                    }}
-                                >
-                                    <div>
-                                        Invalid credentials. If you lost your
-                                        password, you can reset it on the&nbsp;
-                                        <div
-                                            onClick={this.ForgotPassword}
-                                            className={styles.pointerOnHover}
-                                            style={{
-                                                display: "inline",
-                                                fontWeight: "bold",
-                                                textDecoration: "underline",
-                                            }}
-                                        >
-                                            website
-                                        </div>
-                                        .
-                                    </div>
-                                </div>
-                            )}
+                        <div
+                            style={{ marginTop: this.props.warning ? 10 : 60 }}
+                        >
                             {this.state.studios ? (
                                 <div
                                     style={{
@@ -403,9 +376,12 @@ class Login extends Component {
                             )}
                             <div className={styles.loginContainer}>
                                 <div>
-                                    <img
-                                        src={UserIcon}
-                                        width="100"
+                                    <FontAwesomeIcon
+                                        icon={faUser}
+                                        style={{
+                                            color: "white",
+                                            fontSize: 12,
+                                        }}
                                         className={styles.inputIcon}
                                     />
                                     <input
@@ -419,9 +395,12 @@ class Login extends Component {
                                     />
                                 </div>
                                 <div>
-                                    <img
-                                        src={LockIcon}
-                                        width="100"
+                                    <FontAwesomeIcon
+                                        icon={faLock}
+                                        style={{
+                                            color: "white",
+                                            fontSize: 12,
+                                        }}
                                         className={styles.inputIcon}
                                     />
                                     <input
@@ -467,7 +446,7 @@ class Login extends Component {
                                                 className={styles.loginButton}
                                                 id="login-button"
                                             >
-                                                Get Started
+                                                START
                                             </button>
                                         )
                                     ) : (
@@ -532,6 +511,43 @@ class Login extends Component {
                                         )}
                                     </div>
                                 </div>
+                                {this.props.warning && (
+                                    <div
+                                        style={{
+                                            textAlign: "center",
+                                            fontSize: 12,
+                                            color: "#f9000b",
+                                            background:
+                                                "rgba(253, 240, 241, 0.9)",
+                                            width: "100%",
+                                            padding: 15,
+                                            borderRadius: 2,
+                                            margin: "auto",
+                                            marginBottom: 30,
+                                            width: 265,
+                                        }}
+                                    >
+                                        <div>
+                                            Invalid credentials. If you lost
+                                            your password, you can reset it on
+                                            the&nbsp;
+                                            <div
+                                                onClick={this.ForgotPassword}
+                                                className={
+                                                    styles.pointerOnHover
+                                                }
+                                                style={{
+                                                    display: "inline",
+                                                    fontWeight: "bold",
+                                                    textDecoration: "underline",
+                                                }}
+                                            >
+                                                website
+                                            </div>
+                                            .
+                                        </div>
+                                    </div>
+                                )}
                                 <div
                                     style={{
                                         marginTop: 25,
@@ -552,61 +568,6 @@ class Login extends Component {
                                     <div style={{ fontSize: 12 }}>
                                         Remember Me
                                     </div>
-                                </div>
-                                <div
-                                    style={{
-                                        fontSize: 12,
-                                        color: "#D6D6D6",
-                                        width: 250,
-                                        margin: "auto",
-                                        marginTop: 15,
-                                    }}
-                                >
-                                    {this.props.warning ? (
-                                        this.state.studios ? (
-                                            <div>
-                                                Invalid credentials. If you lost
-                                                your password, you can reset it
-                                                on the&nbsp;
-                                                <div
-                                                    onClick={
-                                                        this.ForgotPassword
-                                                    }
-                                                    className={
-                                                        styles.pointerOnHover
-                                                    }
-                                                    style={{
-                                                        display: "inline",
-                                                        fontWeight: "bold",
-                                                    }}
-                                                >
-                                                    Fractal website.
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                Invalid credentials. If you lost
-                                                your password, you can reset it
-                                                on the&nbsp;
-                                                <div
-                                                    onClick={
-                                                        this.ForgotPassword
-                                                    }
-                                                    className={
-                                                        styles.pointerOnHover
-                                                    }
-                                                    style={{
-                                                        display: "inline",
-                                                        fontWeight: "bold",
-                                                    }}
-                                                >
-                                                    Fractal website.
-                                                </div>
-                                            </div>
-                                        )
-                                    ) : (
-                                        <div />
-                                    )}
                                 </div>
                             </div>
                         </div>

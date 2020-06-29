@@ -22,6 +22,7 @@ import Window from "resources/images/window.svg";
 import Speedometer from "resources/images/speedometer.svg";
 import Mountain from "resources/images/mountain.jpg";
 import Scale from "resources/images/scale.svg";
+import WiFi from "resources/images/wifi.svg";
 
 import {
     askFeedback,
@@ -47,6 +48,7 @@ class MainBox extends Component {
             reattached: false,
             restartPopup: false,
             vmRestarting: false,
+            h265Mode: false,
         };
     }
 
@@ -155,18 +157,16 @@ class MainBox extends Component {
 
                     // 0 dimensions is full-screen in protocol, windowed-mode starts at half screen
                     // and can be resized in the protocol directly. DPI calculation done in protocol
-                    var screenWidth = this.state.windowMode
-                        ? window.screen.width / 2
-                        : 0;
-                    var screenHeight = this.state.windowMode
-                        ? window.screen.height / 2
-                        : 0;
+                    var screenWidth = this.state.windowMode ? "-w 1280" : 0;
+                    var screenHeight = this.state.windowMode ? "-h 720" : 0;
+                    var codec = this.state.h265Mode ? "-c h265" : "-c h264";
 
                     var parameters = [
-                        this.props.public_ip,
                         screenWidth,
                         screenHeight,
-                        this.state.mbps,
+                        "-b ".concat(this.state.mbps.toString()),
+                        codec,
+                        this.props.public_ip,
                     ];
 
                     // Starts the protocol
@@ -200,6 +200,15 @@ class MainBox extends Component {
 
         this.setState({ windowMode: !mode }, function () {
             storage.set("window", { windowMode: !mode });
+        });
+    };
+
+    toggleH265 = (mode: any) => {
+        const storage = require("electron-json-storage");
+        let component = this;
+
+        this.setState({ h265Mode: !mode }, function () {
+            storage.set("h265", { h265Mode: !mode });
         });
     };
 
@@ -255,6 +264,11 @@ class MainBox extends Component {
         storage.get("window", function (error, data) {
             if (error) throw error;
             component.setState({ windowMode: data.windowMode });
+        });
+
+        storage.get("h265", function (error, data) {
+            if (error) throw error;
+            component.setState({ h265Mode: data.h265Mode });
         });
 
         this.props.dispatch(askFeedback(false));
@@ -1090,7 +1104,7 @@ class MainBox extends Component {
                                         }}
                                     >
                                         <img
-                                            src={Window}
+                                            src={WiFi}
                                             style={{
                                                 color: "#111111",
                                                 height: 14,
@@ -1124,8 +1138,8 @@ class MainBox extends Component {
                                 <div style={{ width: "25%" }}>
                                     <div style={{ float: "right" }}>
                                         <ToggleButton
-                                            value={this.state.windowMode}
-                                            onToggle={this.toggleWindow}
+                                            value={this.state.h265Mode}
+                                            onToggle={this.toggleH265}
                                             colors={{
                                                 active: {
                                                     base: "#5EC4EB",
