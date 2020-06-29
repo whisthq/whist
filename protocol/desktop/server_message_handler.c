@@ -1,10 +1,11 @@
+#include "server_message_handler.h"
+
+#include <stddef.h>
+
 #include "../fractal/core/fractal.h"
 #include "../fractal/utils/clock.h"
 #include "../fractal/utils/logging.h"
 #include "desktop_utils.h"
-#include "server_message_handler.h"
-
-#include <stddef.h>
 
 extern char filename[300];
 extern char username[50];
@@ -20,7 +21,8 @@ extern volatile int try_amount;
 static int handleInitMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handleQuitMessage(FractalServerMessage *fmsg, size_t fmsg_size);
-static int handleAudioFrequencyMessage(FractalServerMessage *fmsg, size_t fmsg_size);
+static int handleAudioFrequencyMessage(FractalServerMessage *fmsg,
+                                       size_t fmsg_size);
 static int handleClipboardMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 
 int handleServerMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
@@ -44,15 +46,16 @@ int handleServerMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
 static int handleInitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
     if (fmsg_size !=
         sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit)) {
-        LOG_ERROR("Incorrect message size for a server message"
-                  " (type: init message)!");
+        LOG_ERROR(
+            "Incorrect message size for a server message"
+            " (type: init message)!");
         return -1;
     }
 
     LOG_INFO("Received init message!\n");
 
-    FractalServerMessageInit* fmsg_init =
-        (FractalServerMessageInit*)fmsg->init_msg;
+    FractalServerMessageInit *fmsg_init =
+        (FractalServerMessageInit *)fmsg->init_msg;
 
     memcpy(filename, fmsg_init->filename,
            min(sizeof(filename), sizeof(fmsg_init->filename)));
@@ -70,8 +73,9 @@ static int handleInitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
 
 static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
     if (fmsg_size != sizeof(FractalServerMessage)) {
-        LOG_ERROR("Incorrect message size for a server message"
-                  " (type: pong message)!");
+        LOG_ERROR(
+            "Incorrect message size for a server message"
+            " (type: pong message)!");
         return -1;
     }
     if (ping_id == fmsg->ping_id) {
@@ -80,8 +84,8 @@ static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
         ping_failures = 0;
         try_amount = 0;
     } else {
-        LOG_INFO("Old Ping ID found: Got %d but expected %d",
-                 fmsg->ping_id, ping_id);
+        LOG_INFO("Old Ping ID found: Got %d but expected %d", fmsg->ping_id,
+                 ping_id);
     }
     return 0;
 }
@@ -89,8 +93,9 @@ static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
 static int handleQuitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
     fmsg;
     if (fmsg_size != sizeof(FractalServerMessage)) {
-        LOG_ERROR("Incorrect message size for a server message"
-                  " (type: quit message)!");
+        LOG_ERROR(
+            "Incorrect message size for a server message"
+            " (type: quit message)!");
         return -1;
     }
     LOG_INFO("Server signaled a quit!");
@@ -98,10 +103,12 @@ static int handleQuitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
     return 0;
 }
 
-static int handleAudioFrequencyMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handleAudioFrequencyMessage(FractalServerMessage *fmsg,
+                                       size_t fmsg_size) {
     if (fmsg_size != sizeof(FractalServerMessage)) {
-        LOG_ERROR("Incorrect message size for a server message"
-                  " (type: audio frequency message)!");
+        LOG_ERROR(
+            "Incorrect message size for a server message"
+            " (type: audio frequency message)!");
         return -1;
     }
     LOG_INFO("Changing audio frequency to %d", fmsg->frequency);
@@ -109,14 +116,15 @@ static int handleAudioFrequencyMessage(FractalServerMessage *fmsg, size_t fmsg_s
     return 0;
 }
 
-static int handleClipboardMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handleClipboardMessage(FractalServerMessage *fmsg,
+                                  size_t fmsg_size) {
     if (fmsg_size != sizeof(FractalServerMessage) + fmsg->clipboard.size) {
-        LOG_ERROR("Incorrect message size for a server message"
-                  " (type: clipboard message)!");
+        LOG_ERROR(
+            "Incorrect message size for a server message"
+            " (type: clipboard message)!");
         return -1;
     }
-    LOG_INFO("Received %d byte clipboard message from server!",
-             fmsg_size);
+    LOG_INFO("Received %d byte clipboard message from server!", fmsg_size);
     if (!ClipboardSynchronizerSetClipboard(&fmsg->clipboard)) {
         LOG_ERROR("Failed to set local clipboard from server message.");
         return -1;

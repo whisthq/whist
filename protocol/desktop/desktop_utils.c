@@ -1,4 +1,6 @@
+#ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
+#endif
 
 #include <errno.h>
 #include <limits.h>
@@ -13,9 +15,10 @@
 extern volatile char *server_ip;
 extern volatile int output_width;
 extern volatile int output_height;
+extern volatile CodecType output_codec_type;
+
 extern volatile int max_bitrate;
 extern volatile bool is_spectator;
-extern volatile CodecType codec_type;
 
 #define HOST_PUBLIC_KEY                                           \
     "ecdsa-sha2-nistp256 "                                        \
@@ -40,11 +43,11 @@ const struct option cmd_options[] = {
     {0, 0, 0, 0}};
 #define OPTION_STRING "w:h:b:sc:"
 
-int parseArgs(int argc, char* argv[]) {
-    char* usage =
+int parseArgs(int argc, char *argv[]) {
+    char *usage =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "Try 'desktop --help' for more information.\n";
-    char* usage_details =
+    char *usage_details =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
@@ -63,9 +66,10 @@ int parseArgs(int argc, char* argv[]) {
 
     int opt;
     long int ret;
-    char* endptr;
-    while (opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL),
-           opt != -1) {
+    bool ip_set = false;
+    char *endptr;
+    while (true) {
+        opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
         errno = 0;
         switch (opt) {
             case 'w':
@@ -97,9 +101,9 @@ int parseArgs(int argc, char* argv[]) {
                 break;
             case 'c':
                 if (!strcmp(optarg, "h264")) {
-                    codec_type = CODEC_TYPE_H264;
+                    output_codec_type = CODEC_TYPE_H264;
                 } else if (!strcmp(optarg, "h265")) {
-                    codec_type = CODEC_TYPE_H265;
+                    output_codec_type = CODEC_TYPE_H265;
                 } else {
                     printf("Invalid codec type: '%s'\n", optarg);
                     printf("%s", usage);
@@ -110,21 +114,28 @@ int parseArgs(int argc, char* argv[]) {
                 printf("%s", usage_details);
                 return 1;
             case FRACTAL_GETOPT_VERSION_CHAR:
-                printf("No version information specified.\n");
+                printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
                 return 1;
         }
-    }
-
-    if (optind < argc) {
-        server_ip = argv[optind];
-    } else {
-        printf("%s", usage);
-        return -1;
+        if (opt == -1) {
+            if (optind < argc && !ip_set) {
+                // there's a valid non-option arg and ip is unset
+                server_ip = argv[optind];
+                ip_set = true;
+                ++optind;
+            } else if (optind < argc || !ip_set) {
+                // incorrect usage
+                printf("%s", usage);
+                return -1;
+            } else {
+                // we're done
+                break;
+            }
+        }
     }
 
     return 0;
 }
-
 
 #ifndef _WIN32
 static char *appendPathToHome(char *path) {
@@ -151,7 +162,7 @@ char *dupstring(char *s1) {
     char *s2 = malloc(len * sizeof *s2);
     char *ret = s2;
     if (s2 == NULL) return NULL;
-    for (; *s1; s1++, s2++)  *s2 = *s1;
+    for (; *s1; s1++, s2++) *s2 = *s1;
     *s2 = *s1;
     return ret;
 }
@@ -167,16 +178,16 @@ char *getLogDir(void) {
 int logConnectionID(int connection_id) {
     char *path;
 #ifdef _WIN32
-        path = dupstring("connection_id.txt");
+    path = dupstring("connection_id.txt");
 #else
-        path = appendPathToHome(".fractal/connection_id.txt");
+    path = appendPathToHome(".fractal/connection_id.txt");
 #endif
     if (path == NULL) {
         LOG_ERROR("Failed to get connection log path.");
         return -1;
     }
 
-    FILE* f = fopen(path, "w");
+    FILE *f = fopen(path, "w");
     free(path);
     if (f == NULL) {
         LOG_ERROR("Failed to open connection id log file.");
@@ -216,7 +227,7 @@ int destroySocketLibrary(void) {
    imposter
 */
 int configureSSHKeys(void) {
-    FILE* ssh_key_host = fopen(HOST_PUBLIC_KEY_PATH, "w");
+    FILE *ssh_key_host = fopen(HOST_PUBLIC_KEY_PATH, "w");
     if (ssh_key_host == NULL) {
         LOG_ERROR("Failed to open public ssh key file.");
         return -1;
@@ -230,14 +241,15 @@ int configureSSHKeys(void) {
 
 #ifndef _WIN32
     if (chmod(CLIENT_PRIVATE_KEY_PATH, 600) != 0) {
-        LOG_ERROR("Failed to make host's private ssh (at %s) readable and"
-            "writable. (Error: %s)", CLIENT_PRIVATE_KEY_PATH, strerror(errno));
+        LOG_ERROR(
+            "Failed to make host's private ssh (at %s) readable and"
+            "writable. (Error: %s)",
+            CLIENT_PRIVATE_KEY_PATH, strerror(errno));
         return -1;
     }
 #endif
     return 0;
 }
-
 
 // files can't be written to a macos app bundle, so they need to be
 // cached in /Users/USERNAME/.APPNAME, here .fractal directory
@@ -249,7 +261,7 @@ int configureSSHKeys(void) {
 // which case we make sure to clear the previous logs and connection id
 int configureCache(void) {
 #ifndef _WIN32
-    runcmd("mkdir ~/.fractal", NULL);
+    runcmd("mkdir -p ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
     runcmd("rm -f ~/.fractal/log.txt", NULL);
     runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
