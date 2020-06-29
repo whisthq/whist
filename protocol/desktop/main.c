@@ -516,6 +516,7 @@ int main(int argc, char* argv[]) {
     initVideo();
 
     PrintSystemInfo();
+    LOG_INFO("Fractal client revision %s", FRACTAL_GIT_REVISION);
 
     exiting = false;
     bool failed = false;
