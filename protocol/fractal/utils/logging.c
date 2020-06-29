@@ -4,7 +4,12 @@
 
 #include <stdio.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#define _NO_CVCONST_H
+#include <Windows.h>
+#include <process.h>
+#include <DbgHelp.h>
+#else
 #include <execinfo.h>
 #include <signal.h>
 #endif
@@ -243,44 +248,157 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
     SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 }
 
-#ifndef _WIN32
-SDL_mutex *crash_handler_mutex;
+SDL_mutex* crash_handler_mutex;
 
-void crash_handler(int sig) {
-    SDL_LockMutex(crash_handler_mutex);
+void PrintStacktrace()
+{
+    SDL_LockMutex( crash_handler_mutex );
 
+#ifdef _WIN32
+    unsigned int   i;
+    void* stack[100];
+    unsigned short frames;
+    char buf[sizeof( SYMBOL_INFO ) + 256*sizeof( char )];
+    SYMBOL_INFO* symbol = (SYMBOL_INFO*)buf;
+    HANDLE         process;
+
+    process = GetCurrentProcess();
+
+    SymInitialize( process, NULL, TRUE );
+
+    frames = CaptureStackBackTrace( 0, 100, stack, NULL );
+    memset( symbol, 0, sizeof( buf ) );
+    symbol->MaxNameLen = 255;
+    symbol->SizeOfStruct = sizeof( SYMBOL_INFO );
+
+    for( i = 0; i < frames; i++ )
+    {
+        SymFromAddr( process, (DWORD64)(stack[i]), 0, symbol );
+
+        fprintf( stderr, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name, symbol->Address );
+    }
+#else
 #define HANDLER_ARRAY_SIZE 100
 
-    void *array[HANDLER_ARRAY_SIZE];
+    void* array[HANDLER_ARRAY_SIZE];
     size_t size;
 
     // get void*'s for all entries on the stack
-    size = backtrace(array, HANDLER_ARRAY_SIZE);
+    size = backtrace( array, HANDLER_ARRAY_SIZE );
 
     // print out all the frames to stderr
-    fprintf(stderr, "\nError: signal %d:\n", sig);
-    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    fprintf( stderr, "\nError: signal %d:\n", sig );
+    backtrace_symbols_fd( array, size, STDERR_FILENO );
 
     // and to the log
-    int fd = fileno(mprintf_log_file);
-    backtrace_symbols_fd(array, size, fd);
+    int fd = fileno( mprintf_log_file );
+    backtrace_symbols_fd( array, size, fd );
 
-    fprintf(stderr, "addr2line -e build64/FractalServer");
-    for (size_t i = 0; i < size; i++) {
-        fprintf(stderr, " %p", array[i]);
+    fprintf( stderr, "addr2line -e build64/FractalServer" );
+    for( size_t i = 0; i < size; i++ )
+    {
+        fprintf( stderr, " %p", array[i] );
     }
-    fprintf(stderr, "\n\n");
+    fprintf( stderr, "\n\n" );
+#endif
 
-    SDL_UnlockMutex(crash_handler_mutex);
+    SDL_UnlockMutex( crash_handler_mutex );
+}
 
+#ifdef _WIN32
+LONG WINAPI windows_exception_handler( EXCEPTION_POINTERS* ExceptionInfo )
+{
+    switch( ExceptionInfo->ExceptionRecord->ExceptionCode )
+    {
+    case EXCEPTION_ACCESS_VIOLATION:
+        fputs( "Error: EXCEPTION_ACCESS_VIOLATION\n", stderr );
+        break;
+    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+        fputs( "Error: EXCEPTION_ARRAY_BOUNDS_EXCEEDED\n", stderr );
+        break;
+    case EXCEPTION_BREAKPOINT:
+        fputs( "Error: EXCEPTION_BREAKPOINT\n", stderr );
+        break;
+    case EXCEPTION_DATATYPE_MISALIGNMENT:
+        fputs( "Error: EXCEPTION_DATATYPE_MISALIGNMENT\n", stderr );
+        break;
+    case EXCEPTION_FLT_DENORMAL_OPERAND:
+        fputs( "Error: EXCEPTION_FLT_DENORMAL_OPERAND\n", stderr );
+        break;
+    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+        fputs( "Error: EXCEPTION_FLT_DIVIDE_BY_ZERO\n", stderr );
+        break;
+    case EXCEPTION_FLT_INEXACT_RESULT:
+        fputs( "Error: EXCEPTION_FLT_INEXACT_RESULT\n", stderr );
+        break;
+    case EXCEPTION_FLT_INVALID_OPERATION:
+        fputs( "Error: EXCEPTION_FLT_INVALID_OPERATION\n", stderr );
+        break;
+    case EXCEPTION_FLT_OVERFLOW:
+        fputs( "Error: EXCEPTION_FLT_OVERFLOW\n", stderr );
+        break;
+    case EXCEPTION_FLT_STACK_CHECK:
+        fputs( "Error: EXCEPTION_FLT_STACK_CHECK\n", stderr );
+        break;
+    case EXCEPTION_FLT_UNDERFLOW:
+        fputs( "Error: EXCEPTION_FLT_UNDERFLOW\n", stderr );
+        break;
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+        fputs( "Error: EXCEPTION_ILLEGAL_INSTRUCTION\n", stderr );
+        break;
+    case EXCEPTION_IN_PAGE_ERROR:
+        fputs( "Error: EXCEPTION_IN_PAGE_ERROR\n", stderr );
+        break;
+    case EXCEPTION_INT_DIVIDE_BY_ZERO:
+        fputs( "Error: EXCEPTION_INT_DIVIDE_BY_ZERO\n", stderr );
+        break;
+    case EXCEPTION_INT_OVERFLOW:
+        fputs( "Error: EXCEPTION_INT_OVERFLOW\n", stderr );
+        break;
+    case EXCEPTION_INVALID_DISPOSITION:
+        fputs( "Error: EXCEPTION_INVALID_DISPOSITION\n", stderr );
+        break;
+    case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+        fputs( "Error: EXCEPTION_NONCONTINUABLE_EXCEPTION\n", stderr );
+        break;
+    case EXCEPTION_PRIV_INSTRUCTION:
+        fputs( "Error: EXCEPTION_PRIV_INSTRUCTION\n", stderr );
+        break;
+    case EXCEPTION_SINGLE_STEP:
+        fputs( "Error: EXCEPTION_SINGLE_STEP\n", stderr );
+        break;
+    case EXCEPTION_STACK_OVERFLOW:
+        fputs( "Error: EXCEPTION_STACK_OVERFLOW\n", stderr );
+        break;
+    default:
+        fputs( "Error: Unrecognized Exception\n", stderr );
+        break;
+    }
+    fflush( stderr );
+    /* If this is a stack overflow then we can't walk the stack, so just show
+      where the error happened */
+    if( EXCEPTION_STACK_OVERFLOW != ExceptionInfo->ExceptionRecord->ExceptionCode )
+    {
+        PrintStacktrace();
+    } else
+    {
+    }
+
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+#else
+void crash_handler(int sig) {
+    printStacktrace();
     SDL_Delay(100);
     exit(-1);
 }
 #endif
 
 void initBacktraceHandler() {
-#ifndef _WIN32
     crash_handler_mutex = SDL_CreateMutex();
+#ifdef _WIN32
+    SetUnhandledExceptionFilter( windows_exception_handler );
+#else
     signal(SIGSEGV, crash_handler);
 #endif
 }
