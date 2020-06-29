@@ -182,7 +182,7 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
 
     Returns:
         str: The new disk name
-    """    
+    """
     _, compute_client, _ = createClients()
     disk_name = genDiskName()
 
@@ -481,17 +481,13 @@ def startVM(self, vm_name, ID=-1):
 def stopVM(self, vm_name, ID=-1):
     sendInfo(ID, "Trying to stop vm {}".format(vm_name))
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Preparing to stop vm"
-        },)
+        state="PENDING", meta={"msg": "Preparing to stop vm"},
+    )
 
     if spinLock(vm_name) > 0:
         self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Stopping vm"
-        },)
+            state="PENDING", meta={"msg": "Stopping vm"},
+        )
         lockVM(vm_name, True)
 
         _, compute_client, _ = createClients()
@@ -501,18 +497,14 @@ def stopVM(self, vm_name, ID=-1):
 
         sendInfo(ID, "VM {} stopped successfully".format(vm_name))
         self.update_state(
-        state="SUCCESS",
-        meta={
-            "msg": "Vm stopped successfully"
-        },)
+            state="SUCCESS", meta={"msg": "Vm stopped successfully"},
+        )
 
         return {"status": 200}
     else:
         self.update_state(
-        state="FAILURE",
-        meta={
-            "msg": "Failed to stop vm"
-        },)
+            state="FAILURE", meta={"msg": "Failed to stop vm"},
+        )
         return {"status": 400}
 
 
@@ -1027,19 +1019,13 @@ def deleteDisk(self, disk_name, ID=-1):
 @celery.task(bind=True)
 def deallocateVM(self, vm_name, ID=-1):
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Locking vm"
-        },
+        state="PENDING", meta={"msg": "Locking vm"},
     )
     lockVM(vm_name, True, ID=ID)
 
     _, compute_client, _ = createClients()
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Deallocating vm"
-        },
+        state="PENDING", meta={"msg": "Deallocating vm"},
     )
     sendInfo(ID, "Starting to deallocate VM {}".format(vm_name))
     updateVMState(vm_name, "DEALLOCATING")
@@ -1054,10 +1040,7 @@ def deallocateVM(self, vm_name, ID=-1):
     updateVMState(vm_name, "DEALLOCATED")
     sendInfo(ID, "VM {} deallocated successfully".format(vm_name))
     self.update_state(
-        state="SUCCESS",
-        meta={
-            "msg": "VM {} deallocated successfully".format(vm_name)
-        },
+        state="SUCCESS", meta={"msg": "VM {} deallocated successfully".format(vm_name)},
     )
     return {"status": 200}
 
