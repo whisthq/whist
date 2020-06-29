@@ -151,7 +151,7 @@ def reset(username, new_password):
 
 def test_reset(input_token):
     username = "testReset@example.com"
-    resp = register(
+    register(
         username,
         "password",
         "Test Reset",
@@ -164,4 +164,43 @@ def test_reset(input_token):
     assert resp.json()["status"] == 200
     resp = login(username, new_password)
     assert resp.json()["verified"]
+    delete(username, input_token)
+
+def createFromImage(username):
+    return requests.post((SERVER_URL + "/disk/createFromImage"),
+        json={"username": username, "location": "southcentralus", "vm_size": 10, "apps": []})
+
+def getStatus(id):
+    resp = requests.get((SERVER_URL + "/status/" + id))
+    return resp.json()
+
+def fetchDisks(username):
+    return requests.post((SERVER_URL + "/user/fetchdisks"), json={"username": username}).json()
+
+def test_fetchDisks(input_token):
+    username = "testDisks@example.com"
+    register(
+        username,
+        "password",
+        "Test fetchDisks",
+        "Some more feedback.",
+    )
+
+    resp = fetchDisks(username)
+    assert len(resp["disks"]) == 0
+
+    resp = createFromImage(username)
+    assert resp.status_code == 202
+    id = resp.json()["ID"]
+    status = "PENDING"
+    while status == "PENDING" or status == "STARTED":
+        time.sleep(5)
+        status = getStatus(id)["state"]
+    assert status == "SUCCESS"
+    disk_name = getStatus(id)["output"]
+
+    resp = fetchDisks(username)
+    assert len(resp["disks"]) > 0
+    assert disk_name in map(lambda d: d["disk_name"], resp["disks"])
+
     delete(username, input_token)
