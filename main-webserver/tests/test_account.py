@@ -144,3 +144,24 @@ def test_checkVerified(input_token):
     resp = checkVerified(username)
     assert resp.json()["verified"]
     delete(username, input_token)
+
+def reset(username, new_password):
+    return requests.post((SERVER_URL + "/account/reset"),
+    json={"username": username, "password": new_password})
+
+def test_reset(input_token):
+    username = "testReset@example.com"
+    resp = register(
+        username,
+        "password",
+        "Test Reset",
+        "Here is some feedback.",
+    )
+    new_password = "new_password123"
+    resp = login(username, new_password)
+    assert not resp.json()["verified"]
+    resp = reset(username, new_password)
+    assert resp.json()["status"] == 200
+    resp = login(username, new_password)
+    assert resp.json()["verified"]
+    delete(username, input_token)
