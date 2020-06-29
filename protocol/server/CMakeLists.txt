@@ -137,6 +137,7 @@ if(${WIN32})
             crypt32
             shlwapi
             shcore
+            DbgHelp
             )
 
 endif()

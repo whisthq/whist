@@ -1,6 +1,7 @@
+#include "network.h"
+
 #include "../fractal/core/fractal.h"
 #include "main.h"
-#include "network.h"
 
 extern SocketContext PacketSendContext;
 extern SocketContext PacketReceiveContext;
@@ -9,8 +10,8 @@ extern char *server_ip;
 extern bool received_server_init_message;
 
 static int connectUDPOutgoing(int port, bool using_stun) {
-    if (CreateUDPContext(&PacketSendContext, (char *)server_ip,
-            port, 10, 500, using_stun) < 0) {
+    if (CreateUDPContext(&PacketSendContext, (char *)server_ip, port, 10, 500,
+                         using_stun) < 0) {
         LOG_WARNING("Failed establish outgoing UDP connection to server");
         return -1;
     }
@@ -18,29 +19,29 @@ static int connectUDPOutgoing(int port, bool using_stun) {
 }
 
 static int connectUDPIncoming(int port, bool using_stun) {
-    if (CreateUDPContext(&PacketReceiveContext, (char *)server_ip,
-                        port, 1, 500, using_stun) < 0) {
+    if (CreateUDPContext(&PacketReceiveContext, (char *)server_ip, port, 1, 500,
+                         using_stun) < 0) {
         LOG_WARNING("Failed establish incoming UDP connection from server");
         return -1;
     }
 
     int a = 65535;
     if (setsockopt(PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF,
+
                    (const char*)&a, sizeof(int)) == -1) {
-        LOG_ERROR("Error setting socket opts: %s\n", strerror(errno));
+        LOG_ERROR("Error setting socket opts: %d\n", GetLastNetworkError());
         return -1;
     }
     return 0;
 }
 
 static int connectTCP(int port, bool using_stun) {
-    if (CreateTCPContext(&PacketTCPContext, (char *)server_ip, port,
-                        1, 750, using_stun) < 0) {
+    if (CreateTCPContext(&PacketTCPContext, (char *)server_ip, port, 1, 750,
+                         using_stun) < 0) {
         return -1;
     }
     return 0;
 }
-
 
 static int getSpectatorServerPort(void) {
     int port;
@@ -55,7 +56,7 @@ static int getSpectatorServerPort(void) {
 
     FractalPacket *init_spectator;
     clock init_spectator_timer;
-    StartTimer( &init_spectator_timer );
+    StartTimer(&init_spectator_timer);
     do {
         SDL_Delay(5);
         init_spectator = ReadUDPPacket(&PacketReceiveContext);
@@ -65,10 +66,9 @@ static int getSpectatorServerPort(void) {
         LOG_ERROR("Did not receive spectator init packet from server.");
         closesocket(PacketReceiveContext.s);
         return -1;
-
     }
 
-    FractalServerMessage *fmsg = (FractalServerMessage *) init_spectator->data;
+    FractalServerMessage *fmsg = (FractalServerMessage *)init_spectator->data;
     port = fmsg->spectator_port;
 
     closesocket(PacketReceiveContext.s);
