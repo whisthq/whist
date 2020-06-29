@@ -442,10 +442,7 @@ def restartVM(self, vm_name, ID=-1):
 def startVM(self, vm_name, ID=-1):
     sendInfo(ID, "Trying to start vm {}".format(vm_name))
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Starting vm"
-        },
+        state="PENDING", meta={"msg": "Starting vm"},
     )
 
     if spinLock(vm_name) > 0:
@@ -458,20 +455,14 @@ def startVM(self, vm_name, ID=-1):
 
         sendInfo(ID, "VM {} started successfully".format(vm_name))
         self.update_state(
-            state="SUCCESS",
-            meta={
-                "msg": "Vm start success"
-            },
+            state="SUCCESS", meta={"msg": "Vm start success"},
         )
 
         return {"status": 200}
     else:
         self.update_state(
-        state="FAILURE",
-        meta={
-            "msg": "Failed to start vm"
-        },
-    )
+            state="FAILURE", meta={"msg": "Failed to start vm"},
+        )
         return {"status": 400}
 
 
@@ -864,23 +855,17 @@ def swapSpecificDisk(s, disk_name, vm_name, ID=-1):
     sendInfo(ID, "Attempting to swap out disk {} in VM {}".format(disk_name, vm_name))
     locked = checkLock(vm_name)
     s.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Preparing to swap"
-        },
+        state="PENDING", meta={"msg": "Preparing to swap"},
     )
 
     while locked:
         sendDebug(ID, "VM {} is locked. Waiting to be unlocked".format(vm_name))
         s.update_state(
             state="PENDING",
-            meta={
-                "msg": "VM {} is locked. Waiting to be unlocked".format(vm_name)
-            },
+            meta={"msg": "VM {} is locked. Waiting to be unlocked".format(vm_name)},
         )
         time.sleep(5)
         locked = checkLock(vm_name)
-        
 
     lockVM(vm_name, True, ID=ID)
 
@@ -895,10 +880,7 @@ def swapSpecificDisk(s, disk_name, vm_name, ID=-1):
     start = time.perf_counter()
 
     s.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Swapping out old disk"
-        },
+        state="PENDING", meta={"msg": "Swapping out old disk"},
     )
 
     async_disk_attach = compute_client.virtual_machines.create_or_update(
@@ -910,10 +892,7 @@ def swapSpecificDisk(s, disk_name, vm_name, ID=-1):
     # sendDebug(ID, f"SUCCESS: Disk swapped out in {end - start:0.4f} seconds. Restarting " + vm_name)
 
     s.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Restarting vm"
-        },
+        state="PENDING", meta={"msg": "Restarting vm"},
     )
     start = time.perf_counter()
     fractalVMStart(vm_name)
@@ -923,10 +902,7 @@ def swapSpecificDisk(s, disk_name, vm_name, ID=-1):
 
     updateDisk(disk_name, vm_name, None)
     s.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Attaching new disk"
-        },
+        state="PENDING", meta={"msg": "Attaching new disk"},
     )
     associateVMWithDisk(vm_name, disk_name)
     sendDebug(ID, "Database updated.")
@@ -937,10 +913,7 @@ def swapSpecificDisk(s, disk_name, vm_name, ID=-1):
 
     lockVM(vm_name, False, ID=ID)
     s.update_state(
-        state="SUCCESS",
-        meta={
-            "msg": "Swap success"
-        },
+        state="SUCCESS", meta={"msg": "Swap success"},
     )
     return fetchVMCredentials(vm_name)
 

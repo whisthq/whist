@@ -28,7 +28,7 @@ def test_login(input_token):
     resp = login("fakefake@delete.com", "password")
     delete("fakefake@delete.com", input_token)
     assert resp.json()["verified"]
-    resp = login( "support@fakecomputers.com","asdf")
+    resp = login("support@fakecomputers.com", "asdf")
     assert not resp.json()["verified"]
 
 
