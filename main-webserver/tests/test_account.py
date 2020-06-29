@@ -99,9 +99,10 @@ def test_adminLogin():
     resp = adminLogin(os.getenv("DASHBOARD_USERNAME"), os.getenv("DASHBOARD_PASSWORD"))
     assert resp.status_code == 200
 
+
 def lookup(username):
-    return requests.post((SERVER_URL + "/account/lookup"),
-    json={"username": username})
+    return requests.post((SERVER_URL + "/account/lookup"), json={"username": username})
+
 
 def test_lookup(input_token):
     resp = lookup("testlookup@example.com")
@@ -121,20 +122,25 @@ def test_lookup(input_token):
     resp = lookup("doesnotexist@example.com")
     assert not resp.json()["exists"]
 
+
 def checkVerified(username):
-    return requests.post((SERVER_URL + "/account/checkVerified"),
-    json={"username": username})
+    return requests.post(
+        (SERVER_URL + "/account/checkVerified"), json={"username": username}
+    )
+
 
 def makeVerified(username, token, input_token):
-    return requests.post((SERVER_URL + "/account/verifyUser"), json={"username": username, "token": token}, headers={"Authorization": "Bearer " + input_token})
+    return requests.post(
+        (SERVER_URL + "/account/verifyUser"),
+        json={"username": username, "token": token},
+        headers={"Authorization": "Bearer " + input_token},
+    )
+
 
 def test_checkVerified(input_token):
     username = "testCheckVerified@example.com"
     resp = register(
-        username,
-        "password",
-        "Test CheckVerified",
-        "Here is some feedback.",
+        username, "password", "Test CheckVerified", "Here is some feedback.",
     )
     token = resp.json()["token"]
     resp = checkVerified(username)
@@ -145,18 +151,17 @@ def test_checkVerified(input_token):
     assert resp.json()["verified"]
     delete(username, input_token)
 
+
 def reset(username, new_password):
-    return requests.post((SERVER_URL + "/account/reset"),
-    json={"username": username, "password": new_password})
+    return requests.post(
+        (SERVER_URL + "/account/reset"),
+        json={"username": username, "password": new_password},
+    )
+
 
 def test_reset(input_token):
     username = "testReset@example.com"
-    resp = register(
-        username,
-        "password",
-        "Test Reset",
-        "Here is some feedback.",
-    )
+    resp = register(username, "password", "Test Reset", "Here is some feedback.",)
     new_password = "new_password123"
     resp = login(username, new_password)
     assert not resp.json()["verified"]
