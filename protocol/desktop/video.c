@@ -7,7 +7,6 @@
 
 #include <stdio.h>
 
-
 #include "../fractal/utils/png.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "SDL2/SDL.h"
@@ -19,8 +18,7 @@ extern volatile SDL_Window* window;
 
 extern volatile int server_width;
 extern volatile int server_height;
-
-extern volatile CodecType codec_type;
+extern volatile CodecType server_codec_type;
 
 // Keeping track of max mbps
 extern volatile int max_bitrate;
@@ -28,6 +26,7 @@ extern volatile bool update_mbps;
 
 extern volatile int output_width;
 extern volatile int output_height;
+extern volatile CodecType output_codec_type;
 
 // START VIDEO VARIABLES
 volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
@@ -128,7 +127,7 @@ bool has_rendered_yet = false;
 
 // START VIDEO FUNCTIONS
 
-void updateWidthAndHeight(int width, int height);
+void updateDecoderParameters(int width, int height, CodecType codec_type);
 int32_t RenderScreen(SDL_Renderer* renderer);
 void loadingSDL(SDL_Renderer* renderer, int loading_index);
 
@@ -223,15 +222,16 @@ void updateTexture() {
     }
 }
 
-void updateWidthAndHeight(int width, int height) {
-    LOG_INFO("Updating Width & Height to %dx%d", width, height);
+void updateDecoderParameters(int width, int height, CodecType codec_type) {
+    LOG_INFO("Updating Width & Height to %dx%d and Codec to %d", width, height,
+             codec_type);
 
     if (videoContext.decoder) {
         destroy_video_decoder(videoContext.decoder);
     }
 
-    video_decoder_t* decoder = create_video_decoder(width, height, USE_HARDWARE,
-                                                    (CodecType)codec_type);
+    video_decoder_t* decoder =
+        create_video_decoder(width, height, USE_HARDWARE, codec_type);
 
     videoContext.decoder = decoder;
     if (!decoder) {
@@ -244,6 +244,8 @@ void updateWidthAndHeight(int width, int height) {
 
     server_width = width;
     server_height = height;
+    server_codec_type = codec_type;
+    output_codec_type = codec_type;
 }
 
 int32_t RenderScreen(SDL_Renderer* renderer) {
@@ -307,14 +309,17 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                         sizeof(Frame) + frame->size, renderContext.frame_size);
         }
 
-        if (frame->width != server_width || frame->height != server_height) {
+        if (frame->width != server_width || frame->height != server_height ||
+            frame->codec_type != server_codec_type) {
             if (frame->is_iframe) {
                 LOG_INFO(
                     "Updating client rendering to match server's width and "
-                    "height! "
-                    "From %dx%d to %dx%d",
-                    server_width, server_height, frame->width, frame->height);
-                updateWidthAndHeight(frame->width, frame->height);
+                    "height and codec! "
+                    "From %dx%d, codec %d to %dx%d, codec %d",
+                    server_width, server_height, server_codec_type,
+                    frame->width, frame->height, frame->codec_type);
+                updateDecoderParameters(frame->width, frame->height,
+                                        frame->codec_type);
             } else {
                 LOG_INFO("Wants to change resolution, but not an i-frame!");
             }
@@ -941,7 +946,6 @@ void set_video_active_resizing(bool is_resizing) {
             pending_sws_update = true;
             output_width = new_width;
             output_height = new_height;
-
         }
         can_render = true;
         SDL_UnlockMutex(render_mutex);
