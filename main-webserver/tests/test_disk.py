@@ -18,15 +18,16 @@ def getStatus(id):
     return resp.json()
 
 
-def createEmpty(disk_size, username):
+def createEmpty(disk_size, username, input_token):
     return requests.post(
         (SERVER_URL + "/disk/createEmpty"),
         json={"disk_size": disk_size, "username": username},
+        headers={"Authorization": "Bearer " + input_token}
     )
 
 
 def test_createEmpty(input_token):
-    resp = createEmpty(10, "doesntexist@fake.com")
+    resp = createEmpty(10, "doesntexist@fake.com", input_token)
     assert resp.status_code == 404
     # Create an account and test it
     requests.post(
@@ -38,7 +39,7 @@ def test_createEmpty(input_token):
             "feedback": "Where are average things manufactured? The satisfactory.",
         },
     )
-    resp = createEmpty(10, "fakefake@delete.com")
+    resp = createEmpty(10, "fakefake@delete.com", input_token)
     assert resp.status_code == 202
     id = resp.json()["ID"]
     status = "PENDING"
