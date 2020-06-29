@@ -259,7 +259,7 @@ int configureSSHKeys(void) {
 // which case we make sure to clear the previous logs and connection id
 int configureCache(void) {
 #ifndef _WIN32
-    runcmd("mkdir ~/.fractal", NULL);
+    runcmd("mkdir -p ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
     runcmd("rm -f ~/.fractal/log.txt", NULL);
     runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
