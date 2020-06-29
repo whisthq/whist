@@ -16,9 +16,9 @@ Our webservers are hosted on Heroku:
 
 1. Set up the Heroku CLI on your computer
 2. Check your python version by typing `python -V`.
-  - If you have python 3.6.X:
+    - **If you have python 3.6.X**
     - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
-  - If you have Python >3.6 or Python <3.0:
+    - **If you have Python >3.6 or Python <3.0**
     - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
     - Find the directory where python 3 is installed. On linux, this can be done by typing into the terminal: `which python3`.
     - Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
@@ -35,8 +35,6 @@ Our webservers are hosted on Heroku:
     - Once installed, open up a terminal and type `aws configure`.
     - When prompted, enter access key `AKIA24A776SSMH6JRSNH` and secret ID `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`. You can leave the other fields blank.
     - To test if this worked, type the command `aws ec2 describe-instances --region us-east-1`. If some JSON appears, you're all set.
-
-You're not all set!
 
 ### Build/Run in Docker
 
