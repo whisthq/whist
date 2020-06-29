@@ -172,6 +172,17 @@ def createVM(
 
 @celery.task(bind=True)
 def createEmptyDisk(self, disk_size, username, location, ID=-1):
+    """Creates an additional non-os disk for the user
+
+    Args:
+        disk_size (str): Size of disk
+        username (str): The user's email
+        location (str): The user's region
+        ID (int, optional): Logging Id. Defaults to -1.
+
+    Returns:
+        str: The new disk name
+    """    
     _, compute_client, _ = createClients()
     disk_name = genDiskName()
 
@@ -482,14 +493,14 @@ def stopVM(self, vm_name, ID=-1):
         state="PENDING",
         meta={
             "msg": "Preparing to stop vm"
-        },
+        },)
 
     if spinLock(vm_name) > 0:
         self.update_state(
         state="PENDING",
         meta={
             "msg": "Stopping vm"
-        },
+        },)
         lockVM(vm_name, True)
 
         _, compute_client, _ = createClients()
@@ -502,7 +513,7 @@ def stopVM(self, vm_name, ID=-1):
         state="SUCCESS",
         meta={
             "msg": "Vm stopped successfully"
-        },
+        },)
 
         return {"status": 200}
     else:
@@ -510,7 +521,7 @@ def stopVM(self, vm_name, ID=-1):
         state="FAILURE",
         meta={
             "msg": "Failed to stop vm"
-        },
+        },)
         return {"status": 400}
 
 
