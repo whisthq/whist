@@ -557,7 +557,7 @@ def syncDisks(self, ID=-1):
 def swapDiskSync(self, disk_name, ID=-1):
     def swapDiskAndUpdate(s, disk_name, vm_name, needs_winlogon):
         # Pick a VM, attach it to disk
-        hr = swapdisk_name(s, disk_name, vm_name, needs_winlogon = needs_winlogon)
+        hr = swapdisk_name(s, disk_name, vm_name, needs_winlogon=needs_winlogon)
         if hr > 0:
             updateDisk(disk_name, vm_name, location)
             associateVMWithDisk(vm_name, disk_name)
@@ -589,7 +589,11 @@ def swapDiskSync(self, disk_name, ID=-1):
 
             s.update_state(
                 state="PENDING",
-                meta={"msg": "{} extra storage hard drive(s) were found on your cloud PC. Running a few extra tests.".format(len(secondary_disks))},
+                meta={
+                    "msg": "{} extra storage hard drive(s) were found on your cloud PC. Running a few extra tests.".format(
+                        len(secondary_disks)
+                    )
+                },
             )
 
             for secondary_disk in secondary_disks:
@@ -612,8 +616,8 @@ def swapDiskSync(self, disk_name, ID=-1):
     _, compute_client, _ = createClients()
 
     os_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
-    os_type = 'Windows' if 'windows' in str(os_disk.os_type) else 'Linux'
-    needs_winlogon = os_type == 'Windows'
+    os_type = "Windows" if "windows" in str(os_disk.os_type) else "Linux"
+    needs_winlogon = os_type == "Windows"
     username = mapDiskToUser(disk_name)
     vm_name = os_disk.managed_by
 
@@ -686,7 +690,7 @@ def swapDiskSync(self, disk_name, ID=-1):
                     ID, " Database updated with {} and {}".format(disk_name, vm_name)
                 )
 
-                if fractalVMStart(vm_name, needs_winlogon = needs_winlogon, s=self) > 0:
+                if fractalVMStart(vm_name, needs_winlogon=needs_winlogon, s=self) > 0:
                     sendInfo(ID, " VM {} is started and ready to use".format(vm_name))
                     self.update_state(
                         state="PENDING", meta={"msg": "Cloud PC is ready to use."}
@@ -731,20 +735,22 @@ def swapDiskSync(self, disk_name, ID=-1):
                 try:
                     vm_name = vm["vm_name"]
 
-                    vm_info = compute_client.virtual_machines.get(os.getenv('VM_GROUP'), vm_name)
+                    vm_info = compute_client.virtual_machines.get(
+                        os.getenv("VM_GROUP"), vm_name
+                    )
 
                     for disk in vm_info.storage_profile.data_disks:
                         if disk.name != disk_name:
                             self.update_state(
                                 state="PENDING",
-                                meta={"msg": "Making sure that you have a stable connection."},
+                                meta={
+                                    "msg": "Making sure that you have a stable connection."
+                                },
                             )
 
                             sendInfo(
                                 ID,
-                                "Detaching disk {} from {}".format(
-                                    disk_name, vm_name
-                                ),
+                                "Detaching disk {} from {}".format(disk_name, vm_name),
                             )
 
                             detachDisk(disk.name, vm_name)
@@ -1212,6 +1218,7 @@ def runPowershell(self, vm_name, ID=-1):
         sendDebug(ID, result.value[0].message)
 
     return {"status": 200}
+
 
 @celery.task(bind=True)
 def deleteDisk(self, disk_name, ID=-1):

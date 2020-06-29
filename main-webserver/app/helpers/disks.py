@@ -72,9 +72,10 @@ def genPassword():
 
     # alphabet = string.ascii_lowercase + string.digits + ',./;[]'
     # password = ''.join(secrets.choice(alphabet) for i in range(24))
-    password = '6ifq59b;c],c6t.kh.5iw,m/vp.3a;;i'
+    password = "6ifq59b;c],c6t.kh.5iw,m/vp.3a;;i"
 
     return password
+
 
 def getVMSize(disk_name):
     """Gets the size of the vm
@@ -354,6 +355,7 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.execute(command, **params)
         conn.close()
 
+
 def assignSettingsToDisk(disk_name, admin_username):
     """Assigns settings for a disk
 
@@ -368,10 +370,17 @@ def assignSettingsToDisk(disk_name, admin_username):
         """
     )
 
-    params = {"admin_username": admin_username, "admin_password": rand_password, "disk_name": disk_name, "branch": "master", "using_stun": False}
+    params = {
+        "admin_username": admin_username,
+        "admin_password": rand_password,
+        "disk_name": disk_name,
+        "branch": "master",
+        "using_stun": False,
+    }
     with engine.connect() as conn:
         conn.execute(command, **params)
         conn.close()
+
 
 def fetchAllDisks():
     """Fetches all the disks from disks table, LEFT joined with disk_settings

@@ -1845,16 +1845,15 @@ def setAutoLogin(disk_name, vm_name, ID=-1):
         command = """
         Add-AutoLogin "{admin_username}" (ConvertTo-SecureString "{admin_password}." -AsPlainText -Force)
         """.format(
-        admin_username=admin_username,
-        admin_password=admin_password
+            admin_username=admin_username, admin_password=admin_password
         )
         run_command_parameters = {
-        "command_id": "RunPowerShellScript",
-        "script": [command],
+            "command_id": "RunPowerShellScript",
+            "script": [command],
         }
 
         poller = compute_client.virtual_machines.run_command(
-        os.environ.get("VM_GROUP"), vm_name, run_command_parameters
+            os.environ.get("VM_GROUP"), vm_name, run_command_parameters
         )
         # poller.wait()
         result = poller.result()
@@ -1866,6 +1865,7 @@ def setAutoLogin(disk_name, vm_name, ID=-1):
     except Exception as e:
         sendCritical(ID, str(e))
         return {"status": 400}
+
 
 def fetchInstallCommand(app_name):
     """Fetches an install command from the install_commands sql table
