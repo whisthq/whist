@@ -104,6 +104,9 @@ def lookup(username):
     json={"username": username})
 
 def test_lookup(input_token):
+    resp = lookup("testlookup@example.com")
+    assert not resp.json()["exists"]
+
     register(
         "testlookup@example.com",
         "password",
@@ -117,3 +120,27 @@ def test_lookup(input_token):
 
     resp = lookup("doesnotexist@example.com")
     assert not resp.json()["exists"]
+
+def checkVerified(username):
+    return requests.post((SERVER_URL + "/account/checkVerified"),
+    json={"username": username})
+
+def makeVerified(username, token, input_token):
+    return requests.post((SERVER_URL + "/account/verifyUser"), json={"username": username, "token": token}, headers={"Authorization": "Bearer " + input_token})
+
+def test_checkVerified(input_token):
+    username = "testCheckVerified@example.com"
+    resp = register(
+        username,
+        "password",
+        "Test CheckVerified",
+        "Here is some feedback.",
+    )
+    token = resp.json()["token"]
+    resp = checkVerified(username)
+    assert not resp.json()["verified"]
+    resp = makeVerified(username, token, input_token)
+    assert resp.json()["verified"]
+    resp = checkVerified(username)
+    assert resp.json()["verified"]
+    delete(username, input_token)
