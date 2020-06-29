@@ -177,6 +177,11 @@ def test_vm(input_token):
 
     # Test add disk
     print("Testing add disk...")
+    # requests.post(
+    #     (SERVER_URL + "/disk/createEmpty"),
+    #     json={"disk_size": 10, "username": username},
+    #     headers={"Authorization": "Bearer " + input_token}
+    # )
 
     # Test delete
     print("Testing delete...")
