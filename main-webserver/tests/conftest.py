@@ -5,7 +5,7 @@ import logging
 import time
 
 SERVER_URL = (
-    "https://" + os.getenv("HEROKU_APP_NAME") + ".herokuapp.com"
+    "https://main-webserver-pr-65" + ".herokuapp.com"
     if os.getenv("HEROKU_APP_NAME")
     else "http://localhost:5000"
 )
