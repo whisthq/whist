@@ -1,7 +1,4 @@
 {
-  "scripts": {
-    "postdeploy": "pytest --log-cli-level=10"
-  },
   "environments": {
     "review": {
       "addons": ["heroku-redis:hobby-dev"]
