@@ -22,6 +22,7 @@ import Window from "resources/images/window.svg";
 import Speedometer from "resources/images/speedometer.svg";
 import Mountain from "resources/images/mountain.jpg";
 import Scale from "resources/images/scale.svg";
+import WiFi from "resources/images/wifi.svg";
 
 import {
     askFeedback,
@@ -47,6 +48,7 @@ class MainBox extends Component {
             reattached: false,
             restartPopup: false,
             vmRestarting: false,
+            h265Mode: false,
         };
     }
 
@@ -130,6 +132,8 @@ class MainBox extends Component {
             );
             if (this.state.launches == 0) {
                 this.setState({ launches: 1, reattached: false }, function () {
+                    console.log("ENTERING LAUCH");
+
                     var child = require("child_process").spawn;
                     var appRootDir = require("electron").remote.app.getAppPath();
                     const os = require("os");
@@ -156,19 +160,25 @@ class MainBox extends Component {
 
                     // 0 dimensions is full-screen in protocol, windowed-mode starts at half screen
                     // and can be resized in the protocol directly. DPI calculation done in protocol
-                    var screenWidth = this.state.windowMode
-                        ? window.screen.width / 2
-                        : 0;
-                    var screenHeight = this.state.windowMode
-                        ? window.screen.height / 2
-                        : 0;
+                    var screenWidth = this.state.windowMode ? "1280" : 0;
+                    var screenHeight = this.state.windowMode ? "720" : 0;
+                    var codec = this.state.h265Mode ? "h265" : "h264";
 
                     var parameters = [
-                        this.props.public_ip,
+                        "-w",
                         screenWidth,
+                        "-h",
                         screenHeight,
+                        "-c",
+                        codec,
+                        "-b",
                         this.state.mbps,
+                        this.props.public_ip,
                     ];
+
+                    console.log(parameters);
+
+                    console.log("STARTING PROTOCOL");
 
                     // Starts the protocol
                     const protocol = child(executable, parameters, {
@@ -201,6 +211,15 @@ class MainBox extends Component {
 
         this.setState({ windowMode: !mode }, function () {
             storage.set("window", { windowMode: !mode });
+        });
+    };
+
+    toggleH265 = (mode: any) => {
+        const storage = require("electron-json-storage");
+        let component = this;
+
+        this.setState({ h265Mode: !mode }, function () {
+            storage.set("h265", { h265Mode: !mode });
         });
     };
 
@@ -256,6 +275,11 @@ class MainBox extends Component {
         storage.get("window", function (error, data) {
             if (error) throw error;
             component.setState({ windowMode: data.windowMode });
+        });
+
+        storage.get("h265", function (error, data) {
+            if (error) throw error;
+            component.setState({ h265Mode: data.h265Mode });
         });
 
         this.props.dispatch(askFeedback(false));
@@ -409,27 +433,36 @@ class MainBox extends Component {
                     }
                 } else {
                     return (
-                        <div
-                            onClick={this.OpenDashboard}
-                            className={styles.bigButton}
-                        >
-                            <div className={styles.centerContent}>
-                                <div>
-                                    <FontAwesomeIcon
-                                        icon={faPlus}
-                                        style={{ height: 30, color: "#111111" }}
-                                    />
-                                </div>
-                                <div
-                                    style={{ marginTop: 25, color: "#111111" }}
-                                >
-                                    <span className={styles.blueGradient}>
-                                        Create My Cloud PC
-                                    </span>
-                                </div>
-                                <div className={styles.centerSubtext}>
-                                    Transform your computer into a GPU-powered
-                                    workstation.
+                        <div className={styles.pointerOnHover}>
+                            <div
+                                onClick={this.OpenDashboard}
+                                className={styles.bigButton}
+                            >
+                                <div className={styles.centerContent}>
+                                    <div>
+                                        <FontAwesomeIcon
+                                            icon={faPlus}
+                                            style={{
+                                                height: 30,
+                                                color: "#111111",
+                                            }}
+                                        />
+                                    </div>
+                                    <div
+                                        style={{
+                                            marginTop: 25,
+                                            color: "#111111",
+                                        }}
+                                        className={styles.centerText}
+                                    >
+                                        <span className={styles.blueGradient}>
+                                            Create My Cloud PC
+                                        </span>
+                                    </div>
+                                    <div className={styles.centerSubtext}>
+                                        Transform your computer into a
+                                        GPU-powered workstation.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -976,8 +1009,8 @@ class MainBox extends Component {
                     <div
                         style={{
                             position: "relative",
-                            width: 800,
-                            height: 410,
+                            width: 900,
+                            height: 490,
                             borderRadius: 5,
                             boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.2)",
                             background: "white",
@@ -1045,8 +1078,7 @@ class MainBox extends Component {
                                     >
                                         When activated, a titlebar will appear
                                         at the top of your cloud PC, so you can
-                                        adjust your cloud PC's position on your
-                                        screen.
+                                        adjust and resize your cloud PC window.
                                     </div>
                                 </div>
                                 <div style={{ width: "25%" }}>
@@ -1054,6 +1086,71 @@ class MainBox extends Component {
                                         <ToggleButton
                                             value={this.state.windowMode}
                                             onToggle={this.toggleWindow}
+                                            colors={{
+                                                active: {
+                                                    base: "#5EC4EB",
+                                                },
+                                                inactive: {
+                                                    base: "#161936",
+                                                },
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            style={{
+                                padding: "30px 30px",
+                                borderBottom: "solid 0.5px #EFEFEF",
+                            }}
+                        >
+                            <div style={{ display: "flex" }}>
+                                <div style={{ width: "75%" }}>
+                                    <div
+                                        style={{
+                                            color: "#111111",
+                                            fontSize: 16,
+                                            fontWeight: "bold",
+                                        }}
+                                    >
+                                        <img
+                                            src={WiFi}
+                                            style={{
+                                                color: "#111111",
+                                                height: 14,
+                                                marginRight: 12,
+                                                position: "relative",
+                                                top: 2,
+                                                width: 16,
+                                            }}
+                                        />
+                                        Low Internet Mode
+                                    </div>
+                                    <div
+                                        style={{
+                                            fontSize: 13,
+                                            color: "#333333",
+                                            marginTop: 10,
+                                            marginLeft: 28,
+                                            lineHeight: 1.4,
+                                        }}
+                                    >
+                                        If you have low Internet speeds (less
+                                        than 15 Mbps) and are experiencing
+                                        stuttering, low Internet mode will
+                                        reduce Fractal's Internet speed
+                                        requirement. Note that this will
+                                        increase your latency by a very small
+                                        amount, so we don't recommend activating
+                                        it unless necessary.
+                                    </div>
+                                </div>
+                                <div style={{ width: "25%" }}>
+                                    <div style={{ float: "right" }}>
+                                        <ToggleButton
+                                            value={this.state.h265Mode}
+                                            onToggle={this.toggleH265}
                                             colors={{
                                                 active: {
                                                     base: "#5EC4EB",

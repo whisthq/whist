@@ -11,9 +11,23 @@ import LockIcon from "resources/images/lock.svg";
 import UpdateScreen from "pages/PageDashboard/components/UpdateScreen.tsx";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
+import {
+    faCircleNotch,
+    faUser,
+    faLock,
+} from "@fortawesome/free-solid-svg-icons";
 
-import { loginUser, setOS, loginStudio, loginFailed } from "actions/counter";
+import { FaGoogle } from "react-icons/fa";
+
+import {
+    loginUser,
+    setOS,
+    loginStudio,
+    loginFailed,
+    googleLogin,
+} from "actions/counter";
+
+import { GOOGLE_CLIENT_ID } from "constants/config.ts";
 
 class Login extends Component {
     constructor(props) {
@@ -33,15 +47,15 @@ class Login extends Component {
     }
 
     CloseWindow = () => {
-        const remote = require("electron").remote;
-        let win = remote.getCurrentWindow();
+        const { remote } = require("electron");
+        const win = remote.getCurrentWindow();
 
         win.close();
     };
 
     MinimizeWindow = () => {
-        const remote = require("electron").remote;
-        let win = remote.getCurrentWindow();
+        const { remote } = require("electron");
+        const win = remote.getCurrentWindow();
 
         win.minimize();
     };
@@ -84,6 +98,33 @@ class Login extends Component {
         }
     };
 
+    GoogleLogin = () => {
+        const { BrowserWindow } = require("electron").remote;
+
+        const authWindow = new BrowserWindow({
+            width: 800,
+            height: 600,
+            show: false,
+            "node-integration": false,
+            "web-security": false,
+        });
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&openid.realm&include_granted_scopes=true&response_type=code&redirect_uri=urn:ietf:wg:oauth:2.0:oob:auto&client_id=${GOOGLE_CLIENT_ID}&origin=https%3A//fractalcomputers.com`;
+        authWindow.loadURL(authUrl, { userAgent: "Chrome" });
+        authWindow.show();
+
+        authWindow.webContents.on("page-title-updated", (event, newUrl) => {
+            const pageTitle = authWindow.getTitle();
+            if (pageTitle.includes("Success")) {
+                const codeRegexp = new RegExp(
+                    "^(?:Success code=)(.+?)(?:&.+)$"
+                );
+                const code = pageTitle.match(codeRegexp)[1];
+                this.setState({ loggingIn: true });
+                this.props.dispatch(googleLogin(code));
+            }
+        });
+    };
+
     ForgotPassword = () => {
         const { shell } = require("electron");
         shell.openExternal("https://www.fractalcomputers.com/reset");
@@ -95,15 +136,15 @@ class Login extends Component {
     };
 
     CloseWindow = () => {
-        const remote = require("electron").remote;
-        let win = remote.getCurrentWindow();
+        const { remote } = require("electron");
+        const win = remote.getCurrentWindow();
 
         win.close();
     };
 
     MinimizeWindow = () => {
-        const remote = require("electron").remote;
-        let win = remote.getCurrentWindow();
+        const { remote } = require("electron");
+        const win = remote.getCurrentWindow();
 
         win.minimize();
     };
@@ -120,7 +161,7 @@ class Login extends Component {
     };
 
     changeRememberMe = (event: any) => {
-        const target = event.target;
+        const { target } = event;
         if (target.checked) {
             this.setState({ rememberMe: true });
         } else {
@@ -141,7 +182,7 @@ class Login extends Component {
 
         let component = this;
 
-        var appVersion = require("../../package.json").version;
+        const appVersion = require("../../package.json").version;
         const os = require("os");
         this.props.dispatch(setOS(os.platform()));
         this.setState({ version: appVersion });
@@ -200,7 +241,6 @@ class Login extends Component {
             this.props.public_ip &&
             component.state.live
         ) {
-            console.log("REDIRECTING TO DASHBOARD");
             history.push("/dashboard");
         }
     }
@@ -210,7 +250,7 @@ class Login extends Component {
             <div
                 className={styles.container}
                 data-tid="container"
-                style={{ backgroundImage: "url(" + Background + ")" }}
+                style={{ backgroundImage: `url(${Background})` }}
             >
                 <UpdateScreen />
                 <div
@@ -235,7 +275,7 @@ class Login extends Component {
                     <div className={styles.removeDrag}>
                         <div className={styles.landingHeader}>
                             <div className={styles.landingHeaderLeft}>
-                                <img src={Logo} width="20" height="20" />
+                                <img src={Logo} width="18" height="18" />
                                 <span className={styles.logoTitle}>
                                     Fractal
                                 </span>
@@ -258,7 +298,9 @@ class Login extends Component {
                                 </button>
                             </div>
                         </div>
-                        <div style={{ marginTop: 50 }}>
+                        <div
+                            style={{ marginTop: this.props.warning ? 10 : 60 }}
+                        >
                             {this.state.studios ? (
                                 <div
                                     style={{
@@ -334,9 +376,12 @@ class Login extends Component {
                             )}
                             <div className={styles.loginContainer}>
                                 <div>
-                                    <img
-                                        src={UserIcon}
-                                        width="100"
+                                    <FontAwesomeIcon
+                                        icon={faUser}
+                                        style={{
+                                            color: "white",
+                                            fontSize: 12,
+                                        }}
                                         className={styles.inputIcon}
                                     />
                                     <input
@@ -350,9 +395,12 @@ class Login extends Component {
                                     />
                                 </div>
                                 <div>
-                                    <img
-                                        src={LockIcon}
-                                        width="100"
+                                    <FontAwesomeIcon
+                                        icon={faLock}
+                                        style={{
+                                            color: "white",
+                                            fontSize: 12,
+                                        }}
                                         className={styles.inputIcon}
                                     />
                                     <input
@@ -413,10 +461,93 @@ class Login extends Component {
                                                 borderRadius: 5,
                                             }}
                                         >
-                                            START
+                                            Get Started
                                         </button>
                                     )}
+                                    <div style={{ marginBottom: 20 }}>
+                                        {this.state.loggingIn &&
+                                        !this.props.warning ? (
+                                            <button
+                                                type="button"
+                                                className={styles.googleButton}
+                                                id="google-button"
+                                                style={{
+                                                    opacity: 0.6,
+                                                    textAlign: "center",
+                                                }}
+                                            >
+                                                <FontAwesomeIcon
+                                                    icon={faCircleNotch}
+                                                    spin
+                                                    style={{
+                                                        color: "white",
+                                                        width: 12,
+                                                        marginRight: 5,
+                                                        position: "relative",
+                                                        top: 0.5,
+                                                    }}
+                                                />{" "}
+                                                Processing
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() =>
+                                                    this.GoogleLogin()
+                                                }
+                                                type="button"
+                                                className={styles.googleButton}
+                                                id="google-button"
+                                            >
+                                                <FaGoogle
+                                                    style={{
+                                                        fontSize: 16,
+                                                        marginRight: 10,
+                                                        position: "relative",
+                                                        top: 3,
+                                                    }}
+                                                />
+                                                Login with Google
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
+                                {this.props.warning && (
+                                    <div
+                                        style={{
+                                            textAlign: "center",
+                                            fontSize: 12,
+                                            color: "#f9000b",
+                                            background:
+                                                "rgba(253, 240, 241, 0.9)",
+                                            width: "100%",
+                                            padding: 15,
+                                            borderRadius: 2,
+                                            margin: "auto",
+                                            marginBottom: 30,
+                                            width: 265,
+                                        }}
+                                    >
+                                        <div>
+                                            Invalid credentials. If you lost
+                                            your password, you can reset it on
+                                            the&nbsp;
+                                            <div
+                                                onClick={this.ForgotPassword}
+                                                className={
+                                                    styles.pointerOnHover
+                                                }
+                                                style={{
+                                                    display: "inline",
+                                                    fontWeight: "bold",
+                                                    textDecoration: "underline",
+                                                }}
+                                            >
+                                                website
+                                            </div>
+                                            .
+                                        </div>
+                                    </div>
+                                )}
                                 <div
                                     style={{
                                         marginTop: 25,
@@ -431,69 +562,12 @@ class Login extends Component {
                                             onChange={this.changeRememberMe}
                                             onKeyPress={this.LoginKeyPress}
                                         />
-                                        <span
-                                            className={styles.checkmark}
-                                        ></span>
+                                        <span className={styles.checkmark} />
                                     </label>
 
                                     <div style={{ fontSize: 12 }}>
                                         Remember Me
                                     </div>
-                                </div>
-                                <div
-                                    style={{
-                                        fontSize: 12,
-                                        color: "#D6D6D6",
-                                        width: 250,
-                                        margin: "auto",
-                                        marginTop: 15,
-                                    }}
-                                >
-                                    {this.props.warning ? (
-                                        this.state.studios ? (
-                                            <div>
-                                                Invalid credentials. If you lost
-                                                your password, you can reset it
-                                                on the&nbsp;
-                                                <div
-                                                    onClick={
-                                                        this.ForgotPassword
-                                                    }
-                                                    className={
-                                                        styles.pointerOnHover
-                                                    }
-                                                    style={{
-                                                        display: "inline",
-                                                        fontWeight: "bold",
-                                                    }}
-                                                >
-                                                    Fractal website.
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                Invalid credentials. If you lost
-                                                your password, you can reset it
-                                                on the&nbsp;
-                                                <div
-                                                    onClick={
-                                                        this.ForgotPassword
-                                                    }
-                                                    className={
-                                                        styles.pointerOnHover
-                                                    }
-                                                    style={{
-                                                        display: "inline",
-                                                        fontWeight: "bold",
-                                                    }}
-                                                >
-                                                    Fractal website.
-                                                </div>
-                                            </div>
-                                        )
-                                    ) : (
-                                        <div></div>
-                                    )}
                                 </div>
                             </div>
                         </div>

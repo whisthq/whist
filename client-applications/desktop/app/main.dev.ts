@@ -9,13 +9,13 @@
  * `./app/main.prod.js` using webpack. This gives us some performance wins.
  */
 import path from "path";
-import { app, BrowserWindow } from "electron";
+import { app, protocol, BrowserWindow } from "electron";
 import { autoUpdater } from "electron-updater";
 
-var updating = false;
+let updating = false;
 let mainWindow: BrowserWindow | null = null;
 
-process.env["ELECTRON_DISABLE_SECURITY_WARNINGS"] = "true";
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
 process.env.GOOGLE_API_KEY = "AIzaSyA2FUwAOXKqIWMqKN5DNPBUaqYMOWdBADQ";
 
 if (process.env.NODE_ENV === "production") {
@@ -47,8 +47,8 @@ const createWindow = async () => {
     if (os.platform() === "win32") {
         mainWindow = new BrowserWindow({
             show: false,
-            width: 900,
-            height: 600,
+            width: 1000,
+            height: 680,
             frame: false,
             center: true,
             resizable: false,
@@ -59,8 +59,8 @@ const createWindow = async () => {
     } else if (os.platform() === "darwin") {
         mainWindow = new BrowserWindow({
             show: false,
-            width: 900,
-            height: 600,
+            width: 1000,
+            height: 680,
             titleBarStyle: "hidden",
             center: true,
             resizable: false,
@@ -73,8 +73,8 @@ const createWindow = async () => {
         // if (os.platform() === "linux") case
         mainWindow = new BrowserWindow({
             show: false,
-            width: 900,
-            height: 600,
+            width: 1000,
+            height: 680,
             titleBarStyle: "hidden",
             center: true,
             resizable: false,

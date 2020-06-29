@@ -3,6 +3,7 @@ export const STORE_USERNAME = "STORE_USERNAME";
 export const STORE_IP = "STORE_IP";
 export const STORE_IS_USER = "STORE_IS_USER";
 export const TRACK_USER_ACTIVITY = "TRACK_USER_ACTIVITY";
+export const GOOGLE_LOGIN = "GOOGLE_LOGIN";
 export const LOGIN_USER = "LOGIN_USER";
 export const LOGIN_FAILED = "LOGIN_FAILED";
 export const CALCULATE_DISTANCE = "CALCULATE_DISTANCE";
@@ -33,8 +34,14 @@ export const CHANGE_STATUS_MESSAGE = "CHANGE_STATUS_MESSAGE";
 export const UPDATE_FOUND = "UPDATE_FOUND";
 export const READY_TO_CONNECT = "READY_TO_CONNECT";
 
+export function googleLogin(code: any) {
+    return {
+        type: GOOGLE_LOGIN,
+        code,
+    };
+}
+
 export function loginUser(username: any, password: any) {
-    console.log("login action fired");
     return {
         type: LOGIN_USER,
         username,

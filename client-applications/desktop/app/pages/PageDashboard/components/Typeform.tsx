@@ -99,8 +99,8 @@ class Typeform extends Component {
                         position: "absolute",
                         top: 0,
                         left: 0,
-                        width: 900,
-                        height: 600,
+                        width: 1000,
+                        height: 680,
                         background: "#EEEEEE",
                         zIndex: 2,
                         textAlign: "left",
@@ -124,7 +124,12 @@ class Typeform extends Component {
                                 className={styles.typeformButton}
                                 onClick={() => this.setState({ step: 2.1 })}
                             >
-                                <div className={styles.key}>A</div>
+                                <div
+                                    className={styles.key}
+                                    onClick={() => this.setState({ step: 2.1 })}
+                                >
+                                    A
+                                </div>
                                 <div className={styles.text}>
                                     I experienced an issue / bug
                                 </div>
@@ -133,13 +138,23 @@ class Typeform extends Component {
                                 className={styles.typeformButton}
                                 onClick={() => this.setState({ step: 2.2 })}
                             >
-                                <div className={styles.key}>B</div>
+                                <div
+                                    className={styles.key}
+                                    onClick={() => this.setState({ step: 2.1 })}
+                                >
+                                    B
+                                </div>
                                 <div className={styles.text}>
                                     I'd like to provide feedback
                                 </div>
                             </button>
                             <button className={styles.typeformButton}>
-                                <div className={styles.key}>C</div>
+                                <div
+                                    className={styles.key}
+                                    onClick={() => this.setState({ step: 2.1 })}
+                                >
+                                    C
+                                </div>
                                 <div
                                     className={styles.text}
                                     onClick={this.ForwardFeedbackButton}
@@ -160,8 +175,8 @@ class Typeform extends Component {
                         position: "absolute",
                         top: 0,
                         left: 0,
-                        width: 900,
-                        height: 600,
+                        width: 1000,
+                        height: 680,
                         background: "#EEEEEE",
                         zIndex: 2,
                         textAlign: "left",
@@ -303,8 +318,8 @@ class Typeform extends Component {
                         position: "absolute",
                         top: 0,
                         left: 0,
-                        width: 900,
-                        height: 600,
+                        width: 1000,
+                        height: 680,
                         background: "#EEEEEE",
                         zIndex: 2,
                         textAlign: "left",

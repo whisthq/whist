@@ -55,21 +55,21 @@ button {
 .logoTitle {
     font-family: "Maven Pro";
     position: relative;
-    bottom: 3px;
-    left: 10px;
-    font-weight: "bold";
+    bottom: 2px;
+    left: 12px;
     font-size: 20px;
 }
 
 .signupButton,
-.loginButton {
+.loginButton,
+.googleButton {
     font-family: "Maven Pro";
     border: none;
     border: solid 2px #5ec4eb;
     background: none;
     font-weight: bold;
-    border-radius: 5px;
-    padding: 10px 30px;
+    border-radius: 4px;
+    padding: 12px 30px;
     color: #5ec4eb;
     font-weight: "bold";
     margin-left: 10px;
@@ -78,13 +78,24 @@ button {
 .loginButton {
     border: none;
     color: white;
-    background: linear-gradient(258.54deg, #5ec3eb 0%, #d023eb 100%);
+    background: rgba(66, 175, 235, 0.8);
     margin-left: 0px;
-    width: 275px;
+    width: 300px;
+}
+
+.googleButton {
+    border: none;
+    color: white;
+    background: rgba(66, 133, 244, 0.75);
+    margin-left: 0px;
+    width: 300px;
+    margin-top: 20px;
+    padding-top: 11px;
 }
 
 .signupButton:hover,
-.loginButton:hover {
+.loginButton:hover,
+.googleButton:hover {
     cursor: pointer;
 }
 
@@ -94,9 +105,9 @@ button {
 }
 
 .inputBox {
-    width: 175px;
-    background-color: rgba(20, 20, 20, 0.7);
-    padding: 15px 50px;
+    width: 200px;
+    background-color: rgba(77, 77, 92, 0.6);
+    padding: 20px 50px;
     border-radius: 30px;
     margin-bottom: 20px;
     border: none;
@@ -105,9 +116,13 @@ button {
     font-family: "Maven Pro";
 }
 
+input.inputBox::placeholder {
+    color: white;
+}
+
 .inputIcon {
     position: absolute;
-    margin-top: 17px;
+    margin-top: 22px;
     margin-left: 20px;
     width: 12px;
     height: 12px;
