@@ -1,3 +1,5 @@
+# This workflow builds a Docker image
+
 name: Docker Image CI
 
 on:
@@ -7,12 +9,11 @@ on:
     branches: [ master ]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
+      
     - name: Build the Docker Chrome Image
       run: cd chrome && docker build . --file Dockerfile --tag my-image-name:$(date +%s)
