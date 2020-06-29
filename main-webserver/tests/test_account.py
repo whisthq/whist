@@ -18,10 +18,18 @@ def login(username, password):
     )
 
 
-def test_login():
-    resp = login("example@example.com", "password")
-    json_data = resp.json()
-    assert resp.status_code == 200
+def test_login(input_token):
+    register(
+        "fakefake@delete.com",
+        "password",
+        "Delete Me",
+        "Two men walk into a bar. Knock knock.",
+    )
+    resp = login("fakefake@delete.com", "password")
+    delete("fakefake@delete.com", input_token)
+    assert resp.json()["verified"]
+    resp = login( "support@fakecomputers.com","asdf")
+    assert not resp.json()["verified"]
 
 
 def register(username, password, name, feedback):
@@ -49,8 +57,7 @@ def test_register(input_token):
         headers={"Authorization": "Bearer " + input_token},
     )
     success = resp.json()["user"] is not None
-    if success:  # Delete test account if successful
-        delete("fakefake@delete.com", input_token)
+    delete("fakefake@delete.com", input_token)
     assert success
 
 
