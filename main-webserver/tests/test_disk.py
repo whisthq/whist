@@ -7,7 +7,7 @@ import time
 
 load_dotenv()
 SERVER_URL = (
-    "https://" + os.getenv("HEROKU_APP_NAME") + ".herokuapp.com"
+    "https://main-webserver-pr-70" + ".herokuapp.com"
     if os.getenv("HEROKU_APP_NAME")
     else "http://localhost:5000"
 )
