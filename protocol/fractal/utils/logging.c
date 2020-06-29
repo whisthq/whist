@@ -287,7 +287,6 @@ void PrintStacktrace()
     size = backtrace( array, HANDLER_ARRAY_SIZE );
 
     // print out all the frames to stderr
-    fprintf( stderr, "\nError: signal %d:\n", sig );
     backtrace_symbols_fd( array, size, STDERR_FILENO );
 
     // and to the log
@@ -388,6 +387,7 @@ LONG WINAPI windows_exception_handler( EXCEPTION_POINTERS* ExceptionInfo )
 }
 #else
 void crash_handler(int sig) {
+    fprintf( stderr, "\nError: signal %d:\n", sig );
     PrintStacktrace();
     SDL_Delay(100);
     exit(-1);
