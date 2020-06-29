@@ -106,8 +106,6 @@ def mail(action, **kwargs):
         title = "[Fractal] Please Verify Your Email"
         url = os.getenv("FRONTEND_URL") + "/verify?" + token
 
-        print("THE URL IS {}".format(url))
-
         internal_message = SendGridMail(
             from_email="noreply@fractalcomputers.com",
             to_emails=user,
@@ -289,7 +287,6 @@ def signup():
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
         response = sg.send(internal_message)
-        print("Email sent to {}".format(user))
         print(response)
     except Exception as e:
         print(e.message)

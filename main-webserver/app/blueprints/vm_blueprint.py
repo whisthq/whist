@@ -308,11 +308,11 @@ def vm(action, **kwargs):
             if vm_info:
                 is_dev = vm_info["dev"]
                 disk_name = vm_info["disk_name"]
-                disk_info = fetchUserDisks(vm_info["username"])
+                disk_info = fetchDiskInfo(disk_name)
 
                 branch = None
                 if disk_info:
-                    branch = disk_info[0]["branch"]
+                    branch = disk_info["branch"]
 
                 using_stun = fetchDiskSetting(disk_name, "using_stun")
 
@@ -435,12 +435,52 @@ def logs_actions(action, **kwargs):
     # fetch logs action
     if action == "fetch" and request.method == "POST":
         try:
+            username = body["username"]
             fetch_all = body["fetch_all"]
         except:
             fetch_all = False
+            username = None
 
-        task = fetchLogs.apply_async([body["username"], fetch_all, kwargs["ID"]])
-        return jsonify({"ID": task.id}), 202
+        if "connection_id" in body.keys():
+            command = text(
+                """
+                SELECT * FROM logs WHERE "connection_id" = :connection_id ORDER BY last_updated DESC
+                """
+            )
+            params = {"connection_id": body["connection_id"]}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+
+        if not fetch_all:
+            command = text(
+                """
+                SELECT * FROM logs WHERE "username" LIKE :username ORDER BY last_updated DESC
+                """
+            )
+            params = {"username": username + "%"}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+        else:
+            command = text(
+                """
+                SELECT * FROM logs ORDER BY last_updated DESC
+                """
+            )
+
+            params = {}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+        return jsonify({"logs": None}), 400
+
     # delete logs action
     elif action == "delete" and request.method == "POST":
         try:
