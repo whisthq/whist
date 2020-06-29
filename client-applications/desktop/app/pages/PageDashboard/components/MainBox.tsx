@@ -141,6 +141,7 @@ class MainBox extends Component {
                         var path = appRootDir + "/protocol-build/";
                         path = path.replace("/Resources/app.asar", "");
                         path = path.replace("/desktop/app", "/desktop");
+                        console.log(path);
                         var executable = "./FractalClient";
                     } else if (os.platform() === "linux") {
                         var path = process.cwd() + "/protocol-build";
