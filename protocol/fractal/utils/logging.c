@@ -388,7 +388,7 @@ LONG WINAPI windows_exception_handler( EXCEPTION_POINTERS* ExceptionInfo )
 }
 #else
 void crash_handler(int sig) {
-    printStacktrace();
+    PrintStacktrace();
     SDL_Delay(100);
     exit(-1);
 }
