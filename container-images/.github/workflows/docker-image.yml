@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Workflow to build Docker images to ensure they build properly
+=======
+# This workflow builds a Docker image
+>>>>>>> master
 
 name: Docker Image CI
 
@@ -14,5 +18,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      
     - name: Build the Docker Chrome Image
       run: cd chrome && docker build . --file Dockerfile --tag my-image-name:$(date +%s)
