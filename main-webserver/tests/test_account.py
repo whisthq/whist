@@ -98,3 +98,22 @@ def test_adminLogin():
     assert resp.status_code == 422
     resp = adminLogin(os.getenv("DASHBOARD_USERNAME"), os.getenv("DASHBOARD_PASSWORD"))
     assert resp.status_code == 200
+
+def lookup(username):
+    return requests.post((SERVER_URL + "/account/lookup"),
+    json={"username": username})
+
+def test_lookup(input_token):
+    register(
+        "testlookup@example.com",
+        "password",
+        "Test Lookup",
+        "Two men walk into a bar. Knock knock.",
+    )
+    resp = lookup("testlookup@example.com")
+    assert resp.json()["exists"]
+
+    delete("testlookup@example.com", input_token)
+
+    resp = lookup("doesnotexist@example.com")
+    assert not resp.json()["exists"]
