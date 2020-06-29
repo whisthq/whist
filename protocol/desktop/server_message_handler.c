@@ -39,7 +39,6 @@ int handleServerMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
             LOG_WARNING("Unknown FractalServerMessage Received");
             return -1;
     }
-    return 0;
 }
 
 static int handleInitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
@@ -88,6 +87,7 @@ static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
 }
 
 static int handleQuitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
+    fmsg;
     if (fmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR("Incorrect message size for a server message"
                   " (type: quit message)!");
