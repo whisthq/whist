@@ -1,5 +1,5 @@
-## Fractal Mobile Applications
+# Fractal Mobile Applications
 
-Fractal application for a user to connect to their Fractal computer.
+This repository contains the code for the Fractal mobile applications, which run on Android, including Chromebooks, and iOS, including iPads. The application will be developped in React Native to ensure cross-platform compatibility.
 
-TBD.
+TBD
