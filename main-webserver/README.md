@@ -1,4 +1,4 @@
-# Fractal User & VM Webserver
+# Fractal Main Webserver
 
 ![Python Webserver CI](https://github.com/fractalcomputers/vm-webserver/workflows/Python%20App%20CI/badge.svg)
 
