@@ -158,6 +158,7 @@ pytest==5.4.3
 pytest-dotenv==0.5.2
 pytest-flask==1.0.0
 pytest-flask-sqlalchemy==1.0.2
+pytest-helpers-namespace==2019.1.8
 pytest-mock==3.1.1
 pytest-pgsql==1.1.2
 pytest-postgresql==2.4.0
