@@ -1,3 +1,6 @@
 [submodule "setup-scripts"]
 	path = setup-scripts
 	url = https://github.com/fractalcomputers/setup-scripts.git
+[submodule "chrome/setup-scripts"]
+	path = chrome/setup-scripts
+	url = https://github.com/fractalcomputers/setup-scripts.git
