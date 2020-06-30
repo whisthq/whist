@@ -14,6 +14,7 @@ int dxgi_cuda_start_transfer_context(CaptureDevice* device) {
     static bool tried_cuda_check = false;
     if (!tried_cuda_check) {
         tried_cuda_check = true;
+
         if (cudaDeviceSynchronize() != cudaSuccess) {
             LOG_INFO("CUDA requested but not available on this device.");
             return 1;  // cuda unavailable
@@ -22,19 +23,23 @@ int dxgi_cuda_start_transfer_context(CaptureDevice* device) {
         }
     }
 
-    if (active_transfer_context) return 0;
+    if (cuda_is_available) {
+        if (active_transfer_context) return 0;
 
-    cudaError_t res = cudaGraphicsD3D11RegisterResource(
-        &resource, device->screenshot.staging_texture, 0);
-    if (res != cudaSuccess) {
-        LOG_ERROR("Error: %s | %s", cudaGetErrorName(res),
-                  cudaGetErrorString(res));
-        return -1;
+        cudaError_t res = cudaGraphicsD3D11RegisterResource(
+            &resource, device->screenshot.staging_texture, 0);
+        if (res != cudaSuccess) {
+            LOG_ERROR("Error: %s | %s", cudaGetErrorName(res),
+                      cudaGetErrorString(res));
+            return -1;
+        }
+
+        active_transfer_context = true;
+
+        return 0;
+    } else {
+        return 1; // cuda unavailable
     }
-
-    active_transfer_context = true;
-
-    return 0;
 }
 
 void dxgi_cuda_close_transfer_context() {
@@ -46,7 +51,7 @@ void dxgi_cuda_close_transfer_context() {
 
 int dxgi_cuda_transfer_capture(CaptureDevice* device,
                                video_encoder_t* encoder) {
-    if (cuda_is_available) {
+    if (cuda_is_available && active_transfer_context) {
         cudaError_t res;
         cudaArray_t mappedArray;
 

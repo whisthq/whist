@@ -165,13 +165,14 @@ int32_t SendVideo(void* opaque) {
         if (update_device) {
             update_device = false;
 
+#ifdef _WIN32
+            // need to reinitialize this, so close it
+            dxgi_cuda_close_transfer_context();
+#endif
+
             if (device) {
                 DestroyCaptureDevice(device);
                 device = NULL;
-#ifdef _WIN32
-                // need to reinitialize this, so close it
-                dxgi_cuda_close_transfer_context();
-#endif
             }
 
             device = &rdevice;
@@ -228,18 +229,23 @@ int32_t SendVideo(void* opaque) {
                     frames_since_first_iframe = 0;
                     pending_encoder = false;
                     update_encoder = false;
-#ifdef _WIN32
-                    // initialize cuda transfer context
-                    if (encoder->type == NVENC_ENCODE &&
-                        !dxgi_cuda_start_transfer_context(device)) {
-                        dxgi_cuda_available = true;
-                    }
-#endif
                 } else {
                     SDL_CreateThread(MultithreadedEncoderFactory,
                                      "MultithreadedEncoderFactory", NULL);
                 }
             }
+
+#ifdef _WIN32
+            if (encoder->type == NVENC_ENCODE) {
+                // initialize the transfer context
+                if (!dxgi_cuda_start_transfer_context(device)) {
+                    dxgi_cuda_available = true;
+                }
+            } else if (dxgi_cuda_available) {
+                // end the transfer context
+                dxgi_cuda_close_transfer_context();
+            }
+#endif
         }
 
         // Accumulated_frames is equal to how many frames have passed since the
