@@ -4,11 +4,17 @@ This repository contains the Fractal client applications, which users download t
 
 
 
+## Supported Applications
 
-The following desktop (Windows, MacOS, Linux) platforms are supported:
-- Windows: [Latest release](https://s3.console.aws.amazon.com/s3/buckets/fractal-applications-release/?region=us-east-1)
-- MacOS: [Latest release](https://s3.console.aws.amazon.com/s3/buckets/fractal-mac-application-release/?region=us-east-1)
-- Linux Ubuntu: [Latest release](https://s3.console.aws.amazon.com/s3/buckets/fractal-linux-application-release/?region=us-east-1)
+The following platforms are supported by the Fractal applications:
+
+- [Windows 10](https://s3.console.aws.amazon.com/s3/buckets/fractal-applications-release/?region=us-east-1)
+- [MacOS 10.10+](https://s3.console.aws.amazon.com/s3/buckets/fractal-mac-application-release/?region=us-east-1)
+- [Linux Ubuntu 18.04+](https://s3.console.aws.amazon.com/s3/buckets/fractal-linux-application-release/?region=us-east-1)
+
+For the desktop OS applications listed above, 
+
+
 
 The following platforms have yet to be supported:
 - iOS/iPadOS
