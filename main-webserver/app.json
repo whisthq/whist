@@ -5,7 +5,7 @@
     },
     "test": {
       "scripts": {
-        "test": "py.test -v -r",
+        "test": "py.test -v -r A",
         "addons": ["heroku-postgresql:in-dyno", "heroku-redis:in-dyno"]
       }
     }
