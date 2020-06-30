@@ -8,7 +8,7 @@ pytest_plugins = ["helpers_namespace"]
 
 load_dotenv()
 SERVER_URL = (
-    "https://main-webserver-pr-70" + ".herokuapp.com"
+    "https://main-webserver-pr-" + os.getenv("TEST_HEROKU_PR_NUMBER") + ".herokuapp.com"
     if os.getenv("CI")
     else "http://localhost:5000"
 )
