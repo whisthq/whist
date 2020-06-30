@@ -12,6 +12,7 @@ SERVER_URL = (
     else "http://localhost:5000"
 )
 
+
 def test_login(input_token):
     username = "testlogin@example.com"
     try:
@@ -91,7 +92,9 @@ def test_delete(input_token):
 def test_adminLogin():
     resp = pytest.helpers.adminLogin("example@example.com", "password")
     assert resp.status_code == 422
-    resp = pytest.helpers.adminLogin(os.getenv("DASHBOARD_USERNAME"), os.getenv("DASHBOARD_PASSWORD"))
+    resp = pytest.helpers.adminLogin(
+        os.getenv("DASHBOARD_USERNAME"), os.getenv("DASHBOARD_PASSWORD")
+    )
     assert resp.status_code == 200
 
 
