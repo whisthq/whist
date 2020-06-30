@@ -114,7 +114,7 @@ def test_vm(input_token):
     id = resp.json()["ID"]
     print("ID: " + id)
     status = "PENDING"
-    while(status == "PENDING" or status == "STARTED"):
+    while status == "PENDING" or status == "STARTED":
         time.sleep(5)
         status = getStatus(id)["state"]
     assert status == "SUCCESS"
@@ -123,12 +123,10 @@ def test_vm(input_token):
     # Test start
     print("Testing start...")
     requests.post((SERVER_URL + "/vm/setDev"), json={"vm_name": vm_name, "dev": True})
-    resp = requests.post((SERVER_URL + '/vm/start'), json={
-        "vm_name":vm_name,
-    })
+    resp = requests.post((SERVER_URL + "/vm/start"), json={"vm_name": vm_name,})
     id = resp.json()["ID"]
     status = "PENDING"
-    while(status == "PENDING" or status == "STARTED"):
+    while status == "PENDING" or status == "STARTED":
         time.sleep(5)
         status = getStatus(id)["state"]
     assert getVm(vm_name)["state"] == "RUNNING_AVAILABLE"
@@ -136,12 +134,10 @@ def test_vm(input_token):
 
     # Test deallocate
     print("Testing deallocate...")
-    resp = requests.post((SERVER_URL + '/vm/deallocate'), json={
-        "vm_name":vm_name,
-    })
+    resp = requests.post((SERVER_URL + "/vm/deallocate"), json={"vm_name": vm_name,})
     id = resp.json()["ID"]
     status = "PENDING"
-    while(status == "PENDING" or status == "STARTED"):
+    while status == "PENDING" or status == "STARTED":
         time.sleep(5)
         status = getStatus(id)["state"]
     assert getVm(vm_name)["state"] == "DEALLOCATED"

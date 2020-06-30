@@ -48,7 +48,7 @@ def test_createEmpty(input_token):
         status = getStatus(id)["state"]
     assert status == "SUCCESS"
     disk_name = getStatus(id)["output"]
-    
+
     resp = requests.post(
         (SERVER_URL + "/disk/fetchDisk"),
         json={"disk_name": disk_name},
@@ -67,4 +67,3 @@ def test_createEmpty(input_token):
         json={"username": "fakefake@delete.com"},
         headers={"Authorization": "Bearer " + input_token},
     )
-    
