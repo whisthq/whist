@@ -1,6 +1,6 @@
 # Fractal Main Webserver
 
-![Python Webserver CI](https://github.com/fractalcomputers/vm-webserver/workflows/Python%20App%20CI/badge.svg)
+![Python Webserver CI](https://github.com/fractalcomputers/main-webserver/workflows/Python%20Webserver%20CI/badge.svg)
 
 This repository contains the code for the VM and user webserver, which handles interfacing between users, the Fractal cloud computers hosted on Azure (currently), and a variety of website & client applications functionalities. Runs Flask with Celery for asynchronous task handling.
 
