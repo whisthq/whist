@@ -59,8 +59,14 @@ def createDiskFromImage(
         headers={"Authorization": "Bearer " + input_token},
     )
 
+
 def swap(vm_name, disk_name, input_token):
-    return requests.post((SERVER_URL + "/disk/swap"), json={"vm_name": vm_name, "disk_name": disk_name},headers={"Authorization": "Bearer " + input_token},)
+    return requests.post(
+        (SERVER_URL + "/disk/swap"),
+        json={"vm_name": vm_name, "disk_name": disk_name},
+        headers={"Authorization": "Bearer " + input_token},
+    )
+
 
 def test_vm(input_token):
     username = "fakefake@delete.com"
@@ -82,9 +88,7 @@ def test_vm(input_token):
 
     # Test create disk from image
     print("Testing create disk from image...")
-    resp = createDiskFromImage(
-        "Windows", username, "eastus", "NV6", [], input_token
-    )
+    resp = createDiskFromImage("Windows", username, "eastus", "NV6", [], input_token)
     id = resp.json()["ID"]
     status = "PENDING"
     while status == "PENDING" or status == "STARTED":
@@ -147,16 +151,14 @@ def test_vm(input_token):
     resp = requests.post((SERVER_URL + "/vm/restart"), json={"username": username})
     id = resp.json()["ID"]
     status = "PENDING"
-    while(status == "PENDING" or status == "STARTED"):
+    while status == "PENDING" or status == "STARTED":
         time.sleep(5)
         status = getStatus(id)["state"]
     assert status == "SUCCESS"
 
     # Test swap disk
     print("Testing swap disk...")
-    resp = createDiskFromImage(
-        "Windows", username, "eastus", "NV6", [], input_token
-    )
+    resp = createDiskFromImage("Windows", username, "eastus", "NV6", [], input_token)
     id = resp.json()["ID"]
     status = "PENDING"
     while status == "PENDING" or status == "STARTED":

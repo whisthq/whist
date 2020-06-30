@@ -22,7 +22,7 @@ def createEmpty(disk_size, username, input_token):
     return requests.post(
         (SERVER_URL + "/disk/createEmpty"),
         json={"disk_size": disk_size, "username": username},
-        headers={"Authorization": "Bearer " + input_token}
+        headers={"Authorization": "Bearer " + input_token},
     )
 
 
