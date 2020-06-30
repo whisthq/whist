@@ -71,7 +71,6 @@ def test_vm(input_token):
         "Standard_NV6_Promo", "eastus", "Windows", "fractal123456789.", input_token
     )
     id = resp.json()["ID"]
-    print("ID: " + id)
     status = "PENDING"
     while status == "PENDING" or status == "STARTED":
         time.sleep(5)
@@ -113,6 +112,7 @@ def test_vm(input_token):
     print("Testing stop...")
     requests.post((SERVER_URL + "/vm/stopvm"), json={"vm_name": vm_name})
     id = resp.json()["ID"]
+    print("ID: " + id)
     status = "PENDING"
     while(status == "PENDING" or status == "STARTED"):
         time.sleep(5)
@@ -176,12 +176,27 @@ def test_vm(input_token):
     assert getVm(vm_name)["disk_name"] == disk_name2
 
     # Test add disk
-    print("Testing add disk...")
-    # requests.post(
+    # print("Testing add disk...")
+    # resp = requests.post(
     #     (SERVER_URL + "/disk/createEmpty"),
     #     json={"disk_size": 10, "username": username},
     #     headers={"Authorization": "Bearer " + input_token}
     # )
+    # id = resp.json()["ID"]
+    # status = "PENDING"
+    # while status == "PENDING" or status == "STARTED":
+    #     time.sleep(5)
+    #     status = getStatus(id)["state"]
+    # resp = requests.post(
+    #     (SERVER_URL + "/disk/add"),
+    #     json={"disk_size": 10, "username": username},
+    #     headers={"Authorization": "Bearer " + input_token}
+    # )
+    # id = resp.json()["ID"]
+    # status = "PENDING"
+    # while status == "PENDING" or status == "STARTED":
+    #     time.sleep(5)
+    #     status = getStatus(id)["state"]
 
     # Test delete
     print("Testing delete...")
