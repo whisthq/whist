@@ -47,27 +47,6 @@ or
 
 `docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
 
-### Build/Run in Vagrant
-
-Vagrant allows you to build local VMs which can be used to run code seamlessly. It is done via the Git submodule to the `fractalcomputers/vagrant` repository.
-
-First, make sure you initialized submodules via: `git submodule update --init --recursive`. After the submodules are initialized you will find the Vagrant configs in `vagrant/`.
-
-You will first need to download the win10-dev.box image. To do so, run `aws s3 cp s3://fractal-private-dev/win10-dev.box win10-dev.box` as detailed in `vagrant/README.md`, or you can also manually download it from the S3 bucket. If you try to download it via the AWS CLI, you will first need to install the CLI and configure permissions, which is explained the the Vagrant repo README. You can then follow the instructions in `vagrant/README.md` for running VMs with the vm-webserver repo in them.
-
-Quick Commands:
-
-```
-# vagrant up commands will take some time
-vagrant up
-vagrant up win10 # only win10
-vagrant ssh win10
-vagrant ssh ubuntu
-
-# code is located under /vagrant
-vagrant destroy # destroys vms and cleans up
-```
-
 ### Run on Heroku
 
 To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. Make sure you are added as a collaborator to any of the Heroku apps you plan to use. You can contact Ming, Phil, or Jonathan to be added.
