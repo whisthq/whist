@@ -17,6 +17,25 @@ List all the possible scenarios/edge cases that you tested. For instance, if you
 2. Correct username but incorrect password
 3. Correct username and admin password
 
+### Testing Guidelines
+
+Please give instructions for other people to test, e.g.: 
+- Deploy PR to server
+- Connect with client
+- Do x 
+- Do y
+- Upload client and server logs as a comment on this PR if there are issues
+
+### Tested Successfully by:
+- [ ] Phil
+- [ ] Ming
+- [ ] Nicholas
+- [ ] Roshan
+- [ ] Hamish
+- [ ] Isabelle
+- [ ] Jonathan
+- [ ] Sean
+
 ## Checklist
 
 - [ ] Appropriate Unit test coverage
