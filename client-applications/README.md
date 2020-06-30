@@ -1,6 +1,9 @@
 # Fractal Client Applications
 
-Source code for the Fractal client applications, which users download to their local device to connect to their Fractal computer (cloud or peer-to-peer streaming).
+This repository contains the Fractal client applications, which users download to their local device to connect to their Fractal computer (cloud or peer-to-peer streaming). Each subfolder contains the appropriate code for its platform, each with a proper README with information on how to develop or build each application. The web client will be part of the `fractalcomputers/website` repository and is not build in this repository.
+
+
+
 
 The following desktop (Windows, MacOS, Linux) platforms are supported:
 - Windows: [Latest release](https://s3.console.aws.amazon.com/s3/buckets/fractal-applications-release/?region=us-east-1)
