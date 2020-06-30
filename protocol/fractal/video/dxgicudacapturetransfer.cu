@@ -7,6 +7,7 @@
 
 extern "C" {
 bool cuda_is_available = false;
+bool active_transfer_context = false;
 cudaGraphicsResource_t resource = NULL;
 
 int dxgi_cuda_start_transfer_context(CaptureDevice* device) {
@@ -21,6 +22,8 @@ int dxgi_cuda_start_transfer_context(CaptureDevice* device) {
         }
     }
 
+    if (active_transfer_context) return 0;
+
     cudaError_t res = cudaGraphicsD3D11RegisterResource(
         &resource, device->screenshot.staging_texture, 0);
     if (res != cudaSuccess) {
@@ -29,12 +32,15 @@ int dxgi_cuda_start_transfer_context(CaptureDevice* device) {
         return -1;
     }
 
+    active_transfer_context = true;
+
     return 0;
 }
 
 void dxgi_cuda_close_transfer_context() {
-    if (cuda_is_available && resource) {
+    if (cuda_is_available && active_transfer_context && resource) {
         cudaGraphicsUnregisterResource(resource);
+        active_transfer_context = false;
     }
 }
 
