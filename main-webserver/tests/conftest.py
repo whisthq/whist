@@ -114,6 +114,7 @@ def fetchDisks(username):
         (SERVER_URL + "/user/fetchdisks"), json={"username": username}
     ).json()
 
+
 @pytest.helpers.register
 def deleteDisks(username, input_token):
     return requests.post(

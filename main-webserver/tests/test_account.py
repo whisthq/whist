@@ -17,10 +17,7 @@ def test_login(input_token):
     username = "testlogin@example.com"
     try:
         pytest.helpers.register_user(
-            username,
-            "password",
-            "Delete Me",
-            "Two men walk into a bar. Knock knock.",
+            username, "password", "Delete Me", "Two men walk into a bar. Knock knock.",
         )
         resp = pytest.helpers.login(username, "password")
         pytest.helpers.deleteUser(username, input_token)
@@ -32,13 +29,10 @@ def test_login(input_token):
 
 
 def test_register_user(input_token):
-    username = 'testRegistered@example.com'
+    username = "testRegistered@example.com"
     try:
         pytest.helpers.register_user(
-            username,
-            "password",
-            "Delete Me",
-            "Two men walk into a bar. Knock knock.",
+            username, "password", "Delete Me", "Two men walk into a bar. Knock knock.",
         )
         resp = requests.post(
             (SERVER_URL + "/account/fetchUser"),
@@ -50,17 +44,11 @@ def test_register_user(input_token):
         assert success
 
         pytest.helpers.register_user(
-            username,
-            "password",
-            "Delete Me",
-            "Two men walk into a bar. Knock knock.",
+            username, "password", "Delete Me", "Two men walk into a bar. Knock knock.",
         )
 
         resp = pytest.helpers.register_user(
-            "phil@fractalcomputers.com",
-            "password",
-            "Won't work",
-            "Oh no"
+            "phil@fractalcomputers.com", "password", "Won't work", "Oh no"
         )
         assert resp.status_code != 200
     except:
@@ -73,10 +61,7 @@ def test_delete(input_token):
     username = "testDelete@example.com"
     try:
         pytest.helpers.register_user(
-            username,
-            "password",
-            "Delete Me",
-            "Two men walk into a bar. Knock knock.",
+            username, "password", "Delete Me", "Two men walk into a bar. Knock knock.",
         )
         pytest.helpers.deleteUser(username, input_token)
         resp = requests.post(
