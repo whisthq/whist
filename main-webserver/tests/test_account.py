@@ -47,6 +47,21 @@ def test_register_user(input_token):
         success = resp.json()["user"] is not None
         pytest.helpers.deleteUser(username, input_token)
         assert success
+
+        pytest.helpers.register_user(
+            username,
+            "password",
+            "Delete Me",
+            "Two men walk into a bar. Knock knock.",
+        )
+
+        resp = pytest.helpers.register_user(
+            "phil@fractalcomputers.com",
+            "password",
+            "Won't work",
+            "Oh no"
+        )
+        assert resp.status_code != 200
     except:
         pytest.helpers.deleteUser(username, input_token)
 
