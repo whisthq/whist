@@ -92,9 +92,7 @@ int dxgi_cuda_transfer_capture(CaptureDevice* device,
         }
 
         encoder->sw_frame->pts++;
-        encoder->hw_frame->pts = encoder->sw_frame->pts;
         encoder->hw_frame->pict_type = encoder->sw_frame->pict_type;
-        encoder->hw_frame->key_frame = encoder->sw_frame->key_frame;
 
 
         res = cudaMemcpy2DFromArray(
