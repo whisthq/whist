@@ -3,6 +3,7 @@ import os
 import pytest
 import requests
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 SERVER_URL = (
@@ -174,7 +175,7 @@ def test_reset(input_token):
     delete(username, input_token)
 
 
-def createFromImage(username):
+def createFromImage(username, input_token):
     return requests.post(
         (SERVER_URL + "/disk/createFromImage"),
         json={
@@ -183,6 +184,7 @@ def createFromImage(username):
             "vm_size": 10,
             "apps": [],
         },
+        headers={"Authorization": "Bearer " + input_token},
     )
 
 
@@ -206,7 +208,7 @@ def test_fetchDisks(input_token):
     resp = fetchDisks(username)
     assert len(resp["disks"]) == 0
 
-    resp = createFromImage(username)
+    resp = createFromImage(username, input_token)
     assert resp.status_code == 202
     id = resp.json()["ID"]
     status = "PENDING"
@@ -214,10 +216,16 @@ def test_fetchDisks(input_token):
         time.sleep(5)
         status = getStatus(id)["state"]
     assert status == "SUCCESS"
-    disk_name = getStatus(id)["output"]
+    disk = getStatus(id)["output"]
 
     resp = fetchDisks(username)
     assert len(resp["disks"]) > 0
-    assert disk_name in map(lambda d: d["disk_name"], resp["disks"])
+    assert disk["disk_name"] in list(map(lambda d: d["disk_name"], resp["disks"]))
+
+    requests.post(
+        (SERVER_URL + "/disk/delete"),
+        json={"username": username},
+        headers={"Authorization": "Bearer " + input_token},
+    )
 
     delete(username, input_token)
