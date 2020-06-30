@@ -875,7 +875,7 @@ def swapSpecificDisk(s, disk_name, vm_name, ID=-1):
     Returns:
         dict: A dictionary representing the VM in the v_ms sql table
     """
-    sendInfo(ID, "Attempting to swap out disk {} in VM {}".format(disk_name, vm_name))
+    sendInfo(ID, "Attempting to swap disk {} into VM {}".format(disk_name, vm_name))
     locked = checkLock(vm_name)
     s.update_state(
         state="PENDING", meta={"msg": "Preparing to swap"},
@@ -899,7 +899,7 @@ def swapSpecificDisk(s, disk_name, vm_name, ID=-1):
     vm.storage_profile.os_disk.managed_disk.id = new_os_disk.id
     vm.storage_profile.os_disk.name = new_os_disk.name
 
-    sendDebug(ID, "Swapping out disk " + disk_name + " on VM " + vm_name)
+    sendDebug(ID, "Swapping in disk " + disk_name + " onto VM " + vm_name)
     start = time.perf_counter()
 
     s.update_state(
