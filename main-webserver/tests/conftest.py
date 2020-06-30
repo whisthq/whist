@@ -41,7 +41,7 @@ def register_user(username, password, name, feedback):
     )
 
 @pytest.helpers.register
-def delete(username, authToken):
+def deleteUser(username, authToken):
     return requests.post(
         (SERVER_URL + "/account/delete"),
         json={"username": username},
@@ -102,3 +102,11 @@ def fetchDisks(username):
     return requests.post(
         (SERVER_URL + "/user/fetchdisks"), json={"username": username}
     ).json()
+
+@pytest.helpers.register
+def deleteDisks(username, input_token):
+    return requests.post(
+        (SERVER_URL + "/disk/delete"),
+        json={"username": username},
+        headers={"Authorization": "Bearer " + input_token},
+    )
