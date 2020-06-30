@@ -1,6 +1,6 @@
-Ticket | Title
----|---
-#nb | Insert Title Here
+| Ticket | Title             |
+| ------ | ----------------- |
+| #nb    | Insert Title Here |
 
 ## Description
 
@@ -12,25 +12,10 @@ Briefly describe your approach, design, implementation to solve the problem if a
 
 ## Tests
 
-List all the possible scenarios/edge cases that you tested. For instance, if you implemented a login feature, you could say that you tested 1. A correct username/password 2. Correct username but incorrect password 3. Correct username and admin password.
-
-### Testing guidelines
-Please give instructions for other people to test. e.g: 
-- deploy to server
-- connect with client
-- do x 
-- do y
-- upload client and server logs as a comment on this PR if there are issues. 
-
-### Tested with Success by
-- [ ] Phil
-- [ ] Ming
-- [ ] Nicholas
-- [ ] Roshan
-- [ ] Hamish
-- [ ] Isabelle
-- [ ] Jonathan
-- [ ] Sean
+List all the possible scenarios/edge cases that you tested. For instance, if you implemented a login feature, you could say that you tested:
+1. Correct username/password
+2. Correct username but incorrect password
+3. Correct username and admin password
 
 ## Checklist
 
