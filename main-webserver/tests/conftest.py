@@ -4,7 +4,7 @@ import pytest
 import requests
 from dotenv import load_dotenv
 
-pytest_plugins = ['helpers_namespace']
+pytest_plugins = ["helpers_namespace"]
 
 load_dotenv()
 SERVER_URL = (
@@ -22,11 +22,13 @@ def input_token():
     )
     return resp.json()["access_token"]
 
+
 @pytest.helpers.register
 def login(username, password):
     return requests.post(
         (SERVER_URL + "/account/login"), json=dict(username=username, password=password)
     )
+
 
 @pytest.helpers.register
 def register_user(username, password, name, feedback):
@@ -40,6 +42,7 @@ def register_user(username, password, name, feedback):
         },
     )
 
+
 @pytest.helpers.register
 def delete(username, authToken):
     return requests.post(
@@ -48,21 +51,25 @@ def delete(username, authToken):
         headers={"Authorization": "Bearer " + authToken},
     )
 
+
 @pytest.helpers.register
 def adminLogin(username, password):
     return requests.post(
         (SERVER_URL + "/admin/login"), json=dict(username=username, password=password)
     )
 
+
 @pytest.helpers.register
 def lookup(username):
     return requests.post((SERVER_URL + "/account/lookup"), json={"username": username})
+
 
 @pytest.helpers.register
 def checkVerified(username):
     return requests.post(
         (SERVER_URL + "/account/checkVerified"), json={"username": username}
     )
+
 
 @pytest.helpers.register
 def makeVerified(username, token, input_token):
@@ -72,12 +79,14 @@ def makeVerified(username, token, input_token):
         headers={"Authorization": "Bearer " + input_token},
     )
 
+
 @pytest.helpers.register
 def reset(username, new_password):
     return requests.post(
         (SERVER_URL + "/account/reset"),
         json={"username": username, "password": new_password},
     )
+
 
 @pytest.helpers.register
 def createFromImage(username, input_token):
@@ -92,10 +101,12 @@ def createFromImage(username, input_token):
         headers={"Authorization": "Bearer " + input_token},
     )
 
+
 @pytest.helpers.register
 def getStatus(id):
     resp = requests.get((SERVER_URL + "/status/" + id))
     return resp.json()
+
 
 @pytest.helpers.register
 def fetchDisks(username):
