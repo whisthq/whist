@@ -75,14 +75,14 @@ def azure_disk_post(action, **kwargs):
 
         return jsonify({"ID": None}), BAD_REQUEST
 
-    elif action == "attach":
-        # Find a VM to attach disk to
+    # elif action == "attach":
+    #     # Find a VM to attach disk to
 
-        disk_name = kwargs["body"]["disk_name"]
+    #     disk_name = kwargs["body"]["disk_name"]
 
-        task = automaticAttachDisk.apply_async([disk_name])
+    #     task = automaticAttachDisk.apply_async([disk_name])
 
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
+    #     if not task:
+    #         return jsonify({"ID": None}), BAD_REQUEST
 
-        return jsonify({"ID": task.id}), ACCEPTED
+    #     return jsonify({"ID": task.id}), ACCEPTED

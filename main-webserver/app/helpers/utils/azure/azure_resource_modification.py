@@ -2,7 +2,7 @@ from app import *
 from app.helpers.utils.azure.azure_general import *
 
 
-def attachDiskToVM(disk_name, vm_name, resource_group = os.getenv("VM_GROUP"))
+def attachDiskToVM(disk_name, vm_name, resource_group=os.getenv("VM_GROUP")):
     """Creates a network id
 
     Args:
@@ -47,14 +47,14 @@ def attachDiskToVM(disk_name, vm_name, resource_group = os.getenv("VM_GROUP"))
                 conditional_params={"vm_name": vm_name},
                 new_params={"disk_name": disk_name, "username": str(username)},
             )
-            
-        return 1 
+
+        return 1
     except Exception as e:
         fractaLog(
             function="attachDiskToVM",
             label=getVMUser(vm_name),
             log="Critical error attaching disk to VM: {error}".format(error=error),
-            level=logging.CRITICAL 
+            level=logging.CRITICAL,
         )
-        
+
         return -1
