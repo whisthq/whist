@@ -1,14 +1,12 @@
 import { createStore, applyMiddleware } from "redux";
 import createSagaMiddleware from "redux-saga";
 import { createHashHistory } from "history";
-import { routerMiddleware } from "connected-react-router";
 import createRootReducer from "reducers/index";
 import { Store, counterStateType } from "reducers/types";
 import rootSaga from "sagas/index";
 
 const history = createHashHistory();
 const rootReducer = createRootReducer(history);
-const router = routerMiddleware(history);
 const sagaMiddleware = createSagaMiddleware();
 const enhancer = applyMiddleware(sagaMiddleware);
 
