@@ -10,7 +10,12 @@ azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 
 @azure_vm_bp.route("/azure_vm/<action>", methods=["POST"])
 @fractalPreProcess
+@jwt_required
 def azure_vm_post(action, **kwargs):
+    current_user = get_jwt_identity()
+    if current_user != os.getenv("DASHBOARD_USERNAME") + "@gmail.com":
+        return jsonify({ "error": "Not an admin!" }), FORBIDDEN
+
     if action == "create":
         # Creates an Azure VM
 
@@ -99,11 +104,17 @@ def azure_vm_post(action, **kwargs):
 
 @azure_vm_bp.route("/azure_vm/<action>", methods=["GET"])
 @fractalPreProcess
+@jwt_required
 def azure_vm_get(action, **kwargs):
     if action == "ip":
         # Gets the IP address of a VM using Azure SDK
 
         vm_name = request.args.get("vm_name")
+
+        current_user = get_jwt_identity()
+        if getVMUser(vm_name) != current_user:
+            return jsonify({ "error": "Wrong user!" }), FORBIDDEN
+
         resource_group = request.args.get("resource_group")
 
         output = ipHelper(vm_name, resource_group)
