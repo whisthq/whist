@@ -19,9 +19,9 @@ Includes
 ============================
 */
 
-#include "../fractal/core/fractal.h"
-
 #include <stddef.h>
+
+#include "../fractal/core/fractal.h"
 
 /*
 ============================

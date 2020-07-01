@@ -28,7 +28,7 @@ static int connectUDPIncoming(int port, bool using_stun) {
     int a = 65535;
     if (setsockopt(PacketReceiveContext.s, SOL_SOCKET, SO_RCVBUF,
 
-                   (const char*)&a, sizeof(int)) == -1) {
+                   (const char *)&a, sizeof(int)) == -1) {
         LOG_ERROR("Error setting socket opts: %d\n", GetLastNetworkError());
         return -1;
     }

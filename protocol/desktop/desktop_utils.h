@@ -22,7 +22,7 @@ Includes
 
 int parseArgs(int argc, char* argv[]);
 
-char *getLogDir(void);
+char* getLogDir(void);
 
 int logConnectionID(int connection_id);
 

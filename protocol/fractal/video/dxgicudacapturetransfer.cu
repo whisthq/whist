@@ -38,7 +38,7 @@ int dxgi_cuda_start_transfer_context(CaptureDevice* device) {
 
         return 0;
     } else {
-        return 1; // cuda unavailable
+        return 1;  // cuda unavailable
     }
 }
 
@@ -93,7 +93,6 @@ int dxgi_cuda_transfer_capture(CaptureDevice* device,
 
         encoder->sw_frame->pts++;
         encoder->hw_frame->pict_type = encoder->sw_frame->pict_type;
-
 
         res = cudaMemcpy2DFromArray(
             encoder->hw_frame->data[0], encoder->hw_frame->linesize[0],

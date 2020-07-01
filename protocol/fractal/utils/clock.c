@@ -1,13 +1,14 @@
 #define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
 
-#include "../core/fractal.h"
-#include "../utils/logging.h"
 #include "clock.h"
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "../core/fractal.h"
+#include "../utils/logging.h"
 
 #ifdef _WIN32
 int GetUTCOffset();
@@ -92,7 +93,7 @@ char* CurrentTimeStr() {
     return buffer;
 }
 
-int GetUTCOffset(){
+int GetUTCOffset() {
 #if defined(_WIN32)
     return 0;
 #else
@@ -101,11 +102,11 @@ int GetUTCOffset(){
     localtime_r(&t, &lt);
     printf("dst flag %d \n \n", lt.tm_isdst);
 
-    return (int) lt.tm_gmtoff / (60 * 60);
+    return (int)lt.tm_gmtoff / (60 * 60);
 #endif
-    }
+}
 
-int GetDST(){
+int GetDST() {
 #if defined(_WIN32)
     return 0;
 #else
@@ -116,14 +117,15 @@ int GetDST(){
 #endif
 }
 
-int GetTimeData(FractalTimeData *time_data) {
+int GetTimeData(FractalTimeData* time_data) {
 #ifdef _WIN32
     time_data->use_win_name = 1;
     time_data->use_linux_name = 0;
 
     char* win_tz_name = NULL;
     runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
-    strncpy(time_data->win_tz_name, win_tz_name, sizeof( time_data->win_tz_name ));
+    strncpy(time_data->win_tz_name, win_tz_name,
+            sizeof(time_data->win_tz_name));
     time_data->win_tz_name[strlen(time_data->win_tz_name) - 1] = '\0';
     free(win_tz_name);
 
@@ -138,12 +140,13 @@ int GetTimeData(FractalTimeData *time_data) {
     LOG_INFO("Sending UTC offset %d", time_data->UTC_Offset);
     time_data->DST_flag = GetDST();
 
-    char *response = NULL;
+    char* response = NULL;
     runcmd(
         "path=$(readlink /etc/localtime); echo "
         "${path#\"/var/db/timezone/zoneinfo\"}",
         &response);
-    strncpy(time_data->linux_tz_name, response, sizeof(time_data->linux_tz_name));
+    strncpy(time_data->linux_tz_name, response,
+            sizeof(time_data->linux_tz_name));
     free(response);
 
     return 0;
@@ -155,9 +158,10 @@ int GetTimeData(FractalTimeData *time_data) {
     LOG_INFO("Sending UTC offset %d", time_data->UTC_Offset);
     time_data->DST_flag = GetDST();
 
-    char *response = NULL;
+    char* response = NULL;
     runcmd("cat /etc/timezone", &response);
-    strncpy(time_data->linux_tz_name, response, sizeof( time_data->linux_tz_name ));
+    strncpy(time_data->linux_tz_name, response,
+            sizeof(time_data->linux_tz_name));
     free(response);
 
     return 0;
