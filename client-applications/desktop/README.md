@@ -31,27 +31,28 @@ If you get access denied issues, you need to set-up your local SSH key with your
 
 Before starting development, you need to initialize yarn by running `yarn -i`, which will create the `yarn.lock` file and install all of the `node_modules`. If you still experience issues with starting the dev environment, you might need to run `yarn upgrade`, which will upgrade all the dependencies. It's a good idea to do so periodically to keep the application up-to-date. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
 
-To start the application in the `dev` environment, simply run: `yarn dev`. To start development with a custom port, run `set PORT={number} && yarn dev`.
+To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `set PORT={number} && yarn dev`.
 
 This repository has basic continuous integration through GitHub Actions. For every commit or PR to the master branch, it will attempt to build the Electron application on Windows, Mac and Ubuntu, and format the code with Prettier. You should make sure that all tests pass under the Actions tab. If you need help with the Electron CI, check [here](https://github.com/samuelmeuli/action-electron-builder).
 
-
-
-
-
-
-
 ## Packaging for Production
 
-This section explains how to package apps for the local platform, including fetching and compiling the latest Fractal protocol. This will NOT publish the application to production, but will instead build an installer executable locally that is identical to the one that would be published to production and which you can use to test before deploying. The installer executable will be in `client-applications/desktop/release`. If you have already downloaded and compiled the latest Fractal protocol, you can simply run `yarn package`, else see below:
+In order to properly test the application, you need to package the application and the Fractal protocol together into an installer executable for your local platform. This will **NOT** publish the application to production, but will only build an indentical installer which you can install locally and test from the perspective of a user before publishing. The installer executable will be in `client-applications/desktop/release`.
 
-**MacOS/Linux**
+### MacOS/Linux
+
+
+
+
+//tmp
+
+
 
 Run `./build.sh` in a terminal. This will delete any prior Fractal protocol folder, pull the recent master branch, and package it locally. You must also install Cmake; refer to the Fractal protocol repository for installation instructions.
 `build.sh` now has cli arguments. By default `build.sh` will create a release and sign it. To build a fractal client without signing it and running it in dev, use `DEV=yes ./build.sh`. It also starts the dev client after building.
 To build a release of the client, sign it, and upload it, use `RELEASE=yes ./build.sh` ensure that you follow the "Publishing to Production" instructions beforehand.
 
-**Windows**
+### Windows
 
 Run `build.bat` in an x86_x64 Visual Studio Developer Command Prompt. This will delete any prior Fractal protocol folder, pull the recent master branch, and package it locally. You MUST use this specific command prompt to compile the protocol; if you do not the Electron application will package anyway, but the protocol will not packaged with it. If you do not have this command prompt, you need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. You must also install [Cmake](https://cmake.org/download/). For more information on compiling on Windows, refer to the Fractal protocol repository.
 
@@ -73,29 +74,17 @@ Before publishing for production, make sure to package for production (see above
 
 5- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
 
+
+//tmp
+
+
+
+
+
+
 ## Styling
 
-To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. You may find a variety of tutorial online for your personal setup. This README covers how to set it up on VSCode and Sublime.
-
-### [Sublime](https://packagecontrol.io/packages/JsPrettier)
-
-Install prettier if you haven't yet.
-
-```
-# yarn (global):
-yarn add prettier
-```
-
-The easiest and recommended way to install Js​Prettier is using Package Control. From the application menu, navigate to:  
-`Tools` -> `Command Palette...` -> `Package Control: Install Package`, type the word JsPrettier, then select it to complete the installation.
-
-Usage
-
-1. Command Palette: From the command palette (ctrl/cmd + shift + p), type JsPrettier Format Code.
-2. Context Menu: Right-click anywhere in the file to bring up the context menu and select JsPrettier Format Code.
-3. Key Binding: There is no default key binding to run Prettier, but you can add your own.
-
-We recommend setting `auto_format` to `true` in Sublime so you won't need to worry about the usage methods.
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. You may find a variety of tutorial online for your personal setup. You can always run Prettier via the command-line by running `yarn format`. 
 
 ### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 
@@ -115,10 +104,3 @@ To ensure that this extension is used over other extensions you may have install
   }
 }
 ```
-
-
-
-
-
-
-
