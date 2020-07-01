@@ -28,11 +28,13 @@
 #include "../fractal/network/network.h"
 #include "../fractal/utils/aes.h"
 #include "../fractal/utils/logging.h"
+#include "../fractal/video/cpucapturetransfer.h"
 #include "../fractal/video/screencapture.h"
 #include "../fractal/video/videoencode.h"
 
 #ifdef _WIN32
 #include "../fractal/utils/windows_utils.h"
+#include "../fractal/video/dxgicudacapturetransfer.h"
 #endif
 
 #ifdef _WIN32
@@ -149,6 +151,10 @@ int32_t SendVideo(void* opaque) {
     pending_encoder = false;
     encoder_finished = false;
 
+#ifdef _WIN32
+    bool dxgi_cuda_available = false;
+#endif
+
     while (connected) {
         if (client_width < 0 || client_height < 0) {
             SDL_Delay(5);
@@ -158,6 +164,11 @@ int32_t SendVideo(void* opaque) {
         // Update device with new parameters
         if (update_device) {
             update_device = false;
+
+#ifdef _WIN32
+            // need to reinitialize this, so close it
+            dxgi_cuda_close_transfer_context();
+#endif
 
             if (device) {
                 DestroyCaptureDevice(device);
@@ -223,6 +234,18 @@ int32_t SendVideo(void* opaque) {
                                      "MultithreadedEncoderFactory", NULL);
                 }
             }
+
+#ifdef _WIN32
+            if (encoder->type == NVENC_ENCODE) {
+                // initialize the transfer context
+                if (!dxgi_cuda_start_transfer_context(device)) {
+                    dxgi_cuda_available = true;
+                }
+            } else if (dxgi_cuda_available) {
+                // end the transfer context
+                dxgi_cuda_close_transfer_context();
+            }
+#endif
         }
 
         // Accumulated_frames is equal to how many frames have passed since the
@@ -272,11 +295,29 @@ int32_t SendVideo(void* opaque) {
                 is_iframe = true;
             }
 
+            // transfer the screen to a buffer
+            int transfer_res = 2;  // haven't tried anything yet
+#if defined(_WIN32)
+            if (encoder->type == NVENC_ENCODE && dxgi_cuda_available &&
+                device->texture_on_gpu) {
+                // if dxgi_cuda is setup and we have a dxgi texture on the gpu
+                transfer_res = dxgi_cuda_transfer_capture(device, encoder);
+            }
+#endif
+            if (transfer_res) {
+                // if previous attempt failed or we need to use cpu
+                transfer_res = cpu_transfer_capture(device, encoder);
+            }
+            if (transfer_res) {
+                // if there was a failure
+                connected = false;
+                break;
+            }
+
             clock t;
             StartTimer(&t);
 
-            int res = video_encoder_encode(encoder, device->frame_data,
-                                           device->pitch);
+            int res = video_encoder_encode(encoder);
             if (res < 0) {
                 // bad boy error
                 LOG_ERROR("Error encoding video frame!");
@@ -736,9 +777,12 @@ int MultithreadedWaitForSpectator(void* opaque) {
 }
 
 int main() {
-    //    static_assert(sizeof(unsigned short) == 2,
-    //                  "Error: Unsigned short is not length 2 bytes!\n");
-
+    // int d = 0;
+    // int e = 0;
+    // LOG_INFO("d starts at %d, e starts at %d", d, e);
+    // dxgi_cuda_transfer_data(&d, &e);
+    // LOG_INFO("d set to %d, e set to %d", d, e);
+    // return 0;
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);

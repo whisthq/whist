@@ -165,29 +165,20 @@ int audio_decoder_decode_packet(audio_decoder_t *decoder,
 
 void destroy_audio_decoder(audio_decoder_t *decoder) {
     if (decoder == NULL) {
-        LOG_WARNING("Cannot destroy null decoder.\n");
+        LOG_WARNING("Cannot destroy null audio decoder.\n");
         return;
     }
-    LOG_INFO("destroying decoder!\n");
+    LOG_INFO("destroying audio decoder!\n");
 
     // free the ffmpeg context
     avcodec_free_context(&decoder->pCodecCtx);
 
-    LOG_INFO("freed context\n");
-
     // free the frame
     av_frame_free(&decoder->pFrame);
-
-    LOG_INFO("av_freed frame\n");
-    // av_freep(decoder->pFrame);
-    LOG_INFO("really freed rame\n");
 
     // free swr
     swr_free(&decoder->pSwrContext);
 
-    LOG_INFO("freed swr\n");
-
     // free the buffer and decoder
     free(decoder);
-    LOG_INFO("done destroying decoder!\n");
 }

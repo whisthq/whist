@@ -9,9 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int video_encoder_filter_graph_intake(video_encoder_t *encoder,
-                                      void *rgb_pixels, int pitch);
 int video_encoder_receive_packet(video_encoder_t *encoder, AVPacket *packet);
+int video_encoder_send_frame(video_encoder_t *encoder);
 
 #define GOP_SIZE 9999
 
@@ -33,6 +32,7 @@ video_encoder_t *create_nvenc_encoder(int in_width, int in_height,
         (video_encoder_t *)malloc(sizeof(video_encoder_t));
     memset(encoder, 0, sizeof(video_encoder_t));
 
+    encoder->type = NVENC_ENCODE;
     encoder->in_width = in_width;
     encoder->in_height = in_height;
     if (out_width <= 32) out_width = 33;
@@ -277,6 +277,7 @@ video_encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width,
         (video_encoder_t *)malloc(sizeof(video_encoder_t));
     memset(encoder, 0, sizeof(video_encoder_t));
 
+    encoder->type = QSV_ENCODE;
     encoder->in_width = in_width;
     encoder->in_height = in_height;
     encoder->out_width = out_width;
@@ -285,7 +286,7 @@ video_encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width,
     encoder->gop_size = GOP_SIZE;
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
     enum AVPixelFormat hw_format = AV_PIX_FMT_QSV;
-    enum AVPixelFormat sw_format = AV_PIX_FMT_0RGB32;
+    enum AVPixelFormat sw_format = AV_PIX_FMT_RGB32;
 
     // init intake format in sw_frame
 
@@ -333,12 +334,6 @@ video_encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width,
     encoder->pCodecCtx->keyint_min = 5;
     encoder->pCodecCtx->pix_fmt = hw_format;
 
-    set_opt(encoder, "nonref_p", "1");
-    set_opt(encoder, "preset", "llhp");
-    set_opt(encoder, "rc", "cbr_ld_hq");
-    set_opt(encoder, "zerolatency", "1");
-    set_opt(encoder, "delay", "0");
-
     // assign hw_device_ctx
     av_buffer_unref(&encoder->pCodecCtx->hw_frames_ctx);
     encoder->pCodecCtx->hw_frames_ctx =
@@ -351,6 +346,8 @@ video_encoder_t *create_qsv_encoder(int in_width, int in_height, int out_width,
     frames_ctx->sw_format = sw_format;
     frames_ctx->width = encoder->in_width;
     frames_ctx->height = encoder->in_height;
+    frames_ctx->initial_pool_size = 2;
+
     if (av_hwframe_ctx_init(encoder->pCodecCtx->hw_frames_ctx) < 0) {
         LOG_WARNING("Failed to initialize hardware frames context");
         destroy_video_encoder(encoder);
@@ -473,6 +470,7 @@ video_encoder_t *create_sw_encoder(int in_width, int in_height, int out_width,
         (video_encoder_t *)malloc(sizeof(video_encoder_t));
     memset(encoder, 0, sizeof(video_encoder_t));
 
+    encoder->type = SOFTWARE_ENCODE;
     encoder->in_width = in_width;
     encoder->in_height = in_height;
     if (out_width % 2) out_width = out_width + 1;
@@ -652,8 +650,8 @@ video_encoder_t *create_video_encoder(int in_width, int in_height,
     out_height = in_height;
 #endif
 
-    video_encoder_creator encoder_precedence[] = {
-        create_nvenc_encoder, create_qsv_encoder, create_sw_encoder};
+    video_encoder_creator encoder_precedence[] = {create_nvenc_encoder,
+                                                  create_sw_encoder};
     video_encoder_t *encoder;
     for (unsigned int i = 0;
          i < sizeof(encoder_precedence) / sizeof(video_encoder_creator); ++i) {
@@ -713,9 +711,9 @@ void video_encoder_unset_iframe(video_encoder_t *encoder) {
     encoder->sw_frame->key_frame = 0;
 }
 
-int video_encoder_encode(video_encoder_t *encoder, void *rgb_pixels,
-                         int pitch) {
-    if (video_encoder_filter_graph_intake(encoder, rgb_pixels, pitch) < 0) {
+int video_encoder_encode(video_encoder_t *encoder) {
+    if (video_encoder_send_frame(encoder)) {
+        LOG_ERROR("Unable to send frame to encoder!");
         return -1;
     }
 
@@ -761,18 +759,30 @@ void video_encoder_write_buffer(video_encoder_t *encoder, int *buf) {
     }
 }
 
-int video_encoder_filter_graph_intake(video_encoder_t *encoder,
-                                      void *rgb_pixels, int pitch) {
+int video_encoder_frame_intake(video_encoder_t *encoder, void *rgb_pixels,
+                               int pitch) {
     memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
     memset(encoder->sw_frame->linesize, 0, sizeof(encoder->sw_frame->linesize));
     encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
     encoder->sw_frame->linesize[0] = pitch;
     encoder->sw_frame->pts++;
-    AVFrame *active_frame = encoder->sw_frame;
 
     if (encoder->hw_frame) {
-        av_hwframe_transfer_data(encoder->hw_frame, encoder->sw_frame, 0);
+        int res =
+            av_hwframe_transfer_data(encoder->hw_frame, encoder->sw_frame, 0);
+        if (res < 0) {
+            LOG_ERROR("Unable to transfer frame to hardware frame: %s",
+                      av_err2str(res));
+            return -1;
+        }
         encoder->hw_frame->pict_type = encoder->sw_frame->pict_type;
+    }
+    return 0;
+}
+
+int video_encoder_send_frame(video_encoder_t *encoder) {
+    AVFrame *active_frame = encoder->sw_frame;
+    if (encoder->hw_frame) {
         active_frame = encoder->hw_frame;
     }
 
@@ -783,6 +793,7 @@ int video_encoder_filter_graph_intake(video_encoder_t *encoder,
     }
 
     if (encoder->hw_frame) {
+        // have to re-create buffers after sending to filter graph
         av_hwframe_get_buffer(encoder->pCodecCtx->hw_frames_ctx,
                               encoder->hw_frame, 0);
     }

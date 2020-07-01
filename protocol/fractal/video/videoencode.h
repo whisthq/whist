@@ -80,15 +80,42 @@ video_encoder_t* create_video_encoder(int in_width, int in_height,
                                       int bitrate, CodecType codec_type);
 
 /**
- * @brief                          Encode the given frame. The frame can be
- *                                 accessed via encoded_frame_size and
- *                                 encoded_frame_data
+ * @brief                          Put the input data into a software frame, and
+ *                                 upload to a hardware frame if applicable.
  *
+ * @param encoder                  The encoder to use
  * @param rgb_pixels               The frame to be in encoded
  * @param pitch                    The number of bytes per line
+ *
+ * @returns                        0 on success, else -1
  */
-int video_encoder_encode(video_encoder_t* encoder, void* rgb_pixels, int pitch);
+int video_encoder_frame_intake(video_encoder_t* encoder, void* rgb_pixels,
+                               int pitch);
 
+/**
+ * @brief                          Encode the frame in `encoder->sw_frame` or
+ *                                 `encoder->hw_frame`. The encoded packet(s)
+ *                                 are stored in `encoder->packets`, and the
+ *                                 size of the buffer necessary to store them
+ *                                 is stored in `encoder->encoded_frame_size`
+ *
+ * @param encoder                  The encoder to use
+ *
+ * @returns                        0 on success, else -1
+ */
+int video_encoder_encode(video_encoder_t* encoder);
+
+/**
+ * @brief                          Write the data from the encoded packet(s) in
+ *                                 `encoder->packets` to a buffer, along with
+ *                                 header information specifying the size of
+ *                                 each packet.
+ *
+ * @param encoder                  The encoder with stored encoded packet(s)
+ * @param buf                      A pointer to an allocated buffer of size at
+ *                                 least `encoder->encoded_frame_size` into
+ *                                 which to copy the data
+ */
 void video_encoder_write_buffer(video_encoder_t* encoder, int* buf);
 
 /**
