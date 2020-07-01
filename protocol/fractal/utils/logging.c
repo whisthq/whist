@@ -6,8 +6,8 @@
 
 #ifdef _WIN32
 #define _NO_CVCONST_H
-#include <DbgHelp.h>
 #include <Windows.h>
+#include <DbgHelp.h>
 #include <process.h>
 #else
 #include <execinfo.h>
