@@ -22,31 +22,24 @@ And then install the dependencies with yarn:
 The Fractal protocol is linked to this repository as a Git submodule, which you first need to update to the latest commit before using, by running:
 
 ```
-git submodule update --init --recursive && cd protocol && git pull origin [BRANCH] && cd ..
+git submodule update --init --recursive && cd protocol && git checkout [BRANCH] && git pull origin [BRANCH] && cd ..
 ```
 
-The branch can be any of the existing ones on the protocol repository, but is most likely going to be `dev` if you want to test the upcoming release, or `master` if you want to test the current release.
+The branch can be any of the existing ones on the protocol repository, but is most likely going to be `dev` if you want to test the upcoming release, or `master` if you want to test the current release. This will ensure you have the latest protocol to test the application. Note that this will fetch the protocol code, and that you will need to compile it in order to use the protocol executable, which can be done via the build scripts (see below) and requires Cmake. In order to make sure that your system has everything needed to compile the protocol, or if you experience issues with compiling the protocol, you should refer to the protocol repository README for instructions.
 
 If you get access denied issues, you need to set-up your local SSH key with your GitHub account, which you can do by following this [tutorial](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent). After running this command, you will have latest the setup-scripts code locally and can call the files as normal.
 
+Before starting development, you need to initialize yarn by running `yarn -i`, which will create the `yarn.lock` file and install all of the `node_modules`. If you still experience issues with starting the dev environment, you might need to run `yarn upgrade`, which will upgrade all the dependencies. It's a good idea to do so periodically to keep the application up-to-date. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
+
+To start the application in the `dev` environment, simply run: `yarn dev`. To start development with a custom port, run `set PORT={number} && yarn dev`.
+
+This repository has basic continuous integration through GitHub Actions. For every commit or PR to the master branch, it will attempt to build the Electron application on Windows, Mac and Ubuntu, and format the code with Prettier. You should make sure that all tests pass under the Actions tab. If you need help with the Electron CI, check [here](https://github.com/samuelmeuli/action-electron-builder).
 
 
 
 
 
 
-
-Start the app in the `dev` environment. This starts the renderer process in [**hot-module-replacement**](https://webpack.js.org/guides/hmr-react/) mode and starts a webpack dev server that sends hot updates to the renderer process (note that this will only build the application, it won't fetch the latest Fractal protocol, so you won't be able to run the protocol by simply doing `yarn dev`):
-
-`yarn dev`
-
-Before doing this, you will need to run `yarn`, which will create the `yarn.lock` file and install all of the `node_modules`. If you still experience issues with starting the dev environment, you might need to run `yarn upgrade`, which will upgrade all the dependencies. It's a good idea to do so periodically to keep the application up-to-date. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
-
-To start development with a custom port, run `set PORT={number}&& yarn dev`.
-
-If you would like to fully test the application, including the launch of the Fractal protocol, you need to run part of the build scripts, listed in the next section, to clone and make the protocol for your platform. Compiling the protocol requires Cmake, see below for installation instructions. In order to make sure that your system has everything needed to compile the protocol, or if you experience issues with compiling the protocol, you should refer to the protocol repository README for instructions.
-
-This repository has basic continuous integration through GitHub Actions. For every commit or PR to the master branch, it will attempt to build the Electron application on Windows, Mac and Ubuntu, and format the code with Prettier. You should make sure that all tests pass under the Actions tab. If you need help with the CI, check [here](https://github.com/samuelmeuli/action-electron-builder).
 
 ## Packaging for Production
 
