@@ -12,7 +12,7 @@ TBD
 
 If you are contributing to this repository, you can follow the structure of the `chrome` subfolder. Make sure to make the container image as lean as possible, as we want only the strict minimum per container so that we can pack as many as possible on a single unit of hardware.
 
-You should add new Bash functions for your container in the setup-scripts repository, and import them into your Dockerfile. The setup-scripts repository is linked here via a Git submodule, which you first need to update to the latest commit before using, by running:
+You should add new Bash functions for your container in the setup-scripts repository, and import them into your Dockerfile. The setup-scripts repository is linked here via a Git submodule in each container image repository, which you first need to update to the latest commit before using, by running in the appropriate subfolder:
 
 ```
 git submodule update --init --recursive && cd setup-scripts && git pull origin master && cd ..
