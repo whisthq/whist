@@ -21,7 +21,7 @@ jobs:
         run: yarn global add prettier
 
       - name: Format with Prettier
-      - run: cd desktop && yarn format --write --ignore-file ../.prettierignore
+        run: cd desktop && yarn format --write --ignore-file ../.prettierignore
   
       - name: Commit files
         run: |
