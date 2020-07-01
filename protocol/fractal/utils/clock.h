@@ -42,12 +42,15 @@ Custom Types
 
 typedef struct FractalTimeData {
     // UTC offset for setting time
-    int use_win_name; /**< Flag if win_tz_name is to be used */
-    int use_linux_name;/**< FLag if linux_tz_name is to be used */
-    int UTC_Offset; /**< UTC offset for osx/linux -> windows */
-    int DST_flag; /**< DST flag, 1 DST, 0 no DST used in conjunction with UTC offset */
-    char win_tz_name[200]; /**< A windows timezone name: e.g Eastern Standard Time */
-    char linux_tz_name[200]; /**< A linux/IANA timezone name: e.g America/New_York  */
+    int use_win_name;   /**< Flag if win_tz_name is to be used */
+    int use_linux_name; /**< FLag if linux_tz_name is to be used */
+    int UTC_Offset;     /**< UTC offset for osx/linux -> windows */
+    int DST_flag; /**< DST flag, 1 DST, 0 no DST used in conjunction with UTC
+                     offset */
+    char win_tz_name[200];   /**< A windows timezone name: e.g Eastern Standard
+                                Time */
+    char linux_tz_name[200]; /**< A linux/IANA timezone name: e.g
+                                America/New_York  */
 } FractalTimeData;
 
 /*
@@ -101,6 +104,6 @@ int GetUTCOffset();
  */
 int GetDST();
 
-int GetTimeData(FractalTimeData *time_data);
+int GetTimeData(FractalTimeData* time_data);
 
 #endif
