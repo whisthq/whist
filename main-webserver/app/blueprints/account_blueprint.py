@@ -51,10 +51,8 @@ def account_no_auth(action, **kwargs):
 @fractalPreProcess
 @jwt_required
 def account_get(action, **kwargs):
-    current_user = get_jwt_identity()
-
     username = request.args.get("username")
-
+    current_user = get_jwt_identity()
     if current_user != username:
         return  jsonify({ "error": "Wrong user!"}), UNAUTHORIZED
 
