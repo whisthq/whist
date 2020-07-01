@@ -3,11 +3,13 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         add_library(fractalCursor STATIC
                 cursor.h
                 linuxcursor.c
+                cursor.c
                 )
     elseif((${CMAKE_SYSTEM_NAME} MATCHES "Windows"))
         add_library(fractalCursor STATIC
                 cursor.h
                 windowscursor.c
+                cursor.c
                 )
         set_property(TARGET fractalCursor PROPERTY
                 MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

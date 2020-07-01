@@ -7,10 +7,10 @@
 
 #include <stdio.h>
 
+#include "../fractal/cursor/cursor.h"
 #include "../fractal/utils/png.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "SDL2/SDL.h"
-#include "peer.h"
 
 #define USE_HARDWARE true
 
@@ -20,6 +20,8 @@ extern volatile SDL_Window* window;
 extern volatile int server_width;
 extern volatile int server_height;
 extern volatile CodecType server_codec_type;
+
+extern int client_id;
 
 // Keeping track of max mbps
 extern volatile int max_bitrate;
@@ -251,6 +253,30 @@ void updateDecoderParameters(int width, int height, CodecType codec_type) {
     output_codec_type = codec_type;
 }
 
+static int renderPeers(SDL_Renderer *renderer, PeerUpdateMessage *msgs,
+                size_t num_msgs) {
+    int ret = 0;
+
+    int window_width, window_height;
+    SDL_GetWindowSize((SDL_Window *) window, &window_width, &window_height);
+    int x = msgs->x * window_width / (int32_t)MOUSE_SCALING_FACTOR;
+    int y = msgs->y * window_height / (int32_t)MOUSE_SCALING_FACTOR;
+
+    for (; num_msgs > 0; msgs++, num_msgs--) {
+        if (client_id == msgs->peer_id) {
+            continue;
+        }
+        if (drawPeerCursor(renderer, x, y,
+                                msgs->color.r,
+                                msgs->color.g,
+                                msgs->color.b) != 0) {
+            LOG_ERROR("Failed to draw spectator cursor.");
+            ret = -1;
+        }
+    }
+    return ret;
+}
+
 int32_t RenderScreen(SDL_Renderer* renderer) {
     LOG_INFO("RenderScreen running on Thread %d", SDL_GetThreadID(NULL));
 
@@ -435,7 +461,8 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
             SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL,
                            NULL);
-            if (renderPeers((SDL_Renderer *) renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
+            if (renderPeers((SDL_Renderer *) renderer, peer_update_msgs,
+                            num_peer_update_msgs) != 0) {
               LOG_ERROR("Failed to render peers.");
             }
             SDL_RenderPresent((SDL_Renderer*)renderer);
@@ -528,6 +555,10 @@ void clearSDL(SDL_Renderer* renderer) {
 
 int initMultithreadedVideo(void* opaque) {
     opaque;
+
+    if (InitPeerCursors() != 0) {
+        LOG_ERROR("Failed to init peer cursors.");
+    }
 
     can_render = true;
     memset(videoContext.data, 0, sizeof(videoContext.data));
@@ -953,6 +984,10 @@ void destroyVideo() {
     av_freep(&videoContext.data[0]);
 
     has_rendered_yet = false;
+
+    if (DestroyPeerCursors() != 0) {
+        LOG_ERROR("Failed to destroy peer cursors.");
+    }
 }
 
 void set_video_active_resizing(bool is_resizing) {

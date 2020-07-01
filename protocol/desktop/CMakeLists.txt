@@ -9,7 +9,6 @@ add_executable(FractalClient
         desktop_utils.c
         fractalgetopt.c
         network.c
-        peer.c
         sdl_event_handler.c
         sdl_utils.c
         server_message_handler.c

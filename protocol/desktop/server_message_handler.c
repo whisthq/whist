@@ -6,7 +6,6 @@
 #include "../fractal/utils/clock.h"
 #include "../fractal/utils/logging.h"
 #include "desktop_utils.h"
-#include "peer.h"
 #include "server_message_handler.h"
 
 #include <stddef.h>
