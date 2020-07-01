@@ -54,7 +54,7 @@ def account_get(action, **kwargs):
     username = request.args.get("username")
     current_user = get_jwt_identity()
     if current_user != username:
-        return  jsonify({ "error": "Wrong user!"}), UNAUTHORIZED
+        return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
 
     if action == "code":
         # Get the user's promo code

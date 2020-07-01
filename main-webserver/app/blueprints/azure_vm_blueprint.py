@@ -14,7 +14,7 @@ azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 def azure_vm_post(action, **kwargs):
     current_user = get_jwt_identity()
     if current_user != os.getenv("DASHBOARD_USERNAME") + "@gmail.com":
-        return jsonify({ "error": "Not an admin!" }), FORBIDDEN
+        return jsonify({"error": "Not an admin!"}), FORBIDDEN
 
     if action == "create":
         # Creates an Azure VM
@@ -113,7 +113,7 @@ def azure_vm_get(action, **kwargs):
 
         current_user = get_jwt_identity()
         if getVMUser(vm_name) != current_user:
-            return jsonify({ "error": "Wrong user!" }), FORBIDDEN
+            return jsonify({"error": "Wrong user!"}), FORBIDDEN
 
         resource_group = request.args.get("resource_group")
 

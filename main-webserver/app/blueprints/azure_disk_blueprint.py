@@ -44,7 +44,7 @@ def azure_disk_post(action, **kwargs):
         )
 
         if getDiskUser(disk_name) != current_user:
-            return  jsonify({ "error": "Wrong user!"}), UNAUTHORIZED
+            return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
 
         task = swapSpecificDisk.apply_async([vm_name, disk_name, resource_group])
 
@@ -64,7 +64,7 @@ def azure_disk_post(action, **kwargs):
             username = kwargs["body"]["username"]
 
             if username != current_user:
-                return  jsonify({ "error": "Wrong user!"}), UNAUTHORIZED
+                return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
 
             output = fractalSQLSelect(table_name="disks", params={"username": username})
 
@@ -79,7 +79,7 @@ def azure_disk_post(action, **kwargs):
             disk_name = kwargs["body"]["disk_name"]
 
             if getDiskUser(disk_name) != current_user:
-                return  jsonify({ "error": "Wrong user!"}), UNAUTHORIZED
+                return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
 
             task = deleteDisk.apply_async([disk_name, resource_group])
             return jsonify({"ID": task.id}), ACCEPTED

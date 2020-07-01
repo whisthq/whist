@@ -145,10 +145,9 @@ def getVMUser(vm_name, resource_group=os.getenv("VM_GROUP")):
 
     return "None"
 
+
 def getDiskUser(disk_name):
-    output = fractalSQLSelect(
-        table_name="disks", params={"disk_name": disk_name}
-    )
+    output = fractalSQLSelect(table_name="disks", params={"disk_name": disk_name})
 
     if output["success"] and output["rows"]:
         return str(output["rows"][0]["username"])

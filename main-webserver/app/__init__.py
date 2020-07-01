@@ -35,6 +35,7 @@ def fractalPreProcess(f):
 
     return wrapper
 
+
 # fractalLog(function="__init__", label="None", logs="Initializating server")
 
 celery_instance = make_celery()
