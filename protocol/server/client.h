@@ -1,6 +1,6 @@
 #include "../fractal/core/fractal.h"
 #include "../fractal/utils/clock.h"
-#include "rwlock.h"
+#include "../fractal/utils/rwlock.h"
 
 // the write is_active_rwlock takes precedence over
 typedef struct Client {

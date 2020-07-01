@@ -1,7 +1,7 @@
 #include "../fractal/utils/mouse.h"
+#include "../fractal/utils/rwlock.h"
 #include "client.h"
 #include "network.h"
-#include "rwlock.h"
 
 SDL_mutex *state_lock;
 RWLock is_active_rwlock;

@@ -1,7 +1,7 @@
 #ifndef RWLOCK_H
 #define RWLOCK_H
 
-#include "../fractal/core/fractal.h"
+#include "../core/fractal.h"
 
 typedef struct RWLock {
     int num_active_readers;
