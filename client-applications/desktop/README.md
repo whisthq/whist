@@ -2,10 +2,7 @@
 
 ![Electron CI](https://github.com/fractalcomputers/client-applications/workflows/Electron%20CI/badge.svg)
 
-This folder contains the code for the Fractal desktop applications running on Windows, MacOS and Linux Ubuntu. The applications are built cross-platform using ElectronJS. This repository contains all the directions for building the applications locally and for publishing them for production.
-
-Currently supported:
-
+This folder contains the code for the Fractal desktop applications running on Windows, MacOS and Linux Ubuntu. The applications are built with cross-platform compatibility using ElectronJS. This repository contains all the directions for building the applications locally and for publishing them for production on each of the following OSes:
 -   Windows
 -   MacOS
 -   Linux Ubuntu
@@ -16,13 +13,28 @@ First, clone the repo via git:
 
 `git clone https://github.com/fractalcomputers/client-applications.git`
 
-And then install the dependencies with yarn.
+And then install the dependencies with yarn:
 
-`cd client-applications/desktop`
-
-`yarn`
+`cd client-applications/desktop && yarn -i`
 
 ## Starting Development
+
+The Fractal protocol is linked to this repository as a Git submodule, which you first need to update to the latest commit before using, by running:
+
+```
+git submodule update --init --recursive && cd protocol && git pull origin [BRANCH] && cd ..
+```
+
+The branch can be any of the existing ones on the protocol repository, but is most likely going to be `dev` if you want to test the upcoming release, or `master` if you want to test the current release.
+
+If you get access denied issues, you need to set-up your local SSH key with your GitHub account, which you can do by following this [tutorial](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent). After running this command, you will have latest the setup-scripts code locally and can call the files as normal.
+
+
+
+
+
+
+
 
 Start the app in the `dev` environment. This starts the renderer process in [**hot-module-replacement**](https://webpack.js.org/guides/hmr-react/) mode and starts a webpack dev server that sends hot updates to the renderer process (note that this will only build the application, it won't fetch the latest Fractal protocol, so you won't be able to run the protocol by simply doing `yarn dev`):
 
@@ -110,3 +122,10 @@ To ensure that this extension is used over other extensions you may have install
   }
 }
 ```
+
+
+
+
+
+
+
