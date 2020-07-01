@@ -28,6 +28,8 @@ extern volatile int output_width;
 extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 
+extern volatile int running_ci;
+
 // START VIDEO VARIABLES
 volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* cursor = NULL;
@@ -251,6 +253,13 @@ void updateDecoderParameters(int width, int height, CodecType codec_type) {
 int32_t RenderScreen(SDL_Renderer* renderer) {
     LOG_INFO("RenderScreen running on Thread %d", SDL_GetThreadID(NULL));
 
+//    Windows GHA VM cannot render, it just segfaults on creating the renderer
+// TODO test rendering in windows CI.
+#if _WIN32
+    if (running_ci) {
+        return 0;
+    }
+#endif
     int loading_index = 0;
 
     // present the loading screen
@@ -532,6 +541,8 @@ int initMultithreadedVideo(void* opaque) {
     SDL_Renderer* renderer = SDL_CreateRenderer(
         (SDL_Window*)window, -1,
         SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+
+    // Show a black screen initially before anything else
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);

@@ -1,12 +1,21 @@
-name: CMake Build Matrix
+name: Nightly testing
+# Run every day at 6 am UTC, 2am eastern
+on:
+  schedule:
+    - cron:  '0 6 * * *'
 
-on: [push]
+#on: [push] for debugging workflow
+
 
 env:
   CMAKE_VERSION: 3.15.7
   NINJA_VERSION: 1.9.0
   BUILD_TYPE: Debug
   CCACHE_VERSION: 3.7.7
+  SERVER_VM_NAME: crimsonbonus543
+  SERVER_VM_IP: 20.185.40.33
+  WEBSERVER_BASE_URL: https://cube-celery-staging4.herokuapp.com
+  BRANCH_NAME: hamish-gh-run # branch on which the scheduled tests are run, change to dev before merging pr
 
 
 jobs:
@@ -20,7 +29,7 @@ jobs:
           - {
             name: "Windows Latest MSVC", artifact: "Windows-MSVC.tar.xz",
             os: windows-latest,
-            cc: "cl", cxx: "cl", cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc",
+            cc: "cl", cxx: "cl",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           }
           - {
@@ -36,11 +45,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Chocolatey install cppcheck and CUDA Toolkit if windows
-        if: runner.os == 'Windows'
-        uses: crazy-max/ghaction-chocolatey@v1
         with:
-          args: install "${{ github.workspace }}\.github\choco-install.config" --force
+          ref: ${{ secrets.BRANCH_NIGHTLY_CI }}
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
         shell: cmake -P {0}
@@ -127,9 +133,6 @@ jobs:
         run: |
           set(ENV{CC} ${{ matrix.config.cc }})
           set(ENV{CXX} ${{ matrix.config.cxx }})
-          if ("${{ runner.os }}" STREQUAL "Windows")
-            set(ENV{CUDACXX} "${{ matrix.config.cudacxx }}")
-          endif()
 
           if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
             execute_process(
@@ -211,16 +214,188 @@ jobs:
           endif()
 
           execute_process(COMMAND ccache -s)
-
       - name: Upload windows server artifact.
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v2
         with:
           name: windows_server_build
           path: ${{ github.workspace }}/server/build64
-      - name: Upload linux server artifact.
+      - name: Upload windows client artifact.
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows_client_build
+          path: ${{ github.workspace }}/desktop/build64/Windows
+      - name: Upload ubuntu client artifact.
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v2
         with:
-          name: linux_server_build
-          path: ${{ github.workspace }}/server/build64
+          name: linux_client_build
+          path: ${{ github.workspace }}/desktop/build64/Linux
+      - name: Upload mac client artifact.
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v2
+        with:
+          name: mac_client_build
+          path: ${{ github.workspace }}/desktop/build64/Darwin
+
+  start_vm:
+    name: start_vm
+    runs-on: ubuntu-18.04
+    steps:
+      - name: startup_vm
+        run: |
+          curl -X POST -H Content-Type:application/json  -d "{
+          \"vm_name\" : \"$SERVER_VM_NAME\",
+          \"resource_group\" : \"FractalProtocolCI\" }" \
+          $WEBSERVER_BASE_URL/azure_vm/start
+          sleep 500s
+
+  deploy_to_vm:
+    name: deploy_vm
+    runs-on: ubuntu-18.04
+    needs: [build, start_vm]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ secrets.BRANCH_NIGHTLY_CI }}
+      - name: deploy to VM
+        run: |
+          cd ${{ github.workspace }}/.github/
+          ./deploy_artifact.sh $SERVER_VM_NAME ${{github.run_id}} --webserver $WEBSERVER_BASE_URL
+          sleep 300s
+
+  test_linux:
+    name: test_ubuntu_18.04
+    runs-on: ubuntu-18.04
+    needs: deploy_to_vm
+    steps:
+      - name: get linux build
+        uses: actions/download-artifact@v1
+        with:
+          name: linux_client_build
+      - name: get linux deps
+        run: |
+          sudo apt-get install valgrind pulseaudio jackd2 alsa-utils dbus-x11 libavcodec-dev libavdevice-dev libx11-dev libxtst-dev xclip x11-xserver-utils libasound2-dev libxdamage-dev -y
+      - name: run linux
+        if: always()
+        run: |
+          cd linux_client_build && chmod +x FractalClient
+          sleep 1
+          xvfb-run ./FractalClient -k $SERVER_VM_IP | tee log.txt
+      - name: Upload linux client logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux_client_log
+          path: linux_client_build/log.txt
+      - name: run linux valgrind # failing valgrind doesn't count as a failure
+        if: always()
+        run: |
+          sleep 5
+          cd linux_client_build && chmod +x FractalClient
+          set +e
+          xvfb-run valgrind --leak-check=full  \
+          --log-file="valgrind.out" --track-origins=yes  ./FractalClient -k $SERVER_VM_IP
+          sleep 10
+      - name: Upload linux client valgrind logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux_client_valgrind_log
+          path: linux_client_build/valgrind.out
+
+  test_windows:
+    if: always() # run even if linux fails
+    name: test_windows
+    runs-on: windows-2016
+    needs: test_linux
+    steps:
+      - name: get windows build
+        uses: actions/download-artifact@v1
+        with:
+          name: windows_client_build
+#      - name: Download
+#        run: Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+#      - name: Extract
+#        run: Expand-Archive ngrok.zip
+#      - name: Auth
+#        run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+#        env:
+#          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+#      - name: Enable TS
+#        run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
+#      - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+#      - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+#      - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+#      - name: Create Tunnel
+#        run: .\ngrok\ngrok.exe tcp 3389
+      - name: run windows
+        working-directory: windows_client_build
+        run: .\FractalClient -k $Env:SERVER_VM_IP
+      - name: logs
+        if: always()
+        run: |
+          cd windows_client_build
+          cat log.txt
+      - name: Upload windows client logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows_client_log
+          path: ${{ github.workspace }}/windows_client_build/log.txt
+
+
+  test_mac:
+    if: always() # run even if windows fails
+    name: test_osx_10.15
+    runs-on: macos-latest
+    needs: test_windows
+    steps:
+      - name: get mac build
+        uses: actions/download-artifact@v1
+        with:
+          name: mac_client_build
+      - name: run mac client
+        run: |
+          sleep 5
+          cd mac_client_build
+          chmod +x FractalClient
+          ./FractalClient -k $SERVER_VM_IP | tee log.txt
+          cd
+          ls
+          cd .fractal
+          ls
+      - name: Upload mac client logs
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: mac_client_log
+          path: mac_client_build/log.txt
+
+  clean_up:
+    if: always() # run always, must turn off the vm when we are done.
+    name: clean_up
+    runs-on: ubuntu-18.04
+    needs: test_mac
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ secrets.BRANCH_NIGHTLY_CI }}
+      - name: get server logs
+        run: |
+          chmod 0600 ${{github.workspace}}/.github/sshkey
+          sftp -o StrictHostKeyChecking=no  -i ${{github.workspace}}/.github/sshkey Fractal@20.185.40.33:/C:/programdata/fractalcache/log.txt .
+      - name: Upload windows server logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows_server_log
+          path: log.txt
+      - name: Stop VM
+        if: always() # if we fail to get logs we should still kill the VM when done
+        run: |
+          curl -X POST -H Content-Type:application/json  -d "{
+                    \"vm_name\" : \"$SERVER_VM_NAME\",
+                    \"resource_group\" : \"FractalProtocolCI\" }" \
+                    $WEBSERVER_BASE_URL/azure_vm/deallocate
+

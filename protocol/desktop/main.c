@@ -59,6 +59,8 @@ volatile int output_width;
 volatile int output_height;
 volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
+int time_to_run_ci = 300;  // Seconds to run CI tests for
+volatile int running_ci = 0;
 
 // Keyboard state variables
 bool alt_pressed = false;
@@ -483,6 +485,9 @@ int main(int argc, char* argv[]) {
     }
     initLogger(log_dir);
     free(log_dir);
+    if (running_ci) {
+        LOG_INFO("Running in CI mode");
+    }
 
     if (configureSSHKeys() != 0) {
         LOG_ERROR("Failed to configure SSH keys.");
@@ -513,7 +518,14 @@ int main(int argc, char* argv[]) {
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
+// Windows GHA VM cannot render, it just segfaults on creating the renderer
+#if defined(_WIN32)
+    if (!running_ci) {
+        initVideo();
+    }
+#else
     initVideo();
+#endif
 
     PrintSystemInfo();
     LOG_INFO("Fractal client revision %s", FRACTAL_GIT_REVISION);
@@ -547,6 +559,12 @@ int main(int argc, char* argv[]) {
 
         StartTimer(&window_resize_timer);
 
+        // Timer used in CI mode to exit after 1 min
+        clock ci_timer;
+        if (running_ci) {
+            StartTimer(&ci_timer);
+        }
+
         if (!is_spectator) {
             if (waitForServerInitMessage(500) != 0) {
                 LOG_WARNING("Did not receive init message from server.");
@@ -575,6 +593,12 @@ int main(int argc, char* argv[]) {
                     Ack(&PacketTCPContext);
                 }
                 StartTimer(&ack_timer);
+            }
+            // if we are running a CI test we run for time_to_run_ci secondsA
+            // before exiting
+            if (running_ci && GetTimer(ci_timer) > time_to_run_ci) {
+                exiting = 1;
+                LOG_INFO("Exiting CI run");
             }
 
             if (GetTimer(keyboard_sync_timer) > 50.0 / 1000.0) {

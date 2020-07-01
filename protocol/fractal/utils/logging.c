@@ -59,9 +59,10 @@ void initLogger(char *log_dir) {
 
     logger_history_len = 0;
 
+    char f[1000] = "";
     if (log_dir) {
         log_directory = log_dir;
-        char f[1000] = "";
+
         strcat(f, log_directory);
         strcat(f, "/log.txt");
 #if defined(_WIN32)
@@ -77,6 +78,7 @@ void initLogger(char *log_dir) {
     logger_semaphore = SDL_CreateSemaphore(0);
     mprintf_thread = SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf,
                                       "MultiThreadedPrintf", NULL);
+    LOG_INFO("Writing logs to %s", f);
     //    StartTimer(&mprintf_timer);
 }
 

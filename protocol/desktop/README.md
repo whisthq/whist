@@ -16,10 +16,10 @@ From the `/desktop` directory, you can simply run:
 
 ```
 Windows:
-desktop [OPTION]... IP ADDRESS
+desktop [OPTION]... IP_ADDRESS
 
 MacOS/Linux:
-./desktop [OPTION]... IP ADDRESS
+./desktop [OPTION]... IP_ADDRESS
 ```
 The option flags are as follows:
 ```
@@ -33,6 +33,7 @@ The option flags are as follows:
   -s, --spectate                launch the protocol as a spectator
   -c, --codec=CODEC             launch the protocol using the codec
                                   specified: h264 (default) or h265
+  -k, --running_ci             The client will quit after time_to_run_ci seconds
       --help     display help
       --version  output version information
 ```

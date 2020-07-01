@@ -4,6 +4,8 @@
 |:--:|:--:|
 |![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=master)|![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=dev)|
 
+![Dev Nightly testing](https://github.com/fractalcomputers/protocol/workflows/Nightly%20testing/badge.svg)
+
 This repository contains the source code for the Fractal Protocol, which is a low-latency interactive streaming technology that streams audio/video/actions between an OS-like device, whether it is a virtual machine, a container or a regular computer, and a client computer or mobile device.
 
 ## Supported Platforms

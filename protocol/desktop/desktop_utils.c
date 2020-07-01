@@ -20,6 +20,8 @@ extern volatile CodecType output_codec_type;
 extern volatile int max_bitrate;
 extern volatile bool is_spectator;
 
+extern volatile int running_ci;
+
 #define HOST_PUBLIC_KEY                                           \
     "ecdsa-sha2-nistp256 "                                        \
     "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOT1KV+" \
@@ -41,7 +43,7 @@ const struct option cmd_options[] = {
     {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
     // end with NULL-termination
     {0, 0, 0, 0}};
-#define OPTION_STRING "w:h:b:sc:"
+#define OPTION_STRING "w:h:b:sc:k"
 
 int parseArgs(int argc, char *argv[]) {
     char *usage =
@@ -61,6 +63,7 @@ int parseArgs(int argc, char *argv[]) {
         "  -s, --spectate                launch the protocol as a spectator\n"
         "  -c, --codec=CODEC             launch the protocol using the codec\n"
         "                                  specified: h264 (default) or h265\n"
+        "  -k, --use_ci                  launch the protocol in CI mode\n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
@@ -109,6 +112,9 @@ int parseArgs(int argc, char *argv[]) {
                     printf("%s", usage);
                     return -1;
                 }
+                break;
+            case 'k':
+                running_ci = 1;
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);

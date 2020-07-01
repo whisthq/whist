@@ -1,7 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
 
-#include "clock.h"
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +7,7 @@
 
 #include "../core/fractal.h"
 #include "../utils/logging.h"
+#include "clock.h"
 
 #ifdef _WIN32
 int GetUTCOffset();

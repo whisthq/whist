@@ -3,7 +3,7 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file clock.h
- * @brief Helper functions for timing
+ * @brief Helper functions for png to bmp and bmp to png
 ============================
 Usage
 ============================
