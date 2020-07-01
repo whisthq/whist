@@ -1,4 +1,9 @@
 #!/bin/bash
+
+
+
+
+
 echo -e "Updating protocol submodule to latest master"
 git submodule update --remote
 cd protocol
