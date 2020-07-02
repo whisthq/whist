@@ -1,6 +1,6 @@
 #include "../core/fractal.h"
 #include "../utils/logging.h"
-#include "cursor.h"
+#include "peercursor.h"
 
 static SDL_Surface *base_cursor_surface;
 

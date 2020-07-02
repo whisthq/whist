@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-#include "../fractal/cursor/cursor.h"
+#include "../fractal/cursor/peercursor.h"
 #include "../fractal/utils/png.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "SDL2/SDL.h"
