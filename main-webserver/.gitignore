@@ -7,7 +7,7 @@ Test-Environment
 env3.6
 .venv/
 venv/
-__pychache__/
+__pycache__/
 
 # Heroku
 herokulogs.txtgg

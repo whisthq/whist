@@ -89,7 +89,7 @@ We have created a Postman workspace for a variety of API endpionts in vm-webserv
 Postman Team link: https://app.getpostman.com/join-team?invite_code=29d49d2365850ccfb50fc09723a45a93
 
 **Pytest**
-We have pytest tests in the `/tests` folder. To run tests, just run `pytest` in terminal. To run tests in parallel, run `pytest -n <num>`, with `<num>` as the # of workers in parallel.
+We have pytest tests in the `/tests` folder. To run tests, just run `pytest -o log_cli=true -s` in terminal. To run tests in parallel, run `pytest -o log_cli=true -s -n <num>`, with `<num>` as the # of workers in parallel.
 
 ## Publishing
 
