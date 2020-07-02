@@ -916,7 +916,7 @@ int main() {
     update();
 
     while (true) {
-        updateStatus(true);
+        updateStatus(false);
 
         clock startup_time;
         StartTimer(&startup_time);
@@ -929,7 +929,6 @@ int main() {
         SDL_Thread* wait_for_client = SDL_CreateThread(
             MultithreadedWaitForClient, "MultithreadedWaitForClient", NULL);
         wait_for_client;
-        while (num_active_clients == 0) SDL_Delay(500);
         connected = true;
         SDL_Delay(500);
 
@@ -973,7 +972,7 @@ int main() {
                     }
                 }
 #endif
-                updateStatus(true);
+                updateStatus(num_controlling_clients > 0);
                 StartTimer(&ack_timer);
             }
 

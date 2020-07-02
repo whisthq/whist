@@ -532,6 +532,7 @@ int32_t MultithreadedUpdateStatus(void *data) {
 }
 
 void updateStatus(bool is_connected) {
+    LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
     SDL_Thread *update_status =
