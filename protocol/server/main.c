@@ -797,19 +797,26 @@ int MultithreadedWaitForClient(void* opaque) {
     bool trying_to_update = false;
     clock_t last_update_time;
     StartTimer(&last_update_timer);
+
     while (running) {
         if (num_controlling_clients == 0) {
-            if (GetTimer(last_update_timer) > 10.0) {
-                update();
+            if (trying_to_update) {
+                if (GetTimer(last_update_timer) > 10.0) {
+                    update();
+                    StartTimer(&last_update_timer);
+                }
+            } else {
                 StartTimer(&last_update_timer);
+                trying_to_update = true;
             }
+        } else {
+            trying_to_update = false;
         }
 
         if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, 5000,
                              USING_STUN) < 0) {
             continue;
         }
-        StartTimer(&last_update_timer);
 
         if (doDiscoveryHandshake(&discovery_context, &client_id) != 0) {
             LOG_WARNING("Discovery handshake failed.");
