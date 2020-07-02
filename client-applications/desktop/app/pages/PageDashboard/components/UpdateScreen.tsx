@@ -65,8 +65,8 @@ class UpdateScreen extends Component {
                             position: "fixed",
                             top: 0,
                             left: 0,
-                            width: 900,
-                            height: 600,
+                            width: 1000,
+                            height: 680,
                             backgroundColor: "#0B172B",
                             zIndex: 1000,
                         }}
