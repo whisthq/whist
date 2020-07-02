@@ -14,7 +14,7 @@ mkdir desktop
 cd ..
 
 # copy over the Unison executable and FFmpeg dylibs
-cp -R .protocol/lib/64/ffmpeg/Darwin/ protocol-build/desktop/
+cp -R .protocol/desktop/build64/Darwin/ protocol-build/desktop/
 
 sudo chmod 600 protocol-build/desktop/sshkey # was previously in protocol, but operation not permitted from protocol
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
