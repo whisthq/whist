@@ -63,7 +63,14 @@ def user_reset(**kwargs):
 def google_login(**kwargs):
     body = request.get_json()
     code = body["code"]
-    userObj = getGoogleTokens(code)
+
+    clientApp = False
+    if "clientApp" in body.keys():
+        clientApp = body["clientApp"]
+
+    userObj = getGoogleTokens(code, clientApp)
+
+    sendInfo(kwargs["ID"], userObj)
 
     username, name = userObj["email"], userObj["name"]
 
@@ -95,6 +102,9 @@ def google_login(**kwargs):
                 jsonify({"status": 403, "error": "Try using non-Google login",}),
                 403,
             )
+
+    if clientApp:
+        return (jsonify({"status": 401, "error": "User has not registered"}), 401)
 
     sendInfo(kwargs["ID"], "Registering a new user with Google")
     status = registerGoogleUser(username, name, token)
@@ -231,6 +241,15 @@ def account_verify_user(**kwargs):
     else:
         sendInfo(kwargs["ID"], "User {} cannot be verified".format(username))
         return jsonify({"status": 401, "verified": False}), 401
+
+
+@account_bp.route("/account/reset", methods=["POST"])
+@generateID
+@logRequestInfo
+def account_reset(**kwargs):
+    body = request.get_json()
+    resetPassword(body["username"], body["password"])
+    return jsonify({"status": 200}), 200
 
 
 @account_bp.route("/account/generateIDs", methods=["POST"])

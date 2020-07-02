@@ -95,7 +95,7 @@ billiard==3.6.3.0
 black==19.10b0
 blinker==1.4
 boto3==1.13.4
-botocore==1.16.4
+botocore==1.16.26
 cachetools==4.1.0
 celery==4.4.2
 certifi==2019.9.11
@@ -140,6 +140,7 @@ msrestazure==0.6.2
 numpy==1.16.6
 oauthlib==3.1.0
 packaging==20.4
+pandas==1.0.5
 pathlib2==2.3.5
 pathspec==0.8.0
 pg8000==1.15.3
@@ -156,8 +157,11 @@ pyparsing==2.4.7
 pytest==5.4.3
 pytest-dotenv==0.5.2
 pytest-flask==1.0.0
+pytest-flask-sqlalchemy==1.0.2
+pytest-helpers-namespace==2019.1.8
+pytest-mock==3.1.1
 pytest-pgsql==1.1.2
-pytest-xdist
+pytest-postgresql==2.4.0
 python-dateutil==2.8.0
 python-dotenv==0.10.3
 python-editor==1.0.4
