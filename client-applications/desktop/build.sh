@@ -7,9 +7,9 @@ git checkout $1
 cmake .
 make FractalClient
 cd ..
-rm -rf protocol
-mkdir protocol
-cd protocol
+rm -rf protocol-build 
+mkdir protocol-build 
+cd protocol-build
 mkdir desktop
 cd ..
 
