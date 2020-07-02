@@ -95,7 +95,9 @@ class MainBox extends Component {
                         if (err) {
                             console.log(err);
                         } else {
-                            component.props.dispatch(sendLogs(connection_id, data));
+                            component.props.dispatch(
+                                sendLogs(connection_id, data)
+                            );
                         }
                     }
                 );
@@ -104,20 +106,23 @@ class MainBox extends Component {
                 // windows
                 // get logs from the executable directory, no cache on Windows
                 var logs = fs
-                    .readFileSync(process.cwd() + "\\protocol-build\\desktop\\log.txt")
+                    .readFileSync(
+                        process.cwd() + "\\protocol-build\\desktop\\log.txt"
+                    )
                     .toString();
                 var connection_id = parseInt(
                     fs
                         .readFileSync(
-                            process.cwd() + "\\protocol-build\\desktop\\connection_id.txt"
+                            process.cwd() +
+                                "\\protocol-build\\desktop\\connection_id.txt"
                         )
                         .toString()
                 );
                 this.props.dispatch(sendLogs(connection_id, logs));
             }
-        } catch(err) {
-            console.log("Log Error: " + err.toString());  
-		}
+        } catch (err) {
+            console.log("Log Error: " + err.toString());
+        }
     };
 
     // Launches the protocol
