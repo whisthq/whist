@@ -110,6 +110,7 @@ int handleWindowSizeChanged(SDL_Event *event) {
 }
 
 int handleMouseLeftWindow(SDL_Event *event) {
+    event;
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MOUSE_INACTIVE;
     SendFmsg(&fmsg);

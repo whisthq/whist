@@ -65,8 +65,6 @@ Includes
 #include "../utils/logging.h"
 #include "fractal.v"
 
-#pragma warning(disable : 4200)
-
 /*
 ============================
 Defines
@@ -513,8 +511,8 @@ typedef struct FractalServerMessage {
     };
     union {
         ClipboardData clipboard;
-        char discovery_reply[];
-        char init_msg[];
+        char discovery_reply[0];
+        char init_msg[0];
     };
 } FractalServerMessage;
 
