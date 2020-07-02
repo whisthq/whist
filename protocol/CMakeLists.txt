@@ -15,6 +15,7 @@ cmake_minimum_required(VERSION 3.15)
 #See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
 cmake_policy(SET CMP0091 NEW)
 
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release;CI")
 #set default compiler flags
 set (CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
 
