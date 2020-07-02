@@ -48,6 +48,15 @@ In order to properly test the application, you need to package the application a
 
 
 
+
+
+
+[https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12](https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12)
+
+
+
+
+
 Run `./build.sh` in a terminal. This will delete any prior Fractal protocol folder, pull the recent master branch, and package it locally. You must also install Cmake; refer to the Fractal protocol repository for installation instructions.
 `build.sh` now has cli arguments. By default `build.sh` will create a release and sign it. To build a fractal client without signing it and running it in dev, use `DEV=yes ./build.sh`. It also starts the dev client after building.
 To build a release of the client, sign it, and upload it, use `RELEASE=yes ./build.sh` ensure that you follow the "Publishing to Production" instructions beforehand.

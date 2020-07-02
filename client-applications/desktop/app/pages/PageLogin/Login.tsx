@@ -6,8 +6,6 @@ import styles from "pages/PageLogin/Login.css";
 import Titlebar from "react-electron-titlebar";
 import Background from "resources/images/background.jpg";
 import Logo from "resources/images/logo.svg";
-import UserIcon from "resources/images/user.svg";
-import LockIcon from "resources/images/lock.svg";
 import UpdateScreen from "pages/PageDashboard/components/UpdateScreen.tsx";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

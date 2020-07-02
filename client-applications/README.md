@@ -15,4 +15,4 @@ For the desktop OS applications listed above, the version requirements come from
 The following platforms have yet to be supported:
 - iOS/iPadOS
 - Android/Chromebook
-- Web (Note that the web client will be hosted on `fractalcomputers/website`)
+- Web (the web client will be hosted on `fractalcomputers/website`)

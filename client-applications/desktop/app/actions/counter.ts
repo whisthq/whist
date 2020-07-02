@@ -98,7 +98,7 @@ export function storeDistance(distance: any) {
     };
 }
 
-export function sendFeedback(feedback, feedback_type) {
+export function sendFeedback(feedback: any, feedback_type: any) {
     return {
         type: SEND_FEEDBACK,
         feedback,

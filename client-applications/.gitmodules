@@ -1,3 +1,0 @@
-[submodule "desktop/protocol"]
-    path = desktop/protocol
-    url = git@github.com:fractalcomputers/protocol.git

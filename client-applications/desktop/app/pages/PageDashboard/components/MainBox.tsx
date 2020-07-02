@@ -72,7 +72,6 @@ class MainBox extends Component {
 
     SendLogs = () => {
         var fs = require("fs");
-        var appRootDir = require("electron").remote.app.getAppPath();
         const os = require("os");
         let component = this;
 

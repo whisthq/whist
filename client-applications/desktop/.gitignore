@@ -65,7 +65,9 @@ npm-debug.log.*
 # .env for MacOS notarizing credentials
 *.env
 
-# protocol files
+# Fractal protocol
+.unison
+.protocol
 protocol-build
 clipboard/
 log.txt
@@ -73,4 +75,3 @@ connection_id.txt
 ssh_host_ecdsa_key.pub
 sshkey.pub
 sshkey
-.unison
