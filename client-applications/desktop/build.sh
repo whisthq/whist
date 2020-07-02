@@ -52,10 +52,10 @@ mkdir protocol-build
 cd protocol-build
 mkdir desktop
 cd ..
-cp .protocol/desktop/build64/FractalClient protocol-build/desktop
-cp -R loading protocol-build/desktop
-cp .protocol/desktop/build64/sshkey protocol-build/desktop
-cp .protocol/desktop/build64/sshkey.pub protocol-build/desktop
+cp .protocol/desktop/build64/Darwin/FractalClient protocol-build/desktop
+cp -R .protocol/desktop/build64/Darwin/loading protocol-build/desktop
+cp .protocol/desktop/build64/Darwin/sshkey protocol-build/desktop
+cp .protocol/desktop/build64/Darwin/sshkey.pub protocol-build/desktop
 sudo chmod 600 protocol-build/desktop/sshkey # was previously in protocol, but operation not permitted from protocol
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
   # Linux Ubuntu
@@ -72,7 +72,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
   SetFile -a C protocol-build/desktop/FractalClient # use the resource to set the icon
   rm tmpicns.rsrc # clean up
   # copy over the Unison executable and FFmpeg dylibs
-  cp .protocol/desktop/build64/mac_unison protocol-build/desktop
+  cp .protocol/desktop/build64/Darwin/mac_unison protocol-build/desktop
   cp .protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol/-builddesktop
   cp .protocol/lib/64/ffmpeg/Darwin/libavdevice.58.dylib protocol-build/desktop
   cp .protocol/lib/64/ffmpeg/Darwin/libavfilter.7.dylib protocol-build/desktop
