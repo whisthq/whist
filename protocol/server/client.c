@@ -49,6 +49,9 @@ int destroyClients(void) {
 int quitClient(int id) {
     clients[id].is_active = false;
     clients[id].mouse.is_active = false;
+    num_active_clients--;
+    if (clients[id].is_controlling)
+        num_controlling_clients--;
     if (disconnectClient(id) != 0) {
         LOG_ERROR("Failed to disconnect client. (ID: %d)", id);
         return -1;
