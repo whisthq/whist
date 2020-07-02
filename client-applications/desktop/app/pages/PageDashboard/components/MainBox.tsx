@@ -75,44 +75,53 @@ class MainBox extends Component {
         const os = require("os");
         let component = this;
 
-        if (os.platform() === "darwin" || os.platform() === "linux") {
-            // mac & linux
-            // get logs and connection_id from Fractal MacOS/Linux Ubuntu caches
-            // cache is located in /users/USERNAME/.fractal or in /home/USERNAME/.fractal
-            var connection_id = parseInt(
-                fs
-                    .readFileSync(
-                        process.env.HOME + "/.fractal/connection_id.txt"
-                    )
-                    .toString()
-            );
+        try {
+            if (os.platform() === "darwin" || os.platform() === "linux") {
+                // mac & linux
+                // get logs and connection_id from Fractal MacOS/Linux Ubuntu caches
+                // cache is located in /users/USERNAME/.fractal or in /home/USERNAME/.fractal
+                var connection_id = parseInt(
+                    fs
+                        .readFileSync(
+                            process.env.HOME + "/.fractal/connection_id.txt"
+                        )
+                        .toString()
+                );
 
-            fs.readFile(
-                process.env.HOME + "/.fractal/log.txt",
-                "utf8",
-                function (err, data) {
-                    if (err) {
-                        console.log(err);
-                    } else {
-                        component.props.dispatch(sendLogs(connection_id, data));
+                fs.readFile(
+                    process.env.HOME + "/.fractal/log.txt",
+                    "utf8",
+                    function (err, data) {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            component.props.dispatch(
+                                sendLogs(connection_id, data)
+                            );
+                        }
                     }
-                }
-            );
-            // console.log(logs)
-        } else if (os.platform() === "win32") {
-            // windows
-            // get logs from the executable directory, no cache on Windows
-            var logs = fs
-                .readFileSync(process.cwd() + "\\protocol\\desktop\\log.txt")
-                .toString();
-            var connection_id = parseInt(
-                fs
+                );
+                // console.log(logs)
+            } else if (os.platform() === "win32") {
+                // windows
+                // get logs from the executable directory, no cache on Windows
+                var logs = fs
                     .readFileSync(
-                        process.cwd() + "\\protocol\\desktop\\connection_id.txt"
+                        process.cwd() + "\\protocol-build\\desktop\\log.txt"
                     )
-                    .toString()
-            );
-            this.props.dispatch(sendLogs(connection_id, logs));
+                    .toString();
+                var connection_id = parseInt(
+                    fs
+                        .readFileSync(
+                            process.cwd() +
+                                "\\protocol-build\\desktop\\connection_id.txt"
+                        )
+                        .toString()
+                );
+                this.props.dispatch(sendLogs(connection_id, logs));
+            }
+        } catch (err) {
+            console.log("Log Error: " + err.toString());
         }
     };
 
