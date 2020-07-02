@@ -73,7 +73,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
   rm tmpicns.rsrc # clean up
   # copy over the Unison executable and FFmpeg dylibs
   cp .protocol/desktop/build64/Darwin/mac_unison protocol-build/desktop
-  cp .protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol/-builddesktop
+  cp .protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol-build/desktop
   cp .protocol/lib/64/ffmpeg/Darwin/libavdevice.58.dylib protocol-build/desktop
   cp .protocol/lib/64/ffmpeg/Darwin/libavfilter.7.dylib protocol-build/desktop
   cp .protocol/lib/64/ffmpeg/Darwin/libavformat.58.dylib protocol-build/desktop
