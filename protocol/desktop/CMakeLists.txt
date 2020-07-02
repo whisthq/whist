@@ -68,6 +68,7 @@ target_link_libraries(FractalClient
 ################## LINUX ##################
 ]]
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    MESSAGE( STATUS "CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS} )
     find_package(X11 REQUIRED
             Xfixes)
     find_package(ALSA REQUIRED)
@@ -85,6 +86,7 @@ endif()
 ################## MACOS ##################
 ]]
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    MESSAGE( STATUS "CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS} )
     target_link_libraries(FractalClient
         "-framework OpenGL"
         "-framework VideoToolbox"
@@ -109,6 +111,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     message(STATUS c base flags${CMAKE_C_FLAGS})
     message(STATUS c release flags${CMAKE_C_FLAGS_RELEASE})
     message(STATUS c debug flags${CMAKE_C_FLAGS_DEBUG})
+    message(STATUS c CI flags${CMAKE_C_FLAGS_CI})
     #Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
