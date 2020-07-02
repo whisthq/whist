@@ -288,7 +288,7 @@ bool is_dev_vm() {
 
     LOG_INFO("GETTING JSON");
 
-    if (!SendJSONGet(STAGING_HOST, "/vm/isDev", buf, len)) {
+    if (!SendJSONGet(PRODUCTION_HOST, "/vm/isDev", buf, len)) {
         if (already_obtained_vm_type) {
             return is_dev;
         } else {
