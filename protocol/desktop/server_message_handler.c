@@ -6,6 +6,9 @@
 #include "../fractal/utils/clock.h"
 #include "../fractal/utils/logging.h"
 #include "desktop_utils.h"
+#include "server_message_handler.h"
+
+#include <stddef.h>
 
 extern char filename[300];
 extern char username[50];
@@ -17,6 +20,7 @@ extern volatile clock latency_timer;
 extern volatile int ping_id;
 extern volatile int ping_failures;
 extern volatile int try_amount;
+extern int client_id;
 
 static int handleInitMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size);

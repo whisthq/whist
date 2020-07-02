@@ -18,15 +18,8 @@ extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 
 extern volatile int max_bitrate;
-extern volatile bool is_spectator;
-
 extern volatile int running_ci;
-
-#define HOST_PUBLIC_KEY                                           \
-    "ecdsa-sha2-nistp256 "                                        \
-    "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOT1KV+" \
-    "I511l9JilY9vqkp+QHsRve0ZwtGCBarDHRgRtrEARMR6sAPKrqGJzW/"     \
-    "Zt86r9dOzEcfrhxa+MnVQhNE8="
+extern volatile CodecType codec_type;
 
 // standard for POSIX programs
 #define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
@@ -36,7 +29,6 @@ const struct option cmd_options[] = {
     {"width", required_argument, NULL, 'w'},
     {"height", required_argument, NULL, 'h'},
     {"bitrate", required_argument, NULL, 'b'},
-    {"spectate", no_argument, NULL, 's'},
     {"codec", required_argument, NULL, 'c'},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
@@ -60,7 +52,6 @@ int parseArgs(int argc, char *argv[]) {
         "                                  window, if both width and height\n"
         "                                  are specified\n"
         "  -b, --bitrate=BITRATE         set the maximum bitrate to use\n"
-        "  -s, --spectate                launch the protocol as a spectator\n"
         "  -c, --codec=CODEC             launch the protocol using the codec\n"
         "                                  specified: h264 (default) or h265\n"
         "  -k, --use_ci                  launch the protocol in CI mode\n"
@@ -98,9 +89,6 @@ int parseArgs(int argc, char *argv[]) {
                     return -1;
                 }
                 max_bitrate = (int)ret;
-                break;
-            case 's':
-                is_spectator = true;
                 break;
             case 'c':
                 if (!strcmp(optarg, "h264")) {

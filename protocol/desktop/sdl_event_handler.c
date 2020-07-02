@@ -23,6 +23,7 @@ extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 
 int handleWindowSizeChanged(SDL_Event *event);
+int handleMouseLeftWindow(SDL_Event *event);
 int handleKeyUpDown(SDL_Event *event);
 int handleMouseMotion(SDL_Event *event);
 int handleMouseWheel(SDL_Event *event);
@@ -43,6 +44,10 @@ int handleSDLEvent(SDL_Event *event) {
         case SDL_WINDOWEVENT:
             if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
                 if (handleWindowSizeChanged(event) != 0) {
+                    return -1;
+                }
+            } else if (event->window.event == SDL_WINDOWEVENT_LEAVE) {
+                if (handleMouseLeftWindow(event) != 0) {
                     return -1;
                 }
             }
@@ -104,6 +109,14 @@ int handleWindowSizeChanged(SDL_Event *event) {
     return 0;
 }
 
+int handleMouseLeftWindow(SDL_Event *event) {
+    event;
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_MOUSE_INACTIVE;
+    SendFmsg(&fmsg);
+    return 0;
+}
+
 int handleKeyUpDown(SDL_Event *event) {
     FractalKeycode keycode = (FractalKeycode)event->key.keysym.scancode;
     bool is_pressed = event->key.type == SDL_KEYDOWN;
@@ -127,6 +140,27 @@ int handleKeyUpDown(SDL_Event *event) {
         exiting = true;
     }
 
+    if (ctrl_pressed && alt_pressed && keycode == FK_B && is_pressed) {
+        FractalClientMessage fmsg = {0};
+        fmsg.type = CMESSAGE_INTERACTION_MODE;
+        fmsg.interaction_mode = SPECTATE;
+        SendFmsg(&fmsg);
+    }
+
+    if (ctrl_pressed && alt_pressed && keycode == FK_G && is_pressed) {
+        FractalClientMessage fmsg = {0};
+        fmsg.type = CMESSAGE_INTERACTION_MODE;
+        fmsg.interaction_mode = CONTROL;
+        SendFmsg(&fmsg);
+    }
+
+    if (ctrl_pressed && alt_pressed && keycode == FK_M && is_pressed) {
+        FractalClientMessage fmsg = {0};
+        fmsg.type = CMESSAGE_INTERACTION_MODE;
+        fmsg.interaction_mode = EXCLUSIVE_CONTROL;
+        SendFmsg(&fmsg);
+    }
+
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_KEYBOARD;
     fmsg.keyboard.code = keycode;
@@ -142,8 +176,14 @@ int handleKeyUpDown(SDL_Event *event) {
 // on the screen We multiply by scaling factor so that
 // integer division doesn't destroy accuracy
 int handleMouseMotion(SDL_Event *event) {
+    int x, y, x_nonrel, y_nonrel, height, width;
     bool is_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
-    int x, y, height, width;
+
+    int window_width, window_height;
+    SDL_GetWindowSize((SDL_Window *)window, &window_width, &window_height);
+
+    x_nonrel = event->motion.x * MOUSE_SCALING_FACTOR / window_width;
+    y_nonrel = event->motion.y * MOUSE_SCALING_FACTOR / window_width;
 
     if (is_relative) {
         x = event->motion.xrel;
@@ -160,6 +200,8 @@ int handleMouseMotion(SDL_Event *event) {
     fmsg.mouseMotion.relative = is_relative;
     fmsg.mouseMotion.x = x;
     fmsg.mouseMotion.y = y;
+    fmsg.mouseMotion.x_nonrel = x_nonrel;
+    fmsg.mouseMotion.y_nonrel = y_nonrel;
     SendFmsg(&fmsg);
 
     return 0;

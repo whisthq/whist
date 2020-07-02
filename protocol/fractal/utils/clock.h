@@ -106,4 +106,10 @@ int GetDST();
 
 int GetTimeData(FractalTimeData* time_data);
 
+void SetTimezoneFromIANAName(char* linux_tz_name);
+
+void SetTimezoneFromWindowsName(char* win_tz_name);
+
+void SetTimezoneFromUtc(int utc, int DST_flag);
+
 #endif
