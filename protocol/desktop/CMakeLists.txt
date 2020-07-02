@@ -68,7 +68,6 @@ target_link_libraries(FractalClient
 ################## LINUX ##################
 ]]
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    MESSAGE( STATUS "CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS} )
     find_package(X11 REQUIRED
             Xfixes)
     find_package(ALSA REQUIRED)
@@ -86,7 +85,6 @@ endif()
 ################## MACOS ##################
 ]]
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    MESSAGE( STATUS "CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS} )
     target_link_libraries(FractalClient
         "-framework OpenGL"
         "-framework VideoToolbox"

@@ -561,9 +561,8 @@ int main(int argc, char* argv[]) {
 
         // Timer used in CI mode to exit after 1 min
         clock ci_timer;
-        if (running_ci) {
-            StartTimer(&ci_timer);
-        }
+        StartTimer(&ci_timer);
+
 
         if (!is_spectator) {
             if (waitForServerInitMessage(500) != 0) {
