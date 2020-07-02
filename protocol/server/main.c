@@ -841,6 +841,10 @@ int MultithreadedWaitForClient(void* opaque) {
         if (host_id == -1) {
             host_id = client_id;
         }
+
+        /* Make everyone a controller */
+        clients[client_id].is_controlling = true;
+
         num_active_clients++;
         if (num_controlling_clients == 0) {
             clients[client_id].is_controlling = true;
