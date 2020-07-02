@@ -1,6 +1,7 @@
 import pytest
 import requests
 from dotenv import load_dotenv
+import os
 
 pytest_plugins = ["helpers_namespace"]
 
