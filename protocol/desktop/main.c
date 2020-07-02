@@ -577,7 +577,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Timer used in CI mode to exit after 1 min
-        clock ci_timer = { 0 };
+        clock ci_timer = {0};
         if (running_ci) {
             StartTimer(&ci_timer);
         }
