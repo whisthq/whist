@@ -132,8 +132,6 @@ class MainBox extends Component {
             );
             if (this.state.launches == 0) {
                 this.setState({ launches: 1, reattached: false }, function () {
-                    console.log("ENTERING LAUCH");
-
                     var child = require("child_process").spawn;
                     var appRootDir = require("electron").remote.app.getAppPath();
                     const os = require("os");
@@ -154,7 +152,7 @@ class MainBox extends Component {
                     } else if (os.platform() === "win32") {
                         // windows
                         // path when electron app is packaged as .nsis (to use as working directory)
-                        var path = process.cwd() + "\\protocol\\desktop";
+                        var path = process.cwd() + "\\protocol-build\\desktop";
                         var executable = "FractalClient.exe";
                     }
 

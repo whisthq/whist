@@ -30,7 +30,7 @@ if "%1%" == "--help" (
     mkdir desktop
     mkdir desktop\loading
     cd ..
-    xcopy /s .protocol\desktop\build64\Windows protocol\desktop
+    xcopy /s .protocol\desktop\build64\Windows protocol-build\desktop
     powershell -Command "(New-Object Net.WebClient).DownloadFile('https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe', 'rcedit-x64.exe')"
     powershell -Command "Invoke-WebRequest https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe -OutFile rcedit-x64.exe"
     rcedit-x64.exe protocol\desktop\FractalClient.exe --set-icon build\icon.ico
