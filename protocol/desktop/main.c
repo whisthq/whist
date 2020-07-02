@@ -563,7 +563,6 @@ int main(int argc, char* argv[]) {
         clock ci_timer;
         StartTimer(&ci_timer);
 
-
         if (!is_spectator) {
             if (waitForServerInitMessage(500) != 0) {
                 LOG_WARNING("Did not receive init message from server.");
