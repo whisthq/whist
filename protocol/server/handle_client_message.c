@@ -101,7 +101,6 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id,
                 fmsg->type);
             return -1;
     }
-    return 0;
 }
 
 // is called with is active read locked
@@ -135,6 +134,7 @@ static int handleUserInputMessage(FractalClientMessage *fmsg, int client_id,
 // Synchronize client and server keyboard state
 static int handleKeyboardStateMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling) {
+    client_id;
     if (!is_controlling) return 0;
 #ifdef _WIN32
     UpdateKeyboardState(input_device, fmsg);
@@ -146,6 +146,7 @@ static int handleKeyboardStateMessage(FractalClientMessage *fmsg, int client_id,
 // idk how to handle this
 static int handleBitrateMessage(FractalClientMessage *fmsg, int client_id,
                                 bool is_controlling) {
+    client_id;
     if (!is_controlling) return 0;
     LOG_INFO("MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps);
     max_mbps = max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
@@ -155,6 +156,7 @@ static int handleBitrateMessage(FractalClientMessage *fmsg, int client_id,
 
 static int handlePingMessage(FractalClientMessage *fmsg, int client_id,
                              bool is_controlling) {
+    is_controlling;
     LOG_INFO("Ping Received - Client ID: %d, Ping ID %d", client_id,
              fmsg->ping_id);
 
@@ -178,6 +180,7 @@ static int handlePingMessage(FractalClientMessage *fmsg, int client_id,
 
 static int handleDimensionsMessage(FractalClientMessage *fmsg, int client_id,
                                    bool is_controlling) {
+    client_id;
     if (!is_controlling) return 0;
     // Update knowledge of client monitor dimensions
     LOG_INFO("Request to use dimensions %dx%d received", fmsg->dimensions.width,
@@ -196,6 +199,7 @@ static int handleDimensionsMessage(FractalClientMessage *fmsg, int client_id,
 
 static int handleClipboardMessage(FractalClientMessage *fmsg, int client_id,
                                   bool is_controlling) {
+    client_id;
     if (!is_controlling) return 0;
     // Update clipboard with message
     LOG_INFO("Received Clipboard Data! %d", fmsg->clipboard.type);
@@ -264,6 +268,8 @@ static int handleVideoNackMessage(FractalClientMessage *fmsg, int client_id,
 
 static int handleIFrameRequestMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling) {
+    client_id;
+    is_controlling;
     LOG_INFO("Request for i-frame found: Creating iframe");
     if (fmsg->reinitialize_encoder) {
         update_encoder = true;
@@ -275,6 +281,7 @@ static int handleIFrameRequestMessage(FractalClientMessage *fmsg, int client_id,
 
 static int handleInteractionModeMessage(FractalClientMessage *fmsg,
                                         int client_id, bool is_controlling) {
+    is_controlling;
     if (SDL_LockMutex(state_lock) != 0) {
         LOG_ERROR("Failed to lock client's mouse lock.");
         return -1;
@@ -315,6 +322,8 @@ static int handleInteractionModeMessage(FractalClientMessage *fmsg,
 
 static int handleQuitMessage(FractalClientMessage *fmsg, int client_id,
                              bool is_controlling) {
+    is_controlling;
+    fmsg;
     int ret = 0;
     if (readUnlock(&is_active_rwlock) != 0) {
         LOG_ERROR("Failed to read unlock is active lock.");
@@ -362,6 +371,7 @@ static int handleQuitMessage(FractalClientMessage *fmsg, int client_id,
 
 static int handleTimeMessage(FractalClientMessage *fmsg, int client_id,
                              bool is_controlling) {
+    client_id;
     if (!is_controlling) return 0;
     LOG_INFO("Recieving a message time packet");
 #ifdef _WIN32
@@ -391,6 +401,8 @@ static int handleTimeMessage(FractalClientMessage *fmsg, int client_id,
 
 static int handleMouseInactiveMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling) {
+    fmsg;
+    is_controlling;
     clients[client_id].mouse.is_active = false;
     return 0;
 }

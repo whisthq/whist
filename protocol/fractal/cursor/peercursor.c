@@ -96,7 +96,7 @@ int drawPeerCursor(SDL_Renderer *renderer, int x, int y, int r, int g, int b) {
     }
 
     Uint32 black = SDL_MapRGB(sfc->format, 0, 0, 0);
-    Uint32 cursor_color = SDL_MapRGB(sfc->format, r, g, b);
+    Uint32 cursor_color = SDL_MapRGB(sfc->format, (Uint8)r, (Uint8)g, (Uint8)b);
     replaceColor(sfc, black, cursor_color);
 
     SDL_Texture *txtr = SDL_CreateTextureFromSurface(renderer, sfc);

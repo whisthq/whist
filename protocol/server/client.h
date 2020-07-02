@@ -52,9 +52,9 @@ int quitClient(int id);
 
 int quitClients(void);
 
-int existsTimedOutClient(int timeout, bool *exists);
+int existsTimedOutClient(double timeout, bool *exists);
 
-int reapTimedOutClients(int timeout);
+int reapTimedOutClients(double timeout);
 
 int tryFindClientIdByUsername(int username, bool *found, int *id);
 

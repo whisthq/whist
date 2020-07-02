@@ -463,7 +463,7 @@ int32_t SendVideo(void* opaque) {
                         if (broadcastUDPPacket(
                                 PACKET_VIDEO, (uint8_t*)frame,
                                 frame_size +
-                                    sizeof(PeerUpdateMessage) * num_msgs,
+                                    sizeof(PeerUpdateMessage) * (int)num_msgs,
                                 id, STARTING_BURST_BITRATE,
                                 video_buffer[id % VIDEO_BUFFER_SIZE],
                                 video_buffer_packet_len[id %

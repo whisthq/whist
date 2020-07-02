@@ -71,7 +71,7 @@ int quitClients(void) {
 }
 
 // needs read is_active_rwlock
-int existsTimedOutClient(int timeout, bool *exists) {
+int existsTimedOutClient(double timeout, bool *exists) {
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active) {
             if (GetTimer(clients[id].last_ping) > timeout) {
@@ -85,7 +85,7 @@ int existsTimedOutClient(int timeout, bool *exists) {
 }
 
 // Needs write is_active_rwlock and (write) state lock
-int reapTimedOutClients(int timeout) {
+int reapTimedOutClients(double timeout) {
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active &&
