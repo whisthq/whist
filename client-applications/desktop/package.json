@@ -133,7 +133,7 @@
         },
         "publish": {
             "provider": "s3",
-            "bucket": "fractal-applications-release",
+            "bucket": "fractal-applications-testing",
             "region": "us-east-1"
         }
     },
