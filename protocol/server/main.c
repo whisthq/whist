@@ -791,6 +791,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
 
 int MultithreadedWaitForClient(void* opaque) {
     opaque;
+
     SocketContext discovery_context;
     int client_id;
 
