@@ -96,6 +96,7 @@ black==19.10b0
 blinker==1.4
 boto3==1.13.4
 botocore==1.16.26
+cachetools==4.1.0
 celery==4.4.2
 certifi==2019.9.11
 cffi==1.12.3
@@ -117,6 +118,8 @@ Flask-PaperTrail==0.0.3
 Flask-SQLAlchemy==2.4.1
 flower==0.9.3
 future==0.17.1
+google-auth==1.17.2
+google-auth-oauthlib==0.4.1
 haikunator==2.1.0
 idna==2.8
 importlib-metadata==0.23
@@ -134,10 +137,12 @@ msrest==0.6.10
 msrestazure==0.6.2
 numpy==1.16.6
 oauthlib==3.1.0
+pandas==1.0.5
 pathlib2==2.3.5
 pathspec==0.8.0
 psycopg2-binary==2.8.5
 pyasn1==0.4.7
+pyasn1-modules==0.2.8
 pycparser==2.19
 PyJWT==1.7.1
 python-dateutil==2.8.0
