@@ -122,6 +122,9 @@ def payment(action, **kwargs):
                     account_locked = not customer["paid"] and customer[
                         "trial_end"
                     ] < dateToUnix(getToday())
+
+                    print(str(e))
+
                     return (
                         jsonify(
                             {
