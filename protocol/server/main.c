@@ -842,14 +842,15 @@ int MultithreadedWaitForClient(void* opaque) {
             host_id = client_id;
         }
 
-        /* Make everyone a controller */
-        clients[client_id].is_controlling = true;
 
         num_active_clients++;
-        if (num_controlling_clients == 0) {
-            clients[client_id].is_controlling = true;
-            num_controlling_clients++;
-        }
+        /* Make everyone a controller */
+        clients[client_id].is_controlling = true;
+        num_controlling_clients++;
+        // if (num_controlling_clients == 0) {
+        //     clients[client_id].is_controlling = true;
+        //     num_controlling_clients++;
+        // }
 
         StartTimer(&(clients[client_id].last_ping));
 
