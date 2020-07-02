@@ -2,7 +2,7 @@
 
 /*
  * num_writers includes any waiting writers and any active writer
-*/
+ */
 #include "rwlock.h"
 #include "../core/fractal.h"
 
@@ -43,14 +43,16 @@ int writeLock(RWLock *rwlock) {
     // Wait for all of the active readers to go home
     SDL_LockMutex(rwlock->num_active_readers_lock);
     while (rwlock->num_active_readers > 0) {
-        SDL_CondWait(rwlock->no_active_readers_cond, rwlock->num_active_readers_lock);
+        SDL_CondWait(rwlock->no_active_readers_cond,
+                     rwlock->num_active_readers_lock);
     }
     SDL_UnlockMutex(rwlock->num_active_readers_lock);
 
     // Wait for the active writer to go home
     SDL_LockMutex(rwlock->is_active_writer_lock);
     while (rwlock->is_active_writer) {
-        SDL_CondWait(rwlock->no_active_writer_cond, rwlock->is_active_writer_lock);
+        SDL_CondWait(rwlock->no_active_writer_cond,
+                     rwlock->is_active_writer_lock);
     }
 
     // Take the only active writer spot

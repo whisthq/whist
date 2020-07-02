@@ -27,7 +27,6 @@ int InitPeerCursors(void);
 
 int DestroyPeerCursors(void);
 
-int drawPeerCursor(SDL_Renderer *renderer,
-                        int x, int y, int r, int g, int b);
+int drawPeerCursor(SDL_Renderer *renderer, int x, int y, int r, int g, int b);
 
 #endif  // PEERCURSOR_H

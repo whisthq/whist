@@ -4,34 +4,34 @@
 
 // the write is_active_rwlock takes precedence over
 typedef struct Client {
-	/* ACTIVE */
-	bool is_active; // protected by global is_active_rwlock
-	bool is_controlling; // protected by state lock
-	bool is_host; // protected by state lock
+    /* ACTIVE */
+    bool is_active;       // protected by global is_active_rwlock
+    bool is_controlling;  // protected by state lock
+    bool is_host;         // protected by state lock
 
-	/* USER INFO */
-	int username; // not lock protected
+    /* USER INFO */
+    int username;  // not lock protected
 
-	/* NETWORK */
-	SocketContext UDP_context; // protected by global is_active_rwlock
-	SocketContext TCP_context; // protected by global is_active_rwlock
-    int UDP_port; // protected by global is_active_rwlock
-    int TCP_port; // protected by global is_active_rwlock
+    /* NETWORK */
+    SocketContext UDP_context;  // protected by global is_active_rwlock
+    SocketContext TCP_context;  // protected by global is_active_rwlock
+    int UDP_port;               // protected by global is_active_rwlock
+    int TCP_port;               // protected by global is_active_rwlock
 
-	/* MOUSE */
-	struct {
-		int x;
-		int y;
-	    struct {
-			int r;
-			int g;
-			int b;
-		} color;
-		bool is_active;
-	} mouse; // protected by state lock
+    /* MOUSE */
+    struct {
+        int x;
+        int y;
+        struct {
+            int r;
+            int g;
+            int b;
+        } color;
+        bool is_active;
+    } mouse;  // protected by state lock
 
-	/* PING */
-	clock last_ping; // not lock protected
+    /* PING */
+    clock last_ping;  // not lock protected
 
 } Client;
 

@@ -61,7 +61,7 @@ volatile int client_height = -1;
 volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
-input_device_t *input_device = NULL;
+input_device_t* input_device = NULL;
 // volatile
 
 char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
@@ -437,7 +437,9 @@ int32_t SendVideo(void* opaque) {
                     // encoder->encoded_frame_size, frame->is_iframe ?
                     // "(I-frame)" :
                     // "");
-                    PeerUpdateMessage *peer_update_msgs = (PeerUpdateMessage *) (((char *) frame->compressed_frame) + frame->size);
+                    PeerUpdateMessage* peer_update_msgs =
+                        (PeerUpdateMessage*)(((char*)frame->compressed_frame) +
+                                             frame->size);
 
                     size_t num_msgs;
                     if (readLock(&is_active_rwlock) != 0) {
@@ -445,24 +447,30 @@ int32_t SendVideo(void* opaque) {
                     } else if (SDL_LockMutex(state_lock) != 0) {
                         LOG_ERROR("Failed to lock state lock");
                         if (readUnlock(&is_active_rwlock) != 0) {
-                            LOG_ERROR("Failed to read-release is active RW lock.");
+                            LOG_ERROR(
+                                "Failed to read-release is active RW lock.");
                         }
                     } else {
-                        if (fillPeerUpdateMessages(peer_update_msgs, &num_msgs) != 0) {
+                        if (fillPeerUpdateMessages(peer_update_msgs,
+                                                   &num_msgs) != 0) {
                             LOG_ERROR("Failed to copy peer update messages.");
                         }
-                        frame->num_peer_update_msgs = (int) num_msgs;
+                        frame->num_peer_update_msgs = (int)num_msgs;
 
                         StartTimer(&t);
 
                         // Send video packet to client
                         if (broadcastUDPPacket(
                                 PACKET_VIDEO, (uint8_t*)frame,
-                                frame_size + sizeof(PeerUpdateMessage) * num_msgs, id, STARTING_BURST_BITRATE,
+                                frame_size +
+                                    sizeof(PeerUpdateMessage) * num_msgs,
+                                id, STARTING_BURST_BITRATE,
                                 video_buffer[id % VIDEO_BUFFER_SIZE],
-                                video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) !=
+                                video_buffer_packet_len[id %
+                                                        VIDEO_BUFFER_SIZE]) !=
                             0) {
-                            LOG_WARNING("Could not broadcast video frame ID %d", id);
+                            LOG_WARNING("Could not broadcast video frame ID %d",
+                                        id);
                         } else {
                             // Only increment ID if the send succeeded
                             id++;
@@ -471,10 +479,10 @@ int32_t SendVideo(void* opaque) {
                             LOG_ERROR("Failed to unlock state lock");
                         }
                         if (readUnlock(&is_active_rwlock) != 0) {
-                            LOG_ERROR("Failed to read-release is active RW lock.");
+                            LOG_ERROR(
+                                "Failed to read-release is active RW lock.");
                         }
                     }
-
 
                     // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
                     // GetTimer( t ), frame_size );
@@ -525,12 +533,10 @@ int32_t SendAudio(void* opaque) {
     if (readLock(&is_active_rwlock) != 0) {
         LOG_ERROR("Failed to read-acquire is active RW lock.");
     } else {
-        if (broadcastUDPPacket(PACKET_MESSAGE,
-                               (uint8_t*) &fmsg,
-                               sizeof(fmsg), 1,
+        if (broadcastUDPPacket(PACKET_MESSAGE, (uint8_t*)&fmsg, sizeof(fmsg), 1,
                                STARTING_BURST_BITRATE, NULL, NULL) != 0) {
             LOG_ERROR("Failed to broadcast audio packet.");
-         }
+        }
         if (readUnlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to read-release is active RW lock.");
         }
@@ -579,17 +585,18 @@ int32_t SendAudio(void* opaque) {
                         LOG_ERROR("Failed to read-acquire is active RW lock.");
                     } else {
                         if (broadcastUDPPacket(
-                                PACKET_AUDIO,
-                                audio_encoder->encoded_frame_data,
+                                PACKET_AUDIO, audio_encoder->encoded_frame_data,
                                 audio_encoder->encoded_frame_size, id,
                                 STARTING_BURST_BITRATE,
                                 audio_buffer[id % AUDIO_BUFFER_SIZE],
-                                audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) <
+                                audio_buffer_packet_len[id %
+                                                        AUDIO_BUFFER_SIZE]) <
                             0) {
                             LOG_WARNING("Could not send audio frame");
                         }
                         if (readUnlock(&is_active_rwlock) != 0) {
-                            LOG_ERROR("Failed to read-release is active RW lock.");
+                            LOG_ERROR(
+                                "Failed to read-release is active RW lock.");
                         }
                     }
                     // mprintf("sent audio frame %d\n", id);
@@ -605,9 +612,11 @@ int32_t SendAudio(void* opaque) {
                 } else {
                     if (broadcastUDPPacket(
                             PACKET_AUDIO, audio_device->buffer,
-                            audio_device->buffer_size, id, STARTING_BURST_BITRATE,
+                            audio_device->buffer_size, id,
+                            STARTING_BURST_BITRATE,
                             audio_buffer[id % AUDIO_BUFFER_SIZE],
-                            audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
+                            audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) <
+                        0) {
                         mprintf("Could not send audio frame\n");
                     }
                     if (readUnlock(&is_active_rwlock) != 0) {
@@ -671,8 +680,8 @@ void update() {
 
 #include <time.h>
 
-int doDiscoveryHandshake(SocketContext *context, int *client_id) {
-    FractalPacket *packet;
+int doDiscoveryHandshake(SocketContext* context, int* client_id) {
+    FractalPacket* packet;
     clock timer;
     StartTimer(&timer);
     do {
@@ -685,7 +694,7 @@ int doDiscoveryHandshake(SocketContext *context, int *client_id) {
         return -1;
     }
 
-    FractalClientMessage *fcmsg = (FractalClientMessage *) packet->data;
+    FractalClientMessage* fcmsg = (FractalClientMessage*)packet->data;
     int username = fcmsg->discoveryRequest.username;
 
     if (readLock(&is_active_rwlock) != 0) {
@@ -695,8 +704,10 @@ int doDiscoveryHandshake(SocketContext *context, int *client_id) {
     bool found;
     int ret;
     if ((ret = tryFindClientIdByUsername(username, &found, client_id)) != 0) {
-        LOG_ERROR("Failed to try to find client ID by username. "
-                  " (Username: %s)", username);
+        LOG_ERROR(
+            "Failed to try to find client ID by username. "
+            " (Username: %s)",
+            username);
     }
     if (ret == 0 && found) {
         if (readUnlock(&is_active_rwlock) != 0) {
@@ -736,17 +747,17 @@ int doDiscoveryHandshake(SocketContext *context, int *client_id) {
     LOG_INFO("Found ID for client. (ID: %d)", *client_id);
 
     size_t fsmsg_size =
-           sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
+        sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
 
-    FractalServerMessage *fsmsg = malloc(fsmsg_size);
+    FractalServerMessage* fsmsg = malloc(fsmsg_size);
     if (fsmsg == NULL) {
-      LOG_ERROR("Failed to malloc server message.");
-      return -1;
+        LOG_ERROR("Failed to malloc server message.");
+        return -1;
     }
     fsmsg->type = MESSAGE_DISCOVERY_REPLY;
 
-    FractalDiscoveryReplyMessage *reply_msg =
-        (FractalDiscoveryReplyMessage *) fsmsg->discovery_reply;
+    FractalDiscoveryReplyMessage* reply_msg =
+        (FractalDiscoveryReplyMessage*)fsmsg->discovery_reply;
 
     reply_msg->client_id = *client_id;
     reply_msg->UDP_port = clients[*client_id].UDP_port;
@@ -755,18 +766,18 @@ int doDiscoveryHandshake(SocketContext *context, int *client_id) {
     reply_msg->connection_id = connection_id;
     char* server_username = "Fractal";
     memcpy(reply_msg->username, server_username, strlen(server_username) + 1);
-    #ifdef _WIN32
-            reply_msg->filename[0] = '\0';
-            strcat(reply_msg->filename, "C:\\ProgramData\\FractalCache");
-    #else  // Linux
-            char* cwd = getcwd(NULL, 0);
-            memcpy(reply_msg->filename, cwd, strlen(cwd) + 1);
-            free(cwd);
-    #endif
+#ifdef _WIN32
+    reply_msg->filename[0] = '\0';
+    strcat(reply_msg->filename, "C:\\ProgramData\\FractalCache");
+#else  // Linux
+    char* cwd = getcwd(NULL, 0);
+    memcpy(reply_msg->filename, cwd, strlen(cwd) + 1);
+    free(cwd);
+#endif
 
     LOG_INFO("Sending discovery packet");
-    if (SendTCPPacket(context, PACKET_MESSAGE,
-                      (uint8_t*) fsmsg, (int) fsmsg_size) < 0) {
+    if (SendTCPPacket(context, PACKET_MESSAGE, (uint8_t*)fsmsg,
+                      (int)fsmsg_size) < 0) {
         LOG_ERROR("Failed to send send discovery reply message.");
         closesocket(context->s);
         free(fsmsg);
@@ -784,9 +795,7 @@ int MultithreadedWaitForClient(void* opaque) {
     int client_id;
 
     while (running) {
-        if (CreateTCPContext(&discovery_context,
-                             NULL, PORT_DISCOVERY,
-                             1, 5000,
+        if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, 5000,
                              USING_STUN) < 0) {
             continue;
         }
@@ -798,10 +807,13 @@ int MultithreadedWaitForClient(void* opaque) {
 
         LOG_INFO("Discovery handshake succeeded. (ID: %d)", client_id);
 
-        // Client is not in use so we don't need to worry about anyone else touching it
+        // Client is not in use so we don't need to worry about anyone else
+        // touching it
         if (connectClient(client_id) != 0) {
-            LOG_WARNING("Failed to establish connection with client. "
-                      "(ID: %d)", client_id);
+            LOG_WARNING(
+                "Failed to establish connection with client. "
+                "(ID: %d)",
+                client_id);
             continue;
         }
 
@@ -896,9 +908,9 @@ int main() {
 #endif
 
     if (initClients() != 0) {
-      LOG_ERROR("Failed to initialize client objects.");
-      destroyLogger();
-      return 1;
+        LOG_ERROR("Failed to initialize client objects.");
+        destroyLogger();
+        return 1;
     }
 
     update();
@@ -914,18 +926,15 @@ int main() {
         wants_iframe = false;
         update_encoder = false;
 
-        SDL_Thread* wait_for_client =
-            SDL_CreateThread(MultithreadedWaitForClient,
-                             "MultithreadedWaitForClient", NULL);
+        SDL_Thread* wait_for_client = SDL_CreateThread(
+            MultithreadedWaitForClient, "MultithreadedWaitForClient", NULL);
         wait_for_client;
         while (num_active_clients == 0) SDL_Delay(500);
         connected = true;
         SDL_Delay(500);
 
-        SDL_Thread* send_video =
-            SDL_CreateThread(SendVideo, "SendVideo", NULL);
-        SDL_Thread* send_audio =
-            SDL_CreateThread(SendAudio, "SendAudio", NULL);
+        SDL_Thread* send_video = SDL_CreateThread(SendVideo, "SendVideo", NULL);
+        SDL_Thread* send_audio = SDL_CreateThread(SendAudio, "SendAudio", NULL);
         LOG_INFO("Sending video and audio...");
 
         input_device = CreateInputDevice();
@@ -980,9 +989,9 @@ int main() {
                 if (readLock(&is_active_rwlock) != 0) {
                     LOG_ERROR("Failed to read-acquire is active RW lock.");
                 } else {
-                    if (broadcastTCPPacket(PACKET_MESSAGE,
-                                (uint8_t*)fmsg_response,
-                                sizeof(FractalServerMessage) + cb->size) < 0) {
+                    if (broadcastTCPPacket(
+                            PACKET_MESSAGE, (uint8_t*)fmsg_response,
+                            sizeof(FractalServerMessage) + cb->size) < 0) {
                         LOG_WARNING("Could not broadcast Clipboard Message");
                     } else {
                         LOG_INFO("Send clipboard message!");
@@ -1012,14 +1021,16 @@ int main() {
                     }
                     if (should_reap) {
                         if (writeLock(&is_active_rwlock) != 0) {
-                            LOG_ERROR("Failed to write-acquire is active RW lock.");
+                            LOG_ERROR(
+                                "Failed to write-acquire is active RW lock.");
                             break;
                         }
                         if (reapTimedOutClients(3.0) != 0) {
                             LOG_ERROR("Failed to reap timed out clients.");
                         }
                         if (writeUnlock(&is_active_rwlock) != 0) {
-                            LOG_ERROR("Failed to write-release is active RW lock.");
+                            LOG_ERROR(
+                                "Failed to write-release is active RW lock.");
                         }
                     }
                     break;
@@ -1037,15 +1048,15 @@ int main() {
                     if (readLock(&is_active_rwlock) != 0) {
                         LOG_ERROR("Failed to read-acquire is active RW lock.");
                     } else {
-                        if (broadcastUDPPacket(PACKET_MESSAGE,
-                                          (uint8_t*)&fmsg_response,
-                                          sizeof(FractalServerMessage), 1,
-                                          STARTING_BURST_BITRATE,
-                                          NULL, NULL) != 0) {
+                        if (broadcastUDPPacket(
+                                PACKET_MESSAGE, (uint8_t*)&fmsg_response,
+                                sizeof(FractalServerMessage), 1,
+                                STARTING_BURST_BITRATE, NULL, NULL) != 0) {
                             LOG_WARNING("Could not send Quit Message");
                         }
                         if (readUnlock(&is_active_rwlock) != 0) {
-                            LOG_ERROR("Failed to read-release is active RW lock.");
+                            LOG_ERROR(
+                                "Failed to read-release is active RW lock.");
                         }
                     }
                     // Give a bit of time to make sure no one is touching it
@@ -1067,13 +1078,14 @@ int main() {
                 if (!clients[id].is_active) continue;
 
                 // Get packet!
-                FractalClientMessage *fmsg;
+                FractalClientMessage* fmsg;
                 FractalClientMessage local_fcmsg;
                 size_t fcmsg_size;
-                if (tryGetNextMessageTCP(id, &fmsg, &fcmsg_size) != 0
-                        || fcmsg_size == 0) {
-                    if (tryGetNextMessageUDP(id, &local_fcmsg, &fcmsg_size) != 0
-                            || fcmsg_size == 0) {
+                if (tryGetNextMessageTCP(id, &fmsg, &fcmsg_size) != 0 ||
+                    fcmsg_size == 0) {
+                    if (tryGetNextMessageUDP(id, &local_fcmsg, &fcmsg_size) !=
+                            0 ||
+                        fcmsg_size == 0) {
                         continue;
                     }
                     fmsg = &local_fcmsg;
@@ -1087,8 +1099,10 @@ int main() {
                 bool is_controlling = clients[id].is_controlling;
                 SDL_UnlockMutex(state_lock);
                 if (handleClientMessage(fmsg, id, is_controlling) != 0) {
-                    LOG_ERROR("Failed to handle message from client. "
-                              "(ID: %d)", id);
+                    LOG_ERROR(
+                        "Failed to handle message from client. "
+                        "(ID: %d)",
+                        id);
                 } else {
                     // if (handleSpectatorMessage(fmsg, id) != 0) {
                     //     LOG_ERROR("Failed to handle message from spectator");

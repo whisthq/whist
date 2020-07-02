@@ -486,7 +486,7 @@ int main(int argc, char* argv[]) {
     srand(rand() * (unsigned int)time(NULL) + rand());
     uid = rand();
 
-    char *log_dir = getLogDir();
+    char* log_dir = getLogDir();
     if (log_dir == NULL) {
         return -1;
     }
@@ -572,7 +572,7 @@ int main(int argc, char* argv[]) {
 
         StartTimer(&window_resize_timer);
 
-        if(sendTimeToServer() != 0) {
+        if (sendTimeToServer() != 0) {
             LOG_ERROR("Failed to synchronize time with server.");
         }
 
@@ -592,7 +592,7 @@ int main(int argc, char* argv[]) {
         while (connected && !exiting && !failed) {
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);
-                Ack( &PacketTCPContext );
+                Ack(&PacketTCPContext);
                 StartTimer(&ack_timer);
             }
             // if we are running a CI test we run for time_to_run_ci secondsA

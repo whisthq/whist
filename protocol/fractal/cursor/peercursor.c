@@ -7,10 +7,10 @@ static SDL_Surface *base_cursor_surface;
 static void replaceColor(SDL_Surface *sfc, Uint32 old_color, Uint32 new_color) {
     for (int x = 0; x < sfc->w; x++) {
         for (int y = 0; y < sfc->h; y++) {
-            Uint8 * pixel = (Uint8*) sfc->pixels;
+            Uint8 *pixel = (Uint8 *)sfc->pixels;
             pixel += (y * sfc->pitch) + (x * sfc->format->BytesPerPixel);
-            if (*((Uint32*)pixel) == old_color) {
-                *((Uint32*)pixel) = new_color;
+            if (*((Uint32 *)pixel) == old_color) {
+                *((Uint32 *)pixel) = new_color;
             }
         }
     }
@@ -21,21 +21,22 @@ static SDL_Surface *duplicateSurface(SDL_Surface *surface) {
         LOG_ERROR("surface is null");
         exit(1);
     }
-    SDL_Surface *new_surface = SDL_CreateRGBSurface(0,
-        surface->w, surface->h,
-        surface->format->BitsPerPixel,
-        surface->format->Rmask,
-        surface->format->Gmask,
-        surface->format->Bmask,
+    SDL_Surface *new_surface = SDL_CreateRGBSurface(
+        0, surface->w, surface->h, surface->format->BitsPerPixel,
+        surface->format->Rmask, surface->format->Gmask, surface->format->Bmask,
         surface->format->Amask);
     if (new_surface == NULL) {
-        LOG_ERROR("Failed to create new surface. "
-                  "(Error: %s)", SDL_GetError());
+        LOG_ERROR(
+            "Failed to create new surface. "
+            "(Error: %s)",
+            SDL_GetError());
         return NULL;
     }
     if (SDL_BlitSurface(surface, NULL, new_surface, NULL) != 0) {
-        LOG_ERROR("Failed to blit surface. "
-                  "(Error: %s)", SDL_GetError());
+        LOG_ERROR(
+            "Failed to blit surface. "
+            "(Error: %s)",
+            SDL_GetError());
         SDL_FreeSurface(new_surface);
         return NULL;
     }
@@ -49,8 +50,10 @@ int InitPeerCursors(void) {
         return -1;
     }
     if (SDL_LockSurface(base_cursor_surface) != 0) {
-        LOG_ERROR("Failed to unlock cursor surface. "
-                  "(Error: %s)", SDL_GetError());
+        LOG_ERROR(
+            "Failed to unlock cursor surface. "
+            "(Error: %s)",
+            SDL_GetError());
         SDL_FreeSurface(base_cursor_surface);
         return -1;
     }
@@ -61,8 +64,10 @@ int InitPeerCursors(void) {
     }
     Uint32 white = SDL_MapRGB(base_cursor_surface->format, 255, 255, 255);
     if (SDL_SetColorKey(base_cursor_surface, SDL_TRUE, white) != 0) {
-        LOG_ERROR("Failed to set cursor's key color. "
-                  "(Error: %s)", SDL_GetError());
+        LOG_ERROR(
+            "Failed to set cursor's key color. "
+            "(Error: %s)",
+            SDL_GetError());
         SDL_FreeSurface(base_cursor_surface);
         return -1;
     }
@@ -75,17 +80,17 @@ int DestroyPeerCursors(void) {
     return 0;
 }
 
-
-int drawPeerCursor(SDL_Renderer *renderer,
-                        int x, int y, int r, int g, int b) {
+int drawPeerCursor(SDL_Renderer *renderer, int x, int y, int r, int g, int b) {
     SDL_Surface *sfc = duplicateSurface(base_cursor_surface);
     if (sfc == NULL) {
         LOG_ERROR("Failed to duplicate base cursor surface.");
         return -1;
     }
     if (SDL_LockSurface(sfc) != 0) {
-        LOG_ERROR("Failed to create lock cursor surface. "
-                  "(Error: %s)", SDL_GetError());
+        LOG_ERROR(
+            "Failed to create lock cursor surface. "
+            "(Error: %s)",
+            SDL_GetError());
         SDL_FreeSurface(sfc);
         return -1;
     }
@@ -97,8 +102,10 @@ int drawPeerCursor(SDL_Renderer *renderer,
     SDL_Texture *txtr = SDL_CreateTextureFromSurface(renderer, sfc);
     SDL_FreeSurface(sfc);
     if (txtr == NULL) {
-        LOG_ERROR("Failed to create cursor texture from surface. "
-                  "(Error: %s)", SDL_GetError());
+        LOG_ERROR(
+            "Failed to create cursor texture from surface. "
+            "(Error: %s)",
+            SDL_GetError());
         return -1;
     }
 
@@ -109,11 +116,12 @@ int drawPeerCursor(SDL_Renderer *renderer,
     rect.y = y;
 
     if (SDL_RenderCopy(renderer, txtr, NULL, &rect) != 0) {
-        LOG_ERROR("Failed to render copy cursor. "
-                  "(Error: %s)", SDL_GetError());
+        LOG_ERROR(
+            "Failed to render copy cursor. "
+            "(Error: %s)",
+            SDL_GetError());
         SDL_DestroyTexture(txtr);
         return -1;
-
     }
     SDL_DestroyTexture(txtr);
     return 0;

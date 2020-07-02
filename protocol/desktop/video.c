@@ -253,12 +253,12 @@ void updateDecoderParameters(int width, int height, CodecType codec_type) {
     output_codec_type = codec_type;
 }
 
-static int renderPeers(SDL_Renderer *renderer, PeerUpdateMessage *msgs,
-                size_t num_msgs) {
+static int renderPeers(SDL_Renderer* renderer, PeerUpdateMessage* msgs,
+                       size_t num_msgs) {
     int ret = 0;
 
     int window_width, window_height;
-    SDL_GetWindowSize((SDL_Window *) window, &window_width, &window_height);
+    SDL_GetWindowSize((SDL_Window*)window, &window_width, &window_height);
     int x = msgs->x * window_width / (int32_t)MOUSE_SCALING_FACTOR;
     int y = msgs->y * window_height / (int32_t)MOUSE_SCALING_FACTOR;
 
@@ -266,10 +266,8 @@ static int renderPeers(SDL_Renderer *renderer, PeerUpdateMessage *msgs,
         if (client_id == msgs->peer_id) {
             continue;
         }
-        if (drawPeerCursor(renderer, x, y,
-                                msgs->color.r,
-                                msgs->color.g,
-                                msgs->color.b) != 0) {
+        if (drawPeerCursor(renderer, x, y, msgs->color.r, msgs->color.g,
+                           msgs->color.b) != 0) {
             LOG_ERROR("Failed to draw spectator cursor.");
             ret = -1;
         }
@@ -326,7 +324,9 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
 
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)renderContext.frame_buffer;
-        PeerUpdateMessage *peer_update_msgs = (PeerUpdateMessage *) (((char *) frame->compressed_frame) + frame->size);
+        PeerUpdateMessage* peer_update_msgs =
+            (PeerUpdateMessage*)(((char*)frame->compressed_frame) +
+                                 frame->size);
         size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
 #if LOG_VIDEO
@@ -342,9 +342,13 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                 renderContext.num_packets, frame->is_iframe ? "(I-Frame)" : "");
         }
 
-        if ((int)(sizeof(Frame) + frame->size + sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs) != renderContext.frame_size) {
+        if ((int)(sizeof(Frame) + frame->size +
+                  sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs) !=
+            renderContext.frame_size) {
             mprintf("Incorrect Frame Size! %d instead of %d\n",
-                    sizeof(Frame) + frame->size + sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs, renderContext.frame_size);
+                    sizeof(Frame) + frame->size +
+                        sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs,
+                    renderContext.frame_size);
         }
 
         if (frame->width != server_width || frame->height != server_height ||
@@ -456,14 +460,14 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         // GetTimer(renderContext.client_frame_timer));
 
         if (!skip_render && can_render) {
-            //SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160, SDL_ALPHA_OPAQUE);
-            //SDL_RenderClear((SDL_Renderer*)renderer);
+            // SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
+            // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
 
             SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL,
                            NULL);
-            if (renderPeers((SDL_Renderer *) renderer, peer_update_msgs,
+            if (renderPeers((SDL_Renderer*)renderer, peer_update_msgs,
                             num_peer_update_msgs) != 0) {
-              LOG_ERROR("Failed to render peers.");
+                LOG_ERROR("Failed to render peers.");
             }
             SDL_RenderPresent((SDL_Renderer*)renderer);
         }

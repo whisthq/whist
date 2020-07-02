@@ -179,7 +179,7 @@ int handleMouseMotion(SDL_Event *event) {
     bool is_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
 
     int window_width, window_height;
-    SDL_GetWindowSize((SDL_Window *) window, &window_width, &window_height);
+    SDL_GetWindowSize((SDL_Window *)window, &window_width, &window_height);
 
     x_nonrel = event->motion.x * MOUSE_SCALING_FACTOR / window_width;
     y_nonrel = event->motion.y * MOUSE_SCALING_FACTOR / window_width;

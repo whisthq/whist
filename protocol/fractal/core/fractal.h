@@ -426,7 +426,8 @@ typedef struct FractalClientMessage {
         FractalMouseButtonMessage mouseButton;  ///< Mouse button message.
         FractalMouseWheelMessage mouseWheel;    ///< Mouse wheel message.
         FractalMouseMotionMessage mouseMotion;  ///< Mouse motion message.
-        FractalDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
+        FractalDiscoveryRequestMessage
+            discoveryRequest;  ///< Discovery request message.
 
         // CMESSAGE_INTERACTION_MODE
         InteractionMode interaction_mode;
