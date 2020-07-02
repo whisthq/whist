@@ -795,7 +795,7 @@ int MultithreadedWaitForClient(void* opaque) {
     int client_id;
 
     bool trying_to_update = false;
-    clock_t last_update_timer;
+    clock last_update_timer;
     StartTimer(&last_update_timer);
 
     while (running) {
