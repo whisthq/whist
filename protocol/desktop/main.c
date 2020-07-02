@@ -3,7 +3,7 @@
  *
  * Copyright Fractal Computers, Inc. 2020
  **/
-#if defined(_WIN32)
+#ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
