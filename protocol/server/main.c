@@ -791,10 +791,29 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
 
 int MultithreadedWaitForClient(void* opaque) {
     opaque;
+
     SocketContext discovery_context;
     int client_id;
 
+    bool trying_to_update = false;
+    clock last_update_timer;
+    StartTimer(&last_update_timer);
+
     while (running) {
+        if (num_controlling_clients == 0) {
+            if (trying_to_update) {
+                if (GetTimer(last_update_timer) > 10.0) {
+                    update();
+                    StartTimer(&last_update_timer);
+                }
+            } else {
+                StartTimer(&last_update_timer);
+                trying_to_update = true;
+            }
+        } else {
+            trying_to_update = false;
+        }
+
         if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, 5000,
                              USING_STUN) < 0) {
             continue;
@@ -823,11 +842,15 @@ int MultithreadedWaitForClient(void* opaque) {
         if (host_id == -1) {
             host_id = client_id;
         }
+
         num_active_clients++;
-        if (num_controlling_clients == 0) {
-            clients[client_id].is_controlling = true;
-            num_controlling_clients++;
-        }
+        /* Make everyone a controller */
+        clients[client_id].is_controlling = true;
+        num_controlling_clients++;
+        // if (num_controlling_clients == 0) {
+        //     clients[client_id].is_controlling = true;
+        //     num_controlling_clients++;
+        // }
 
         StartTimer(&(clients[client_id].last_ping));
 
