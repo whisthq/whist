@@ -5,13 +5,26 @@
 add_executable(FractalClient
         main.c
         main.h
-        video.c
         audio.c
-        sdl_utils.c)
+        desktop_utils.c
+        fractalgetopt.c
+        network.c
+        sdl_event_handler.c
+        sdl_utils.c
+        server_message_handler.c
+        video.c)
 
+# set the build directory
 set_target_properties(FractalClient PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/desktop/build${arch}
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/desktop/build${arch})
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/desktop/build${arch}/${CMAKE_SYSTEM_NAME}
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/desktop/build${arch}/${CMAKE_SYSTEM_NAME})
+# move necessary files into the build directory
+add_custom_command(TARGET FractalClient PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/desktop/loading $<TARGET_FILE_DIR:FractalClient>/loading)
+add_custom_command(TARGET FractalClient PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/desktop/external_utils/${CMAKE_SYSTEM_NAME} $<TARGET_FILE_DIR:FractalClient>)
 
 
 #Print out compile flags in verbose mode of CMake
@@ -43,6 +56,7 @@ endif ()
 target_link_libraries(FractalClient
         fractalCore
         fractalAudio
+        fractalCursor
         fractalVideo
         fractalClipboard
         fractalNetwork
@@ -59,7 +73,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             Xfixes)
     find_package(ALSA REQUIRED)
     include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
-    target_link_libraries(FractalClient fractalInput fractalCursor
+    target_link_libraries(FractalClient fractalInput
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
             ${ALSA_LIBRARIES}
@@ -100,7 +114,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
 
-    target_link_libraries(FractalClient fractalInput fractalCursor ${LIBMFX})
+    target_link_libraries(FractalClient fractalInput ${LIBMFX})
 
     set_property(TARGET FractalClient PROPERTY
             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -127,6 +141,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             crypt32
             d3d11
             dxgi
+            dxguid
             shcore
+            DbgHelp
             )
 endif()

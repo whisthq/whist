@@ -182,15 +182,16 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
     */
 
     clock packet_timer;
-    StartTimer( &packet_timer );
+    StartTimer(&packet_timer);
 
     while (curr_index < len) {
         // Delay distribution of packets as needed
-        while( burst_bitrate > 0 && curr_index - 5000 > GetTimer( packet_timer ) * max_bytes_per_second )
-        {
-            SDL_Delay( 1 );
+        while (burst_bitrate > 0 &&
+               curr_index - 5000 >
+                   GetTimer(packet_timer) * max_bytes_per_second) {
+            SDL_Delay(1);
         }
-        
+
         // local packet and len for when nack buffer isn't needed
         FractalPacket l_packet = {0};
         int l_len = 0;
@@ -243,7 +244,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
         curr_index += payload_size;
     }
 
-    //LOG_INFO( "Packet Time: %f\n", GetTimer( packet_timer ) );
+    // LOG_INFO( "Packet Time: %f\n", GetTimer( packet_timer ) );
 
     return 0;
 }
@@ -257,7 +258,7 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
         LOG_WARNING("Context is NULL");
         return -1;
     }
-    if (packet == NULL){
+    if (packet == NULL) {
         LOG_WARNING("packet is NULL");
         return -1;
     }
@@ -293,7 +294,7 @@ int sendp(SocketContext *context, void *buf, int len) {
         LOG_WARNING("Context is NULL");
         return -1;
     }
-    if(len != 0 && buf == NULL){
+    if (len != 0 && buf == NULL) {
         LOG_ERROR("Passed non zero length and a NULL pointer to sendto");
         return -1;
     }
@@ -309,11 +310,13 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     int ret;
     set_timeout(s, 0);
     if ((ret = connect(s, (struct sockaddr *)(&addr), sizeof(addr))) < 0) {
-        bool worked = GetLastNetworkError() == EINPROGRESS;
+        bool worked = GetLastNetworkError() == FRACTAL_EINPROGRESS;
 
         if (!worked) {
-            LOG_WARNING("Could not connect() over TCP to server: Returned %d, Error Code %d\n",
-                        ret, GetLastNetworkError());
+            LOG_WARNING(
+                "Could not connect() over TCP to server: Returned %d, Error "
+                "Code %d\n",
+                ret, GetLastNetworkError());
             closesocket(s);
             return false;
         }
@@ -327,8 +330,10 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     tv.tv_sec = timeout_ms / 1000;
     tv.tv_usec = (timeout_ms % 1000) * 1000;
     if ((ret = select((int)s + 1, NULL, &set, NULL, &tv)) <= 0) {
-        LOG_WARNING("Could not select() over TCP to server: Returned %d, Error Code %d\n",
-                    ret, GetLastNetworkError());
+        LOG_WARNING(
+            "Could not select() over TCP to server: Returned %d, Error Code "
+            "%d\n",
+            ret, GetLastNetworkError());
         closesocket(s);
         return false;
     }
@@ -342,6 +347,7 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
         LOG_WARNING("Context is NULL");
         return NULL;
     }
+
     // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
     int encrypted_len =
@@ -358,6 +364,12 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
         // If there was an issue decrypting it, post warning and then
         // ignore the problem
         if (decrypted_len < 0) {
+            if (encrypted_len == sizeof(stun_entry_t)) {
+                stun_entry_t *e;
+                e = (void *)&encrypted_packet;
+                LOG_INFO("Maybe a map from public %d to private %d?",
+                         ntohs(e->private_port), ntohs(e->private_port));
+            }
             LOG_WARNING("Failed to decrypt packet");
             return NULL;
         }
@@ -367,8 +379,8 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
         if (encrypted_len < 0) {
             int error = GetLastNetworkError();
             switch (error) {
-                case ETIMEDOUT:
-                case EWOULDBLOCK:
+                case FRACTAL_ETIMEDOUT:
+                case FRACTAL_EWOULDBLOCK:
                     break;
                 default:
                     LOG_WARNING("Unexpected Packet Error: %d", error);
@@ -412,7 +424,7 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
 
         if (len < 0) {
             int err = GetLastNetworkError();
-            if (err == ETIMEDOUT || err == EAGAIN) {
+            if (err == FRACTAL_ETIMEDOUT || err == FRACTAL_EAGAIN) {
             } else {
                 // mprintf( "Error %d\n", err );
             }
@@ -699,7 +711,7 @@ int CreateTCPClientContext(SocketContext *context, char *destination, int port,
         LOG_WARNING("Context is NULL");
         return -1;
     }
-    if (destination == NULL){
+    if (destination == NULL) {
         LOG_WARNING("destiniation is NULL");
         return -1;
     }
@@ -744,7 +756,7 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
         LOG_WARNING("Context is NULL");
         return -1;
     }
-    if (destination == NULL){
+    if (destination == NULL) {
         LOG_WARNING("destiniation is NULL");
         return -1;
     }
@@ -870,8 +882,6 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
 
     LOG_INFO("Connecting to server...");
 
-    SDL_Delay(200);
-
     // Connect to TCP server
     if (!tcp_connect(context->s, context->addr, stun_timeout_ms)) {
         LOG_WARNING("Could not connect to server over TCP");
@@ -885,26 +895,25 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
 }
 
 int CreateTCPContext(SocketContext *context, char *destination, int port,
-                     int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun )  {
-    if( context == NULL )
-    {
-        LOG_WARNING( "Context is NULL" );
+                     int recvfrom_timeout_ms, int stun_timeout_ms,
+                     bool using_stun) {
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
         return -1;
     }
     context->mutex = SDL_CreateMutex();
 
     int ret;
 
-    if( using_stun )
-    {
+    if (using_stun) {
         if (destination == NULL)
             ret = CreateTCPServerContextStun(context, port, recvfrom_timeout_ms,
                                              stun_timeout_ms);
         else
             ret = CreateTCPClientContextStun(context, destination, port,
-                                             recvfrom_timeout_ms, stun_timeout_ms);
-    } else
-    {
+                                             recvfrom_timeout_ms,
+                                             stun_timeout_ms);
+    } else {
         if (destination == NULL)
             ret = CreateTCPServerContext(context, port, recvfrom_timeout_ms,
                                          stun_timeout_ms);
@@ -919,7 +928,7 @@ int CreateTCPContext(SocketContext *context, char *destination, int port,
 
 int CreateUDPServerContext(SocketContext *context, int port,
                            int recvfrom_timeout_ms, int stun_timeout_ms) {
-    if (context == NULL){
+    if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
     }
@@ -1028,8 +1037,8 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
         // If we haven't spent too much time waiting, and our previous 100ms
         // poll failed, then send another STUN update
         if (GetTimer(recv_timer) * 1000 < stun_timeout_ms &&
-            (GetLastNetworkError() == ETIMEDOUT ||
-             GetLastNetworkError() == EAGAIN)) {
+            (GetLastNetworkError() == FRACTAL_ETIMEDOUT ||
+             GetLastNetworkError() == FRACTAL_EAGAIN)) {
             if (sendto(context->s, (const char *)&stun_request,
                        sizeof(stun_request), 0, (struct sockaddr *)&stun_addr,
                        sizeof(stun_addr)) < 0) {
@@ -1273,19 +1282,19 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
 }
 
 int CreateUDPContext(SocketContext *context, char *destination, int port,
-                     int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun) {
+                     int recvfrom_timeout_ms, int stun_timeout_ms,
+                     bool using_stun) {
     context->mutex = SDL_CreateMutex();
 
-    if( using_stun )
-    {
-        if( destination == NULL )
-            return CreateUDPServerContextStun( context, port, recvfrom_timeout_ms,
-                                               stun_timeout_ms );
+    if (using_stun) {
+        if (destination == NULL)
+            return CreateUDPServerContextStun(
+                context, port, recvfrom_timeout_ms, stun_timeout_ms);
         else
-            return CreateUDPClientContextStun( context, destination, port,
-                                               recvfrom_timeout_ms, stun_timeout_ms );
-    } else
-    {
+            return CreateUDPClientContextStun(context, destination, port,
+                                              recvfrom_timeout_ms,
+                                              stun_timeout_ms);
+    } else {
         if (destination == NULL)
             return CreateUDPServerContext(context, port, recvfrom_timeout_ms,
                                           stun_timeout_ms);
@@ -1324,7 +1333,8 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     // create the struct for the webserver address socket we will query
     webserver_socketAddress.sin_family = AF_INET;
     webserver_socketAddress.sin_port = htons(80);  // HTTP port
-    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr);
+    webserver_socketAddress.sin_addr.s_addr =
+        *((unsigned long *)host->h_addr_list[0]);
 
     // connect to the web server before sending the POST request packet
     int connect_status =
@@ -1401,7 +1411,8 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
     // create the struct for the webserver address socket we will query
     webserver_socketAddress.sin_family = AF_INET;
     webserver_socketAddress.sin_port = htons(80);  // HTTP port
-    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr);
+    webserver_socketAddress.sin_addr.s_addr =
+        *((unsigned long *)host->h_addr_list[0]);
 
     // connect to the web server before sending the POST request packet
     int connect_status =
@@ -1428,15 +1439,14 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
     free(message);
 
     // now that it's sent, let's get the reply
-    int len = recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
-    if( len < 0 )
-    {
-        LOG_WARNING( "Response to JSON GET failed!" );
+    int len =
+        recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
+    if (len < 0) {
+        LOG_WARNING("Response to JSON GET failed!");
         json_res[0] = '\0';
-    } else
-    {
+    } else {
         json_res[len] = '\0';
-        LOG_INFO( "JSON GET Response: %s", json_res );
+        LOG_INFO("JSON GET Response: %s", json_res);
     }
 
     FRACTAL_CLOSE_SOCKET(Socket);

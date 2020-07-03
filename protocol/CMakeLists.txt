@@ -18,7 +18,11 @@ cmake_policy(SET CMP0091 NEW)
 #set default compiler flags
 set (CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
 
-project(FractalProtocol)
+project(FractalProtocol LANGUAGES C)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    enable_language(CUDA)
+endif()
 
 set(META_PROJECT_NAME        "FractalProtocol")
 set(META_PROJECT_DESCRIPTION "CMake Project for the Fractal client protocol clients on mac, linux and windows
@@ -36,6 +40,7 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 include(cmake/clang-format.cmake)
 # A small module which sets the default build type to debug if a .git is present and release otherwise.
 include(cmake/default-build.cmake)
+include(cmake/version-info.cmake)
 
 option(BUILD_SERVER "build FractalServer" ON)
 option(BUILD_CLIENT "build FractalClient" ON)
@@ -78,6 +83,25 @@ else()
     set(arch 32)
 endif()
 
+#download unison binary from AWS S3
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    MESSAGE(STATUS "Downloading binaries from AWS S3")
+    execute_process(COMMAND CMD /C "download-binaries.bat"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    RESULT_VARIABLE download_res)
+    if (NOT ${download_res} EQUAL "0")
+        message(FATAL_ERROR "Failed to binaries from AWS S3: exitcode: ${download_res}")
+    endif()
+else()
+    MESSAGE(STATUS "Downloading binaries from AWS S3")
+    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    RESULT_VARIABLE download)
+    if (NOT ${download} EQUAL "0")
+        message(FATAL_ERROR "Failed to download unison binary from AWS S3: exitcode: ${download}")
+    endif()
+endif()
+
 
 # ffmpeg: using our provided libs on mac and windows and system on linux.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -98,7 +122,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
     endforeach(LIB)
     message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
-    include_directories(include/ffmpeg)
+    find_path(FFMPEG_AVCODEC_INCLUDE_DIR
+            NAMES libavcodec/avcodec.h
+            PATHS ${_FFMPEG_AVCODEC_INCLUDE_DIRS} /usr/include /usr/local/include /opt/local/include /sw/include
+            PATH_SUFFIXES ffmpeg libav
+            )
+    message(VERBOSE "FFmpeg include dir: ${FFMPEG_AVCODEC_INCLUDE_DIR}")
+    include_directories(${FFMPEG_AVCODEC_INCLUDE_DIR})
 else()
     FOREACH(LIB ${FFMPEG_LIBS})
         message(STATUS "Looking for lib ${LIB}")
@@ -171,7 +201,8 @@ endif()
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
-include_directories(include/ffmpeg)
+include_directories(include/SDL_image)
+
 
 
 #Here is where we tell cmake to look in subdirectories for further CMakeLists.txt

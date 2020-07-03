@@ -3,7 +3,10 @@
 ]]
 
 add_executable(FractalServer
+        client.c
         main.c
+        handle_client_message.c
+        network.c
         )
 
 set_target_properties(FractalServer PROPERTIES
@@ -137,6 +140,7 @@ if(${WIN32})
             crypt32
             shlwapi
             shcore
+            DbgHelp
             )
 
 endif()

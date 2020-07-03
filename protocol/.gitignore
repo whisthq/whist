@@ -1,4 +1,5 @@
 # general files
+*.a
 *.o
 *.obj
 *.iml
@@ -13,6 +14,7 @@
 *.sln
 .idea/
 *.pdb
+*.exp
 *.ilk
 *.user
 **/log.txt
@@ -23,10 +25,15 @@
 version
 **/build32
 **/build64
-fractal/*/*.lib
-fractal/*/*.a
 desktop/log.txt
 server/log.txt
+share/
+desktop/external_utils/Darwin/mac_unison
+desktop/external_utils/Linux/linux_unison
+desktop/external_utils/Windows/unison.exe
+desktop/external_utils/Windows/ssh.exe
+desktop/loading/
+*.v
 
 # CMake
 *.cmake
@@ -34,7 +41,9 @@ server/log.txt
 *.marks
 *.internal
 *.includecache
-*.lib
+fractal/**/*.lib
+desktop/*.lib
+server/*.lib
 CMakeSettings.json
 
 cmake-build-*
@@ -48,3 +57,12 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
+
+#docs
+docs/html/
+docs/latex/
+
+#vagrant
+.vagrant
+*.box
+ubuntu-bionic-18.04-cloudimg-console.log
