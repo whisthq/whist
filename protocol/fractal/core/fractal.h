@@ -20,7 +20,6 @@ Includes
 #include <stdint.h>
 
 #if defined(_WIN32)
-#pragma warning(disable : 4200)
 #define _WINSOCKAPI_
 #include <Audioclient.h>
 #include <avrt.h>
@@ -64,6 +63,10 @@ Includes
 #include "../utils/clock.h"
 #include "../utils/logging.h"
 #include "fractal.v"
+
+#ifdef _WIN32
+#pragma warning(disable : 4200)
+#endif
 
 /*
 ============================

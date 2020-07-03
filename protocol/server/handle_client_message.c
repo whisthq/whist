@@ -282,6 +282,9 @@ static int handleIFrameRequestMessage(FractalClientMessage *fmsg, int client_id,
 
 static int handleInteractionModeMessage(FractalClientMessage *fmsg,
                                         int client_id, bool is_controlling) {
+    /* IGNORE INTERACTION MODE MESSAGES */
+    return 0;
+
     is_controlling;
     if (SDL_LockMutex(state_lock) != 0) {
         LOG_ERROR("Failed to lock client's mouse lock.");
