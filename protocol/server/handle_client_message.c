@@ -1,5 +1,6 @@
-#include "../fractal/clipboard/clipboard.h"
 #include "../fractal/core/fractal.h"
+
+#include "../fractal/clipboard/clipboard.h"
 #include "../fractal/input/input.h"
 #include "../fractal/network/network.h"
 #include "../fractal/utils/clock.h"

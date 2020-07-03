@@ -42,8 +42,9 @@ void initClipboardSynchronizer(char* server_ip_local) {
     StartTimer((clock*)&last_clipboard_update);
     clipboard_semaphore = SDL_CreateSemaphore(0);
 
-    thread =
-        SDL_CreateThread(UpdateClipboardThread, "UpdateClipboardThread", NULL);
+    // thread =
+    //     SDL_CreateThread(UpdateClipboardThread, "UpdateClipboardThread",
+    //     NULL);
 
     pending_update_clipboard = true;
 }
@@ -213,6 +214,8 @@ int UpdateClipboardThread(void* opaque) {
 }
 
 ClipboardData* ClipboardSynchronizerGetNewClipboard() {
+    return NULL;
+
     if (pending_clipboard_push) {
         pending_clipboard_push = false;
         return clipboard;
