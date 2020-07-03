@@ -148,7 +148,7 @@ class MainBox extends Component {
                     if (os.platform() === "darwin") {
                         // mac
                         // path when electron app is packaged as .dmg
-                        var path = appRootDir + "/protocol-build/";
+                        var path = appRootDir + "/protocol-build/desktop/";
                         path = path.replace("/Resources/app.asar", "");
                         path = path.replace("/desktop/app", "/desktop");
                         console.log(path);
