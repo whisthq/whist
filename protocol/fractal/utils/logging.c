@@ -4,7 +4,12 @@
 
 #include <stdio.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#define _NO_CVCONST_H
+#include <Windows.h>
+#include <DbgHelp.h>
+#include <process.h>
+#else
 #include <execinfo.h>
 #include <signal.h>
 #endif
@@ -54,9 +59,10 @@ void initLogger(char *log_dir) {
 
     logger_history_len = 0;
 
+    char f[1000] = "";
     if (log_dir) {
         log_directory = log_dir;
-        char f[1000] = "";
+
         strcat(f, log_directory);
         strcat(f, "/log.txt");
 #if defined(_WIN32)
@@ -72,6 +78,7 @@ void initLogger(char *log_dir) {
     logger_semaphore = SDL_CreateSemaphore(0);
     mprintf_thread = SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf,
                                       "MultiThreadedPrintf", NULL);
+    LOG_INFO("Writing logs to %s", f);
     //    StartTimer(&mprintf_timer);
 }
 
@@ -198,7 +205,8 @@ void mprintf(const char *fmtStr, ...) {
 
 void real_mprintf(bool log, const char *fmtStr, va_list args) {
     if (mprintf_thread == NULL) {
-        printf("initLogger has not been called!\n");
+        printf("initLogger has not been called! Printing below...\n");
+        vprintf(fmtStr, args);
         return;
     }
 
@@ -242,12 +250,35 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
     SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 }
 
-#ifndef _WIN32
 SDL_mutex *crash_handler_mutex;
 
-void crash_handler(int sig) {
+void PrintStacktrace() {
     SDL_LockMutex(crash_handler_mutex);
 
+#ifdef _WIN32
+    unsigned int i;
+    void *stack[100];
+    unsigned short frames;
+    char buf[sizeof(SYMBOL_INFO) + 256 * sizeof(char)];
+    SYMBOL_INFO *symbol = (SYMBOL_INFO *)buf;
+    HANDLE process;
+
+    process = GetCurrentProcess();
+
+    SymInitialize(process, NULL, TRUE);
+
+    frames = CaptureStackBackTrace(0, 100, stack, NULL);
+    memset(symbol, 0, sizeof(buf));
+    symbol->MaxNameLen = 255;
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+
+    for (i = 0; i < frames; i++) {
+        SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
+
+        fprintf(stderr, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name,
+                symbol->Address);
+    }
+#else
 #define HANDLER_ARRAY_SIZE 100
 
     void *array[HANDLER_ARRAY_SIZE];
@@ -257,7 +288,6 @@ void crash_handler(int sig) {
     size = backtrace(array, HANDLER_ARRAY_SIZE);
 
     // print out all the frames to stderr
-    fprintf(stderr, "\nError: signal %d:\n", sig);
     backtrace_symbols_fd(array, size, STDERR_FILENO);
 
     // and to the log
@@ -269,17 +299,105 @@ void crash_handler(int sig) {
         fprintf(stderr, " %p", array[i]);
     }
     fprintf(stderr, "\n\n");
+#endif
 
     SDL_UnlockMutex(crash_handler_mutex);
+}
 
+#ifdef _WIN32
+LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS *ExceptionInfo) {
+    SDL_Delay(250);
+    fprintf(stderr, "\n");
+    switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
+        case EXCEPTION_ACCESS_VIOLATION:
+            fprintf(stderr, "Error: EXCEPTION_ACCESS_VIOLATION\n");
+            break;
+        case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+            fprintf(stderr, "Error: EXCEPTION_ARRAY_BOUNDS_EXCEEDED\n");
+            break;
+        case EXCEPTION_BREAKPOINT:
+            fprintf(stderr, "Error: EXCEPTION_BREAKPOINT\n");
+            break;
+        case EXCEPTION_DATATYPE_MISALIGNMENT:
+            fprintf(stderr, "Error: EXCEPTION_DATATYPE_MISALIGNMENT\n");
+            break;
+        case EXCEPTION_FLT_DENORMAL_OPERAND:
+            fprintf(stderr, "Error: EXCEPTION_FLT_DENORMAL_OPERAND\n");
+            break;
+        case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+            fprintf(stderr, "Error: EXCEPTION_FLT_DIVIDE_BY_ZERO\n");
+            break;
+        case EXCEPTION_FLT_INEXACT_RESULT:
+            fprintf(stderr, "Error: EXCEPTION_FLT_INEXACT_RESULT\n");
+            break;
+        case EXCEPTION_FLT_INVALID_OPERATION:
+            fprintf(stderr, "Error: EXCEPTION_FLT_INVALID_OPERATION\n");
+            break;
+        case EXCEPTION_FLT_OVERFLOW:
+            fprintf(stderr, "Error: EXCEPTION_FLT_OVERFLOW\n");
+            break;
+        case EXCEPTION_FLT_STACK_CHECK:
+            fprintf(stderr, "Error: EXCEPTION_FLT_STACK_CHECK\n");
+            break;
+        case EXCEPTION_FLT_UNDERFLOW:
+            fprintf(stderr, "Error: EXCEPTION_FLT_UNDERFLOW\n");
+            break;
+        case EXCEPTION_ILLEGAL_INSTRUCTION:
+            fprintf(stderr, "Error: EXCEPTION_ILLEGAL_INSTRUCTION\n");
+            break;
+        case EXCEPTION_IN_PAGE_ERROR:
+            fprintf(stderr, "Error: EXCEPTION_IN_PAGE_ERROR\n");
+            break;
+        case EXCEPTION_INT_DIVIDE_BY_ZERO:
+            fprintf(stderr, "Error: EXCEPTION_INT_DIVIDE_BY_ZERO\n");
+            break;
+        case EXCEPTION_INT_OVERFLOW:
+            fprintf(stderr, "Error: EXCEPTION_INT_OVERFLOW\n");
+            break;
+        case EXCEPTION_INVALID_DISPOSITION:
+            fprintf(stderr, "Error: EXCEPTION_INVALID_DISPOSITION\n");
+            break;
+        case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+            fprintf(stderr, "Error: EXCEPTION_NONCONTINUABLE_EXCEPTION\n");
+            break;
+        case EXCEPTION_PRIV_INSTRUCTION:
+            fprintf(stderr, "Error: EXCEPTION_PRIV_INSTRUCTION\n");
+            break;
+        case EXCEPTION_SINGLE_STEP:
+            fprintf(stderr, "Error: EXCEPTION_SINGLE_STEP\n");
+            break;
+        case EXCEPTION_STACK_OVERFLOW:
+            fprintf(stderr, "Error: EXCEPTION_STACK_OVERFLOW\n");
+            break;
+        default:
+            fprintf(stderr, "Error: Unrecognized Exception\n");
+            break;
+    }
+    fflush(stderr);
+    /* If this is a stack overflow then we can't walk the stack, so just show
+      where the error happened */
+    if (EXCEPTION_STACK_OVERFLOW !=
+        ExceptionInfo->ExceptionRecord->ExceptionCode) {
+        PrintStacktrace();
+    } else {
+    }
+
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+#else
+void crash_handler(int sig) {
+    fprintf(stderr, "\nError: signal %d:\n", sig);
+    PrintStacktrace();
     SDL_Delay(100);
     exit(-1);
 }
 #endif
 
 void initBacktraceHandler() {
-#ifndef _WIN32
     crash_handler_mutex = SDL_CreateMutex();
+#ifdef _WIN32
+    SetUnhandledExceptionFilter(windows_exception_handler);
+#else
     signal(SIGSEGV, crash_handler);
 #endif
 }
@@ -306,7 +424,8 @@ char *get_version() {
         fseek(f, 0, SEEK_SET);
         static char buf[17];
         version = buf;
-        fread(version, 1, min(length, (long)sizeof(buf)), f); // cast for compiler warning
+        fread(version, 1, min(length, (long)sizeof(buf)),
+              f);  // cast for compiler warning
         version[16] = '\0';
         fclose(f);
     } else {
@@ -317,7 +436,7 @@ char *get_version() {
 }
 
 bool sendLogHistory() {
-    char *host = "cube-celery-staging.herokuapp.com";
+    char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
     char *path = "/logs";
 
     char *logs_raw = get_logger_history();
@@ -396,7 +515,9 @@ int32_t MultithreadedUpdateStatus(void *data) {
             \"ready\" : true\
     }");
 
-    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/winlogonStatus", json);
+    char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
+
+    SendJSONPost(host, "/vm/winlogonStatus", json);
 
     snprintf(json, sizeof(json),
              "{\
@@ -404,13 +525,14 @@ int32_t MultithreadedUpdateStatus(void *data) {
             \"available\" : %s\
     }",
              get_version(), d->is_connected ? "false" : "true");
-    SendJSONPost("cube-celery-vm.herokuapp.com", "/vm/connectionStatus", json);
+    SendJSONPost(host, "/vm/connectionStatus", json);
 
     free(d);
     return 0;
 }
 
 void updateStatus(bool is_connected) {
+    LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
     SDL_Thread *update_status =

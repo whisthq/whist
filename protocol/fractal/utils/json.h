@@ -1,5 +1,14 @@
 #ifndef JSON_H
 #define JSON_H
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file json.h
+ * @brief This file contains all the JSON helper functions.
+============================
+Usage
+============================
+*/
+
 /*
 ============================
 Includes
@@ -18,11 +27,11 @@ Custom Types
 ============================
 */
 
-
 typedef enum json_type {
     JSON_BOOL,
     JSON_INT,
-    JSON_STRING
+    JSON_STRING,
+    JSON_NULL
 } json_type_t;
 
 typedef struct kv_pair {
@@ -46,9 +55,43 @@ Public Functions
 ============================
 */
 
+/**
+ * @brief                          Parse a string JSON into a JSON parsed struct
+
+ * @param str                      JSON, in string, format to parse
+ * @param json                     JSON struct to receive the parsed JSON
+ *
+ * @returns                        True if parsed successfully, else False
+ */
 bool parse_json(char* str, json_t* json);
-kv_pair_t* get_kv(json_t json, char* key);
+
+/**
+ * @brief                          Retrieve the value associated with a key in a
+ *                                 JSON struct
+ *
+ * @param json                     The JSON struct to map key-value from
+ * @param key                      The key to find the value of
+ *
+ * @returns                        A key-value pair struct of the found value
+ *                                 for the provided key
+ */
+kv_pair_t* get_kv(json_t* json, char* key);
+
+/**
+ * @brief                          Free the memory of a JSON stored in a JSON
+ *                                 struct
+ *
+ * @param json                     The JSON struct to free
+ */
 void free_json(json_t json);
+
+/**
+ * @brief                          Allocate new memory and clone a string
+ *
+ * @param str                      The string to clone
+ *
+ * @returns                        The cloned string
+ */
 char* clone(char* str);
 
-#endif
+#endif  // JSON_H

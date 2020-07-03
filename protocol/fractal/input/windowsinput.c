@@ -279,338 +279,337 @@ const int windows_keycodes[NUM_KEYCODES] = {
 int GetWindowsKeyCode(int sdl_keycode) { return windows_keycodes[sdl_keycode]; }
 
 input_device_t* CreateInputDevice() {
-  input_device_t* input_device = malloc(sizeof(input_device_t));
-  memset(input_device, 0, sizeof(input_device_t));
-  return input_device;
+    input_device_t* input_device = malloc(sizeof(input_device_t));
+    memset(input_device, 0, sizeof(input_device_t));
+    return input_device;
 }
 
 void DestroyInputDevice(input_device_t* input_device) {
-  free(input_device);
-  return;
+    free(input_device);
+    return;
 }
 
 void SendKeyInput(int windows_keycode, int extraFlags) {
-  INPUT ip;
-  ip.type = INPUT_KEYBOARD;
-  ip.ki.wVk = 0;
-  ip.ki.time = 0;
-  ip.ki.dwExtraInfo = 0;
+    INPUT ip;
+    ip.type = INPUT_KEYBOARD;
+    ip.ki.wVk = 0;
+    ip.ki.time = 0;
+    ip.ki.dwExtraInfo = 0;
 
-  ip.ki.wScan =
-      (WORD)MapVirtualKeyA(windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX);
-  ip.ki.dwFlags = KEYEVENTF_SCANCODE | extraFlags;
-  if (ip.ki.wScan >> 8 == 0xE0 || (windows_keycode & USE_NUMPAD)) {
-    ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-    ip.ki.wScan &= 0xFF;
-  }
+    ip.ki.wScan =
+        (WORD)MapVirtualKeyA(windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX);
+    ip.ki.dwFlags = KEYEVENTF_SCANCODE | extraFlags;
+    if (ip.ki.wScan >> 8 == 0xE0 || (windows_keycode & USE_NUMPAD)) {
+        ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+        ip.ki.wScan &= 0xFF;
+    }
 
-  SendInput(1, &ip, sizeof(INPUT));
+    SendInput(1, &ip, sizeof(INPUT));
 }
 
 void KeyDown(int windows_keycode) { SendKeyInput(windows_keycode, 0); }
 
 void KeyUp(int windows_keycode) {
-  SendKeyInput(windows_keycode, KEYEVENTF_KEYUP);
+    SendKeyInput(windows_keycode, KEYEVENTF_KEYUP);
 }
 
 void UpdateKeyboardState(input_device_t* input_device,
-                         struct FractalClientMessage* fmsg) {
-  input_device;
-  if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
-    LOG_WARNING(
-        "updateKeyboardState requires fmsg.type to be "
-        "MESSAGE_KEYBOARD_STATE");
-    return;
-  }
-
-  // Setup base input data
-  INPUT ip;
-  ip.type = INPUT_KEYBOARD;
-  ip.ki.wVk = 0;
-  ip.ki.time = 0;
-  ip.ki.dwExtraInfo = 0;
-
-  bool server_caps_lock = GetKeyState(VK_CAPITAL) & 1;
-  bool server_num_lock = GetKeyState(VK_NUMLOCK) & 1;
-
-  bool caps_lock_holding = false;
-  bool num_lock_holding = false;
-
-  int keypress_mask = 1 << 15;
-
-  // Depress all keys that are currently pressed but should not be pressed
-  for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
-    int windows_keycode = GetWindowsKeyCode(sdl_keycode);
-
-    if (!windows_keycode) continue;
-
-    // If I should key up, then key up
-    if (!fmsg->keyboard_state[sdl_keycode] &&
-        (GetAsyncKeyState(windows_keycode) & keypress_mask)) {
-      KeyUp(windows_keycode);
-    }
-  }
-
-  // Press all keys that are not currently pressed but should be pressed
-  for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
-    int windows_keycode = GetWindowsKeyCode(sdl_keycode);
-
-    if (!windows_keycode) continue;
-
-    // Keep track of keyboard state for caps lock and num lock
-
-    if (windows_keycode == VK_CAPITAL) {
-      caps_lock_holding = fmsg->keyboard_state[sdl_keycode];
+                         FractalClientMessage* fmsg) {
+    input_device;
+    if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
+        LOG_WARNING(
+            "updateKeyboardState requires fmsg.type to be "
+            "MESSAGE_KEYBOARD_STATE");
+        return;
     }
 
-    if (windows_keycode == VK_NUMLOCK) {
-      num_lock_holding = fmsg->keyboard_state[sdl_keycode];
+    // Setup base input data
+    INPUT ip;
+    ip.type = INPUT_KEYBOARD;
+    ip.ki.wVk = 0;
+    ip.ki.time = 0;
+    ip.ki.dwExtraInfo = 0;
+
+    bool server_caps_lock = GetKeyState(VK_CAPITAL) & 1;
+    bool server_num_lock = GetKeyState(VK_NUMLOCK) & 1;
+
+    bool caps_lock_holding = false;
+    bool num_lock_holding = false;
+
+    int keypress_mask = 1 << 15;
+
+    // Depress all keys that are currently pressed but should not be pressed
+    for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
+        int windows_keycode = GetWindowsKeyCode(sdl_keycode);
+
+        if (!windows_keycode) continue;
+
+        // If I should key up, then key up
+        if (!fmsg->keyboard_state[sdl_keycode] &&
+            (GetAsyncKeyState(windows_keycode) & keypress_mask)) {
+            KeyUp(windows_keycode);
+        }
     }
 
-    // If I should key down, then key down
-    if (fmsg->keyboard_state[sdl_keycode] &&
-        !(GetAsyncKeyState(windows_keycode) & keypress_mask)) {
-      KeyDown(windows_keycode);
+    // Press all keys that are not currently pressed but should be pressed
+    for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; sdl_keycode++) {
+        int windows_keycode = GetWindowsKeyCode(sdl_keycode);
 
-      // In the process of swapping a toggle key
-      if (windows_keycode == VK_CAPITAL) {
-        server_caps_lock = !server_caps_lock;
-      }
-      if (windows_keycode == VK_NUMLOCK) {
-        server_num_lock = !server_num_lock;
-      }
-    }
-  }
+        if (!windows_keycode) continue;
 
-  // If caps lock doesn't match, then send a correction
-  if (!!server_caps_lock != !!fmsg->caps_lock) {
-    LOG_INFO("Caps lock out of sync, updating! From %s to %s\n",
-             server_caps_lock ? "caps" : "no caps",
-             fmsg->caps_lock ? "caps" : "no caps");
-    // If I'm supposed to be holding it down, then just release and then
-    // repress
-    if (caps_lock_holding) {
-      KeyUp(VK_CAPITAL);
-      KeyDown(VK_CAPITAL);
-    } else {
-      // Otherwise, just press and let go like a normal key press
-      KeyDown(VK_CAPITAL);
-      KeyUp(VK_CAPITAL);
-    }
-  }
+        // Keep track of keyboard state for caps lock and num lock
 
-  // If num lock doesn't match, then send a correction
-  if (!!server_num_lock != !!fmsg->num_lock) {
-    LOG_INFO("Num lock out of sync, updating! From %s to %s\n",
-             server_num_lock ? "num lock" : "no num lock",
-             fmsg->num_lock ? "num lock" : "no num lock");
-    // If I'm supposed to be holding it down, then just release and then
-    // repress
-    if (num_lock_holding) {
-      KeyUp(VK_NUMLOCK);
-      KeyDown(VK_NUMLOCK);
-    } else {
-      // Otherwise, just press and let go like a normal key press
-      KeyDown(VK_NUMLOCK);
-      KeyUp(VK_NUMLOCK);
+        if (windows_keycode == VK_CAPITAL) {
+            caps_lock_holding = fmsg->keyboard_state[sdl_keycode];
+        }
+
+        if (windows_keycode == VK_NUMLOCK) {
+            num_lock_holding = fmsg->keyboard_state[sdl_keycode];
+        }
+
+        // If I should key down, then key down
+        if (fmsg->keyboard_state[sdl_keycode] &&
+            !(GetAsyncKeyState(windows_keycode) & keypress_mask)) {
+            KeyDown(windows_keycode);
+
+            // In the process of swapping a toggle key
+            if (windows_keycode == VK_CAPITAL) {
+                server_caps_lock = !server_caps_lock;
+            }
+            if (windows_keycode == VK_NUMLOCK) {
+                server_num_lock = !server_num_lock;
+            }
+        }
     }
-  }
+
+    // If caps lock doesn't match, then send a correction
+    if (!!server_caps_lock != !!fmsg->caps_lock) {
+        LOG_INFO("Caps lock out of sync, updating! From %s to %s\n",
+                 server_caps_lock ? "caps" : "no caps",
+                 fmsg->caps_lock ? "caps" : "no caps");
+        // If I'm supposed to be holding it down, then just release and then
+        // repress
+        if (caps_lock_holding) {
+            KeyUp(VK_CAPITAL);
+            KeyDown(VK_CAPITAL);
+        } else {
+            // Otherwise, just press and let go like a normal key press
+            KeyDown(VK_CAPITAL);
+            KeyUp(VK_CAPITAL);
+        }
+    }
+
+    // If num lock doesn't match, then send a correction
+    if (!!server_num_lock != !!fmsg->num_lock) {
+        LOG_INFO("Num lock out of sync, updating! From %s to %s\n",
+                 server_num_lock ? "num lock" : "no num lock",
+                 fmsg->num_lock ? "num lock" : "no num lock");
+        // If I'm supposed to be holding it down, then just release and then
+        // repress
+        if (num_lock_holding) {
+            KeyUp(VK_NUMLOCK);
+            KeyDown(VK_NUMLOCK);
+        } else {
+            // Otherwise, just press and let go like a normal key press
+            KeyDown(VK_NUMLOCK);
+            KeyUp(VK_NUMLOCK);
+        }
+    }
 }
 
-bool ReplayUserInput(input_device_t* input_device,
-                     struct FractalClientMessage* fmsg) {
-  input_device;
-  // get screen width and height for mouse cursor
-  // int sWidth = GetSystemMetrics( SM_CXSCREEN ) - 1; is this still needed?
-  // int sHeight = GetSystemMetrics( SM_CYSCREEN ) - 1; ^^
-  INPUT Event = {0};
+bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
+    input_device;
+    // get screen width and height for mouse cursor
+    // int sWidth = GetSystemMetrics( SM_CXSCREEN ) - 1; is this still needed?
+    // int sHeight = GetSystemMetrics( SM_CYSCREEN ) - 1; ^^
+    INPUT Event = {0};
 
-  // switch to fill in the Windows event depending on the FractalClientMessage
-  // type
-  switch (fmsg->type) {
-    case MESSAGE_KEYBOARD:
-      // Windows event for keyboard action
+    // switch to fill in the Windows event depending on the FractalClientMessage
+    // type
+    switch (fmsg->type) {
+        case MESSAGE_KEYBOARD:
+            // Windows event for keyboard action
 
-      Event.type = INPUT_KEYBOARD;
-      Event.ki.time = 0;  // system supplies timestamp
+            Event.type = INPUT_KEYBOARD;
+            Event.ki.time = 0;  // system supplies timestamp
 
-      HKL keyboard_layout = GetKeyboardLayout(0);
+            HKL keyboard_layout = GetKeyboardLayout(0);
 
-      Event.ki.dwFlags = KEYEVENTF_SCANCODE;
-      Event.ki.wVk = 0;
-      Event.ki.wScan =
-          (WORD)MapVirtualKeyExA(windows_keycodes[fmsg->keyboard.code],
-                                 MAPVK_VK_TO_VSC_EX, keyboard_layout);
+            Event.ki.dwFlags = KEYEVENTF_SCANCODE;
+            Event.ki.wVk = 0;
+            Event.ki.wScan =
+                (WORD)MapVirtualKeyExA(windows_keycodes[fmsg->keyboard.code],
+                                       MAPVK_VK_TO_VSC_EX, keyboard_layout);
 
-      switch (windows_keycodes[fmsg->keyboard.code]) {
-        // List found here:
-        // https://docs.microsoft.com/en-us/windows/win32/inputdev/about-keyboard-input
-        case VK_RMENU:
-        case VK_RCONTROL:
-        case VK_INSERT:
-        case VK_DELETE:
-        case VK_HOME:
-        case VK_END:
-        case VK_PRIOR:
-        case VK_NEXT:  // page up and page down
-        case VK_LEFT:
-        case VK_UP:
-        case VK_RIGHT:
-        case VK_DOWN:  // arrow keys
-        case VK_NUMLOCK:
-        case VK_PRINT:
-        case VK_DIVIDE:  // numpad slash
-        case VK_RETURN + USE_NUMPAD:
-          Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-      }
+            switch (windows_keycodes[fmsg->keyboard.code]) {
+                // List found here:
+                // https://docs.microsoft.com/en-us/windows/win32/inputdev/about-keyboard-input
+                case VK_RMENU:
+                case VK_RCONTROL:
+                case VK_INSERT:
+                case VK_DELETE:
+                case VK_HOME:
+                case VK_END:
+                case VK_PRIOR:
+                case VK_NEXT:  // page up and page down
+                case VK_LEFT:
+                case VK_UP:
+                case VK_RIGHT:
+                case VK_DOWN:  // arrow keys
+                case VK_NUMLOCK:
+                case VK_PRINT:
+                case VK_DIVIDE:  // numpad slash
+                case VK_RETURN + USE_NUMPAD:
+                    Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+            }
 
-      /* Print entire keyboard
-      for( int i = 0; i < 256; i++ )
-      {
-          char keyName[50];
-          if( GetKeyNameTextA( i << 16, keyName, sizeof( keyName ) ) != 0
-      )
-          {
-              mprintf( "Code: %d\n", i );
-              mprintf( "KEY: %s\n", keyName );
-          } else
-          {
-              mprintf( "Code: %d\n", i );
-              mprintf( "NoKey:\n" );
-          }
-      }
-      for( int i = 0; i < 256; i++ )
-      {
-          char keyName[50];
-          if( GetKeyNameTextA( (i << 16) + (1 << 24), keyName, sizeof(
-      keyName ) ) != 0 )
-          {
-              mprintf( "Code: %d\n", i + (1 << 24) );
-              mprintf( "KEY: %s\n", keyName );
-          } else
-          {
-              mprintf( "Code: %d\n", i + (1 << 24) );
-              mprintf( "NoKey:\n" );
-          }
-      }*/
+            /* Print entire keyboard
+            for( int i = 0; i < 256; i++ )
+            {
+                char keyName[50];
+                if( GetKeyNameTextA( i << 16, keyName, sizeof( keyName ) ) != 0
+            )
+                {
+                    mprintf( "Code: %d\n", i );
+                    mprintf( "KEY: %s\n", keyName );
+                } else
+                {
+                    mprintf( "Code: %d\n", i );
+                    mprintf( "NoKey:\n" );
+                }
+            }
+            for( int i = 0; i < 256; i++ )
+            {
+                char keyName[50];
+                if( GetKeyNameTextA( (i << 16) + (1 << 24), keyName, sizeof(
+            keyName ) ) != 0 )
+                {
+                    mprintf( "Code: %d\n", i + (1 << 24) );
+                    mprintf( "KEY: %s\n", keyName );
+                } else
+                {
+                    mprintf( "Code: %d\n", i + (1 << 24) );
+                    mprintf( "NoKey:\n" );
+                }
+            }*/
 
-      if (Event.ki.wScan >> 8 == 0xE0) {
-        Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-        Event.ki.wScan &= 0xFF;
-      }
+            if (Event.ki.wScan >> 8 == 0xE0) {
+                Event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+                Event.ki.wScan &= 0xFF;
+            }
 
-      if (Event.ki.wScan >> 8 == 0xE1) {
-        LOG_INFO("Weird Extended");
-      }
+            if (Event.ki.wScan >> 8 == 0xE1) {
+                LOG_INFO("Weird Extended");
+            }
 
-      if (!fmsg->keyboard.pressed) {
-        Event.ki.dwFlags |= KEYEVENTF_KEYUP;
-      } else {
-        Event.ki.dwFlags |= 0;
-      }
-      break;
-    case MESSAGE_MOUSE_MOTION:
-      // mouse motion event
-      // mprintf("MOUSE: x %d y %d r %d\n", fmsg->mouseMotion.x,
-      //        fmsg->mouseMotion.y, fmsg->mouseMotion.relative);
+            if (!fmsg->keyboard.pressed) {
+                Event.ki.dwFlags |= KEYEVENTF_KEYUP;
+            } else {
+                Event.ki.dwFlags |= 0;
+            }
+            break;
+        case MESSAGE_MOUSE_MOTION:
+            // mouse motion event
+            // mprintf("MOUSE: x %d y %d r %d\n", fmsg->mouseMotion.x,
+            //        fmsg->mouseMotion.y, fmsg->mouseMotion.relative);
 
-      Event.type = INPUT_MOUSE;
-      if (fmsg->mouseMotion.relative) {
-        Event.mi.dx = (LONG)(fmsg->mouseMotion.x * 0.9);
-        Event.mi.dy = (LONG)(fmsg->mouseMotion.y * 0.9);
-        Event.mi.dwFlags = MOUSEEVENTF_MOVE;
-      } else {
-        Event.mi.dx =
-            (LONG)(fmsg->mouseMotion.x * (double)65536 / MOUSE_SCALING_FACTOR);
-        Event.mi.dy =
-            (LONG)(fmsg->mouseMotion.y * (double)65536 / MOUSE_SCALING_FACTOR);
-        Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-      }
-      break;
-    case MESSAGE_MOUSE_BUTTON:
-      // mouse button event
-      Event.type = INPUT_MOUSE;
-      Event.mi.dx = 0;
-      Event.mi.dy = 0;
+            Event.type = INPUT_MOUSE;
+            if (fmsg->mouseMotion.relative) {
+                Event.mi.dx = (LONG)(fmsg->mouseMotion.x * 0.9);
+                Event.mi.dy = (LONG)(fmsg->mouseMotion.y * 0.9);
+                Event.mi.dwFlags = MOUSEEVENTF_MOVE;
+            } else {
+                Event.mi.dx = (LONG)(fmsg->mouseMotion.x * (double)65536 /
+                                     MOUSE_SCALING_FACTOR);
+                Event.mi.dy = (LONG)(fmsg->mouseMotion.y * (double)65536 /
+                                     MOUSE_SCALING_FACTOR);
+                Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+            }
+            break;
+        case MESSAGE_MOUSE_BUTTON:
+            // mouse button event
+            Event.type = INPUT_MOUSE;
+            Event.mi.dx = 0;
+            Event.mi.dy = 0;
 
-      // Emulating button click
-      // switch to parse button type
-      switch (fmsg->mouseButton.button) {
-        case SDL_BUTTON_LEFT:
-          // left click
-          if (fmsg->mouseButton.pressed) {
-            Event.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-          } else {
-            Event.mi.dwFlags = MOUSEEVENTF_LEFTUP;
-          }
-          break;
-        case SDL_BUTTON_MIDDLE:
-          // middle click
-          if (fmsg->mouseButton.pressed) {
-            Event.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
-          } else {
-            Event.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
-          }
-          break;
-        case SDL_BUTTON_RIGHT:
-          // right click
-          if (fmsg->mouseButton.pressed) {
-            Event.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-          } else {
-            Event.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
-          }
-          break;
-      }
-      // End emulating button click
+            // Emulating button click
+            // switch to parse button type
+            switch (fmsg->mouseButton.button) {
+                case SDL_BUTTON_LEFT:
+                    // left click
+                    if (fmsg->mouseButton.pressed) {
+                        Event.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+                    } else {
+                        Event.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+                    }
+                    break;
+                case SDL_BUTTON_MIDDLE:
+                    // middle click
+                    if (fmsg->mouseButton.pressed) {
+                        Event.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
+                    } else {
+                        Event.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
+                    }
+                    break;
+                case SDL_BUTTON_RIGHT:
+                    // right click
+                    if (fmsg->mouseButton.pressed) {
+                        Event.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
+                    } else {
+                        Event.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
+                    }
+                    break;
+            }
+            // End emulating button click
 
-      break;  // outer switch
-    case MESSAGE_MOUSE_WHEEL:
-      // mouse wheel event
-      Event.type = INPUT_MOUSE;
-      Event.mi.dwFlags = MOUSEEVENTF_WHEEL;
-      Event.mi.dx = 0;
-      Event.mi.dy = 0;
-      Event.mi.mouseData = fmsg->mouseWheel.y * 100;
-      break;
-  }
+            break;  // outer switch
+        case MESSAGE_MOUSE_WHEEL:
+            // mouse wheel event
+            Event.type = INPUT_MOUSE;
+            Event.mi.dwFlags = MOUSEEVENTF_WHEEL;
+            Event.mi.dx = 0;
+            Event.mi.dy = 0;
+            Event.mi.mouseData = fmsg->mouseWheel.y * 100;
+            break;
+    }
 
-  // send FMSG mapped to Windows event to Windows and return
-  int num_events_sent =
-      SendInput(1, &Event, sizeof(INPUT));  // 1 structure to send
+    // send FMSG mapped to Windows event to Windows and return
+    int num_events_sent =
+        SendInput(1, &Event, sizeof(INPUT));  // 1 structure to send
 
-  if (1 != num_events_sent) {
-    LOG_WARNING("SendInput did not send all events! %d\n", num_events_sent);
-    return false;
-  }
+    if (1 != num_events_sent) {
+        LOG_WARNING("SendInput did not send all events! %d\n", num_events_sent);
+        return false;
+    }
 
-  return true;
+    return true;
 }
 
 void EnterWinString(enum FractalKeycode* keycodes, int len) {
-  // get screen width and height for mouse cursor
-  int i, index = 0;
-  enum FractalKeycode keycode;
-  INPUT Event[200];
+    // get screen width and height for mouse cursor
+    int i, index = 0;
+    enum FractalKeycode keycode;
+    INPUT Event[200];
 
-  for (i = 0; i < len; i++) {
-    keycode = keycodes[i];
-    Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
-    Event[index].type = INPUT_KEYBOARD;
-    Event[index].ki.wScan = 0;
-    Event[index].ki.time = 0;  // system supplies timestamp
-    Event[index].ki.dwFlags = 0;
+    for (i = 0; i < len; i++) {
+        keycode = keycodes[i];
+        Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
+        Event[index].type = INPUT_KEYBOARD;
+        Event[index].ki.wScan = 0;
+        Event[index].ki.time = 0;  // system supplies timestamp
+        Event[index].ki.dwFlags = 0;
 
-    index++;
+        index++;
 
-    Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
-    Event[index].type = INPUT_KEYBOARD;
-    Event[index].ki.wScan = 0;
-    Event[index].ki.time = 0;  // system supplies timestamp
-    Event[index].ki.dwFlags = KEYEVENTF_KEYUP;
+        Event[index].ki.wVk = (WORD)windows_keycodes[keycode];
+        Event[index].type = INPUT_KEYBOARD;
+        Event[index].ki.wScan = 0;
+        Event[index].ki.time = 0;  // system supplies timestamp
+        Event[index].ki.dwFlags = KEYEVENTF_KEYUP;
 
-    index++;
-  }
+        index++;
+    }
 
-  // send FMSG mapped to Windows event to Windows and return
-  SendInput(index, Event, sizeof(INPUT));
+    // send FMSG mapped to Windows event to Windows and return
+    SendInput(index, Event, sizeof(INPUT));
 }

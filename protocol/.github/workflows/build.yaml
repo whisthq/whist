@@ -1,6 +1,6 @@
 name: CMake Build Matrix
 
-on: [push, pull_request]
+on: [push]
 
 env:
   CMAKE_VERSION: 3.15.7
@@ -20,7 +20,7 @@ jobs:
           - {
             name: "Windows Latest MSVC", artifact: "Windows-MSVC.tar.xz",
             os: windows-latest,
-            cc: "cl", cxx: "cl",
+            cc: "cl", cxx: "cl", cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           }
           - {
@@ -35,12 +35,12 @@ jobs:
           }
 
     steps:
-      - name: Chocolatey install cppcheck if windows
+      - uses: actions/checkout@v2
+      - name: Chocolatey install cppcheck and CUDA Toolkit if windows
         if: runner.os == 'Windows'
         uses: crazy-max/ghaction-chocolatey@v1
         with:
-          args: install cppcheck --force
-      - uses: actions/checkout@v1
+          args: install "${{ github.workspace }}\.github\choco-install.config" --force
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
         shell: cmake -P {0}
@@ -54,6 +54,7 @@ jobs:
             set(cmake_suffix "win64-x64.zip")
             set(cmake_dir "cmake-${cmake_version}-win64-x64/bin")
             message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\msvc_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\msvc_linker_matcher.json\n")
           elseif ("${{ runner.os }}" STREQUAL "Linux")
             set(ninja_suffix "linux.zip")
             set(cmake_suffix "Linux-x86_64.tar.gz")
@@ -126,6 +127,9 @@ jobs:
         run: |
           set(ENV{CC} ${{ matrix.config.cc }})
           set(ENV{CXX} ${{ matrix.config.cxx }})
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            set(ENV{CUDACXX} "${{ matrix.config.cudacxx }}")
+          endif()
 
           if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
             execute_process(
@@ -208,5 +212,15 @@ jobs:
 
           execute_process(COMMAND ccache -s)
 
-
-
+      - name: Upload windows server artifact.
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows_server_build
+          path: ${{ github.workspace }}/server/build64
+      - name: Upload linux server artifact.
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux_server_build
+          path: ${{ github.workspace }}/server/build64

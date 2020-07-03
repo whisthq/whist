@@ -5,12 +5,12 @@ Includes
 ============================
 */
 
-
 #include "json.h"
-#include "logging.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "logging.h"
 
 /*
 ============================
@@ -43,19 +43,15 @@ bool parse_json(char* str, json_t* json) {
         // LOG_INFO("CHAR: %c", c);
 
         // If we reached the end of the json
-        if( c == '}' )
-        {
+        if (c == '}') {
             break;
         }
 
-        if( num_kv_pairs > 0 )
-        {
-            if( c == ',' )
-            {
-                c = next_alphanumeric_char( &str );
-            } else
-            {
-                LOG_ERROR( "JSON VALUE did not follow with ,! Had %c", *str );
+        if (num_kv_pairs > 0) {
+            if (c == ',') {
+                c = next_alphanumeric_char(&str);
+            } else {
+                LOG_ERROR("JSON VALUE did not follow with ,! Had %c", *str);
                 return false;
             }
         }
@@ -85,6 +81,9 @@ bool parse_json(char* str, json_t* json) {
                 str += 4;
                 kv->type = JSON_BOOL;
                 kv->bool_value = false;
+            } else if (memcmp(str, "null", 4) == 0) {
+                str += 3;
+                kv->type = JSON_NULL;
             } else if ('0' < *str && *str < '9') {
                 kv->type = JSON_INT;
                 kv->int_value = atoi(str);
@@ -149,10 +148,10 @@ bool parse_json(char* str, json_t* json) {
     return true;
 }
 
-kv_pair_t* get_kv(json_t json, char* key) {
-    for (int i = 0; i < json.size; i++) {
-        if (strcmp(json.pairs[i].key, key) == 0) {
-            return &json.pairs[i];
+kv_pair_t* get_kv(json_t* json, char* key) {
+    for (int i = 0; i < json->size; i++) {
+        if (strcmp(json->pairs[i].key, key) == 0) {
+            return &json->pairs[i];
         }
     }
     return NULL;

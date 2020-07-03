@@ -4,6 +4,8 @@
 |:--:|:--:|
 |![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=master)|![CMake Build Matrix](https://github.com/fractalcomputers/protocol/workflows/CMake%20Build%20Matrix/badge.svg?branch=dev)|
 
+![Dev Nightly testing](https://github.com/fractalcomputers/protocol/workflows/Nightly%20testing/badge.svg)
+
 This repository contains the source code for the Fractal Protocol, which is a low-latency interactive streaming technology that streams audio/video/actions between an OS-like device, whether it is a virtual machine, a container or a regular computer, and a client computer or mobile device.
 
 ## Supported Platforms
@@ -59,7 +61,7 @@ brew install cmake cppcheck
 
 ##### Windows
 
-On Windows, in addition to downloading Cmake, of which you can find the latest binaries [here](https://cmake.org/download/), and cppcheck, which you can install via Chocolatey by running `choco install cppcheck --force`, you also need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. In order to compile the protocol, you need to make sure to be using x86_x64 Visual Studio Developer Command Prompt.
+First you will have to install [gitbash](https://git-scm.com/downloads). You can install cmake with the latest binaries [here](https://cmake.org/download/), and cppcheck, which you can install via Chocolatey by running `choco install cppcheck --force`. You also need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. In order to compile the protocol, you need to make sure to be using x86_x64 Visual Studio Developer Command Prompt.
 
 ### Building
 
@@ -96,7 +98,7 @@ NMake-style makefiles. Then, run `nmake` in either `/server` or `/desktop`, depe
 
 #### Further documentation
 
-More documentation is in our [Google Drive](https://docs.google.com/document/d/1T9Lc3HVoqhqSjdUbiaFaQU71oV1VH25iFGDNvAYjtOs/edit?usp=sharing), if needed.
+More documentation is in our [Google Drive](https://docs.google.com/document/d/1T9Lc3HVoqhqSjdUbiaFaQU71oV1VH25iFGDNvAYjtOs/edit?usp=sharing), if needed. We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install doxygen via your local package manager, and run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs gitignored to avoid clutter on the repository, since we don't publish them anywhere.
 
 ### Continous Integration
  
@@ -121,6 +123,6 @@ Windows:
 choco install llvm --force
 ```
 
-If using VSCode or Visual Studio, please set this up in your editor to format on save if possible (in Visual Studio, this is through the C/C++ extension settings, as well as the general 'Format on Save' setting/shortcut). Otherwise, please make sure to run your code through `clang` before commits. You can run it from the CLI by running `clang-format <file>`.
+If using VSCode or Visual Studio, please set this up in your editor to format on save if possible (in Visual Studio, this is through the C/C++ extension settings, as well as the general 'Format on Save' setting/shortcut). Otherwise, please make sure to run your code through `clang` before commits. You can run it from the CLI by running `cmake . && make clang-format`, on MacOS/Linux, or `cmake -G "NMake Makefiles" && make clang-format`, on Windows.
 
 We also have a custom build tagret in the CMake 'clang-format' with will run with this style over all `.c` and `.h` files in `server/` `desktop/` and `fractal/`.

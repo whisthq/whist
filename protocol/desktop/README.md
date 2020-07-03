@@ -16,18 +16,38 @@ From the `/desktop` directory, you can simply run:
 
 ```
 Windows:
-desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
+desktop [OPTION]... IP_ADDRESS
 
 MacOS/Linux:
-./desktop [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
+./desktop [OPTION]... IP_ADDRESS
+```
+The option flags are as follows:
+```
+  -w, --width=WIDTH             set the width for the windowed-mode
+                                  window, if both width and height
+                                  are specified
+  -h, --height=HEIGHT           set the height for the windowed-mode
+                                  window, if both width and height
+                                  are specified
+  -b, --bitrate=BITRATE         set the maximum bitrate to use
+  -s, --spectate                launch the protocol as a spectator
+  -c, --codec=CODEC             launch the protocol using the codec
+                                  specified: h264 (default) or h265
+  -k, --running_ci             The client will quit after time_to_run_ci seconds
+      --help     display help
+      --version  output version information
+```
+For example, to run the protocol on IP address `0.0.0.0` in an `800x600` window on Linux, call:
+```
+./desktop --width 800 --height 600 0.0.0.0
 ```
 
-Alternatively, if you want to run the executable directly, in the `/desktop/build64` directory or `/desktop/build32`, run:
+Alternatively, if you want to run the executable directly, in the `/desktop/build64/[Windows/Darwin/Linux]` directory or `/desktop/build32/Windows`, run:
 
 ```
 Windows:
-FractalClient [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
+FractalClient [OPTION]... IP ADDRESS
 
 MacOS/Linux:
-./FractalClient [IP ADDRESS] [[OPTIONAL] WIDTH] [[OPTIONAL] HEIGHT] [[OPTIONAL] MAX BITRATE]
+./FractalClient [OPTION]... IP ADDRESS
 ```

@@ -10,20 +10,20 @@
 // To link IID_'s
 #pragma comment(lib, "dxguid.lib")
 
-void GetBitmapScreenshot(struct CaptureDevice* device);
+void GetBitmapScreenshot(CaptureDevice* device);
+ID3D11Texture2D* CreateTexture(CaptureDevice* device);
 
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
+int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     LOG_INFO("Creating capture device for resolution %dx%d...", width, height);
-    memset(device, 0, sizeof(struct CaptureDevice));
+    memset(device, 0, sizeof(CaptureDevice));
 
-    device->hardware =
-        (struct DisplayHardware*)malloc(sizeof(struct DisplayHardware));
-    memset(device->hardware, 0, sizeof(struct DisplayHardware));
+    device->hardware = (DisplayHardware*)malloc(sizeof(DisplayHardware));
+    memset(device->hardware, 0, sizeof(DisplayHardware));
 
-    struct DisplayHardware* hardware = device->hardware;
+    DisplayHardware* hardware = device->hardware;
 
     int num_adapters = 0, num_outputs = 0, i = 0, j = 0;
     IDXGIFactory1* factory;
@@ -45,7 +45,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
                                           &hardware->adapter) !=
            DXGI_ERROR_NOT_FOUND) {
         if (num_adapters == MAX_NUM_ADAPTERS) {
-            LOG_WARNING("Too many adaters!\n");
+            LOG_WARNING("Too many adapters!\n");
             break;
         }
         adapters[num_adapters] = hardware->adapter;
@@ -68,16 +68,21 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
     }
     hardware->adapter = adapters[USE_GPU];
 
+    LOG_INFO("Monitor Info:");
+
     // GET ALL MONITORS
     for (i = 0; i < num_adapters; i++) {
         for (j = 0;
-             hardware->adapter->lpVtbl->EnumOutputs(
+             adapters[i]->lpVtbl->EnumOutputs(
                  adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND;
              j++) {
-            LOG_INFO("Found monitor %d on adapter %lu", j, i);
+            DXGI_OUTPUT_DESC desc;
+            hr = hardware->output->lpVtbl->GetDesc(hardware->output, &desc);
+            LOG_INFO("  Found monitor %d on adapter %lu. Monitor %d named %S",
+                     j, i, j, desc.DeviceName);
             if (i == USE_GPU) {
                 if (j == MAX_NUM_OUTPUTS) {
-                    LOG_WARNING("Too many adapters!");
+                    LOG_WARNING("  Too many adapters on adapter %lu!", i);
                     break;
                 } else {
                     outputs[j] = hardware->output;
@@ -136,7 +141,8 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
             set_width = pDescs[k].Width;
             set_height = pDescs[k].Height;
             ratio_closeness = 0.0;
-            LOG_INFO( "FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator, pDescs[k].RefreshRate.Denominator );
+            LOG_INFO("FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator,
+                     pDescs[k].RefreshRate.Denominator);
         }
     }
 
@@ -152,7 +158,8 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
             0.01) {
             LOG_INFO("Ratio match found with %dx%d!", pDescs[k].Width,
                      pDescs[k].Height);
-            LOG_INFO( "FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator, pDescs[k].RefreshRate.Denominator );
+            LOG_INFO("FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator,
+                     pDescs[k].RefreshRate.Denominator);
 
             if (set_width == 0) {
                 LOG_INFO("Will try using this resolution");
@@ -160,14 +167,16 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
                 set_height = pDescs[k].Height;
             }
 
-            // We'd prefer a higher resolution if possible, if the current resolution still isn't high enough
+            // We'd prefer a higher resolution if possible, if the current
+            // resolution still isn't high enough
             if (set_width < pDescs[k].Width && set_width < width) {
                 LOG_INFO("This resolution is higher, let's use it");
                 set_width = pDescs[k].Width;
                 set_height = pDescs[k].Height;
             }
 
-            // We'd prefer a lower resolution if possible, if the potential resolution is indeed high enough
+            // We'd prefer a lower resolution if possible, if the potential
+            // resolution is indeed high enough
             if (pDescs[k].Width < set_width && width < pDescs[k].Width) {
                 LOG_INFO("This resolution is lower, let's use it");
                 set_width = pDescs[k].Width;
@@ -199,7 +208,7 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
             dm.dmPelsWidth = width;
             dm.dmPelsHeight = height;
             dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
-            //dm.dmDisplayFrequency = 
+            // dm.dmDisplayFrequency =
 
             int ret = ChangeDisplaySettingsExW(
                 monitorInfo.szDevice, &dm, NULL,
@@ -243,14 +252,14 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
         return -1;
     }
 
-    if( hardware->final_output_desc.DesktopCoordinates.left != 0 )
-    {
-        LOG_ERROR( "final_output_desc left found: %d\n", hardware->final_output_desc.DesktopCoordinates.left );
+    if (hardware->final_output_desc.DesktopCoordinates.left != 0) {
+        LOG_ERROR("final_output_desc left found: %d\n",
+                  hardware->final_output_desc.DesktopCoordinates.left);
     }
 
-    if( hardware->final_output_desc.DesktopCoordinates.top != 0 )
-    {
-        LOG_ERROR( "final_output_desc top found: %d\n", hardware->final_output_desc.DesktopCoordinates.top );
+    if (hardware->final_output_desc.DesktopCoordinates.top != 0) {
+        LOG_ERROR("final_output_desc top found: %d\n",
+                  hardware->final_output_desc.DesktopCoordinates.top);
     }
 
     device->width = hardware->final_output_desc.DesktopCoordinates.right;
@@ -260,10 +269,12 @@ int CreateCaptureDevice(struct CaptureDevice* device, UINT width, UINT height) {
 
     GetBitmapScreenshot(device);
 
+    device->screenshot.staging_texture = CreateTexture(device);
+
     return 0;
 }
 
-void GetBitmapScreenshot(struct CaptureDevice* device) {
+void GetBitmapScreenshot(CaptureDevice* device) {
     HDC hScreenDC = CreateDCW(device->monitorInfo.szDevice, NULL, NULL, NULL);
     HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
 
@@ -288,12 +299,13 @@ void GetBitmapScreenshot(struct CaptureDevice* device) {
 
     device->frame_data = device->bitmap;
     device->pitch = device->width * 4;
+    device->texture_on_gpu = false;
 }
 
-ID3D11Texture2D* CreateTexture(struct CaptureDevice* device) {
+ID3D11Texture2D* CreateTexture(CaptureDevice* device) {
     HRESULT hr;
 
-    struct DisplayHardware* hardware = device->hardware;
+    DisplayHardware* hardware = device->hardware;
 
     D3D11_TEXTURE2D_DESC tDesc;
 
@@ -331,7 +343,7 @@ ID3D11Texture2D* CreateTexture(struct CaptureDevice* device) {
     return texture;
 }
 
-void ReleaseScreenshot(struct ScreenshotContainer* screenshot) {
+void ReleaseScreenshot(ScreenshotContainer* screenshot) {
     if (screenshot->final_texture != NULL) {
         screenshot->final_texture->lpVtbl->Release(screenshot->final_texture);
         screenshot->final_texture = NULL;
@@ -343,24 +355,18 @@ void ReleaseScreenshot(struct ScreenshotContainer* screenshot) {
         screenshot->desktop_resource = NULL;
     }
 
-    if (screenshot->staging_texture != NULL) {
-        screenshot->staging_texture->lpVtbl->Release(
-            screenshot->staging_texture);
-        screenshot->staging_texture = NULL;
-    }
-
     if (screenshot->surface != NULL) {
         screenshot->surface->lpVtbl->Release(screenshot->surface);
         screenshot->surface = NULL;
     }
 }
 
-int CaptureScreen(struct CaptureDevice* device) {
+int CaptureScreen(CaptureDevice* device) {
     ReleaseScreen(device);
 
     HRESULT hr;
 
-    struct ScreenshotContainer* screenshot = &device->screenshot;
+    ScreenshotContainer* screenshot = &device->screenshot;
 
     hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
@@ -403,61 +409,34 @@ int CaptureScreen(struct CaptureDevice* device) {
     if (accumulated_frames > 0 && device->bitmap) {
         free(device->bitmap);
         device->bitmap = NULL;
+        device->texture_on_gpu = true;
     }
 
-    device->counter++;
-    hr =
-        DXGI_ERROR_UNSUPPORTED;  // device->duplication->lpVtbl->MapDesktopSurface(
-                                 // device->duplication,
-                                 // &screenshot->mapped_rect );
+    device->D3D11context->lpVtbl->CopySubresourceRegion(
+        device->D3D11context, (ID3D11Resource*)screenshot->staging_texture, 0,
+        0, 0, 0, (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
 
-    // If MapDesktopSurface doesn't work, then do it manually
-    if (hr == DXGI_ERROR_UNSUPPORTED) {
-        screenshot->staging_texture = CreateTexture(device);
-        if (screenshot->staging_texture == NULL) {
-            // Error already printed inside of CreateTexture
-            return -1;
-        }
+    return accumulated_frames;
+}
 
-        device->D3D11context->lpVtbl->CopySubresourceRegion(
-            device->D3D11context, (ID3D11Resource*)screenshot->staging_texture,
-            0, 0, 0, 0, (ID3D11Resource*)screenshot->final_texture, 0,
-            &device->Box);
+int TransferScreen(CaptureDevice* device) {
+    HRESULT hr;
+    ScreenshotContainer* screenshot = &device->screenshot;
 
-        hr = screenshot->staging_texture->lpVtbl->QueryInterface(
-            screenshot->staging_texture, &IID_IDXGISurface,
-            (void**)&screenshot->surface);
-        if (FAILED(hr)) {
-            LOG_ERROR("Query Interface Failed! 0x%X %d", hr, GetLastError());
-            return -1;
-        }
-
-        static int times_measured = 0;
-        static double time_spent = 0.0;
-
-        clock dxgi_copy_timer;
-        StartTimer( &dxgi_copy_timer );
-        hr = screenshot->surface->lpVtbl->Map(
-            screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
-        times_measured++;
-        time_spent += GetTimer( dxgi_copy_timer );
-        if( times_measured == 10 )
-        {
-            LOG_INFO( "Average Time Spent Moving DXGI to CPU: %f\n", time_spent / times_measured );
-            times_measured = 0;
-            time_spent = 0.0;
-        }
-
-        if (FAILED(hr)) {
-            LOG_ERROR("Map Failed!");
-            return -1;
-        }
-        device->did_use_map_desktop_surface = false;
-    } else if (FAILED(hr)) {
-        LOG_ERROR("MapDesktopSurface Failed! 0x%X %d", hr, GetLastError());
+    hr = screenshot->staging_texture->lpVtbl->QueryInterface(
+        screenshot->staging_texture, &IID_IDXGISurface,
+        (void**)&screenshot->surface);
+    if (FAILED(hr)) {
+        LOG_ERROR("Query Interface Failed! 0x%X %d", hr, GetLastError());
         return -1;
-    } else {
-        device->did_use_map_desktop_surface = true;
+    }
+
+    hr = screenshot->surface->lpVtbl->Map(
+        screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
+
+    if (FAILED(hr)) {
+        LOG_ERROR("Map Failed!");
+        return -1;
     }
 
     if (!device->bitmap) {
@@ -466,38 +445,37 @@ int CaptureScreen(struct CaptureDevice* device) {
     }
 
     device->released = false;
-    return accumulated_frames;
+    return 0;
 }
 
-void ReleaseScreen(struct CaptureDevice* device) {
+void ReleaseScreen(CaptureDevice* device) {
     if (device->released) {
         return;
     }
     HRESULT hr;
-    if (device->did_use_map_desktop_surface) {
-        hr = device->duplication->lpVtbl->UnMapDesktopSurface(
-            device->duplication);
-        if (FAILED(hr)) {
-            LOG_ERROR("Failed to unmap duplication's desktop surface 0x%X %d",
-                      hr, GetLastError());
-        }
-    } else {
-        struct ScreenshotContainer* screenshot = &device->screenshot;
-        hr = screenshot->surface->lpVtbl->Unmap(screenshot->surface);
-        if (FAILED(hr)) {
-            LOG_ERROR("Failed to unmap screenshot surface 0x%X %d", hr,
-                      GetLastError());
-        }
+
+    ScreenshotContainer* screenshot = &device->screenshot;
+    hr = screenshot->surface->lpVtbl->Unmap(screenshot->surface);
+    if (FAILED(hr)) {
+        LOG_ERROR("Failed to unmap screenshot surface 0x%X %d", hr,
+                  GetLastError());
     }
+
     device->released = true;
 }
 
-void DestroyCaptureDevice(struct CaptureDevice* device) {
+void DestroyCaptureDevice(CaptureDevice* device) {
     HRESULT hr;
 
     hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
     ReleaseScreenshot(&device->screenshot);
+
+    if (device->screenshot.staging_texture != NULL) {
+        device->screenshot.staging_texture->lpVtbl->Release(
+            device->screenshot.staging_texture);
+        device->screenshot.staging_texture = NULL;
+    }
 
     if (device->duplication) {
         device->duplication->lpVtbl->Release(device->duplication);
