@@ -2,11 +2,8 @@
 
 This repository contains the base Docker images for the various single-application streaming that Fractal supports. Each subfolder contains its image for streaming the specific application using Fractal with a fully self-contained container, meaning deploying one of those container images should be sufficient for the application to be streamed via Fractal.
 
-## Existing Images
-
 Here is a list of the existing Fractal single-application images, alongside their base container OS:
-
-TBD
+- None yet
 
 ## Development
 
