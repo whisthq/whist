@@ -5,6 +5,7 @@
 This repository contains the code for the VM and user webserver, which handles interfacing between users, the Fractal cloud computers hosted on Azure (currently), and a variety of website & client applications functionalities. Runs Flask with Celery for asynchronous task handling.
 
 Our webservers are hosted on Heroku:
+
 - [Production](https://cube-celery-vm.herokuapp.com)
 - [Staging](https://cube-celery-staging.herokuapp.com)
 - [Staging2](https://cube-celery-staging2.herokuapp.com)
@@ -25,7 +26,7 @@ Our webservers are hosted on Heroku:
     - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
 3. Install everything by typing `pip install -r requirements.txt`. Make sure you're in the virtual environment when doing this.
 4. Tell the local environment what the entry point is to the webserver by typing `set FLASK_APP=run.py`.
-5. Import the environment variables into your computer by typing `heroku config -s --app <APP> >> .env`. App is either `cube-celery-vm` if you are working on the production webserver, or `cube-celery-staging` if you are working on the staging webserver.
+5. Import the environment variables into your computer by typing `heroku config -s --app <APP> >> .env`. App is either `cube-celery-vm` if you are working on the production webserver, or `cube-celery-staging` if you are working on the staging webserver. This command appends to the `.env` file, so make sure to delete/clear the file if you plan to copy new config variables.
 6. Type `flask run` to start the webserver on localhost.
 7. [NOTE: Currently buggy] If you plan on calling endpoints that require celery, you will want to view the celery task queue locally. To do this, open a new terminal, cd into the vm-webserver folder, and type `celery -A app.tasks worker --loglevel=info`.
 8. Then, in a new terminal, attach the staging branch to cube-celery-staging by typing `git checkout staging`, then `heroku git:remote --app cube-celery-staging -r staging`
@@ -42,7 +43,7 @@ To build the Docker image, run: `docker build -t vm-webserver`. You will require
 
 `docker run --env-file .envdocker -t vm-webserver:latest`
 
-or 
+or
 
 `docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
 
@@ -54,7 +55,7 @@ To push to the Heroku production/staging servers, you’ll first need to set up 
 
 1. Inside your virtual environment, run the command `heroku create -a [DESIRED HEROKU SERVER NAME]`.
 2. `git checkout` to the branch you want to connect the new server to, and run the command `heroku git:remote -a [HEROKU SERVER NAME] -r [DESIRED LOCAL NICKNAME]`. For instance, if the app you created is called `cube-celery-staging5`, you could run `heroku git:remote -a cube-celery-staging5 -r staging5`.
-3. To transfer the environment variables over automatically, run the  command `heroku config -s -a [EXISTING SERVER] > config.txt` and then `cat config.txt | tr '\n' ' ' | xargs heroku config:set -a [HEROKU SERVER NAME]`. Note that you need to be on a Mac or Linux computer to run the second command; I could not find a suitable workaround for Windows.
+3. To transfer the environment variables over automatically, run the command `heroku config -s -a [EXISTING SERVER] > config.txt` and then `cat config.txt | tr '\n' ' ' | xargs heroku config:set -a [HEROKU SERVER NAME]`. Note that you need to be on a Mac or Linux computer to run the second command; I could not find a suitable workaround for Windows.
 4. Copy the environment variables locally by running `heroku config -s -a [HEROKU SERVER NAME]` >> .env`
 5. Install a Redis task Queue by going to the Heroku dashboard, finding the app you created, and navigating to Resources > Find More Addons > Heroku Redis. Follow the Heroku setup instructions and select the free plan.
 6. Under the Resources tab, make sure that the "web" and "celery" workers are both toggled on.
@@ -80,6 +81,15 @@ Test the webserver by running it on localhost and using Postman to send requests
 #### [SQL Database Scheme](https://pgweb-demo.herokuapp.com/)
 
 Select Scheme, and for the server URL scheme, copy the DATABASE_URL config var found on the Heroku instance.
+
+## Testing
+
+We have created a Postman workspace for a variety of API endpionts in vm-webserver, which can be used for testing in the Staging and Staging2 environments.
+
+Postman Team link: https://app.getpostman.com/join-team?invite_code=29d49d2365850ccfb50fc09723a45a93
+
+**Pytest**
+We have pytest tests in the `/tests` folder. To run tests, just run `pytest -o log_cli=true -s` in terminal. To run tests in parallel, run `pytest -o log_cli=true -s -n <num>`, with `<num>` as the # of workers in parallel.
 
 ## Publishing
 

@@ -94,8 +94,8 @@ def insertCustomer(
         if not customers:
             command = text(
                 """
-                INSERT INTO customers("username", "id", "subscription", "location", "trial_end", "paid")
-                VALUES(:email, :id, :subscription, :location, :trial_end, :paid)
+                INSERT INTO customers("username", "id", "subscription", "location", "trial_end", "paid", "created")
+                VALUES(:email, :id, :subscription, :location, :trial_end, :paid, :created)
                 """
             )
 
@@ -106,6 +106,7 @@ def insertCustomer(
                 "location": location,
                 "trial_end": trial_end,
                 "paid": paid,
+                "created": dt.now(datetime.timezone.utc).timestamp(),
             }
 
             conn.execute(command, **params)
@@ -215,4 +216,3 @@ def addPendingCharge(username, amount, ID=0):
                     username
                 ),
             )
-

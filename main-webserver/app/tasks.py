@@ -9,7 +9,15 @@ from .helpers.s3 import *
 
 
 @celery.task(bind=True)
-def createVM(self, vm_size, location, operating_system, ID=-1):
+def createVM(
+    self,
+    vm_size,
+    location,
+    operating_system,
+    admin_password=None,
+    admin_username=None,
+    ID=-1,
+):
     """Creates a windows vm of size vm_size in Azure region location
 
     Args:
@@ -42,7 +50,13 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         sendError(ID, "Nic does not exist, aborting")
         return
     vmParameters = createVMParameters(
-        vmName, nic.id, vm_size, location, operating_system
+        vmName,
+        nic.id,
+        vm_size,
+        location,
+        operating_system,
+        admin_password=admin_password,
+        admin_username=admin_username,
     )
 
     async_vm_creation = compute_client.virtual_machines.create_or_update(
@@ -50,30 +64,20 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     )
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "Waiting on async VM creation"
-        },
+        state="PENDING", meta={"msg": "Waiting on async VM creation"},
     )
 
     sendDebug(ID, "Waiting on async_vm_creation")
     async_vm_creation.wait()
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "VM {} created".format(vmParameters["vm_name"])
-        },
+        state="PENDING", meta={"msg": "VM {} created".format(vmParameters["vm_name"])},
     )
-
 
     time.sleep(10)
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "VM {} starting".format(vmParameters["vm_name"])
-        },
+        state="PENDING", meta={"msg": "VM {} starting".format(vmParameters["vm_name"])},
     )
 
     async_vm_start = compute_client.virtual_machines.start(
@@ -83,19 +87,23 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     async_vm_start.wait()
 
     self.update_state(
-        state="PENDING",
-        meta={
-            "msg": "VM {} started".format(vmParameters["vm_name"])
-        },
+        state="PENDING", meta={"msg": "VM {} started".format(vmParameters["vm_name"])},
     )
 
     time.sleep(30)
 
     sendInfo(ID, "The VM created is called {}".format(vmParameters["vm_name"]))
 
-    fractalVMStart(vmParameters["vm_name"], needs_winlogon=False, s = self)
+    fractalVMStart(vmParameters["vm_name"], needs_winlogon=False, s=self)
 
-    time.sleep(30)
+    lockVMAndUpdate(
+        vm_name=vmParameters["vm_name"],
+        state="RUNNING_AVAILABLE",
+        lock=True,
+        temporary_lock=None,
+        change_last_updated=False,
+        verbose=False,
+    )
 
     extension_parameters = (
         {
@@ -122,7 +130,6 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
         },
     )
 
-
     async_vm_extension = compute_client.virtual_machine_extensions.create_or_update(
         os.environ["VM_GROUP"],
         vmParameters["vm_name"],
@@ -136,7 +143,9 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
     self.update_state(
         state="PENDING",
         meta={
-            "msg": "VM {} successfully installed NVIDIA extension".format(vmParameters["vm_name"])
+            "msg": "VM {} successfully installed NVIDIA extension".format(
+                vmParameters["vm_name"]
+            )
         },
     )
 
@@ -149,11 +158,31 @@ def createVM(self, vm_size, location, operating_system, ID=-1):
 
     sendInfo(ID, "SUCCESS: VM {} created and updated".format(vmName))
 
+    lockVMAndUpdate(
+        vm_name=vmParameters["vm_name"],
+        state="RUNNING_AVAILABLE",
+        lock=False,
+        temporary_lock=0,
+        change_last_updated=False,
+        verbose=False,
+    )
+
     return fetchVMCredentials(vmParameters["vm_name"])
 
 
 @celery.task(bind=True)
 def createEmptyDisk(self, disk_size, username, location, ID=-1):
+    """Creates an additional non-os disk for the user
+
+    Args:
+        disk_size (str): Size of disk
+        username (str): The user's email
+        location (str): The user's region
+        ID (int, optional): Logging Id. Defaults to -1.
+
+    Returns:
+        str: The new disk name
+    """
     _, compute_client, _ = createClients()
     disk_name = genDiskName()
 
@@ -179,17 +208,27 @@ def createEmptyDisk(self, disk_size, username, location, ID=-1):
 
 
 @celery.task(bind=True)
-def createDiskFromImage(self, username, location, vm_size, operating_system, ID=-1):
+def createDiskFromImage(
+    self, username, location, vm_size, operating_system, apps=[], ID=-1
+):
     hr = 400
     payload = None
+    attempts = 0
+    disk_name = None
 
-    while hr == 400:
+    while hr == 400 and attempts < 10:
         sendInfo(ID, "Creating {} disk for {}".format(operating_system, username))
         payload = createDiskFromImageHelper(
             username, location, vm_size, operating_system
         )
         hr = payload["status"]
-        sendInfo(ID, "Disk created with status {}".format(hr))
+        disk_name = payload["disk_name"]
+        sendInfo(ID, "Disk {} created with status {}".format(disk_name, hr))
+        attempts += 1
+
+    if hr == 200 and disk_name and len(apps) > 0:
+        sendInfo(ID, "Disk created, inserting apps {} for {}".format(apps, disk_name))
+        insertDiskApps(disk_name, apps)
 
     sendDebug(ID, payload)
     payload["location"] = location
@@ -413,6 +452,9 @@ def restartVM(self, vm_name, ID=-1):
 @celery.task(bind=True)
 def startVM(self, vm_name, ID=-1):
     sendInfo(ID, "Trying to start vm {}".format(vm_name))
+    self.update_state(
+        state="PENDING", meta={"msg": "Starting vm"},
+    )
 
     if spinLock(vm_name) > 0:
         lockVM(vm_name, True)
@@ -423,17 +465,29 @@ def startVM(self, vm_name, ID=-1):
         lockVM(vm_name, False)
 
         sendInfo(ID, "VM {} started successfully".format(vm_name))
+        self.update_state(
+            state="SUCCESS", meta={"msg": "Vm start success"},
+        )
 
         return {"status": 200}
     else:
+        self.update_state(
+            state="FAILURE", meta={"msg": "Failed to start vm"},
+        )
         return {"status": 400}
 
 
 @celery.task(bind=True)
 def stopVM(self, vm_name, ID=-1):
     sendInfo(ID, "Trying to stop vm {}".format(vm_name))
+    self.update_state(
+        state="PENDING", meta={"msg": "Preparing to stop vm"},
+    )
 
     if spinLock(vm_name) > 0:
+        self.update_state(
+            state="PENDING", meta={"msg": "Stopping vm"},
+        )
         lockVM(vm_name, True)
 
         _, compute_client, _ = createClients()
@@ -442,9 +496,15 @@ def stopVM(self, vm_name, ID=-1):
         lockVM(vm_name, False)
 
         sendInfo(ID, "VM {} stopped successfully".format(vm_name))
+        self.update_state(
+            state="SUCCESS", meta={"msg": "Vm stopped successfully"},
+        )
 
         return {"status": 200}
     else:
+        self.update_state(
+            state="FAILURE", meta={"msg": "Failed to stop vm"},
+        )
         return {"status": 400}
 
 
@@ -516,6 +576,9 @@ def syncDisks(self, ID=-1):
     for stored_disk in stored_disks:
         if not stored_disk["disk_name"] in disk_names:
             deleteDiskFromTable(stored_disk["disk_name"])
+            stored_disks.remove(stored_disk)
+        # else:
+        #     insertDiskSetting(stored_disk["disk_name"], stored_disk["branch"], False)
 
     sendInfo(ID, "Sync disks complete")
 
@@ -587,7 +650,7 @@ def swapDiskSync(self, disk_name, ID=-1):
 
     os_disk = compute_client.disks.get(os.environ.get("VM_GROUP"), disk_name)
     os_type = "Windows" if "windows" in str(os_disk.os_type) else "Linux"
-    needs_winlogon = os_type == "Windows"
+    needs_winlogon = os_type == "Windows" and os.environ.get("VM_GROUP") == "Fractal"
     username = mapDiskToUser(disk_name)
     vm_name = os_disk.managed_by
 
@@ -801,8 +864,8 @@ def swapDiskSync(self, disk_name, ID=-1):
 
 
 @celery.task(bind=True)
-def swapSpecificDisk(self, disk_name, vm_name, ID=-1):
-    """Swaps out a disk in a vm
+def swapSpecificDisk(s, disk_name, vm_name, ID=-1):
+    """Swaps a specific disk into the vm
 
     Args:
         disk_name (str): The name of the disk to swap out
@@ -814,9 +877,16 @@ def swapSpecificDisk(self, disk_name, vm_name, ID=-1):
     """
     sendInfo(ID, "Attempting to swap out disk {} in VM {}".format(disk_name, vm_name))
     locked = checkLock(vm_name)
+    s.update_state(
+        state="PENDING", meta={"msg": "Preparing to swap"},
+    )
 
     while locked:
         sendDebug(ID, "VM {} is locked. Waiting to be unlocked".format(vm_name))
+        s.update_state(
+            state="PENDING",
+            meta={"msg": "VM {} is locked. Waiting to be unlocked".format(vm_name)},
+        )
         time.sleep(5)
         locked = checkLock(vm_name)
 
@@ -832,14 +902,21 @@ def swapSpecificDisk(self, disk_name, vm_name, ID=-1):
     sendDebug(ID, "Swapping out disk " + disk_name + " on VM " + vm_name)
     start = time.perf_counter()
 
+    s.update_state(
+        state="PENDING", meta={"msg": "Swapping out old disk"},
+    )
+
     async_disk_attach = compute_client.virtual_machines.create_or_update(
-        "Fractal", vm.name, vm
+        os.environ.get("VM_GROUP"), vm.name, vm
     )
     async_disk_attach.wait()
 
     end = time.perf_counter()
     # sendDebug(ID, f"SUCCESS: Disk swapped out in {end - start:0.4f} seconds. Restarting " + vm_name)
 
+    s.update_state(
+        state="PENDING", meta={"msg": "Restarting vm"},
+    )
     start = time.perf_counter()
     fractalVMStart(vm_name)
     end = time.perf_counter()
@@ -847,6 +924,9 @@ def swapSpecificDisk(self, disk_name, vm_name, ID=-1):
     # sendDebug(ID, f"SUCCESS: VM restarted in {end - start:0.4f} seconds")
 
     updateDisk(disk_name, vm_name, None)
+    s.update_state(
+        state="PENDING", meta={"msg": "Attaching new disk"},
+    )
     associateVMWithDisk(vm_name, disk_name)
     sendDebug(ID, "Database updated.")
 
@@ -855,6 +935,9 @@ def swapSpecificDisk(self, disk_name, vm_name, ID=-1):
     sendDebug(ID, "VM " + vm_name + " successfully restarted")
 
     lockVM(vm_name, False, ID=ID)
+    s.update_state(
+        state="SUCCESS", meta={"msg": "Swap success"},
+    )
     return fetchVMCredentials(vm_name)
 
 
@@ -935,10 +1018,15 @@ def deleteDisk(self, disk_name, ID=-1):
 
 @celery.task(bind=True)
 def deallocateVM(self, vm_name, ID=-1):
+    self.update_state(
+        state="PENDING", meta={"msg": "Locking vm"},
+    )
     lockVM(vm_name, True, ID=ID)
 
     _, compute_client, _ = createClients()
-
+    self.update_state(
+        state="PENDING", meta={"msg": "Deallocating vm"},
+    )
     sendInfo(ID, "Starting to deallocate VM {}".format(vm_name))
     updateVMState(vm_name, "DEALLOCATING")
 
@@ -951,7 +1039,9 @@ def deallocateVM(self, vm_name, ID=-1):
 
     updateVMState(vm_name, "DEALLOCATED")
     sendInfo(ID, "VM {} deallocated successfully".format(vm_name))
-
+    self.update_state(
+        state="SUCCESS", meta={"msg": "VM {} deallocated successfully".format(vm_name)},
+    )
     return {"status": 200}
 
 
@@ -960,41 +1050,6 @@ def storeLogs(self, sender, connection_id, logs, vm_ip, version, ID=-1):
     if SendLogsToS3(logs, sender, connection_id, vm_ip, version, ID) > 0:
         return {"status": 200}
     return {"status": 422}
-
-
-@celery.task(bind=True)
-def fetchLogs(self, username, fetch_all=False, ID=-1):
-    if not fetch_all:
-        sendInfo(ID, "Fetch log for {} sent to Redis queue".format(username))
-        command = text(
-            """
-            SELECT * FROM logs WHERE "username" = :username ORDER BY last_updated DESC
-            """
-        )
-        params = {"username": username}
-
-        with engine.connect() as conn:
-            sendInfo(ID, "Fetching logs for {} from Postgres".format(username))
-            logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-            sendInfo(ID, "Logs fetched for {} successfully".format(username))
-            conn.close()
-            return logs
-    else:
-        sendInfo(ID, "Fetch all logs sent to Redis queue")
-        command = text(
-            """
-            SELECT * FROM logs ORDER BY last_updated DESC
-            """
-        )
-
-        params = {"username": username}
-
-        with engine.connect() as conn:
-            sendInfo(ID, "Fetching all logs from Postgres".format(username))
-            logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
-            sendInfo(ID, "All logs fetched successfully".format(username))
-            conn.close()
-            return logs
 
 
 @celery.task(bind=True)
