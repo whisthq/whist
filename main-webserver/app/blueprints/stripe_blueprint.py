@@ -44,7 +44,12 @@ def payment(action, **kwargs):
         for customer in customers:
             if email == customer["username"]:
                 customer_exists = True
-                trial_end = customer["trial_end"]
+                if customer["trial_end"]:
+                    trial_end = max(
+                        customer["trial_end"], shiftUnixByDay(dateToUnix(getToday()), 1)
+                    )
+                else:
+                    trial_end = shiftUnixByDay(dateToUnix(getToday()), 1)
 
         try:
             new_customer = stripe.Customer.create(email=email, source=token)
