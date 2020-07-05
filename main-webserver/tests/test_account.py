@@ -3,91 +3,174 @@ import os
 import pytest
 import requests
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 SERVER_URL = (
-    "https://" + os.getenv("HEROKU_APP_NAME") + ".herokuapp.com"
-    if os.getenv("HEROKU_APP_NAME")
+    "https://main-webserver-pr-"
+    + str(os.getenv("TEST_HEROKU_PR_NUMBER"))
+    + ".herokuapp.com"
+    if os.getenv("CI") == "true"
     else "http://localhost:5000"
 )
 
 
-def login(username, password):
-    return requests.post(
-        (SERVER_URL + "/account/login"), json=dict(username=username, password=password)
-    )
+def test_login(input_token):
+    username = "testlogin@example.com"
+    try:
+        pytest.helpers.register_user(
+            username, "password", "Delete Me", "Two men walk into a bar. Knock knock.",
+        )
+        resp = pytest.helpers.login(username, "password")
+        pytest.helpers.deleteUser(username, input_token)
+        assert resp.json()["verified"]
+        resp = pytest.helpers.login("support@fakecomputers.com", "asdf")
+        assert not resp.json()["verified"]
+    except:
+        pytest.helpers.deleteUser(username, input_token)
 
 
-def test_login():
-    resp = login("example@example.com", "password")
-    json_data = resp.json()
-    assert resp.status_code == 200
+def test_register_user(input_token):
+    username = "testRegistered@example.com"
+    try:
+        pytest.helpers.register_user(
+            username, "password", "Delete Me", "Two men walk into a bar. Knock knock.",
+        )
+        resp = requests.post(
+            (SERVER_URL + "/account/fetchUser"),
+            json={"username": username},
+            headers={"Authorization": "Bearer " + input_token},
+        )
+        success = resp.json()["user"] is not None
+        pytest.helpers.deleteUser(username, input_token)
+        assert success
 
+        pytest.helpers.register_user(
+            username, "password", "Delete Me", "Two men walk into a bar. Knock knock.",
+        )
 
-def register(username, password, name, feedback):
-    return requests.post(
-        (SERVER_URL + "/account/register"),
-        json={
-            "username": username,
-            "password": password,
-            "name": name,
-            "feedback": feedback,
-        },
-    )
-
-
-def test_register(input_token):
-    register(
-        "fakefake@delete.com",
-        "password",
-        "Delete Me",
-        "Two men walk into a bar. Knock knock.",
-    )
-    resp = requests.post(
-        (SERVER_URL + "/account/fetchUser"),
-        json={"username": "fakefake@delete.com"},
-        headers={"Authorization": "Bearer " + input_token},
-    )
-    success = resp.json()["user"] is not None
-    if success:  # Delete test account if successful
-        delete("fakefake@delete.com", input_token)
-    assert success
-
-
-def delete(username, authToken):
-    return requests.post(
-        (SERVER_URL + "/account/delete"),
-        json={"username": username},
-        headers={"Authorization": "Bearer " + authToken},
-    )
+        resp = pytest.helpers.register_user(
+            "phil@fractalcomputers.com", "password", "Won't work", "Oh no"
+        )
+        assert resp.status_code != 200
+    except:
+        pytest.helpers.deleteUser(username, input_token)
 
 
 def test_delete(input_token):
     """Creates a test user and deletes it
     """
-    register(
-        "fakefake@delete.com",
-        "password",
-        "Delete Me",
-        "Two men walk into a bar. Knock knock.",
-    )
-    delete("fakefake@delete.com", input_token)
-    resp = requests.post(
-        (SERVER_URL + "/account/fetchUser"),
-        json={"username": "fakefake@delete.com"},
-        headers={"Authorization": "Bearer " + input_token},
-    )
-    assert resp.json()["user"] is None
-
-
-def adminLogin(username, password):
-    return requests.post(
-        (SERVER_URL + "/admin/login"), json=dict(username=username, password=password)
-    )
+    username = "testDelete@example.com"
+    try:
+        pytest.helpers.register_user(
+            username, "password", "Delete Me", "Two men walk into a bar. Knock knock.",
+        )
+        pytest.helpers.deleteUser(username, input_token)
+        resp = requests.post(
+            (SERVER_URL + "/account/fetchUser"),
+            json={"username": username},
+            headers={"Authorization": "Bearer " + input_token},
+        )
+        assert resp.json()["user"] is None
+    except:
+        pytest.helpers.deleteUser(username, input_token)
 
 
 def test_adminLogin():
-    resp = adminLogin("example@example.com", "password")
+    resp = pytest.helpers.adminLogin("example@example.com", "password")
     assert resp.status_code == 422
-    resp = adminLogin(os.getenv("DASHBOARD_USERNAME"), os.getenv("DASHBOARD_PASSWORD"))
+    resp = pytest.helpers.adminLogin(
+        os.getenv("DASHBOARD_USERNAME"), os.getenv("DASHBOARD_PASSWORD")
+    )
     assert resp.status_code == 200
+
+
+def test_lookup(input_token):
+    username = "testlookup@example.com"
+    try:
+        resp = pytest.helpers.lookup(username)
+        assert not resp.json()["exists"]
+
+        pytest.helpers.register_user(
+            username,
+            "password",
+            "Test Lookup",
+            "Two men walk into a bar. Knock knock.",
+        )
+        resp = pytest.helpers.lookup(username)
+        assert resp.json()["exists"]
+
+        pytest.helpers.deleteUser(username, input_token)
+
+        resp = pytest.helpers.lookup("doesnotexist@example.com")
+        assert not resp.json()["exists"]
+    except:
+        pytest.helpers.deleteUser(username, input_token)
+
+
+def test_checkVerified(input_token):
+    username = "testCheckVerified@example.com"
+    try:
+        resp = pytest.helpers.register_user(
+            username, "password", "Test CheckVerified", "Here is some feedback.",
+        )
+        token = resp.json()["token"]
+        resp = pytest.helpers.checkVerified(username)
+        assert not resp.json()["verified"]
+        resp = pytest.helpers.makeVerified(username, token, input_token)
+        assert resp.json()["verified"]
+        resp = pytest.helpers.checkVerified(username)
+        assert resp.json()["verified"]
+        pytest.helpers.deleteUser(username, input_token)
+    except:
+        pytest.helpers.deleteUser(username, input_token)
+
+
+def test_reset(input_token):
+    username = "testReset@example.com"
+    try:
+        pytest.helpers.register_user(
+            username, "password", "Test Reset", "Here is some feedback.",
+        )
+        new_password = "new_password123"
+        resp = pytest.helpers.login(username, new_password)
+        assert not resp.json()["verified"]
+        resp = pytest.helpers.reset(username, new_password)
+        assert resp.json()["status"] == 200
+        resp = pytest.helpers.login(username, new_password)
+        assert resp.json()["verified"]
+        pytest.helpers.deleteUser(username, input_token)
+    except:
+        pytest.helpers.deleteUser(username, input_token)
+
+
+def test_fetchDisks(input_token):
+    username = "testDisks@example.com"
+    try:
+        pytest.helpers.register_user(
+            username, "password", "Test fetchDisks", "Some more feedback.",
+        )
+
+        resp = pytest.helpers.fetchDisks(username)
+        assert len(resp["disks"]) == 0
+
+        resp = pytest.helpers.createFromImage(username, input_token)
+        assert resp.status_code == 202
+        id = resp.json()["ID"]
+        status = "PENDING"
+        while status == "PENDING" or status == "STARTED":
+            time.sleep(5)
+            status = pytest.helpers.getStatus(id)["state"]
+        assert status == "SUCCESS"
+        disk = pytest.helpers.getStatus(id)["output"]
+
+        resp = pytest.helpers.fetchDisks(username)
+        assert len(resp["disks"]) > 0
+        assert disk["disk_name"] in list(map(lambda d: d["disk_name"], resp["disks"]))
+
+        pytest.helpers.deleteDisks(username, input_token)
+
+        pytest.helpers.deleteUser(username, input_token)
+    except:
+        pytest.helpers.deleteDisks(username, input_token)
+        pytest.helpers.deleteUser(username, input_token)
