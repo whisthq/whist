@@ -1,6 +1,6 @@
-# Fractal User & VM Webserver
+# Fractal Main Webserver
 
-![Python Webserver CI](https://github.com/fractalcomputers/vm-webserver/workflows/Python%20App%20CI/badge.svg)
+![Python Webserver CI](https://github.com/fractalcomputers/main-webserver/workflows/Python%20Webserver%20CI/badge.svg)
 
 This repository contains the code for the VM and user webserver, which handles interfacing between users, the Fractal cloud computers hosted on Azure (currently), and a variety of website & client applications functionalities. Runs Flask with Celery for asynchronous task handling.
 
@@ -17,15 +17,13 @@ Our webservers are hosted on Heroku:
 
 1. Set up the Heroku CLI on your computer
 2. Check your python version by typing `python -V`.
-
-- If you have python 3.6.X:
-  - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
-- If you have Python >3.6 or Python <3.0:
-  - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
-  - Find the directory where python 3 is installed. On linux, this can be done by typing into the terminal: `which python3`.
-  - Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
-  - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
-
+    - **If you have python 3.6.X**
+    - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
+    - **If you have Python >3.6 or Python <3.0**
+    - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
+    - Find the directory where python 3 is installed. On linux, this can be done by typing into the terminal: `which python3`.
+    - Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
+    - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
 3. Install everything by typing `pip install -r requirements.txt`. Make sure you're in the virtual environment when doing this.
 4. Tell the local environment what the entry point is to the webserver by typing `set FLASK_APP=run.py`.
 5. Import the environment variables into your computer by typing `heroku config -s --app <APP> >> .env`. App is either `cube-celery-vm` if you are working on the production webserver, or `cube-celery-staging` if you are working on the staging webserver. This command appends to the `.env` file, so make sure to delete/clear the file if you plan to copy new config variables.
@@ -33,11 +31,11 @@ Our webservers are hosted on Heroku:
 7. [NOTE: Currently buggy] If you plan on calling endpoints that require celery, you will want to view the celery task queue locally. To do this, open a new terminal, cd into the vm-webserver folder, and type `celery -A app.tasks worker --loglevel=info`.
 8. Then, in a new terminal, attach the staging branch to cube-celery-staging by typing `git checkout staging`, then `heroku git:remote --app cube-celery-staging -r staging`
 9. Also in the new terminal, attach the master branch to cube-celery-vm by typing `git checkout master`, then `heroku git:remote --app cube-celery-vm -r heroku`
-10. [OPTIONAL] We are starting to build out support for AWS EC2 instances. If you don't plan on testing our EC2 endpoints, you don't need to worry about this, but if you are, then here's what you will need to do:
-    a) Install the AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html.
-    b) Once installed, open up a terminal and type `aws configure`.
-    c) When prompted, enter access key `AKIA24A776SSMH6JRSNH` and secret ID `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`. You can leave the other fields blank.
-    d) To test if this worked, type the command `aws ec2 describe-instances --region us-east-1`. If some JSON appears, you're all set.
+10. **[OPTIONAL]** We are starting to build out support for AWS EC2 instances. If you don't plan on testing our EC2 endpoints, you don't need to worry about this, but if you are, then here's what you will need to do:
+    - Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html).
+    - Once installed, open up a terminal and type `aws configure`.
+    - When prompted, enter access key `AKIA24A776SSMH6JRSNH` and secret ID `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`. You can leave the other fields blank.
+    - To test if this worked, type the command `aws ec2 describe-instances --region us-east-1`. If some JSON appears, you're all set.
 
 ### Build/Run in Docker
 
@@ -48,27 +46,6 @@ To build the Docker image, run: `docker build -t vm-webserver`. You will require
 or
 
 `docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
-
-### Build/Run in Vagrant
-
-Vagrant allows you to build local VMs which can be used to run code seamlessly. It is done via the Git submodule to the `fractalcomputers/vagrant` repository.
-
-First, make sure you initialized submodules via: `git submodule update --init --recursive`. After the submodules are initialized you will find the Vagrant configs in `vagrant/`.
-
-You will first need to download the win10-dev.box image. To do so, run `aws s3 cp s3://fractal-private-dev/win10-dev.box win10-dev.box` as detailed in `vagrant/README.md`, or you can also manually download it from the S3 bucket. If you try to download it via the AWS CLI, you will first need to install the CLI and configure permissions, which is explained the the Vagrant repo README. You can then follow the instructions in `vagrant/README.md` for running VMs with the vm-webserver repo in them.
-
-Quick Commands:
-
-```
-# vagrant up commands will take some time
-vagrant up
-vagrant up win10 # only win10
-vagrant ssh win10
-vagrant ssh ubuntu
-
-# code is located under /vagrant
-vagrant destroy # destroys vms and cleans up
-```
 
 ### Run on Heroku
 
@@ -112,7 +89,7 @@ We have created a Postman workspace for a variety of API endpionts in vm-webserv
 Postman Team link: https://app.getpostman.com/join-team?invite_code=29d49d2365850ccfb50fc09723a45a93
 
 **Pytest**
-We have pytest tests in the `/tests` folder. To run tests, just run `pytest` in terminal. To run tests in parallel, run `pytest -n <num>`, with `<num>` as the # of workers in parallel.
+We have pytest tests in the `/tests` folder. To run tests, just run `pytest -o log_cli=true -s` in terminal. To run tests in parallel, run `pytest -o log_cli=true -s -n <num>`, with `<num>` as the # of workers in parallel.
 
 ## Publishing
 

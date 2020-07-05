@@ -243,6 +243,15 @@ def account_verify_user(**kwargs):
         return jsonify({"status": 401, "verified": False}), 401
 
 
+@account_bp.route("/account/reset", methods=["POST"])
+@generateID
+@logRequestInfo
+def account_reset(**kwargs):
+    body = request.get_json()
+    resetPassword(body["username"], body["password"])
+    return jsonify({"status": 200}), 200
+
+
 @account_bp.route("/account/generateIDs", methods=["POST"])
 @jwt_required
 @generateID

@@ -492,3 +492,64 @@ def logs_actions(action, **kwargs):
 
         task = deleteLogs.apply_async([connection_id, kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
+
+    elif action == "bookmark":
+        body = json.loads(request.data)
+
+        command = text(
+            """
+            INSERT INTO "bookmarked_logs"("connection_id")
+            VALUES(:connection_id)
+            """
+        )
+        params = {"connection_id": str(body["connection_id"])}
+
+        with engine.connect() as conn:
+            conn.execute(command, **params)
+            conn.close()
+
+        return jsonify({}), 200
+
+    elif action == "unbookmark":
+        body = json.loads(request.data)
+
+        command = text(
+            """
+            DELETE FROM "bookmarked_logs" WHERE "connection_id" = :connection_id
+            """
+        )
+        params = {"connection_id": str(body["connection_id"])}
+
+        with engine.connect() as conn:
+            conn.execute(command, **params)
+            conn.close()
+
+        return jsonify({}), 200
+
+
+@vm_bp.route("/logs/<action>", methods=["GET"])
+@generateID
+@logRequestInfo
+def logs_get(action, **kwargs):
+    if action == "bookmarked":
+        command = text(
+            """
+            SELECT * FROM "bookmarked_logs"
+            """
+        )
+        params = {}
+
+        connection_ids = None
+
+        with engine.connect() as conn:
+            connection_ids = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+
+            if connection_ids:
+                connection_ids = [
+                    element["connection_id"] for element in connection_ids
+                ]
+            conn.close()
+
+        return jsonify({"connection_ids": connection_ids}), 200
+
+    return jsonify({}), 200

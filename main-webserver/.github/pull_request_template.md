@@ -1,6 +1,6 @@
-Ticket | Title
----|---
-#nb | Insert Title Here
+| Ticket | Title             |
+| ------ | ----------------- |
+| #nb    | Insert Title Here |
 
 ## Description
 
@@ -12,7 +12,10 @@ Briefly describe your approach, design, implementation to solve the problem if a
 
 ## Tests
 
-List all the possible scenarios/edge cases that you tested. For instance, if you implemented a login feature, you could say that you tested 1. A correct username/password 2. Correct username but incorrect password 3. Correct username and admin password.
+List all the possible scenarios/edge cases that you tested. For instance, if you implemented a login feature, you could say that you tested:
+1. Correct username/password
+2. Correct username but incorrect password
+3. Correct username and admin password
 
 ## Checklist
 

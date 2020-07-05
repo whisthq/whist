@@ -1,6 +1,5 @@
 # Python
 .env*
-env
 env/
 Test-Environment
 "env"
@@ -10,12 +9,9 @@ env3.6
 .venv/
 venv/
 __pycache__/
-.vagrant
-*.box
-ubuntu-bionic-18.04-cloudimg-console.log
-.vscode/
+
 # Heroku
-herokulogs.txtgg
+herokulogs.txt
 
 # Vagrant
 .vagrant

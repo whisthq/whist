@@ -1535,6 +1535,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                 )
 
             if needs_winlogon:
+                print("Winlogon 1")
                 winlogon = waitForWinlogon(vm_name, ID)
                 while winlogon < 0:
                     boot_if_necessary(vm_name, True, ID)
@@ -1545,6 +1546,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                                 "msg": "Logging you into your cloud PC. This should take less than two minutes."
                             },
                         )
+                    print("Winlogon 2")
                     winlogon = waitForWinlogon(vm_name, ID)
 
                 if s:
@@ -1657,7 +1659,13 @@ def waitForWinlogon(vm_name, ID=-1):
     return 1
 
 
-def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, ID=-1, s=None):
+def fractalVMStart(
+    vm_name,
+    needs_restart=False,
+    needs_winlogon=os.environ.get("VM_GROUP") == "Fractal",
+    ID=-1,
+    s=None,
+):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary (big brain thoughts from Ming)
 
     Args:
