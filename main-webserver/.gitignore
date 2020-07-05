@@ -2,6 +2,7 @@
 .env*
 env/
 Test-Environment
+"env"
 *.pyc
 *.py[cod]
 env3.6
@@ -10,7 +11,7 @@ venv/
 __pycache__/
 
 # Heroku
-herokulogs.txtgg
+herokulogs.txt
 
 # Vagrant
 .vagrant

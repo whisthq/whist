@@ -69,7 +69,7 @@ Disable-HyperV
 Disable-Lock
 Disable-Logout
 Disable-Shutdown
-Add-AutoLogin $admin_username $admin_password
+# Add-AutoLogin $admin_username $admin_password # Ran separately with user-specific password
 
 # Install creative packages
 if ($creative_install) {

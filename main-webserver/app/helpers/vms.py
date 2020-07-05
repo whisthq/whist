@@ -1521,6 +1521,11 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                 ID=ID,
             )
 
+            if first_time:
+                print("Setting auto-login for {}".format(disk_name))
+                setAutoLogin(disk_name, vm_name, ID)
+                print("Auto-login set for {}".format(disk_name))
+
             if s:
                 s.update_state(
                     state="PENDING",
@@ -1826,6 +1831,50 @@ def updateProtocolVersion(vm_name, version):
         conn.close()
 
 
+def setAutoLogin(disk_name, vm_name, ID=-1):
+    """
+        Adds auto-login credentials to a disk's VM, using the disk's unique vm_password
+
+        Args:
+            vm_name (str): The name of the vm to set credentials for
+            disk_name (str): The name of the disk associated with the vm
+
+        Returns:
+            int: 200 for success, 400 for error
+    """
+    _, compute_client, _ = createClients()
+    try:
+        print("TASK: Starting to run Powershell scripts")
+
+        disk_settings = getDiskSettings(disk_name)
+        admin_username = disk_settings["admin_username"]
+        admin_password = disk_settings["admin_password"]
+
+        command = """
+        Add-AutoLogin "{admin_username}" (ConvertTo-SecureString "{admin_password}." -AsPlainText -Force)
+        """.format(
+            admin_username=admin_username, admin_password=admin_password
+        )
+        run_command_parameters = {
+            "command_id": "RunPowerShellScript",
+            "script": [command],
+        }
+
+        poller = compute_client.virtual_machines.run_command(
+            os.environ.get("VM_GROUP"), vm_name, run_command_parameters
+        )
+        # poller.wait()
+        result = poller.result()
+        print("SUCCESS: Powershell scripts finished running")
+        print(result.value[0].message)
+
+        return {"status": 200}
+
+    except Exception as e:
+        sendCritical(ID, str(e))
+        return {"status": 400}
+
+
 def fetchInstallCommand(app_name):
     """Fetches an install command from the install_commands sql table
 
@@ -1842,6 +1891,7 @@ def fetchInstallCommand(app_name):
     )
     params = {"app_name": app_name}
     with engine.connect() as conn:
+
         install_command = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         return install_command
