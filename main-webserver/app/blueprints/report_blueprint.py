@@ -276,7 +276,7 @@ def analytics(action, **kwargs):
             )
             df.columns = ["time", "level", "file", "location", "contents"]
             r = df.time.apply(
-                lambda x: ":".join(x.split(":")[:-1]) + "." + x.split(":")[-1]
+                lambda x: ":".join(str(x).split(":")[:-1]) + "." + str(x).split(":")[-1]
             )
             df.time = pd.to_datetime(r, errors="coerce")
             cleaned_df = df[df.time.notnull()]

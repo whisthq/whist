@@ -7,8 +7,10 @@ import time
 
 load_dotenv()
 SERVER_URL = (
-    "https://" + os.getenv("HEROKU_APP_NAME") + ".herokuapp.com"
-    if os.getenv("HEROKU_APP_NAME")
+    "https://main-webserver-pr-"
+    + str(os.getenv("TEST_HEROKU_PR_NUMBER"))
+    + ".herokuapp.com"
+    if os.getenv("CI") == "true"
     else "http://localhost:5000"
 )
 
@@ -60,7 +62,17 @@ def createDiskFromImage(
     )
 
 
+def swap(vm_name, disk_name, input_token):
+    return requests.post(
+        (SERVER_URL + "/disk/swap"),
+        json={"vm_name": vm_name, "disk_name": disk_name},
+        headers={"Authorization": "Bearer " + input_token},
+    )
+
+
 def test_vm(input_token):
+    username = "fakefake@delete.com"
+
     # Testing create
     print("Testing create vm...")
     resp = create(
@@ -78,9 +90,7 @@ def test_vm(input_token):
 
     # Test create disk from image
     print("Testing create disk from image...")
-    resp = createDiskFromImage(
-        "Windows", "fakefake@delete.com", "eastus", "NV6", [], input_token
-    )
+    resp = createDiskFromImage("Windows", username, "eastus", "NV6", [], input_token)
     id = resp.json()["ID"]
     status = "PENDING"
     while status == "PENDING" or status == "STARTED":
@@ -106,12 +116,14 @@ def test_vm(input_token):
 
     # Test stop
     print("Testing stop...")
-    requests.post((SERVER_URL + "/vm/stopvm"), json={"vm_name": vm_name,})
+    requests.post((SERVER_URL + "/vm/stopvm"), json={"vm_name": vm_name})
     id = resp.json()["ID"]
+    print("ID: " + id)
     status = "PENDING"
     while status == "PENDING" or status == "STARTED":
         time.sleep(5)
         status = getStatus(id)["state"]
+    assert status == "SUCCESS"
     assert getVm(vm_name)["state"] == "STOPPED"
 
     # Test start
@@ -136,8 +148,58 @@ def test_vm(input_token):
         status = getStatus(id)["state"]
     assert getVm(vm_name)["state"] == "DEALLOCATED"
 
+    # Test restart
+    print("Testing restart...")
+    resp = requests.post((SERVER_URL + "/vm/restart"), json={"username": username})
+    id = resp.json()["ID"]
+    status = "PENDING"
+    while status == "PENDING" or status == "STARTED":
+        time.sleep(5)
+        status = getStatus(id)["state"]
+    assert status == "SUCCESS"
+
+    # Test swap disk
+    print("Testing swap disk...")
+    resp = createDiskFromImage("Windows", username, "eastus", "NV6", [], input_token)
+    id = resp.json()["ID"]
+    status = "PENDING"
+    while status == "PENDING" or status == "STARTED":
+        time.sleep(5)
+        status = getStatus(id)["state"]
+    disk_name2 = getStatus(id)["output"]["disk_name"]
+    resp = swap(vm_name, disk_name2, input_token)
+    id = resp.json()["ID"]
+    status = "PENDING"
+    while status == "PENDING" or status == "STARTED":
+        time.sleep(5)
+        status = getStatus(id)["state"]
+    assert getVm(vm_name)["disk_name"] == disk_name2
+
+    # Test add disk
+    # print("Testing add disk...")
+    # resp = requests.post(
+    #     (SERVER_URL + "/disk/createEmpty"),
+    #     json={"disk_size": 10, "username": username},
+    #     headers={"Authorization": "Bearer " + input_token}
+    # )
+    # id = resp.json()["ID"]
+    # status = "PENDING"
+    # while status == "PENDING" or status == "STARTED":
+    #     time.sleep(5)
+    #     status = getStatus(id)["state"]
+    # resp = requests.post(
+    #     (SERVER_URL + "/disk/add"),
+    #     json={"disk_size": 10, "username": username},
+    #     headers={"Authorization": "Bearer " + input_token}
+    # )
+    # id = resp.json()["ID"]
+    # status = "PENDING"
+    # while status == "PENDING" or status == "STARTED":
+    #     time.sleep(5)
+    #     status = getStatus(id)["state"]
+
     # Test delete
-    print("Testing create...")
+    print("Testing delete...")
     resp = delete(vm_name, True)
     id = resp.json()["ID"]
     status = "PENDING"

@@ -60,6 +60,11 @@ def getToday():
     return aware
 
 
+def shiftUnixByDay(utc, num_days):
+    date = unixToDate(utc)
+    return round(dateToUnix(date + relativedelta(days=num_days)))
+
+
 def shiftUnixByMonth(utc, num_months):
     date = unixToDate(utc)
     return round(dateToUnix(date + relativedelta(months=num_months)))
