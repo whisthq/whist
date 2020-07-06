@@ -1,7 +1,8 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file main.c
- * @brief This file contains the main code that runs a Fractal server on a Windows or Linux Ubuntu computer.
+ * @brief This file contains the main code that runs a Fractal server on a
+Windows or Linux Ubuntu computer.
 ============================
 Usage
 ============================
