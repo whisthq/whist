@@ -173,4 +173,3 @@ def claimAvailableVM(
     session.commit()
     session.close()
     return None
-
