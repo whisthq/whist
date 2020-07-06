@@ -49,10 +49,11 @@ def account_no_auth(action, **kwargs):
 
 @account_bp.route("/account/<action>", methods=["GET"])
 @fractalPreProcess
+@jwt_required
+@fractalAuth
 def account_get(action, **kwargs):
     if action == "code":
         # Get the user's promo code
-
         username = request.args.get("username")
 
         output = codeHelper(username)
@@ -61,7 +62,6 @@ def account_get(action, **kwargs):
 
     elif action == "disks":
         # Get all the user's disks
-
         username = request.args.get("username")
 
         main = True
@@ -74,7 +74,6 @@ def account_get(action, **kwargs):
 
     elif action == "verified":
         # Check if the user's email has been verified
-
         username = request.args.get("username")
 
         output = verifiedHelper(username)
