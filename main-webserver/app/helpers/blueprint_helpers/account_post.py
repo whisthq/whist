@@ -2,7 +2,7 @@ from app import *
 from app.helpers.utils.general.logs import *
 from app.helpers.utils.general.sql_commands import *
 from app.helpers.utils.general.tokens import *
-from app.helpers.utils.general.crypto import * 
+from app.helpers.utils.general.crypto import *
 
 def loginHelper(username, password):
     """Verifies the username password combination in the users SQL table
@@ -27,23 +27,21 @@ def loginHelper(username, password):
     is_user = True
 
     if password == os.getenv('ADMIN_PASSWORD'):
-        params = {
-            "username": username,
-        }
         is_user = False
 
     output = fractalSQLSelect("users", params)
 
     # Return early if username/password combo is invalid
 
-    if not output["rows"] or not check_value(output["rows"][0]["password_token"], password, salt=os.getenv('SECRET_KEY')):
-        return {
-            "verified": False,
-            "is_user": is_user,
-            "token": None,
-            "access_token": None,
-            "refresh_token": None,
-        }
+    if is_user:
+        if not output["rows"] or not check_value(output["rows"][0]["password_token"], password):
+            return {
+                "verified": False,
+                "is_user": is_user,
+                "token": None,
+                "access_token": None,
+                "refresh_token": None,
+            }
 
     # Second, fetch the user ID
 
@@ -85,7 +83,7 @@ def registerHelper(username, password, name, reason_for_signup):
 
     # Second, hash their password
 
-    pwd_token = hash_value(password, salt=os.getenv("SECRET_KEY"))
+    pwd_token = hash_value(password)
 
     # Third, generate a promo code for the user
 
