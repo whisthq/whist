@@ -5,7 +5,7 @@ from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_modification import *
 
 
-def swapDiskAndUpdate( disk_name, vm_name, needs_winlogon, resource_group, s=None):
+def swapDiskAndUpdate(disk_name, vm_name, needs_winlogon, resource_group, s=None):
     s.update_state(
         state="PENDING",
         meta={
@@ -34,7 +34,7 @@ def swapDiskAndUpdate( disk_name, vm_name, needs_winlogon, resource_group, s=Non
                 "username": output["rows"][0]["username"],
             },
         )
-        
+
     return 1
 
 
@@ -42,9 +42,11 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
     fractalLog(
         function="attachSecondaryDisks",
         label=getVMUser(vm_name),
-        logs="Looking for any secondary disks associated with VM {vm_name}".format(vm_name=vm_name)
+        logs="Looking for any secondary disks associated with VM {vm_name}".format(
+            vm_name=vm_name
+        ),
     )
-                
+
     output = fractalSQLSelect(
         table_name="disks",
         params={"username": username, "state": "ACTIVE", "main": False},
@@ -56,9 +58,11 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
         fractalLog(
             function="attachSecondaryDisks",
             label=getVMUser(vm_name),
-            logs="Found {num_disks} secondary disks associated with VM {vm_name}".format(num_disks=str(len(secondary_disks)), vm_name=vm_name)
+            logs="Found {num_disks} secondary disks associated with VM {vm_name}".format(
+                num_disks=str(len(secondary_disks)), vm_name=vm_name
+            ),
         )
-    
+
         lockVMAndUpdate(
             vm_name=vm_name,
             state="ATTACHING",
@@ -93,7 +97,9 @@ def attachSecondaryDisks(username, vm_name, resource_group, s=None):
         fractalLog(
             function="attachSecondaryDisks",
             label=getVMUser(vm_name),
-            logs="Did not find any secondary disks associated with VM {vm_name}".format(vm_name=vm_name)
+            logs="Did not find any secondary disks associated with VM {vm_name}".format(
+                vm_name=vm_name
+            ),
         )
 
 
@@ -108,9 +114,11 @@ def claimAvailableVM(
         fractalLog(
             function="claimAvailableVM",
             label=str(username),
-            logs="Querying all {location} VMs with state {state}".format(state=state, location=location)
+            logs="Querying all {location} VMs with state {state}".format(
+                state=state, location=location
+            ),
         )
-        
+
         command = text(
             """
             SELECT * FROM {table_name}
@@ -135,9 +143,11 @@ def claimAvailableVM(
             fractalLog(
                 function="claimAvailableVM",
                 label=str(username),
-                logs="Found a {location} VM with state {state} to attach {disk_name} to".format(location=location, state=state, disk_name=disk_name)
+                logs="Found a {location} VM with state {state} to attach {disk_name} to".format(
+                    location=location, state=state, disk_name=disk_name
+                ),
             )
-            
+
             if s:
                 if state == "RUNNING_AVAILABLE":
                     s.update_state(
@@ -160,8 +170,10 @@ def claimAvailableVM(
                 SET lock = :lock, username = :username, disk_name = :disk_name, state = :state, last_updated = :last_updated
                 WHERE vm_name = :vm_name
                 """.format(
-                table_name=resourceGroupToTable(resource_group)
+                    table_name=resourceGroupToTable(resource_group)
+                )
             )
+
             params = {
                 "lock": True,
                 "username": username,
@@ -181,7 +193,7 @@ def claimAvailableVM(
                 logs="Did not find any VMs in {location} with state {state}.".format(
                     location=location, state=state
                 ),
-                level=logging.WARNING
+                level=logging.WARNING,
             )
 
     session.commit()
