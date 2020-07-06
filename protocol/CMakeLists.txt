@@ -17,7 +17,7 @@ cmake_policy(SET CMP0091 NEW)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;CI;")
 #set default compiler flags
-set (CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
+set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/CompilerOptions.cmake")
 
 project(FractalProtocol LANGUAGES C)
 

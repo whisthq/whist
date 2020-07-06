@@ -1,8 +1,10 @@
 #/bin/bash
+
 # Named arguments are optional see defaults below
 # usage:
 # ./deploy_artifact <vm_name> <run_id> --resource_group <azure resource group> \
 # --artifact_name <artifact name> --web_server <web server>
+
 vm_name=$1
 run_id=$2
 
@@ -29,6 +31,3 @@ curl --location --request POST ''$web_server'/artifact/deploy' \
     "resource_group": "'$resource_group'"
 }'
 echo "Deploy command sent, you may need to wait a minute or so for the deployment to complete"
-
-
-

@@ -4,6 +4,8 @@
 *.obj
 *.iml
 *.pyc
+
+# visual studio
 **/Debug/
 **/Release/
 .vs/
@@ -19,6 +21,8 @@
 *.user
 **/log.txt
 **/log_prev.txt
+
+# macOS
 .DS_Store
 
 # fractal files
@@ -35,7 +39,7 @@ desktop/external_utils/Windows/ssh.exe
 desktop/loading/
 *.v
 
-# CMake
+# cmake
 *.cmake
 *.make
 *.marks
@@ -45,7 +49,6 @@ fractal/**/*.lib
 desktop/*.lib
 server/*.lib
 CMakeSettings.json
-
 cmake-build-*
 CMakeFiles/
 build/
@@ -58,11 +61,11 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 
-#docs
+# docs
 docs/html/
 docs/latex/
 
-#vagrant
+# vagrant
 .vagrant
 *.box
 ubuntu-bionic-18.04-cloudimg-console.log

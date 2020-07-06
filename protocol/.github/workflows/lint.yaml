@@ -1,13 +1,14 @@
+# Format C/C++ code via clang-format
+
 name: clang-format
 
-on: [push]
+on: [ push ]
 
 env:
   CMAKE_VERSION: 3.15.7
   NINJA_VERSION: 1.9.0
   BUILD_TYPE: Debug
   CCACHE_VERSION: 3.7.7
-
 
 jobs:
   build:
@@ -27,7 +28,7 @@ jobs:
       - name: Commit files
         run: |
           git config --local user.email "linter@fractalcomputers.com"
-          git config --local user.name "fractal linter"
+          git config --local user.name "Fractal Linter"
           git diff-index --quiet HEAD || git commit -m "Linted for clang-format" -a
       - name: Push changes
         uses: ad-m/github-push-action@master
