@@ -104,16 +104,27 @@ def claimAvailableVM(
             "os_type": os_type,
         }
 
+        print(str(params))
+
         available_vm = fractalCleanSQLOutput(
             session.execute(command, params).fetchone()
+        )
+
+        print(
+            fractalCleanSQLOutput(
+                session.execute(text("""SELECT * FROM \"v_ms\""""), {}).fetchall()
+            )
         )
 
         if available_vm:
             fractalLog(
                 function="claimAvailableVM",
                 label=str(username),
-                logs="Found a {location} VM with state {state} to attach {disk_name} to".format(
-                    location=location, state=state, disk_name=disk_name
+                logs="Found a {location} VM with state {state} to attach {disk_name} to: VM {vm_name}".format(
+                    location=location,
+                    state=state,
+                    disk_name=disk_name,
+                    vm_name=available_vm["vm_name"],
                 ),
             )
 
