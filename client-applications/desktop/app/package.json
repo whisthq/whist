@@ -1,19 +1,19 @@
 {
-    "name": "fractal",
-    "license": "UNLICENSED",
-    "productName": "Fractal",
-    "description": "Fractal Desktop Application",
-    "version": "1.7.4",
-    "main": "./main.prod.js",
     "author": {
-        "name": "Fractal Computers, Inc.",
-        "email": "support@fractalcomputers.com"
+        "email": "support@fractalcomputers.com",
+        "name": "Fractal Computers, Inc."
     },
+    "dependencies": {
+        "speedtest.net": "^0.1.0"
+    },
+    "description": "Fractal Desktop Application",
+    "license": "UNLICENSED",
+    "main": "./main.prod.js",
+    "name": "fractal",
+    "productName": "Fractal",
     "scripts": {
         "electron-rebuild": "node -r ../internals/scripts/BabelRegister.js ../internals/scripts/ElectronRebuild.js",
         "postinstall": "yarn electron-rebuild"
     },
-    "dependencies": {
-        "speedtest.net": "^0.1.0"
-    }
+    "version": "1.0.0"
 }
