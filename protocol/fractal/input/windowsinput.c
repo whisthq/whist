@@ -1,8 +1,20 @@
-/*
- * User input processing on Windows.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file windowsinput.c
+ * @brief This file defines the Windows input device type and function to enter
+ *        string on Winlogon screen.
+============================
+Usage
+============================
+
+Use EnterWinString to enter a password to Windows Winlogon screen, to log a user
+into the Windows desktop environment. You can create an input device to receive
+input (keystrokes, mouse clicks, etc.) via CreateInputDevice. You can then send
+input to the Windows OS via ReplayUserInput, and use UpdateKeyboardState to sync
+keyboard state between local and remote computers (say, sync them to both have
+CapsLock activated).
+*/
+
 #include "windowsinput.h"
 
 #define USE_NUMPAD 0x1000

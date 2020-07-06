@@ -1,8 +1,21 @@
-/*
- * Audio decoding via FFmpeg library.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file audiodecode.c
+ * @brief This file contains the code to decode AAC-encoded audio using FFmpeg.
+============================
+Usage
+============================
+
+Audio is decoded from AAC via FFmpeg. In order for FFmpeg to be able to decoder
+an audio frame, it needs to be have a certain duration of data. This is
+frequently more than a single packet, which is why we have a FIFO encoding
+queue. This is abstracted away in the decoder, each packet will already have
+enough data from the way the encoder encodes. You can initialize the AAC decoder
+via create_audio_decoder. You then decode packets via
+audio_decoder_decode_packet and convert them into readable format via
+audio_decoder_packet_readout.
+*/
+
 #include "audiodecode.h"
 
 audio_decoder_t *create_audio_decoder(int sample_rate) {

@@ -1,8 +1,15 @@
-/*
- * MacOS helper functions for clipboard functions.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file mac_utils.c
+ * @brief This file contains the MacOS helper functions for clipboard functions.
+============================
+Usage
+============================
+
+You can use these functions to check if a directory exist, to compare filenames,
+or to delete files/folders
+*/
+
 #include "mac_utils.h"
 
 #include <stdio.h>

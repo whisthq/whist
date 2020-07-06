@@ -1,3 +1,15 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file clock.c
+ * @brief This file contains the helper functions for timing code.
+============================
+Usage
+============================
+
+You can use StartTimer and GetTimer to time specific pieces of code, or to
+relate different events across server and client.
+*/
+
 #define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
 
 #include <stdbool.h>

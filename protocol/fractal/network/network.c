@@ -1,3 +1,68 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file network.c
+ * @brief This file contains all code that interacts directly with sockets
+ *        under-the-hood.
+============================
+Usage
+============================
+
+SocketContext: This type represents a socket.
+   - To use a socket, call CreateUDPContext or CreateTCPContext with the desired
+     parameters
+   - To send data over a socket, call SendTCPPacket or SendUDPPacket
+   - To receive data over a socket, call ReadTCPPacket or ReadUDPPacket
+   - If there is belief that a packet wasn't sent, you can call ReplayPacket to
+     send a packet twice
+
+FractalPacket: This type represents a packet of information
+   - Unique packets of a given type will be given unique IDs. IDs are expected
+     to be increasing monotonically, with a gap implying that a packet was lost
+   - FractalPackets that were thought to have been sent may not arrive, and
+     FractalPackets may arrive out-of-order, in the case of UDP. This will not
+     be the case for TCP, however TCP sockets may lose connection if there is a
+     problem.
+   - A given block of data will, during transmission, be split up into packets
+     with the same type and ID, but indicies ranging from 0 to num_indices - 1
+   - A missing index implies that a packet was lost
+   - A FractalPacket is only guaranteed to have data information from 0 to
+     payload_size - 1 data[] occurs at the end of the packet, so extra bytes may
+     in-fact point to invalid memory to save space and bandwidth
+   - A FractalPacket may be sent twice in the case of packet recovery, but any
+     two FractalPackets found that are of the same type and ID will be expected
+     to have the same data (To be specific, the Client should never legally send
+     two distinct packets with same ID/Type, and neither should the Server, but if
+     the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
+     they can be different)
+   - To reconstruct the original datagram from a sequence of FractalPackets,
+     concatenated the data[] streams (From 0 to payload_size - 1) for each index
+     from 0 to num_indices - 1
+
+-----
+Client
+-----
+
+SocketContext context;
+CreateTCPContext(&context, "10.0.0.5", 5055, 500, 250);
+
+char* msg = "Hello this is a message!";
+SendTCPPacket(&context, PACKET_MESSAGE, msg, strlen(msg);
+
+-----
+Server
+-----
+
+SocketContext context;
+CreateTCPContext(&context, NULL, 5055, 500, 250);
+
+FractalPacket* packet = NULL;
+while(!packet) {
+  packet = ReadTCPPacket(context);
+}
+
+printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
+*/
+
 #if defined(_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, need to
                                          // be at the very top

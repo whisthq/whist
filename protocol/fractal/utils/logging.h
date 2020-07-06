@@ -3,7 +3,7 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file logging.h
- * @brief This fiel contains the logging macros and utils to send Winlogon
+ * @brief This file contains the logging macros and utils to send Winlogon
  *        status and to send the logs to the webserver.
 ============================
 Usage

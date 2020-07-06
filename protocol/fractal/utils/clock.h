@@ -3,10 +3,13 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file clock.h
- * @brief Helper functions for timing
+ * @brief This file contains the helper functions for timing code.
 ============================
 Usage
 ============================
+
+You can use StartTimer and GetTimer to time specific pieces of code, or to
+relate different events across server and client.
 */
 
 /*

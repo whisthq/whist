@@ -1,11 +1,14 @@
 #ifndef SYSINFO_H
 #define SYSINFO_H
 /**
+ * Copyright Fractal Computers, Inc. 2020
  * @file sysinfo.h
  * @brief This file contains all code that logs client hardware specifications.
 ============================
 Usage
 ============================
+
+Call the respective functions to log a device's OS, model, CPU, RAM, etc.
 */
 
 /*

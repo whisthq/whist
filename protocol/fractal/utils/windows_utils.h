@@ -1,7 +1,7 @@
 #ifndef WINDOWS_UTILS_H
 #define WINDOWS_UTILS_H
-
 /**
+ * Copyright Fractal Computers, Inc. 2020
  * @file windows_utils.h
  * @brief This file contains all code that interacts directly with Windows
  *        desktops (Winlogon, the login screen, and regular desktops).

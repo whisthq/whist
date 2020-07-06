@@ -7,6 +7,11 @@
 ============================
 Usage
 ============================
+
+You can use the functions here to handle JSONs in C. The function parse_json
+will parse it into our custom JSON struct, and you can then use get_kv to
+retrieve specific key and value pairs, the way you'd normally do in Python or
+JavaScript.
 */
 
 /*
