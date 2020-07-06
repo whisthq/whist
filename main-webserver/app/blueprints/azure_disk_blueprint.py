@@ -8,7 +8,9 @@ azure_disk_bp = Blueprint("azure_disk_bp", __name__)
 
 @azure_disk_bp.route("/azure_disk/<action>", methods=["POST"])
 @fractalPreProcess
+@jwt_required
 def azure_disk_post(action, **kwargs):
+    current_user = get_jwt_identity()
     if action == "clone":
         # Clone a Fractal disk
 
@@ -41,6 +43,9 @@ def azure_disk_post(action, **kwargs):
             kwargs["body"]["resource_group"],
         )
 
+        if getDiskUser(disk_name) != current_user:
+            return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
+
         task = swapSpecificDisk.apply_async([vm_name, disk_name, resource_group])
 
         if not task:
@@ -58,6 +63,9 @@ def azure_disk_post(action, **kwargs):
         if "username" in kwargs["body"].keys():
             username = kwargs["body"]["username"]
 
+            if username != current_user:
+                return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
+
             output = fractalSQLSelect(table_name="disks", params={"username": username})
 
             if output["success"] and output["rows"]:
@@ -70,19 +78,25 @@ def azure_disk_post(action, **kwargs):
         elif "disk_name" in kwargs["body"].keys():
             disk_name = kwargs["body"]["disk_name"]
 
+            if getDiskUser(disk_name) != current_user:
+                return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
+
             task = deleteDisk.apply_async([disk_name, resource_group])
             return jsonify({"ID": task.id}), ACCEPTED
 
         return jsonify({"ID": None}), BAD_REQUEST
 
-    # elif action == "attach":
-    #     # Find a VM to attach disk to
+    elif action == "attach":
+        # Find a VM to attach disk to
 
-    #     disk_name = kwargs["body"]["disk_name"]
+        disk_name, resource_group = (
+            kwargs["body"]["disk_name"],
+            kwargs["body"]["resource_group"],
+        )
 
-    #     task = automaticAttachDisk.apply_async([disk_name])
+        task = automaticAttachDisk.apply_async([disk_name, resource_group])
 
-    #     if not task:
-    #         return jsonify({"ID": None}), BAD_REQUEST
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
 
-    #     return jsonify({"ID": task.id}), ACCEPTED
+        return jsonify({"ID": task.id}), ACCEPTED

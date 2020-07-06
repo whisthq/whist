@@ -4,7 +4,7 @@ from app import *
 def createClients():
     """Creates Azure management clients
 
-    This function is used to access the resource management, compute management, and network management clients, 
+    This function is used to access the resource management, compute management, and network management clients,
     which are modules in the Azure Python SDK.
 
     Returns:
@@ -127,6 +127,7 @@ def resourceGroupToTable(resource_group):
     try:
         table_mapping = {
             "Fractal": "v_ms",
+            "FractalStaging": "v_ms",
             "FractalProtocolCI": "VMs_FractalProtocolCI",
         }
 
@@ -139,6 +140,15 @@ def getVMUser(vm_name, resource_group=os.getenv("VM_GROUP")):
     output = fractalSQLSelect(
         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
     )
+
+    if output["success"] and output["rows"]:
+        return str(output["rows"][0]["username"])
+
+    return "None"
+
+
+def getDiskUser(disk_name):
+    output = fractalSQLSelect(table_name="disks", params={"disk_name": disk_name})
 
     if output["success"] and output["rows"]:
         return str(output["rows"][0]["username"])
