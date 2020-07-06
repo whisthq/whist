@@ -37,7 +37,11 @@ def swapSpecificDisk(self, vm_name, disk_name, resource_group=os.getenv("VM_GROU
     fractalVMStart(vm_name, resource_group=resource_group, s=self)
 
     lockVMAndUpdate(
-        vm_name=vm_name, state="RUNNING_AVAILABLE", lock=False, temporary_lock=0, resource_group=resource_group
+        vm_name=vm_name,
+        state="RUNNING_AVAILABLE",
+        lock=False,
+        temporary_lock=0,
+        resource_group=resource_group,
     )
 
     output = fractalSQLSelect(
@@ -135,15 +139,16 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
     location = os_disk.location
     vm_attached = True if vm_name else False
 
-    if vm_attached:
-    else:
-        self.update_state(
-            state="PENDING",
-            meta={"msg": "Boot request received successfully. Fetching your cloud PC."},
-        )
-
     # If disk is already attached to a VM, start the VM and attach any secondary disks
-    
+
+    fractalLog(
+        function="automaticAttachDisk",
+        label=str(username),
+        logs="Starting to automatically attach disk {disk_name}".format(
+            disk_name=disk_name
+        ),
+    )
+
     if vm_attached:
         self.update_state(
             state="PENDING",
@@ -151,38 +156,52 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
                 "msg": "Boot request received successfully. Preparing your cloud PC."
             },
         )
-        
+
         vm_name = vm_name.split("/")[-1]
         unlocked = False
-        
+
+        fractalLog(
+            function="automaticAttachDisk",
+            label=str(username),
+            logs="{disk_name} is already attached to VM {vm_name}".format(
+                disk_name=disk_name, vm_name=vm_name
+            ),
+        )
+
         while not unlocked and vm_attached:
             # Wait to gain access to the VM
-            
-            if spinLock(vm_name, resource_group=resource_group, s = self) > 0:
+
+            if spinLock(vm_name, resource_group=resource_group, s=self) > 0:
                 # Access gained, lock the VM for ourselves
-                
+
+                fractalLog(
+                    function="automaticAttachDisk",
+                    label=str(username),
+                    logs="Updating database and starting VM {vm_name}".format(
+                        vm_name=vm_name
+                    ),
+                )
+
                 unlocked = True
                 lockVMAndUpdate(
                     vm_name=vm_name,
                     state="ATTACHING",
                     lock=True,
                     temporary_lock=None,
-                    resource_group=resource_group 
+                    resource_group=resource_group,
                 )
 
                 # Update database to make sure that the VM is associated with the correct disk
                 # and username
-                
+
                 fractalSQLUpdate(
                     table_name=resourceGroupToTable(resource_group),
-                    conditional_params = {
-                        "vm_name": vm_name,
-                    },
-                    new_params = {
+                    conditional_params={"vm_name": vm_name,},
+                    new_params={
                         "disk_name": disk_name,
                         "username": username,
-                        "location": location
-                    }
+                        "location": location,
+                    },
                 )
 
                 self.update_state(
@@ -192,7 +211,15 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
                     },
                 )
 
-                if fractalVMStart(vm_name, needs_winlogon=needs_winlogon, resource_group=resource_group, s=self) > 0:
+                if (
+                    fractalVMStart(
+                        vm_name,
+                        needs_winlogon=needs_winlogon,
+                        resource_group=resource_group,
+                        s=self,
+                    )
+                    > 0
+                ):
                     self.update_state(
                         state="PENDING", meta={"msg": "Cloud PC is ready to use."}
                     )
@@ -211,30 +238,36 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
                     state="RUNNING_AVAILABLE",
                     lock=False,
                     temporary_lock=1,
-                    resource_group=resource_group 
+                    resource_group=resource_group,
                 )
 
-                output = fractalSQLSelect(table_name=resourceGroupToTable(vm_name), params={
-                    "vm_name": vm_name 
-                })
-                
+                output = fractalSQLSelect(
+                    table_name=resourceGroupToTable(vm_name),
+                    params={"vm_name": vm_name},
+                )
+
                 if output["success"] and output["rows"]:
                     return output["rows"][0]
                 else:
                     return {}
-                
+
             else:
-                os_disk = compute_client.disks.get(
-                    resource_group, disk_name
-                )
+                os_disk = compute_client.disks.get(resource_group, disk_name)
                 vm_name = os_disk.managed_by
                 location = os_disk.location
                 vm_attached = True if vm_name else False
 
     if not vm_attached:
+        self.update_state(
+            state="PENDING",
+            meta={"msg": "Boot request received successfully. Fetching your cloud PC."},
+        )
+
         disk_attached = False
         while not disk_attached:
-            vm = claimAvailableVM(username, disk_name, location, resource_group, os_type, s=self)
+            vm = claimAvailableVM(
+                username, disk_name, location, resource_group, os_type, s=self
+            )
             if vm:
                 try:
                     vm_name = vm["vm_name"]
@@ -254,12 +287,17 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
 
                             detachSecondaryDisk(disk.name, vm_name, resource_group)
 
-                    if swapDiskAndUpdate(disk_name, vm_name, needs_winlogon, resource_group, s=self) > 0:
+                    if (
+                        swapDiskAndUpdate(
+                            disk_name, vm_name, needs_winlogon, resource_group, s=self
+                        )
+                        > 0
+                    ):
                         self.update_state(
                             state="PENDING",
                             meta={"msg": "Data successfully uploaded to cloud PC."},
                         )
-                        free_vm_found = True
+
                         attachSecondaryDisks(username, vm_name, resource_group, s=self)
 
                         lockVMAndUpdate(
@@ -267,13 +305,14 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
                             state="RUNNING_AVAILABLE",
                             lock=False,
                             temporary_lock=1,
-                            resource_group=resource_group
+                            resource_group=resource_group,
                         )
 
-                        output = fractalSQLSelect(table_name=resourceGroupToTable(vm_name), params={
-                            "vm_name": vm_name 
-                        })
-                        
+                        output = fractalSQLSelect(
+                            table_name=resourceGroupToTable(vm_name),
+                            params={"vm_name": vm_name},
+                        )
+
                         if output["success"] and output["rows"]:
                             return output["rows"][0]
                         else:
@@ -286,15 +325,16 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
                         state="RUNNING_AVAILABLE",
                         lock=False,
                         temporary_lock=1,
-                        resource_group=resource_group
+                        resource_group=resource_group,
                     )
 
                     disk_attached = True
-                    
-                    output = fractalSQLSelect(table_name=resourceGroupToTable(vm_name), params={
-                        "vm_name": vm_name 
-                    })
-                    
+
+                    output = fractalSQLSelect(
+                        table_name=resourceGroupToTable(vm_name),
+                        params={"vm_name": vm_name},
+                    )
+
                     if output["success"] and output["rows"]:
                         return output["rows"][0]
                     else:
@@ -303,8 +343,10 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
                     fractalLog(
                         function="automaticAttachDisk",
                         label=username,
-                        logs="Critical error attaching disk: {error}".format(error=str(e)),
-                        level=logging.CRITICAL
+                        logs="Critical error attaching disk: {error}".format(
+                            error=str(e)
+                        ),
+                        level=logging.CRITICAL,
                     )
 
             else:
@@ -318,7 +360,7 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
                     function="automaticAttachDisk",
                     label=username,
                     logs="No VMs available, waiting 30 seconds...",
-                    level=logging.WARNING
+                    level=logging.WARNING,
                 )
                 time.sleep(30)
 

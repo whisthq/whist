@@ -70,6 +70,13 @@ def detachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
     """
     _, compute_client, _ = createClients()
     # Detach data disk
+    fractalLog(
+        function="detachSecondaryDisk",
+        label=getVMUser(vm_name),
+        logs="Detaching secondary disk {disk_name} to {vm_name}".format(
+            disk_name=disk_name, vm_name=vm_name
+        ),
+    )
 
     virtual_machine = compute_client.virtual_machines.get(resource_group, vm_name)
     data_disks = virtual_machine.storage_profile.data_disks
@@ -82,6 +89,14 @@ def detachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
 
 
 def attachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
+    fractalLog(
+        function="attachSecondaryDisk",
+        label=getVMUser(vm_name),
+        logs="Attaching secondary disk {disk_name} to {vm_name}".format(
+            disk_name=disk_name, vm_name=vm_name
+        ),
+    )
+
     _, compute_client, _ = createClients()
     data_disk = compute_client.disks.get(resource_group, disk_name)
 
