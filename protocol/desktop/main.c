@@ -3,7 +3,7 @@
  *
  * Copyright Fractal Computers, Inc. 2020
  **/
-#if defined(_WIN32)
+#ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
@@ -46,7 +46,6 @@ volatile int max_bitrate = STARTING_BITRATE;
 volatile bool update_mbps = false;
 
 // Global state variables
-volatile bool is_spectator = false;
 volatile int connection_id;
 volatile SDL_Window* window;
 volatile bool run_receive_packets;
@@ -61,6 +60,11 @@ volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
+
+int UDP_port = -1;
+int TCP_port = -1;
+int client_id = -1;
+int uid;
 
 // Keyboard state variables
 bool alt_pressed = false;
@@ -122,7 +126,7 @@ void update() {
     // the last time we checked the TCP socket, and the clipboard isn't actively
     // busy
     if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 &&
-        !isClipboardSynchronizing() && !is_spectator) {
+        !isClipboardSynchronizing()) {
         // Check if TCP connction is active
         int result = Ack(&PacketTCPContext);
         if (result < 0) {
@@ -479,6 +483,9 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    srand(rand() * (unsigned int)time(NULL) + rand());
+    uid = rand();
+
     char* log_dir = getLogDir();
     if (log_dir == NULL) {
         return -1;
@@ -540,12 +547,19 @@ int main(int argc, char* argv[]) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
         }
-        if (!is_spectator) {
-            if (establishConnections() != 0) continue;
-        } else {
-            if (establishSpectatorConnections() != 0) continue;
+
+        if (discoverPorts() != 0) {
+            LOG_WARNING("Failed to discover ports.");
+            continue;
         }
+
+        if (connectToServer() != 0) {
+            LOG_WARNING("Failed to connect to server.");
+            continue;
+        }
+
         connected = true;
+        received_server_init_message = true;
 
         // Initialize audio and variables
         is_timing_latency = false;
@@ -553,29 +567,18 @@ int main(int argc, char* argv[]) {
 
         // Create thread to receive all packets and handle them as needed
         run_receive_packets = true;
-        received_server_init_message = false;
         SDL_Thread* receive_packets_thread = SDL_CreateThread(
             ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
         StartTimer(&window_resize_timer);
 
+        if (sendTimeToServer() != 0) {
+            LOG_ERROR("Failed to synchronize time with server.");
+        }
+
         // Timer used in CI mode to exit after 1 min
         clock ci_timer;
         StartTimer(&ci_timer);
-
-        if (!is_spectator) {
-            if (waitForServerInitMessage(500) != 0) {
-                LOG_WARNING("Did not receive init message from server.");
-                failed = true;
-                break;
-            }
-        }
-
-        if (!is_spectator) {
-            if (sendTimeToServer() != 0) {
-                LOG_ERROR("Failed to synchronize time with server.");
-            }
-        }
 
         clock ack_timer, keyboard_sync_timer;
         StartTimer(&ack_timer);
@@ -587,9 +590,7 @@ int main(int argc, char* argv[]) {
         while (connected && !exiting && !failed) {
             if (GetTimer(ack_timer) > 5) {
                 Ack(&PacketSendContext);
-                if (!is_spectator) {
-                    Ack(&PacketTCPContext);
-                }
+                Ack(&PacketTCPContext);
                 StartTimer(&ack_timer);
             }
             // if we are running a CI test we run for time_to_run_ci secondsA
@@ -622,11 +623,7 @@ int main(int argc, char* argv[]) {
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
         destroyAudio();
-        if (is_spectator) {
-            closeSpectatorConnections();
-        } else {
-            closeConnections();
-        }
+        closeConnections();
     }
 
     LOG_INFO("Closing Client...");

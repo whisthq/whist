@@ -166,3 +166,106 @@ int GetTimeData(FractalTimeData* time_data) {
     return 0;
 #endif
 }
+
+void SetTimezoneFromIANAName(char* linux_tz_name) {
+    // TODO we need the sudo password on the server to set the time
+    // when we get around to implementing that we should update this function to
+    // actually work
+    //    char cmd[500] = "echo {INSERT PASSWORD HERE WHEN WE CAN} | sudo -S
+    //    timedatectl set-timezone "; snprintf(cmd + strlen(cmd),
+    //    strlen(linux_tz_name), linux_tz_name);
+    (void*)linux_tz_name;  // silence unused variable warning
+    return;
+}
+
+void SetTimezoneFromWindowsName(char* win_tz_name) {
+    char cmd[500];
+    snprintf(cmd, sizeof(cmd), "powershell -command \"Set-TimeZone -Id '%s'\"",
+             win_tz_name);
+    char* response = NULL;
+    runcmd(cmd, &response);
+    LOG_INFO("Timezone powershell command: %s -> %s\n", cmd, response);
+    free(response);
+    return;
+}
+
+void SetTimezoneFromUtc(int utc, int DST_flag) {
+#ifndef _WIN32
+    // TODO come back to this when we have sudo password on linux server
+    //    char cmd[5000];
+    //    // Negative one because UNIX UTC values are flipped from usual. West
+    //    is positive and east is negative. sprintf(cmd,"echo {INSERT PASSWORD
+    //    HERE WHEN WE CAN} | sudo -S timedatectl set-timezoneEtc/GMT%d\0",
+    //    -1*utc);
+    return;
+#else
+    if (DST_flag > 0) {
+        LOG_INFO("DST active");
+        utc = utc - 1;
+    }
+    char* timezone;
+    //    Open powershell " here closing " in timezone
+    char cmd[5000] = "powershell.exe \"Set-TimeZone -Id \0";
+    switch (utc) {
+        case -12:
+            timezone = " 'Dateline Standard Time' \" \0";
+            break;
+        case -11:
+            timezone = " 'UTC-11' \" \0";
+            break;
+        case -10:
+            timezone = " 'Hawaiian Standard Time' \" \0";
+            break;
+        case -9:
+            timezone = " 'Alaskan Standard Time' \" \0";
+            break;
+        case -8:
+            timezone = " 'Pacific Standard Time' \" \0";
+            break;
+        case -7:
+            timezone = " 'Mountain Standard Time' \" \0";
+            break;
+        case -6:
+            timezone = " 'Central Standard Time' \" \0";
+            break;
+        case -5:
+            timezone = " 'US Eastern Standard Time' \" \0";
+            break;
+        case -4:
+            timezone = " 'Atlantic Standard Time' \" \0";
+            break;
+        case -3:
+            timezone = " ' E. South America Standard Time' \" \0";
+            break;
+        case -2:
+            timezone = " 'Mid-Atlantic Standard Time'  \" \0";
+            break;
+        case -1:
+            timezone = " 'Cape Verde Standard Time'  \" \0";
+            break;
+        case 0:
+            timezone = " 'GMT Standard Time'  \" \0";
+            break;
+        case 1:
+            timezone = " 'W. Europe Standard Time' \" \0";
+            break;
+        case 2:
+            timezone = " 'E. Europe Standard Time' \" \0";
+            break;
+        case 3:
+            timezone = " 'Turkey Standard Time' \" \0";
+            break;
+        case 4:
+            timezone = " 'Arabian Standard Time' \" \0";
+            break;
+        default:
+            LOG_WARNING("Note a valid UTC offset: %d", utc);
+            return;
+    }
+    snprintf(cmd + strlen(cmd), strlen(timezone), timezone);
+    char* response = malloc(sizeof(char) * 200);
+    runcmd(cmd, &response);
+    LOG_INFO("Timezone powershell command: %s \n", cmd);
+    free(response);
+#endif
+}

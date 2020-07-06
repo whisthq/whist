@@ -56,6 +56,7 @@ endif ()
 target_link_libraries(FractalClient
         fractalCore
         fractalAudio
+        fractalCursor
         fractalVideo
         fractalClipboard
         fractalNetwork
@@ -72,7 +73,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             Xfixes)
     find_package(ALSA REQUIRED)
     include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
-    target_link_libraries(FractalClient fractalInput fractalCursor
+    target_link_libraries(FractalClient fractalInput
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
             ${ALSA_LIBRARIES}
@@ -114,7 +115,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
 
-    target_link_libraries(FractalClient fractalInput fractalCursor ${LIBMFX})
+    target_link_libraries(FractalClient fractalInput ${LIBMFX})
 
     set_property(TARGET FractalClient PROPERTY
             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

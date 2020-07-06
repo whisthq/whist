@@ -20,7 +20,6 @@ Includes
 #include <stdint.h>
 
 #if defined(_WIN32)
-#pragma warning(disable : 4200)
 #define _WINSOCKAPI_
 #include <Audioclient.h>
 #include <avrt.h>
@@ -65,6 +64,10 @@ Includes
 #include "../utils/logging.h"
 #include "fractal.v"
 
+#ifdef _WIN32
+#pragma warning(disable : 4200)
+#endif
+
 /*
 ============================
 Defines
@@ -73,10 +76,10 @@ Defines
 
 #define NUM_KEYCODES 265
 
-#define PORT_CLIENT_TO_SERVER 32262
-#define PORT_SERVER_TO_CLIENT 32263
-#define PORT_SHARED_TCP 32264
-#define PORT_SPECTATOR 32265
+#define MAX_NUM_CLIENTS 10
+#define PORT_DISCOVERY 32262
+#define BASE_UDP_PORT 32263
+#define BASE_TCP_PORT (BASE_UDP_PORT + MAX_NUM_CLIENTS)
 
 #define PRODUCTION_HOST "cube-celery-vm.herokuapp.com"
 #define STAGING_HOST "cube-celery-staging.herokuapp.com"
@@ -299,6 +302,12 @@ typedef enum FractalMouseButton {
     __MOUSE_MAKE_32 = 0x7FFFFFFF,
 } FractalMouseButton;
 
+typedef struct RGB_Color {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} RGB_Color;
+
 /// @brief Cursor properties.
 /// @details Track important information on cursor.
 typedef struct FractalCursor {
@@ -370,8 +379,20 @@ typedef struct FractalMouseMotionMessage {
                 ///< `relative` is `true`.
     bool relative;  ///< `true` for relative mode, `false` for absolute mode.
                     ///< See details.
+    int x_nonrel;
+    int y_nonrel;
     uint8_t __pad[3];
 } FractalMouseMotionMessage;
+
+typedef struct FractalDiscoveryRequestMessage {
+    int username;
+} FractalDiscoveryRequestMessage;
+
+typedef enum InteractionMode {
+    CONTROL = 1,
+    SPECTATE = 2,
+    EXCLUSIVE_CONTROL = 3
+} InteractionMode;
 
 typedef enum FractalClientMessageType {
     CMESSAGE_NONE = 0,     ///< No Message
@@ -383,18 +404,21 @@ typedef enum FractalClientMessageType {
                                ///< valid in FractClientMessage.
     MESSAGE_MOUSE_MOTION = 4,  ///< `mouseMotion` FractalMouseMotionMessage is
                                ///< valid in FractClientMessage.
-    MESSAGE_RELEASE = 5,  ///< Message instructing the host to release all input
+    MESSAGE_MOUSE_INACTIVE = 5,
+    MESSAGE_RELEASE = 6,  ///< Message instructing the host to release all input
                           ///< that is currently pressed.
-    MESSAGE_MBPS = 6,     ///< `mbps` double is valid in FractClientMessage.
-    MESSAGE_PING = 7,
-    MESSAGE_DIMENSIONS = 8,  ///< `dimensions.width` int and `dimensions.height`
+    MESSAGE_MBPS = 7,     ///< `mbps` double is valid in FractClientMessage.
+    MESSAGE_PING = 8,
+    MESSAGE_DIMENSIONS = 9,  ///< `dimensions.width` int and `dimensions.height`
                              ///< int is valid in FractClientMessage
-    MESSAGE_VIDEO_NACK = 9,
-    MESSAGE_AUDIO_NACK = 10,
-    MESSAGE_KEYBOARD_STATE = 11,
-    CMESSAGE_CLIPBOARD = 12,
-    MESSAGE_IFRAME_REQUEST = 13,
-    MESSAGE_TIME = 14,
+    MESSAGE_VIDEO_NACK = 10,
+    MESSAGE_AUDIO_NACK = 11,
+    MESSAGE_KEYBOARD_STATE = 12,
+    CMESSAGE_CLIPBOARD = 13,
+    MESSAGE_IFRAME_REQUEST = 14,
+    MESSAGE_TIME = 15,
+    CMESSAGE_INTERACTION_MODE = 16,
+    MESSAGE_DISCOVERY_REQUEST = 17,
     CMESSAGE_QUIT = 100,
 } FractalClientMessageType;
 
@@ -405,6 +429,11 @@ typedef struct FractalClientMessage {
         FractalMouseButtonMessage mouseButton;  ///< Mouse button message.
         FractalMouseWheelMessage mouseWheel;    ///< Mouse wheel message.
         FractalMouseMotionMessage mouseMotion;  ///< Mouse motion message.
+        FractalDiscoveryRequestMessage
+            discoveryRequest;  ///< Discovery request message.
+
+        // CMESSAGE_INTERACTION_MODE
+        InteractionMode interaction_mode;
 
         // MESSAGE_MBPS
         double mbps;
@@ -450,6 +479,7 @@ typedef enum FractalServerMessageType {
     MESSAGE_AUDIO_FREQUENCY = 2,
     SMESSAGE_CLIPBOARD = 3,
     MESSAGE_INIT = 4,
+    MESSAGE_DISCOVERY_REPLY = 5,
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
@@ -459,15 +489,32 @@ typedef struct FractalServerMessageInit {
     int connection_id;
 } FractalServerMessageInit;
 
+typedef struct FractalDiscoveryReplyMessage {
+    int client_id;
+    int UDP_port;
+    int TCP_port;
+    char filename[300];
+    char username[50];
+    int connection_id;
+} FractalDiscoveryReplyMessage;
+
+typedef struct PeerUpdateMessage {
+    int peer_id;
+    int x;
+    int y;
+    bool is_controlling;
+    RGB_Color color;
+} PeerUpdateMessage;
+
 typedef struct FractalServerMessage {
     FractalServerMessageType type;  ///< Input message type.
     union {
         int ping_id;
         int frequency;
-        int spectator_port;
     };
     union {
         ClipboardData clipboard;
+        char discovery_reply[0];
         char init_msg[0];
     };
 } FractalServerMessage;
@@ -484,6 +531,7 @@ typedef struct Frame {
     CodecType codec_type;
     int size;
     bool is_iframe;
+    int num_peer_update_msgs;
     unsigned char compressed_frame[];
 } Frame;
 
