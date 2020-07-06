@@ -77,14 +77,14 @@ if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON")
 endif()
 
 
-#detect if we are building 64bit or 32bit
+# detect if we are building 64bit or 32bit
 if (${CMAKE_SIZEOF_VOID_P} MATCHES "8")
     set(arch 64)
 else()
     set(arch 32)
 endif()
 
-#download unison binary from AWS S3
+# download unison binary from AWS S3
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     MESSAGE(STATUS "Downloading binaries from AWS S3")
     execute_process(COMMAND CMD /C "download-binaries.bat"
@@ -104,7 +104,7 @@ else()
 endif()
 
 
-# ffmpeg: using our provided libs on mac and windows and system on linux.
+# FFmpeg: using our provided libs on mac and windows and system on linux.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FFMPEG_LIBS libswresample.3.dylib;libavcodec.58.dylib;libavdevice.58.dylib;libavfilter.7.dylib;
                     libavformat.58.dylib;libswscale.5.dylib;libavutil.56.dylib;libpostproc.55.dylib)
@@ -162,7 +162,7 @@ find_library(STATIC_SDL2 NAMES SDL2 PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
-if(NOT STATIC_SDL2)
+if (NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
@@ -174,7 +174,7 @@ find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/li
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
 
-if(NOT STATIC_OPENSSL)
+if (NOT STATIC_OPENSSL)
     message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
 endif()
 
@@ -186,7 +186,7 @@ find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/$
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
 
-if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/")
 endif()
 
@@ -197,16 +197,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Require MacOS 10.13 or up, to ensure LibObj-C is standard
 endif()
 
-
 # Tell CMake where to look for includes
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
 include_directories(include/SDL_image)
 
-
-
-#Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
+# Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
 if (${BUILD_CLIENT} MATCHES "ON")
     message(STATUS building client)

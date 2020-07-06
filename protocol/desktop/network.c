@@ -1,3 +1,15 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file network.c
+ * @brief This file contains client-specific wrappers to low-level network
+ *        functions.
+============================
+Usage
+============================
+
+TODO
+*/
+
 #include "network.h"
 
 #include "../fractal/core/fractal.h"

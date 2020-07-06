@@ -1,3 +1,17 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file audio.c
+ * @brief This file contains all code that interacts directly with processing
+ *        audio packets on the client.
+============================
+Usage
+============================
+
+initAudio() must be called first before receiving any audio packets.
+updateAudio() gets called immediately after to update the client to the server's
+audio format.
+*/
+
 #include "audio.h"
 
 extern int audio_frequency;

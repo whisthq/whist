@@ -9,7 +9,9 @@
 Usage
 ============================
 
+TODO
 */
+
 // must be called before connectToServer()
 int discoverPorts(void);
 

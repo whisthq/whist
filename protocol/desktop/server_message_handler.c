@@ -1,3 +1,16 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file server_message_handler.c
+ * @brief This file contains all the code for client-side processing of messages
+ *        received from the server
+============================
+Usage
+============================
+
+handleServerMessage() must be called on any received message from the server.
+Any action trigged a server message must be initiated in network.c.
+*/
+
 #include "server_message_handler.h"
 
 #include <stddef.h>

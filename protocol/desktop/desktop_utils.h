@@ -2,16 +2,13 @@
 #define DESKTOP_UTILS_H
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file audio.h
- * @brief This file contains all code that interacts directly with processing
- *        audio packets on the client.
+ * @file desktop_utils.c
+ * @brief TODO
 ============================
 Usage
 ============================
 
-initAudio() must be called first before receiving any audio packets.
-updateAudio() gets called immediately after to update the client to the server's
-audio format.
+TODO
 */
 
 /*
