@@ -3,6 +3,7 @@ from app.helpers.utils.azure.azure_general import *
 from app.helpers.utils.azure.azure_resource_creation import *
 from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_locks import *
+from app.helpers.utils.general.crypto import *
 
 
 @celery_instance.task(bind=True)
@@ -116,6 +117,7 @@ def createVM(
     )
 
     ip_address = getVMIP(vm_name, resource_group)
+    private_key = genPrivateKey()
     fractalSQLInsert(
         table_name=resourceGroupToTable(resource_group),
         params={
@@ -127,6 +129,7 @@ def createVM(
             "os": operating_system,
             "lock": True,
             "disk_name": disk_name,
+            "rsa_private_key": private_key,
         },
     )
 
