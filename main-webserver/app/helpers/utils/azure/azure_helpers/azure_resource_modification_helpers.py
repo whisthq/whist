@@ -104,16 +104,8 @@ def claimAvailableVM(
             "os_type": os_type,
         }
 
-        print(str(params))
-
         available_vm = fractalCleanSQLOutput(
             session.execute(command, params).fetchone()
-        )
-
-        print(
-            fractalCleanSQLOutput(
-                session.execute(text("""SELECT * FROM \"v_ms\""""), {}).fetchall()
-            )
         )
 
         if available_vm:

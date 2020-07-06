@@ -341,7 +341,7 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
                         )
 
                         output = fractalSQLSelect(
-                            table_name=resourceGroupToTable(vm_name),
+                            table_name=resourceGroupToTable(resource_group),
                             params={"vm_name": vm_name},
                         )
 
@@ -363,7 +363,7 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
                     disk_attached = True
 
                     output = fractalSQLSelect(
-                        table_name=resourceGroupToTable(vm_name),
+                        table_name=resourceGroupToTable(resource_group),
                         params={"vm_name": vm_name},
                     )
 
