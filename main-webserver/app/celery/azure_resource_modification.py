@@ -115,6 +115,38 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
         json:
     """
 
+    def swapDiskAndUpdate(disk_name, vm_name, needs_winlogon, resource_group, s=None):
+        s.update_state(
+            state="PENDING",
+            meta={
+                "msg": "Uploading the necessary data to our servers. This could take a few minutes."
+            },
+        )
+
+        attachDiskToVM(disk_name, vm_name, resource_group)
+
+        fractalVMStart(
+            vm_name,
+            needs_restart=True,
+            needs_winlogon=needs_winlogon,
+            resource_group=resource_group,
+            s=s,
+        )
+
+        output = fractalSQLSelect(table_name="disks", params={"disk_name": disk_name})
+
+        if output["rows"] and output["success"]:
+            fractalSQLUpdate(
+                table_name=resourceGroupToTable(resource_group),
+                conditional_params={"vm_name": vm_name},
+                new_params={
+                    "disk_name": disk_name,
+                    "username": output["rows"][0]["username"],
+                },
+            )
+
+        return 1
+
     # Create an Azure instance of disk
 
     _, compute_client, _ = createClients()
