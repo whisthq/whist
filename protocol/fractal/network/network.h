@@ -33,8 +33,8 @@ FractalPacket: This type represents a packet of information
    - A FractalPacket may be sent twice in the case of packet recovery, but any
      two FractalPackets found that are of the same type and ID will be expected
      to have the same data (To be specific, the Client should never legally send
-     two distinct packets with same ID/Type, and neither should the Server, but if
-     the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
+     two distinct packets with same ID/Type, and neither should the Server, but
+if the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
      they can be different)
    - To reconstruct the original datagram from a sequence of FractalPackets,
      concatenated the data[] streams (From 0 to payload_size - 1) for each index
