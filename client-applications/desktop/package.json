@@ -1,62 +1,43 @@
 {
-    "name": "fractal",
-    "license": "UNLICENSED",
-    "productName": "Fractal",
-    "description": "Fractal Desktop Application",
-    "homepage": "https://www.fractalcomputers.com",
-    "scripts": {
-        "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
-        "build-dll": "cross-env NODE_ENV=development webpack --config ./configs/webpack.config.renderer.dev.dll.babel.js --colors",
-        "build-e2e": "cross-env E2E_BUILD=true yarn build",
-        "build-main": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.main.prod.babel.js --colors",
-        "build-renderer": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.renderer.prod.babel.js --colors",
-        "dev": "cross-env START_HOT=1 node -r @babel/register ./internals/scripts/CheckPortInUse.js && cross-env START_HOT=1 yarn start-renderer-dev",
-        "electron-rebuild": "electron-rebuild --parallel --force --types prod,dev,optional --module-dir app",
-        "format": "prettier --write .",
-        "ts": "tsc",
-        "lint": "cross-env NODE_ENV=development eslint . --cache --ext .js,.jsx,.ts,.tsx",
-        "lint-fix": "yarn --silent lint --fix; exit 0",
-        "lint-styles": "stylelint --ignore-path .eslintignore '**/*.*(css|scss)' --syntax scss",
-        "lint-styles-fix": "yarn --silent lint-styles --fix; exit 0",
-        "package": "yarn build && electron-builder build --publish never",
-        "package-all": "yarn build && electron-builder build -mwl",
-        "package-ci": "yarn postinstall && yarn build && electron-builder build --publish always",
-        "package-linux": "yarn build && electron-builder build --linux",
-        "package-win": "yarn build && electron-builder build --win --x64",
-        "postinstall": "node -r @babel/register internals/scripts/CheckNativeDep.js && electron-builder install-app-deps && yarn build-dll && opencollective-postinstall",
-        "postlint-fix": "prettier --ignore-path .eslintignore --single-quote --write '**/*.{js,jsx,json,html,css,less,scss,yml}'",
-        "postlint-styles-fix": "prettier --ignore-path .eslintignore --single-quote --write '**/*.{css,scss}'",
-        "preinstall": "node ./internals/scripts/CheckYarn.js",
-        "prestart": "yarn build",
-        "start": "cross-env NODE_ENV=development electron ./app/main.prod.js",
-        "start-main-dev": "cross-env START_HOT=1 NODE_ENV=development electron -r ./internals/scripts/BabelRegister ./app/main.dev.ts",
-        "start-renderer-dev": "cross-env NODE_ENV=development webpack-dev-server --config configs/webpack.config.renderer.dev.babel.js",
-        "test": "cross-env NODE_ENV=test BABEL_DISABLE_CACHE=1 jest",
-        "test-all": "yarn lint && yarn ts && yarn build && yarn test && yarn build-e2e && yarn test-e2e",
-        "test-e2e": "node -r @babel/register ./internals/scripts/CheckBuildsExist.js && cross-env NODE_ENV=test testcafe electron:./app ./test/e2e/HomePage.e2e.ts",
-        "test-e2e-live": "node -r @babel/register ./internals/scripts/CheckBuildsExist.js && cross-env NODE_ENV=test testcafe --live electron:./app ./test/e2e/HomePage.e2e.ts",
-        "test-watch": "yarn test --watch"
+    "author": {
+        "email": "support@fractalcomputers.com",
+        "name": "Fractal Computers, Inc.",
+        "url": "https://www.fractalcomputers.com"
     },
-    "lint-staged": {
-        "*.{js,jsx,ts,tsx}": [
-            "cross-env NODE_ENV=development eslint --cache"
-        ],
-        "{*.json,.{babelrc,eslintrc,prettierrc,stylelintrc}}": [
-            "prettier --ignore-path .eslintignore --parser json --write"
-        ],
-        "*.{css,scss}": [
-            "stylelint --ignore-path .eslintignore --syntax scss --fix",
-            "prettier --ignore-path .eslintignore --single-quote --write"
-        ],
-        "*.{html,md,yml}": [
-            "prettier --ignore-path .eslintignore --single-quote --write"
-        ]
-    },
+    "browserslist": [
+        "extends browserslist-config-erb"
+    ],
     "build": {
+        "afterSign": "build/notarize.js",
         "appId": "com.fractalcomputers.fractal",
-        "productName": "Fractal",
-        "copyright": "Copyright © Fractal Computers, Inc.",
         "artifactName": "Fractal.${ext}",
+        "copyright": "Copyright \u00a9 Fractal Computers, Inc.",
+        "deb": {
+            "icon": "build/icon.png",
+            "vendor": "Fractal Computers, Inc."
+        },
+        "directories": {
+            "buildResources": "resources",
+            "output": "release"
+        },
+        "dmg": {
+            "contents": [
+                {
+                    "x": 130,
+                    "y": 220
+                },
+                {
+                    "path": "/Applications",
+                    "type": "link",
+                    "x": 410,
+                    "y": 220
+                }
+            ],
+            "sign": false
+        },
+        "extraFiles": [
+            "protocol-build/"
+        ],
         "files": [
             "dist/",
             "node_modules/",
@@ -69,113 +50,125 @@
             "build/icon.png",
             "loading/"
         ],
-        "extraFiles": [
-            "protocol-build/"
-        ],
-        "dmg": {
-            "sign": false,
-            "contents": [
-                {
-                    "x": 130,
-                    "y": 220
-                },
-                {
-                    "x": 410,
-                    "y": 220,
-                    "type": "link",
-                    "path": "/Applications"
-                }
+        "linux": {
+            "artifactName": "Fractal.${ext}",
+            "category": "Productivity",
+            "description": "Fractal Desktop Application. ",
+            "icon": "build/icon.png",
+            "synopsis": "Fractal Desktop Application",
+            "target": [
+                "deb",
+                "AppImage"
             ]
         },
         "mac": {
+            "category": "public.app-category.productivity",
+            "darkModeSupport": true,
+            "entitlements": "build/entitlements.mac.plist",
+            "entitlementsInherit": "build/entitlements.mac.plist",
+            "extendInfo": {
+                "NSHighResolutionCapable": true
+            },
+            "gatekeeperAssess": false,
+            "hardenedRuntime": true,
             "icon": "build/icon.icns",
+            "minimumSystemVersion": "10.13.0",
             "target": [
                 "zip",
                 "dmg"
             ],
-            "category": "public.app-category.productivity",
-            "hardenedRuntime": true,
-            "entitlements": "build/entitlements.mac.plist",
-            "entitlementsInherit": "build/entitlements.mac.plist",
-            "gatekeeperAssess": false,
-            "darkModeSupport": true,
-            "minimumSystemVersion": "10.13.0",
-            "type": "distribution",
-            "extendInfo": {
-                "NSHighResolutionCapable": true
-            }
+            "type": "distribution"
         },
-        "afterSign": "build/notarize.js",
+        "productName": "Fractal",
+        "publish": {
+            "bucket": "fractal-mac-application-testing",
+            "provider": "s3",
+            "region": "us-east-1"
+        },
         "win": {
+            "icon": "build/icon.ico",
             "target": [
                 "nsis"
-            ],
-            "icon": "build/icon.ico"
-        },
-        "deb": {
-            "vendor": "Fractal Computers, Inc.",
-            "icon": "build/icon.png"
-        },
-        "linux": {
-            "target": [
-                "deb",
-                "AppImage"
-            ],
-            "category": "Productivity",
-            "artifactName": "Fractal.${ext}",
-            "synopsis": "Fractal Desktop Application",
-            "description": "Fractal Desktop Application. ",
-            "icon": "build/icon.png"
-        },
-        "directories": {
-            "buildResources": "resources",
-            "output": "release"
-        },
-        "publish": {
-            "provider": "s3",
-            "bucket": "fractal-mac-application-release",
-            "region": "us-east-1"
+            ]
         }
-    },
-    "author": {
-        "name": "Fractal Computers, Inc.",
-        "email": "support@fractalcomputers.com",
-        "url": "https://www.fractalcomputers.com"
     },
     "contributors": [
         {
-            "name": "Philippe Noel",
-            "email": "phil@fractalcomputers.com"
+            "email": "phil@fractalcomputers.com",
+            "name": "Philippe Noel"
         },
         {
-            "name": "Ming Ying",
-            "email": "ming@fractalcomputers.com"
+            "email": "ming@fractalcomputers.com",
+            "name": "Ming Ying"
         }
     ],
-    "keywords": [
-        "fractal"
-    ],
-    "jest": {
-        "testURL": "http://localhost/",
-        "moduleNameMapper": {
-            "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/internals/mocks/fileMock.js",
-            "\\.(css|less|sass|scss)$": "identity-obj-proxy"
-        },
-        "moduleFileExtensions": [
-            "js",
-            "jsx",
-            "ts",
-            "tsx",
-            "json"
-        ],
-        "moduleDirectories": [
-            "node_modules",
-            "app/node_modules"
-        ],
-        "setupFiles": [
-            "./internals/scripts/CheckBuildsExist.js"
-        ]
+    "dependencies": {
+        "@fortawesome/fontawesome-free": "^5.12.1",
+        "@fortawesome/fontawesome-svg-core": "^1.2.27",
+        "@fortawesome/free-solid-svg-icons": "^5.12.1",
+        "@fortawesome/react-fontawesome": "^0.1.8",
+        "@hot-loader/react-dom": "^16.11.0",
+        "@typeform/embed": "^0.16.0",
+        "app-root-dir": "^1.0.2",
+        "app-root-path": "^3.0.0",
+        "chokidar": "3",
+        "connected-react-router": "^6.6.1",
+        "core-js": "^3",
+        "devtron": "^1.4.0",
+        "dotenv": "^8.2.0",
+        "electron-debug": "^3.0.1",
+        "electron-json-storage": "^4.1.8",
+        "electron-log": "^4.0.7",
+        "electron-store": "^5.1.1",
+        "electron-titlebar": "^0.0.3",
+        "electron-updater": "^4.2.5",
+        "eslint-config-airbnb-typescript": "^6.3.1",
+        "eslint-plugin-react-hooks": "^2.5.0",
+        "eval": "^0.1.4",
+        "fast-speedtest-api": "^0.3.2",
+        "fix-path": "^3.0.0",
+        "geoip-lite": "^1.4.0",
+        "geolib": "^3.2.1",
+        "history": "^4.10.1",
+        "immutable": "^4.0.0-rc.12",
+        "iplocation": "^7.0.0",
+        "json5": "^2.1.3",
+        "ky": "^0.19.1",
+        "ky-universal": "^0.6.0",
+        "local-ip-url": "^1.0.2",
+        "network-speed": "^2.0.6",
+        "prettier": "^2.0.5",
+        "prop-types": "^15.6.0",
+        "react": "^16.12.0",
+        "react-bootstrap": "^1.0.1",
+        "react-detect-offline": "^2.4.0",
+        "react-dom": "^16.12.0",
+        "react-electron-titlebar": "^1.0.9",
+        "react-fa": "^5.0.0",
+        "react-fontawesome": "^1.7.1",
+        "react-geolocated": "^3.0.1",
+        "react-google-login": "^5.1.20",
+        "react-hot-loader": "^4.12.19",
+        "react-icons": "^3.10.0",
+        "react-input-slider": "^5.1.4",
+        "react-redux": "^7.2.0",
+        "react-router": "^5.1.2",
+        "react-router-dom": "^5.1.2",
+        "react-tabs": "^3.1.0",
+        "react-toggle": "^4.1.1",
+        "react-toggle-button": "^2.2.0",
+        "react-typeform-embed": "^0.2.1",
+        "reactjs-popup": "^1.5.0",
+        "redux": "^4.0.5",
+        "redux-saga": "^1.1.3",
+        "redux-thunk": "^2.3.0",
+        "seamless-immutable": "^7.1.3",
+        "source-map-resolve": "^0.6.0",
+        "source-map-support": "^0.5.16",
+        "spawn-sync": "^2.0.0",
+        "systeminformation": "^4.22.3"
     },
+    "description": "Fractal Desktop Application",
     "devDependencies": {
         "@babel/core": "^7.8.3",
         "@babel/plugin-proposal-class-properties": "^7.8.3",
@@ -284,83 +277,90 @@
         "webpack-merge": "^4.2.2",
         "yarn": "^1.22.1"
     },
-    "dependencies": {
-        "@fortawesome/fontawesome-free": "^5.12.1",
-        "@fortawesome/fontawesome-svg-core": "^1.2.27",
-        "@fortawesome/free-solid-svg-icons": "^5.12.1",
-        "@fortawesome/react-fontawesome": "^0.1.8",
-        "@hot-loader/react-dom": "^16.11.0",
-        "@typeform/embed": "^0.16.0",
-        "app-root-dir": "^1.0.2",
-        "app-root-path": "^3.0.0",
-        "chokidar": "3",
-        "connected-react-router": "^6.6.1",
-        "core-js": "^3",
-        "devtron": "^1.4.0",
-        "dotenv": "^8.2.0",
-        "electron-debug": "^3.0.1",
-        "electron-json-storage": "^4.1.8",
-        "electron-log": "^4.0.7",
-        "electron-store": "^5.1.1",
-        "electron-titlebar": "^0.0.3",
-        "electron-updater": "^4.2.5",
-        "eslint-config-airbnb-typescript": "^6.3.1",
-        "eslint-plugin-react-hooks": "^2.5.0",
-        "eval": "^0.1.4",
-        "fast-speedtest-api": "^0.3.2",
-        "fix-path": "^3.0.0",
-        "geoip-lite": "^1.4.0",
-        "geolib": "^3.2.1",
-        "history": "^4.10.1",
-        "immutable": "^4.0.0-rc.12",
-        "iplocation": "^7.0.0",
-        "json5": "^2.1.3",
-        "ky": "^0.19.1",
-        "ky-universal": "^0.6.0",
-        "local-ip-url": "^1.0.2",
-        "network-speed": "^2.0.6",
-        "prettier": "^2.0.5",
-        "prop-types": "^15.6.0",
-        "react": "^16.12.0",
-        "react-bootstrap": "^1.0.1",
-        "react-detect-offline": "^2.4.0",
-        "react-dom": "^16.12.0",
-        "react-electron-titlebar": "^1.0.9",
-        "react-fa": "^5.0.0",
-        "react-fontawesome": "^1.7.1",
-        "react-geolocated": "^3.0.1",
-        "react-google-login": "^5.1.20",
-        "react-hot-loader": "^4.12.19",
-        "react-icons": "^3.10.0",
-        "react-input-slider": "^5.1.4",
-        "react-redux": "^7.2.0",
-        "react-router": "^5.1.2",
-        "react-router-dom": "^5.1.2",
-        "react-tabs": "^3.1.0",
-        "react-toggle": "^4.1.1",
-        "react-toggle-button": "^2.2.0",
-        "react-typeform-embed": "^0.2.1",
-        "reactjs-popup": "^1.5.0",
-        "redux": "^4.0.5",
-        "redux-saga": "^1.1.3",
-        "redux-thunk": "^2.3.0",
-        "seamless-immutable": "^7.1.3",
-        "source-map-resolve": "^0.6.0",
-        "source-map-support": "^0.5.16",
-        "spawn-sync": "^2.0.0",
-        "systeminformation": "^4.22.3"
-    },
     "devEngines": {
         "node": ">=7.x",
         "npm": ">=4.x",
         "yarn": ">=0.21.3"
     },
+    "homepage": "https://www.fractalcomputers.com",
+    "jest": {
+        "moduleDirectories": [
+            "node_modules",
+            "app/node_modules"
+        ],
+        "moduleFileExtensions": [
+            "js",
+            "jsx",
+            "ts",
+            "tsx",
+            "json"
+        ],
+        "moduleNameMapper": {
+            "\\.(css|less|sass|scss)$": "identity-obj-proxy",
+            "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/internals/mocks/fileMock.js"
+        },
+        "setupFiles": [
+            "./internals/scripts/CheckBuildsExist.js"
+        ],
+        "testURL": "http://localhost/"
+    },
+    "keywords": [
+        "fractal"
+    ],
+    "license": "UNLICENSED",
+    "lint-staged": {
+        "*.{css,scss}": [
+            "stylelint --ignore-path .eslintignore --syntax scss --fix",
+            "prettier --ignore-path .eslintignore --single-quote --write"
+        ],
+        "*.{html,md,yml}": [
+            "prettier --ignore-path .eslintignore --single-quote --write"
+        ],
+        "*.{js,jsx,ts,tsx}": [
+            "cross-env NODE_ENV=development eslint --cache"
+        ],
+        "{*.json,.{babelrc,eslintrc,prettierrc,stylelintrc}}": [
+            "prettier --ignore-path .eslintignore --parser json --write"
+        ]
+    },
+    "name": "fractal",
+    "private": true,
+    "productName": "Fractal",
     "repository": {
         "type": "git",
         "url": "git://github.com/fractalcomputers/client-applications.git"
     },
-    "private": true,
-    "browserslist": [
-        "extends browserslist-config-erb"
-    ]
+    "scripts": {
+        "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
+        "build-dll": "cross-env NODE_ENV=development webpack --config ./configs/webpack.config.renderer.dev.dll.babel.js --colors",
+        "build-e2e": "cross-env E2E_BUILD=true yarn build",
+        "build-main": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.main.prod.babel.js --colors",
+        "build-renderer": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.renderer.prod.babel.js --colors",
+        "dev": "cross-env START_HOT=1 node -r @babel/register ./internals/scripts/CheckPortInUse.js && cross-env START_HOT=1 yarn start-renderer-dev",
+        "electron-rebuild": "electron-rebuild --parallel --force --types prod,dev,optional --module-dir app",
+        "format": "prettier --write .",
+        "lint": "cross-env NODE_ENV=development eslint . --cache --ext .js,.jsx,.ts,.tsx",
+        "lint-fix": "yarn --silent lint --fix; exit 0",
+        "lint-styles": "stylelint --ignore-path .eslintignore '**/*.*(css|scss)' --syntax scss",
+        "lint-styles-fix": "yarn --silent lint-styles --fix; exit 0",
+        "package": "yarn build && electron-builder build --publish never",
+        "package-all": "yarn build && electron-builder build -mwl",
+        "package-ci": "yarn postinstall && yarn build && electron-builder build --publish always",
+        "package-linux": "yarn build && electron-builder build --linux",
+        "package-win": "yarn build && electron-builder build --win --x64",
+        "postinstall": "node -r @babel/register internals/scripts/CheckNativeDep.js && electron-builder install-app-deps && yarn build-dll && opencollective-postinstall",
+        "postlint-fix": "prettier --ignore-path .eslintignore --single-quote --write '**/*.{js,jsx,json,html,css,less,scss,yml}'",
+        "postlint-styles-fix": "prettier --ignore-path .eslintignore --single-quote --write '**/*.{css,scss}'",
+        "preinstall": "node ./internals/scripts/CheckYarn.js",
+        "prestart": "yarn build",
+        "start": "cross-env NODE_ENV=development electron ./app/main.prod.js",
+        "start-main-dev": "cross-env START_HOT=1 NODE_ENV=development electron -r ./internals/scripts/BabelRegister ./app/main.dev.ts",
+        "start-renderer-dev": "cross-env NODE_ENV=development webpack-dev-server --config configs/webpack.config.renderer.dev.babel.js",
+        "test": "cross-env NODE_ENV=test BABEL_DISABLE_CACHE=1 jest",
+        "test-all": "yarn lint && yarn ts && yarn build && yarn test && yarn build-e2e && yarn test-e2e",
+        "test-e2e": "node -r @babel/register ./internals/scripts/CheckBuildsExist.js && cross-env NODE_ENV=test testcafe electron:./app ./test/e2e/HomePage.e2e.ts",
+        "test-e2e-live": "node -r @babel/register ./internals/scripts/CheckBuildsExist.js && cross-env NODE_ENV=test testcafe --live electron:./app ./test/e2e/HomePage.e2e.ts",
+        "test-watch": "yarn test --watch",
+        "ts": "tsc"
+    }
 }
