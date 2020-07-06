@@ -127,6 +127,7 @@ def resourceGroupToTable(resource_group):
     try:
         table_mapping = {
             "Fractal": "v_ms",
+            "FractalStaging": "v_ms",
             "FractalProtocolCI": "VMs_FractalProtocolCI",
         }
 
