@@ -29,7 +29,7 @@ jobs:
           - {
             name: "Windows Latest MSVC", artifact: "Windows-MSVC.tar.xz",
             os: windows-latest,
-            cc: "cl", cxx: "cl",
+            cc: "cl", cxx: "cl", cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           }
           - {
@@ -47,6 +47,11 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ref: ${{ secrets.BRANCH_NIGHTLY_CI }}
+      - name: Chocolatey install cppcheck and CUDA Toolkit if windows
+        if: runner.os == 'Windows'
+        uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: install "${{ github.workspace }}\.github\choco-install.config" --force
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
         shell: cmake -P {0}
@@ -133,6 +138,9 @@ jobs:
         run: |
           set(ENV{CC} ${{ matrix.config.cc }})
           set(ENV{CXX} ${{ matrix.config.cxx }})
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            set(ENV{CUDACXX} "${{ matrix.config.cudacxx }}")
+          endif()
 
           if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
             execute_process(
@@ -164,7 +172,6 @@ jobs:
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
               -D CMAKE_OSX_SYSROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
               -DUSE_CPPCHECK=ON
-              -DCMAKE_BUILD_TYPE=Release
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
@@ -213,6 +220,7 @@ jobs:
           endif()
 
           execute_process(COMMAND ccache -s)
+
       - name: Upload windows server artifact.
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v2
