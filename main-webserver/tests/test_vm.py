@@ -1,33 +1,19 @@
-import sys
-import os
-import pytest
-import requests
-from dotenv import load_dotenv
-import time
-
-load_dotenv()
-SERVER_URL = (
-    "https://main-webserver-pr-"
-    + str(os.getenv("TEST_HEROKU_PR_NUMBER"))
-    + ".herokuapp.com"
-    if os.getenv("CI") == "true"
-    else "http://localhost:5000"
-)
+from tests import *
 
 
 def getStatus(id):
-    resp = requests.get((SERVER_URL + "/status/" + id))
+    resp = requests.get((HEROKU_SERVER_URL + "/status/" + id))
     return resp.json()
 
 
 def getVm(vm_name):
-    resp = requests.post((SERVER_URL + "/vm/fetchVm"), json={"vm_name": vm_name})
+    resp = requests.post((HEROKU_SERVER_URL + "/vm/fetchVm"), json={"vm_name": vm_name})
     return resp.json()["vm"]
 
 
 def create(vm_size, location, operating_system, admin_password, input_token):
     return requests.post(
-        (SERVER_URL + "/vm/create"),
+        (HEROKU_SERVER_URL + "/vm/create"),
         json={
             "vm_size": vm_size,
             "location": location,
@@ -40,7 +26,7 @@ def create(vm_size, location, operating_system, admin_password, input_token):
 
 def delete(vm_name, delete_disk):
     return requests.post(
-        (SERVER_URL + "/vm/delete"),
+        (HEROKU_SERVER_URL + "/vm/delete"),
         json={"vm_name": vm_name, "delete_disk": delete_disk},
     )
 
@@ -49,7 +35,7 @@ def createDiskFromImage(
     operating_system, username, location, vm_size, apps, input_token
 ):
     return requests.post(
-        (SERVER_URL + "/disk/createFromImage"),
+        (HEROKU_SERVER_URL + "/disk/createFromImage"),
         json={
             "operating_system": operating_system,
             "username": username,
@@ -64,7 +50,7 @@ def createDiskFromImage(
 
 def swap(vm_name, disk_name, input_token):
     return requests.post(
-        (SERVER_URL + "/disk/swap"),
+        (HEROKU_SERVER_URL + "/disk/swap"),
         json={"vm_name": vm_name, "disk_name": disk_name},
         headers={"Authorization": "Bearer " + input_token},
     )
@@ -104,7 +90,7 @@ def test_vm(input_token):
     # Test attach disk
     print("Testing attach disk...")
     resp = requests.post(
-        (SERVER_URL + "/disk/attachSpecific"),
+        (HEROKU_SERVER_URL + "/disk/attachSpecific"),
         json={"disk_name": disk_name, "vm_name": vm_name},
         headers={"Authorization": "Bearer " + input_token},
     )
@@ -116,7 +102,7 @@ def test_vm(input_token):
 
     # Test stop
     print("Testing stop...")
-    requests.post((SERVER_URL + "/vm/stopvm"), json={"vm_name": vm_name})
+    requests.post((HEROKU_SERVER_URL + "/vm/stopvm"), json={"vm_name": vm_name})
     id = resp.json()["ID"]
     print("ID: " + id)
     status = "PENDING"
@@ -128,19 +114,25 @@ def test_vm(input_token):
 
     # Test start
     print("Testing start...")
-    requests.post((SERVER_URL + "/vm/setDev"), json={"vm_name": vm_name, "dev": True})
-    resp = requests.post((SERVER_URL + "/vm/start"), json={"vm_name": vm_name,})
+    requests.post(
+        (HEROKU_SERVER_URL + "/vm/setDev"), json={"vm_name": vm_name, "dev": True}
+    )
+    resp = requests.post((HEROKU_SERVER_URL + "/vm/start"), json={"vm_name": vm_name,})
     id = resp.json()["ID"]
     status = "PENDING"
     while status == "PENDING" or status == "STARTED":
         time.sleep(5)
         status = getStatus(id)["state"]
     assert getVm(vm_name)["state"] == "RUNNING_AVAILABLE"
-    requests.post((SERVER_URL + "/vm/setDev"), json={"vm_name": vm_name, "dev": False})
+    requests.post(
+        (HEROKU_SERVER_URL + "/vm/setDev"), json={"vm_name": vm_name, "dev": False}
+    )
 
     # Test deallocate
     print("Testing deallocate...")
-    resp = requests.post((SERVER_URL + "/vm/deallocate"), json={"vm_name": vm_name,})
+    resp = requests.post(
+        (HEROKU_SERVER_URL + "/vm/deallocate"), json={"vm_name": vm_name,}
+    )
     id = resp.json()["ID"]
     status = "PENDING"
     while status == "PENDING" or status == "STARTED":
@@ -150,7 +142,9 @@ def test_vm(input_token):
 
     # Test restart
     print("Testing restart...")
-    resp = requests.post((SERVER_URL + "/vm/restart"), json={"username": username})
+    resp = requests.post(
+        (HEROKU_SERVER_URL + "/vm/restart"), json={"username": username}
+    )
     id = resp.json()["ID"]
     status = "PENDING"
     while status == "PENDING" or status == "STARTED":
@@ -178,7 +172,7 @@ def test_vm(input_token):
     # Test add disk
     # print("Testing add disk...")
     # resp = requests.post(
-    #     (SERVER_URL + "/disk/createEmpty"),
+    #     (HEROKU_SERVER_URL + "/disk/createEmpty"),
     #     json={"disk_size": 10, "username": username},
     #     headers={"Authorization": "Bearer " + input_token}
     # )
@@ -188,7 +182,7 @@ def test_vm(input_token):
     #     time.sleep(5)
     #     status = getStatus(id)["state"]
     # resp = requests.post(
-    #     (SERVER_URL + "/disk/add"),
+    #     (HEROKU_SERVER_URL + "/disk/add"),
     #     json={"disk_size": 10, "username": username},
     #     headers={"Authorization": "Bearer " + input_token}
     # )

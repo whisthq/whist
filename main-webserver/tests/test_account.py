@@ -1,18 +1,4 @@
-import sys
-import os
-import pytest
-import requests
-from dotenv import load_dotenv
-import time
-
-load_dotenv()
-SERVER_URL = (
-    "https://main-webserver-pr-"
-    + str(os.getenv("TEST_HEROKU_PR_NUMBER"))
-    + ".herokuapp.com"
-    if os.getenv("CI") == "true"
-    else "http://localhost:5000"
-)
+from tests import *
 
 
 def test_login(input_token):
@@ -37,7 +23,7 @@ def test_register_user(input_token):
             username, "password", "Delete Me", "Two men walk into a bar. Knock knock.",
         )
         resp = requests.post(
-            (SERVER_URL + "/account/fetchUser"),
+            (HEROKU_SERVER_URL + "/account/fetchUser"),
             json={"username": username},
             headers={"Authorization": "Bearer " + input_token},
         )
@@ -67,7 +53,7 @@ def test_delete(input_token):
         )
         pytest.helpers.deleteUser(username, input_token)
         resp = requests.post(
-            (SERVER_URL + "/account/fetchUser"),
+            (HEROKU_SERVER_URL + "/account/fetchUser"),
             json={"username": username},
             headers={"Authorization": "Bearer " + input_token},
         )
