@@ -8,8 +8,8 @@ Our webservers are hosted on Heroku:
 
 - [Production](https://cube-celery-vm.herokuapp.com)
 - [Staging](https://cube-celery-staging.herokuapp.com)
-- [Staging2](https://cube-celery-staging2.herokuapp.com)
-- [Staging3](https://cube-celery-staging3.herokuapp.com)
+- [Staging2](https://main-webserver-staging2.herokuapp.com)
+- [Staging3](https://main-webserver-staging3.herokuapp.com)
 
 ## Development
 
