@@ -2,6 +2,7 @@ import pytest
 import requests
 import os
 import time
+from pathos.multiprocessing import ProcessingPool as Pool
 
 from .helpers.general.progress import *
 from .helpers.general.sql_commands import *

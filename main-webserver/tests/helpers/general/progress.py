@@ -5,24 +5,6 @@ import progressbar
 from tests.constants.heroku import *
 
 
-def printProgressBar(
-    iteration,
-    total,
-    prefix="",
-    suffix="",
-    decimals=1,
-    length=100,
-    fill="",
-    printEnd="\r",
-):
-    bar = progressbar.ProgressBar(
-        maxval=20,
-        widgets=[progressbar.Bar("=", "[", "]"), " ", progressbar.Percentage()],
-    )
-    bar.start()
-    bar.finish()
-
-
 def queryStatus(resp, timeout=10):
     """
     Call in a loop to create terminal progress bar
@@ -53,6 +35,10 @@ def queryStatus(resp, timeout=10):
     bar.start()
 
     status = "PENDING"
+    returned_json = None
+
+    # Wait for job to finish
+
     while (
         status == "PENDING"
         or status == "STARTED"
@@ -67,7 +53,16 @@ def queryStatus(resp, timeout=10):
 
     bar.finish()
 
-    if seconds_elapsed > total_timeout_seconds or status != "SUCCESS":
-        return -1
+    # Check for success, timeout, or failure
+
+    if seconds_elapsed > total_timeout_seconds:
+        return {"status": -1, "output": "Timeout error"}
+    elif status != "SUCCESS":
+        return {
+            "status": -2,
+            "output": "Did not receive SUCCESS, instead saw {error}".format(
+                error=str(returned_json)
+            ),
+        }
     else:
-        return 1
+        return {"status": 1, "output": "SUCCESS detected"}

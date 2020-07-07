@@ -4,6 +4,7 @@ from .helpers.tests.azure_vm import *
 # Start off by deleting all the disks in the staging resource group, if there are any
 
 
+@pytest.mark.disk_serial
 def test_delete_disk_initial(input_token):
     if os.getenv("USE_PRODUCTION_DATABASE").upper() == "TRUE":
         fractalLog(
@@ -41,7 +42,15 @@ def test_delete_disk_initial(input_token):
                     input_token=input_token,
                 )
 
-                if queryStatus(resp, timeout=2) < 1:
+                task = queryStatus(resp, timeout=2)
+
+                if task["status"] < 1:
+                    fractalLog(
+                        function="test_delete_disk_initial",
+                        label="azure_disk/delete",
+                        logs=task["output"],
+                        level=logging.ERROR,
+                    )
                     assert False
         else:
             fractalLog(
@@ -64,6 +73,7 @@ def test_delete_disk_initial(input_token):
 # Test disk cloning in each Azure region
 
 
+@pytest.mark.disk_serial
 def test_disk_clone(input_token):
     regions = ["eastus", "southcentralus", "northcentralus"]
 
@@ -84,7 +94,15 @@ def test_disk_clone(input_token):
             input_token=input_token,
         )
 
-        if queryStatus(resp, timeout=1.2) < 1:
+        task = queryStatus(resp, timeout=1.2)
+
+        if task["status"] < 1:
+            fractalLog(
+                function="test_delete_clone",
+                label="azure_disk/clone",
+                logs=task["output"],
+                level=logging.ERROR,
+            )
             assert False
 
     assert True
@@ -93,6 +111,7 @@ def test_disk_clone(input_token):
 # Test disk attaching
 
 
+@pytest.mark.disk_serial
 def test_disk_attach(input_token):
     disks = fetchCurrentDisks()
     vms = fetchCurrentVMs()

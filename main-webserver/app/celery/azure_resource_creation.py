@@ -60,7 +60,9 @@ def createVM(
     if not nic:
         self.update_state(
             state="FAILURE",
-            meta={"msg": "NIC failed to create for VM {vm_name}".format(vm_name)},
+            meta={
+                "msg": "NIC failed to create for VM {vm_name}".format(vm_name=vm_name)
+            },
         )
 
         return

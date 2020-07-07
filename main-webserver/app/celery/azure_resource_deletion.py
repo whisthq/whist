@@ -253,17 +253,37 @@ def deleteDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
         ),
     )
 
-    async_disk_deletion = compute_client.disks.delete(resource_group, disk_name)
-    async_disk_deletion.wait()
+    disk = compute_client.disks.get(resource_group, disk_name)
+    vm_name = disk.managed_by
 
-    fractalSQLDelete(table_name="disks", params={"disk_name": disk_name})
+    if not vm_name:
+        async_disk_deletion = compute_client.disks.delete(resource_group, disk_name)
+        async_disk_deletion.wait()
 
-    fractalLog(
-        function="deleteDisk",
-        label=str(disk_name),
-        logs="Disk {disk_name} successfully deleted. Goodbye {disk_name}!".format(
-            disk_name=disk_name
-        ),
-    )
+        fractalSQLDelete(table_name="disks", params={"disk_name": disk_name})
+
+        fractalLog(
+            function="deleteDisk",
+            label=str(disk_name),
+            logs="Disk {disk_name} successfully deleted. Goodbye {disk_name}!".format(
+                disk_name=disk_name
+            ),
+        )
+
+    else:
+        fractalLog(
+            function="deleteDisk",
+            label=str(disk_name),
+            logs="Disk {disk_name} could not be deleted because it is attached to {vm_name}. Marking as TO_BE_DELETED".format(
+                disk_name=disk_name, vm_name=str(vm_name.split("/")[-1])
+            ),
+            level=logging.WARNING,
+        )
+
+        fractalSQLUpdate(
+            table_name="disks",
+            conditional_params={"disk_name": disk_name},
+            new_params={"state": "TO_BE_DELETED"},
+        )
 
     return {"status": SUCCESS}
