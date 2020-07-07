@@ -19,12 +19,14 @@ def fractalAuth(f):
                 if "username" in body.keys():
                     username = body["username"]
                 elif "vm_name" in body.keys():
+                    vm_name = body["vm_name"]
                     output = fractalSQLSelect(
                         table_name="v_ms", params={"vm_name": vm_name}
                     )
                     if output["success"] and output["rows"]:
                         username = output["rows"][0]["username"]
                 elif "disk_name" in body.keys():
+                    disk_name = body["disk_name"]
                     output = fractalSQLSelect(
                         table_name="disks", params={"disk_name": disk_name}
                     )

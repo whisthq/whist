@@ -109,6 +109,7 @@ def azure_vm_post(action, **kwargs):
 @azure_vm_bp.route("/azure_vm/<action>", methods=["GET"])
 @fractalPreProcess
 @jwt_required
+@fractalAuth
 def azure_vm_get(action, **kwargs):
     if action == "ip":
         # Gets the IP address of a VM using Azure SDK
@@ -116,8 +117,6 @@ def azure_vm_get(action, **kwargs):
         vm_name = request.args.get("vm_name")
 
         current_user = get_jwt_identity()
-        if getVMUser(vm_name) != current_user:
-            return jsonify({"error": "Wrong user!"}), FORBIDDEN
 
         resource_group = request.args.get("resource_group")
 

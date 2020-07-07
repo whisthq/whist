@@ -58,9 +58,6 @@ def azure_disk_post(action, **kwargs):
         elif "disk_name" in kwargs["body"].keys():
             disk_name = kwargs["body"]["disk_name"]
 
-            if getDiskUser(disk_name) != current_user:
-                return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
-
             task = deleteDisk.apply_async([disk_name, resource_group])
             return jsonify({"ID": task.id}), ACCEPTED
 
