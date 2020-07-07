@@ -9,9 +9,8 @@ from .helpers.utils.general.auth import *
 
 
 def make_celery(app_name=__name__):
-    backend = os.getenv("REDIS_URL")
     broker = os.getenv("REDIS_URL")
-    return Celery(app_name, backend=backend, broker=broker)
+    return Celery(app_name, broker=broker)
 
 
 def fractalPreProcess(f):
