@@ -1,5 +1,6 @@
 import time
 import requests
+import progressbar
 
 from tests.constants.heroku import *
 
@@ -14,25 +15,12 @@ def printProgressBar(
     fill="",
     printEnd="\r",
 ):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
-    """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + "-" * (length - filledLength)
-    print(f"\r{prefix} |{bar}| {percent}% {suffix}", end=printEnd)
-    # Print New Line on Complete
-    if iteration == total:
-        print()
+    bar = progressbar.ProgressBar(
+        maxval=20,
+        widgets=[progressbar.Bar("=", "[", "]"), " ", progressbar.Percentage()],
+    )
+    bar.start()
+    bar.finish()
 
 
 def queryStatus(resp, timeout=10):
@@ -56,6 +44,14 @@ def queryStatus(resp, timeout=10):
     total_timeout_seconds = timeout * 60
     seconds_elapsed = 0
 
+    # Create progress bar
+
+    bar = progressbar.ProgressBar(
+        maxval=total_timeout_seconds,
+        widgets=[progressbar.Bar("=", "[", "]"), " ", progressbar.Percentage()],
+    )
+    bar.start()
+
     status = "PENDING"
     while (
         status == "PENDING"
@@ -66,13 +62,10 @@ def queryStatus(resp, timeout=10):
         status = returned_json["state"]
 
         time.sleep(10)
-        seconds_elapsed += 10
+        seconds_elapsed = seconds_elapsed + 10
+        bar.update(seconds_elapsed)
 
-        printProgressBar(
-            seconds_elpased / 10,
-            total_timeout_seconds,
-            suffix=str(returned_json["output"]),
-        )
+    bar.finish()
 
     if seconds_elapsed > total_timeout_seconds or status != "SUCCESS":
         return -1

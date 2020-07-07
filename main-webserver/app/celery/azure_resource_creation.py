@@ -277,7 +277,9 @@ def cloneDisk(
         if operating_system == "Linux":
             original_disk_name = original_disk_name + "_Linux"
 
-        original_disk = compute_client.disks.get(resource_group, original_disk_name)
+        original_disk = compute_client.disks.get(
+            os.getenv("VM_GROUP"), original_disk_name
+        )
 
         fractalLog(
             function="cloneDisk",
@@ -330,7 +332,7 @@ def cloneDisk(
             level=logging.CRITICAL,
         )
 
-        async_disk_deletion = compute_client.disk.delete(resource_group, disk_name)
+        async_disk_deletion = compute_client.disks.delete(resource_group, disk_name)
         async_disk_deletion.wait()
 
         return {"status": BAD_REQUEST, "error": str(e)}
