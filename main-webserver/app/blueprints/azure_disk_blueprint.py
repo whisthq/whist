@@ -92,4 +92,6 @@ def azure_disk_post(action, **kwargs):
     elif action == "create":
         disk_size, username = kwargs["body"]["disk_size"], kwargs["body"]["username"]
 
-        return {}
+        task_id = createHelper(disk_size, username)
+
+        return jsonify({"ID": output["ID"]}), output["status"]

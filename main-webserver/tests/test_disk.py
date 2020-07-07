@@ -15,7 +15,33 @@ def test_delete_disk_initial(input_token):
         )
 
         assert False
+
     if RESOURCE_GROUP == "FractalStaging":
+
+        def deleteDiskHelper(disk):
+            fractalLog(
+                function="test_delete_disk_initial",
+                label="azure_disk/delete",
+                logs="Deleting disk {disk_name}".format(disk_name=disk["disk_name"]),
+            )
+
+            resp = deleteDisk(
+                disk_name=disk["disk_name"],
+                resource_group=RESOURCE_GROUP,
+                input_token=input_token,
+            )
+
+            task = queryStatus(resp, timeout=2)
+
+            if task["status"] < 1:
+                fractalLog(
+                    function="test_delete_disk_initial",
+                    label="azure_disk/delete",
+                    logs=task["output"],
+                    level=logging.ERROR,
+                )
+                assert False
+
         all_disks = fetchCurrentDisks()
 
         if all_disks:
@@ -27,31 +53,8 @@ def test_delete_disk_initial(input_token):
                 ),
             )
 
-            for disk in all_disks:
-                fractalLog(
-                    function="test_delete_disk_initial",
-                    label="azure_disk/delete",
-                    logs="Deleting disk {disk_name}".format(
-                        disk_name=disk["disk_name"]
-                    ),
-                )
+            fractalJobRunner(deleteDiskHelper, all_disks)
 
-                resp = deleteDisk(
-                    disk_name=disk["disk_name"],
-                    resource_group=RESOURCE_GROUP,
-                    input_token=input_token,
-                )
-
-                task = queryStatus(resp, timeout=2)
-
-                if task["status"] < 1:
-                    fractalLog(
-                        function="test_delete_disk_initial",
-                        label="azure_disk/delete",
-                        logs=task["output"],
-                        level=logging.ERROR,
-                    )
-                    assert False
         else:
             fractalLog(
                 function="test_delete_disk_initial",
@@ -77,7 +80,7 @@ def test_delete_disk_initial(input_token):
 def test_disk_clone(input_token):
     regions = ["eastus", "southcentralus", "northcentralus"]
 
-    for region in regions:
+    def cloneDiskHelper(region):
         fractalLog(
             function="test_disk_clone",
             label="azure_disk/clone",
@@ -104,6 +107,8 @@ def test_disk_clone(input_token):
                 level=logging.ERROR,
             )
             assert False
+
+    fractalJobRunner(cloneDiskHelper, regions)
 
     assert True
 

@@ -1,8 +1,10 @@
 import time
 import requests
 import progressbar
+from pathos.multiprocessing import ProcessingPool as Pool
 
-from tests.constants.heroku import *
+from tests.constants.resources import *
+from tests.constants.settings import *
 
 
 def queryStatus(resp, timeout=10):
@@ -66,3 +68,12 @@ def queryStatus(resp, timeout=10):
         }
     else:
         return {"status": 1, "output": "SUCCESS detected"}
+
+
+def fractalJobRunner(f, initial_list):
+    if initial_list:
+        if ALLOW_MULTITHREADING:
+            Pool().map(f, initial_list)
+        else:
+            for element in initial_list:
+                f(element)

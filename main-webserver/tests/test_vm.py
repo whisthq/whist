@@ -8,71 +8,76 @@ pytest.disk_name = None
 # Start off by deleting all the VM resources in the staging resource group, if there are any
 
 
-# @pytest.mark.vm_serial
-# def test_delete_vm_initial(input_token):
-#     all_vms = fetchCurrentVMs()
-#     for vm in all_vms:
-#         fractalSQLUpdate(
-#             table_name="v_ms",
-#             conditional_params={"vm_name": vm["vm_name"]},
-#             new_params={"lock": False, "temporary_lock": 0},
-#         )
+@pytest.mark.vm_serial
+def test_delete_vm_initial(input_token):
+    newLine()
 
-#         fractalLog(
-#             function="test_delete_vm_initial",
-#             label="azure_vm/delete",
-#             logs="Starting to delete VM {vm_name}".format(vm_name=vm_name),
-#         )
+    def deleteVMHelper(vm):
+        fractalSQLUpdate(
+            table_name="v_ms",
+            conditional_params={"vm_name": vm["vm_name"]},
+            new_params={"lock": False, "temporary_lock": 0},
+        )
 
-#         resp = deleteVM(
-#             vm_name=vm["vm_name"],
-#             delete_disk=True,
-#             resource_group=RESOURCE_GROUP,
-#             input_token=input_token,
-#         )
+        fractalLog(
+            function="test_delete_vm_initial",
+            label="azure_vm/delete",
+            logs="Starting to delete VM {vm_name}".format(vm_name=vm["vm_name"]),
+        )
 
-#         task = queryStatus(resp, timeout=10)
+        resp = deleteVM(
+            vm_name=vm["vm_name"],
+            delete_disk=True,
+            resource_group=RESOURCE_GROUP,
+            input_token=input_token,
+        )
 
-#         if task["status"] < 1:
-#             fractalLog(
-#                 function="test_delete_vm_initial",
-#                 label="azure_vm/delete",
-#                 logs=task["output"],
-#                 level=logging.ERROR,
-#             )
-#             assert False
+        task = queryStatus(resp, timeout=10)
 
-#     assert True
+        if task["status"] < 1:
+            fractalLog(
+                function="test_delete_vm_initial",
+                label="azure_vm/delete",
+                logs=task["output"],
+                level=logging.ERROR,
+            )
+            assert False
+
+    all_vms = fetchCurrentVMs()
+    fractalJobRunner(deleteVMHelper, all_vms)
+
+    assert True
 
 
 @pytest.mark.vm_serial
 def test_vm_create(input_token):
+    newLine()
+
     regions = ["eastus", "southcentralus", "northcentralus"]
 
-    def createVMInRegion(regions):
-        for region in regions:
+    def createVMInRegion(region):
+        fractalLog(
+            function="test_vm_create",
+            label="azure_vm/create",
+            logs="Starting to create a VM in {region}".format(region=region),
+        )
+
+        resp = createVM(
+            "Standard_NV6_Promo", region, "Windows", RESOURCE_GROUP, input_token
+        )
+
+        task = queryStatus(resp, timeout=12.5)
+
+        if task["status"] < 1:
             fractalLog(
                 function="test_vm_create",
                 label="azure_vm/create",
-                logs="Starting to create a VM in {region}".format(region=region),
+                logs=task["output"],
+                level=logging.ERROR,
             )
+            assert False
 
-            resp = createVM(
-                "Standard_NV6_Promo", region, "Windows", RESOURCE_GROUP, input_token
-            )
-
-            task = queryStatus(resp, timeout=12.5)
-
-            if task["status"] < 1:
-                fractalLog(
-                    function="test_vm_create",
-                    label="azure_vm/create",
-                    logs=task["output"],
-                    level=logging.ERROR,
-                )
-                assert False
-
-    createVMInRegion(regions)
+    fractalJobRunner(createVMInRegion, regions)
 
     assert True
 

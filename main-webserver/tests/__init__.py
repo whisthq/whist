@@ -2,13 +2,12 @@ import pytest
 import requests
 import os
 import time
-from pathos.multiprocessing import ProcessingPool as Pool
 
 from .helpers.general.progress import *
 from .helpers.general.sql_commands import *
 from .helpers.general.logs import *
 from .helpers.general.tokens import *
 
-from .constants.heroku import *
+from .constants.settings import *
 from .constants.resources import *
 
