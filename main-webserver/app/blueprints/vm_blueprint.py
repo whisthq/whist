@@ -131,9 +131,12 @@ def vm(action, **kwargs):
         task = updateVMTable.apply_async([kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
     elif action == "fetchall" and request.method == "POST":
-        body = request.get_json()
         vms = fetchUserVMs(None, kwargs["ID"])
         return jsonify({"payload": vms, "status": 200}), 200
+    elif action == "fetchVm" and request.method == "POST":
+        body = request.get_json()
+        vm = fetchVm(body["vm_name"])
+        return jsonify({"vm": vm}), 200
     elif action == "winlogonStatus" and request.method == "POST":
         body = request.get_json()
         ready = body["ready"]
@@ -305,11 +308,11 @@ def vm(action, **kwargs):
             if vm_info:
                 is_dev = vm_info["dev"]
                 disk_name = vm_info["disk_name"]
-                disk_info = fetchUserDisks(vm_info["username"])
+                disk_info = fetchDiskInfo(disk_name)
 
                 branch = None
                 if disk_info:
-                    branch = disk_info[0]["branch"]
+                    branch = disk_info["branch"]
 
                 using_stun = fetchDiskSetting(disk_name, "using_stun")
 
@@ -432,12 +435,52 @@ def logs_actions(action, **kwargs):
     # fetch logs action
     if action == "fetch" and request.method == "POST":
         try:
+            username = body["username"]
             fetch_all = body["fetch_all"]
         except:
             fetch_all = False
+            username = None
 
-        task = fetchLogs.apply_async([body["username"], fetch_all, kwargs["ID"]])
-        return jsonify({"ID": task.id}), 202
+        if "connection_id" in body.keys():
+            command = text(
+                """
+                SELECT * FROM logs WHERE "connection_id" = :connection_id ORDER BY last_updated DESC
+                """
+            )
+            params = {"connection_id": body["connection_id"]}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+
+        if not fetch_all:
+            command = text(
+                """
+                SELECT * FROM logs WHERE "username" LIKE :username ORDER BY last_updated DESC
+                """
+            )
+            params = {"username": username + "%"}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+        else:
+            command = text(
+                """
+                SELECT * FROM logs ORDER BY last_updated DESC
+                """
+            )
+
+            params = {}
+
+            with engine.connect() as conn:
+                logs = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+                conn.close()
+                return jsonify({"logs": logs}), 200
+        return jsonify({"logs": None}), 400
+
     # delete logs action
     elif action == "delete" and request.method == "POST":
         try:
@@ -449,3 +492,64 @@ def logs_actions(action, **kwargs):
 
         task = deleteLogs.apply_async([connection_id, kwargs["ID"]])
         return jsonify({"ID": task.id}), 202
+
+    elif action == "bookmark":
+        body = json.loads(request.data)
+
+        command = text(
+            """
+            INSERT INTO "bookmarked_logs"("connection_id")
+            VALUES(:connection_id)
+            """
+        )
+        params = {"connection_id": str(body["connection_id"])}
+
+        with engine.connect() as conn:
+            conn.execute(command, **params)
+            conn.close()
+
+        return jsonify({}), 200
+
+    elif action == "unbookmark":
+        body = json.loads(request.data)
+
+        command = text(
+            """
+            DELETE FROM "bookmarked_logs" WHERE "connection_id" = :connection_id
+            """
+        )
+        params = {"connection_id": str(body["connection_id"])}
+
+        with engine.connect() as conn:
+            conn.execute(command, **params)
+            conn.close()
+
+        return jsonify({}), 200
+
+
+@vm_bp.route("/logs/<action>", methods=["GET"])
+@generateID
+@logRequestInfo
+def logs_get(action, **kwargs):
+    if action == "bookmarked":
+        command = text(
+            """
+            SELECT * FROM "bookmarked_logs"
+            """
+        )
+        params = {}
+
+        connection_ids = None
+
+        with engine.connect() as conn:
+            connection_ids = cleanFetchedSQL(conn.execute(command, **params).fetchall())
+
+            if connection_ids:
+                connection_ids = [
+                    element["connection_id"] for element in connection_ids
+                ]
+            conn.close()
+
+        return jsonify({"connection_ids": connection_ids}), 200
+
+    return jsonify({}), 200

@@ -213,6 +213,27 @@ def fetchVMByIP(vm_ip):
         return vm_info
 
 
+def fetchVm(vm_name):
+    """Fetches 1 vm from the table
+
+    Args:
+        vm_name (str): Name of vm
+
+    Returns:
+        dict: Dict for vm
+    """
+    command = text(
+        """
+        SELECT * FROM v_ms WHERE "vm_name" = :vm_name
+        """
+    )
+    params = {"vm_name": vm_name}
+    with engine.connect() as conn:
+        vm_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        return vm_info
+
+
 def genVMName():
     """Generates a unique name for a vm
 
@@ -1500,6 +1521,11 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                 ID=ID,
             )
 
+            if first_time:
+                print("Setting auto-login for {}".format(disk_name))
+                setAutoLogin(disk_name, vm_name, ID)
+                print("Auto-login set for {}".format(disk_name))
+
             if s:
                 s.update_state(
                     state="PENDING",
@@ -1509,6 +1535,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                 )
 
             if needs_winlogon:
+                print("Winlogon 1")
                 winlogon = waitForWinlogon(vm_name, ID)
                 while winlogon < 0:
                     boot_if_necessary(vm_name, True, ID)
@@ -1519,6 +1546,7 @@ def sendVMStartCommand(vm_name, needs_restart, needs_winlogon, ID=-1, s=None):
                                 "msg": "Logging you into your cloud PC. This should take less than two minutes."
                             },
                         )
+                    print("Winlogon 2")
                     winlogon = waitForWinlogon(vm_name, ID)
 
                 if s:
@@ -1631,7 +1659,13 @@ def waitForWinlogon(vm_name, ID=-1):
     return 1
 
 
-def fractalVMStart(vm_name, needs_restart=False, needs_winlogon=True, ID=-1, s=None):
+def fractalVMStart(
+    vm_name,
+    needs_restart=False,
+    needs_winlogon=os.environ.get("VM_GROUP") == "Fractal",
+    ID=-1,
+    s=None,
+):
     """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary (big brain thoughts from Ming)
 
     Args:
@@ -1797,6 +1831,50 @@ def updateProtocolVersion(vm_name, version):
         conn.close()
 
 
+def setAutoLogin(disk_name, vm_name, ID=-1):
+    """
+        Adds auto-login credentials to a disk's VM, using the disk's unique vm_password
+
+        Args:
+            vm_name (str): The name of the vm to set credentials for
+            disk_name (str): The name of the disk associated with the vm
+
+        Returns:
+            int: 200 for success, 400 for error
+    """
+    _, compute_client, _ = createClients()
+    try:
+        print("TASK: Starting to run Powershell scripts")
+
+        disk_settings = getDiskSettings(disk_name)
+        admin_username = disk_settings["admin_username"]
+        admin_password = disk_settings["admin_password"]
+
+        command = """
+        Add-AutoLogin "{admin_username}" (ConvertTo-SecureString "{admin_password}." -AsPlainText -Force)
+        """.format(
+            admin_username=admin_username, admin_password=admin_password
+        )
+        run_command_parameters = {
+            "command_id": "RunPowerShellScript",
+            "script": [command],
+        }
+
+        poller = compute_client.virtual_machines.run_command(
+            os.environ.get("VM_GROUP"), vm_name, run_command_parameters
+        )
+        # poller.wait()
+        result = poller.result()
+        print("SUCCESS: Powershell scripts finished running")
+        print(result.value[0].message)
+
+        return {"status": 200}
+
+    except Exception as e:
+        sendCritical(ID, str(e))
+        return {"status": 400}
+
+
 def fetchInstallCommand(app_name):
     """Fetches an install command from the install_commands sql table
 
@@ -1813,6 +1891,7 @@ def fetchInstallCommand(app_name):
     )
     params = {"app_name": app_name}
     with engine.connect() as conn:
+
         install_command = cleanFetchedSQL(conn.execute(command, **params).fetchone())
         conn.close()
         return install_command

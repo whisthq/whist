@@ -1,18 +1,17 @@
 # Python
 .env*
-env
 env/
 Test-Environment
-"env" 
+"env"
 *.pyc
 *.py[cod]
 env3.6
 .venv/
 venv/
-__pychache__/
+__pycache__/
 
 # Heroku
-herokulogs.txtgg
+herokulogs.txt
 
 # Vagrant
 .vagrant

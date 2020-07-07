@@ -60,6 +60,11 @@ def getToday():
     return aware
 
 
+def shiftUnixByDay(utc, num_days):
+    date = unixToDate(utc)
+    return round(dateToUnix(date + relativedelta(days=num_days)))
+
+
 def shiftUnixByMonth(utc, num_months):
     date = unixToDate(utc)
     return round(dateToUnix(date + relativedelta(months=num_months)))
@@ -102,15 +107,22 @@ def getAccessTokens(user):
     return (access_token, refresh_token)
 
 
-def getGoogleTokens(code):
+def getGoogleTokens(code, clientApp):
+    if clientApp:
+        client_secret = "google_client_secret_desktop.json"
+        redirect_uri = "urn:ietf:wg:oauth:2.0:oob:auto"
+    else:
+        client_secret = "google_client_secret.json"
+        redirect_uri = "postmessage"
+
     flow = Flow.from_client_secrets_file(
-        "google_client_secret.json",
+        client_secret,
         scopes=[
             "https://www.googleapis.com/auth/userinfo.email",
             "openid",
             "https://www.googleapis.com/auth/userinfo.profile",
         ],
-        redirect_uri="postmessage",
+        redirect_uri=redirect_uri,
     )
 
     flow.fetch_token(code=code)

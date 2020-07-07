@@ -17,14 +17,15 @@ def createDiskEntry(
     location (str): The Azure region of the vm
     state (str): The state of the disk (default is "ACTIVE")
    """
+
     with engine.connect() as conn:
-        command = text(
+        commandDisk = text(
             """
             INSERT INTO disks("disk_name", "vm_name", "username", "location", "state", "disk_size", "main")
             VALUES(:diskname, :vmname, :username, :location, :state, :disk_size, :main)
             """
         )
-        params = {
+        paramsDisk = {
             "diskname": disk_name,
             "vmname": vm_name,
             "username": username,
@@ -34,19 +35,13 @@ def createDiskEntry(
             "main": main,
         }
 
-        conn.execute(command, **params)
+        conn.execute(commandDisk, **paramsDisk)
 
-        command = text(
-            """
-            INSERT INTO disk_settings("disk_name", "branch", "using_stun")
-            VALUES(:disk_name, :branch, :using_stun)
-            """
-        )
-
-        params = {"disk_name": disk_name, "branch": "master", "using_stun": False}
-
-        conn.execute(command, **params)
         conn.close()
+
+        assignSettingsToDisk(disk_name, "Fractal")
+
+        # TODO: this method should take the OS
 
 
 def genDiskName():
@@ -66,6 +61,20 @@ def genDiskName():
         diskName = str(diskName) + "_disk"
 
         return diskName
+
+
+def genPassword():
+    """Generates a random password for a disk, from an alphabet of lowercase letters, numbers, and acceptable punctuation
+
+    Returns:
+        str: The generated password
+    """
+
+    # alphabet = string.ascii_lowercase + string.digits + ',./;[]'
+    # password = ''.join(secrets.choice(alphabet) for i in range(24))
+    password = "6ifq59b;c],c6t.kh.5iw,m/vp.3a;;i"
+
+    return password
 
 
 def getVMSize(disk_name):
@@ -89,6 +98,27 @@ def getVMSize(disk_name):
         return disks_info["vm_size"]
 
 
+def getDiskSettings(disk_name):
+    """Gets the disk settings for the disk
+
+    Args:
+        disk_name (str): Name of the disk
+
+    Returns:
+        dict: disk settings row
+    """
+    command = text(
+        """
+        SELECT * FROM disk_settings WHERE "disk_name" = :disk_name
+        """
+    )
+    params = {"disk_name": disk_name}
+    with engine.connect() as conn:
+        disks_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+        conn.close()
+        return disks_info
+
+
 def fetchUserDisks(username, show_all=False, main=True, ID=-1):
     """Fetches all disks associated with the user
 
@@ -109,7 +139,7 @@ def fetchUserDisks(username, show_all=False, main=True, ID=-1):
 
             command = text(
                 """
-                SELECT * FROM disks WHERE "username" = :username AND "state" = :state
+                SELECT disks.*, disk_settings.* FROM disks LEFT JOIN disk_settings ON disks.disk_name = disk_settings.disk_name WHERE "username" = :username AND "state" = :state
                 """
             )
             params = {"username": username, "state": "ACTIVE"}
@@ -326,6 +356,32 @@ def associateVMWithDisk(vm_name, disk_name):
         conn.close()
 
 
+def assignSettingsToDisk(disk_name, admin_username):
+    """Assigns settings for a disk
+
+    Args:
+        disk_name (str): The name of the disk
+    """
+
+    rand_password = genPassword()
+    command = text(
+        """
+        INSERT INTO disk_settings ("admin_username", "admin_password", "disk_name", "branch", "using_stun") VALUES (:admin_username, :admin_password, :disk_name, :branch, :using_stun)
+        """
+    )
+
+    params = {
+        "admin_username": admin_username,
+        "admin_password": rand_password,
+        "disk_name": disk_name,
+        "branch": "master",
+        "using_stun": False,
+    }
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
 def fetchAllDisks():
     """Fetches all the disks from disks table, LEFT joined with disk_settings
 
@@ -356,6 +412,23 @@ def deleteDiskFromTable(disk_name):
     command = text(
         """
         DELETE FROM disks WHERE "disk_name" = :disk_name
+        """
+    )
+    params = {"disk_name": disk_name}
+    with engine.connect() as conn:
+        conn.execute(command, **params)
+        conn.close()
+
+
+def deleteDiskSettingsFromTable(disk_name):
+    """Deletes a disk from the disk_settings sql table
+
+    Args:
+        disk_name (str): The name of the disk to delete settings for
+    """
+    command = text(
+        """
+        DELETE FROM disk_settings WHERE "disk_name" = :disk_name
         """
     )
     params = {"disk_name": disk_name}
@@ -473,6 +546,8 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
     _, compute_client, _ = createClients()
 
     try:
+        admin_username = "Fractal"
+
         ORIGINAL_DISK = "Fractal_Disk_Eastus"
         if location == "southcentralus":
             ORIGINAL_DISK = "Fractal_Disk_Southcentralus"
@@ -480,6 +555,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
             ORIGINAL_DISK = "Fractal_Disk_Northcentralus"
 
         if operating_system == "Linux":
+            admin_username = "fractal"
             if not location == "northcentralus":
                 return {
                     "status": 402,
@@ -516,6 +592,7 @@ def createDiskFromImageHelper(username, location, vm_size, operating_system, ID=
         updateDisk(disk_name, "", location)
         assignUserToDisk(disk_name, username)
         assignVMSizeToDisk(disk_name, vm_size)
+        assignSettingsToDisk(disk_name, admin_username)
 
         return {"status": 200, "disk_name": disk_name}
     except Exception as e:
@@ -740,5 +817,22 @@ def fetchDiskSetting(disk_name, setting_name):
 
         if disk_info:
             return disk_info[setting_name]
+        else:
+            return None
+
+
+def fetchDisk(disk_name):
+    with engine.connect() as conn:
+        command = text(
+            """
+            SELECT * FROM disks WHERE "disk_name" = :disk_name
+            """
+        )
+
+        params = {"disk_name": disk_name}
+        disk_info = cleanFetchedSQL(conn.execute(command, **params).fetchone())
+
+        if disk_info:
+            return disk_info
         else:
             return None
