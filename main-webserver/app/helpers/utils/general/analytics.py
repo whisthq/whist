@@ -1,4 +1,5 @@
 from app.imports import *
+from app.helpers.utils.general.time import *
 
 def totalMinutes(report):
     reportByUser = {}

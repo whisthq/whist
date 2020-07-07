@@ -22,6 +22,7 @@ def init_app(app):
     from .blueprints.celery_status_blueprint import celery_status_bp
     from .blueprints.azure_disk_blueprint import azure_disk_bp
     from .blueprints.artifact_blueprint import artifact_bp
+    from .blueprints.report_blueprint import report_bp
 
     app.register_blueprint(account_bp)
     app.register_blueprint(token_bp)
@@ -29,5 +30,6 @@ def init_app(app):
     app.register_blueprint(celery_status_bp)
     app.register_blueprint(azure_disk_bp)
     app.register_blueprint(artifact_bp)
+    app.register_blueprint(report_bp)
 
     return app

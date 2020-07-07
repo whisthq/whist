@@ -24,4 +24,4 @@ def report_get(action, **kwargs):
         else:
             return jsonify({}), BAD_REQUEST
     elif action == "signups":
-        return
+        output = signupsHelper()
