@@ -13,14 +13,18 @@ def azure_disk_post(action, **kwargs):
     current_user = get_jwt_identity()
     if action == "clone":
         # Clone a Fractal disk
+        username = kwargs["body"]["username"]
 
         resource_group = os.getenv("VM_GROUP")
         if "resource_group" in kwargs["body"].keys():
             resource_group = kwargs["body"]["resource_group"]
 
+        if username != current_user:
+            return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
+
         task = cloneDisk.apply_async(
             [
-                kwargs["body"]["username"],
+                username,
                 kwargs["body"]["location"],
                 kwargs["body"]["vm_size"],
                 kwargs["body"]["operating_system"],
