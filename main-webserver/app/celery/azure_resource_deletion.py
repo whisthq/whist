@@ -5,7 +5,7 @@ from app.helpers.utils.azure.azure_resource_locks import *
 
 
 @celery_instance.task(bind=True)
-def deleteVM(self, vm_name, delete_disk):
+def deleteVM(self, vm_name, delete_disk, resource_group=os.getenv("VM_GROUP")):
     """Deletes an Azure VM
 
     Args:
@@ -46,7 +46,7 @@ def deleteVM(self, vm_name, delete_disk):
     # step 1, deallocate the VM
     try:
         async_vm_deallocate = compute_client.virtual_machines.deallocate(
-            os.getenv("VM_GROUP"), vm_name
+            resource_group, vm_name
         )
         async_vm_deallocate.wait()
 
@@ -71,7 +71,7 @@ def deleteVM(self, vm_name, delete_disk):
     # step 2, detach the IP
     try:
         subnet_obj = network_client.subnets.get(
-            resource_group_name=os.getenv("VM_GROUP"),
+            resource_group_name=resource_group,
             virtual_network_name=vnet_name,
             subnet_name=subnet_name,
         )
@@ -89,7 +89,7 @@ def deleteVM(self, vm_name, delete_disk):
         }
         # use method create_or_update to update network interface configuration.
         async_ip_detach = network_client.network_interfaces.create_or_update(
-            resource_group_name=os.getenv("VM_GROUP"),
+            resource_group_name=resource_group,
             network_interface_name=nic_name,
             parameters=params,
         )
@@ -114,11 +114,13 @@ def deleteVM(self, vm_name, delete_disk):
     # step 3, delete the VM
     try:
         async_vm_delete = compute_client.virtual_machines.delete(
-            os.getenv("VM_GROUP"), vm_name
+            resource_group, vm_name
         )
         async_vm_delete.wait()
 
-        fractalSQLDelete(table_name="v_ms", params={"vm_name": vm_name})
+        fractalSQLDelete(
+            table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
+        )
 
         fractalLog(
             function="deleteVM",
@@ -140,7 +142,7 @@ def deleteVM(self, vm_name, delete_disk):
     # step 4, delete the IP
     try:
         async_ip_delete = network_client.public_ip_addresses.delete(
-            os.getenv("VM_GROUP"), ip_name
+            resource_group, ip_name
         )
         async_ip_delete.wait()
 
@@ -163,7 +165,7 @@ def deleteVM(self, vm_name, delete_disk):
     # step 4, delete the NIC
     try:
         async_nic_delete = network_client.network_interfaces.delete(
-            os.getenv("VM_GROUP"), nic_name
+            resource_group, nic_name
         )
         async_nic_delete.wait()
 
@@ -186,7 +188,7 @@ def deleteVM(self, vm_name, delete_disk):
     # step 5, delete the Vnet
     try:
         async_vnet_delete = network_client.virtual_networks.delete(
-            os.getenv("VM_GROUP"), vnet_name
+            resource_group, vnet_name
         )
         async_vnet_delete.wait()
 
@@ -209,9 +211,7 @@ def deleteVM(self, vm_name, delete_disk):
     if delete_disk:
         # step 6, delete the OS disk
         try:
-            os_disk_delete = compute_client.disks.delete(
-                os.getenv("VM_GROUP"), os_disk_name
-            )
+            os_disk_delete = compute_client.disks.delete(resource_group, os_disk_name)
             os_disk_delete.wait()
 
             fractalLog(

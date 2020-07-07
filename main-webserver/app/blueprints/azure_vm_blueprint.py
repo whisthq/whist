@@ -44,9 +44,13 @@ def azure_vm_post(action, **kwargs):
     elif action == "delete":
         # Deletes an Azure VM
 
-        vm_name, delete_disk = kwargs["body"]["vm_name"], kwargs["body"]["delete_disk"]
+        vm_name, delete_disk, resource_group = (
+            kwargs["body"]["vm_name"],
+            kwargs["body"]["delete_disk"],
+            kwargs["body"]["resource_group"],
+        )
 
-        task = deleteVM.apply_async([vm_name, delete_disk])
+        task = deleteVM.apply_async([vm_name, delete_disk, resource_group])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
