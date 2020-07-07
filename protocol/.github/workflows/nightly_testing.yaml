@@ -244,7 +244,14 @@ jobs:
     steps:
       - name: startup_vm
         run: |
-          curl -X POST -H Content-Type:application/json  -d "{
+          token=$(curl -X POST -H Content-Type:application/json  -d "{
+          \"username\" : \"fractal-admin@gmail.com\",
+          \"password\" : \"fractal-admin-password\" } "  \
+          $WEBSERVER_BASE_URL/account/login | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
+
+
+          curl -X POST -H "Content-Type:application/json" -H "Authorization: Bearer ${token}" \
+          -d "{
           \"vm_name\" : \"$SERVER_VM_NAME\",
           \"resource_group\" : \"FractalProtocolCI\" }" \
           $WEBSERVER_BASE_URL/azure_vm/start
@@ -392,7 +399,12 @@ jobs:
       - name: Stop VM
         if: always() # if we fail to get logs we should still kill the VM when done
         run: |
-          curl -X POST -H Content-Type:application/json  -d "{
-                    \"vm_name\" : \"$SERVER_VM_NAME\",
-                    \"resource_group\" : \"FractalProtocolCI\" }" \
-                    $WEBSERVER_BASE_URL/azure_vm/deallocate
+          token=$(curl -X POST -H Content-Type:application/json  -d "{
+          \"username\" : \"fractal-admin@gmail.com\",
+          \"password\" : \"fractal-admin-password\" } "  \
+          $WEBSERVER_BASE_URL/account/login | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
+
+          curl -X POST -H "Content-Type:application/json" -H "Authorization: Bearer ${token}"  -d "{
+          \"vm_name\" : \"$SERVER_VM_NAME\",
+          \"resource_group\" : \"FractalProtocolCI\" }" \
+          $WEBSERVER_BASE_URL/azure_vm/deallocate
