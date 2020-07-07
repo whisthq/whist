@@ -18,6 +18,8 @@ trigged an SDL event must be triggered in sdl_event_handler.c
 #include "main.h"
 #include "sdl_utils.h"
 
+#define UNUSED(x) (void)(x)
+
 // Keyboard state variables
 extern bool alt_pressed;
 extern bool ctrl_pressed;
@@ -123,7 +125,7 @@ int handleWindowSizeChanged(SDL_Event *event) {
 }
 
 int handleMouseLeftWindow(SDL_Event *event) {
-    event;
+    UNUSED(event);
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MOUSE_INACTIVE;
     SendFmsg(&fmsg);

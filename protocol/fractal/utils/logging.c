@@ -50,6 +50,8 @@ could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 #include "../network/network.h"
 #include "logging.h"
 
+#define UNUSED(x) (void)(x)
+
 char *get_logger_history();
 int get_logger_history_len();
 void initBacktraceHandler();
@@ -131,7 +133,7 @@ void destroyLogger() {
 }
 
 int MultiThreadedPrintf(void *opaque) {
-    opaque;
+    UNUSED(opaque);
 
     while (true) {
         // Wait until signaled by printf to begin running

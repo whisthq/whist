@@ -21,6 +21,8 @@ packet), before being saved in a proper video frame format.
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "SDL2/SDL.h"
 
+#define UNUSED(x) (void)(x)
+
 #define USE_HARDWARE true
 
 // Global Variables
@@ -567,7 +569,7 @@ void clearSDL(SDL_Renderer* renderer) {
 }
 
 int initMultithreadedVideo(void* opaque) {
-    opaque;
+    UNUSED(opaque);
 
     if (InitPeerCursors() != 0) {
         LOG_ERROR("Failed to init peer cursors.");

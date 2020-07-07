@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define UNUSED(x) (void)(x)
+
 void destroy_video_decoder_members(video_decoder_t* decoder);
 
 #define SHOW_DECODER_LOGS false
@@ -54,7 +56,7 @@ int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
 enum AVPixelFormat match_format(AVCodecContext* ctx,
                                 const enum AVPixelFormat* pix_fmts,
                                 enum AVPixelFormat match_pix_fmt) {
-    ctx;
+    UNUSED(ctx);
 
     char supported_formats[2000] = "";
     int len = 2000;
