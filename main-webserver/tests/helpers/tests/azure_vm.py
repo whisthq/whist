@@ -9,14 +9,14 @@ def fetchCurrentVMs():
     return output["rows"]
 
 
-def create(vm_size, location, operating_system, admin_password, input_token):
+def createVM(vm_size, location, operating_system, resource_group, input_token):
     return requests.post(
         (SERVER_URL + "/azure_vm/create"),
         json={
-            "vm_size": "Standard_NV6_Promo",
-            "location": "eastus",
-            "operating_system": "Windows",
-            "resource_group": "FractalStaging",
+            "vm_size": vm_size,
+            "location": location,
+            "operating_system": operating_system,
+            "resource_group": resource_group,
         },
         headers={"Authorization": "Bearer " + input_token},
     )

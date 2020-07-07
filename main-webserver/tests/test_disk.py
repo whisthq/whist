@@ -90,4 +90,4 @@ def test_disk_attach(input_token):
     vms = fetchCurrentVMs()
 
     for disk in disks:
-        
+        assert True

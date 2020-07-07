@@ -29,24 +29,22 @@ def test_delete_vm_initial(input_token):
     assert True
 
 
-# def test_vm(input_token):
-#     username = "fakefake@delete.com"
+def test_vm_create(input_token):
+    regions = ["eastus", "southcentralus", "northcentralus"]
 
-#     # Testing create
-#     print("Testing create vm...")
-#     resp = create(
-#         "Standard_NV6_Promo", "eastus", "Windows", "fractal123456789.", input_token
-#     )
-#     id = resp.json()["ID"]
-#     print(id)
-#     status = "PENDING"
-#     while status == "PENDING" or status == "STARTED":
-#         time.sleep(5)
-#         status = getStatus(id)["state"]
-#     if status != "SUCCESS":
-#         delete(getStatus(id)["output"]["vm_name"], True)
-#     assert status == "SUCCESS"
-#     pytest.vm_name = getStatus(id)["output"]["vm_name"]
+    for region in regions:
+        fractalLog(
+            function="test_vm_create",
+            label="azure_vm/create",
+            logs="Starting to create a VM in {region}".format(region=region),
+        )
+
+        resp = createVM(
+            "Standard_NV6_Promo", region, "Windows", RESOURCE_GROUP, input_token
+        )
+
+        if queryStatus(resp, timeout=10) < 1:
+            assert False
 
 
 # def test_attach(input_token):
