@@ -24,3 +24,18 @@ def report_get(action, **kwargs):
         output = signupsHelper()
 
         return jsonify(output), SUCCESS
+
+@report_bp.route("/report/<action>", methods=["POST"])
+@fractalPreProcess
+def report_post(action, **kwargs):
+    if action == "regionReport":
+        body = request.get_json()
+        output = regionReportHelper(body["timescale"])
+
+        return jsonify(output), SUCCESS
+
+@report_bp.route("/report/<action>", methods=["POST"])
+@fractalPreProcess
+def report_no_admin(action, **kwargs):
+    if action == "userReport":
+        return
