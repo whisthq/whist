@@ -29,3 +29,15 @@ def cloneDisk(
         },
         headers={"Authorization": "Bearer " + input_token},
     )
+
+
+def attachDisk(disk_name, resource_group, vm_name=None):
+    return requests.post(
+        (SERVER_URL + "/azure_disk/attach"),
+        json={
+            "disk_name": disk_name,
+            "resource_group": resource_group,
+            "vm_name": vm_name,
+        },
+        headers={"Authorization": "Bearer " + input_token},
+    )

@@ -7,25 +7,26 @@ pytest.disk_name = None
 
 # Start off by deleting all the VM resources in the staging resource group, if there are any
 
-# def test_delete_vm_initial(input_token):
-#     all_vms = fetchCurrentVMs()
-#     for vm in all_vms:
-#         fractalSQLUpdate(
-#             table_name="v_ms",
-#             conditional_params={"vm_name": vm["vm_name"]},
-#             new_params={"lock": False, "temporary_lock": 0},
-#         )
-#         resp = deleteVM(
-#             vm_name=vm["vm_name"],
-#             delete_disk=True,
-#             resource_group=RESOURCE_GROUP,
-#             input_token=input_token,
-#         )
 
-#         if queryStatus(resp) < 1:
-#             assert False
+def test_delete_vm_initial(input_token):
+    all_vms = fetchCurrentVMs()
+    for vm in all_vms:
+        fractalSQLUpdate(
+            table_name="v_ms",
+            conditional_params={"vm_name": vm["vm_name"]},
+            new_params={"lock": False, "temporary_lock": 0},
+        )
+        resp = deleteVM(
+            vm_name=vm["vm_name"],
+            delete_disk=True,
+            resource_group=RESOURCE_GROUP,
+            input_token=input_token,
+        )
 
-#     assert True
+        if queryStatus(resp) < 1:
+            assert False
+
+    assert True
 
 
 # def test_vm(input_token):

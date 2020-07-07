@@ -71,10 +71,17 @@ def azure_disk_post(action, **kwargs):
             kwargs["body"]["resource_group"],
         )
 
+        attach_to_specific_vm = False
+
         if "vm_name" in kwargs["body"].keys():
             vm_name = kwargs["body"]["vm_name"]
-            task = swapSpecificDisk.apply_async([vm_name, disk_name, resource_group])
-        else:
+            if vm_name:
+                attach_to_specific_vm = True
+                task = swapSpecificDisk.apply_async(
+                    [vm_name, disk_name, resource_group]
+                )
+
+        if not attach_to_specific_vm:
             task = automaticAttachDisk.apply_async([disk_name, resource_group])
 
         if not task:
