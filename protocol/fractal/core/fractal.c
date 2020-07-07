@@ -13,7 +13,6 @@
 
 #define UNUSED(x) (void)(x)
 
-
 // Print Memory Info
 
 int MultithreadedPrintSystemInfo(void* opaque) {

@@ -189,7 +189,7 @@ void SetTimezoneFromIANAName(char* linux_tz_name) {
     //    timedatectl set-timezone "; snprintf(cmd + strlen(cmd),
     //    strlen(linux_tz_name), linux_tz_name);
     //(void*)linux_tz_name;  // silence unused variable warning
-    UNUSED(linux_tz_name); // will need to use this at some point
+    UNUSED(linux_tz_name);  // will need to use this at some point
 
     return;
 }
