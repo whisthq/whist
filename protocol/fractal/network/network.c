@@ -78,6 +78,8 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #define STUN_IP "52.5.240.234"
 #define STUN_PORT 48800
 
+#define UNUSED(x) (void)(x)
+
 /*
 ============================
 Private Custom Types
@@ -459,7 +461,7 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
 static int reading_packet_len;
 
 void ClearReadingTCP(SocketContext *context) {
-    context;
+    UNUSED(context);
     reading_packet_len = 0;
 }
 
@@ -771,7 +773,7 @@ int CreateTCPServerContextStun(SocketContext *context, int port,
 
 int CreateTCPClientContext(SocketContext *context, char *destination, int port,
                            int recvfrom_timeout_ms, int stun_timeout_ms) {
-    stun_timeout_ms;  // TODO; remove useless parameter
+    UNUSED(stun_timeout_ms);
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;

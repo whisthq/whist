@@ -37,6 +37,8 @@ destroyClipboardSynchronizer();
 #include "../core/fractal.h"
 #include "clipboard.h"
 
+#define UNUSED(x) (void)(x)
+
 int UpdateClipboardThread(void* opaque);
 bool pendingUpdateClipboard();
 
@@ -99,7 +101,7 @@ bool ClipboardSynchronizerSetClipboard(ClipboardData* cb) {
 }
 
 int UpdateClipboardThread(void* opaque) {
-    opaque;
+    UNUSED(opaque);
 
     while (connected) {
         SDL_SemWait(clipboard_semaphore);
