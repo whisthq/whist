@@ -1,14 +1,17 @@
-# Fractal User & VM Webserver
+# Fractal Main Webserver
 
-![Python Webserver CI](https://github.com/fractalcomputers/vm-webserver/workflows/Python%20App%20CI/badge.svg)
+![Python Webserver CI](https://github.com/fractalcomputers/main-webserver/workflows/Python%20Webserver%20CI/badge.svg)
 
 This repository contains the code for the VM and user webserver, which handles interfacing between users, the Fractal cloud computers hosted on Azure (currently), and a variety of website & client applications functionalities. Runs Flask with Celery for asynchronous task handling.
 
 Our webservers are hosted on Heroku:
+
 - [Production](https://cube-celery-vm.herokuapp.com)
 - [Staging](https://cube-celery-staging.herokuapp.com)
-- [Staging2](https://cube-celery-staging2.herokuapp.com)
-- [Staging3](https://cube-celery-staging3.herokuapp.com)
+- [Staging2](https://main-webserver-staging2.herokuapp.com)
+- [Staging3](https://main-webserver-staging3.herokuapp.com)
+
+Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?cols=core_host%2Ccore_service&from_ts=1593977274176&index=&live=true&messageDisplay=inline&stream_sort=desc&to_ts=1593978174176).
 
 ## Development
 
@@ -16,15 +19,13 @@ Our webservers are hosted on Heroku:
 
 1. Set up the Heroku CLI on your computer
 2. Check your python version by typing `python -V`.
-
-- If you have python 3.6.X:
-  - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
-- If you have Python >3.6 or Python <3.0:
-  - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
-  - Find the directory where python 3 is installed. On linux, this can be done by typing into the terminal: `which python3`.
-  - Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
-  - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
-
+   - **If you have python 3.6.X**
+   - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
+   - **If you have Python >3.6 or Python <3.0**
+   - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
+   - Find the directory where python 3 is installed. On linux, this can be done by typing into the terminal: `which python3`.
+   - Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
+   - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
 3. Install everything by typing `pip install -r requirements.txt`. Make sure you're in the virtual environment when doing this.
 4. Tell the local environment what the entry point is to the webserver by typing `set FLASK_APP=run.py`.
 5. Import the environment variables into your computer by typing `heroku config -s --app <APP> >> .env`. App is either `cube-celery-vm` if you are working on the production webserver, or `cube-celery-staging` if you are working on the staging webserver.
@@ -43,27 +44,6 @@ or
 
 `docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
 
-### Build/Run in Vagrant
-
-Vagrant allows you to build local VMs which can be used to run code seamlessly. It is done via the Git submodule to the `fractalcomputers/vagrant` repository.
-
-First, make sure you initialized submodules via: `git submodule update --init --recursive`. After the submodules are initialized you will find the Vagrant configs in `vagrant/`.
-
-You will first need to download the win10-dev.box image. To do so, run `aws s3 cp s3://fractal-private-dev/win10-dev.box win10-dev.box` as detailed in `vagrant/README.md`, or you can also manually download it from the S3 bucket. If you try to download it via the AWS CLI, you will first need to install the CLI and configure permissions, which is explained the the Vagrant repo README. You can then follow the instructions in `vagrant/README.md` for running VMs with the vm-webserver repo in them.
-
-Quick Commands:
-
-```
-# vagrant up commands will take some time
-vagrant up
-vagrant up win10 # only win10
-vagrant ssh win10
-vagrant ssh ubuntu
-
-# code is located under /vagrant
-vagrant destroy # destroys vms and cleans up
-```
-
 ### Run on Heroku
 
 To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. Make sure you are added as a collaborator to any of the Heroku apps you plan to use. You can contact Ming, Phil, or Jonathan to be added.
@@ -72,7 +52,7 @@ To push to the Heroku production/staging servers, you’ll first need to set up 
 
 1. Inside your virtual environment, run the command `heroku create -a [DESIRED HEROKU SERVER NAME]`.
 2. `git checkout` to the branch you want to connect the new server to, and run the command `heroku git:remote -a [HEROKU SERVER NAME] -r [DESIRED LOCAL NICKNAME]`. For instance, if the app you created is called `cube-celery-staging5`, you could run `heroku git:remote -a cube-celery-staging5 -r staging5`.
-3. To transfer the environment variables over automatically, run the  command `heroku config -s -a [EXISTING SERVER] > config.txt` and then `cat config.txt | tr '\n' ' ' | xargs heroku config:set -a [HEROKU SERVER NAME]`. Note that you need to be on a Mac or Linux computer to run the second command; I could not find a suitable workaround for Windows.
+3. To transfer the environment variables over automatically, run the command `heroku config -s -a [EXISTING SERVER] > config.txt` and then `cat config.txt | tr '\n' ' ' | xargs heroku config:set -a [HEROKU SERVER NAME]`. Note that you need to be on a Mac or Linux computer to run the second command; I could not find a suitable workaround for Windows.
 4. Copy the environment variables locally by running `heroku config -s -a [HEROKU SERVER NAME]` >> .env`
 5. Install a Redis task Queue by going to the Heroku dashboard, finding the app you created, and navigating to Resources > Find More Addons > Heroku Redis. Follow the Heroku setup instructions and select the free plan.
 6. Under the Resources tab, make sure that the "web" and "celery" workers are both toggled on.
