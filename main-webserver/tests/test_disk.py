@@ -21,12 +21,20 @@ def test_delete_disk_initial(input_token):
             fractalLog(
                 function="test_delete_disk_initial",
                 label="azure_disk/delete",
-                logs="Found {num_disks} disk already in database. Starting to delete...".format(
+                logs="Found {num_disks} disk(s) already in database. Starting to delete...".format(
                     num_disks=str(len(all_disks))
                 ),
             )
 
             for disk in all_disks:
+                fractalLog(
+                    function="test_delete_disk_initial",
+                    label="azure_disk/delete",
+                    logs="Deleting disk {disk_name}".format(
+                        disk_name=disk["disk_name"]
+                    ),
+                )
+
                 resp = deleteDisk(
                     disk_name=disk["disk_name"],
                     resource_group=RESOURCE_GROUP,
@@ -61,7 +69,7 @@ def test_disk_clone(input_token):
 
     for region in regions:
         fractalLog(
-            function="test_delete_disk_initial",
+            function="test_disk_clone",
             label="azure_disk/clone",
             logs="Starting to clone a disk in {region}".format(region=region),
         )
