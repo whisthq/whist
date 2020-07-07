@@ -2,7 +2,7 @@ from app.imports import *
 from app.helpers.utils.general.logs import *
 
 
-engine = db.create_engine(os.getenv("DATABASE_URL"), echo=False, pool_pre_ping=True)
+engine = db.create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 Session = sessionmaker(bind=engine, autocommit=False)
 
 
