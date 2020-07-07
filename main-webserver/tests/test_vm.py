@@ -179,4 +179,3 @@ def test_vm_create(input_token):
 # assert status == "SUCCESS"
 
 # # Delete disks
-
