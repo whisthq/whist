@@ -40,7 +40,7 @@ def deleteVM(self, vm_name, delete_disk, resource_group=os.getenv("VM_GROUP")):
     hr = 1
 
     # get VM info based on name
-    virtual_machine = createVMInstance(vm_name)
+    virtual_machine = createVMInstance(vm_name, resource_group)
     os_disk_name = virtual_machine.storage_profile.os_disk.name
 
     # step 1, deallocate the VM
