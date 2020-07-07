@@ -64,27 +64,23 @@ def signupsHelper():
             WHERE created > :timestamp
         """
     )
-    # try:
-    #     with engine.connect() as conn:
-    #         params = {
-    #             "timestamp": dt.combine(today.date(), dt.min.time()).timestamp(),
-    #         }
-    #         dayCount = cleanFetchedSQL(conn.execute(command, **params).fetchall())[
-    #             0
-    #         ]["count"]
-    #         params = {
-    #             "timestamp": (today - datetime.timedelta(days=7)).timestamp(),
-    #         }
-    #         weekCount = cleanFetchedSQL(conn.execute(command, **params).fetchall())[
-    #             0
-    #         ]["count"]
-    #         params = {
-    #             "timestamp": (today - datetime.timedelta(days=30)).timestamp()
-    #         }
-    #         monthCount = cleanFetchedSQL(
-    #             conn.execute(command, **params).fetchall()
-    #         )[0]["count"]
-    #         return (
-    #             jsonify({"day": dayCount, "week": weekCount, "month": monthCount}),
-    #             200,
-    #         )
+
+    dayParams = {
+        "timestamp": dt.combine(today.date(), dt.min.time()).timestamp(),
+    }
+    dayOutput = fractalRunSQL(command, dayParams)
+    dayCount = dayOutput["rows"][0]["count"] if dayOutput["rows"] else 0
+
+    weekParams = {
+        "timestamp": (today - datetime.timedelta(days=7)).timestamp(),
+    }
+    weekOutput = fractalRunSQL(command, weekParams)
+    weekCount = weekOutput["rows"][0]["count"] if weekOutput["rows"] else 0
+
+    monthParams = {
+        "timestamp": (today - datetime.timedelta(days=30)).timestamp()
+    }
+    monthOutput = fractalRunSQL(command, monthParams)
+    monthCount = monthOutput["rows"][0]["count"] if monthOutput["rows"] else 0
+
+    return {"day": dayCount, "week": weekCount, "month": monthCount}

@@ -19,9 +19,8 @@ def report_get(action, **kwargs):
     elif action == "totalUsage":
         output = totalUsageHelper()
 
-        if output:
-            return jsonify(output), SUCCESS
-        else:
-            return jsonify({}), BAD_REQUEST
+        return jsonify(output), SUCCESS
     elif action == "signups":
         output = signupsHelper()
+
+        return jsonify(output), SUCCESS
