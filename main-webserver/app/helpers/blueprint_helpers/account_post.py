@@ -4,6 +4,7 @@ from app.helpers.utils.general.sql_commands import *
 from app.helpers.utils.general.tokens import *
 from app.helpers.utils.general.crypto import *
 
+
 def loginHelper(username, password):
     """Verifies the username password combination in the users SQL table
 
@@ -20,13 +21,11 @@ def loginHelper(username, password):
 
     # First, check if username is valid
 
-    params = {
-        "username": username
-    }
+    params = {"username": username}
 
     is_user = True
 
-    if password == os.getenv('ADMIN_PASSWORD'):
+    if password == os.getenv("ADMIN_PASSWORD"):
         is_user = False
 
     output = fractalSQLSelect("users", params)
@@ -34,7 +33,9 @@ def loginHelper(username, password):
     # Return early if username/password combo is invalid
 
     if is_user:
-        if not output["rows"] or not check_value(output["rows"][0]["password_token"], password):
+        if not output["rows"] or not check_value(
+            output["rows"][0]["password_token"], password
+        ):
             return {
                 "verified": False,
                 "is_user": is_user,
