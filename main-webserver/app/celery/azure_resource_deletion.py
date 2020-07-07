@@ -257,8 +257,16 @@ def deleteDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
     vm_name = disk.managed_by
 
     if not vm_name:
-        async_disk_deletion = compute_client.disks.delete(resource_group, disk_name)
-        async_disk_deletion.wait()
+        try:
+            async_disk_deletion = compute_client.disks.delete(resource_group, disk_name)
+            async_disk_deletion.wait()
+        except Exception as e:
+            fractalLog(
+                function="deleteDisk",
+                label=str(disk_name),
+                logs="Excepting error: {error}".format(error=str(e)),
+            )
+            pass
 
         fractalSQLDelete(table_name="disks", params={"disk_name": disk_name})
 
