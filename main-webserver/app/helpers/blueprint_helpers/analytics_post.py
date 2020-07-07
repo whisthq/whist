@@ -1,12 +1,11 @@
 from app import *
 from app.helpers.utils.general.analytics import *
 
+
 def logsHelper(filename, sender):
     # Read and clean logs into Pandas dataframe
     try:
-        df = pd.read_csv(
-            filename, sep="|", header=None, error_bad_lines=False
-        )
+        df = pd.read_csv(filename, sep="|", header=None, error_bad_lines=False)
         df.columns = ["time", "level", "file", "location", "contents"]
         r = df.time.apply(
             lambda x: ":".join(str(x).split(":")[:-1]) + "." + str(x).split(":")[-1]
@@ -21,9 +20,7 @@ def logsHelper(filename, sender):
         )
 
     # Get number of errors
-    error_df = cleaned_df[
-        cleaned_df.level.str.contains("ERROR", na=False, regex=False)
-    ]
+    error_df = cleaned_df[cleaned_df.level.str.contains("ERROR", na=False, regex=False)]
     number_of_errors = error_df.shape[0]
     error_rate = float(number_of_errors) / float(cleaned_df.shape[0])
 

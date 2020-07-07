@@ -25,6 +25,7 @@ def report_get(action, **kwargs):
 
         return jsonify(output), SUCCESS
 
+
 @report_bp.route("/report/<action>", methods=["POST"])
 @fractalPreProcess
 def report_post(action, **kwargs):

@@ -3,6 +3,7 @@ from app.helpers.utils.general.analytics import *
 from app.helpers.utils.general.logs import *
 from app.helpers.utils.general.sql_commands import *
 
+
 def latestHelper():
     command = text(
         """
@@ -18,6 +19,7 @@ def latestHelper():
     else:
         return None
 
+
 def totalUsageHelper():
     today = dt.now()
     command = text(
@@ -30,9 +32,7 @@ def totalUsageHelper():
     )
 
     dayParams = {
-        "date": dt.combine(today.date(), dt.min.time()).strftime(
-            "%m-%d-%y"
-        ),
+        "date": dt.combine(today.date(), dt.min.time()).strftime("%m-%d-%y"),
     }
     dayReport = fractalRunSQL(command, dayParams)
 
@@ -41,12 +41,10 @@ def totalUsageHelper():
     }
     weekReport = fractalRunSQL(command, weekParams)
 
-
     monthParams = {
         "date": (today - datetime.timedelta(days=30)).strftime("%m-%d-%y"),
     }
     monthReport = fractalRunSQL(command, monthParams)
-
 
     dayMins = totalMinutes(dayReport["rows"]) if dayReport["rows"] else 0
     weekMins = totalMinutes(weekReport["rows"]) if weekReport["rows"] else 0
@@ -77,9 +75,7 @@ def signupsHelper():
     weekOutput = fractalRunSQL(command, weekParams)
     weekCount = weekOutput["rows"][0]["count"] if weekOutput["rows"] else 0
 
-    monthParams = {
-        "timestamp": (today - datetime.timedelta(days=30)).timestamp()
-    }
+    monthParams = {"timestamp": (today - datetime.timedelta(days=30)).timestamp()}
     monthOutput = fractalRunSQL(command, monthParams)
     monthCount = monthOutput["rows"][0]["count"] if monthOutput["rows"] else 0
 

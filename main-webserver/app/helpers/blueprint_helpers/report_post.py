@@ -3,6 +3,7 @@ from app.helpers.utils.general.analytics import *
 from app.helpers.utils.general.logs import *
 from app.helpers.utils.general.sql_commands import *
 
+
 def regionReportHelper(timescale):
     command = text("")
     if timescale == "day":
@@ -45,6 +46,7 @@ def regionReportHelper(timescale):
         return report
     else:
         return {}
+
 
 def userReportHelper(username, timescale=None, start_date=None):
     today = dt.now()

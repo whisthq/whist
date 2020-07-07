@@ -1,6 +1,7 @@
 from app.imports import *
 from app.helpers.utils.general.time import *
 
+
 def totalMinutes(report):
     reportByUser = {}
     for entry in report:
@@ -80,6 +81,7 @@ def loginsToMinutes(report):
         index += 1
     return output
 
+
 def extractFeature(feature_name, cleaned_df, scale):
     transformed_df = cleaned_df[
         cleaned_df.contents.str.contains(feature_name, na=False, regex=False)
@@ -88,8 +90,7 @@ def extractFeature(feature_name, cleaned_df, scale):
         float(content.split(": ")[1]) for content in transformed_df["contents"]
     ]
     transformed_df["time"] = [
-        time_str.strftime("%H:%M:%S.%f")[:-3]
-        for time_str in transformed_df["time"]
+        time_str.strftime("%H:%M:%S.%f")[:-3] for time_str in transformed_df["time"]
     ]
     transformed_df.loc[:, ["contents", "time"]]
 
