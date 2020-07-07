@@ -72,7 +72,7 @@ def test_vm_create(input_token):
                 )
                 assert False
 
-    Pool().map(createVMInRegion, regions)
+    createVMInRegion(regions)
 
     assert True
 
