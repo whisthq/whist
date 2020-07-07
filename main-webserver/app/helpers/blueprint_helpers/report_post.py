@@ -45,3 +45,55 @@ def regionReportHelper(timescale):
         return report
     else:
         return {}
+
+def userReportHelper(username, timescale=None, start_date=None):
+    today = dt.now()
+    command = text(
+        """
+        SELECT *
+        FROM login_history
+        WHERE "username" = :username AND timestamp > :date AND is_user = true
+        ORDER BY timestamp ASC
+        """
+    )
+    params = {}
+
+    if timescale:
+        if timescale == "day":
+            return []
+        elif timescale == "week":
+            lastWeek = today - datetime.timedelta(days=7)
+            params = {
+                "username": username,
+                "date": lastWeek.strftime("%m-%d-%y"),
+            }
+        elif timescale == "month":
+            lastMonth = today - datetime.timedelta(days=30)
+            params = {
+                "username": username,
+                "date": lastMonth.strftime("%m-%d-%y"),
+            }
+        elif timescale == "beginningMonth":
+            beginning_month = dt.strptime(
+                "{year}-{month}-{day}".format(
+                    year=today.year, month=today.month, day="1"
+                ),
+                "%Y-%m-%d",
+            ).strftime("%m-%d-%y")
+            params = {
+                "username": username,
+                "date": beginning_month,
+            }
+
+    if start_date:
+        params = {
+            "username": username,
+            "date": unixToDate(start_date).strftime("%m-%d-%y"),
+        }
+
+    report = fractalRunSQL(command, params)
+    output = []
+    if report["success"] and report["rows"]:
+        output = loginsToMinutes(report["rows"])
+
+    return output

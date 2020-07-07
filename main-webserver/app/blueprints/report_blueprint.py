@@ -33,9 +33,13 @@ def report_post(action, **kwargs):
         output = regionReportHelper(body["timescale"])
 
         return jsonify(output), SUCCESS
+    elif action == "userReport":
+        body = request.get_json()
+        if body["timescale"]:
+            output = userReportHelper(body["username"], timescale=body["timescale"])
+        elif body["start_date"]:
+            output = userReportHelper(body["username"], start_date=body["start_date"])
+        else:
+            return jsonify({}), BAD_REQUEST
 
-@report_bp.route("/report/<action>", methods=["POST"])
-@fractalPreProcess
-def report_no_admin(action, **kwargs):
-    if action == "userReport":
-        return
+        return jsonify(output), SUCCESS
