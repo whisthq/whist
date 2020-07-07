@@ -1,4 +1,5 @@
 from app.imports import *
+from app.helpers.utils.general.sql_commands import *
 
 
 def fractalAuth(f):
@@ -14,7 +15,21 @@ def fractalAuth(f):
 
         try:
             if request.method == "POST":
-                username = json.loads(request.data)["username"]
+                body = json.loads(request.data)
+                if "username" in body.keys():
+                    username = body["username"]
+                elif "vm_name" in body.keys():
+                    output = fractalSQLSelect(
+                        table_name="v_ms", params={"vm_name": vm_name}
+                    )
+                    if output["success"] and output["rows"]:
+                        username = output["rows"][0]["username"]
+                elif "disk_name" in body.keys():
+                    output = fractalSQLSelect(
+                        table_name="disks", params={"disk_name": disk_name}
+                    )
+                    if output["success"] and output["rows"]:
+                        username = output["rows"][0]["username"]
             elif request.method == "GET":
                 username = request.args.get("username")
         except Exception as e:
@@ -26,7 +41,7 @@ def fractalAuth(f):
             )
 
         current_user = get_jwt_identity()
-        if current_user != username:
+        if current_user != username and not os.getenv("DASHBOARD_USERNAME") in username:
             return (
                 jsonify(
                     {

@@ -5,101 +5,81 @@ from .helpers.tests.azure_vm import *
 pytest.vm_name = None
 pytest.disk_name = None
 
+# Start off by deleting all the VM resources in the staging resource group, if there are any
 
-def getStatus(id):
-    resp = requests.get((SERVER_URL + "/status/" + id))
-    return resp.json()
+# def test_delete_vm_initial(input_token):
+#     all_vms = fetchCurrentVMs()
+#     for vm in all_vms:
+#         fractalSQLUpdate(
+#             table_name="v_ms",
+#             conditional_params={"vm_name": vm["vm_name"]},
+#             new_params={"lock": False, "temporary_lock": 0},
+#         )
+#         resp = deleteVM(
+#             vm_name=vm["vm_name"],
+#             delete_disk=True,
+#             resource_group=RESOURCE_GROUP,
+#             input_token=input_token,
+#         )
 
+#         if queryStatus(resp) < 1:
+#             assert False
 
-def getVm(vm_name):
-    resp = requests.post((SERVER_URL + "/vm/fetchVm"), json={"vm_name": vm_name})
-    return resp.json()["vm"]
-
-
-def delete(vm_name, delete_disk):
-    return requests.post(
-        (SERVER_URL + "/vm/delete"),
-        json={"vm_name": vm_name, "delete_disk": delete_disk},
-    )
-
-
-def createDiskFromImage(
-    operating_system, username, location, vm_size, apps, input_token
-):
-    return requests.post(
-        (SERVER_URL + "/disk/createFromImage"),
-        json={
-            "operating_system": operating_system,
-            "username": username,
-            "location": location,
-            "vm_size": vm_size,
-            "apps": apps,
-            "resource_group": os.getenv("VM_GROUP"),
-        },
-        headers={"Authorization": "Bearer " + input_token},
-    )
+#     assert True
 
 
-def swap(vm_name, disk_name, input_token):
-    return requests.post(
-        (SERVER_URL + "/disk/swap"),
-        json={"vm_name": vm_name, "disk_name": disk_name},
-        headers={"Authorization": "Bearer " + input_token},
-    )
+# def test_vm(input_token):
+#     username = "fakefake@delete.com"
+
+#     # Testing create
+#     print("Testing create vm...")
+#     resp = create(
+#         "Standard_NV6_Promo", "eastus", "Windows", "fractal123456789.", input_token
+#     )
+#     id = resp.json()["ID"]
+#     print(id)
+#     status = "PENDING"
+#     while status == "PENDING" or status == "STARTED":
+#         time.sleep(5)
+#         status = getStatus(id)["state"]
+#     if status != "SUCCESS":
+#         delete(getStatus(id)["output"]["vm_name"], True)
+#     assert status == "SUCCESS"
+#     pytest.vm_name = getStatus(id)["output"]["vm_name"]
 
 
-def test_vm(input_token):
-    username = "fakefake@delete.com"
+# def test_attach(input_token):
+#     vm_name = "restlessstar701"
+#     disk_name = "lingeringbase19_disk"
 
-    # Testing create
-    print("Testing create vm...")
-    resp = create(
-        "Standard_NV6_Promo", "eastus", "Windows", "fractal123456789.", input_token
-    )
-    id = resp.json()["ID"]
-    print(id)
-    status = "PENDING"
-    while status == "PENDING" or status == "STARTED":
-        time.sleep(5)
-        status = getStatus(id)["state"]
-    if status != "SUCCESS":
-        delete(getStatus(id)["output"]["vm_name"], True)
-    assert status == "SUCCESS"
-    pytest.vm_name = getStatus(id)["output"]["vm_name"]
+#     # # Test create disk from image
+#     # print("Testing create disk from image...")
+#     # resp = createDiskFromImage("Windows", username, "eastus", "NV6", [], input_token)
+#     # id = resp.json()["ID"]
+#     # print(id)
+#     # status = "PENDING"
+#     # while status == "PENDING" or status == "STARTED":
+#     #     time.sleep(5)
+#     #     status = getStatus(id)["state"]
+#     # if status != "SUCCESS":
+#     #     delete(getStatus(id)["output"]["vm_name"], True)
+#     # assert status == "SUCCESS"
+#     # disk_name = getStatus(id)["output"]["disk_name"]
 
-
-def test_attach(input_token):
-    vm_name = "restlessstar701"
-    disk_name = "lingeringbase19_disk"
-
-    # # Test create disk from image
-    # print("Testing create disk from image...")
-    # resp = createDiskFromImage("Windows", username, "eastus", "NV6", [], input_token)
-    # id = resp.json()["ID"]
-    # print(id)
-    # status = "PENDING"
-    # while status == "PENDING" or status == "STARTED":
-    #     time.sleep(5)
-    #     status = getStatus(id)["state"]
-    # if status != "SUCCESS":
-    #     delete(getStatus(id)["output"]["vm_name"], True)
-    # assert status == "SUCCESS"
-    # disk_name = getStatus(id)["output"]["disk_name"]
-
-    # # Test attach disk
-    # print("Testing attach disk...")
-    resp = requests.post(
-        (SERVER_URL + "/azure_disk/attach"),
-        json={"disk_name": disk_name, "resource_group": "FractalStaging"},
-        headers={"Authorization": "Bearer " + input_token},
-    )
-    id = resp.json()["ID"]
-    print(id)
-    status = "PENDING"
-    while status == "PENDING" or status == "STARTED":
-        time.sleep(5)
-        status = getStatus(id)["state"]
-    assert status == "SUCCESS"
+#     # # Test attach disk
+#     # print("Testing attach disk...")
+#     resp = requests.post(
+#         (SERVER_URL + "/azure_disk/attach"),
+#         json={"disk_name": disk_name, "resource_group": "FractalStaging"},
+#         headers={"Authorization": "Bearer " + input_token},
+#     )
+#     id = resp.json()["ID"]
+#     print(id)
+#     status = "PENDING"
+#     while status == "PENDING" or status == "STARTED":
+#         time.sleep(5)
+#         status = getStatus(id)["state"]
+#     assert status == "SUCCESS"
 
 
 # # Test stop

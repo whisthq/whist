@@ -9,6 +9,7 @@ azure_disk_bp = Blueprint("azure_disk_bp", __name__)
 @azure_disk_bp.route("/azure_disk/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
+@fractalAuth
 def azure_disk_post(action, **kwargs):
     current_user = get_jwt_identity()
     if action == "clone":
@@ -18,9 +19,6 @@ def azure_disk_post(action, **kwargs):
         resource_group = os.getenv("VM_GROUP")
         if "resource_group" in kwargs["body"].keys():
             resource_group = kwargs["body"]["resource_group"]
-
-        if username != current_user:
-            return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
 
         task = cloneDisk.apply_async(
             [
@@ -38,25 +36,6 @@ def azure_disk_post(action, **kwargs):
 
         return jsonify({"ID": task.id}), ACCEPTED
 
-    elif action == "swap":
-        # Swap a disk onto a specified VM
-
-        disk_name, vm_name, resource_group = (
-            kwargs["body"]["disk_name"],
-            kwargs["body"]["vm_name"],
-            kwargs["body"]["resource_group"],
-        )
-
-        if getDiskUser(disk_name) != current_user:
-            return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
-
-        task = swapSpecificDisk.apply_async([vm_name, disk_name, resource_group])
-
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-
-        return jsonify({"ID": task.id}), ACCEPTED
-
     elif action == "delete":
         # Delete a disk from Azure and database
 
@@ -66,9 +45,6 @@ def azure_disk_post(action, **kwargs):
 
         if "username" in kwargs["body"].keys():
             username = kwargs["body"]["username"]
-
-            if username != current_user:
-                return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
 
             output = fractalSQLSelect(table_name="disks", params={"username": username})
 
@@ -98,9 +74,18 @@ def azure_disk_post(action, **kwargs):
             kwargs["body"]["resource_group"],
         )
 
-        task = automaticAttachDisk.apply_async([disk_name, resource_group])
+        if "vm_name" in kwargs["body"].keys():
+            vm_name = kwargs["body"]["vm_name"]
+            task = swapSpecificDisk.apply_async([vm_name, disk_name, resource_group])
+        else:
+            task = automaticAttachDisk.apply_async([disk_name, resource_group])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+
+    elif action == "create":
+        disk_size, username = kwargs["body"]["disk_size"], kwargs["body"]["username"]
+
+        return {}

@@ -1,3 +1,9 @@
+import time
+import requests
+
+from tests.constants.heroku import *
+
+
 def printProgressBar(
     iteration,
     total,
@@ -27,3 +33,48 @@ def printProgressBar(
     # Print New Line on Complete
     if iteration == total:
         print()
+
+
+def queryStatus(resp, timeout=10):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        status_id   - Required  : Celery task ID, returned from function call
+        timeout     - Required  : Timeout in minutes, return -1 if timeout is succeeded
+    """
+
+    def getStatus(status_id):
+        resp = requests.get((SERVER_URL + "/status/" + status_id))
+        return resp.json()
+
+    try:
+        status_id = resp.json()["ID"]
+    except Exception as e:
+        print(str(e))
+        return -1
+
+    total_timeout_seconds = timeout * 60
+    seconds_elapsed = 0
+
+    status = "PENDING"
+    while (
+        status == "PENDING"
+        or status == "STARTED"
+        and seconds_elapsed < total_timeout_seconds
+    ):
+        returned_json = getStatus(status_id)
+        status = returned_json["state"]
+
+        time.sleep(10)
+        seconds_elapsed += 10
+
+        printProgressBar(
+            seconds_elpased / 10,
+            total_timeout_seconds,
+            suffix=str(returned_json["output"]),
+        )
+
+    if seconds_elapsed > total_timeout_seconds or status != "SUCCESS":
+        return -1
+    else:
+        return 1
