@@ -47,6 +47,7 @@ def forgotPasswordHelper(username):
         conn.close()
         return jsonify({"verified": verified}), 401
 
+
 def cancelHelper(user, feedback):
     title = "[CANCELLED PLAN + FEEDBACK] " + user + " has Just Cancelled Their Plan"
 
@@ -186,6 +187,7 @@ def trialStartHelper(user, location, code):
         return jsonify({"status": 500}), 500
 
     return jsonify({"status": 200}), 200
+
 
 def computerReadyHelper(user, date, code, location):
     title = "Your Cloud PC Is Ready!"
