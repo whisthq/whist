@@ -24,6 +24,7 @@ def init_app(app):
     from .blueprints.artifact_blueprint import artifact_bp
     from .blueprints.report_blueprint import report_bp
     from .blueprints.analytics_blueprint import analytics_bp
+    from .blueprints.admin_blueprint import admin_bp
 
     app.register_blueprint(account_bp)
     app.register_blueprint(token_bp)
@@ -33,5 +34,6 @@ def init_app(app):
     app.register_blueprint(artifact_bp)
     app.register_blueprint(report_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(admin_bp)
 
     return app
