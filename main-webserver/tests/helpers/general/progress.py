@@ -10,9 +10,8 @@ from tests.constants.settings import *
 
 def queryStatus(resp, timeout=10):
     """
-    Call in a loop to create terminal progress bar
     @params:
-        status_id   - Required  : Celery task ID, returned from function call
+        resp        - Required  : Raw celery function call response
         timeout     - Required  : Timeout in minutes, return -1 if timeout is succeeded
     """
 
