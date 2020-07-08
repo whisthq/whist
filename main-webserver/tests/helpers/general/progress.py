@@ -17,14 +17,16 @@ def queryStatus(resp, timeout=10):
     """
 
     def getStatus(status_id):
-        resp = requests.get((SERVER_URL + "/status/" + status_id))
-        return resp.json()
+        if status_id:
+            resp = requests.get((SERVER_URL + "/status/" + status_id))
+            return resp.json()
+        return None
 
     try:
         status_id = resp.json()["ID"]
     except Exception as e:
         print(str(e))
-        return -1
+        return {"status": -3, "output": "No status ID provided"}
 
     total_timeout_seconds = timeout * 60
     seconds_elapsed = 0
@@ -48,6 +50,8 @@ def queryStatus(resp, timeout=10):
         and seconds_elapsed < total_timeout_seconds
     ):
         returned_json = getStatus(status_id)
+        if not returned_json:
+            return {"status": -3, "output": "No status ID provided"}
         status = returned_json["state"]
 
         time.sleep(10)

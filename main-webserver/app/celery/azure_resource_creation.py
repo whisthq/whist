@@ -364,6 +364,7 @@ def createDisk(
         logs="New disk will be called {disk_name}".format(disk_name=disk_name),
     )
 
+    _, compute_client, _ = createClients()
     async_disk_creation = compute_client.disks.create_or_update(
         resource_group,
         disk_name,

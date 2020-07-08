@@ -77,7 +77,6 @@ def test_delete_disk_initial(input_token):
 
 
 @pytest.mark.disk_serial
-@disabled
 def test_disk_clone(input_token):
     regions = ["eastus", "southcentralus", "northcentralus"]
 
@@ -89,7 +88,6 @@ def test_disk_clone(input_token):
         )
 
         resp = cloneDisk(
-            username=genHaiku(1)[0],
             location=region,
             vm_size="NV6",
             operating_system="Windows",
