@@ -67,7 +67,7 @@ audio_device_t *CreateAudioDevice() {
     }
 
     // set stream rate
-    audio_device->sample_rate = 44100; // Hertz
+    audio_device->sample_rate = 44100;  // Hertz
     res = snd_pcm_hw_params_set_rate_near(audio_device->handle,
                                           audio_device->params,
                                           &audio_device->sample_rate, 0);
