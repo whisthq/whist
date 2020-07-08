@@ -3,6 +3,7 @@ import threading
 import requests
 import progressbar
 import multiprocessing
+from functools import wraps
 
 from tests.constants.resources import *
 from tests.constants.settings import *
@@ -84,3 +85,11 @@ def fractalJobRunner(f, initial_list):
         else:
             for element in initial_list:
                 f(element)
+
+
+def disabled(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        assert True
+
+    return wrapper

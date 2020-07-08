@@ -77,6 +77,7 @@ def test_delete_disk_initial(input_token):
 
 
 @pytest.mark.disk_serial
+@disabled
 def test_disk_clone(input_token):
     regions = ["eastus", "southcentralus", "northcentralus"]
 
@@ -101,7 +102,7 @@ def test_disk_clone(input_token):
 
         if task["status"] < 1:
             fractalLog(
-                function="test_delete_clone",
+                function="test_disk_clone",
                 label="azure_disk/clone",
                 logs=task["output"],
                 level=logging.ERROR,
@@ -117,9 +118,39 @@ def test_disk_clone(input_token):
 
 
 @pytest.mark.disk_serial
+@disabled
 def test_disk_attach(input_token):
     disks = fetchCurrentDisks()
     vms = fetchCurrentVMs()
 
     for disk in disks:
         assert True
+
+
+@pytest.mark.disk_serial
+def test_disk_create(input_token):
+    region = "eastus"
+
+    fractalLog(
+        function="test_disk_create",
+        label="azure_disk/create",
+        logs="Starting to create a disk in {region}".format(region=region),
+    )
+
+    resp = createDisk(
+        location=region,
+        disk_size=127,
+        resource_group=RESOURCE_GROUP,
+        input_token=input_token,
+    )
+
+    task = queryStatus(resp, timeout=1.2)
+
+    if task["status"] < 1:
+        fractalLog(
+            function="test_disk_create",
+            label="azure_disk/create",
+            logs=task["output"],
+            level=logging.ERROR,
+        )
+        assert False
