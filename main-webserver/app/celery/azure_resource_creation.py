@@ -389,4 +389,3 @@ def createDisk(
     )
 
     return {"status": 200, "disk_name": disk_name}
-
