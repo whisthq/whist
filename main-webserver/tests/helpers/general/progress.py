@@ -1,7 +1,8 @@
 import time
+import threading
 import requests
 import progressbar
-from pathos.multiprocessing import ProcessingPool as Pool
+import multiprocessing
 
 from tests.constants.resources import *
 from tests.constants.settings import *
@@ -73,7 +74,14 @@ def queryStatus(resp, timeout=10):
 def fractalJobRunner(f, initial_list):
     if initial_list:
         if ALLOW_MULTITHREADING:
-            Pool().map(f, initial_list)
+            thread_tracker = [None] * len(initial_list)
+
+            for i in range(0, len(initial_list)):
+                element = initial_list[i]
+                thread_tracker[i] = threading.Thread(target=f, args=(element,))
+                thread_tracker[i].start()
+            for thread in thread_tracker:
+                thread.join()
         else:
             for element in initial_list:
                 f(element)
