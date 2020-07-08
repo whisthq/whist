@@ -23,6 +23,13 @@ def token(action, **kwargs):
             200,
         )
 
+@token_bp.route("/token/validate", methods=["POST"])
+@fractalPreProcess
+def validateToken(**kwargs):
+    body = kwargs["body"]
+    return validateTokenHelper(body["token"])
+
+
 
 @jwtManager.expired_token_loader
 @fractalPreProcess
