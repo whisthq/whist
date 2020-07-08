@@ -14,7 +14,7 @@
 #define USING_SHM true
 
 int handler(Display* d, XErrorEvent* a) {
-    mprintf("X11 Error: %d\n", a->error_code);
+    LOG_ERROR("X11 Error: %d", a->error_code);
     return 0;
 }
 
@@ -22,7 +22,7 @@ void get_wh(CaptureDevice* device, int* w, int* h) {
     XWindowAttributes window_attributes;
     if (!XGetWindowAttributes(device->display, device->root,
                               &window_attributes)) {
-        mprintf("Error while getting window attributes\n");
+        LOG_ERROR("Error while getting window attributes");
         return;
     }
     *w = window_attributes.width;
@@ -38,13 +38,13 @@ bool is_same_wh(CaptureDevice* device) {
 int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     device->display = XOpenDisplay(NULL);
     if (!device->display) {
-        mprintf("ERROR: CreateCaptureDevice display did not open\n");
+        LOG_ERROR("ERROR: CreateCaptureDevice display did not open");
         return -1;
     }
     device->root = DefaultRootWindow(device->display);
 
     if (width <= 0 || height <= 0) {
-        mprintf("Nonsensicle width/height of %d/%d\n", width, height);
+        LOG_ERROR("Nonsensicle width/height of %d/%d", width, height);
         return -1;
     }
     device->width = width & ~0xF;
@@ -66,7 +66,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
 
         // If it's still not the correct dimensions
         if (!is_same_wh(device)) {
-            mprintf("Could not force monitor to a given width/height\n");
+            LOG_ERROR("Could not force monitor to a given width/height");
             get_wh(device, &device->width, &device->height);
         }
     }
@@ -81,7 +81,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     XWindowAttributes window_attributes;
     if (!XGetWindowAttributes(device->display, device->root,
                               &window_attributes)) {
-        mprintf("Error while getting window attributes\n");
+        LOG_ERROR("Error while getting window attributes");
         return -1;
     }
     Screen* screen = window_attributes.screen;
@@ -104,7 +104,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     device->segment.readOnly = False;
 
     if (!XShmAttach(device->display, &device->segment)) {
-        mprintf("Error while attaching display\n");
+        LOG_ERROR("Error while attaching display");
         return -1;
     }
     device->frame_data = device->image->data;
@@ -140,14 +140,14 @@ int CaptureScreen(CaptureDevice* device) {
         XDamageSubtract(device->display, device->damage, None, None);
 
         if (!is_same_wh(device)) {
-            mprintf("Wrong width/height!\n");
+            LOG_ERROR("Wrong width/height!\n");
             update = -1;
         } else {
             XErrorHandler prev_handler = XSetErrorHandler(handler);
 #if USING_SHM
             if (!XShmGetImage(device->display, device->root, device->image, 0,
                               0, AllPlanes)) {
-                mprintf("Error while capturing the screen");
+                LOG_ERROR("Error while capturing the screen");
                 update = -1;
             }
 #else
@@ -158,7 +158,7 @@ int CaptureScreen(CaptureDevice* device) {
                 XGetImage(device->display, device->root, 0, 0, device->width,
                           device->height, AllPlanes, ZPixmap);
             if (!device->image) {
-                mprintf("Error while capturing the screen\n");
+                LOG_ERROR("Error while capturing the screen");
                 update = -1;
             } else {
                 device->frame_data = device->image->data;

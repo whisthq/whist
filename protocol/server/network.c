@@ -6,19 +6,23 @@
 
 #include "client.h"
 
+#define UDP_CONNECTION_WAIT 5000
+#define TCP_CONNECTION_WAIT 500
+#define BITS_IN_BYTE 8.0
+
 extern Client clients[MAX_NUM_CLIENTS];
 
 int last_input_id = -1;
 
 int connectClient(int id) {
     if (CreateUDPContext(&(clients[id].UDP_context), NULL, clients[id].UDP_port,
-                         1, 5000, USING_STUN) < 0) {
+                         1, UDP_CONNECTION_WAIT, USING_STUN) < 0) {
         LOG_ERROR("Failed UDP connection with client (ID: %d)", id);
         return -1;
     }
 
     if (CreateTCPContext(&(clients[id].TCP_context), NULL, clients[id].TCP_port,
-                         1, 500, USING_STUN) < 0) {
+                         1, TCP_CONNECTION_WAIT, USING_STUN) < 0) {
         LOG_WARNING("Failed TCP connection with client (ID: %d)", id);
         closesocket(clients[id].UDP_context.s);
         return -1;
@@ -72,7 +76,7 @@ int broadcastUDPPacket(FractalPacketType type, void *data, int len, int id,
     int num_indices =
         len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
 
-    double max_bytes_per_second = burst_bitrate / 8.0;
+    double max_bytes_per_second = burst_bitrate / BITS_IN_BYTE;
 
     /*
     if (type == PACKET_AUDIO) {

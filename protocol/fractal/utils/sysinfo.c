@@ -36,11 +36,11 @@ void PrintOSInfo() {
     char* os_version = NULL;
     runcmd("sw_vers", &os_version);
     char* token = strtok(os_version, "\n");
-    LOG_INFO("  OS %s", token);  // Get ProductName
+    LOG_INFO("OS %s", token);  // Get ProductName
     token = strtok(NULL, "\n");  // Get ProductVersion
-    LOG_INFO("  OS %s", token);
+    LOG_INFO("OS %s", token);
     token = strtok(NULL, "\n");  // Get BuildVersion
-    LOG_INFO("  OS %s", token);
+    LOG_INFO("OS %s", token);
 #elif __linux__
     char buf[1024];
     struct utsname uts;
@@ -172,7 +172,7 @@ void PrintMonitors() {
              j++) {
             DXGI_OUTPUT_DESC output_desc;
             hr = output->lpVtbl->GetDesc(output, &output_desc);
-            LOG_INFO("  Found monitor %d on adapter %lu. Monitor %d named %S",
+            LOG_INFO("Found monitor %d on adapter %lu. Monitor %d named %S",
                      j, i, j, output_desc.DeviceName);
 
             HMONITOR hMonitor = output_desc.Monitor;
@@ -210,7 +210,7 @@ void PrintMonitors() {
             }
 
             LOG_INFO(
-                "  Resolution of %dx%d, Refresh Rate of %d, DPI %d, location "
+                "Resolution of %dx%d, Refresh Rate of %d, DPI %d, location "
                 "(%d,%d), orientation %s",
                 devMode.dmPelsWidth, devMode.dmPelsHeight,
                 devMode.dmDisplayFrequency, dpiX, devMode.dmPosition.x,
@@ -261,11 +261,11 @@ void PrintRAMInfo() {
     total_ram_usage = info.totalram - (info.freeram + info.bufferram);
 #endif
 #ifndef __APPLE__
-    LOG_INFO("  Total RAM Usage: %.2f GB", total_ram_usage / BYTES_IN_GB);
+    LOG_INFO("Total RAM Usage: %.2f GB", total_ram_usage / BYTES_IN_GB);
 #else
-    LOG_INFO("  Total RAM Usage: %s", total_ram_usage);
+    LOG_INFO("Total RAM Usage: %s", total_ram_usage);
 #endif
-    LOG_INFO("  Total Physical RAM: %.2f GB", (size_t)total_ram / BYTES_IN_GB);
+    LOG_INFO("Total Physical RAM: %.2f GB", (size_t)total_ram / BYTES_IN_GB);
 }
 
 void PrintMemoryInfo() {
@@ -312,7 +312,7 @@ void PrintCPUInfo() {
     ((unsigned*)cpuVendor)[1] = regs[3];  // EDX
     ((unsigned*)cpuVendor)[2] = regs[2];  // ECX
 
-    LOG_INFO("  CPU Vendor: %s", cpuVendor);
+    LOG_INFO("CPU Vendor: %s", cpuVendor);
 
     // Get Brand String
     unsigned int nExIds = 0;
@@ -331,12 +331,12 @@ void PrintCPUInfo() {
             memcpy(CPUBrandString + 32, regs, sizeof(regs));
     }
     // string includes manufacturer, model and clockspeed
-    LOG_INFO("  CPU Type: %s", CPUBrandString);
+    LOG_INFO("CPU Type: %s", CPUBrandString);
 
     // Logical core count per CPU
     cpuID(1, regs);
     unsigned logical = (regs[1] >> 16) & 0xff;  // EBX[23:16]
-    LOG_INFO("  Logical Cores: %d", logical);
+    LOG_INFO("Logical Cores: %d", logical);
     unsigned cores = logical;
 
     if (strcmp(cpuVendor, "GenuineIntel") == 0) {
@@ -352,7 +352,7 @@ void PrintCPUInfo() {
         LOG_WARNING("Unrecognized processor: %s", cpuVendor);
     }
 
-    LOG_INFO("  Physical Cores: %d", cores);
+    LOG_INFO("Physical Cores: %d", cores);
 
     // Get CPU features
     cpuID(1, regs);
@@ -361,7 +361,7 @@ void PrintCPUInfo() {
     // Detect hyper-threads
     bool hyperThreads = cpuFeatures & (1 << 28) && cores < logical;
 
-    LOG_INFO("  HyperThreaded: %s", (hyperThreads ? "true" : "false"));
+    LOG_INFO("HyperThreaded: %s", (hyperThreads ? "true" : "false"));
 
 // add CPU usage at beginning of Fractal
 #ifdef __APPLE__
@@ -392,7 +392,7 @@ void PrintHardDriveInfo() {
     used_space = total_space - buf.f_bfree * buf.f_frsize;
     available_space = buf.f_bavail * buf.f_frsize;
 #endif
-    LOG_INFO("  Hard Drive: %.2fGB/%.2fGB used, %.2fGB available to Fractal",
+    LOG_INFO("Hard Drive: %.2fGB/%.2fGB used, %.2fGB available to Fractal",
              used_space / BYTES_IN_GB, total_space / BYTES_IN_GB,
              available_space / BYTES_IN_GB);
 }
