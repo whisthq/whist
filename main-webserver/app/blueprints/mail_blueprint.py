@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.blueprint_helpers.mail_post import *
 
 mail_bp = Blueprint("mail_bp", __name__)
 
@@ -24,7 +25,7 @@ def mail(action, **kwargs):
         return referralHelper(body["username"], body["recipients"], body["code"])
 
     elif action == "feedback":
-        return feedbackHelper(body["username"], body["type"])
+        return feedbackHelper(body["username"], body["feedback"], body["type"])
 
     elif action == "trialStart":
         return trialStartHelper(body["username"], body["location"], body["code"])

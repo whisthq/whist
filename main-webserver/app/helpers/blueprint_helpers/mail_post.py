@@ -122,14 +122,14 @@ def referralHelper(user, recipients, code):
 
     return jsonify({"status": 200}), 200
 
-def feedbackHelper(user, feedback_type):
+def feedbackHelper(user, feedback, feedback_type):
     title = "[{}] Feedback from {}".format(feedback_type, user)
 
     message = SendGridMail(
         from_email="noreply@fractalcomputers.com",
         to_emails=["pipitone@fractalcomputers.com", "support@fractalcomputers.com"],
         subject=title,
-        html_content="<div>" + body["feedback"] + "</div>",
+        html_content="<div>" + feedback + "</div>",
     )
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
@@ -225,4 +225,4 @@ def newsletterSubscribe(username):
     fractalSQLInsert("newsletter", {"username": username})
 
 def newsletterUnsubscribe(username):
-    fractalSQLDelete("newsletter", {"username": username}):
+    fractalSQLDelete("newsletter", {"username": username})
