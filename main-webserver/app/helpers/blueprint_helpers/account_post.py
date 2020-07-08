@@ -128,6 +128,24 @@ def registerHelper(username, password, name, reason_for_signup):
         status = BAD_REQUEST
         user_id = access_token = refresh_token = None
 
+    if status == SUCCESS:
+        # Send email to the user if status is successful
+        title = "Welcome to Fractal"
+        internal_message = SendGridMail(
+            from_email="phil@fractalcomputers.com",
+            to_emails=username,
+            subject=title,
+            html_content=render_template("on_signup.html", code=promo_code),
+        )
+
+        try:
+            sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+            response = sg.send(internal_message)
+        except Exception as e:
+            fractalLog(
+                function="registerHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
+            )
+
     return {
         "status": status,
         "token": user_id,
@@ -187,3 +205,15 @@ def deleteHelper(username):
         return {"status": BAD_REQUEST, "error": output["error"]}
 
     return {"status": SUCCESS, "error": None}
+
+def resetPasswordHelper(username, password):
+    """Updates the password for a user in the users SQL table
+
+    Args:
+        username (str): The user to update the password for
+        password (str): The new password
+    """
+    pwd_token = jwt.encode({"pwd": password}, os.getenv("SECRET_KEY"))
+    fractalSQLUpdate(table_name="users",
+        conditional_params={"username": username},
+        new_params={"password": pwd_token},)

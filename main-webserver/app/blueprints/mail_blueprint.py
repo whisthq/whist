@@ -10,10 +10,6 @@ def mail(action, **kwargs):
     body = kwargs["body"]
     if action == "forgot":
         return forgotPasswordHelper(body["username"])
-
-    elif action == "reset":
-        resetPasswordHelper(body["username"], body["password"])
-        return jsonify({"status": 200}), 200
         
     elif action == "cancel":
         return cancelHelper(body["username"], body["feedback"])
@@ -29,9 +25,6 @@ def mail(action, **kwargs):
 
     elif action == "trialStart":
         return trialStartHelper(body["username"], body["location"], body["code"])
-    
-    elif action == "signup":
-        return signupMailHelper(body["username"], body["code"])
 
     elif action == "computerReady":
         return computerReadyHelper(body["username"], body["date"], body["code"], body["location"])

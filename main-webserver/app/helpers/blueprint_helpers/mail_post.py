@@ -45,18 +45,6 @@ def forgotPasswordHelper(username):
         conn.close()
         return jsonify({"verified": verified}), 401
 
-def resetPasswordHelper(username, password):
-    """Updates the password for a user in the users SQL table
-
-    Args:
-        username (str): The user to update the password for
-        password (str): The new password
-    """
-    pwd_token = jwt.encode({"pwd": password}, os.getenv("SECRET_KEY"))
-    fractalSQLUpdate(table_name="users",
-        conditional_params={"username": username},
-        new_params={"password": pwd_token},)
-
 def cancelHelper(user, feedback):
     title = "[CANCELLED PLAN + FEEDBACK] " + user + " has Just Cancelled Their Plan"
 
@@ -172,27 +160,6 @@ def trialStartHelper(user, location, code):
     except Exception as e:
         fractalLog(
             function="trialStartHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
-        )
-        return jsonify({"status": 500}), 500
-
-    return jsonify({"status": 200}), 200
-
-def signupMailHelper(user, code):
-    title = "Welcome to Fractal"
-
-    internal_message = SendGridMail(
-        from_email="phil@fractalcomputers.com",
-        to_emails=user,
-        subject=title,
-        html_content=render_template("on_signup.html", code=code),
-    )
-
-    try:
-        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
-        response = sg.send(internal_message)
-    except Exception as e:
-        fractalLog(
-            function="signupMailHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
         )
         return jsonify({"status": 500}), 500
 
