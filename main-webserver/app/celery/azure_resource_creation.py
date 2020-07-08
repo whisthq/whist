@@ -60,7 +60,9 @@ def createVM(
     if not nic:
         self.update_state(
             state="FAILURE",
-            meta={"msg": "NIC failed to create for VM {vm_name}".format(vm_name)},
+            meta={
+                "msg": "NIC failed to create for VM {vm_name}".format(vm_name=vm_name)
+            },
         )
 
         return
@@ -336,3 +338,54 @@ def cloneDisk(
         async_disk_deletion.wait()
 
         return {"status": BAD_REQUEST, "error": str(e)}
+
+
+@celery_instance.task(bind=True)
+def createDisk(
+    self, disk_size, username, location, resource_group=os.getenv("VM_GROUP"),
+):
+    """Creates an empty Windows Azure managed disk
+
+    Args:
+        disk_size (str): Size of disk in GB
+        username (str): The size of the vm to create
+        location (str): The Azure region (eastus, northcentralus, southcentralus)
+        resource_group (str): Azure resource group name
+
+    Returns:
+        json: New disk name
+    """
+
+    disk_name = createDiskName()
+
+    fractalLog(
+        function="createDisk",
+        label=str(username),
+        logs="New disk will be called {disk_name}".format(disk_name=disk_name),
+    )
+
+    _, compute_client, _ = createClients()
+    async_disk_creation = compute_client.disks.create_or_update(
+        resource_group,
+        disk_name,
+        {
+            "location": location,
+            "disk_size_gb": disk_size,
+            "creation_data": {"create_option": DiskCreateOption.empty},
+        },
+    )
+
+    async_disk_creation.wait()
+
+    fractalSQLInsert(
+        table_name="disks",
+        params={
+            "disk_name": disk_name,
+            "username": username,
+            "location": location,
+            "disk_size": disk_size,
+            "main": False,
+        },
+    )
+
+    return {"status": 200, "disk_name": disk_name}

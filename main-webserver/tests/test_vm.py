@@ -8,14 +8,23 @@ pytest.disk_name = None
 # Start off by deleting all the VM resources in the staging resource group, if there are any
 
 
+@pytest.mark.vm_serial
 def test_delete_vm_initial(input_token):
-    all_vms = fetchCurrentVMs()
-    for vm in all_vms:
+    newLine()
+
+    def deleteVMHelper(vm):
         fractalSQLUpdate(
             table_name="v_ms",
             conditional_params={"vm_name": vm["vm_name"]},
             new_params={"lock": False, "temporary_lock": 0},
         )
+
+        fractalLog(
+            function="test_delete_vm_initial",
+            label="azure_vm/delete",
+            logs="Starting to delete VM {vm_name}".format(vm_name=vm["vm_name"]),
+        )
+
         resp = deleteVM(
             vm_name=vm["vm_name"],
             delete_disk=True,
@@ -23,16 +32,31 @@ def test_delete_vm_initial(input_token):
             input_token=input_token,
         )
 
-        if queryStatus(resp) < 1:
+        task = queryStatus(resp, timeout=10)
+
+        if task["status"] < 1:
+            fractalLog(
+                function="test_delete_vm_initial",
+                label="azure_vm/delete",
+                logs=task["output"],
+                level=logging.ERROR,
+            )
             assert False
+
+    all_vms = fetchCurrentVMs()
+    fractalJobRunner(deleteVMHelper, all_vms)
 
     assert True
 
 
+@pytest.mark.vm_serial
+@disabled
 def test_vm_create(input_token):
+    newLine()
+
     regions = ["eastus", "southcentralus", "northcentralus"]
 
-    for region in regions:
+    def createVMInRegion(region):
         fractalLog(
             function="test_vm_create",
             label="azure_vm/create",
@@ -43,8 +67,20 @@ def test_vm_create(input_token):
             "Standard_NV6_Promo", region, "Windows", RESOURCE_GROUP, input_token
         )
 
-        if queryStatus(resp, timeout=10) < 1:
+        task = queryStatus(resp, timeout=12.5)
+
+        if task["status"] < 1:
+            fractalLog(
+                function="test_vm_create",
+                label="azure_vm/create",
+                logs=task["output"],
+                level=logging.ERROR,
+            )
             assert False
+
+    fractalJobRunner(createVMInRegion, regions)
+
+    assert True
 
 
 # def test_attach(input_token):

@@ -1,0 +1,29 @@
+from app import *
+from app.celery.azure_resource_creation import *
+
+
+def createHelper(disk_size, username, location, resource_group):
+    output = fractalSQLSelect(
+        table_name="disks", params={"username": username, "main": True}
+    )
+
+    if output["success"] and output["rows"]:
+        # Create Empty Task
+
+        task = createDisk.apply_async([disk_size, username, location, resource_group])
+        return {"ID": task.id, "status": ACCEPTED}
+    else:
+        return {"ID": None, "status": NOT_FOUND}
+
+
+def stunHelper(using_stun, disk_name):
+    output = fractalSQLUpdate(
+        table_name="disk_settings",
+        conditional_params={"disk_name": disk_name,},
+        new_params={"using_stun": using_stun},
+    )
+
+    if output["success"]:
+        return {"status": SUCCESS}
+    else:
+        return {"status": BAD_REQUEST}

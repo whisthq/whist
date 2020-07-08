@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.blueprint_helpers.azure_disk_post import *
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_modification import *
@@ -11,7 +12,6 @@ azure_disk_bp = Blueprint("azure_disk_bp", __name__)
 @jwt_required
 @fractalAuth
 def azure_disk_post(action, **kwargs):
-    current_user = get_jwt_identity()
     if action == "clone":
         # Clone a Fractal disk
         username = kwargs["body"]["username"]
@@ -91,5 +91,21 @@ def azure_disk_post(action, **kwargs):
 
     elif action == "create":
         disk_size, username = kwargs["body"]["disk_size"], kwargs["body"]["username"]
+        location, resource_group = (
+            kwargs["body"]["location"],
+            kwargs["body"]["resource_group"],
+        )
 
-        return {}
+        output = createHelper(disk_size, username, location, resource_group)
+
+        return jsonify({"ID": output["ID"]}), output["status"]
+
+    elif action == "stun":
+        using_stun, disk_name = (
+            kwargs["body"]["using_stun"],
+            kwargs["body"]["disk_name"],
+        )
+
+        output = stunHelper(using_stun, disk_name)
+
+        return jsonify(output), output["status"]

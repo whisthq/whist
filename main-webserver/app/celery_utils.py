@@ -4,6 +4,7 @@ def init_celery(celery, app):
         accept_content=["json"],
         result_accept_content=["json"],
         worker_hijack_root_logger=True,
+        celery_redis_max_connections=40,
     )
     TaskBase = celery.Task
 
