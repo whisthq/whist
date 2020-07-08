@@ -100,7 +100,7 @@ def fractalSQLUpdate(table_name, conditional_params, new_params):
 
     Returns:
         [type]: [description]
-    """    
+    """
     number_of_new_params = number_of_conditional_params = 1
 
     command = """

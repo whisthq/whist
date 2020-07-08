@@ -14,13 +14,13 @@ def mail(action, **kwargs):
     elif action == "reset":
         resetPasswordHelper(body["username"], body["password"])
         return jsonify({"status": 200}), 200
-        
+
     elif action == "cancel":
         return cancelHelper(body["username"], body["feedback"])
 
     elif action == "verification":
         return verificationHelper(body["username"], body["token"])
-        
+
     elif action == "referral":
         return referralHelper(body["username"], body["recipients"], body["code"])
 
@@ -29,12 +29,14 @@ def mail(action, **kwargs):
 
     elif action == "trialStart":
         return trialStartHelper(body["username"], body["location"], body["code"])
-    
+
     elif action == "signup":
         return signupMailHelper(body["username"], body["code"])
 
     elif action == "computerReady":
-        return computerReadyHelper(body["username"], body["date"], body["code"], body["location"])
+        return computerReadyHelper(
+            body["username"], body["date"], body["code"], body["location"]
+        )
 
 
 @mail_bp.route("/newsletter/<action>", methods=["POST"])

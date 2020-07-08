@@ -2,6 +2,7 @@ from app import *
 from app.helpers.utils.general.logs import *
 from app.helpers.utils.general.sql_commands import *
 
+
 def forgotPasswordHelper(username):
     params = {"userName": username}
     user = fractalSQLSelect("users", params)
@@ -22,9 +23,7 @@ def forgotPasswordHelper(username):
             to_emails=[username],
             subject="Reset Your Password",
             html_content=render_template(
-                "on_password_forget.html",
-                url=os.getenv("FRONTEND_URL"),
-                token=token,
+                "on_password_forget.html", url=os.getenv("FRONTEND_URL"), token=token,
             ),
         )
         try:
@@ -32,18 +31,22 @@ def forgotPasswordHelper(username):
             response = sg.send(message)
         except Exception as e:
             fractalLog(
-                function="forgotPasswordHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
+                function="forgotPasswordHelper",
+                label="ERROR",
+                logs="Mail send failed: Error code " + e.message,
+                level=logging.ERROR,
             )
             return jsonify({"status": 500}), 500
 
-        fractalSQLInsert("password_tokens", {
-            "token": token,
-            "time_issued":dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
-        })
+        fractalSQLInsert(
+            "password_tokens",
+            {"token": token, "time_issued": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),},
+        )
         return jsonify({"verified": verified}), 200
     else:
         conn.close()
         return jsonify({"verified": verified}), 401
+
 
 def resetPasswordHelper(username, password):
     """Updates the password for a user in the users SQL table
@@ -53,9 +56,12 @@ def resetPasswordHelper(username, password):
         password (str): The new password
     """
     pwd_token = jwt.encode({"pwd": password}, os.getenv("SECRET_KEY"))
-    fractalSQLUpdate(table_name="users",
+    fractalSQLUpdate(
+        table_name="users",
         conditional_params={"username": username},
-        new_params={"password": pwd_token},)
+        new_params={"password": pwd_token},
+    )
+
 
 def cancelHelper(user, feedback):
     title = "[CANCELLED PLAN + FEEDBACK] " + user + " has Just Cancelled Their Plan"
@@ -72,11 +78,15 @@ def cancelHelper(user, feedback):
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
-            function="cancelHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
+            function="cancelHelper",
+            label="ERROR",
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
         )
         return jsonify({"status": 500}), 500
 
     return jsonify({"status": 200}), 200
+
 
 def verificationHelper(user, token):
     title = "[Fractal] Please Verify Your Email"
@@ -93,11 +103,15 @@ def verificationHelper(user, token):
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
-            function="verificationHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
+            function="verificationHelper",
+            label="ERROR",
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
         )
         return jsonify({"status": 500}), 500
 
     return jsonify({"status": 200}), 200
+
 
 def referralHelper(user, recipients, code):
     title = "Check out Fractal"
@@ -106,9 +120,7 @@ def referralHelper(user, recipients, code):
         from_email=user,
         to_emails=recipients,
         subject=title,
-        html_content=render_template(
-            "on_referral.html", code=code, user=user
-        ),
+        html_content=render_template("on_referral.html", code=code, user=user),
     )
 
     try:
@@ -116,11 +128,15 @@ def referralHelper(user, recipients, code):
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
-            function="referralHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
+            function="referralHelper",
+            label="ERROR",
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
         )
         return jsonify({"status": 500}), 500
 
     return jsonify({"status": 200}), 200
+
 
 def feedbackHelper(user, feedback, feedback_type):
     title = "[{}] Feedback from {}".format(feedback_type, user)
@@ -136,34 +152,41 @@ def feedbackHelper(user, feedback, feedback_type):
         response = sg.send(message)
     except Exception as e:
         fractalLog(
-            function="feedbackHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
+            function="feedbackHelper",
+            label="ERROR",
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
         )
         return jsonify({"status": 500}), 500
 
     return jsonify({"status": 200}), 200
+
 
 def trialStartHelper(user, location, code):
     message = SendGridMail(
         from_email="pipitone@fractalcomputers.com",
         to_emails=user,
         subject="Your Free Trial has Started",
-        html_content=render_template(
-            "on_purchase.html", location=location, code=code
-        ),
+        html_content=render_template("on_purchase.html", location=location, code=code),
     )
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
         response = sg.send(message)
     except Exception as e:
         fractalLog(
-            function="trialStartHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
+            function="trialStartHelper",
+            label="ERROR",
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
         )
         return jsonify({"status": 500}), 500
 
     internal_message = SendGridMail(
         from_email="noreply@fractalcomputers.com",
         to_emails=["pipitone@fractalcomputers.com", "support@fractalcomputers.com"],
-        subject="[FREE TRIAL START] A new user, " + user + ", just signed up for the free trial.",
+        subject="[FREE TRIAL START] A new user, "
+        + user
+        + ", just signed up for the free trial.",
         html_content="<div>No action needed from our part at this point.</div>",
     )
     try:
@@ -171,11 +194,15 @@ def trialStartHelper(user, location, code):
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
-            function="trialStartHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
+            function="trialStartHelper",
+            label="ERROR",
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
         )
         return jsonify({"status": 500}), 500
 
     return jsonify({"status": 200}), 200
+
 
 def signupMailHelper(user, code):
     title = "Welcome to Fractal"
@@ -192,11 +219,15 @@ def signupMailHelper(user, code):
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
-            function="signupMailHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
+            function="signupMailHelper",
+            label="ERROR",
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
         )
         return jsonify({"status": 500}), 500
 
     return jsonify({"status": 200}), 200
+
 
 def computerReadyHelper(user, date, code, location):
     title = "Your Cloud PC Is Ready!"
@@ -215,14 +246,19 @@ def computerReadyHelper(user, date, code, location):
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
-            function="computerReadyHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
+            function="computerReadyHelper",
+            label="ERROR",
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
         )
         return jsonify({"status": 500}), 500
 
     return jsonify({"status": 200}), 200
 
+
 def newsletterSubscribe(username):
     fractalSQLInsert("newsletter", {"username": username})
+
 
 def newsletterUnsubscribe(username):
     fractalSQLDelete("newsletter", {"username": username})

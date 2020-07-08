@@ -24,7 +24,6 @@ def init_app(app):
     from .blueprints.artifact_blueprint import artifact_bp
     from .blueprints.mail_blueprint import mail_bp
 
-
     app.register_blueprint(account_bp)
     app.register_blueprint(token_bp)
     app.register_blueprint(azure_vm_bp)
