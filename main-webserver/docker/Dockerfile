@@ -12,6 +12,7 @@ FROM python:3.8.3-slim-buster as builder
 WORKDIR /repo
 
 # Setup toolchain necessary for compilation activities in python dependencies
+# hadolint ignore=DL3008,DL3015
 RUN apt-get update \
  && apt-get install -y \
             build-essential \
