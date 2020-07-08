@@ -68,19 +68,21 @@ SDL_Window* initSDL(int target_output_width, int target_output_height) {
     SDL_Window* window;
 
 #if defined(_WIN32)
-    int fullscreen_flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP;
+    static const uint32_t fullscreen_flags =
+        SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP;
 #else
-    int fullscreen_flags =
+    static const uint32_t fullscreen_flags =
         SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALWAYS_ON_TOP;
 #endif
+    static const uint32_t windowed_flags = SDL_WINDOW_OPENGL;
 
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
     window = SDL_CreateWindow(
         "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         target_output_width, target_output_height,
-        SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : 0) |
-            SDL_WINDOW_OPENGL);
+        SDL_WINDOW_ALLOW_HIGHDPI |
+            (is_fullscreen ? fullscreen_flags : windowed_flags));
 
     if (!is_fullscreen) {
         // Resize event handling
