@@ -143,7 +143,10 @@ def registerHelper(username, password, name, reason_for_signup):
             response = sg.send(internal_message)
         except Exception as e:
             fractalLog(
-                function="registerHelper", label="ERROR", logs="Mail send failed: Error code " + e.message, level=logging.ERROR
+                function="registerHelper",
+                label="ERROR",
+                logs="Mail send failed: Error code " + e.message,
+                level=logging.ERROR,
             )
 
     return {
@@ -206,6 +209,7 @@ def deleteHelper(username):
 
     return {"status": SUCCESS, "error": None}
 
+
 def resetPasswordHelper(username, password):
     """Updates the password for a user in the users SQL table
 
@@ -214,6 +218,8 @@ def resetPasswordHelper(username, password):
         password (str): The new password
     """
     pwd_token = jwt.encode({"pwd": password}, os.getenv("SECRET_KEY"))
-    fractalSQLUpdate(table_name="users",
+    fractalSQLUpdate(
+        table_name="users",
         conditional_params={"username": username},
-        new_params={"password": pwd_token},)
+        new_params={"password": pwd_token},
+    )

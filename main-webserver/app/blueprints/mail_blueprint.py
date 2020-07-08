@@ -10,7 +10,7 @@ def mail(action, **kwargs):
     body = kwargs["body"]
     if action == "forgot":
         return forgotPasswordHelper(body["username"])
-        
+
     elif action == "cancel":
         return cancelHelper(body["username"], body["feedback"])
 
