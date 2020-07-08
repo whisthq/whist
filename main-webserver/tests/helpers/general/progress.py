@@ -1,45 +1,32 @@
 import time
+import threading
 import requests
 import progressbar
+import multiprocessing
+from functools import wraps
 
-from tests.constants.heroku import *
-
-
-def printProgressBar(
-    iteration,
-    total,
-    prefix="",
-    suffix="",
-    decimals=1,
-    length=100,
-    fill="",
-    printEnd="\r",
-):
-    bar = progressbar.ProgressBar(
-        maxval=20,
-        widgets=[progressbar.Bar("=", "[", "]"), " ", progressbar.Percentage()],
-    )
-    bar.start()
-    bar.finish()
+from tests.constants.resources import *
+from tests.constants.settings import *
 
 
 def queryStatus(resp, timeout=10):
     """
-    Call in a loop to create terminal progress bar
     @params:
-        status_id   - Required  : Celery task ID, returned from function call
+        resp        - Required  : Raw celery function call response
         timeout     - Required  : Timeout in minutes, return -1 if timeout is succeeded
     """
 
     def getStatus(status_id):
-        resp = requests.get((SERVER_URL + "/status/" + status_id))
-        return resp.json()
+        if status_id:
+            resp = requests.get((SERVER_URL + "/status/" + status_id))
+            return resp.json()
+        return None
 
     try:
         status_id = resp.json()["ID"]
     except Exception as e:
         print(str(e))
-        return -1
+        return {"status": -3, "output": "No status ID provided"}
 
     total_timeout_seconds = timeout * 60
     seconds_elapsed = 0
@@ -53,12 +40,18 @@ def queryStatus(resp, timeout=10):
     bar.start()
 
     status = "PENDING"
+    returned_json = None
+
+    # Wait for job to finish
+
     while (
         status == "PENDING"
         or status == "STARTED"
         and seconds_elapsed < total_timeout_seconds
     ):
         returned_json = getStatus(status_id)
+        if not returned_json:
+            return {"status": -3, "output": "No status ID provided"}
         status = returned_json["state"]
 
         time.sleep(10)
@@ -67,7 +60,40 @@ def queryStatus(resp, timeout=10):
 
     bar.finish()
 
-    if seconds_elapsed > total_timeout_seconds or status != "SUCCESS":
-        return -1
+    # Check for success, timeout, or failure
+
+    if seconds_elapsed > total_timeout_seconds:
+        return {"status": -1, "output": "Timeout error"}
+    elif status != "SUCCESS":
+        return {
+            "status": -2,
+            "output": "Did not receive SUCCESS, instead saw {error}".format(
+                error=str(returned_json)
+            ),
+        }
     else:
-        return 1
+        return {"status": 1, "output": "SUCCESS detected"}
+
+
+def fractalJobRunner(f, initial_list):
+    if initial_list:
+        if ALLOW_MULTITHREADING:
+            thread_tracker = [None] * len(initial_list)
+
+            for i in range(0, len(initial_list)):
+                element = initial_list[i]
+                thread_tracker[i] = threading.Thread(target=f, args=(element,))
+                thread_tracker[i].start()
+            for thread in thread_tracker:
+                thread.join()
+        else:
+            for element in initial_list:
+                f(element)
+
+
+def disabled(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        assert True
+
+    return wrapper

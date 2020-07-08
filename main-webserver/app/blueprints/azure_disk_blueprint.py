@@ -1,4 +1,5 @@
 from app import *
+from app.helpers.blueprint_helpers.azure_disk_post import *
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_modification import *
@@ -91,5 +92,11 @@ def azure_disk_post(action, **kwargs):
 
     elif action == "create":
         disk_size, username = kwargs["body"]["disk_size"], kwargs["body"]["username"]
+        location, resource_group = (
+            kwargs["body"]["location"],
+            kwargs["body"]["resource_group"],
+        )
 
-        return {}
+        output = createHelper(disk_size, username, location, resource_group)
+
+        return jsonify({"ID": output["ID"]}), output["status"]

@@ -8,5 +8,5 @@ from .helpers.general.sql_commands import *
 from .helpers.general.logs import *
 from .helpers.general.tokens import *
 
-from .constants.heroku import *
+from .constants.settings import *
 from .constants.resources import *

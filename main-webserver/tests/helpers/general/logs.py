@@ -26,3 +26,7 @@ def fractalLog(function, label, logs, level=logging.INFO):
         logger.info(output)
     else:
         logger.debug(output)
+
+
+def newLine():
+    print("\n")
