@@ -586,7 +586,10 @@ int initMultithreadedVideo(void* opaque) {
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
     // configure renderer
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+    if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OPENGL) {
+        // only opengl if windowed mode
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+    }
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
     SDL_Renderer* renderer = SDL_CreateRenderer(
