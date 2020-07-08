@@ -65,6 +65,7 @@ void initLogger(char *log_dir) {
 
         strcat(f, log_directory);
         strcat(f, "/log.txt");
+
 #if defined(_WIN32)
         CreateDirectoryA(log_directory, 0);
 #else
