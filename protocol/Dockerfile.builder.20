@@ -1,0 +1,42 @@
+FROM ubuntu:20.04
+ARG uname
+ARG uid
+ARG gid
+
+ENV container docker
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
+
+RUN apt-get update && apt-get clean && apt-get install -y wget apt-utils
+RUN apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget -y
+RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
+RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
+RUN apt-get update && apt-get clean
+RUN apt-get install libssl-dev
+RUN dpkg --configure -a && apt-get install -f
+RUN apt-get install make gcc g++ -y
+# RUN cmake --version
+# RUN apt-get install cmake -y
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3.tar.gz
+RUN tar -zxvf cmake-3.17.3.tar.gz
+RUN cd cmake-3.17.3 && ./bootstrap && make && make install
+RUN apt-get install cppcheck -y
+RUN apt-get install sudo
+RUN echo "Set disable_coredump false" >> /etc/sudo.conf
+
+ADD desktop/linux-client-setup.sh /
+RUN /linux-client-setup.sh
+RUN groupadd fractal
+RUN echo $uname
+RUN useradd -u ${uid} -g fractal ${uname}
+RUN usermod -aG sudo $uname
+RUN echo "${uname}:password" | chpasswd
+RUN apt-get install curl git -y
+
+RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.sh >>/dev/null 2>&1
+RUN /bin/bash -c "source utils.sh && Set-FractalDirectory && Install-FractalServer"
+WORKDIR /workdir
+
+
