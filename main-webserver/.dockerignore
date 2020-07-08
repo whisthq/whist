@@ -7,4 +7,5 @@
 !tests/
 !migrations/
 !*.py
+!stem-cell.sh
 **/.DS_Store

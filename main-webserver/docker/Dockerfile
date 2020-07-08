@@ -6,7 +6,7 @@
 #   to occur and we don't want to include the compiler toolchain in the final image.
 # - Normally Alpine would be a good choice, but by using Debian (e.g. slim-buster)
 #   it's easier to be compatible out of the box with various python dependencies
-FROM python:3.8.3-slim-buster as builder
+FROM python:3.8.3-slim-buster AS builder
 
 # Create and change the repo directory
 WORKDIR /repo
@@ -46,5 +46,4 @@ WORKDIR /app
 # - This expects .dockerignore to omit anything unnecessary for the image
 COPY ./ ./
 
-ENV FLASK_APP "run"
-CMD ["flask", "run"]
+ENTRYPOINT ["./stem-cell.sh"]
