@@ -2,11 +2,8 @@
 
 name: Python Webserver Linting
 
-<<<<<<< HEAD
 on: [push]
-=======
-on: [ push ]
->>>>>>> staging
+
 
 jobs:
   build:
