@@ -519,9 +519,9 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
                 Event.mi.dy = (LONG)(fmsg->mouseMotion.y * 0.9);
                 Event.mi.dwFlags = MOUSEEVENTF_MOVE;
             } else {
-                Event.mi.dx = (LONG)(fmsg->mouseMotion.x * (double)65536 /
+                Event.mi.dx = (LONG)(fmsg->mouseMotion.x * (double) 65536 /
                                      MOUSE_SCALING_FACTOR);
-                Event.mi.dy = (LONG)(fmsg->mouseMotion.y * (double)65536 /
+                Event.mi.dy = (LONG)(fmsg->mouseMotion.y * (double) 65536 /
                                      MOUSE_SCALING_FACTOR);
                 Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
             }

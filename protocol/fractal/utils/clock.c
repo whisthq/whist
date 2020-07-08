@@ -18,6 +18,9 @@ LARGE_INTEGER frequency;
 bool set_frequency = false;
 #endif
 
+#define MS_IN_SECOND 1000.0
+#define US_IN_MS 1000.0
+
 void StartTimer(clock* timer) {
 #if defined(_WIN32)
     if (!set_frequency) {
@@ -42,14 +45,14 @@ double GetTimer(clock timer) {
     gettimeofday(&t2, NULL);
 
     // compute and print the elapsed time in millisec
-    double elapsedTime = (t2.tv_sec - timer.tv_sec) * 1000.0;  // sec to ms
-    elapsedTime += (t2.tv_usec - timer.tv_usec) / 1000.0;      // us to ms
+    double elapsedTime = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;  // sec to ms
+    elapsedTime += (t2.tv_usec - timer.tv_usec) / US_IN_MS;      // us to ms
 
     // printf("elapsed time in ms is: %f\n", elapsedTime);
 
     // standard var to return and convert to seconds since it gets converted to
     // ms in function call
-    double ret = elapsedTime / 1000.0;
+    double ret = elapsedTime / MS_IN_SECOND;
 #endif
     return ret;
 }
@@ -59,7 +62,7 @@ clock CreateClock(int timeout_ms) {
 #if defined(_WIN32)
     out.QuadPart = timeout_ms;
 #else
-    out.tv_sec = timeout_ms / 1000;
+    out.tv_sec = timeout_ms / MS_IN_SECOND;
     out.tv_usec = (timeout_ms % 1000) * 1000;
 #endif
     return out;
