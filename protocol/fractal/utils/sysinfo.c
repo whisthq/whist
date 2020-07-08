@@ -36,7 +36,7 @@ void PrintOSInfo() {
     char* os_version = NULL;
     runcmd("sw_vers", &os_version);
     char* token = strtok(os_version, "\n");
-    LOG_INFO("OS %s", token);  // Get ProductName
+    LOG_INFO("OS %s", token);    // Get ProductName
     token = strtok(NULL, "\n");  // Get ProductVersion
     LOG_INFO("OS %s", token);
     token = strtok(NULL, "\n");  // Get BuildVersion
@@ -172,8 +172,8 @@ void PrintMonitors() {
              j++) {
             DXGI_OUTPUT_DESC output_desc;
             hr = output->lpVtbl->GetDesc(output, &output_desc);
-            LOG_INFO("Found monitor %d on adapter %lu. Monitor %d named %S",
-                     j, i, j, output_desc.DeviceName);
+            LOG_INFO("Found monitor %d on adapter %lu. Monitor %d named %S", j,
+                     i, j, output_desc.DeviceName);
 
             HMONITOR hMonitor = output_desc.Monitor;
             MONITORINFOEXW monitorInfo;
