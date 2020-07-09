@@ -27,6 +27,9 @@ def report_get(action, **kwargs):
     elif action == "loginActivity":
         output = loginActivityHelper()
         return jsonify(output), SUCCESS
+    elif action == "fetchUsers":
+        output = fetchUsersHelper()
+        return jsonify(output), SUCCESS
 
 
 @report_bp.route("/report/<action>", methods=["POST"])

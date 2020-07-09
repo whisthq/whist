@@ -86,7 +86,13 @@ def loginActivityHelper():
     if output["rows"]:
         activities = output["rows"]
         activities.reverse()
-        print(activities)
         return activities
+    else:
+        return {}
+
+def fetchUsersHelper():
+    output = fractalSQLSelect("users", {})
+    if output["rows"]:
+        return output["rows"]
     else:
         return {}
