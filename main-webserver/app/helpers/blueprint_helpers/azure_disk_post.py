@@ -14,3 +14,16 @@ def createHelper(disk_size, username, location, resource_group):
         return {"ID": task.id, "status": ACCEPTED}
     else:
         return {"ID": None, "status": NOT_FOUND}
+
+
+def stunHelper(using_stun, disk_name):
+    output = fractalSQLUpdate(
+        table_name="disk_settings",
+        conditional_params={"disk_name": disk_name,},
+        new_params={"using_stun": using_stun},
+    )
+
+    if output["success"]:
+        return {"status": SUCCESS}
+    else:
+        return {"status": BAD_REQUEST}

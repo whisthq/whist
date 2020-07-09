@@ -12,23 +12,22 @@ azure_disk_bp = Blueprint("azure_disk_bp", __name__)
 @jwt_required
 @fractalAuth
 def azure_disk_post(action, **kwargs):
-    current_user = get_jwt_identity()
     if action == "clone":
         # Clone a Fractal disk
-        username = kwargs["body"]["username"]
 
-        resource_group = os.getenv("VM_GROUP")
-        if "resource_group" in kwargs["body"].keys():
-            resource_group = kwargs["body"]["resource_group"]
+        branch = "master"
+        if "branch" in kwargs["body"].keys():
+            branch = kwargs["body"]["branch"]
 
         task = cloneDisk.apply_async(
             [
-                username,
+                kwargs["body"]["username"],
                 kwargs["body"]["location"],
                 kwargs["body"]["vm_size"],
                 kwargs["body"]["operating_system"],
+                branch,
                 kwargs["body"]["apps"],
-                resource_group,
+                kwargs["body"]["resource_group"],
             ]
         )
 
@@ -100,3 +99,13 @@ def azure_disk_post(action, **kwargs):
         output = createHelper(disk_size, username, location, resource_group)
 
         return jsonify({"ID": output["ID"]}), output["status"]
+
+    elif action == "stun":
+        using_stun, disk_name = (
+            kwargs["body"]["using_stun"],
+            kwargs["body"]["disk_name"],
+        )
+
+        output = stunHelper(using_stun, disk_name)
+
+        return jsonify(output), output["status"]

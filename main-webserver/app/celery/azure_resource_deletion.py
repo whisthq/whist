@@ -219,6 +219,13 @@ def deleteVM(self, vm_name, delete_disk, resource_group=os.getenv("VM_GROUP")):
                 label=str(vm_name),
                 logs="OS disk {disk_name} deleted".format(disk_name=os_disk_name),
             )
+
+            fractalSQLDelete(table_name="disks", params={"disk_name": os_disk_name})
+
+            fractalSQLDelete(
+                table_name="disk_settings", params={"disk_name": os_disk_name}
+            )
+
         except Exception as e:
             fractalLog(
                 function="deleteVM",
