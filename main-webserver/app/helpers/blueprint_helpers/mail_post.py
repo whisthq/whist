@@ -98,7 +98,7 @@ def verificationHelper(user, token):
     return jsonify({"status": 200}), 200
 
 
-def referralHelper(user, recipients, code):
+def referralMailHelper(user, recipients, code):
     title = "Check out Fractal"
 
     internal_message = SendGridMail(
@@ -113,7 +113,7 @@ def referralHelper(user, recipients, code):
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
-            function="referralHelper",
+            function="referralMailHelper",
             label="ERROR",
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,

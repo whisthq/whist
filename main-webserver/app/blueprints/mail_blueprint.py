@@ -18,7 +18,7 @@ def mail(action, **kwargs):
         return verificationHelper(body["username"], body["token"])
 
     elif action == "referral":
-        return referralHelper(body["username"], body["recipients"], body["code"])
+        return referralMailHelper(body["username"], body["recipients"], body["code"])
 
     elif action == "feedback":
         return feedbackHelper(body["username"], body["feedback"], body["type"])
