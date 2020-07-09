@@ -361,7 +361,7 @@ bool is_dev_vm() {
             read_hexadecimal_private_key(private_key->str_value,
                                          aes_private_key);
         } else {
-            memcpy(aes_private_key, PRIVATE_KEY, sizeof(aes_private_key));
+            memcpy(aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
         }
 
         free_json(json);

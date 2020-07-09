@@ -114,7 +114,7 @@ Defines
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
-#define PRIVATE_KEY \
+#define DEFAULT_PRIVATE_KEY \
     "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
 
 #define MOUSE_SCALING_FACTOR 100000
