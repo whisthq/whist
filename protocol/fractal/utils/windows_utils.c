@@ -20,15 +20,13 @@ void logToFile(char* msg, char* filename) {
 int setCurrentInputDesktop(HDESK currentInputDesktop) {
     // Set current thread to the current user input desktop
     if (!SetThreadDesktop(currentInputDesktop)) {
-        LOG_WARNING("SetThreadDesktop failed w/ error code: %d.\n",
-                    GetLastError());
+        LOG_WARNING("SetThreadDesktop failed w/ error code: %d.\n", GetLastError());
         return -2;
     }
     return 0;
 }
 
-DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name,
-                              bool set_thread) {
+DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_thread) {
     DesktopContext context = {0};
     HDESK new_desktop;
 
@@ -45,8 +43,7 @@ DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name,
     if (get_name) {
         TCHAR szName[1000];
         DWORD dwLen;
-        GetUserObjectInformationW(new_desktop, UOI_NAME, szName, sizeof(szName),
-                                  &dwLen);
+        GetUserObjectInformationW(new_desktop, UOI_NAME, szName, sizeof(szName), &dwLen);
         memcpy(context.desktop_name, szName, dwLen);
     }
 
@@ -86,9 +83,9 @@ bool InitDesktop() {
 
         Sleep(500);
 
-        enum FractalKeycode keycodes2[] = {
-            FK_P, FK_A, FK_S, FK_S, FK_W, FK_O, FK_R,      FK_D,     FK_1,
-            FK_2, FK_3, FK_4, FK_5, FK_6, FK_7, FK_PERIOD, FK_ENTER, FK_ENTER};
+        enum FractalKeycode keycodes2[] = {FK_P, FK_A, FK_S, FK_S,      FK_W,     FK_O,
+                                           FK_R, FK_D, FK_1, FK_2,      FK_3,     FK_4,
+                                           FK_5, FK_6, FK_7, FK_PERIOD, FK_ENTER, FK_ENTER};
 
         EnterWinString(keycodes2, 18);
 

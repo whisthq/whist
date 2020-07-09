@@ -52,8 +52,8 @@ uint32_t Hash(void* key, size_t len);
  *
  * @returns                        Will return the encrypted packet length
  */
-int encrypt_packet(FractalPacket* plaintext_packet, int packet_len,
-                   FractalPacket* encrypted_packet, unsigned char* private_key);
+int encrypt_packet(FractalPacket* plaintext_packet, int packet_len, FractalPacket* encrypted_packet,
+                   unsigned char* private_key);
 
 /**
  * @brief                          Calls decrypt_packet_n to decrypt an
@@ -69,8 +69,8 @@ int encrypt_packet(FractalPacket* plaintext_packet, int packet_len,
  * @returns                        Will return -1 on failure, will return the
  *                                 length of the decrypted packets
  */
-int decrypt_packet(FractalPacket* encrypted_packet, int packet_len,
-                   FractalPacket* plaintext_packet, unsigned char* private_key);
+int decrypt_packet(FractalPacket* encrypted_packet, int packet_len, FractalPacket* plaintext_packet,
+                   unsigned char* private_key);
 
 /**
  * @brief                          Decrypts an AES-encrypted packet

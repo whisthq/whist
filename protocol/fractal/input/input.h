@@ -69,7 +69,6 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg);
  * @param fmsg                     The Fractal message packet, defining one
  *                                 keyboard event, to update the keyboard state
  */
-void UpdateKeyboardState(input_device_t* input_device,
-                         FractalClientMessage* fmsg);
+void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fmsg);
 
 #endif  // INPUT_H

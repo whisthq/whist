@@ -20,8 +20,7 @@ int handler(Display* d, XErrorEvent* a) {
 
 void get_wh(CaptureDevice* device, int* w, int* h) {
     XWindowAttributes window_attributes;
-    if (!XGetWindowAttributes(device->display, device->root,
-                              &window_attributes)) {
+    if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
         LOG_ERROR("Error while getting window attributes");
         return;
     }
@@ -73,34 +72,29 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
 
     int damage_event, damage_error;
     XDamageQueryExtension(device->display, &damage_event, &damage_error);
-    device->damage = XDamageCreate(device->display, device->root,
-                                   XDamageReportRawRectangles);
+    device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
     device->event = damage_event;
 
 #if USING_SHM
     XWindowAttributes window_attributes;
-    if (!XGetWindowAttributes(device->display, device->root,
-                              &window_attributes)) {
+    if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
         LOG_ERROR("Error while getting window attributes");
         return -1;
     }
     Screen* screen = window_attributes.screen;
 
-    device->image = XShmCreateImage(
-        device->display,
-        DefaultVisualOfScreen(
-            screen),  // DefaultVisual(device->display, 0), // Use a correct
-                      // visual. Omitted for brevity
-        DefaultDepthOfScreen(screen),  // 24,   // Determine correct depth from
-                                       // the visual. Omitted for brevity
-        ZPixmap, NULL, &device->segment, device->width, device->height);
+    device->image =
+        XShmCreateImage(device->display,
+                        DefaultVisualOfScreen(screen),  // DefaultVisual(device->display, 0), // Use
+                                                        // a correct visual. Omitted for brevity
+                        DefaultDepthOfScreen(screen),  // 24,   // Determine correct depth from
+                                                       // the visual. Omitted for brevity
+                        ZPixmap, NULL, &device->segment, device->width, device->height);
 
     device->segment.shmid = shmget(
-        IPC_PRIVATE, device->image->bytes_per_line * device->image->height,
-        IPC_CREAT | 0777);
+        IPC_PRIVATE, device->image->bytes_per_line * device->image->height, IPC_CREAT | 0777);
 
-    device->segment.shmaddr = device->image->data =
-        shmat(device->segment.shmid, 0, 0);
+    device->segment.shmaddr = device->image->data = shmat(device->segment.shmid, 0, 0);
     device->segment.readOnly = False;
 
     if (!XShmAttach(device->display, &device->segment)) {
@@ -145,8 +139,7 @@ int CaptureScreen(CaptureDevice* device) {
         } else {
             XErrorHandler prev_handler = XSetErrorHandler(handler);
 #if USING_SHM
-            if (!XShmGetImage(device->display, device->root, device->image, 0,
-                              0, AllPlanes)) {
+            if (!XShmGetImage(device->display, device->root, device->image, 0, 0, AllPlanes)) {
                 LOG_ERROR("Error while capturing the screen");
                 update = -1;
             }
@@ -154,9 +147,8 @@ int CaptureScreen(CaptureDevice* device) {
             if (device->image) {
                 XFree(device->image);
             }
-            device->image =
-                XGetImage(device->display, device->root, 0, 0, device->width,
-                          device->height, AllPlanes, ZPixmap);
+            device->image = XGetImage(device->display, device->root, 0, 0, device->width,
+                                      device->height, AllPlanes, ZPixmap);
             if (!device->image) {
                 LOG_ERROR("Error while capturing the screen");
                 update = -1;

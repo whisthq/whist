@@ -45,9 +45,8 @@ double GetTimer(clock timer) {
     gettimeofday(&t2, NULL);
 
     // compute and print the elapsed time in millisec
-    double elapsedTime =
-        (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;           // sec to ms
-    elapsedTime += (t2.tv_usec - timer.tv_usec) / US_IN_MS;  // us to ms
+    double elapsedTime = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;  // sec to ms
+    elapsedTime += (t2.tv_usec - timer.tv_usec) / US_IN_MS;          // us to ms
 
     // printf("elapsed time in ms is: %f\n", elapsedTime);
 
@@ -78,17 +77,16 @@ char* CurrentTimeStr() {
 #if defined(_WIN32)
     SYSTEMTIME time_now;
     GetSystemTime(&time_now);
-    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i:%03i", time_now.wHour,
-             time_now.wMinute, time_now.wSecond, time_now.wMilliseconds);
+    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i:%03i", time_now.wHour, time_now.wMinute,
+             time_now.wSecond, time_now.wMilliseconds);
 #else
     struct tm* time_str_tm;
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
 
     time_str_tm = gmtime(&time_now.tv_sec);
-    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i:%06li",
-             time_str_tm->tm_hour, time_str_tm->tm_min, time_str_tm->tm_sec,
-             (long)time_now.tv_usec);
+    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i:%06li", time_str_tm->tm_hour,
+             time_str_tm->tm_min, time_str_tm->tm_sec, (long)time_now.tv_usec);
 #endif
 
     //    strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
@@ -127,8 +125,7 @@ int GetTimeData(FractalTimeData* time_data) {
 
     char* win_tz_name = NULL;
     runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
-    strncpy(time_data->win_tz_name, win_tz_name,
-            sizeof(time_data->win_tz_name));
+    strncpy(time_data->win_tz_name, win_tz_name, sizeof(time_data->win_tz_name));
     time_data->win_tz_name[strlen(time_data->win_tz_name) - 1] = '\0';
     free(win_tz_name);
 
@@ -148,8 +145,7 @@ int GetTimeData(FractalTimeData* time_data) {
         "path=$(readlink /etc/localtime); echo "
         "${path#\"/var/db/timezone/zoneinfo\"}",
         &response);
-    strncpy(time_data->linux_tz_name, response,
-            sizeof(time_data->linux_tz_name));
+    strncpy(time_data->linux_tz_name, response, sizeof(time_data->linux_tz_name));
     free(response);
 
     return 0;
@@ -163,8 +159,7 @@ int GetTimeData(FractalTimeData* time_data) {
 
     char* response = NULL;
     runcmd("cat /etc/timezone", &response);
-    strncpy(time_data->linux_tz_name, response,
-            sizeof(time_data->linux_tz_name));
+    strncpy(time_data->linux_tz_name, response, sizeof(time_data->linux_tz_name));
     free(response);
 
     return 0;
@@ -184,8 +179,7 @@ void SetTimezoneFromIANAName(char* linux_tz_name) {
 
 void SetTimezoneFromWindowsName(char* win_tz_name) {
     char cmd[500];
-    snprintf(cmd, sizeof(cmd), "powershell -command \"Set-TimeZone -Id '%s'\"",
-             win_tz_name);
+    snprintf(cmd, sizeof(cmd), "powershell -command \"Set-TimeZone -Id '%s'\"", win_tz_name);
     char* response = NULL;
     runcmd(cmd, &response);
     LOG_INFO("Timezone powershell command: %s -> %s\n", cmd, response);

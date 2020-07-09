@@ -188,21 +188,19 @@ void updateSwsContext() {
 
     if (sws_input_fmt != AV_PIX_FMT_YUV420P || decoder->width != output_width ||
         decoder->height != output_height) {
-        av_image_alloc(videoContext.data, videoContext.linesize, output_width,
-                       output_height, AV_PIX_FMT_YUV420P, 32);
+        av_image_alloc(videoContext.data, videoContext.linesize, output_width, output_height,
+                       AV_PIX_FMT_YUV420P, 32);
 
-        LOG_INFO("Will be resizing from %dx%d to %dx%d", decoder->width,
-                 decoder->height, output_width, output_height);
+        LOG_INFO("Will be resizing from %dx%d to %dx%d", decoder->width, decoder->height,
+                 output_width, output_height);
         videoContext.sws =
-            sws_getContext(decoder->width, decoder->height, sws_input_fmt,
-                           output_width, output_height, AV_PIX_FMT_YUV420P,
-                           SWS_FAST_BILINEAR, NULL, NULL, NULL);
+            sws_getContext(decoder->width, decoder->height, sws_input_fmt, output_width,
+                           output_height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
     }
 }
 
 void updatePixelFormat() {
-    if (sws_input_fmt != videoContext.decoder->sw_frame->format ||
-        pending_sws_update) {
+    if (sws_input_fmt != videoContext.decoder->sw_frame->format || pending_sws_update) {
         sws_input_fmt = videoContext.decoder->sw_frame->format;
         pending_sws_update = false;
         updateSwsContext();
@@ -212,9 +210,9 @@ void updatePixelFormat() {
 void updateTexture() {
     if (pending_texture_update) {
         LOG_INFO("Beginning to use %d x %d", output_width, output_height);
-        SDL_Texture* texture = SDL_CreateTexture(
-            (SDL_Renderer*)videoContext.renderer, SDL_PIXELFORMAT_YV12,
-            SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
+        SDL_Texture* texture =
+            SDL_CreateTexture((SDL_Renderer*)videoContext.renderer, SDL_PIXELFORMAT_YV12,
+                              SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
         if (!texture) {
             LOG_ERROR("SDL: could not create texture - exiting");
             exit(1);
@@ -228,15 +226,13 @@ void updateTexture() {
 }
 
 void updateDecoderParameters(int width, int height, CodecType codec_type) {
-    LOG_INFO("Updating Width & Height to %dx%d and Codec to %d", width, height,
-             codec_type);
+    LOG_INFO("Updating Width & Height to %dx%d and Codec to %d", width, height, codec_type);
 
     if (videoContext.decoder) {
         destroy_video_decoder(videoContext.decoder);
     }
 
-    video_decoder_t* decoder =
-        create_video_decoder(width, height, USE_HARDWARE, codec_type);
+    video_decoder_t* decoder = create_video_decoder(width, height, USE_HARDWARE, codec_type);
 
     videoContext.decoder = decoder;
     if (!decoder) {
@@ -253,8 +249,7 @@ void updateDecoderParameters(int width, int height, CodecType codec_type) {
     output_codec_type = codec_type;
 }
 
-static int renderPeers(SDL_Renderer* renderer, PeerUpdateMessage* msgs,
-                       size_t num_msgs) {
+static int renderPeers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
     int ret = 0;
 
     int window_width, window_height;
@@ -266,8 +261,7 @@ static int renderPeers(SDL_Renderer* renderer, PeerUpdateMessage* msgs,
         if (client_id == msgs->peer_id) {
             continue;
         }
-        if (drawPeerCursor(renderer, x, y, msgs->color.r, msgs->color.g,
-                           msgs->color.b) != 0) {
+        if (drawPeerCursor(renderer, x, y, msgs->color.r, msgs->color.g, msgs->color.b) != 0) {
             LOG_ERROR("Failed to draw spectator cursor.");
             ret = -1;
         }
@@ -294,8 +288,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         int ret = SDL_SemTryWait(VideoData.renderscreen_semaphore);
         SDL_LockMutex(render_mutex);
         if (pending_resize_render) {
-            SDL_RenderCopy((SDL_Renderer*)videoContext.renderer,
-                           videoContext.texture, NULL, NULL);
+            SDL_RenderCopy((SDL_Renderer*)videoContext.renderer, videoContext.texture, NULL, NULL);
             SDL_RenderPresent((SDL_Renderer*)videoContext.renderer);
         }
         SDL_UnlockMutex(render_mutex);
@@ -325,21 +318,19 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)renderContext.frame_buffer;
         PeerUpdateMessage* peer_update_msgs =
-            (PeerUpdateMessage*)(((char*)frame->compressed_frame) +
-                                 frame->size);
+            (PeerUpdateMessage*)(((char*)frame->compressed_frame) + frame->size);
         size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
 #if LOG_VIDEO
         mprintf("Rendering ID %d (Age %f) (Packets %d) %s\n", renderContext.id,
-                GetTimer(renderContext.frame_creation_timer),
-                renderContext.num_packets, frame->is_iframe ? "(I-Frame)" : "");
+                GetTimer(renderContext.frame_creation_timer), renderContext.num_packets,
+                frame->is_iframe ? "(I-Frame)" : "");
 #endif
 
         if (GetTimer(renderContext.frame_creation_timer) > 25.0 / 1000.0) {
-            LOG_INFO(
-                "Late! Rendering ID %d (Age %f) (Packets %d) %s",
-                renderContext.id, GetTimer(renderContext.frame_creation_timer),
-                renderContext.num_packets, frame->is_iframe ? "(I-Frame)" : "");
+            LOG_INFO("Late! Rendering ID %d (Age %f) (Packets %d) %s", renderContext.id,
+                     GetTimer(renderContext.frame_creation_timer), renderContext.num_packets,
+                     frame->is_iframe ? "(I-Frame)" : "");
         }
 
         if ((int)(sizeof(Frame) + frame->size +
@@ -358,10 +349,9 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                     "Updating client rendering to match server's width and "
                     "height and codec! "
                     "From %dx%d, codec %d to %dx%d, codec %d",
-                    server_width, server_height, server_codec_type,
-                    frame->width, frame->height, frame->codec_type);
-                updateDecoderParameters(frame->width, frame->height,
-                                        frame->codec_type);
+                    server_width, server_height, server_codec_type, frame->width, frame->height,
+                    frame->codec_type);
+                updateDecoderParameters(frame->width, frame->height, frame->codec_type);
             } else {
                 LOG_INFO("Wants to change resolution, but not an i-frame!");
             }
@@ -370,8 +360,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         clock decode_timer;
         StartTimer(&decode_timer);
 
-        if (!video_decoder_decode(videoContext.decoder, frame->compressed_frame,
-                                  frame->size)) {
+        if (!video_decoder_decode(videoContext.decoder, frame->compressed_frame, frame->size)) {
             LOG_WARNING("Failed to video_decoder_decode!");
             rendering = false;
             continue;
@@ -389,26 +378,22 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             updateTexture();
 
             if (videoContext.sws) {
-                sws_scale(
-                    videoContext.sws,
-                    (uint8_t const* const*)videoContext.decoder->sw_frame->data,
-                    videoContext.decoder->sw_frame->linesize, 0,
-                    videoContext.decoder->height, videoContext.data,
-                    videoContext.linesize);
+                sws_scale(videoContext.sws,
+                          (uint8_t const* const*)videoContext.decoder->sw_frame->data,
+                          videoContext.decoder->sw_frame->linesize, 0, videoContext.decoder->height,
+                          videoContext.data, videoContext.linesize);
             } else {
                 memcpy(videoContext.data, videoContext.decoder->sw_frame->data,
                        sizeof(videoContext.data));
-                memcpy(videoContext.linesize,
-                       videoContext.decoder->sw_frame->linesize,
+                memcpy(videoContext.linesize, videoContext.decoder->sw_frame->linesize,
                        sizeof(videoContext.linesize));
             }
 
             // LOG_INFO( "SWS Time: %f\n", GetTimer( sws_timer ) );
 
-            SDL_UpdateYUVTexture(videoContext.texture, NULL,
-                                 videoContext.data[0], videoContext.linesize[0],
-                                 videoContext.data[1], videoContext.linesize[1],
-                                 videoContext.data[2],
+            SDL_UpdateYUVTexture(videoContext.texture, NULL, videoContext.data[0],
+                                 videoContext.linesize[0], videoContext.data[1],
+                                 videoContext.linesize[1], videoContext.data[2],
                                  videoContext.linesize[2]);
 
             if (!videoContext.sws) {
@@ -429,12 +414,11 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                 SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
                     frame->cursor.cursor_bmp, frame->cursor.cursor_bmp_width,
                     frame->cursor.cursor_bmp_height, sizeof(uint32_t) * 8,
-                    sizeof(uint32_t) * frame->cursor.cursor_bmp_width,
-                    CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B, CURSORIMAGE_A);
+                    sizeof(uint32_t) * frame->cursor.cursor_bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
+                    CURSORIMAGE_B, CURSORIMAGE_A);
                 // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
                 // pre-alpha multplied
-                cursor = SDL_CreateColorCursor(cursor_surface,
-                                               frame->cursor.cursor_bmp_hot_x,
+                cursor = SDL_CreateColorCursor(cursor_surface, frame->cursor.cursor_bmp_hot_x,
                                                frame->cursor.cursor_bmp_hot_y);
                 SDL_FreeSurface(cursor_surface);
             } else {
@@ -463,10 +447,8 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             // SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
             // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
 
-            SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL,
-                           NULL);
-            if (renderPeers((SDL_Renderer*)renderer, peer_update_msgs,
-                            num_peer_update_msgs) != 0) {
+            SDL_RenderCopy((SDL_Renderer*)renderer, videoContext.texture, NULL, NULL);
+            if (renderPeers((SDL_Renderer*)renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
                 LOG_ERROR("Failed to render peers.");
             }
             SDL_RenderPresent((SDL_Renderer*)renderer);
@@ -475,8 +457,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         SDL_UnlockMutex(render_mutex);
 
 #if LOG_VIDEO
-        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)\n", renderContext.id,
-                  renderContext.frame_size,
+        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size,
                   GetTimer(renderContext.frame_creation_timer));
 #endif
 
@@ -502,12 +483,10 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
 
     char frame_name[24];
     if (gif_frame_index < 10) {
-        snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png",
-                 gif_frame_index);
+        snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png", gif_frame_index);
         //            LOG_INFO("Frame loading/frame_0%d.png", gif_frame_index);
     } else {
-        snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png",
-                 gif_frame_index);
+        snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png", gif_frame_index);
         //            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
     }
 
@@ -524,8 +503,7 @@ void loadingSDL(SDL_Renderer* renderer, int loading_index) {
         return;
     }
     free(pkt.data);
-    SDL_Texture* loading_screen_texture =
-        SDL_CreateTextureFromSurface(renderer, loading_screen);
+    SDL_Texture* loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
 
     int w = 200;
     int h = 200;
@@ -569,8 +547,7 @@ int initMultithreadedVideo(void* opaque) {
 
     render_mutex = SDL_CreateMutex();
 
-    LOG_INFO("Creating renderer for %dx%d display", output_width,
-             output_height);
+    LOG_INFO("Creating renderer for %dx%d display", output_width, output_height);
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
@@ -582,8 +559,7 @@ int initMultithreadedVideo(void* opaque) {
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
     SDL_Renderer* renderer = SDL_CreateRenderer(
-        (SDL_Window*)window, -1,
-        SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+        (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 
     // Show a black screen initially before anything else
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -592,8 +568,7 @@ int initMultithreadedVideo(void* opaque) {
 
     videoContext.renderer = renderer;
     if (!renderer) {
-        LOG_WARNING("SDL: could not create renderer - exiting: %s",
-                    SDL_GetError());
+        LOG_WARNING("SDL: could not create renderer - exiting: %s", SDL_GetError());
         return -1;
     }
 
@@ -610,8 +585,7 @@ int initMultithreadedVideo(void* opaque) {
     SDL_SetRenderDrawBlendMode((SDL_Renderer*)renderer, SDL_BLENDMODE_BLEND);
     // Allocate a place to put our YUV image on that screen
     texture = SDL_CreateTexture((SDL_Renderer*)renderer, SDL_PIXELFORMAT_YV12,
-                                SDL_TEXTUREACCESS_STREAMING, output_width,
-                                output_height);
+                                SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
     if (!texture) {
         LOG_ERROR("SDL: could not create texture - exiting");
         destroyLogger();
@@ -651,8 +625,7 @@ int initMultithreadedVideo(void* opaque) {
 // END VIDEO FUNCTIONS
 
 void initVideo() {
-    VideoData.render_screen_thread =
-        SDL_CreateThread(initMultithreadedVideo, "VideoThread", NULL);
+    VideoData.render_screen_thread = SDL_CreateThread(initMultithreadedVideo, "VideoThread", NULL);
 }
 
 int last_rendered_index = 0;
@@ -712,8 +685,7 @@ void updateVideo() {
             update_mbps = true;
         } else {
             working_mbps = max(VideoData.target_mbps * 1.05, working_mbps);
-            VideoData.target_mbps =
-                (VideoData.target_mbps + working_mbps) / 2.0;
+            VideoData.target_mbps = (VideoData.target_mbps + working_mbps) / 2.0;
             VideoData.target_mbps = min(VideoData.target_mbps, MAXIMUM_BITRATE);
             update_mbps = true;
         }
@@ -721,8 +693,7 @@ void updateVideo() {
         LOG_INFO("MBPS2: %f", VideoData.target_mbps);
 
         VideoData.bucket = (int)VideoData.target_mbps / BITRATE_BUCKET_SIZE;
-        max_bitrate = (int)VideoData.bucket * BITRATE_BUCKET_SIZE +
-                      BITRATE_BUCKET_SIZE / 2;
+        max_bitrate = (int)VideoData.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
 
         LOG_INFO("MBPS3: %d", max_bitrate);
         VideoData.num_nacked = 0;
@@ -739,26 +710,22 @@ void updateVideo() {
 
     if (!rendering && VideoData.last_rendered_id >= 0) {
         if (VideoData.most_recent_iframe - 1 > VideoData.last_rendered_id) {
-            LOG_INFO("Skipping from %d to i-frame %d!",
-                     VideoData.last_rendered_id, VideoData.most_recent_iframe);
-            for (int i = VideoData.last_rendered_id + 1;
-                 i < VideoData.most_recent_iframe; i++) {
+            LOG_INFO("Skipping from %d to i-frame %d!", VideoData.last_rendered_id,
+                     VideoData.most_recent_iframe);
+            for (int i = VideoData.last_rendered_id + 1; i < VideoData.most_recent_iframe; i++) {
                 int index = i % RECV_FRAMES_BUFFER_SIZE;
                 if (receiving_frames[index].id == i) {
                     LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
                                 receiving_frames[index].packets_received,
                                 receiving_frames[index].num_packets);
 
-                    for (int j = 0; j < receiving_frames[index].num_packets;
-                         j++) {
+                    for (int j = 0; j < receiving_frames[index].num_packets; j++) {
                         if (!receiving_frames[index].received_indicies[j]) {
-                            LOG_WARNING("Did not receive ID %d, Index %d", i,
-                                        j);
+                            LOG_WARNING("Did not receive ID %d, Index %d", i, j);
                         }
                     }
                 } else {
-                    LOG_WARNING("Bad ID? %d instead of %d",
-                                receiving_frames[index].id, i);
+                    LOG_WARNING("Bad ID? %d instead of %d", receiving_frames[index].id, i);
                 }
             }
             VideoData.last_rendered_id = VideoData.most_recent_iframe - 1;
@@ -803,15 +770,14 @@ void updateVideo() {
                     int num_nacked = 0;
                     // mprintf("************NACKING PACKET %d, alive for %f
                     // MS\n", ctx->id, GetTimer(ctx->frame_creation_timer));
-                    for (int i = ctx->last_nacked_index + 1;
-                         i < ctx->num_packets && num_nacked < 1; i++) {
+                    for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 1;
+                         i++) {
                         if (!ctx->received_indicies[i]) {
                             num_nacked++;
                             LOG_INFO(
                                 "************NACKING VIDEO PACKET %d %d (/%d), "
                                 "alive for %f MS",
-                                ctx->id, i, ctx->num_packets,
-                                GetTimer(ctx->frame_creation_timer));
+                                ctx->id, i, ctx->num_packets, GetTimer(ctx->frame_creation_timer));
                             ctx->nacked_indicies[i] = true;
                             nack(ctx->id, i);
                         }
@@ -832,10 +798,9 @@ void updateVideo() {
             // RECV_FRAMES_BUFFER_SIZE];
 
             if (VideoData.max_id >
-                VideoData.last_rendered_id +
-                    3)  // || (cur_ctx->id == VideoData.last_rendered_id &&
-                        // GetTimer( cur_ctx->last_packet_timer ) > 96.0 /
-                        // 1000.0) )
+                VideoData.last_rendered_id + 3)  // || (cur_ctx->id == VideoData.last_rendered_id &&
+                                                 // GetTimer( cur_ctx->last_packet_timer ) > 96.0 /
+                                                 // 1000.0) )
             {
                 if (requestIframe()) {
                     LOG_INFO("TOO FAR BEHIND! REQUEST FOR IFRAME!");
@@ -864,8 +829,7 @@ int32_t ReceiveVideo(FractalPacket* packet) {
 
     // Check if we have to initialize the frame buffer
     if (packet->id < ctx->id) {
-        LOG_INFO("Old packet received! %d is less than the previous %d",
-                 packet->id, ctx->id);
+        LOG_INFO("Old packet received! %d is less than the previous %d", packet->id, ctx->id);
         return -1;
     } else if (packet->id > ctx->id) {
         if (rendering && renderContext.id == ctx->id) {
@@ -897,8 +861,7 @@ int32_t ReceiveVideo(FractalPacket* packet) {
     // If we already received this packet, we can skip
     if (packet->is_a_nack) {
         if (!ctx->received_indicies[packet->index]) {
-            LOG_INFO("NACK for Video ID %d, Index %d Received!", packet->id,
-                     packet->index);
+            LOG_INFO("NACK for Video ID %d, Index %d Received!", packet->id, packet->index);
         } else {
             LOG_INFO(
                 "NACK for Video ID %d, Index %d Received! But didn't need "
@@ -964,16 +927,14 @@ int32_t ReceiveVideo(FractalPacket* packet) {
         VideoData.frames_received++;
 
 #if LOG_VIDEO
-        mprintf("Received Video Frame ID %d (Packets: %d) (Size: %d) %s\n",
-                ctx->id, ctx->num_packets, ctx->frame_size,
-                is_iframe ? "(i-frame)" : "");
+        mprintf("Received Video Frame ID %d (Packets: %d) (Size: %d) %s\n", ctx->id,
+                ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
 #endif
 
         // If it's an I-frame, then just skip right to it, if the id is ahead of
         // the next to render id
         if (is_iframe) {
-            VideoData.most_recent_iframe =
-                max(VideoData.most_recent_iframe, ctx->id);
+            VideoData.most_recent_iframe = max(VideoData.most_recent_iframe, ctx->id);
         }
     }
 

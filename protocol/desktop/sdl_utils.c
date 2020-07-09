@@ -21,8 +21,7 @@ void SendCapturedKey(FractalKeycode key, int type, int time) {
 
 // Handle SDL resize events
 int resizingEventWatcher(void* data, SDL_Event* event) {
-    if (event->type == SDL_WINDOWEVENT &&
-        event->window.event == SDL_WINDOWEVENT_RESIZED) {
+    if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_RESIZED) {
         // If the resize event if for the current window
         SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
         if (win == (SDL_Window*)data) {
@@ -41,8 +40,8 @@ SDL_Window* initSDL(int target_output_width, int target_output_height) {
 
 #if defined(_WIN32)
     // Hook onto windows keyboard to intercept windows special key combinations
-    g_hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc,
-                                       GetModuleHandle(NULL), 0);
+    g_hKeyboardHook =
+        SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
 #endif
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
@@ -68,8 +67,7 @@ SDL_Window* initSDL(int target_output_width, int target_output_height) {
     SDL_Window* window;
 
 #if defined(_WIN32)
-    static const uint32_t fullscreen_flags =
-        SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP;
+    static const uint32_t fullscreen_flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP;
 #else
     static const uint32_t fullscreen_flags =
         SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALWAYS_ON_TOP;
@@ -79,17 +77,15 @@ SDL_Window* initSDL(int target_output_width, int target_output_height) {
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
     window = SDL_CreateWindow(
-        "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        target_output_width, target_output_height,
-        SDL_WINDOW_ALLOW_HIGHDPI |
-            (is_fullscreen ? fullscreen_flags : windowed_flags));
+        "Fractal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, target_output_width,
+        target_output_height,
+        SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : windowed_flags));
 
     if (!is_fullscreen) {
         // Resize event handling
         SDL_AddEventWatch(resizingEventWatcher, (SDL_Window*)window);
         if (!window) {
-            LOG_ERROR("SDL: could not create window - exiting: %s",
-                      SDL_GetError());
+            LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
             return NULL;
         }
         SDL_SetWindowResizable((SDL_Window*)window, true);
@@ -135,8 +131,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam) {
     switch (nCode) {
         case HC_ACTION: {
             // Check to see if the CTRL key is pressed
-            BOOL bControlKeyDown =
-                GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
+            BOOL bControlKeyDown = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
             BOOL bAltKeyDown = pkbhs->flags & LLKHF_ALTDOWN;
 
             int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;

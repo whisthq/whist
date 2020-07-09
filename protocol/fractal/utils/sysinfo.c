@@ -11,21 +11,17 @@ void PrintOSInfo() {
     DWORD product_size = sizeof(product);
     DWORD version_size = sizeof(version);
     DWORD buildlab_size = sizeof(buildlab);
-    RegGetValueA(HKEY_LOCAL_MACHINE,
-                 "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+    RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
                  "ProductName", RRF_RT_ANY, NULL, &product, &product_size);
-    RegGetValueA(HKEY_LOCAL_MACHINE,
-                 "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+    RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
                  "CurrentVersion", RRF_RT_ANY, NULL, &version, &version_size);
-    RegGetValueA(HKEY_LOCAL_MACHINE,
-                 "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "BuildLab",
+    RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "BuildLab",
                  RRF_RT_ANY, NULL, &buildlab, &buildlab_size);
 
     LOG_INFO("PROD NAME: %S", product);
 
     char winOSstring[512];
-    snprintf(winOSstring, sizeof(winOSstring), "%s %s.%s", product, version,
-             buildlab);
+    snprintf(winOSstring, sizeof(winOSstring), "%s %s.%s", product, version, buildlab);
 #endif
 
 #ifdef _WIN32
@@ -45,8 +41,8 @@ void PrintOSInfo() {
     char buf[1024];
     struct utsname uts;
     uname(&uts);
-    snprintf(buf, sizeof(buf), "%s %s %s %s %s", uts.machine, uts.sysname,
-             uts.nodename, uts.release, uts.version);
+    snprintf(buf, sizeof(buf), "%s %s %s %s %s", uts.machine, uts.sysname, uts.nodename,
+             uts.release, uts.version);
     LOG_INFO("  OS: %s", buf);
 #else
     snprintf(buf, sizeof(buf), "Other");
@@ -57,21 +53,19 @@ void PrintOSInfo() {
 void PrintModelInfo() {
 #ifdef _WIN32
     char* response = NULL;
-    int total_sz =
-        runcmd("wmic computersystem get model,manufacturer", &response);
+    int total_sz = runcmd("wmic computersystem get model,manufacturer", &response);
     if (response) {
         // Get rid of leading whitespace, we jump until right after the \n
         int find_newline = 0;
-        while (find_newline < total_sz && response[find_newline] != '\n')
-            find_newline++;
+        while (find_newline < total_sz && response[find_newline] != '\n') find_newline++;
         find_newline++;
         char* make_model = response;
         make_model += find_newline;
 
         // Get rid of trailing whitespace
         int sz = (int)strlen(make_model);
-        while (sz > 0 && make_model[sz - 1] == ' ' ||
-               make_model[sz - 1] == '\n' || make_model[sz - 1] == '\r') {
+        while (sz > 0 && make_model[sz - 1] == ' ' || make_model[sz - 1] == '\n' ||
+               make_model[sz - 1] == '\r') {
             sz--;
         }
         make_model[sz] = '\0';
@@ -167,13 +161,13 @@ void PrintMonitors() {
     // GET ALL MONITORS
     for (i = 0; i < num_adapters; i++) {
         IDXGIOutput* output;
-        for (j = 0; adapters[i]->lpVtbl->EnumOutputs(adapters[i], j, &output) !=
-                    DXGI_ERROR_NOT_FOUND;
+        for (j = 0;
+             adapters[i]->lpVtbl->EnumOutputs(adapters[i], j, &output) != DXGI_ERROR_NOT_FOUND;
              j++) {
             DXGI_OUTPUT_DESC output_desc;
             hr = output->lpVtbl->GetDesc(output, &output_desc);
-            LOG_INFO("Found monitor %d on adapter %lu. Monitor %d named %S", j,
-                     i, j, output_desc.DeviceName);
+            LOG_INFO("Found monitor %d on adapter %lu. Monitor %d named %S", j, i, j,
+                     output_desc.DeviceName);
 
             HMONITOR hMonitor = output_desc.Monitor;
             MONITORINFOEXW monitorInfo;
@@ -182,8 +176,7 @@ void PrintMonitors() {
             DEVMODE devMode = {0};
             devMode.dmSize = sizeof(DEVMODE);
             devMode.dmDriverExtra = 0;
-            EnumDisplaySettingsW(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS,
-                                 &devMode);
+            EnumDisplaySettingsW(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode);
 
             UINT dpiX, dpiY;
             hr = GetDpiForMonitor(hMonitor, MDT_DEFAULT, &dpiX, &dpiY);
@@ -203,8 +196,7 @@ void PrintMonitors() {
                     orientation = "270 degrees";
                     break;
                 default:
-                    LOG_WARNING("Orientation did not match: %d",
-                                devMode.dmDisplayOrientation);
+                    LOG_WARNING("Orientation did not match: %d", devMode.dmDisplayOrientation);
                     orientation = "";
                     break;
             }
@@ -212,9 +204,8 @@ void PrintMonitors() {
             LOG_INFO(
                 "Resolution of %dx%d, Refresh Rate of %d, DPI %d, location "
                 "(%d,%d), orientation %s",
-                devMode.dmPelsWidth, devMode.dmPelsHeight,
-                devMode.dmDisplayFrequency, dpiX, devMode.dmPosition.x,
-                devMode.dmPosition.y, orientation);
+                devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmDisplayFrequency, dpiX,
+                devMode.dmPosition.x, devMode.dmPosition.y, orientation);
         }
     }
 #endif
@@ -276,8 +267,7 @@ void PrintMemoryInfo() {
 
     // Print information about the memory usage of the process.
 
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE,
-                           processID);
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
     if (NULL == hProcess) return;
 
     if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
@@ -393,6 +383,5 @@ void PrintHardDriveInfo() {
     available_space = buf.f_bavail * buf.f_frsize;
 #endif
     LOG_INFO("Hard Drive: %.2fGB/%.2fGB used, %.2fGB available to Fractal",
-             used_space / BYTES_IN_GB, total_space / BYTES_IN_GB,
-             available_space / BYTES_IN_GB);
+             used_space / BYTES_IN_GB, total_space / BYTES_IN_GB, available_space / BYTES_IN_GB);
 }

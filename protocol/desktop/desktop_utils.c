@@ -25,16 +25,15 @@ extern volatile CodecType codec_type;
 #define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
 #define FRACTAL_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
 
-const struct option cmd_options[] = {
-    {"width", required_argument, NULL, 'w'},
-    {"height", required_argument, NULL, 'h'},
-    {"bitrate", required_argument, NULL, 'b'},
-    {"codec", required_argument, NULL, 'c'},
-    // these are standard for POSIX programs
-    {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
-    {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
-    // end with NULL-termination
-    {0, 0, 0, 0}};
+const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
+                                     {"height", required_argument, NULL, 'h'},
+                                     {"bitrate", required_argument, NULL, 'b'},
+                                     {"codec", required_argument, NULL, 'c'},
+                                     // these are standard for POSIX programs
+                                     {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
+                                     {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
+                                     // end with NULL-termination
+                                     {0, 0, 0, 0}};
 #define OPTION_STRING "w:h:b:sc:k"
 
 int parseArgs(int argc, char *argv[]) {
@@ -200,8 +199,7 @@ int initSocketLibrary(void) {
 #ifdef _WIN32
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        mprintf("Failed to initialize Winsock with error code: %d.\n",
-                WSAGetLastError());
+        mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
         return -1;
     }
 #endif

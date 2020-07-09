@@ -75,8 +75,7 @@ int setCurrentInputDesktop(HDESK currentInputDesktop);
  * @returns                        Returns a DesktopContext with information on
  *                                 the opened Desktop
  */
-DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name,
-                              bool set_thread);
+DesktopContext OpenNewDesktop(WCHAR* desktop_name, bool get_name, bool set_thread);
 
 /**
  * @brief                          Open a Windows window station (a handle to a
