@@ -948,6 +948,13 @@ int CreateTCPContext(SocketContext *context, char *destination, int port,
                                          recvfrom_timeout_ms, stun_timeout_ms);
     }
 
+    // Verify TCP private key
+    private_key_data_t priv_key_data;
+    preparePrivateKey( &priv_key_data, aes_private_key );
+    sendp( context, &priv_key_data, sizeof( priv_key_data ) );
+    int recv_size = recvp( context, &priv_key_data, sizeof( priv_key_data ) );
+    confirmPrivateKey( &priv_key_data, recv_size, aes_private_key );
+
     ClearReadingTCP(context);
     return ret;
 }
