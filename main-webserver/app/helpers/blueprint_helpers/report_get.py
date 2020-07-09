@@ -112,7 +112,14 @@ def fetchCustomersHelper():
         return {}
 
 def fetchDisksHelper():
-    output = fractalSQLSelect("disks", {})
+    command = text(
+        """
+        SELECT disks.*, disk_settings.using_stun
+        FROM disks
+        LEFT JOIN disk_settings ON disks.disk_name = disk_settings.disk_name
+        """
+    )
+    output = fractalRunSQL(command, {})
     if output["rows"]:
         return output["rows"]
     else:
