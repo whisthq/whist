@@ -77,8 +77,8 @@ int hmac(char* hash, char* buf, int len, char* key) {
 }
 
 #define CRYPTO_HEADER_LEN                                                    \
-    (sizeof(plaintext_packet->hash) + sizeof(plaintext_packet->cipher_len) + \
-     sizeof(plaintext_packet->iv))
+    (sizeof(((FractalPacket*)0)->hash) + sizeof(((FractalPacket*)0)->cipher_len) + \
+     sizeof(((FractalPacket*)0)->iv))
 
 int encrypt_packet(FractalPacket* plaintext_packet, int packet_len,
                    FractalPacket* encrypted_packet,
