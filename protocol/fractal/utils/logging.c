@@ -22,6 +22,8 @@ char *get_logger_history();
 int get_logger_history_len();
 void initBacktraceHandler();
 
+#define BYTES_IN_KILOBYTE 1024
+
 extern int connection_id;
 
 // logger Semaphores and Mutexes
@@ -168,7 +170,7 @@ int MultiThreadedPrintf(void *opaque) {
             int sz = ftell(mprintf_log_file);
 
             // If it's larger than 5MB, start a new file and store the old one
-            if (sz > 5 * 1024 * 1024) {
+            if (sz > 5 * BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE) {
                 fclose(mprintf_log_file);
 
                 char f[1000] = "";

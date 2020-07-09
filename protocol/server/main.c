@@ -50,6 +50,12 @@
 #define DEFAULT_WIDTH 1920
 #define DEFAULT_HEIGHT 1080
 
+
+#define BITS_IN_BYTE 8.0
+#define BYTES_IN_KILOBYTE 1024.0
+#define MS_IN_SECOND 1000.0
+#define TCP_CONNECTION_WAIT 5000
+
 extern Client clients[MAX_NUM_CLIENTS];
 
 volatile int connection_id;
@@ -369,12 +375,12 @@ int32_t SendVideo(void* opaque) {
                     // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime
                     // = max_mbps previousFrameSize * 8.0 / 1024.0 / 1024.0
                     // / max_mbps = IdealTime
-                    double transmit_time = previous_frame_size * 8.0 / 1024.0 / 1024.0 / max_mbps;
+                    double transmit_time = previous_frame_size * BITS_IN_BYTE / BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
 
                     // double average_frame_size = 1.0 * bytes_tested_frames
                     // / bitrate_tested_frames;
                     double current_trasmit_time =
-                        previous_frame_size * 8.0 / 1024.0 / 1024.0 / max_mbps;
+                        previous_frame_size * BITS_IN_BYTE / BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
                     double current_fps = 1.0 / current_trasmit_time;
 
                     delay = transmit_time - frame_time;
@@ -783,7 +789,7 @@ int MultithreadedWaitForClient(void* opaque) {
             trying_to_update = false;
         }
 
-        if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, 5000, USING_STUN) < 0) {
+        if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, USING_STUN) < 0) {
             continue;
         }
 
@@ -1023,7 +1029,7 @@ int main() {
                 StartTimer(&last_ping_check);
             }
 
-            if (GetTimer(last_exit_check) > 15.0 / 1000.0) {
+            if (GetTimer(last_exit_check) > 15.0 / MS_IN_SECOND) {
 // Exit file seen, time to exit
 #ifdef _WIN32
                 if (PathFileExistsA("C:\\Program Files\\Fractal\\Exit\\exit")) {
