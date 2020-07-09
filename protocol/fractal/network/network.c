@@ -91,9 +91,9 @@ int GetLastNetworkError() {
 #endif
 }
 
-#define 
 #define LARGEST_TCP_PACKET 10000000
-#define LARGEST_ENCRYPTED_TCP_PACKET (sizeof(int) + LARGEST_TCP_PACKET + 16)
+#define PACKET_ENCRYPTION_PADDING 16 // encryption can make packets a bit bigger, this pads to avoid overflow
+#define LARGEST_ENCRYPTED_TCP_PACKET (sizeof(int) + LARGEST_TCP_PACKET + PACKET_ENCRYPTION_PADDING)
 
 int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data, int len) {
     // Verify packet size can fit
