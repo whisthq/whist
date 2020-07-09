@@ -36,12 +36,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-#      - name: Chocolatey install cppcheck
-#        if: runner.os == 'Windows'
-#        uses: crazy-max/ghaction-chocolatey@v1
-#        with:
-#          args: install "${{ github.workspace }}\.github\choco-install.config" --force
-
+      - name: Chocolatey install cppcheck
+        if: runner.os == 'Windows'
+        uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: install "${{ github.workspace }}\.github\choco-install.config" --force
       - name: Install CUDA for windows
         if: runner.os == 'Windows'
         env:
