@@ -32,6 +32,12 @@ typedef struct {
     stun_entry_t entry;
 } stun_request_t;
 
+typedef struct
+{
+    char iv[16];
+    char private_key[16];
+} private_key_data_t;
+
 /*
 ============================
 Private Functions
@@ -896,12 +902,13 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
 
 int CreateTCPContext(SocketContext *context, char *destination, int port,
                      int recvfrom_timeout_ms, int stun_timeout_ms,
-                     bool using_stun) {
+                     bool using_stun, char* aes_private_key) {
     if (context == NULL) {
-        LOG_WARNING("Context is NULL");
+        LOG_ERROR("Context is NULL");
         return -1;
     }
     context->mutex = SDL_CreateMutex();
+    memcpy( context->aes_private_key, aes_private_key, sizeof( context->aes_private_key ) );
 
     int ret;
 
@@ -1283,8 +1290,14 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
 
 int CreateUDPContext(SocketContext *context, char *destination, int port,
                      int recvfrom_timeout_ms, int stun_timeout_ms,
-                     bool using_stun) {
+                     bool using_stun, char* aes_private_key) {
+    if( context == NULL )
+    {
+        LOG_ERROR( "Context is NULL" );
+        return -1;
+    }
     context->mutex = SDL_CreateMutex();
+    memcpy( context->aes_private_key, aes_private_key, sizeof( context->aes_private_key ) );
 
     if (using_stun) {
         if (destination == NULL)

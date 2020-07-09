@@ -12,6 +12,7 @@
 #include "fractalgetopt.h"
 #include "main.h"
 
+extern volatile char aes_private_key[16];
 extern volatile char *server_ip;
 extern volatile int output_width;
 extern volatile int output_height;
@@ -30,12 +31,13 @@ const struct option cmd_options[] = {
     {"height", required_argument, NULL, 'h'},
     {"bitrate", required_argument, NULL, 'b'},
     {"codec", required_argument, NULL, 'c'},
+    {"private-key", optional_argument, NULL, 'p'},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
     {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
     // end with NULL-termination
     {0, 0, 0, 0}};
-#define OPTION_STRING "w:h:b:sc:k"
+#define OPTION_STRING "w:h:b:sc:kp::"
 
 int parseArgs(int argc, char *argv[]) {
     char *usage =
@@ -54,9 +56,13 @@ int parseArgs(int argc, char *argv[]) {
         "  -b, --bitrate=BITRATE         set the maximum bitrate to use\n"
         "  -c, --codec=CODEC             launch the protocol using the codec\n"
         "                                  specified: h264 (default) or h265\n"
+        "  -p, --private-key=PK          pass in the RSA Private Key as a hexadecimal string\n"
         "  -k, --use_ci                  launch the protocol in CI mode\n"
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
+
+    memcpy( (char*)&aes_private_key, PRIVATE_KEY, sizeof( aes_private_key ) );
+    sizeof( PRIVATE_KEY );
 
     int opt;
     long int ret;
@@ -103,6 +109,18 @@ int parseArgs(int argc, char *argv[]) {
                 break;
             case 'k':
                 running_ci = 1;
+                break;
+            case 'p':
+                for( int i = 0; i < 16; i++ )
+                {
+                    if( !isxdigit( optarg[2*i] ) || !isxdigit( optarg[2*i+1] ) || optarg[32] != '\0' )
+                    {
+                        printf( "Invalid hexadecimal string: %s\n", optarg );
+                        printf( "%s", usage );
+                        return -1;
+                    }
+                    sscanf( &optarg[2*i], "%2hhx", &(aes_private_key[i]) );
+                }
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:
                 printf("%s", usage_details);
