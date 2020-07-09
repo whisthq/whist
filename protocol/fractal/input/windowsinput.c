@@ -7,7 +7,8 @@
 
 #define USE_NUMPAD 0x1000
 
-// This defines the total range of a mouse coordinate as defined by SDL, from 0 to MOUSE_COORDINATE_RANGE as left to right or top to bottom
+// This defines the total range of a mouse coordinate as defined by SDL, from 0 to
+// MOUSE_COORDINATE_RANGE as left to right or top to bottom
 #define SDL_MOUSE_COORDINATE_RANGE 65536
 
 // @brief Windows keycodes for replaying SDL user inputs on server
@@ -516,8 +517,10 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
                 Event.mi.dy = (LONG)(fmsg->mouseMotion.y * 0.9);
                 Event.mi.dwFlags = MOUSEEVENTF_MOVE;
             } else {
-                Event.mi.dx = (LONG)(fmsg->mouseMotion.x * (double) SDL_MOUSE_COORDINATE_RANGE / MOUSE_SCALING_FACTOR);
-                Event.mi.dy = (LONG)(fmsg->mouseMotion.y * (double) SDL_MOUSE_COORDINATE_RANGE / MOUSE_SCALING_FACTOR);
+                Event.mi.dx = (LONG)(fmsg->mouseMotion.x * (double)SDL_MOUSE_COORDINATE_RANGE /
+                                     MOUSE_SCALING_FACTOR);
+                Event.mi.dy = (LONG)(fmsg->mouseMotion.y * (double)SDL_MOUSE_COORDINATE_RANGE /
+                                     MOUSE_SCALING_FACTOR);
                 Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
             }
             break;

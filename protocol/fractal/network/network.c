@@ -91,7 +91,7 @@ int GetLastNetworkError() {
 #endif
 }
 
-#define 
+#define
 #define LARGEST_TCP_PACKET 10000000
 #define LARGEST_ENCRYPTED_TCP_PACKET (sizeof(int) + LARGEST_TCP_PACKET + 16)
 
