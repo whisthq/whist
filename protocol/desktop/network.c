@@ -25,10 +25,10 @@ int discoverPorts(void) {
     SocketContext context;
     using_stun = true;
     if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, 500,
-                         using_stun, (char*)aes_private_key) < 0) {
+                         using_stun, (char *)aes_private_key) < 0) {
         using_stun = false;
         if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, 750,
-                             using_stun, (char*)aes_private_key) < 0) {
+                             using_stun, (char *)aes_private_key) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
             return -1;
         }
@@ -121,7 +121,7 @@ int connectToServer(void) {
     }
 
     if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10, 500,
-                         using_stun, (char*)aes_private_key) < 0) {
+                         using_stun, (char *)aes_private_key) < 0) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
@@ -134,7 +134,7 @@ int connectToServer(void) {
     }
 
     if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, 750,
-                         using_stun, (char*)aes_private_key) < 0) {
+                         using_stun, (char *)aes_private_key) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         closesocket(PacketSendContext.s);
         return -1;
