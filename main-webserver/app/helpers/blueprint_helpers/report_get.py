@@ -110,3 +110,10 @@ def fetchCustomersHelper():
         return output["rows"]
     else:
         return {}
+
+def fetchDisksHelper():
+    output = fractalSQLSelect("disks", {})
+    if output["rows"]:
+        return output["rows"]
+    else:
+        return {}
