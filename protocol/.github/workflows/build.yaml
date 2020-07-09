@@ -56,16 +56,15 @@ jobs:
           echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
           echo "::set-env name=CUDA_PATH::$env:CUDA_PATH"
           echo "::set-env name=$env:CUDA_PATH_VX_Y::$env:CUDA_PATH"
-          echo "::add-path::$env:CUDA_PATH/bin"
-          }
-        - name: nvcc check for windows
-          if: runner.os == 'Windows'
-          shell: powershell
-          run: |
-            nvcc -V
-            ls $env:CUDA_PATH
-            ls $env:CUDA_PATH\bin
-            ls $env:CUDA_PATH\include
+          echo "::add-path::$env:CUDA_PATH/bin"  }
+      - name: nvcc check for windows
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          nvcc -V
+          ls $env:CUDA_PATH
+          ls $env:CUDA_PATH\bin
+          ls $env:CUDA_PATH\include
 
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
