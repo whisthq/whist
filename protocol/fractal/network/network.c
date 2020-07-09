@@ -85,7 +85,7 @@ void ClearReadingTCP(SocketContext *context);
 @param priv_key_data            The private key data buffer
 @param private_key              The private key
 */
-void preparePrivateKey(private_key_data_t *priv_key_data, char* private_key);
+void preparePrivateKey(private_key_data_t *priv_key_data, char *private_key);
 
 /*
 @brief                          This will verify the given private key
@@ -94,9 +94,11 @@ void preparePrivateKey(private_key_data_t *priv_key_data, char* private_key);
 @param len                      The length of the buffer
 @param private_key              The private key
 
-@returns                        True if the verification succeeds, false if it fails
+@returns                        True if the verification succeeds, false if it
+fails
 */
-bool confirmPrivateKey(private_key_data_t *priv_key_data, int len, char* private_key);
+bool confirmPrivateKey(private_key_data_t *priv_key_data, int len,
+                       char *private_key);
 
 /*
 ============================
@@ -950,11 +952,11 @@ int CreateTCPContext(SocketContext *context, char *destination, int port,
 
     // Verify TCP private key
     private_key_data_t priv_key_data;
-    preparePrivateKey( &priv_key_data, aes_private_key );
-    sendp( context, &priv_key_data, sizeof( priv_key_data ) );
-    SDL_Delay( 150 );
-    int recv_size = recvp( context, &priv_key_data, sizeof( priv_key_data ) );
-    confirmPrivateKey( &priv_key_data, recv_size, aes_private_key );
+    preparePrivateKey(&priv_key_data, aes_private_key);
+    sendp(context, &priv_key_data, sizeof(priv_key_data));
+    SDL_Delay(150);
+    int recv_size = recvp(context, &priv_key_data, sizeof(priv_key_data));
+    confirmPrivateKey(&priv_key_data, recv_size, aes_private_key);
 
     ClearReadingTCP(context);
     return ret;
@@ -998,8 +1000,7 @@ int CreateUDPServerContext(SocketContext *context, int port,
     int recv_size;
     while ((recv_size = recvfrom(
                 context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
-                                 (struct sockaddr *)(&context->addr), &slen)) <
-           0) {
+                (struct sockaddr *)(&context->addr), &slen)) < 0) {
         LOG_WARNING("Did not receive response from client! %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
@@ -1134,9 +1135,9 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
     // Wait for client to connect
     // cppcheck-suppress nullPointer
     // cppcheck-suppress nullPointer
-    if ((recv_size = recvfrom(context->s, (char*)&priv_key_data, sizeof(priv_key_data), 0,
-                 (struct sockaddr *)(&context->addr),
-                 &slen)) < 0) {
+    if ((recv_size =
+             recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data),
+                      0, (struct sockaddr *)(&context->addr), &slen)) < 0) {
         LOG_WARNING("Did not receive client confirmation!");
         closesocket(context->s);
         return -1;
@@ -1175,7 +1176,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     context->is_tcp = false;
 
     private_key_data_t priv_key_data;
-    preparePrivateKey( &priv_key_data, context->aes_private_key );
+    preparePrivateKey(&priv_key_data, context->aes_private_key);
 
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -1194,7 +1195,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     LOG_INFO("Connecting to server...");
 
     // Open up the port
-    if (sendp(context, &priv_key_data, sizeof( priv_key_data )) < 0) {
+    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
         LOG_WARNING("Could not send message to server %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
@@ -1204,7 +1205,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     SDL_Delay(150);
 
     // Send acknowledgement
-    if (sendp(context, &priv_key_data, sizeof( priv_key_data )) < 0) {
+    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
         LOG_WARNING("Could not send message to server %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
@@ -1215,16 +1216,16 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     socklen_t slen = sizeof(context->addr);
     int recv_size;
     // cppcheck-suppress nullPointer
-    if ((recv_size = recvfrom(context->s, (char*)&priv_key_data, sizeof( priv_key_data ), 0, (struct sockaddr *)&context->addr,
-                 &slen)) < 0) {
+    if ((recv_size =
+             recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data),
+                      0, (struct sockaddr *)&context->addr, &slen)) < 0) {
         LOG_WARNING("Did not receive response from server! %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    if( !confirmPrivateKey( &priv_key_data, recv_size, PRIVATE_KEY ) )
-    {
+    if (!confirmPrivateKey(&priv_key_data, recv_size, PRIVATE_KEY)) {
         return -1;
     }
 
@@ -1242,7 +1243,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
                                int stun_timeout_ms) {
     context->is_tcp = false;
     private_key_data_t priv_key_data;
-    preparePrivateKey( &priv_key_data, context->aes_private_key );
+    preparePrivateKey(&priv_key_data, context->aes_private_key);
 
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -1305,7 +1306,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
     LOG_INFO("Connecting to server...");
 
     // Open up the port
-    if (sendp(context, &priv_key_data, sizeof( priv_key_data )) < 0) {
+    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
         LOG_WARNING("Could not send message to server %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
@@ -1315,7 +1316,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
     SDL_Delay(150);
 
     // Send acknowledgement
-    if (sendp(context, &priv_key_data, sizeof( priv_key_data )) < 0) {
+    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
         LOG_WARNING("Could not send message to server %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
@@ -1325,16 +1326,16 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
     // Receive server's acknowledgement of connection
     socklen_t slen = sizeof(context->addr);
     // cppcheck-suppress nullPointer
-    if ((recv_size = recvfrom(context->s, (char*)&priv_key_data, sizeof( priv_key_data ), 0, (struct sockaddr *)&context->addr,
-                 &slen)) < 0) {
+    if ((recv_size =
+             recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data),
+                      0, (struct sockaddr *)&context->addr, &slen)) < 0) {
         LOG_WARNING("Did not receive response from server! %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    if( !confirmPrivateKey( &priv_key_data, recv_size, PRIVATE_KEY ) )
-    {
+    if (!confirmPrivateKey(&priv_key_data, recv_size, PRIVATE_KEY)) {
         return -1;
     }
 
@@ -1556,13 +1557,13 @@ void set_timeout(SOCKET s, int timeout_ms) {
     }
 }
 
-void preparePrivateKey( private_key_data_t* priv_key_data, char* private_key )
-{
+void preparePrivateKey(private_key_data_t *priv_key_data, char *private_key) {
     memcpy(priv_key_data->private_key, private_key,
            sizeof(priv_key_data->private_key));
 }
 
-bool confirmPrivateKey(private_key_data_t *priv_key_data, int len, char* private_key) {
+bool confirmPrivateKey(private_key_data_t *priv_key_data, int len,
+                       char *private_key) {
     if (len == sizeof(private_key_data_t)) {
         if (memcmp(priv_key_data->private_key, private_key,
                    sizeof(priv_key_data->private_key)) == 0) {
