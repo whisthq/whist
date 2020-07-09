@@ -38,10 +38,10 @@ def payment(action, **kwargs):
             event = stripe.Webhook.construct_event(body, sigHeader, endpointSecret)
         except ValueError as e:
             # Invalid payload
-            return jsonify({"status": "Invalid payload"}), 400
+            return jsonify({"status": "Invalid payload"}), NOT_ACCEPTABLE
         except stripe.error.SignatureVerificationError as e:
             # Invalid signature
-            return jsonify({"status": "Invalid signature"}), 400
+            return jsonify({"status": "Invalid signature"}), FORBIDDEN
 
         return webhookHelper(event)
         

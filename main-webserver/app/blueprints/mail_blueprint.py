@@ -38,8 +38,8 @@ def newsletter(action, **kwargs):
     body = kwargs["body"]
     if action == "subscribe":
         newsletterSubscribe(body["username"])
-        return jsonify({"status": 200}), 200
+        return jsonify({"status": SUCCESS}), SUCCESS
 
     elif action == "unsubscribe":
         newsletterUnsubscribe(body["username"])
-        return jsonify({"status": 200}), 200
+        return jsonify({"status": SUCCESS}), SUCCESS
