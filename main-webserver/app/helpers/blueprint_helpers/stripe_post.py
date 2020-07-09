@@ -334,7 +334,7 @@ def updateHelper(username, new_plan_type):
     else:
         return jsonify({"status": 404, "error": "Invalid plan type"}), 404
 
-def validateReferralHelper(code, username):
+def referralHelper(code, username):
     code_username = None
 
     metadata = fractalSQLSelect("users", {"code": code})

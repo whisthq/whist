@@ -3,10 +3,11 @@ from app.helpers.blueprint_helpers.stripe_post import *
 
 stripe_bp = Blueprint("stripe_bp", __name__)
 
+
 @stripe_bp.route("/stripe/<action>", methods=["POST"])
 @fractalPreProcess
 def payment(action, **kwargs):
-    body=kwargs["body"]
+    body = kwargs["body"]
 
     # Adds a subscription to the customer
     if action == "charge":
@@ -44,17 +45,10 @@ def payment(action, **kwargs):
             return jsonify({"status": "Invalid signature"}), 400
 
         return webhookHelper(event)
-        
+
     elif action == "update" and request.method == "POST":
         # When a customer requests to change their plan type
         return updateHelper(body["username"], body["plan"])
 
-
-# REFERRAL endpoint
-@stripe_bp.route("/referral/<action>", methods=["POST"])
-@jwt_required
-@fractalPreProcess
-def referral(action, **kwargs):
-    body = kwargs["body"]
-    if action == "validate":
-        return validateReferralHelper(body["code"], body["username"])
+    elif action == "referral":
+        return referralHelper(body["code"], body["username"])
