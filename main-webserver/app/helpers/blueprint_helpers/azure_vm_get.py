@@ -64,4 +64,3 @@ def protocolInfoHelper(ip_address):
                 "status": NOT_FOUND,
                 "using_stun": False,
             }
-
