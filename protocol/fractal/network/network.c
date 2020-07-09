@@ -84,7 +84,6 @@ void ClearReadingTCP(SocketContext *context);
 
 @param priv_key_data            The private key data buffer
 @param private_key              The private key
-fails
 */
 void preparePrivateKey(private_key_data_t *priv_key_data, char* private_key);
 
@@ -93,10 +92,11 @@ void preparePrivateKey(private_key_data_t *priv_key_data, char* private_key);
 
 @param priv_key_data            The private key data buffer
 @param len                      The length of the buffer
+@param private_key              The private key
 
 @returns                        True if the verification succeeds, false if it fails
 */
-bool confirmPrivateKey(private_key_data_t *priv_key_data, int len);
+bool confirmPrivateKey(private_key_data_t *priv_key_data, int len, char* private_key);
 
 /*
 ============================
@@ -998,14 +998,16 @@ int CreateUDPServerContext(SocketContext *context, int port,
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size)) {
+    if (!confirmPrivateKey(&priv_key_data, recv_size, PRIVATE_KEY)) {
         return -1;
     }
+
+    preparePrivateKey(&priv_key_data, PRIVATE_KEY);
 
     set_timeout(context->s, 350);
 
     // Send acknowledgement of connection
-    sendp(context, NULL, 0);
+    sendp(context, &priv_key_data, sizeof(priv_key_data));
 
     LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
@@ -1102,8 +1104,11 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
     LOG_INFO("Received STUN response, client connection desired from %s:%d\n",
              inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
+    private_key_data_t priv_key_data = {0};
+    preparePrivateKey(&priv_key_data, PRIVATE_KEY);
+
     // Open up port to receive message
-    if (sendp(context, NULL, 0) < 0) {
+    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
         LOG_WARNING("Could not open up port!");
         closesocket(context->s);
         return -1;
@@ -1112,7 +1117,7 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
     SDL_Delay(150);
 
     // Send acknowledgement
-    if (sendp(context, NULL, 0) < 0) {
+    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
         LOG_WARNING("Could not open up port!");
         closesocket(context->s);
         return -1;
@@ -1121,7 +1126,6 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
     // Wait for client to connect
     // cppcheck-suppress nullPointer
     // cppcheck-suppress nullPointer
-    private_key_data_t priv_key_data = {0};
     if ((recv_size = recvfrom(context->s, (char*)&priv_key_data, sizeof(priv_key_data), 0,
                  (struct sockaddr *)(&context->addr),
                  &slen)) < 0) {
@@ -1130,7 +1134,7 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size)) {
+    if (!confirmPrivateKey(&priv_key_data, recv_size, PRIVATE_KEY)) {
         return -1;
     }
 
@@ -1550,9 +1554,9 @@ void preparePrivateKey( private_key_data_t* priv_key_data, char* private_key )
            sizeof(priv_key_data->private_key));
 }
 
-bool confirmPrivateKey(private_key_data_t *priv_key_data, int len) {
+bool confirmPrivateKey(private_key_data_t *priv_key_data, int len, char* private_key) {
     if (len == sizeof(private_key_data_t)) {
-        if (memcmp(priv_key_data->private_key, PRIVATE_KEY,
+        if (memcmp(priv_key_data->private_key, private_key,
                    sizeof(priv_key_data->private_key)) == 0) {
             LOG_INFO("PRIVATE KEY WAS CORRECT!");
             return true;
