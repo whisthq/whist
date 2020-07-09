@@ -6,6 +6,7 @@
 
 #include "fractal.h"  // header file for this protocol, includes winsock
 
+#include <ctype.h>
 #include <stdio.h>
 
 #include "../utils/json.h"
