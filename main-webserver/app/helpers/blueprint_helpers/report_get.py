@@ -96,3 +96,10 @@ def fetchUsersHelper():
         return output["rows"]
     else:
         return {}
+
+def fetchVMsHelper():
+    output = fractalSQLSelect("v_ms", {})
+    if output["rows"]:
+        return output["rows"]
+    else:
+        return {}

@@ -24,11 +24,14 @@ def report_get(action, **kwargs):
         output = signupsHelper()
 
         return jsonify(output), SUCCESS
-    elif action == "loginActivity":
+    elif action == "fetchLoginActivity":
         output = loginActivityHelper()
         return jsonify(output), SUCCESS
     elif action == "fetchUsers":
         output = fetchUsersHelper()
+        return jsonify(output), SUCCESS
+    elif action == "fetchVMs":
+        output = fetchVMsHelper()
         return jsonify(output), SUCCESS
 
 
