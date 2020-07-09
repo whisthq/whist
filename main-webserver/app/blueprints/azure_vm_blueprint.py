@@ -13,7 +13,7 @@ azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 @jwt_required
 def azure_vm_post(action, **kwargs):
     current_user = get_jwt_identity()
-    if current_user != os.getenv("DASHBOARD_USERNAME") + "@gmail.com":
+    if current_user != os.getenv("DASHBOARD_USERNAME"):
         return jsonify({"error": "Not an admin!"}), FORBIDDEN
 
     if action == "create":
