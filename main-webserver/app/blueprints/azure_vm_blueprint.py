@@ -70,6 +70,20 @@ def azure_vm_post(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+    elif action == "restart":
+        # Restarts an Azure VM
+
+        vm_name = kwargs["body"]["vm_name"]
+        resource_group = os.getenv("VM_GROUP")
+        if "resource_group" in kwargs["body"].keys():
+            resource_group = kwargs["body"]["resource_group"]
+
+        task = restartVM.apply_async([vm_name, resource_group])
+
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
     elif action == "deallocate":
         # Deallocates an Azure VM
 

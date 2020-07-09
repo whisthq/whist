@@ -1,6 +1,4 @@
 from app import *
-from app.helpers.utils.general.logs import *
-from app.helpers.utils.general.sql_commands import *
 from app.helpers.utils.mail.stripe_mail import *
 
 stripe.api_key = os.getenv("STRIPE_SECRET")

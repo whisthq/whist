@@ -4,8 +4,7 @@ from app.helpers.utils.general.sql_commands import *
 
 
 def forgotPasswordHelper(username):
-    params = {"userName": username}
-    user = fractalSQLSelect("users", params)
+    user = fractalSQLSelect(table_name="users", params={"username": username})
     verified = len(user) > 0
     if verified:
         upperCase = string.ascii_uppercase
@@ -217,8 +216,8 @@ def computerReadyHelper(user, date, code, location):
 
 
 def newsletterSubscribe(username):
-    fractalSQLInsert("newsletter", {"username": username})
+    fractalSQLInsert(table_name="newsletter", params={"username": username})
 
 
 def newsletterUnsubscribe(username):
-    fractalSQLDelete("newsletter", {"username": username})
+    fractalSQLDelete(table_name="newsletter", params={"username": username})
