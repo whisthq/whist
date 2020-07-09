@@ -12,13 +12,13 @@ int last_input_id = -1;
 
 int connectClient(int id) {
     if (CreateUDPContext(&(clients[id].UDP_context), NULL, clients[id].UDP_port,
-                         1, 5000, USING_STUN) < 0) {
+                         1, 5000, USING_STUN, PRIVATE_KEY) < 0) {
         LOG_ERROR("Failed UDP connection with client (ID: %d)", id);
         return -1;
     }
 
     if (CreateTCPContext(&(clients[id].TCP_context), NULL, clients[id].TCP_port,
-                         1, 500, USING_STUN) < 0) {
+                         1, 500, USING_STUN, PRIVATE_KEY) < 0) {
         LOG_WARNING("Failed TCP connection with client (ID: %d)", id);
         closesocket(clients[id].UDP_context.s);
         return -1;

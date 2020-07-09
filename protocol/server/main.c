@@ -815,7 +815,7 @@ int MultithreadedWaitForClient(void* opaque) {
         }
 
         if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, 5000,
-                             USING_STUN) < 0) {
+                             USING_STUN, PRIVATE_KEY) < 0) {
             continue;
         }
 

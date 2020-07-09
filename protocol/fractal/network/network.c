@@ -81,6 +81,25 @@ packet when the entire packet is received
 void ClearReadingTCP(SocketContext *context);
 
 /*
+@brief                          This will prepare the private key data
+
+@param priv_key_data            The private key data buffer
+@param private_key              The private key
+fails
+*/
+void preparePrivateKey(private_key_data_t *priv_key_data, char* private_key);
+
+/*
+@brief                          This will verify the given private key
+
+@param priv_key_data            The private key data buffer
+@param len                      The length of the buffer
+
+@returns                        True if the verification succeeds, false if it fails
+*/
+bool confirmPrivateKey(private_key_data_t *priv_key_data, int len);
+
+/*
 ============================
 Public Function Implementations
 ============================
@@ -967,14 +986,19 @@ int CreateUDPServerContext(SocketContext *context, int port,
     LOG_INFO("Waiting for client to connect to %s:%d...\n", "localhost", port);
 
     socklen_t slen = sizeof(context->addr);
-    stun_entry_t entry = {0};
+    private_key_data_t priv_key_data = {0};
     int recv_size;
-    while ((recv_size = recvfrom(context->s, (char *)&entry, sizeof(entry), 0,
+    while ((recv_size = recvfrom(
+                context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
                                  (struct sockaddr *)(&context->addr), &slen)) <
            0) {
         LOG_WARNING("Did not receive response from client! %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
+        return -1;
+    }
+
+    if (!confirmPrivateKey(&priv_key_data, recv_size)) {
         return -1;
     }
 
@@ -1097,10 +1121,16 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
     // Wait for client to connect
     // cppcheck-suppress nullPointer
     // cppcheck-suppress nullPointer
-    if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)(&context->addr),
-                 &slen) < 0) {
+    private_key_data_t priv_key_data = {0};
+    if ((recv_size = recvfrom(context->s, (char*)&priv_key_data, sizeof(priv_key_data), 0,
+                 (struct sockaddr *)(&context->addr),
+                 &slen)) < 0) {
         LOG_WARNING("Did not receive client confirmation!");
         closesocket(context->s);
+        return -1;
+    }
+
+    if (!confirmPrivateKey(&priv_key_data, recv_size)) {
         return -1;
     }
 
@@ -1495,5 +1525,30 @@ void set_timeout(SOCKET s, int timeout_ms) {
             LOG_WARNING("Failed to set timeout");
             return;
         }
+    }
+}
+
+void preparePrivateKey( private_key_data_t* priv_key_data, char* private_key )
+{
+    memcpy(priv_key_data->private_key, private_key,
+           sizeof(priv_key_data->private_key));
+}
+
+bool confirmPrivateKey(private_key_data_t *priv_key_data, int len) {
+    if (len == sizeof(private_key_data_t)) {
+        if (memcmp(priv_key_data->private_key, PRIVATE_KEY,
+                   sizeof(priv_key_data->private_key)) == 0) {
+            LOG_INFO("PRIVATE KEY WAS CORRECT!");
+            return true;
+        } else {
+            LOG_ERROR("Private Key was incorrect: %p",
+                      *(long long *)priv_key_data->private_key);
+            return false;
+        }
+    } else {
+        LOG_ERROR(
+            "Recv Size was not equal to private_key_data_t: %d instead of %d",
+            len, sizeof(private_key_data_t));
+        return false;
     }
 }
