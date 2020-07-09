@@ -610,7 +610,8 @@ bool is_dev_vm();
 char* get_private_key();
 
 /**
- * @brief                          Queries the webserver to get the using_stun status
+ * @brief                          Queries the webserver to get the using_stun
+ * status
  *
  * @returns                        The using_stun status
  */
