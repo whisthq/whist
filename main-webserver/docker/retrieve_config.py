@@ -34,7 +34,9 @@ args = parser.parse_args()
 env_to_app_name = {"staging": "cube-celery-staging", "production": "cube-celery-vm"}
 app_name = env_to_app_name.get(args.env, args.env)
 heroku_proc = subprocess.run(
-    ["heroku", "config", "--json", "--app", app_name], capture_output=True
+    ["heroku", "config", "--json", "--app", app_name],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
 )
 if heroku_proc.returncode != 0:
     print(heroku_proc.stderr.decode("utf-8"))
