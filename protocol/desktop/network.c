@@ -18,9 +18,9 @@ extern char *server_ip;
 extern bool received_server_init_message;
 extern int uid;
 
-#define SHORT_TCP_CONNECTION_WAIT 500    // ms
-#define LONG_TCP_CONNECTION_WAIT 750  // ms
-#define UDP_CONNECTION_WAIT 500 // ms
+#define SHORT_TCP_CONNECTION_WAIT 500  // ms
+#define LONG_TCP_CONNECTION_WAIT 750   // ms
+#define UDP_CONNECTION_WAIT 500        // ms
 
 bool using_stun;
 
@@ -118,7 +118,8 @@ int connectToServer(void) {
         return -1;
     }
 
-    if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10, UDP_CONNECTION_WAIT, using_stun) < 0) {
+    if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10, UDP_CONNECTION_WAIT,
+                         using_stun) < 0) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
@@ -132,7 +133,8 @@ int connectToServer(void) {
         return -1;
     }
 
-    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, LONG_TCP_CONNECTION_WAIT, using_stun) < 0) {
+    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, LONG_TCP_CONNECTION_WAIT,
+                         using_stun) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         closesocket(PacketSendContext.s);
         return -1;

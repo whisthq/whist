@@ -189,8 +189,7 @@ void SetTimezoneFromWindowsName(char* win_tz_name) {
             win_tz_name[i] = '\0';
         }
     }
-    snprintf(cmd, sizeof(cmd), "powershell -command \"Set-TimeZone -Id '%s'\"",
-             win_tz_name);
+    snprintf(cmd, sizeof(cmd), "powershell -command \"Set-TimeZone -Id '%s'\"", win_tz_name);
 
     char* response = NULL;
     runcmd(cmd, &response);
