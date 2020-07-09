@@ -57,6 +57,7 @@ void handleErrors(void) {
 void gen_iv(unsigned char* iv) {
     srand((unsigned int)time(NULL) * rand() + rand());
     (void)rand();
+    srand((unsigned int)time(NULL) * rand() + rand());
     (void)rand();
     (void)rand();
 
