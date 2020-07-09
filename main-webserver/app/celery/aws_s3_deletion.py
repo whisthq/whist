@@ -15,7 +15,6 @@ def deleteLogsFromS3(sender, connection_id):
     def S3Delete(file_name, last_updated):
         bucket = "fractal-protocol-logs"
 
-        # remove url, keep filename only
         file_name = file_name.replace(
             "https://fractal-protocol-logs.s3.amazonaws.com/", ""
         )
@@ -28,7 +27,11 @@ def deleteLogsFromS3(sender, connection_id):
         )
 
         try:
-            print("deleting filename: " + str(file_name))
+            fractalLog(
+                function="deleteLogsFromS3",
+                label="None",
+                logs="Deleting log {file_name} from S3".format(file_name=file_name)
+            )
             s3.Object(bucket, file_name).delete()
             return True
         except Exception as e:
