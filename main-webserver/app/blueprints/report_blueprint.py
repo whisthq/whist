@@ -7,6 +7,8 @@ report_bp = Blueprint("report_bp", __name__)
 
 @report_bp.route("/report/<action>", methods=["GET"])
 @fractalPreProcess
+@jwt_required
+@adminRequired
 def report_get(action, **kwargs):
     if action == "latest":
         output = latestHelper()
@@ -43,13 +45,21 @@ def report_get(action, **kwargs):
 
 @report_bp.route("/report/<action>", methods=["POST"])
 @fractalPreProcess
+@jwt_required
+@adminRequired
 def report_post(action, **kwargs):
     if action == "regionReport":
         body = request.get_json()
         output = regionReportHelper(body["timescale"])
 
         return jsonify(output), SUCCESS
-    elif action == "userReport":
+
+@report_bp.route("/report/<action>", methods=["POST"])
+@fractalPreProcess
+@jwt_required
+@fractalAuth
+def report_no_admin(action, **kwargs):
+    if action == "userReport":
         body = request.get_json()
         if body["timescale"]:
             output = userReportHelper(body["username"], timescale=body["timescale"])

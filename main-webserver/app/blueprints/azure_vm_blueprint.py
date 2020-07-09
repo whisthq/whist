@@ -11,11 +11,8 @@ azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 @azure_vm_bp.route("/azure_vm/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
+@adminRequired
 def azure_vm_post(action, **kwargs):
-    current_user = get_jwt_identity()
-    if current_user != os.getenv("DASHBOARD_USERNAME"):
-        return jsonify({"error": "Not an admin!"}), FORBIDDEN
-
     if action == "create":
         # Creates an Azure VM
 
