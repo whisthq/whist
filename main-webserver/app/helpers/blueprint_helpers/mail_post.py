@@ -5,9 +5,8 @@ from app.helpers.utils.general.sql_commands import *
 
 def forgotPasswordHelper(username):
     params = {"userName": username}
-    user = fractalSQLSelect("users", params)
-    verified = len(user) > 0
-    if verified:
+    user = fractalSQLSelect("users", params)["rows"]
+    if user:
         upperCase = string.ascii_uppercase
         lowerCase = string.ascii_lowercase
         numbers = "1234567890"
@@ -32,7 +31,7 @@ def forgotPasswordHelper(username):
         except Exception as e:
             fractalLog(
                 function="forgotPasswordHelper",
-                label="ERROR",
+                label=username,
                 logs="Mail send failed: Error code " + e.message,
                 level=logging.ERROR,
             )
@@ -64,7 +63,7 @@ def cancelHelper(user, feedback):
     except Exception as e:
         fractalLog(
             function="cancelHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
@@ -89,7 +88,7 @@ def verificationHelper(user, token):
     except Exception as e:
         fractalLog(
             function="verificationHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
@@ -114,7 +113,7 @@ def referralMailHelper(user, recipients, code):
     except Exception as e:
         fractalLog(
             function="referralMailHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
@@ -138,7 +137,7 @@ def feedbackHelper(user, feedback, feedback_type):
     except Exception as e:
         fractalLog(
             function="feedbackHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
@@ -160,7 +159,7 @@ def trialStartHelper(user, location, code):
     except Exception as e:
         fractalLog(
             function="trialStartHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
@@ -180,7 +179,7 @@ def trialStartHelper(user, location, code):
     except Exception as e:
         fractalLog(
             function="trialStartHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
@@ -207,7 +206,7 @@ def computerReadyHelper(user, date, code, location):
     except Exception as e:
         fractalLog(
             function="computerReadyHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
