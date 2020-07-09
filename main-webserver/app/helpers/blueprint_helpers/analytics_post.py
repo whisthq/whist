@@ -2,7 +2,7 @@ from app import *
 from app.helpers.utils.general.analytics import *
 
 
-def logsHelper(filename, sender):
+def analyticsLogsHelper(filename, sender):
     # Read and clean logs into Pandas dataframe
     try:
         df = pd.read_csv(filename, sep="|", header=None, error_bad_lines=False)

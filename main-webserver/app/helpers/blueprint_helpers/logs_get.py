@@ -17,7 +17,11 @@ def logsHelper(connection_id, username, bookmarked):
         session.commit()
         session.close()
 
-        return {"logs": output, "status": SUCCESS}
+        connection_ids = []
+        if output:
+            connection_ids = [element["connection_id"] for element in output]
+
+        return {"logs": output, "connection_ids": connection_ids, "status": SUCCESS}
     if connection_id:
         command = text(
             """

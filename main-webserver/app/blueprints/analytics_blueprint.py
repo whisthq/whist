@@ -12,4 +12,4 @@ def analytics_post(action, **kwargs):
     if action == "logs":
         body = json.loads(request.data)
 
-        return logsHelper(body["filename"], body["sender"])
+        return analyticsLogsHelper(body["filename"], body["sender"])

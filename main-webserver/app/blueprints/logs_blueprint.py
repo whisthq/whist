@@ -72,9 +72,8 @@ def logs_get(**kwargs):
         request.args.get("bookmarked"),
     )
 
-    bookmarked = str(bookmarked.upper()) == "TRUE"
+    bookmarked = str(bookmarked.upper()) == "TRUE" if bookmarked else False
 
     output = logsHelper(connection_id, username, bookmarked)
 
     return jsonify(output), output["status"]
-
