@@ -282,10 +282,9 @@ static int handleIFrameRequestMessage(FractalClientMessage *fmsg, int client_id,
 
 static int handleInteractionModeMessage(FractalClientMessage *fmsg,
                                         int client_id, bool is_controlling) {
-    /* IGNORE INTERACTION MODE MESSAGES */
-    // return 0;
-
     is_controlling;
+
+    /*
     if (SDL_LockMutex(state_lock) != 0) {
         LOG_ERROR("Failed to lock client's mouse lock.");
         return -1;
@@ -320,6 +319,10 @@ static int handleInteractionModeMessage(FractalClientMessage *fmsg,
         }
     }
     SDL_UnlockMutex(state_lock);
+    */
+    // Remove below if uncommenting
+    fmsg;
+    client_id;
 
     return 0;
 }
@@ -377,7 +380,7 @@ static int handleTimeMessage(FractalClientMessage *fmsg, int client_id,
                              bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
-    LOG_INFO("Recieving a message time packet");
+    LOG_INFO("Receiving a message time packet");
 #ifdef _WIN32
     if (fmsg->time_data.use_win_name) {
         LOG_INFO("Setting time from windows time zone %s",

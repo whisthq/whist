@@ -245,6 +245,7 @@ int UpdateClipboardThread(void* opaque) {
 }
 
 ClipboardData* ClipboardSynchronizerGetNewClipboard() {
+    /*
     if (pending_clipboard_push) {
         pending_clipboard_push = false;
         return clipboard;
@@ -267,6 +268,7 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard() {
             SDL_SemPost(clipboard_semaphore);
         }
     }
+    */
 
     return NULL;
 }
