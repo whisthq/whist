@@ -80,3 +80,53 @@ def signupsHelper():
     monthCount = monthOutput["rows"][0]["count"] if monthOutput["rows"] else 0
 
     return {"day": dayCount, "week": weekCount, "month": monthCount}
+
+
+def loginActivityHelper():
+    output = fractalSQLSelect("login_history", {})
+    if output["rows"]:
+        activities = output["rows"]
+        activities.reverse()
+        return activities
+    else:
+        return {}
+
+
+def fetchUsersHelper():
+    output = fractalSQLSelect("users", {})
+    if output["rows"]:
+        return output["rows"]
+    else:
+        return {}
+
+
+def fetchVMsHelper():
+    output = fractalSQLSelect("v_ms", {})
+    if output["rows"]:
+        return output["rows"]
+    else:
+        return {}
+
+
+def fetchCustomersHelper():
+    output = fractalSQLSelect("customers", {})
+    if output["rows"]:
+        return output["rows"]
+    else:
+        return {}
+
+
+def fetchDisksHelper():
+    # TODO: delete branch from disks and fix this command
+    command = text(
+        """
+        SELECT disks.*, disk_settings.using_stun, disk_settings.branch as settings_branch
+        FROM disks
+        LEFT JOIN disk_settings ON disks.disk_name = disk_settings.disk_name
+        """
+    )
+    output = fractalRunSQL(command, {})
+    if output["rows"]:
+        return output["rows"]
+    else:
+        return {}

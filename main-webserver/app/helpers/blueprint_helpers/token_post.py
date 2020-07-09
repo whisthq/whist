@@ -13,7 +13,10 @@ def validateTokenHelper(token):
         ).total_seconds()
         conn.close()
         if diff > (60 * 10):
-            return jsonify({"status": UNAUTHORIZED, "error": "Expired token"}), UNAUTHORIZED
+            return (
+                jsonify({"status": UNAUTHORIZED, "error": "Expired token"}),
+                UNAUTHORIZED,
+            )
         else:
             return jsonify({"status": SUCCESS}), SUCCESS
     else:

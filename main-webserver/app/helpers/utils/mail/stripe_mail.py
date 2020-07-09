@@ -1,6 +1,7 @@
 from app import *
 from app.helpers.utils.general.logs import *
 
+
 def chargeFailedMail(username, custId):
     sendInfo(ID, "Sending charge failed email to {}".format(username))
     try:
@@ -28,14 +29,13 @@ def chargeFailedMail(username, custId):
     except Exception as e:
         sendError(ID, "Mail send failed: Error code " + e.message)
 
+
 def chargeSuccessMail(username, custId):
     message = SendGridMail(
         from_email="noreply@fractalcomputers.com",
         to_emails=["support@fractalcomputers.com"],
         subject="Payment recieved from " + username,
-        html_content="<div>The charge has succeeded for account "
-        + custId
-        + "</div>",
+        html_content="<div>The charge has succeeded for account " + custId + "</div>",
     )
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
@@ -50,7 +50,7 @@ def chargeSuccessMail(username, custId):
             function="chargeSuccessMail",
             label="Stripe",
             logs=e.message,
-            level=logging.ERROR
+            level=logging.ERROR,
         )
 
 
@@ -79,7 +79,7 @@ def trialEndingMail(user):
             function="trialEndingMail",
             label="Stripe",
             logs=e.message,
-            level=logging.ERROR
+            level=logging.ERROR,
         )
 
 
@@ -103,7 +103,7 @@ def trialEndedMail(username):
             function="trialEndedMail",
             label="Stripe",
             logs=e.message,
-            level=logging.ERROR
+            level=logging.ERROR,
         )
 
 
@@ -115,7 +115,7 @@ def creditAppliedMail(username):
 
     Returns:
         int: 0 for success, 1 for failure
-    """    
+    """
     internal_message = SendGridMail(
         from_email="support@fractalcomputers.com",
         to_emails=username,
@@ -136,7 +136,7 @@ def creditAppliedMail(username):
             function="creditAppliedMail",
             label="Mail",
             logs=e.message,
-            level=logging.ERROR
+            level=logging.ERROR,
         )
         return 1
 
@@ -160,9 +160,5 @@ def planChangeMail(username, newPlan):
         )
     except Exception as e:
         fractalLog(
-            function="planChangeMail",
-            label="Mail",
-            logs=e.message,
-            level=logging.ERROR
+            function="planChangeMail", label="Mail", logs=e.message, level=logging.ERROR
         )
- 
