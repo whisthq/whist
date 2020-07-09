@@ -112,7 +112,8 @@ int parseArgs(int argc, char *argv[]) {
                 running_ci = 1;
                 break;
             case 'p':
-                if (!read_hexadecimal_private_key(optarg, (char*)aes_private_key)) {
+                if (!read_hexadecimal_private_key(optarg,
+                                                  (char *)aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
                     printf("%s", usage);
                     return -1;
