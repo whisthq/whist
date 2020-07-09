@@ -952,6 +952,7 @@ int CreateTCPContext(SocketContext *context, char *destination, int port,
     private_key_data_t priv_key_data;
     preparePrivateKey( &priv_key_data, aes_private_key );
     sendp( context, &priv_key_data, sizeof( priv_key_data ) );
+    SDL_Delay( 150 );
     int recv_size = recvp( context, &priv_key_data, sizeof( priv_key_data ) );
     confirmPrivateKey( &priv_key_data, recv_size, aes_private_key );
 
