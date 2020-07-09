@@ -148,17 +148,17 @@ class Typeform extends Component {
                                     I'd like to provide feedback
                                 </div>
                             </button>
-                            <button className={styles.typeformButton}>
+                            <button
+                                className={styles.typeformButton}
+                                onClick={this.ForwardFeedbackButton}
+                            >
                                 <div
                                     className={styles.key}
                                     onClick={() => this.setState({ step: 2.1 })}
                                 >
                                     C
                                 </div>
-                                <div
-                                    className={styles.text}
-                                    onClick={this.ForwardFeedbackButton}
-                                >
+                                <div className={styles.text}>
                                     Great! Continue to dashboard
                                 </div>
                             </button>
