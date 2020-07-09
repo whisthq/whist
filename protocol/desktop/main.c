@@ -487,6 +487,13 @@ int main(int argc, char* argv[]) {
     if (log_dir == NULL) {
         return -1;
     }
+
+    // cache should be the first thing!
+    if (configureCache() != 0) {
+        printf("Failed to configure cache.");
+        return -1;
+    }
+
     initLogger(log_dir);
     free(log_dir);
     if (running_ci) {
@@ -495,12 +502,6 @@ int main(int argc, char* argv[]) {
 
     if (configureSSHKeys() != 0) {
         LOG_ERROR("Failed to configure SSH keys.");
-        destroyLogger();
-        return -1;
-    }
-
-    if (configureCache() != 0) {
-        LOG_ERROR("Failed to configure cache.");
         destroyLogger();
         return -1;
     }
