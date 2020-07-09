@@ -80,3 +80,13 @@ def signupsHelper():
     monthCount = monthOutput["rows"][0]["count"] if monthOutput["rows"] else 0
 
     return {"day": dayCount, "week": weekCount, "month": monthCount}
+
+def loginActivityHelper():
+    output = fractalSQLSelect("login_history", {})
+    if output["rows"]:
+        activities = output["rows"]
+        activities.reverse()
+        print(activities)
+        return activities
+    else:
+        return {}
