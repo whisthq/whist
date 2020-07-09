@@ -35,35 +35,25 @@ extern volatile bool wants_iframe;
 extern volatile bool update_encoder;
 extern input_device_t *input_device;
 
-static int handleUserInputMessage(FractalClientMessage *fmsg, int client_id,
-                                  bool is_controlling);
+static int handleUserInputMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handleKeyboardStateMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling);
-static int handleBitrateMessage(FractalClientMessage *fmsg, int client_id,
-                                bool is_controlling);
-static int handlePingMessage(FractalClientMessage *fmsg, int client_id,
-                             bool is_controlling);
-static int handleDimensionsMessage(FractalClientMessage *fmsg, int client_id,
-                                   bool is_controlling);
-static int handleClipboardMessage(FractalClientMessage *fmsg, int client_id,
-                                  bool is_controlling);
-static int handleAudioNackMessage(FractalClientMessage *fmsg, int client_id,
-                                  bool is_controlling);
-static int handleVideoNackMessage(FractalClientMessage *fmsg, int client_id,
-                                  bool is_controlling);
+static int handleBitrateMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handlePingMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handleDimensionsMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handleClipboardMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handleAudioNackMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handleVideoNackMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handleIFrameRequestMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling);
-static int handleInteractionModeMessage(FractalClientMessage *fmsg,
-                                        int client_id, bool is_controlling);
-static int handleQuitMessage(FractalClientMessage *fmsg, int client_id,
-                             bool is_controlling);
-static int handleTimeMessage(FractalClientMessage *fmsg, int client_id,
-                             bool is_controlling);
+static int handleInteractionModeMessage(FractalClientMessage *fmsg, int client_id,
+                                        bool is_controlling);
+static int handleQuitMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handleTimeMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handleMouseInactiveMessage(FractalClientMessage *fmsg, int client_id,
                                       bool is_controlling);
 
-int handleClientMessage(FractalClientMessage *fmsg, int client_id,
-                        bool is_controlling) {
+int handleClientMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
         case MESSAGE_MOUSE_BUTTON:
@@ -87,8 +77,7 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id,
         case MESSAGE_IFRAME_REQUEST:
             return handleIFrameRequestMessage(fmsg, client_id, is_controlling);
         case CMESSAGE_INTERACTION_MODE:
-            return handleInteractionModeMessage(fmsg, client_id,
-                                                is_controlling);
+            return handleInteractionModeMessage(fmsg, client_id, is_controlling);
         case CMESSAGE_QUIT:
             return handleQuitMessage(fmsg, client_id, is_controlling);
         case MESSAGE_TIME:
@@ -105,8 +94,7 @@ int handleClientMessage(FractalClientMessage *fmsg, int client_id,
 }
 
 // is called with is active read locked
-static int handleUserInputMessage(FractalClientMessage *fmsg, int client_id,
-                                  bool is_controlling) {
+static int handleUserInputMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     // Replay user input (keyboard or mouse presses)
     if (is_controlling && input_device) {
         if (!ReplayUserInput(input_device, fmsg)) {
@@ -145,8 +133,7 @@ static int handleKeyboardStateMessage(FractalClientMessage *fmsg, int client_id,
 
 // Update mbps
 // idk how to handle this
-static int handleBitrateMessage(FractalClientMessage *fmsg, int client_id,
-                                bool is_controlling) {
+static int handleBitrateMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
     LOG_INFO("MSG RECEIVED FOR MBPS: %f\n", fmsg->mbps);
@@ -155,11 +142,9 @@ static int handleBitrateMessage(FractalClientMessage *fmsg, int client_id,
     return 0;
 }
 
-static int handlePingMessage(FractalClientMessage *fmsg, int client_id,
-                             bool is_controlling) {
+static int handlePingMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     is_controlling;
-    LOG_INFO("Ping Received - Client ID: %d, Ping ID %d", client_id,
-             fmsg->ping_id);
+    LOG_INFO("Ping Received - Client ID: %d, Ping ID %d", client_id, fmsg->ping_id);
 
     // Update ping timer
     StartTimer(&(clients[client_id].last_ping));
@@ -169,9 +154,8 @@ static int handlePingMessage(FractalClientMessage *fmsg, int client_id,
     fmsg_response.type = MESSAGE_PONG;
     fmsg_response.ping_id = fmsg->ping_id;
     int ret = 0;
-    if (SendUDPPacket(&(clients[client_id].UDP_context), PACKET_MESSAGE,
-                      (uint8_t *)&fmsg_response, sizeof(fmsg_response), 1,
-                      STARTING_BURST_BITRATE, NULL, NULL) < 0) {
+    if (SendUDPPacket(&(clients[client_id].UDP_context), PACKET_MESSAGE, (uint8_t *)&fmsg_response,
+                      sizeof(fmsg_response), 1, STARTING_BURST_BITRATE, NULL, NULL) < 0) {
         LOG_WARNING("Could not send Ping to Client ID: %d", client_id);
         ret = -1;
     }
@@ -179,15 +163,13 @@ static int handlePingMessage(FractalClientMessage *fmsg, int client_id,
     return ret;
 }
 
-static int handleDimensionsMessage(FractalClientMessage *fmsg, int client_id,
-                                   bool is_controlling) {
+static int handleDimensionsMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
     // Update knowledge of client monitor dimensions
     LOG_INFO("Request to use dimensions %dx%d received", fmsg->dimensions.width,
              fmsg->dimensions.height);
-    if (client_width != fmsg->dimensions.width ||
-        client_height != fmsg->dimensions.height ||
+    if (client_width != fmsg->dimensions.width || client_height != fmsg->dimensions.height ||
         client_codec_type != fmsg->dimensions.codec_type) {
         client_width = fmsg->dimensions.width;
         client_height = fmsg->dimensions.height;
@@ -198,8 +180,7 @@ static int handleDimensionsMessage(FractalClientMessage *fmsg, int client_id,
     return 0;
 }
 
-static int handleClipboardMessage(FractalClientMessage *fmsg, int client_id,
-                                  bool is_controlling) {
+static int handleClipboardMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
     // Update clipboard with message
@@ -209,16 +190,14 @@ static int handleClipboardMessage(FractalClientMessage *fmsg, int client_id,
 }
 
 // Audio nack received, relay the packet
-static int handleAudioNackMessage(FractalClientMessage *fmsg, int client_id,
-                                  bool is_controlling) {
+static int handleAudioNackMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     if (!is_controlling) return 0;
     // mprintf("Audio NACK requested for: ID %d Index %d\n",
     // fmsg->nack_data.id, fmsg->nack_data.index);
     FractalPacket *audio_packet =
-        &audio_buffer[fmsg->nack_data.id % AUDIO_BUFFER_SIZE]
-                     [fmsg->nack_data.index];
-    int len = audio_buffer_packet_len[fmsg->nack_data.id % AUDIO_BUFFER_SIZE]
-                                     [fmsg->nack_data.index];
+        &audio_buffer[fmsg->nack_data.id % AUDIO_BUFFER_SIZE][fmsg->nack_data.index];
+    int len =
+        audio_buffer_packet_len[fmsg->nack_data.id % AUDIO_BUFFER_SIZE][fmsg->nack_data.index];
     if (audio_packet->id == fmsg->nack_data.id) {
         LOG_INFO(
             "NACKed audio packet %d found of length %d. "
@@ -231,23 +210,20 @@ static int handleAudioNackMessage(FractalClientMessage *fmsg, int client_id,
         LOG_WARNING(
             "NACKed audio packet %d %d not found, ID %d %d was "
             "located instead.",
-            fmsg->nack_data.id, fmsg->nack_data.index, audio_packet->id,
-            audio_packet->index);
+            fmsg->nack_data.id, fmsg->nack_data.index, audio_packet->id, audio_packet->index);
     }
     return 0;
 }
-static int handleVideoNackMessage(FractalClientMessage *fmsg, int client_id,
-                                  bool is_controlling) {
+static int handleVideoNackMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     if (!is_controlling) return 0;
     // Video nack received, relay the packet
 
     // mprintf("Video NACK requested for: ID %d Index %d\n",
     // fmsg->nack_data.id, fmsg->nack_data.index);
     FractalPacket *video_packet =
-        &video_buffer[fmsg->nack_data.id % VIDEO_BUFFER_SIZE]
-                     [fmsg->nack_data.index];
-    int len = video_buffer_packet_len[fmsg->nack_data.id % VIDEO_BUFFER_SIZE]
-                                     [fmsg->nack_data.index];
+        &video_buffer[fmsg->nack_data.id % VIDEO_BUFFER_SIZE][fmsg->nack_data.index];
+    int len =
+        video_buffer_packet_len[fmsg->nack_data.id % VIDEO_BUFFER_SIZE][fmsg->nack_data.index];
     if (video_packet->id == fmsg->nack_data.id) {
         LOG_INFO(
             "NACKed video packet ID %d Index %d found of "
@@ -261,8 +237,7 @@ static int handleVideoNackMessage(FractalClientMessage *fmsg, int client_id,
         LOG_WARNING(
             "NACKed video packet %d %d not found, ID %d %d was "
             "located instead.",
-            fmsg->nack_data.id, fmsg->nack_data.index, video_packet->id,
-            video_packet->index);
+            fmsg->nack_data.id, fmsg->nack_data.index, video_packet->id, video_packet->index);
     }
     return 0;
 }
@@ -280,8 +255,8 @@ static int handleIFrameRequestMessage(FractalClientMessage *fmsg, int client_id,
     return 0;
 }
 
-static int handleInteractionModeMessage(FractalClientMessage *fmsg,
-                                        int client_id, bool is_controlling) {
+static int handleInteractionModeMessage(FractalClientMessage *fmsg, int client_id,
+                                        bool is_controlling) {
     is_controlling;
 
     /*
@@ -327,8 +302,7 @@ static int handleInteractionModeMessage(FractalClientMessage *fmsg,
     return 0;
 }
 
-static int handleQuitMessage(FractalClientMessage *fmsg, int client_id,
-                             bool is_controlling) {
+static int handleQuitMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     is_controlling;
     fmsg;
     int ret = 0;
@@ -376,31 +350,25 @@ static int handleQuitMessage(FractalClientMessage *fmsg, int client_id,
     return ret;
 }
 
-static int handleTimeMessage(FractalClientMessage *fmsg, int client_id,
-                             bool is_controlling) {
+static int handleTimeMessage(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     client_id;
     if (!is_controlling) return 0;
     LOG_INFO("Receiving a message time packet");
 #ifdef _WIN32
     if (fmsg->time_data.use_win_name) {
-        LOG_INFO("Setting time from windows time zone %s",
-                 fmsg->time_data.win_tz_name);
+        LOG_INFO("Setting time from windows time zone %s", fmsg->time_data.win_tz_name);
         SetTimezoneFromWindowsName(fmsg->time_data.win_tz_name);
     } else {
         LOG_INFO("Setting time from UTC offset %d", fmsg->time_data.UTC_Offset);
-        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset,
-                           fmsg->time_data.DST_flag);
+        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
     }
 #else
     if (fmsg->time_data.use_linux_name) {
-        LOG_INFO("Setting time from IANA time zone %s",
-                 fmsg->time_data.win_tz_name);
+        LOG_INFO("Setting time from IANA time zone %s", fmsg->time_data.win_tz_name);
         SetTimezoneFromIANAName(fmsg->time_data.win_tz_name);
     } else {
-        LOG_INFO("Setting time from UTC offset %d",
-                 fmsg->time_data.win_tz_name);
-        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset,
-                           fmsg->time_data.DST_flag);
+        LOG_INFO("Setting time from UTC offset %d", fmsg->time_data.win_tz_name);
+        SetTimezoneFromUtc(fmsg->time_data.UTC_Offset, fmsg->time_data.DST_flag);
     }
 #endif
     return 0;

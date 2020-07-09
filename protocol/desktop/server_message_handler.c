@@ -40,8 +40,7 @@ extern int client_id;
 static int handleInitMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handleQuitMessage(FractalServerMessage *fmsg, size_t fmsg_size);
-static int handleAudioFrequencyMessage(FractalServerMessage *fmsg,
-                                       size_t fmsg_size);
+static int handleAudioFrequencyMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handleClipboardMessage(FractalServerMessage *fmsg, size_t fmsg_size);
 
 int handleServerMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
@@ -63,8 +62,7 @@ int handleServerMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
 }
 
 static int handleInitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
-    if (fmsg_size !=
-        sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit)) {
+    if (fmsg_size != sizeof(FractalServerMessage) + sizeof(FractalServerMessageInit)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
             " (type: init message)!");
@@ -73,13 +71,10 @@ static int handleInitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
 
     LOG_INFO("Received init message!\n");
 
-    FractalServerMessageInit *fmsg_init =
-        (FractalServerMessageInit *)fmsg->init_msg;
+    FractalServerMessageInit *fmsg_init = (FractalServerMessageInit *)fmsg->init_msg;
 
-    memcpy(filename, fmsg_init->filename,
-           min(sizeof(filename), sizeof(fmsg_init->filename)));
-    memcpy(username, fmsg_init->username,
-           min(sizeof(username), sizeof(fmsg_init->username)));
+    memcpy(filename, fmsg_init->filename, min(sizeof(filename), sizeof(fmsg_init->filename)));
+    memcpy(username, fmsg_init->username, min(sizeof(username), sizeof(fmsg_init->username)));
 
     if (logConnectionID(fmsg_init->connection_id) < 0) {
         LOG_ERROR("Failed to log connection ID.");
@@ -103,8 +98,7 @@ static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
         ping_failures = 0;
         try_amount = 0;
     } else {
-        LOG_INFO("Old Ping ID found: Got %d but expected %d", fmsg->ping_id,
-                 ping_id);
+        LOG_INFO("Old Ping ID found: Got %d but expected %d", fmsg->ping_id, ping_id);
     }
     return 0;
 }
@@ -122,8 +116,7 @@ static int handleQuitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
     return 0;
 }
 
-static int handleAudioFrequencyMessage(FractalServerMessage *fmsg,
-                                       size_t fmsg_size) {
+static int handleAudioFrequencyMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
     if (fmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
@@ -135,8 +128,7 @@ static int handleAudioFrequencyMessage(FractalServerMessage *fmsg,
     return 0;
 }
 
-static int handleClipboardMessage(FractalServerMessage *fmsg,
-                                  size_t fmsg_size) {
+static int handleClipboardMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
     if (fmsg_size != sizeof(FractalServerMessage) + fmsg->clipboard.size) {
         LOG_ERROR(
             "Incorrect message size for a server message"

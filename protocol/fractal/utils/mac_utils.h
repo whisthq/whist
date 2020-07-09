@@ -41,8 +41,7 @@ Public Functions
  *
  * @returns
  */
-int remove_file(const char* fpath, const struct stat* sb, int typeflag,
-                struct FTW* ftwbuf);
+int remove_file(const char* fpath, const struct stat* sb, int typeflag, struct FTW* ftwbuf);
 
 /**
  * @brief                         Recurisvely delete a path on MacOS

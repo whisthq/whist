@@ -58,16 +58,14 @@ WCHAR* lclipboard_directory() {
     if (directory == NULL) {
         static WCHAR szPath[MAX_PATH];
         WCHAR* path;
-        if (SUCCEEDED(SHGetKnownFolderPath(
-                &FOLDERID_ProgramData, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE,
-                0, &path))) {
+        if (SUCCEEDED(SHGetKnownFolderPath(&FOLDERID_ProgramData,
+                                           CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, 0, &path))) {
             wcscpy(szPath, path);
             CoTaskMemFree(path);
             PathAppendW(szPath, L"FractalCache");
             if (!PathFileExistsW(szPath)) {
                 if (!CreateDirectoryW(szPath, NULL)) {
-                    LOG_ERROR("Could not create directory: %S (Error %d)",
-                              szPath, GetLastError());
+                    LOG_ERROR("Could not create directory: %S (Error %d)", szPath, GetLastError());
                     return NULL;
                 }
             }
@@ -88,8 +86,7 @@ WCHAR* lget_clipboard_directory() {
     PathAppendW(path, L"get_clipboard");
     if (!PathFileExistsW(path)) {
         if (!CreateDirectoryW(path, NULL)) {
-            LOG_ERROR("Could not create directory: %S (Error %d)", path,
-                      GetLastError());
+            LOG_ERROR("Could not create directory: %S (Error %d)", path, GetLastError());
             return NULL;
         }
     }
@@ -103,8 +100,7 @@ WCHAR* lset_clipboard_directory() {
     PathAppendW(path, L"set_clipboard");
     if (!PathFileExistsW(path)) {
         if (!CreateDirectoryW(path, NULL)) {
-            LOG_ERROR("Could not create directory: %S (Error %d)", path,
-                      GetLastError());
+            LOG_ERROR("Could not create directory: %S (Error %d)", path, GetLastError());
             return NULL;
         }
     }
@@ -130,8 +126,7 @@ bool CreateJunction(WCHAR* szJunction, WCHAR* szPath);
 
 bool CreateJunction(WCHAR* szJunction, WCHAR* szPath) {
     BYTE buf[sizeof(REPARSE_MOUNTPOINT_DATA_BUFFER) + MAX_PATH * sizeof(WCHAR)];
-    REPARSE_MOUNTPOINT_DATA_BUFFER* ReparseBuffer =
-        (REPARSE_MOUNTPOINT_DATA_BUFFER*)buf;
+    REPARSE_MOUNTPOINT_DATA_BUFFER* ReparseBuffer = (REPARSE_MOUNTPOINT_DATA_BUFFER*)buf;
     WCHAR szTarget[MAX_PATH] = L"\\??\\";
 
     wcscat(szTarget, szPath);
@@ -145,29 +140,25 @@ bool CreateJunction(WCHAR* szJunction, WCHAR* szPath) {
     // Obtain SE_RESTORE_NAME privilege (required for opening a directory)
     HANDLE hToken = NULL;
     TOKEN_PRIVILEGES tp;
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES,
-                          &hToken)) {
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken)) {
         LOG_ERROR("OpenProcessToken Error: %d", GetLastError());
         return false;
     }
-    if (!LookupPrivilegeValueW(NULL, L"SeRestorePrivilege",
-                               &tp.Privileges[0].Luid)) {
+    if (!LookupPrivilegeValueW(NULL, L"SeRestorePrivilege", &tp.Privileges[0].Luid)) {
         LOG_ERROR("LookupPrivilegeValueW Error: %d", GetLastError());
         return false;
     }
     tp.PrivilegeCount = 1;
     tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-    if (!AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES),
-                               NULL, NULL)) {
+    if (!AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), NULL, NULL)) {
         LOG_ERROR("AdjustTokenPrivileges Error: %d", GetLastError());
         return false;
     }
     if (hToken) CloseHandle(hToken);
     // End Obtain SE_RESTORE_NAME privilege
 
-    HANDLE hDir = CreateFileW(
-        szJunction, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
-        FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    HANDLE hDir = CreateFileW(szJunction, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                              FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL);
     if (hDir == INVALID_HANDLE_VALUE) {
         LOG_ERROR("CreateFileW Error: %d", GetLastError());
         return false;
@@ -182,10 +173,9 @@ bool CreateJunction(WCHAR* szJunction, WCHAR* szPath) {
     ReparseBuffer->ReparseDataLength = ReparseBuffer->ReparseTargetLength + 12;
 
     DWORD dwRet;
-    if (!DeviceIoControl(
-            hDir, FSCTL_SET_REPARSE_POINT, ReparseBuffer,
-            ReparseBuffer->ReparseDataLength + REPARSE_MOUNTPOINT_HEADER_SIZE,
-            NULL, 0, &dwRet, NULL)) {
+    if (!DeviceIoControl(hDir, FSCTL_SET_REPARSE_POINT, ReparseBuffer,
+                         ReparseBuffer->ReparseDataLength + REPARSE_MOUNTPOINT_HEADER_SIZE, NULL, 0,
+                         &dwRet, NULL)) {
         CloseHandle(hDir);
         RemoveDirectoryW(szJunction);
 
@@ -238,8 +228,7 @@ ClipboardData* GetClipboard() {
 
     int cf_type = -1;
 
-    for (int i = 0; i < sizeof(cf_types) / sizeof(cf_types[0]) && cf_type == -1;
-         i++) {
+    for (int i = 0; i < sizeof(cf_types) / sizeof(cf_types[0]) && cf_type == -1; i++) {
         if (IsClipboardFormatAvailable(cf_types[i])) {
             HGLOBAL hglb = GetClipboardData(cf_types[i]);
             if (hglb != NULL) {
@@ -251,16 +240,14 @@ ClipboardData* GetClipboard() {
                         memcpy(cb->data, lptstr, data_size);
                         cf_type = cf_types[i];
                     } else {
-                        LOG_WARNING(
-                            "Could not copy, clipboard too large! %d bytes",
-                            data_size);
+                        LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
                     }
 
                     // Don't forget to release the lock after you are done.
                     GlobalUnlock(hglb);
                 } else {
-                    LOG_WARNING("GlobalLock failed! (Type: %d) (Error: %d)",
-                                cf_types[i], GetLastError());
+                    LOG_WARNING("GlobalLock failed! (Type: %d) (Error: %d)", cf_types[i],
+                                GetLastError());
                 }
             }
         }
@@ -328,22 +315,18 @@ ClipboardData* GetClipboard() {
 
                         LOG_INFO("Deleting %S...", cur_filename);
 
-                        DWORD fileattributes =
-                            GetFileAttributesW((LPCWSTR)cur_filename);
+                        DWORD fileattributes = GetFileAttributesW((LPCWSTR)cur_filename);
                         if (fileattributes == INVALID_FILE_ATTRIBUTES) {
-                            LOG_WARNING("GetFileAttributesW Error: %d",
-                                        GetLastError());
+                            LOG_WARNING("GetFileAttributesW Error: %d", GetLastError());
                         }
 
                         if (fileattributes & FILE_ATTRIBUTE_DIRECTORY) {
                             if (!RemoveDirectoryW((LPCWSTR)cur_filename)) {
-                                LOG_WARNING("Delete Folder Error: %d",
-                                            GetLastError());
+                                LOG_WARNING("Delete Folder Error: %d", GetLastError());
                             }
                         } else {
                             if (!DeleteFileW((LPCWSTR)cur_filename)) {
-                                LOG_WARNING("Delete Folder Error: %d",
-                                            GetLastError());
+                                LOG_WARNING("Delete Folder Error: %d", GetLastError());
                             }
                         }
                     } while (FindNextFileW(hFind, &data));
@@ -353,8 +336,8 @@ ClipboardData* GetClipboard() {
                 if (!CreateDirectoryW(LGET_CLIPBOARD, NULL)) {
                     int err = GetLastError();
                     if (err != ERROR_ALREADY_EXISTS) {
-                        LOG_WARNING("Could not create directory: %S (Error %d)",
-                                    LGET_CLIPBOARD, GetLastError());
+                        LOG_WARNING("Could not create directory: %S (Error %d)", LGET_CLIPBOARD,
+                                    GetLastError());
                         break;
                     }
                 }
@@ -374,13 +357,11 @@ ClipboardData* GetClipboard() {
 
                     if (fileattributes & FILE_ATTRIBUTE_DIRECTORY) {
                         if (!CreateJunction(target_file, filename)) {
-                            LOG_WARNING("CreateJunction Error: %d",
-                                        GetLastError());
+                            LOG_WARNING("CreateJunction Error: %d", GetLastError());
                         }
                     } else {
                         if (!CreateHardLinkW(target_file, filename, 0)) {
-                            LOG_WARNING("CreateHardLinkW Error: %d",
-                                        GetLastError());
+                            LOG_WARNING("CreateHardLinkW Error: %d", GetLastError());
                         }
                     }
 
@@ -484,15 +465,13 @@ void SetClipboard(ClipboardData* cb) {
                         continue;
                     }
 
-                    memcpy(file_ptr, file_prefix,
-                           sizeof(WCHAR) * file_prefix_len);
+                    memcpy(file_ptr, file_prefix, sizeof(WCHAR) * file_prefix_len);
                     // file_ptr moves in terms of WCHAR
                     file_ptr += file_prefix_len;
                     // total_len moves in terms of bytes
                     total_len += sizeof(WCHAR) * file_prefix_len;
 
-                    int len = (int)wcslen(data.cFileName) +
-                              1;  // Including null terminator
+                    int len = (int)wcslen(data.cFileName) + 1;  // Including null terminator
 
                     LOG_INFO("FILENAME: %S", data.cFileName);
 

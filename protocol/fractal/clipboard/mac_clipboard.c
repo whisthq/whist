@@ -36,8 +36,7 @@ static int last_clipboard_sequence_number = -1;
 static char clipboard_buf[9000000];
 
 bool StartTrackingClipboardUpdates() {
-    last_clipboard_sequence_number =
-        GetClipboardChangecount();  // to capture the first event
+    last_clipboard_sequence_number = GetClipboardChangecount();  // to capture the first event
     clipboardHasImage = false;
     clipboardHasString = false;
     clipboardHasFiles = false;
@@ -53,9 +52,8 @@ bool hasClipboardUpdated() {
         clipboardHasImage = ClipboardHasImage();
         clipboardHasString = ClipboardHasString();
         clipboardHasFiles = ClipboardHasFiles();
-        hasUpdated =
-            (clipboardHasImage || clipboardHasString ||
-             clipboardHasFiles);  // should be always set to true in here
+        hasUpdated = (clipboardHasImage || clipboardHasString ||
+                      clipboardHasFiles);  // should be always set to true in here
         last_clipboard_sequence_number = new_clipboard_sequence_number;
     }
     return hasUpdated;
@@ -133,8 +131,7 @@ ClipboardData* GetClipboard() {
             LOG_INFO("CLIPBOARD STRING: %s", cb->data);
             LOG_INFO("Len %d, Strlen %d", cb->size, strlen(cb->data));
         } else {
-            LOG_WARNING("Could not copy, clipboard too large! %d bytes",
-                        data_size);
+            LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
         }
     } else if (clipboardHasImage) {
         // malloc some space for the image
@@ -159,8 +156,7 @@ ClipboardData* GetClipboard() {
             // struct
             free(clipboard_image);
         } else {
-            LOG_WARNING("Could not copy, clipboard too large! %d bytes",
-                        data_size);
+            LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
         }
     } else {
         LOG_INFO("Nothing in the clipboard!");

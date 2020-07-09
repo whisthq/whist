@@ -84,8 +84,7 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate);
  *                                 encoder FIFO queue to encode
  * @param len                      Length of the buffer of data to intake
  */
-void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data,
-                               int len);
+void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data, int len);
 
 /**
  * @brief                          Encodes an AVFrame of audio to AAC format

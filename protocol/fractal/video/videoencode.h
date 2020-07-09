@@ -75,8 +75,7 @@ Public Functions
  *
  * @returns                        The newly created encoder
  */
-video_encoder_t* create_video_encoder(int in_width, int in_height,
-                                      int out_width, int out_height,
+video_encoder_t* create_video_encoder(int in_width, int in_height, int out_width, int out_height,
                                       int bitrate, CodecType codec_type);
 
 /**
@@ -89,8 +88,7 @@ video_encoder_t* create_video_encoder(int in_width, int in_height,
  *
  * @returns                        0 on success, else -1
  */
-int video_encoder_frame_intake(video_encoder_t* encoder, void* rgb_pixels,
-                               int pitch);
+int video_encoder_frame_intake(video_encoder_t* encoder, void* rgb_pixels, int pitch);
 
 /**
  * @brief                          Encode the frame in `encoder->sw_frame` or

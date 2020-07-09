@@ -43,18 +43,15 @@ void set_decoder_opts(video_decoder_t* decoder) {
 int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
     int err = 0;
 
-    if ((err = av_hwdevice_ctx_create(&ctx->hw_device_ctx, type, NULL, NULL,
-                                      0)) < 0) {
-        LOG_WARNING("Failed to create specified HW device. Error %d: %s\n", err,
-                    av_err2str(err));
+    if ((err = av_hwdevice_ctx_create(&ctx->hw_device_ctx, type, NULL, NULL, 0)) < 0) {
+        LOG_WARNING("Failed to create specified HW device. Error %d: %s\n", err, av_err2str(err));
         return err;
     }
 
     return err;
 }
 
-enum AVPixelFormat match_format(AVCodecContext* ctx,
-                                const enum AVPixelFormat* pix_fmts,
+enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts,
                                 enum AVPixelFormat match_pix_fmt) {
     UNUSED(ctx);
 
@@ -65,8 +62,7 @@ enum AVPixelFormat match_format(AVCodecContext* ctx,
     i += snprintf(supported_formats, len, "Supported formats:");
 
     for (const enum AVPixelFormat* p = pix_fmts; *p != -1; p++) {
-        i += snprintf(supported_formats + i, len - i, " %s",
-                      av_get_pix_fmt_name(*p));
+        i += snprintf(supported_formats + i, len - i, " %s", av_get_pix_fmt_name(*p));
     }
 
     LOG_INFO("%s", supported_formats);
@@ -79,8 +75,7 @@ enum AVPixelFormat match_format(AVCodecContext* ctx,
     }
 
     if (*pix_fmts != -1) {
-        LOG_WARNING("Hardware format not found, using format %s\n",
-                    av_get_pix_fmt_name(*pix_fmts));
+        LOG_WARNING("Hardware format not found, using format %s\n", av_get_pix_fmt_name(*pix_fmts));
         return *pix_fmts;
     }
 
@@ -88,8 +83,7 @@ enum AVPixelFormat match_format(AVCodecContext* ctx,
     return AV_PIX_FMT_NONE;
 }
 
-enum AVPixelFormat get_format(AVCodecContext* ctx,
-                              const enum AVPixelFormat* pix_fmts) {
+enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts) {
     video_decoder_t* decoder = ctx->opaque;
 
     enum AVPixelFormat match = match_format(ctx, pix_fmts, decoder->match_fmt);
@@ -99,8 +93,7 @@ enum AVPixelFormat get_format(AVCodecContext* ctx,
     if (decoder->match_fmt == AV_PIX_FMT_QSV) {
         int ret;
 
-        ret = av_hwdevice_ctx_create(&decoder->ref, AV_HWDEVICE_TYPE_QSV,
-                                     "auto", NULL, 0);
+        ret = av_hwdevice_ctx_create(&decoder->ref, AV_HWDEVICE_TYPE_QSV, "auto", NULL, 0);
         if (ret < 0) {
             LOG_WARNING("Could not av_hwdevice_ctx_create for QSV");
             return AV_PIX_FMT_NONE;
@@ -138,8 +131,8 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
     // avcodec_register_all is deprecated on FFmpeg 4+
     // only Linux uses FFmpeg 3.4.x because of canonical system packages
 #if LIBAVCODEC_VERSION_MAJOR < 58
-    LOG_INFO("OLD VERSON FFMPEG: %d.%d.%d", LIBAVCODEC_VERSION_MAJOR,
-             LIBAVCODEC_VERSION_MINOR, LIBAVCODEC_VERSION_MICRO);
+    LOG_INFO("OLD VERSON FFMPEG: %d.%d.%d", LIBAVCODEC_VERSION_MAJOR, LIBAVCODEC_VERSION_MINOR,
+             LIBAVCODEC_VERSION_MICRO);
     avcodec_register_all();
 #endif
 
@@ -234,10 +227,9 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
             LOG_WARNING("Device type %s is not supported.\n",
                         av_hwdevice_get_type_name(decoder->device_type));
             LOG_WARNING("Available device types:");
-            while ((decoder->device_type = av_hwdevice_iterate_types(
-                        decoder->device_type)) != AV_HWDEVICE_TYPE_NONE) {
-                LOG_WARNING(" %s",
-                            av_hwdevice_get_type_name(decoder->device_type));
+            while ((decoder->device_type = av_hwdevice_iterate_types(decoder->device_type)) !=
+                   AV_HWDEVICE_TYPE_NONE) {
+                LOG_WARNING(" %s", av_hwdevice_get_type_name(decoder->device_type));
             }
             LOG_WARNING(" ");
             return -1;
@@ -250,8 +242,7 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
         }
 
         if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
-            LOG_WARNING("alloccontext3 failed w/ error code: %d\n",
-                        AVERROR(ENOMEM));
+            LOG_WARNING("alloccontext3 failed w/ error code: %d\n", AVERROR(ENOMEM));
             return -1;
         }
         decoder->context->opaque = decoder;
@@ -270,8 +261,7 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
 
         set_decoder_opts(decoder);
 
-        if (!(decoder->hw_frame = av_frame_alloc()) ||
-            !(decoder->sw_frame = av_frame_alloc())) {
+        if (!(decoder->hw_frame = av_frame_alloc()) || !(decoder->sw_frame = av_frame_alloc())) {
             LOG_WARNING("Can not alloc frame");
 
             av_frame_free(&decoder->hw_frame);
@@ -289,17 +279,15 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
 }
 
 #if defined(_WIN32)
-DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE,
-                                   DECODE_TYPE_HARDWARE_OLDER, DECODE_TYPE_QSV,
-                                   DECODE_TYPE_SOFTWARE};
+DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_HARDWARE_OLDER,
+                                   DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
 #elif __APPLE__
 DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
 #else  // linux
 DecodeType decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
 #endif
 
-#define NUM_DECODER_TYPES \
-    (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
+#define NUM_DECODER_TYPES (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
 
 bool try_next_decoder(video_decoder_t* decoder) {
     if (decoder->can_use_hardware) {
@@ -326,8 +314,7 @@ bool try_next_decoder(video_decoder_t* decoder) {
             }
         }
 
-        LOG_WARNING(
-            "Video decoder: Failed, No more decoders, All decoders failed!");
+        LOG_WARNING("Video decoder: Failed, No more decoders, All decoders failed!");
         return false;
     } else {
         LOG_WARNING("Video Decoder: NO HARDWARE");
@@ -349,8 +336,7 @@ video_decoder_t* create_video_decoder(int width, int height, bool use_hardware,
     av_log_set_callback(swap_decoder);
 #endif
 
-    video_decoder_t* decoder =
-        (video_decoder_t*)malloc(sizeof(video_decoder_t));
+    video_decoder_t* decoder = (video_decoder_t*)malloc(sizeof(video_decoder_t));
     memset(decoder, 0, sizeof(video_decoder_t));
 
     decoder->width = width;
@@ -400,8 +386,7 @@ void destroy_video_decoder_members(video_decoder_t* decoder) {
 
 /// @brief decode a frame using the decoder decoder
 /// @details decode an encoded frame under YUV color format into RGB frame
-bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
-                          int buffer_size) {
+bool video_decoder_decode(video_decoder_t* decoder, void* buffer, int buffer_size) {
     clock t;
     StartTimer(&t);
 

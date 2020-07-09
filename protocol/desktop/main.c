@@ -99,6 +99,10 @@ volatile int try_amount;
 char filename[300];
 char username[50];
 
+#define MS_IN_SECOND 1000.0
+#define WINDOWS_DEFAULT_DPI 96.0
+#define BYTES_IN_KILOBYTE 1024.0
+
 // UPDATER CODE - HANDLES ALL PERIODIC UPDATES
 struct UpdateData {
     bool tried_to_update_dimension;
@@ -133,7 +137,7 @@ void update() {
     // Check for a new clipboard update from the server, if it's been 25ms since
     // the last time we checked the TCP socket, and the clipboard isn't actively
     // busy
-    if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / 1000.0 &&
+    if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / MS_IN_SECOND &&
         !isClipboardSynchronizing()) {
         // Check if TCP connction is active
         int result = Ack(&PacketTCPContext);
@@ -159,11 +163,9 @@ void update() {
         ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
         if (clipboard) {
             FractalClientMessage* fmsg_clipboard =
-                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) +
-                       clipboard->size);
+                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
             fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
-            memcpy(&fmsg_clipboard->clipboard, clipboard,
-                   sizeof(ClipboardData) + clipboard->size);
+            memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
             SendFmsg(fmsg_clipboard);
             free(fmsg_clipboard);
         }
@@ -174,14 +176,14 @@ void update() {
     if (!UpdateData.tried_to_update_dimension &&
         (server_width != output_width || server_height != output_height ||
          server_codec_type != output_codec_type)) {
-        LOG_INFO("Asking for server dimension to be %dx%d with codec type h%d",
-                 output_width, output_height, output_codec_type);
+        LOG_INFO("Asking for server dimension to be %dx%d with codec type h%d", output_width,
+                 output_height, output_codec_type);
         fmsg.type = MESSAGE_DIMENSIONS;
         fmsg.dimensions.width = (int)output_width;
         fmsg.dimensions.height = (int)output_height;
         fmsg.dimensions.codec_type = (CodecType)output_codec_type;
         fmsg.dimensions.dpi =
-            (int)(96.0 * output_width / get_virtual_screen_width());
+            (int)(WINDOWS_DEFAULT_DPI * output_width / get_virtual_screen_width());
         SendFmsg(&fmsg);
         UpdateData.tried_to_update_dimension = true;
     }
@@ -191,7 +193,7 @@ void update() {
     if (update_mbps) {
         update_mbps = false;
         fmsg.type = MESSAGE_MBPS;
-        fmsg.mbps = max_bitrate / 1024.0 / 1024.0;
+        fmsg.mbps = max_bitrate / BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE;
         LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
         SendFmsg(&fmsg);
     }
@@ -219,13 +221,11 @@ void update() {
 
     // If 210ms has past since last ping, then it's taking a bit
     // Ie, a ping try will occur every 210ms
-    bool taking_a_bit = is_timing_latency &&
-                        GetTimer(latency_timer) > 0.21 * (1 + num_ping_tries);
+    bool taking_a_bit = is_timing_latency && GetTimer(latency_timer) > 0.21 * (1 + num_ping_tries);
     // If 500ms has past since the last resolved ping, then it's been a while
     // and we should ping again (Last resolved ping is a ping that either has
     // been received, or was noted as failed)
-    bool awhile_since_last_resolved_ping =
-        !is_timing_latency && GetTimer(latency_timer) > 0.5;
+    bool awhile_since_last_resolved_ping = !is_timing_latency && GetTimer(latency_timer) > 0.5;
 
     // If either of the two above conditions hold, then send a new ping
     if (awhile_since_last_resolved_ping || taking_a_bit) {
@@ -257,13 +257,12 @@ void update() {
 // implemented)
 int SendFmsg(FractalClientMessage* fmsg) {
     if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_TIME) {
-        return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg,
-                             GetFmsgSize(fmsg));
+        return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
     } else {
         static int sent_packet_id = 0;
         sent_packet_id++;
-        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg,
-                             GetFmsgSize(fmsg), sent_packet_id, -1, NULL, NULL);
+        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg),
+                             sent_packet_id, -1, NULL, NULL);
     }
 }
 
@@ -365,14 +364,12 @@ int ReceivePackets(void* opaque) {
 
         // START DROP EMULATION
         if (is_currently_dropping) {
-            if (drop_time_ms > 0 &&
-                GetTimer(drop_test_timer) * 1000.0 > drop_time_ms) {
+            if (drop_time_ms > 0 && GetTimer(drop_test_timer) * MS_IN_SECOND > drop_time_ms) {
                 is_currently_dropping = false;
                 StartTimer(&drop_test_timer);
             }
         } else {
-            if (drop_distance_sec > 0 &&
-                GetTimer(drop_test_timer) > drop_distance_sec) {
+            if (drop_distance_sec > 0 && GetTimer(drop_test_timer) > drop_distance_sec) {
                 is_currently_dropping = true;
                 StartTimer(&drop_test_timer);
             }
@@ -400,11 +397,11 @@ int ReceivePackets(void* opaque) {
 
         if (packet) {
             // Log if it's been a while since the last packet was received
-            if (lastrecv > 20.0 / 1000.0) {
+            if (lastrecv > 20.0 / MS_IN_SECOND) {
                 LOG_INFO(
                     "Took more than 20ms to receive something!! Took %fms "
                     "total!",
-                    lastrecv * 1000.0);
+                    lastrecv * MS_IN_SECOND);
             }
             lastrecv = 0.0;
         }
@@ -443,9 +440,9 @@ int ReceivePackets(void* opaque) {
         }
     }
 
-    if (lastrecv > 20.0 / 1000.0) {
+    if (lastrecv > 20.0 / MS_IN_SECOND) {
         LOG_INFO("Took more than 20ms to receive something!! Took %fms total!",
-                 lastrecv * 1000.0);
+                 lastrecv * MS_IN_SECOND);
     }
 
     SDL_Delay(5);
@@ -549,8 +546,7 @@ int main(int argc, char* argv[]) {
     exiting = false;
     bool failed = false;
 
-    for (try_amount = 0;
-         try_amount < MAX_NUM_CONNECTION_ATTEMPTS && !exiting && !failed;
+    for (try_amount = 0; try_amount < MAX_NUM_CONNECTION_ATTEMPTS && !exiting && !failed;
          try_amount++) {
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
@@ -576,8 +572,8 @@ int main(int argc, char* argv[]) {
 
         // Create thread to receive all packets and handle them as needed
         run_receive_packets = true;
-        SDL_Thread* receive_packets_thread = SDL_CreateThread(
-            ReceivePackets, "ReceivePackets", &PacketReceiveContext);
+        SDL_Thread* receive_packets_thread =
+            SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
         StartTimer(&window_resize_timer);
 
@@ -609,7 +605,7 @@ int main(int argc, char* argv[]) {
                 LOG_INFO("Exiting CI run");
             }
 
-            if (GetTimer(keyboard_sync_timer) > 50.0 / 1000.0) {
+            if (GetTimer(keyboard_sync_timer) > 50.0 / MS_IN_SECOND) {
                 if (syncKeyboardState() != 0) {
                     failed = true;
                     break;

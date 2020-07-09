@@ -30,15 +30,19 @@ extern char *server_ip;
 extern bool received_server_init_message;
 extern int uid;
 
+#define SHORT_TCP_CONNECTION_WAIT 500  // ms
+#define LONG_TCP_CONNECTION_WAIT 750   // ms
+#define UDP_CONNECTION_WAIT 500        // ms
+
 bool using_stun;
 
 int discoverPorts(void) {
     SocketContext context;
     using_stun = true;
-    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, 500,
+    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, SHORT_TCP_CONNECTION_WAIT,
                          using_stun) < 0) {
         using_stun = false;
-        if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, 750,
+        if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, LONG_TCP_CONNECTION_WAIT,
                              using_stun) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
             return -1;
@@ -49,8 +53,7 @@ int discoverPorts(void) {
     fcmsg.type = MESSAGE_DISCOVERY_REQUEST;
     fcmsg.discoveryRequest.username = uid;
 
-    if (SendTCPPacket(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg,
-                      (int)sizeof(fcmsg)) < 0) {
+    if (SendTCPPacket(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg)) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
         closesocket(context.s);
         return -1;
@@ -81,8 +84,7 @@ int discoverPorts(void) {
             packet->payload_size);
     }
     if (fsmsg->type != MESSAGE_DISCOVERY_REPLY) {
-        LOG_ERROR("Message not of discovery reply type (Type: %d)",
-                  fsmsg->type);
+        LOG_ERROR("Message not of discovery reply type (Type: %d)", fsmsg->type);
         closesocket(context.s);
         return -1;
     }
@@ -100,13 +102,10 @@ int discoverPorts(void) {
     client_id = reply_msg->client_id;
     UDP_port = reply_msg->UDP_port;
     TCP_port = reply_msg->TCP_port;
-    LOG_INFO("Assigned client ID: %d. UDP Port: %d, TCP Port: %d", client_id,
-             UDP_port, TCP_port);
+    LOG_INFO("Assigned client ID: %d. UDP Port: %d, TCP Port: %d", client_id, UDP_port, TCP_port);
 
-    memcpy(filename, reply_msg->filename,
-           min(sizeof(filename), sizeof(reply_msg->filename)));
-    memcpy(username, reply_msg->username,
-           min(sizeof(username), sizeof(reply_msg->username)));
+    memcpy(filename, reply_msg->filename, min(sizeof(filename), sizeof(reply_msg->filename)));
+    memcpy(username, reply_msg->username, min(sizeof(username), sizeof(reply_msg->username)));
 
     if (logConnectionID(reply_msg->connection_id) < 0) {
         LOG_ERROR("Failed to log connection ID.");
@@ -131,20 +130,22 @@ int connectToServer(void) {
         return -1;
     }
 
-    if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10, 500,
+    if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10, UDP_CONNECTION_WAIT,
                          using_stun) < 0) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
 
+    // socket options = TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=65536
+    // Windows Socket 65535 Socket options apply to all sockets.
     int a = 65535;
-    if (setsockopt(PacketSendContext.s, SOL_SOCKET, SO_RCVBUF, (const char *)&a,
-                   sizeof(int)) == -1) {
-        LOG_ERROR("Error setting socket opts: %d\n", GetLastNetworkError());
+    if (setsockopt(PacketSendContext.s, SOL_SOCKET, SO_RCVBUF, (const char *)&a, sizeof(int)) ==
+        -1) {
+        LOG_ERROR("Error setting socket opts: %d", GetLastNetworkError());
         return -1;
     }
 
-    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, 750,
+    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, LONG_TCP_CONNECTION_WAIT,
                          using_stun) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         closesocket(PacketSendContext.s);
