@@ -77,4 +77,3 @@ def logs_get(**kwargs):
     output = logsHelper(connection_id, username, bookmarked)
 
     return jsonify(output), output["status"]
-
