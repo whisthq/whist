@@ -221,6 +221,7 @@ def cloneDisk(
     location,
     vm_size,
     operating_system,
+    branch,
     apps=[],
     resource_group=os.getenv("VM_GROUP"),
 ):
@@ -322,6 +323,11 @@ def cloneDisk(
                 "location": location,
                 "vm_size": vm_size,
             },
+        )
+
+        fractalSQLInsert(
+            table_name="disk_settings",
+            params={"disk_name": disk_name, "branch": branch, "using_stun": False,},
         )
 
         return {"status": SUCCESS, "disk_name": disk_name}
