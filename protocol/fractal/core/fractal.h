@@ -577,12 +577,14 @@ int runcmd(const char* cmdline, char** response);
 char* get_ip();
 
 /**
- * @brief                          Reads a 16-byte hexidecimal string and copies it into private_key
+ * @brief                          Reads a 16-byte hexidecimal string and copies
+ * it into private_key
  *
  * @param hex_string               The hexidecimal string to copy
  * @param private_key              The 16-byte buffer to copy the bytes into
  *
- * @returns                        True if hex_string was a 16-byte hexadecimal value, otherwise false
+ * @returns                        True if hex_string was a 16-byte hexadecimal
+ * value, otherwise false
  */
 bool read_hexadecimal_private_key(char* hex_string, char* private_key);
 
@@ -596,7 +598,8 @@ bool read_hexadecimal_private_key(char* hex_string, char* private_key);
 bool is_dev_vm();
 
 /**
- * @brief                          Queries the webserver to get the VM's aes private key
+ * @brief                          Queries the webserver to get the VM's aes
+ * private key
  *
  * @returns                        The VM's 16-byte aes private key
  */

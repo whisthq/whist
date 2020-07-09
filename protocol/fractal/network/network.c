@@ -252,7 +252,8 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
 
         // Encrypt the packet with AES
         FractalPacket encrypted_packet;
-        int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
+        int encrypt_len =
+            encrypt_packet(packet, packet_size, &encrypted_packet,
                            (unsigned char *)context->aes_private_key);
 
         // Send it off
@@ -1007,7 +1008,8 @@ int CreateUDPServerContext(SocketContext *context, int port,
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
+    if (!confirmPrivateKey(&priv_key_data, recv_size,
+                           context->aes_private_key)) {
         return -1;
     }
 

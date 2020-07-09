@@ -268,7 +268,7 @@ char* get_ip() {
     return ip;
 }
 
-bool read_hexadecimal_private_key( char* hex_string, char* private_key ) {
+bool read_hexadecimal_private_key(char* hex_string, char* private_key) {
     for (int i = 0; i < 16; i++) {
         if (!isxdigit(hex_string[2 * i]) || !isxdigit(hex_string[2 * i + 1]) ||
             hex_string[32] != '\0') {
@@ -358,7 +358,8 @@ bool is_dev_vm() {
         LOG_INFO("Branch: %s", branch);
         if (private_key) {
             LOG_INFO("Private Key: %s", private_key->str_value);
-            read_hexadecimal_private_key(private_key->str_value, aes_private_key);
+            read_hexadecimal_private_key(private_key->str_value,
+                                         aes_private_key);
         } else {
             memcpy(aes_private_key, PRIVATE_KEY, sizeof(aes_private_key));
         }
