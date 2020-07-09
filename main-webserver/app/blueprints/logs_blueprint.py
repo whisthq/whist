@@ -1,6 +1,7 @@
 from app import *
 
 from app.helpers.blueprint_helpers.logs_get import *
+from app.helpers.blueprint_helpers.logs_post import *
 
 from app.celery.aws_s3_modification import *
 from app.celery.aws_s3_deletion import *
@@ -45,15 +46,35 @@ def logs_post(action, **kwargs):
 
         return jsonify({"ID": task.id}), ACCEPTED
 
+    elif action == "bookmark":
+        connection_id = kwargs["body"]["connection_id"]
+
+        output = bookmarkHelper(connection_id)
+
+        return jsonify(output), output["status"]
+
+    elif action == "unbookmark":
+        connection_id = kwargs["body"]["connection_id"]
+
+        output = unbookmarkHelper(connection_id)
+
+        return jsonify(output), output["status"]
+
 
 @logs_bp.route("/logs", methods=["GET"])
 @fractalPreProcess
 @jwt_required
 @adminRequired
 def logs_get(**kwargs):
-    connection_id = request.args.get("connection_id")
-    username = request.args.get("username")
+    connection_id, username, bookmarked = (
+        request.args.get("connection_id"),
+        request.args.get("username"),
+        request.args.get("bookmarked"),
+    )
 
-    output = logsHelper(connection_id, username)
+    bookmarked = str(bookmarked.upper()) == "TRUE"
+
+    output = logsHelper(connection_id, username, bookmarked)
 
     return jsonify(output), output["status"]
+

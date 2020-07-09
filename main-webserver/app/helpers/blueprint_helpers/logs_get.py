@@ -1,9 +1,23 @@
 from app import *
 
 
-def logsHelper(connection_id, username):
+def logsHelper(connection_id, username, bookmarked):
     session = Session()
 
+    if bookmarked:
+        command = text(
+            """
+            SELECT * FROM "bookmarked_logs" LEFT JOIN "logs" ON (bookmarked_logs.connection_id = logs.connection_id)
+            """
+        )
+
+        params = {"connection_id": connection_id}
+
+        output = fractalCleanSQLOutput(session.execute(command, params).fetchall())
+        session.commit()
+        session.close()
+
+        return {"logs": output, "status": SUCCESS}
     if connection_id:
         command = text(
             """
