@@ -1132,6 +1132,9 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
                            int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
 
+    private_key_data_t priv_key_data;
+    memcpy( priv_key_data.private_key, context->aes_private_key, 16 );
+
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (context->s <= 0) {  // Windows & Unix cases
@@ -1149,7 +1152,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     LOG_INFO("Connecting to server...");
 
     // Open up the port
-    if (sendp(context, NULL, 0) < 0) {
+    if (sendp(context, &priv_key_data, sizeof( priv_key_data )) < 0) {
         LOG_WARNING("Could not send message to server %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
@@ -1159,7 +1162,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     SDL_Delay(150);
 
     // Send acknowledgement
-    if (sendp(context, NULL, 0) < 0) {
+    if (sendp(context, &priv_key_data, sizeof( priv_key_data )) < 0) {
         LOG_WARNING("Could not send message to server %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
@@ -1190,6 +1193,8 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
                                int port, int recvfrom_timeout_ms,
                                int stun_timeout_ms) {
     context->is_tcp = false;
+    private_key_data_t priv_key_data;
+    memcpy( priv_key_data.private_key, context->aes_private_key, 16 );
 
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -1252,7 +1257,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
     LOG_INFO("Connecting to server...");
 
     // Open up the port
-    if (sendp(context, NULL, 0) < 0) {
+    if (sendp(context, &priv_key_data, sizeof( priv_key_data )) < 0) {
         LOG_WARNING("Could not send message to server %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
@@ -1262,7 +1267,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
     SDL_Delay(150);
 
     // Send acknowledgement
-    if (sendp(context, NULL, 0) < 0) {
+    if (sendp(context, &priv_key_data, sizeof( priv_key_data )) < 0) {
         LOG_WARNING("Could not send message to server %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
