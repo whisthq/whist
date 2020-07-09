@@ -20,8 +20,20 @@ def protocolInfoHelper(ip_address):
 
     output = fractalSQLSelect(table_name="v_ms", params={"ip": ip_address})
 
-    if not output or not output["rows"]:
-        return {"dev": True, "branch": "dev", "status": NOT_FOUND, "using_stun": False}
+    if not output["success"] or not output["rows"]:
+        output = fractalSQLSelect(
+            table_name="VMs_FractalProtocolCI", params={"ip": ip_address}
+        )
+
+        if not output["success"] or not output["rows"]:
+            output = fractalSQLSelect(table_name="v_ms", params={"ip": ip_address})
+
+            return {
+                "dev": True,
+                "branch": "dev",
+                "status": NOT_FOUND,
+                "using_stun": False,
+            }
     else:
         vm_info = output["rows"][0]
 

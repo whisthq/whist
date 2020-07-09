@@ -125,6 +125,6 @@ def azure_vm_get(action, **kwargs):
         return jsonify(output), output["status"]
 
     elif action == "protocolInfo":
-        output = protocolInfoHelper(kwargs["body"]["received_from"])
+        output = protocolInfoHelper(kwargs["received_from"])
 
-        return 200
+        return jsonify(output), output["status"]
