@@ -43,29 +43,28 @@ def report_get(action, **kwargs):
         return jsonify(output), SUCCESS
 
 
-@report_bp.route("/report/<action>", methods=["POST"])
+@report_bp.route("/report/regionReport", methods=["POST"])
 @fractalPreProcess
 @jwt_required
 @adminRequired
-def report_post(action, **kwargs):
-    if action == "regionReport":
-        body = request.get_json()
-        output = regionReportHelper(body["timescale"])
+def regionReport(**kwargs):
+    body = request.get_json()
+    output = regionReportHelper(body["timescale"])
 
-        return jsonify(output), SUCCESS
+    return jsonify(output), SUCCESS
 
-@report_bp.route("/report/<action>", methods=["POST"])
+@report_bp.route("/report/userReport", methods=["POST"])
 @fractalPreProcess
 @jwt_required
 @fractalAuth
-def report_no_admin(action, **kwargs):
-    if action == "userReport":
-        body = request.get_json()
-        if body["timescale"]:
-            output = userReportHelper(body["username"], timescale=body["timescale"])
-        elif body["start_date"]:
-            output = userReportHelper(body["username"], start_date=body["start_date"])
-        else:
-            return jsonify({}), BAD_REQUEST
+def userReport(**kwargs):
+    body = request.get_json()
+    output = {}
+    if body["timescale"]:
+        output = userReportHelper(body["username"], timescale=body["timescale"])
+    elif body["start_date"]:
+        output = userReportHelper(body["username"], start_date=body["start_date"])
+    else:
+        return jsonify({}), BAD_REQUEST
 
-        return jsonify(output), SUCCESS
+    return jsonify(output), SUCCESS
