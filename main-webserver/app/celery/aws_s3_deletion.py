@@ -12,7 +12,7 @@ def deleteLogsFromS3(sender, connection_id):
         json:
     """
 
-    def S3Delete(file_name, last_updated):
+    def S3Delete(file_name):
         bucket = "fractal-protocol-logs"
 
         file_name = file_name.replace(
@@ -27,56 +27,32 @@ def deleteLogsFromS3(sender, connection_id):
         )
 
         try:
+            s3.Object(bucket, file_name).delete()
             fractalLog(
                 function="deleteLogsFromS3",
                 label="None",
-                logs="Deleting log {file_name} from S3".format(file_name=file_name)
+                logs="Deleted log {file_name} from S3".format(file_name=file_name)
             )
-            s3.Object(bucket, file_name).delete()
-            return True
         except Exception as e:
-            print(str(e))
-            return False
+            fractalLog(
+                function="deleteLogsFromS3",
+                label="None",
+                logs="Deleting log {file_name} failed: {error}".format(file_name=file_name, error=str(e)),
+                level=logging.ERROR 
+            )
 
-    last_updated = getCurrentTime()
+    output = fractalSQLSelect(
+        table_name="logs", params={"connection_id": connection_id}
+    )
 
-    with engine.connect() as conn:
-        command = text(
-            """
-			SELECT * FROM logs WHERE "connection_id" = :connection_id
-			"""
-        )
+    if output["success"] and output["rows"]:
+        logs = output["rows"][0]
+        if logs["server_logs"]:
+            S3Delete(logs_found["server_logs"])
 
-        params = {"connection_id": connection_id}
-        logs_found = (cleanFetchedSQL(conn.execute(command, **params).fetchall()))[0]
-        success_serverlogs = None
-
-        # delete server log for this connection ID
-        if logs_found["server_logs"]:
-            success_serverlogs = S3Delete(logs_found["server_logs"], last_updated)
-            if success_serverlogs:
-                print("Successfully deleted log: " + str(logs_found["server_logs"]))
-            else:
-                print("Could not delete log: " + str(logs_found["server_logs"]))
-
-        # delete the client logs
         if logs_found["client_logs"]:
-            print(logs_found["client_logs"])
-            success_clientlogs = S3Delete(logs_found["client_logs"], last_updated)
-            if success_clientlogs:
-                print("Successfully deleted log: " + str(logs_found["client_logs"]))
-            else:
-                print("Could not delete log: " + str(logs_found["client_logs"]))
+            S3Delete(logs_found["client_logs"])
 
-        command = text(
-            """
-			DELETE FROM logs WHERE "connection_id" = :connection_id
-			"""
-        )
-
-        params = {"connection_id": connection_id}
-        conn.execute(command, **params)
-
-        conn.close()
-        return 1
-    return -1
+        fractalSQLDelete(table_name="logs", params={"connection_id": connection_id})
+    
+    return {"status": SUCCESS}
