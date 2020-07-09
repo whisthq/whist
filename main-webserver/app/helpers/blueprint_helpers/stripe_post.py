@@ -76,7 +76,7 @@ def chargeHelper(token, email, code, plan):
                 logs="Customer updated successful"
             )
         else:
-            fractalSQLInsert("customers", {"username": email, "id": customer_id, "subscription": subscription_id, "location"; "", "trial_end": trial_end, "paid": True, "created": dt.now(datetime.timezone.utc).timestamp()})
+            fractalSQLInsert("customers", {"username": email, "id": customer_id, "subscription": subscription_id, "location": "", "trial_end": trial_end, "paid": True, "created": dt.now(datetime.timezone.utc).timestamp()})
             fractalLog(
                 function="chargeHelper",
                 label=email,
@@ -258,7 +258,7 @@ def insertCustomerHelper(email, location):
         trial_end = round((dt.now() + relativedelta(months=credits)).timestamp())
         fractalSQLUpdate(table_name="users", conditional_params={"username": email}, new_params={"credits_outstanding": 0})
 
-    fractalSQLInsert("customers", {"username": email, "id": None, "subscription": None, "location"; location, "trial_end": trial_end, "paid": False, "created": dt.now(datetime.timezone.utc).timestamp()})
+    fractalSQLInsert("customers", {"username": email, "id": None, "subscription": None, "location": location, "trial_end": trial_end, "paid": False, "created": dt.now(datetime.timezone.utc).timestamp()})
 
     return jsonify({"status": SUCCESS}), SUCCESS
 

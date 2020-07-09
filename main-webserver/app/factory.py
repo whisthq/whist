@@ -23,6 +23,7 @@ def init_app(app):
     from .blueprints.azure_disk_blueprint import azure_disk_bp
     from .blueprints.artifact_blueprint import artifact_bp
     from .blueprints.mail_blueprint import mail_bp
+    from .blueprints.stripe_blueprint import stripe_bp
     from .blueprints.report_blueprint import report_bp
     from .blueprints.analytics_blueprint import analytics_bp
     from .blueprints.sql_table_blueprint import table_bp
@@ -35,6 +36,7 @@ def init_app(app):
     app.register_blueprint(azure_disk_bp)
     app.register_blueprint(artifact_bp)
     app.register_blueprint(mail_bp)
+    app.register_blueprint(stripe_bp)
     app.register_blueprint(report_bp)
     app.register_blueprint(analytics_bp)
     app.register_blueprint(table_bp)
