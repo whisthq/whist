@@ -252,8 +252,7 @@ char* get_ip() {
     }
 
     char* buf;
-    int len = runcmd("curl ipinfo.io", &buf);
-    UNUSED(len);
+    runcmd("curl ipinfo.io", &buf);
 
     json_t json;
     if (!parse_json(buf, &json)) {
