@@ -91,6 +91,16 @@ def fractalSQLSelect(table_name, params):
 
 
 def fractalSQLUpdate(table_name, conditional_params, new_params):
+    """Updates an entry in the database
+
+    Args:
+        table_name (str): Name of table to update
+        conditional_params (arr[str]): The params that need to be satisfied for the row to update
+        new_params (arr[str]): The new values to update
+
+    Returns:
+        [type]: [description]
+    """
     number_of_new_params = number_of_conditional_params = 1
 
     command = """

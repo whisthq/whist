@@ -46,6 +46,12 @@ def account_no_auth(action, **kwargs):
 
         return jsonify(output), output["status"]
 
+    elif action == "resetPassword":
+        # Reset user password
+
+        resetPasswordHelper(kwargs["body"]["username"], kwargs["body"]["password"])
+        return jsonify({"status": 200}), 200
+
 
 @account_bp.route("/account/<action>", methods=["GET"])
 @fractalPreProcess
