@@ -20,7 +20,9 @@ jobs:
           persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
           fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
       - name: install linux dependencies
-        run: ${{ github.workspace }}/desktop/linux-client-setup.sh
+        run: |
+          sudo apt-get update -y
+          ${{ github.workspace }}/desktop/linux-client-setup.sh
       - name: cmake build
         run: cmake -DBUILD_SERVER=OFF -DBUILD_CLIENT=OFF -DBUILD_TESTS=OFF .
       - name: clang-format
