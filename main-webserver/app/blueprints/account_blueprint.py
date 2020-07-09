@@ -50,7 +50,7 @@ def account_no_auth(action, **kwargs):
         # Reset user password
 
         resetPasswordHelper(kwargs["body"]["username"], kwargs["body"]["password"])
-        return jsonify({"status": 200}), 200
+        return jsonify({"status": SUCCESS}), SUCCESS
 
 
 @account_bp.route("/account/<action>", methods=["GET"])

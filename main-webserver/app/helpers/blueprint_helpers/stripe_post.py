@@ -8,7 +8,7 @@ subscription_id = ""
 def chargeHelper(token, email, code, plan):
     fractalLog(
         function="chargeHelper",
-        label="Stripe",
+        label=email,
         logs ="Signing {} up for plan {}, with code {}, token{}".format(
             email, plan, code, token
         )
@@ -23,7 +23,7 @@ def chargeHelper(token, email, code, plan):
     trial_end = 0
     customer_exists = False
 
-    customer = fractalSQLSelect("customers", {"username":email})
+    customer = fractalSQLSelect("customers", {"username":email})["rows"]
     if customer:
         customer_exists = True
         if customer["trial_end"]:
@@ -36,9 +36,9 @@ def chargeHelper(token, email, code, plan):
     try:
         new_customer = stripe.Customer.create(email=email, source=token)
         customer_id = new_customer["id"]
-        credits = fractalSQLSelect("users", {"username":email})["credits_outstanding"]
+        credits = fractalSQLSelect("users", {"username":email})["rows"]["credits_outstanding"]
 
-        metadata = fractalSQLSelect("users", {"code":code})
+        metadata = fractalSQLSelect("users", {"code":code})["rows"]
         if metadata:
             credits += 1
 
@@ -63,34 +63,34 @@ def chargeHelper(token, email, code, plan):
             fractalSQLUpdate(table_name="users", conditional_params={"username": email}, new_params={"credits_outstanding": 0})
             subscription_id = new_subscription["id"]
     except Exception as e:
-        return jsonify({"status": 402, "error": str(e)}), 402
+        return jsonify({"status": UNAUTHORIZED, "error": str(e)}), UNAUTHORIZED
 
     try:
         if customer_exists:
             fractalSQLUpdate("customers", {"username": email}, {"id": customer_id, "subscription": subscription_id, "trial_end": trial_end, "paid": True})
             fractalLog(
                 function="chargeHelper",
-                label="Stripe",
+                label=email,
                 logs="Customer updated successful"
             )
         else:
             fractalSQLInsert("customers", {"username": email, "id": customer_id, "subscription": subscription_id, "location"; "", "trial_end": trial_end, "paid": True, "created": dt.now(datetime.timezone.utc).timestamp()})
             fractalLog(
                 function="chargeHelper",
-                label="Stripe",
+                label=email,
                 logs="Customer inserted successful"
             )
         
     except:
         fractalLog(
             function="chargeHelper",
-            label="Stripe",
+            label=email,
             logs="Customer inserted unsuccessful",
             level=logging.ERROR
         )
-        return jsonify({"status": 409}), 409
+        return jsonify({"status": CONFLICT}), CONFLICT
 
-    return jsonify({"status": 200}), 200
+    return jsonify({"status": SUCCESS}), SUCCESS
 
 def retrieveStripeHelper(email):
     fractalLog(
@@ -99,8 +99,8 @@ def retrieveStripeHelper(email):
         logs="Retrieving subscriptions for {}".format(email),
     )
 
-    customer = fractalSQLSelect("customers", {"username":email})
-    credits = fractalSQLSelect("users", {"username":email})["credits_outstanding"]
+    customer = fractalSQLSelect("customers", {"username":email})["rows"]
+    credits = fractalSQLSelect("users", {"username":email})["rows"]["credits_outstanding"]
 
     if customer:
         subscription = customer["subscription"]
@@ -111,14 +111,14 @@ def retrieveStripeHelper(email):
             return (
                 jsonify(
                     {
-                        "status": 200,
+                        "status": SUCCESS,
                         "subscription": payload,
                         "creditsOutstanding": credits,
                         "account_locked": account_locked,
                         "customer": customer,
                     }
                 ),
-                200,
+                SUCCESS,
             )
         except Exception as e:
             account_locked = not customer["paid"] and customer[
@@ -135,54 +135,54 @@ def retrieveStripeHelper(email):
             return (
                 jsonify(
                     {
-                        "status": 402,
+                        "status": PAYMENT_REQUIRED,
                         "subscription": {},
                         "creditsOutstanding": credits,
                         "account_locked": account_locked,
                         "customer": customer,
                     }
                 ),
-                402,
+                PAYMENT_REQUIRED,
             )
 
     return (
         jsonify(
             {
-                "status": 402,
+                "status": PAYMENT_REQUIRED,
                 "subscription": {},
                 "creditsOutstanding": credits,
                 "account_locked": False,
                 "customer": {},
             }
         ),
-        402,
+        PAYMENT_REQUIRED,
     )
 
 def cancelStripeHelper(email):
-    customer = fractalSQLSelect("customers", {"username":email})
+    customer = fractalSQLSelect("customers", {"username":email})["rows"]
     if customer:
         subscription = customer["subscription"]
         try:
             payload = stripe.Subscription.delete(subscription)
             fractalLog(
                 function="cancelStripeHelper",
-                label="Stripe",
+                label=email,
                 logs="Cancel stripe subscription for {}".format(email),
             )
         except Exception as e:
             fractalLog(
                 function="cancelStripeHelper",
-                label="Stripe",
+                label=email,
                 logs=e,
                 level=logging.ERROR
             )
             pass
         fractalSQLDelete("customers", {"username": email})
-        return jsonify({"status": 200}), 200
-    return jsonify({"status": 400}), 400
+        return jsonify({"status": SUCCESS}), SUCCESS
+    return jsonify({"status": NOT_FOUND}), NOT_FOUND
 
 def discountHelper(code):
-    metadata = fractalSQLSelect("users", {"code":code})
+    metadata = fractalSQLSelect("users", {"code":code})["rows"]
 
     if not metadata:
         fractalLog(
@@ -191,7 +191,7 @@ def discountHelper(code):
             logs="No user for code {}".format(code),
             level=logging.ERROR
         )
-        return jsonify({"status": 404}), 404
+        return jsonify({"status": NOT_FOUND}), NOT_FOUND
 
     creditsOutstanding = metadata["credits_outstanding"]
     email = metadata["username"]
@@ -199,7 +199,7 @@ def discountHelper(code):
     subscription_id = None
     trial_end = 0
 
-    customer = fractalSQLSelect("customers", {"username":email})
+    customer = fractalSQLSelect("customers", {"username":email})["rows"]
     if customer and customer["subscription"]:
         has_subscription = True
         subscription_id = customer["subscription"]
@@ -231,25 +231,25 @@ def discountHelper(code):
             fractalSQLUpdate("customers", {"subscription":new_subscription["id"]}, {"trial_end":trial_end})
         fractalLog(
             function="discountHelper",
-            label="Stripe",
+            label=code,
             logs="Applied discount and updated trial end",
         )
     else:
         fractalSQLUpdate("users", {"username":email}, {"credits_outstanding":creditsOutstanding + 1})
         fractalLog(
             function="discountHelper",
-            label="Stripe",
+            label=email,
             logs="Applied discount and updated credits outstanding"
         )
 
     creditAppliedMail(email)
 
-    return jsonify({"status": 200}), 200
+    return jsonify({"status": SUCCESS}), SUCCESS
 
 def insertCustomerHelper(email, location):
     trial_end = round((dt.now() + relativedelta(weeks=1)).timestamp())
     credits = 0
-    user = fractalSQLSelect("users", {"username":email})
+    user = fractalSQLSelect("users", {"username":email})["rows"]
     if user:
         credits = user["credits_outstanding"]
     if credits > 0:
@@ -258,7 +258,7 @@ def insertCustomerHelper(email, location):
 
     fractalSQLInsert("customers", {"username": email, "id": None, "subscription": None, "location"; location, "trial_end": trial_end, "paid": False, "created": dt.now(datetime.timezone.utc).timestamp()})
 
-    return jsonify({"status": 200}), 200
+    return jsonify({"status": SUCCESS}), SUCCESS
 
 def webhookHelper(event):
     # Handle the event
@@ -269,7 +269,7 @@ def webhookHelper(event):
             logs="Charge failed webhook received from stripe",
         )
         custId = event.data.object.customer
-        customer = fractalSQLSelect("customers", {"id": custId})
+        customer = fractalSQLSelect("customers", {"id": custId})["rows"]
 
         if customer:
             chargeFailedMail(customer["username"], custId)
@@ -286,7 +286,7 @@ def webhookHelper(event):
             logs="Charge succeeded webhook received from stripe",
         )
         custId = event.data.object.customer
-        customer = fractalSQLSelect("customers", {"id": custId})
+        customer = fractalSQLSelect("customers", {"id": custId})["rows"]
         if customer:
             chargeSuccessMail(customer["username"], custId)
 
@@ -297,7 +297,7 @@ def webhookHelper(event):
             logs="Charge ending webhook received from stripe",
         )
         custId = event.data.object.customer
-        customer = fractalSQLSelect("customers", {"id": custId})
+        customer = fractalSQLSelect("customers", {"id": custId})["rows"]
         status = event.data.object.status
         if customer:
             if status == "trialing":
@@ -305,9 +305,9 @@ def webhookHelper(event):
             else:
                 trialEndedMail(customer["username"])
     else:
-        return jsonify({}), 400
+        return jsonify({}), NOT_FOUND
 
-    return jsonify({"status": 200}), 200
+    return jsonify({"status": SUCCESS}), SUCCESS
 
 def updateHelper(username, new_plan_type):
     new_plan_id = None
@@ -318,9 +318,9 @@ def updateHelper(username, new_plan_type):
     elif new_plan_type == "Unlimited":
         new_plan_id = os.getenv("UNLIMITED_PLAN_ID")
     else:
-        return jsonify({"status": 404, "error": "Invalid plan type"}), 404
+        return jsonify({"status": NOT_ACCEPTABLE, "error": "Invalid plan type"}), NOT_ACCEPTABLE
 
-    customer = fractalSQLSelect("customers", {"username":username})
+    customer = fractalSQLSelect("customers", {"username":username})["rows"]
     if customer:
         old_subscription = customer["subscription"]
         subscription = stripe.Subscription.retrieve(old_subscription)
@@ -328,18 +328,18 @@ def updateHelper(username, new_plan_type):
             subscription_id = subscription["items"]["data"][0].id
             stripe.SubscriptionItem.modify(subscription_id, plan=new_plan_id)
             planChangeMail(username, new_plan_type)
-            return jsonify({"status": 200}), 200
+            return jsonify({"status": SUCCESS}), SUCCESS
     else:
-        return jsonify({"status": 404, "error": "Invalid plan type"}), 404
+        return jsonify({"status": NOT_ACCEPTABLE, "error": "Invalid plan type"}), NOT_ACCEPTABLE
 
 def referralHelper(code, username):
     code_username = None
 
-    metadata = fractalSQLSelect("users", {"code": code})
+    metadata = fractalSQLSelect("users", {"code": code})["rows"]
     if metadata:
         code_username = metadata["username"]
     if username == code_username:
-        return jsonify({"status": 200, "verified": False}), 200
-    codes = fractalSQLSelect("users", {"code": code})
+        return jsonify({"status": SUCCESS, "verified": False}), SUCCESS
+    codes = fractalSQLSelect("users", {"code": code})["rows"]
     verified = code_username is not None
-    return jsonify({"status": 200, "verified": verified}), 200
+    return jsonify({"status": SUCCESS, "verified": verified}), SUCCESS

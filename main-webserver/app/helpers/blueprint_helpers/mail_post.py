@@ -4,9 +4,9 @@ from app.helpers.utils.general.sql_commands import *
 
 
 def forgotPasswordHelper(username):
-    user = fractalSQLSelect(table_name="users", params={"username": username})
-    verified = len(user) > 0
-    if verified:
+    params = {"userName": username}
+    user = fractalSQLSelect("users", params)["rows"]
+    if user:
         upperCase = string.ascii_uppercase
         lowerCase = string.ascii_lowercase
         numbers = "1234567890"
@@ -31,20 +31,20 @@ def forgotPasswordHelper(username):
         except Exception as e:
             fractalLog(
                 function="forgotPasswordHelper",
-                label="ERROR",
+                label=username,
                 logs="Mail send failed: Error code " + e.message,
                 level=logging.ERROR,
             )
-            return jsonify({"status": 500}), 500
+            return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
         fractalSQLInsert(
             "password_tokens",
             {"token": token, "time_issued": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),},
         )
-        return jsonify({"verified": verified}), 200
+        return jsonify({"verified": verified}), SUCCESS
     else:
         conn.close()
-        return jsonify({"verified": verified}), 401
+        return jsonify({"verified": verified}), NOT_FOUND
 
 
 def cancelHelper(user, feedback):
@@ -63,13 +63,13 @@ def cancelHelper(user, feedback):
     except Exception as e:
         fractalLog(
             function="cancelHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
-        return jsonify({"status": 500}), 500
+        return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
-    return jsonify({"status": 200}), 200
+    return jsonify({"status": SUCCESS}), SUCCESS
 
 
 def verificationHelper(user, token):
@@ -88,13 +88,13 @@ def verificationHelper(user, token):
     except Exception as e:
         fractalLog(
             function="verificationHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
-        return jsonify({"status": 500}), 500
+        return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
-    return jsonify({"status": 200}), 200
+    return jsonify({"status": SUCCESS}), SUCCESS
 
 
 def referralMailHelper(user, recipients, code):
@@ -113,13 +113,13 @@ def referralMailHelper(user, recipients, code):
     except Exception as e:
         fractalLog(
             function="referralMailHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
-        return jsonify({"status": 500}), 500
+        return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
-    return jsonify({"status": 200}), 200
+    return jsonify({"status": SUCCESS}), SUCCESS
 
 
 def feedbackHelper(user, feedback, feedback_type):
@@ -137,13 +137,13 @@ def feedbackHelper(user, feedback, feedback_type):
     except Exception as e:
         fractalLog(
             function="feedbackHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
-        return jsonify({"status": 500}), 500
+        return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
-    return jsonify({"status": 200}), 200
+    return jsonify({"status": SUCCESS}), SUCCESS
 
 
 def trialStartHelper(user, location, code):
@@ -159,11 +159,11 @@ def trialStartHelper(user, location, code):
     except Exception as e:
         fractalLog(
             function="trialStartHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
-        return jsonify({"status": 500}), 500
+        return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
     internal_message = SendGridMail(
         from_email="noreply@fractalcomputers.com",
@@ -179,13 +179,13 @@ def trialStartHelper(user, location, code):
     except Exception as e:
         fractalLog(
             function="trialStartHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
-        return jsonify({"status": 500}), 500
+        return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
-    return jsonify({"status": 200}), 200
+    return jsonify({"status": SUCCESS}), SUCCESS
 
 
 def computerReadyHelper(user, date, code, location):
@@ -206,13 +206,13 @@ def computerReadyHelper(user, date, code, location):
     except Exception as e:
         fractalLog(
             function="computerReadyHelper",
-            label="ERROR",
+            label=user,
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
-        return jsonify({"status": 500}), 500
+        return jsonify({"status": UNAUTHORIZED}), UNAUTHORIZED
 
-    return jsonify({"status": 200}), 200
+    return jsonify({"status": SUCCESS}), SUCCESS
 
 
 def newsletterSubscribe(username):
