@@ -136,14 +136,15 @@ int broadcastUDPPacket(FractalPacketType type, void *data, int len, int id,
         // Save the len to nack buffer lens
         *packet_len = packet_size;
 
-        // Encrypt the packet with AES
-        FractalPacket encrypted_packet;
-        int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
-                                         (unsigned char *)PRIVATE_KEY);
-
         // Send it off
         for (int j = 0; j < MAX_NUM_CLIENTS; j++) {
             if (clients[j].is_active) {
+                // Encrypt the packet with AES
+                FractalPacket encrypted_packet;
+                int encrypt_len = encrypt_packet(
+                    packet, packet_size, &encrypted_packet,
+                    (unsigned char *)clients[j].UDP_context.aes_private_key);
+
                 SDL_LockMutex(clients[j].UDP_context.mutex);
                 int sent_size = sendp(&(clients[j].UDP_context),
                                       &encrypted_packet, encrypt_len);
