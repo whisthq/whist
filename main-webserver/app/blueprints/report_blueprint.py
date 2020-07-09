@@ -53,6 +53,7 @@ def regionReport(**kwargs):
 
     return jsonify(output), SUCCESS
 
+
 @report_bp.route("/report/userReport", methods=["POST"])
 @fractalPreProcess
 @jwt_required
