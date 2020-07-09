@@ -19,47 +19,42 @@ And then install the dependencies with yarn:
 
 ## Starting Development
 
-The Fractal protocol is linked to this repository as a Git submodule, which you first need to update to the latest commit before using, by running:
-
-```
-git submodule update --init --recursive && cd protocol && git checkout [BRANCH] && git pull origin [BRANCH] && cd ..
-```
-
-The branch can be any of the existing ones on the protocol repository, but is most likely going to be `dev` if you want to test the upcoming release, or `master` if you want to test the current release. This will ensure you have the latest protocol to test the application. Note that this will fetch the protocol code, and that you will need to compile it in order to use the protocol executable, which can be done via the build scripts (see below) and requires Cmake. In order to make sure that your system has everything needed to compile the protocol, or if you experience issues with compiling the protocol, you should refer to the protocol repository README for instructions.
-
-If you get access denied issues, you need to set-up your local SSH key with your GitHub account, which you can do by following this [tutorial](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent). After running this command, you will have latest the setup-scripts code locally and can call the files as normal.
-
 Before starting development, you need to initialize yarn by running `yarn -i`, which will create the `yarn.lock` file and install all of the `node_modules`. If you still experience issues with starting the dev environment, you might need to run `yarn upgrade`, which will upgrade all the dependencies. It's a good idea to do so periodically to keep the application up-to-date. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
 
-To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `set PORT={number} && yarn dev`.
+To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `set PORT={number} && yarn dev`. This will start the Electron application, but will not fetch the Fractal protocol, which means you can only use this to test the application itself, unless you manually cloned and built the protocol yourself. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below. 
 
 This repository has basic continuous integration through GitHub Actions. For every commit or PR to the master branch, it will attempt to build the Electron application on Windows, Mac and Ubuntu, and format the code with Prettier. You should make sure that all tests pass under the Actions tab. If you need help with the Electron CI, check [here](https://github.com/samuelmeuli/action-electron-builder).
 
 ## Packaging for Production
 
-In order to properly test the application, you need to package the application and the Fractal protocol together into an installer executable for your local platform. This will **NOT** publish the application to production, but will only build an indentical installer which you can install locally and test from the perspective of a user before publishing. The installer executable will be in `client-applications/desktop/release`.
+In order to properly test the application, you need to package the application and the Fractal protocol together into an installer executable for your local platform. This will **NOT** publish the application to production, but will only build an identical installer which you can install locally and test from the perspective of a user, before publishing live. The installer executable will be in `client-applications/desktop/release` as a `.dmg` (MacOS), `.exe` (Windows) or `.deb` (Linux Ubuntu).
+
+The `build.sh` and `build.bat` scripts automate the process of packaging the Fractal protocol and the application together. In order to use them, you **need** to have all the tools needed to build the protocol on your local machine. 
+
+
+
+
 
 ### MacOS/Linux
 
 
 
 
-//tmp
+
+
+
+
+#### MacOS Notarizing
+
+To package the MacOS application, it needs to be notarized, which means it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developper Certificate in your MacOS Keychain for this to be successful. You can download the certificate from AWS S3 on [this link](https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12) assuming you have access to the Fractal AWS organization, and then install it by double-clicking the `.p12` certificate file. The application will get notarized seamlessly when running the build script.
 
 
 
 
 
 
-[https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12](https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12)
 
 
-
-
-
-Run `./build.sh` in a terminal. This will delete any prior Fractal protocol folder, pull the recent master branch, and package it locally. You must also install Cmake; refer to the Fractal protocol repository for installation instructions.
-`build.sh` now has cli arguments. By default `build.sh` will create a release and sign it. To build a fractal client without signing it and running it in dev, use `DEV=yes ./build.sh`. It also starts the dev client after building.
-To build a release of the client, sign it, and upload it, use `RELEASE=yes ./build.sh` ensure that you follow the "Publishing to Production" instructions beforehand.
 
 ### Windows
 
