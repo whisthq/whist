@@ -8,8 +8,7 @@
 audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
     // initialize the audio encoder
 
-    audio_encoder_t* encoder =
-        (audio_encoder_t*)malloc(sizeof(audio_encoder_t));
+    audio_encoder_t* encoder = (audio_encoder_t*)malloc(sizeof(audio_encoder_t));
     memset(encoder, 0, sizeof(audio_encoder_t));
 
     // setup the AVCodec and AVFormatContext
@@ -66,9 +65,9 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
 
     // initialize the AVAudioFifo as an empty FIFO
 
-    encoder->pFifo = av_audio_fifo_alloc(
-        encoder->pFrame->format,
-        av_get_channel_layout_nb_channels(encoder->pFrame->channel_layout), 1);
+    encoder->pFifo =
+        av_audio_fifo_alloc(encoder->pFrame->format,
+                            av_get_channel_layout_nb_channels(encoder->pFrame->channel_layout), 1);
     if (!encoder->pFifo) {
         LOG_WARNING("Could not allocate AVAudioFifo.\n");
         destroy_audio_encoder(encoder);
@@ -77,13 +76,13 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
 
     // setup the SwrContext for resampling
 
-    encoder->pSwrContext = swr_alloc_set_opts(
-        NULL, encoder->pFrame->channel_layout, encoder->pFrame->format,
-        encoder->pCodecCtx->sample_rate,
-        AV_CH_LAYOUT_STEREO,  // should get layout from WASAPI
-        AV_SAMPLE_FMT_FLT,    // should get format from WASAPI
-        sample_rate,  // should use same sample rate as WASAPI, though this just
-        0, NULL);     //       might not work if not same sample size throughout
+    encoder->pSwrContext =
+        swr_alloc_set_opts(NULL, encoder->pFrame->channel_layout, encoder->pFrame->format,
+                           encoder->pCodecCtx->sample_rate,
+                           AV_CH_LAYOUT_STEREO,  // should get layout from WASAPI
+                           AV_SAMPLE_FMT_FLT,    // should get format from WASAPI
+                           sample_rate,  // should use same sample rate as WASAPI, though this just
+                           0, NULL);     //       might not work if not same sample size throughout
     if (!encoder->pSwrContext) {
         LOG_WARNING("Could not initialize SwrContext.\n");
         destroy_audio_encoder(encoder);
@@ -101,50 +100,43 @@ audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {
     return encoder;
 }
 
-void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data,
-                               int len) {
+void audio_encoder_fifo_intake(audio_encoder_t* encoder, uint8_t* data, int len) {
     // convert and add samples to the FIFO
 
     // initialize
 
     uint8_t** converted_data = calloc(
-        av_get_channel_layout_nb_channels(encoder->pFrame->channel_layout),
-        sizeof(uint8_t*));
+        av_get_channel_layout_nb_channels(encoder->pFrame->channel_layout), sizeof(uint8_t*));
     if (!converted_data) {
         LOG_WARNING("Could not allocate converted samples channel pointers.\n");
         return;
     }
 
-    if (av_samples_alloc(
-            converted_data, NULL,
-            av_get_channel_layout_nb_channels(encoder->pFrame->channel_layout),
-            len, encoder->pFrame->format, 0) < 0) {
+    if (av_samples_alloc(converted_data, NULL,
+                         av_get_channel_layout_nb_channels(encoder->pFrame->channel_layout), len,
+                         encoder->pFrame->format, 0) < 0) {
         LOG_WARNING("Could not allocate converted samples channel arrays.\n");
         return;
     }
 
     // convert
 
-    if (swr_convert(encoder->pSwrContext, converted_data, len,
-                    (const uint8_t**)&data, len) < 0) {
+    if (swr_convert(encoder->pSwrContext, converted_data, len, (const uint8_t**)&data, len) < 0) {
         LOG_WARNING("Could not convert samples to intake format.\n");
         return;
     }
 
     // reallocate fifo
 
-    if (av_audio_fifo_realloc(encoder->pFifo,
-                              av_audio_fifo_size(encoder->pFifo) + len) < 0) {
+    if (av_audio_fifo_realloc(encoder->pFifo, av_audio_fifo_size(encoder->pFifo) + len) < 0) {
         LOG_WARNING("Could not reallocate AVAudioFifo.\n");
         return;
     }
 
     // add
 
-    if (av_audio_fifo_write(encoder->pFifo, (void**)converted_data, len) <
-        len) {
-        LOG_WARNING(
-            "Could not write all the requested data to the AVAudioFifo.\n");
+    if (av_audio_fifo_write(encoder->pFifo, (void**)converted_data, len) < len) {
+        LOG_WARNING("Could not write all the requested data to the AVAudioFifo.\n");
         return;
     }
 
@@ -161,13 +153,10 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
 
     // read from FIFO to AVFrame
 
-    const int len = FFMIN(av_audio_fifo_size(encoder->pFifo),
-                          encoder->pCodecCtx->frame_size);
+    const int len = FFMIN(av_audio_fifo_size(encoder->pFifo), encoder->pCodecCtx->frame_size);
 
-    if (av_audio_fifo_read(encoder->pFifo, (void**)encoder->pFrame->data, len) <
-        len) {
-        LOG_WARNING(
-            "Could not read all the requested data from the AVAudioFifo.\n");
+    if (av_audio_fifo_read(encoder->pFifo, (void**)encoder->pFrame->data, len) < len) {
+        LOG_WARNING("Could not read all the requested data from the AVAudioFifo.\n");
         return -1;
     }
 
@@ -187,8 +176,7 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
         return -1;
     } else if (res < 0) {
         // real error
-        LOG_ERROR("Could not send audio AVFrame for encoding: error '%s'.\n",
-                  av_err2str(res));
+        LOG_ERROR("Could not send audio AVFrame for encoding: error '%s'.\n", av_err2str(res));
         return -1;
     }
 
@@ -201,8 +189,7 @@ int audio_encoder_encode_frame(audio_encoder_t* encoder) {
         return 1;
     } else if (res < 0) {
         // real error
-        LOG_ERROR("Could not encode audio frame: error '%s'.\n",
-                  av_err2str(res));
+        LOG_ERROR("Could not encode audio frame: error '%s'.\n", av_err2str(res));
         return -1;
     } else {
         // we did it!

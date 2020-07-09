@@ -61,8 +61,7 @@ void resize_dynamic_buffer(dynamic_buffer db, int new_size) {
         int new_capacity = new_size * 2;
         char* new_buffer = realloc(db->buf, new_capacity);
         if (!new_buffer) {
-            LOG_ERROR("Could not realloc from %d to %d!", db->capacity,
-                      new_capacity);
+            LOG_ERROR("Could not realloc from %d to %d!", db->capacity, new_capacity);
             SDL_Delay(50);
             exit(-1);
         } else {
@@ -144,8 +143,8 @@ int runcmd(const char* cmdline, char** response) {
 
     SetEnvironmentVariableW((LPCWSTR)L"UNISON", (LPCWSTR)L"./.unison");
 
-    if (CreateProcessA(NULL, (LPSTR)cmd_buf, NULL, NULL, TRUE, CREATE_NO_WINDOW,
-                       NULL, NULL, &si, &pi)) {
+    if (CreateProcessA(NULL, (LPSTR)cmd_buf, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si,
+                       &pi)) {
     } else {
         LOG_ERROR("CreateProcessA failed!");
         *response = NULL;
@@ -164,8 +163,7 @@ int runcmd(const char* cmdline, char** response) {
 
         dynamic_buffer db = init_dynamic_buffer();
         for (;;) {
-            bSuccess =
-                ReadFile(hChildStd_OUT_Rd, chBuf, sizeof(chBuf), &dwRead, NULL);
+            bSuccess = ReadFile(hChildStd_OUT_Rd, chBuf, sizeof(chBuf), &dwRead, NULL);
             if (!bSuccess || dwRead == 0) break;
 
             int original_size = db->size;

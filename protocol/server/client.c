@@ -29,8 +29,7 @@ int initClients(void) {
         clients[id].UDP_port = BASE_UDP_PORT + id;
         clients[id].TCP_port = BASE_TCP_PORT + id;
 
-        memcpy(&(clients[id].mouse.color), &(MOUSE_COLORS[id]),
-               sizeof(RGB_Color));
+        memcpy(&(clients[id].mouse.color), &(MOUSE_COLORS[id]), sizeof(RGB_Color));
     }
     return 0;
 }
@@ -90,8 +89,7 @@ int existsTimedOutClient(double timeout, bool *exists) {
 int reapTimedOutClients(double timeout) {
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
-        if (clients[id].is_active &&
-            GetTimer(clients[id].last_ping) > timeout) {
+        if (clients[id].is_active && GetTimer(clients[id].last_ping) > timeout) {
             LOG_INFO("Dropping client ID: %d", id);
             if (quitClient(id) != 0) {
                 LOG_ERROR("Failed to quit client. (ID: %d)", id);
@@ -139,8 +137,7 @@ int fillPeerUpdateMessages(PeerUpdateMessage *msgs, size_t *num_msgs) {
             msgs->x = clients[id].mouse.x;
             msgs->y = clients[id].mouse.y;
             msgs->is_controlling = clients[id].is_controlling;
-            memcpy(&(msgs->color), &(clients[id].mouse.color),
-                   sizeof(RGB_Color));
+            memcpy(&(msgs->color), &(clients[id].mouse.color), sizeof(RGB_Color));
             msgs++;
             (*num_msgs)++;
         }

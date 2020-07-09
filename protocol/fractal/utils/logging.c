@@ -22,6 +22,8 @@ char *get_logger_history();
 int get_logger_history_len();
 void initBacktraceHandler();
 
+#define BYTES_IN_KILOBYTE 1024
+
 extern int connection_id;
 
 // logger Semaphores and Mutexes
@@ -77,8 +79,8 @@ void initLogger(char *log_dir) {
     run_multithreaded_printf = true;
     logger_mutex = SDL_CreateMutex();
     logger_semaphore = SDL_CreateSemaphore(0);
-    mprintf_thread = SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf,
-                                      "MultiThreadedPrintf", NULL);
+    mprintf_thread =
+        SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
     LOG_INFO("Writing logs to %s", f);
     //    StartTimer(&mprintf_timer);
 }
@@ -144,18 +146,16 @@ int MultiThreadedPrintf(void *opaque) {
             //    last_printf = i + 6;
             //} else if (i > last_printf) {
             printf("%s", logger_queue_cache[i].buf);
-            int chars_written = sprintf(&logger_history[logger_history_len],
-                                        "%s", logger_queue_cache[i].buf);
+            int chars_written =
+                sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
             logger_history_len += chars_written;
 
             // Shift buffer over if too large;
             if ((unsigned long)logger_history_len >
-                sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) -
-                    10) {
+                sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) - 10) {
                 int new_len = sizeof(logger_history) / 3;
                 for (i = 0; i < new_len; i++) {
-                    logger_history[i] =
-                        logger_history[logger_history_len - new_len + i];
+                    logger_history[i] = logger_history[logger_history_len - new_len + i];
                 }
                 logger_history_len = new_len;
             }
@@ -171,7 +171,7 @@ int MultiThreadedPrintf(void *opaque) {
             int sz = ftell(mprintf_log_file);
 
             // If it's larger than 5MB, start a new file and store the old one
-            if (sz > 5 * 1024 * 1024) {
+            if (sz > 5 * BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE) {
                 fclose(mprintf_log_file);
 
                 char f[1000] = "";
@@ -223,8 +223,7 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
             char old_msg[LOGGER_BUF_SIZE];
             memcpy(old_msg, buf, LOGGER_BUF_SIZE);
             int chars_written =
-                snprintf(buf, LOGGER_BUF_SIZE,
-                         "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n",
+                snprintf(buf, LOGGER_BUF_SIZE, "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n",
                          old_msg, logger_queue[index].buf);
             if (!(chars_written > 0 && chars_written <= LOGGER_BUF_SIZE)) {
                 buf[0] = '\0';
@@ -276,8 +275,7 @@ void PrintStacktrace() {
     for (i = 0; i < frames; i++) {
         SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
 
-        fprintf(stderr, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name,
-                symbol->Address);
+        fprintf(stderr, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name, symbol->Address);
     }
 #else
 #define HANDLER_ARRAY_SIZE 100
@@ -377,8 +375,7 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS *ExceptionInfo) {
     fflush(stderr);
     /* If this is a stack overflow then we can't walk the stack, so just show
       where the error happened */
-    if (EXCEPTION_STACK_OVERFLOW !=
-        ExceptionInfo->ExceptionRecord->ExceptionCode) {
+    if (EXCEPTION_STACK_OVERFLOW != ExceptionInfo->ExceptionRecord->ExceptionCode) {
         PrintStacktrace();
     } else {
     }
@@ -528,7 +525,6 @@ void updateStatus(bool is_connected) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
-    SDL_Thread *update_status =
-        SDL_CreateThread(MultithreadedUpdateStatus, "UpdateStatus", d);
+    SDL_Thread *update_status = SDL_CreateThread(MultithreadedUpdateStatus, "UpdateStatus", d);
     SDL_DetachThread(update_status);
 }
