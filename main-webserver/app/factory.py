@@ -26,6 +26,7 @@ def init_app(app):
     from .blueprints.stripe_blueprint import stripe_bp
     from .blueprints.report_blueprint import report_bp
     from .blueprints.analytics_blueprint import analytics_bp
+    from .blueprints.admin_blueprint import admin_bp
     from .blueprints.sql_table_blueprint import table_bp
     from .blueprints.logs_blueprint import logs_bp
 
@@ -39,6 +40,7 @@ def init_app(app):
     app.register_blueprint(stripe_bp)
     app.register_blueprint(report_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(admin_bp)
     app.register_blueprint(table_bp)
     app.register_blueprint(logs_bp)
 

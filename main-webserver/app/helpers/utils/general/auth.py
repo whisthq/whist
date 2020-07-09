@@ -62,20 +62,20 @@ from app.helpers.utils.general.sql_commands import *
 def adminRequired(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        username = None
+        # username = None
 
-        try:
-            if request.method == "POST":
-                username = body["username"]
-            elif request.method == "GET":
-                username = request.args.get("username")
-        except Exception as e:
-            return (
-                jsonify(
-                    {"error": "No username provided, cannot authorize Bearer token."}
-                ),
-                UNAUTHORIZED,
-            )
+        # try:
+        #     if request.method == "POST":
+        #         username = body["username"]
+        #     elif request.method == "GET":
+        #         username = request.args.get("username")
+        # except Exception as e:
+        #     return (
+        #         jsonify(
+        #             {"error": "No username provided, cannot authorize Bearer token."}
+        #         ),
+        #         UNAUTHORIZED,
+        #     )
 
         current_user = get_jwt_identity()
         if not os.getenv("DASHBOARD_USERNAME") in current_user:
