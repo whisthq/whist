@@ -27,12 +27,7 @@ Custom Types
 ============================
 */
 
-typedef enum json_type {
-    JSON_BOOL,
-    JSON_INT,
-    JSON_STRING,
-    JSON_NULL
-} json_type_t;
+typedef enum json_type { JSON_BOOL, JSON_INT, JSON_STRING, JSON_NULL } json_type_t;
 
 typedef struct kv_pair {
     json_type_t type;

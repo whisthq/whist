@@ -41,8 +41,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     }
 
     // GET ALL GPUS
-    while (factory->lpVtbl->EnumAdapters1(factory, num_adapters,
-                                          &hardware->adapter) !=
+    while (factory->lpVtbl->EnumAdapters1(factory, num_adapters, &hardware->adapter) !=
            DXGI_ERROR_NOT_FOUND) {
         if (num_adapters == MAX_NUM_ADAPTERS) {
             LOG_WARNING("Too many adapters!\n");
@@ -62,8 +61,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
 
     // Set used GPU
     if (USE_GPU >= num_adapters) {
-        LOG_WARNING("No GPU with ID %d, only %d adapters", USE_GPU,
-                    num_adapters);
+        LOG_WARNING("No GPU with ID %d, only %d adapters", USE_GPU, num_adapters);
         return -1;
     }
     hardware->adapter = adapters[USE_GPU];
@@ -72,14 +70,13 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
 
     // GET ALL MONITORS
     for (i = 0; i < num_adapters; i++) {
-        for (j = 0;
-             adapters[i]->lpVtbl->EnumOutputs(
-                 adapters[i], j, &hardware->output) != DXGI_ERROR_NOT_FOUND;
+        for (j = 0; adapters[i]->lpVtbl->EnumOutputs(adapters[i], j, &hardware->output) !=
+                    DXGI_ERROR_NOT_FOUND;
              j++) {
             DXGI_OUTPUT_DESC desc;
             hr = hardware->output->lpVtbl->GetDesc(hardware->output, &desc);
-            LOG_INFO("  Found monitor %d on adapter %lu. Monitor %d named %S",
-                     j, i, j, desc.DeviceName);
+            LOG_INFO("  Found monitor %d on adapter %lu. Monitor %d named %S", j, i, j,
+                     desc.DeviceName);
             if (i == USE_GPU) {
                 if (j == MAX_NUM_OUTPUTS) {
                     LOG_WARNING("  Too many adapters on adapter %lu!", i);
@@ -101,8 +98,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
 
     // Set used output
     if (USE_MONITOR >= num_outputs) {
-        LOG_WARNING("No Monitor with ID %d, only %d adapters", USE_MONITOR,
-                    num_outputs);
+        LOG_WARNING("No Monitor with ID %d, only %d adapters", USE_MONITOR, num_outputs);
         return -1;
     }
     hardware->output = outputs[USE_MONITOR];
@@ -111,15 +107,15 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     UINT num_display_modes = 0;
     DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
     UINT flags = 0;
-    hr = hardware->output->lpVtbl->GetDisplayModeList(
-        hardware->output, format, flags, &num_display_modes, 0);
+    hr = hardware->output->lpVtbl->GetDisplayModeList(hardware->output, format, flags,
+                                                      &num_display_modes, 0);
     if (FAILED(hr)) {
         LOG_WARNING("Could not GetDisplayModeList: %X", hr);
     }
 
     DXGI_MODE_DESC* pDescs = malloc(sizeof(DXGI_MODE_DESC) * num_display_modes);
-    hardware->output->lpVtbl->GetDisplayModeList(
-        hardware->output, format, flags, &num_display_modes, pDescs);
+    hardware->output->lpVtbl->GetDisplayModeList(hardware->output, format, flags,
+                                                 &num_display_modes, pDescs);
     if (FAILED(hr)) {
         LOG_WARNING("Could not GetDisplayModeList: %X", hr);
     }
@@ -131,9 +127,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     LOG_INFO("Number of display modes: %d", num_display_modes);
     for (UINT k = 0; k < num_display_modes; k++) {
         double current_ratio_closeness =
-            fabs(1.0 * pDescs[k].Width / pDescs[k].Height -
-                 1.0 * width / height) +
-            0.001;
+            fabs(1.0 * pDescs[k].Width / pDescs[k].Height - 1.0 * width / height) + 0.001;
         ratio_closeness = min(ratio_closeness, current_ratio_closeness);
 
         if (pDescs[k].Width == width && pDescs[k].Height == height) {
@@ -147,17 +141,12 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     }
 
     for (UINT k = 0; k < num_display_modes && ratio_closeness > 0.0; k++) {
-        LOG_INFO("Possible Resolution: %dx%d", pDescs[k].Width,
-                 pDescs[k].Height);
+        LOG_INFO("Possible Resolution: %dx%d", pDescs[k].Width, pDescs[k].Height);
 
         double current_ratio_closeness =
-            fabs(1.0 * pDescs[k].Width / pDescs[k].Height -
-                 1.0 * width / height) +
-            0.001;
-        if (fabs(current_ratio_closeness - ratio_closeness) / ratio_closeness <
-            0.01) {
-            LOG_INFO("Ratio match found with %dx%d!", pDescs[k].Width,
-                     pDescs[k].Height);
+            fabs(1.0 * pDescs[k].Width / pDescs[k].Height - 1.0 * width / height) + 0.001;
+        if (fabs(current_ratio_closeness - ratio_closeness) / ratio_closeness < 0.01) {
+            LOG_INFO("Ratio match found with %dx%d!", pDescs[k].Width, pDescs[k].Height);
             LOG_INFO("FPS: %d/%d\n", pDescs[k].RefreshRate.Numerator,
                      pDescs[k].RefreshRate.Denominator);
 
@@ -202,26 +191,23 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
     LOG_INFO("Device Name: %S", monitorInfo.szDevice);
-    if (0 != EnumDisplaySettingsW(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS,
-                                  &dm)) {
+    if (0 != EnumDisplaySettingsW(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &dm)) {
         if (dm.dmPelsWidth != width || dm.dmPelsHeight != height) {
             dm.dmPelsWidth = width;
             dm.dmPelsHeight = height;
             dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
             // dm.dmDisplayFrequency =
 
-            int ret = ChangeDisplaySettingsExW(
-                monitorInfo.szDevice, &dm, NULL,
-                CDS_SET_PRIMARY | CDS_UPDATEREGISTRY, 0);
+            int ret = ChangeDisplaySettingsExW(monitorInfo.szDevice, &dm, NULL,
+                                               CDS_SET_PRIMARY | CDS_UPDATEREGISTRY, 0);
             LOG_INFO("ChangeDisplaySettingsCode: %d", ret);
         }
     } else {
         LOG_WARNING("Failed to update DisplaySettings");
     }
 
-    hr = D3D11CreateDevice((IDXGIAdapter*)hardware->adapter,
-                           D3D_DRIVER_TYPE_UNKNOWN, NULL, 0, NULL, 0,
-                           D3D11_SDK_VERSION, &device->D3D11device,
+    hr = D3D11CreateDevice((IDXGIAdapter*)hardware->adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, 0, NULL,
+                           0, D3D11_SDK_VERSION, &device->D3D11device,
                            NULL,  // implicit D3D Feature Array 11, 10.1, 10, 9
                            &device->D3D11context);
 
@@ -232,21 +218,19 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
 
     IDXGIOutput1* output1;
 
-    hr = hardware->output->lpVtbl->QueryInterface(
-        hardware->output, &IID_IDXGIOutput1, (void**)&output1);
+    hr = hardware->output->lpVtbl->QueryInterface(hardware->output, &IID_IDXGIOutput1,
+                                                  (void**)&output1);
     if (FAILED(hr)) {
-        LOG_ERROR("Failed to query interface of output: 0x%X %d", hr,
-                  GetLastError());
+        LOG_ERROR("Failed to query interface of output: 0x%X %d", hr, GetLastError());
         return -1;
     }
-    hr = output1->lpVtbl->DuplicateOutput(
-        output1, (IUnknown*)device->D3D11device, &device->duplication);
+    hr = output1->lpVtbl->DuplicateOutput(output1, (IUnknown*)device->D3D11device,
+                                          &device->duplication);
     if (FAILED(hr)) {
         LOG_ERROR("Failed to duplicate output: 0x%X %d", hr, GetLastError());
         return -1;
     }
-    hr = hardware->output->lpVtbl->GetDesc(hardware->output,
-                                           &hardware->final_output_desc);
+    hr = hardware->output->lpVtbl->GetDesc(hardware->output, &hardware->final_output_desc);
     if (FAILED(hr)) {
         LOG_ERROR("Failed to getdesc of output: 0x%X %d", hr, GetLastError());
         return -1;
@@ -278,12 +262,10 @@ void GetBitmapScreenshot(CaptureDevice* device) {
     HDC hScreenDC = CreateDCW(device->monitorInfo.szDevice, NULL, NULL, NULL);
     HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
 
-    HBITMAP hBitmap =
-        CreateCompatibleBitmap(hScreenDC, device->width, device->height);
+    HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, device->width, device->height);
     HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemoryDC, hBitmap);
 
-    BitBlt(hMemoryDC, 0, 0, device->width, device->height, hScreenDC, 0, 0,
-           SRCCOPY);
+    BitBlt(hMemoryDC, 0, 0, device->width, device->height, hScreenDC, 0, 0, SRCCOPY);
     hBitmap = (HBITMAP)SelectObject(hMemoryDC, hOldBitmap);
 
     DeleteDC(hMemoryDC);
@@ -330,15 +312,13 @@ ID3D11Texture2D* CreateTexture(CaptureDevice* device) {
     device->Box.back = 1;
 
     ID3D11Texture2D* texture;
-    hr = device->D3D11device->lpVtbl->CreateTexture2D(device->D3D11device,
-                                                      &tDesc, NULL, &texture);
+    hr = device->D3D11device->lpVtbl->CreateTexture2D(device->D3D11device, &tDesc, NULL, &texture);
     if (FAILED(hr)) {
         LOG_ERROR("Failed to create Texture2D 0x%X %d", hr, GetLastError());
         return NULL;
     }
 
-    device->duplication->lpVtbl->GetDesc(device->duplication,
-                                         &device->duplication_desc);
+    device->duplication->lpVtbl->GetDesc(device->duplication, &device->duplication_desc);
 
     return texture;
 }
@@ -350,8 +330,7 @@ void ReleaseScreenshot(ScreenshotContainer* screenshot) {
     }
 
     if (screenshot->desktop_resource != NULL) {
-        screenshot->desktop_resource->lpVtbl->Release(
-            screenshot->desktop_resource);
+        screenshot->desktop_resource->lpVtbl->Release(screenshot->desktop_resource);
         screenshot->desktop_resource = NULL;
     }
 
@@ -371,14 +350,13 @@ int CaptureScreen(CaptureDevice* device) {
     hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
 
     IDXGIResource* desktop_resource;
-    hr = device->duplication->lpVtbl->AcquireNextFrame(
-        device->duplication, 1, &device->frame_info, &desktop_resource);
+    hr = device->duplication->lpVtbl->AcquireNextFrame(device->duplication, 1, &device->frame_info,
+                                                       &desktop_resource);
 
     if (FAILED(hr)) {
         if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
             return 0;
-        } else if (hr == DXGI_ERROR_ACCESS_LOST ||
-                   hr == DXGI_ERROR_INVALID_CALL) {
+        } else if (hr == DXGI_ERROR_ACCESS_LOST || hr == DXGI_ERROR_INVALID_CALL) {
             LOG_WARNING(
                 "CaptureScreen returned DXGI_ERROR_ACCESS_LOST or "
                 "DXGI_ERROR_INVALID_CALL (0x%X)! Recreating device",
@@ -386,8 +364,7 @@ int CaptureScreen(CaptureDevice* device) {
             SDL_Delay(1);
             return -1;
         } else {
-            LOG_ERROR("Failed to Acquire Next Frame! 0x%X %d", hr,
-                      GetLastError());
+            LOG_ERROR("Failed to Acquire Next Frame! 0x%X %d", hr, GetLastError());
             return -1;
         }
     }
@@ -396,8 +373,7 @@ int CaptureScreen(CaptureDevice* device) {
     screenshot->desktop_resource = desktop_resource;
 
     hr = screenshot->desktop_resource->lpVtbl->QueryInterface(
-        screenshot->desktop_resource, &IID_ID3D11Texture2D,
-        (void**)&screenshot->final_texture);
+        screenshot->desktop_resource, &IID_ID3D11Texture2D, (void**)&screenshot->final_texture);
 
     if (FAILED(hr)) {
         LOG_WARNING("Query Interface Failed!");
@@ -413,8 +389,8 @@ int CaptureScreen(CaptureDevice* device) {
     }
 
     device->D3D11context->lpVtbl->CopySubresourceRegion(
-        device->D3D11context, (ID3D11Resource*)screenshot->staging_texture, 0,
-        0, 0, 0, (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
+        device->D3D11context, (ID3D11Resource*)screenshot->staging_texture, 0, 0, 0, 0,
+        (ID3D11Resource*)screenshot->final_texture, 0, &device->Box);
 
     return accumulated_frames;
 }
@@ -424,15 +400,14 @@ int TransferScreen(CaptureDevice* device) {
     ScreenshotContainer* screenshot = &device->screenshot;
 
     hr = screenshot->staging_texture->lpVtbl->QueryInterface(
-        screenshot->staging_texture, &IID_IDXGISurface,
-        (void**)&screenshot->surface);
+        screenshot->staging_texture, &IID_IDXGISurface, (void**)&screenshot->surface);
     if (FAILED(hr)) {
         LOG_ERROR("Query Interface Failed! 0x%X %d", hr, GetLastError());
         return -1;
     }
 
-    hr = screenshot->surface->lpVtbl->Map(
-        screenshot->surface, &screenshot->mapped_rect, DXGI_MAP_READ);
+    hr = screenshot->surface->lpVtbl->Map(screenshot->surface, &screenshot->mapped_rect,
+                                          DXGI_MAP_READ);
 
     if (FAILED(hr)) {
         LOG_ERROR("Map Failed!");
@@ -457,8 +432,7 @@ void ReleaseScreen(CaptureDevice* device) {
     ScreenshotContainer* screenshot = &device->screenshot;
     hr = screenshot->surface->lpVtbl->Unmap(screenshot->surface);
     if (FAILED(hr)) {
-        LOG_ERROR("Failed to unmap screenshot surface 0x%X %d", hr,
-                  GetLastError());
+        LOG_ERROR("Failed to unmap screenshot surface 0x%X %d", hr, GetLastError());
     }
 
     device->released = true;
@@ -472,8 +446,7 @@ void DestroyCaptureDevice(CaptureDevice* device) {
     ReleaseScreenshot(&device->screenshot);
 
     if (device->screenshot.staging_texture != NULL) {
-        device->screenshot.staging_texture->lpVtbl->Release(
-            device->screenshot.staging_texture);
+        device->screenshot.staging_texture->lpVtbl->Release(device->screenshot.staging_texture);
         device->screenshot.staging_texture = NULL;
     }
 

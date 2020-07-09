@@ -109,8 +109,7 @@ Defines
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
-#define PRIVATE_KEY \
-    "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
+#define PRIVATE_KEY "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
 
 #define MOUSE_SCALING_FACTOR 100000
 
@@ -122,11 +121,7 @@ Custom Types
 ============================
 */
 
-typedef enum EncodeType {
-    SOFTWARE_ENCODE = 0,
-    NVENC_ENCODE = 1,
-    QSV_ENCODE = 2
-} EncodeType;
+typedef enum EncodeType { SOFTWARE_ENCODE = 0, NVENC_ENCODE = 1, QSV_ENCODE = 2 } EncodeType;
 
 typedef enum CodecType {
     CODEC_TYPE_UNKNOWN = 0,
@@ -311,27 +306,26 @@ typedef struct RGB_Color {
 /// @brief Cursor properties.
 /// @details Track important information on cursor.
 typedef struct FractalCursor {
-    uint32_t size;  ///< Size in bytes of the cursor image buffer.
-    uint32_t
-        positionX;  ///< When leaving relative mode, the horizontal position
-                    ///< in screen coordinates where the cursor reappears.
+    uint32_t size;       ///< Size in bytes of the cursor image buffer.
+    uint32_t positionX;  ///< When leaving relative mode, the horizontal position
+                         ///< in screen coordinates where the cursor reappears.
     uint32_t positionY;  ///< When leaving relative mode, the vertical position
                          ///< in screen coordinates where the cursor reappears.
     uint16_t width;      ///< Width of the cursor image in pixels.
     uint16_t height;     ///< Height of the cursor position in pixels.
-    uint16_t hotX;  ///< Horizontal pixel position of the cursor hotspot within
-                    ///< the image.
-    uint16_t hotY;  ///< Vertical pixel position of the cursor hotspot within
-                    ///< the image.
-    bool modeUpdate;   ///< `true` if the cursor mode should be updated. The
-                       ///< `relative`, `positionX`, and `positionY` members are
-                       ///< valid.
-    bool imageUpdate;  ///< `true` if the cursor image should be updated. The
-                       ///< `width`, `height`, `hotX`, `hotY`, and `size`
-                       ///< members are valid.
-    bool relative;  ///< `true` if in relative mode, meaning the client should
-                    ///< submit mouse motion in relative distances rather than
-                    ///< absolute screen coordinates.
+    uint16_t hotX;       ///< Horizontal pixel position of the cursor hotspot within
+                         ///< the image.
+    uint16_t hotY;       ///< Vertical pixel position of the cursor hotspot within
+                         ///< the image.
+    bool modeUpdate;     ///< `true` if the cursor mode should be updated. The
+                         ///< `relative`, `positionX`, and `positionY` members are
+                         ///< valid.
+    bool imageUpdate;    ///< `true` if the cursor image should be updated. The
+                         ///< `width`, `height`, `hotX`, `hotY`, and `size`
+                         ///< members are valid.
+    bool relative;       ///< `true` if in relative mode, meaning the client should
+                         ///< submit mouse motion in relative distances rather than
+                         ///< absolute screen coordinates.
     uint8_t __pad[1];
 } FractalCursor;
 
@@ -371,12 +365,12 @@ typedef struct FractalMouseWheelMessage {
 /// affected by FractalClientSetDimensions and move the cursor with a signed
 /// delta value from its previous location.
 typedef struct FractalMouseMotionMessage {
-    int32_t x;  ///< The absolute horizontal screen coordinate of the cursor  if
-                ///< `relative` is `false`, or the delta (can be negative) if
-                ///< `relative` is `true`.
-    int32_t y;  ///< The absolute vertical screen coordinate of the cursor if
-                ///< `relative` is `false`, or the delta (can be negative) if
-                ///< `relative` is `true`.
+    int32_t x;      ///< The absolute horizontal screen coordinate of the cursor  if
+                    ///< `relative` is `false`, or the delta (can be negative) if
+                    ///< `relative` is `true`.
+    int32_t y;      ///< The absolute vertical screen coordinate of the cursor if
+                    ///< `relative` is `false`, or the delta (can be negative) if
+                    ///< `relative` is `true`.
     bool relative;  ///< `true` for relative mode, `false` for absolute mode.
                     ///< See details.
     int x_nonrel;
@@ -388,16 +382,12 @@ typedef struct FractalDiscoveryRequestMessage {
     int username;
 } FractalDiscoveryRequestMessage;
 
-typedef enum InteractionMode {
-    CONTROL = 1,
-    SPECTATE = 2,
-    EXCLUSIVE_CONTROL = 3
-} InteractionMode;
+typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
 
 typedef enum FractalClientMessageType {
-    CMESSAGE_NONE = 0,     ///< No Message
-    MESSAGE_KEYBOARD = 1,  ///< `keyboard` FractalKeyboardMessage is valid in
-                           ///< FractClientMessage.
+    CMESSAGE_NONE = 0,         ///< No Message
+    MESSAGE_KEYBOARD = 1,      ///< `keyboard` FractalKeyboardMessage is valid in
+                               ///< FractClientMessage.
     MESSAGE_MOUSE_BUTTON = 2,  ///< `mouseButton` FractalMouseButtonMessage is
                                ///< valid in FractClientMessage.
     MESSAGE_MOUSE_WHEEL = 3,   ///< `mouseWheel` FractalMouseWheelMessage is
@@ -425,12 +415,11 @@ typedef enum FractalClientMessageType {
 typedef struct FractalClientMessage {
     FractalClientMessageType type;  ///< Input message type.
     union {
-        FractalKeyboardMessage keyboard;        ///< Keyboard message.
-        FractalMouseButtonMessage mouseButton;  ///< Mouse button message.
-        FractalMouseWheelMessage mouseWheel;    ///< Mouse wheel message.
-        FractalMouseMotionMessage mouseMotion;  ///< Mouse motion message.
-        FractalDiscoveryRequestMessage
-            discoveryRequest;  ///< Discovery request message.
+        FractalKeyboardMessage keyboard;                  ///< Keyboard message.
+        FractalMouseButtonMessage mouseButton;            ///< Mouse button message.
+        FractalMouseWheelMessage mouseWheel;              ///< Mouse wheel message.
+        FractalMouseMotionMessage mouseMotion;            ///< Mouse motion message.
+        FractalDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
 
         // CMESSAGE_INTERACTION_MODE
         InteractionMode interaction_mode;

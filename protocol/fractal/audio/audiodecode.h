@@ -107,8 +107,7 @@ void audio_decoder_packet_readout(audio_decoder_t* decoder, uint8_t* data);
  * @returns                        0 if success, else -1
  */
 
-int audio_decoder_decode_packet(audio_decoder_t* decoder,
-                                AVPacket* encoded_packet);
+int audio_decoder_decode_packet(audio_decoder_t* decoder, AVPacket* encoded_packet);
 
 /**
  * @brief                          Destroy a FFmpeg AAC audio decoder, and free
