@@ -5,6 +5,8 @@
 #include "main.h"
 #include "sdl_utils.h"
 
+#define WINDOWS_DEFAULT_DPI 96.0
+
 // Keyboard state variables
 extern bool alt_pressed;
 extern bool ctrl_pressed;
@@ -96,7 +98,7 @@ int handleWindowSizeChanged(SDL_Event *event) {
         fmsg.dimensions.height = output_height;
         fmsg.dimensions.codec_type = (CodecType)output_codec_type;
         fmsg.dimensions.dpi =
-            (int)(96.0 * output_width / get_virtual_screen_width());
+            (int)(WINDOWS_DEFAULT_DPI * output_width / get_virtual_screen_width());
         SendFmsg(&fmsg);
 
         StartTimer(&window_resize_timer);

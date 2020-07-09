@@ -25,6 +25,8 @@ audio_packet receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
 
+#define MS_IN_SECOND 1000.0
+
 struct AudioData {
     SDL_AudioDeviceID dev;
     audio_decoder_t* audio_decoder;
@@ -38,7 +40,7 @@ int last_played_id = -1;
 
 bool triggered = false;
 
-int decoder_frequency = 48000;
+int decoder_frequency = 48000; // Hertz
 
 clock test_timer;
 double test_time;
@@ -165,7 +167,6 @@ void updateAudio() {
 
             if (SDL_GetQueuedAudioSize(AudioData.dev) >
                 (unsigned int)real_limit) {
-                //                mprintf("*******************");
                 LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
                             next_to_play_id / MAX_NUM_AUDIO_INDICES,
                             SDL_GetQueuedAudioSize(AudioData.dev));
@@ -249,7 +250,7 @@ void updateAudio() {
     // }
 
     // Find all pending audio packets and NACK them
-    if (last_played_id > -1 && GetTimer(nack_timer) > 6.0 / 1000.0) {
+    if (last_played_id > -1 && GetTimer(nack_timer) > 6.0 / MS_IN_SECOND) {
         int num_nacked = 0;
         last_nacked_id = max(last_played_id, last_nacked_id);
         for (int i = last_nacked_id + 1;
@@ -286,9 +287,9 @@ int32_t ReceiveAudio(FractalPacket* packet) {
         &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
 
     if (audio_id == audio_pkt->id) {
-        //         mprintf("Already received audio packet: %d\n", audio_id);
+        //         LOG_WARNING("Already received audio packet: %d", audio_id);
     } else if (audio_id < audio_pkt->id || audio_id <= last_played_id) {
-        // mprintf("Old audio packet received: %d, last played id is %d\n",
+        // LOG_INFO("Old audio packet received: %d, last played id is %d",
         // audio_id, last_played_id);
     }
     // audio_id > audio_pkt->id && audio_id > last_played_id
@@ -361,10 +362,10 @@ int32_t ReceiveAudio(FractalPacket* packet) {
         memcpy(audio_pkt->data, packet->data, packet->payload_size);
 
         if (packet->index + 1 == packet->num_indices) {
-            // mprintf("Audio Packet %d Received! Last Played: %d\n",
+            // LOG_INFO("Audio Packet %d Received! Last Played: %d",
             // packet->id, last_played_id / MAX_NUM_AUDIO_INDICES);
             for (int i = audio_id + 1; i % MAX_NUM_AUDIO_INDICES != 0; i++) {
-                // mprintf("Receiving %d\n", i);
+                // LOG_INFO("Receiving %d", i);
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id = i;
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].size = 0;
             }

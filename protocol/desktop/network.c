@@ -18,15 +18,19 @@ extern char *server_ip;
 extern bool received_server_init_message;
 extern int uid;
 
+
+#define STUN_TCP_CONNECTION_WAIT 500 // ms
+#define NOSTUN_TCP_CONNECTION_WAIT 750 // ms
+
 bool using_stun;
 
 int discoverPorts(void) {
     SocketContext context;
     using_stun = true;
-    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, 500,
+    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, STUN_TCP_CONNECTION_WAIT,
                          using_stun) < 0) {
         using_stun = false;
-        if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, 750,
+        if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, NOSTUN_TCP_CONNECTION_WAIT,
                              using_stun) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
             return -1;
