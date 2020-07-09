@@ -50,7 +50,6 @@
 #define DEFAULT_WIDTH 1920
 #define DEFAULT_HEIGHT 1080
 
-
 #define BITS_IN_BYTE 8.0
 #define BYTES_IN_KILOBYTE 1024.0
 #define MS_IN_SECOND 1000.0
@@ -375,12 +374,13 @@ int32_t SendVideo(void* opaque) {
                     // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime
                     // = max_mbps previousFrameSize * 8.0 / 1024.0 / 1024.0
                     // / max_mbps = IdealTime
-                    double transmit_time = previous_frame_size * BITS_IN_BYTE / BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
+                    double transmit_time = previous_frame_size * BITS_IN_BYTE / BYTES_IN_KILOBYTE /
+                                           BYTES_IN_KILOBYTE / max_mbps;
 
                     // double average_frame_size = 1.0 * bytes_tested_frames
                     // / bitrate_tested_frames;
-                    double current_trasmit_time =
-                        previous_frame_size * BITS_IN_BYTE / BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
+                    double current_trasmit_time = previous_frame_size * BITS_IN_BYTE /
+                                                  BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
                     double current_fps = 1.0 / current_trasmit_time;
 
                     delay = transmit_time - frame_time;
@@ -789,7 +789,8 @@ int MultithreadedWaitForClient(void* opaque) {
             trying_to_update = false;
         }
 
-        if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, USING_STUN) < 0) {
+        if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
+                             USING_STUN) < 0) {
             continue;
         }
 

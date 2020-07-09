@@ -129,7 +129,8 @@ void update() {
     // Check for a new clipboard update from the server, if it's been 25ms since
     // the last time we checked the TCP socket, and the clipboard isn't actively
     // busy
-    if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / MS_IN_SECOND && !isClipboardSynchronizing()) {
+    if (GetTimer(UpdateData.last_tcp_check_timer) > 25.0 / MS_IN_SECOND &&
+        !isClipboardSynchronizing()) {
         // Check if TCP connction is active
         int result = Ack(&PacketTCPContext);
         if (result < 0) {
@@ -173,7 +174,8 @@ void update() {
         fmsg.dimensions.width = (int)output_width;
         fmsg.dimensions.height = (int)output_height;
         fmsg.dimensions.codec_type = (CodecType)output_codec_type;
-        fmsg.dimensions.dpi = (int)(WINDOWS_DEFAULT_DPI * output_width / get_virtual_screen_width());
+        fmsg.dimensions.dpi =
+            (int)(WINDOWS_DEFAULT_DPI * output_width / get_virtual_screen_width());
         SendFmsg(&fmsg);
         UpdateData.tried_to_update_dimension = true;
     }
@@ -431,7 +433,8 @@ int ReceivePackets(void* opaque) {
     }
 
     if (lastrecv > 20.0 / MS_IN_SECOND) {
-        LOG_INFO("Took more than 20ms to receive something!! Took %fms total!", lastrecv * MS_IN_SECOND);
+        LOG_INFO("Took more than 20ms to receive something!! Took %fms total!",
+                 lastrecv * MS_IN_SECOND);
     }
 
     SDL_Delay(5);

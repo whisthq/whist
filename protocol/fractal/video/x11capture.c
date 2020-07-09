@@ -87,8 +87,8 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
         XShmCreateImage(device->display,
                         DefaultVisualOfScreen(screen),  // DefaultVisual(device->display, 0), // Use
                                                         // a correct visual. Omitted for brevity
-                        DefaultDepthOfScreen(screen),  // 24,   // Determine correct depth from
-                                                       // the visual. Omitted for brevity
+                        DefaultDepthOfScreen(screen),   // 24,   // Determine correct depth from
+                                                        // the visual. Omitted for brevity
                         ZPixmap, NULL, &device->segment, device->width, device->height);
 
     device->segment.shmid = shmget(
