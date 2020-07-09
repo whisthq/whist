@@ -26,17 +26,16 @@ extern volatile CodecType codec_type;
 #define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
 #define FRACTAL_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
 
-const struct option cmd_options[] = {
-    {"width", required_argument, NULL, 'w'},
-    {"height", required_argument, NULL, 'h'},
-    {"bitrate", required_argument, NULL, 'b'},
-    {"codec", required_argument, NULL, 'c'},
-    {"private-key", optional_argument, NULL, 'p'},
-    // these are standard for POSIX programs
-    {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
-    {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
-    // end with NULL-termination
-    {0, 0, 0, 0}};
+const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
+                                     {"height", required_argument, NULL, 'h'},
+                                     {"bitrate", required_argument, NULL, 'b'},
+                                     {"codec", required_argument, NULL, 'c'},
+                                     {"private-key", optional_argument, NULL, 'p'},
+                                     // these are standard for POSIX programs
+                                     {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
+                                     {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
+                                     // end with NULL-termination
+                                     {0, 0, 0, 0}};
 #define OPTION_STRING "w:h:b:sc:kp::"
 
 int parseArgs(int argc, char *argv[]) {
@@ -62,8 +61,7 @@ int parseArgs(int argc, char *argv[]) {
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
-    memcpy((char *)&aes_private_key, DEFAULT_PRIVATE_KEY,
-           sizeof(aes_private_key));
+    memcpy((char *)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
 
     int opt;
     long int ret;
@@ -112,8 +110,7 @@ int parseArgs(int argc, char *argv[]) {
                 running_ci = 1;
                 break;
             case 'p':
-                if (!read_hexadecimal_private_key(optarg,
-                                                  (char *)aes_private_key)) {
+                if (!read_hexadecimal_private_key(optarg, (char *)aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
                     printf("%s", usage);
                     return -1;

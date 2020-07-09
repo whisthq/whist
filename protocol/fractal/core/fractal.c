@@ -362,8 +362,7 @@ void update_webserver_parameters() {
 
         if (private_key && private_key->type == JSON_BOOL) {
             LOG_INFO("Private Key: %s", private_key->str_value);
-            read_hexadecimal_private_key(private_key->str_value,
-                                         aes_private_key);
+            read_hexadecimal_private_key(private_key->str_value, aes_private_key);
         }
 
         if (using_stun && using_stun->type == JSON_BOOL) {

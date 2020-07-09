@@ -100,8 +100,7 @@ void preparePrivateKey(private_key_data_t *priv_key_data, char *private_key);
 @returns                        True if the verification succeeds, false if it
 fails
 */
-bool confirmPrivateKey(private_key_data_t *priv_key_data, int len,
-                       char *private_key);
+bool confirmPrivateKey(private_key_data_t *priv_key_data, int len, char *private_key);
 
 /*
 ============================
@@ -151,10 +150,9 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
     // Encrypt the packet using aes encryption
     int unencrypted_len = PACKET_HEADER_SIZE + packet->payload_size;
-    int encrypted_len =
-        encrypt_packet(packet, unencrypted_len,
-                       (FractalPacket *)(sizeof(int) + encrypted_packet_buffer),
-                       (unsigned char *)context->aes_private_key);
+    int encrypted_len = encrypt_packet(packet, unencrypted_len,
+                                       (FractalPacket *)(sizeof(int) + encrypted_packet_buffer),
+                                       (unsigned char *)context->aes_private_key);
 
     // Pass the length of the packet as the first byte
     *((int *)encrypted_packet_buffer) = encrypted_len;
@@ -252,9 +250,8 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
         // Encrypt the packet with AES
         FractalPacket encrypted_packet;
-        int encrypt_len =
-            encrypt_packet(packet, packet_size, &encrypted_packet,
-                           (unsigned char *)context->aes_private_key);
+        int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
+                                         (unsigned char *)context->aes_private_key);
 
         // Send it off
         SDL_LockMutex(context->mutex);
@@ -383,9 +380,8 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
 
     // If the packet was successfully received, then decrypt it
     if (encrypted_len > 0) {
-        int decrypted_len =
-            decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                           (unsigned char *)context->aes_private_key);
+        int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
+                                           (unsigned char *)context->aes_private_key);
 
         // If there was an issue decrypting it, post warning and then
         // ignore the problem
@@ -472,10 +468,10 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
         // good to go
         if (target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len) {
             // Decrypt it
-            int decrypted_len = decrypt_packet_n(
-                (FractalPacket *)(encrypted_packet_buffer + sizeof(int)),
-                target_len, (FractalPacket *)decrypted_packet_buffer,
-                LARGEST_TCP_PACKET, (unsigned char *)context->aes_private_key);
+            int decrypted_len =
+                decrypt_packet_n((FractalPacket *)(encrypted_packet_buffer + sizeof(int)),
+                                 target_len, (FractalPacket *)decrypted_packet_buffer,
+                                 LARGEST_TCP_PACKET, (unsigned char *)context->aes_private_key);
 
             // Move the rest of the read bytes to the beginning of the buffer to
             // continue
@@ -900,16 +896,14 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
     return 0;
 }
 
-int CreateTCPContext(SocketContext *context, char *destination, int port,
-                     int recvfrom_timeout_ms, int stun_timeout_ms,
-                     bool using_stun, char *aes_private_key) {
+int CreateTCPContext(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
+                     int stun_timeout_ms, bool using_stun, char *aes_private_key) {
     if (context == NULL) {
         LOG_ERROR("Context is NULL");
         return -1;
     }
     context->mutex = SDL_CreateMutex();
-    memcpy(context->aes_private_key, aes_private_key,
-           sizeof(context->aes_private_key));
+    memcpy(context->aes_private_key, aes_private_key, sizeof(context->aes_private_key));
 
     int ret;
 
@@ -974,17 +968,14 @@ int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeou
     socklen_t slen = sizeof(context->addr);
     private_key_data_t priv_key_data = {0};
     int recv_size;
-    while ((recv_size = recvfrom(
-                context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
-                (struct sockaddr *)(&context->addr), &slen)) < 0) {
-        LOG_WARNING("Did not receive response from client! %d\n",
-                    GetLastNetworkError());
+    while ((recv_size = recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
+                                 (struct sockaddr *)(&context->addr), &slen)) < 0) {
+        LOG_WARNING("Did not receive response from client! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size,
-                           context->aes_private_key)) {
+    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
         return -1;
     }
 
@@ -1107,16 +1098,14 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     // Wait for client to connect
     // cppcheck-suppress nullPointer
     // cppcheck-suppress nullPointer
-    if ((recv_size =
-             recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data),
-                      0, (struct sockaddr *)(&context->addr), &slen)) < 0) {
+    if ((recv_size = recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
+                              (struct sockaddr *)(&context->addr), &slen)) < 0) {
         LOG_WARNING("Did not receive client confirmation!");
         closesocket(context->s);
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size,
-                           context->aes_private_key)) {
+    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
         return -1;
     }
 
@@ -1167,8 +1156,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
 
     // Open up the port
     if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not send message to server %d\n",
-                    GetLastNetworkError());
+        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -1177,8 +1165,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
 
     // Send acknowledgement
     if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not send message to server %d\n",
-                    GetLastNetworkError());
+        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -1187,23 +1174,19 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     socklen_t slen = sizeof(context->addr);
     int recv_size;
     // cppcheck-suppress nullPointer
-    if ((recv_size =
-             recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data),
-                      0, (struct sockaddr *)&context->addr, &slen)) < 0) {
-        LOG_WARNING("Did not receive response from server! %d\n",
-                    GetLastNetworkError());
+    if ((recv_size = recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
+                              (struct sockaddr *)&context->addr, &slen)) < 0) {
+        LOG_WARNING("Did not receive response from server! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size,
-                           context->aes_private_key)) {
+    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
         return -1;
     }
 
-    LOG_WARNING("Connected to server on %s:%d! (Private %d)\n",
-                inet_ntoa(context->addr.sin_addr), port,
-                ntohs(context->addr.sin_port));
+    LOG_WARNING("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
+                port, ntohs(context->addr.sin_port));
 
     set_timeout(context->s, recvfrom_timeout_ms);
 
@@ -1275,8 +1258,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
 
     // Open up the port
     if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not send message to server %d\n",
-                    GetLastNetworkError());
+        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -1285,8 +1267,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
 
     // Send acknowledgement
     if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not send message to server %d\n",
-                    GetLastNetworkError());
+        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -1294,39 +1275,33 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
     // Receive server's acknowledgement of connection
     socklen_t slen = sizeof(context->addr);
     // cppcheck-suppress nullPointer
-    if ((recv_size =
-             recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data),
-                      0, (struct sockaddr *)&context->addr, &slen)) < 0) {
-        LOG_WARNING("Did not receive response from server! %d\n",
-                    GetLastNetworkError());
+    if ((recv_size = recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
+                              (struct sockaddr *)&context->addr, &slen)) < 0) {
+        LOG_WARNING("Did not receive response from server! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size,
-                           context->aes_private_key)) {
+    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
         return -1;
     }
 
-    LOG_INFO("Connected to server on %s:%d! (Private %d)\n",
-             inet_ntoa(context->addr.sin_addr), port,
-             ntohs(context->addr.sin_port));
+    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
+             port, ntohs(context->addr.sin_port));
     set_timeout(context->s, recvfrom_timeout_ms);
 
     return 0;
 }
 
-int CreateUDPContext(SocketContext *context, char *destination, int port,
-                     int recvfrom_timeout_ms, int stun_timeout_ms,
-                     bool using_stun, char *aes_private_key) {
+int CreateUDPContext(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
+                     int stun_timeout_ms, bool using_stun, char *aes_private_key) {
     if (context == NULL) {
         LOG_ERROR("Context is NULL");
         return -1;
     }
 
     context->mutex = SDL_CreateMutex();
-    memcpy(context->aes_private_key, aes_private_key,
-           sizeof(context->aes_private_key));
+    memcpy(context->aes_private_key, aes_private_key, sizeof(context->aes_private_key));
 
     if (using_stun) {
         if (destination == NULL)
@@ -1517,26 +1492,22 @@ void set_timeout(SOCKET s, int timeout_ms) {
 }
 
 void preparePrivateKey(private_key_data_t *priv_key_data, char *private_key) {
-    memcpy(priv_key_data->private_key, private_key,
-           sizeof(priv_key_data->private_key));
+    memcpy(priv_key_data->private_key, private_key, sizeof(priv_key_data->private_key));
 }
 
-bool confirmPrivateKey(private_key_data_t *priv_key_data, int len,
-                       char *private_key) {
+bool confirmPrivateKey(private_key_data_t *priv_key_data, int len, char *private_key) {
     if (len == sizeof(private_key_data_t)) {
-        if (memcmp(priv_key_data->private_key, private_key,
-                   sizeof(priv_key_data->private_key)) == 0) {
+        if (memcmp(priv_key_data->private_key, private_key, sizeof(priv_key_data->private_key)) ==
+            0) {
             LOG_INFO("PRIVATE KEY WAS CORRECT!");
             return true;
         } else {
-            LOG_ERROR("Private Key was incorrect: %p",
-                      *(long long *)priv_key_data->private_key);
+            LOG_ERROR("Private Key was incorrect: %p", *(long long *)priv_key_data->private_key);
             return false;
         }
     } else {
-        LOG_ERROR(
-            "Recv Size was not equal to private_key_data_t: %d instead of %d",
-            len, sizeof(private_key_data_t));
+        LOG_ERROR("Recv Size was not equal to private_key_data_t: %d instead of %d", len,
+                  sizeof(private_key_data_t));
         return false;
     }
 }

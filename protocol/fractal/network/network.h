@@ -230,12 +230,10 @@ int GetLastNetworkError();
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int CreateUDPContext(SocketContext* context, char* destination, int port,
-                     int recvfrom_timeout_s, int connection_timeout_ms,
-                     bool using_stun, char* aes_private_key);
-int CreateTCPContext(SocketContext* context, char* destination, int port,
-                     int recvfrom_timeout_s, int connection_timeout_ms,
-                     bool using_stun, char* aes_private_key);
+int CreateUDPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
+                     int connection_timeout_ms, bool using_stun, char* aes_private_key);
+int CreateTCPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
+                     int connection_timeout_ms, bool using_stun, char* aes_private_key);
 
 /**
  * @brief                          This will send a FractalPacket over TCP to

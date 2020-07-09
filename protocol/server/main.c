@@ -970,8 +970,7 @@ int main() {
                             LOG_ERROR("Failed to broadcast acks.");
                         }
                         if (readUnlock(&is_active_rwlock) != 0) {
-                            LOG_ERROR(
-                                "Failed to read-release is active RW lock.");
+                            LOG_ERROR("Failed to read-release is active RW lock.");
                         }
                     }
                 }
