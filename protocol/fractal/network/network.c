@@ -1167,7 +1167,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     context->is_tcp = false;
 
     private_key_data_t priv_key_data;
-    memcpy( priv_key_data.private_key, context->aes_private_key, 16 );
+    preparePrivateKey( &priv_key_data, context->aes_private_key );
 
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -1215,7 +1215,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
         return -1;
     }
 
-    if( !confirmPrivateKey( &priv_key_data, recv_size ) )
+    if( !confirmPrivateKey( &priv_key_data, recv_size, PRIVATE_KEY ) )
     {
         return -1;
     }
@@ -1234,7 +1234,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
                                int stun_timeout_ms) {
     context->is_tcp = false;
     private_key_data_t priv_key_data;
-    memcpy( priv_key_data.private_key, context->aes_private_key, 16 );
+    preparePrivateKey( &priv_key_data, context->aes_private_key );
 
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -1325,7 +1325,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
         return -1;
     }
 
-    if( !confirmPrivateKey( &priv_key_data, recv_size ) )
+    if( !confirmPrivateKey( &priv_key_data, recv_size, PRIVATE_KEY ) )
     {
         return -1;
     }
