@@ -123,3 +123,8 @@ def azure_vm_get(action, **kwargs):
         output = ipHelper(vm_name, resource_group)
 
         return jsonify(output), output["status"]
+
+    elif action == "protocolInfo":
+        output = protocolInfoHelper(kwargs["received_from"])
+
+        return jsonify(output), output["status"]

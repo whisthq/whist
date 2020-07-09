@@ -14,20 +14,20 @@ azure_disk_bp = Blueprint("azure_disk_bp", __name__)
 def azure_disk_post(action, **kwargs):
     if action == "clone":
         # Clone a Fractal disk
-        username = kwargs["body"]["username"]
 
-        resource_group = os.getenv("VM_GROUP")
-        if "resource_group" in kwargs["body"].keys():
-            resource_group = kwargs["body"]["resource_group"]
+        branch = "master"
+        if "branch" in kwargs["body"].keys():
+            branch = kwargs["body"]["branch"]
 
         task = cloneDisk.apply_async(
             [
-                username,
+                kwargs["body"]["username"],
                 kwargs["body"]["location"],
                 kwargs["body"]["vm_size"],
                 kwargs["body"]["operating_system"],
+                branch,
                 kwargs["body"]["apps"],
-                resource_group,
+                kwargs["body"]["resource_group"],
             ]
         )
 
