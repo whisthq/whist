@@ -112,9 +112,10 @@ def fetchCustomersHelper():
         return {}
 
 def fetchDisksHelper():
+    # TODO: delete branch from disks and fix this command
     command = text(
         """
-        SELECT disks.*, disk_settings.using_stun
+        SELECT disks.*, disk_settings.using_stun, disk_settings.branch as settings_branch
         FROM disks
         LEFT JOIN disk_settings ON disks.disk_name = disk_settings.disk_name
         """

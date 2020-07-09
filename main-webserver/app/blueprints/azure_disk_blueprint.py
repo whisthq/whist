@@ -109,3 +109,11 @@ def azure_disk_post(action, **kwargs):
         output = stunHelper(using_stun, disk_name)
 
         return jsonify(output), output["status"]
+    elif action == "version":
+        disk_name, branch = (
+            kwargs["body"]["disk_name"],
+            kwargs["body"]["branch"]
+        )
+        output = versionHelper(branch, disk_name)
+
+        return jsonify(output), output["status"]
