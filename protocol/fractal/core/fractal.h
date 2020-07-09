@@ -91,7 +91,7 @@ Defines
 
 #define USING_AUDIO_ENCODE_DECODE true
 
-#if defined(_WIN32)
+#ifdef _WIN32
 // possible on windows, so let's do it
 #define USING_SERVERSIDE_SCALE true
 #else
