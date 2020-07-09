@@ -81,6 +81,7 @@ def signupsHelper():
 
     return {"day": dayCount, "week": weekCount, "month": monthCount}
 
+
 def loginActivityHelper():
     output = fractalSQLSelect("login_history", {})
     if output["rows"]:
@@ -90,12 +91,14 @@ def loginActivityHelper():
     else:
         return {}
 
+
 def fetchUsersHelper():
     output = fractalSQLSelect("users", {})
     if output["rows"]:
         return output["rows"]
     else:
         return {}
+
 
 def fetchVMsHelper():
     output = fractalSQLSelect("v_ms", {})
@@ -104,12 +107,14 @@ def fetchVMsHelper():
     else:
         return {}
 
+
 def fetchCustomersHelper():
     output = fractalSQLSelect("customers", {})
     if output["rows"]:
         return output["rows"]
     else:
         return {}
+
 
 def fetchDisksHelper():
     # TODO: delete branch from disks and fix this command
