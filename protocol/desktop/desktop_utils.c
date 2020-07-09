@@ -112,14 +112,10 @@ int parseArgs(int argc, char *argv[]) {
                 running_ci = 1;
                 break;
             case 'p':
-                for (int i = 0; i < 16; i++) {
-                    if (!isxdigit(optarg[2 * i]) ||
-                        !isxdigit(optarg[2 * i + 1]) || optarg[32] != '\0') {
-                        printf("Invalid hexadecimal string: %s\n", optarg);
-                        printf("%s", usage);
-                        return -1;
-                    }
-                    sscanf(&optarg[2 * i], "%2hhx", &(aes_private_key[i]));
+                if (!read_hexadecimal_private_key(optarg, aes_private_key)) {
+                    printf("Invalid hexadecimal string: %s\n", optarg);
+                    printf("%s", usage);
+                    return -1;
                 }
                 break;
             case FRACTAL_GETOPT_HELP_CHAR:

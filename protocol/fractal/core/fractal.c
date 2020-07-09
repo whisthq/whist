@@ -268,6 +268,18 @@ char* get_ip() {
     return ip;
 }
 
+bool read_hexadecimal_private_key( char* hex_string, char* private_key ) {
+    for (int i = 0; i < 16; i++) {
+        if (!isxdigit(hex_string[2 * i]) || !isxdigit(hex_string[2 * i + 1]) ||
+            hex_string[32] != '\0') {
+            return false;
+        }
+        sscanf(&hex_string[2 * i], "%2hhx", &(private_key[i]));
+    }
+    return true;
+}
+
+static char aes_private_key[16];
 static char* branch = NULL;
 static bool is_dev;
 static bool already_obtained_vm_type = false;
@@ -276,6 +288,11 @@ static clock last_vm_info_check_time;
 char* get_branch() {
     is_dev_vm();
     return branch;
+}
+
+char* get_private_key() {
+    is_dev_vm();
+    return aes_private_key;
 }
 
 bool is_dev_vm() {
@@ -322,6 +339,7 @@ bool is_dev_vm() {
 
     kv_pair_t* dev_value = get_kv(&json, "dev");
     kv_pair_t* branch_value = get_kv(&json, "branch");
+    kv_pair_t* private_key = get_kv(&json, "private_key");
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {
             return false;
@@ -338,6 +356,12 @@ bool is_dev_vm() {
 
         LOG_INFO("Is Dev? %s", dev_value->bool_value ? "true" : "false");
         LOG_INFO("Branch: %s", branch);
+        if (private_key) {
+            LOG_INFO("Private Key: %s", private_key->str_value);
+            read_hexadecimal_private_key(private_key->str_value, aes_private_key);
+        } else {
+            memcpy(aes_private_key, PRIVATE_KEY, sizeof(aes_private_key));
+        }
 
         free_json(json);
 

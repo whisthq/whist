@@ -52,6 +52,7 @@
 
 extern Client clients[MAX_NUM_CLIENTS];
 
+char aes_private_key[16];
 volatile int connection_id;
 static volatile bool connected;
 static volatile bool running;
@@ -676,6 +677,8 @@ void update() {
             ,
             NULL);
     }
+
+    memcpy(aes_private_key, get_private_key(), sizeof(aes_private_key));
 }
 
 #include <time.h>
@@ -815,7 +818,7 @@ int MultithreadedWaitForClient(void* opaque) {
         }
 
         if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, 5000,
-                             USING_STUN, PRIVATE_KEY) < 0) {
+                             USING_STUN, aes_private_key) < 0) {
             continue;
         }
 
@@ -828,7 +831,7 @@ int MultithreadedWaitForClient(void* opaque) {
 
         // Client is not in use so we don't need to worry about anyone else
         // touching it
-        if (connectClient(client_id) != 0) {
+        if (connectClient(client_id, aes_private_key) != 0) {
             LOG_WARNING(
                 "Failed to establish connection with client. "
                 "(ID: %d)",

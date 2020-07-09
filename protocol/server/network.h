@@ -15,7 +15,7 @@ int tryGetNextMessageTCP(int client_id, FractalClientMessage **fcmsg,
 int tryGetNextMessageUDP(int client_id, FractalClientMessage *fcmsg,
                          size_t *fcmsg_size);
 
-int connectClient(int id);
+int connectClient(int id, char *aes_private_key);
 
 int disconnectClient(int id);
 
