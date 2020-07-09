@@ -103,3 +103,10 @@ def fetchVMsHelper():
         return output["rows"]
     else:
         return {}
+
+def fetchCustomersHelper():
+    output = fractalSQLSelect("customers", {})
+    if output["rows"]:
+        return output["rows"]
+    else:
+        return {}

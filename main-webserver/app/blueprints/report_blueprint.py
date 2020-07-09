@@ -33,6 +33,9 @@ def report_get(action, **kwargs):
     elif action == "fetchVMs":
         output = fetchVMsHelper()
         return jsonify(output), SUCCESS
+    elif action == "fetchCustomers":
+        output = fetchCustomersHelper()
+        return jsonify(output), SUCCESS
 
 
 @report_bp.route("/report/<action>", methods=["POST"])
