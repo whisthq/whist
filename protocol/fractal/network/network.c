@@ -1201,12 +1201,18 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
 
     // Receive server's acknowledgement of connection
     socklen_t slen = sizeof(context->addr);
+    int recv_size;
     // cppcheck-suppress nullPointer
-    if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)&context->addr,
-                 &slen) < 0) {
+    if ((recv_size = recvfrom(context->s, (char*)&priv_key_data, sizeof( priv_key_data ), 0, (struct sockaddr *)&context->addr,
+                 &slen)) < 0) {
         LOG_WARNING("Did not receive response from server! %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
+        return -1;
+    }
+
+    if( !confirmPrivateKey( &priv_key_data, recv_size ) )
+    {
         return -1;
     }
 
@@ -1307,11 +1313,16 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
     // Receive server's acknowledgement of connection
     socklen_t slen = sizeof(context->addr);
     // cppcheck-suppress nullPointer
-    if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)&context->addr,
-                 &slen) < 0) {
+    if ((recv_size = recvfrom(context->s, (char*)&priv_key_data, sizeof( priv_key_data ), 0, (struct sockaddr *)&context->addr,
+                 &slen)) < 0) {
         LOG_WARNING("Did not receive response from server! %d\n",
                     GetLastNetworkError());
         closesocket(context->s);
+        return -1;
+    }
+
+    if( !confirmPrivateKey( &priv_key_data, recv_size ) )
+    {
         return -1;
     }
 
