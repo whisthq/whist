@@ -62,7 +62,8 @@ int parseArgs(int argc, char *argv[]) {
         "      --help     display this help and exit\n"
         "      --version  output version information and exit\n";
 
-    memcpy((char *)&aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+    memcpy((char *)&aes_private_key, DEFAULT_PRIVATE_KEY,
+           sizeof(aes_private_key));
 
     int opt;
     long int ret;
