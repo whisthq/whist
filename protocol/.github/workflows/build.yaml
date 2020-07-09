@@ -46,7 +46,8 @@ jobs:
       - name: Install CUDA for windows
         if: runner.os == 'Windows'
         env:
-          visual_studio: ${{ matrix.visual_studio }}
+          visual_studio: "Visual Studio 16 2019"
+          cuda: ${{matrix.cuda}}
         shell: powershell
         run: |
           # Install CUDA via a powershell script
