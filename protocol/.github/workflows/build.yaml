@@ -21,6 +21,7 @@ jobs:
             name: "Windows Latest MSVC", artifact: "Windows-MSVC.tar.xz",
             os: windows-latest,
             cc: "cl", cxx: "cl", cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc",
+            cuda: "11.0.167",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           }
           - {
@@ -36,11 +37,36 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Chocolatey install cppcheck and CUDA Toolkit if windows
+#      - name: Chocolatey install cppcheck
+#        if: runner.os == 'Windows'
+#        uses: crazy-max/ghaction-chocolatey@v1
+#        with:
+#          args: install "${{ github.workspace }}\.github\choco-install.config" --force
+
+      - name: Install CUDA for windows
         if: runner.os == 'Windows'
-        uses: crazy-max/ghaction-chocolatey@v1
-        with:
-          args: install "${{ github.workspace }}\.github\choco-install.config" --force
+        env:
+          visual_studio: ${{ matrix.visual_studio }}
+        shell: powershell
+        run: |
+          # Install CUDA via a powershell script
+          ${{ github.workspace }}\.github\install_cuda_windows.ps1
+          if ($?) {
+          # Set paths for subsequent steps, using $env:CUDA_PATH
+          echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
+          echo "::set-env name=CUDA_PATH::$env:CUDA_PATH"
+          echo "::set-env name=$env:CUDA_PATH_VX_Y::$env:CUDA_PATH"
+          echo "::add-path::$env:CUDA_PATH/bin"
+          }
+        - name: nvcc check for windows
+          if: runner.os == 'Windows'
+          shell: powershell
+          run: |
+            nvcc -V
+            ls $env:CUDA_PATH
+            ls $env:CUDA_PATH\bin
+            ls $env:CUDA_PATH\include
+
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
         shell: cmake -P {0}
