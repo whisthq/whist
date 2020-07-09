@@ -31,14 +31,16 @@ def deleteLogsFromS3(sender, connection_id):
             fractalLog(
                 function="deleteLogsFromS3",
                 label="None",
-                logs="Deleted log {file_name} from S3".format(file_name=file_name)
+                logs="Deleted log {file_name} from S3".format(file_name=file_name),
             )
         except Exception as e:
             fractalLog(
                 function="deleteLogsFromS3",
                 label="None",
-                logs="Deleting log {file_name} failed: {error}".format(file_name=file_name, error=str(e)),
-                level=logging.ERROR 
+                logs="Deleting log {file_name} failed: {error}".format(
+                    file_name=file_name, error=str(e)
+                ),
+                level=logging.ERROR,
             )
 
     output = fractalSQLSelect(
@@ -54,5 +56,5 @@ def deleteLogsFromS3(sender, connection_id):
             S3Delete(logs_found["client_logs"])
 
         fractalSQLDelete(table_name="logs", params={"connection_id": connection_id})
-    
+
     return {"status": SUCCESS}
