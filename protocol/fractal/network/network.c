@@ -150,7 +150,7 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data,
     int encrypted_len =
         encrypt_packet(packet, unencrypted_len,
                        (FractalPacket *)(sizeof(int) + encrypted_packet_buffer),
-                       (unsigned char *)PRIVATE_KEY);
+                       (unsigned char *)context->aes_private_key);
 
     // Pass the length of the packet as the first byte
     *((int *)encrypted_packet_buffer) = encrypted_len;
@@ -253,7 +253,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
         // Encrypt the packet with AES
         FractalPacket encrypted_packet;
         int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
-                                         (unsigned char *)PRIVATE_KEY);
+                           (unsigned char *)context->aes_private_key);
 
         // Send it off
         SDL_LockMutex(context->mutex);
@@ -293,7 +293,7 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
 
     FractalPacket encrypted_packet;
     int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
-                                     (unsigned char *)PRIVATE_KEY);
+                                     (unsigned char *)context->aes_private_key);
 
     SDL_LockMutex(context->mutex);
     int sent_size = sendp(context, &encrypted_packet, encrypt_len);
@@ -385,7 +385,7 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
     if (encrypted_len > 0) {
         int decrypted_len =
             decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                           (unsigned char *)PRIVATE_KEY);
+                           (unsigned char *)context->aes_private_key);
 
         // If there was an issue decrypting it, post warning and then
         // ignore the problem
@@ -477,7 +477,7 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
             int decrypted_len = decrypt_packet_n(
                 (FractalPacket *)(encrypted_packet_buffer + sizeof(int)),
                 target_len, (FractalPacket *)decrypted_packet_buffer,
-                LARGEST_TCP_PACKET, (unsigned char *)PRIVATE_KEY);
+                LARGEST_TCP_PACKET, (unsigned char *)context->aes_private_key);
 
             // Move the rest of the read bytes to the beginning of the buffer to
             // continue
@@ -952,11 +952,11 @@ int CreateTCPContext(SocketContext *context, char *destination, int port,
 
     // Verify TCP private key
     private_key_data_t priv_key_data;
-    preparePrivateKey(&priv_key_data, aes_private_key);
+    preparePrivateKey(&priv_key_data, context->aes_private_key);
     sendp(context, &priv_key_data, sizeof(priv_key_data));
     SDL_Delay(150);
     int recv_size = recvp(context, &priv_key_data, sizeof(priv_key_data));
-    confirmPrivateKey(&priv_key_data, recv_size, aes_private_key);
+    confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key);
 
     ClearReadingTCP(context);
     return ret;
@@ -1007,11 +1007,11 @@ int CreateUDPServerContext(SocketContext *context, int port,
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size, PRIVATE_KEY)) {
+    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
         return -1;
     }
 
-    preparePrivateKey(&priv_key_data, PRIVATE_KEY);
+    preparePrivateKey(&priv_key_data, context->aes_private_key);
 
     set_timeout(context->s, 350);
 
@@ -1114,7 +1114,7 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
              inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
     private_key_data_t priv_key_data = {0};
-    preparePrivateKey(&priv_key_data, PRIVATE_KEY);
+    preparePrivateKey(&priv_key_data, context->aes_private_key);
 
     // Open up port to receive message
     if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
@@ -1143,7 +1143,8 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size, PRIVATE_KEY)) {
+    if (!confirmPrivateKey(&priv_key_data, recv_size,
+                           context->aes_private_key)) {
         return -1;
     }
 
@@ -1225,7 +1226,8 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size, PRIVATE_KEY)) {
+    if (!confirmPrivateKey(&priv_key_data, recv_size,
+                           context->aes_private_key)) {
         return -1;
     }
 
@@ -1335,7 +1337,8 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size, PRIVATE_KEY)) {
+    if (!confirmPrivateKey(&priv_key_data, recv_size,
+                           context->aes_private_key)) {
         return -1;
     }
 
