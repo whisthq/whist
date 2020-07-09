@@ -6,7 +6,9 @@
 #   to occur and we don't want to include the compiler toolchain in the final image.
 # - Normally Alpine would be a good choice, but by using Debian (e.g. slim-buster)
 #   it's easier to be compatible out of the box with various python dependencies
-FROM python:3.8.3-slim-buster AS builder
+FROM python:3.6.10-slim-buster AS builder
+# python:3.6.10 was validated to be the current version on Heroku by Ming by running
+# `git push heroku SOME_BRANCH` (which returns status about the dyno) on 2020-07-09
 
 # Create and change the repo directory
 WORKDIR /repo
@@ -28,11 +30,11 @@ RUN pip install -r requirements.txt
 # - Specify full Python version to avoid disparities in images (i.e. if someone
 #   builds this package after someone else when a new python version was released in
 #   between)
-FROM python:3.8.3-slim-buster
+FROM python:3.6.10-slim-buster
 
 # Copy fully compiled python dependencies from the builder image into this final
 # image
-COPY --from=builder /usr/local/lib/python3.8/site-packages /usr/local/lib/python3.8/site-packages
+COPY --from=builder /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages
 # Copy the bin tools created for the python dependencies from the builder image
 # into this final image to ease developer usage
 COPY --from=builder /usr/local/bin /usr/local/bin
