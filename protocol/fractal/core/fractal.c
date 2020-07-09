@@ -281,24 +281,22 @@ bool read_hexadecimal_private_key(char* hex_string, char* private_key) {
 }
 
 static char aes_private_key[16];
-static char* branch = NULL;
+static char* branch;
 static bool is_dev;
 static bool already_obtained_vm_type = false;
 static clock last_vm_info_check_time;
+static bool is_using_stun;
 
-char* get_branch() {
-    is_dev_vm();
-    return branch;
-}
+void update_webserver_parameters() {
+    if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 30.0) {
+        return;
+    }
 
-char* get_private_key() {
-    is_dev_vm();
-    return aes_private_key;
-}
-
-bool is_dev_vm() {
-    if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 60.0) {
-        return is_dev;
+    if (!already_obtained_vm_type) {
+        // Set Default Values
+        is_dev = true;
+        memcpy(aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+        is_using_stun = false;
     }
 
     char buf[4800];
@@ -307,13 +305,13 @@ bool is_dev_vm() {
     LOG_INFO("GETTING JSON");
 
     if (!SendJSONGet(PRODUCTION_HOST, "/vm/isDev", buf, len)) {
-        if (already_obtained_vm_type) {
-            return is_dev;
-        } else {
-            return true;
-        }
+        already_obtained_vm_type = true;
+        StartTimer(&last_vm_info_check_time);
+        return;
     }
 
+    // Find JSON as the data after all HTTP headers, ie after the string
+    // "\r\n\r\n"
     char* json_str = NULL;
     for (size_t i = 0; i < len - 4; i++) {
         if (memcmp(buf + i, "\r\n\r\n", 4) == 0) {
@@ -322,28 +320,34 @@ bool is_dev_vm() {
     }
 
     if (!json_str) {
-        if (already_obtained_vm_type) {
-            return is_dev;
-        } else {
-            return true;
-        }
+        already_obtained_vm_type = true;
+        StartTimer(&last_vm_info_check_time);
+        return;
     }
+
+    // Set Default Values
+    is_dev = true;
+    memcpy(aes_private_key, DEFAULT_PRIVATE_KEY, sizeof(aes_private_key));
+    is_using_stun = false;
 
     json_t json;
     if (!parse_json(json_str, &json)) {
-        LOG_WARNING("Failed to parse JSON from /vm/isDev");
+        LOG_ERROR("Failed to parse JSON from /vm/isDev");
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
-        is_dev = true;
-        return is_dev;
+        return;
     }
 
     kv_pair_t* dev_value = get_kv(&json, "dev");
     kv_pair_t* branch_value = get_kv(&json, "branch");
     kv_pair_t* private_key = get_kv(&json, "private_key");
+    kv_pair_t* using_stun = get_kv(&json, "using_stun");
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {
-            return false;
+            free_json(json);
+            already_obtained_vm_type = true;
+            StartTimer(&last_vm_info_check_time);
+            return;
         }
 
         is_dev = dev_value->bool_value;
@@ -357,28 +361,52 @@ bool is_dev_vm() {
 
         LOG_INFO("Is Dev? %s", dev_value->bool_value ? "true" : "false");
         LOG_INFO("Branch: %s", branch);
-        if (private_key) {
+
+        if (private_key && private_key->type == JSON_BOOL) {
             LOG_INFO("Private Key: %s", private_key->str_value);
             read_hexadecimal_private_key(private_key->str_value,
                                          aes_private_key);
-        } else {
-            memcpy(aes_private_key, DEFAULT_PRIVATE_KEY,
-                   sizeof(aes_private_key));
         }
 
-        free_json(json);
-
-        already_obtained_vm_type = true;
-        StartTimer(&last_vm_info_check_time);
-        return is_dev;
+        if (using_stun && using_stun->type == JSON_BOOL) {
+            LOG_INFO("Using Stun: %s", using_stun->bool_value ? "Yes" : "No");
+            is_using_stun = using_stun->bool_value;
+        }
     } else {
-        LOG_WARNING("COULD NOT GET JSON FROM: %s", json_str);
-        free_json(json);
-        already_obtained_vm_type = true;
-        StartTimer(&last_vm_info_check_time);
-        is_dev = true;
-        return is_dev;
+        LOG_WARNING("COULD NOT GET JSON PARAMETERS FROM: %s", json_str);
     }
+
+    free_json(json);
+    already_obtained_vm_type = true;
+    StartTimer(&last_vm_info_check_time);
+}
+
+char* get_branch() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return branch;
+}
+
+char* get_private_key() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return aes_private_key;
+}
+
+bool get_using_stun() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return is_using_stun;
+}
+
+bool is_dev_vm() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return is_dev;
 }
 
 int GetFmsgSize(FractalClientMessage* fmsg) {

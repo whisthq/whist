@@ -639,6 +639,8 @@ int32_t SendAudio(void* opaque) {
 }
 
 void update() {
+    update_webserver_parameters();
+
     if (is_dev_vm()) {
         LOG_INFO("dev vm - not auto-updating");
     } else {
@@ -818,7 +820,7 @@ int MultithreadedWaitForClient(void* opaque) {
         }
 
         if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, 5000,
-                             USING_STUN, aes_private_key) < 0) {
+                             get_using_stun(), aes_private_key) < 0) {
             continue;
         }
 
@@ -985,19 +987,19 @@ int main() {
 
         while (connected) {
             if (GetTimer(ack_timer) > 5) {
-#if USING_STUN
-                // Broadcast ack
-                if (readLock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to read-acquire is active RW lock.");
-                } else {
-                    if (broadcastAck() != 0) {
-                        LOG_ERROR("Failed to broadcast acks.");
-                    }
-                    if (readUnlock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to read-release is active RW lock.");
+                if (get_using_stun()) {
+                    // Broadcast ack
+                    if (readLock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-acquire is active RW lock.");
+                    } else {
+                        if (broadcastAck() != 0) {
+                            LOG_ERROR("Failed to broadcast acks.");
+                        }
+                        if (readUnlock(&is_active_rwlock) != 0) {
+                            LOG_ERROR("Failed to read-release is active RW lock.");
+                        }
                     }
                 }
-#endif
                 updateStatus(num_controlling_clients > 0);
                 StartTimer(&ack_timer);
             }

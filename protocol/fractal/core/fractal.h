@@ -89,7 +89,6 @@ Defines
 #define PRODUCTION_HOST "cube-celery-vm.herokuapp.com"
 #define STAGING_HOST "cube-celery-staging.herokuapp.com"
 
-#define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
 
 #if defined(_WIN32)
@@ -589,6 +588,11 @@ char* get_ip();
 bool read_hexadecimal_private_key(char* hex_string, char* private_key);
 
 /**
+ * @brief                          Queries the webserver for various parameters
+ */
+void update_webserver_parameters();
+
+/**
  * @brief                          Queries the webserver to ask if a VM is
  *                                 development VM
  *
@@ -604,6 +608,13 @@ bool is_dev_vm();
  * @returns                        The VM's 16-byte aes private key
  */
 char* get_private_key();
+
+/**
+ * @brief                          Queries the webserver to get the using_stun status
+ *
+ * @returns                        The using_stun status
+ */
+bool get_using_stun();
 
 /**
  * @brief                          Calculate the size of a FractalClientMessage
