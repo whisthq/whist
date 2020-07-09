@@ -1,4 +1,7 @@
 from app import *
+
+from app.helpers.blueprint_helpers.logs_get import *
+
 from app.celery.aws_s3_modification import *
 from app.celery.aws_s3_deletion import *
 
@@ -41,3 +44,16 @@ def logs_post(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+
+
+@logs_bp.route("/logs", methods=["GET"])
+@fractalPreProcess
+@jwt_required
+@adminRequired
+def logs_get(**kwargs):
+    connection_id = request.args.get("connection_id")
+    username = request.args.get("username")
+
+    output = logsHelper(connection_id, username)
+
+    return jsonify(output), output["status"]
