@@ -13,6 +13,9 @@
 #define STUN_IP "52.5.240.234"
 #define STUN_PORT 48800
 
+#define BITS_IN_BYTE 8.0
+#define MS_IN_SECOND 1000
+
 /*
 ============================
 Private Custom Types
@@ -88,6 +91,7 @@ int GetLastNetworkError() {
 #endif
 }
 
+#define 
 #define LARGEST_TCP_PACKET 10000000
 #define LARGEST_ENCRYPTED_TCP_PACKET (sizeof(int) + LARGEST_TCP_PACKET + 16)
 
@@ -155,7 +159,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
     int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
 
-    double max_bytes_per_second = burst_bitrate / 8.0;
+    double max_bytes_per_second = burst_bitrate / BITS_IN_BYTE;
 
     /*
     if (type == PACKET_AUDIO) {
@@ -321,8 +325,8 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     FD_ZERO(&set);
     FD_SET(s, &set);
     struct timeval tv;
-    tv.tv_sec = timeout_ms / 1000;
-    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    tv.tv_sec = timeout_ms / MS_IN_SECOND;
+    tv.tv_usec = (timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
     if ((ret = select((int)s + 1, NULL, &set, NULL, &tv)) <= 0) {
         LOG_WARNING(
             "Could not select() over TCP to server: Returned %d, Error Code "
@@ -519,8 +523,8 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     FD_SET(context->s, &fd_write);
 
     struct timeval tv;
-    tv.tv_sec = stun_timeout_ms / 1000;
-    tv.tv_usec = (stun_timeout_ms % 1000) * 1000;
+    tv.tv_sec = stun_timeout_ms / MS_IN_SECOND;
+    tv.tv_usec = (stun_timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
 
     if (select(0, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) < 0) {
         LOG_WARNING("Could not select!");
@@ -999,7 +1003,7 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
                                  (struct sockaddr *)(&context->addr), &slen)) < 0) {
         // If we haven't spent too much time waiting, and our previous 100ms
         // poll failed, then send another STUN update
-        if (GetTimer(recv_timer) * 1000 < stun_timeout_ms &&
+        if (GetTimer(recv_timer) * MS_IN_SECOND < stun_timeout_ms &&
             (GetLastNetworkError() == FRACTAL_ETIMEDOUT ||
              GetLastNetworkError() == FRACTAL_EAGAIN)) {
             if (sendto(context->s, (const char *)&stun_request, sizeof(stun_request), 0,

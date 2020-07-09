@@ -18,18 +18,19 @@ extern char *server_ip;
 extern bool received_server_init_message;
 extern int uid;
 
-#define STUN_TCP_CONNECTION_WAIT 500    // ms
-#define NOSTUN_TCP_CONNECTION_WAIT 750  // ms
+#define SHORT_TCP_CONNECTION_WAIT 500    // ms
+#define LONG_TCP_CONNECTION_WAIT 750  // ms
+#define UDP_CONNECTION_WAIT 500 // ms
 
 bool using_stun;
 
 int discoverPorts(void) {
     SocketContext context;
     using_stun = true;
-    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, STUN_TCP_CONNECTION_WAIT,
+    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, SHORT_TCP_CONNECTION_WAIT,
                          using_stun) < 0) {
         using_stun = false;
-        if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, NOSTUN_TCP_CONNECTION_WAIT,
+        if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, LONG_TCP_CONNECTION_WAIT,
                              using_stun) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
             return -1;
@@ -117,19 +118,21 @@ int connectToServer(void) {
         return -1;
     }
 
-    if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10, 500, using_stun) < 0) {
+    if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10, UDP_CONNECTION_WAIT, using_stun) < 0) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
 
+    // socket options = TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=65536
+    // Windows Socket 65535 Socket options apply to all sockets.
     int a = 65535;
     if (setsockopt(PacketSendContext.s, SOL_SOCKET, SO_RCVBUF, (const char *)&a, sizeof(int)) ==
         -1) {
-        LOG_ERROR("Error setting socket opts: %d\n", GetLastNetworkError());
+        LOG_ERROR("Error setting socket opts: %d", GetLastNetworkError());
         return -1;
     }
 
-    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, 750, using_stun) < 0) {
+    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, LONG_TCP_CONNECTION_WAIT, using_stun) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         closesocket(PacketSendContext.s);
         return -1;
