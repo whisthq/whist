@@ -6,6 +6,7 @@ stripe_bp = Blueprint("stripe_bp", __name__)
 
 @stripe_bp.route("/stripe/<action>", methods=["POST"])
 @fractalPreProcess
+@fractalAuth
 def payment(action, **kwargs):
     body = kwargs["body"]
 

@@ -12,6 +12,8 @@ def fractalAuth(f):
                 body = json.loads(request.data)
                 if "username" in body.keys():
                     username = body["username"]
+                elif "email" in body.keys():
+                    username = body["email"]
                 elif "vm_name" in body.keys():
                     vm_name = body["vm_name"]
                     output = fractalSQLSelect(
@@ -37,8 +39,7 @@ def fractalAuth(f):
             )
 
         current_user = get_jwt_identity()
-        print(current_user)
-        print(username)
+
         if (
             current_user != username
             and not os.getenv("DASHBOARD_USERNAME") in current_user
