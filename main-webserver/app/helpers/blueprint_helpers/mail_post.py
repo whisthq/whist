@@ -43,7 +43,6 @@ def forgotPasswordHelper(username):
         )
         return jsonify({"verified": verified}), SUCCESS
     else:
-        conn.close()
         return jsonify({"verified": verified}), NOT_FOUND
 
 

@@ -12,7 +12,6 @@ report_bp = Blueprint("report_bp", __name__)
 def report_get(action, **kwargs):
     if action == "latest":
         output = latestHelper()
-
         if output:
             return jsonify(output), SUCCESS
         else:
@@ -20,11 +19,9 @@ def report_get(action, **kwargs):
 
     elif action == "totalUsage":
         output = totalUsageHelper()
-
         return jsonify(output), SUCCESS
     elif action == "signups":
         output = signupsHelper()
-
         return jsonify(output), SUCCESS
     elif action == "fetchLoginActivity":
         output = loginActivityHelper()
@@ -34,6 +31,7 @@ def report_get(action, **kwargs):
         return jsonify(output), SUCCESS
     elif action == "fetchVMs":
         output = fetchVMsHelper()
+        print(output)
         return jsonify(output), SUCCESS
     elif action == "fetchCustomers":
         output = fetchCustomersHelper()

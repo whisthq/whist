@@ -46,7 +46,7 @@ def payment(action, **kwargs):
 
         return webhookHelper(event)
 
-    elif action == "update" and request.method == "POST":
+    elif action == "update":
         # When a customer requests to change their plan type
         return updateHelper(body["username"], body["plan"])
 
