@@ -29,7 +29,7 @@ def stunHelper(using_stun, disk_name):
         return {"status": BAD_REQUEST}
 
 
-def versionHelper(branch, disk_name):
+def branchHelper(branch, disk_name):
     output = fractalSQLUpdate(
         table_name="disk_settings",
         conditional_params={"disk_name": disk_name,},
