@@ -6,7 +6,7 @@ admin_bp = Blueprint("admin_bp", __name__)
 
 @admin_bp.route("/admin/<action>", methods=["POST"])
 @fractalPreProcess
-def admin_no_auth(action, **kwargs):
+def admin_post(action, **kwargs):
     if action == "login":
         body = request.get_json()
         output = None

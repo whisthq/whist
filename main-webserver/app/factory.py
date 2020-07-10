@@ -16,19 +16,23 @@ def create_app(app_name=PKG_NAME, **kwargs):
 
 
 def init_app(app):
-    from .blueprints.account_blueprint import account_bp
-    from .blueprints.token_blueprint import token_bp
-    from .blueprints.azure_vm_blueprint import azure_vm_bp
-    from .blueprints.celery_status_blueprint import celery_status_bp
-    from .blueprints.azure_disk_blueprint import azure_disk_bp
-    from .blueprints.artifact_blueprint import artifact_bp
-    from .blueprints.mail_blueprint import mail_bp
-    from .blueprints.stripe_blueprint import stripe_bp
-    from .blueprints.report_blueprint import report_bp
-    from .blueprints.analytics_blueprint import analytics_bp
-    from .blueprints.admin_blueprint import admin_bp
-    from .blueprints.sql_table_blueprint import table_bp
-    from .blueprints.logs_blueprint import logs_bp
+    from .blueprints.admin.report_blueprint import report_bp
+    from .blueprints.admin.analytics_blueprint import analytics_bp
+    from .blueprints.admin.admin_blueprint import admin_bp
+    from .blueprints.admin.sql_table_blueprint import table_bp
+    from .blueprints.admin.logs_blueprint import logs_bp
+
+    from .blueprints.auth.account_blueprint import account_bp
+    from .blueprints.auth.token_blueprint import token_bp
+
+    from .blueprints.azure.azure_vm_blueprint import azure_vm_bp
+    from .blueprints.azure.azure_disk_blueprint import azure_disk_bp
+    from .blueprints.azure.artifact_blueprint import artifact_bp
+
+    from .blueprints.celery.celery_status_blueprint import celery_status_bp
+
+    from .blueprints.mail.mail_blueprint import mail_bp
+    from .blueprints.payment.stripe_blueprint import stripe_bp
 
     app.register_blueprint(account_bp)
     app.register_blueprint(token_bp)
