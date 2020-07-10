@@ -224,6 +224,7 @@ def resetPasswordHelper(username, password):
         new_params={"password": pwd_token},
     )
 
+
 def lookupHelper(username):
     """Checks if user exists in the users SQL table
 
@@ -238,8 +239,8 @@ def lookupHelper(username):
 
     if output["success"]:
         if output["rows"]:
-            return ({"exists": True, "status": SUCCESS})
+            return {"exists": True, "status": SUCCESS}
         else:
-            return ({"exists": False, "status": SUCCESS})
+            return {"exists": False, "status": SUCCESS}
     else:
-        return ({"status": BAD_REQUEST})
+        return {"status": BAD_REQUEST}
