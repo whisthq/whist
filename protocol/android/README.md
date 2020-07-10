@@ -1,3 +1,5 @@
-## Fractal Android/Chromebook Client
+## Fractal Android Client
 
-TBD.
+This client is built to support Android and Chromebook devices.
+
+TBD

@@ -1,4 +1,18 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file clock.c
+ * @brief This file contains the helper functions for timing code.
+============================
+Usage
+============================
+
+You can use StartTimer and GetTimer to time specific pieces of code, or to
+relate different events across server and client.
+*/
+
 #define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
+
+#define UNUSED(x) (void)(x)
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -173,7 +187,9 @@ void SetTimezoneFromIANAName(char* linux_tz_name) {
     //    char cmd[500] = "echo {INSERT PASSWORD HERE WHEN WE CAN} | sudo -S
     //    timedatectl set-timezone "; snprintf(cmd + strlen(cmd),
     //    strlen(linux_tz_name), linux_tz_name);
-    (void*)linux_tz_name;  // silence unused variable warning
+    //(void*)linux_tz_name;  // silence unused variable warning
+    UNUSED(linux_tz_name);  // will need to use this at some point
+
     return;
 }
 

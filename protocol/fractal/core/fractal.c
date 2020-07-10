@@ -12,10 +12,12 @@
 #include "../utils/json.h"
 #include "../utils/sysinfo.h"
 
+#define UNUSED(x) (void)(x)
+
 // Print Memory Info
 
 int MultithreadedPrintSystemInfo(void* opaque) {
-    opaque;
+    UNUSED(opaque);
 
     LOG_INFO("Hardware information:");
 
@@ -249,8 +251,7 @@ char* get_ip() {
     }
 
     char* buf;
-    int len = runcmd("curl ipinfo.io", &buf);
-    len;
+    runcmd("curl ipinfo.io", &buf);
 
     json_t json;
     if (!parse_json(buf, &json)) {

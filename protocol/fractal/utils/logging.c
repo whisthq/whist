@@ -1,3 +1,35 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file logging.c
+ * @brief This file contains the logging macros and utils to send Winlogon
+ *        status and to send the logs to the webserver.
+============================
+Usage
+============================
+We have several levels of logging.
+- NO_LOG: self explanatory
+- ERROR_LEVEL: only log errors. Errors are conditions that cause the program to
+               terminate or lead to an irrecoverable state.
+- WARNING_LEVEL: log warnings and above (warnings and errors). Warnings are when
+                 things do not work as expected, but we can recover.
+- INFO_LEVEL: log info and above. Info is just for logs that provide additional
+              information on state. e.g decode time
+- DEBUG_LEVEL: log debug and above. For use when actively debugging a problem,
+               but for things that don't need to be logged regularly
+
+The log level defaults to DEBUG_LEVEL, but it can also be passed as a compiler
+flag, as it is in the root CMakesList.txt, which sets it to DEBUG_LEVEL for
+Debug builds and WARNING_LEVEL for release builds.
+
+Note that these macros do not need an additional \n character at the end of your
+format strings.
+
+We also have a LOG_IF(condition, format string) Macro which only logs if the
+condition is true. This can be used for debugging or if we want to more
+aggressively log something when a flag changes. For example in this file you
+could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
+*/
+
 #if defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -17,6 +49,8 @@
 #include "../core/fractal.h"
 #include "../network/network.h"
 #include "logging.h"
+
+#define UNUSED(x) (void)(x)
 
 char *get_logger_history();
 int get_logger_history_len();
@@ -102,7 +136,7 @@ void destroyLogger() {
 }
 
 int MultiThreadedPrintf(void *opaque) {
-    opaque;
+    UNUSED(opaque);
 
     while (true) {
         // Wait until signaled by printf to begin running

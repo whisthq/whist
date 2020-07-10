@@ -1,8 +1,17 @@
-/*
- * General client video functions.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file video.c
+ * @brief This file contains all code that interacts directly with receiving and
+ *        processing video packets on the client.
+============================
+Usage
+============================
+
+initVideo() gets called before any video packet can be received. The video
+packets are received as standard FractalPackets by ReceiveVideo(FractalPacket*
+packet), before being saved in a proper video frame format.
+*/
+
 #include "video.h"
 
 #include <stdio.h>
@@ -11,6 +20,8 @@
 #include "../fractal/utils/png.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "SDL2/SDL.h"
+
+#define UNUSED(x) (void)(x)
 
 #define USE_HARDWARE true
 
@@ -536,7 +547,7 @@ void clearSDL(SDL_Renderer* renderer) {
 }
 
 int initMultithreadedVideo(void* opaque) {
-    opaque;
+    UNUSED(opaque);
 
     if (InitPeerCursors() != 0) {
         LOG_ERROR("Failed to init peer cursors.");

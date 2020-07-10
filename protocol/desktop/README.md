@@ -16,10 +16,10 @@ From the `/desktop` directory, you can simply run:
 
 ```
 Windows:
-desktop [OPTION]... IP_ADDRESS
+desktop IP_ADDRESS [OPTION]...
 
 MacOS/Linux:
-./desktop [OPTION]... IP_ADDRESS
+./desktop IP_ADDRESS [OPTION]...
 ```
 The option flags are as follows:
 ```
@@ -39,7 +39,7 @@ The option flags are as follows:
 ```
 For example, to run the protocol on IP address `0.0.0.0` in an `800x600` window on Linux, call:
 ```
-./desktop --width 800 --height 600 0.0.0.0
+./desktop 0.0.0.0 --width 800 --height 600
 ```
 
 Alternatively, if you want to run the executable directly, in the `/desktop/build64/[Windows/Darwin/Linux]` directory or `/desktop/build32/Windows`, run:

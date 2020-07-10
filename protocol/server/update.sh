@@ -1,4 +1,5 @@
 #!/bin/bash
+
 rndbytes=$(hexdump -n 4 -e '"%08X"' /dev/random)
 gitcommit=$(git rev-parse --short HEAD)
 version=$gitcommit-$rndbytes

@@ -1,13 +1,14 @@
+# Compile and static test via cppcheck on all desktop OSes
+
 name: CMake Build Matrix
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 env:
   CMAKE_VERSION: 3.15.7
   NINJA_VERSION: 1.9.0
   BUILD_TYPE: CI
   CCACHE_VERSION: 3.7.7
-
 
 jobs:
   build:
@@ -123,7 +124,6 @@ jobs:
               execute_process(COMMAND brew install cppcheck)
           endif()
 
-
       - name: Download ccache
         id: ccache
         shell: cmake -P {0}
@@ -175,7 +175,6 @@ jobs:
           endif()
           set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
 
-
           execute_process(
             COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
               -S .
@@ -192,7 +191,6 @@ jobs:
           if (NOT result EQUAL 0)
             message(FATAL_ERROR "Bad exit status")
           endif()
-
 
       - name: Build
         shell: cmake -P {0}

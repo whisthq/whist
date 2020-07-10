@@ -1,8 +1,16 @@
-/*
- * Fractal Client.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file main.c
+ * @brief This file contains the main code that runs a Fractal client on a
+ *        Windows, MacOS or Linux Ubuntu computer.
+============================
+Usage
+============================
+
+Follow main() to see a Fractal video streaming client being created and creating
+its threads.
+*/
+
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
 #endif
