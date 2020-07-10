@@ -158,7 +158,7 @@ def registerHelper(username, password, name, reason_for_signup):
 
 
 def verifyHelper(username, provided_user_id):
-    """Checks provided verification token against database token. If they match, we verify the 
+    """Checks provided verification token against database token. If they match, we verify the
     user's email.
 
     Parameters:
@@ -223,3 +223,24 @@ def resetPasswordHelper(username, password):
         conditional_params={"username": username},
         new_params={"password": pwd_token},
     )
+
+
+def lookupHelper(username):
+    """Checks if user exists in the users SQL table
+
+    Args:
+        username (str): The user to lookup
+    """
+    params = {
+        "username": username,
+    }
+
+    output = fractalSQLSelect("users", params)
+
+    if output["success"]:
+        if output["rows"]:
+            return {"exists": True, "status": SUCCESS}
+        else:
+            return {"exists": False, "status": SUCCESS}
+    else:
+        return {"status": BAD_REQUEST}
