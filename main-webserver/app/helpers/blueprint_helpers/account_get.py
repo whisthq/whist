@@ -59,16 +59,27 @@ def disksHelper(username, main):
     # Return SQL output
 
     if output["success"]:
-        fractalLog(
-            function="disksHelper",
-            label="{username}".format(username=username),
-            logs="Disk helper function found disks {disks} associated with {username} and main {main}".format(
-                disks=str([disk["disk_name"] for disk in output["rows"]]),
-                username=username,
-                main=str(main),
-            ),
-        )
-        return {"disks": output["rows"], "status": SUCCESS}
+        if output["rows"]:
+            fractalLog(
+                function="disksHelper",
+                label="{username}".format(username=username),
+                logs="Disk helper function found disks {disks} associated with {username} and main {main}".format(
+                    disks=str([disk["disk_name"] for disk in output["rows"]]),
+                    username=username,
+                    main=str(main),
+                ),
+            )
+            return {"disks": output["rows"], "status": SUCCESS}
+        else:
+            fractalLog(
+                function="disksHelper",
+                label="{username}".format(username=username),
+                logs="Disk helper function found no disks associated with {username} and main {main}".format(
+                    username=username,
+                    main=str(main),
+                ),
+            )
+            return {"disks": [], "status": SUCCESS}
     else:
         fractalLog(
             function="disksHelper",
