@@ -7,7 +7,7 @@ account_bp = Blueprint("account_bp", __name__)
 
 @account_bp.route("/account/<action>", methods=["POST"])
 @fractalPreProcess
-def account_no_auth(action, **kwargs):
+def account_post(action, **kwargs):
     if action == "login":
         # Login endpoint
 

@@ -2,8 +2,6 @@ from app import *
 
 
 def loginHelper(code, clientApp):
-    clientApp = False
-
     userObj = getGoogleTokens(code, clientApp)
 
     username, name = userObj["email"], userObj["name"]
@@ -41,3 +39,12 @@ def loginHelper(code, clientApp):
         "refresh_token": refresh_token,
         "username": username,
     }
+
+
+def reasonHelper(username, reason_for_signup):
+    fractalSQLUpdate(
+        table_name="users",
+        new_params={"reason_for_signup": reason_for_signup, "verified": True},
+        conditional_params={"username": username},
+    )
+
