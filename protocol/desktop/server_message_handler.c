@@ -1,3 +1,16 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file server_message_handler.c
+ * @brief This file contains all the code for client-side processing of messages
+ *        received from the server
+============================
+Usage
+============================
+
+handleServerMessage() must be called on any received message from the server.
+Any action trigged a server message must be initiated in network.c.
+*/
+
 #include "server_message_handler.h"
 
 #include <stddef.h>
@@ -9,6 +22,8 @@
 #include "server_message_handler.h"
 
 #include <stddef.h>
+
+#define UNUSED(x) (void)(x)
 
 extern char filename[300];
 extern char username[50];
@@ -89,7 +104,7 @@ static int handlePongMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
 }
 
 static int handleQuitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
-    fmsg;
+    UNUSED(fmsg);
     if (fmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"

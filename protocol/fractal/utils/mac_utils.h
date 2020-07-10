@@ -7,6 +7,9 @@
 ============================
 Usage
 ============================
+
+You can use these functions to check if a directory exist, to compare filenames,
+or to delete files/folders.
 */
 
 /*

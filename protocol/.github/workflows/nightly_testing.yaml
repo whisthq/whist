@@ -1,3 +1,5 @@
+# Run streaming tests between Azure (server) and GitHub VMs (client) every night
+
 name: Nightly testing
 # Run every day at 6 am UTC, 2am eastern
 on:
@@ -5,7 +7,6 @@ on:
     - cron:  '0 6 * * *'
 
 #on: [push] for debugging workflow
-
 
 env:
   CMAKE_VERSION: 3.15.7
@@ -16,7 +17,6 @@ env:
   SERVER_VM_IP: 20.185.40.33
   WEBSERVER_BASE_URL: https://cube-celery-staging4.herokuapp.com
   BRANCH_NAME: hamish-gh-run # branch on which the scheduled tests are run, change to dev before merging pr
-
 
 jobs:
   build:
@@ -105,7 +105,6 @@ jobs:
               execute_process(COMMAND brew install cppcheck)
           endif()
 
-
       - name: Download ccache
         id: ccache
         shell: cmake -P {0}
@@ -154,7 +153,6 @@ jobs:
           endif()
           set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
 
-
           execute_process(
             COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
               -S .
@@ -172,7 +170,6 @@ jobs:
           if (NOT result EQUAL 0)
             message(FATAL_ERROR "Bad exit status")
           endif()
-
 
       - name: Build
         shell: cmake -P {0}
@@ -332,7 +329,7 @@ jobs:
 #      - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
 #      - name: Create Tunnel
 #        run: .\ngrok\ngrok.exe tcp 3389
-      - name: run windows
+      - name: run Windows
         working-directory: windows_client_build
         run: .\FractalClient -k $Env:SERVER_VM_IP
       - name: logs
@@ -340,13 +337,12 @@ jobs:
         run: |
           cd windows_client_build
           cat log.txt
-      - name: Upload windows client logs
+      - name: Upload Windows client logs
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: windows_client_log
           path: ${{ github.workspace }}/windows_client_build/log.txt
-
 
   test_mac:
     if: always() # run even if windows fails
@@ -376,7 +372,7 @@ jobs:
           path: mac_client_build/log.txt
 
   clean_up:
-    if: always() # run always, must turn off the vm when we are done.
+    if: always() # run always, must turn off the VM when we are done.
     name: clean_up
     runs-on: ubuntu-18.04
     needs: test_mac
@@ -400,4 +396,3 @@ jobs:
                     \"vm_name\" : \"$SERVER_VM_NAME\",
                     \"resource_group\" : \"FractalProtocolCI\" }" \
                     $WEBSERVER_BASE_URL/azure_vm/deallocate
-

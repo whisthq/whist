@@ -1,8 +1,17 @@
-/*
- * AES encryption for streamed packets.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file aes.c
+ * @brief This file contains all code that interacts directly with packets
+ *        encryption (using AES encryption).
+============================
+Usage
+============================
+
+The function encrypt_packet gets called when a new packet of data needs to be
+sent over the network, while decrypt_packet, which calls decrypt_packet_n, gets
+called on the receiving end to re-obtain the data and process it.
+*/
+
 #if defined(_WIN32)
 #pragma warning(disable : 4706)  // assignment within conditional expression warning
 #endif

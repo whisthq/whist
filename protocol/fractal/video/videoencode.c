@@ -1,8 +1,13 @@
-/*
- * Video encoding via FFmpeg library.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file videoencode.c
+ * @brief This file contains the code to create and destroy Encoders and use
+ *        them to encode captured screens.
+============================
+Usage
+============================
+*/
+
 #include "videoencode.h"
 
 #include <libavfilter/avfilter.h>

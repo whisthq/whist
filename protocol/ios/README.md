@@ -1,3 +1,5 @@
-## Fractal iOS/iPadOS Client
+## Fractal iOS Client
 
-TBD.
+This client is built to support iOS and iPadOS devices.
+
+TBD

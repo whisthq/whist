@@ -1,3 +1,16 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file sdl_utils.c
+ * @brief This file contains the code to create and destroy SDL windows on the
+ *        client.
+============================
+Usage
+============================
+
+initSDL gets called first to create an SDL window, and destroySDL at the end to
+close the window.
+*/
+
 #include "sdl_utils.h"
 
 extern volatile int output_width;

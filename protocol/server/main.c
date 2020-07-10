@@ -1,8 +1,16 @@
-/*
- * Fractal Server.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file main.c
+ * @brief This file contains the main code that runs a Fractal server on a
+Windows or Linux Ubuntu computer.
+============================
+Usage
+============================
+
+Follow main() to see a Fractal video streaming server being created and creating
+its threads.
+*/
+
 #if defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #endif

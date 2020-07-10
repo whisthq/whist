@@ -1,3 +1,16 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file sdl_event_handler.c
+ * @brief This file contains client-specific wrappers to low-level network
+ *        functions.
+============================
+Usage
+============================
+
+handleSDLEvent() must be called on any SDL event that occurs. Any action
+trigged an SDL event must be triggered in sdl_event_handler.c
+*/
+
 #include "sdl_event_handler.h"
 
 #include "../fractal/utils/logging.h"
@@ -5,6 +18,7 @@
 #include "main.h"
 #include "sdl_utils.h"
 
+#define UNUSED(x) (void)(x)
 #define WINDOWS_DEFAULT_DPI 96.0
 
 // Keyboard state variables
@@ -111,7 +125,7 @@ int handleWindowSizeChanged(SDL_Event *event) {
 }
 
 int handleMouseLeftWindow(SDL_Event *event) {
-    event;
+    UNUSED(event);
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MOUSE_INACTIVE;
     SendFmsg(&fmsg);
