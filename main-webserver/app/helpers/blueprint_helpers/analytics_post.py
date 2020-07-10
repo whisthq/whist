@@ -11,8 +11,7 @@ def analyticsLogsHelper(body):
             float(content.split(": ")[1]) for content in transformed_df["contents"]
         ]
         transformed_df["time"] = [
-            time_str.strftime("%H:%M:%S.%f")[:-3]
-            for time_str in transformed_df["time"]
+            time_str.strftime("%H:%M:%S.%f")[:-3] for time_str in transformed_df["time"]
         ]
         transformed_df.loc[:, ["contents", "time"]]
 
@@ -59,9 +58,7 @@ def analyticsLogsHelper(body):
     # Read and clean logs into Pandas dataframe
 
     try:
-        df = pd.read_csv(
-            body["filename"], sep="|", header=None, error_bad_lines=False
-        )
+        df = pd.read_csv(body["filename"], sep="|", header=None, error_bad_lines=False)
         df.columns = ["time", "level", "file", "location", "contents"]
         r = df.time.apply(
             lambda x: ":".join(str(x).split(":")[:-1]) + "." + str(x).split(":")[-1]
@@ -76,9 +73,7 @@ def analyticsLogsHelper(body):
         )
 
     # Get number of errors
-    error_df = cleaned_df[
-        cleaned_df.level.str.contains("ERROR", na=False, regex=False)
-    ]
+    error_df = cleaned_df[cleaned_df.level.str.contains("ERROR", na=False, regex=False)]
     number_of_errors = error_df.shape[0]
     error_rate = float(number_of_errors) / float(cleaned_df.shape[0])
 
