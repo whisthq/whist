@@ -47,4 +47,3 @@ def reasonHelper(username, reason_for_signup):
         new_params={"reason_for_signup": reason_for_signup, "verified": True},
         conditional_params={"username": username},
     )
-
