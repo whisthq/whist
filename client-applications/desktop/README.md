@@ -27,7 +27,7 @@ This repository has basic continuous integration through GitHub Actions. For eve
 
 ## Packaging for Production
 
-In order to properly test the application, you need to package the application and the Fractal protocol together into an installer executable for your local platform. This will **NOT** publish the application to production, but will only build an identical installer which you can install locally and test from the perspective of a user, before publishing live. The installer executable will be in `client-applications/desktop/release` as a `.dmg` (MacOS), `.exe` (Windows) or `.deb` (Linux Ubuntu).
+In order to properly test the application, you need to package the application and the Fractal protocol together into an installer executable for your local platform. This will **NOT** publish the application to production, but will only build an identical installer which you can install locally and test from the perspective of a user, before publishing live. The installer executable will be in `client-applications/desktop/release` as a `.dmg` (MacOS), `.exe` (Windows) or `.deb` (Linux Ubuntu). You need to package for a platform from that platform, for instance you can only package the Windows application from a Windows computer.
 
 The `build.sh` and `build.bat` scripts automate the process of packaging the Fractal protocol and the application together. In order to use them, you **need** to have all the tools needed to build the protocol on your local machine. If you've never compiled the protocol before, or are having issues, refer to the protocol repository [here](https://github.com/fractalcomputers/protocol).
 
@@ -57,10 +57,19 @@ This will clone the Fractal protocol, build it locally and package it and the ap
 
 ## Publishing to Production
 
+If you have tested the packaged application locally and are ready to update the client applications, including the client protocol, as part of our [Release Schedule](https://www.notion.so/fractalcomputers/Release-Schedule-Drafting-c29cbe11c5f94cedb9c01aaa6d0d1ca4), then it is time to publish. You can publish by running the same build script, and specifying the AWS S3 bucket which is associated with the platform you are publishing for. The buckets are:
+
+-   Windows: `fractal-applications-release`
+-   Windows (internal): `fractal-applications-testing`
+-   MacOS: `fractal-mac-application-release`
+-   MacOS (internal): `fractal-mac-application-testing`
+-   Linux: `fractal-linux-application-release`
 
 
 
-
+```
+./build.sh --branch [BRANCH]
+```
 
 
 Before publishing for production, make sure to package for production (see above) and test locally. In order to publish to production, you will run all the steps for packaging and need to make sure all the Cmake and other dependencies listed above are satisfied on your system. Once you are ready to publish for auto-update to the Fractal users, you need to do a few things:
