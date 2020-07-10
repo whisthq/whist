@@ -1,2 +1,11 @@
-# Docker env
-env
+# Use an "inverted-ignore" approach, e.g. ignore everything by default
+# and then manually unignore things as needed
+
+*
+!requirements.txt
+!app/
+!tests/
+!migrations/
+!*.py
+!stem-cell.sh
+**/.DS_Store
