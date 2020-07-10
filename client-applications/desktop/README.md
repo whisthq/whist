@@ -29,17 +29,34 @@ This repository has basic continuous integration through GitHub Actions. For eve
 
 In order to properly test the application, you need to package the application and the Fractal protocol together into an installer executable for your local platform. This will **NOT** publish the application to production, but will only build an identical installer which you can install locally and test from the perspective of a user, before publishing live. The installer executable will be in `client-applications/desktop/release` as a `.dmg` (MacOS), `.exe` (Windows) or `.deb` (Linux Ubuntu).
 
-The `build.sh` and `build.bat` scripts automate the process of packaging the Fractal protocol and the application together. In order to use them, you **need** to have all the tools needed to build the protocol on your local machine. 
-
-
-
-
+The `build.sh` and `build.bat` scripts automate the process of packaging the Fractal protocol and the application together. In order to use them, you **need** to have all the tools needed to build the protocol on your local machine. If you've never compiled the protocol before, or are having issues, refer to the protocol repository [here](https://github.com/fractalcomputers/protocol).
 
 ### MacOS/Linux
 
+To package for local 
+
+Run `./build.sh --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish [PUBLISH]`. 
 
 
 
+function printhelp {
+    echo "Usage: build [OPTION 1] [OPTION 2] ...\n"
+    echo "Note: Make sure to run this script in a terminal on Mac."
+    echo "  --branch BRANCH                set the Github protocol branch that you"
+    echo "                                  want the client app to run"
+    echo "  --version VERSION              set the version number of the client app"
+    echo "                                  must be greater than the current version"
+    echo "                                  in S3 bucket"
+    echo "  --bucket BUCKET                set the S3 bucket to upload to (if -publish=true)"
+    echo "                                  options are:"
+    echo "                                    fractal-applications-release [Windows bucket]"
+    echo "                                    fractal-mac-application-release [Mac bucket]"
+    echo "                                    fractal-linux-application-release [Linux bucket]"
+    echo "                                    fractal-applications-testing [Internal use Windows testing bucket]"
+    echo "                                    fractal-mac-application-testing [Internal use Macvp testing bucket]"
+    echo "  --publish PUBLISH              set whether to publish to S3 and auto-update live apps"
+    echo "                                  defaults to false, options are true/false"
+}
 
 
 
