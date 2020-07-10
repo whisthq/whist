@@ -8,6 +8,8 @@
 #include "../core/fractal.h"
 #include "clipboard.h"
 
+#define MS_IN_SECOND 1000.0
+
 int UpdateClipboardThread(void* opaque);
 bool pendingUpdateClipboard();
 
@@ -108,8 +110,7 @@ int UpdateClipboardThread(void* opaque) {
                          \"ssh://%s/%s/get_clipboard/\" \
                          %s \
                          -force \"ssh://%s/%s/get_clipboard/\"",
-                    prefix, exc, username, server_ip, filename, SET_CLIPBOARD,
-                    server_ip, filename);
+                    prefix, exc, username, server_ip, filename, SET_CLIPBOARD, server_ip, filename);
 
                 /*
                 strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-o
@@ -161,8 +162,7 @@ int UpdateClipboardThread(void* opaque) {
                          %s \
                          \"ssh://%s/%s/set_clipboard/\" \
                          -force %s",
-                    prefix, exc, username, GET_CLIPBOARD, server_ip, filename,
-                    GET_CLIPBOARD);
+                    prefix, exc, username, GET_CLIPBOARD, server_ip, filename, GET_CLIPBOARD);
 
                 /*
                 strncat(cmd,
@@ -200,9 +200,8 @@ int UpdateClipboardThread(void* opaque) {
             // If it hasn't been 500ms yet, then wait 500ms to prevent too much
             // spam
             const int spam_time_ms = 500;
-            if (GetTimer(clipboard_time) < spam_time_ms / 1000.0) {
-                SDL_Delay(max(
-                    (int)(spam_time_ms - 1000 * GetTimer(clipboard_time)), 1));
+            if (GetTimer(clipboard_time) < spam_time_ms / MS_IN_SECOND) {
+                SDL_Delay(max((int)(spam_time_ms - 1000 * GetTimer(clipboard_time)), 1));
             }
         }
 

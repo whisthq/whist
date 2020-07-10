@@ -103,8 +103,7 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
     frame->width = c->width;
     frame->height = c->height;
 
-    ret = av_image_alloc(frame->data, frame->linesize, c->width, c->height,
-                         c->pix_fmt, 32);
+    ret = av_image_alloc(frame->data, frame->linesize, c->width, c->height, c->pix_fmt, 32);
     if (ret < 0) {
         LOG_ERROR("Could not allocate raw picture buffer");
         exit(1);
@@ -140,8 +139,8 @@ int bmp_to_png(char* bmp, int size, AVPacket* pkt) {
     return 0;
 }
 
-int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
-             unsigned int* h, enum AVPixelFormat* pix_fmt, char* png_filename) {
+int load_png(uint8_t* data[4], int linesize[4], unsigned int* w, unsigned int* h,
+             enum AVPixelFormat* pix_fmt, char* png_filename) {
     AVFormatContext* format_ctx = NULL;
     AVCodec* codec = NULL;
     AVCodecContext* codec_ctx = NULL;
@@ -157,8 +156,7 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
 
     char err_buf[1000];
 
-    if ((ret = avformat_open_input(&format_ctx, png_filename, NULL, NULL)) <
-        0) {
+    if ((ret = avformat_open_input(&format_ctx, png_filename, NULL, NULL)) < 0) {
         av_make_error_string(err_buf, sizeof(err_buf), ret);
         LOG_ERROR("avformat_open_input failed: %s", err_buf);
         return ret;
@@ -174,8 +172,7 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
 
     codec_ctx = avcodec_alloc_context3(codec);
 
-    ret = avcodec_parameters_to_context(codec_ctx,
-                                        format_ctx->streams[0]->codecpar);
+    ret = avcodec_parameters_to_context(codec_ctx, format_ctx->streams[0]->codecpar);
     if (ret < 0) {
         av_make_error_string(err_buf, sizeof(err_buf), ret);
         LOG_ERROR("avcodec_parameters_to_context failed: %s", err_buf);
@@ -225,19 +222,18 @@ int load_png(uint8_t* data[4], int linesize[4], unsigned int* w,
     *h = frame->height;
     *pix_fmt = frame->format;
 
-    if ((ret = av_image_alloc(data, linesize, (int)*w, (int)*h,
-                              AV_PIX_FMT_RGB24, 32)) < 0) {
+    if ((ret = av_image_alloc(data, linesize, (int)*w, (int)*h, AV_PIX_FMT_RGB24, 32)) < 0) {
         av_make_error_string(err_buf, sizeof(err_buf), ret);
         LOG_ERROR("av_image_alloc failed: %s", err_buf);
         goto end;
     }
     ret = 0;
 
-    struct SwsContext* swsContext = sws_getContext(
-        *w, *h, *pix_fmt, *w, *h, AV_PIX_FMT_RGB24, 0, NULL, NULL, NULL);
+    struct SwsContext* swsContext =
+        sws_getContext(*w, *h, *pix_fmt, *w, *h, AV_PIX_FMT_RGB24, 0, NULL, NULL, NULL);
 
-    sws_scale(swsContext, (uint8_t const* const*)frame->data, frame->linesize,
-              0, *h, data, linesize);
+    sws_scale(swsContext, (uint8_t const* const*)frame->data, frame->linesize, 0, *h, data,
+              linesize);
 
 end:
     avcodec_close(codec_ctx);

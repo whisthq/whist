@@ -164,21 +164,20 @@ typedef struct FractalPacket {
 
     // Metadata
     FractalPacketType type;  // Video, Audio, or Message
-    int id;  // Unique identifier (Two packets with the same type and id, from
-             // the same IP, will be the same)
-    short index;        // Handle separation of large datagrams
-    short num_indices;  // The total datagram consists of data packets with
-                        // indices from 0 to payload_size - 1
-    int payload_size;   // size of data[] that is of interest
-    bool is_a_nack;     // True if this is a replay'ed packet
+    int id;                  // Unique identifier (Two packets with the same type and id, from
+                             // the same IP, will be the same)
+    short index;             // Handle separation of large datagrams
+    short num_indices;       // The total datagram consists of data packets with
+                             // indices from 0 to payload_size - 1
+    int payload_size;        // size of data[] that is of interest
+    bool is_a_nack;          // True if this is a replay'ed packet
 
     // Data
-    uint8_t
-        data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
-                                 // bytes beyond payload_size / cipher_len
-    uint8_t overflow[16];  // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16,
-                           // as the encrypted packet might be slightly larger
-                           // than the unencrypted packet
+    uint8_t data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
+                                     // bytes beyond payload_size / cipher_len
+    uint8_t overflow[16];            // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16,
+                                     // as the encrypted packet might be slightly larger
+                                     // than the unencrypted packet
 } FractalPacket;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
@@ -230,12 +229,10 @@ int GetLastNetworkError();
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int CreateUDPContext(SocketContext* context, char* destination, int port,
-                     int recvfrom_timeout_s, int connection_timeout_ms,
-                     bool using_stun);
-int CreateTCPContext(SocketContext* context, char* destination, int port,
-                     int recvfrom_timeout_s, int connection_timeout_ms,
-                     bool using_stun);
+int CreateUDPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
+                     int connection_timeout_ms, bool using_stun);
+int CreateTCPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
+                     int connection_timeout_ms, bool using_stun);
 
 /**
  * @brief                          This will send a FractalPacket over TCP to
@@ -252,8 +249,7 @@ int CreateTCPContext(SocketContext* context, char* destination, int port,
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data,
-                  int len);
+int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data, int len);
 
 /**
  * @brief                          This will send a FractalPacket over UDP to
@@ -279,9 +275,8 @@ int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data,
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int SendUDPPacket(SocketContext* context, FractalPacketType type, void* data,
-                  int len, int id, int burst_bitrate,
-                  FractalPacket* packet_buffer, int* packet_len_buffer);
+int SendUDPPacket(SocketContext* context, FractalPacketType type, void* data, int len, int id,
+                  int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer);
 
 /**
  * @brief                          Replay the sending of a packet that has
@@ -358,8 +353,7 @@ bool SendJSONPost(char* host_s, char* path, char* jsonObj);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendJSONGet(char* host_s, char* path, char* json_res,
-                 size_t json_res_size);
+bool SendJSONGet(char* host_s, char* path, char* json_res, size_t json_res_size);
 
 int sendp(SocketContext* context, void* buf, int len);
 

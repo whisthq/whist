@@ -98,8 +98,7 @@ bool get_clipboard_string(ClipboardData* cb) {
 }
 
 bool get_clipboard_files(ClipboardData* cb) {
-    Atom target_atom =
-        XInternAtom(display, "x-special/gnome-copied-files", False);
+    Atom target_atom = XInternAtom(display, "x-special/gnome-copied-files", False);
     Atom property_atom = XInternAtom(display, "XSEL_DATA", False);
 
     if (clipboard_has_target(property_atom, target_atom)) {
@@ -128,8 +127,7 @@ bool get_clipboard_files(ClipboardData* cb) {
                 strcat(final_filename, GET_CLIPBOARD);
                 strcat(final_filename, "/");
                 strcat(final_filename, basename(file));
-                printf("NAME: %s %s %s\n", final_filename, file,
-                       basename(file));
+                printf("NAME: %s %s %s\n", final_filename, file, basename(file));
                 symlink(file + sizeof(file_prefix) - 1, final_filename);
             } else {
                 mprintf("Not a file: %s\n", file);
@@ -150,8 +148,7 @@ ClipboardData* GetClipboard() {
     ClipboardData* cb = (ClipboardData*)cb_buf;
     cb->type = CLIPBOARD_NONE;
     cb->size = 0;
-    get_clipboard_files(cb) || get_clipboard_picture(cb) ||
-        get_clipboard_string(cb);
+    get_clipboard_files(cb) || get_clipboard_picture(cb) || get_clipboard_string(cb);
 
     // Essentially just cb_buf, we expect that the user of GetClipboard
     // will malloc his own version if he wants to save multiple clipboards
@@ -190,8 +187,7 @@ void SetClipboard(ClipboardData* cb) {
         LOG_INFO("Setting clipboard to image!");
 
         // Open up xclip
-        inp =
-            popen(CLOSE_FDS "xclip -i -selection clipboard -t image/png", "w");
+        inp = popen(CLOSE_FDS "xclip -i -selection clipboard -t image/png", "w");
 
         // Write file header
         char* file_buf = malloc(14);
@@ -213,10 +209,7 @@ void SetClipboard(ClipboardData* cb) {
         DIR* dr = opendir(SET_CLIPBOARD);
 
         if (dr) {
-            inp =
-                popen(CLOSE_FDS
-                      "xclip -i -sel clipboard -t x-special/gnome-copied-files",
-                      "w");
+            inp = popen(CLOSE_FDS "xclip -i -sel clipboard -t x-special/gnome-copied-files", "w");
 
             char prefix[] = "copy";
             fwrite(prefix, 1, sizeof(prefix) - 1, inp);
@@ -232,8 +225,7 @@ void SetClipboard(ClipboardData* cb) {
             // Read through the directory
             while (dr && (de = readdir(dr)) != NULL) {
                 // Ignore . and ..
-                if (strcmp(de->d_name, ".") == 0 ||
-                    strcmp(de->d_name, "..") == 0) {
+                if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) {
                     continue;
                 }
 
@@ -267,8 +259,7 @@ bool StartTrackingClipboardUpdates() {
         return false;
     }
     unsigned long color = BlackPixel(display, DefaultScreen(display));
-    window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1,
-                                 1, 0, color, color);
+    window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1, 1, 0, color, color);
     clipboard = XInternAtom(display, "CLIPBOARD", False);
     incr_id = XInternAtom(display, "INCR", False);
     return true;
@@ -304,13 +295,11 @@ bool clipboard_has_target(Atom property_atom, Atom target_atom) {
     XEvent event;
 
     XSelectInput(display, window, PropertyChangeMask);
-    XConvertSelection(display, clipboard, target_atom, property_atom, window,
-                      CurrentTime);
+    XConvertSelection(display, clipboard, target_atom, property_atom, window, CurrentTime);
 
     do {
         XNextEvent(display, &event);
-    } while (event.type != SelectionNotify ||
-             event.xselection.selection != clipboard);
+    } while (event.type != SelectionNotify || event.xselection.selection != clipboard);
 
     if (event.xselection.property == property_atom) {
         return true;
@@ -319,16 +308,14 @@ bool clipboard_has_target(Atom property_atom, Atom target_atom) {
     }
 }
 
-bool get_clipboard_data(Atom property_atom, ClipboardData* cb,
-                        int header_size) {
+bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size) {
     Atom new_atom;
     int resbits;
     long unsigned ressize, restail;
     char* result;
 
-    XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4, True,
-                       AnyPropertyType, &new_atom, &resbits, &ressize, &restail,
-                       (unsigned char**)&result);
+    XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4, True, AnyPropertyType,
+                       &new_atom, &resbits, &ressize, &restail, (unsigned char**)&result);
     ressize *= resbits / 8;
 
     cb->size = 0;
@@ -343,13 +330,12 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb,
             XEvent event;
             do {
                 XNextEvent(display, &event);
-            } while (event.type != PropertyNotify ||
-                     event.xproperty.atom != property_atom ||
+            } while (event.type != PropertyNotify || event.xproperty.atom != property_atom ||
                      event.xproperty.state != PropertyNewValue);
 
-            XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4,
-                               True, AnyPropertyType, &new_atom, &resbits,
-                               &ressize, &restail, (unsigned char**)(&result));
+            XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4, True,
+                               AnyPropertyType, &new_atom, &resbits, &ressize, &restail,
+                               (unsigned char**)(&result));
 
             // Measure size in bytes
             int src_size = ressize * (resbits / 8);
