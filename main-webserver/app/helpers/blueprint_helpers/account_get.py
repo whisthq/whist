@@ -75,8 +75,7 @@ def disksHelper(username, main):
                 function="disksHelper",
                 label="{username}".format(username=username),
                 logs="Disk helper function found no disks associated with {username} and main {main}".format(
-                    username=username,
-                    main=str(main),
+                    username=username, main=str(main),
                 ),
             )
             return {"disks": [], "status": SUCCESS}
