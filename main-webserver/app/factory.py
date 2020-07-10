@@ -27,6 +27,7 @@ def init_app(app):
 
     from .blueprints.auth.account_blueprint import account_bp
     from .blueprints.auth.token_blueprint import token_bp
+    from .blueprints.auth.google_auth_blueprint import google_auth_bp
 
     from .blueprints.celery.celery_status_blueprint import celery_status_bp
 
@@ -44,6 +45,7 @@ def init_app(app):
     app.register_blueprint(azure_vm_bp)
     app.register_blueprint(celery_status_bp)
     app.register_blueprint(azure_disk_bp)
+    app.register_blueprint(google_auth_bp)
     app.register_blueprint(artifact_bp)
     app.register_blueprint(mail_bp)
     app.register_blueprint(newsletter_bp)

@@ -26,4 +26,4 @@ def google_auth_post(action, **kwargs):
 
         output = reasonHelper(username, reason_for_signup)
 
-        return jsonify(output), output["status"]
+        return jsonify(output), SUCCESS
