@@ -1,8 +1,20 @@
-/*
- * Clipboard getting and setting functions on Linux Ubuntu.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file x11_clipboard.c
+ * @brief This file contains the general clipboard functions for a shared
+ *        client-server clipboard on Linux clients/servers.
+============================
+Usage
+============================
+
+GET_CLIPBOARD and SET_CLIPBOARD will return strings representing directories
+important for getting and setting file clipboards. When GetClipboard() is called
+and it returns a CLIPBOARD_FILES type, then GET_CLIPBOARD will be filled with
+symlinks to the clipboard files. When SetClipboard(cb) is called and is given a
+clipboard with a CLIPBOARD_FILES type, then the clipboard will be set to
+whatever files are in the SET_CLIPBOARD directory.
+*/
+
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>

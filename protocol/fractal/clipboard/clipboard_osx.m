@@ -1,8 +1,21 @@
-/*
- * Objective-C MacOS clipboard setting and getting functions.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file clipboard_osx.m
+ * @brief This file contains the code to interface with the MacOS clipboard via
+ *        Apple's Objective-C language.
+============================
+Usage
+============================
+
+The OSXImage and OSXFilenames structs define data for images and files in MacOS.
+
+You can find whether the clipboard has a specific data (Image, String or File)
+by calling the respective "ClipboardHas___" function. You can see whether the
+clipboard updated by calling GetClipboardChangeCount you can then either
+retrieve from the clipboard, or put some specific data in the clipboard, via the
+respective "ClipboardGet___" or "ClipboardSet___".
+*/
+
 #include "clipboard_osx.h"
 
 #include <AppKit/AppKit.h>

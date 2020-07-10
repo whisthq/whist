@@ -8,6 +8,12 @@
 ============================
 Usage
 ============================
+
+Toggles dynamically between input receiving on Windows or Linux Ubuntu
+computers. You can create an input device to receive input (keystrokes, mouse
+clicks, etc.) via CreateInputDevice. You can then send input to the Windows OS
+via ReplayUserInput, and use UpdateKeyboardState to sync keyboard state between
+local and remote computers (say, sync them to both have CapsLock activated).
 */
 
 /*

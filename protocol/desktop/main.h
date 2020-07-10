@@ -8,6 +8,8 @@
 ============================
 Usage
 ============================
+
+Use SendFmsg to send a FractalClientMessage to the server.
 */
 
 /*

@@ -1,13 +1,43 @@
-/*
- * Clipboard thread handling.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file clipboard_synchronizer.c
+ * @brief This file contains code meant, to be used on the clientside, that will
+ *        assist in synchronizing the client-server clipboard.
+============================
+Usage
+============================
+
+initClipboardSynchronizer("76.106.92.11");
+
+ClipboardData server_clipboard;
+
+// Will set the client clipboard to that data
+ClipboardSynchronizerSetClipboard(&server_clipboard);
+
+// Will likely return true because it's waiting on server_clipboard to be set
+mprintf("Is Synchronizing? %d\n", isClipboardSynchronizing());
+
+// Wait for clipboard to be done synchronizing
+while(isClipboardSynchronizing());
+
+ClipboardData* client_clipboard = ClipboardSynchronizerGetNewClipboard();
+
+if (client_clipboard) {
+  // We have a new clipboard, this should be sent to the server
+  Send(client_clipboard);
+} else {
+  // There is no new clipboard
+}
+
+destroyClipboardSynchronizer();
+*/
+
 #include <stdio.h>
 
 #include "../core/fractal.h"
 #include "clipboard.h"
 
+#define UNUSED(x) (void)(x)
 #define MS_IN_SECOND 1000.0
 
 int UpdateClipboardThread(void* opaque);
@@ -72,7 +102,7 @@ bool ClipboardSynchronizerSetClipboard(ClipboardData* cb) {
 }
 
 int UpdateClipboardThread(void* opaque) {
-    opaque;
+    UNUSED(opaque);
 
     while (connected) {
         SDL_SemWait(clipboard_semaphore);
@@ -214,7 +244,6 @@ int UpdateClipboardThread(void* opaque) {
 
 ClipboardData* ClipboardSynchronizerGetNewClipboard() {
     /*
-
     if (pending_clipboard_push) {
         pending_clipboard_push = false;
         return clipboard;

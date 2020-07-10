@@ -1,8 +1,19 @@
-/*
- * Audio encoding via FFmpeg library.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file audioencode.c
+ * @brief This file contains the code to encode AAC-encoded audio using FFmpeg.
+============================
+Usage
+============================
+
+Audio is encoded to AAC via FFmpeg using a FIFO queue. In order for FFmpeg to
+be able to encode an audio frame, it needs to be have a certain duration of
+data. This is frequently more than a single packet, which is why we have a FIFO
+queue. You can initialize the AAC encoder via create_audio_encoder. You then
+receive packets into the FIFO queue, which is a data buffer, via
+audio_encoder_fifo_intake. You can then encode via audio_encoder_encode.
+*/
+
 #include "audioencode.h"
 
 audio_encoder_t* create_audio_encoder(int bit_rate, int sample_rate) {

@@ -1,8 +1,15 @@
-/*
- * Set and retrieve Windows cursor shapes.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file windowscursor.c
+ * @brief This file defines the cursor types, functions, init and get.
+============================
+Usage
+============================
+
+Use InitCursor to load the appropriate cursor images for a specific OS, and then
+GetCurrentCursor to retrieve what the cursor shold be on the OS (drag-window,
+arrow, etc.).
+*/
 
 #include <windows.h>
 

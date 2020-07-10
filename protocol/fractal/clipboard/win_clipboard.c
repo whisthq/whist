@@ -1,8 +1,23 @@
-/*
- * Clipboard getting and setting functions on Windows.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file win_clipboard.c
+ * @brief This file contains the general clipboard functions for a shared
+ *        client-server clipboard on Windows clients/servers.
+============================
+Usage
+============================
+
+GET_CLIPBOARD and SET_CLIPBOARD will return strings representing directories
+important for getting and setting file clipboards. When GetClipboard() is called
+and it returns a CLIPBOARD_FILES type, then GET_CLIPBOARD will be filled with
+symlinks to the clipboard files. When SetClipboard(cb) is called and is given a
+clipboard with a CLIPBOARD_FILES type, then the clipboard will be set to
+whatever files are in the SET_CLIPBOARD directory.
+
+LGET_CLIPBOARD and LSET_CLIPBOARD are the wide-character versions of these
+strings, for use on windows OS's
+*/
+
 #if defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #endif

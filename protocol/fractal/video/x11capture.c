@@ -1,8 +1,23 @@
-/*
- * GPU screen capture on Linux Ubuntu.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file x11capture.c
+ * @brief This file contains the code to do screen capture in the GPU on Linux
+ *        Ubuntu.
+============================
+Usage
+============================
+
+CaptureDevice contains all the information used to interface with the X11 screen
+capture API and the data of a frame.
+
+Call CreateCaptureDevice to initialize at the beginning of the program, and
+DestroyCaptureDevice to clean up at the end of the program. Call CaptureScreen
+to capture a frame.
+
+You must release each frame you capture via ReleaseScreen before calling
+CaptureScreen again.
+*/
+
 #include "x11capture.h"
 
 #include <X11/extensions/Xdamage.h>

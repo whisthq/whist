@@ -1,4 +1,3 @@
-
 find_program(CLANG_FORMAT_EXE NAMES "clang-format" DOC "Path to clang-format executable" )
 if(NOT CLANG_FORMAT_EXE)
     message(STATUS "clang-format not found.")

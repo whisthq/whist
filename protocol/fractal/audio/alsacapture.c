@@ -1,9 +1,27 @@
-/*
- * Audio capture on Linux Ubuntu.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file alsacapture.c
+ * @brief This file contains the code to capture audio on Ubuntu using ALSA.
+============================
+Usage
+============================
+
+Audio is captured as a stream. You first need to create an audio device via
+CreateAudioDevice. You can then start it via StartAudioDevice and it will
+capture all audio data it finds. It captures nothing if there is no audio
+playing. You can use GetNextPacket to retrieve the next packet of audio data
+from the stream,, and GetBuffer to grab the data. Packets will keep coming
+whether you grab them or not. Once you are done, you need to destroy the audio
+device via DestroyAudioDevice.
+*/
+
 #include "alsacapture.h"
+
+/*
+============================
+Public Functions
+============================
+*/
 
 audio_device_t *CreateAudioDevice() {
     audio_device_t *audio_device = malloc(sizeof(audio_device_t));
