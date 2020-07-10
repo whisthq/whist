@@ -33,51 +33,35 @@ The `build.sh` and `build.bat` scripts automate the process of packaging the Fra
 
 ### MacOS/Linux
 
-To package for local 
+To package for local testing on Unix systems, simply run `build.sh` with the appropriate protocol branch you'd like to test, likely `dev` or `master`.
 
-Run `./build.sh --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish [PUBLISH]`. 
+```
+./build.sh --branch [BRANCH]
+```
 
-
-
-function printhelp {
-    echo "Usage: build [OPTION 1] [OPTION 2] ...\n"
-    echo "Note: Make sure to run this script in a terminal on Mac."
-    echo "  --branch BRANCH                set the Github protocol branch that you"
-    echo "                                  want the client app to run"
-    echo "  --version VERSION              set the version number of the client app"
-    echo "                                  must be greater than the current version"
-    echo "                                  in S3 bucket"
-    echo "  --bucket BUCKET                set the S3 bucket to upload to (if -publish=true)"
-    echo "                                  options are:"
-    echo "                                    fractal-applications-release [Windows bucket]"
-    echo "                                    fractal-mac-application-release [Mac bucket]"
-    echo "                                    fractal-linux-application-release [Linux bucket]"
-    echo "                                    fractal-applications-testing [Internal use Windows testing bucket]"
-    echo "                                    fractal-mac-application-testing [Internal use Macvp testing bucket]"
-    echo "  --publish PUBLISH              set whether to publish to S3 and auto-update live apps"
-    echo "                                  defaults to false, options are true/false"
-}
-
-
-
+This will clone the Fractal protocol, build it locally and package it and the application into a `.dmg` for you to install and test. 
 
 #### MacOS Notarizing
 
 To package the MacOS application, it needs to be notarized, which means it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developper Certificate in your MacOS Keychain for this to be successful. You can download the certificate from AWS S3 on [this link](https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12) assuming you have access to the Fractal AWS organization, and then install it by double-clicking the `.p12` certificate file. The application will get notarized seamlessly when running the build script.
 
-
-
-
-
-
-
-
-
 ### Windows
 
-Run `build.bat` in an x86_x64 Visual Studio Developer Command Prompt. This will delete any prior Fractal protocol folder, pull the recent master branch, and package it locally. You MUST use this specific command prompt to compile the protocol; if you do not the Electron application will package anyway, but the protocol will not packaged with it. If you do not have this command prompt, you need to install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. You must also install [Cmake](https://cmake.org/download/). For more information on compiling on Windows, refer to the Fractal protocol repository.
+To package for local testing on Windows systems, simply run `build.bat` from an x86_x64 Visual Studio Developer Command Prompt with the appropriate protocol branch you'd like to test, likely `dev` or `master`. You MUST use this specific command prompt to compile the protocol; if you do not the Electron application will package anyway, but the protocol will not packaged with it. If you need help setting up Visual Studio, refer to the protocol repository for instructions on how to compile.
+
+```
+build.bat --branch [BRANCH]
+```
+
+This will clone the Fractal protocol, build it locally and package it and the application into a `.exe` for you to install and test. 
 
 ## Publishing to Production
+
+
+
+
+
+
 
 Before publishing for production, make sure to package for production (see above) and test locally. In order to publish to production, you will run all the steps for packaging and need to make sure all the Cmake and other dependencies listed above are satisfied on your system. Once you are ready to publish for auto-update to the Fractal users, you need to do a few things:
 
