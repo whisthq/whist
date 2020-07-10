@@ -65,6 +65,7 @@ useful_env_vars = [
     "DASHBOARD_PASSWORD",
     "DASHBOARD_USERNAME",
     "DATABASE_URL",
+    "HEROKU_POSTGRESQL_ORANGE_URL",
     "ENDPOINT_SECRET",
     "FRONTEND_URL",
     "HOURLY_PLAN_ID",
@@ -79,6 +80,7 @@ useful_env_vars = [
     "STRIPE_SECRET",
     # "TEST_HEROKU_PR_NUMBER",
     "UNLIMITED_PLAN_ID",
+    "USE_PRODUCTION_DATABASE",
     "VM_GROUP",
     "VM_PASSWORD",
 ]
