@@ -41,6 +41,7 @@ heroku_proc = subprocess.run(
     ["heroku", "config", "--json", "--app", app_name],
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
+    shell=True,
 )
 if heroku_proc.returncode != 0:
     print(heroku_proc.stderr.decode("utf-8"))
