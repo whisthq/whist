@@ -96,4 +96,3 @@ def detachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
     )
     virtual_machine = async_vm_update.result()
     return 1
-
