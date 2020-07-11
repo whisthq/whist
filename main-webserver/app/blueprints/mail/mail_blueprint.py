@@ -30,16 +30,3 @@ def mail(action, **kwargs):
         return computerReadyHelper(
             body["username"], body["date"], body["code"], body["location"]
         )
-
-
-@mail_bp.route("/newsletter/<action>", methods=["POST"])
-@fractalPreProcess
-def newsletter(action, **kwargs):
-    body = kwargs["body"]
-    if action == "subscribe":
-        newsletterSubscribe(body["username"])
-        return jsonify({"status": SUCCESS}), SUCCESS
-
-    elif action == "unsubscribe":
-        newsletterUnsubscribe(body["username"])
-        return jsonify({"status": SUCCESS}), SUCCESS

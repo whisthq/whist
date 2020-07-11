@@ -125,10 +125,15 @@ def retrieveStripeHelper(email):
         logs="Retrieving subscriptions for {}".format(email),
     )
 
-    customer = fractalSQLSelect("customers", {"username": email})["rows"]
-    credits = fractalSQLSelect("users", {"username": email})["rows"][
-        "credits_outstanding"
-    ]
+    customerOutput = fractalSQLSelect("customers", {"username": email})
+    customer = None
+    if customerOutput["rows"]:
+        customer = customerOutput["rows"][0]
+    creditsOutput = fractalSQLSelect("users", {"username": email})
+    if creditsOutput["rows"]:
+        credits = creditsOutput["rows"][0]["credits_outstanding"]
+    else:
+        credits = 0
 
     if customer:
         subscription = customer["subscription"]

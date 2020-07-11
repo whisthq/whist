@@ -65,7 +65,7 @@ def fractalSQLSelect(table_name, params):
         table_name=table_name
     )
 
-    if not params:
+    if not params or len(params) == 0:
         command = """
             SELECT * FROM \"{table_name}\"""".format(
             table_name=table_name

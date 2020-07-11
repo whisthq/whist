@@ -6,6 +6,8 @@ stripe_bp = Blueprint("stripe_bp", __name__)
 
 @stripe_bp.route("/stripe/<action>", methods=["POST"])
 @fractalPreProcess
+@jwt_required
+@fractalAuth
 def payment(action, **kwargs):
     body = kwargs["body"]
 
@@ -46,7 +48,7 @@ def payment(action, **kwargs):
 
         return webhookHelper(event)
 
-    elif action == "update" and request.method == "POST":
+    elif action == "update":
         # When a customer requests to change their plan type
         return updateHelper(body["username"], body["plan"])
 

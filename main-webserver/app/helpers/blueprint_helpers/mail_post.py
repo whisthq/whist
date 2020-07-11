@@ -4,7 +4,7 @@ from app.helpers.utils.general.sql_commands import *
 
 
 def forgotPasswordHelper(username):
-    params = {"userName": username}
+    params = {"username": username}
     user = fractalSQLSelect("users", params)["rows"]
     if user:
         upperCase = string.ascii_uppercase
@@ -41,10 +41,9 @@ def forgotPasswordHelper(username):
             "password_tokens",
             {"token": token, "time_issued": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),},
         )
-        return jsonify({"verified": verified}), SUCCESS
+        return jsonify({"verified": True}), SUCCESS
     else:
-        conn.close()
-        return jsonify({"verified": verified}), NOT_FOUND
+        return jsonify({"verified": False}), NOT_FOUND
 
 
 def cancelHelper(user, feedback):
