@@ -1,0 +1,8 @@
+# Allow actions to be manually triggered using Actions Panel (https://actionspanel.app)
+buttons:
+  - title: Trigger Branch Build & Release
+    action: "branch_build_release"
+    description: Manually trigger a branch to be built, tested, and released
+    arguments:
+      - name: branch
+      - name: should_test
