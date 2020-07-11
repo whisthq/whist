@@ -36,6 +36,14 @@ def attachDiskToVM(disk_name, vm_name, resource_group=os.getenv("VM_GROUP")):
         )
         async_disk_attach.wait()
 
+        fractalLog(
+            function="swapSpecificDisk",
+            label=str(vm_name),
+            logs="Disk {disk_name} successfully swapped onto VM {vm_name}".format(
+                disk_name=disk_name, vm_name=vm_name
+            ),
+        )
+
         output = fractalSQLSelect(table_name="disks", params={"disk_name": disk_name})
 
         username = None
@@ -51,7 +59,7 @@ def attachDiskToVM(disk_name, vm_name, resource_group=os.getenv("VM_GROUP")):
 
         return 1
     except Exception as e:
-        fractaLog(
+        fractalLog(
             function="attachDiskToVM",
             label=getVMUser(vm_name),
             log="Critical error attaching disk to VM: {error}".format(error=error),
@@ -79,7 +87,8 @@ def detachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
         ),
     )
 
-    virtual_machine = compute_client.virtual_machines.get(resource_group, vm_name)
+    virtual_machine = createVMInstance(vm_name, resource_group)
+
     data_disks = virtual_machine.storage_profile.data_disks
     data_disks[:] = [disk for disk in data_disks if disk.name != disk_name]
     async_vm_update = compute_client.virtual_machines.create_or_update(
@@ -88,70 +97,3 @@ def detachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
     virtual_machine = async_vm_update.result()
     return 1
 
-
-def attachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
-    fractalLog(
-        function="attachSecondaryDisk",
-        label=getVMUser(vm_name),
-        logs="Attaching secondary disk {disk_name} to {vm_name}".format(
-            disk_name=disk_name, vm_name=vm_name
-        ),
-    )
-
-    _, compute_client, _ = createClients()
-    data_disk = compute_client.disks.get(resource_group, disk_name)
-
-    if data_disk.managed_by:
-        old_vm_name = data_disk.managed_by.split("/")[-1]
-        if old_vm_name != vm_name:
-            detachSecondaryDisk(disk_name, old_vm_name, resource_group, s=s)
-        else:
-            return 1
-
-    lunNum = 1
-    attachedDisk = False
-    while not attachedDisk and lunNum < 15:
-        try:
-            # Get the virtual machine by name
-
-            virtual_machine = compute_client.virtual_machines.get(
-                resource_group, virtual_machine.name, virtual_machine, vm_name
-            )
-
-            virtual_machine.storage_profile.data_disks.append(
-                {
-                    "lun": lunNum,
-                    "name": data_disk.name,
-                    "create_option": DiskCreateOption.attach,
-                    "managed_disk": {"id": data_disk.id},
-                }
-            )
-
-            async_disk_attach = compute_client.virtual_machines.create_or_update(
-                resource_group, virtual_machine.name, virtual_machine
-            )
-            async_disk_attach.wait()
-
-            attachedDisk = True
-        except ClientException as e:
-            lunNum += 1
-
-    if lunNum >= 15:
-        return -1
-
-    command = """
-        Get-Disk | Where partitionstyle -eq 'raw' |
-            Initialize-Disk -PartitionStyle MBR -PassThru |
-            New-Partition -AssignDriveLetter -UseMaximumSize |
-            Format-Volume -FileSystem NTFS -NewFileSystemLabel "{disk_name}" -Confirm:$false
-        """.format(
-        disk_name=disk_name
-    )
-
-    run_command_parameters = {"command_id": "RunPowerShellScript", "script": [command]}
-    poller = compute_client.virtual_machines.run_command(
-        resource_group, vm_name, run_command_parameters
-    )
-
-    result = poller.result()
-    return 1
