@@ -1,0 +1,203 @@
+name: Branch Build & Release
+
+on:
+  push:
+    branches: ["wip-ci"] # TODO remove this once done with testing
+  repository_dispatch:
+    types:
+      - branch_build_release
+        # params:
+        #   branch: name of branch to run against
+        #   should_test: optional, if tests should be run before publishing this release (default: true)
+        #   overridden_version_id: optional, manually set a version ID (default: false, ie. BRANCH-YYYYMMDD.#)
+  workflow_dispatch: # repository_dispatch can only be invoked for a workflow that's on master
+    types:
+      - branch_build_release
+
+jobs:
+
+  build:
+    strategy:
+      matrix:
+        config:
+          - os: windows-latest
+            artifact_name: TODO-Windows-64bit.tar.xz
+          - os: macos-latest
+            artifact_name: TODO-macOS-64bit.tar.xz
+          - os: ubuntu-latest
+            artifact_name: TODO-Linux-64bit.tar.xz
+    name: Build protocol binaries for ${{ matrix.config.os }}
+    runs-on: ${{ matrix.config.os }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.client_payload.branch }}
+      - name: TODO - Create build artifact
+        run: echo "test" > ${{ matrix.config.artifact_name }}
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.config.artifact_name }}
+          path: ${{ github.workspace }}/${{ matrix.config.artifact_name }}
+
+  test:
+    strategy:
+      matrix:
+        config:
+          # These should match the configurations defined in the build job
+          # TODO: figure out how to DRY these configurations
+          - os: windows-latest
+            artifact_name: TODO-Windows-64bit.tar.xz
+          - os: macos-latest
+            artifact_name: TODO-macOS-64bit.tar.xz
+          - os: ubuntu-latest
+            artifact_name: TODO-Linux-64bit.tar.xz
+    name: "Test on ${{ matrix.config.os }}"
+    runs-on: ${{ matrix.config.os }}
+    # This job (and any of its dependents) will be skipped if the dispatch payload has
+    # the parameter "should_test" set to false. This is intended to be used when performing
+    # a quick subsequent release due to non-code changes (such as documentation) or when iterating
+    # on the release workflow and a full test suite isn't necessary
+    if: "!contains(github.event.client_payload.branch, 'false')"
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.client_payload.branch }}
+      - name: Retrieve build artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.config.artifact_name }}
+      - name: Run tests
+        run: |
+          echo TODO "run tests", ls-ing file in the meantime
+          ls ${{ matrix.config.artifact_name }}
+        env:
+          CI: true
+
+  create-release:
+    name: Create release
+    needs: [test] # FIXME allow run if test was skipped
+    runs-on: ubuntu-latest
+    outputs:
+      release_upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version_id: ${{ steps.release_info.outputs.version_id }}
+    steps:
+      # TODO convert this into its own Github Action (ie. not embedded in this workflow but as its own published action)
+      # - https://docs.github.com/en/actions/creating-actions/creating-a-javascript-action
+      # - https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-using-action-in-the-same-repository-as-the-workflow
+      - name: Determine the new release version ID
+        id: release_info
+        uses: actions/github-script@v2
+        with:
+          script: |
+            if ("${{ github.event.client_payload.overridden_version_id }}") {
+              console.log(`::set-output name=version_id::${{ github.event.client_payload.overridden_version_id }}`)
+              return
+            }
+            const cur_branch = "${{ github.event.client_payload.branch }}" || "wip-ci" // TODO
+            const accumulate_paged_list = async (doReq, start_page = 0) => {
+              let aggregate = []
+              let new_list
+              do {
+                new_list = await doReq(start_page)
+                aggregate = aggregate.concat(new_list)
+                start_page++
+              } while (new_list.length > 0)
+              return aggregate
+            }
+            const releases = await accumulate_paged_list(
+              async (i) => (await github.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+                page: i,
+              })).data,
+              1 // Github's REST API paging is 1-indexed (not 0-indexed)
+            )
+            version_regex = /(\S+)-(\d{8})\.(\d+)/
+            console.log("Found ${releases.length} releases:")
+            const relevant_releases = releases
+              .map(r => { console.log(`  ${r.name}`); return r.name.match(version_regex) })
+              .filter(m => !!m)
+              .filter(([, branch]) => branch == cur_branch)
+            relevant_releases.sort()
+            
+            const cur_date = new Date().toISOString().split("T")[0].replace(/-/g, "") // should always be in UTC
+            let cur_date_point = 1
+            console.log(`New release is for the "${cur_branch}" branch on ${cur_date}`)
+            
+            const latest_release = relevant_releases[relevant_releases.length - 1]
+            if (latest_release) {
+              const [full, branch, date, point] = latest_release
+              console.log(`Comparing against latest release relevant release: "${full}".`)
+              if (date == cur_date) {
+                cur_date_point = Number(point) + 1
+              }
+            } else {
+              console.log(`Of ${releases.length} releases found none were for the "${cur_branch}" branch (or at least none followed the BRANCH-YYYYMMDD.# naming pattern)`)
+            }
+            version_id = `${cur_branch}-${cur_date}.${cur_date_point}`
+            console.log(`::set-output name=version_id::${version_id}`)
+          github-token: ${{secrets.GITHUB_TOKEN}}
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.client_payload.branch }}
+      - name: Tag HEAD as ${{ steps.release_info.outputs.version_id }} and push
+        run: |
+          git tag ${{ steps.release_info.outputs.version_id }}
+          git push origin --tags
+      - name: Create release for ${{ steps.release_info.outputs.version_id }}
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release_info.outputs.version_id }}
+          release_name: ${{ steps.release_info.outputs.version_id }}
+          body: |
+            This was an automated release produced via the *${{ github.workflow }}* workflow in Github Actions which was triggered by *${{ github.event_name }}*.
+
+            **Version ID:** `${{ steps.release_info.outputs.version_id }}`
+
+            **Commit:** `${{ github.sha }}`
+
+            **Release parameters:**
+
+            ```json
+            ${{ toJson(github.event.client_payload) }}
+            ```
+
+            **Commits since last release:** TODO
+          draft: false
+          prerelease: false
+  
+  upload-builds:
+    needs: [create-release]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config:
+          # These should match the configurations defined in the build job
+          # TODO: figure out how to DRY these configurations
+          - os: windows-latest
+            artifact_name: TODO-Windows-64bit.tar.xz
+          - os: macos-latest
+            artifact_name: TODO-macOS-64bit.tar.xz
+          - os: ubuntu-latest
+            artifact_name: TODO-Linux-64bit.tar.xz
+    name: Upload ${{ matrix.config.artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
+    steps:
+      - name: Retrieve artifact ${{ matrix.config.artifact_name }}
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.config.artifact_name }}
+      - name: Upload to release ${{ needs['create-release'].outputs.version_id }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs['create-release'].outputs.release_upload_url }}
+          asset_path: ./${{ matrix.config.artifact_name }}
+          asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.artifact_name }}
+          asset_content_type: application/octet-stream # application/x-xz
