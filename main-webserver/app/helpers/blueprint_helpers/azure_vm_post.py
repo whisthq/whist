@@ -14,6 +14,14 @@ def devHelper(vm_name, dev):
         json: Success/failure
     """
 
+    fractalLog(
+        function="pingHelper",
+        label=getVMUser(vm_name),
+        logs="Setting VM {vm_name} dev mode to {dev}".format(
+            vm_name=str(vm_name), dev=str(dev)
+        ),
+    )
+
     output = fractalSQLUpdate(
         table_name="v_ms",
         conditional_params={"vm_name": vm_name},
