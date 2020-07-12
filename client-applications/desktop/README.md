@@ -43,7 +43,7 @@ To package for local testing, you can run the scripts with a subset of the param
 # Windows
 build.bat --branch [BRANCH] --publish false
 
-## MacOS/Linux
+# MacOS/Linux
 ./build.sh --branch [BRANCH] --publish false
 ```
 
@@ -57,7 +57,7 @@ To package to an internal, Fractal-only AWS S3 bucket to distribute and test acr
 # Windows
 build.bat --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish false
 
-## MacOS/Linux
+# MacOS/Linux
 ./build.sh --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish false
 ```
 
