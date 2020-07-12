@@ -1,5 +1,5 @@
 from app import *
-from app.helpers.blueprint_helpers.azure_disk_post import *
+from app.helpers.blueprint_helpers.azure.azure_disk_post import *
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_modification import *

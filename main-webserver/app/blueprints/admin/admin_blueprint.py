@@ -1,5 +1,5 @@
 from app import *
-from app.helpers.blueprint_helpers.admin_post import *
+from app.helpers.blueprint_helpers.admin.admin_post import *
 
 admin_bp = Blueprint("admin_bp", __name__)
 

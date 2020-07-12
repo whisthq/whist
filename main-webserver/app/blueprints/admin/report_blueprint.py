@@ -1,6 +1,6 @@
 from app import *
-from app.helpers.blueprint_helpers.report_get import *
-from app.helpers.blueprint_helpers.report_post import *
+from app.helpers.blueprint_helpers.admin.report_get import *
+from app.helpers.blueprint_helpers.admin.report_post import *
 
 report_bp = Blueprint("report_bp", __name__)
 

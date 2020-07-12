@@ -1,7 +1,7 @@
 from app import *
 
-from app.helpers.blueprint_helpers.logs_get import *
-from app.helpers.blueprint_helpers.logs_post import *
+from app.helpers.blueprint_helpers.admin.logs_get import *
+from app.helpers.blueprint_helpers.admin.logs_post import *
 
 from app.celery.aws_s3_modification import *
 from app.celery.aws_s3_deletion import *

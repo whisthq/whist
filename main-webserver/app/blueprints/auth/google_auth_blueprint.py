@@ -1,6 +1,6 @@
 from app import *
 
-from app.helpers.blueprint_helpers.google_auth_post import *
+from app.helpers.blueprint_helpers.auth.google_auth_post import *
 
 google_auth_bp = Blueprint("google_auth_bp", __name__)
 

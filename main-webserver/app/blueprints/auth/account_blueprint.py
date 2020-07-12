@@ -1,6 +1,6 @@
 from app import *
-from app.helpers.blueprint_helpers.account_get import *
-from app.helpers.blueprint_helpers.account_post import *
+from app.helpers.blueprint_helpers.auth.account_get import *
+from app.helpers.blueprint_helpers.auth.account_post import *
 
 account_bp = Blueprint("account_bp", __name__)
 
