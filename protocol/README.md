@@ -51,7 +51,7 @@ You can install cppcheck via your package manager, e.g. `apt-get install cppchec
 
 #### MacOS
 
-You can install both Cmake and cppcheck via Homebrew.
+You can install both Cmake and cppcheck via Homebrew. You also need to have installed Xcode and installed the Xcode CLI tools, which you can install by running `xcode-select --install` in a terminal after having installed Xcode.
 
 ```
 brew install cmake cppcheck
