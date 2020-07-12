@@ -3,10 +3,8 @@
 name: Electron CI
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, staging ]
 
 jobs:
   electron-build:
