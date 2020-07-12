@@ -27,52 +27,46 @@ This repository has basic continuous integration through GitHub Actions. For eve
 
 ## Packaging for Production
 
-In order to properly test the application, you need to package the application and the Fractal protocol together into an installer executable for your local platform. This will **NOT** publish the application to production, but will only build an identical installer which you can install locally and test from the perspective of a user, before publishing live. It can also publish an internal installer which can be distributed within the company for more testing, provided you specify the proper AWS S3 bucket. The installer executable will be in `client-applications/desktop/release` as a `.dmg` (MacOS), `.exe` (Windows) or `.deb` (Linux Ubuntu). You need to package for a platform from that platform, for instance you can only package the Windows application from a Windows computer.
+In order to properly test the application, you need to package the application and the Fractal protocol together into an installer executable for your local platform. There are two scripts, `build.bat` (Windows) and `build.sh` (MacOS/Linux), which automate the process of packaging locally, for internal publishing, and for publishing to production, by calling `setVersion.ps1` and `setVersion.gyp` to update `package.json`, which is where the bucket and version numbers are stored in Electron.
 
-### Local Testing
-
-
-
-
-
-
-```
-build.bat/build.sh [VERSION NUMBER] [BUCKET-NAME] [PUBLISH TRUE/FALSE]
-```
-
-
-
-### Internal Publishing
-
-
-
-
-
-### MacOS/Linux
-
-To package for local testing on Unix systems, simply run `build.sh` with the appropriate protocol branch you'd like to test, likely `dev` or `master`.
-
-```
-./build.sh --branch [BRANCH]
-```
-
-This will clone the Fractal protocol, build it locally and package it and the application into a `.dmg` for you to install and test. 
+If you package locally, this will **NOT** publish the application to production, but will only build an identical installer which you can install locally and test from the perspective of a user, before publishing live. It can also publish an internal installer executable which can be distributed within the company for more testing, provided you specify the proper AWS S3 bucket. The installer executable will be in `client-applications/desktop/release` as a `.dmg` (MacOS), `.exe` (Windows) or `.deb` (Linux Ubuntu). You need to package for a platform from that platform; for instance you can only package the Windows application from a Windows computer.
 
 #### MacOS Notarizing
 
-To package the MacOS application, it needs to be notarized, which means it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developper Certificate in your MacOS Keychain for this to be successful. You can download the certificate from AWS S3 on [this link](https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12) assuming you have access to the Fractal AWS organization, and then install it by double-clicking the `.p12` certificate file. The application will get notarized seamlessly when running the build script.
+To package the MacOS application, it needs to be notarized. This means it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developper Certificate in your MacOS Keychain for this to be successful. You can download the certificate from AWS S3 on [this link](https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12) assuming you have access to the Fractal AWS organization, and then install it by double-clicking the `.p12` certificate file. The application will get notarized seamlessly when running the build script. Once you have the certificate in your Keychain, you can proceed to the testing steps below.
 
-### Windows
+### Local Testing
 
-To package for local testing on Windows systems, simply run `build.bat` from an x86_x64 Visual Studio Developer Command Prompt with the appropriate protocol branch you'd like to test, likely `dev` or `master`. You MUST use this specific command prompt to compile the protocol; if you do not the Electron application will package anyway, but the protocol will not packaged with it. If you need help setting up Visual Studio, refer to the protocol repository for instructions on how to compile.
+To package for local testing, you can run the scripts with a subset of the parameters, where branch represents the protocol branch to package, and is likely either `master`, `dev` or `staging`. This will clone the Fractal protocol, build it locally and package it and the application into a `.dmg` for you to install and test.
 
 ```
-build.bat --branch [BRANCH]
+# Windows
+build.bat --branch [BRANCH] --publish false
+
+## MacOS/Linux
+./build.sh --branch [BRANCH] --publish false
 ```
 
-This will clone the Fractal protocol, build it locally and package it and the application into a `.exe` for you to install and test. 
+### Internal Publishing
+
+To package to an internal, Fractal-only AWS S3 bucket to distribute and test across the company, you can run the same script while specifying one of the internal testing S3 buckets:
+- Windows (internal): `fractal-applications-testing`
+- MacOS (internal): `fractal-mac-application-testing`
+
+```
+# Windows
+build.bat --branch [BRANCH] --bucket [BUCKET] --publish false
+
+## MacOS/Linux
+./build.sh --branch [BRANCH] --bucket [BUCKET] --publish false
+```
+
+This will again clone the protocol and package the application, but will also upload its executable to the bucket and auto-update the internal applications within Fractal.
 
 ## Publishing to Production
+
+
+
 
 If you have tested the packaged application locally and are ready to update the client applications, including the client protocol, as part of our [Release Schedule](https://www.notion.so/fractalcomputers/Release-Schedule-Drafting-c29cbe11c5f94cedb9c01aaa6d0d1ca4), then it is time to publish. You can publish by running the same build script, and specifying the AWS S3 bucket which is associated with the platform you are publishing for. The buckets are:
 
@@ -106,7 +100,7 @@ Before publishing for production, make sure to package for production (see above
 
 
 
-Once you are ready to publish for auto-update to the Fractal users, you need to do a few things. We have two scripts, `build.bat`, for Windows, and `build.sh`, for Linux. These scripts call `setVersion.ps1` and `setVersion.gyp` to update `package.json`, which is where the bucket and version numbers are stored in Electron. You need to be on a Windows computer to build and update the Windows VM application, and need to be on a Linux computer to build and update the Linux application. The scripts can be run with the following parameters:
+
 
 ```
 build.bat/build.sh [VERSION NUMBER] [BUCKET-NAME] [PUBLISH TRUE/FALSE]
@@ -125,7 +119,6 @@ build.bat [VERSION] fractal-windows-vm-application-release true
 Finally, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
 
 The production executables are hosted [here](https://s3.console.aws.amazon.com/s3/home?region=us-east-1#).
-
 
 
 
