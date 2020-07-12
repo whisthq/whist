@@ -8,8 +8,6 @@ Our webservers are hosted on Heroku:
 
 - [Production](https://cube-celery-vm.herokuapp.com)
 - [Staging](https://cube-celery-staging.herokuapp.com)
-- [Staging2](https://main-webserver-staging2.herokuapp.com)
-- [Staging3](https://main-webserver-staging3.herokuapp.com)
 
 Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?cols=core_host%2Ccore_service&from_ts=1593977274176&index=&live=true&messageDisplay=inline&stream_sort=desc&to_ts=1593978174176).
 
@@ -41,13 +39,7 @@ Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?c
 
 ### Build/Run in Docker
 
-To build the Docker image, run: `docker build -t vm-webserver`. You will require the Heroku API key as an environment variable, `HEROKU_API_KEY=<heroku-api-key>`. You can store all Docker environment variables in a file such as `.envdocker`, to save yourself time between runs. You can then run Docker with:
-
-`docker run --env-file .envdocker -t vm-webserver:latest`
-
-or
-
-`docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
+This webserver is dockerized, which allows you to run a full Heroku-equivalent staging version locally, including Celery and Redis. Instructions on how to do are in `docker/README.md`.
 
 ### Run on Heroku
 
