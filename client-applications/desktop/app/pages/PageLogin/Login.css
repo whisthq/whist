@@ -24,6 +24,7 @@ button {
     background-position: center;
     background-repeat: no-repeat;
     -webkit-app-region: drag;
+    user-select: none; /* Disable text selection on arbitrary UI elements to make the application feel more native */
 }
 
 .container h2 {
