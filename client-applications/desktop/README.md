@@ -3,9 +3,9 @@
 ![Electron CI](https://github.com/fractalcomputers/client-applications/workflows/Electron%20CI/badge.svg)
 
 This folder contains the code for the Fractal desktop applications running on Windows, MacOS and Linux Ubuntu. The applications are built with cross-platform compatibility using ElectronJS. This repository contains all the directions for building the applications locally and for publishing them for production on each of the following OSes:
--   Windows
--   MacOS
--   Linux Ubuntu
+-   Windows 10
+-   MacOS 10.10+
+-   Linux Ubuntu 18.04+
 
 ## Install
 
@@ -27,9 +27,26 @@ This repository has basic continuous integration through GitHub Actions. For eve
 
 ## Packaging for Production
 
-In order to properly test the application, you need to package the application and the Fractal protocol together into an installer executable for your local platform. This will **NOT** publish the application to production, but will only build an identical installer which you can install locally and test from the perspective of a user, before publishing live. The installer executable will be in `client-applications/desktop/release` as a `.dmg` (MacOS), `.exe` (Windows) or `.deb` (Linux Ubuntu). You need to package for a platform from that platform, for instance you can only package the Windows application from a Windows computer.
+In order to properly test the application, you need to package the application and the Fractal protocol together into an installer executable for your local platform. This will **NOT** publish the application to production, but will only build an identical installer which you can install locally and test from the perspective of a user, before publishing live. It can also publish an internal installer which can be distributed within the company for more testing, provided you specify the proper AWS S3 bucket. The installer executable will be in `client-applications/desktop/release` as a `.dmg` (MacOS), `.exe` (Windows) or `.deb` (Linux Ubuntu). You need to package for a platform from that platform, for instance you can only package the Windows application from a Windows computer.
 
-The `build.sh` and `build.bat` scripts automate the process of packaging the Fractal protocol and the application together. In order to use them, you **need** to have all the tools needed to build the protocol on your local machine. If you've never compiled the protocol before, or are having issues, refer to the protocol repository [here](https://github.com/fractalcomputers/protocol).
+### Local Testing
+
+
+
+
+
+
+```
+build.bat/build.sh [VERSION NUMBER] [BUCKET-NAME] [PUBLISH TRUE/FALSE]
+```
+
+
+
+### Internal Publishing
+
+
+
+
 
 ### MacOS/Linux
 
@@ -82,14 +99,39 @@ Before publishing for production, make sure to package for production (see above
 
 2- Go to `node_modules/builder-util-runtime/out/httpExecutor.js`, and change the timeout on Line 319 from `60 * 1000` to `60 * 1000 * 1000`. This is necessary to avoid timeout errors for connection in the production application.
 
-3- Increment the version number in `desktop/app/package.json` by `0.0.1`, unless it is a major release, in which case increment by `0.1.0` (e.g.: 1.4.6 becomes 1.5.0).
-
-4- Then, run `RELEASE=yes ./build.sh` (MacOS/Linux) or `publish.bat` (Windows - in an x86_64 Visual Studio Developer Command Prompt) to publish for the respective OS. This will fetch the latest Fractal Protocol, set proper file permissions, set the executable icon, upgrade yarn and run `yarn package-ci` to publish to the S3 bucket.
-
-5- Lastly, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
 
 
 //tmp
+
+
+
+
+Once you are ready to publish for auto-update to the Fractal users, you need to do a few things. We have two scripts, `build.bat`, for Windows, and `build.sh`, for Linux. These scripts call `setVersion.ps1` and `setVersion.gyp` to update `package.json`, which is where the bucket and version numbers are stored in Electron. You need to be on a Windows computer to build and update the Windows VM application, and need to be on a Linux computer to build and update the Linux application. The scripts can be run with the following parameters:
+
+```
+build.bat/build.sh [VERSION NUMBER] [BUCKET-NAME] [PUBLISH TRUE/FALSE]
+```
+
+You can use this script with publish set to false to package locally; it will simply run `yarn package` as explained above. Else, this will take care of updating the version, publishing to the proper S3 bucket (from which Electron pulls the auto-updates) and notify the team in Slack. You need to increment the version number by `0.0.1`, unless it is a major release, in which case increment by `0.1.0` (e.g. 1.4.6 becomes 1.5.0), from what it currently is. Electron will only auto-update if the version number is higher than what is currently deployed to production. 
+
+```
+# Publish the Windows VM Application
+build.bat [VERSION] fractal-windows-vm-application-release true
+
+# Publish the Linux VM Application
+./build.sh [VERSION] fractal-linux-vm-application-release true
+```
+
+Finally, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
+
+The production executables are hosted [here](https://s3.console.aws.amazon.com/s3/home?region=us-east-1#).
+
+
+
+
+
+
+
 
 
 
