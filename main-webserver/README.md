@@ -13,7 +13,7 @@ Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?c
 
 ## Development
 
-### Local Setup (Windows/MacOS)
+### Local Setup
 
 Docker is being leveraged to create a partial-stack (TBD on full) deployment of the `main-webserver` components, `web` and `celery`. To do so, it packages the application into an image with all necessary dependencies and then launches the application with the appropriate configurations, depending on if it's `web` or `celery` using `stem-cell.sh`.
 
@@ -52,7 +52,7 @@ Review `docker-compose.yml` to see which ports the various services are hosted o
 
 If you make a change to the webserver, you'll need to restart docker by first killing the server (Ctrl-C) and re-running `docker-compose up --build`.
 
-### Run on Heroku
+### Heroku Setup
 
 To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. Make sure you are added as a collaborator to any of the Heroku apps you plan to use. You can contact Ming, Phil, or Jonathan to be added.
 
