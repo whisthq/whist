@@ -49,87 +49,42 @@ build.bat --branch [BRANCH] --publish false
 
 ### Internal Publishing
 
-To package to an internal, Fractal-only AWS S3 bucket to distribute and test across the company, you can run the same script while specifying one of the internal testing S3 buckets:
+To package to an internal, Fractal-only AWS S3 bucket to distribute and test across the company, you can run the same script while incrementing the internal version number and specifying one of the internal testing S3 buckets:
 - Windows (internal): `fractal-applications-testing`
 - MacOS (internal): `fractal-mac-application-testing`
 
 ```
 # Windows
-build.bat --branch [BRANCH] --bucket [BUCKET] --publish false
+build.bat --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish false
 
 ## MacOS/Linux
-./build.sh --branch [BRANCH] --bucket [BUCKET] --publish false
+./build.sh --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish false
 ```
 
 This will again clone the protocol and package the application, but will also upload its executable to the bucket and auto-update the internal applications within Fractal.
 
 ## Publishing to Production
 
-
-
-
-If you have tested the packaged application locally and are ready to update the client applications, including the client protocol, as part of our [Release Schedule](https://www.notion.so/fractalcomputers/Release-Schedule-Drafting-c29cbe11c5f94cedb9c01aaa6d0d1ca4), then it is time to publish. You can publish by running the same build script, and specifying the AWS S3 bucket which is associated with the platform you are publishing for. The buckets are:
-
--   Windows: `fractal-applications-release`
--   Windows (internal): `fractal-applications-testing`
--   MacOS: `fractal-mac-application-release`
--   MacOS (internal): `fractal-mac-application-testing`
--   Linux: `fractal-linux-application-release`
-
-
-
-```
-./build.sh --branch [BRANCH]
-```
-
-
-Before publishing for production, make sure to package for production (see above) and test locally. In order to publish to production, you will run all the steps for packaging and need to make sure all the Cmake and other dependencies listed above are satisfied on your system. Once you are ready to publish for auto-update to the Fractal users, you need to do a few things:
-
-1- Go into `/desktop/package.json` and update the `"bucket":` field to the proper bucket for the operating system you are publishing for:
-
+If you're ready to publish an update to production, as part of our [Release Schedule](https://www.notion.so/fractalcomputers/Release-Schedule-Drafting-c29cbe11c5f94cedb9c01aaa6d0d1ca4), then it is time to publish. You can publish by running the same build script, and specifying the AWS S3 bucket which is associated with the platform you are publishing for:
 -   Windows: `fractal-applications-release`
 -   MacOS: `fractal-mac-application-release`
 -   Linux: `fractal-linux-application-release`
 
-2- Go to `node_modules/builder-util-runtime/out/httpExecutor.js`, and change the timeout on Line 319 from `60 * 1000` to `60 * 1000 * 1000`. This is necessary to avoid timeout errors for connection in the production application.
+First, go to `node_modules/builder-util-runtime/out/httpExecutor.js`, and change the timeout on Line 319 from `60 * 1000` to `60 * 1000 * 1000`. This is necessary to avoid timeout errors for connection in the production application.
 
-
-
-//tmp
-
-
-
-
-
+Then, publish by running the appropriate script with `--publish` flag set to `true` and incrementing the version number from what is currently in production. You need to increment the version number by `0.0.1`, unless it is a major release, in which case increment by `0.1.0` (e.g. 1.4.6 becomes 1.5.0), from what it currently is. Electron will only auto-update if the version number is higher than what is currently deployed to production. This will also notify the team in Slack.
 
 ```
-build.bat/build.sh [VERSION NUMBER] [BUCKET-NAME] [PUBLISH TRUE/FALSE]
-```
+# Windows
+build.bat --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish true
 
-You can use this script with publish set to false to package locally; it will simply run `yarn package` as explained above. Else, this will take care of updating the version, publishing to the proper S3 bucket (from which Electron pulls the auto-updates) and notify the team in Slack. You need to increment the version number by `0.0.1`, unless it is a major release, in which case increment by `0.1.0` (e.g. 1.4.6 becomes 1.5.0), from what it currently is. Electron will only auto-update if the version number is higher than what is currently deployed to production. 
-
-```
-# Publish the Windows VM Application
-build.bat [VERSION] fractal-windows-vm-application-release true
-
-# Publish the Linux VM Application
-./build.sh [VERSION] fractal-linux-vm-application-release true
+## MacOS/Linux
+./build.sh --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish true
 ```
 
 Finally, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
 
 The production executables are hosted [here](https://s3.console.aws.amazon.com/s3/home?region=us-east-1#).
-
-
-
-
-
-
-
-
-
-
-
 
 ## Styling
 
