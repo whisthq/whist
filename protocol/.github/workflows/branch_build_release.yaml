@@ -456,7 +456,7 @@ jobs:
 
   create-release:
     name: Create release
-    needs: [test] # FIXME allow run if test was skipped
+    needs: [clean_up] # FIXME allow run if test was skipped
     runs-on: ubuntu-latest
     outputs:
       release_upload_url: ${{ steps.create_release.outputs.upload_url }}
