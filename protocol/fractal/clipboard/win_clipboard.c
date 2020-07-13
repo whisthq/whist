@@ -271,7 +271,7 @@ ClipboardData* GetClipboard() {
             case CF_TEXT:
                 // Read the contents of lptstr which just a pointer to the
                 // string.
-                LOG_INFO( "CLIPBOARD STRING Received! Size: %d", cb->size );
+                LOG_INFO("CLIPBOARD STRING Received! Size: %d", cb->size);
                 cb->type = CLIPBOARD_TEXT;
                 break;
             case CF_DIB:

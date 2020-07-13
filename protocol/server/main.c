@@ -986,7 +986,8 @@ int main() {
             if (hasClipboardUpdated()) {
                 LOG_INFO("Received clipboard trigger! Sending to client");
                 ClipboardData* cb = GetClipboard();
-                FractalServerMessage* fmsg_response = malloc(sizeof(FractalServerMessage) + cb->size);
+                FractalServerMessage* fmsg_response =
+                    malloc(sizeof(FractalServerMessage) + cb->size);
                 fmsg_response->type = SMESSAGE_CLIPBOARD;
                 memcpy(&fmsg_response->clipboard, cb, sizeof(ClipboardData) + cb->size);
                 if (readLock(&is_active_rwlock) != 0) {
