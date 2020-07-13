@@ -135,8 +135,17 @@ int runcmd(const char* cmdline, char** response) {
 
     char cmd_buf[1000];
 
+    while( cmdline[0] == ' ' )
+    {
+        cmdline++;
+    }
+
     if (strlen((const char*)cmdline) + 1 > sizeof(cmd_buf)) {
         mprintf("runcmd cmdline too long!\n");
+        if( response )
+        {
+            *response = NULL;
+        }
         return -1;
     }
 
@@ -148,7 +157,10 @@ int runcmd(const char* cmdline, char** response) {
                        &pi)) {
     } else {
         LOG_ERROR("CreateProcessA failed!");
-        *response = NULL;
+        if( response )
+        {
+            *response = NULL;
+        }
         return -1;
     }
 
@@ -185,6 +197,13 @@ int runcmd(const char* cmdline, char** response) {
         free(db);
         return size;
     } else {
+        CloseHandle( hChildStd_OUT_Wr );
+        CloseHandle( hChildStd_IN_Rd );
+        CloseHandle( hChildStd_IN_Wr );
+
+        WaitForSingleObject( pi.hProcess, INFINITE );
+        CloseHandle( pi.hProcess );
+        CloseHandle( pi.hThread );
         return 0;
     }
 #else
@@ -236,6 +255,7 @@ int runcmd(const char* cmdline, char** response) {
             return current_len;
         } else {
             LOG_WARNING("Error: Failed to read the pipe to the end.\n");
+            *response = NULL;
             return -1;
         }
     }

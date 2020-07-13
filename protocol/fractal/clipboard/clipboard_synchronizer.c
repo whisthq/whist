@@ -140,24 +140,6 @@ int UpdateClipboardThread(void* opaque) {
                          -force \"ssh://%s/%s/get_clipboard/\"",
                     prefix, exc, username, server_ip, filename, SET_CLIPBOARD, server_ip, filename);
 
-                /*
-                strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-o
-                UserKnownHostsFile=ssh_host_ecdsa_key.pub -l " ); strcat( cmd,
-                username ); strcat( cmd, " -i sshkey\" " ); strcat( cmd, "
-                \"ssh://" ); strcat( cmd, (char*)server_ip ); strcat( cmd, "/"
-                ); strcat( cmd, filename ); strcat( cmd, "/get_clipboard/" );
-                strcat( cmd, "\" " );
-                strcat( cmd, SET_CLIPBOARD );
-                strcat( cmd, " -force " );
-                strcat( cmd, " \"ssh://" );
-                strcat( cmd, (char*)server_ip );
-                strcat( cmd, "/" );
-                strcat( cmd, filename );
-                strcat( cmd, "/get_clipboard/" );
-                strcat( cmd, "\" " );
-                strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
-                */
-
                 LOG_INFO("COMMAND: %s", cmd);
                 runcmd(cmd, NULL);
             }
@@ -191,24 +173,6 @@ int UpdateClipboardThread(void* opaque) {
                          \"ssh://%s/%s/set_clipboard/\" \
                          -force %s",
                     prefix, exc, username, GET_CLIPBOARD, server_ip, filename, GET_CLIPBOARD);
-
-                /*
-                strncat(cmd,
-                       "-follow \"Path *\" -ui text -sshargs \"-o "
-                       "UserKnownHostsFile=ssh_host_ecdsa_key.pub -l ",
-                sizeof(cmd)); strncat(cmd, username, sizeof( cmd ) );
-                strncat(cmd, " -i sshkey\" ", sizeof( cmd ) );
-                strncat(cmd, GET_CLIPBOARD, sizeof( cmd ) );
-                strncat(cmd, " \"ssh://", sizeof( cmd ) );
-                strncat(cmd, (char*)server_ip, sizeof( cmd ) );
-                strncat(cmd, "/", sizeof( cmd ) );
-                strncat(cmd, filename, sizeof( cmd ) );
-                strncat(cmd, "/set_clipboard", sizeof( cmd ) );
-                strncat(cmd, "/\" -force ", sizeof( cmd ) );
-                strncat(cmd, GET_CLIPBOARD, sizeof( cmd ) );
-                strncat(cmd, " -ignorearchives -confirmbigdel=false -batch",
-                sizeof( cmd ) );
-                */
 
                 LOG_INFO("COMMAND: %s", cmd);
                 runcmd(cmd, NULL);
