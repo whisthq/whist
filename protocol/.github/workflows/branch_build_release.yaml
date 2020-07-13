@@ -559,24 +559,30 @@ jobs:
         config:
           # These should match the configurations defined in the build job
           # TODO: figure out how to DRY these configurations
-          - os: windows-latest
-            artifact_name: TODO-Windows-64bit.tar.xz
-          - os: macos-latest
-            artifact_name: TODO-macOS-64bit.tar.xz
-          - os: ubuntu-latest
-            artifact_name: TODO-Linux-64bit.tar.xz
-    name: Upload ${{ matrix.config.artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
+          - {
+            name: "Windows Latest MSVC", server_artifact_name: "Windows_server.tar.xz", client_artifact_name: "Windows_client.tar.xz",
+            os: windows-latest
+          }
+          - {
+            name: "Ubuntu Latest GCC", client_artifact_name: "Linux_client.tar.xz",
+            os: ubuntu-latest
+          }
+          - {
+            name: "macOS Latest Clang", client_artifact_name: "macOS_client.tar.xz",
+            os: macos-latest
+          }
+    name: Upload ${{ matrix.config.client_artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
     steps:
-      - name: Retrieve artifact ${{ matrix.config.artifact_name }}
+      - name: Retrieve artifact ${{ matrix.config.client_artifact_name }}
         uses: actions/download-artifact@v2
         with:
-          name: ${{ matrix.config.artifact_name }}
+          name: ${{ matrix.config.client_artifact_name }}
       - name: Upload to release ${{ needs['create-release'].outputs.version_id }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs['create-release'].outputs.release_upload_url }}
-          asset_path: ./${{ matrix.config.artifact_name }}
-          asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.artifact_name }}
+          asset_path: ./${{ matrix.config.client_artifact_name }}
+          asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.client_artifact_name }}
           asset_content_type: application/octet-stream # application/x-xz
