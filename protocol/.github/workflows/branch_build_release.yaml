@@ -31,18 +31,18 @@ jobs:
       matrix:
         config:
           - {
-            name: "Windows Latest MSVC", server_artifact_name: "Windows_server.tar.xz", client_artifact_name: "Windows_client.tar.xz",
+            name: "Windows Latest MSVC", server_artifact_name: "windows_server_build", client_artifact_name: "windows_client_build",
             os: windows-latest,
             cc: "cl", cxx: "cl", cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           }
           - {
-            name: "Ubuntu Latest GCC", client_artifact_name: "Linux_client.tar.xz",
+            name: "Ubuntu Latest GCC", client_artifact_name: "linux_client_build",
             os: ubuntu-latest,
             cc: "gcc", cxx: "g++"
           }
           - {
-            name: "macOS Latest Clang", client_artifact_name: "macOS_client.tar.xz",
+            name: "macOS Latest Clang", client_artifact_name: "mac_client_build",
             os: macos-latest,
             cc: "clang", cxx: "clang++"
           }
@@ -377,10 +377,6 @@ jobs:
           cd mac_client_build
           chmod +x FractalClient
           ./FractalClient -k $SERVER_VM_IP | tee log.txt
-          cd
-          ls
-          cd .fractal
-          ls
       - name: Upload mac client logs
         uses: actions/upload-artifact@v2
         if: always()
@@ -560,16 +556,16 @@ jobs:
           # These should match the configurations defined in the build job
           # TODO: figure out how to DRY these configurations
           - {
-            name: "Windows Latest MSVC", server_artifact_name: "Windows_server.tar.xz", client_artifact_name: "Windows_client.tar.xz",
-            os: windows-latest
+            name: "Windows Latest MSVC", server_artifact_name: "windows_server_build", client_artifact_name: "windows_client_build",
+            os: windows-latest,
           }
           - {
-            name: "Ubuntu Latest GCC", client_artifact_name: "Linux_client.tar.xz",
-            os: ubuntu-latest
+            name: "Ubuntu Latest GCC", client_artifact_name: "linux_client_build",
+            os: ubuntu-latest,
           }
           - {
-            name: "macOS Latest Clang", client_artifact_name: "macOS_client.tar.xz",
-            os: macos-latest
+            name: "macOS Latest Clang", client_artifact_name: "mac_client_build",
+            os: macos-latest,
           }
     name: Upload ${{ matrix.config.client_artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
     steps:
