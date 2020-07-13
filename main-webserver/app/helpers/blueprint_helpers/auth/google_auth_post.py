@@ -42,8 +42,13 @@ def loginHelper(code, clientApp):
 
 
 def reasonHelper(username, reason_for_signup):
-    return fractalSQLUpdate(
+    output = fractalSQLUpdate(
         table_name="users",
         new_params={"reason_for_signup": reason_for_signup, "verified": True},
         conditional_params={"username": username},
     )
+
+    if output["success"]:
+        return {"status": SUCCESS}
+    else:
+        return {"status": BAD_REQUEST}
