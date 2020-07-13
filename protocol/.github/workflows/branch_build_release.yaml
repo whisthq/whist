@@ -13,67 +13,446 @@ on:
   workflow_dispatch: # repository_dispatch can only be invoked for a workflow that's on master
     types:
       - branch_build_release
+env:
+  CMAKE_VERSION: 3.15.7
+  NINJA_VERSION: 1.9.0
+  BUILD_TYPE: Debug
+  CCACHE_VERSION: 3.7.7
+  SERVER_VM_NAME: crimsonbonus543
+  SERVER_VM_IP: 20.185.40.33
+  WEBSERVER_BASE_URL: https://cube-celery-staging4.herokuapp.com
 
 jobs:
-
   build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
     strategy:
+      fail-fast: false
       matrix:
         config:
-          - os: windows-latest
-            artifact_name: TODO-Windows-64bit.tar.xz
-          - os: macos-latest
-            artifact_name: TODO-macOS-64bit.tar.xz
-          - os: ubuntu-latest
-            artifact_name: TODO-Linux-64bit.tar.xz
-    name: Build protocol binaries for ${{ matrix.config.os }}
-    runs-on: ${{ matrix.config.os }}
+          - {
+            name: "Windows Latest MSVC", server_artifact_name: "Windows_server.tar.xz", client_artifact_name: "Windows_client.tar.xz"
+            os: windows-latest,
+            cc: "cl", cxx: "cl", cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc",
+            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          }
+          - {
+            name: "Ubuntu Latest GCC", client_artifact_name: "Linux_client.tar.xz",
+            os: ubuntu-latest,
+            cc: "gcc", cxx: "g++"
+          }
+          - {
+            name: "macOS Latest Clang", client_artifact_name: "macOS_client.tar.xz",
+            os: macos-latest,
+            cc: "clang", cxx: "clang++"
+          }
+
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.client_payload.branch }}
-      - name: TODO - Create build artifact
-        run: echo "test" > ${{ matrix.config.artifact_name }}
-      - name: Upload build artifact
+          ref: ${{ secrets.BRANCH_NIGHTLY_CI }} # TODO set the branch from params here.
+      - name: Chocolatey install cppcheck
+        if: runner.os == 'Windows'
+        uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: install "${{ github.workspace }}\.github\choco-install.config" --force
+      - name: Install CUDA for windows
+        if: runner.os == 'Windows'
+        env:
+          visual_studio: "Visual Studio 16 2019"
+          cuda: "11.0.167"
+        shell: powershell
+        run: |
+          # Install CUDA via a powershell script
+          ${{ github.workspace }}\.github\install_cuda_windows.ps1
+          if ($?) {
+          # Set paths for subsequent steps, using $env:CUDA_PATH
+          echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
+          echo "::set-env name=CUDA_PATH::$env:CUDA_PATH"
+          echo "::set-env name=$env:CUDA_PATH_VX_Y::$env:CUDA_PATH"
+          echo "::add-path::$env:CUDA_PATH/bin"  }
+      - name: nvcc check for windows
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          nvcc -V
+          ls $env:CUDA_PATH
+          ls $env:CUDA_PATH\bin
+          ls $env:CUDA_PATH\include
+      - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
+        id: cmake_and_ninja
+        shell: cmake -P {0}
+        run: |
+          set(cmake_version $ENV{CMAKE_VERSION})
+          set(ninja_version $ENV{NINJA_VERSION})
+          message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
+
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            set(ninja_suffix "win.zip")
+            set(cmake_suffix "win64-x64.zip")
+            set(cmake_dir "cmake-${cmake_version}-win64-x64/bin")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\msvc_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\msvc_linker_matcher.json\n")
+          elseif ("${{ runner.os }}" STREQUAL "Linux")
+            set(ninja_suffix "linux.zip")
+            set(cmake_suffix "Linux-x86_64.tar.gz")
+            set(cmake_dir "cmake-${cmake_version}-Linux-x86_64/bin")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/gcc_matcher.json\n")
+          elseif ("${{ runner.os }}" STREQUAL "macOS")
+            set(ninja_suffix "mac.zip")
+            set(cmake_suffix "Darwin-x86_64.tar.gz")
+            set(cmake_dir "cmake-${cmake_version}-Darwin-x86_64/CMake.app/Contents/bin")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/clang_matcher.json\n")
+          endif()
+
+          set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
+          file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
+          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ninja.zip)
+
+          set(cmake_url "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-${cmake_suffix}")
+          file(DOWNLOAD "${cmake_url}" ./cmake.zip SHOW_PROGRESS)
+          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./cmake.zip)
+
+          # Save the path for other steps
+          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/${cmake_dir}" cmake_dir)
+          message("::set-output name=cmake_dir::${cmake_dir}")
+
+          if (NOT "${{ runner.os }}" STREQUAL "Windows")
+
+            execute_process(
+              COMMAND chmod +x ninja
+              COMMAND chmod +x ${cmake_dir}/cmake
+            )
+          endif()
+
+          message(STATUS "\n::add-matcher::./.github/cppcheck_matcher.json\n")
+          message(STATUS "\n::add-matcher::./.github/cmake_matcher.json\n")
+
+          if ("${{ runner.os }}" STREQUAL "Linux")
+            # install linux dev dependencies
+              execute_process(COMMAND ${{ github.workspace }}/desktop/linux-client-setup.sh)
+              execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
+          elseif("${{ runner.os }}" STREQUAL "macOS")
+              execute_process(COMMAND brew install cppcheck)
+          endif()
+
+
+      - name: Download ccache
+        id: ccache
+        shell: cmake -P {0}
+        run: |
+          set(ccache_url "https://github.com/cristianadam/ccache/releases/download/v$ENV{CCACHE_VERSION}/${{ runner.os }}.tar.xz")
+          file(DOWNLOAD "${ccache_url}" ./ccache.tar.xz SHOW_PROGRESS)
+          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ccache.tar.xz)
+
+      - name: Prepare ccache timestamp
+        id: ccache_cache_timestamp
+        shell: cmake -P {0}
+        run: |
+          string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
+          message("::set-output name=timestamp::${current_date}")
+
+      - name: ccache cache files
+        uses: actions/cache@v1.1.0
+        with:
+          path: .ccache
+          key: ${{ matrix.config.name }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
+          restore-keys: |
+            ${{ matrix.config.name }}-ccache-
+
+      - name: Configure
+        shell: cmake -P {0}
+        run: |
+          set(ENV{CC} ${{ matrix.config.cc }})
+          set(ENV{CXX} ${{ matrix.config.cxx }})
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            set(ENV{CUDACXX} "${{ matrix.config.cudacxx }}")
+          endif()
+
+          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+            execute_process(
+              COMMAND "${{ matrix.config.environment_script }}" && set
+              OUTPUT_FILE environment_script_output.txt
+            )
+            file(STRINGS environment_script_output.txt output_lines)
+            foreach(line IN LISTS output_lines)
+              if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+                set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+              endif()
+            endforeach()
+          endif()
+
+          set(path_separator ":")
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            set(path_separator ";")
+          endif()
+          set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
+
+
+          execute_process(
+            COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
+              -S .
+              -B build
+              -D CMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
+              -G Ninja
+              -D CMAKE_MAKE_PROGRAM=ninja
+              -D CMAKE_C_COMPILER_LAUNCHER=ccache
+              -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
+              -D CMAKE_OSX_SYSROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
+              -DUSE_CPPCHECK=ON
+            RESULT_VARIABLE result
+          )
+          if (NOT result EQUAL 0)
+            message(FATAL_ERROR "Bad exit status")
+          endif()
+
+
+      - name: Build
+        shell: cmake -P {0}
+        run: |
+          set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+
+          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+            file(STRINGS environment_script_output.txt output_lines)
+            foreach(line IN LISTS output_lines)
+              if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+                set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+              endif()
+            endforeach()
+          endif()
+
+          set(path_separator ":")
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            set(path_separator ";")
+          endif()
+          set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
+
+          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" ccache_basedir)
+          set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
+          set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
+          set(ENV{CCACHE_COMPRESS} "true")
+          set(ENV{CCACHE_COMPRESSLEVEL} "6")
+          set(ENV{CCACHE_MAXSIZE} "400M")
+          if ("${{ matrix.config.cxx }}" STREQUAL "cl")
+            set(ENV{CCACHE_MAXSIZE} "600M")
+          endif()
+
+          execute_process(COMMAND ccache -p)
+          execute_process(COMMAND ccache -z)
+
+          execute_process(
+            COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build
+            RESULT_VARIABLE result
+          )
+          if (NOT result EQUAL 0)
+            message(FATAL_ERROR "Bad exit status")
+          endif()
+
+          execute_process(COMMAND ccache -s)
+      - name: Upload windows server artifact.
+        if: runner.os == 'Windows'
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.config.artifact_name }}
-          path: ${{ github.workspace }}/${{ matrix.config.artifact_name }}
+          name: ${{ matrix.config.server_artifact_name }}
+          path: ${{ github.workspace }}/server/build64
+      - name: Upload windows client artifact.
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.config.client_artifact_name }}
+          path: ${{ github.workspace }}/desktop/build64/Windows
+      - name: Upload ubuntu client artifact.
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.config.client_artifact_name }}
+          path: ${{ github.workspace }}/desktop/build64/Linux
+      - name: Upload mac client artifact.
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.config.client_artifact_name }}
+          path: ${{ github.workspace }}/desktop/build64/Darwin
 
-  test:
-    strategy:
-      matrix:
-        config:
-          # These should match the configurations defined in the build job
-          # TODO: figure out how to DRY these configurations
-          - os: windows-latest
-            artifact_name: TODO-Windows-64bit.tar.xz
-          - os: macos-latest
-            artifact_name: TODO-macOS-64bit.tar.xz
-          - os: ubuntu-latest
-            artifact_name: TODO-Linux-64bit.tar.xz
-    name: "Test on ${{ matrix.config.os }}"
-    runs-on: ${{ matrix.config.os }}
-    # This job (and any of its dependents) will be skipped if the dispatch payload has
-    # the parameter "should_test" set to false. This is intended to be used when performing
-    # a quick subsequent release due to non-code changes (such as documentation) or when iterating
-    # on the release workflow and a full test suite isn't necessary
-    if: "!contains(github.event.client_payload.branch, 'false')"
-    needs: build
+  start_vm:
+    if: "!contains(github.event.client_payload.should_test, 'false')"
+    name: start_vm
+    runs-on: ubuntu-18.04
+    steps:
+      - name: startup_vm
+        run: |
+          token=$(curl -X POST -H Content-Type:application/json  -d "{
+          \"username\" : \"fractal-admin@gmail.com\",
+          \"password\" : \"fractal-admin-password\" } "  \
+          $WEBSERVER_BASE_URL/account/login | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
+
+
+          curl -X POST -H "Content-Type:application/json" -H "Authorization: Bearer ${token}" \
+          -d "{
+          \"vm_name\" : \"$SERVER_VM_NAME\",
+          \"resource_group\" : \"FractalProtocolCI\" }" \
+          $WEBSERVER_BASE_URL/azure_vm/start
+          sleep 500s
+
+  deploy_to_vm:
+    if: "!contains(github.event.client_payload.should_test, 'false')"
+    name: deploy_vm
+    runs-on: ubuntu-18.04
+    needs: [build, start_vm]
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.client_payload.branch }}
-      - name: Retrieve build artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ matrix.config.artifact_name }}
-      - name: Run tests
+          ref: ${{ secrets.BRANCH_NIGHTLY_CI }} # TODO set branch from param here
+      - name: deploy to VM
         run: |
-          echo TODO "run tests", ls-ing file in the meantime
-          ls ${{ matrix.config.artifact_name }}
-        env:
-          CI: true
+          cd ${{ github.workspace }}/.github/
+          ./deploy_artifact.sh $SERVER_VM_NAME ${{github.run_id}} --webserver $WEBSERVER_BASE_URL
+          sleep 300s
+
+  test_linux:
+    if: "!contains(github.event.client_payload.should_test, 'false')"
+    name: test_ubuntu_18.04
+    runs-on: ubuntu-18.04
+    needs: deploy_to_vm
+    steps:
+      - name: get linux build
+        uses: actions/download-artifact@v1
+        with:
+          name: linux_client_build
+      - name: get linux deps
+        run: |
+          sudo apt-get install valgrind pulseaudio jackd2 alsa-utils dbus-x11 libavcodec-dev libavdevice-dev libx11-dev libxtst-dev xclip x11-xserver-utils libasound2-dev libxdamage-dev -y
+      - name: run linux
+        if: always()
+        run: |
+          cd linux_client_build && chmod +x FractalClient
+          sleep 1
+          xvfb-run ./FractalClient -k $SERVER_VM_IP | tee log.txt
+      - name: Upload linux client logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux_client_log
+          path: linux_client_build/log.txt
+
+  test_windows:
+    if: "!contains(github.event.client_payload.should_test, 'false')" # run even if linux fails
+    name: test_windows
+    runs-on: windows-2016
+    needs: test_linux
+    steps:
+      - name: get windows build
+        uses: actions/download-artifact@v1
+        with:
+          name: windows_client_build
+      - name: run windows
+        working-directory: windows_client_build
+        run: .\FractalClient -k $Env:SERVER_VM_IP
+      - name: logs
+        if: always()
+        run: |
+          cd windows_client_build
+          cat log.txt
+      - name: Upload windows client logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows_client_log
+          path: ${{ github.workspace }}/windows_client_build/log.txt
+
+
+  test_mac:
+    if: "!contains(github.event.client_payload.should_test, 'false')"# run even if windows fails
+    name: test_osx_10.15
+    runs-on: macos-latest
+    needs: test_windows
+    steps:
+      - name: get mac build
+        uses: actions/download-artifact@v1
+        with:
+          name: mac_client_build
+      - name: run mac client
+        run: |
+          sleep 5
+          cd mac_client_build
+          chmod +x FractalClient
+          ./FractalClient -k $SERVER_VM_IP | tee log.txt
+          cd
+          ls
+          cd .fractal
+          ls
+      - name: Upload mac client logs
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: mac_client_log
+          path: mac_client_build/log.txt
+
+  clean_up:
+    if: "!contains(github.event.client_payload.should_test, 'false')" # run always, must turn off the vm when we are done.
+    name: clean_up
+    runs-on: ubuntu-18.04
+    needs: test_mac
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ secrets.BRANCH_NIGHTLY_CI }}
+      - name: get server logs
+        run: |
+          chmod 0600 ${{github.workspace}}/.github/sshkey
+          sftp -o StrictHostKeyChecking=no  -i ${{github.workspace}}/.github/sshkey Fractal@20.185.40.33:/C:/programdata/fractalcache/log.txt .
+      - name: Upload windows server logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows_server_log
+          path: log.txt
+      - name: Stop VM
+        if: "!contains(github.event.client_payload.branch, 'false')" # if we fail to get logs we should still kill the VM when done
+        run: |
+          token=$(curl -X POST -H Content-Type:application/json  -d "{
+          \"username\" : \"fractal-admin@gmail.com\",
+          \"password\" : \"fractal-admin-password\" } "  \
+          $WEBSERVER_BASE_URL/account/login | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
+
+          curl -X POST -H "Content-Type:application/json" -H "Authorization: Bearer ${token}"  -d "{
+          \"vm_name\" : \"$SERVER_VM_NAME\",
+          \"resource_group\" : \"FractalProtocolCI\" }" \
+          $WEBSERVER_BASE_URL/azure_vm/deallocate
+
+#  test:
+#    strategy:
+#      matrix:
+#        config:
+#          # These should match the configurations defined in the build job
+#          # TODO: figure out how to DRY these configurations
+#          - os: windows-latest
+#            artifact_name: TODO-Windows-64bit.tar.xz
+#          - os: macos-latest
+#            artifact_name: TODO-macOS-64bit.tar.xz
+#          - os: ubuntu-latest
+#            artifact_name: TODO-Linux-64bit.tar.xz
+#    name: "Test on ${{ matrix.config.os }}"
+#    runs-on: ${{ matrix.config.os }}
+#    # This job (and any of its dependents) will be skipped if the dispatch payload has
+#    # the parameter "should_test" set to false. This is intended to be used when performing
+#    # a quick subsequent release due to non-code changes (such as documentation) or when iterating
+#    # on the release workflow and a full test suite isn't necessary
+#    if: "!contains(github.event.client_payload.branch, 'false')"
+#    needs: build
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          ref: ${{ github.event.client_payload.branch }}
+#      - name: Retrieve build artifact
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: ${{ matrix.config.artifact_name }}
+#      - name: Run tests
+#        run: |
+#          echo TODO "run tests", ls-ing file in the meantime
+#          ls ${{ matrix.config.artifact_name }}
+#        env:
+#          CI: true
 
   create-release:
     name: Create release
