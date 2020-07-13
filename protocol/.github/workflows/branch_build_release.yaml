@@ -385,7 +385,7 @@ jobs:
           path: mac_client_build/log.txt
 
   clean_up:
-    if: "!contains(github.event.client_payload.should_test, 'false')" # run always, must turn off the vm when we are done.
+    if: always() # run always, must turn off the vm when we are done.
     name: clean_up
     runs-on: ubuntu-18.04
     needs: test_mac
