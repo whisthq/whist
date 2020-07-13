@@ -1,5 +1,5 @@
 from app import *
-from app.helpers.blueprint_helpers.analytics_post import *
+from app.helpers.blueprint_helpers.admin.analytics_post import *
 
 analytics_bp = Blueprint("analytics_bp", __name__)
 

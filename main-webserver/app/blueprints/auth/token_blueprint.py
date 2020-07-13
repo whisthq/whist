@@ -1,6 +1,6 @@
 from app import *
 from app.helpers.utils.general.tokens import *
-from app.helpers.blueprint_helpers.token_post import *
+from app.helpers.blueprint_helpers.auth.token_post import *
 
 token_bp = Blueprint("token_bp", __name__)
 

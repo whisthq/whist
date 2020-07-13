@@ -1,6 +1,7 @@
 from app import *
-from app.helpers.blueprint_helpers.azure_vm_get import *
-from app.helpers.blueprint_helpers.azure_vm_post import *
+from app.helpers.blueprint_helpers.azure.azure_vm_get import *
+from app.helpers.blueprint_helpers.azure.azure_vm_post import *
+
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_state import *
@@ -112,7 +113,7 @@ def azure_vm_post(action, **kwargs):
         if "version" in kwargs["body"].keys():
             version = kwargs["body"]["version"]
 
-        output = connectionStatusHelper(available, vm_ip, version)
+        output = pingHelper(available, vm_ip, version)
 
         return jsonify(output), output["status"]
 

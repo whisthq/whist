@@ -394,4 +394,12 @@ def createDisk(
         },
     )
 
+    fractalLog(
+        function="createDisk",
+        label=str(username),
+        logs="{disk_name} was created successfully as a secondary disk".format(
+            disk_name=disk_name
+        ),
+    )
+
     return {"status": 200, "disk_name": disk_name}

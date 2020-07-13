@@ -13,6 +13,6 @@
 
 case "$1" in
     "web") exec waitress-serve --port="$PORT" app:app ;;
-    "celery") exec celery worker --app=celery_worker.celery ;;
+    "celery") exec celery worker --app=celery_worker.celery_instance ;;
     *) echo "Specify either 'web' or 'celery' to determine what this instance will manifest as." ;;
 esac

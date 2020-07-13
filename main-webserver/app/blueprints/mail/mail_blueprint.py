@@ -1,5 +1,5 @@
 from app import *
-from app.helpers.blueprint_helpers.mail_post import *
+from app.helpers.blueprint_helpers.mail.mail_post import *
 
 mail_bp = Blueprint("mail_bp", __name__)
 
