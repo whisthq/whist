@@ -211,12 +211,15 @@ bool hasClipboardUpdated() {
 }
 
 ClipboardData* GetClipboard() {
+    SDL_Delay(15);
+
     ClipboardData* cb = (ClipboardData*)clipboard_buf;
 
     cb->size = 0;
     cb->type = CLIPBOARD_NONE;
 
     if (!OpenClipboard(NULL)) {
+        LOG_WARNING("Failed to open clipboard!");
         return cb;
     }
 
@@ -255,16 +258,24 @@ ClipboardData* GetClipboard() {
 
     if (cf_type == -1) {
         LOG_WARNING("Clipboard not found");
+        int ret = 0;
+        int new_ret;
+        while ((new_ret = EnumClipboardFormats(ret)) != 0) {
+            char buf[1000];
+            GetClipboardFormatNameA(new_ret, buf, sizeof(buf));
+            LOG_INFO("Potential Format: %s", buf);
+            ret = new_ret;
+        }
     } else {
         switch (cf_type) {
             case CF_TEXT:
                 // Read the contents of lptstr which just a pointer to the
                 // string.
-                // LOG_INFO( "CLIPBOARD STRING: %s", cb->data );
+                LOG_INFO( "CLIPBOARD STRING Received! Size: %d", cb->size );
                 cb->type = CLIPBOARD_TEXT;
                 break;
             case CF_DIB:
-                // LOG_ERROR( "Clipboard bitmap received! Size: %d", cb->size );
+                LOG_INFO("Clipboard bitmap received! Size: %d", cb->size);
                 cb->type = CLIPBOARD_IMAGE;
                 break;
             case CF_HDROP:

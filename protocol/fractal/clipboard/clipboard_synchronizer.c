@@ -38,7 +38,7 @@ destroyClipboardSynchronizer();
 #include "clipboard.h"
 
 #define UNUSED(x) (void)(x)
-#define MS_IN_SECOND 1000.0
+#define MS_IN_SECOND 1000
 
 int UpdateClipboardThread(void* opaque);
 bool pendingUpdateClipboard();
@@ -192,8 +192,8 @@ int UpdateClipboardThread(void* opaque) {
             // If it hasn't been 500ms yet, then wait 500ms to prevent too much
             // spam
             const int spam_time_ms = 500;
-            if (GetTimer(clipboard_time) < spam_time_ms / MS_IN_SECOND) {
-                SDL_Delay(max((int)(spam_time_ms - 1000 * GetTimer(clipboard_time)), 1));
+            if (GetTimer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
+                SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * GetTimer(clipboard_time)), 1));
             }
         }
 
