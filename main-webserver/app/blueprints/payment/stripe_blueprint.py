@@ -14,22 +14,22 @@ def payment(action, **kwargs):
     # Adds a subscription to the customer
     if action == "charge":
         body = request.get_json()
-        return chargeHelper(body["token"], body["email"], body["code"], body["plan"])
+        return chargeHelper(body["token"], body["username"], body["code"], body["plan"])
 
     # Retrieves the stripe subscription of the customer
     elif action == "retrieve":
-        return retrieveStripeHelper(body["email"])
+        return retrieveStripeHelper(body["username"])
 
     # Cancel a stripe subscription
     elif action == "cancel":
-        return cancelStripeHelper(body["email"])
+        return cancelStripeHelper(body["username"])
 
     elif action == "discount":
         return discountHelper(body["code"])
 
     # Inserts a customer to the table
     elif action == "insert":
-        return insertCustomerHelper(body["email"], body["location"])
+        return insertCustomerHelper(body["username"], body["location"])
 
     # Endpoint for stripe webhooks
     elif action == "hooks":
