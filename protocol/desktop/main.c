@@ -99,7 +99,7 @@ volatile int try_amount;
 char filename[300];
 char username[50];
 
-#define MS_IN_SECOND 1000.0
+#define MS_IN_SECOND 1000
 #define WINDOWS_DEFAULT_DPI 96.0
 #define BYTES_IN_KILOBYTE 1024.0
 
@@ -397,9 +397,9 @@ int ReceivePackets(void* opaque) {
 
         if (packet) {
             // Log if it's been a while since the last packet was received
-            if (lastrecv > 20.0 / MS_IN_SECOND) {
+            if (lastrecv > 50.0 / MS_IN_SECOND) {
                 LOG_INFO(
-                    "Took more than 20ms to receive something!! Took %fms "
+                    "Took more than 50ms to receive something!! Took %fms "
                     "total!",
                     lastrecv * MS_IN_SECOND);
             }
