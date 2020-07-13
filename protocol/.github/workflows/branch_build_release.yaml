@@ -31,7 +31,7 @@ jobs:
       matrix:
         config:
           - {
-            name: "Windows Latest MSVC", server_artifact_name: "Windows_server.tar.xz", client_artifact_name: "Windows_client.tar.xz"
+            name: "Windows Latest MSVC", server_artifact_name: "Windows_server.tar.xz", client_artifact_name: "Windows_client.tar.xz",
             os: windows-latest,
             cc: "cl", cxx: "cl", cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
