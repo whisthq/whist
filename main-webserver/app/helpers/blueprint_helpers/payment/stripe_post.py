@@ -38,7 +38,7 @@ def chargeHelper(token, email, code, plan):
     try:
         new_customer = stripe.Customer.create(email=email, source=token)
         customer_id = new_customer["id"]
-        credits = fractalSQLSelect("users", {"username": email})["rows"][
+        credits = fractalSQLSelect("users", {"username": email})["rows"][0][
             "credits_outstanding"
         ]
 
