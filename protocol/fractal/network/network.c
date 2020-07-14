@@ -991,102 +991,122 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
         return -1;
     }
 
-    // Bind to port
-    if (bind(context->s, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
-        LOG_WARNING("Failed to bind to port! %d\n", GetLastNetworkError());
-        closesocket(context->s);
-        return -1;
-    }
-    set_timeout(context->s, stun_timeout_ms);
+// Bind to port
+if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
+{
+    LOG_WARNING( "Failed to bind to port! %d\n", GetLastNetworkError() );
+    closesocket( context->s );
+    return -1;
+}
+set_timeout( context->s, stun_timeout_ms );
 
-    context->addr.sin_family = AF_INET;
-    context->addr.sin_addr.s_addr = entry.ip;
-    context->addr.sin_port = entry.private_port;
+context->addr.sin_family = AF_INET;
+context->addr.sin_addr.s_addr = entry.ip;
+context->addr.sin_port = entry.private_port;
 
-    LOG_INFO("Connecting to server...");
+LOG_INFO( "Connecting to server..." );
 
-    // Connect to TCP server
-    if (!tcp_connect(context->s, context->addr, stun_timeout_ms)) {
-        LOG_WARNING("Could not connect to server over TCP");
-        return -1;
-    }
-
-    LOG_INFO("Connected on %s:%d!\n", destination, port);
-
-    set_timeout(context->s, recvfrom_timeout_ms);
-    return 0;
+// Connect to TCP server
+if( !tcp_connect( context->s, context->addr, stun_timeout_ms ) )
+{
+    LOG_WARNING( "Could not connect to server over TCP" );
+    return -1;
 }
 
-int CreateTCPContext(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
-                     int stun_timeout_ms, bool using_stun, char *aes_private_key) {
-    if (context == NULL) {
-        LOG_ERROR("Context is NULL");
+LOG_INFO( "Connected on %s:%d!\n", destination, port );
+
+set_timeout( context->s, recvfrom_timeout_ms );
+return 0;
+}
+
+int CreateTCPContext( SocketContext* context, char* destination, int port, int recvfrom_timeout_ms,
+                      int stun_timeout_ms, bool using_stun, char* aes_private_key )
+{
+    if( context == NULL )
+    {
+        LOG_ERROR( "Context is NULL" );
         return -1;
     }
     context->mutex = SDL_CreateMutex();
-    memcpy(context->aes_private_key, aes_private_key, sizeof(context->aes_private_key));
+    memcpy( context->aes_private_key, aes_private_key, sizeof( context->aes_private_key ) );
 
     int ret;
 
-    if (using_stun) {
-        if (destination == NULL)
-            ret = CreateTCPServerContextStun(context, port, recvfrom_timeout_ms, stun_timeout_ms);
+    if( using_stun )
+    {
+        if( destination == NULL )
+            ret = CreateTCPServerContextStun( context, port, recvfrom_timeout_ms, stun_timeout_ms );
         else
-            ret = CreateTCPClientContextStun(context, destination, port, recvfrom_timeout_ms,
-                                             stun_timeout_ms);
-    } else {
-        if (destination == NULL)
-            ret = CreateTCPServerContext(context, port, recvfrom_timeout_ms, stun_timeout_ms);
+            ret = CreateTCPClientContextStun( context, destination, port, recvfrom_timeout_ms,
+                                              stun_timeout_ms );
+    } else
+    {
+        if( destination == NULL )
+            ret = CreateTCPServerContext( context, port, recvfrom_timeout_ms, stun_timeout_ms );
         else
-            ret = CreateTCPClientContext(context, destination, port, recvfrom_timeout_ms,
-                                         stun_timeout_ms);
+            ret = CreateTCPClientContext( context, destination, port, recvfrom_timeout_ms,
+                                          stun_timeout_ms );
     }
 
-    if (ret == -1) {
+    if( ret == -1 )
+    {
         return -1;
     }
 
-    if (!handshakePrivateKey(context)) {
-        LOG_WARNING("Could not complete handshake!");
-        closesocket(context->s);
+    if( !handshakePrivateKey( context ) )
+    {
+        LOG_WARNING( "Could not complete handshake!" );
+        closesocket( context->s );
         return -1;
     }
 
-    ClearReadingTCP(context);
+    ClearReadingTCP( context );
     return ret;
 }
 
-int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeout_ms,
-                           int stun_timeout_ms) {
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
+int CreateUDPServerContext( SocketContext* context, int port, int recvfrom_timeout_ms,
+                            int stun_timeout_ms )
+{
+    if( context == NULL )
+    {
+        LOG_WARNING( "Context is NULL" );
         return -1;
     }
 
     context->is_tcp = false;
     // Create UDP socket
-    context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (context->s <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
+    context->s = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+    if( context->s <= 0 )
+    {  // Windows & Unix cases
+        LOG_WARNING( "Could not create UDP socket %d\n", GetLastNetworkError() );
         return -1;
     }
-    set_timeout(context->s, stun_timeout_ms);
+    set_timeout( context->s, stun_timeout_ms );
     // Server connection protocol
     context->is_server = true;
 
     // Bind the server port to the advertized public port
     struct sockaddr_in origin_addr;
     origin_addr.sin_family = AF_INET;
-    origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    origin_addr.sin_port = htons((unsigned short)port);
+    origin_addr.sin_addr.s_addr = htonl( INADDR_ANY );
+    origin_addr.sin_port = htons( (unsigned short)port );
 
-    if (bind(context->s, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
-        LOG_WARNING("Failed to bind to port! %d\n", GetLastNetworkError());
-        closesocket(context->s);
+    if( bind( context->s, (struct sockaddr*)(&origin_addr), sizeof( origin_addr ) ) < 0 )
+    {
+        LOG_WARNING( "Failed to bind to port! %d\n", GetLastNetworkError() );
+        closesocket( context->s );
         return -1;
     }
 
-    LOG_INFO("Waiting for client to connect to %s:%d...\n", "localhost", port);
+    LOG_INFO( "Waiting for client to connect to %s:%d...\n", "localhost", port );
+
+    socklen_t slen = sizeof( context->addr );
+    int recv_size;
+    if( (recv_size = recvfrom( context->s, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen )) != 0 ) {
+        LOG_WARNING( "Failed to receive ack! %d %d", recv_size, GetLastNetworkError() );
+        closesocket( context->s );
+        return -1;
+    }
 
     if (!handshakePrivateKey(context)) {
         LOG_WARNING("Could not complete handshake!");
@@ -1239,6 +1259,14 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
     context->addr.sin_port = htons((unsigned short)port);
 
     LOG_INFO("Connecting to server...");
+
+    // Send Ack
+    if( Ack( context ) < 0 )
+    {
+        LOG_WARNING( "Could not send ack to server %d\n", GetLastNetworkError() );
+        closesocket( context->s );
+        return -1;
+    }
 
     if (!handshakePrivateKey(context)) {
         LOG_WARNING("Could not complete handshake!");
