@@ -28,6 +28,7 @@ Use `retrieve_config.py`. It provides a `-h` help menu for understanding paramet
 ```
 
 On Windows, run
+
 ```sh
 py retrieve_config.py [NAME OF BRANCH]
 ```
@@ -53,6 +54,8 @@ Review `docker-compose.yml` to see which ports the various services are hosted o
 If you make a change to the webserver, you'll need to restart docker by first killing the server (Ctrl-C) and re-running `docker-compose up --build`.
 
 ### Heroku Setup
+
+[ Deprecated, talk about pipeline ]
 
 To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. Make sure you are added as a collaborator to any of the Heroku apps you plan to use. You can contact Ming, Phil, or Jonathan to be added.
 
