@@ -44,7 +44,7 @@ uint32_t Hash(void* key, size_t len);
  *
  * @param iv                       Buffer to save the IV to
  */
-void gen_iv( unsigned char* iv );
+void gen_iv(void* iv);
 
 /**
  * @brief                          Encrypts a data packet using the AES private
