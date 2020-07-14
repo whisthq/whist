@@ -69,7 +69,7 @@ static int handleInitMessage(FractalServerMessage *fmsg, size_t fmsg_size) {
         return -1;
     }
 
-    LOG_INFO("Received init message!\n");
+    LOG_INFO("Received init message!");
 
     FractalServerMessageInit *fmsg_init = (FractalServerMessageInit *)fmsg->init_msg;
 

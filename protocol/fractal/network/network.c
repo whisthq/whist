@@ -199,7 +199,7 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data, in
     *((int *)encrypted_packet_buffer) = encrypted_len;
 
     // Send the packet
-    LOG_INFO("Sending TCP Packet of length %d\n", encrypted_len);
+    LOG_INFO("Sending TCP Packet of length %d", encrypted_len);
     bool failed = false;
     if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len) < 0) {
         LOG_WARNING("Failed to send packet!");
@@ -301,7 +301,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
         if (sent_size < 0) {
             int error = GetLastNetworkError();
-            mprintf("Unexpected Packet Error: %d\n", error);
+            mprintf("Unexpected Packet Error: %d", error);
             return -1;
         }
 
@@ -316,7 +316,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
 int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
     if (len > sizeof(FractalPacket)) {
-        LOG_WARNING("Len too long!\n");
+        LOG_WARNING("Len too long!");
         return -1;
     }
     if (context == NULL) {
@@ -339,7 +339,7 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
     SDL_UnlockMutex(context->mutex);
 
     if (sent_size < 0) {
-        mprintf("Could not replay packet!\n");
+        LOG_WARNING("Could not replay packet!");
         return -1;
     }
 
@@ -380,7 +380,7 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
         if (!worked) {
             LOG_WARNING(
                 "Could not connect() over TCP to server: Returned %d, Error "
-                "Code %d\n",
+                "Code %d",
                 ret, GetLastNetworkError());
             closesocket(s);
             return false;

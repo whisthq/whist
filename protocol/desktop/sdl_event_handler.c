@@ -118,7 +118,7 @@ int handleWindowSizeChanged(SDL_Event *event) {
         StartTimer(&window_resize_timer);
     }
 
-    LOG_INFO("Window %d resized to %dx%d (Physical %dx%d)\n", event->window.windowID,
+    LOG_INFO("Window %d resized to %dx%d (Physical %dx%d)", event->window.windowID,
              event->window.data1, event->window.data2, output_width, output_height);
 
     return 0;

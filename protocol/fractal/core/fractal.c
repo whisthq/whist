@@ -136,7 +136,7 @@ int runcmd(const char* cmdline, char** response) {
     char cmd_buf[1000];
 
     if (strlen((const char*)cmdline) + 1 > sizeof(cmd_buf)) {
-        mprintf("runcmd cmdline too long!\n");
+        LOG_WARNING("runcmd cmdline too long!");
         return -1;
     }
 

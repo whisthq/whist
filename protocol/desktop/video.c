@@ -186,7 +186,7 @@ void updateSwsContext() {
 
     sws_input_fmt = decoder->sw_frame->format;
 
-    mprintf("Decoder Format: %s\n", av_get_pix_fmt_name(sws_input_fmt));
+    LOG_INFO("Decoder Format: %s", av_get_pix_fmt_name(sws_input_fmt));
 
     if (videoContext.sws) {
         av_freep(&videoContext.data[0]);
@@ -377,7 +377,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
             continue;
         }
 
-        // LOG_INFO( "Decode Time: %f\n", GetTimer( decode_timer ) );
+        // LOG_INFO( "Decode Time: %f", GetTimer( decode_timer ) );
 
         SDL_LockMutex(render_mutex);
         updatePixelFormat();
@@ -400,7 +400,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
                        sizeof(videoContext.linesize));
             }
 
-            // LOG_INFO( "SWS Time: %f\n", GetTimer( sws_timer ) );
+            // LOG_INFO( "SWS Time: %f", GetTimer( sws_timer ) );
 
             SDL_UpdateYUVTexture(videoContext.texture, NULL, videoContext.data[0],
                                  videoContext.linesize[0], videoContext.data[1],
@@ -468,7 +468,7 @@ int32_t RenderScreen(SDL_Renderer* renderer) {
         SDL_UnlockMutex(render_mutex);
 
 #if LOG_VIDEO
-        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)\n", renderContext.id, renderContext.frame_size,
+        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", renderContext.id, renderContext.frame_size,
                   GetTimer(renderContext.frame_creation_timer));
 #endif
 
@@ -663,7 +663,7 @@ void updateVideo() {
         VideoData.nack_by_bitrate[VideoData.bucket] += VideoData.num_nacked;
         VideoData.seconds_by_bitrate[VideoData.bucket] += time;
 
-        mprintf("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====\n",
+        LOG_INFO("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====",
                 VideoData.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
 
         // Print statistics
