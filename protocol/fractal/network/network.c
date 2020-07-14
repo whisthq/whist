@@ -1073,7 +1073,7 @@ int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeou
         LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
-    set_timeout( context->s, stun_timeout_ms );
+    set_timeout(context->s, stun_timeout_ms);
     // Server connection protocol
     context->is_server = true;
 
@@ -1091,10 +1091,9 @@ int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeou
 
     LOG_INFO("Waiting for client to connect to %s:%d...\n", "localhost", port);
 
-    if( !handshakePrivateKey( context ) )
-    {
-        LOG_WARNING( "Could not complete handshake!" );
-        closesocket( context->s );
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
+        closesocket(context->s);
         return -1;
     }
 
