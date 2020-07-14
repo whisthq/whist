@@ -69,7 +69,7 @@ void gen_iv(void* iv) {
     }
 }
 
-int hmac(char* hash, char* buf, int len, char* key) {
+int hmac( void* hash, void* buf, int len, void* key) {
     int hash_len;
     HMAC(EVP_sha256(), key, 16, (const unsigned char*)buf, len, (unsigned char*)hash,
          (unsigned int*)&hash_len);
@@ -78,6 +78,20 @@ int hmac(char* hash, char* buf, int len, char* key) {
         return -1;
     }
     return hash_len;
+}
+
+bool verify_hmac( void* hash, void* buf, int len, void* key )
+{
+    char correct_hash[32];
+    hmac( correct_hash, buf, len, key);
+    for( int i = 0; i < 16; i++ )
+    {
+        if( ((char*)hash)[i] != correct_hash[i] )
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 #define CRYPTO_HEADER_LEN                                                          \
@@ -133,14 +147,12 @@ int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
         return -1;
     }
 
-    char hash[32];
-    hmac(hash, (char*)encrypted_packet + sizeof(encrypted_packet->hash),
-         packet_len - sizeof(encrypted_packet->hash), (char*)private_key);
-    for (int i = 0; i < 16; i++) {
-        if (hash[i] != encrypted_packet->hash[i]) {
-            LOG_WARNING("HMAC failed!");
-            return -1;
-        }
+    if( !verify_hmac( encrypted_packet->hash,
+                      (char*)encrypted_packet + sizeof( encrypted_packet->hash )
+                      packet_len - sizeof( encrypted_packet->hash ), private_key ) )
+    {
+        LOG_WARNING( "Incorrect hmac!" );
+        return -1;
     }
 
     char* cipher_buf = (char*)encrypted_packet + CRYPTO_HEADER_LEN;
