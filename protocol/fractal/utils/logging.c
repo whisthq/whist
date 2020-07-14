@@ -540,17 +540,9 @@ typedef struct update_status_data {
 int32_t MultithreadedUpdateStatus(void *data) {
     update_status_data_t *d = data;
 
-    char json[1000];
-
-    snprintf(json, sizeof(json),
-             "{\
-            \"ready\" : true\
-    }");
-
     char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
 
-    SendJSONPost(host, "/vm/winlogonStatus", json);
-
+    char json[1000];
     snprintf(json, sizeof(json),
              "{\
             \"version\" : \"%s\",\

@@ -22,6 +22,7 @@ called on the receiving end to re-obtain the data and process it.
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <time.h>
 
 uint32_t Hash(void* buf, size_t len) {
     char* key = buf;
@@ -51,24 +52,20 @@ uint32_t Hash(void* buf, size_t len) {
     return hash;
 }
 
-int aes_encrypt(unsigned char* plaintext, int plaintext_len, unsigned char* key, unsigned char* iv,
-                unsigned char* ciphertext);
-int aes_decrypt(unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
-                unsigned char* iv, unsigned char* plaintext);
-
 void handleErrors(void) {
     ERR_print_errors_fp(stderr);
     abort();
 }
 
-void gen_iv(unsigned char* iv) {
+void gen_iv(void* iv) {
     srand((unsigned int)time(NULL) * rand() + rand());
     (void)rand();
+    srand((unsigned int)time(NULL) * rand() + rand());
     (void)rand();
     (void)rand();
 
     for (int i = 0; i < 16; i++) {
-        iv[i] = (unsigned char)rand();
+        ((unsigned char*)iv)[i] = (unsigned char)rand();
     }
 }
 
@@ -83,9 +80,9 @@ int hmac(char* hash, char* buf, int len, char* key) {
     return hash_len;
 }
 
-#define CRYPTO_HEADER_LEN                                                    \
-    (sizeof(plaintext_packet->hash) + sizeof(plaintext_packet->cipher_len) + \
-     sizeof(plaintext_packet->iv))
+#define CRYPTO_HEADER_LEN                                                          \
+    (sizeof(((FractalPacket*)0)->hash) + sizeof(((FractalPacket*)0)->cipher_len) + \
+     sizeof(((FractalPacket*)0)->iv))
 
 int encrypt_packet(FractalPacket* plaintext_packet, int packet_len, FractalPacket* encrypted_packet,
                    unsigned char* private_key) {
@@ -171,8 +168,7 @@ int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
     return decrypt_len;
 }
 
-int aes_encrypt(unsigned char* plaintext, int plaintext_len, unsigned char* key, unsigned char* iv,
-                unsigned char* ciphertext) {
+int aes_encrypt(void* plaintext, int plaintext_len, void* key, void* iv, void* ciphertext) {
     EVP_CIPHER_CTX* ctx;
 
     int len;
@@ -190,7 +186,8 @@ int aes_encrypt(unsigned char* plaintext, int plaintext_len, unsigned char* key,
     ciphertext_len = len;
 
     // Finish encryption (Might add a few bytes)
-    if (1 != EVP_EncryptFinal_ex(ctx, ciphertext + ciphertext_len, &len)) handleErrors();
+    if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char*)ciphertext + ciphertext_len, &len))
+        handleErrors();
     ciphertext_len += len;
 
     // Free the context
@@ -199,8 +196,7 @@ int aes_encrypt(unsigned char* plaintext, int plaintext_len, unsigned char* key,
     return ciphertext_len;
 }
 
-int aes_decrypt(unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
-                unsigned char* iv, unsigned char* plaintext) {
+int aes_decrypt(void* ciphertext, int ciphertext_len, void* key, void* iv, void* plaintext) {
     EVP_CIPHER_CTX* ctx;
 
     int len;
@@ -218,7 +214,7 @@ int aes_decrypt(unsigned char* ciphertext, int ciphertext_len, unsigned char* ke
     plaintext_len = len;
 
     // Finish decryption
-    if (1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) handleErrors();
+    if (1 != EVP_DecryptFinal_ex(ctx, (unsigned char*)plaintext + len, &len)) handleErrors();
     plaintext_len += len;
 
     // Free context

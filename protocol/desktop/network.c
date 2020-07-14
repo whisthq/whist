@@ -18,6 +18,7 @@ TODO
 #include "desktop_utils.h"
 
 // Data
+extern volatile char aes_private_key[16];
 extern char filename[300];
 extern char username[50];
 extern int UDP_port;
@@ -40,10 +41,10 @@ int discoverPorts(void) {
     SocketContext context;
     using_stun = true;
     if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, SHORT_TCP_CONNECTION_WAIT,
-                         using_stun) < 0) {
+                         using_stun, (char *)aes_private_key) < 0) {
         using_stun = false;
         if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, LONG_TCP_CONNECTION_WAIT,
-                             using_stun) < 0) {
+                             using_stun, (char *)aes_private_key) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
             return -1;
         }
@@ -131,7 +132,7 @@ int connectToServer(void) {
     }
 
     if (CreateUDPContext(&PacketSendContext, server_ip, UDP_port, 10, UDP_CONNECTION_WAIT,
-                         using_stun) < 0) {
+                         using_stun, (char *)aes_private_key) < 0) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
@@ -146,7 +147,7 @@ int connectToServer(void) {
     }
 
     if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, LONG_TCP_CONNECTION_WAIT,
-                         using_stun) < 0) {
+                         using_stun, (char *)aes_private_key) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         closesocket(PacketSendContext.s);
         return -1;
