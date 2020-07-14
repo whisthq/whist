@@ -1,4 +1,7 @@
 from app import *
+from app.helpers.utils.general.sql_commands import *
+from app.helpers.utils.general.tokens import *
+
 
 def registerGoogleUser(username, name, token, reason_for_signup=None):
     """Registers a user, and stores it in the users table
@@ -11,13 +14,13 @@ def registerGoogleUser(username, name, token, reason_for_signup=None):
     Returns:
         int: 200 on success, 400 on fail
     """
-    code = genUniqueCode()
+    code = generateUniquePromoCode()
 
     params = {
-        "userName": username,
+        "username": username,
         "password": None,
         "code": code,
-        "token": token,
+        "id": token,
         "name": name,
         "reason_for_signup": reason_for_signup,
         "google_login": True,
