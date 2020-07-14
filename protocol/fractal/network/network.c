@@ -1042,8 +1042,7 @@ int CreateTCPContext(SocketContext *context, char *destination, int port, int re
                                          stun_timeout_ms);
     }
 
-    if( ret == -1 )
-    {
+    if (ret == -1) {
         return -1;
     }
 
