@@ -79,7 +79,7 @@ void initLogger(char *log_dir) {
     logger_mutex = SDL_CreateMutex();
     logger_semaphore = SDL_CreateSemaphore(0);
     mprintf_thread =
-            SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
+        SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
     LOG_INFO("Writing logs to %s", f);
     //    StartTimer(&mprintf_timer);
 }
@@ -146,7 +146,7 @@ int MultiThreadedPrintf(void *opaque) {
             //} else if (i > last_printf) {
             fprintf(stdout, "%s", logger_queue_cache[i].buf);
             int chars_written =
-                    sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
+                sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
             logger_history_len += chars_written;
 
             // Shift buffer over if too large;
@@ -259,8 +259,8 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
             char old_msg[LOGGER_BUF_SIZE];
             memcpy(old_msg, buf, LOGGER_BUF_SIZE);
             int chars_written =
-                    snprintf(buf, LOGGER_BUF_SIZE, "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n",
-                             old_msg, logger_queue[index].buf);
+                snprintf(buf, LOGGER_BUF_SIZE, "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n",
+                         old_msg, logger_queue[index].buf);
             if (!(chars_written > 0 && chars_written <= LOGGER_BUF_SIZE)) {
                 buf[0] = '\0';
             }

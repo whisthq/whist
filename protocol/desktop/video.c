@@ -664,7 +664,7 @@ void updateVideo() {
         VideoData.seconds_by_bitrate[VideoData.bucket] += time;
 
         LOG_INFO("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====",
-                VideoData.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
+                 VideoData.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
 
         // Print statistics
 
