@@ -227,7 +227,7 @@ bool handshakePrivateKey(SocketContext *context) {
     SDL_Delay(150);
 
     // Wait for and verify their signed private key request data
-    recv_size = recvp(context, &our_signed_priv_key_data, sizeof(their_priv_key_data));
+    recv_size = recvp(context, &our_signed_priv_key_data, sizeof(our_signed_priv_key_data));
     if (!confirmPrivateKey(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
                            context->aes_private_key)) {
         LOG_ERROR("Could not confirmPrivateKey!");
@@ -1254,6 +1254,8 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
         closesocket(context->s);
         return -1;
     }
+
+    SDL_Delay( stun_timeout_ms );
 
     if (!handshakePrivateKey(context)) {
         LOG_WARNING("Could not complete handshake!");
