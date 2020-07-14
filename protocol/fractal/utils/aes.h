@@ -104,12 +104,12 @@ int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
  * @param plaintext_len            Length of the plaintext
  * @param key                      AES Private Key used to encrypt the plaintext
  * @param iv                       IV used to seed the AES encryption
- * @param ciphertext               Pointer to buffer for receiving ciphertext 
+ * @param ciphertext               Pointer to buffer for receiving ciphertext
  *
  * @returns                        Will return -1 on failure, else will return the
  *                                 length of the encrypted result
  */
-int aes_encrypt( void* plaintext, int plaintext_len, void* key, void* iv, void* ciphertext );
+int aes_encrypt(void* plaintext, int plaintext_len, void* key, void* iv, void* ciphertext);
 
 /**
  * @brief                          Decrypt ciphertext data
@@ -123,6 +123,6 @@ int aes_encrypt( void* plaintext, int plaintext_len, void* key, void* iv, void* 
  * @returns                        Will return -1 on failure, else will return the
  *                                 length of the decrypted result
  */
-int aes_decrypt( void* ciphertext, int ciphertext_len, void* key, void* iv, void* plaintext );
+int aes_decrypt(void* ciphertext, int ciphertext_len, void* key, void* iv, void* plaintext);
 
 #endif  // AES_H

@@ -1559,33 +1559,31 @@ void set_timeout(SOCKET s, int timeout_ms) {
 }
 
 void preparePrivateKey(private_key_data_t *priv_key_data, char *private_key) {
-    gen_iv( priv_key_data->iv );
-    priv_key_data->private_key_len = aes_encrypt( private_key, 16, private_key, priv_key_data->iv, priv_key_data->private_key );
+    gen_iv(priv_key_data->iv);
+    priv_key_data->private_key_len =
+        aes_encrypt(private_key, 16, private_key, priv_key_data->iv, priv_key_data->private_key);
 }
 
 bool confirmPrivateKey(private_key_data_t *priv_key_data, int len, char *private_key) {
     if (len == sizeof(private_key_data_t)) {
-        if( priv_key_data->private_key_len > sizeof( priv_key_data->private_key ) )
-        {
-            LOG_ERROR( "Private Key Length is too long! %d bytes!", priv_key_data->private_key_len );
+        if (priv_key_data->private_key_len > sizeof(priv_key_data->private_key)) {
+            LOG_ERROR("Private Key Length is too long! %d bytes!", priv_key_data->private_key_len);
             return false;
-        } else
-        {
+        } else {
             char resulting_private_key[32];
-            int private_key_len = aes_decrypt( priv_key_data->private_key, priv_key_data->private_key_len, private_key, priv_key_data->iv, resulting_private_key );
-            if( private_key_len != 16 )
-            {
-                LOG_ERROR( "Private Key Length is not 16! Is %d instead!", private_key_len );
+            int private_key_len =
+                aes_decrypt(priv_key_data->private_key, priv_key_data->private_key_len, private_key,
+                            priv_key_data->iv, resulting_private_key);
+            if (private_key_len != 16) {
+                LOG_ERROR("Private Key Length is not 16! Is %d instead!", private_key_len);
                 return false;
-            } else
-            {
-                if( memcmp( resulting_private_key, private_key, 16 ) == 0 ) 
-                {
-                    LOG_INFO( "PRIVATE KEY WAS CORRECT!" );
+            } else {
+                if (memcmp(resulting_private_key, private_key, 16) == 0) {
+                    LOG_INFO("PRIVATE KEY WAS CORRECT!");
                     return true;
-                } else
-                {
-                    LOG_ERROR( "Private Key was incorrect: %p", *(long long*)priv_key_data->private_key );
+                } else {
+                    LOG_ERROR("Private Key was incorrect: %p",
+                              *(long long *)priv_key_data->private_key);
                     return false;
                 }
             }

@@ -168,7 +168,7 @@ int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
     return decrypt_len;
 }
 
-int aes_encrypt( void* plaintext, int plaintext_len, void* key, void* iv, void* ciphertext ) {
+int aes_encrypt(void* plaintext, int plaintext_len, void* key, void* iv, void* ciphertext) {
     EVP_CIPHER_CTX* ctx;
 
     int len;
@@ -186,7 +186,8 @@ int aes_encrypt( void* plaintext, int plaintext_len, void* key, void* iv, void* 
     ciphertext_len = len;
 
     // Finish encryption (Might add a few bytes)
-    if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char*)ciphertext + ciphertext_len, &len)) handleErrors();
+    if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char*)ciphertext + ciphertext_len, &len))
+        handleErrors();
     ciphertext_len += len;
 
     // Free the context
@@ -195,7 +196,7 @@ int aes_encrypt( void* plaintext, int plaintext_len, void* key, void* iv, void* 
     return ciphertext_len;
 }
 
-int aes_decrypt( void* ciphertext, int ciphertext_len, void* key, void* iv, void* plaintext ) {
+int aes_decrypt(void* ciphertext, int ciphertext_len, void* key, void* iv, void* plaintext) {
     EVP_CIPHER_CTX* ctx;
 
     int len;
