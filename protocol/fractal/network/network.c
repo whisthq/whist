@@ -1255,7 +1255,7 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
         return -1;
     }
 
-    SDL_Delay( stun_timeout_ms );
+    SDL_Delay(stun_timeout_ms);
 
     if (!handshakePrivateKey(context)) {
         LOG_WARNING("Could not complete handshake!");
