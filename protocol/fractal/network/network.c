@@ -201,13 +201,6 @@ bool handshakePrivateKey(SocketContext *context) {
     int recv_size;
     int slen = sizeof(context->addr);
 
-    // Open up the port
-    if (sendp(context, NULL, 0) < 0) {
-        LOG_ERROR("sendp(3) failed! Could not open up port! %d", GetLastNetworkError());
-        return false;
-    }
-    SDL_Delay(150);
-
     // Generate and send private key request data
     preparePrivateKeyRequest(&our_priv_key_data);
     if (sendp(context, &our_priv_key_data, sizeof(our_priv_key_data)) < 0) {
@@ -1192,6 +1185,14 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     LOG_INFO("Received STUN response, client connection desired from %s:%d\n",
              inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
+    // Open up the port
+    if( sendp( context, NULL, 0 ) < 0 )
+    {
+        LOG_ERROR( "sendp(3) failed! Could not open up port! %d", GetLastNetworkError() );
+        return false;
+    }
+    SDL_Delay( 150 );
+
     if (!handshakePrivateKey(context)) {
         LOG_WARNING("Could not complete handshake!");
         closesocket(context->s);
@@ -1314,6 +1315,14 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
     }
 
     LOG_INFO("Connecting to server...");
+
+    // Open up the port
+    if( sendp( context, NULL, 0 ) < 0 )
+    {
+        LOG_ERROR( "sendp(3) failed! Could not open up port! %d", GetLastNetworkError() );
+        return false;
+    }
+    SDL_Delay( 150 );
 
     if (!handshakePrivateKey(context)) {
         LOG_WARNING("Could not complete handshake!");
