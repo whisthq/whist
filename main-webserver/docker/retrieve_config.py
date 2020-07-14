@@ -34,7 +34,7 @@ args = parser.parse_args()
 env_to_app_name = {
     "staging": "cube-celery-staging",
     "production": "cube-celery-vm",
-    "reorganization": "main-webserver-staging4",
+    "reorganization": "cube-celery-staging4",
 }
 app_name = env_to_app_name.get(args.env, args.env)
 heroku_proc = subprocess.run(
