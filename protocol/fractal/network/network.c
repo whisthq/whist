@@ -1205,12 +1205,11 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
              inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
     // Open up the port
-    if( sendp( context, NULL, 0 ) < 0 )
-    {
-        LOG_ERROR( "sendp(3) failed! Could not open up port! %d", GetLastNetworkError() );
+    if (sendp(context, NULL, 0) < 0) {
+        LOG_ERROR("sendp(3) failed! Could not open up port! %d", GetLastNetworkError());
         return false;
     }
-    SDL_Delay( 150 );
+    SDL_Delay(150);
 
     if (!handshakePrivateKey(context)) {
         LOG_WARNING("Could not complete handshake!");
@@ -1344,12 +1343,11 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
     LOG_INFO("Connecting to server...");
 
     // Open up the port
-    if( sendp( context, NULL, 0 ) < 0 )
-    {
-        LOG_ERROR( "sendp(3) failed! Could not open up port! %d", GetLastNetworkError() );
+    if (sendp(context, NULL, 0) < 0) {
+        LOG_ERROR("sendp(3) failed! Could not open up port! %d", GetLastNetworkError());
         return false;
     }
-    SDL_Delay( 150 );
+    SDL_Delay(150);
 
     if (!handshakePrivateKey(context)) {
         LOG_WARNING("Could not complete handshake!");
