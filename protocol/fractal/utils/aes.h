@@ -64,7 +64,7 @@ int hmac( void* signature, void* buf, int len, void* key );
  * @param len                      Length of signed buffer
  * @param key                      Private key that was signed with
  */
-int verify_hmac( void* signature, void* buf, int len, void* key );
+bool verify_hmac( void* signature, void* buf, int len, void* key );
 
 /**
  * @brief                          Encrypts a data packet using the AES private

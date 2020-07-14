@@ -152,9 +152,8 @@ void ClearReadingTCP(SocketContext *context);
 @brief                          This will prepare the private key data
 
 @param priv_key_data            The private key data buffer
-@param private_key              The private key
 */
-void preparePrivateKey(private_key_data_t *priv_key_data, void *private_key);
+void preparePrivateKeyRequest(private_key_data_t *priv_key_data);
 
 /*
 @brief                          This will sign the other connection's private key data
@@ -202,17 +201,25 @@ bool handshakePrivateKey( SocketContext* context )
     int recv_size;
     int slen = sizeof( context->addr );
 
+    // Open up the port
+    if( sendp( context, NULL, 0 ) < 0 )
+    {
+        LOG_ERROR( "sendp(3) failed! Could not open up port! %d", GetLastNetworkError() );
+        return false;
+    }
+    SDL_Delay( 150 );
+
     // Generate and send private key request data
-    preparePrivateKey( &our_priv_key_data, context->aes_private_key );
+    preparePrivateKeyRequest( &our_priv_key_data );
     if( sendp( context, &our_priv_key_data, sizeof( our_priv_key_data ) ) < 0 )
     {
-        LOG_ERROR( "sendp(3) failed! %d", GetLastNetworkError() );
+        LOG_ERROR( "sendp(3) failed! Could not send private key request data! %d", GetLastNetworkError() );
         return false;
     }
     SDL_Delay( 150 );
 
     // Receive, sign, and send back their private key request data
-    recv_size = recvfrom( context->s, &their_priv_key_data, sizeof( their_priv_key_data ), (struct sockaddr*)(&context->addr), &slen );
+    while( (recv_size = recvfrom( context->s, (char*)&their_priv_key_data, sizeof( their_priv_key_data ), 0, (struct sockaddr*)(&context->addr), &slen )) == 0 );
     if( !signPrivateKey( &their_priv_key_data, recv_size, context->aes_private_key ) )
     {
         LOG_ERROR( "signPrivateKey failed!" );
@@ -220,7 +227,7 @@ bool handshakePrivateKey( SocketContext* context )
     }
     if( sendp( context, &their_priv_key_data, sizeof( their_priv_key_data ) ) < 0 )
     {
-        LOG_ERROR( "sendp(3) failed! %d", GetLastNetworkError() );
+        LOG_ERROR( "sendp(3) failed! Could not send signed private key data! %d", GetLastNetworkError() );
         return false;
     }
     SDL_Delay( 150 );
@@ -1095,12 +1102,6 @@ int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeou
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
-        return -1;
-    }
-
-    preparePrivateKey(&priv_key_data, context->aes_private_key);
-
     set_timeout(context->s, 350);
 
     // Send acknowledgement of connection
@@ -1229,9 +1230,6 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
                            int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
 
-    private_key_data_t priv_key_data;
-    preparePrivateKey(&priv_key_data, context->aes_private_key);
-
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (context->s <= 0) {  // Windows & Unix cases
@@ -1324,33 +1322,10 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
 
     LOG_INFO("Connecting to server...");
 
-    // Open up the port
-    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
-        closesocket(context->s);
-        return -1;
-    }
-
-    SDL_Delay(150);
-
-    // Send acknowledgement
-    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
-        closesocket(context->s);
-        return -1;
-    }
-
-    // Receive server's acknowledgement of connection
-    socklen_t slen = sizeof(context->addr);
-    // cppcheck-suppress nullPointer
-    if ((recv_size = recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
-                              (struct sockaddr *)&context->addr, &slen)) < 0) {
-        LOG_WARNING("Did not receive response from server! %d\n", GetLastNetworkError());
-        closesocket(context->s);
-        return -1;
-    }
-
-    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
+    if( !handshakePrivateKey( context ) )
+    {
+        LOG_WARNING( "Could not complete handshake!" );
+        closesocket( context->s );
         return -1;
     }
 
@@ -1559,7 +1534,7 @@ void set_timeout(SOCKET s, int timeout_ms) {
     }
 }
 
-void preparePrivateKey(private_key_data_t *priv_key_data, char *private_key) {
+void preparePrivateKeyRequest(private_key_data_t *priv_key_data) {
     gen_iv(priv_key_data->iv);
 }
 
