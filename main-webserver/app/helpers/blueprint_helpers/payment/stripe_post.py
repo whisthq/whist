@@ -24,8 +24,9 @@ def chargeHelper(token, email, code, plan):
     trial_end = 0
     customer_exists = False
 
-    customer = fractalSQLSelect("customers", {"username": email})["rows"]
-    if customer:
+    output = fractalSQLSelect("customers", {"username": email})["rows"]
+    if output:
+        customer = output[0]
         customer_exists = True
         if customer["trial_end"]:
             trial_end = max(
