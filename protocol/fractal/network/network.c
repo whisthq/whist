@@ -1566,7 +1566,7 @@ void preparePrivateKey(private_key_data_t *priv_key_data, char *private_key) {
 
 bool confirmPrivateKey(private_key_data_t *priv_key_data, int len, char *private_key) {
     if (len == sizeof(private_key_data_t)) {
-        if (priv_key_data->private_key_len > sizeof(priv_key_data->private_key)) {
+        if (priv_key_data->private_key_len > (int)sizeof(priv_key_data->private_key)) {
             LOG_ERROR("Private Key Length is too long! %d bytes!", priv_key_data->private_key_len);
             return false;
         } else {
