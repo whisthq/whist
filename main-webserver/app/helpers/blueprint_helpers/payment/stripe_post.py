@@ -198,8 +198,9 @@ def retrieveStripeHelper(email):
 
 
 def cancelStripeHelper(email):
-    customer = fractalSQLSelect("customers", {"username": email})["rows"]
-    if customer:
+    output = fractalSQLSelect("customers", {"username": email})["rows"]
+    if output:
+        customer = output[0]
         subscription = customer["subscription"]
         try:
             payload = stripe.Subscription.delete(subscription)
