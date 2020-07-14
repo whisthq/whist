@@ -1072,7 +1072,7 @@ int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeou
         LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
         return -1;
     }
-    set_timeout(context->s, stun_timeout_ms);
+    set_timeout( context->s, stun_timeout_ms );
     // Server connection protocol
     context->is_server = true;
 
@@ -1090,20 +1090,12 @@ int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeou
 
     LOG_INFO("Waiting for client to connect to %s:%d...\n", "localhost", port);
 
-    socklen_t slen = sizeof(context->addr);
-    private_key_data_t priv_key_data = {0};
-    int recv_size;
-    while ((recv_size = recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
-                                 (struct sockaddr *)(&context->addr), &slen)) < 0) {
-        LOG_WARNING("Did not receive response from client! %d\n", GetLastNetworkError());
-        closesocket(context->s);
+    if( !handshakePrivateKey( context ) )
+    {
+        LOG_WARNING( "Could not complete handshake!" );
+        closesocket( context->s );
         return -1;
     }
-
-    set_timeout(context->s, 350);
-
-    // Send acknowledgement of connection
-    sendp(context, &priv_key_data, sizeof(priv_key_data));
 
     LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
