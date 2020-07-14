@@ -144,11 +144,10 @@ int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
         return -1;
     }
 
-    if( !verify_hmac( encrypted_packet->hash,
-                      (char*)encrypted_packet + sizeof( encrypted_packet->hash ),
-                      packet_len - sizeof( encrypted_packet->hash ), private_key ) )
-    {
-        LOG_WARNING( "Incorrect hmac!" );
+    if (!verify_hmac(encrypted_packet->hash,
+                     (char*)encrypted_packet + sizeof(encrypted_packet->hash),
+                     packet_len - sizeof(encrypted_packet->hash), private_key)) {
+        LOG_WARNING("Incorrect hmac!");
         return -1;
     }
 
