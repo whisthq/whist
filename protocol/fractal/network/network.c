@@ -165,7 +165,7 @@ void preparePrivateKey(private_key_data_t *priv_key_data, void *private_key);
 
 @returns                        True if the verification succeeds, false if it fails
 */
-bool signPrivateKey(private_key_data_t* priv_key_data, int recv_size, void *private_key);
+bool signPrivateKey(private_key_data_t *priv_key_data, int recv_size, void *private_key);
 
 /*
 @brief                          This will verify the given private key
@@ -177,7 +177,9 @@ bool signPrivateKey(private_key_data_t* priv_key_data, int recv_size, void *priv
 
 @returns                        True if the verification succeeds, false if it fails
 */
-bool confirmPrivateKey(private_key_data_t* our_priv_key_data, private_key_data_t *our_signed_priv_key_data, int recv_size, void *private_key );
+bool confirmPrivateKey(private_key_data_t *our_priv_key_data,
+                       private_key_data_t *our_signed_priv_key_data, int recv_size,
+                       void *private_key);
 
 /*
 ============================
@@ -185,8 +187,7 @@ Public Function Implementations
 ============================
 */
 
-int GetLastNetworkError()
-{
+int GetLastNetworkError() {
 #if defined(_WIN32)
     return WSAGetLastError();
 #else
@@ -194,45 +195,41 @@ int GetLastNetworkError()
 #endif
 }
 
-bool handshakePrivateKey( SocketContext* context )
-{
+bool handshakePrivateKey(SocketContext *context) {
     private_key_data_t our_priv_key_data;
     private_key_data_t our_signed_priv_key_data;
     private_key_data_t their_priv_key_data;
     int recv_size;
-    int slen = sizeof( context->addr );
+    int slen = sizeof(context->addr);
 
     // Generate and send private key request data
-    preparePrivateKey( &our_priv_key_data, context->aes_private_key );
-    if( sendp( context, &our_priv_key_data, sizeof( our_priv_key_data ) ) < 0 )
-    {
-        LOG_ERROR( "sendp(3) failed! %d", GetLastNetworkError() );
+    preparePrivateKey(&our_priv_key_data, context->aes_private_key);
+    if (sendp(context, &our_priv_key_data, sizeof(our_priv_key_data)) < 0) {
+        LOG_ERROR("sendp(3) failed! %d", GetLastNetworkError());
         return false;
     }
-    SDL_Delay( 150 );
+    SDL_Delay(150);
 
     // Receive, sign, and send back their private key request data
-    recv_size = recvfrom( context->s, &their_priv_key_data, sizeof( their_priv_key_data ), (struct sockaddr*)(&context->addr), &slen );
-    if( !signPrivateKey( &their_priv_key_data, recv_size, context->aes_private_key ) )
-    {
-        LOG_ERROR( "signPrivateKey failed!" );
+    recv_size = recvfrom(context->s, &their_priv_key_data, sizeof(their_priv_key_data),
+                         (struct sockaddr *)(&context->addr), &slen);
+    if (!signPrivateKey(&their_priv_key_data, recv_size, context->aes_private_key)) {
+        LOG_ERROR("signPrivateKey failed!");
         return false;
     }
-    if( sendp( context, &their_priv_key_data, sizeof( their_priv_key_data ) ) < 0 )
-    {
-        LOG_ERROR( "sendp(3) failed! %d", GetLastNetworkError() );
+    if (sendp(context, &their_priv_key_data, sizeof(their_priv_key_data)) < 0) {
+        LOG_ERROR("sendp(3) failed! %d", GetLastNetworkError());
         return false;
     }
-    SDL_Delay( 150 );
+    SDL_Delay(150);
 
     // Wait for and verify their signed private key request data
-    recv_size = recvp( context, &our_signed_priv_key_data, sizeof( their_priv_key_data ) );
-    if( !confirmPrivateKey( &our_priv_key_data, &our_signed_priv_key_data, recv_size, context->aes_private_key ) )
-    {
-        LOG_ERROR( "Could not confirmPrivateKey!" );
+    recv_size = recvp(context, &our_signed_priv_key_data, sizeof(their_priv_key_data));
+    if (!confirmPrivateKey(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
+                           context->aes_private_key)) {
+        LOG_ERROR("Could not confirmPrivateKey!");
         return false;
-    } else
-    {
+    } else {
         return true;
     }
 }
@@ -1042,10 +1039,9 @@ int CreateTCPContext(SocketContext *context, char *destination, int port, int re
                                          stun_timeout_ms);
     }
 
-    if( !handshakePrivateKey( context ) )
-    {
-        LOG_WARNING( "Could not complete handshake!" );
-        closesocket( context->s );
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
+        closesocket(context->s);
         return -1;
     }
 
@@ -1196,10 +1192,9 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     LOG_INFO("Received STUN response, client connection desired from %s:%d\n",
              inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
-    if( !handshakePrivateKey( context ) )
-    {
-        LOG_WARNING( "Could not complete handshake!" );
-        closesocket( context->s );
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
+        closesocket(context->s);
         return -1;
     }
 
@@ -1248,10 +1243,9 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
 
     LOG_INFO("Connecting to server...");
 
-    if( !handshakePrivateKey( context ) )
-    {
-        LOG_WARNING( "Could not complete handshake!" );
-        closesocket( context->s );
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
+        closesocket(context->s);
         return -1;
     }
 
@@ -1563,47 +1557,41 @@ void preparePrivateKey(private_key_data_t *priv_key_data, char *private_key) {
     gen_iv(priv_key_data->iv);
 }
 
-typedef struct
-{
+typedef struct {
     char iv[16];
     char private_key[16];
 } signature_data_t;
 
-bool signPrivateKey( private_key_data_t* priv_key_data, int recv_size, char* private_key )
-{
-    if( recv_size == sizeof( private_key_data_t ) )
-    {
+bool signPrivateKey(private_key_data_t *priv_key_data, int recv_size, char *private_key) {
+    if (recv_size == sizeof(private_key_data_t)) {
         signature_data_t sig_data;
-        memcpy( sig_data.iv, priv_key_data->iv, sizeof( priv_key_data->iv ) );
-        memcpy( sig_data.private_key, private_key, sizeof( sig_data.private_key ) );
-        hmac( priv_key_data->signature, &sig_data, sizeof( sig_data ), private_key );
+        memcpy(sig_data.iv, priv_key_data->iv, sizeof(priv_key_data->iv));
+        memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
+        hmac(priv_key_data->signature, &sig_data, sizeof(sig_data), private_key);
         return true;
-    } else
-    {
-        LOG_ERROR( "Recv Size was not equal to private_key_data_t: %d instead of %d", recv_size,
-                   sizeof( private_key_data_t ) );
+    } else {
+        LOG_ERROR("Recv Size was not equal to private_key_data_t: %d instead of %d", recv_size,
+                  sizeof(private_key_data_t));
         return false;
     }
 }
 
-bool confirmPrivateKey(private_key_data_t *our_priv_key_data, private_key_data_t* our_signed_priv_key_data, int recv_size, char *private_key) {
-    if( recv_size == sizeof( private_key_data_t ) )
-    {
-        if( memcmp( our_priv_key_data->iv, our_signed_priv_key_data->iv, 16 ) != 0 )
-        {
-            LOG_ERROR( "IV is incorrect!" );
+bool confirmPrivateKey(private_key_data_t *our_priv_key_data,
+                       private_key_data_t *our_signed_priv_key_data, int recv_size,
+                       char *private_key) {
+    if (recv_size == sizeof(private_key_data_t)) {
+        if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
+            LOG_ERROR("IV is incorrect!");
             return false;
-        } else
-        {
+        } else {
             signature_data_t sig_data;
-            memcpy( sig_data.iv, our_signed_priv_key_data->iv, sizeof( our_signed_priv_key_data->iv ) );
-            memcpy( sig_data.private_key, private_key, sizeof( sig_data.private_key ) );
-            if( !verify_hmac( our_signed_priv_key_data->signature, &sig_data, sizeof( sig_data ), private_key ) )
-            {
-                LOG_ERROR( "Verify HMAC Failed" );
+            memcpy(sig_data.iv, our_signed_priv_key_data->iv, sizeof(our_signed_priv_key_data->iv));
+            memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
+            if (!verify_hmac(our_signed_priv_key_data->signature, &sig_data, sizeof(sig_data),
+                             private_key)) {
+                LOG_ERROR("Verify HMAC Failed");
                 return false;
-            } else
-            {
+            } else {
                 return true;
             }
         }
