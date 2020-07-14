@@ -202,32 +202,33 @@ bool handshakePrivateKey(SocketContext *context) {
     int slen = sizeof(context->addr);
 
     // Open up the port
-    if( sendp( context, NULL, 0 ) < 0 )
-    {
-        LOG_ERROR( "sendp(3) failed! Could not open up port! %d", GetLastNetworkError() );
+    if (sendp(context, NULL, 0) < 0) {
+        LOG_ERROR("sendp(3) failed! Could not open up port! %d", GetLastNetworkError());
         return false;
     }
-    SDL_Delay( 150 );
+    SDL_Delay(150);
 
     // Generate and send private key request data
-    preparePrivateKeyRequest( &our_priv_key_data );
-    if( sendp( context, &our_priv_key_data, sizeof( our_priv_key_data ) ) < 0 )
-    {
-        LOG_ERROR( "sendp(3) failed! Could not send private key request data! %d", GetLastNetworkError() );
+    preparePrivateKeyRequest(&our_priv_key_data);
+    if (sendp(context, &our_priv_key_data, sizeof(our_priv_key_data)) < 0) {
+        LOG_ERROR("sendp(3) failed! Could not send private key request data! %d",
+                  GetLastNetworkError());
         return false;
     }
     SDL_Delay(150);
 
     // Receive, sign, and send back their private key request data
-    while( (recv_size = recvfrom( context->s, (char*)&their_priv_key_data, sizeof( their_priv_key_data ), 0, (struct sockaddr*)(&context->addr), &slen )) == 0 );
-    if( !signPrivateKey( &their_priv_key_data, recv_size, context->aes_private_key ) )
-    {
-        LOG_ERROR( "signPrivateKey failed!" );
+    while (
+        (recv_size = recvfrom(context->s, (char *)&their_priv_key_data, sizeof(their_priv_key_data),
+                              0, (struct sockaddr *)(&context->addr), &slen)) == 0)
+        ;
+    if (!signPrivateKey(&their_priv_key_data, recv_size, context->aes_private_key)) {
+        LOG_ERROR("signPrivateKey failed!");
         return false;
     }
-    if( sendp( context, &their_priv_key_data, sizeof( their_priv_key_data ) ) < 0 )
-    {
-        LOG_ERROR( "sendp(3) failed! Could not send signed private key data! %d", GetLastNetworkError() );
+    if (sendp(context, &their_priv_key_data, sizeof(their_priv_key_data)) < 0) {
+        LOG_ERROR("sendp(3) failed! Could not send signed private key data! %d",
+                  GetLastNetworkError());
         return false;
     }
     SDL_Delay(150);
@@ -1310,10 +1311,9 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
 
     LOG_INFO("Connecting to server...");
 
-    if( !handshakePrivateKey( context ) )
-    {
-        LOG_WARNING( "Could not complete handshake!" );
-        closesocket( context->s );
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
+        closesocket(context->s);
         return -1;
     }
 
@@ -1522,9 +1522,7 @@ void set_timeout(SOCKET s, int timeout_ms) {
     }
 }
 
-void preparePrivateKeyRequest(private_key_data_t *priv_key_data) {
-    gen_iv(priv_key_data->iv);
-}
+void preparePrivateKeyRequest(private_key_data_t *priv_key_data) { gen_iv(priv_key_data->iv); }
 
 typedef struct {
     char iv[16];
