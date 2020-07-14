@@ -146,6 +146,7 @@ pathspec==0.8.0
 pg8000==1.15.3
 pluggy==0.13.1
 port-for==0.4
+progressbar==2.5
 psutil==5.7.0
 psycopg2-binary==2.8.5
 py==1.8.2
@@ -163,7 +164,7 @@ pytest-mock==3.1.1
 pytest-pgsql==1.1.2
 pytest-postgresql==2.4.0
 python-dateutil==2.8.0
-python-dotenv==0.10.3
+python-dotenv==0.13.0
 python-editor==1.0.4
 python-http-client==3.2.7
 python-jose==3.0.1
