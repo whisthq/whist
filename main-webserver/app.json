@@ -5,7 +5,7 @@
     },
     "test": {
       "scripts": {
-        "test-setup": "./ci_env_setup.sh; source test_setup.sh",
+        "test-setup": "source ci_env_setup.sh; source test_setup.sh",
         "test": "py.test -v -r A",
         "addons": ["heroku-postgresql:in-dyno", "heroku-redis:in-dyno"]
       }
