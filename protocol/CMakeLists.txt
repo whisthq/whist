@@ -202,6 +202,8 @@ include_directories(include)
 include_directories(include/SDL2)
 include_directories(include/SDL_image)
 
+add_subdirectory(sentry-native)
+
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
 if (${BUILD_CLIENT} MATCHES "ON")
@@ -212,3 +214,4 @@ if (${BUILD_SERVER} MATCHES "ON" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
     message(STATUS building server)
     add_subdirectory(server)
 endif()
+

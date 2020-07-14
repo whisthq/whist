@@ -79,6 +79,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ${ALSA_LIBRARIES}
             m
             )
+    target_link_libraries(FractalClient sentry)
 endif()
 
 #[[
