@@ -89,16 +89,6 @@ def registerHelper(username, password, name, reason_for_signup):
 
     # Third, generate a promo code for the user
 
-    def generateUniquePromoCode():
-        output = fractalSQLSelect("users", {})
-        old_codes = []
-        if output["rows"]:
-            old_codes = [user["code"] for user in output["rows"]]
-        new_code = generatePromoCode()
-        while new_code in old_codes:
-            new_code = generatePromoCode()
-        return new_code
-
     promo_code = generateUniquePromoCode()
 
     # Add the user to the database

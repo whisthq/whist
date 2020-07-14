@@ -1,4 +1,32 @@
 from app import *
+from app.helpers.utils.general.sql_commands import *
+from app.helpers.utils.general.tokens import *
+
+
+def registerGoogleUser(username, name, token, reason_for_signup=None):
+    """Registers a user, and stores it in the users table
+
+    Args:
+        username (str): The username
+        name (str): The user's name (from Google)
+        token (str): The generated token
+
+    Returns:
+        int: 200 on success, 400 on fail
+    """
+    code = generateUniquePromoCode()
+
+    params = {
+        "username": username,
+        "password": None,
+        "code": code,
+        "id": token,
+        "name": name,
+        "reason_for_signup": reason_for_signup,
+        "google_login": True,
+        "verified": True,
+    }
+    return fractalSQLInsert("users", params)
 
 
 def loginHelper(code, clientApp):
@@ -28,7 +56,12 @@ def loginHelper(code, clientApp):
     if clientApp:
         return {"status": UNAUTHORIZED, "error": "User has not registered"}
 
-    status = registerGoogleUser(username, name, token)
+    output = registerGoogleUser(username, name, token)
+
+    if output["success"]:
+        status = 200
+    else:
+        status = 500
 
     return {
         "status": status,
