@@ -211,7 +211,7 @@ def cancelStripeHelper(email):
             )
         except Exception as e:
             fractalLog(
-                function="cancelStripeHelper", label=email, logs=e, level=logging.ERROR
+                function="cancelStripeHelper", label=email, logs=str(e), level=logging.ERROR
             )
             pass
         fractalSQLDelete("customers", {"username": email})
