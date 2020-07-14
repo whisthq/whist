@@ -16,7 +16,7 @@ env:
   SERVER_VM_NAME: crimsonbonus543
   SERVER_VM_IP: 20.185.40.33
   WEBSERVER_BASE_URL: https://cube-celery-staging4.herokuapp.com
-  BRANCH_NAME: hamish-gh-run # branch on which the scheduled tests are run, change to dev before merging pr
+  BRANCH_NAME: dev # branch on which the scheduled tests are run, change to dev before merging pr
 
 jobs:
   build:
@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ secrets.BRANCH_NIGHTLY_CI }}
+          ref: ${{ env.BRANCH_NAME }}
       - name: Chocolatey install cppcheck
         if: runner.os == 'Windows'
         uses: crazy-max/ghaction-chocolatey@v1
@@ -295,7 +295,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ secrets.BRANCH_NIGHTLY_CI }}
+          ref: ${{ env.BRANCH_NAME }}
       - name: deploy to VM
         run: |
           cd ${{ github.workspace }}/.github/
@@ -417,7 +417,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ secrets.BRANCH_NIGHTLY_CI }}
+          ref: ${{ env.BRANCH_NAME }}
       - name: get server logs
         run: |
           chmod 0600 ${{github.workspace}}/.github/sshkey
