@@ -24,8 +24,9 @@ def chargeHelper(token, email, code, plan):
     trial_end = 0
     customer_exists = False
 
-    customer = fractalSQLSelect("customers", {"username": email})["rows"]
-    if customer:
+    output = fractalSQLSelect("customers", {"username": email})["rows"]
+    if output:
+        customer = output[0]
         customer_exists = True
         if customer["trial_end"]:
             trial_end = max(
@@ -204,8 +205,9 @@ def retrieveStripeHelper(email):
 
 
 def cancelStripeHelper(email):
-    customer = fractalSQLSelect("customers", {"username": email})["rows"]
-    if customer:
+    output = fractalSQLSelect("customers", {"username": email})["rows"]
+    if output:
+        customer = output[0]
         subscription = customer["subscription"]
         try:
             payload = stripe.Subscription.delete(subscription)
@@ -216,7 +218,7 @@ def cancelStripeHelper(email):
             )
         except Exception as e:
             fractalLog(
-                function="cancelStripeHelper", label=email, logs=e, level=logging.ERROR
+                function="cancelStripeHelper", label=email, logs=str(e), level=logging.ERROR
             )
             pass
         fractalSQLDelete("customers", {"username": email})
