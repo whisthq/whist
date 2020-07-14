@@ -49,12 +49,12 @@ void gen_iv(void* iv);
 /**
  * @brief                          Generate an hmac signature
  *
- * @param signature                Buffer to save the signature to                     
+ * @param signature                Buffer to save the signature to
  * @param buf                      Buffer to sign
  * @param len                      Length of buffer to sign
  * @param key                      Private key to sign with
  */
-int hmac( void* signature, void* buf, int len, void* key );
+int hmac(void* signature, void* buf, int len, void* key);
 
 /**
  * @brief                          Verify an hmac signature
@@ -64,7 +64,7 @@ int hmac( void* signature, void* buf, int len, void* key );
  * @param len                      Length of signed buffer
  * @param key                      Private key that was signed with
  */
-bool verify_hmac( void* signature, void* buf, int len, void* key );
+bool verify_hmac(void* signature, void* buf, int len, void* key);
 
 /**
  * @brief                          Encrypts a data packet using the AES private
