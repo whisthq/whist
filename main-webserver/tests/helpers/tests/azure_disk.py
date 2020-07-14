@@ -29,7 +29,7 @@ def cloneDisk(location, vm_size, operating_system, apps, resource_group, input_t
     )
 
 
-def attachDisk(disk_name, resource_group, vm_name=None):
+def attachDisk(disk_name, resource_group, vm_name=None, input_token=None):
     return requests.post(
         (SERVER_URL + "/azure_disk/attach"),
         json={

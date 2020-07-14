@@ -39,8 +39,7 @@ def fractalAuth(f):
             )
 
         current_user = get_jwt_identity()
-        print(current_user)
-        print(username)
+
         if (
             current_user != username
             and not os.getenv("DASHBOARD_USERNAME") in current_user

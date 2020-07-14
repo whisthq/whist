@@ -70,6 +70,13 @@ def chargeHelper(token, email, code, plan):
             )
             subscription_id = new_subscription["id"]
     except Exception as e:
+        fractalLog(
+            function="chargeHelper",
+            label=email,
+            logs="Stripe charge encountered a critical error: {error}".format(
+                error=str(e)
+            ),
+        )
         return jsonify({"status": UNAUTHORIZED, "error": str(e)}), UNAUTHORIZED
 
     try:

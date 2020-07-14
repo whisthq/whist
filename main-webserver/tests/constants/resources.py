@@ -11,4 +11,5 @@ DATABASE_URL = (
 
 RESOURCE_GROUP = "FractalStaging"
 
-SERVER_URL = "https://main-webserver-staging4.herokuapp.com"
+# SERVER_URL = "https://main-webserver-staging4.herokuapp.com"
+SERVER_URL = "http://127.0.0.1:7730"

@@ -60,18 +60,8 @@ def account_post(action, **kwargs):
 
 @account_bp.route("/account/<action>", methods=["GET"])
 @fractalPreProcess
-@jwt_required
-@fractalAuth
-def account_get(action, **kwargs):
-    if action == "code":
-        # Get the user's promo code
-        username = request.args.get("username")
-
-        output = codeHelper(username)
-
-        return jsonify(output), output["status"]
-
-    elif action == "disks":
+def account_get_no_auth(action, **kwargs):
+    if action == "disks":
         # Get all the user's disks
         username = request.args.get("username")
 
@@ -82,7 +72,6 @@ def account_get(action, **kwargs):
         output = disksHelper(username, main)
 
         return jsonify(output), output["status"]
-
     elif action == "verified":
         # Check if the user's email has been verified
         username = request.args.get("username")
@@ -90,3 +79,12 @@ def account_get(action, **kwargs):
         output = verifiedHelper(username)
 
         return jsonify(output), output["status"]
+
+    elif action == "code":
+        # Get the user's promo code
+        username = request.args.get("username")
+
+        output = codeHelper(username)
+
+        return jsonify(output), output["status"]
+

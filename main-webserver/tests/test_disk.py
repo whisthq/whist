@@ -5,6 +5,7 @@ from .helpers.tests.azure_vm import *
 
 
 @pytest.mark.disk_serial
+@disabled
 def test_delete_disk_initial(input_token):
     if os.getenv("USE_PRODUCTION_DATABASE").upper() == "TRUE":
         fractalLog(
@@ -79,7 +80,7 @@ def test_delete_disk_initial(input_token):
 @pytest.mark.disk_serial
 @disabled
 def test_disk_clone(input_token):
-    regions = ["eastus", "southcentralus", "northcentralus"]
+    regions = ["eastus", "eastus", "eastus"]
 
     def cloneDiskHelper(region):
         fractalLog(
@@ -117,13 +118,67 @@ def test_disk_clone(input_token):
 
 
 @pytest.mark.disk_serial
-@disabled
 def test_disk_attach(input_token):
-    disks = fetchCurrentDisks()
-    vms = fetchCurrentVMs()
+    regions = ["eastus", "eastus", "eastus"]
 
-    for disk in disks:
-        assert True
+    def attachDiskHelper(disk):
+        disk_name = disk["disk_name"]
+        if disk["main"] and disk["state"] == "ACTIVE":
+            fractalLog(
+                function="test_disk_attach",
+                label="azure_disk/attach",
+                logs="Starting to attach disk {disk_name} to an available VM".format(
+                    disk_name=disk_name
+                ),
+            )
+
+            resp = attachDisk(
+                disk_name=disk_name,
+                resource_group=RESOURCE_GROUP,
+                input_token=input_token,
+            )
+
+            task = queryStatus(resp, timeout=8)
+
+            if task["status"] < 1:
+                fractalLog(
+                    function="test_disk_attach",
+                    label="azure_disk/attach",
+                    logs=task["output"],
+                    level=logging.ERROR,
+                )
+                assert False
+
+            fractalLog(
+                function="test_disk_attach",
+                label="azure_disk/attach",
+                logs="Running powershell script on {disk_name}".format(
+                    disk_name=disk_name
+                ),
+            )
+
+            resp = runPowershell(
+                vm_name="shinymode749971",
+                command="choco install firefox --force",
+                resource_group=RESOURCE_GROUP,
+                input_token=input_token,
+            )
+
+            task = queryStatus(resp, timeout=4)
+
+            if task["status"] < 1:
+                fractalLog(
+                    function="test_disk_attach",
+                    label="azure_disk/attach",
+                    logs=task["output"],
+                    level=logging.ERROR,
+                )
+                assert False
+
+    disks = fetchCurrentDisks()
+    fractalJobRunner(attachDiskHelper, disks, multithreading=False)
+
+    assert True
 
 
 @pytest.mark.disk_serial

@@ -50,11 +50,10 @@ def test_delete_vm_initial(input_token):
 
 
 @pytest.mark.vm_serial
-@disabled
 def test_vm_create(input_token):
     newLine()
 
-    regions = ["eastus", "southcentralus", "northcentralus"]
+    regions = ["eastus", "eastus"]
 
     def createVMInRegion(region):
         fractalLog(

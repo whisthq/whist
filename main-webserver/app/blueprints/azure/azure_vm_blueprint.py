@@ -5,6 +5,7 @@ from app.helpers.blueprint_helpers.azure.azure_vm_post import *
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_state import *
+from app.celery.azure_resource_modification import *
 
 azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 
@@ -116,6 +117,21 @@ def azure_vm_post(action, **kwargs):
         output = pingHelper(available, vm_ip, version)
 
         return jsonify(output), output["status"]
+    elif action == "command":
+        # Runs a powershell script on a VM
+
+        vm_name, powershell_script, resource_group = (
+            kwargs["body"]["vm_name"],
+            kwargs["body"]["command"],
+            kwargs["body"]["resource_group"],
+        )
+
+        task = runPowershell.apply_async([vm_name, powershell_script, resource_group])
+
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
 
 
 @azure_vm_bp.route("/azure_vm/<action>", methods=["GET"])

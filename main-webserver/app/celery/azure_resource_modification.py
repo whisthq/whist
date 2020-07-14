@@ -105,6 +105,68 @@ def deployArtifact(
 
 
 @celery_instance.task(bind=True)
+def runPowershell(self, vm_name, command, resource_group=os.getenv("VM_GROUP")):
+    """Runs a powershell script on a VM
+
+    Args:
+        vm_name (str): The name of the vm
+        command (str): Powershell script
+        resource_group (str): Resource group of VM
+
+    Returns:
+        json: Success/failure
+    """
+
+    if spinLock(vm_name, resource_group=resource_group, s=self) > 0:
+        lockVMAndUpdate(
+            vm_name=vm_name,
+            state=None,
+            lock=True,
+            temporary_lock=None,
+            resource_group=resource_group,
+        )
+
+        _, compute_client, _ = createClients()
+
+        fractalLog(
+            function="runPowershell",
+            label=getVMUser(vm_name),
+            logs="Starting to run Powershell on VM {vm_name}".format(vm_name=vm_name),
+        )
+
+        run_command_parameters = {
+            "command_id": "RunPowerShellScript",
+            "script": [command],
+        }
+
+        poller = compute_client.virtual_machines.run_command(
+            resource_group, vm_name, run_command_parameters
+        )
+
+        result = poller.result()
+
+        fractalLog(
+            function="runPowershell",
+            label=getVMUser(vm_name),
+            logs="Artifact script finished running. Output: {output}".format(
+                output=str(result.value[0])
+            ),
+        )
+
+        lockVMAndUpdate(
+            vm_name=vm_name,
+            state=None,
+            lock=False,
+            temporary_lock=None,
+            resource_group=resource_group,
+        )
+
+        return {"status": SUCCESS, "payload": str(result.value[0])}
+
+    return {"status": REQUEST_TIMEOUT, "payload": None}
+
+
+@celery_instance.task(bind=True)
 def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
     """Find an available VM to attach a disk to
 

@@ -39,26 +39,13 @@ def deleteVM(vm_name, delete_disk, resource_group, input_token):
     )
 
 
-def createDiskFromImage(
-    operating_system, username, location, vm_size, apps, input_token
-):
+def runPowershell(vm_name, command, resource_group, input_token):
     return requests.post(
-        (SERVER_URL + "/disk/createFromImage"),
+        (SERVER_URL + "/azure_vm/command"),
         json={
-            "operating_system": operating_system,
-            "username": username,
-            "location": location,
-            "vm_size": vm_size,
-            "apps": apps,
-            "resource_group": os.getenv("VM_GROUP"),
+            "vm_name": vm_name,
+            "command": command,
+            "resource_group": resource_group,
         },
-        headers={"Authorization": "Bearer " + input_token},
-    )
-
-
-def swap(vm_name, disk_name, input_token):
-    return requests.post(
-        (SERVER_URL + "/disk/swap"),
-        json={"vm_name": vm_name, "disk_name": disk_name},
         headers={"Authorization": "Bearer " + input_token},
     )

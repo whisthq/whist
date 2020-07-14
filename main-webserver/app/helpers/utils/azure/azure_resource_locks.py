@@ -24,6 +24,9 @@ def lockVMAndUpdate(
 
     new_params = {"state": state, "lock": lock}
 
+    if not state:
+        new_params = {"lock": lock}
+
     if temporary_lock:
         new_temporary_lock = min(MAX_LOCK_TIME, temporary_lock)
         new_temporary_lock = shiftUnixByMinutes(dateToUnix(getToday()), temporary_lock)

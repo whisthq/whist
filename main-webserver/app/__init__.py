@@ -32,6 +32,16 @@ def fractalPreProcess(f):
         kwargs["body"] = body
         kwargs["received_from"] = received_from
 
+        logger = logging.getLogger(__name__)
+        logger.info(
+            "{}\n{}\r\n{}\r\n\r\n{}".format(
+                "-----------START-----------",
+                request.method + " " + request.url,
+                "\r\n".join("{}: {}".format(k, v) for k, v in request.headers.items()),
+                str(body),
+            )
+        )
+
         return f(*args, **kwargs)
 
     return wrapper

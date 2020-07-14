@@ -75,9 +75,9 @@ def queryStatus(resp, timeout=10):
         return {"status": 1, "output": "SUCCESS detected"}
 
 
-def fractalJobRunner(f, initial_list):
+def fractalJobRunner(f, initial_list, multithreading=ALLOW_MULTITHREADING):
     if initial_list:
-        if ALLOW_MULTITHREADING:
+        if multithreading:
             thread_tracker = [None] * len(initial_list)
 
             for i in range(0, len(initial_list)):
