@@ -32,7 +32,12 @@ def fractalPreProcess(f):
         kwargs["body"] = body
         kwargs["received_from"] = received_from
 
+        format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
+
+        logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
         logger = logging.getLogger(__name__)
+        logger.setLevel(logging.DEBUG)
+
         logger.info(
             "{}\n{}\r\n{}\r\n\r\n{}".format(
                 "-----------START-----------",

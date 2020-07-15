@@ -77,6 +77,7 @@ def chargeHelper(token, email, code, plan):
             logs="Stripe charge encountered a critical error: {error}".format(
                 error=str(e)
             ),
+            level=logging.CRITICAL,
         )
         return jsonify({"status": UNAUTHORIZED, "error": str(e)}), UNAUTHORIZED
 
@@ -218,7 +219,10 @@ def cancelStripeHelper(email):
             )
         except Exception as e:
             fractalLog(
-                function="cancelStripeHelper", label=email, logs=str(e), level=logging.ERROR
+                function="cancelStripeHelper",
+                label=email,
+                logs=str(e),
+                level=logging.ERROR,
             )
             pass
         fractalSQLDelete("customers", {"username": email})
