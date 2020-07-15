@@ -1,6 +1,9 @@
 # macOS
 .DS_Store
 
+# Protocol binaries downloaded via retrieve_protocol_binaries.py
+protocol-binaries/
+
 # yarn
 node_modules/
 yarn.lock

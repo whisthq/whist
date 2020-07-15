@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "fractal-client-apps-scripts"
+version = "0.0.0"
+description = "Scripts to assist with development of the Fractal Client Apps"
+authors = ["Alex Wendland <me@alexwendland.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+
+[tool.poetry.dev-dependencies]
+PyGithub = "^1.51"
+mypy = "^0.782"
+black = "^19.10b0"
+requests = "^2.24.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
