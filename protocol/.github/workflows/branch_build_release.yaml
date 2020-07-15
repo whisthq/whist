@@ -367,10 +367,9 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: Windows-64bit_server
-          path: ${{ github.workspace }}
+          path: ${{ github.workspace }}/Windows-64bit_server
       - name: deploy to VM
         run: |
-          ls
           cat <<EOF > sshkey
           ${{ secrets.TEST_VM_SSHKEY }}
           EOF
