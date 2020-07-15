@@ -51,7 +51,7 @@ def pingHelper(available, vm_ip, version=None):
     output = fractalSQLSelect(table_name="v_ms", params={"ip": vm_ip})
 
     if output["success"] and output["rows"]:
-        vm_info = output["rows"][0]["ip"]
+        vm_info = output["rows"][0]
     else:
         return {"status": BAD_REQUEST}
 
