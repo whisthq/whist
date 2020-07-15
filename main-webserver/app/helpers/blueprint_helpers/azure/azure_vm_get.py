@@ -33,6 +33,7 @@ def protocolInfoHelper(ip_address):
                 "branch": "dev",
                 "status": NOT_FOUND,
                 "using_stun": False,
+                "private_key": None
             }
     else:
         vm_info = output["rows"][0]
@@ -42,18 +43,20 @@ def protocolInfoHelper(ip_address):
         )
 
         if output["rows"] and output["success"]:
+            settings = output["rows"][0]
             return {
                 "dev": vm_info["dev"],
-                "branch": output["branch"],
+                "branch": settings["branch"],
                 "status": SUCCESS,
-                "using_stun": output["using_stun"],
+                "using_stun": settings["using_stun"],
+                "private_key": vm_info["private_key"]
             }
         else:
             fractalLog(
                 function="protocolInfoHelper",
                 label=vm_info["username"],
                 logs="Error fetching disk settings for disk {disk_name}: {error}".format(
-                    disk_name=disk_name, error=output["error"]
+                    disk_name=vm_info["disk_name"], error=output["error"]
                 ),
                 level=logging.ERROR,
             )
@@ -63,4 +66,5 @@ def protocolInfoHelper(ip_address):
                 "branch": "dev",
                 "status": NOT_FOUND,
                 "using_stun": False,
+                "private_key": vm_info["private_key"]
             }

@@ -1,9 +1,6 @@
 from app.imports import *
 from app.helpers.utils.general.sql_commands import *
 
-def generatePrivateKey():
-    return secrets.token_hex(16)
-
 def generateUniquePromoCode():
     output = fractalSQLSelect("users", {})
     old_codes = []

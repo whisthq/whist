@@ -108,6 +108,10 @@ def createVM(
     vm_instance = createVMInstance(vm_name, resource_group=resource_group)
     disk_name = vm_instance.storage_profile.os_disk.name
 
+    # Generate private key for AES
+    
+    private_key = generatePrivateKey()
+
     self.update_state(
         state="PENDING",
         meta={
@@ -129,6 +133,7 @@ def createVM(
             "os": operating_system,
             "lock": True,
             "disk_name": disk_name,
+            "private_key": private_key
         },
     )
 
