@@ -344,7 +344,7 @@ jobs:
           \"vm_name\" : \"$SERVER_VM_NAME\",
           \"resource_group\" : \"FractalProtocolCI\" }" \
           $WEBSERVER_BASE_URL/azure_vm/start
-          sleep 500s
+          ping -w 500 -c 1 $SERVER_VM_IP
 
   # Unlike the server VM start operation, this should only run if the builds succeeded
   test_deploy_to_vm:
@@ -366,8 +366,11 @@ jobs:
           ${{ secrets.TEST_VM_SSHKEY }}
           EOF
           chmod 0600 sshkey
-          cd ${{ github.workspace }}/.github/
-          ./deploy_artifact_ssh.sh ${{ github.workspace }}/windows_server_build
+          ${{ github.workspace }}/.github/deploy_artifact_ssh.sh \
+            --ssh-key ./sshkey \
+            --vm-ip "$SERVER_VM_IP" \
+            --vm-user "$SERVER_VM_USER" \
+            --deploy ${{ github.workspace }}/windows_server_build
           ping -w 300 -c 1 $SERVER_VM_IP
 
   # This should run regardless of the success status of the other OS tests
