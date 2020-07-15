@@ -353,9 +353,9 @@ jobs:
     if: needs.params.outputs.should_test != ''
     runs-on: ubuntu-latest
     steps:
+      # This shouldn't check out the target branch because it needs to use scripts that are
+      # specific to this workflow definition, so it should checkout the branch of this workflow.
       - uses: actions/checkout@v2
-        with:
-          ref: ${{ needs.params.outputs.branch }}
       - uses: actions/download-artifact@v2
         with:
           name: windows_server_build
