@@ -356,12 +356,20 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ref: ${{ needs.params.outputs.branch }}
+      - uses: actions/download-artifact@v2
+        with:
+          name: windows_server_build
+          path: ${{ github.workspace }}
       - name: deploy to VM
-        # TODO is there a way we can ping the VM every 5s or so to avoid a naive 300s wait?
         run: |
+          cat <<EOF > sshkey
+          ${{ secrets.TEST_VM_SSHKEY }}
+          EOF
+          chmod 0600 sshkey
           cd ${{ github.workspace }}/.github/
-          ./deploy_artifact.sh $SERVER_VM_NAME ${{github.run_id}} --webserver $WEBSERVER_BASE_URL
-          sleep 300s
+          ./deploy_artifact_ssh.sh ${{ github.workspace }}/windows_server_build
+#          wait 300 seconds or until we get a packet back
+          ping -w 300 -c 1 $SERVER_VM_IP
 
   # This should run regardless of the success status of the other OS tests
   test_client:
@@ -387,6 +395,7 @@ jobs:
             # https://github.community/t/matrix-cannot-be-used-in-jobs-level-if/17177/6
             test_predicate: "!contains(needs.params.outputs.should_test_linux, 'false')"
             test_script: |
+              sudo apt-get update -y
               sudo apt-get install valgrind pulseaudio jackd2 alsa-utils dbus-x11 libavcodec-dev libavdevice-dev libx11-dev libxtst-dev xclip x11-xserver-utils libasound2-dev libxdamage-dev -y || true
               chmod +x FractalClient
               sleep 1
