@@ -32,7 +32,12 @@ target_metadata = None
 
 
 def get_url():
-    return app.config["DATABASE_URL"]
+    if os.getenv("USE_PRODUCTION_DATABASE").upper() == "TRUE":
+        url = os.getenv("DATABASE_URL")
+    else:
+        url =  os.getenv("HEROKU_POSTGRESQL_ORANGE_URL")
+    print(url)
+    return url
 
 
 def run_migrations_offline():
