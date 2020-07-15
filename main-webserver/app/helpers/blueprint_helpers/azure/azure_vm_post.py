@@ -114,7 +114,7 @@ def pingHelper(available, vm_ip, version=None):
             params={
                 "username": username,
                 "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
-                "action": "logoff",
+                "action": "logon",
             },
         )
 

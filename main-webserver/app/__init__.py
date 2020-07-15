@@ -42,8 +42,8 @@ def fractalPreProcess(f):
             "{}\n{}\r\n{}\r\n\r\n{}".format(
                 "-----------START-----------",
                 request.method + " " + request.url,
-                "\r\n".join("{}: {}".format(k, v) for k, v in request.headers.items()),
                 str(body),
+                "------------END------------",
             )
         )
 
