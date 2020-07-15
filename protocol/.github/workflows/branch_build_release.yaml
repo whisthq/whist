@@ -185,6 +185,7 @@ jobs:
 
           if ("${{ runner.os }}" STREQUAL "Linux")
             # install linux dev dependencies
+              execute_process(COMMAND bash -c "sudo apt-get update -y")
               execute_process(COMMAND ${{ github.workspace }}/desktop/linux-client-setup.sh)
               execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
           elseif("${{ runner.os }}" STREQUAL "macOS")
