@@ -369,11 +369,16 @@ jobs:
           name: Windows-64bit_server
           path: ${{ github.workspace }}/Windows-64bit_server
       - name: deploy to VM
+        timeout-minutes: 20
         run: |
           cat <<EOF > sshkey
           ${{ secrets.TEST_VM_SSHKEY }}
           EOF
           chmod 0600 sshkey
+          until ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"; do
+              sleep 30
+          done
+
           ${{ github.workspace }}/.github/deploy_artifact_ssh.sh \
             --ssh-key ./sshkey \
             --vm-ip "$SERVER_VM_IP" \
