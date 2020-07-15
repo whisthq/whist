@@ -1,3 +1,4 @@
+import { Action } from "redux";
 import * as MainAction from "actions/counter";
 
 const DEFAULT = {
@@ -14,6 +15,7 @@ const DEFAULT = {
     computers: [],
     fetchStatus: false,
     disk: "",
+    vm: "",
     attachState: "NOT_REQUESTED",
     access_token: "",
     refresh_token: "",
@@ -26,6 +28,7 @@ const DEFAULT = {
     status_message: "Boot request sent to server",
     update_found: false,
     ready_to_connect: false,
+    versions: {},
 };
 
 export default function counter(
@@ -44,6 +47,7 @@ export default function counter(
         payload: any;
         status: any;
         disk: any;
+        vm: any;
         location: any;
         state: any;
         access_token: any;
@@ -52,6 +56,7 @@ export default function counter(
         code: any;
         status_message: any;
         update: any;
+        versions: any;
     }
 ) {
     switch (action.type) {
@@ -119,10 +124,11 @@ export default function counter(
                 ...state,
                 fetchStatus: action.status,
             };
-        case MainAction.STORE_DISK_NAME:
+        case MainAction.STORE_RESOURCES:
             return {
                 ...state,
                 disk: action.disk,
+                vm: action.vm,
                 location: action.location,
             };
         case MainAction.ATTACH_DISK:
@@ -166,6 +172,11 @@ export default function counter(
             return {
                 ...state,
                 ready_to_connect: action.update,
+            };
+        case MainAction.SET_VERSION:
+            return {
+                ...state,
+                versions: action.versions,
             };
         default:
             return state;

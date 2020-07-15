@@ -3,7 +3,6 @@ export const STORE_USERNAME = "STORE_USERNAME";
 export const STORE_IP = "STORE_IP";
 export const STORE_IS_USER = "STORE_IS_USER";
 export const TRACK_USER_ACTIVITY = "TRACK_USER_ACTIVITY";
-export const GOOGLE_LOGIN = "GOOGLE_LOGIN";
 export const LOGIN_USER = "LOGIN_USER";
 export const LOGIN_FAILED = "LOGIN_FAILED";
 export const CALCULATE_DISTANCE = "CALCULATE_DISTANCE";
@@ -20,7 +19,7 @@ export const FETCH_COMPUTERS = "FETCH_COMPUTERS";
 export const STORE_COMPUTERS = "STORE_COMPUTERS";
 export const FETCH_DISK = "FETCH_DISK";
 export const FETCH_DISK_STATUS = "FETCH_DISK_STATUS";
-export const STORE_DISK_NAME = "STORE_DISK_NAME";
+export const STORE_RESOURCES = "STORE_RESOURCES";
 export const ATTACH_DISK = "ATTACH_DISK";
 export const FETCH_VM = "FETCH_VM";
 export const STORE_JWT = "STORE_JWT";
@@ -33,15 +32,11 @@ export const SEND_LOGS = "SEND_LOGS";
 export const CHANGE_STATUS_MESSAGE = "CHANGE_STATUS_MESSAGE";
 export const UPDATE_FOUND = "UPDATE_FOUND";
 export const READY_TO_CONNECT = "READY_TO_CONNECT";
-
-export function googleLogin(code: any) {
-    return {
-        type: GOOGLE_LOGIN,
-        code,
-    };
-}
+export const GET_VERSION = "GET_VERSION";
+export const SET_VERSION = "SET_VERSION";
 
 export function loginUser(username: any, password: any) {
+    console.log("login action fired");
     return {
         type: LOGIN_USER,
         username,
@@ -98,7 +93,7 @@ export function storeDistance(distance: any) {
     };
 }
 
-export function sendFeedback(feedback: any, feedback_type: any) {
+export function sendFeedback(feedback, feedback_type) {
     return {
         type: SEND_FEEDBACK,
         feedback,
@@ -184,10 +179,12 @@ export function fetchDiskStatus(status: boolean) {
     };
 }
 
-export function storeDiskName(disk: string, location: string) {
+export function storeResources(disk: string, vm: string, location: string) {
+    console.log(disk + " " + vm + " " + location);
     return {
-        type: STORE_DISK_NAME,
+        type: STORE_RESOURCES,
         disk,
+        vm,
         location,
     };
 }
@@ -279,5 +276,18 @@ export function readyToConnect(update: boolean) {
     return {
         type: READY_TO_CONNECT,
         update,
+    };
+}
+
+export function getVersion() {
+    return {
+        type: GET_VERSION,
+    };
+}
+
+export function setVersion(versions: any) {
+    return {
+        type: SET_VERSION,
+        versions,
     };
 }

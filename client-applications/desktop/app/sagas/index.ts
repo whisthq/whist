@@ -5,11 +5,13 @@ import { history } from "store/configureStore";
 
 import { config } from "constants/config";
 
+import moment from "moment";
+
 function* refreshAccess(action) {
     const state = yield select();
     const { json, response } = yield call(
         apiPost,
-        `${config.url.PRIMARY_SERVER}/token/refresh`,
+        config.url.PRIMARY_SERVER + "/token/refresh",
         {},
         state.counter.refresh_token
     );
@@ -18,49 +20,11 @@ function* refreshAccess(action) {
     }
 }
 
-function* googleLogin(action) {
-    yield select();
-
-    if (action.code) {
-        const { json } = yield call(
-            apiPost,
-            `${config.url.PRIMARY_SERVER}/account/googleLogin`,
-            {
-                code: action.code,
-                clientApp: true,
-            }
-        );
-        if (json) {
-            if (json.status === 200) {
-                yield put(Action.fetchDisk(json.username));
-                yield call(fetchPaymentInfo, { username: json.username });
-
-                yield put(Action.storeUsername(json.username));
-                yield put(Action.storeIsUser(json.is_user));
-                yield put(
-                    Action.storeJWT(json.access_token, json.refresh_token)
-                );
-
-                yield call(getPromoCode, {
-                    username: json.username,
-                    token: "",
-                });
-
-                history.push("/dashboard");
-            } else {
-                yield put(Action.loginFailed(true));
-            }
-        }
-    } else {
-        yield put(Action.loginFailed(true));
-    }
-}
-
 function* loginUser(action) {
     if (action.username !== "" && action.password !== "") {
         const { json, response } = yield call(
             apiPost,
-            `${config.url.PRIMARY_SERVER}/account/login`,
+            config.url.PRIMARY_SERVER + "/account/login",
             {
                 username: action.username,
                 password: action.password,
@@ -68,11 +32,11 @@ function* loginUser(action) {
         );
 
         if (json && json.verified) {
-            yield put(Action.fetchDisk(action.username));
-            yield call(fetchPaymentInfo, action);
             yield put(Action.storeUsername(action.username));
             yield put(Action.storeIsUser(json.is_user));
             yield put(Action.storeJWT(json.access_token, json.refresh_token));
+            yield put(Action.fetchDisk(action.username));
+            yield call(fetchPaymentInfo, action);
             yield call(getPromoCode, action);
             history.push("/dashboard");
         } else {
@@ -86,12 +50,9 @@ function* loginUser(action) {
 function* getPromoCode(action) {
     const state = yield select();
     const { json, response } = yield call(
-        apiPost,
-        `${config.url.PRIMARY_SERVER}/account/fetchCode`,
-        {
-            username: action.username,
-        },
-        ""
+        apiGet,
+        config.url.PRIMARY_SERVER + "/account/code?username=" + action.username,
+        state.counter.access_token
     );
 
     if (json && json.status === 200) {
@@ -100,12 +61,14 @@ function* getPromoCode(action) {
 }
 
 function* fetchPaymentInfo(action) {
+    const state = yield select();
     const { json, response } = yield call(
         apiPost,
-        `${config.url.PRIMARY_SERVER}/stripe/retrieve`,
+        config.url.PRIMARY_SERVER + "/stripe/retrieve",
         {
-            email: action.username,
-        }
+            username: action.username,
+        },
+        state.counter.access_token
     );
 
     if (json && json.account_locked) {
@@ -116,11 +79,10 @@ function* fetchPaymentInfo(action) {
 function* fetchDisk(action) {
     const state = yield select();
     const { json, response } = yield call(
-        apiPost,
-        `${config.url.PRIMARY_SERVER}/user/login`,
-        {
-            username: action.username,
-        },
+        apiGet,
+        config.url.PRIMARY_SERVER +
+            "/account/disks?username=" +
+            action.username,
         state.counter.access_token
     );
 
@@ -129,15 +91,16 @@ function* fetchDisk(action) {
         yield call(fetchDisk, action);
     }
 
-    if (json && json.payload && Object.keys(json.payload).length > 0) {
+    if (json && json.disks && json.disks.length) {
         yield put(
-            Action.storeDiskName(
-                json.payload[0].disk_name,
-                json.payload[0].location
+            Action.storeResources(
+                json.disks[0].disk_name,
+                json.disks[0].vm_name,
+                json.disks[0].location
             )
         );
     } else {
-        yield put(Action.storeDiskName("", ""));
+        yield put(Action.storeResources("", "", ""));
     }
 
     yield put(Action.fetchDiskStatus(true));
@@ -146,7 +109,7 @@ function* fetchDisk(action) {
 function* loginStudio(action) {
     const { json, response } = yield call(
         apiPost,
-        `${config.url.PRIMARY_SERVER}/account/login`,
+        config.url.PRIMARY_SERVER + "/account/login",
         {
             username: action.username,
             password: action.password,
@@ -173,7 +136,7 @@ function* sendFeedback(action) {
     const state = yield select();
     const { json } = yield call(
         apiPost,
-        `${config.url.PRIMARY_SERVER}/feedback`,
+        config.url.PRIMARY_SERVER + "/mail/feedback",
         {
             username: state.counter.username,
             feedback: action.feedback,
@@ -181,8 +144,6 @@ function* sendFeedback(action) {
         },
         state.counter.access_token
     );
-
-    console.log(json);
 
     if (json && json.status && json.status === 401) {
         yield call(refreshAccess);
@@ -204,11 +165,11 @@ function* pingIPInfo(action) {
 
 function* storeIPInfo(action) {
     const state = yield select();
-    const location = `${action.payload.city}, ${action.payload.region}`;
+    var location = action.payload.city + ", " + action.payload.region;
 
     const { json, response } = yield call(
         apiPost,
-        `${config.url.PRIMARY_SERVER}/account/checkComputer`,
+        config.url.PRIMARY_SERVER + "/account/checkComputer",
         {
             id: action.id,
             username: state.counter.username,
@@ -227,11 +188,11 @@ function* storeIPInfo(action) {
         } else {
             const { json1, response1 } = yield call(
                 apiPost,
-                `${config.url.PRIMARY_SERVER}/account/insertComputer`,
+                config.url.PRIMARY_SERVER + "/account/insertComputer",
                 {
                     id: action.id,
                     username: state.counter.username,
-                    location,
+                    location: location,
                     nickname: json.computers[0].nickname,
                 },
                 state.counter.access_token
@@ -245,7 +206,7 @@ function* fetchComputers(action) {
     const state = yield select();
     const { json, response } = yield call(
         apiPost,
-        `${config.url.PRIMARY_SERVER}/account/fetchComputers`,
+        config.url.PRIMARY_SERVER + "/account/fetchComputers",
         {
             username: state.counter.username,
         },
@@ -265,9 +226,10 @@ function* attachDisk(action) {
     const state = yield select();
     const { json, response } = yield call(
         apiPost,
-        `${config.url.PRIMARY_SERVER}/disk/attach`,
+        config.url.PRIMARY_SERVER + "/azure_disk/attach",
         {
             disk_name: state.counter.disk,
+            resource_group: config.azure.RESOURCE_GROUP,
         },
         state.counter.access_token
     );
@@ -278,7 +240,7 @@ function* attachDisk(action) {
     }
 
     if (response && response.status && response.status === 500) {
-        const warning =
+        var warning =
             "Unexpectedly lost connection with server. Please close the app and log back in.";
         yield put(Action.changeStatusMessage(warning));
     }
@@ -288,41 +250,30 @@ function* attachDisk(action) {
     }
 }
 
-function formatDate(num) {
-    num = String(num);
-    const singleDigits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
-    if (singleDigits.includes(num)) {
-        num = `0${num}`;
-    }
-    return num;
-}
-
 function* fetchVM(action) {
     const state = yield select();
     var { json, response } = yield call(
         apiGet,
-        `${config.url.PRIMARY_SERVER}/status/`.concat(action.id),
+        (config.url.PRIMARY_SERVER + "/status/").concat(action.id),
         state.counter.access_token
     );
 
     while (json.state !== "SUCCESS" && json.state !== "FAILURE") {
         var { json, response } = yield call(
             apiGet,
-            `${config.url.PRIMARY_SERVER}/status/`.concat(action.id),
+            (config.url.PRIMARY_SERVER + "/status/").concat(action.id),
             state.counter.access_token
         );
 
         if (response && response.status && response.status === 500) {
-            const warning =
+            var warning =
                 "Unexpectedly lost connection with server. Please close the app and log back in.";
             yield put(Action.changeStatusMessage(warning));
         }
 
         if (json && json.output && json.state === "PENDING") {
-            var now = new Date();
-            var message = `(${formatDate(now.getHours())}:${formatDate(
-                now.getMinutes()
-            )}:${formatDate(now.getSeconds())}) ${json.output.msg}`;
+            var message =
+                "(" + moment().format("hh:mm:ss") + ") " + json.output;
             yield put(Action.changeStatusMessage(message));
         }
 
@@ -333,14 +284,25 @@ function* fetchVM(action) {
             yield put(Action.storeIP(json.output.ip));
         }
     } else {
-        var now = new Date();
         var message =
-            `(${formatDate(now.getHours())}:${formatDate(
-                now.getMinutes()
-            )}:${formatDate(now.getSeconds())}) ` +
-            `Unexpectedly lost connection with server. Trying again.`;
+            "(" +
+            moment().format("hh:mm:ss") +
+            ") " +
+            "Unexpectedly lost connection with server. Trying again.";
         yield put(Action.changeStatusMessage(message));
         yield put(Action.attachDisk());
+    }
+}
+
+function* getVersion() {
+    var { json, response } = yield call(
+        apiGet,
+        config.url.PRIMARY_SERVER + "/azure_disk/version",
+        {}
+    );
+
+    if (json && json.versions) {
+        yield put(Action.setVersion(json.versions));
     }
 }
 
@@ -348,9 +310,10 @@ function* restartPC(action) {
     const state = yield select();
     const { json, response } = yield call(
         apiPost,
-        `${config.url.PRIMARY_SERVER}/vm/restart`,
+        config.url.PRIMARY_SERVER + "/vm/restart",
         {
-            username: state.counter.username,
+            vm_name: state.counter.vm,
+            resource_group: config.azure.RESOURCE_GROUP,
         },
         state.counter.access_token
     );
@@ -371,14 +334,14 @@ function* getRestartStatus(id) {
     const state = yield select();
     var { json, response } = yield call(
         apiGet,
-        `${config.url.PRIMARY_SERVER}/status/`.concat(id),
+        (config.url.PRIMARY_SERVER + "/status/").concat(id),
         state.counter.access_token
     );
 
     while (json.state === "PENDING" || json.state === "STARTED") {
         var { json, response } = yield call(
             apiGet,
-            `${config.url.PRIMARY_SERVER}/status/`.concat(id),
+            (config.url.PRIMARY_SERVER + "/status/").concat(id),
             state.counter.access_token
         );
         yield delay(5000);
@@ -391,10 +354,10 @@ function* getRestartStatus(id) {
 
 function* sendLogs(action) {
     const state = yield select();
-    const { public_ip } = state.counter;
+    var public_ip = state.counter.public_ip;
     const { json, response } = yield call(
         apiPost,
-        "https://cube-celery-staging.herokuapp.com/logs",
+        config.url.PRIMARY_SERVER + "/logs/insert",
         {
             connection_id: action.connection_id,
             logs: action.logs,
@@ -408,7 +371,6 @@ export default function* rootSaga() {
     yield all([
         takeEvery(Action.SEND_FEEDBACK, sendFeedback),
         takeEvery(Action.LOGIN_USER, loginUser),
-        takeEvery(Action.GOOGLE_LOGIN, googleLogin),
         takeEvery(Action.LOGIN_STUDIO, loginStudio),
         takeEvery(Action.PING_IPINFO, pingIPInfo),
         takeEvery(Action.STORE_IPINFO, storeIPInfo),
@@ -417,6 +379,6 @@ export default function* rootSaga() {
         takeEvery(Action.ATTACH_DISK, attachDisk),
         takeEvery(Action.FETCH_VM, fetchVM),
         takeEvery(Action.RESTART_PC, restartPC),
-        takeEvery(Action.SEND_LOGS, sendLogs),
+        takeEvery(Action.GET_VERSION, getVersion),
     ]);
 }

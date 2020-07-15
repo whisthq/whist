@@ -6,6 +6,9 @@ const production = {
     stripe: {
         PUBLIC_KEY: "pk_live_XLjiiZB93KN0EjY8hwCxvKmB00whKEIj3U",
     },
+    azure: {
+        RESOURCE_GROUP: "Fractal",
+    },
 };
 
 const staging = {
@@ -14,6 +17,9 @@ const staging = {
     },
     stripe: {
         PUBLIC_KEY: "pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb",
+    },
+    azure: {
+        RESOURCE_GROUP: "Fractal",
     },
 };
 
@@ -24,6 +30,21 @@ const staging2 = {
     stripe: {
         PUBLIC_KEY: "pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb",
     },
+    azure: {
+        RESOURCE_GROUP: "FractalStaging",
+    },
+};
+
+const staging4 = {
+    url: {
+        PRIMARY_SERVER: "https://cube-celery-staging4.herokuapp.com",
+    },
+    stripe: {
+        PUBLIC_KEY: "pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb",
+    },
+    azure: {
+        RESOURCE_GROUP: "FractalStaging",
+    },
 };
 
 const development = {
@@ -33,10 +54,11 @@ const development = {
     stripe: {
         PUBLIC_KEY: "pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb",
     },
+    azure: {
+        RESOURCE_GROUP: "FractalStaging",
+    },
 };
 
+// TODO: change back when deployed to other vm-webservers
 export const config =
     process.env.NODE_ENV === "development" ? staging : production;
-
-export const GOOGLE_CLIENT_ID =
-    "581514545734-gml44hupfv9shlj68703s67crnbgjuoe.apps.googleusercontent.com";
