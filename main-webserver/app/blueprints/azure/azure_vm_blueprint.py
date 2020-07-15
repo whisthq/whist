@@ -10,7 +10,7 @@ from app.celery.azure_resource_modification import *
 azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 
 
-@azure_vm_bp.route("/azure_vm/<action>", methods=["POST"])
+@azure_vm_bp.route("/vm/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
 @adminRequired
@@ -134,10 +134,8 @@ def azure_vm_post(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
 
-@azure_vm_bp.route("/azure_vm/<action>", methods=["GET"])
+@azure_vm_bp.route("/vm/<action>", methods=["GET"])
 @fractalPreProcess
-@jwt_required
-@fractalAuth
 def azure_vm_get(action, **kwargs):
     if action == "ip":
         # Gets the IP address of a VM using Azure SDK
