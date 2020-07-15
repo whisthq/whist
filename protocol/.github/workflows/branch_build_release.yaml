@@ -78,21 +78,21 @@ jobs:
       matrix:
         config:
           - os: windows-latest
-            client_artifact_name: "windows_client_build"
+            client_artifact_name: "Windows-64bit_client"
             client_artifact_relpath: "/desktop/build64/Windows"
-            server_artifact_name: "windows_server_build"
+            server_artifact_name: "Windows-64bit_server"
             server_artifact_relpath: "/server/build64"
             cc: "cl"
             cxx: "cl"
             cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc"
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           - os: ubuntu-latest
-            client_artifact_name: "linux_client_build"
+            client_artifact_name: "Linux-64bit_client"
             client_artifact_relpath: "/desktop/build64/Linux"
             cc: "gcc"
             cxx: "g++"
           - os: macos-latest
-            client_artifact_name: "macos_client_build"
+            client_artifact_name: "macOS-64bit_client"
             client_artifact_relpath: "/desktop/build64/Darwin"
             cc: "clang"
             cxx: "clang++"
@@ -358,7 +358,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
         with:
-          name: windows_server_build
+          name: Windows-64bit_server
           path: ${{ github.workspace }}
       - name: deploy to VM
         run: |
@@ -370,7 +370,7 @@ jobs:
             --ssh-key ./sshkey \
             --vm-ip "$SERVER_VM_IP" \
             --vm-user "$SERVER_VM_USER" \
-            --deploy ${{ github.workspace }}/windows_server_build
+            --deploy ${{ github.workspace }}/Windows-64bit_server
           ping -w 300 -c 1 $SERVER_VM_IP
 
   # This should run regardless of the success status of the other OS tests
@@ -391,7 +391,7 @@ jobs:
       matrix:
         config:
           - os: ubuntu-18.04
-            client_artifact_name: linux_client_build
+            client_artifact_name: Linux-64bit_client
             # TODO test_predicates currently don't work since the matrix is computed after the job-level if. This
             # configuration item is left here in preparation for matrix support at the job-level.
             # https://github.community/t/matrix-cannot-be-used-in-jobs-level-if/17177/6
@@ -405,23 +405,23 @@ jobs:
             log_location: log.txt
             log_artifact_name: linux_client_test_logs
           - os: windows-2016
-            client_artifact_name: windows_client_build
+            client_artifact_name: Windows-64bit_client
             test_predicate: "!contains(needs.params.outputs.should_test_windows, 'false')"
             test_script:
               | # `cd .` is to avoid fast-fail behavior in the shell by return 0 if the fractal command fails
               .\FractalClient -k $Env:SERVER_VM_IP || cd .
               cat log.txt
             log_location: log.txt
-            log_artifact_name: windows_client_test_logs
+            log_artifact_name: Windows-64bit_client_test_logs
           - os: macos-latest
-            client_artifact_name: macos_client_build
+            client_artifact_name: macOS-64bit_client
             test_predicate: "!contains(needs.params.outputs.should_test_macos, 'false')"
             test_script: |
               sleep 5
               chmod +x FractalClient
               ./FractalClient -k $SERVER_VM_IP | tee log.txt
             log_location: log.txt
-            log_artifact_name: macos_client_test_logs
+            log_artifact_name: macOS-64bit_client_test_logs
     steps:
       - name: Retrieve client build artifact "${{ matrix.config.client_artifact_name }}"
         uses: actions/download-artifact@v2
@@ -454,7 +454,7 @@ jobs:
       - name: Upload Windows server logs
         uses: actions/upload-artifact@v2
         with:
-          name: windows_server_log
+          name: Windows-64bit_server_log
           path: log.txt
       - name: Stop VM
         if: always() # if we fail to get logs we should still kill the VM when done
@@ -468,37 +468,6 @@ jobs:
           \"vm_name\" : \"$SERVER_VM_NAME\",
           \"resource_group\" : \"FractalProtocolCI\" }" \
           $WEBSERVER_BASE_URL/azure_vm/deallocate
-
-  #  test:
-  #    strategy:
-  #      matrix:
-  #        config:
-  #          # These should match the configurations defined in the build job
-  #          # TODO: figure out how to DRY these configurations
-  #          - os: windows-latest
-  #            artifact_name: TODO-Windows-64bit.tar.xz
-  #          - os: macos-latest
-  #            artifact_name: TODO-macOS-64bit.tar.xz
-  #          - os: ubuntu-latest
-  #            artifact_name: TODO-Linux-64bit.tar.xz
-  #    name: "Test on ${{ matrix.config.os }}"
-  #    runs-on: ${{ matrix.config.os }}
-  #    if: "!contains(github.event.client_payload.branch, 'false')"
-  #    needs: build
-  #    steps:
-  #      - uses: actions/checkout@v2
-  #        with:
-  #          ref: ${{ github.event.client_payload.branch }}
-  #      - name: Retrieve build artifact
-  #        uses: actions/download-artifact@v2
-  #        with:
-  #          name: ${{ matrix.config.artifact_name }}
-  #      - name: Run tests
-  #        run: |
-  #          echo TODO "run tests", ls-ing file in the meantime
-  #          ls ${{ matrix.config.artifact_name }}
-  #        env:
-  #          CI: true
 
   create-release:
     name: Create release
@@ -607,21 +576,21 @@ jobs:
           # These should match the configurations defined in the build job
           # TODO: figure out how to DRY these configurations
           - os: windows-latest
-            client_artifact_name: "windows_client_build"
+            client_artifact_name: "Windows-64bit_client"
             client_artifact_relpath: "/desktop/build64/Windows"
-            server_artifact_name: "windows_server_build"
+            server_artifact_name: "Windows-64bit_server"
             server_artifact_relpath: "/server/build64"
             cc: "cl"
             cxx: "cl"
             cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc"
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           - os: ubuntu-latest
-            client_artifact_name: "linux_client_build"
+            client_artifact_name: "Linux-64bit_client"
             client_artifact_relpath: "/desktop/build64/Linux"
             cc: "gcc"
             cxx: "g++"
           - os: macos-latest
-            client_artifact_name: "macos_client_build"
+            client_artifact_name: "macOS-64bit_client"
             client_artifact_relpath: "/desktop/build64/Darwin"
             cc: "clang"
             cxx: "clang++"
