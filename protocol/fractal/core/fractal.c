@@ -303,7 +303,7 @@ void update_webserver_parameters() {
 
     LOG_INFO("GETTING JSON");
 
-    if (!SendJSONGet(PRODUCTION_HOST, "/vm/isDev", buf, len)) {
+    if (!SendJSONGet(PRODUCTION_HOST, "/vm/protocol_info", buf, len)) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;
@@ -331,7 +331,7 @@ void update_webserver_parameters() {
 
     json_t json;
     if (!parse_json(json_str, &json)) {
-        LOG_ERROR("Failed to parse JSON from /vm/isDev");
+        LOG_ERROR("Failed to parse JSON from /vm/protocol_info");
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;

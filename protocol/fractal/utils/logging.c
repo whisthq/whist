@@ -549,7 +549,7 @@ int32_t MultithreadedUpdateStatus(void *data) {
             \"available\" : %s\
     }",
              get_version(), d->is_connected ? "false" : "true");
-    SendJSONPost(host, "/vm/connectionStatus", json);
+    SendJSONPost(host, "/vm/ping", json);
 
     free(d);
     return 0;
