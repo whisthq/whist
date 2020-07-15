@@ -49,7 +49,7 @@ def protocolInfoHelper(ip_address):
         if output["rows"] and output["success"]:
             return {
                 "dev": vm_info["dev"],
-                "branch": output["branch"],
+                "branch": output["rows"][0]["branch"],
                 "status": SUCCESS,
                 "using_stun": output["using_stun"],
                 "access_token": access_token,
