@@ -333,6 +333,11 @@ jobs:
         # TODO is there a way we can ping the VM every 5s or so to avoid a naive 500s wait?
       - name: startup_vm
         run: |
+          cat <<EOF > sshkey
+          ${{ secrets.TEST_VM_SSHKEY }}
+          EOF
+          chmod 0600 sshkey
+
           token=$(curl -X POST -H Content-Type:application/json  -d "{
           \"username\" : \"${{ secrets.FRACTAL_TEST_USER }}\",
           \"password\" : \"${{ secrets.FRACTAL_TEST_PASSWORD }}\" } "  \
@@ -344,7 +349,8 @@ jobs:
           \"vm_name\" : \"$SERVER_VM_NAME\",
           \"resource_group\" : \"FractalProtocolCI\" }" \
           $WEBSERVER_BASE_URL/azure_vm/start
-          ping -w 500 -c 1 $SERVER_VM_IP
+          ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=300 -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"
+
 
   # Unlike the server VM start operation, this should only run if the builds succeeded
   test_deploy_to_vm:
@@ -371,7 +377,7 @@ jobs:
             --vm-ip "$SERVER_VM_IP" \
             --vm-user "$SERVER_VM_USER" \
             --deploy ${{ github.workspace }}/Windows-64bit_server
-          ping -w 300 -c 1 $SERVER_VM_IP
+          ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=300 -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"
 
   # This should run regardless of the success status of the other OS tests
   test_client:
