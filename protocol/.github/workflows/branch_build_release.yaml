@@ -370,6 +370,7 @@ jobs:
           path: ${{ github.workspace }}
       - name: deploy to VM
         run: |
+          ls
           cat <<EOF > sshkey
           ${{ secrets.TEST_VM_SSHKEY }}
           EOF
