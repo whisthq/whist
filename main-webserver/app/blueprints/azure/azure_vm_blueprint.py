@@ -110,6 +110,10 @@ def azure_vm_post(action, **kwargs):
         # Receives pings from active VMs
 
         available, vm_ip = kwargs["body"]["available"], kwargs["received_from"]
+
+        if "resource_group" in kwargs["body"].keys():
+            resource_group = kwargs["body"]["resource_group"]
+
         version = None
         if "version" in kwargs["body"].keys():
             version = kwargs["body"]["version"]
