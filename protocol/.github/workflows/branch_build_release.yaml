@@ -349,7 +349,7 @@ jobs:
           \"vm_name\" : \"$SERVER_VM_NAME\",
           \"resource_group\" : \"FractalProtocolCI\" }" \
           $WEBSERVER_BASE_URL/azure_vm/start
-          ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=500 -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"
+          ssh -v -o "StrictHostKeyChecking=no" -o "ConnectTimeout=500" -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"
 
 
   # Unlike the server VM start operation, this should only run if the builds succeeded
