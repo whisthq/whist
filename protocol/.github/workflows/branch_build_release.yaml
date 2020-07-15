@@ -2,7 +2,7 @@ name: Branch Build & Release
 
 on:
   push:
-    branches: ["wip-ci"] # TODO remove this once done with testing
+#    branches: ["wip-ci"] # TODO remove this once done with testing
   workflow_dispatch:
     inputs:
       branch: # TODO support arbitrary refs
