@@ -38,6 +38,7 @@ ssh -v -o StrictHostKeyChecking=no -i sshkey "$vm_user@$vm_ip" powershell.exe <<
 Copy-item -Force -Recurse C:\server_build\* -Destination 'C:\Program Files\Fractal' ;
 Remove-Item C:\server_build\* ;
 net start fractal ;
+shutdown /r ;
 HEREDOC
 
 #Copy-item -Force -Recurse build\* -Destination 'C:\Program Files\Fractal' ;
