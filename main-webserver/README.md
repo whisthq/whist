@@ -8,8 +8,6 @@ Our webservers are hosted on Heroku:
 
 - [Production](https://cube-celery-vm.herokuapp.com)
 - [Staging](https://cube-celery-staging.herokuapp.com)
-- [Staging2](https://main-webserver-staging2.herokuapp.com)
-- [Staging3](https://main-webserver-staging3.herokuapp.com)
 
 Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?cols=core_host%2Ccore_service&from_ts=1593977274176&index=&live=true&messageDisplay=inline&stream_sort=desc&to_ts=1593978174176).
 
@@ -19,13 +17,13 @@ Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?c
 
 1. Set up the Heroku CLI on your computer
 2. Check your python version by typing `python -V`.
-    - **If you have python 3.6.X**
-    - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
-    - **If you have Python >3.6 or Python <3.0**
-    - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
-    - Find the directory where python 3 is installed. On linux, this can be done by typing into the terminal: `which python3`.
-    - Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
-    - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
+   - **If you have python 3.6.X**
+   - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
+   - **If you have Python >3.6 or Python <3.0**
+   - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
+   - Find the directory where python 3 is installed. On linux, this can be done by typing into the terminal: `which python3`.
+   - Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
+   - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
 3. Install everything by typing `pip install -r requirements.txt`. Make sure you're in the virtual environment when doing this.
 4. Tell the local environment what the entry point is to the webserver by typing `set FLASK_APP=run.py`.
 5. Import the environment variables into your computer by typing `heroku config -s --app <APP> >> .env`. App is either `cube-celery-vm` if you are working on the production webserver, or `cube-celery-staging` if you are working on the staging webserver. This command appends to the `.env` file, so make sure to delete/clear the file if you plan to copy new config variables.
@@ -33,11 +31,6 @@ Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?c
 7. [NOTE: Currently buggy] If you plan on calling endpoints that require celery, you will want to view the celery task queue locally. To do this, open a new terminal, cd into the vm-webserver folder, and type `celery -A app.tasks worker --loglevel=info`.
 8. Then, in a new terminal, attach the staging branch to cube-celery-staging by typing `git checkout staging`, then `heroku git:remote --app cube-celery-staging -r staging`
 9. Also in the new terminal, attach the master branch to cube-celery-vm by typing `git checkout master`, then `heroku git:remote --app cube-celery-vm -r heroku`
-10. **[OPTIONAL]** We are starting to build out support for AWS EC2 instances. If you don't plan on testing our EC2 endpoints, you don't need to worry about this, but if you are, then here's what you will need to do:
-    - Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html).
-    - Once installed, open up a terminal and type `aws configure`.
-    - When prompted, enter access key `AKIA24A776SSMH6JRSNH` and secret ID `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`. You can leave the other fields blank.
-    - To test if this worked, type the command `aws ec2 describe-instances --region us-east-1`. If some JSON appears, you're all set.
 
 ### Build/Run in Docker
 

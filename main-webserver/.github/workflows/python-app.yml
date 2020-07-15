@@ -3,8 +3,6 @@
 name: Python Webserver CI
 
 on:
-  push:
-    branches: [ master, staging ]
   pull_request:
     branches: [ master, staging ]
 
@@ -13,20 +11,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-      
-    - name: Set up Python 3.6
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.6
+      - uses: actions/checkout@v2
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        
-    # TODO: write unit tests
-    # - name: Test with pytest
-    #   run: |
-    #     pytest
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # TODO: write unit tests
+      # - name: Test with pytest
+      #   run: |
+      #     pytest
