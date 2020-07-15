@@ -1,22 +1,22 @@
 name: Branch Build & Release
 
-on: [push]
-#  push:
-##    branches: ["wip-ci"] # TODO remove this once done with testing
-#  workflow_dispatch:
-#    inputs:
-#      branch: # TODO support arbitrary refs
-#        description: name of branch to run against
-#        required: true
-#      should_test:
-#        # TODO: see the note above "test_predicate" for why this only works with running all tests or
-#        # no tests right now, ie. no test selection is supported.
-#        description: which tests should be run before publishing this release (eg. "true", or use ""--not "false"--for none)
-#        default: "true"
-#        required: false
-#      overridden_version_id:
-#        description: "manually set a version ID (default: false, ie. dynamic from BRANCH-YYYYMMDD.#)"
-#        required: false
+on:
+  push:
+    branches: ["wip-ci"] # TODO remove this once done with testing
+  workflow_dispatch:
+    inputs:
+      branch: # TODO support arbitrary refs
+        description: name of branch to run against
+        required: true
+      should_test:
+        # TODO: see the note above "test_predicate" for why this only works with running all tests or
+        # no tests right now, ie. no test selection is supported.
+        description: which tests should be run before publishing this release (eg. "true", or use ""--not "false"--for none)
+        default: "true"
+        required: false
+      overridden_version_id:
+        description: "manually set a version ID (default: false, ie. dynamic from BRANCH-YYYYMMDD.#)"
+        required: false
 
 env:
   CMAKE_VERSION: 3.15.7
@@ -368,7 +368,6 @@ jobs:
           chmod 0600 sshkey
           cd ${{ github.workspace }}/.github/
           ./deploy_artifact_ssh.sh ${{ github.workspace }}/windows_server_build
-#          wait 300 seconds or until we get a packet back
           ping -w 300 -c 1 $SERVER_VM_IP
 
   # This should run regardless of the success status of the other OS tests
