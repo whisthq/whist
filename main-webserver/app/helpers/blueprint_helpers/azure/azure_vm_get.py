@@ -51,7 +51,7 @@ def protocolInfoHelper(ip_address):
                 "dev": vm_info["dev"],
                 "branch": output["rows"][0]["branch"],
                 "status": SUCCESS,
-                "using_stun": output["using_stun"],
+                "using_stun": output["rows"][0]["using_stun"],
                 "access_token": access_token,
                 "refresh_token": refresh_token,
             }
