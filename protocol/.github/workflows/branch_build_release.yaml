@@ -338,13 +338,13 @@ jobs:
           EOF
           chmod 0600 sshkey
 
-          token=$(curl -X POST -H Content-Type:application/json  -d "{
+          token=$(curl -v -X POST -H Content-Type:application/json  -d "{
           \"username\" : \"${{ secrets.FRACTAL_TEST_USER }}\",
           \"password\" : \"${{ secrets.FRACTAL_TEST_PASSWORD }}\" } "  \
           $WEBSERVER_BASE_URL/account/login | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
 
 
-          curl -X POST -H "Content-Type:application/json" -H "Authorization: Bearer ${token}" \
+          curl -v -X POST -H "Content-Type:application/json" -H "Authorization: Bearer ${token}" \
           -d "{
           \"vm_name\" : \"$SERVER_VM_NAME\",
           \"resource_group\" : \"FractalProtocolCI\" }" \
@@ -466,7 +466,7 @@ jobs:
           ${{ secrets.TEST_VM_SSHKEY }}
           EOF
           chmod 0600 sshkey
-          sftp -o StrictHostKeyChecking=no -i sshkey $SERVER_VM_USER@$SERVER_VM_IP:/C:/programdata/fractalcache/log.txt .
+          sftp -v -o StrictHostKeyChecking=no -i sshkey $SERVER_VM_USER@$SERVER_VM_IP:/C:/programdata/fractalcache/log.txt .
       - name: Upload Windows server logs
         uses: actions/upload-artifact@v2
         with:
@@ -475,12 +475,12 @@ jobs:
       - name: Stop VM
         if: always() # if we fail to get logs we should still kill the VM when done
         run: |
-          token=$(curl -X POST -H Content-Type:application/json  -d "{
+          token=$(curl -v -X POST -H Content-Type:application/json  -d "{
           \"username\" : \"${{ secrets.FRACTAL_TEST_USER }}\",
           \"password\" : \"${{ secrets.FRACTAL_TEST_PASSWORD }}\" } "  \
           $WEBSERVER_BASE_URL/account/login | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
 
-          curl -X POST -H "Content-Type:application/json" -H "Authorization: Bearer ${token}"  -d "{
+          curl -v -X POST -H "Content-Type:application/json" -H "Authorization: Bearer ${token}"  -d "{
           \"vm_name\" : \"$SERVER_VM_NAME\",
           \"resource_group\" : \"FractalProtocolCI\" }" \
           $WEBSERVER_BASE_URL/azure_vm/deallocate
