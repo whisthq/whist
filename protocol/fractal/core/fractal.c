@@ -351,6 +351,7 @@ void update_webserver_parameters() {
     kv_pair_t* private_key = get_kv(&json, "private_key");
     kv_pair_t* using_stun = get_kv(&json, "using_stun");
     kv_pair_t* access_token_value = get_kv(&json, "access_token");
+
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {
             free_json(json);
