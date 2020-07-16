@@ -154,3 +154,19 @@ def getDiskUser(disk_name):
         return str(output["rows"][0]["username"])
 
     return "None"
+
+
+def checkResourceGroup(resource_group):
+    fractalLog(
+        function="checkResourceGroup",
+        label="None",
+        logs="Checking to see if {resource_group} is allowed under production database {use_production_database}".format(
+            resource_group=resource_group,
+            use_production_database=str(os.getenv("USE_PRODUCTION_DATABASE")),
+        ),
+    )
+
+    if str(os.getenv("USE_PRODUCTION_DATABASE")).upper() == "TRUE":
+        return resource_group == os.getenv("VM_GROUP")
+    else:
+        return resource_group == "FractalStaging"

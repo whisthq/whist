@@ -1,5 +1,7 @@
 from app import *
 from app.helpers.blueprint_helpers.azure.azure_disk_post import *
+from app.helpers.utils.azure.azure_general import *
+
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_modification import *
@@ -70,6 +72,9 @@ def azure_disk_post(action, **kwargs):
             kwargs["body"]["disk_name"],
             kwargs["body"]["resource_group"],
         )
+
+        if not checkResourceGroup(resource_group):
+            return jsonify({"ID": None}), BAD_REQUEST
 
         attach_to_specific_vm = False
 
