@@ -11,6 +11,7 @@ on:
         # no tests right now, ie. no test selection is supported. This should be updated once matrix builds
         # support job level ifs.
         description: should tests be run before releasing (eg. "true", or "false")
+        # NOTE: if a user passes an empty string "" to the parameter then the default value will be used
         default: "true"
         required: false
       overridden_version_id:
@@ -150,6 +151,7 @@ jobs:
           ls $env:CUDA_PATH\bin
           ls $env:CUDA_PATH\include
 
+      # TODO add actions/cache@v2 around this operation to improve GHA execution time
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         # TODO move into a script stored inside the repo to make this workflow easier to read
         id: cmake_and_ninja
@@ -511,12 +513,22 @@ jobs:
   create-release:
     name: Create release
     needs: [params, build, test_client]
-    if: needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success')
+    if: always() # See not in first step to understand why this is set to always run (which would seem incorrect since it should only run when builds succeed)
     runs-on: ubuntu-latest
     outputs:
       release_upload_url: ${{ steps.create_release.outputs.upload_url }}
       version_id: ${{ steps.release_info.outputs.version_id }}
     steps:
+      - name: Check if all builds succeeded
+        # This step was added because the job level if `needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success')`
+        # was resulting in the job skipping even when the value was shown to be true when printed.
+        run: |
+          if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
+            echo "Proceeding with job"
+          else
+            echo "Killing release job because builds or tests failed"
+            exit 1
+          fi
       # TODO convert this into its own Github Action (ie. not embedded in this workflow but as its own published action)
       # - https://docs.github.com/en/actions/creating-actions/creating-a-javascript-action
       # - https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-using-action-in-the-same-repository-as-the-workflow
