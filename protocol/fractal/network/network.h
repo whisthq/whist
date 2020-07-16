@@ -133,6 +133,7 @@ typedef struct SocketContext {
     struct sockaddr_in addr;
     int ack;
     SDL_mutex* mutex;
+    char aes_private_key[16];
 } SocketContext;
 
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
@@ -230,9 +231,9 @@ int GetLastNetworkError();
  *                                 success
  */
 int CreateUDPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
-                     int connection_timeout_ms, bool using_stun);
+                     int connection_timeout_ms, bool using_stun, char* aes_private_key);
 int CreateTCPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
-                     int connection_timeout_ms, bool using_stun);
+                     int connection_timeout_ms, bool using_stun, char* aes_private_key);
 
 /**
  * @brief                          This will send a FractalPacket over TCP to
