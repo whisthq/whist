@@ -22,6 +22,7 @@ TODO
 #include "../fractal/utils/logging.h"
 #include "fractalgetopt.h"
 #include "main.h"
+#include "desktop_utils.h"
 
 extern volatile char aes_private_key[16];
 extern volatile char *server_ip;
@@ -32,6 +33,9 @@ extern volatile CodecType output_codec_type;
 extern volatile int max_bitrate;
 extern volatile int running_ci;
 extern volatile CodecType codec_type;
+
+extern mouse_motion_accumulation mouse_state;
+extern volatile SDL_Window *window;
 
 // standard for POSIX programs
 #define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
@@ -294,5 +298,38 @@ int sendTimeToServer(void) {
     }
     SendFmsg(&fmsg);
 
+    return 0;
+}
+
+int updateMouseMotion() {
+    if (mouse_state.update) {
+        int window_width, window_height;
+        SDL_GetWindowSize((SDL_Window *)window, &window_width, &window_height);
+        int x, y, x_nonrel, y_nonrel;
+
+        x_nonrel = mouse_state.x_nonrel * MOUSE_SCALING_FACTOR / window_width;
+        y_nonrel = mouse_state.y_nonrel * MOUSE_SCALING_FACTOR / window_height;
+
+        if (mouse_state.is_relative) {
+            x = mouse_state.x_rel;
+            y = mouse_state.y_rel;
+        } else {
+            x = x_nonrel;
+            y = y_nonrel;
+        }
+
+        FractalClientMessage fmsg = {0};
+        fmsg.type = MESSAGE_MOUSE_MOTION;
+        fmsg.mouseMotion.relative = mouse_state.is_relative;
+        fmsg.mouseMotion.x = x;
+        fmsg.mouseMotion.y = y;
+        fmsg.mouseMotion.x_nonrel = x_nonrel;
+        fmsg.mouseMotion.y_nonrel = y_nonrel;
+        if (SendFmsg(&fmsg) != 0) {
+            return -1;
+        }
+
+        mouse_state.update = false;
+    }
     return 0;
 }

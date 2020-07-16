@@ -81,6 +81,9 @@ bool ctrl_pressed = false;
 bool lgui_pressed = false;
 bool rgui_pressed = false;
 
+// Mouse motion state
+mouse_motion_accumulation mouse_state = {0};
+
 clock window_resize_timer;
 
 // Function Declarations
@@ -586,9 +589,10 @@ int main(int argc, char* argv[]) {
         clock ci_timer;
         StartTimer(&ci_timer);
 
-        clock ack_timer, keyboard_sync_timer;
+        clock ack_timer, keyboard_sync_timer, mouse_motion_timer;
         StartTimer(&ack_timer);
         StartTimer(&keyboard_sync_timer);
+        StartTimer(&mouse_motion_timer);
 
         SDL_Event sdl_msg;
 
@@ -599,7 +603,7 @@ int main(int argc, char* argv[]) {
                 Ack(&PacketTCPContext);
                 StartTimer(&ack_timer);
             }
-            // if we are running a CI test we run for time_to_run_ci secondsA
+            // if we are running a CI test we run for time_to_run_ci seconds
             // before exiting
             if (running_ci && GetTimer(ci_timer) > time_to_run_ci) {
                 exiting = 1;
@@ -613,12 +617,24 @@ int main(int argc, char* argv[]) {
                 }
                 StartTimer(&keyboard_sync_timer);
             }
-            if (SDL_PollEvent(&sdl_msg)) {
-                if (handleSDLEvent(&sdl_msg) != 0) {
+            int events = SDL_PollEvent(&sdl_msg);
+
+            if (events && handleSDLEvent(&sdl_msg) != 0) {
+                // unable to handle event
+                failed = true;
+                break;
+            }
+
+            if (GetTimer(mouse_motion_timer) > 0.5 / MS_IN_SECOND) {
+                if (updateMouseMotion()) {
                     failed = true;
                     break;
                 }
-            } else {
+                StartTimer(&mouse_motion_timer);
+            }
+
+            if (!events) {
+                // no events found
                 SDL_Delay(1);
             }
         }
