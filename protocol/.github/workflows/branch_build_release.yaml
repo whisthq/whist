@@ -645,14 +645,17 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: ${{ matrix.config.client_artifact_name }}
-      - run: |
-          ls -la .
+          path: ${{ matrix.config.client_artifact_name }}
+      - name: Package up artifact as a zip file
+        run: |
+          ls -laR
+          zip -r "${{ matrix.config.client_artifact_name }}" "${{ matrix.config.client_artifact_name }}"
       - name: Upload to release ${{ needs['create-release'].outputs.version_id }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs['create-release'].outputs.release_upload_url }}
-          asset_path: ./${{ matrix.config.client_artifact_name }}
-          asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.client_artifact_name }}
-          asset_content_type: application/octet-stream # application/x-xz
+          asset_path: ./${{ matrix.config.client_artifact_name }}.zip
+          asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.client_artifact_name }}.zip
+          asset_content_type: application/zip
