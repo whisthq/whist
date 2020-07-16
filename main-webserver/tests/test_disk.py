@@ -44,7 +44,6 @@ def test_delete_disk_initial(input_token, admin_token):
                 assert False
 
         all_disks = fetchCurrentDisks(admin_token)
-        print(all_disks)
 
         if all_disks:
             fractalLog(
@@ -177,7 +176,6 @@ def test_disk_attach(input_token, admin_token):
                 assert False
 
     disks = fetchCurrentDisks(admin_token)
-    print(disks)
     fractalJobRunner(attachDiskHelper, disks, multithreading=False)
 
     assert True

@@ -7,7 +7,6 @@ load_dotenv(find_dotenv())
 
 @pytest.fixture
 def input_token():
-    print(SERVER_URL)
     resp = requests.post(
         (SERVER_URL + "/account/login"),
         json=dict(
