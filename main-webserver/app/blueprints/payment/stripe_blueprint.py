@@ -46,7 +46,7 @@ def payment(action, **kwargs):
 
 @stripe_bp.route("/stripe/hooks", methods=["POST"])
 def hooks(**kwargs):
-    body = request.get_json()
+    body = request.get_data()
 
     # Endpoint for stripe webhooks
     sigHeader = request.headers["Stripe-Signature"]
