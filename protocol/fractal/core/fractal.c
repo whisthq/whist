@@ -285,11 +285,19 @@ static bool is_dev;
 static bool already_obtained_vm_type = false;
 static clock last_vm_info_check_time;
 static bool is_using_stun;
+static char* access_token = NULL;
+bool is_trying_staging_protocol_info = false;
 
 void update_webserver_parameters() {
     if (already_obtained_vm_type && GetTimer(last_vm_info_check_time) < 30.0) {
         return;
     }
+
+    bool will_try_staging = false;
+    if (is_trying_staging_protocol_info) {
+        will_try_staging = true;
+    }
+    is_trying_staging_protocol_info = false;
 
     if (!already_obtained_vm_type) {
         // Set Default Values
@@ -303,7 +311,7 @@ void update_webserver_parameters() {
 
     LOG_INFO("GETTING JSON");
 
-    if (!SendJSONGet(PRODUCTION_HOST, "/vm/protocol_info", buf, len)) {
+    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/vm/protocol_info", buf, len)) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;
@@ -341,6 +349,7 @@ void update_webserver_parameters() {
     kv_pair_t* branch_value = get_kv(&json, "branch");
     kv_pair_t* private_key = get_kv(&json, "private_key");
     kv_pair_t* using_stun = get_kv(&json, "using_stun");
+    kv_pair_t* access_token_value = get_kv(&json, "access_token");
     if (dev_value && branch_value) {
         if (dev_value->type != JSON_BOOL) {
             free_json(json);
@@ -370,13 +379,27 @@ void update_webserver_parameters() {
             LOG_INFO("Using Stun: %s", using_stun->bool_value ? "Yes" : "No");
             is_using_stun = using_stun->bool_value;
         }
+
+        if (access_token_value && access_token_value->type == JSON_STRING) {
+            if (!access_token) {
+                free(access_token);
+            }
+            access_token = clone(access_token_value->str_value);
+        }
     } else {
         LOG_WARNING("COULD NOT GET JSON PARAMETERS FROM: %s", json_str);
     }
 
     free_json(json);
-    already_obtained_vm_type = true;
-    StartTimer(&last_vm_info_check_time);
+    if (is_dev_vm() && !will_try_staging) {
+        is_trying_staging_protocol_info = true;
+        // This time trying the staging protocol info, if we haven't already
+        update_webserver_parameters();
+        return;
+    } else {
+        already_obtained_vm_type = true;
+        StartTimer(&last_vm_info_check_time);
+    }
 }
 
 char* get_branch() {
@@ -405,6 +428,13 @@ bool is_dev_vm() {
         LOG_ERROR("Webserver parameters not updated!");
     }
     return is_dev;
+}
+
+char* get_access_token() {
+    if (!already_obtained_vm_type) {
+        LOG_ERROR("Webserver parameters not updated!");
+    }
+    return access_token;
 }
 
 int GetFmsgSize(FractalClientMessage* fmsg) {
