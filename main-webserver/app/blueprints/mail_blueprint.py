@@ -2,6 +2,7 @@ from app import *
 
 from app.logger import *
 from app.helpers.mail import *
+from app.helpers.users import *
 
 mail_bp = Blueprint("mail_bp", __name__)
 
