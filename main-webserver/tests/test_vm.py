@@ -9,15 +9,10 @@ pytest.disk_name = None
 
 
 @pytest.mark.vm_serial
-def test_delete_vm_initial(input_token):
+def test_delete_vm_initial(input_token, admin_token):
     newLine()
 
     def deleteVMHelper(vm):
-        fractalSQLUpdate(
-            table_name="v_ms",
-            conditional_params={"vm_name": vm["vm_name"]},
-            new_params={"lock": False, "temporary_lock": 0},
-        )
 
         fractalLog(
             function="test_delete_vm_initial",
@@ -43,7 +38,8 @@ def test_delete_vm_initial(input_token):
             )
             assert False
 
-    all_vms = fetchCurrentVMs()
+    all_vms = fetchCurrentVMs(admin_token)
+    print(all_vms)
     fractalJobRunner(deleteVMHelper, all_vms)
 
     assert True

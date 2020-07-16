@@ -5,7 +5,7 @@
     },
     "test": {
       "scripts": {
-        "test": "source ci_env_setup.sh; source test_setup.sh; py.test -v -r A"
+        "test": "source ci_env_setup.sh; source test_setup.sh; py.test -v -s -r A"
       }
     }
   }

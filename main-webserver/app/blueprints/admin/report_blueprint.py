@@ -31,7 +31,6 @@ def report_get(action, **kwargs):
         return jsonify(output), SUCCESS
     elif action == "fetchVMs":
         output = fetchVMsHelper()
-        print(output)
         return jsonify(output), SUCCESS
     elif action == "fetchCustomers":
         output = fetchCustomersHelper()
