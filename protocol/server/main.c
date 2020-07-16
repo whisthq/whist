@@ -65,6 +65,7 @@ its threads.
 
 extern Client clients[MAX_NUM_CLIENTS];
 
+char aes_private_key[16];
 volatile int connection_id;
 static volatile bool connected;
 static volatile bool running;
@@ -625,6 +626,8 @@ int32_t SendAudio(void* opaque) {
 }
 
 void update() {
+    update_webserver_parameters();
+
     if (is_dev_vm()) {
         LOG_INFO("dev vm - not auto-updating");
     } else {
@@ -662,6 +665,8 @@ void update() {
             ,
             NULL);
     }
+
+    memcpy(aes_private_key, get_private_key(), sizeof(aes_private_key));
 }
 
 #include <time.h>
@@ -798,7 +803,7 @@ int MultithreadedWaitForClient(void* opaque) {
         }
 
         if (CreateTCPContext(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                             USING_STUN) < 0) {
+                             get_using_stun(), aes_private_key) < 0) {
             continue;
         }
 
@@ -811,7 +816,7 @@ int MultithreadedWaitForClient(void* opaque) {
 
         // Client is not in use so we don't need to worry about anyone else
         // touching it
-        if (connectClient(client_id) != 0) {
+        if (connectClient(client_id, aes_private_key) != 0) {
             LOG_WARNING(
                 "Failed to establish connection with client. "
                 "(ID: %d)",
@@ -964,19 +969,19 @@ int main() {
 
         while (connected) {
             if (GetTimer(ack_timer) > 5) {
-#if USING_STUN
-                // Broadcast ack
-                if (readLock(&is_active_rwlock) != 0) {
-                    LOG_ERROR("Failed to read-acquire is active RW lock.");
-                } else {
-                    if (broadcastAck() != 0) {
-                        LOG_ERROR("Failed to broadcast acks.");
-                    }
-                    if (readUnlock(&is_active_rwlock) != 0) {
-                        LOG_ERROR("Failed to read-release is active RW lock.");
+                if (get_using_stun()) {
+                    // Broadcast ack
+                    if (readLock(&is_active_rwlock) != 0) {
+                        LOG_ERROR("Failed to read-acquire is active RW lock.");
+                    } else {
+                        if (broadcastAck() != 0) {
+                            LOG_ERROR("Failed to broadcast acks.");
+                        }
+                        if (readUnlock(&is_active_rwlock) != 0) {
+                            LOG_ERROR("Failed to read-release is active RW lock.");
+                        }
                     }
                 }
-#endif
                 updateStatus(num_controlling_clients > 0);
                 StartTimer(&ack_timer);
             }
