@@ -44,6 +44,8 @@ def payment(action, **kwargs):
 @stripe_bp.route("/stripe/hooks", methods=["POST"])
 @fractalPreProcess
 def hooks(**kwargs):
+    body = kwargs["body"]
+
     # Endpoint for stripe webhooks
     sigHeader = request.headers["Stripe-Signature"]
     endpointSecret = os.getenv("ENDPOINT_SECRET")
