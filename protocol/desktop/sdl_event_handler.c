@@ -202,8 +202,6 @@ int handleMouseMotion(SDL_Event *event) {
         if (updateMouseMotion() != 0) {
             return -1;
         }
-        mouse_state.x_rel = 0;
-        mouse_state.y_rel = 0;
     }
 
     mouse_state.x_nonrel = event->motion.x;

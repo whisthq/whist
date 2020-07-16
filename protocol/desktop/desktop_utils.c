@@ -330,6 +330,8 @@ int updateMouseMotion() {
         }
 
         mouse_state.update = false;
+        mouse_state.x_rel = 0;
+        mouse_state.y_rel = 0;
     }
     return 0;
 }
