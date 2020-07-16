@@ -16,7 +16,10 @@ def payment(action, **kwargs):
         return chargeHelper(body["token"], body["username"], body["code"], body["plan"])
 
     elif action == "addProduct":
-        return productHelper(body["username"], body["product"])
+        return addProductHelper(body["username"], body["product"])
+
+    elif action == "removeProduct":
+        return removeProductHelper(body["username"], body["product"])
 
     # Retrieves the stripe subscription of the customer
     elif action == "retrieve":

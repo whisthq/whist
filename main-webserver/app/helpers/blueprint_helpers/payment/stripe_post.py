@@ -343,11 +343,26 @@ def insertCustomerHelper(email, location):
     return jsonify({"status": SUCCESS}), SUCCESS
 
 
-def productHelper(email, productName):
+def addProductHelper(email, productName):
+    """Adds a product to the customer
+
+    Args:
+        email (str): The email of the customer
+        productName (str): Name of the product
+
+    Returns:
+        http response
+    """
     customers = fractalSQLSelect("customers", {"username": email})["rows"]
     if not customers:
         return (
             jsonify({"status": "Customer with this email does not exist!"}),
+            BAD_REQUEST,
+        )
+
+    if not customers[0]["subscription"]:
+        return (
+            jsonify({"status": "Customer does not have a subscription on Stripe!"}),
             BAD_REQUEST,
         )
 
@@ -356,6 +371,90 @@ def productHelper(email, productName):
         PLAN_ID = os.getenv("SMALLDISK_PLAN_ID")
     elif productName == "512disk":
         PLAN_ID = os.getenv("MEDIUMDISK_PLAN_ID")
+
+    if PLAN_ID is None:
+        return (
+            jsonify({"status": "Invalid product"}),
+            BAD_REQUEST,
+        )
+
+    subscription = stripe.Subscription.retrieve(customers[0]["subscription"])
+    subscriptionItem = None
+    for item in subscription["items"]["data"]:
+        if item["plan"]["id"] == PLAN_ID:
+            subscriptionItem = stripe.SubscriptionItem.retrieve(item["id"])
+
+    if subscriptionItem is None:
+        stripe.SubscriptionItem.create(subscription=subscription["id"], plan=PLAN_ID)
+    else:
+        stripe.SubscriptionItem.modify(
+            subscriptionItem["id"], quantity=subscriptionItem["quantity"] + 1
+        )
+
+    return (
+        jsonify({"status": "Product added to subscription successfully"}),
+        SUCCESS,
+    )
+
+
+def removeProductHelper(email, productName):
+    """Removes a product from the customer
+
+    Args:
+        email (str): The email of the customer
+        productName (str): Name of the product
+
+    Returns:
+        http response
+    """
+    customers = fractalSQLSelect("customers", {"username": email})["rows"]
+    if not customers:
+        return (
+            jsonify({"status": "Customer with this email does not exist!"}),
+            BAD_REQUEST,
+        )
+
+    if not customers[0]["subscription"]:
+        return (
+            jsonify({"status": "Customer does not have a subscription on Stripe!"}),
+            BAD_REQUEST,
+        )
+
+    PLAN_ID = None
+    if productName == "256disk":
+        PLAN_ID = os.getenv("SMALLDISK_PLAN_ID")
+    elif productName == "512disk":
+        PLAN_ID = os.getenv("MEDIUMDISK_PLAN_ID")
+
+    if PLAN_ID is None:
+        return (
+            jsonify({"status": "Invalid product"}),
+            BAD_REQUEST,
+        )
+
+    subscription = stripe.Subscription.retrieve(customers[0]["subscription"])
+    subscriptionItem = None
+    for item in subscription["items"]["data"]:
+        if item["plan"]["id"] == PLAN_ID:
+            subscriptionItem = stripe.SubscriptionItem.retrieve(item["id"])
+
+    if subscriptionItem is None:
+        return (
+            jsonify({"status": "Product already not in subscription"}),
+            SUCCESS,
+        )
+    else:
+        if subscriptionItem["quantity"] == 1:
+            stripe.SubscriptionItem.delete(subscriptionItem["id"])
+        else:
+            stripe.SubscriptionItem.modify(
+                subscriptionItem["id"], quantity=subscriptionItem["quantity"] - 1
+            )
+
+    return (
+        jsonify({"status": "Product removed from subscription successfully"}),
+        SUCCESS,
+    )
 
 
 def webhookHelper(event):
