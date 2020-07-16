@@ -1,21 +1,20 @@
 name: Branch Build & Release
 
 on:
-  push:
-    branches: ["wip-ci"] # TODO remove this once done with testing
   workflow_dispatch:
     inputs:
-      branch: # TODO support arbitrary refs
-        description: name of branch to run against
+      ref: # TODO support arbitrary refs
+        description: ref to run against (eg. `refs/heads/BRANCH_NAME` or `refs/pull/PR_NUMBER`)
         required: true
       should_test:
         # TODO: see the note above "test_predicate" for why this only works with running all tests or
-        # no tests right now, ie. no test selection is supported.
-        description: which tests should be run before publishing this release (eg. "true", or use ""--not "false"--for none)
+        # no tests right now, ie. no test selection is supported. This should be updated once matrix builds
+        # support job level ifs.
+        description: should tests be run before releasing (eg. "true", or "false")
         default: "true"
         required: false
       overridden_version_id:
-        description: "manually set a version ID (default: false, ie. dynamic from BRANCH-YYYYMMDD.#)"
+        description: "manually set a version ID (default: false, ie. dynamic from REFNAME-YYYYMMDD.#)"
         required: false
 
 env:
@@ -27,14 +26,14 @@ env:
   SERVER_VM_USER: Fractal
   SERVER_VM_IP: 20.185.40.33
   WEBSERVER_BASE_URL: https://cube-celery-staging4.herokuapp.com
-  TODO_NIGHTLY_BRANCH: dev
 
 jobs:
   params:
     name: Setup dynamic parameters
     runs-on: ubuntu-latest
     outputs:
-      branch: ${{ steps.values.outputs.branch }}
+      ref: ${{ steps.values.outputs.ref }}
+      ref_name: ${{ steps.values.outputs.ref_name }}
       git_sha: ${{ steps.values.outputs.git_sha }}
       should_test: ${{ steps.values.outputs.should_test }}
       should_test_windows: ${{ steps.values.outputs.should_test_windows }}
@@ -43,30 +42,48 @@ jobs:
       overridden_version_id: ${{ steps.values.outputs.overridden_version_id }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.ref }}
       - name: Determine parameter values and export to global environment
         id: values
-        # NOTE: environment variables can only be used in script bodies and job/step if/with/name keys. If more
-        # use sites are needed consider switching these to output variables.
-        # https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#env-context
-
-        # TODO switch to proper workflow input variables once workflow_dispatch is working https://github.community/t/cant-trigger-workflow-manually/121740/11
+        # ref: If this wasn't triggered using workflow_dispatch then a ref won't be specified. Fill in the param using whatever
+        # the workflow is checkout out to.
+        #
+        # ref_name: This supports branches (refs/heads/BRANCH_NAME), PRs (refs/pull/PR_NUMBER/{merge,head,etc.}), and
+        # arbitrary commits
+        #
+        # should_test: Translated from "true"/"false" into "true"/"" to lay the groundwork for per-OS test control
+        #
+        # should_test_*: breakout the should_test into individual predicates for each OS for 
         run: |
-          export BRANCH=${{ github.event.client_payload.branch || env.TODO_NIGHTLY_BRANCH }}
-          echo ::set-output name=branch::$BRANCH
-          git fetch --depth=1
-          git checkout $BRANCH
+          export REF="${{ github.event.inputs.ref || '$(git symbolic-ref HEAD)' }}"
+          echo ::set-output name=ref::$REF
+          if git symbolic-ref --short HEAD > /dev/null; then
+            echo ::set-output name=ref_name::$(git symbolic-ref --short HEAD)
+          elif [[ "$REF" == *"/pull/"* ]]; then
+            # $REF should be in the format "refs/pull/225/merge"
+            pr_id=$(echo "$REF" | grep -o -E '[0-9]+') # eg. "225"
+            pr_action=$(basename "$REF") # eg. "merge"
+            echo ::set-output name=ref_name::pr$pr_id$pr_action
+          else
+            echo ::set-output name=ref_name::$(git rev-parse HEAD)
+          fi
           echo ::set-output name=git_sha::$(git rev-parse HEAD)
-          export SHOULD_TEST=${{ github.event.client_payload.should_test || secrets.SHOULD_TEST || 'windows,linux,TODO' }}
-          echo ::set-output name=should_test::$SHOULD_TEST
+          echo ::set-output name=should_test::$(if [[ "${{ github.event.inputs.should_test }}" == "false" ]]; then echo ""; else echo "true"; fi)
+          export SHOULD_TEST=${{ github.event.inputs.should_test }}
           echo ::set-output name=should_test_windows::$(if [[ $SHOULD_TEST == *"windows"* ]]; then echo "true"; else echo "false"; fi)
           echo ::set-output name=should_test_linux::$(if [[ $SHOULD_TEST == *"linux"* ]]; then echo "true"; else echo "false"; fi)
           echo ::set-output name=should_test_macos::$(if [[ $SHOULD_TEST == *"macos"* ]]; then echo "true"; else echo "false"; fi)
-          echo ::set-output name=overridden_version_id::${{ github.event.client_payload.overridden_version_id }}
+          echo ::set-output name=overridden_version_id::${{ github.event.inputs.overridden_version_id }}
       - name: Show all env and output vars
         run: |
           cat <<JSON
-          ${{ toJson(steps.values.outputs) }}
+          Inputs: ${{ toJson(github.event.inputs) }}
           JSON
+          cat <<JSON
+          Outputs: ${{ toJson(steps.values.outputs) }}
+          JSON
+          echo "Env vars:"
           printenv
 
   build:
@@ -100,7 +117,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ needs.params.outputs.branch }}
+          ref: ${{ needs.params.outputs.ref }}
 
       - name: Chocolatey install cppcheck
         if: runner.os == 'Windows'
@@ -361,7 +378,7 @@ jobs:
     if: needs.params.outputs.should_test != ''
     runs-on: ubuntu-latest
     steps:
-      # This shouldn't check out the target branch because it needs to use scripts that are
+      # This shouldn't check out the target ref because it needs to use scripts that are
       # specific to this workflow definition, so it should checkout the branch of this workflow.
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
@@ -452,12 +469,12 @@ jobs:
           name: ${{ matrix.config.log_artifact_name }}
           path: ${{ matrix.config.log_location }}
 
-  # This should always be run, regardless of the success of the tests. It should be able to handle
-  # a scenario where the VM was never started in the first place.
+  # This should always be if tests were run, regardless of the success of the tests. It should be able
+  # to handle a scenario where the VM was never started in the first place.
   clean_up:
     name: "Test: Shutdown server VM"
     needs: [test_client]
-    if: always()
+    if: needs.params.outputs.should_test != ''
     runs-on: ubuntu-latest
     steps:
       - name: SSH into server and retrieve logs
@@ -506,7 +523,7 @@ jobs:
               console.log(`::set-output name=version_id::${{ needs.params.outputs.overridden_version_id }}`)
               return
             }
-            const cur_branch = "${{ needs.params.outputs.branch }}"
+            const cur_ref_name = "${{ needs.params.outputs.ref_name }}"
             const accumulate_paged_list = async (doReq, start_page = 0) => {
               let aggregate = []
               let new_list
@@ -531,29 +548,29 @@ jobs:
             const relevant_releases = releases
               .map(r => { console.log(`  ${r.name}`); return r.name.match(version_regex) })
               .filter(m => !!m)
-              .filter(([, branch]) => branch == cur_branch)
+              .filter(([, ref_name]) => ref_name == cur_ref_name)
             relevant_releases.sort()
 
             const cur_date = new Date().toISOString().split("T")[0].replace(/-/g, "") // should always be in UTC
             let cur_date_point = 1
-            console.log(`New release is for the "${cur_branch}" branch on ${cur_date}`)
+            console.log(`New release is for the "${cur_ref_name}" ref on ${cur_date}`)
 
             const latest_release = relevant_releases[relevant_releases.length - 1]
             if (latest_release) {
-              const [full, branch, date, point] = latest_release
+              const [full, ref_name, date, point] = latest_release
               console.log(`Comparing against latest release relevant release: "${full}".`)
               if (date == cur_date) {
                 cur_date_point = Number(point) + 1
               }
             } else {
-              console.log(`Of ${releases.length} releases found none were for the "${cur_branch}" branch (or at least none followed the BRANCH-YYYYMMDD.# naming pattern)`)
+              console.log(`Of ${releases.length} releases found none were for the "${cur_ref_name}" ref (or at least none followed the ref_name-YYYYMMDD.# naming pattern)`)
             }
-            version_id = `${cur_branch}-${cur_date}.${cur_date_point}`
+            version_id = `${cur_ref_name}-${cur_date}.${cur_date_point}`
             console.log(`::set-output name=version_id::${version_id}`)
           github-token: ${{secrets.GITHUB_TOKEN}}
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.client_payload.branch }}
+          ref: ${{ needs.params.outputs.ref }}
       - name: Tag HEAD as ${{ steps.release_info.outputs.version_id }} and push
         run: |
           git tag ${{ steps.release_info.outputs.version_id }}
@@ -575,8 +592,14 @@ jobs:
 
             **Release parameters:**
 
+            Inputs:
             ```json
-            ${{ toJson(github.event.client_payload) }}
+            ${{ toJson(github.event.inputs) }}
+            ```
+
+            Derived:
+            ```json
+            ${{ toJson(needs.params.outputs) }}
             ```
 
             **Commits since last release:** TODO
