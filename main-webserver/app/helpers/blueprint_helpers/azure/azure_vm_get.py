@@ -19,9 +19,6 @@ def ipHelper(vm_name, resource_group):
 def protocolInfoHelper(ip_address):
 
     output = fractalSQLSelect(table_name="v_ms", params={"ip": ip_address})
-    access_token, refresh_token = getAccessTokens(
-        os.getenv("DASHBOARD_USERNAME") + "@gmail.com"
-    )
 
     if not output["success"] or not output["rows"]:
         output = fractalSQLSelect(
@@ -44,6 +41,10 @@ def protocolInfoHelper(ip_address):
 
         output = fractalSQLSelect(
             table_name="disk_settings", params={"disk_name": vm_info["disk_name"]}
+        )
+
+        access_token, refresh_token = getAccessTokens(
+            str(vm_info["username"])
         )
 
         if output["rows"] and output["success"]:
