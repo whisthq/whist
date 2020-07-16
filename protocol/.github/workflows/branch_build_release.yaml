@@ -384,6 +384,7 @@ jobs:
             --vm-ip "$SERVER_VM_IP" \
             --vm-user "$SERVER_VM_USER" \
             --deploy ${{ github.workspace }}/Windows-64bit_server
+          sleep 60
           until ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"; do
               sleep 30
           done
