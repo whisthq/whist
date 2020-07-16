@@ -35,7 +35,7 @@ scp -v -o StrictHostKeyChecking=no -i "$ssh_key" -r "$path" "$vm_user@$vm_ip":/C
 
 echo "ssh in and restart the service and move the build folder"
 ssh -v -o StrictHostKeyChecking=no -i sshkey "$vm_user@$vm_ip" powershell.exe <<HEREDOC
-Copy-item -Force -Recurse C:\server_build\* -Destination 'C:\Program Files\Fractal' ;
+Copy-item -Force -Recurse C:\server_build\Windows-64bit_server -Destination 'C:\Program Files\Fractal' ;
 net start fractal ;
 shutdown /r ;
 HEREDOC
