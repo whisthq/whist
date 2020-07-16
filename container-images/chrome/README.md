@@ -13,8 +13,10 @@ For reference on the Fractal protocol and streaming, refer to: https://github.co
 Building the container
 `docker build -t chrome . `
 
-To run the container
-`docker run -it -p 5900:5900 -e VNC_SERVER_PASSWORD=password -t chrome`
+To build and run, run the following in the root of the project
+`./runchrome.sh`
+
+The runchrome script contains fixes for networking issues when setting up the firewall.
 
 Then open up vnc and connect it to 5900 with the VNC_SERVER_PASSWORD
 

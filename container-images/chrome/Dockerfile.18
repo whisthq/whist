@@ -1,0 +1,126 @@
+FROM ubuntu:18.04
+
+ENV container docker
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
+
+RUN apt-get update \
+    && apt-get install -y systemd systemd-sysv \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN cd /lib/systemd/system/sysinit.target.wants/ \
+    && ls | grep -v systemd-tmpfiles-setup | xargs rm -f $1
+
+RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
+    /etc/systemd/system/*.wants/* \
+    /lib/systemd/system/local-fs.target.wants/* \
+    /lib/systemd/system/sockets.target.wants/*udev* \
+    /lib/systemd/system/sockets.target.wants/*initctl* \
+    /lib/systemd/system/basic.target.wants/* \
+    /lib/systemd/system/anaconda.target.wants/* \
+    /lib/systemd/system/plymouth* \
+    /lib/systemd/system/systemd-update-utmp*
+
+RUN apt-get update && apt-get clean && apt-get install -y \
+    x11vnc \
+    xvfb \
+    fluxbox \
+    wmctrl \
+    wget \
+    gnupg2 \
+    libgbm1 \
+    libxcb-dri3-0 \
+    wget \
+    python \
+    python3 \
+    gnupg2 \
+    sudo \
+    vim \
+    apt-utils \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+    && apt-get update && apt-get -y install google-chrome-stable \
+    && apt-get clean
+
+# Avoids interactive installation for tzdata
+# Uses UTC
+ENV LOCAL="yes"
+RUN apt-get -y install tzdata keyboard-configuration ufw
+
+# Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
+RUN echo "Set disable_coredump false" >> /etc/sudo.conf
+
+# RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.sh >>/dev/null 2>&1
+# Using local setup-scripts repository for development
+ADD utils.sh /
+
+RUN useradd --create-home fractal \
+    && usermod -aG sudo fractal \ 
+    && echo 'fractal:password1234567.' | chpasswd
+
+# Install all required components for Fractal to perform well
+# Split into multiple steps for caching
+RUN /bin/bash -c "source utils.sh \ 
+    && Update-Linux \
+    && Set-Time \
+    && Install-VirtualDisplay-NoGnome"
+RUN /bin/bash -c "source utils.sh \ 
+    && Install-7Zip \
+    && Install-Curl \
+    && Install-GoogleChrome"
+RUN /bin/bash -c "source utils.sh \ 
+    && Install-NvidiaTeslaPublicDrivers \
+    && Disable-TCC \
+    && Set-OptimalGPUSettings"
+RUN /bin/bash -c "source utils.sh \ 
+    && Install-CustomX11Configuration"
+RUN /bin/bash -c "source utils.sh \ 
+    && Set-FractalDirectory \
+    && Install-FractalServer dev"
+# RUN /bin/bash -c "source utils.sh \ 
+#     && Install-FractalExitScript"
+RUN /bin/bash -c "source utils.sh \
+    && Install-FractalAutoUpdate master"
+RUN /bin/bash -c "source utils.sh \
+    && Install-FractalLinuxInputDriver"
+# RUN /bin/bash -c "source utils.sh \
+#     && Install-FractalWallpaper"
+RUN /bin/bash -c "source utils.sh \ 
+    && Install-Unison \
+    && Enable-SSHKey"
+# RUN /bin/bash -c " source utils.sh \
+#     && Disable-Shutdown"
+# RUN /bin/bash -c " source utils.sh \
+#     && Add-AutoLogin \
+#     && Disable-AutomaticLockScreen"
+
+#From protocol/server/linux-server-setup.sh
+RUN sudo apt-get install ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils -y
+ADD bootstrap.sh /home/fractal
+ADD entry.sh /home/fractal
+ADD fractal-input.rules home/fractal
+
+RUN chmod +x /home/fractal/bootstrap.sh \
+    && chown -v -R fractal:fractal /home/fractal
+RUN chown root:root /run/user
+RUN chmod +x /home/fractal/entry.sh
+
+
+ADD fractal-entrypoint.service /etc/systemd/system
+ADD fractal-display.service /etc/systemd/system
+# RUN chmod u+x /etc/systemd/system/bootstrap-service.service
+
+VOLUME [ "/sys/fs/cgroup" ]
+
+RUN systemctl set-default multi-user.target
+ENV init /lib/systemd/systemd
+RUN systemctl enable fractal-entrypoint
+RUN systemctl enable fractal-display
+RUN sudo apt-get install -y pulseaudio
+
+# USER fractal
+
+CMD ["/lib/systemd/systemd"]

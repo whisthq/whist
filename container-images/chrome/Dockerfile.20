@@ -1,5 +1,29 @@
 FROM ubuntu:20.04
 
+ENV container docker
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
+
+RUN apt-get update \
+    && apt-get install -y systemd systemd-sysv \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN cd /lib/systemd/system/sysinit.target.wants/ \
+    && ls | grep -v systemd-tmpfiles-setup | xargs rm -f $1
+
+RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
+    /etc/systemd/system/*.wants/* \
+    /lib/systemd/system/local-fs.target.wants/* \
+    /lib/systemd/system/sockets.target.wants/*udev* \
+    /lib/systemd/system/sockets.target.wants/*initctl* \
+    /lib/systemd/system/basic.target.wants/* \
+    /lib/systemd/system/anaconda.target.wants/* \
+    /lib/systemd/system/plymouth* \
+    /lib/systemd/system/systemd-update-utmp*
+
 RUN apt-get update && apt-get clean && apt-get install -y \
     x11vnc \
     xvfb \
@@ -23,15 +47,15 @@ RUN apt-get update && apt-get clean && apt-get install -y \
 
 # Avoids interactive installation for tzdata
 # Uses UTC
-ENV DEBIAN_FRONTEND="noninteractive"
 ENV LOCAL="yes"
 RUN apt-get -y install tzdata keyboard-configuration ufw
 
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
-RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.sh >>/dev/null 2>&1
-
+# RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.sh >>/dev/null 2>&1
+# Using local setup-scripts repository for development
+ADD utils.sh /
 
 RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \ 
@@ -42,7 +66,7 @@ RUN useradd --create-home fractal \
 RUN /bin/bash -c "source utils.sh \ 
     && Update-Linux \
     && Set-Time \
-    && Install-VirtualDisplay"
+    && Install-VirtualDisplay-NoGnome"
 RUN /bin/bash -c "source utils.sh \ 
     && Install-7Zip \
     && Install-Curl \
@@ -52,18 +76,15 @@ RUN /bin/bash -c "source utils.sh \
     && Disable-TCC \
     && Set-OptimalGPUSettings"
 RUN /bin/bash -c "source utils.sh \ 
-    && Install-CustomGDMConfiguration \
     && Install-CustomX11Configuration"
 RUN /bin/bash -c "source utils.sh \ 
     && Set-FractalDirectory \
-    && Install-FractalServer master \
-    && Install-FractalService"
+    && Install-FractalServer master"
 RUN /bin/bash -c "source utils.sh \ 
     && Install-FractalExitScript \
     && Install-FractalAutoUpdate master \
     && Install-FractalLinuxInputDriver \
-    && Install-FractalWallpaper \
-    && Enable-FractalFirewallRule"
+    && Install-FractalWallpaper "
 RUN /bin/bash -c "source utils.sh \ 
     && Install-Unison \
     && Enable-SSHKey \
@@ -71,12 +92,30 @@ RUN /bin/bash -c "source utils.sh \
     && Add-AutoLogin \ 
     && Disable-AutomaticLockScreen "
 
+#From protocol/server/linux-server-setup.sh
+RUN sudo apt-get install ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils -y
+
 ADD bootstrap.sh /home/fractal
+ADD entry.sh /home/fractal
+ADD fractal-input.rules home/fractal
 
 RUN chmod +x /home/fractal/bootstrap.sh \
     && chown -v -R fractal:fractal /home/fractal
+RUN chown root:root /run/user
+RUN chmod +x /home/fractal/entry.sh
 
-USER fractal
 
-# ENTRYPOINT ["google-chrome"]
-CMD '/home/fractal/bootstrap.sh'
+ADD fractal-entrypoint.service /etc/systemd/system
+ADD fractal-display.service /etc/systemd/system
+# RUN chmod u+x /etc/systemd/system/bootstrap-service.service
+
+VOLUME [ "/sys/fs/cgroup" ]
+
+RUN systemctl set-default multi-user.target
+ENV init /lib/systemd/systemd
+RUN systemctl enable fractal-entrypoint
+RUN systemctl enable fractal-display
+
+# USER fractal
+
+CMD ["/lib/systemd/systemd"]

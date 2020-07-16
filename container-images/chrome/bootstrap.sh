@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "Installing Fractal Service in entry.sh"
+source /utils.sh && Install-FractalService
+
+
 # Based on: http://www.richud.com/wiki/Ubuntu_Fluxbox_GUI_with_x11vnc_and_Xvfb
 
 main() {

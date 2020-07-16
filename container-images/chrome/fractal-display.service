@@ -1,0 +1,11 @@
+[Unit]
+Description=Display and protocol entrypoint, runs as user fractal
+After=fractal-entrypoint.service
+Requires=fractal-entrypoint.service
+
+[Service]
+User=fractal
+ExecStart=/home/fractal/bootstrap.sh
+
+[Install]
+WantedBy=multi-user.target
