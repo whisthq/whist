@@ -2,8 +2,6 @@ from app import *
 from app.helpers.utils.mail.stripe_mail import *
 
 stripe.api_key = os.getenv("STRIPE_SECRET")
-customer_id = ""
-subscription_id = ""
 
 
 def chargeHelper(token, email, code, plan):
@@ -14,6 +12,8 @@ def chargeHelper(token, email, code, plan):
             email, plan, code, token
         ),
     )
+
+    customer_id = ""
 
     PLAN_ID = os.getenv("MONTHLY_PLAN_ID")
     if plan == "unlimited":
@@ -36,6 +36,7 @@ def chargeHelper(token, email, code, plan):
             trial_end = round((dt.now() + timedelta(days=1)).timestamp())
 
     try:
+        subscription_id = ""
         new_customer = stripe.Customer.create(email=email, source=token)
         customer_id = new_customer["id"]
         credits = fractalSQLSelect("users", {"username": email})["rows"][0][
@@ -340,6 +341,21 @@ def insertCustomerHelper(email, location):
     )
 
     return jsonify({"status": SUCCESS}), SUCCESS
+
+
+def productHelper(email, productName):
+    customers = fractalSQLSelect("customers", {"username": email})["rows"]
+    if not customers:
+        return (
+            jsonify({"status": "Customer with this email does not exist!"}),
+            BAD_REQUEST,
+        )
+
+    PLAN_ID = None
+    if productName == "256disk":
+        PLAN_ID = os.getenv("SMALLDISK_PLAN_ID")
+    elif productName == "512disk":
+        PLAN_ID = os.getenv("MEDIUMDISK_PLAN_ID")
 
 
 def webhookHelper(event):
