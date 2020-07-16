@@ -51,6 +51,9 @@ def hooks(**kwargs):
     endpointSecret = os.getenv("ENDPOINT_SECRET")
     event = None
 
+    print(sigHeader)
+    print(endpointSecret)
+
     try:
         event = stripe.Webhook.construct_event(body, sigHeader, endpointSecret)
     except ValueError as e:
