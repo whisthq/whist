@@ -211,7 +211,7 @@ bool hasClipboardUpdated() {
 }
 
 ClipboardData* GetClipboard() {
-    // We have to wait a bit after hasClipboardUpdated, before the clipboard actually updates 
+    // We have to wait a bit after hasClipboardUpdated, before the clipboard actually updates
     SDL_Delay(15);
 
     ClipboardData* cb = (ClipboardData*)clipboard_buf;
