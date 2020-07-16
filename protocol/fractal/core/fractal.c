@@ -311,7 +311,8 @@ void update_webserver_parameters() {
 
     LOG_INFO("GETTING JSON");
 
-    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/vm/protocol_info", buf, len)) {
+    if (!SendJSONGet(will_try_staging ? STAGING_HOST : PRODUCTION_HOST, "/vm/protocol_info", buf,
+                     len)) {
         already_obtained_vm_type = true;
         StartTimer(&last_vm_info_check_time);
         return;

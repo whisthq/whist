@@ -544,7 +544,7 @@ int32_t MultithreadedUpdateStatus(void *data) {
 
     char json[1000];
     snprintf(json, sizeof(json),
-"{\n\
+             "{\n\
             \"version\" : \"%s\",\n\
             \"available\" : %s\n\
 }",
