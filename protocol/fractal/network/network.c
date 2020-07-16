@@ -199,7 +199,7 @@ bool handshakePrivateKey(SocketContext *context) {
     private_key_data_t our_signed_priv_key_data;
     private_key_data_t their_priv_key_data;
     int recv_size;
-    int slen = sizeof(context->addr);
+    socklen_t slen = sizeof(context->addr);
 
     // Generate and send private key request data
     preparePrivateKeyRequest(&our_priv_key_data);
@@ -1557,7 +1557,7 @@ typedef struct {
     char private_key[16];
 } signature_data_t;
 
-bool signPrivateKey(private_key_data_t *priv_key_data, int recv_size, char *private_key) {
+bool signPrivateKey(private_key_data_t *priv_key_data, int recv_size, void *private_key) {
     if (recv_size == sizeof(private_key_data_t)) {
         signature_data_t sig_data;
         memcpy(sig_data.iv, priv_key_data->iv, sizeof(priv_key_data->iv));
@@ -1573,7 +1573,7 @@ bool signPrivateKey(private_key_data_t *priv_key_data, int recv_size, char *priv
 
 bool confirmPrivateKey(private_key_data_t *our_priv_key_data,
                        private_key_data_t *our_signed_priv_key_data, int recv_size,
-                       char *private_key) {
+                       void *private_key) {
     if (recv_size == sizeof(private_key_data_t)) {
         if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
             LOG_ERROR("IV is incorrect!");
