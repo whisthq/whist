@@ -138,16 +138,14 @@ ClipboardData* GetClipboard() {
         OSXImage* clipboard_image = (OSXImage*)malloc(sizeof(OSXImage));
         memset(clipboard_image, 0, sizeof(OSXImage));
 
-        // get the image and its size
+        // get the image
         ClipboardGetImage(clipboard_image);
-        int data_size = clipboard_image->size + 14;
 
         // copy the data
-        if ((unsigned long)data_size < sizeof(clipboard_buf)) {
-            cb->size = data_size;
-            memcpy(cb->data, clipboard_image->data + 14, data_size);
+        if ((unsigned long)clipboard_image->size < sizeof(clipboard_buf)) {
+            cb->size = clipboard_image->size;
+            memcpy(cb->data, clipboard_image->data + 14, clipboard_image->size);
             // dimensions for sanity check
-            (*(int*)&cb->data[8]) = -(*(int*)&cb->data[8]);
             LOG_INFO("Width: %d", (*(int*)&cb->data[4]));
             LOG_INFO("Height: %d", (*(int*)&cb->data[8]));
             // data type and length
@@ -157,7 +155,7 @@ ClipboardData* GetClipboard() {
             // struct
             free(clipboard_image);
         } else {
-            LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
+            LOG_WARNING("Could not copy, clipboard too large! %d bytes", cb->size);
         }
     } else {
         LOG_INFO("Nothing in the clipboard!");
