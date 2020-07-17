@@ -142,7 +142,7 @@ ClipboardData* GetClipboard() {
         ClipboardGetImage(clipboard_image);
 
         // copy the data
-        if ((unsigned long)data_size < sizeof(clipboard_buf)) {
+        if ((unsigned long)clipboard_image->size < sizeof(clipboard_buf)) {
             cb->size = clipboard_image->size;
             memcpy(cb->data, clipboard_image->data + 14, clipboard_image->size);
             // dimensions for sanity check
@@ -155,7 +155,7 @@ ClipboardData* GetClipboard() {
             // struct
             free(clipboard_image);
         } else {
-            LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
+            LOG_WARNING("Could not copy, clipboard too large! %d bytes", cb->size);
         }
     } else {
         LOG_INFO("Nothing in the clipboard!");
