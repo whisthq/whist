@@ -33,13 +33,12 @@ whatever files are in the SET_CLIPBOARD directory.
 
 #define CLOSE_FDS \
     "for fd in $(ls /proc/$$/fd); do\
-  case \"$fd\" in\
-    0|1|2|255)\
+  case \"$fd\" in 0|1|2|255)\
       ;;\
     *)\
       eval \"exec $fd>&-\"\
       ;;\
-  esac\
+  esac \
 done; "
 
 #define MAX_CLIPBOARD_SIZE 10000000
@@ -56,7 +55,7 @@ static Atom incr_id;
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
 bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
 
-void initClipboard() { StartTrackingClipboardUpdates(); }
+void unsafe_initClipboard() { StartTrackingClipboardUpdates(); }
 
 bool get_clipboard_picture(ClipboardData* cb) {
     Atom target_atom = XInternAtom(display, "image/bmp", False),
@@ -156,7 +155,7 @@ bool get_clipboard_files(ClipboardData* cb) {
     }
 }
 
-ClipboardData* GetClipboard() {
+ClipboardData* unsafe_GetClipboard() {
     ClipboardData* cb = (ClipboardData*)cb_buf;
     cb->type = CLIPBOARD_NONE;
     cb->size = 0;
@@ -168,7 +167,7 @@ ClipboardData* GetClipboard() {
     return cb;
 }
 
-void SetClipboard(ClipboardData* cb) {
+void unsafe_SetClipboard(ClipboardData* cb) {
     static FILE* inp = NULL;
 
     //
@@ -257,7 +256,7 @@ void SetClipboard(ClipboardData* cb) {
     // We make sure that pending clipboard updates are wiped out, because we
     // just recently updated the clipboard hasClipboardUpdated() is going to
     // return true right now:
-    hasClipboardUpdated();
+    unsafe_hasClipboardUpdated();
     // hasClipboardUpdated() should return false after this
     return;
 }
@@ -277,7 +276,7 @@ bool StartTrackingClipboardUpdates() {
     return true;
 }
 
-bool hasClipboardUpdated() {
+bool unsafe_hasClipboardUpdated() {
     //
     // If the clipboard has updated since this function was last called,
     // or since StartTrackingClipboardUpdates was last called,
