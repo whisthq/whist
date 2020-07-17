@@ -891,7 +891,7 @@ int main() {
 #ifdef _WIN32
     initLogger("C:\\ProgramData\\FractalCache");
 #else
-    initLogger(".");
+    initLogger(".", connection_id);
 #endif
     LOG_INFO("Version Number: %s", get_version());
     LOG_INFO("Fractal server revision %s", FRACTAL_GIT_REVISION);
@@ -1116,9 +1116,12 @@ int main() {
             }
         }
 
-        sendLogHistory();
-
         LOG_INFO("Disconnected");
+        sendLogHistory();
+        destroyLogger();
+        connection_id = rand();
+        initLogger(".", connection_id);
+
 
         DestroyInputDevice(input_device);
 

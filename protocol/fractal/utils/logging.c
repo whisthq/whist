@@ -84,13 +84,14 @@ clock mprintf_timer;
 FILE *mprintf_log_file = NULL;
 char *log_directory = NULL;
 
+//This is written to in MultiThreaderPrintf
 char logger_history[1000000];
 int logger_history_len;
 
 char *get_logger_history() { return logger_history; }
 int get_logger_history_len() { return logger_history_len; }
 
-void initLogger(char *log_dir) {
+void initLogger(char *log_dir, int log_id) {
     initBacktraceHandler();
 
     logger_history_len = 0;
@@ -100,7 +101,14 @@ void initLogger(char *log_dir) {
         log_directory = log_dir;
 
         strcat(f, log_directory);
-        strcat(f, "/log.txt");
+        strcat(f, "/log");
+
+        if (log_id >= 0) {
+            char * log_id_str;
+            asprintf(&log_id_str, "%d", log_id);
+            strcat(f, log_id_str);
+        }
+        strcat(f, ".txt");
 
 #if defined(_WIN32)
         CreateDirectoryA(log_directory, 0);
@@ -133,6 +141,9 @@ void destroyLogger() {
         fclose(mprintf_log_file);
     }
     mprintf_log_file = NULL;
+
+    logger_history[0] = '\0';
+    logger_history_len = 0;
 }
 
 int MultiThreadedPrintf(void *opaque) {
@@ -469,7 +480,7 @@ char *get_version() {
 
 bool sendLogHistory() {
     char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
-    char *path = "/logs";
+    char *request_path = "/logs";
 
     char *logs_raw = get_logger_history();
     int raw_log_len = get_logger_history_len();
@@ -526,7 +537,7 @@ bool sendLogHistory() {
             connection_id, get_version(), logs);
 
     LOG_INFO("Sending logs to webserver...");
-    SendJSONPost(host, path, json);
+    SendJSONPost(host, request_path, json);
     free(logs);
     free(json);
 
