@@ -329,6 +329,7 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  * @param path                     The /path/to/the/endpoint
  * @param jsonObj                  A string consisting of the JSON-complient
  *                                 datastream to send to the webserver
+ * @param access_token             The access token for authentication
  *
  * @returns                        Will return false on failure, will return
  *                                 true on success Failure implies that the
@@ -336,7 +337,7 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendJSONPost(char* host_s, char* path, char* jsonObj);
+bool SendJSONPost(char* host_s, char* path, char* jsonObj, char* access_token);
 
 /**
  * @brief                          Sends a JSON GET request to the Fractal
