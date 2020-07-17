@@ -10,7 +10,7 @@ import requests
 import github
 
 default_protocol_dir = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "protocol-binaries"
+    os.path.dirname(os.path.realpath(__file__)), "protocol-packages"
 )
 
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--release",
-        help="which release to download the binaries from; either a fully qualified release name or 'latest:branch' which will pick the latest for the branch",
+        help="which release to download the packages from; either a fully qualified release name or 'latest:branch' which will pick the latest for the branch",
         default="latest:dev",
     )
     parser.add_argument(
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--wipe-old",
-        help="delete older protocol binaries in the specified out_dir",
+        help="delete older protocol packages in the specified out_dir",
         action="store_true",
         default=False
     )
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     assets = get_assets_for_platforms(release, platforms)
     if len(assets) != len(platforms):
         print(
-            f"WARNING: Only found {len(assets)} of {len(platforms)} requested binaries"
+            f"WARNING: Only matched {len(assets)} of {len(platforms)} requested platforms"
         )
     if args.wipe_old:
         print(f"Clearing out all files currently in '{args.out_dir}'")

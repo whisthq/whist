@@ -1,3 +1,18 @@
+# Fractal protocol
+protocol-build/
+rcedit-x64.exe
+.unison
+.protocol
+clipboard/
+log.txt
+connection_id.txt
+ssh_host_ecdsa_key.pub
+sshkey.pub
+sshkey
+
+# .env for MacOS notarizing credentials
+*.env
+
 # Logs
 logs
 *.log
@@ -61,17 +76,3 @@ npm-debug.log.*
 *.css.d.ts
 *.sass.d.ts
 *.scss.d.ts
-
-# .env for MacOS notarizing credentials
-*.env
-
-# Fractal protocol
-.unison
-.protocol
-protocol-build
-clipboard/
-log.txt
-connection_id.txt
-ssh_host_ecdsa_key.pub
-sshkey.pub
-sshkey

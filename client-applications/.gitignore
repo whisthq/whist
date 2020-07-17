@@ -1,8 +1,8 @@
 # macOS
 .DS_Store
 
-# Protocol binaries downloaded via retrieve_protocol_binaries.py
-protocol-binaries/
+# Protocol packages downloaded via retrieve_protocol_packages.py
+protocol-packages/
 
 # yarn
 node_modules/
