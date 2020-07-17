@@ -191,6 +191,172 @@ class Dashboard extends Component {
                                             <span
                                                 className={styles.headerButton}
                                             >
+                                                How to Use
+                                            </span>
+                                        }
+                                        modal
+                                        contentStyle={{
+                                            width: 450,
+                                            color: "#111111",
+                                            borderRadius: 5,
+                                            backgroundColor: "white",
+                                            border: "none",
+                                            height: 450,
+                                            padding: 30,
+                                            textAlign: "left",
+                                            overflowY: "scroll",
+                                            lineHeight: 1.6
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                fontSize: 28,
+                                                marginTop: 20,
+                                                marginBottom: 10,
+                                                fontWeight: "bold",
+                                                textAlign: "center"
+                                            }}
+                                            className={styles.blueGradient}
+                                        >
+                                            How to Use
+                                        </div>
+                                        <div
+                                            style={{
+                                                maxWidth: 450,
+                                                margin: "auto",
+                                                marginTop: 15,
+                                                fontSize: 14,
+                                            }}
+                                        >
+                                            Welcome to Fractal! To get started, simply 
+                                            click the <b>Launch My Cloud PC</b> button. Fractal is a
+                                            computer in the cloud, and is used just like your regular computer.
+                                            Here's a few useful things to help make your experience the best
+                                            it can be:
+                                        </div>
+                                        <div className={styles.subTitle}>
+                                            Exiting your Fractal PC
+                                        </div>
+                                        <div
+                                            style={{
+                                                maxWidth: 450,
+                                                margin: "auto",
+                                                marginTop: 15,
+                                                fontSize: 14,
+                                            }}
+                                        >
+                                            You can exit your Fractal PC by clicking on the Windows Start 
+                                            Menu and then clicking on the <b>Exit Fractal</b> shortcut under
+                                            the <b>&</b> sign, atop the menu bar. There's also a similar exit
+                                            button on the desktop.
+                                        </div>
+                                        <div
+                                            style={{
+                                                maxWidth: 450,
+                                                margin: "auto",
+                                                marginTop: 15,
+                                                fontSize: 14,
+                                            }}
+                                        >
+                                            You can also exit via the shortchut <b>Ctrl+Alt+F4</b>, on Windows
+                                                devices, and <b>Cmd+Ctrl+F4</b>, on MacOS devices.
+                                        </div>
+                                        <div className={styles.subTitle}>
+                                            Clipboard
+                                        </div>
+                                        <div
+                                            style={{
+                                                maxWidth: 450,
+                                                margin: "auto",
+                                                marginTop: 15,
+                                                fontSize: 14,
+                                            }}
+                                        >
+                                            Fractal contains a bidirectional clipboard between your local computer 
+                                            and your Fractal PC. You can copy-paste text, images and files seamlessly,
+                                            and Fractal will transfer this data back-and-forth. This feature works best
+                                            in windowed mode.
+                                        </div>
+                                        <div className={styles.subTitle}>
+                                            Windowed Mode
+                                        </div>
+                                        <div
+                                            style={{
+                                                maxWidth: 450,
+                                                margin: "auto",
+                                                marginTop: 15,
+                                                fontSize: 14,
+                                            }}
+                                        >
+                                            You can launch Fractal in windowed mode and resize the window to the size
+                                            you want by dragging on the corners of the window, just like any other 
+                                            program. The stream of your Fractal PC will freeze as you drag, and pick up
+                                            seamlessly when you release.
+                                        </div>
+                                        <div className={styles.subTitle}>
+                                            Scaling Factor
+                                        </div>
+                                        <div
+                                            style={{
+                                                maxWidth: 450,
+                                                margin: "auto",
+                                                marginTop: 15,
+                                                fontSize: 14,
+                                            }}
+                                        >
+                                            You can modify the scaling factor of your Fractal PC to support all the way up to 4K. 
+                                            Beware that this will increase bandwidth consumption.
+                                        </div>
+                                        <div
+                                            style={{
+                                                maxWidth: 450,
+                                                margin: "auto",
+                                                marginTop: 15,
+                                                fontSize: 14,
+                                            }}
+                                        >
+                                            To change the size of text and icons in
+                                            your cloud PC, connect to your cloud PC, right click on the desktop and select "Display Settings".
+                                            Next, click on Screen 2. Finally, select the appropriate scaling factor (100%, 150%, etc.).
+                                        </div>
+                                        <div className={styles.subTitle}>
+                                            Current Limitations
+                                        </div>
+                                        <div
+                                            style={{
+                                                maxWidth: 450,
+                                                margin: "auto",
+                                                marginTop: 15,
+                                                fontSize: 14,
+                                            }}
+                                        >
+                                            We are working diligently to improve Fractal. However,
+                                            there are a few limitations outside of our control.
+                                        </div>
+                                        <div>
+                                        <div className = {styles.limitationBox}>
+                                            The graphics cards powering Fractal PCs do not currently support resolutions compatible
+                                            with MacOS resolutions, and might appear slightly stretched on those devices.
+                                        </div>
+                                        <div className = {styles.limitationBox}>
+                                            Some video games and softwares have trouble communicating with a cloud PC.
+                                            If you experience this issue, please report the specific software to <b>support@fractalcomputers.com</b> so we can communicate with the publisher.
+                                        </div>
+                                        <div className = {styles.limitationBox}>
+                                            VPNs should not be used on Fractal PCs as they will prevent the Fractal PC from
+                                            communicating with your local computer.
+                                        </div>
+                                        <div className = {styles.limitationBox}>
+                                            Docker does not run on Fractal PCs, since nested virtualization is not currently
+                                            supported on the hardware we use.
+                                        </div>
+                                        </div>                                      
+                                    </Popup>
+                                    <Popup
+                                        trigger={
+                                            <span
+                                                className={styles.headerButton}
+                                            >
                                                 Refer a Friend
                                             </span>
                                         }

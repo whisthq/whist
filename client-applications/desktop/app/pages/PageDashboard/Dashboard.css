@@ -283,3 +283,21 @@ button {
     top: 5.5px;
     padding-left: 16px;
 }
+
+.limitationBox {
+    max-width: 450px;
+    margin: auto;
+    margin-top: 15px;
+    font-size: 13px;
+    text-align: left;
+    border-radius: 5px;
+    padding: 15px 25px;
+    background-color: #F6F6F6;
+}
+
+.subTitle {
+    font-weight: bold;
+    font-size: 18px;
+    margin-top: 35px;
+    text-align: left;
+}
