@@ -63,7 +63,8 @@ const char *ClipboardGetString() {
 void ClipboardSetString(const char *str) {
     // clear clipboard and then set string data
     [[NSPasteboard generalPasteboard] clearContents];
-    [[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str] forType:NSPasteboardTypeString];
+    [[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str]
+                                        forType:NSPasteboardTypeString];
     return;
 }
 
@@ -94,7 +95,8 @@ void ClipboardSetImage(char *img, int len) {
 
     // clear clipboard and then set image data
     [[NSPasteboard generalPasteboard] clearContents];
-    [[NSPasteboard generalPasteboard] setData:[image TIFFRepresentation] forType:NSPasteboardTypeTIFF];
+    [[NSPasteboard generalPasteboard] setData:[image TIFFRepresentation]
+                                      forType:NSPasteboardTypeTIFF];
     return;
 }
 
