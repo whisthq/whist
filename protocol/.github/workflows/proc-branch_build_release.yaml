@@ -1,9 +1,11 @@
-name: Branch Build & Release
+# NOTE: this name should be kept stable since workflow_dispatch callers may use it to
+# trigger this workflow.
+name: "Procedure: Branch Build & Release"
 
 on:
   workflow_dispatch:
     inputs:
-      ref: # TODO support arbitrary refs
+      ref:
         description: ref to run against (eg. `refs/heads/BRANCH_NAME` or `refs/pull/PR_NUMBER`)
         required: true
       should_test:
