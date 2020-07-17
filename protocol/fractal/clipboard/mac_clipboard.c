@@ -147,6 +147,7 @@ ClipboardData* GetClipboard() {
             cb->size = data_size;
             memcpy(cb->data, clipboard_image->data + 14, data_size);
             // dimensions for sanity check
+            (*(int*)&cb->data[8]) = -(*(int*)&cb->data[8]);
             LOG_INFO("Width: %d", (*(int*)&cb->data[4]));
             LOG_INFO("Height: %d", (*(int*)&cb->data[8]));
             // data type and length
@@ -178,12 +179,14 @@ void SetClipboard(ClipboardData* cb) {
         case CLIPBOARD_IMAGE:
             LOG_INFO("SetClipboard to Image with size %d", cb->size);
             // fix the CGImage header back
-            char* data = malloc(cb->size + 14);
+            const size_t header_size = 14;
+            const size_t offset_to_pixel_array = 54;
+            char* data = malloc(cb->size + header_size);
             *((char*)(&data[0])) = 'B';
             *((char*)(&data[1])) = 'M';
-            *((int*)(&data[2])) = cb->size + 14;
-            *((int*)(&data[10])) = 54;
-            memcpy(data + 14, cb->data, cb->size);
+            *((int*)(&data[2])) = cb->size + header_size;
+            *((int*)(&data[10])) = offset_to_pixel_array;
+            memcpy(data + header_size, cb->data, cb->size);
             // set the image and free the temp data
             ClipboardSetImage(data, cb->size + 14);
             free(data);
