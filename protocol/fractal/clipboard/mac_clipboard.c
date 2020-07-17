@@ -138,14 +138,13 @@ ClipboardData* GetClipboard() {
         OSXImage* clipboard_image = (OSXImage*)malloc(sizeof(OSXImage));
         memset(clipboard_image, 0, sizeof(OSXImage));
 
-        // get the image and its size
+        // get the image
         ClipboardGetImage(clipboard_image);
-        int data_size = clipboard_image->size + 14;
 
         // copy the data
         if ((unsigned long)data_size < sizeof(clipboard_buf)) {
-            cb->size = data_size;
-            memcpy(cb->data, clipboard_image->data + 14, data_size);
+            cb->size = clipboard_image->size;
+            memcpy(cb->data, clipboard_image->data + 14, clipboard_image->size);
             // dimensions for sanity check
             LOG_INFO("Width: %d", (*(int*)&cb->data[4]));
             LOG_INFO("Height: %d", (*(int*)&cb->data[8]));
