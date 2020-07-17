@@ -38,7 +38,7 @@ destroyClipboardSynchronizer();
 #include "clipboard.h"
 
 #define UNUSED(x) (void)(x)
-#define MS_IN_SECOND 1000.0
+#define MS_IN_SECOND 1000
 
 int UpdateClipboardThread(void* opaque);
 bool pendingUpdateClipboard();
@@ -74,9 +74,7 @@ void initClipboardSynchronizer(char* server_ip_local) {
     StartTimer((clock*)&last_clipboard_update);
     clipboard_semaphore = SDL_CreateSemaphore(0);
 
-    // thread =
-    //     SDL_CreateThread(UpdateClipboardThread, "UpdateClipboardThread",
-    //     NULL);
+    thread = SDL_CreateThread(UpdateClipboardThread, "UpdateClipboardThread", NULL);
 
     pending_update_clipboard = true;
 }
@@ -142,24 +140,6 @@ int UpdateClipboardThread(void* opaque) {
                          -force \"ssh://%s/%s/get_clipboard/\"",
                     prefix, exc, username, server_ip, filename, SET_CLIPBOARD, server_ip, filename);
 
-                /*
-                strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-o
-                UserKnownHostsFile=ssh_host_ecdsa_key.pub -l " ); strcat( cmd,
-                username ); strcat( cmd, " -i sshkey\" " ); strcat( cmd, "
-                \"ssh://" ); strcat( cmd, (char*)server_ip ); strcat( cmd, "/"
-                ); strcat( cmd, filename ); strcat( cmd, "/get_clipboard/" );
-                strcat( cmd, "\" " );
-                strcat( cmd, SET_CLIPBOARD );
-                strcat( cmd, " -force " );
-                strcat( cmd, " \"ssh://" );
-                strcat( cmd, (char*)server_ip );
-                strcat( cmd, "/" );
-                strcat( cmd, filename );
-                strcat( cmd, "/get_clipboard/" );
-                strcat( cmd, "\" " );
-                strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
-                */
-
                 LOG_INFO("COMMAND: %s", cmd);
                 runcmd(cmd, NULL);
             }
@@ -194,24 +174,6 @@ int UpdateClipboardThread(void* opaque) {
                          -force %s",
                     prefix, exc, username, GET_CLIPBOARD, server_ip, filename, GET_CLIPBOARD);
 
-                /*
-                strncat(cmd,
-                       "-follow \"Path *\" -ui text -sshargs \"-o "
-                       "UserKnownHostsFile=ssh_host_ecdsa_key.pub -l ",
-                sizeof(cmd)); strncat(cmd, username, sizeof( cmd ) );
-                strncat(cmd, " -i sshkey\" ", sizeof( cmd ) );
-                strncat(cmd, GET_CLIPBOARD, sizeof( cmd ) );
-                strncat(cmd, " \"ssh://", sizeof( cmd ) );
-                strncat(cmd, (char*)server_ip, sizeof( cmd ) );
-                strncat(cmd, "/", sizeof( cmd ) );
-                strncat(cmd, filename, sizeof( cmd ) );
-                strncat(cmd, "/set_clipboard", sizeof( cmd ) );
-                strncat(cmd, "/\" -force ", sizeof( cmd ) );
-                strncat(cmd, GET_CLIPBOARD, sizeof( cmd ) );
-                strncat(cmd, " -ignorearchives -confirmbigdel=false -batch",
-                sizeof( cmd ) );
-                */
-
                 LOG_INFO("COMMAND: %s", cmd);
                 runcmd(cmd, NULL);
             }
@@ -230,8 +192,8 @@ int UpdateClipboardThread(void* opaque) {
             // If it hasn't been 500ms yet, then wait 500ms to prevent too much
             // spam
             const int spam_time_ms = 500;
-            if (GetTimer(clipboard_time) < spam_time_ms / MS_IN_SECOND) {
-                SDL_Delay(max((int)(spam_time_ms - 1000 * GetTimer(clipboard_time)), 1));
+            if (GetTimer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
+                SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * GetTimer(clipboard_time)), 1));
             }
         }
 
@@ -243,7 +205,6 @@ int UpdateClipboardThread(void* opaque) {
 }
 
 ClipboardData* ClipboardSynchronizerGetNewClipboard() {
-    /*
     if (pending_clipboard_push) {
         pending_clipboard_push = false;
         return clipboard;
@@ -266,7 +227,6 @@ ClipboardData* ClipboardSynchronizerGetNewClipboard() {
             SDL_SemPost(clipboard_semaphore);
         }
     }
-    */
 
     return NULL;
 }

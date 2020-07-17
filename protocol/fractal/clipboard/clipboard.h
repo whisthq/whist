@@ -123,4 +123,9 @@ void SetClipboard(ClipboardData* cb);
  */
 bool hasClipboardUpdated();
 
+void unsafe_initClipboard();
+ClipboardData* unsafe_GetClipboard();
+void unsafe_SetClipboard(ClipboardData* cb);
+bool unsafe_hasClipboardUpdated();
+
 #endif  // CLIPBOARD_H
