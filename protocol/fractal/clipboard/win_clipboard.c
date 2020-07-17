@@ -40,7 +40,7 @@ char* set_clipboard_directory() {
 }
 #endif
 
-void initClipboard() {
+void unsafe_initClipboard() {
     get_clipboard_directory();
     set_clipboard_directory();
     StartTrackingClipboardUpdates();
@@ -199,7 +199,7 @@ bool StartTrackingClipboardUpdates() {
     return true;
 }
 
-bool hasClipboardUpdated() {
+bool unsafe_hasClipboardUpdated() {
     bool hasUpdated = false;
 
     int new_clipboard_sequence_number = GetClipboardSequenceNumber();
@@ -210,7 +210,7 @@ bool hasClipboardUpdated() {
     return hasUpdated;
 }
 
-ClipboardData* GetClipboard() {
+ClipboardData* unsafe_GetClipboard() {
     // We have to wait a bit after hasClipboardUpdated, before the clipboard actually updates
     SDL_Delay(15);
 
@@ -419,7 +419,7 @@ HGLOBAL getGlobalAlloc(void* buf, int len) {
     return hMem;
 }
 
-void SetClipboard(ClipboardData* cb) {
+void unsafe_SetClipboard(ClipboardData* cb) {
     if (cb->type == CLIPBOARD_NONE) {
         return;
     }
@@ -547,5 +547,5 @@ void SetClipboard(ClipboardData* cb) {
     }
 
     // Update the status so that this specific update doesn't count
-    hasClipboardUpdated();
+    unsafe_hasClipboardUpdated();
 }

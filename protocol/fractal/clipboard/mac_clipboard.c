@@ -20,7 +20,7 @@ whatever files are in the SET_CLIPBOARD directory.
 
 bool StartTrackingClipboardUpdates();
 
-void initClipboard() { StartTrackingClipboardUpdates(); }
+void unsafe_initClipboard() { StartTrackingClipboardUpdates(); }
 
 #include <sys/syslimits.h>
 #include <unistd.h>
@@ -43,7 +43,7 @@ bool StartTrackingClipboardUpdates() {
     return true;
 }
 
-bool hasClipboardUpdated() {
+bool unsafe_hasClipboardUpdated() {
     bool hasUpdated = false;
 
     int new_clipboard_sequence_number = GetClipboardChangecount();
@@ -59,7 +59,7 @@ bool hasClipboardUpdated() {
     return hasUpdated;
 }
 
-ClipboardData* GetClipboard() {
+ClipboardData* unsafe_GetClipboard() {
     ClipboardData* cb = (ClipboardData*)clipboard_buf;
 
     cb->size = 0;
@@ -164,7 +164,7 @@ ClipboardData* GetClipboard() {
     return cb;
 }
 
-void SetClipboard(ClipboardData* cb) {
+void unsafe_SetClipboard(ClipboardData* cb) {
     if (cb->type == CLIPBOARD_NONE) {
         return;
     }
@@ -217,5 +217,5 @@ void SetClipboard(ClipboardData* cb) {
     }
 
     // Update the status so that this specific update doesn't count
-    hasClipboardUpdated();
+    unsafe_hasClipboardUpdated();
 }
