@@ -1,3 +1,35 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file logging.c
+ * @brief This file contains the logging macros and utils to send Winlogon
+ *        status and to send the logs to the webserver.
+============================
+Usage
+============================
+We have several levels of logging.
+- NO_LOG: self explanatory
+- ERROR_LEVEL: only log errors. Errors are conditions that cause the program to
+               terminate or lead to an irrecoverable state.
+- WARNING_LEVEL: log warnings and above (warnings and errors). Warnings are when
+                 things do not work as expected, but we can recover.
+- INFO_LEVEL: log info and above. Info is just for logs that provide additional
+              information on state. e.g decode time
+- DEBUG_LEVEL: log debug and above. For use when actively debugging a problem,
+               but for things that don't need to be logged regularly
+
+The log level defaults to DEBUG_LEVEL, but it can also be passed as a compiler
+flag, as it is in the root CMakesList.txt, which sets it to DEBUG_LEVEL for
+Debug builds and WARNING_LEVEL for release builds.
+
+Note that these macros do not need an additional \n character at the end of your
+format strings.
+
+We also have a LOG_IF(condition, format string) Macro which only logs if the
+condition is true. This can be used for debugging or if we want to more
+aggressively log something when a flag changes. For example in this file you
+could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
+*/
+
 #if defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -18,9 +50,13 @@
 #include "../network/network.h"
 #include "logging.h"
 
+#define UNUSED(x) (void)(x)
+
 char *get_logger_history();
 int get_logger_history_len();
 void initBacktraceHandler();
+
+#define BYTES_IN_KILOBYTE 1024
 
 extern int connection_id;
 
@@ -65,6 +101,7 @@ void initLogger(char *log_dir) {
 
         strcat(f, log_directory);
         strcat(f, "/log.txt");
+
 #if defined(_WIN32)
         CreateDirectoryA(log_directory, 0);
 #else
@@ -76,8 +113,8 @@ void initLogger(char *log_dir) {
     run_multithreaded_printf = true;
     logger_mutex = SDL_CreateMutex();
     logger_semaphore = SDL_CreateSemaphore(0);
-    mprintf_thread = SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf,
-                                      "MultiThreadedPrintf", NULL);
+    mprintf_thread =
+        SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
     LOG_INFO("Writing logs to %s", f);
     //    StartTimer(&mprintf_timer);
 }
@@ -99,7 +136,7 @@ void destroyLogger() {
 }
 
 int MultiThreadedPrintf(void *opaque) {
-    opaque;
+    UNUSED(opaque);
 
     while (true) {
         // Wait until signaled by printf to begin running
@@ -143,18 +180,16 @@ int MultiThreadedPrintf(void *opaque) {
             //    last_printf = i + 6;
             //} else if (i > last_printf) {
             printf("%s", logger_queue_cache[i].buf);
-            int chars_written = sprintf(&logger_history[logger_history_len],
-                                        "%s", logger_queue_cache[i].buf);
+            int chars_written =
+                sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
             logger_history_len += chars_written;
 
             // Shift buffer over if too large;
             if ((unsigned long)logger_history_len >
-                sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) -
-                    10) {
+                sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) - 10) {
                 int new_len = sizeof(logger_history) / 3;
                 for (i = 0; i < new_len; i++) {
-                    logger_history[i] =
-                        logger_history[logger_history_len - new_len + i];
+                    logger_history[i] = logger_history[logger_history_len - new_len + i];
                 }
                 logger_history_len = new_len;
             }
@@ -170,7 +205,7 @@ int MultiThreadedPrintf(void *opaque) {
             int sz = ftell(mprintf_log_file);
 
             // If it's larger than 5MB, start a new file and store the old one
-            if (sz > 5 * 1024 * 1024) {
+            if (sz > 5 * BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE) {
                 fclose(mprintf_log_file);
 
                 char f[1000] = "";
@@ -222,8 +257,7 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
             char old_msg[LOGGER_BUF_SIZE];
             memcpy(old_msg, buf, LOGGER_BUF_SIZE);
             int chars_written =
-                snprintf(buf, LOGGER_BUF_SIZE,
-                         "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n",
+                snprintf(buf, LOGGER_BUF_SIZE, "OLD MESSAGE: %s\nTRYING TO OVERWRITE WITH: %s\n",
                          old_msg, logger_queue[index].buf);
             if (!(chars_written > 0 && chars_written <= LOGGER_BUF_SIZE)) {
                 buf[0] = '\0';
@@ -275,8 +309,7 @@ void PrintStacktrace() {
     for (i = 0; i < frames; i++) {
         SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
 
-        fprintf(stderr, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name,
-                symbol->Address);
+        fprintf(stderr, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name, symbol->Address);
     }
 #else
 #define HANDLER_ARRAY_SIZE 100
@@ -376,8 +409,7 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS *ExceptionInfo) {
     fflush(stderr);
     /* If this is a stack overflow then we can't walk the stack, so just show
       where the error happened */
-    if (EXCEPTION_STACK_OVERFLOW !=
-        ExceptionInfo->ExceptionRecord->ExceptionCode) {
+    if (EXCEPTION_STACK_OVERFLOW != ExceptionInfo->ExceptionRecord->ExceptionCode) {
         PrintStacktrace();
     } else {
     }
@@ -494,7 +526,7 @@ bool sendLogHistory() {
             connection_id, get_version(), logs);
 
     LOG_INFO("Sending logs to webserver...");
-    SendJSONPost(host, path, json);
+    SendJSONPost(host, path, json, get_access_token());
     free(logs);
     free(json);
 
@@ -508,24 +540,16 @@ typedef struct update_status_data {
 int32_t MultithreadedUpdateStatus(void *data) {
     update_status_data_t *d = data;
 
-    char json[1000];
-
-    snprintf(json, sizeof(json),
-             "{\
-            \"ready\" : true\
-    }");
-
     char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
 
-    SendJSONPost(host, "/vm/winlogonStatus", json);
-
+    char json[1000];
     snprintf(json, sizeof(json),
-             "{\
-            \"version\" : \"%s\",\
-            \"available\" : %s\
-    }",
+             "{\n\
+            \"version\" : \"%s\",\n\
+            \"available\" : %s\n\
+}",
              get_version(), d->is_connected ? "false" : "true");
-    SendJSONPost(host, "/vm/connectionStatus", json);
+    SendJSONPost(host, "/vm/ping", json, get_access_token());
 
     free(d);
     return 0;
@@ -535,7 +559,6 @@ void updateStatus(bool is_connected) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
     update_status_data_t *d = malloc(sizeof(update_status_data_t));
     d->is_connected = is_connected;
-    SDL_Thread *update_status =
-        SDL_CreateThread(MultithreadedUpdateStatus, "UpdateStatus", d);
+    SDL_Thread *update_status = SDL_CreateThread(MultithreadedUpdateStatus, "UpdateStatus", d);
     SDL_DetachThread(update_status);
 }

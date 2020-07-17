@@ -137,15 +137,12 @@ extern int getopt();
 #ifndef __need_getopt
 extern int getopt_long(int __argc, char *const *__argv, const char *__shortopts,
                        const struct option *__longopts, int *__longind);
-extern int getopt_long_only(int __argc, char *const *__argv,
-                            const char *__shortopts,
+extern int getopt_long_only(int __argc, char *const *__argv, const char *__shortopts,
                             const struct option *__longopts, int *__longind);
 
 /* Internal only.  Users should not call this directly.  */
-extern int _getopt_internal(int __argc, char *const *__argv,
-                            const char *__shortopts,
-                            const struct option *__longopts, int *__longind,
-                            int __long_only);
+extern int _getopt_internal(int __argc, char *const *__argv, const char *__shortopts,
+                            const struct option *__longopts, int *__longind, int __long_only);
 #endif
 #else /* not __STDC__ */
 extern int getopt();

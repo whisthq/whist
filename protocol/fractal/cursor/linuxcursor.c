@@ -1,8 +1,15 @@
-/*
- * Set and retrieve Linux Ubuntu cursor shapes.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file linuxcursor.c
+ * @brief This file defines the cursor types, functions, init and get.
+============================
+Usage
+============================
+
+Use InitCursor to load the appropriate cursor images for a specific OS, and then
+GetCurrentCursor to retrieve what the cursor shold be on the OS (drag-window,
+arrow, etc.).
+*/
 
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>

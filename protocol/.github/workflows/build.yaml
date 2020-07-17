@@ -1,13 +1,14 @@
+# Compile and static test via cppcheck on all desktop OSes
+
 name: CMake Build Matrix
 
-on: [push]
+on: [ push, pull_request ]
 
 env:
   CMAKE_VERSION: 3.15.7
   NINJA_VERSION: 1.9.0
-  BUILD_TYPE: Debug
+  BUILD_TYPE: CI
   CCACHE_VERSION: 3.7.7
-
 
 jobs:
   build:
@@ -36,11 +37,35 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Chocolatey install cppcheck and CUDA Toolkit if windows
+      - name: Chocolatey install cppcheck
         if: runner.os == 'Windows'
         uses: crazy-max/ghaction-chocolatey@v1
         with:
           args: install "${{ github.workspace }}\.github\choco-install.config" --force
+      - name: Install CUDA for windows
+        if: runner.os == 'Windows'
+        env:
+          visual_studio: "Visual Studio 16 2019"
+          cuda: "11.0.167"
+        shell: powershell
+        run: |
+          # Install CUDA via a powershell script
+          ${{ github.workspace }}\.github\install_cuda_windows.ps1
+          if ($?) {
+          # Set paths for subsequent steps, using $env:CUDA_PATH
+          echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
+          echo "::set-env name=CUDA_PATH::$env:CUDA_PATH"
+          echo "::set-env name=$env:CUDA_PATH_VX_Y::$env:CUDA_PATH"
+          echo "::add-path::$env:CUDA_PATH/bin"  }
+      - name: nvcc check for windows
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          nvcc -V
+          ls $env:CUDA_PATH
+          ls $env:CUDA_PATH\bin
+          ls $env:CUDA_PATH\include
+
       - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
         id: cmake_and_ninja
         shell: cmake -P {0}
@@ -92,12 +117,12 @@ jobs:
 
           if ("${{ runner.os }}" STREQUAL "Linux")
             # install linux dev dependencies
+              execute_process(COMMAND bash -c "sudo apt-get update -y")
               execute_process(COMMAND ${{ github.workspace }}/desktop/linux-client-setup.sh)
               execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
           elseif("${{ runner.os }}" STREQUAL "macOS")
               execute_process(COMMAND brew install cppcheck)
           endif()
-
 
       - name: Download ccache
         id: ccache
@@ -150,7 +175,6 @@ jobs:
           endif()
           set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
 
-
           execute_process(
             COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
               -S .
@@ -161,13 +185,12 @@ jobs:
               -D CMAKE_C_COMPILER_LAUNCHER=ccache
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
               -D CMAKE_OSX_SYSROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
-              -DUSE_CPPCHECK=ON
+              -D USE_CPPCHECK=ON
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
             message(FATAL_ERROR "Bad exit status")
           endif()
-
 
       - name: Build
         shell: cmake -P {0}

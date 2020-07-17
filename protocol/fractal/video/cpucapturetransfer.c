@@ -11,8 +11,7 @@ int cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder) {
         LOG_ERROR("Unable to transfer screen to CPU buffer.");
         return -1;
     }
-    if (video_encoder_frame_intake(encoder, device->frame_data,
-                                   device->pitch)) {
+    if (video_encoder_frame_intake(encoder, device->frame_data, device->pitch)) {
         LOG_ERROR("Unable to load data to AVFrame");
         return -1;
     }
@@ -21,9 +20,8 @@ int cpu_transfer_capture(CaptureDevice* device, video_encoder_t* encoder) {
     time_spent += GetTimer(cpu_transfer_timer);
 
     if (times_measured == 10) {
-        LOG_INFO(
-            "Average time transferring dxgi data to encoder frame on CPU: %f",
-            time_spent / times_measured);
+        LOG_INFO("Average time transferring dxgi data to encoder frame on CPU: %f",
+                 time_spent / times_measured);
         times_measured = 0;
         time_spent = 0.0;
     }

@@ -3,7 +3,7 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file logging.h
- * @brief This fiel contains the logging macros and utils to send Winlogon
+ * @brief This file contains the logging macros and utils to send Winlogon
  *        status and to send the logs to the webserver.
 ============================
 Usage
@@ -72,8 +72,7 @@ Defines
 
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-15s | %30s:%-5d | "
-#define LOG_ARGS(LOG_TAG) \
-    CurrentTimeStr(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
+#define LOG_ARGS(LOG_TAG) CurrentTimeStr(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE "\n"
 #define ERROR_TAG "ERROR"
@@ -111,8 +110,7 @@ Defines
 
 #if LOG_LEVEL >= NO_LOGS
 #define LOG_IF(condition, message, ...) \
-    if (condition)                      \
-    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
+    if (condition) PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
 #else
 #define LOG_IF(condition, message, args...)
 #endif

@@ -3,19 +3,16 @@
 
 int broadcastAck(void);
 
-int broadcastUDPPacket(FractalPacketType type, void *data, int len, int id,
-                       int burst_bitrate, FractalPacket *packet_buffer,
-                       int *packet_len_buffer);
+int broadcastUDPPacket(FractalPacketType type, void *data, int len, int id, int burst_bitrate,
+                       FractalPacket *packet_buffer, int *packet_len_buffer);
 
 int broadcastTCPPacket(FractalPacketType type, void *data, int len);
 
-int tryGetNextMessageTCP(int client_id, FractalClientMessage **fcmsg,
-                         size_t *fcmsg_size);
+int tryGetNextMessageTCP(int client_id, FractalClientMessage **fcmsg, size_t *fcmsg_size);
 
-int tryGetNextMessageUDP(int client_id, FractalClientMessage *fcmsg,
-                         size_t *fcmsg_size);
+int tryGetNextMessageUDP(int client_id, FractalClientMessage *fcmsg, size_t *fcmsg_size);
 
-int connectClient(int id);
+int connectClient(int id, char *aes_private_key);
 
 int disconnectClient(int id);
 

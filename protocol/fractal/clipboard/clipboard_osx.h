@@ -8,6 +8,14 @@
 ============================
 Usage
 ============================
+
+The OSXImage and OSXFilenames structs define data for images and files in MacOS.
+
+You can find whether the clipboard has a specific data (Image, String or File)
+by calling the respective "ClipboardHas___" function. You can see whether the
+clipboard updated by calling GetClipboardChangeCount you can then either
+retrieve from the clipboard, or put some specific data in the clipboard, via the
+respective "ClipboardGet___" or "ClipboardSet___".
 */
 
 /*

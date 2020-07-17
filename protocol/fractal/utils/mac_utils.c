@@ -1,8 +1,15 @@
-/*
- * MacOS helper functions for clipboard functions.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file mac_utils.c
+ * @brief This file contains the MacOS helper functions for clipboard functions.
+============================
+Usage
+============================
+
+You can use these functions to check if a directory exist, to compare filenames,
+or to delete files/folders
+*/
+
 #include "mac_utils.h"
 
 #include <stdio.h>
@@ -10,8 +17,7 @@
 
 #include "logging.h"
 
-int remove_file(const char* fpath, const struct stat* sb, int typeflag,
-                struct FTW* ftwbuf) {
+int remove_file(const char* fpath, const struct stat* sb, int typeflag, struct FTW* ftwbuf) {
     int errCode = remove(fpath);
     if (errCode < 0) {
         LOG_WARNING("Error from remove: %d", errCode);
@@ -21,8 +27,7 @@ int remove_file(const char* fpath, const struct stat* sb, int typeflag,
 
 void mac_rm_rf(const char* path) {
     int errCode =
-        nftw(path, remove_file, 64 /* number of simultaneously opened fds*/,
-             FTW_DEPTH | FTW_PHYS);
+        nftw(path, remove_file, 64 /* number of simultaneously opened fds*/, FTW_DEPTH | FTW_PHYS);
     if (errCode < 0) {
         LOG_WARNING("Error from nftw, remove recursively: %d", errCode);
     }
@@ -50,10 +55,8 @@ void get_filenames(char* dir, char* filenames[]) {
                 size_t pathlen = strlen(child->fts_path);
                 strncpy(filenames[i], child->fts_path, pathlen);
                 strncpy(filenames[i] + pathlen, "/", 1);
-                strncpy(filenames[i] + pathlen + 1, child->fts_name,
-                        child->fts_namelen);
-                strncpy(filenames[i] + pathlen + 1 + child->fts_namelen, "\0",
-                        1);
+                strncpy(filenames[i] + pathlen + 1, child->fts_name, child->fts_namelen);
+                strncpy(filenames[i] + pathlen + 1 + child->fts_namelen, "\0", 1);
                 child = child->fts_link;
                 i++;
             }

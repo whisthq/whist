@@ -1,3 +1,68 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file network.c
+ * @brief This file contains all code that interacts directly with sockets
+ *        under-the-hood.
+============================
+Usage
+============================
+
+SocketContext: This type represents a socket.
+   - To use a socket, call CreateUDPContext or CreateTCPContext with the desired
+     parameters
+   - To send data over a socket, call SendTCPPacket or SendUDPPacket
+   - To receive data over a socket, call ReadTCPPacket or ReadUDPPacket
+   - If there is belief that a packet wasn't sent, you can call ReplayPacket to
+     send a packet twice
+
+FractalPacket: This type represents a packet of information
+   - Unique packets of a given type will be given unique IDs. IDs are expected
+     to be increasing monotonically, with a gap implying that a packet was lost
+   - FractalPackets that were thought to have been sent may not arrive, and
+     FractalPackets may arrive out-of-order, in the case of UDP. This will not
+     be the case for TCP, however TCP sockets may lose connection if there is a
+     problem.
+   - A given block of data will, during transmission, be split up into packets
+     with the same type and ID, but indicies ranging from 0 to num_indices - 1
+   - A missing index implies that a packet was lost
+   - A FractalPacket is only guaranteed to have data information from 0 to
+     payload_size - 1 data[] occurs at the end of the packet, so extra bytes may
+     in-fact point to invalid memory to save space and bandwidth
+   - A FractalPacket may be sent twice in the case of packet recovery, but any
+     two FractalPackets found that are of the same type and ID will be expected
+     to have the same data (To be specific, the Client should never legally send
+     two distinct packets with same ID/Type, and neither should the Server, but
+if the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
+     they can be different)
+   - To reconstruct the original datagram from a sequence of FractalPackets,
+     concatenated the data[] streams (From 0 to payload_size - 1) for each index
+     from 0 to num_indices - 1
+
+-----
+Client
+-----
+
+SocketContext context;
+CreateTCPContext(&context, "10.0.0.5", 5055, 500, 250);
+
+char* msg = "Hello this is a message!";
+SendTCPPacket(&context, PACKET_MESSAGE, msg, strlen(msg);
+
+-----
+Server
+-----
+
+SocketContext context;
+CreateTCPContext(&context, NULL, 5055, 500, 250);
+
+FractalPacket* packet = NULL;
+while(!packet) {
+  packet = ReadTCPPacket(context);
+}
+
+printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
+*/
+
 #if defined(_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, need to
                                          // be at the very top
@@ -12,6 +77,10 @@
 
 #define STUN_IP "52.5.240.234"
 #define STUN_PORT 48800
+
+#define UNUSED(x) (void)(x)
+#define BITS_IN_BYTE 8.0
+#define MS_IN_SECOND 1000
 
 /*
 ============================
@@ -31,6 +100,11 @@ typedef struct {
     stun_request_type_t type;
     stun_entry_t entry;
 } stun_request_t;
+
+typedef struct {
+    char iv[16];
+    char signature[32];
+} private_key_data_t;
 
 /*
 ============================
@@ -75,6 +149,38 @@ packet when the entire packet is received
 void ClearReadingTCP(SocketContext *context);
 
 /*
+@brief                          This will prepare the private key data
+
+@param priv_key_data            The private key data buffer
+*/
+void preparePrivateKeyRequest(private_key_data_t *priv_key_data);
+
+/*
+@brief                          This will sign the other connection's private key data
+
+@param priv_key_data            The private key data buffer
+@param recv_size                The length of the buffer
+@param private_key              The private key
+
+@returns                        True if the verification succeeds, false if it fails
+*/
+bool signPrivateKey(private_key_data_t *priv_key_data, int recv_size, void *private_key);
+
+/*
+@brief                          This will verify the given private key
+
+@param our_priv_key_data        The private key data buffer
+@param our_signed_priv_key_data The signed private key data buffer
+@param recv_size                The length of the buffer
+@param private_key              The private key
+
+@returns                        True if the verification succeeds, false if it fails
+*/
+bool confirmPrivateKey(private_key_data_t *our_priv_key_data,
+                       private_key_data_t *our_signed_priv_key_data, int recv_size,
+                       void *private_key);
+
+/*
 ============================
 Public Function Implementations
 ============================
@@ -88,11 +194,55 @@ int GetLastNetworkError() {
 #endif
 }
 
-#define LARGEST_TCP_PACKET 10000000
-#define LARGEST_ENCRYPTED_TCP_PACKET (sizeof(int) + LARGEST_TCP_PACKET + 16)
+bool handshakePrivateKey(SocketContext *context) {
+    private_key_data_t our_priv_key_data;
+    private_key_data_t our_signed_priv_key_data;
+    private_key_data_t their_priv_key_data;
+    int recv_size;
+    socklen_t slen = sizeof(context->addr);
 
-int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data,
-                  int len) {
+    // Generate and send private key request data
+    preparePrivateKeyRequest(&our_priv_key_data);
+    if (sendp(context, &our_priv_key_data, sizeof(our_priv_key_data)) < 0) {
+        LOG_ERROR("sendp(3) failed! Could not send private key request data! %d",
+                  GetLastNetworkError());
+        return false;
+    }
+    SDL_Delay(150);
+
+    // Receive, sign, and send back their private key request data
+    while (
+        (recv_size = recvfrom(context->s, (char *)&their_priv_key_data, sizeof(their_priv_key_data),
+                              0, (struct sockaddr *)(&context->addr), &slen)) == 0)
+        ;
+    if (!signPrivateKey(&their_priv_key_data, recv_size, context->aes_private_key)) {
+        LOG_ERROR("signPrivateKey failed!");
+        return false;
+    }
+    if (sendp(context, &their_priv_key_data, sizeof(their_priv_key_data)) < 0) {
+        LOG_ERROR("sendp(3) failed! Could not send signed private key data! %d",
+                  GetLastNetworkError());
+        return false;
+    }
+    SDL_Delay(150);
+
+    // Wait for and verify their signed private key request data
+    recv_size = recvp(context, &our_signed_priv_key_data, sizeof(our_signed_priv_key_data));
+    if (!confirmPrivateKey(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
+                           context->aes_private_key)) {
+        LOG_ERROR("Could not confirmPrivateKey!");
+        return false;
+    } else {
+        return true;
+    }
+}
+
+#define LARGEST_TCP_PACKET 10000000
+#define PACKET_ENCRYPTION_PADDING \
+    16  // encryption can make packets a bit bigger, this pads to avoid overflow
+#define LARGEST_ENCRYPTED_TCP_PACKET (sizeof(int) + LARGEST_TCP_PACKET + PACKET_ENCRYPTION_PADDING)
+
+int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data, int len) {
     // Verify packet size can fit
     if (PACKET_HEADER_SIZE + (unsigned int)len > LARGEST_TCP_PACKET) {
         LOG_WARNING("Packet too large!");
@@ -121,10 +271,9 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data,
 
     // Encrypt the packet using aes encryption
     int unencrypted_len = PACKET_HEADER_SIZE + packet->payload_size;
-    int encrypted_len =
-        encrypt_packet(packet, unencrypted_len,
-                       (FractalPacket *)(sizeof(int) + encrypted_packet_buffer),
-                       (unsigned char *)PRIVATE_KEY);
+    int encrypted_len = encrypt_packet(packet, unencrypted_len,
+                                       (FractalPacket *)(sizeof(int) + encrypted_packet_buffer),
+                                       (unsigned char *)context->aes_private_key);
 
     // Pass the length of the packet as the first byte
     *((int *)encrypted_packet_buffer) = encrypted_len;
@@ -132,8 +281,7 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data,
     // Send the packet
     LOG_INFO("Sending TCP Packet of length %d\n", encrypted_len);
     bool failed = false;
-    if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len) <
-        0) {
+    if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len) < 0) {
         LOG_WARNING("Failed to send packet!");
         failed = true;
     }
@@ -142,9 +290,8 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data,
     return failed ? -1 : 0;
 }
 
-int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
-                  int len, int id, int burst_bitrate,
-                  FractalPacket *packet_buffer, int *packet_len_buffer) {
+int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, int len, int id,
+                  int burst_bitrate, FractalPacket *packet_buffer, int *packet_len_buffer) {
     if (id <= 0) {
         LOG_WARNING("IDs must be positive!");
         return -1;
@@ -157,10 +304,9 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
     int payload_size;
     int curr_index = 0, i = 0;
 
-    int num_indices =
-        len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
+    int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
 
-    double max_bytes_per_second = burst_bitrate / 8.0;
+    double max_bytes_per_second = burst_bitrate / BITS_IN_BYTE;
 
     /*
     if (type == PACKET_AUDIO) {
@@ -187,8 +333,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
     while (curr_index < len) {
         // Delay distribution of packets as needed
         while (burst_bitrate > 0 &&
-               curr_index - 5000 >
-                   GetTimer(packet_timer) * max_bytes_per_second) {
+               curr_index - 5000 > GetTimer(packet_timer) * max_bytes_per_second) {
             SDL_Delay(1);
         }
 
@@ -227,7 +372,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data,
         // Encrypt the packet with AES
         FractalPacket encrypted_packet;
         int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
-                                         (unsigned char *)PRIVATE_KEY);
+                                         (unsigned char *)context->aes_private_key);
 
         // Send it off
         SDL_LockMutex(context->mutex);
@@ -267,7 +412,7 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
 
     FractalPacket encrypted_packet;
     int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
-                                     (unsigned char *)PRIVATE_KEY);
+                                     (unsigned char *)context->aes_private_key);
 
     SDL_LockMutex(context->mutex);
     int sent_size = sendp(context, &encrypted_packet, encrypt_len);
@@ -327,8 +472,8 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     FD_ZERO(&set);
     FD_SET(s, &set);
     struct timeval tv;
-    tv.tv_sec = timeout_ms / 1000;
-    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    tv.tv_sec = timeout_ms / MS_IN_SECOND;
+    tv.tv_usec = (timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
     if ((ret = select((int)s + 1, NULL, &set, NULL, &tv)) <= 0) {
         LOG_WARNING(
             "Could not select() over TCP to server: Returned %d, Error Code "
@@ -350,16 +495,14 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
 
     // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
-    int encrypted_len =
-        recvp(context, &encrypted_packet, sizeof(encrypted_packet));
+    int encrypted_len = recvp(context, &encrypted_packet, sizeof(encrypted_packet));
 
     static FractalPacket decrypted_packet;
 
     // If the packet was successfully received, then decrypt it
     if (encrypted_len > 0) {
-        int decrypted_len =
-            decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                           (unsigned char *)PRIVATE_KEY);
+        int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
+                                           (unsigned char *)context->aes_private_key);
 
         // If there was an issue decrypting it, post warning and then
         // ignore the problem
@@ -367,8 +510,8 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
             if (encrypted_len == sizeof(stun_entry_t)) {
                 stun_entry_t *e;
                 e = (void *)&encrypted_packet;
-                LOG_INFO("Maybe a map from public %d to private %d?",
-                         ntohs(e->private_port), ntohs(e->private_port));
+                LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port),
+                         ntohs(e->private_port));
             }
             LOG_WARNING("Failed to decrypt packet");
             return NULL;
@@ -394,7 +537,7 @@ FractalPacket *ReadUDPPacket(SocketContext *context) {
 static int reading_packet_len;
 
 void ClearReadingTCP(SocketContext *context) {
-    context;
+    UNUSED(context);
     reading_packet_len = 0;
 }
 
@@ -419,8 +562,7 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
         len = recvp(context, encrypted_packet_buffer + reading_packet_len,
-                    min(TCP_SEGMENT_SIZE,
-                        LARGEST_ENCRYPTED_TCP_PACKET - reading_packet_len));
+                    min(TCP_SEGMENT_SIZE, LARGEST_ENCRYPTED_TCP_PACKET - reading_packet_len));
 
         if (len < 0) {
             int err = GetLastNetworkError();
@@ -445,21 +587,18 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
 
         // If the target len is valid, and actual len > target len, then we're
         // good to go
-        if (target_len >= 0 && target_len <= LARGEST_TCP_PACKET &&
-            actual_len >= target_len) {
+        if (target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len) {
             // Decrypt it
-            int decrypted_len = decrypt_packet_n(
-                (FractalPacket *)(encrypted_packet_buffer + sizeof(int)),
-                target_len, (FractalPacket *)decrypted_packet_buffer,
-                LARGEST_TCP_PACKET, (unsigned char *)PRIVATE_KEY);
+            int decrypted_len =
+                decrypt_packet_n((FractalPacket *)(encrypted_packet_buffer + sizeof(int)),
+                                 target_len, (FractalPacket *)decrypted_packet_buffer,
+                                 LARGEST_TCP_PACKET, (unsigned char *)context->aes_private_key);
 
             // Move the rest of the read bytes to the beginning of the buffer to
             // continue
             int start_next_bytes = sizeof(int) + target_len;
-            for (unsigned long i = start_next_bytes;
-                 i < sizeof(int) + actual_len; i++) {
-                encrypted_packet_buffer[i - start_next_bytes] =
-                    encrypted_packet_buffer[i];
+            for (unsigned long i = start_next_bytes; i < sizeof(int) + actual_len; i++) {
+                encrypted_packet_buffer[i - start_next_bytes] = encrypted_packet_buffer[i];
             }
             reading_packet_len = actual_len - target_len;
 
@@ -476,8 +615,8 @@ FractalPacket *ReadTCPPacket(SocketContext *context) {
     return NULL;
 }
 
-int CreateTCPServerContext(SocketContext *context, int port,
-                           int recvfrom_timeout_ms, int stun_timeout_ms) {
+int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeout_ms,
+                           int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -499,8 +638,7 @@ int CreateTCPServerContext(SocketContext *context, int port,
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
-                   sizeof(opt)) < 0) {
+    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) < 0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
@@ -511,8 +649,7 @@ int CreateTCPServerContext(SocketContext *context, int port,
     origin_addr.sin_port = htons((unsigned short)port);
 
     // Bind to port
-    if (bind(context->s, (struct sockaddr *)(&origin_addr),
-             sizeof(origin_addr)) < 0) {
+    if (bind(context->s, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
@@ -533,11 +670,10 @@ int CreateTCPServerContext(SocketContext *context, int port,
     FD_SET(context->s, &fd_write);
 
     struct timeval tv;
-    tv.tv_sec = stun_timeout_ms / 1000;
-    tv.tv_usec = (stun_timeout_ms % 1000) * 1000;
+    tv.tv_sec = stun_timeout_ms / MS_IN_SECOND;
+    tv.tv_usec = (stun_timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
 
-    if (select(0, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) <
-        0) {
+    if (select(0, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) < 0) {
         LOG_WARNING("Could not select!");
         closesocket(context->s);
         return -1;
@@ -546,10 +682,8 @@ int CreateTCPServerContext(SocketContext *context, int port,
     // Accept connection from client
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
-    if ((new_socket = accept(context->s, (struct sockaddr *)(&context->addr),
-                             &slen)) < 0) {
-        LOG_WARNING("Did not receive response from client! %d\n",
-                    GetLastNetworkError());
+    if ((new_socket = accept(context->s, (struct sockaddr *)(&context->addr), &slen)) < 0) {
+        LOG_WARNING("Did not receive response from client! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -565,8 +699,8 @@ int CreateTCPServerContext(SocketContext *context, int port,
     return 0;
 }
 
-int CreateTCPServerContextStun(SocketContext *context, int port,
-                               int recvfrom_timeout_ms, int stun_timeout_ms) {
+int CreateTCPServerContextStun(SocketContext *context, int port, int recvfrom_timeout_ms,
+                               int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -599,8 +733,7 @@ int CreateTCPServerContextStun(SocketContext *context, int port,
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
-                   sizeof(opt)) < 0) {
+    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) < 0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
@@ -641,10 +774,8 @@ int CreateTCPServerContextStun(SocketContext *context, int port,
     while (recv_size < (int)sizeof(entry) && GetTimer(t) < stun_timeout_ms) {
         int single_recv_size;
         if ((single_recv_size = recvp(context, ((char *)&entry) + recv_size,
-                                      max(0, (int)sizeof(entry) - recv_size))) <
-            0) {
-            LOG_WARNING("Did not receive STUN response %d\n",
-                        GetLastNetworkError());
+                                      max(0, (int)sizeof(entry) - recv_size))) < 0) {
+            LOG_WARNING("Did not receive STUN response %d\n", GetLastNetworkError());
             closesocket(context->s);
             return -1;
         }
@@ -662,8 +793,8 @@ int CreateTCPServerContextStun(SocketContext *context, int port,
     client_addr.sin_family = AF_INET;
     client_addr.sin_addr.s_addr = entry.ip;
     client_addr.sin_port = entry.private_port;
-    LOG_INFO("TCP STUN notified of desired request from %s:%d\n",
-             inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+    LOG_INFO("TCP STUN notified of desired request from %s:%d\n", inet_ntoa(client_addr.sin_addr),
+             ntohs(client_addr.sin_port));
 
     closesocket(context->s);
 
@@ -675,15 +806,13 @@ int CreateTCPServerContextStun(SocketContext *context, int port,
     }
 
     opt = 1;
-    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
-                   sizeof(opt)) < 0) {
+    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) < 0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
     // Bind to port
-    if (bind(context->s, (struct sockaddr *)(&origin_addr),
-             sizeof(origin_addr)) < 0) {
+    if (bind(context->s, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
@@ -706,7 +835,7 @@ int CreateTCPServerContextStun(SocketContext *context, int port,
 
 int CreateTCPClientContext(SocketContext *context, char *destination, int port,
                            int recvfrom_timeout_ms, int stun_timeout_ms) {
-    stun_timeout_ms;  // TODO; remove useless parameter
+    UNUSED(stun_timeout_ms);
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -749,9 +878,8 @@ int CreateTCPClientContext(SocketContext *context, char *destination, int port,
     return 0;
 }
 
-int CreateTCPClientContextStun(SocketContext *context, char *destination,
-                               int port, int recvfrom_timeout_ms,
-                               int stun_timeout_ms) {
+int CreateTCPClientContextStun(SocketContext *context, char *destination, int port,
+                               int recvfrom_timeout_ms, int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -787,8 +915,7 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
-                   sizeof(opt)) < 0) {
+    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) < 0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
@@ -829,10 +956,8 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
     while (recv_size < (int)sizeof(entry) && GetTimer(t) < stun_timeout_ms) {
         int single_recv_size;
         if ((single_recv_size = recvp(context, ((char *)&entry) + recv_size,
-                                      max(0, (int)sizeof(entry) - recv_size))) <
-            0) {
-            LOG_WARNING("Did not receive STUN response %d\n",
-                        GetLastNetworkError());
+                                      max(0, (int)sizeof(entry) - recv_size))) < 0) {
+            LOG_WARNING("Did not receive STUN response %d\n", GetLastNetworkError());
             closesocket(context->s);
             return -1;
         }
@@ -848,8 +973,8 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
     // Print STUN response
     struct in_addr a;
     a.s_addr = entry.ip;
-    LOG_WARNING("TCP STUN responded that the TCP server is located at %s:%d\n",
-                inet_ntoa(a), ntohs(entry.private_port));
+    LOG_WARNING("TCP STUN responded that the TCP server is located at %s:%d\n", inet_ntoa(a),
+                ntohs(entry.private_port));
 
     closesocket(context->s);
 
@@ -861,15 +986,13 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt,
-                   sizeof(opt)) < 0) {
+    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) < 0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
     // Bind to port
-    if (bind(context->s, (struct sockaddr *)(&origin_addr),
-             sizeof(origin_addr)) < 0) {
+    if (bind(context->s, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
@@ -894,40 +1017,47 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination,
     return 0;
 }
 
-int CreateTCPContext(SocketContext *context, char *destination, int port,
-                     int recvfrom_timeout_ms, int stun_timeout_ms,
-                     bool using_stun) {
+int CreateTCPContext(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
+                     int stun_timeout_ms, bool using_stun, char *aes_private_key) {
     if (context == NULL) {
-        LOG_WARNING("Context is NULL");
+        LOG_ERROR("Context is NULL");
         return -1;
     }
     context->mutex = SDL_CreateMutex();
+    memcpy(context->aes_private_key, aes_private_key, sizeof(context->aes_private_key));
 
     int ret;
 
     if (using_stun) {
         if (destination == NULL)
-            ret = CreateTCPServerContextStun(context, port, recvfrom_timeout_ms,
-                                             stun_timeout_ms);
+            ret = CreateTCPServerContextStun(context, port, recvfrom_timeout_ms, stun_timeout_ms);
         else
-            ret = CreateTCPClientContextStun(context, destination, port,
-                                             recvfrom_timeout_ms,
+            ret = CreateTCPClientContextStun(context, destination, port, recvfrom_timeout_ms,
                                              stun_timeout_ms);
     } else {
         if (destination == NULL)
-            ret = CreateTCPServerContext(context, port, recvfrom_timeout_ms,
-                                         stun_timeout_ms);
+            ret = CreateTCPServerContext(context, port, recvfrom_timeout_ms, stun_timeout_ms);
         else
-            ret = CreateTCPClientContext(context, destination, port,
-                                         recvfrom_timeout_ms, stun_timeout_ms);
+            ret = CreateTCPClientContext(context, destination, port, recvfrom_timeout_ms,
+                                         stun_timeout_ms);
+    }
+
+    if (ret == -1) {
+        return -1;
+    }
+
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
+        closesocket(context->s);
+        return -1;
     }
 
     ClearReadingTCP(context);
     return ret;
 }
 
-int CreateUDPServerContext(SocketContext *context, int port,
-                           int recvfrom_timeout_ms, int stun_timeout_ms) {
+int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeout_ms,
+                           int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -950,8 +1080,7 @@ int CreateUDPServerContext(SocketContext *context, int port,
     origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     origin_addr.sin_port = htons((unsigned short)port);
 
-    if (bind(context->s, (struct sockaddr *)(&origin_addr),
-             sizeof(origin_addr)) < 0) {
+    if (bind(context->s, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
@@ -960,21 +1089,19 @@ int CreateUDPServerContext(SocketContext *context, int port,
     LOG_INFO("Waiting for client to connect to %s:%d...\n", "localhost", port);
 
     socklen_t slen = sizeof(context->addr);
-    stun_entry_t entry = {0};
     int recv_size;
-    while ((recv_size = recvfrom(context->s, (char *)&entry, sizeof(entry), 0,
-                                 (struct sockaddr *)(&context->addr), &slen)) <
-           0) {
-        LOG_WARNING("Did not receive response from client! %d\n",
-                    GetLastNetworkError());
+    if ((recv_size =
+             recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)(&context->addr), &slen)) != 0) {
+        LOG_WARNING("Failed to receive ack! %d %d", recv_size, GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    set_timeout(context->s, 350);
-
-    // Send acknowledgement of connection
-    sendp(context, NULL, 0);
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
+        closesocket(context->s);
+        return -1;
+    }
 
     LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
@@ -984,8 +1111,8 @@ int CreateUDPServerContext(SocketContext *context, int port,
     return 0;
 }
 
-int CreateUDPServerContextStun(SocketContext *context, int port,
-                               int recvfrom_timeout_ms, int stun_timeout_ms) {
+int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_timeout_ms,
+                               int stun_timeout_ms) {
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1012,8 +1139,7 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
     LOG_INFO("Sending stun entry to STUN...");
     if (sendto(context->s, (const char *)&stun_request, sizeof(stun_request), 0,
                (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
-        LOG_WARNING("Could not send message to STUN %d\n",
-                    GetLastNetworkError());
+        LOG_WARNING("Could not send message to STUN %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -1032,25 +1158,21 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
     stun_entry_t entry = {0};
     int recv_size;
     while ((recv_size = recvfrom(context->s, (char *)&entry, sizeof(entry), 0,
-                                 (struct sockaddr *)(&context->addr), &slen)) <
-           0) {
+                                 (struct sockaddr *)(&context->addr), &slen)) < 0) {
         // If we haven't spent too much time waiting, and our previous 100ms
         // poll failed, then send another STUN update
-        if (GetTimer(recv_timer) * 1000 < stun_timeout_ms &&
+        if (GetTimer(recv_timer) * MS_IN_SECOND < stun_timeout_ms &&
             (GetLastNetworkError() == FRACTAL_ETIMEDOUT ||
              GetLastNetworkError() == FRACTAL_EAGAIN)) {
-            if (sendto(context->s, (const char *)&stun_request,
-                       sizeof(stun_request), 0, (struct sockaddr *)&stun_addr,
-                       sizeof(stun_addr)) < 0) {
-                LOG_WARNING("Could not send message to STUN %d\n",
-                            GetLastNetworkError());
+            if (sendto(context->s, (const char *)&stun_request, sizeof(stun_request), 0,
+                       (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
+                LOG_WARNING("Could not send message to STUN %d\n", GetLastNetworkError());
                 closesocket(context->s);
                 return -1;
             }
             continue;
         }
-        LOG_WARNING("Did not receive response from client! %d\n",
-                    GetLastNetworkError());
+        LOG_WARNING("Did not receive response from client! %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -1071,43 +1193,28 @@ int CreateUDPServerContextStun(SocketContext *context, int port,
     LOG_INFO("Received STUN response, client connection desired from %s:%d\n",
              inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
-    // Open up port to receive message
+    // Open up the port
     if (sendp(context, NULL, 0) < 0) {
-        LOG_WARNING("Could not open up port!");
-        closesocket(context->s);
-        return -1;
+        LOG_ERROR("sendp(3) failed! Could not open up port! %d", GetLastNetworkError());
+        return false;
     }
-
     SDL_Delay(150);
 
-    // Send acknowledgement
-    if (sendp(context, NULL, 0) < 0) {
-        LOG_WARNING("Could not open up port!");
-        closesocket(context->s);
-        return -1;
-    }
-
-    // Wait for client to connect
-    // cppcheck-suppress nullPointer
-    // cppcheck-suppress nullPointer
-    if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)(&context->addr),
-                 &slen) < 0) {
-        LOG_WARNING("Did not receive client confirmation!");
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
         closesocket(context->s);
         return -1;
     }
 
     // Check that confirmation matches STUN's claimed client
-    if (context->addr.sin_addr.s_addr != entry.ip ||
-        context->addr.sin_port != entry.private_port) {
+    if (context->addr.sin_addr.s_addr != entry.ip || context->addr.sin_port != entry.private_port) {
         LOG_WARNING(
             "Connection did not match STUN's claimed client, got %s:%d "
             "instead\n",
             inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
         context->addr.sin_addr.s_addr = entry.ip;
         context->addr.sin_port = entry.private_port;
-        LOG_WARNING("Should have been %s:%d!\n",
-                    inet_ntoa(context->addr.sin_addr),
+        LOG_WARNING("Should have been %s:%d!\n", inet_ntoa(context->addr.sin_addr),
                     ntohs(context->addr.sin_port));
         closesocket(context->s);
         return -1;
@@ -1141,47 +1248,31 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
 
     LOG_INFO("Connecting to server...");
 
-    // Open up the port
-    if (sendp(context, NULL, 0) < 0) {
-        LOG_WARNING("Could not send message to server %d\n",
-                    GetLastNetworkError());
+    // Send Ack
+    if (Ack(context) < 0) {
+        LOG_WARNING("Could not send ack to server %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    SDL_Delay(150);
+    SDL_Delay(stun_timeout_ms);
 
-    // Send acknowledgement
-    if (sendp(context, NULL, 0) < 0) {
-        LOG_WARNING("Could not send message to server %d\n",
-                    GetLastNetworkError());
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
         closesocket(context->s);
         return -1;
     }
 
-    // Receive server's acknowledgement of connection
-    socklen_t slen = sizeof(context->addr);
-    // cppcheck-suppress nullPointer
-    if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)&context->addr,
-                 &slen) < 0) {
-        LOG_WARNING("Did not receive response from server! %d\n",
-                    GetLastNetworkError());
-        closesocket(context->s);
-        return -1;
-    }
-
-    LOG_WARNING("Connected to server on %s:%d! (Private %d)\n",
-                inet_ntoa(context->addr.sin_addr), port,
-                ntohs(context->addr.sin_port));
+    LOG_WARNING("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
+                port, ntohs(context->addr.sin_port));
 
     set_timeout(context->s, recvfrom_timeout_ms);
 
     return 0;
 }
 
-int CreateUDPClientContextStun(SocketContext *context, char *destination,
-                               int port, int recvfrom_timeout_ms,
-                               int stun_timeout_ms) {
+int CreateUDPClientContextStun(SocketContext *context, char *destination, int port,
+                               int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1208,8 +1299,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
     LOG_INFO("Sending info request to STUN...");
     if (sendto(context->s, (const char *)&stun_request, sizeof(stun_request), 0,
                (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
-        LOG_WARNING("Could not send message to STUN %d\n",
-                    GetLastNetworkError());
+        LOG_WARNING("Could not send message to STUN %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -1217,8 +1307,7 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
     stun_entry_t entry = {0};
     int recv_size;
     if ((recv_size = recvp(context, &entry, sizeof(entry))) < 0) {
-        LOG_WARNING("Could not receive message from STUN %d\n",
-                    GetLastNetworkError());
+        LOG_WARNING("Could not receive message from STUN %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
@@ -1233,10 +1322,9 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
         closesocket(context->s);
         return -1;
     } else {
-        LOG_WARNING(
-            "Received STUN response! Public %d is mapped to private %d\n",
-            ntohs((unsigned short)entry.public_port),
-            ntohs((unsigned short)entry.private_port));
+        LOG_WARNING("Received STUN response! Public %d is mapped to private %d\n",
+                    ntohs((unsigned short)entry.public_port),
+                    ntohs((unsigned short)entry.private_port));
         context->addr.sin_family = AF_INET;
         context->addr.sin_addr.s_addr = entry.ip;
         context->addr.sin_port = entry.private_port;
@@ -1246,72 +1334,56 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination,
 
     // Open up the port
     if (sendp(context, NULL, 0) < 0) {
-        LOG_WARNING("Could not send message to server %d\n",
-                    GetLastNetworkError());
-        closesocket(context->s);
-        return -1;
+        LOG_ERROR("sendp(3) failed! Could not open up port! %d", GetLastNetworkError());
+        return false;
     }
-
     SDL_Delay(150);
 
-    // Send acknowledgement
-    if (sendp(context, NULL, 0) < 0) {
-        LOG_WARNING("Could not send message to server %d\n",
-                    GetLastNetworkError());
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
         closesocket(context->s);
         return -1;
     }
 
-    // Receive server's acknowledgement of connection
-    socklen_t slen = sizeof(context->addr);
-    // cppcheck-suppress nullPointer
-    if (recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)&context->addr,
-                 &slen) < 0) {
-        LOG_WARNING("Did not receive response from server! %d\n",
-                    GetLastNetworkError());
-        closesocket(context->s);
-        return -1;
-    }
-
-    LOG_INFO("Connected to server on %s:%d! (Private %d)\n",
-             inet_ntoa(context->addr.sin_addr), port,
-             ntohs(context->addr.sin_port));
+    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
+             port, ntohs(context->addr.sin_port));
     set_timeout(context->s, recvfrom_timeout_ms);
 
     return 0;
 }
 
-int CreateUDPContext(SocketContext *context, char *destination, int port,
-                     int recvfrom_timeout_ms, int stun_timeout_ms,
-                     bool using_stun) {
+int CreateUDPContext(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
+                     int stun_timeout_ms, bool using_stun, char *aes_private_key) {
+    if (context == NULL) {
+        LOG_ERROR("Context is NULL");
+        return -1;
+    }
+
     context->mutex = SDL_CreateMutex();
+    memcpy(context->aes_private_key, aes_private_key, sizeof(context->aes_private_key));
 
     if (using_stun) {
         if (destination == NULL)
-            return CreateUDPServerContextStun(
-                context, port, recvfrom_timeout_ms, stun_timeout_ms);
+            return CreateUDPServerContextStun(context, port, recvfrom_timeout_ms, stun_timeout_ms);
         else
-            return CreateUDPClientContextStun(context, destination, port,
-                                              recvfrom_timeout_ms,
+            return CreateUDPClientContextStun(context, destination, port, recvfrom_timeout_ms,
                                               stun_timeout_ms);
     } else {
         if (destination == NULL)
-            return CreateUDPServerContext(context, port, recvfrom_timeout_ms,
-                                          stun_timeout_ms);
+            return CreateUDPServerContext(context, port, recvfrom_timeout_ms, stun_timeout_ms);
         else
-            return CreateUDPClientContext(context, destination, port,
-                                          recvfrom_timeout_ms, stun_timeout_ms);
+            return CreateUDPClientContext(context, destination, port, recvfrom_timeout_ms,
+                                          stun_timeout_ms);
     }
 }
 
 // send JSON post to query the database, authenticate the user and return the VM
 // IP
-bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
+bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
     // environment variables
     SOCKET Socket;  // socket to send/receive POST request
     struct hostent *host;
-    struct sockaddr_in
-        webserver_socketAddress;  // address of the web server socket
+    struct sockaddr_in webserver_socketAddress;  // address of the web server socket
 
     // Creating our TCP socket to connect to the web server
     Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -1333,13 +1405,11 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     // create the struct for the webserver address socket we will query
     webserver_socketAddress.sin_family = AF_INET;
     webserver_socketAddress.sin_port = htons(80);  // HTTP port
-    webserver_socketAddress.sin_addr.s_addr =
-        *((unsigned long *)host->h_addr_list[0]);
+    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
 
     // connect to the web server before sending the POST request packet
-    int connect_status =
-        connect(Socket, (struct sockaddr *)&webserver_socketAddress,
-                sizeof(webserver_socketAddress));
+    int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
+                                 sizeof(webserver_socketAddress));
     if (connect_status < 0) {
         LOG_WARNING("Could not connect to the webserver.");
         return false;
@@ -1348,6 +1418,12 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     // now that we're connected, we can send the POST request to authenticate
     // the user first, we create the POST request message
 
+    char access_token_header[1000];
+    if (access_token) {
+        snprintf(access_token_header, sizeof(access_token_header), "Authorization: Bearer %s\r\n",
+                 access_token);
+    }
+
     int json_len = (int)strlen(jsonObj);
     char *message = malloc(5000 + json_len);
     snprintf(message, 5000 + json_len,
@@ -1355,9 +1431,12 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
              "Host: %s\r\n"
              "Content-Type: application/json\r\n"
              "Content-Length: %d\r\n"
+             "%s"
              "\r\n"
              "%s\r\n",
-             path, host_s, json_len, jsonObj);
+             path, host_s, json_len, access_token ? access_token_header : "", jsonObj);
+
+    LOG_INFO("POST Request: %s", message);
 
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
@@ -1388,13 +1467,11 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
 }
 
 // send JSON get to query the database for VM details
-bool SendJSONGet(char *host_s, char *path, char *json_res,
-                 size_t json_res_size) {
+bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size) {
     // environment variables
     SOCKET Socket;  // socket to send/receive POST request
     struct hostent *host;
-    struct sockaddr_in
-        webserver_socketAddress;  // address of the web server socket
+    struct sockaddr_in webserver_socketAddress;  // address of the web server socket
 
     // Creating our TCP socket to connect to the web server
     Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -1411,13 +1488,11 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
     // create the struct for the webserver address socket we will query
     webserver_socketAddress.sin_family = AF_INET;
     webserver_socketAddress.sin_port = htons(80);  // HTTP port
-    webserver_socketAddress.sin_addr.s_addr =
-        *((unsigned long *)host->h_addr_list[0]);
+    webserver_socketAddress.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
 
     // connect to the web server before sending the POST request packet
-    int connect_status =
-        connect(Socket, (struct sockaddr *)&webserver_socketAddress,
-                sizeof(webserver_socketAddress));
+    int connect_status = connect(Socket, (struct sockaddr *)&webserver_socketAddress,
+                                 sizeof(webserver_socketAddress));
     if (connect_status < 0) {
         LOG_WARNING("Could not connect to the webserver.");
         return false;
@@ -1439,8 +1514,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res,
     free(message);
 
     // now that it's sent, let's get the reply
-    int len =
-        recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
+    int len = recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
     if (len < 0) {
         LOG_WARNING("Response to JSON GET failed!");
         json_res[0] = '\0';
@@ -1482,5 +1556,52 @@ void set_timeout(SOCKET s, int timeout_ms) {
             LOG_WARNING("Failed to set timeout");
             return;
         }
+    }
+}
+
+void preparePrivateKeyRequest(private_key_data_t *priv_key_data) { gen_iv(priv_key_data->iv); }
+
+typedef struct {
+    char iv[16];
+    char private_key[16];
+} signature_data_t;
+
+bool signPrivateKey(private_key_data_t *priv_key_data, int recv_size, void *private_key) {
+    if (recv_size == sizeof(private_key_data_t)) {
+        signature_data_t sig_data;
+        memcpy(sig_data.iv, priv_key_data->iv, sizeof(priv_key_data->iv));
+        memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
+        hmac(priv_key_data->signature, &sig_data, sizeof(sig_data), private_key);
+        return true;
+    } else {
+        LOG_ERROR("Recv Size was not equal to private_key_data_t: %d instead of %d", recv_size,
+                  sizeof(private_key_data_t));
+        return false;
+    }
+}
+
+bool confirmPrivateKey(private_key_data_t *our_priv_key_data,
+                       private_key_data_t *our_signed_priv_key_data, int recv_size,
+                       void *private_key) {
+    if (recv_size == sizeof(private_key_data_t)) {
+        if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
+            LOG_ERROR("IV is incorrect!");
+            return false;
+        } else {
+            signature_data_t sig_data;
+            memcpy(sig_data.iv, our_signed_priv_key_data->iv, sizeof(our_signed_priv_key_data->iv));
+            memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
+            if (!verify_hmac(our_signed_priv_key_data->signature, &sig_data, sizeof(sig_data),
+                             private_key)) {
+                LOG_ERROR("Verify HMAC Failed");
+                return false;
+            } else {
+                return true;
+            }
+        }
+    } else {
+        LOG_ERROR("Recv Size was not equal to private_key_data_t: %d instead of %d", recv_size,
+                  sizeof(private_key_data_t));
+        return false;
     }
 }
