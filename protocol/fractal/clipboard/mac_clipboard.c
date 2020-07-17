@@ -147,7 +147,6 @@ ClipboardData* GetClipboard() {
             cb->size = data_size;
             memcpy(cb->data, clipboard_image->data + 14, data_size);
             // dimensions for sanity check
-            (*(int*)&cb->data[8]) = -(*(int*)&cb->data[8]);
             LOG_INFO("Width: %d", (*(int*)&cb->data[4]));
             LOG_INFO("Height: %d", (*(int*)&cb->data[8]));
             // data type and length
