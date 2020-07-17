@@ -438,27 +438,26 @@ void SetClipboard(ClipboardData* cb) {
         case CLIPBOARD_IMAGE:
             LOG_INFO("SetClipboard to Image with size %d", cb->size);
             if (cb->size > 0) {
-                if( (*(int*)&cb->data[8]) < 0 )
-                {
+                if ((*(int*)&cb->data[8]) < 0) {
                     int height = (*(int*)&cb->data[8]);
                     (*(int*)&cb->data[8]) = -(*(int*)&cb->data[8]);
                     // row_size = 4 * floor( (bits_per_pixel * image_width + 31)/32 )
-                    int row_size = (((*(short*)&cb->data[14]) * (*(int*)&cb->data[4]) + 31) / 32) * 4;
-                    char* buf = cb->data + cb->size - row_size*height;
-                    char* tmp = malloc( row_size );
-                    LOG_INFO( "Width: %d", (*(int*)&cb->data[4]) );
-                    LOG_INFO( "Height: %d", (*(int*)&cb->data[8]) );
-                    LOG_INFO( "Bits per pixel: %d", (*(short*)&cb->data[14]) );
-                    LOG_INFO( "Row Size: %d", row_size );
-                    LOG_INFO( "OFFSET: %d", (int)(buf - cb->data) );
-                    LOG_INFO( "Header Size: %d", (*(int*)&cb->data[0]) );
-                    for( int i = 0; i < height/2; i++ )
-                    {
-                        memcpy( tmp, buf + row_size*i, row_size );
-                        memcpy( buf + row_size*i, buf + row_size*(height-1-i), row_size );
-                        memcpy( buf + row_size*(height-1-i), tmp, row_size );
+                    int row_size =
+                        (((*(short*)&cb->data[14]) * (*(int*)&cb->data[4]) + 31) / 32) * 4;
+                    char* buf = cb->data + cb->size - row_size * height;
+                    char* tmp = malloc(row_size);
+                    LOG_INFO("Width: %d", (*(int*)&cb->data[4]));
+                    LOG_INFO("Height: %d", (*(int*)&cb->data[8]));
+                    LOG_INFO("Bits per pixel: %d", (*(short*)&cb->data[14]));
+                    LOG_INFO("Row Size: %d", row_size);
+                    LOG_INFO("OFFSET: %d", (int)(buf - cb->data));
+                    LOG_INFO("Header Size: %d", (*(int*)&cb->data[0]));
+                    for (int i = 0; i < height / 2; i++) {
+                        memcpy(tmp, buf + row_size * i, row_size);
+                        memcpy(buf + row_size * i, buf + row_size * (height - 1 - i), row_size);
+                        memcpy(buf + row_size * (height - 1 - i), tmp, row_size);
                     }
-                    free( tmp );
+                    free(tmp);
                 }
                 cf_type = CF_DIB;
                 hMem = getGlobalAlloc(cb->data, cb->size);
