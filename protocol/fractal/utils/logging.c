@@ -84,7 +84,7 @@ clock mprintf_timer;
 FILE *mprintf_log_file = NULL;
 char *log_directory = NULL;
 
-//This is written to in MultiThreaderPrintf
+// This is written to in MultiThreaderPrintf
 char logger_history[1000000];
 int logger_history_len;
 
@@ -104,7 +104,7 @@ void initLogger(char *log_dir, int log_id) {
         strcat(f, "/log");
 
         if (log_id >= 0) {
-            char * log_id_str;
+            char *log_id_str;
             asprintf(&log_id_str, "%d", log_id);
             strcat(f, log_id_str);
         }

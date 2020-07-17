@@ -1122,7 +1122,6 @@ int main() {
         connection_id = rand();
         initLogger(".", connection_id);
 
-
         DestroyInputDevice(input_device);
 
         SDL_WaitThread(send_video, NULL);

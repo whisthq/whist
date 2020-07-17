@@ -503,7 +503,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    //Initialize logger. -1 makes name "log.txt"
+    // Initialize logger. -1 makes name "log.txt"
     initLogger(log_dir, -1);
     free(log_dir);
     if (running_ci) {
