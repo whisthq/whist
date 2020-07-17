@@ -439,8 +439,9 @@ void SetClipboard(ClipboardData* cb) {
             LOG_INFO("SetClipboard to Image with size %d", cb->size);
             if (cb->size > 0) {
                 if ((*(int*)&cb->data[8]) < 0) {
-                    int height = (*(int*)&cb->data[8]);
+                    LOG_INFO("Original Height: %d", (*(int*)&cb->data[8]));
                     (*(int*)&cb->data[8]) = -(*(int*)&cb->data[8]);
+                    int height = (*(int*)&cb->data[8]);
                     // row_size = 4 * floor( (bits_per_pixel * image_width + 31)/32 )
                     int row_size =
                         (((*(short*)&cb->data[14]) * (*(int*)&cb->data[4]) + 31) / 32) * 4;
