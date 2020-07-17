@@ -526,7 +526,7 @@ bool sendLogHistory() {
             connection_id, get_version(), logs);
 
     LOG_INFO("Sending logs to webserver...");
-    SendJSONPost(host, path, json);
+    SendJSONPost(host, path, json, get_access_token());
     free(logs);
     free(json);
 
@@ -544,12 +544,12 @@ int32_t MultithreadedUpdateStatus(void *data) {
 
     char json[1000];
     snprintf(json, sizeof(json),
-             "{\
-            \"version\" : \"%s\",\
-            \"available\" : %s\
-    }",
+             "{\n\
+            \"version\" : \"%s\",\n\
+            \"available\" : %s\n\
+}",
              get_version(), d->is_connected ? "false" : "true");
-    SendJSONPost(host, "/vm/ping", json);
+    SendJSONPost(host, "/vm/ping", json, get_access_token());
 
     free(d);
     return 0;

@@ -607,6 +607,14 @@ char* get_private_key();
 bool get_using_stun();
 
 /**
+ * @brief                          Queries the webserver for the get access token
+ * status
+ *
+ * @returns                        The access token
+ */
+char* get_access_token();
+
+/**
  * @brief                          Calculate the size of a FractalClientMessage
  *                                 struct
  *
