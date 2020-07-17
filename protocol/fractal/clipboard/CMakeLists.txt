@@ -2,6 +2,7 @@ add_library(fractalClipboard STATIC
         clipboard.h
         clipboard_synchronizer.h
         clipboard_synchronizer.c
+        clipboard.c
         )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")

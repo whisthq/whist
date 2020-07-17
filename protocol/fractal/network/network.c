@@ -103,8 +103,7 @@ typedef struct {
 
 typedef struct {
     char iv[16];
-    char private_key[32];
-    int private_key_len;
+    char signature[32];
 } private_key_data_t;
 
 /*
@@ -153,21 +152,33 @@ void ClearReadingTCP(SocketContext *context);
 @brief                          This will prepare the private key data
 
 @param priv_key_data            The private key data buffer
-@param private_key              The private key
 */
-void preparePrivateKey(private_key_data_t *priv_key_data, char *private_key);
+void preparePrivateKeyRequest(private_key_data_t *priv_key_data);
+
+/*
+@brief                          This will sign the other connection's private key data
+
+@param priv_key_data            The private key data buffer
+@param recv_size                The length of the buffer
+@param private_key              The private key
+
+@returns                        True if the verification succeeds, false if it fails
+*/
+bool signPrivateKey(private_key_data_t *priv_key_data, int recv_size, void *private_key);
 
 /*
 @brief                          This will verify the given private key
 
-@param priv_key_data            The private key data buffer
-@param len                      The length of the buffer
+@param our_priv_key_data        The private key data buffer
+@param our_signed_priv_key_data The signed private key data buffer
+@param recv_size                The length of the buffer
 @param private_key              The private key
 
-@returns                        True if the verification succeeds, false if it
-fails
+@returns                        True if the verification succeeds, false if it fails
 */
-bool confirmPrivateKey(private_key_data_t *priv_key_data, int len, char *private_key);
+bool confirmPrivateKey(private_key_data_t *our_priv_key_data,
+                       private_key_data_t *our_signed_priv_key_data, int recv_size,
+                       void *private_key);
 
 /*
 ============================
@@ -181,6 +192,49 @@ int GetLastNetworkError() {
 #else
     return errno;
 #endif
+}
+
+bool handshakePrivateKey(SocketContext *context) {
+    private_key_data_t our_priv_key_data;
+    private_key_data_t our_signed_priv_key_data;
+    private_key_data_t their_priv_key_data;
+    int recv_size;
+    socklen_t slen = sizeof(context->addr);
+
+    // Generate and send private key request data
+    preparePrivateKeyRequest(&our_priv_key_data);
+    if (sendp(context, &our_priv_key_data, sizeof(our_priv_key_data)) < 0) {
+        LOG_ERROR("sendp(3) failed! Could not send private key request data! %d",
+                  GetLastNetworkError());
+        return false;
+    }
+    SDL_Delay(150);
+
+    // Receive, sign, and send back their private key request data
+    while (
+        (recv_size = recvfrom(context->s, (char *)&their_priv_key_data, sizeof(their_priv_key_data),
+                              0, (struct sockaddr *)(&context->addr), &slen)) == 0)
+        ;
+    if (!signPrivateKey(&their_priv_key_data, recv_size, context->aes_private_key)) {
+        LOG_ERROR("signPrivateKey failed!");
+        return false;
+    }
+    if (sendp(context, &their_priv_key_data, sizeof(their_priv_key_data)) < 0) {
+        LOG_ERROR("sendp(3) failed! Could not send signed private key data! %d",
+                  GetLastNetworkError());
+        return false;
+    }
+    SDL_Delay(150);
+
+    // Wait for and verify their signed private key request data
+    recv_size = recvp(context, &our_signed_priv_key_data, sizeof(our_signed_priv_key_data));
+    if (!confirmPrivateKey(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
+                           context->aes_private_key)) {
+        LOG_ERROR("Could not confirmPrivateKey!");
+        return false;
+    } else {
+        return true;
+    }
 }
 
 #define LARGEST_TCP_PACKET 10000000
@@ -988,13 +1042,15 @@ int CreateTCPContext(SocketContext *context, char *destination, int port, int re
                                          stun_timeout_ms);
     }
 
-    // Verify TCP private key
-    private_key_data_t priv_key_data;
-    preparePrivateKey(&priv_key_data, context->aes_private_key);
-    sendp(context, &priv_key_data, sizeof(priv_key_data));
-    SDL_Delay(150);
-    int recv_size = recvp(context, &priv_key_data, sizeof(priv_key_data));
-    confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key);
+    if (ret == -1) {
+        return -1;
+    }
+
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
+        closesocket(context->s);
+        return -1;
+    }
 
     ClearReadingTCP(context);
     return ret;
@@ -1033,25 +1089,19 @@ int CreateUDPServerContext(SocketContext *context, int port, int recvfrom_timeou
     LOG_INFO("Waiting for client to connect to %s:%d...\n", "localhost", port);
 
     socklen_t slen = sizeof(context->addr);
-    private_key_data_t priv_key_data = {0};
     int recv_size;
-    while ((recv_size = recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
-                                 (struct sockaddr *)(&context->addr), &slen)) < 0) {
-        LOG_WARNING("Did not receive response from client! %d\n", GetLastNetworkError());
+    if ((recv_size =
+             recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)(&context->addr), &slen)) != 0) {
+        LOG_WARNING("Failed to receive ack! %d %d", recv_size, GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
+        closesocket(context->s);
         return -1;
     }
-
-    preparePrivateKey(&priv_key_data, context->aes_private_key);
-
-    set_timeout(context->s, 350);
-
-    // Send acknowledgement of connection
-    sendp(context, &priv_key_data, sizeof(priv_key_data));
 
     LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
@@ -1143,36 +1193,16 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
     LOG_INFO("Received STUN response, client connection desired from %s:%d\n",
              inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
-    private_key_data_t priv_key_data = {0};
-    preparePrivateKey(&priv_key_data, context->aes_private_key);
-
-    // Open up port to receive message
-    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not open up port!");
-        closesocket(context->s);
-        return -1;
+    // Open up the port
+    if (sendp(context, NULL, 0) < 0) {
+        LOG_ERROR("sendp(3) failed! Could not open up port! %d", GetLastNetworkError());
+        return false;
     }
-
     SDL_Delay(150);
 
-    // Send acknowledgement
-    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not open up port!");
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
         closesocket(context->s);
-        return -1;
-    }
-
-    // Wait for client to connect
-    // cppcheck-suppress nullPointer
-    // cppcheck-suppress nullPointer
-    if ((recv_size = recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
-                              (struct sockaddr *)(&context->addr), &slen)) < 0) {
-        LOG_WARNING("Did not receive client confirmation!");
-        closesocket(context->s);
-        return -1;
-    }
-
-    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
         return -1;
     }
 
@@ -1202,9 +1232,6 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
                            int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
 
-    private_key_data_t priv_key_data;
-    preparePrivateKey(&priv_key_data, context->aes_private_key);
-
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (context->s <= 0) {  // Windows & Unix cases
@@ -1221,34 +1248,18 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
 
     LOG_INFO("Connecting to server...");
 
-    // Open up the port
-    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
+    // Send Ack
+    if (Ack(context) < 0) {
+        LOG_WARNING("Could not send ack to server %d\n", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
 
-    SDL_Delay(150);
+    SDL_Delay(stun_timeout_ms);
 
-    // Send acknowledgement
-    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
         closesocket(context->s);
-        return -1;
-    }
-
-    // Receive server's acknowledgement of connection
-    socklen_t slen = sizeof(context->addr);
-    int recv_size;
-    // cppcheck-suppress nullPointer
-    if ((recv_size = recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
-                              (struct sockaddr *)&context->addr, &slen)) < 0) {
-        LOG_WARNING("Did not receive response from server! %d\n", GetLastNetworkError());
-        closesocket(context->s);
-        return -1;
-    }
-
-    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
         return -1;
     }
 
@@ -1263,8 +1274,6 @@ int CreateUDPClientContext(SocketContext *context, char *destination, int port,
 int CreateUDPClientContextStun(SocketContext *context, char *destination, int port,
                                int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
-    private_key_data_t priv_key_data;
-    preparePrivateKey(&priv_key_data, context->aes_private_key);
 
     // Create UDP socket
     context->s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -1324,32 +1333,15 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
     LOG_INFO("Connecting to server...");
 
     // Open up the port
-    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
-        closesocket(context->s);
-        return -1;
+    if (sendp(context, NULL, 0) < 0) {
+        LOG_ERROR("sendp(3) failed! Could not open up port! %d", GetLastNetworkError());
+        return false;
     }
-
     SDL_Delay(150);
 
-    // Send acknowledgement
-    if (sendp(context, &priv_key_data, sizeof(priv_key_data)) < 0) {
-        LOG_WARNING("Could not send message to server %d\n", GetLastNetworkError());
+    if (!handshakePrivateKey(context)) {
+        LOG_WARNING("Could not complete handshake!");
         closesocket(context->s);
-        return -1;
-    }
-
-    // Receive server's acknowledgement of connection
-    socklen_t slen = sizeof(context->addr);
-    // cppcheck-suppress nullPointer
-    if ((recv_size = recvfrom(context->s, (char *)&priv_key_data, sizeof(priv_key_data), 0,
-                              (struct sockaddr *)&context->addr, &slen)) < 0) {
-        LOG_WARNING("Did not receive response from server! %d\n", GetLastNetworkError());
-        closesocket(context->s);
-        return -1;
-    }
-
-    if (!confirmPrivateKey(&priv_key_data, recv_size, context->aes_private_key)) {
         return -1;
     }
 
@@ -1387,7 +1379,7 @@ int CreateUDPContext(SocketContext *context, char *destination, int port, int re
 
 // send JSON post to query the database, authenticate the user and return the VM
 // IP
-bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
+bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
     // environment variables
     SOCKET Socket;  // socket to send/receive POST request
     struct hostent *host;
@@ -1426,6 +1418,12 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     // now that we're connected, we can send the POST request to authenticate
     // the user first, we create the POST request message
 
+    char access_token_header[1000];
+    if (access_token) {
+        snprintf(access_token_header, sizeof(access_token_header), "Authorization: Bearer %s\r\n",
+                 access_token);
+    }
+
     int json_len = (int)strlen(jsonObj);
     char *message = malloc(5000 + json_len);
     snprintf(message, 5000 + json_len,
@@ -1433,9 +1431,12 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
              "Host: %s\r\n"
              "Content-Type: application/json\r\n"
              "Content-Length: %d\r\n"
+             "%s"
              "\r\n"
              "%s\r\n",
-             path, host_s, json_len, jsonObj);
+             path, host_s, json_len, access_token ? access_token_header : "", jsonObj);
+
+    LOG_INFO("POST Request: %s", message);
 
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {
@@ -1558,38 +1559,48 @@ void set_timeout(SOCKET s, int timeout_ms) {
     }
 }
 
-void preparePrivateKey(private_key_data_t *priv_key_data, char *private_key) {
-    gen_iv(priv_key_data->iv);
-    priv_key_data->private_key_len =
-        aes_encrypt(private_key, 16, private_key, priv_key_data->iv, priv_key_data->private_key);
+void preparePrivateKeyRequest(private_key_data_t *priv_key_data) { gen_iv(priv_key_data->iv); }
+
+typedef struct {
+    char iv[16];
+    char private_key[16];
+} signature_data_t;
+
+bool signPrivateKey(private_key_data_t *priv_key_data, int recv_size, void *private_key) {
+    if (recv_size == sizeof(private_key_data_t)) {
+        signature_data_t sig_data;
+        memcpy(sig_data.iv, priv_key_data->iv, sizeof(priv_key_data->iv));
+        memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
+        hmac(priv_key_data->signature, &sig_data, sizeof(sig_data), private_key);
+        return true;
+    } else {
+        LOG_ERROR("Recv Size was not equal to private_key_data_t: %d instead of %d", recv_size,
+                  sizeof(private_key_data_t));
+        return false;
+    }
 }
 
-bool confirmPrivateKey(private_key_data_t *priv_key_data, int len, char *private_key) {
-    if (len == sizeof(private_key_data_t)) {
-        if (priv_key_data->private_key_len > (int)sizeof(priv_key_data->private_key)) {
-            LOG_ERROR("Private Key Length is too long! %d bytes!", priv_key_data->private_key_len);
+bool confirmPrivateKey(private_key_data_t *our_priv_key_data,
+                       private_key_data_t *our_signed_priv_key_data, int recv_size,
+                       void *private_key) {
+    if (recv_size == sizeof(private_key_data_t)) {
+        if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
+            LOG_ERROR("IV is incorrect!");
             return false;
         } else {
-            char resulting_private_key[32];
-            int private_key_len =
-                aes_decrypt(priv_key_data->private_key, priv_key_data->private_key_len, private_key,
-                            priv_key_data->iv, resulting_private_key);
-            if (private_key_len != 16) {
-                LOG_ERROR("Private Key Length is not 16! Is %d instead!", private_key_len);
+            signature_data_t sig_data;
+            memcpy(sig_data.iv, our_signed_priv_key_data->iv, sizeof(our_signed_priv_key_data->iv));
+            memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
+            if (!verify_hmac(our_signed_priv_key_data->signature, &sig_data, sizeof(sig_data),
+                             private_key)) {
+                LOG_ERROR("Verify HMAC Failed");
                 return false;
             } else {
-                if (memcmp(resulting_private_key, private_key, 16) == 0) {
-                    LOG_INFO("PRIVATE KEY WAS CORRECT!");
-                    return true;
-                } else {
-                    LOG_ERROR("Private Key was incorrect: %p",
-                              *(long long *)priv_key_data->private_key);
-                    return false;
-                }
+                return true;
             }
         }
     } else {
-        LOG_ERROR("Recv Size was not equal to private_key_data_t: %d instead of %d", len,
+        LOG_ERROR("Recv Size was not equal to private_key_data_t: %d instead of %d", recv_size,
                   sizeof(private_key_data_t));
         return false;
     }

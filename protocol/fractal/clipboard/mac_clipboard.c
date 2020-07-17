@@ -20,7 +20,7 @@ whatever files are in the SET_CLIPBOARD directory.
 
 bool StartTrackingClipboardUpdates();
 
-void initClipboard() { StartTrackingClipboardUpdates(); }
+void unsafe_initClipboard() { StartTrackingClipboardUpdates(); }
 
 #include <sys/syslimits.h>
 #include <unistd.h>
@@ -43,7 +43,7 @@ bool StartTrackingClipboardUpdates() {
     return true;
 }
 
-bool hasClipboardUpdated() {
+bool unsafe_hasClipboardUpdated() {
     bool hasUpdated = false;
 
     int new_clipboard_sequence_number = GetClipboardChangecount();
@@ -59,7 +59,7 @@ bool hasClipboardUpdated() {
     return hasUpdated;
 }
 
-ClipboardData* GetClipboard() {
+ClipboardData* unsafe_GetClipboard() {
     ClipboardData* cb = (ClipboardData*)clipboard_buf;
 
     cb->size = 0;
@@ -138,14 +138,13 @@ ClipboardData* GetClipboard() {
         OSXImage* clipboard_image = (OSXImage*)malloc(sizeof(OSXImage));
         memset(clipboard_image, 0, sizeof(OSXImage));
 
-        // get the image and its size
+        // get the image
         ClipboardGetImage(clipboard_image);
-        int data_size = clipboard_image->size + 14;
 
         // copy the data
-        if ((unsigned long)data_size < sizeof(clipboard_buf)) {
-            cb->size = data_size;
-            memcpy(cb->data, clipboard_image->data + 14, data_size);
+        if ((unsigned long)clipboard_image->size < sizeof(clipboard_buf)) {
+            cb->size = clipboard_image->size;
+            memcpy(cb->data, clipboard_image->data + 14, clipboard_image->size);
             // dimensions for sanity check
             LOG_INFO("Width: %d", (*(int*)&cb->data[4]));
             LOG_INFO("Height: %d", (*(int*)&cb->data[8]));
@@ -156,7 +155,7 @@ ClipboardData* GetClipboard() {
             // struct
             free(clipboard_image);
         } else {
-            LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
+            LOG_WARNING("Could not copy, clipboard too large! %d bytes", cb->size);
         }
     } else {
         LOG_INFO("Nothing in the clipboard!");
@@ -165,7 +164,7 @@ ClipboardData* GetClipboard() {
     return cb;
 }
 
-void SetClipboard(ClipboardData* cb) {
+void unsafe_SetClipboard(ClipboardData* cb) {
     if (cb->type == CLIPBOARD_NONE) {
         return;
     }
@@ -178,12 +177,14 @@ void SetClipboard(ClipboardData* cb) {
         case CLIPBOARD_IMAGE:
             LOG_INFO("SetClipboard to Image with size %d", cb->size);
             // fix the CGImage header back
-            char* data = malloc(cb->size + 14);
+            const size_t header_size = 14;
+            const size_t offset_to_pixel_array = 54;
+            char* data = malloc(cb->size + header_size);
             *((char*)(&data[0])) = 'B';
             *((char*)(&data[1])) = 'M';
-            *((int*)(&data[2])) = cb->size + 14;
-            *((int*)(&data[10])) = 54;
-            memcpy(data + 14, cb->data, cb->size);
+            *((int*)(&data[2])) = cb->size + header_size;
+            *((int*)(&data[10])) = offset_to_pixel_array;
+            memcpy(data + header_size, cb->data, cb->size);
             // set the image and free the temp data
             ClipboardSetImage(data, cb->size + 14);
             free(data);
@@ -216,5 +217,5 @@ void SetClipboard(ClipboardData* cb) {
     }
 
     // Update the status so that this specific update doesn't count
-    hasClipboardUpdated();
+    unsafe_hasClipboardUpdated();
 }
