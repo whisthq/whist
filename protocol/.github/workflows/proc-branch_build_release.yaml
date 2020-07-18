@@ -1,0 +1,675 @@
+# NOTE: this name should be kept stable since workflow_dispatch callers may use it to
+# trigger this workflow.
+name: "Procedure: Branch Build & Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: ref to run against (eg. `refs/heads/BRANCH_NAME` or `refs/pull/PR_NUMBER`)
+        required: true
+      should_test:
+        # TODO: see the note above "test_predicate" for why this only works with running all tests or
+        # no tests right now, ie. no test selection is supported. This should be updated once matrix builds
+        # support job level ifs.
+        description: should tests be run before releasing (eg. "true", or "false")
+        # NOTE: if a user passes an empty string "" to the parameter then the default value will be used
+        default: "true"
+        required: false
+      overridden_version_id:
+        description: "manually set a version ID (default: false, ie. dynamic from REFNAME-YYYYMMDD.#)"
+        required: false
+
+env:
+  CMAKE_VERSION: 3.15.7
+  NINJA_VERSION: 1.9.0
+  BUILD_TYPE: Debug
+  CCACHE_VERSION: 3.7.7
+  SERVER_VM_NAME: crimsonbonus543
+  SERVER_VM_USER: Fractal
+  SERVER_VM_IP: 20.185.40.33
+  WEBSERVER_BASE_URL: https://cube-celery-staging4.herokuapp.com
+
+jobs:
+  params:
+    name: Setup dynamic parameters
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.values.outputs.ref }}
+      ref_name: ${{ steps.values.outputs.ref_name }}
+      git_sha: ${{ steps.values.outputs.git_sha }}
+      should_test: ${{ steps.values.outputs.should_test }}
+      should_test_windows: ${{ steps.values.outputs.should_test_windows }}
+      should_test_linux: ${{ steps.values.outputs.should_test_linux }}
+      should_test_macos: ${{ steps.values.outputs.should_test_macos }}
+      overridden_version_id: ${{ steps.values.outputs.overridden_version_id }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.ref }}
+      - name: Determine parameter values and export to global environment
+        id: values
+        # ref: If this wasn't triggered using workflow_dispatch then a ref won't be specified. Fill in the param using whatever
+        # the workflow is checkout out to.
+        #
+        # ref_name: This supports branches (refs/heads/BRANCH_NAME), PRs (refs/pull/PR_NUMBER/{merge,head,etc.}), and
+        # arbitrary commits
+        #
+        # should_test: Translated from "true"/"false" into "true"/"" to lay the groundwork for per-OS test control
+        #
+        # should_test_*: breakout the should_test into individual predicates for each OS for 
+        run: |
+          export REF="${{ github.event.inputs.ref || '$(git symbolic-ref HEAD)' }}"
+          echo ::set-output name=ref::$REF
+          if git symbolic-ref --short HEAD > /dev/null; then
+            echo ::set-output name=ref_name::$(git symbolic-ref --short HEAD)
+          elif [[ "$REF" == *"/pull/"* ]]; then
+            # $REF should be in the format "refs/pull/225/merge"
+            pr_id=$(echo "$REF" | grep -o -E '[0-9]+') # eg. "225"
+            pr_action=$(basename "$REF") # eg. "merge"
+            echo ::set-output name=ref_name::pr$pr_id$pr_action
+          else
+            echo ::set-output name=ref_name::$(git rev-parse HEAD)
+          fi
+          echo ::set-output name=git_sha::$(git rev-parse HEAD)
+          echo ::set-output name=should_test::$(if [[ "${{ github.event.inputs.should_test }}" == "false" ]]; then echo ""; else echo "true"; fi)
+          export SHOULD_TEST=${{ github.event.inputs.should_test }}
+          echo ::set-output name=should_test_windows::$(if [[ $SHOULD_TEST == *"windows"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=should_test_linux::$(if [[ $SHOULD_TEST == *"linux"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=should_test_macos::$(if [[ $SHOULD_TEST == *"macos"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=overridden_version_id::${{ github.event.inputs.overridden_version_id }}
+      - name: Show all env and output vars
+        run: |
+          cat <<JSON
+          Inputs: ${{ toJson(github.event.inputs) }}
+          JSON
+          cat <<JSON
+          Outputs: ${{ toJson(steps.values.outputs) }}
+          JSON
+          echo "Env vars:"
+          printenv
+
+  build:
+    name: Build on ${{ matrix.config.os }} using ${{ matrix.config.cc }}/${{ matrix.config.cxx }}
+    needs: [params]
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - os: windows-latest
+            client_artifact_name: "Windows-64bit_client"
+            client_artifact_relpath: "/desktop/build64/Windows"
+            server_artifact_name: "Windows-64bit_server"
+            server_artifact_relpath: "/server/build64"
+            cc: "cl"
+            cxx: "cl"
+            cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc"
+            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          - os: ubuntu-latest
+            client_artifact_name: "Linux-64bit_client"
+            client_artifact_relpath: "/desktop/build64/Linux"
+            cc: "gcc"
+            cxx: "g++"
+          - os: macos-latest
+            client_artifact_name: "macOS-64bit_client"
+            client_artifact_relpath: "/desktop/build64/Darwin"
+            cc: "clang"
+            cxx: "clang++"
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ needs.params.outputs.ref }}
+
+      - name: Chocolatey install cppcheck
+        if: runner.os == 'Windows'
+        uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: install "${{ github.workspace }}\.github\choco-install.config" --force
+
+      - name: Install CUDA for windows
+        if: runner.os == 'Windows'
+        env:
+          visual_studio: "Visual Studio 16 2019"
+          cuda: "11.0.167"
+        shell: powershell
+        run: |
+          # Install CUDA via a powershell script
+          ${{ github.workspace }}\.github\install_cuda_windows.ps1
+          if ($?) {
+          # Set paths for subsequent steps, using $env:CUDA_PATH
+          echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
+          echo "::set-env name=CUDA_PATH::$env:CUDA_PATH"
+          echo "::set-env name=$env:CUDA_PATH_VX_Y::$env:CUDA_PATH"
+          echo "::add-path::$env:CUDA_PATH/bin"  }
+
+      - name: nvcc check for windows
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          nvcc -V
+          ls $env:CUDA_PATH
+          ls $env:CUDA_PATH\bin
+          ls $env:CUDA_PATH\include
+
+      # TODO add actions/cache@v2 around this operation to improve GHA execution time
+      - name: Download Ninja and CMake, install linux dependencies + linux cppcheck
+        # TODO move into a script stored inside the repo to make this workflow easier to read
+        id: cmake_and_ninja
+        shell: cmake -P {0}
+        run: |
+          set(cmake_version $ENV{CMAKE_VERSION})
+          set(ninja_version $ENV{NINJA_VERSION})
+          message(STATUS "Using host CMake version: ${CMAKE_VERSION}")
+
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            set(ninja_suffix "win.zip")
+            set(cmake_suffix "win64-x64.zip")
+            set(cmake_dir "cmake-${cmake_version}-win64-x64/bin")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\msvc_matcher.json\n")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}\.github\msvc_linker_matcher.json\n")
+          elseif ("${{ runner.os }}" STREQUAL "Linux")
+            set(ninja_suffix "linux.zip")
+            set(cmake_suffix "Linux-x86_64.tar.gz")
+            set(cmake_dir "cmake-${cmake_version}-Linux-x86_64/bin")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/gcc_matcher.json\n")
+          elseif ("${{ runner.os }}" STREQUAL "macOS")
+            set(ninja_suffix "mac.zip")
+            set(cmake_suffix "Darwin-x86_64.tar.gz")
+            set(cmake_dir "cmake-${cmake_version}-Darwin-x86_64/CMake.app/Contents/bin")
+            message(STATUS "\n ::add-matcher::${{ github.workspace }}/.github/clang_matcher.json\n")
+          endif()
+
+          set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
+          file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
+          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ninja.zip)
+
+          set(cmake_url "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-${cmake_suffix}")
+          file(DOWNLOAD "${cmake_url}" ./cmake.zip SHOW_PROGRESS)
+          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./cmake.zip)
+
+          # Save the path for other steps
+          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/${cmake_dir}" cmake_dir)
+          message("::set-output name=cmake_dir::${cmake_dir}")
+
+          if (NOT "${{ runner.os }}" STREQUAL "Windows")
+
+            execute_process(
+              COMMAND chmod +x ninja
+              COMMAND chmod +x ${cmake_dir}/cmake
+            )
+          endif()
+
+          message(STATUS "\n::add-matcher::./.github/cppcheck_matcher.json\n")
+          message(STATUS "\n::add-matcher::./.github/cmake_matcher.json\n")
+
+          if ("${{ runner.os }}" STREQUAL "Linux")
+            # install linux dev dependencies
+              execute_process(COMMAND bash -c "sudo apt-get update -y")
+              execute_process(COMMAND ${{ github.workspace }}/desktop/linux-client-setup.sh)
+              execute_process(COMMAND bash -c "sudo apt-get install cppcheck -y")
+          elseif("${{ runner.os }}" STREQUAL "macOS")
+              execute_process(COMMAND brew install cppcheck)
+          endif()
+
+      - name: Download ccache
+        id: ccache
+        shell: cmake -P {0}
+        run: |
+          set(ccache_url "https://github.com/cristianadam/ccache/releases/download/v$ENV{CCACHE_VERSION}/${{ runner.os }}.tar.xz")
+          file(DOWNLOAD "${ccache_url}" ./ccache.tar.xz SHOW_PROGRESS)
+          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ccache.tar.xz)
+
+      - name: Prepare ccache timestamp
+        id: ccache_cache_timestamp
+        shell: cmake -P {0}
+        run: |
+          string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
+          message("::set-output name=timestamp::${current_date}")
+
+      - name: ccache cache files
+        uses: actions/cache@v1.1.0
+        with:
+          path: .ccache
+          key: ${{ matrix.config.name }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
+          restore-keys: |
+            ${{ matrix.config.name }}-ccache-
+
+      - name: Configure cmake
+        # TODO move into a script stored inside the repo to make this workflow easier to read
+        shell: cmake -P {0}
+        run: |
+          set(ENV{CC} ${{ matrix.config.cc }})
+          set(ENV{CXX} ${{ matrix.config.cxx }})
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            set(ENV{CUDACXX} "${{ matrix.config.cudacxx }}")
+          endif()
+
+          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+            execute_process(
+              COMMAND "${{ matrix.config.environment_script }}" && set
+              OUTPUT_FILE environment_script_output.txt
+            )
+            file(STRINGS environment_script_output.txt output_lines)
+            foreach(line IN LISTS output_lines)
+              if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+                set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+              endif()
+            endforeach()
+          endif()
+
+          set(path_separator ":")
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            set(path_separator ";")
+          endif()
+          set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
+
+
+          execute_process(
+            COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
+              -S .
+              -B build
+              -D CMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
+              -G Ninja
+              -D CMAKE_MAKE_PROGRAM=ninja
+              -D CMAKE_C_COMPILER_LAUNCHER=ccache
+              -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
+              -D CMAKE_OSX_SYSROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
+              -DUSE_CPPCHECK=ON
+            RESULT_VARIABLE result
+          )
+          if (NOT result EQUAL 0)
+            message(FATAL_ERROR "Bad exit status")
+          endif()
+
+      - name: Perform build
+        # TODO move into a script stored inside the repo to make this workflow easier to read
+        shell: cmake -P {0}
+        run: |
+          set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+
+          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+            file(STRINGS environment_script_output.txt output_lines)
+            foreach(line IN LISTS output_lines)
+              if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+                set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+              endif()
+            endforeach()
+          endif()
+
+          set(path_separator ":")
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            set(path_separator ";")
+          endif()
+          set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
+
+          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" ccache_basedir)
+          set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
+          set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
+          set(ENV{CCACHE_COMPRESS} "true")
+          set(ENV{CCACHE_COMPRESSLEVEL} "6")
+          set(ENV{CCACHE_MAXSIZE} "400M")
+          if ("${{ matrix.config.cxx }}" STREQUAL "cl")
+            set(ENV{CCACHE_MAXSIZE} "600M")
+          endif()
+
+          execute_process(COMMAND ccache -p)
+          execute_process(COMMAND ccache -z)
+
+          execute_process(
+            COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build
+            RESULT_VARIABLE result
+          )
+          if (NOT result EQUAL 0)
+            message(FATAL_ERROR "Bad exit status")
+          endif()
+
+          execute_process(COMMAND ccache -s)
+
+      - name: Upload server artifact (if requested on this platform)
+        if: matrix.config.server_artifact_name
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.config.server_artifact_name }}
+          path: ${{ github.workspace }}${{ matrix.config.server_artifact_relpath }}
+
+      - name: Upload client artifact
+        if: matrix.config.client_artifact_name
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.config.client_artifact_name }}
+          path: ${{ github.workspace }}${{ matrix.config.client_artifact_relpath }}
+
+  # The server VM start job is kept separate from the server binary deploy job because it can take some
+  # time for a VM to come online. Notice that this job has no dependencies (besides the params job) and
+  # will therefore run in parallel with the previously defined build jobs. This parallelism improves
+  # total test wall clock time notably.
+  test_start_vm:
+    name: "Test: Allocate and start a server VM"
+    needs: [params]
+    if: needs.params.outputs.should_test != ''
+    runs-on: ubuntu-latest
+    steps:
+        # TODO is there a way we can ping the VM every 5s or so to avoid a naive 500s wait?
+      - name: startup_vm
+        run: |
+          cat <<EOF > sshkey
+          ${{ secrets.TEST_VM_SSHKEY }}
+          EOF
+          chmod 0600 sshkey
+
+          token=$(curl -v -X POST -H Content-Type:application/json  -d "{
+          \"username\" : \"${{ secrets.FRACTAL_TEST_USER }}\",
+          \"password\" : \"${{ secrets.FRACTAL_TEST_PASSWORD }}\" } "  \
+          $WEBSERVER_BASE_URL/account/login | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
+
+
+          curl -v -X POST -H "Content-Type:application/json" -H "Authorization: Bearer ${token}" \
+          -d "{
+          \"vm_name\" : \"$SERVER_VM_NAME\",
+          \"resource_group\" : \"FractalProtocolCI\" }" \
+          $WEBSERVER_BASE_URL/azure_vm/start
+          NUM_RETRIES=0
+          until [ $NUM_RETRIES -eq 5 ] || ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"; do
+              (( NUM_RETRIES++ ))
+              sleep 30
+          done
+
+
+  # Unlike the server VM start operation, this should only run if the builds succeeded
+  test_deploy_to_vm:
+    name: "Test: Deploy new protocol to server VM"
+    needs: [params, build, test_start_vm]
+    if: needs.params.outputs.should_test != ''
+    runs-on: ubuntu-latest
+    steps:
+      # This shouldn't check out the target ref because it needs to use scripts that are
+      # specific to this workflow definition, so it should checkout the branch of this workflow.
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: Windows-64bit_server
+          path: ${{ github.workspace }}/Windows-64bit_server
+      - name: deploy to VM
+        timeout-minutes: 20
+        run: |
+          cat <<EOF > sshkey
+          ${{ secrets.TEST_VM_SSHKEY }}
+          EOF
+          chmod 0600 sshkey
+          NUM_RETRIES=0
+          until [ NUM_RETRIES -eq 5 ] || ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"; do
+              (( NUM_RETRIES++ ))
+              sleep 30
+          done
+
+          ${{ github.workspace }}/.github/deploy_artifact_ssh.sh \
+            --ssh-key ./sshkey \
+            --vm-ip "$SERVER_VM_IP" \
+            --vm-user "$SERVER_VM_USER" \
+            --deploy ${{ github.workspace }}/Windows-64bit_server
+          sleep 60
+          NUM_RETRIES=0
+          until [ NUM_RETRIES -eq 5 ] || ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i sshkey "$SERVER_VM_USER@$SERVER_VM_IP" powershell.exe "Start-Sleep -s 2"; do
+              (( NUM_RETRIES++ ))
+              sleep 30
+          done
+
+  # This should run regardless of the success status of the other OS tests
+  test_client:
+    name: "Test: Client on ${{ matrix.config.os }}"
+    needs: [params, test_deploy_to_vm]
+    # This job (and any of its dependents) will be skipped if the workflow input doesn't request
+    # a given OS in the "should_test" parameter. This is intended to be used when performing
+    # a quick subsequent release due to non-code changes (such as documentation) or when iterating
+    # on the release workflow and a full test suite isn't necessary
+    #
+    # TODO: see the note above "test_predicate" for why this only works with running all tests or
+    # no tests right now, ie. no test selection is supported.
+    if: needs.params.outputs.should_test != ''
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - os: ubuntu-18.04
+            client_artifact_name: Linux-64bit_client
+            # TODO test_predicates currently don't work since the matrix is computed after the job-level if. This
+            # configuration item is left here in preparation for matrix support at the job-level.
+            # https://github.community/t/matrix-cannot-be-used-in-jobs-level-if/17177/6
+            test_predicate: "!contains(needs.params.outputs.should_test_linux, 'false')"
+            test_script: |
+              sudo apt-get update -y
+              sudo apt-get install valgrind pulseaudio jackd2 alsa-utils dbus-x11 libavcodec-dev libavdevice-dev libx11-dev libxtst-dev xclip x11-xserver-utils libasound2-dev libxdamage-dev -y || true
+              chmod +x FractalClient
+              sleep 1
+              xvfb-run ./FractalClient -k $SERVER_VM_IP | tee log.txt
+            log_location: log.txt
+            log_artifact_name: linux_client_test_logs
+          - os: windows-2016
+            client_artifact_name: Windows-64bit_client
+            test_predicate: "!contains(needs.params.outputs.should_test_windows, 'false')"
+            test_script:
+              | # `cd .` is to avoid fast-fail behavior in the shell by return 0 if the fractal command fails
+              .\FractalClient -k $Env:SERVER_VM_IP || cd .
+              cat log.txt
+            log_location: log.txt
+            log_artifact_name: Windows-64bit_client_test_logs
+          - os: macos-latest
+            client_artifact_name: macOS-64bit_client
+            test_predicate: "!contains(needs.params.outputs.should_test_macos, 'false')"
+            test_script: |
+              sleep 5
+              chmod +x FractalClient
+              ./FractalClient -k $SERVER_VM_IP | tee log.txt
+            log_location: log.txt
+            log_artifact_name: macOS-64bit_client_test_logs
+    steps:
+      - name: Retrieve client build artifact "${{ matrix.config.client_artifact_name }}"
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.config.client_artifact_name }}
+      - name: Run tests
+        run: ${{ matrix.config.test_script }}
+      - name: Upload logs
+        uses: actions/upload-artifact@v2
+        if: always() # Logs should be uploaded even if (actually, especially if) the previous step failed
+        with:
+          name: ${{ matrix.config.log_artifact_name }}
+          path: ${{ matrix.config.log_location }}
+
+  # This should always be if tests were run, regardless of the success of the tests. It should be able
+  # to handle a scenario where the VM was never started in the first place.
+  clean_up:
+    name: "Test: Shutdown server VM"
+    needs: [test_client]
+    if: needs.params.outputs.should_test != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH into server and retrieve logs
+        run: |
+          cat <<EOF > sshkey
+          ${{ secrets.TEST_VM_SSHKEY }}
+          EOF
+          chmod 0600 sshkey
+          sftp -v -o StrictHostKeyChecking=no -i sshkey $SERVER_VM_USER@$SERVER_VM_IP:/C:/programdata/fractalcache/log.txt .
+      - name: Upload Windows server logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: Windows-64bit_server_log
+          path: log.txt
+      - name: Stop VM
+        if: always() # if we fail to get logs we should still kill the VM when done
+        run: |
+          token=$(curl -v -X POST -H Content-Type:application/json  -d "{
+          \"username\" : \"${{ secrets.FRACTAL_TEST_USER }}\",
+          \"password\" : \"${{ secrets.FRACTAL_TEST_PASSWORD }}\" } "  \
+          $WEBSERVER_BASE_URL/account/login | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
+
+          curl -v -X POST -H "Content-Type:application/json" -H "Authorization: Bearer ${token}"  -d "{
+          \"vm_name\" : \"$SERVER_VM_NAME\",
+          \"resource_group\" : \"FractalProtocolCI\" }" \
+          $WEBSERVER_BASE_URL/azure_vm/deallocate
+
+  create-release:
+    name: Create release
+    needs: [params, build, test_client]
+    if: always() # See not in first step to understand why this is set to always run (which would seem incorrect since it should only run when builds succeed)
+    runs-on: ubuntu-latest
+    outputs:
+      release_upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version_id: ${{ steps.release_info.outputs.version_id }}
+    steps:
+      - name: Check if all builds succeeded
+        # This step was added because the job level if `needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success')`
+        # was resulting in the job skipping even when the value was shown to be true when printed.
+        run: |
+          if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
+            echo "Proceeding with job"
+          else
+            echo "Killing release job because builds or tests failed"
+            exit 1
+          fi
+      # TODO convert this into its own Github Action (ie. not embedded in this workflow but as its own published action)
+      # - https://docs.github.com/en/actions/creating-actions/creating-a-javascript-action
+      # - https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-using-action-in-the-same-repository-as-the-workflow
+      - name: Determine the new release version ID
+        id: release_info
+        uses: actions/github-script@v2
+        with:
+          script: |
+            if ("${{ needs.params.outputs.overridden_version_id }}") {
+              console.log(`::set-output name=version_id::${{ needs.params.outputs.overridden_version_id }}`)
+              return
+            }
+            const cur_ref_name = "${{ needs.params.outputs.ref_name }}"
+            const accumulate_paged_list = async (doReq, start_page = 0) => {
+              let aggregate = []
+              let new_list
+              do {
+                new_list = await doReq(start_page)
+                aggregate = aggregate.concat(new_list)
+                start_page++
+              } while (new_list.length > 0)
+              return aggregate
+            }
+            const releases = await accumulate_paged_list(
+              async (i) => (await github.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+                page: i,
+              })).data,
+              1 // Github's REST API paging is 1-indexed (not 0-indexed)
+            )
+            version_regex = /(\S+)-(\d{8})\.(\d+)/
+            console.log("Found ${releases.length} releases:")
+            const relevant_releases = releases
+              .map(r => { console.log(`  ${r.name}`); return r.name.match(version_regex) })
+              .filter(m => !!m)
+              .filter(([, ref_name]) => ref_name == cur_ref_name)
+            relevant_releases.sort()
+
+            const cur_date = new Date().toISOString().split("T")[0].replace(/-/g, "") // should always be in UTC
+            let cur_date_point = 1
+            console.log(`New release is for the "${cur_ref_name}" ref on ${cur_date}`)
+
+            const latest_release = relevant_releases[relevant_releases.length - 1]
+            if (latest_release) {
+              const [full, ref_name, date, point] = latest_release
+              console.log(`Comparing against latest release relevant release: "${full}".`)
+              if (date == cur_date) {
+                cur_date_point = Number(point) + 1
+              }
+            } else {
+              console.log(`Of ${releases.length} releases found none were for the "${cur_ref_name}" ref (or at least none followed the ref_name-YYYYMMDD.# naming pattern)`)
+            }
+            version_id = `${cur_ref_name}-${cur_date}.${cur_date_point}`
+            console.log(`::set-output name=version_id::${version_id}`)
+          github-token: ${{secrets.GITHUB_TOKEN}}
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ needs.params.outputs.ref }}
+      - name: Tag HEAD as ${{ steps.release_info.outputs.version_id }} and push
+        run: |
+          git tag ${{ steps.release_info.outputs.version_id }}
+          git push origin --tags
+      - name: Create release for ${{ steps.release_info.outputs.version_id }}
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release_info.outputs.version_id }}
+          release_name: ${{ steps.release_info.outputs.version_id }}
+          body: |
+            This was an automated release produced via the *${{ github.workflow }}* workflow in Github Actions which was triggered by *${{ github.event_name }}*.
+
+            **Version ID:** `${{ steps.release_info.outputs.version_id }}`
+
+            **Commit:** `${{ needs.params.outputs.git_sha }}`
+
+            **Release parameters:**
+
+            Inputs:
+            ```json
+            ${{ toJson(github.event.inputs) }}
+            ```
+
+            Derived:
+            ```json
+            ${{ toJson(needs.params.outputs) }}
+            ```
+
+            **Commits since last release:** TODO
+          draft: false
+          prerelease: false
+
+  upload-builds:
+    needs: [create-release]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config:
+          # These should match the configurations defined in the build job
+          # TODO: figure out how to DRY these configurations
+          - os: windows-latest
+            client_artifact_name: "Windows-64bit_client"
+            client_artifact_relpath: "/desktop/build64/Windows"
+            server_artifact_name: "Windows-64bit_server"
+            server_artifact_relpath: "/server/build64"
+            cc: "cl"
+            cxx: "cl"
+            cudacxx: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.0/bin/nvcc"
+            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          - os: ubuntu-latest
+            client_artifact_name: "Linux-64bit_client"
+            client_artifact_relpath: "/desktop/build64/Linux"
+            cc: "gcc"
+            cxx: "g++"
+          - os: macos-latest
+            client_artifact_name: "macOS-64bit_client"
+            client_artifact_relpath: "/desktop/build64/Darwin"
+            cc: "clang"
+            cxx: "clang++"
+    name: Upload ${{ matrix.config.client_artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
+    steps:
+      - name: Retrieve artifact ${{ matrix.config.client_artifact_name }}
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.config.client_artifact_name }}
+          path: ${{ matrix.config.client_artifact_name }}
+      - name: Package up artifact as a zip file
+        run: |
+          ls -laR
+          zip -r "${{ matrix.config.client_artifact_name }}" "${{ matrix.config.client_artifact_name }}"
+      - name: Upload to release ${{ needs['create-release'].outputs.version_id }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs['create-release'].outputs.release_upload_url }}
+          asset_path: ./${{ matrix.config.client_artifact_name }}.zip
+          asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.client_artifact_name }}.zip
+          asset_content_type: application/zip
