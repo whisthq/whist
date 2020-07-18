@@ -1,8 +1,75 @@
 {
+    "name": "fractal",
+    "description": "Fractal Desktop Application",
     "author": {
         "email": "support@fractalcomputers.com",
         "name": "Fractal Computers, Inc.",
         "url": "https://www.fractalcomputers.com"
+    },
+    "productName": "Fractal",
+    "homepage": "https://www.fractalcomputers.com",
+    "keywords": [
+        "fractal"
+    ],
+    "private": true,
+    "license": "UNLICENSED",
+    "engines": {
+        "node": ">=13.x",
+        "yarn": "1.x"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/fractalcomputers/client-applications.git"
+    },
+    "scripts": {
+        "-----misc-dev-----": "",
+        "dev": "cross-env START_HOT=1 node -r @babel/register ./internals/scripts/CheckPortInUse.js && cross-env START_HOT=1 yarn start-renderer-dev",
+        "-----lifecycle----": "",
+        "prestart": "yarn build",
+        "start": "cross-env NODE_ENV=development electron ./app/main.prod.js",
+        "start-main-dev": "cross-env START_HOT=1 NODE_ENV=development electron -r ./internals/scripts/BabelRegister ./app/main.dev.ts",
+        "start-renderer-dev": "cross-env NODE_ENV=development webpack-dev-server --config configs/webpack.config.renderer.dev.babel.js",
+        "postinstall": "node -r @babel/register internals/scripts/CheckNativeDep.js && electron-builder install-app-deps && yarn build-dll && opencollective-postinstall",
+        "preinstall": "node ./internals/scripts/CheckYarn.js",
+        "-----building-----": "",
+        "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
+        "build-dll": "cross-env NODE_ENV=development webpack --config ./configs/webpack.config.renderer.dev.dll.babel.js --colors",
+        "build-e2e": "cross-env E2E_BUILD=true yarn build",
+        "build-main": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.main.prod.babel.js --colors",
+        "build-renderer": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.renderer.prod.babel.js --colors",
+        "electron-rebuild": "electron-rebuild --parallel --force --types prod,dev,optional --module-dir app",
+        "-----packaging-----": "",
+        "package": "yarn build && electron-builder build --publish never",
+        "package:publish": "yarn build && electron-builder build --publish always",
+        "------testing------": "",
+        "test": "cross-env NODE_ENV=test BABEL_DISABLE_CACHE=1 jest",
+        "test-all": "yarn lint && yarn tsc && yarn build && yarn test && yarn build-e2e && yarn test-e2e",
+        "test-e2e": "node -r @babel/register ./internals/scripts/CheckBuildsExist.js && cross-env NODE_ENV=test testcafe electron:./app ./test/e2e/HomePage.e2e.ts",
+        "test-e2e-live": "node -r @babel/register ./internals/scripts/CheckBuildsExist.js && cross-env NODE_ENV=test testcafe --live electron:./app ./test/e2e/HomePage.e2e.ts",
+        "test-watch": "yarn test --watch",
+        "------linting------": "",
+        "format": "prettier --write .",
+        "lint": "cross-env NODE_ENV=development eslint . --cache --ext .js,.jsx,.ts,.tsx",
+        "lint-fix": "yarn --silent lint --fix; exit 0",
+        "lint-styles": "stylelint --ignore-path .eslintignore '**/*.*(css|scss)' --syntax scss",
+        "lint-styles-fix": "yarn --silent lint-styles --fix; exit 0",
+        "postlint-fix": "prettier --ignore-path .eslintignore --single-quote --write '**/*.{js,jsx,json,html,css,less,scss,yml}'",
+        "postlint-styles-fix": "prettier --ignore-path .eslintignore --single-quote --write '**/*.{css,scss}'"
+    },
+    "lint-staged": {
+        "*.{css,scss}": [
+            "stylelint --ignore-path .eslintignore --syntax scss --fix",
+            "prettier --ignore-path .eslintignore --single-quote --write"
+        ],
+        "*.{html,md,yml}": [
+            "prettier --ignore-path .eslintignore --single-quote --write"
+        ],
+        "*.{js,jsx,ts,tsx}": [
+            "cross-env NODE_ENV=development eslint --cache"
+        ],
+        "{*.json,.{babelrc,eslintrc,prettierrc,stylelintrc}}": [
+            "prettier --ignore-path .eslintignore --parser json --write"
+        ]
     },
     "browserslist": [
         "extends browserslist-config-erb"
@@ -162,7 +229,6 @@
         "spawn-sync": "^2.0.0",
         "systeminformation": "^4.22.3"
     },
-    "description": "Fractal Desktop Application",
     "devDependencies": {
         "@babel/core": "^7.8.3",
         "@babel/plugin-proposal-class-properties": "^7.8.3",
@@ -277,11 +343,6 @@
         "webpack-merge": "^4.2.2",
         "yarn": "^1.22.1"
     },
-    "engines": {
-        "node": ">=13.x",
-        "yarn": "1.x"
-    },
-    "homepage": "https://www.fractalcomputers.com",
     "jest": {
         "moduleDirectories": [
             "node_modules",
@@ -302,64 +363,5 @@
             "./internals/scripts/CheckBuildsExist.js"
         ],
         "testURL": "http://localhost/"
-    },
-    "keywords": [
-        "fractal"
-    ],
-    "license": "UNLICENSED",
-    "lint-staged": {
-        "*.{css,scss}": [
-            "stylelint --ignore-path .eslintignore --syntax scss --fix",
-            "prettier --ignore-path .eslintignore --single-quote --write"
-        ],
-        "*.{html,md,yml}": [
-            "prettier --ignore-path .eslintignore --single-quote --write"
-        ],
-        "*.{js,jsx,ts,tsx}": [
-            "cross-env NODE_ENV=development eslint --cache"
-        ],
-        "{*.json,.{babelrc,eslintrc,prettierrc,stylelintrc}}": [
-            "prettier --ignore-path .eslintignore --parser json --write"
-        ]
-    },
-    "name": "fractal",
-    "private": true,
-    "productName": "Fractal",
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/fractalcomputers/client-applications.git"
-    },
-    "scripts": {
-        "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
-        "build-dll": "cross-env NODE_ENV=development webpack --config ./configs/webpack.config.renderer.dev.dll.babel.js --colors",
-        "build-e2e": "cross-env E2E_BUILD=true yarn build",
-        "build-main": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.main.prod.babel.js --colors",
-        "build-renderer": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.renderer.prod.babel.js --colors",
-        "dev": "cross-env START_HOT=1 node -r @babel/register ./internals/scripts/CheckPortInUse.js && cross-env START_HOT=1 yarn start-renderer-dev",
-        "electron-rebuild": "electron-rebuild --parallel --force --types prod,dev,optional --module-dir app",
-        "format": "prettier --write .",
-        "lint": "cross-env NODE_ENV=development eslint . --cache --ext .js,.jsx,.ts,.tsx",
-        "lint-fix": "yarn --silent lint --fix; exit 0",
-        "lint-styles": "stylelint --ignore-path .eslintignore '**/*.*(css|scss)' --syntax scss",
-        "lint-styles-fix": "yarn --silent lint-styles --fix; exit 0",
-        "package": "yarn build && electron-builder build --publish never",
-        "package-all": "yarn build && electron-builder build -mwl",
-        "package-ci": "yarn postinstall && yarn build && electron-builder build --publish always",
-        "package-linux": "yarn build && electron-builder build --linux",
-        "package-win": "yarn build && electron-builder build --win --x64",
-        "postinstall": "node -r @babel/register internals/scripts/CheckNativeDep.js && electron-builder install-app-deps && yarn build-dll && opencollective-postinstall",
-        "postlint-fix": "prettier --ignore-path .eslintignore --single-quote --write '**/*.{js,jsx,json,html,css,less,scss,yml}'",
-        "postlint-styles-fix": "prettier --ignore-path .eslintignore --single-quote --write '**/*.{css,scss}'",
-        "preinstall": "node ./internals/scripts/CheckYarn.js",
-        "prestart": "yarn build",
-        "start": "cross-env NODE_ENV=development electron ./app/main.prod.js",
-        "start-main-dev": "cross-env START_HOT=1 NODE_ENV=development electron -r ./internals/scripts/BabelRegister ./app/main.dev.ts",
-        "start-renderer-dev": "cross-env NODE_ENV=development webpack-dev-server --config configs/webpack.config.renderer.dev.babel.js",
-        "test": "cross-env NODE_ENV=test BABEL_DISABLE_CACHE=1 jest",
-        "test-all": "yarn lint && yarn ts && yarn build && yarn test && yarn build-e2e && yarn test-e2e",
-        "test-e2e": "node -r @babel/register ./internals/scripts/CheckBuildsExist.js && cross-env NODE_ENV=test testcafe electron:./app ./test/e2e/HomePage.e2e.ts",
-        "test-e2e-live": "node -r @babel/register ./internals/scripts/CheckBuildsExist.js && cross-env NODE_ENV=test testcafe --live electron:./app ./test/e2e/HomePage.e2e.ts",
-        "test-watch": "yarn test --watch",
-        "ts": "tsc"
     }
 }
