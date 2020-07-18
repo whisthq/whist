@@ -277,10 +277,9 @@
         "webpack-merge": "^4.2.2",
         "yarn": "^1.22.1"
     },
-    "devEngines": {
-        "node": ">=7.x",
-        "npm": ">=4.x",
-        "yarn": ">=0.21.3"
+    "engines": {
+        "node": ">=13.x",
+        "yarn": "1.x"
     },
     "homepage": "https://www.fractalcomputers.com",
     "jest": {
