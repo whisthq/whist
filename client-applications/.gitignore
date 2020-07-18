@@ -6,4 +6,3 @@ protocol-packages/
 
 # yarn
 node_modules/
-yarn.lock
