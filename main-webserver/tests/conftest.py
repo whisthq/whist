@@ -10,4 +10,6 @@ def input_token():
         ),
     )
 
-    return resp.json()["access_token"]
+    input_token = resp.json()["access_token"]
+
+    return input_token

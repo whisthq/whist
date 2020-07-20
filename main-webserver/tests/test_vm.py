@@ -53,7 +53,8 @@ def test_delete_vm_initial(input_token):
 def test_vm_create(input_token):
     newLine()
 
-    regions = ["eastus", "eastus"]
+    # regions = ["eastus", "northcentralus", "southcentralus"]
+    regions = ["eastus"]
 
     def createVMInRegion(region):
         fractalLog(

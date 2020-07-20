@@ -202,7 +202,7 @@ def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
     fractalLog(
         function="sendVMStartCommand",
         label="VM {vm_name}".format(vm_name=vm_name),
-        logs="VM {vm_name} winlogoned successfully after {} tries".format(
+        logs="VM {vm_name} winlogoned successfully after {num_tries} tries".format(
             vm_name=vm_name, num_tries=str(num_tries)
         ),
     )

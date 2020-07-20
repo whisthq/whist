@@ -83,6 +83,8 @@ useful_env_vars = [
     "USE_PRODUCTION_DATABASE",
     "VM_GROUP",
     "VM_PASSWORD",
+    "SMALLDISK_PLAN_ID",
+    "MEDIUMDISK_PLAN_ID",
 ]
 
 useful_config = {k: env_config.get(k) for k in useful_env_vars}

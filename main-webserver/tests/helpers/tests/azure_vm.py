@@ -11,7 +11,7 @@ def fetchCurrentVMs():
 
 def createVM(vm_size, location, operating_system, resource_group, input_token):
     return requests.post(
-        (SERVER_URL + "/azure_vm/create"),
+        (SERVER_URL + "/vm/create"),
         json={
             "vm_size": vm_size,
             "location": location,
@@ -29,7 +29,7 @@ def getVm(vm_name):
 
 def deleteVM(vm_name, delete_disk, resource_group, input_token):
     return requests.post(
-        (SERVER_URL + "/azure_vm/delete"),
+        (SERVER_URL + "/vm/delete"),
         json={
             "vm_name": vm_name,
             "delete_disk": delete_disk,
@@ -41,7 +41,7 @@ def deleteVM(vm_name, delete_disk, resource_group, input_token):
 
 def runPowershell(vm_name, command, resource_group, input_token):
     return requests.post(
-        (SERVER_URL + "/azure_vm/command"),
+        (SERVER_URL + "/vm/command"),
         json={
             "vm_name": vm_name,
             "command": command,
