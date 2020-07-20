@@ -109,8 +109,6 @@ void initLogger(char *log_dir) {
         mprintf_log_file = fopen(f, "wb");
     }
 
-
-
     run_multithreaded_printf = true;
     logger_mutex = SDL_CreateMutex();
     startConnectionLog();
@@ -121,20 +119,20 @@ void initLogger(char *log_dir) {
     //    StartTimer(&mprintf_timer);
 }
 
-//Sets up logs for a new connection, overwriting previous
-void startConnectionLog(){
+// Sets up logs for a new connection, overwriting previous
+void startConnectionLog() {
     char l[1000] = "";
     strcat(l, log_directory);
     strcat(l, "/log_connection.txt");
 
-    FILE * log_connection_file = fopen(l, "wb");
+    FILE *log_connection_file = fopen(l, "wb");
 
-//  Set up log_connection.txt to see when a connection begins
-//  Use lock so there aren't any race conditions with
-//  Making a log_prev.txt at the same time
+    //  Set up log_connection.txt to see when a connection begins
+    //  Use lock so there aren't any race conditions with
+    //  Making a log_prev.txt at the same time
     SDL_LockMutex((SDL_mutex *)logger_mutex);
     int sz = ftell(mprintf_log_file);
-    fprintf(log_connection_file, "%d\n%d",sz,1);
+    fprintf(log_connection_file, "%d\n%d", sz, 1);
     fclose(log_connection_file);
     SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 }
@@ -248,12 +246,12 @@ int MultiThreadedPrintf(void *opaque) {
 #endif
                 mprintf_log_file = fopen(f, "ab");
 
-//              This changes the line number and file # indicator
-//              in log_connection.txt to reflect file copying
+                //              This changes the line number and file # indicator
+                //              in log_connection.txt to reflect file copying
                 char lname[1000] = "";
                 strcat(lname, log_directory);
                 strcat(lname, "/log_connection.txt");
-                FILE * log_connection = fopen(lname, "ab+");
+                FILE *log_connection = fopen(lname, "ab+");
                 fseek(log_connection, 0, SEEK_SET);
 
                 int seekPos;
@@ -261,7 +259,7 @@ int MultiThreadedPrintf(void *opaque) {
                 fscanf(log_connection, "%d", &seekPos);
                 fscanf(log_connection, "%d", &fileNum);
 
-                if (fileNum == 0){
+                if (fileNum == 0) {
                     seekPos = 0;
                 } else {
                     fileNum = 0;
@@ -270,8 +268,6 @@ int MultiThreadedPrintf(void *opaque) {
                 freopen(lname, "w", log_connection);
                 fprintf(log_connection, "%d\n%d", seekPos, fileNum);
                 fclose(log_connection);
-
-
             }
         }
     }
@@ -582,14 +578,14 @@ char *get_version() {
     return version;
 }
 
-//The first time this is called will include the initial log messages,
-//before the first connection, if they haven't been overwritten.
+// The first time this is called will include the initial log messages,
+// before the first connection, if they haven't been overwritten.
 int sendConnectionHistory() {
     char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
-    //This is for HTTP request, not filesystem
+    // This is for HTTP request, not filesystem
     char *request_path = "/logs";
 
-    SDL_LockMutex((SDL_mutex*) logger_mutex);
+    SDL_LockMutex((SDL_mutex *)logger_mutex);
     bool using_cache = true;
     char *logs_raw;
     int log_len;
@@ -602,7 +598,7 @@ int sendConnectionHistory() {
         char f[1000] = "";
         strcat(f, log_directory);
         strcat(f, "/log_connection.txt");
-        FILE * log_connection = fopen(f, "rb");
+        FILE *log_connection = fopen(f, "rb");
         fseek(log_connection, 0, SEEK_SET);
         int seekPos;
         int fileNum;
@@ -610,18 +606,18 @@ int sendConnectionHistory() {
         fscanf(log_connection, "%d", &fileNum);
         fclose(log_connection);
 
-        if (fileNum == 1){
-            //Only need to use log.txt
+        if (fileNum == 1) {
+            // Only need to use log.txt
             log_len = ftell(mprintf_log_file) - seekPos;
             logs_raw = malloc(log_len + 10);
             fseek(mprintf_log_file, seekPos, SEEK_SET);
             fread(logs_raw, log_len, 1, mprintf_log_file);
         } else if (fileNum == 0) {
-            //Need to use log_prev.txt and log.txt. Know log_prev.txt exists
+            // Need to use log_prev.txt and log.txt. Know log_prev.txt exists
             char f[1000] = "";
             strcat(f, log_directory);
             strcat(f, "/log_prev.txt");
-            FILE * prev_log = fopen(f, "rb");
+            FILE *prev_log = fopen(f, "rb");
             fseek(prev_log, 0, SEEK_END);
             int prev_len = ftell(prev_log) - seekPos;
             int curr_len = ftell(mprintf_log_file);
@@ -635,7 +631,7 @@ int sendConnectionHistory() {
             read(mprintf_log_file, &logs_raw[prev_len], curr_len);
 
         } else {
-//          Recovery from a corrupted log_connection.txt file
+            //          Recovery from a corrupted log_connection.txt file
             fprintf(stderr, "Corrupted log_connection.txt file! Cannot send logfile. Using cache");
             mprintf("Corrupted log_connection.txt file! Cannot send logfile. Using cache");
             logs_raw = get_logger_history();
@@ -699,7 +695,7 @@ int sendConnectionHistory() {
     SendJSONPost(host, request_path, json, get_access_token());
     free(logs);
     free(json);
-    if (!using_cache){
+    if (!using_cache) {
         free(logs_raw);
     }
 
