@@ -21,9 +21,12 @@ jobs:
         #   https://api.github.com/repos/fractalcomputers/protocol/actions/workflows
         # ```
 
+        # NOTE: the root "ref" tag points to `master` because that is the version of the workflow that
+        # we want to run (as in, that is the branch containing the specific YAML file that should be used)
+
         # TODO enable testing once it is working reliably
         run: |
           curl -u "${{ secrets.CI_PAT }}:" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/fractalcomputers/protocol/actions/workflows/1851975/dispatches \
-            -d '{"ref": "${{ github.ref }}", "inputs": {"ref": "${{ github.ref }}", "should_test": "false"}}'
+            -d '{"ref": "master", "inputs": {"ref": "${{ github.ref }}", "should_test": "false"}}'
