@@ -84,7 +84,7 @@ clock mprintf_timer;
 FILE *mprintf_log_file = NULL;
 char *log_directory = NULL;
 
-//This is written to in MultiThreaderPrintf
+// This is written to in MultiThreaderPrintf
 #define LOG_CACHE_SIZE 1000000
 char logger_history[LOG_CACHE_SIZE];
 int logger_history_len;
@@ -479,12 +479,10 @@ bool sendLogHistory() {
     char using_cache = 1;
     char *logs_raw;
     int cached_log_len = get_logger_history_len();
-    if (mprintf_log_file == NULL || cached_log_len < LOG_CACHE_SIZE ) {
+    if (mprintf_log_file == NULL || cached_log_len < LOG_CACHE_SIZE) {
         logs_raw = get_logger_history();
     } else {
         using_cache = 0;
-
-
     }
 
     char *logs = malloc(1000 + 2 * raw_log_len);
