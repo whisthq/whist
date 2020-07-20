@@ -130,6 +130,8 @@ if __name__ == "__main__":
             headers={"Accept": "application/octet-stream"},
             stream=True,
         ) as r:
+            r.raise_for_status()
+            print(f"Asset size = {r.headers.get('Content-Length', 'unknown')} bytes")
             with open(out_path, "wb") as out:
                 shutil.copyfileobj(r.raw, out)
         print(f"Saved '{out_path}'")

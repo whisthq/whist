@@ -142,6 +142,7 @@ def prep_windows(protocol_dir: Path) -> None:
             f"https://github.com/electron/rcedit/releases/download/{rcedit_version}/rcedit-x64.exe",
             stream=True,
         ) as r:
+            r.raise_for_status()
             with open(rcedit_path) as f:
                 shutil.copyfileobj(r.raw, f)
     rcedit_cmd = [
@@ -223,7 +224,8 @@ if __name__ == "__main__":
 
     desktop_dir = Path(args.src_dir)
     protocol_packages_dir = Path(args.protocol_packages_dir)
-    protocol_dir = desktop_dir / "protocol-build"
+    protocol_dir = (desktop_dir / "protocol-build").resolve()
+    protocol_dir.mkdir(parents=True, exist_ok=True)
 
     cleanup_list = []
     protocol = select_protocol_binary(
