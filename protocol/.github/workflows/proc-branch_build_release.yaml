@@ -19,6 +19,11 @@ on:
       overridden_version_id:
         description: "manually set a version ID (default: false, ie. dynamic from REFNAME-YYYYMMDD.#)"
         required: false
+      should_release:
+        description: should the builds be uploaded as a release; allowing this workflow to be used purely for testing ("true" or "false")
+        # NOTE: if a user passes an empty string "" to the parameter then the default value will be used
+        default: "true"
+        required: false
 
 env:
   CMAKE_VERSION: 3.15.7
@@ -38,6 +43,7 @@ jobs:
       ref: ${{ steps.values.outputs.ref }}
       ref_name: ${{ steps.values.outputs.ref_name }}
       git_sha: ${{ steps.values.outputs.git_sha }}
+      should_test: ${{ steps.values.outputs.should_release }}
       should_test: ${{ steps.values.outputs.should_test }}
       should_test_windows: ${{ steps.values.outputs.should_test_windows }}
       should_test_linux: ${{ steps.values.outputs.should_test_linux }}
@@ -72,6 +78,7 @@ jobs:
             echo ::set-output name=ref_name::$(git rev-parse HEAD)
           fi
           echo ::set-output name=git_sha::$(git rev-parse HEAD)
+          echo ::set-output name=should_release::${{ github.event.inputs.should_release }}
           echo ::set-output name=should_test::$(if [[ "${{ github.event.inputs.should_test }}" == "false" ]]; then echo ""; else echo "true"; fi)
           export SHOULD_TEST=${{ github.event.inputs.should_test }}
           echo ::set-output name=should_test_windows::$(if [[ $SHOULD_TEST == *"windows"* ]]; then echo "true"; else echo "false"; fi)
@@ -525,6 +532,10 @@ jobs:
         # This step was added because the job level if `needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success')`
         # was resulting in the job skipping even when the value was shown to be true when printed.
         run: |
+          if ! ${{ needs.params.outputs.should_release }}; then
+            echo "Killing release job because should_release=${{ needs.params.outputs.should_release }}"
+            exit 1
+          fi
           if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
             echo "Proceeding with job"
           else

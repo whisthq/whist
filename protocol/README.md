@@ -102,13 +102,34 @@ To build on Windows, run the command `cmake -G "NMake Makefiles"` at the root di
 
 More documentation is in our [Google Drive](https://docs.google.com/document/d/1T9Lc3HVoqhqSjdUbiaFaQU71oV1VH25iFGDNvAYjtOs/edit?usp=sharing), if needed. We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install doxygen via your local package manager, and run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs gitignored to avoid clutter on the repository, since we don't publish them anywhere.
 
-### Continous Integration
+## CI & CD
 
-We have GitHub Actions enabled on this repository, in conjunction with CMake. Therefore, every time there is a push or a PR, GitHub will automatically compile both FractalClient and FractalServer on Windows, MacOS and Linux Ubuntu, and will outline any warnings and/or errors on the "Actions" tab above. Make sure to verify there after your push or PR. The relevant workflow file for compiling is `build.yaml`. This workflow also runs cppcheck on Windows, MacOS and Linux Ubuntu, which is a static analysis tool which can catch errors which compilers cannot, e.g. accessing uninitialized memory and other undefined behaviour. Not everything it catches is critical, but it does indicate the possibility of unexpected behaviour. In addition, for every push or PR, the code will be automatically linted via clang-format.
+### Continuous Deployment
 
-Lastly, every night at 2 AM EST we run an integrated streaming testing workflow, `nightly_testing.yaml`. This workflow will spin an Azure VM, upload the latest `dev` server to it, and then use GitHub Actions VMs on Windows, MacOS and Linux Ubuntu as clients to connect and stream via the protocol for one minute.
+Every commit to `dev`, `staging` and `master`, as well as each new PR opened or updated, results in a new build being created an uploaded to GitHub Releases. These builds are versioned using the following scheme `GITREF-YYYYMMDD.#`, where
+- `GITREF` is either the branch name (such as `dev`) or the PR info (such as `pr255merge` for the merge commit on PR #255)
+- `YYYYMMDD` is the current UTC date
+- `#` is an incrementing integer to disambiguate multiple releases on the same date
+
+A build of the `client-applications` will also be triggered for each new `protocol` build. See that repository's README for more information.
+
+#### Checks & Tests
+
+These builds will also have `cppcheck` run against them which is a static analysis tool which can catch errors which compilers cannot, e.g. accessing uninitialized memory and other undefined behavior. Not everything it catches is critical, but it does indicate the possibility of unexpected behavior.
+
+These builds will also (TODO) be tested against a live server VM. This workflow will spin up an Azure VM, upload the server build to it, and then use GitHub Actions VMs on Windows, MacOS and Linux Ubuntu as clients to connect and stream via the protocol for one minute. This will also occur nightly against the `dev` branch, but these builds will not be released (this can be removed once testing is stable and re-enabled on all commits).
 
 To see the warnings in context go to the Actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log, where you can clearly see the warnings/errors generated. 
+
+### Special Cases
+
+You can add `WIP` anywhere in the title of a PR to keep the CD auto-build workflow from running
+
+You can include `skip-ci` anywhere in a commit message to `dev`, `staging`, or `master` to keep the CD auto-build workflow from running.
+
+### Continuous Integration
+
+For every push or PR, the code will be automatically linted via clang-format according to the [styling](#styling) guidelines.
 
 ## Styling
 

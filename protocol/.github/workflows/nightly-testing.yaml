@@ -1,18 +1,15 @@
-name: Auto release primary branches (dev, staging, master)
+# Run streaming tests between Azure (server) and GitHub VMs (client) every night
 
+name: Nightly testing
+# Run every day at 6 am UTC, 2am eastern
 on:
-  push:
-    branches:
-      - dev
-      - staging
-      - master
+  schedule:
+    - cron:  '0 6 * * *'
 
 jobs:
-  trigger-release:
+  trigger-testing:
     runs-on: ubuntu-latest
     steps:
-        # Do not run if latest commit contains "skip-ci" in its message
-      - if: "!contains(github.event.head_commit.message, 'skip-ci')"
         # TODO switch this to GITHUB_TOKEN once workflow_dispatch supports GHA initiated dispatches
         # (currently it requires the dispatcher to be a user, so a personal access token must be used
         # here)
@@ -27,8 +24,6 @@ jobs:
         # NOTE: the root "ref" tag points to `master` because that is the version of the workflow that
         # we want to run (as in, that is the branch containing the specific YAML file that should be used)
 
-        # TODO enable testing once it is working reliably
-
         # Pipe secrets.PROC_BRANCH_BUILD_RELEASE_ID to base64 so that the user can see it in the logs
         # since GHA auto redacts secrets.
       - run: |
@@ -37,4 +32,4 @@ jobs:
           curl -u "${{ secrets.CI_PAT }}:" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/fractalcomputers/protocol/actions/workflows/${{ secrets.PROC_BRANCH_BUILD_RELEASE_ID }}/dispatches \
-            -d '{"ref": "master", "inputs": {"ref": "${{ github.ref }}", "should_test": "false"}}'
+            -d '{"ref": "master", "inputs": {"ref": "dev", "should_test": "true", "should_release": "false"}}'
