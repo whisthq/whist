@@ -144,8 +144,11 @@ void destroyLogger();
 
 /**
  * @brief                          Send the log history to the webserver
+ *
+ * @returns                         0: success -1: failure to send file,
+ *                                  sent cache instead   -2: outright failure
  */
-bool sendLogHistory();
+int sendConnectionHistory();
 
 /**
  * @brief                          Tell the server the WinLogon and connection

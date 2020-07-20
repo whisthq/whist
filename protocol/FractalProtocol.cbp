@@ -447,6 +447,9 @@
 		<Unit filename="/Users/gavin/Fractal/protocol/fractal/audio/audiodecode.h">
 			<Option target="fractalAudio"/>
 		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/clipboard/clipboard.c">
+			<Option target="fractalClipboard"/>
+		</Unit>
 		<Unit filename="/Users/gavin/Fractal/protocol/fractal/clipboard/clipboard.h">
 			<Option target="fractalClipboard"/>
 		</Unit>

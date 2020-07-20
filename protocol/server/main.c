@@ -891,7 +891,7 @@ int main() {
 #ifdef _WIN32
     initLogger("C:\\ProgramData\\FractalCache");
 #else
-    initLogger(".", connection_id);
+    initLogger(".");
 #endif
     LOG_INFO("Version Number: %s", get_version());
     LOG_INFO("Fractal server revision %s", FRACTAL_GIT_REVISION);
@@ -1118,10 +1118,6 @@ int main() {
         }
 
         LOG_INFO("Disconnected");
-        sendLogHistory();
-        destroyLogger();
-        connection_id = rand();
-        initLogger(".");
 
         DestroyInputDevice(input_device);
 
@@ -1149,6 +1145,10 @@ int main() {
         if (writeUnlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
         }
+
+        sendConnectionHistory();
+        startConnectionLog();
+        connection_id = rand();
     }
 
 #ifdef _WIN32
