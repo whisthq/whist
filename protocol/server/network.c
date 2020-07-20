@@ -161,7 +161,7 @@ int broadcastUDPPacket(FractalPacketType type, void *data, int len, int id, int 
         curr_index += payload_size;
     }
 
-    // LOG_INFO( "Packet Time: %f\n", GetTimer( packet_timer ) );
+    // LOG_INFO( "Packet Time: %f", GetTimer( packet_timer ) );
 
     return 0;
 }

@@ -279,7 +279,7 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data, in
     *((int *)encrypted_packet_buffer) = encrypted_len;
 
     // Send the packet
-    LOG_INFO("Sending TCP Packet of length %d\n", encrypted_len);
+    LOG_INFO("Sending TCP Packet of length %d", encrypted_len);
     bool failed = false;
     if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len) < 0) {
         LOG_WARNING("Failed to send packet!");
@@ -381,7 +381,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
         if (sent_size < 0) {
             int error = GetLastNetworkError();
-            mprintf("Unexpected Packet Error: %d\n", error);
+            mprintf("Unexpected Packet Error: %d", error);
             return -1;
         }
 
@@ -396,7 +396,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
 int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
     if (len > sizeof(FractalPacket)) {
-        LOG_WARNING("Len too long!\n");
+        LOG_WARNING("Len too long!");
         return -1;
     }
     if (context == NULL) {
@@ -419,7 +419,7 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
     SDL_UnlockMutex(context->mutex);
 
     if (sent_size < 0) {
-        mprintf("Could not replay packet!\n");
+        LOG_WARNING("Could not replay packet!");
         return -1;
     }
 
@@ -460,7 +460,7 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
         if (!worked) {
             LOG_WARNING(
                 "Could not connect() over TCP to server: Returned %d, Error "
-                "Code %d\n",
+                "Code %d",
                 ret, GetLastNetworkError());
             closesocket(s);
             return false;
@@ -1379,7 +1379,7 @@ int CreateUDPContext(SocketContext *context, char *destination, int port, int re
 
 // send JSON post to query the database, authenticate the user and return the VM
 // IP
-bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
+bool SendJSONPost(char *host_s, char *path, char *jsonObj, char *access_token) {
     // environment variables
     SOCKET Socket;  // socket to send/receive POST request
     struct hostent *host;
@@ -1418,6 +1418,12 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
     // now that we're connected, we can send the POST request to authenticate
     // the user first, we create the POST request message
 
+    char access_token_header[1000];
+    if (access_token) {
+        snprintf(access_token_header, sizeof(access_token_header), "Authorization: Bearer %s\r\n",
+                 access_token);
+    }
+
     int json_len = (int)strlen(jsonObj);
     char *message = malloc(5000 + json_len);
     snprintf(message, 5000 + json_len,
@@ -1425,9 +1431,12 @@ bool SendJSONPost(char *host_s, char *path, char *jsonObj) {
              "Host: %s\r\n"
              "Content-Type: application/json\r\n"
              "Content-Length: %d\r\n"
+             "%s"
              "\r\n"
              "%s\r\n",
-             path, host_s, json_len, jsonObj);
+             path, host_s, json_len, access_token ? access_token_header : "", jsonObj);
+
+    LOG_INFO("POST Request: %s", message);
 
     // now we send it
     if (send(Socket, message, (int)strlen(message), 0) < 0) {

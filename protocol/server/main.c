@@ -60,7 +60,7 @@ its threads.
 
 #define BITS_IN_BYTE 8.0
 #define BYTES_IN_KILOBYTE 1024.0
-#define MS_IN_SECOND 1000.0
+#define MS_IN_SECOND 1000
 #define TCP_CONNECTION_WAIT 5000
 
 extern Client clients[MAX_NUM_CLIENTS];
@@ -223,7 +223,7 @@ int32_t SendVideo(void* opaque) {
                 }
             } else {
                 current_bitrate = (int)(STARTING_BITRATE);
-                LOG_INFO("Updating Encoder using Bitrate: %d from %f\n", current_bitrate, max_mbps);
+                LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate, max_mbps);
                 pending_encoder = true;
                 encoder_finished = false;
                 encoder_factory_server_w = device->width;
@@ -353,10 +353,10 @@ int32_t SendVideo(void* opaque) {
             max_frame_size = max(max_frame_size, encoder->encoded_frame_size);
 
             if (frame_stat_number % 30 == 0) {
-                LOG_INFO("Longest Encode Time: %f\n", max_frame_time);
-                LOG_INFO("Average Encode Time: %f\n", total_frame_time / 30);
-                LOG_INFO("Longest Encode Size: %f\n", max_frame_size);
-                LOG_INFO("Average Encode Size: %f\n", total_frame_sizes / 30);
+                LOG_INFO("Longest Encode Time: %f", max_frame_time);
+                LOG_INFO("Average Encode Time: %f", total_frame_time / 30);
+                LOG_INFO("Longest Encode Size: %f", max_frame_size);
+                LOG_INFO("Average Encode Size: %f", total_frame_sizes / 30);
                 total_frame_time = 0.0;
                 max_frame_time = 0.0;
                 total_frame_sizes = 0.0;
@@ -989,11 +989,12 @@ int main() {
             // If they clipboard as updated, we should send it over to the
             // client
             if (hasClipboardUpdated()) {
-                FractalServerMessage* fmsg_response = malloc(10000000);
-                fmsg_response->type = SMESSAGE_CLIPBOARD;
-                ClipboardData* cb = GetClipboard();
-                memcpy(&fmsg_response->clipboard, cb, sizeof(ClipboardData) + cb->size);
                 LOG_INFO("Received clipboard trigger! Sending to client");
+                ClipboardData* cb = GetClipboard();
+                FractalServerMessage* fmsg_response =
+                    malloc(sizeof(FractalServerMessage) + cb->size);
+                fmsg_response->type = SMESSAGE_CLIPBOARD;
+                memcpy(&fmsg_response->clipboard, cb, sizeof(ClipboardData) + cb->size);
                 if (readLock(&is_active_rwlock) != 0) {
                     LOG_ERROR("Failed to read-acquire is active RW lock.");
                 } else {

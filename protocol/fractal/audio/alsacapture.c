@@ -32,7 +32,7 @@ audio_device_t *CreateAudioDevice() {
     // open pcm device for stream capture
     res = snd_pcm_open(&audio_device->handle, "default", SND_PCM_STREAM_CAPTURE, 0);
     if (res < 0) {
-        LOG_WARNING("Failed to open PCM device: %s\n", snd_strerror(res));
+        LOG_WARNING("Failed to open PCM device: %s", snd_strerror(res));
         free(audio_device);
         return NULL;
     }
@@ -42,7 +42,7 @@ audio_device_t *CreateAudioDevice() {
 
     res = snd_pcm_hw_params_any(audio_device->handle, audio_device->params);
     if (res < 0) {
-        LOG_WARNING("No available PCM hardware configurations.\n");
+        LOG_WARNING("No available PCM hardware configurations.");
         free(audio_device);
         return NULL;
     }
@@ -54,7 +54,7 @@ audio_device_t *CreateAudioDevice() {
                                        audio_device->sample_format);
 
     if (res < 0) {
-        LOG_WARNING("PCM sample format 'enum _snd_pcm_format %d' unavailable.\n",
+        LOG_WARNING("PCM sample format 'enum _snd_pcm_format %d' unavailable.",
                     audio_device->sample_format);
         free(audio_device);
         return NULL;
@@ -65,7 +65,7 @@ audio_device_t *CreateAudioDevice() {
     res = snd_pcm_hw_params_set_channels_near(audio_device->handle, audio_device->params,
                                               &audio_device->channels);
     if (res < 0) {
-        LOG_WARNING("PCM cannot set format with num channels: %d\n", audio_device->channels);
+        LOG_WARNING("PCM cannot set format with num channels: %d", audio_device->channels);
         free(audio_device);
         return NULL;
     }
@@ -74,7 +74,7 @@ audio_device_t *CreateAudioDevice() {
     res = snd_pcm_hw_params_set_access(audio_device->handle, audio_device->params,
                                        SND_PCM_ACCESS_RW_INTERLEAVED);
     if (res < 0) {
-        LOG_WARNING("Unavailable PCM access type.\n");
+        LOG_WARNING("Unavailable PCM access type.");
         free(audio_device);
         return NULL;
     }
@@ -84,7 +84,7 @@ audio_device_t *CreateAudioDevice() {
     res = snd_pcm_hw_params_set_rate_near(audio_device->handle, audio_device->params,
                                           &audio_device->sample_rate, 0);
     if (res < 0) {
-        LOG_WARNING("PCM cannot set format with sample rate: %d\n", audio_device->sample_rate);
+        LOG_WARNING("PCM cannot set format with sample rate: %d", audio_device->sample_rate);
         free(audio_device);
         return NULL;
     }
@@ -99,7 +99,7 @@ audio_device_t *CreateAudioDevice() {
     res = snd_pcm_hw_params(audio_device->handle, audio_device->params);
 
     if (res < 0) {
-        LOG_WARNING("Unable to set hw parameters. Error: %s\n", snd_strerror(res));
+        LOG_WARNING("Unable to set hw parameters. Error: %s", snd_strerror(res));
         free(audio_device);
         return NULL;
     }
@@ -138,7 +138,7 @@ void GetBuffer(audio_device_t *audio_device) {
         snd_pcm_recover(audio_device->handle, res, 0);
         audio_device->frames_available = 0;
     } else if (res < 0) {
-        LOG_WARNING("Error from PCM read: %s\n", snd_strerror(res));
+        LOG_WARNING("Error from PCM read: %s", snd_strerror(res));
         snd_pcm_recover(audio_device->handle, res, 0);
         audio_device->frames_available = 0;
     } else {

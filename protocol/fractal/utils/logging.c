@@ -16,14 +16,11 @@ We have several levels of logging.
               information on state. e.g decode time
 - DEBUG_LEVEL: log debug and above. For use when actively debugging a problem,
                but for things that don't need to be logged regularly
-
 The log level defaults to DEBUG_LEVEL, but it can also be passed as a compiler
 flag, as it is in the root CMakesList.txt, which sets it to DEBUG_LEVEL for
 Debug builds and WARNING_LEVEL for release builds.
-
 Note that these macros do not need an additional \n character at the end of your
 format strings.
-
 We also have a LOG_IF(condition, format string) Macro which only logs if the
 condition is true. This can be used for debugging or if we want to more
 aggressively log something when a flag changes. For example in this file you
@@ -41,6 +38,7 @@ could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 #include <Windows.h>
 #include <DbgHelp.h>
 #include <process.h>
+#define strtok_r strtok_s
 #else
 #include <execinfo.h>
 #include <signal.h>
@@ -50,13 +48,9 @@ could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 #include "../network/network.h"
 #include "logging.h"
 
-#define UNUSED(x) (void)(x)
-
 char *get_logger_history();
 int get_logger_history_len();
 void initBacktraceHandler();
-
-#define BYTES_IN_KILOBYTE 1024
 
 extern int connection_id;
 
@@ -141,7 +135,7 @@ void destroyLogger() {
 }
 
 int MultiThreadedPrintf(void *opaque) {
-    UNUSED(opaque);
+    opaque;
 
     while (true) {
         // Wait until signaled by printf to begin running
@@ -184,7 +178,7 @@ int MultiThreadedPrintf(void *opaque) {
             // logger_queue_cache[i+5].buf,  logger_queue_cache[i+6].buf);
             //    last_printf = i + 6;
             //} else if (i > last_printf) {
-            printf("%s", logger_queue_cache[i].buf);
+            fprintf(stdout, "%s", logger_queue_cache[i].buf);
             int chars_written =
                 sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
             logger_history_len += chars_written;
@@ -210,7 +204,7 @@ int MultiThreadedPrintf(void *opaque) {
             int sz = ftell(mprintf_log_file);
 
             // If it's larger than 5MB, start a new file and store the old one
-            if (sz > 5 * BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE) {
+            if (sz > 5 * 1024 * 1024) {
                 fclose(mprintf_log_file);
 
                 char f[1000] = "";
@@ -235,6 +229,44 @@ int MultiThreadedPrintf(void *opaque) {
     return 0;
 }
 
+/**
+ * This function escapes certain escape sequences in a log. It allocates heap
+ * memory that must be later freed
+ * @param old_string a string with sequences we want escaped, e.g "some json
+ * stuff \r\n\r\n"
+ * @return the same string, but possible longer e.g "some json stuff
+ * \\r\\n\\r\\n"
+ */
+char *escape_escaped(char *old_string) {
+    char *new_string = malloc(2 * strlen(old_string) * sizeof(char));
+    int new_str_len = 0;
+    for (size_t i = 0; i < strlen(old_string); i++) {
+        switch (old_string[i]) {
+            case '\b':
+                new_string[new_str_len++] = '\\';
+                new_string[new_str_len++] = 'b';
+                break;
+            case '\f':
+                new_string[new_str_len++] = '\\';
+                new_string[new_str_len++] = 'f';
+                break;
+            case '\r':
+                new_string[new_str_len++] = '\\';
+                new_string[new_str_len++] = 'r';
+                break;
+            case '\t':
+                new_string[new_str_len++] = '\\';
+                new_string[new_str_len++] = 't';
+                break;
+            default:
+                new_string[new_str_len++] = old_string[i];
+                break;
+        }
+    }
+    new_string[new_str_len++] = '\0';
+    return new_string;
+}
+
 void mprintf(const char *fmtStr, ...) {
     va_list args;
     va_start(args, fmtStr);
@@ -256,8 +288,7 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
     if (logger_queue_size < LOGGER_QUEUE_SIZE - 2) {
         logger_queue[index].log = log;
         buf = (char *)logger_queue[index].buf;
-        //        snprintf(buf, LOGGER_BUF_SIZE, "%15.4f: ",
-        //        GetTimer(mprintf_timer));
+
         if (buf[0] != '\0') {
             char old_msg[LOGGER_BUF_SIZE];
             memcpy(old_msg, buf, LOGGER_BUF_SIZE);
@@ -267,25 +298,55 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
             if (!(chars_written > 0 && chars_written <= LOGGER_BUF_SIZE)) {
                 buf[0] = '\0';
             }
+            logger_queue_size++;
+            SDL_SemPost((SDL_sem *)logger_semaphore);
         } else {
-            vsnprintf(buf, LOGGER_BUF_SIZE, fmtStr, args);
+            // Get the length of the formatted string with args replaced.
+            // After calls to function which invoke VA args, the args are
+            // undefined so we copy
+            va_list args_copy;
+            va_copy(args_copy, args);
+            int len = vsnprintf(NULL, 0, fmtStr, args) + 1;
+
+            // print to a temp buf so we can split on \n
+            char *temp_buf = malloc(sizeof(char) * (len + 1));
+            vsnprintf(temp_buf, len, fmtStr, args_copy);
+            // use strtok_r over strtok due to thread safety
+            char *strtok_context = NULL;  // strtok_r context var
+            // Log the first line out of the loop because we log it with
+            // the full log formatting time | type | file | log_msg
+            // subsequent lines start with | followed by 4 spaces
+            char *line = strtok_r(temp_buf, "\n", &strtok_context);
+            char *san_line = escape_escaped(line);
+            snprintf(buf, LOGGER_BUF_SIZE, "%s \n", san_line);
+            free(san_line);
+            logger_queue_size++;
+            SDL_SemPost((SDL_sem *)logger_semaphore);
+
+            index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
+            buf = (char *)logger_queue[index].buf;
+            line = strtok_r(NULL, "\n", &strtok_context);
+            while (line != NULL) {
+                san_line = escape_escaped(line);
+                snprintf(buf, LOGGER_BUF_SIZE, "|    %s \n", san_line);
+                free(san_line);
+                logger_queue_size++;
+                logger_queue[index].log = log;
+                SDL_SemPost((SDL_sem *)logger_semaphore);
+                index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
+                buf = (char *)logger_queue[index].buf;
+                line = strtok_r(NULL, "\n", &strtok_context);
+            }
         }
-        logger_queue_size++;
+
     } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
         logger_queue[index].log = log;
         buf = (char *)logger_queue[index].buf;
         strcpy(buf, "Buffer maxed out!!!\n");
         logger_queue_size++;
-    }
-
-    if (buf != NULL) {
-        buf[LOGGER_BUF_SIZE - 5] = '.';
-        buf[LOGGER_BUF_SIZE - 4] = '.';
-        buf[LOGGER_BUF_SIZE - 3] = '.';
-        buf[LOGGER_BUF_SIZE - 2] = '\n';
-        buf[LOGGER_BUF_SIZE - 1] = '\0';
         SDL_SemPost((SDL_sem *)logger_semaphore);
     }
+
     SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 }
 
@@ -539,7 +600,7 @@ bool sendLogHistory() {
             connection_id, get_version(), logs);
 
     LOG_INFO("Sending logs to webserver...");
-    SendJSONPost(host, request_path, json);
+    SendJSONPost(host, request_path, json, get_access_token());
     free(logs);
     free(json);
 
@@ -557,12 +618,12 @@ int32_t MultithreadedUpdateStatus(void *data) {
 
     char json[1000];
     snprintf(json, sizeof(json),
-             "{\
-            \"version\" : \"%s\",\
-            \"available\" : %s\
-    }",
+             "{\n\
+            \"version\" : \"%s\",\n\
+            \"available\" : %s\n\
+}",
              get_version(), d->is_connected ? "false" : "true");
-    SendJSONPost(host, "/vm/ping", json);
+    SendJSONPost(host, "/vm/ping", json, get_access_token());
 
     free(d);
     return 0;
