@@ -1120,7 +1120,7 @@ int main() {
         sendLogHistory();
         destroyLogger();
         connection_id = rand();
-        initLogger(".", connection_id);
+        initLogger(".");
 
 
         DestroyInputDevice(input_device);

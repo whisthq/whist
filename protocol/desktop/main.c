@@ -504,7 +504,7 @@ int main(int argc, char* argv[]) {
     }
 
     //Initialize logger. -1 makes name "log.txt"
-    initLogger(log_dir, -1);
+    initLogger(log_dir);
     free(log_dir);
     if (running_ci) {
         LOG_INFO("Running in CI mode");

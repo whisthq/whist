@@ -127,11 +127,8 @@ Public Functions
  * @param log_directory            The directory to store the log files in. Pass
  *                                 NULL to not store the logs in a log file
  *
- * @param log_id                   An ID for the logs. File will be named
- *                                 "log#.txt" unless -1 is used, in which
- *                                 case it will be "log.txt"
  */
-void initLogger(char* log_directory, int log_id);
+void initLogger(char* log_directory);
 
 /**
  * @brief                          Log the given format string

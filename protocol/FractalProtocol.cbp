@@ -1,0 +1,616 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="FractalProtocol"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\cmake\;CMake Files\.git\;CMake Files\.git\refs\;CMake Files\.git\refs\heads\;CMake Files\.git\refs\heads\gavin\;CMake Files\fractal\;CMake Files\fractal\core\;CMake Files\fractal\audio\;CMake Files\fractal\clipboard\;CMake Files\fractal\cursor\;CMake Files\fractal\input\;CMake Files\fractal\network\;CMake Files\fractal\utils\;CMake Files\fractal\video\;CMake Files\desktop\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/Users/gavin/Fractal/protocol"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/Users/gavin/Fractal/protocol"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/Users/gavin/Fractal/protocol"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="clang-format">
+				<Option working_dir="/Users/gavin/Fractal/protocol"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 clang-format"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalAudio">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/audio/libfractalAudio.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/audio"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/audio/Makefile&quot;  VERBOSE=1 fractalAudio"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/audio/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/audio/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/audio/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalAudio/fast">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/audio/libfractalAudio.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/audio"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/audio/Makefile&quot;  VERBOSE=1 fractalAudio/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/audio/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/audio/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/audio/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalClipboard">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/clipboard/libfractalClipboard.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/clipboard"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/clipboard/Makefile&quot;  VERBOSE=1 fractalClipboard"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/clipboard/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/clipboard/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/clipboard/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalClipboard/fast">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/clipboard/libfractalClipboard.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/clipboard"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/clipboard/Makefile&quot;  VERBOSE=1 fractalClipboard/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/clipboard/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/clipboard/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/clipboard/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalCore">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/core/libfractalCore.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/core"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/core/Makefile&quot;  VERBOSE=1 fractalCore"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/core/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/core/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/core/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalCore/fast">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/core/libfractalCore.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/core"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/core/Makefile&quot;  VERBOSE=1 fractalCore/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/core/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/core/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/core/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalCursor">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/cursor/libfractalCursor.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/cursor"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/cursor/Makefile&quot;  VERBOSE=1 fractalCursor"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/cursor/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/cursor/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/cursor/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalCursor/fast">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/cursor/libfractalCursor.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/cursor"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/cursor/Makefile&quot;  VERBOSE=1 fractalCursor/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/cursor/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/cursor/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/cursor/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalNetwork">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/network/libfractalNetwork.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/network"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/network/Makefile&quot;  VERBOSE=1 fractalNetwork"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/network/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/network/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/network/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalNetwork/fast">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/network/libfractalNetwork.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/network"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/network/Makefile&quot;  VERBOSE=1 fractalNetwork/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/network/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/network/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/network/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalUtils">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/utils/libfractalUtils.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/utils"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/utils/Makefile&quot;  VERBOSE=1 fractalUtils"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/utils/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/utils/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/utils/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalUtils/fast">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/utils/libfractalUtils.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/utils"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/utils/Makefile&quot;  VERBOSE=1 fractalUtils/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/utils/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/utils/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/utils/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalVideo">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/video/libfractalVideo.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/video"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/video/Makefile&quot;  VERBOSE=1 fractalVideo"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/video/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/video/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/video/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fractalVideo/fast">
+				<Option output="/Users/gavin/Fractal/protocol/fractal/video/libfractalVideo.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/fractal/video"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/video/Makefile&quot;  VERBOSE=1 fractalVideo/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/video/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/video/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/fractal/video/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="FractalClient">
+				<Option output="/Users/gavin/Fractal/protocol/desktop/build64/Darwin/FractalClient" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/desktop"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/desktop/Makefile&quot;  VERBOSE=1 FractalClient"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/desktop/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/desktop/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/desktop/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="FractalClient/fast">
+				<Option output="/Users/gavin/Fractal/protocol/desktop/build64/Darwin/FractalClient" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/gavin/Fractal/protocol/desktop"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DLOG_LEVEL=5"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/ffmpeg"/>
+					<Add directory="/Users/gavin/Fractal/protocol/fractal"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL2"/>
+					<Add directory="/Users/gavin/Fractal/protocol/include/SDL_image"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/desktop/Makefile&quot;  VERBOSE=1 FractalClient/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/desktop/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/desktop/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/Users/gavin/Fractal/protocol/desktop/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/audio.c">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/audio.h">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/desktop_utils.c">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/desktop_utils.h">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/fractalgetopt.c">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/fractalgetopt.h">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/main.c">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/main.h">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/network.c">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/network.h">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/sdl_event_handler.c">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/sdl_event_handler.h">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/sdl_utils.c">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/sdl_utils.h">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/server_message_handler.c">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/server_message_handler.h">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/video.c">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/video.h">
+			<Option target="FractalClient"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/audio/audiocapture.h">
+			<Option target="fractalAudio"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/audio/audiodecode.c">
+			<Option target="fractalAudio"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/audio/audiodecode.h">
+			<Option target="fractalAudio"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/clipboard/clipboard.h">
+			<Option target="fractalClipboard"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/clipboard/clipboard_osx.h">
+			<Option target="fractalClipboard"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/clipboard/clipboard_osx.m">
+			<Option target="fractalClipboard"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/clipboard/clipboard_synchronizer.c">
+			<Option target="fractalClipboard"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/clipboard/clipboard_synchronizer.h">
+			<Option target="fractalClipboard"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/clipboard/mac_clipboard.c">
+			<Option target="fractalClipboard"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/core/fractal.c">
+			<Option target="fractalCore"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/core/fractal.h">
+			<Option target="fractalCore"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/cursor/peercursor.c">
+			<Option target="fractalCursor"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/cursor/peercursor.h">
+			<Option target="fractalCursor"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/network/network.c">
+			<Option target="fractalNetwork"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/network/network.h">
+			<Option target="fractalNetwork"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/aes.c">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/aes.h">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/clock.c">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/clock.h">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/json.c">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/json.h">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/logging.c">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/logging.h">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/mac_utils.c">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/mac_utils.h">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/mouse.c">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/mouse.h">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/png.c">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/png.h">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/rwlock.c">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/rwlock.h">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/sdlscreeninfo.c">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/sdlscreeninfo.h">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/sysinfo.c">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/sysinfo.h">
+			<Option target="fractalUtils"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/video/screencapture.h">
+			<Option target="fractalVideo"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/video/videodecode.c">
+			<Option target="fractalVideo"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/video/videodecode.h">
+			<Option target="fractalVideo"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/cmake/CompilerOptions.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/cmake/GetGitRevisionDescription.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/cmake/GetGitRevisionDescription.cmake.in">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/cmake/clang-format.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/cmake/default-build.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/cmake/version-info.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/.git/HEAD">
+			<Option virtualFolder="CMake Files\.git\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/.git/refs/heads/gavin/split-logs-connection">
+			<Option virtualFolder="CMake Files\.git\refs\heads\gavin\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\fractal\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/core/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\fractal\core\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/core/fractal.v.in">
+			<Option virtualFolder="CMake Files\fractal\core\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/audio/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\fractal\audio\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/clipboard/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\fractal\clipboard\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/cursor/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\fractal\cursor\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/input/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\fractal\input\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/network/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\fractal\network\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/utils/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\fractal\utils\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/fractal/video/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\fractal\video\"/>
+		</Unit>
+		<Unit filename="/Users/gavin/Fractal/protocol/desktop/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\desktop\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

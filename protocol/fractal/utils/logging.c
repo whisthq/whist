@@ -85,13 +85,14 @@ FILE *mprintf_log_file = NULL;
 char *log_directory = NULL;
 
 //This is written to in MultiThreaderPrintf
-char logger_history[1000000];
+#define LOG_CACHE_SIZE 1000000
+char logger_history[LOG_CACHE_SIZE];
 int logger_history_len;
 
 char *get_logger_history() { return logger_history; }
 int get_logger_history_len() { return logger_history_len; }
 
-void initLogger(char *log_dir, int log_id) {
+void initLogger(char *log_dir) {
     initBacktraceHandler();
 
     logger_history_len = 0;
@@ -101,14 +102,7 @@ void initLogger(char *log_dir, int log_id) {
         log_directory = log_dir;
 
         strcat(f, log_directory);
-        strcat(f, "/log");
-
-        if (log_id >= 0) {
-            char * log_id_str;
-            asprintf(&log_id_str, "%d", log_id);
-            strcat(f, log_id_str);
-        }
-        strcat(f, ".txt");
+        strcat(f, "/log.txt");
 
 #if defined(_WIN32)
         CreateDirectoryA(log_directory, 0);
@@ -482,8 +476,16 @@ bool sendLogHistory() {
     char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
     char *request_path = "/logs";
 
-    char *logs_raw = get_logger_history();
-    int raw_log_len = get_logger_history_len();
+    char using_cache = 1;
+    char *logs_raw;
+    int cached_log_len = get_logger_history_len();
+    if (mprintf_log_file == NULL || cached_log_len < LOG_CACHE_SIZE ) {
+        logs_raw = get_logger_history();
+    } else {
+        using_cache = 0;
+
+
+    }
 
     char *logs = malloc(1000 + 2 * raw_log_len);
     int log_len = 0;
