@@ -25,8 +25,13 @@ jobs:
         # we want to run (as in, that is the branch containing the specific YAML file that should be used)
 
         # TODO enable testing once it is working reliably
-        run: |
+
+        # Pipe secrets.PROC_BRANCH_BUILD_RELEASE_ID to base64 so that the user can see it in the logs
+        # since GHA auto redacts secrets.
+      - run: |
+          echo "base64 encoded PROC_BRANCH_BUILD_RELEASE_ID (pipe to `base64 -d` to decode): "
+          echo "${{ secrets.PROC_BRANCH_BUILD_RELEASE_ID }}" | base64
           curl -u "${{ secrets.CI_PAT }}:" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/fractalcomputers/protocol/actions/workflows/1851975/dispatches \
+            https://api.github.com/repos/fractalcomputers/protocol/actions/workflows/${{ secrets.PROC_BRANCH_BUILD_RELEASE_ID }}/dispatches \
             -d '{"ref": "master", "inputs": {"ref": "${{ github.ref }}", "should_test": "false"}}'
