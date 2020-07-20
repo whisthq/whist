@@ -151,6 +151,13 @@ void destroyLogger();
 int sendConnectionHistory();
 
 /**
+ * @brief                          Set the logger to categorize all logs from now
+ *                                  on as a new connection. Only these will be sent
+ *                                  on a sendConnectionHistory call.
+ */
+void startConnectionLog();
+
+/**
  * @brief                          Tell the server the WinLogon and connection
  *                                 status
  *

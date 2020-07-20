@@ -967,6 +967,8 @@ int main() {
         clock ack_timer;
         StartTimer(&ack_timer);
 
+        bool have_sent_logs = false;
+
         while (connected) {
             if (GetTimer(ack_timer) > 5) {
                 if (get_using_stun()) {
@@ -1078,6 +1080,16 @@ int main() {
                 LOG_ERROR("Failed to write-acquire is active lock.");
                 continue;
             }
+
+            if (num_active_clients == 0 && !have_sent_logs) {
+                sendConnectionHistory();
+                connection_id = rand();
+                startConnectionLogs();
+                have_sent_logs = true;
+            } else if (num_active_clients > 0 && have_sent_logs){
+                have_sent_logs = false;
+            }
+
             for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
                 if (!clients[id].is_active) continue;
 
@@ -1146,9 +1158,6 @@ int main() {
             LOG_ERROR("Failed to write-release is active RW lock.");
         }
 
-        sendConnectionHistory();
-        startConnectionLog();
-        connection_id = rand();
     }
 
 #ifdef _WIN32
