@@ -1086,7 +1086,7 @@ int main() {
                 connection_id = rand();
                 startConnectionLogs();
                 have_sent_logs = true;
-            } else if (num_active_clients > 0 && have_sent_logs){
+            } else if (num_active_clients > 0 && have_sent_logs) {
                 have_sent_logs = false;
             }
 
@@ -1157,7 +1157,6 @@ int main() {
         if (writeUnlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
         }
-
     }
 
 #ifdef _WIN32
