@@ -17,6 +17,7 @@ trigged an SDL event must be triggered in sdl_event_handler.c
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "main.h"
 #include "sdl_utils.h"
+#include "desktop_utils.h"
 
 #define UNUSED(x) (void)(x)
 #define WINDOWS_DEFAULT_DPI 96.0
@@ -37,6 +38,8 @@ extern volatile SDL_Window *window;
 extern volatile int output_width;
 extern volatile int output_height;
 extern volatile CodecType output_codec_type;
+
+extern mouse_motion_accumulation mouse_state;
 
 int handleWindowSizeChanged(SDL_Event *event);
 int handleMouseLeftWindow(SDL_Event *event);
@@ -191,33 +194,26 @@ int handleKeyUpDown(SDL_Event *event) {
 // on the screen We multiply by scaling factor so that
 // integer division doesn't destroy accuracy
 int handleMouseMotion(SDL_Event *event) {
-    int x, y, x_nonrel, y_nonrel, height, width;
     bool is_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
 
-    int window_width, window_height;
-    SDL_GetWindowSize((SDL_Window *)window, &window_width, &window_height);
-
-    x_nonrel = event->motion.x * MOUSE_SCALING_FACTOR / window_width;
-    y_nonrel = event->motion.y * MOUSE_SCALING_FACTOR / window_width;
-
-    if (is_relative) {
-        x = event->motion.xrel;
-        y = event->motion.yrel;
-    } else {
-        width = get_window_virtual_width((SDL_Window *)window);
-        height = get_window_virtual_height((SDL_Window *)window);
-        x = event->motion.x * MOUSE_SCALING_FACTOR / width;
-        y = event->motion.y * MOUSE_SCALING_FACTOR / height;
+    if (is_relative && !mouse_state.is_relative) {
+        // old datum was absolute, new is relative
+        // hence, clear any pending absolute motion
+        if (updateMouseMotion() != 0) {
+            return -1;
+        }
     }
 
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_MOUSE_MOTION;
-    fmsg.mouseMotion.relative = is_relative;
-    fmsg.mouseMotion.x = x;
-    fmsg.mouseMotion.y = y;
-    fmsg.mouseMotion.x_nonrel = x_nonrel;
-    fmsg.mouseMotion.y_nonrel = y_nonrel;
-    SendFmsg(&fmsg);
+    mouse_state.x_nonrel = event->motion.x;
+    mouse_state.y_nonrel = event->motion.y;
+    mouse_state.is_relative = is_relative;
+
+    if (is_relative) {
+        mouse_state.x_rel += event->motion.xrel;
+        mouse_state.y_rel += event->motion.yrel;
+    }
+
+    mouse_state.update = true;
 
     return 0;
 }

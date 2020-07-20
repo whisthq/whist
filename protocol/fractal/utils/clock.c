@@ -195,7 +195,6 @@ void SetTimezoneFromIANAName(char* linux_tz_name) {
 
 void SetTimezoneFromWindowsName(char* win_tz_name) {
     char cmd[500];
-
     //    Timezone name must end with no white space
     for (size_t i = 0; win_tz_name[i] != '\0'; i++) {
         if (win_tz_name[i] == '\n') {
