@@ -11,19 +11,21 @@ jobs:
   trigger-release:
     runs-on: ubuntu-latest
     steps:
-      # TODO switch this to GITHUB_TOKEN once workflow_dispatch supports GHA initiated dispatches
-      # (currently it requires the dispatcher to be a user, so a personal access token must be used
-      # here)
+        # Do not run if latest commit contains "skip-ci" in its message
+      - if: "!contains(github.event.head_commit.message, 'skip-ci')"
+        # TODO switch this to GITHUB_TOKEN once workflow_dispatch supports GHA initiated dispatches
+        # (currently it requires the dispatcher to be a user, so a personal access token must be used
+        # here)
 
-      # The workflow ID can be determined by running:
-      # ```
-      # curl -u "$TOKEN:" \
-      #   -H "Accept: application/vnd.github.v3+json" \
-      #   https://api.github.com/repos/fractalcomputers/protocol/actions/workflows
-      # ```
+        # The workflow ID can be determined by running:
+        # ```
+        # curl -u "$TOKEN:" \
+        #   -H "Accept: application/vnd.github.v3+json" \
+        #   https://api.github.com/repos/fractalcomputers/protocol/actions/workflows
+        # ```
 
-      # TODO enable testing once it is working reliably
-      - run: |
+        # TODO enable testing once it is working reliably
+        run: |
           curl -u "${{ secrets.CI_PAT }}:" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/fractalcomputers/protocol/actions/workflows/1851975/dispatches \
