@@ -622,7 +622,7 @@ int sendConnectionHistory() {
             int prev_len = ftell(prev_log) - seekPos;
             int curr_len = ftell(mprintf_log_file);
             raw_log_len = prev_len + curr_len;
-            logs_raw = malloc(log_len + 10);
+            logs_raw = malloc(raw_log_len + 10);
 
             fseek(prev_log, seekPos, SEEK_SET);
             read(prev_log, logs_raw, prev_len);
