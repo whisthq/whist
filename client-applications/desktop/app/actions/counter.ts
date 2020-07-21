@@ -36,7 +36,6 @@ export const GET_VERSION = "GET_VERSION";
 export const SET_VERSION = "SET_VERSION";
 
 export function loginUser(username: any, password: any) {
-    console.log("login action fired");
     return {
         type: LOGIN_USER,
         username,

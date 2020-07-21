@@ -380,5 +380,6 @@ export default function* rootSaga() {
         takeEvery(Action.FETCH_VM, fetchVM),
         takeEvery(Action.RESTART_PC, restartPC),
         takeEvery(Action.GET_VERSION, getVersion),
+        takeEvery(Action.SEND_LOGS, sendLogs),
     ]);
 }
