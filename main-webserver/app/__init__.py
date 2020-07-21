@@ -44,9 +44,14 @@ def fractalPreProcess(f):
             logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
             logger = logging.getLogger(__name__)
             logger.setLevel(logging.DEBUG)
-            logger.info(
-                "{}\n{}\r\n".format(request.method + " " + request.url, str(body),)
-            )
+
+            if body and request.method == "POST":
+                body = {
+                    k: str(v)[0 : min(len(str(v)), 500)] for k, v in dict(body).items()
+                }
+                body = str(body)
+
+            logger.info("{}\n{}\r\n".format(request.method + " " + request.url, body,))
 
         return f(*args, **kwargs)
 
