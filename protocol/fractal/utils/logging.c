@@ -609,9 +609,9 @@ int sendConnectionHistory() {
         if (fileNum == 1) {
             // Only need to use log.txt
             raw_log_len = ftell(mprintf_log_file) - seekPos;
-            logs_raw = malloc(log_len + 10);
+            logs_raw = malloc(raw_log_len + 10);
             fseek(mprintf_log_file, seekPos, SEEK_SET);
-            fread(logs_raw, log_len, 1, mprintf_log_file);
+            fread(logs_raw, raw_log_len, 1, mprintf_log_file);
         } else if (fileNum == 0) {
             // Need to use log_prev.txt and log.txt. Know log_prev.txt exists
             char f[1000] = "";
