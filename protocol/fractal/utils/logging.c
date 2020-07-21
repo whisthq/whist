@@ -129,6 +129,7 @@ void startConnectionLog() {
     printf("Opening file\n"):
     FILE *log_connection_file = fopen(l, "wb");
 
+
     //  Set up log_connection.txt to see when a connection begins
     //  Use lock so there aren't any race conditions with
     //  Making a log_prev.txt at the same time
@@ -139,7 +140,7 @@ void startConnectionLog() {
     fprintf(log_connection_file, "%d\n%d", sz, 1);
     printf("Printed successfully\n");
     fclose(log_connection_file);
-    SDL_UnlockMutex((SDL_mutex *) logger_mutex);
+    SDL_UnlockMutex((SDL_mutex *)logger_mutex);
     printf("Completed startConnectionLog");
 }
 
