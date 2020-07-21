@@ -588,10 +588,10 @@ int sendConnectionHistory() {
     SDL_LockMutex((SDL_mutex *)logger_mutex);
     bool using_cache = true;
     char *logs_raw;
-    int log_len;
+    int raw_log_len;
     if (mprintf_log_file == NULL) {
         logs_raw = get_logger_history();
-        log_len = get_logger_history_len();
+        raw_log_len = get_logger_history_len();
     } else {
         using_cache = false;
 
@@ -608,7 +608,7 @@ int sendConnectionHistory() {
 
         if (fileNum == 1) {
             // Only need to use log.txt
-            log_len = ftell(mprintf_log_file) - seekPos;
+            raw_log_len = ftell(mprintf_log_file) - seekPos;
             logs_raw = malloc(log_len + 10);
             fseek(mprintf_log_file, seekPos, SEEK_SET);
             fread(logs_raw, log_len, 1, mprintf_log_file);
@@ -621,7 +621,7 @@ int sendConnectionHistory() {
             fseek(prev_log, 0, SEEK_END);
             int prev_len = ftell(prev_log) - seekPos;
             int curr_len = ftell(mprintf_log_file);
-            log_len = prev_len + curr_len;
+            raw_log_len = prev_len + curr_len;
             logs_raw = malloc(log_len + 10);
 
             fseek(prev_log, seekPos, SEEK_SET);
@@ -635,14 +635,14 @@ int sendConnectionHistory() {
             fprintf(stderr, "Corrupted log_connection.txt file! Cannot send logfile. Using cache");
             mprintf("Corrupted log_connection.txt file! Cannot send logfile. Using cache");
             logs_raw = get_logger_history();
-            log_len = get_logger_history_len();
+            raw_log_len = get_logger_history_len();
             using_cache = true;
         }
     }
 
-    char *logs = malloc(1000 + 2 * log_len);
+    char *logs = malloc(1000 + 2 * raw_log_len);
     int log_len = 0;
-    for (int i = 0; i < log_len; i++) {
+    for (int i = 0; i < raw_log_len; i++) {
         switch (logs_raw[i]) {
             case '\b':
                 logs[log_len++] = '\\';
