@@ -10,6 +10,26 @@ from app.celery.azure_resource_modification import *
 azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 
 
+@azure_vm_bp.route("/vm/restart", methods=["POST"])
+@fractalPreProcess
+@jwt_required
+@fractalAuth
+def azure_vm_restart(**kwargs):
+    # Restarts an Azure VM
+
+    vm_name = kwargs["body"]["vm_name"]
+    resource_group = os.getenv("VM_GROUP")
+    if "resource_group" in kwargs["body"].keys():
+        resource_group = kwargs["body"]["resource_group"]
+
+    task = restartVM.apply_async([vm_name, resource_group])
+
+    if not task:
+        return jsonify({"ID": None}), BAD_REQUEST
+
+    return jsonify({"ID": task.id}), ACCEPTED
+
+
 @azure_vm_bp.route("/vm/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
@@ -64,20 +84,6 @@ def azure_vm_post(action, **kwargs):
             resource_group = kwargs["body"]["resource_group"]
 
         task = startVM.apply_async([vm_name, resource_group])
-
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-
-        return jsonify({"ID": task.id}), ACCEPTED
-    elif action == "restart":
-        # Restarts an Azure VM
-
-        vm_name = kwargs["body"]["vm_name"]
-        resource_group = os.getenv("VM_GROUP")
-        if "resource_group" in kwargs["body"].keys():
-            resource_group = kwargs["body"]["resource_group"]
-
-        task = restartVM.apply_async([vm_name, resource_group])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
