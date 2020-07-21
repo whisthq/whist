@@ -1084,7 +1084,7 @@ int main() {
             if (num_active_clients == 0 && !have_sent_logs) {
                 sendConnectionHistory();
                 connection_id = rand();
-                startConnectionLogs();
+                startConnectionLog();
                 have_sent_logs = true;
             } else if (num_active_clients > 0 && have_sent_logs) {
                 have_sent_logs = false;
