@@ -625,10 +625,10 @@ int sendConnectionHistory() {
             logs_raw = malloc(raw_log_len + 10);
 
             fseek(prev_log, seekPos, SEEK_SET);
-            fread(logs_raw,1,prev_len, prev_log);
+            fread(logs_raw, 1, prev_len, prev_log);
             fclose(prev_log);
             fseek(mprintf_log_file, 0, SEEK_SET);
-            fread(&logs_raw[prev_len], 1,curr_len,mprintf_log_file);
+            fread(&logs_raw[prev_len], 1, curr_len, mprintf_log_file);
 
         } else {
             //          Recovery from a corrupted log_connection.txt file
