@@ -121,6 +121,7 @@ void initLogger(char *log_dir) {
 
 // Sets up logs for a new connection, overwriting previous
 void startConnectionLog() {
+    printf("startConnectionLog called\n");
     char l[1000] = "";
     strcat(l, log_directory);
     strcat(l, "/log_connection.txt");
@@ -135,6 +136,7 @@ void startConnectionLog() {
     fprintf(log_connection_file, "%d\n%d", sz, 1);
     fclose(log_connection_file);
     SDL_UnlockMutex((SDL_mutex *)logger_mutex);
+    printf("Completed startConnectionLog");
 }
 
 void destroyLogger() {
@@ -628,7 +630,7 @@ int sendConnectionHistory() {
             fread(logs_raw,1,prev_len, prev_log);
             fclose(prev_log);
             fseek(mprintf_log_file, 0, SEEK_SET);
-            fread(&logs_raw[prev_len], 1,curr_len,mprintf_log_file);
+            fread(&logs_raw[prev_len], 1,curr_len, mprintf_log_file);
 
         } else {
             //          Recovery from a corrupted log_connection.txt file
