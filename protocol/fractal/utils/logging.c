@@ -122,7 +122,7 @@ void initLogger(char *log_dir) {
         mkdir(log_directory, 0755);
 #endif
         printf("Trying to open up %s \n", f);
-        mprintf_log_file = fopen(f, "wb");
+        mprintf_log_file = fopen(f, "ab");
         if (mprintf_log_file == NULL) {
             printf("Couldn't open up logfile\n");
         }
@@ -172,7 +172,10 @@ void destroyLogger() {
 
     logger_history[0] = '\0';
     logger_history_len = 0;
-    free(log_directory);
+    if( log_directory )
+    {
+        free( log_directory );
+    }
 }
 
 int MultiThreadedPrintf(void *opaque) {
