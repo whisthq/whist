@@ -106,7 +106,11 @@ void initLogger(char *log_dir) {
 #else
         mkdir(log_directory, 0755);
 #endif
+        printf("Trying to open up %s \n", f);
         mprintf_log_file = fopen(f, "wb");
+        if (mprintf_log_file == NULL) {
+            printf("Couldn't open up logfile\n");
+        }
     }
 
     run_multithreaded_printf = true;
@@ -126,7 +130,7 @@ void startConnectionLog() {
     strcat(l, log_directory);
     strcat(l, "/log_connection.txt");
 
-    printf("Opening file\n"):
+    printf("Opening file\n");
     FILE *log_connection_file = fopen(l, "wb");
 
 
@@ -136,7 +140,9 @@ void startConnectionLog() {
     printf("Attempting to acquire mutex\n");
     SDL_LockMutex((SDL_mutex *) logger_mutex);
     printf("Acquired mutex\n");
+
     int sz = ftell(mprintf_log_file);
+    printf("Got size\n");
     fprintf(log_connection_file, "%d\n%d", sz, 1);
     printf("Printed successfully\n");
     fclose(log_connection_file);
@@ -621,10 +627,10 @@ int sendConnectionHistory() {
             fread(logs_raw, raw_log_len, 1, mprintf_log_file);
         } else if (fileNum == 0) {
             // Need to use log_prev.txt and log.txt. Know log_prev.txt exists
-            char f[1000] = "";
-            strcat(f, log_directory);
-            strcat(f, "/log_prev.txt");
-            FILE *prev_log = fopen(f, "rb");
+            char p[1000] = "";
+            strcat(p, log_directory);
+            strcat(p, "/log_prev.txt");
+            FILE *prev_log = fopen(p, "rb");
             fseek(prev_log, 0, SEEK_END);
             int prev_len = ftell(prev_log) - seekPos;
             int curr_len = ftell(mprintf_log_file);
