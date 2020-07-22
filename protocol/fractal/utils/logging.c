@@ -139,7 +139,6 @@ void initLogger(char *log_dir) {
 
 // Sets up logs for a new connection, overwriting previous
 void startConnectionLog() {
-
     SDL_LockMutex((SDL_mutex *)logger_mutex);
 
     if (mprintf_log_connection_file) {
@@ -213,9 +212,10 @@ int MultiThreadedPrintf(void *opaque) {
         for (int i = 0; i < cache_size; i++) {
             if (logger_queue_cache[i].log) {
                 if (mprintf_log_file) {
-                        fprintf(mprintf_log_file, "%s", logger_queue_cache[i].buf);
+                    fprintf(mprintf_log_file, "%s", logger_queue_cache[i].buf);
                 }
-                if (mprintf_log_connection_file && logger_queue_cache[i].id >= log_connection_log_id) {
+                if (mprintf_log_connection_file &&
+                    logger_queue_cache[i].id >= log_connection_log_id) {
                     fprintf(mprintf_log_connection_file, "%s", logger_queue_cache[i].buf);
                 }
             }
@@ -642,7 +642,6 @@ int sendConnectionHistory() {
 
     char *logs_raw = NULL;
     if (log_connection_file) {
-
         long prev_pos = ftell(log_connection_file);
 
         fseek(log_connection_file, 0L, SEEK_END);
