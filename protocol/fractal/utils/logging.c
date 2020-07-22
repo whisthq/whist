@@ -667,14 +667,15 @@ int sendConnectionHistory() {
         while (sz) {
             size_t n_read = fread(logs_raw_ptr, 1, sz, log_connection_file);
             logs_raw_ptr += n_read;
-            sz -= n_read;
-            read_bytes += n_read;
+            sz -= (long)n_read;
+            read_bytes += (int)n_read;
             if (ferror(log_connection_file)) {
                 printf("Warning - ferror\n");
                 break;
             }
             if (feof(log_connection_file)) break;
         }
+        printf("Read %d / %d\n", read_bytes, original_sz);
         logs_raw[read_bytes] = '\0';
 
         fseek(log_connection_file, prev_pos, SEEK_SET);
