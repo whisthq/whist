@@ -104,7 +104,7 @@ void initLogger(char *log_dir) {
 #else
         log_directory[dir_len] = '/';
 #endif
-        log_directory[dir_len+1] = '\0';
+        log_directory[dir_len + 1] = "\0";
 
         strcat(f, log_directory);
         strcat(f, "log.txt");
