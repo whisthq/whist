@@ -634,11 +634,11 @@ char *get_version() {
         fseek(f, 0, SEEK_END);
         length = ftell(f);
         fseek(f, 0, SEEK_SET);
-        static char buf[17];
+        static char buf[200];
         version = buf;
         fread(version, 1, min(length, (long)sizeof(buf)),
               f);  // cast for compiler warning
-        version[16] = '\0';
+        version[length] = '\0';
         fclose(f);
     } else {
         version = "NONE";
