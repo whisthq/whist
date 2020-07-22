@@ -684,3 +684,29 @@ jobs:
           asset_path: ./${{ matrix.config.client_artifact_name }}.zip
           asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.client_artifact_name }}.zip
           asset_content_type: application/zip
+  trigger-clientapp-builds:
+    needs: [upload-builds]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if all builds succeeded
+        # This step was added because the job level if `needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success')`
+        # was resulting in the job skipping even when the value was shown to be true when printed.
+        run: |
+          if ! ${{ needs.params.outputs.should_release }}; then
+            echo "Killing release job because should_release=${{ needs.params.outputs.should_release }}"
+            exit 1
+          fi
+          if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
+            echo "Proceeding with job"
+          else
+            echo "Killing release job because builds or tests failed"
+            exit 1
+          fi
+      - name: Trigger a client-app build for ${{ steps.release_info.outputs.version_id }}
+        run: |
+          echo "base64 encoded PROC_BRANCH_BUILD_RELEASE_ID (pipe to `base64 -d` to decode): "
+          echo "${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}" | base64
+          curl -u "${{ secrets.CI_PAT }}:" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches \
+            -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{steps.release_info.outputs.version_id}}}, "should_test": "false", "should_release": "true"}'
