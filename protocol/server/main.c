@@ -643,7 +643,7 @@ void update() {
 #ifdef _WIN32
                  "powershell -command \"iwr -outf 'C:\\Program "
                  "Files\\Fractal\\update.bat' "
-                 "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/"
+                 "https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/%s/Windows/"
                  "update.bat\"",
                  get_branch()
 #else
