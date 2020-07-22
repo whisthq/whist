@@ -621,6 +621,15 @@ char *get_version() {
     return version;
 }
 
+void saveConnectionID( int connection_id_int ) {
+    char connection_id_filename[1000] = "";
+    strcat(connection_id_filename, log_directory);
+    strcat(connection_id_filename, "connection_id.txt");
+    FILE *connection_id_file = fopen(connection_id_filename, "wb");
+    fprintf(connection_id_file, "%d", connection_id_int);
+    fclose(connection_id_file);
+}
+
 // The first time this is called will include the initial log messages,
 // before the first connection, if they haven't been overwritten.
 int sendConnectionHistory() {
@@ -631,6 +640,7 @@ int sendConnectionHistory() {
     SDL_LockMutex((SDL_mutex *)logger_mutex);
 
     FILE *log_connection_file = NULL;
+    bool new_file = false;
     if (mprintf_log_connection_file) {
         log_connection_file = mprintf_log_connection_file;
     } else {
@@ -638,6 +648,7 @@ int sendConnectionHistory() {
         strcat(log_connection_filename, log_directory);
         strcat(log_connection_filename, "log_connection.txt");
         log_connection_file = fopen(log_connection_filename, "rb");
+        new_file = true;
     }
 
     char *logs_raw = NULL;
@@ -649,11 +660,28 @@ int sendConnectionHistory() {
         logs_raw = malloc(sz + 5);
 
         fseek(log_connection_file, 0L, SEEK_SET);
-        fread(logs_raw, sz, 1, log_connection_file);
-        logs_raw[sz] = '\0';
+
+        char *logs_raw_ptr = logs_raw;
+        int read_bytes = 0;
+        int original_sz = sz;
+        while (sz) {
+            size_t n_read = fread(logs_raw_ptr, 1, sz, log_connection_file);
+            logs_raw_ptr += n_read;
+            sz -= n_read;
+            read_bytes += n_read;
+            if (ferror(log_connection_file)) {
+                printf("Warning - ferror\n");
+                break;
+            }
+            if (feof(log_connection_file)) break;
+        }
+        logs_raw[read_bytes] = '\0';
 
         fseek(log_connection_file, prev_pos, SEEK_SET);
 
+        if (new_file) {
+            fclose(log_connection_file);
+        }
     } else {
         printf("No Log Connection File!\n");
     }
@@ -662,23 +690,41 @@ int sendConnectionHistory() {
 
     if (logs_raw) {
         char *logs = escape_string(logs_raw);
+        free(logs_raw);
 
         char *json = malloc(1000 + strlen(logs));
 
-        sprintf(json,
-                "{\
-            \"connection_id\" : \"%d\",\
+        char connection_id_filename[1000] = "";
+        strcat(connection_id_filename, log_directory);
+        strcat(connection_id_filename, "connection_id.txt");
+        FILE *connection_id_file = fopen(connection_id_filename, "rb");
+        if (connection_id_file) {
+            char *connection_id_data = malloc(100);
+            size_t size = fread(connection_id_data, 1, 50, connection_id_file);
+            connection_id_data[size] = '\0';
+
+            if (size > 0) {
+                sprintf(json,
+                        "{\
+            \"connection_id\" : \"%s\",\
             \"version\" : \"%s\",\
             \"logs\" : \"%s\",\
             \"sender\" : \"server\"\
     }",
-                connection_id, get_version(), logs);
+                        connection_id_data, get_version(), logs);
 
-        LOG_INFO("Sending logs to webserver...");
-        SendJSONPost(host, request_path, json, get_access_token());
-        free(logs);
+                LOG_INFO("Sending logs to webserver...");
+                SendJSONPost(host, request_path, json, get_access_token());
+
+                freopen(connection_id_filename, "wb", connection_id_file);
+            }
+
+            fclose(connection_id_file);
+            free(connection_id_data);
+        }
+
         free(json);
-        free(logs_raw);
+        free(logs);
     }
 
     return true;

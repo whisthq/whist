@@ -158,6 +158,13 @@ int sendConnectionHistory();
 void startConnectionLog();
 
 /**
+ * @brief                          Save the current connection id into the log history
+ *
+ * @param connection_id            The connection id to use
+ */
+void saveConnectionID(int connection_id);
+
+/**
  * @brief                          Tell the server the WinLogon and connection
  *                                 status
  *

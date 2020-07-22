@@ -752,6 +752,10 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
     reply_msg->UDP_port = clients[*client_id].UDP_port;
     reply_msg->TCP_port = clients[*client_id].TCP_port;
 
+    // Save connection ID
+    saveConnectionID(connection_id);
+
+    // Send connection ID to client
     reply_msg->connection_id = connection_id;
     char* server_username = "Fractal";
     memcpy(reply_msg->username, server_username, strlen(server_username) + 1);
@@ -788,6 +792,7 @@ int MultithreadedWaitForClient(void* opaque) {
     StartTimer(&last_update_timer);
 
     sendConnectionHistory();
+    connection_id = rand();
     startConnectionLog();
     bool have_sent_logs = true;
 
@@ -802,6 +807,8 @@ int MultithreadedWaitForClient(void* opaque) {
             continue;
         }
 
+        LOG_INFO("Num Active Clients %d, Have Sent Logs %s", saved_num_active_clients,
+                 have_sent_logs ? "yes" : "no");
         if (saved_num_active_clients == 0 && !have_sent_logs) {
             sendConnectionHistory();
             have_sent_logs = true;
@@ -811,7 +818,7 @@ int MultithreadedWaitForClient(void* opaque) {
 
         if (saved_num_active_clients == 0) {
             connection_id = rand();
-            // startConnectionLog();
+            startConnectionLog();
 
             if (trying_to_update) {
                 if (GetTimer(last_update_timer) > 10.0) {
