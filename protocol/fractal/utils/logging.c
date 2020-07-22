@@ -228,7 +228,13 @@ int MultiThreadedPrintf(void *opaque) {
             // logger_queue_cache[i+5].buf,  logger_queue_cache[i+6].buf);
             //    last_printf = i + 6;
             //} else if (i > last_printf) {
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 5] = '.';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 4] = '.';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 3] = '.';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 2] = '\n';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 1] = '\0';
             fprintf(stdout, "%s", logger_queue_cache[i].buf);
+
             int chars_written =
                 sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
             logger_history_len += chars_written;
@@ -322,7 +328,7 @@ int MultiThreadedPrintf(void *opaque) {
  * @return the same string, but possible longer e.g "some json stuff
  * \\r\\n\\r\\n"
  */
-char *escape_string(char *old_string) {
+char *escape_string(char *old_string, bool escape_all) {
     size_t old_string_len = strlen(old_string);
     char *new_string = malloc(2 * (old_string_len + 1));
     int new_str_len = 0;
@@ -344,6 +350,24 @@ char *escape_string(char *old_string) {
                 new_string[new_str_len++] = '\\';
                 new_string[new_str_len++] = 't';
                 break;
+            case '\"':
+                if (escape_all) {
+                    new_string[new_str_len++] = '\\';
+                    new_string[new_str_len++] = '\"';
+                    break;
+                }
+            case '\\':
+                if (escape_all) {
+                    new_string[new_str_len++] = '\\';
+                    new_string[new_str_len++] = '\\';
+                    break;
+                }
+            case '\n':
+                if (escape_all) {
+                    new_string[new_str_len++] = '\\';
+                    new_string[new_str_len++] = 'n';
+                    break;
+                }
             default:
                 new_string[new_str_len++] = old_string[i];
                 break;
@@ -405,7 +429,7 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
             // the full log formatting time | type | file | log_msg
             // subsequent lines start with | followed by 4 spaces
             char *line = strtok_r(temp_buf, "\n", &strtok_context);
-            char *san_line = escape_string(line);
+            char *san_line = escape_string(line, false);
             snprintf(buf, LOGGER_BUF_SIZE, "%s \n", san_line);
             free(san_line);
             logger_queue_size++;
@@ -415,7 +439,7 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
             buf = (char *)logger_queue[index].buf;
             line = strtok_r(NULL, "\n", &strtok_context);
             while (line != NULL) {
-                san_line = escape_string(line);
+                san_line = escape_string(line, false);
                 snprintf(buf, LOGGER_BUF_SIZE, "|    %s \n", san_line);
                 free(san_line);
                 logger_queue[index].log = log;
@@ -637,7 +661,7 @@ void saveConnectionID(int connection_id_int) {
 int sendConnectionHistory() {
     char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
     // This is for HTTP request, not filesystem
-    char *request_path = "/logs";
+    char *request_path = "/logs/insert";
 
     SDL_LockMutex((SDL_mutex *)logger_mutex);
 
@@ -692,7 +716,7 @@ int sendConnectionHistory() {
     SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 
     if (logs_raw) {
-        char *logs = escape_string(logs_raw);
+        char *logs = escape_string(logs_raw, true);
         free(logs_raw);
 
         char *json = malloc(1000 + strlen(logs));

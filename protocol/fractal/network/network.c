@@ -1521,7 +1521,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     // now that it's sent, let's get the reply
     int len = recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
     if (len < 0) {
-        LOG_WARNING("Response to JSON GET failed!");
+        LOG_WARNING("Response to JSON GET failed! %d %d", len, GetLastNetworkError());
         json_res[0] = '\0';
     } else {
         json_res[len] = '\0';
