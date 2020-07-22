@@ -627,6 +627,7 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     int opt;
 
     // Create TCP socket
+    LOG_INFO("Creating TCP Socket");
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
         LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
@@ -656,6 +657,7 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     }
 
     // Set listen queue
+    LOG_INFO("Waiting for TCP Connection");
     set_timeout(context->s, stun_timeout_ms);
     if (listen(context->s, 3) < 0) {
         LOG_WARNING("Could not listen(2)! %d\n", GetLastNetworkError());
@@ -673,13 +675,14 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     tv.tv_sec = stun_timeout_ms / MS_IN_SECOND;
     tv.tv_usec = (stun_timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
 
-    if (select(0, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) < 0) {
+    if (select(0, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) <= 0) {
         LOG_WARNING("Could not select!");
         closesocket(context->s);
         return -1;
     }
 
     // Accept connection from client
+    LOG_INFO("Accepting TCP Connection");
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
     if ((new_socket = accept(context->s, (struct sockaddr *)(&context->addr), &slen)) < 0) {
@@ -687,6 +690,8 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
         closesocket(context->s);
         return -1;
     }
+
+    LOG_INFO("PORT: %d", context->addr.sin_port);
 
     closesocket(context->s);
     context->s = new_socket;

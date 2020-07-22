@@ -787,8 +787,31 @@ int MultithreadedWaitForClient(void* opaque) {
     clock last_update_timer;
     StartTimer(&last_update_timer);
 
+    sendConnectionHistory();
+    bool have_sent_logs = true;
+
     while (running) {
-        if (num_controlling_clients == 0) {
+        if (readLock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to read-acquire an active RW lock.");
+            continue;
+        }
+        int saved_num_active_clients = num_active_clients;
+        if (readUnlock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to read-release and active RW lock.");
+            continue;
+        }
+
+        if (saved_num_active_clients == 0 && !have_sent_logs) {
+            sendConnectionHistory();
+            have_sent_logs = true;
+        } else if (saved_num_active_clients > 0 && have_sent_logs) {
+            have_sent_logs = false;
+        }
+
+        if (saved_num_active_clients == 0) {
+            connection_id = rand();
+            startConnectionLog();
+
             if (trying_to_update) {
                 if (GetTimer(last_update_timer) > 10.0) {
                     update();
@@ -824,6 +847,19 @@ int MultithreadedWaitForClient(void* opaque) {
             continue;
         }
 
+        if (writeLock(&is_active_rwlock) != 0) {
+            LOG_ERROR("Failed to write-acquire is active RW lock.");
+            if (quitClient(client_id) != 0) {
+                LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
+            }
+            if (host_id == client_id) {
+                // if (randomlyAssignHost() != 0) {
+                //     LOG_ERROR("Failed to randomly assigned host.");
+                // }
+            }
+            continue;
+        }
+
         LOG_INFO("Client connected. (ID: %d)", client_id);
 
         // We probably need to lock these. Argh.
@@ -842,19 +878,8 @@ int MultithreadedWaitForClient(void* opaque) {
 
         StartTimer(&(clients[client_id].last_ping));
 
-        if (writeLock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to write-acquire is active RW lock.");
-            if (quitClient(client_id) != 0) {
-                LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
-            }
-            if (host_id == client_id) {
-                // if (randomlyAssignHost() != 0) {
-                //     LOG_ERROR("Failed to randomly assigned host.");
-                // }
-            }
-            continue;
-        }
         clients[client_id].is_active = true;
+
         if (writeUnlock(&is_active_rwlock) != 0) {
             LOG_ERROR("Failed to write-release is active RW lock.");
             LOG_ERROR("VERY BAD. IRRECOVERABLE.");
@@ -967,8 +992,6 @@ int main() {
         clock ack_timer;
         StartTimer(&ack_timer);
 
-        bool have_sent_logs = false;
-
         while (connected) {
             if (GetTimer(ack_timer) > 5) {
                 if (get_using_stun()) {
@@ -1079,15 +1102,6 @@ int main() {
             if (readLock(&is_active_rwlock) != 0) {
                 LOG_ERROR("Failed to write-acquire is active lock.");
                 continue;
-            }
-
-            if (num_active_clients == 0 && !have_sent_logs) {
-                sendConnectionHistory();
-                connection_id = rand();
-                startConnectionLog();
-                have_sent_logs = true;
-            } else if (num_active_clients > 0 && have_sent_logs) {
-                have_sent_logs = false;
             }
 
             for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
