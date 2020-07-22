@@ -27,7 +27,7 @@ RUN apt-get install sudo
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 ADD desktop/linux-client-setup.sh /
-RUN /linux-client-setup.sh
+RUN apt-get update && apt-get clean && /linux-client-setup.sh
 RUN groupadd fractal
 RUN echo $uname
 RUN useradd -u ${uid} -g fractal ${uname}
