@@ -147,7 +147,7 @@ void startConnectionLog() {
     char log_connection_directory[1000] = "";
     strcat(log_connection_directory, log_directory);
     strcat(log_connection_directory, "log_connection.txt");
-    mprintf_log_connection_file = fopen(log_connection_directory, "wb");
+    mprintf_log_connection_file = fopen(log_connection_directory, "w+b");
     log_connection_log_id = logger_global_id;
 
     SDL_UnlockMutex((SDL_mutex *)logger_mutex);
