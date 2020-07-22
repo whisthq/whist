@@ -129,16 +129,14 @@ void startConnectionLog() {
     char l[1000] = "";
     strcat(l, log_directory);
     strcat(l, "/log_connection.txt");
-
     printf("Opening file\n");
     FILE *log_connection_file = fopen(l, "wb");
-
 
     //  Set up log_connection.txt to see when a connection begins
     //  Use lock so there aren't any race conditions with
     //  Making a log_prev.txt at the same time
     printf("Attempting to acquire mutex\n");
-    SDL_LockMutex((SDL_mutex *) logger_mutex);
+    SDL_LockMutex((SDL_mutex *)logger_mutex);
     printf("Acquired mutex\n");
 
     int sz = ftell(mprintf_log_file);
