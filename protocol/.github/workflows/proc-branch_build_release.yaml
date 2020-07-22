@@ -686,6 +686,7 @@ jobs:
           asset_content_type: application/zip
   trigger-clientapp-builds:
     needs: [params, build, upload-builds, test_client]
+    if: always() # See not in first step to understand why this is set to always run (which would seem incorrect since it should only run when builds succeed)
     runs-on: ubuntu-latest
     steps:
       - name: Check if all builds succeeded
