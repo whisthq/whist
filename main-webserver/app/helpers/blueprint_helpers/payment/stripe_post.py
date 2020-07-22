@@ -228,7 +228,7 @@ def cancelStripeHelper(email):
             pass
         fractalSQLDelete("customers", {"username": email})
         return jsonify({"status": SUCCESS}), SUCCESS
-    return jsonify({"status": NOT_FOUND}), NOT_FOUND
+    return jsonify({"status": PAYMENT_REQUIRED}), PAYMENT_REQUIRED
 
 
 def discountHelper(code):
