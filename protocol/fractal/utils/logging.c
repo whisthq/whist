@@ -249,13 +249,15 @@ int MultiThreadedPrintf(void *opaque) {
             fflush(mprintf_log_connection_file);
         }
 
+#define MAX_LOG_FILE_SIZE (5 * BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE)
+
         // If the log file is large enough, cache it
         if (mprintf_log_file) {
             fseek(mprintf_log_file, 0L, SEEK_END);
             int sz = ftell(mprintf_log_file);
 
             // If it's larger than 5MB, start a new file and store the old one
-            if (sz > 5 * BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE) {
+            if (sz > MAX_LOG_FILE_SIZE) {
                 fclose(mprintf_log_file);
 
                 char f[1000] = "";
@@ -274,6 +276,36 @@ int MultiThreadedPrintf(void *opaque) {
                 DeleteFileW(wf);
 #endif
                 mprintf_log_file = fopen(f, "ab");
+            }
+        }
+
+        // If the log file is large enough, cache it
+        if (mprintf_log_connection_file) {
+            fseek(mprintf_log_connection_file, 0L, SEEK_END);
+            long sz = ftell(mprintf_log_connection_file);
+
+            // If it's larger than 5MB, start a new file and store the old one
+            if (sz > MAX_LOG_FILE_SIZE) {
+                long buf_len = MAX_LOG_FILE_SIZE / 2;
+
+                char *original_buf = malloc(buf_len);
+                char *buf = original_buf;
+                fseek(mprintf_log_connection_file, -buf_len, SEEK_END);
+                fread(buf, buf_len, 1, mprintf_log_connection_file);
+
+                while (buf_len > 0 && buf[0] != '\n') {
+                    buf++;
+                    buf_len--;
+                }
+
+                char f[1000] = "";
+                strcat(f, log_directory);
+                strcat(f, "log_connection.txt");
+                freopen(f, "wb", mprintf_log_connection_file);
+                fwrite(buf, buf_len, 1, mprintf_log_connection_file);
+                fflush(mprintf_log_connection_file);
+
+                free(original_buf);
             }
         }
     }
