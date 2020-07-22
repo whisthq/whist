@@ -338,12 +338,12 @@ upload-builds:
           - os: ubuntu-latest
             artifact_name: "Linux-64bit"
             artifact_relpath: "/desktop/release/linux/Fractal"
-         - os: windows-latest
-           artifact_name: "Windows-64bit"
-           artifact_relpath: "/desktop/release/windows/Fractal.exe"
-         - os: macos-latest
-           artifact_name: "macOS-64bit"
-           artifact_relpath: "/desktop/release/mac/Fractal.app"
+          - os: windows-latest
+            artifact_name: "Windows-64bit"
+            artifact_relpath: "/desktop/release/windows/Fractal.exe"
+          - os: macos-latest
+            artifact_name: "macOS-64bit"
+            artifact_relpath: "/desktop/release/mac/Fractal.app"
     name: Upload ${{ matrix.config.artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
     steps:
       - name: Retrieve artifact ${{ matrix.config.artifact_name }}
