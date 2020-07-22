@@ -621,7 +621,7 @@ char *get_version() {
     return version;
 }
 
-void saveConnectionID( int connection_id_int ) {
+void saveConnectionID(int connection_id_int) {
     char connection_id_filename[1000] = "";
     strcat(connection_id_filename, log_directory);
     strcat(connection_id_filename, "connection_id.txt");
