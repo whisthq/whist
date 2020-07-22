@@ -172,9 +172,8 @@ void destroyLogger() {
 
     logger_history[0] = '\0';
     logger_history_len = 0;
-    if( log_directory )
-    {
-        free( log_directory );
+    if (log_directory) {
+        free(log_directory);
     }
 }
 
