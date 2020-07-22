@@ -173,6 +173,7 @@ void destroyLogger() {
 
     logger_history[0] = '\0';
     logger_history_len = 0;
+    free(log_directory);
 }
 
 int MultiThreadedPrintf(void *opaque) {
