@@ -811,7 +811,7 @@ int MultithreadedWaitForClient(void* opaque) {
 
         if (saved_num_active_clients == 0) {
             connection_id = rand();
-            //startConnectionLog();
+            // startConnectionLog();
 
             if (trying_to_update) {
                 if (GetTimer(last_update_timer) > 10.0) {
