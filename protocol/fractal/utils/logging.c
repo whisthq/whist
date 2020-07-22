@@ -96,10 +96,18 @@ void initLogger(char *log_dir) {
 
     char f[1000] = "";
     if (log_dir) {
-        log_directory = log_dir;
+        int dir_len = strlen(log_dir);
+        log_directory = (char *) malloc(dir_len + 2)
+        strncpy(log_directory, log_dir, dir_len);
+#if defined(_WIN32)
+        log_directory[dir_len] = "\\";
+#else
+        log_directory[dir_len] = "/";
+#endif
+        log_directory[dir_len+1] = "\0";
 
         strcat(f, log_directory);
-        strcat(f, "/log.txt");
+        strcat(f, "log.txt");
 
 #if defined(_WIN32)
         CreateDirectoryA(log_directory, 0);
@@ -128,7 +136,7 @@ void startConnectionLog() {
     printf("startConnectionLog called\n");
     char l[1000] = "";
     strcat(l, log_directory);
-    strcat(l, "/log_connection.txt");
+    strcat(l, "log_connection.txt");
     printf("Opening file\n");
     FILE *log_connection_file = fopen(l, "wb");
 
@@ -242,10 +250,10 @@ int MultiThreadedPrintf(void *opaque) {
 
                 char f[1000] = "";
                 strcat(f, log_directory);
-                strcat(f, "/log.txt");
+                strcat(f, "log.txt");
                 char fp[1000] = "";
                 strcat(fp, log_directory);
-                strcat(fp, "/log_prev.txt");
+                strcat(fp, "log_prev.txt");
 #if defined(_WIN32)
                 WCHAR wf[1000];
                 WCHAR wfp[1000];
@@ -261,7 +269,7 @@ int MultiThreadedPrintf(void *opaque) {
                 //              in log_connection.txt to reflect file copying
                 char lname[1000] = "";
                 strcat(lname, log_directory);
-                strcat(lname, "/log_connection.txt");
+                strcat(lname, "log_connection.txt");
                 FILE *log_connection = fopen(lname, "ab+");
                 fseek(log_connection, 0, SEEK_SET);
 
@@ -608,7 +616,7 @@ int sendConnectionHistory() {
 
         char f[1000] = "";
         strcat(f, log_directory);
-        strcat(f, "/log_connection.txt");
+        strcat(f, "log_connection.txt");
         FILE *log_connection = fopen(f, "rb");
         fseek(log_connection, 0, SEEK_SET);
         int seekPos;
@@ -627,7 +635,7 @@ int sendConnectionHistory() {
             // Need to use log_prev.txt and log.txt. Know log_prev.txt exists
             char p[1000] = "";
             strcat(p, log_directory);
-            strcat(p, "/log_prev.txt");
+            strcat(p, "log_prev.txt");
             FILE *prev_log = fopen(p, "rb");
             fseek(prev_log, 0, SEEK_END);
             int prev_len = ftell(prev_log) - seekPos;
