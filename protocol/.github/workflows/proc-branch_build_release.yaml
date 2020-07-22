@@ -685,7 +685,7 @@ jobs:
           asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.client_artifact_name }}.zip
           asset_content_type: application/zip
   trigger-clientapp-builds:
-    needs: [upload-builds]
+    needs: [params, build, upload-builds]
     runs-on: ubuntu-latest
     steps:
       - name: Check if all builds succeeded
