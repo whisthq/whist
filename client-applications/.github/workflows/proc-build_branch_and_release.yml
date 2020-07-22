@@ -328,40 +328,40 @@ jobs:
           prerelease: false
 
 
-upload-builds:
-    needs: [create-release]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        config:
-          # These should match the configurations defined in the build job
-          # TODO: figure out how to DRY these configurations
-          - os: ubuntu-latest
-            artifact_name: "Linux-64bit"
-            artifact_relpath: "/desktop/release/linux/Fractal"
-          - os: windows-latest
-            artifact_name: "Windows-64bit"
-            artifact_relpath: "/desktop/release/windows/Fractal.exe"
-          - os: macos-latest
-            artifact_name: "macOS-64bit"
-            artifact_relpath: "/desktop/release/mac/Fractal.app"
-    name: Upload ${{ matrix.config.artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
-    steps:
-      - name: Retrieve artifact ${{ matrix.config.artifact_name }}
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ matrix.config.artifact_name }}
-          path: ${{ matrix.config.artifact_name }}
-      - name: Package up artifact as a zip file
-        run: |
-          ls -laR
-          zip -r "${{ matrix.config.artifact_name }}" "${{ matrix.config.artifact_name }}"
-      - name: Upload to release ${{ needs['create-release'].outputs.version_id }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs['create-release'].outputs.release_upload_url }}
-          asset_path: ./${{ matrix.config.artifact_name }}.zip
-          asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.artifact_name }}.zip
-          asset_content_type: application/zip
+  upload-builds:
+      needs: [create-release]
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          config:
+            # These should match the configurations defined in the build job
+            # TODO: figure out how to DRY these configurations
+            - os: ubuntu-latest
+              artifact_name: "Linux-64bit"
+              artifact_relpath: "/desktop/release/linux/Fractal"
+            - os: windows-latest
+              artifact_name: "Windows-64bit"
+              artifact_relpath: "/desktop/release/windows/Fractal.exe"
+            - os: macos-latest
+              artifact_name: "macOS-64bit"
+              artifact_relpath: "/desktop/release/mac/Fractal.app"
+      name: Upload ${{ matrix.config.artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
+      steps:
+        - name: Retrieve artifact ${{ matrix.config.artifact_name }}
+          uses: actions/download-artifact@v2
+          with:
+            name: ${{ matrix.config.artifact_name }}
+            path: ${{ matrix.config.artifact_name }}
+        - name: Package up artifact as a zip file
+          run: |
+            ls -laR
+            zip -r "${{ matrix.config.artifact_name }}" "${{ matrix.config.artifact_name }}"
+        - name: Upload to release ${{ needs['create-release'].outputs.version_id }}
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs['create-release'].outputs.release_upload_url }}
+            asset_path: ./${{ matrix.config.artifact_name }}.zip
+            asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.artifact_name }}.zip
+            asset_content_type: application/zip
