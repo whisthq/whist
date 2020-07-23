@@ -86,7 +86,7 @@ Defines
 #define BASE_UDP_PORT 32263
 #define BASE_TCP_PORT (BASE_UDP_PORT + MAX_NUM_CLIENTS)
 
-#define PRODUCTION_HOST "cube-celery-vm.herokuapp.com"
+#define PRODUCTION_HOST "main-webserver.fractalcomputers.com"
 #define STAGING_HOST "cube-celery-staging.herokuapp.com"
 
 #define USING_AUDIO_ENCODE_DECODE true

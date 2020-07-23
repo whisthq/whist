@@ -126,6 +126,7 @@ Public Functions
  *
  * @param log_directory            The directory to store the log files in. Pass
  *                                 NULL to not store the logs in a log file
+ *
  */
 void initLogger(char* log_directory);
 
@@ -143,8 +144,25 @@ void destroyLogger();
 
 /**
  * @brief                          Send the log history to the webserver
+ *
+ * @returns                         0: success -1: failure to send file,
+ *                                  sent cache instead   -2: outright failure
  */
-bool sendLogHistory();
+int sendConnectionHistory();
+
+/**
+ * @brief                          Set the logger to categorize all logs from now
+ *                                  on as a new connection. Only these will be sent
+ *                                  on a sendConnectionHistory call.
+ */
+void startConnectionLog();
+
+/**
+ * @brief                          Save the current connection id into the log history
+ *
+ * @param connection_id            The connection id to use
+ */
+void saveConnectionID(int connection_id);
 
 /**
  * @brief                          Tell the server the WinLogon and connection

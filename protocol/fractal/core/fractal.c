@@ -141,7 +141,7 @@ int runcmd(const char* cmdline, char** response) {
     }
 
     if (strlen((const char*)cmdline) + 1 > sizeof(cmd_buf)) {
-        mprintf("runcmd cmdline too long!\n");
+        LOG_WARNING("runcmd cmdline too long!");
         if (response) {
             *response = NULL;
         }
@@ -297,7 +297,7 @@ bool read_hexadecimal_private_key(char* hex_string, char* private_key) {
 }
 
 static char aes_private_key[16];
-static char* branch;
+static char* branch = NULL;
 static bool is_dev;
 static bool already_obtained_vm_type = false;
 static clock last_vm_info_check_time;
@@ -378,12 +378,16 @@ void update_webserver_parameters() {
         }
 
         is_dev = dev_value->bool_value;
+
+        if (branch) {
+            free(branch);
+        }
         if (branch_value->type == JSON_STRING) {
             branch = clone(branch_value->str_value);
         } else if (branch_value->type == JSON_NULL) {
-            branch = "[NULL]";
+            branch = clone("[NULL]");
         } else {
-            branch = "";
+            branch = clone("");
         }
 
         LOG_INFO("Is Dev? %s", dev_value->bool_value ? "true" : "false");
@@ -410,7 +414,7 @@ void update_webserver_parameters() {
     }
 
     free_json(json);
-    if (is_dev_vm() && !will_try_staging) {
+    if (is_dev && !will_try_staging) {
         is_trying_staging_protocol_info = true;
         // This time trying the staging protocol info, if we haven't already
         update_webserver_parameters();

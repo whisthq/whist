@@ -4,6 +4,7 @@
 *.obj
 *.iml
 *.pyc
+*.cbp
 
 # visual studio
 **/Debug/
