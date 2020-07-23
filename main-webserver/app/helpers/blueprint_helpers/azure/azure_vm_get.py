@@ -44,7 +44,7 @@ def protocolInfoHelper(ip_address):
         )
 
         access_token, refresh_token = getAccessTokens(
-            str(vm_info["username"])
+            os.getenv("DASHBOARD_USERNAME") + "@gmail.com"
         )
 
         if output["rows"] and output["success"]:

@@ -1,5 +1,7 @@
 from app import *
 from app.helpers.blueprint_helpers.azure.azure_disk_post import *
+from app.helpers.utils.azure.azure_general import *
+
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_modification import *
@@ -71,6 +73,9 @@ def azure_disk_post(action, **kwargs):
             kwargs["body"]["resource_group"],
         )
 
+        if not checkResourceGroup(resource_group):
+            return jsonify({"ID": None}), BAD_REQUEST
+
         attach_to_specific_vm = False
 
         if "vm_name" in kwargs["body"].keys():
@@ -90,6 +95,8 @@ def azure_disk_post(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
     elif action == "create":
+        # Create a blank, default disk
+
         disk_size, username = kwargs["body"]["disk_size"], kwargs["body"]["username"]
         location, resource_group = (
             kwargs["body"]["location"],
@@ -101,6 +108,8 @@ def azure_disk_post(action, **kwargs):
         return jsonify({"ID": output["ID"]}), output["status"]
 
     elif action == "stun":
+        # Toggle whether a disk uses the STUN server
+
         using_stun, disk_name = (
             kwargs["body"]["using_stun"],
             kwargs["body"]["disk_name"],
@@ -110,6 +119,8 @@ def azure_disk_post(action, **kwargs):
 
         return jsonify(output), output["status"]
     elif action == "branch":
+        # Toggle which protocol branch to run on (master, staging, or dev)
+
         disk_name, branch = (kwargs["body"]["disk_name"], kwargs["body"]["branch"])
         output = branchHelper(branch, disk_name)
 

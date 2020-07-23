@@ -159,16 +159,52 @@ def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
             },
         )
 
+    fractalLog(
+        function="waitForWinlogon",
+        label=getVMUser(vm_name),
+        logs="Checking to see if VM {vm_name} has a recent winlogon event".format(
+            vm_name=vm_name
+        ),
+    )
+
     has_winlogoned = checkWinlogon(vm_name, resource_group)
     num_tries = 0
 
+    if has_winlogoned:
+        fractalLog(
+            function="waitForWinlogon",
+            label=getVMUser(vm_name),
+            logs="VM {vm_name} winlogoned on the first try!".format(vm_name=vm_name),
+        )
+    else:
+        fractalLog(
+            function="waitForWinlogon",
+            label=getVMUser(vm_name),
+            logs="VM {vm_name} has not winlogoned yet. Waiting...".format(
+                vm_name=vm_name
+            ),
+        )
+
     # Return success if a winlogon has been detected within the last 10 seconds
 
-    if (
-        has_winlogoned
-        or checkDev(vm_name, resource_group)
-        or resource_group != os.getenv("VM_GROUP")
-    ):
+    if checkDev(vm_name, resource_group):
+        fractalLog(
+            function="waitForWinlogon",
+            label=getVMUser(vm_name),
+            logs="VM {vm_name} is in dev mode. Winlogon will not be detected if protocol is not running.".format(
+                vm_name=vm_name
+            ),
+        )
+
+    if has_winlogoned or resource_group != os.getenv("VM_GROUP"):
+        if resource_group != os.getenv("VM_GROUP"):
+            fractalLog(
+                function="waitForWinlogon",
+                label=getVMUser(vm_name),
+                logs="Resource group {resource_group} is not production resource group. Bypassing winlogon...".format(
+                    vm_name=vm_name
+                ),
+            )
         return 1
     else:
         fractalLog(

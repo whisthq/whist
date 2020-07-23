@@ -13,8 +13,13 @@ def payment(action, **kwargs):
 
     # Adds a subscription to the customer
     if action == "charge":
-        body = request.get_json()
         return chargeHelper(body["token"], body["username"], body["code"], body["plan"])
+
+    elif action == "addProduct":
+        return addProductHelper(body["username"], body["product"])
+
+    elif action == "removeProduct":
+        return removeProductHelper(body["username"], body["product"])
 
     # Retrieves the stripe subscription of the customer
     elif action == "retrieve":
@@ -31,26 +36,31 @@ def payment(action, **kwargs):
     elif action == "insert":
         return insertCustomerHelper(body["username"], body["location"])
 
-    # Endpoint for stripe webhooks
-    elif action == "hooks":
-        sigHeader = request.headers["Stripe-Signature"]
-        endpointSecret = os.getenv("ENDPOINT_SECRET")
-        event = None
-
-        try:
-            event = stripe.Webhook.construct_event(body, sigHeader, endpointSecret)
-        except ValueError as e:
-            # Invalid payload
-            return jsonify({"status": "Invalid payload"}), NOT_ACCEPTABLE
-        except stripe.error.SignatureVerificationError as e:
-            # Invalid signature
-            return jsonify({"status": "Invalid signature"}), FORBIDDEN
-
-        return webhookHelper(event)
-
     elif action == "update":
         # When a customer requests to change their plan type
         return updateHelper(body["username"], body["plan"])
 
     elif action == "referral":
         return referralHelper(body["code"], body["username"])
+
+
+@stripe_bp.route("/stripe/hooks", methods=["POST"])
+def hooks(**kwargs):
+    body = request.get_data()
+
+    # Endpoint for stripe webhooks
+    sigHeader = request.headers["Stripe-Signature"]
+    endpointSecret = os.getenv("ENDPOINT_SECRET")
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(body, sigHeader, endpointSecret)
+    except ValueError as e:
+        # Invalid payload
+        return jsonify({"status": "Invalid payload"}), NOT_ACCEPTABLE
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        print(e)
+        return jsonify({"status": "Invalid signature"}), FORBIDDEN
+
+    return webhookHelper(event)

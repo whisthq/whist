@@ -68,9 +68,11 @@ useful_env_vars = [
     "HEROKU_POSTGRESQL_ORANGE_URL",
     "ENDPOINT_SECRET",
     "FRONTEND_URL",
-    "HOURLY_PLAN_ID",
     "JWT_SECRET_KEY",
+    "HOURLY_PLAN_ID",
     "MONTHLY_PLAN_ID",
+    "SMALLDISK_PLAN_ID",
+    "MEDIUMDISK_PLAN_ID",
     "PAPERTRAIL_PORT",
     "PAPERTRAIL_URL",
     "REDIS_URL",
@@ -83,6 +85,8 @@ useful_env_vars = [
     "USE_PRODUCTION_DATABASE",
     "VM_GROUP",
     "VM_PASSWORD",
+    "SMALLDISK_PLAN_ID",
+    "MEDIUMDISK_PLAN_ID",
 ]
 
 useful_config = {k: env_config.get(k) for k in useful_env_vars}

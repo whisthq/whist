@@ -87,7 +87,7 @@ def spinLock(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
     else:
         fractalLog(
             function="spinLock",
-            label=str(username),
+            label=str(username) if username else vm_name,
             logs="spinLock errored with error: {error}.".format(
                 error=str(output["error"])
             ),

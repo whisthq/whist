@@ -2,7 +2,7 @@ from app import *
 
 
 @celery_instance.task(bind=True)
-def uploadLogsToS3(sender, connection_id, logs, vm_ip, version):
+def uploadLogsToS3(self, sender, connection_id, logs, vm_ip, version):
     """Uploads a log .txt file tos S3
 
     Args:
@@ -71,7 +71,7 @@ def uploadLogsToS3(sender, connection_id, logs, vm_ip, version):
             vm_info = output["rows"][0]
             username = vm_info["username"]
 
-        file_name = S3Upload(content, last_updated, sender, username)
+        file_name = S3Upload(logs, last_updated, sender, username)
         file_name = file_name if file_name else ""
 
         if sender == "CLIENT":
