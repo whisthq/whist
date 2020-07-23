@@ -35,7 +35,6 @@ Please give instructions for other people to test, e.g.:
 - [ ] Isabelle
 - [ ] Jonathan
 - [ ] Sean
-- [ ] Gavin
 
 ## Checklist
 
