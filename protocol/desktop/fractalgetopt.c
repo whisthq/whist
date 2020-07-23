@@ -105,8 +105,7 @@ int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
         if (optopt == (int)'-') return (-1);
         if (!*place) ++optind;
         if (opterr && *ostr != ':')
-            (void)fprintf(stderr, "%s: illegal option -- %c\n",
-                          __progname(nargv[0]), optopt);
+            (void)fprintf(stderr, "%s: illegal option -- %c\n", __progname(nargv[0]), optopt);
         return (BADCH);
     }
     if (*++oli != ':') { /* don't need argument */
@@ -177,8 +176,7 @@ int getopt_long(int nargc, char *const *nargv, const char *options,
             current_argv_len = (int)strlen(current_argv);
 
         for (i = 0; long_options[i].name; i++) {
-            if (strncmp(current_argv, long_options[i].name, current_argv_len))
-                continue;
+            if (strncmp(current_argv, long_options[i].name, current_argv_len)) continue;
 
             if (strlen(long_options[i].name) == (unsigned)current_argv_len) {
                 match = i;
@@ -194,22 +192,20 @@ int getopt_long(int nargc, char *const *nargv, const char *options,
                 else
                     optarg = nargv[optind++];
             }
-            if ((long_options[match].has_arg == required_argument) &&
-                (optarg == NULL)) {
+            if ((long_options[match].has_arg == required_argument) && (optarg == NULL)) {
                 /*
                  * Missing argument, leading :
                  * indicates no error should be generated
                  */
                 if ((opterr) && (*options != ':'))
-                    (void)fprintf(stderr,
-                                  "%s: option requires an argument -- %s\n",
+                    (void)fprintf(stderr, "%s: option requires an argument -- %s\n",
                                   __progname(nargv[0]), current_argv);
                 return (BADARG);
             }
         } else { /* No matching argument */
             if ((opterr) && (*options != ':'))
-                (void)fprintf(stderr, "%s: illegal option -- %s\n",
-                              __progname(nargv[0]), current_argv);
+                (void)fprintf(stderr, "%s: illegal option -- %s\n", __progname(nargv[0]),
+                              current_argv);
             return (BADCH);
         }
         if (long_options[match].flag) {

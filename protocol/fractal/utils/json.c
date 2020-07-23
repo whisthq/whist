@@ -1,3 +1,16 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file json.c
+ * @brief This file contains all the JSON helper functions.
+============================
+Usage
+============================
+
+You can use the functions here to handle JSONs in C. The function parse_json
+will parse it into our custom JSON struct, and you can then use get_kv to
+retrieve specific key and value pairs, the way you'd normally do in Python or
+JavaScript.
+*/
 
 /*
 ============================
@@ -130,7 +143,7 @@ bool parse_json(char* str, json_t* json) {
     /*
     for (int i = 0; i < json->size; i++) {
         kv_pair_t* kv = &json->pairs[i];
-        LOG_INFO("KEY BEGIN: %s\n", kv->key);
+        LOG_INFO("KEY BEGIN: %s", kv->key);
         switch (kv->type) {
             case JSON_BOOL:
                 LOG_INFO("VALUE BEGIN: %s", kv->bool_value ? "true" : "false");

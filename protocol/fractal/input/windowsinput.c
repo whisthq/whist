@@ -1,11 +1,27 @@
-/*
- * User input processing on Windows.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file windowsinput.c
+ * @brief This file defines the Windows input device type and function to enter
+ *        string on Winlogon screen.
+============================
+Usage
+============================
+
+Use EnterWinString to enter a password to Windows Winlogon screen, to log a user
+into the Windows desktop environment. You can create an input device to receive
+input (keystrokes, mouse clicks, etc.) via CreateInputDevice. You can then send
+input to the Windows OS via ReplayUserInput, and use UpdateKeyboardState to sync
+keyboard state between local and remote computers (say, sync them to both have
+CapsLock activated).
+*/
+
 #include "windowsinput.h"
 
 #define USE_NUMPAD 0x1000
+
+// This defines the total range of a mouse coordinate as defined by SDL, from 0 to
+// MOUSE_COORDINATE_RANGE as left to right or top to bottom
+#define SDL_MOUSE_COORDINATE_RANGE 65536
 
 // @brief Windows keycodes for replaying SDL user inputs on server
 // @details index is SDL keycode, value is Windows keycode
@@ -296,8 +312,7 @@ void SendKeyInput(int windows_keycode, int extraFlags) {
     ip.ki.time = 0;
     ip.ki.dwExtraInfo = 0;
 
-    ip.ki.wScan =
-        (WORD)MapVirtualKeyA(windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX);
+    ip.ki.wScan = (WORD)MapVirtualKeyA(windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX);
     ip.ki.dwFlags = KEYEVENTF_SCANCODE | extraFlags;
     if (ip.ki.wScan >> 8 == 0xE0 || (windows_keycode & USE_NUMPAD)) {
         ip.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
@@ -309,12 +324,9 @@ void SendKeyInput(int windows_keycode, int extraFlags) {
 
 void KeyDown(int windows_keycode) { SendKeyInput(windows_keycode, 0); }
 
-void KeyUp(int windows_keycode) {
-    SendKeyInput(windows_keycode, KEYEVENTF_KEYUP);
-}
+void KeyUp(int windows_keycode) { SendKeyInput(windows_keycode, KEYEVENTF_KEYUP); }
 
-void UpdateKeyboardState(input_device_t* input_device,
-                         FractalClientMessage* fmsg) {
+void UpdateKeyboardState(input_device_t* input_device, FractalClientMessage* fmsg) {
     input_device;
     if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
         LOG_WARNING(
@@ -385,8 +397,7 @@ void UpdateKeyboardState(input_device_t* input_device,
     // If caps lock doesn't match, then send a correction
     if (!!server_caps_lock != !!fmsg->caps_lock) {
         LOG_INFO("Caps lock out of sync, updating! From %s to %s\n",
-                 server_caps_lock ? "caps" : "no caps",
-                 fmsg->caps_lock ? "caps" : "no caps");
+                 server_caps_lock ? "caps" : "no caps", fmsg->caps_lock ? "caps" : "no caps");
         // If I'm supposed to be holding it down, then just release and then
         // repress
         if (caps_lock_holding) {
@@ -437,9 +448,8 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
 
             Event.ki.dwFlags = KEYEVENTF_SCANCODE;
             Event.ki.wVk = 0;
-            Event.ki.wScan =
-                (WORD)MapVirtualKeyExA(windows_keycodes[fmsg->keyboard.code],
-                                       MAPVK_VK_TO_VSC_EX, keyboard_layout);
+            Event.ki.wScan = (WORD)MapVirtualKeyExA(windows_keycodes[fmsg->keyboard.code],
+                                                    MAPVK_VK_TO_VSC_EX, keyboard_layout);
 
             switch (windows_keycodes[fmsg->keyboard.code]) {
                 // List found here:
@@ -510,7 +520,7 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
-            // mprintf("MOUSE: x %d y %d r %d\n", fmsg->mouseMotion.x,
+            // LOG_INFO("MOUSE: x %d y %d r %d", fmsg->mouseMotion.x,
             //        fmsg->mouseMotion.y, fmsg->mouseMotion.relative);
 
             Event.type = INPUT_MOUSE;
@@ -519,9 +529,9 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
                 Event.mi.dy = (LONG)(fmsg->mouseMotion.y * 0.9);
                 Event.mi.dwFlags = MOUSEEVENTF_MOVE;
             } else {
-                Event.mi.dx = (LONG)(fmsg->mouseMotion.x * (double)65536 /
+                Event.mi.dx = (LONG)(fmsg->mouseMotion.x * (double)SDL_MOUSE_COORDINATE_RANGE /
                                      MOUSE_SCALING_FACTOR);
-                Event.mi.dy = (LONG)(fmsg->mouseMotion.y * (double)65536 /
+                Event.mi.dy = (LONG)(fmsg->mouseMotion.y * (double)SDL_MOUSE_COORDINATE_RANGE /
                                      MOUSE_SCALING_FACTOR);
                 Event.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
             }
@@ -574,8 +584,7 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
     }
 
     // send FMSG mapped to Windows event to Windows and return
-    int num_events_sent =
-        SendInput(1, &Event, sizeof(INPUT));  // 1 structure to send
+    int num_events_sent = SendInput(1, &Event, sizeof(INPUT));  // 1 structure to send
 
     if (1 != num_events_sent) {
         LOG_WARNING("SendInput did not send all events! %d\n", num_events_sent);

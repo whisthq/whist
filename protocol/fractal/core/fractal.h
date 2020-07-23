@@ -1,5 +1,10 @@
 #ifndef FRACTAL_H
 #define FRACTAL_H
+
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file fractal.h
@@ -81,13 +86,12 @@ Defines
 #define BASE_UDP_PORT 32263
 #define BASE_TCP_PORT (BASE_UDP_PORT + MAX_NUM_CLIENTS)
 
-#define PRODUCTION_HOST "cube-celery-vm.herokuapp.com"
+#define PRODUCTION_HOST "main-webserver.fractalcomputers.com"
 #define STAGING_HOST "cube-celery-staging.herokuapp.com"
 
-#define USING_STUN true
 #define USING_AUDIO_ENCODE_DECODE true
 
-#if defined(_WIN32)
+#ifdef _WIN32
 // possible on windows, so let's do it
 #define USING_SERVERSIDE_SCALE true
 #else
@@ -109,8 +113,7 @@ Defines
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
-#define PRIVATE_KEY \
-    "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
+#define DEFAULT_PRIVATE_KEY "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
 
 #define MOUSE_SCALING_FACTOR 100000
 
@@ -122,11 +125,7 @@ Custom Types
 ============================
 */
 
-typedef enum EncodeType {
-    SOFTWARE_ENCODE = 0,
-    NVENC_ENCODE = 1,
-    QSV_ENCODE = 2
-} EncodeType;
+typedef enum EncodeType { SOFTWARE_ENCODE = 0, NVENC_ENCODE = 1, QSV_ENCODE = 2 } EncodeType;
 
 typedef enum CodecType {
     CODEC_TYPE_UNKNOWN = 0,
@@ -311,27 +310,26 @@ typedef struct RGB_Color {
 /// @brief Cursor properties.
 /// @details Track important information on cursor.
 typedef struct FractalCursor {
-    uint32_t size;  ///< Size in bytes of the cursor image buffer.
-    uint32_t
-        positionX;  ///< When leaving relative mode, the horizontal position
-                    ///< in screen coordinates where the cursor reappears.
+    uint32_t size;       ///< Size in bytes of the cursor image buffer.
+    uint32_t positionX;  ///< When leaving relative mode, the horizontal position
+                         ///< in screen coordinates where the cursor reappears.
     uint32_t positionY;  ///< When leaving relative mode, the vertical position
                          ///< in screen coordinates where the cursor reappears.
     uint16_t width;      ///< Width of the cursor image in pixels.
     uint16_t height;     ///< Height of the cursor position in pixels.
-    uint16_t hotX;  ///< Horizontal pixel position of the cursor hotspot within
-                    ///< the image.
-    uint16_t hotY;  ///< Vertical pixel position of the cursor hotspot within
-                    ///< the image.
-    bool modeUpdate;   ///< `true` if the cursor mode should be updated. The
-                       ///< `relative`, `positionX`, and `positionY` members are
-                       ///< valid.
-    bool imageUpdate;  ///< `true` if the cursor image should be updated. The
-                       ///< `width`, `height`, `hotX`, `hotY`, and `size`
-                       ///< members are valid.
-    bool relative;  ///< `true` if in relative mode, meaning the client should
-                    ///< submit mouse motion in relative distances rather than
-                    ///< absolute screen coordinates.
+    uint16_t hotX;       ///< Horizontal pixel position of the cursor hotspot within
+                         ///< the image.
+    uint16_t hotY;       ///< Vertical pixel position of the cursor hotspot within
+                         ///< the image.
+    bool modeUpdate;     ///< `true` if the cursor mode should be updated. The
+                         ///< `relative`, `positionX`, and `positionY` members are
+                         ///< valid.
+    bool imageUpdate;    ///< `true` if the cursor image should be updated. The
+                         ///< `width`, `height`, `hotX`, `hotY`, and `size`
+                         ///< members are valid.
+    bool relative;       ///< `true` if in relative mode, meaning the client should
+                         ///< submit mouse motion in relative distances rather than
+                         ///< absolute screen coordinates.
     uint8_t __pad[1];
 } FractalCursor;
 
@@ -371,12 +369,12 @@ typedef struct FractalMouseWheelMessage {
 /// affected by FractalClientSetDimensions and move the cursor with a signed
 /// delta value from its previous location.
 typedef struct FractalMouseMotionMessage {
-    int32_t x;  ///< The absolute horizontal screen coordinate of the cursor  if
-                ///< `relative` is `false`, or the delta (can be negative) if
-                ///< `relative` is `true`.
-    int32_t y;  ///< The absolute vertical screen coordinate of the cursor if
-                ///< `relative` is `false`, or the delta (can be negative) if
-                ///< `relative` is `true`.
+    int32_t x;      ///< The absolute horizontal screen coordinate of the cursor  if
+                    ///< `relative` is `false`, or the delta (can be negative) if
+                    ///< `relative` is `true`.
+    int32_t y;      ///< The absolute vertical screen coordinate of the cursor if
+                    ///< `relative` is `false`, or the delta (can be negative) if
+                    ///< `relative` is `true`.
     bool relative;  ///< `true` for relative mode, `false` for absolute mode.
                     ///< See details.
     int x_nonrel;
@@ -388,16 +386,12 @@ typedef struct FractalDiscoveryRequestMessage {
     int username;
 } FractalDiscoveryRequestMessage;
 
-typedef enum InteractionMode {
-    CONTROL = 1,
-    SPECTATE = 2,
-    EXCLUSIVE_CONTROL = 3
-} InteractionMode;
+typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
 
 typedef enum FractalClientMessageType {
-    CMESSAGE_NONE = 0,     ///< No Message
-    MESSAGE_KEYBOARD = 1,  ///< `keyboard` FractalKeyboardMessage is valid in
-                           ///< FractClientMessage.
+    CMESSAGE_NONE = 0,         ///< No Message
+    MESSAGE_KEYBOARD = 1,      ///< `keyboard` FractalKeyboardMessage is valid in
+                               ///< FractClientMessage.
     MESSAGE_MOUSE_BUTTON = 2,  ///< `mouseButton` FractalMouseButtonMessage is
                                ///< valid in FractClientMessage.
     MESSAGE_MOUSE_WHEEL = 3,   ///< `mouseWheel` FractalMouseWheelMessage is
@@ -425,12 +419,11 @@ typedef enum FractalClientMessageType {
 typedef struct FractalClientMessage {
     FractalClientMessageType type;  ///< Input message type.
     union {
-        FractalKeyboardMessage keyboard;        ///< Keyboard message.
-        FractalMouseButtonMessage mouseButton;  ///< Mouse button message.
-        FractalMouseWheelMessage mouseWheel;    ///< Mouse wheel message.
-        FractalMouseMotionMessage mouseMotion;  ///< Mouse motion message.
-        FractalDiscoveryRequestMessage
-            discoveryRequest;  ///< Discovery request message.
+        FractalKeyboardMessage keyboard;                  ///< Keyboard message.
+        FractalMouseButtonMessage mouseButton;            ///< Mouse button message.
+        FractalMouseWheelMessage mouseWheel;              ///< Mouse wheel message.
+        FractalMouseMotionMessage mouseMotion;            ///< Mouse motion message.
+        FractalDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
 
         // CMESSAGE_INTERACTION_MODE
         InteractionMode interaction_mode;
@@ -572,6 +565,23 @@ int runcmd(const char* cmdline, char** response);
 char* get_ip();
 
 /**
+ * @brief                          Reads a 16-byte hexidecimal string and copies
+ * it into private_key
+ *
+ * @param hex_string               The hexidecimal string to copy
+ * @param private_key              The 16-byte buffer to copy the bytes into
+ *
+ * @returns                        True if hex_string was a 16-byte hexadecimal
+ * value, otherwise false
+ */
+bool read_hexadecimal_private_key(char* hex_string, char* private_key);
+
+/**
+ * @brief                          Queries the webserver for various parameters
+ */
+void update_webserver_parameters();
+
+/**
  * @brief                          Queries the webserver to ask if a VM is
  *                                 development VM
  *
@@ -579,6 +589,30 @@ char* get_ip();
  *                                 protocol branch), False otherwise
  */
 bool is_dev_vm();
+
+/**
+ * @brief                          Queries the webserver to get the VM's aes
+ * private key
+ *
+ * @returns                        The VM's 16-byte aes private key
+ */
+char* get_private_key();
+
+/**
+ * @brief                          Queries the webserver to get the using_stun
+ * status
+ *
+ * @returns                        The using_stun status
+ */
+bool get_using_stun();
+
+/**
+ * @brief                          Queries the webserver for the get access token
+ * status
+ *
+ * @returns                        The access token
+ */
+char* get_access_token();
 
 /**
  * @brief                          Calculate the size of a FractalClientMessage

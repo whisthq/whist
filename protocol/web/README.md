@@ -1,3 +1,5 @@
 ## Fractal Web Client
 
-TBD.
+We are building the Fractal web client via Emscriptem.
+
+TBD

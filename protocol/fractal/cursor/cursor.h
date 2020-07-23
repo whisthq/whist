@@ -7,6 +7,10 @@
 ============================
 Usage
 ============================
+
+Use InitCursor to load the appropriate cursor images for a specific OS, and then
+GetCurrentCursor to retrieve what the cursor shold be on the OS (drag-window,
+arrow, etc.).
 */
 
 /*

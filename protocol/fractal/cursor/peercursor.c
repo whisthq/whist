@@ -22,9 +22,8 @@ static SDL_Surface *duplicateSurface(SDL_Surface *surface) {
         exit(1);
     }
     SDL_Surface *new_surface = SDL_CreateRGBSurface(
-        0, surface->w, surface->h, surface->format->BitsPerPixel,
-        surface->format->Rmask, surface->format->Gmask, surface->format->Bmask,
-        surface->format->Amask);
+        0, surface->w, surface->h, surface->format->BitsPerPixel, surface->format->Rmask,
+        surface->format->Gmask, surface->format->Bmask, surface->format->Amask);
     if (new_surface == NULL) {
         LOG_ERROR(
             "Failed to create new surface. "

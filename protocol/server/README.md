@@ -28,7 +28,7 @@ The Fractal virtual machines run this server executable. We run 3 different type
 
 `master`, for the latest release branch | User-facing
 
-`staging`, for the current beta-version release branch | User-facing
+`staging`, for the current beta-version release branch | Beta User-facing
 
 `dev`, for the current internal development branch | NOT User-facing
 
@@ -36,14 +36,22 @@ The Fractal virtual machines run this server executable. We run 3 different type
 
 After compiling the server under the appropriate branch by running `nmake`, you can then run one of the following, from a Windows computer, to update the machines running a specific branch:
 
-`update master` to update the VMs running the master branch
+`update master` to update the Windows VMs running the master branch
 
-`update staging` to update the VMs running the staging branch
+`update staging` to update the Windows VMs running the staging branch
 
-`update dev` to update the VMs running the dev branch
+`update dev` to update the Windows VMs running the dev branch
 
 You should only do this if you are sure of what you are doing and the team has agreed it is time to push an update.
 
 #### Linux Ubuntu
 
-TBD.
+After compiling the server under the appropriate branch by running `make`, you can then run one of the following, from a Windows computer, to update the machines running a specific branch:
+
+`./update master` to update the Linux Ubuntu VMs running the master branch
+
+`./update staging` to update the Linux Ubuntu VMs running the staging branch
+
+`./update dev` to update the Linux UbuntuVMs running the dev branch
+
+You should only do this if you are sure of what you are doing and the team has agreed it is time to push an update.

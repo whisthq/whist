@@ -8,6 +8,8 @@
 ============================
 Usage
 ============================
+
+Toggles automatically between the screen capture files based on OS.
 */
 
 /*

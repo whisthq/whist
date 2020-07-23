@@ -87,7 +87,6 @@ void destroy_video_decoder(video_decoder_t* decoder);
  *
  * @returns                        True if it decoded successfully, else False
  */
-bool video_decoder_decode(video_decoder_t* decoder, void* buffer,
-                          int buffer_size);
+bool video_decoder_decode(video_decoder_t* decoder, void* buffer, int buffer_size);
 
 #endif  // VIDEO_DECODE_H

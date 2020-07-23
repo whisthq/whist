@@ -7,6 +7,9 @@
 ============================
 Usage
 ============================
+
+You can use these functions to check if a directory exist, to compare filenames,
+or to delete files/folders.
 */
 
 /*
@@ -38,8 +41,7 @@ Public Functions
  *
  * @returns
  */
-int remove_file(const char* fpath, const struct stat* sb, int typeflag,
-                struct FTW* ftwbuf);
+int remove_file(const char* fpath, const struct stat* sb, int typeflag, struct FTW* ftwbuf);
 
 /**
  * @brief                         Recurisvely delete a path on MacOS
