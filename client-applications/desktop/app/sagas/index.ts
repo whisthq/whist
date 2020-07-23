@@ -222,7 +222,6 @@ function* fetchComputers(action) {
 }
 
 function* attachDisk(action) {
-    console.log("ATTACHING DISK");
     const state = yield select();
     const { json, response } = yield call(
         apiPost,

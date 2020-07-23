@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 const production = {
     url: {
-        PRIMARY_SERVER: "https://cube-celery-vm.herokuapp.com",
+        PRIMARY_SERVER: "https://main-webserver.fractalcomputers.com",
     },
     stripe: {
         PUBLIC_KEY: "pk_live_XLjiiZB93KN0EjY8hwCxvKmB00whKEIj3U",
@@ -37,4 +37,4 @@ const development = {
 
 // TODO: change back when deployed to other vm-webservers
 export const config =
-    process.env.NODE_ENV === "development" ? development : staging;
+    process.env.NODE_ENV === "development" ? production : production;
