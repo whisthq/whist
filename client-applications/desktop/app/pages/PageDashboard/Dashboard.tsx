@@ -266,7 +266,7 @@ class Dashboard extends Component {
                                         >
                                             You can also exit via the shortchut{" "}
                                             <b>Ctrl+Alt+F4</b>, on Windows
-                                            devices, and <b>Cmd+Ctrl+F4</b>, on
+                                            devices, and <b>Fn+Ctrl+Option+F4</b>, on
                                             MacOS devices.
                                         </div>
                                         <div className={styles.subTitle}>
