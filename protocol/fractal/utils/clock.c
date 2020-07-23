@@ -208,7 +208,7 @@ void SetTimezoneFromWindowsName(char* win_tz_name) {
 
     char* response = NULL;
     runcmd(cmd, &response);
-    LOG_INFO("Timezone powershell command: %s -> %s\n", cmd, response);
+    LOG_INFO("Timezone powershell command: %s -> %s", cmd, response);
     free(response);
     return;
 }
@@ -289,7 +289,7 @@ void SetTimezoneFromUtc(int utc, int DST_flag) {
     snprintf(cmd + strlen(cmd), strlen(timezone), timezone);
     char* response = malloc(sizeof(char) * 200);
     runcmd(cmd, &response);
-    LOG_INFO("Timezone powershell command: %s \n", cmd);
+    LOG_INFO("Timezone powershell command: %s ", cmd);
     free(response);
 #endif
 }

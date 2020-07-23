@@ -16,14 +16,11 @@ We have several levels of logging.
               information on state. e.g decode time
 - DEBUG_LEVEL: log debug and above. For use when actively debugging a problem,
                but for things that don't need to be logged regularly
-
 The log level defaults to DEBUG_LEVEL, but it can also be passed as a compiler
 flag, as it is in the root CMakesList.txt, which sets it to DEBUG_LEVEL for
 Debug builds and WARNING_LEVEL for release builds.
-
 Note that these macros do not need an additional \n character at the end of your
 format strings.
-
 We also have a LOG_IF(condition, format string) Macro which only logs if the
 condition is true. This can be used for debugging or if we want to more
 aggressively log something when a flag changes. For example in this file you
@@ -41,6 +38,7 @@ could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 #include <Windows.h>
 #include <DbgHelp.h>
 #include <process.h>
+#define strtok_r strtok_s
 #else
 #include <execinfo.h>
 #include <signal.h>
@@ -51,12 +49,11 @@ could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 #include "logging.h"
 
 #define UNUSED(x) (void)(x)
+#define BYTES_IN_KILOBYTE 1024
 
 char *get_logger_history();
 int get_logger_history_len();
 void initBacktraceHandler();
-
-#define BYTES_IN_KILOBYTE 1024
 
 extern int connection_id;
 
@@ -67,6 +64,7 @@ static volatile SDL_mutex *logger_mutex;
 // logger queue
 
 typedef struct logger_queue_item {
+    int id;
     bool log;
     char buf[LOGGER_BUF_SIZE];
 } logger_queue_item;
@@ -74,6 +72,7 @@ static volatile logger_queue_item logger_queue[LOGGER_QUEUE_SIZE];
 static volatile logger_queue_item logger_queue_cache[LOGGER_QUEUE_SIZE];
 static volatile int logger_queue_index = 0;
 static volatile int logger_queue_size = 0;
+static volatile int logger_global_id = 0;
 
 // logger global variables
 SDL_Thread *mprintf_thread = NULL;
@@ -82,14 +81,21 @@ int MultiThreadedPrintf(void *opaque);
 void real_mprintf(bool log, const char *fmtStr, va_list args);
 clock mprintf_timer;
 FILE *mprintf_log_file = NULL;
+FILE *mprintf_log_connection_file = NULL;
+int log_connection_log_id;
 char *log_directory = NULL;
 
-char logger_history[1000000];
+// This is written to in MultiThreaderPrintf
+#define LOG_CACHE_SIZE 1000000
+char logger_history[LOG_CACHE_SIZE];
 int logger_history_len;
 
 char *get_logger_history() { return logger_history; }
 int get_logger_history_len() { return logger_history_len; }
 
+void startConnectionLog();
+
+// Initializes the logger and starts a connection log
 void initLogger(char *log_dir) {
     initBacktraceHandler();
 
@@ -97,17 +103,29 @@ void initLogger(char *log_dir) {
 
     char f[1000] = "";
     if (log_dir) {
-        log_directory = log_dir;
+        size_t dir_len = strlen(log_dir);
+        log_directory = (char *)malloc(dir_len + 2);
+        strncpy(log_directory, log_dir, dir_len);
+#if defined(_WIN32)
+        log_directory[dir_len] = '\\';
+#else
+        log_directory[dir_len] = '/';
+#endif
+        log_directory[dir_len + 1] = '\0';
 
         strcat(f, log_directory);
-        strcat(f, "/log.txt");
+        strcat(f, "log.txt");
 
 #if defined(_WIN32)
         CreateDirectoryA(log_directory, 0);
 #else
         mkdir(log_directory, 0755);
 #endif
+        printf("Trying to open up %s \n", f);
         mprintf_log_file = fopen(f, "ab");
+        if (mprintf_log_file == NULL) {
+            printf("Couldn't open up logfile\n");
+        }
     }
 
     run_multithreaded_printf = true;
@@ -117,6 +135,24 @@ void initLogger(char *log_dir) {
         SDL_CreateThread((SDL_ThreadFunction)MultiThreadedPrintf, "MultiThreadedPrintf", NULL);
     LOG_INFO("Writing logs to %s", f);
     //    StartTimer(&mprintf_timer);
+}
+
+// Sets up logs for a new connection, overwriting previous
+void startConnectionLog() {
+    SDL_LockMutex((SDL_mutex *)logger_mutex);
+
+    if (mprintf_log_connection_file) {
+        fclose(mprintf_log_connection_file);
+    }
+    char log_connection_directory[1000] = "";
+    strcat(log_connection_directory, log_directory);
+    strcat(log_connection_directory, "log_connection.txt");
+    mprintf_log_connection_file = fopen(log_connection_directory, "w+b");
+    log_connection_log_id = logger_global_id;
+
+    SDL_UnlockMutex((SDL_mutex *)logger_mutex);
+
+    LOG_INFO("Beginning connection log");
 }
 
 void destroyLogger() {
@@ -133,6 +169,12 @@ void destroyLogger() {
         fclose(mprintf_log_file);
     }
     mprintf_log_file = NULL;
+
+    logger_history[0] = '\0';
+    logger_history_len = 0;
+    if (log_directory) {
+        free(log_directory);
+    }
 }
 
 int MultiThreadedPrintf(void *opaque) {
@@ -153,9 +195,10 @@ int MultiThreadedPrintf(void *opaque) {
         SDL_LockMutex((SDL_mutex *)logger_mutex);
         cache_size = logger_queue_size;
         for (int i = 0; i < logger_queue_size; i++) {
-            logger_queue_cache[i].log = logger_queue[logger_queue_index].log;
             strcpy((char *)logger_queue_cache[i].buf,
                    (const char *)logger_queue[logger_queue_index].buf);
+            logger_queue_cache[i].log = logger_queue[logger_queue_index].log;
+            logger_queue_cache[i].id = logger_queue[logger_queue_index].id;
             logger_queue[logger_queue_index].buf[0] = '\0';
             logger_queue_index++;
             logger_queue_index %= LOGGER_QUEUE_SIZE;
@@ -169,8 +212,14 @@ int MultiThreadedPrintf(void *opaque) {
         // Print all of the data into the cache
         // int last_printf = -1;
         for (int i = 0; i < cache_size; i++) {
-            if (mprintf_log_file && logger_queue_cache[i].log) {
-                fprintf(mprintf_log_file, "%s", logger_queue_cache[i].buf);
+            if (logger_queue_cache[i].log) {
+                if (mprintf_log_file) {
+                    fprintf(mprintf_log_file, "%s", logger_queue_cache[i].buf);
+                }
+                if (mprintf_log_connection_file &&
+                    logger_queue_cache[i].id >= log_connection_log_id) {
+                    fprintf(mprintf_log_connection_file, "%s", logger_queue_cache[i].buf);
+                }
             }
             // if (i + 6 < cache_size) {
             //	printf("%s%s%s%s%s%s%s", logger_queue_cache[i].buf,
@@ -179,7 +228,13 @@ int MultiThreadedPrintf(void *opaque) {
             // logger_queue_cache[i+5].buf,  logger_queue_cache[i+6].buf);
             //    last_printf = i + 6;
             //} else if (i > last_printf) {
-            printf("%s", logger_queue_cache[i].buf);
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 5] = '.';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 4] = '.';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 3] = '.';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 2] = '\n';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 1] = '\0';
+            fprintf(stdout, "%s", logger_queue_cache[i].buf);
+
             int chars_written =
                 sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
             logger_history_len += chars_written;
@@ -198,6 +253,11 @@ int MultiThreadedPrintf(void *opaque) {
         if (mprintf_log_file) {
             fflush(mprintf_log_file);
         }
+        if (mprintf_log_connection_file) {
+            fflush(mprintf_log_connection_file);
+        }
+
+#define MAX_LOG_FILE_SIZE (5 * BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE)
 
         // If the log file is large enough, cache it
         if (mprintf_log_file) {
@@ -205,15 +265,15 @@ int MultiThreadedPrintf(void *opaque) {
             int sz = ftell(mprintf_log_file);
 
             // If it's larger than 5MB, start a new file and store the old one
-            if (sz > 5 * BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE) {
+            if (sz > MAX_LOG_FILE_SIZE) {
                 fclose(mprintf_log_file);
 
                 char f[1000] = "";
                 strcat(f, log_directory);
-                strcat(f, "/log.txt");
+                strcat(f, "log.txt");
                 char fp[1000] = "";
                 strcat(fp, log_directory);
-                strcat(fp, "/log_prev.txt");
+                strcat(fp, "log_prev.txt");
 #if defined(_WIN32)
                 WCHAR wf[1000];
                 WCHAR wfp[1000];
@@ -226,8 +286,95 @@ int MultiThreadedPrintf(void *opaque) {
                 mprintf_log_file = fopen(f, "ab");
             }
         }
+
+        // If the log file is large enough, cache it
+        if (mprintf_log_connection_file) {
+            fseek(mprintf_log_connection_file, 0L, SEEK_END);
+            long sz = ftell(mprintf_log_connection_file);
+
+            // If it's larger than 5MB, start a new file and store the old one
+            if (sz > MAX_LOG_FILE_SIZE) {
+                long buf_len = MAX_LOG_FILE_SIZE / 2;
+
+                char *original_buf = malloc(buf_len);
+                char *buf = original_buf;
+                fseek(mprintf_log_connection_file, -buf_len, SEEK_END);
+                fread(buf, buf_len, 1, mprintf_log_connection_file);
+
+                while (buf_len > 0 && buf[0] != '\n') {
+                    buf++;
+                    buf_len--;
+                }
+
+                char f[1000] = "";
+                strcat(f, log_directory);
+                strcat(f, "log_connection.txt");
+                freopen(f, "wb", mprintf_log_connection_file);
+                fwrite(buf, buf_len, 1, mprintf_log_connection_file);
+                fflush(mprintf_log_connection_file);
+
+                free(original_buf);
+            }
+        }
     }
     return 0;
+}
+
+/**
+ * This function escapes certain escape sequences in a log. It allocates heap
+ * memory that must be later freed
+ * @param old_string a string with sequences we want escaped, e.g "some json
+ * stuff \r\n\r\n"
+ * @return the same string, but possible longer e.g "some json stuff
+ * \\r\\n\\r\\n"
+ */
+char *escape_string(char *old_string, bool escape_all) {
+    size_t old_string_len = strlen(old_string);
+    char *new_string = malloc(2 * (old_string_len + 1));
+    int new_str_len = 0;
+    for (size_t i = 0; i < old_string_len; i++) {
+        switch (old_string[i]) {
+            case '\b':
+                new_string[new_str_len++] = '\\';
+                new_string[new_str_len++] = 'b';
+                break;
+            case '\f':
+                new_string[new_str_len++] = '\\';
+                new_string[new_str_len++] = 'f';
+                break;
+            case '\r':
+                new_string[new_str_len++] = '\\';
+                new_string[new_str_len++] = 'r';
+                break;
+            case '\t':
+                new_string[new_str_len++] = '\\';
+                new_string[new_str_len++] = 't';
+                break;
+            case '\"':
+                if (escape_all) {
+                    new_string[new_str_len++] = '\\';
+                    new_string[new_str_len++] = '\"';
+                    break;
+                }
+            case '\\':
+                if (escape_all) {
+                    new_string[new_str_len++] = '\\';
+                    new_string[new_str_len++] = '\\';
+                    break;
+                }
+            case '\n':
+                if (escape_all) {
+                    new_string[new_str_len++] = '\\';
+                    new_string[new_str_len++] = 'n';
+                    break;
+                }
+            default:
+                new_string[new_str_len++] = old_string[i];
+                break;
+        }
+    }
+    new_string[new_str_len++] = '\0';
+    return new_string;
 }
 
 void mprintf(const char *fmtStr, ...) {
@@ -246,13 +393,14 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
     }
 
     SDL_LockMutex((SDL_mutex *)logger_mutex);
+
     int index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
     char *buf = NULL;
     if (logger_queue_size < LOGGER_QUEUE_SIZE - 2) {
         logger_queue[index].log = log;
+        logger_queue[index].id = logger_global_id++;
         buf = (char *)logger_queue[index].buf;
-        //        snprintf(buf, LOGGER_BUF_SIZE, "%15.4f: ",
-        //        GetTimer(mprintf_timer));
+
         if (buf[0] != '\0') {
             char old_msg[LOGGER_BUF_SIZE];
             memcpy(old_msg, buf, LOGGER_BUF_SIZE);
@@ -262,25 +410,57 @@ void real_mprintf(bool log, const char *fmtStr, va_list args) {
             if (!(chars_written > 0 && chars_written <= LOGGER_BUF_SIZE)) {
                 buf[0] = '\0';
             }
+            logger_queue_size++;
+            SDL_SemPost((SDL_sem *)logger_semaphore);
         } else {
-            vsnprintf(buf, LOGGER_BUF_SIZE, fmtStr, args);
+            // Get the length of the formatted string with args replaced.
+            // After calls to function which invoke VA args, the args are
+            // undefined so we copy
+            va_list args_copy;
+            va_copy(args_copy, args);
+            int len = vsnprintf(NULL, 0, fmtStr, args) + 1;
+
+            // print to a temp buf so we can split on \n
+            char *temp_buf = malloc(sizeof(char) * (len + 1));
+            vsnprintf(temp_buf, len, fmtStr, args_copy);
+            // use strtok_r over strtok due to thread safety
+            char *strtok_context = NULL;  // strtok_r context var
+            // Log the first line out of the loop because we log it with
+            // the full log formatting time | type | file | log_msg
+            // subsequent lines start with | followed by 4 spaces
+            char *line = strtok_r(temp_buf, "\n", &strtok_context);
+            char *san_line = escape_string(line, false);
+            snprintf(buf, LOGGER_BUF_SIZE, "%s \n", san_line);
+            free(san_line);
+            logger_queue_size++;
+            SDL_SemPost((SDL_sem *)logger_semaphore);
+
+            index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
+            buf = (char *)logger_queue[index].buf;
+            line = strtok_r(NULL, "\n", &strtok_context);
+            while (line != NULL) {
+                san_line = escape_string(line, false);
+                snprintf(buf, LOGGER_BUF_SIZE, "|    %s \n", san_line);
+                free(san_line);
+                logger_queue[index].log = log;
+                logger_queue[index].id = logger_global_id++;
+                logger_queue_size++;
+                SDL_SemPost((SDL_sem *)logger_semaphore);
+                index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
+                buf = (char *)logger_queue[index].buf;
+                line = strtok_r(NULL, "\n", &strtok_context);
+            }
         }
-        logger_queue_size++;
+
     } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
-        logger_queue[index].log = log;
         buf = (char *)logger_queue[index].buf;
         strcpy(buf, "Buffer maxed out!!!\n");
+        logger_queue[index].log = log;
+        logger_queue[index].id = logger_global_id++;
         logger_queue_size++;
-    }
-
-    if (buf != NULL) {
-        buf[LOGGER_BUF_SIZE - 5] = '.';
-        buf[LOGGER_BUF_SIZE - 4] = '.';
-        buf[LOGGER_BUF_SIZE - 3] = '.';
-        buf[LOGGER_BUF_SIZE - 2] = '\n';
-        buf[LOGGER_BUF_SIZE - 1] = '\0';
         SDL_SemPost((SDL_sem *)logger_semaphore);
     }
+
     SDL_UnlockMutex((SDL_mutex *)logger_mutex);
 }
 
@@ -454,11 +634,17 @@ char *get_version() {
         fseek(f, 0, SEEK_END);
         length = ftell(f);
         fseek(f, 0, SEEK_SET);
-        static char buf[17];
+        static char buf[200];
         version = buf;
-        fread(version, 1, min(length, (long)sizeof(buf)),
-              f);  // cast for compiler warning
-        version[16] = '\0';
+        size_t bytes = fread(version, 1, min(length, (long)sizeof(buf) - 1),
+                             f);  // cast for compiler warning
+        for (int i = 0; i < bytes; i++) {
+            if (version[i] == '\n') {
+                version[i] = '\0';
+                break;
+            }
+        }
+        version[bytes] = '\0';
         fclose(f);
     } else {
         version = "NONE";
@@ -467,68 +653,112 @@ char *get_version() {
     return version;
 }
 
-bool sendLogHistory() {
+void saveConnectionID(int connection_id_int) {
+    char connection_id_filename[1000] = "";
+    strcat(connection_id_filename, log_directory);
+    strcat(connection_id_filename, "connection_id.txt");
+    FILE *connection_id_file = fopen(connection_id_filename, "wb");
+    fprintf(connection_id_file, "%d", connection_id_int);
+    fclose(connection_id_file);
+}
+
+// The first time this is called will include the initial log messages,
+// before the first connection, if they haven't been overwritten.
+int sendConnectionHistory() {
     char *host = is_dev_vm() ? STAGING_HOST : PRODUCTION_HOST;
-    char *path = "/logs";
+    // This is for HTTP request, not filesystem
+    char *request_path = "/logs/insert";
 
-    char *logs_raw = get_logger_history();
-    int raw_log_len = get_logger_history_len();
+    SDL_LockMutex((SDL_mutex *)logger_mutex);
 
-    char *logs = malloc(1000 + 2 * raw_log_len);
-    int log_len = 0;
-    for (int i = 0; i < raw_log_len; i++) {
-        switch (logs_raw[i]) {
-            case '\b':
-                logs[log_len++] = '\\';
-                logs[log_len++] = 'b';
-                break;
-            case '\f':
-                logs[log_len++] = '\\';
-                logs[log_len++] = 'f';
-                break;
-            case '\n':
-                logs[log_len++] = '\\';
-                logs[log_len++] = 'n';
-                break;
-            case '\r':
-                logs[log_len++] = '\\';
-                logs[log_len++] = 'r';
-                break;
-            case '\t':
-                logs[log_len++] = '\\';
-                logs[log_len++] = 't';
-                break;
-            case '"':
-                logs[log_len++] = '\\';
-                logs[log_len++] = '"';
-                break;
-            case '\\':
-                logs[log_len++] = '\\';
-                logs[log_len++] = '\\';
-                break;
-            default:
-                logs[log_len++] = logs_raw[i];
-                break;
-        }
+    FILE *log_connection_file = NULL;
+    bool new_file = false;
+    if (mprintf_log_connection_file) {
+        log_connection_file = mprintf_log_connection_file;
+    } else {
+        char log_connection_filename[1000] = "";
+        strcat(log_connection_filename, log_directory);
+        strcat(log_connection_filename, "log_connection.txt");
+        log_connection_file = fopen(log_connection_filename, "rb");
+        new_file = true;
     }
 
-    logs[log_len++] = '\0';
+    char *logs_raw = NULL;
+    if (log_connection_file) {
+        long prev_pos = ftell(log_connection_file);
 
-    char *json = malloc(1000 + log_len);
+        fseek(log_connection_file, 0L, SEEK_END);
+        long sz = ftell(log_connection_file);
+        logs_raw = malloc(sz + 5);
 
-    sprintf(json,
-            "{\
-            \"connection_id\" : \"%d\",\
+        fseek(log_connection_file, 0L, SEEK_SET);
+
+        char *logs_raw_ptr = logs_raw;
+        int read_bytes = 0;
+        int original_sz = sz;
+        while (sz) {
+            size_t n_read = fread(logs_raw_ptr, 1, sz, log_connection_file);
+            logs_raw_ptr += n_read;
+            sz -= (long)n_read;
+            read_bytes += (int)n_read;
+            if (ferror(log_connection_file)) {
+                printf("Warning - ferror\n");
+                break;
+            }
+            if (feof(log_connection_file)) break;
+        }
+        printf("Read %d / %d\n", read_bytes, original_sz);
+        logs_raw[read_bytes] = '\0';
+
+        fseek(log_connection_file, prev_pos, SEEK_SET);
+
+        if (new_file) {
+            fclose(log_connection_file);
+        }
+    } else {
+        printf("No Log Connection File!\n");
+    }
+
+    SDL_UnlockMutex((SDL_mutex *)logger_mutex);
+
+    if (logs_raw) {
+        char *logs = escape_string(logs_raw, true);
+        free(logs_raw);
+
+        char *json = malloc(1000 + strlen(logs));
+
+        char connection_id_filename[1000] = "";
+        strcat(connection_id_filename, log_directory);
+        strcat(connection_id_filename, "connection_id.txt");
+        FILE *connection_id_file = fopen(connection_id_filename, "rb");
+        if (connection_id_file) {
+            char *connection_id_data = malloc(100);
+            size_t size = fread(connection_id_data, 1, 50, connection_id_file);
+            connection_id_data[size] = '\0';
+
+            if (size > 0) {
+                sprintf(json,
+                        "{\
+            \"connection_id\" : \"%s\",\
             \"version\" : \"%s\",\
             \"logs\" : \"%s\",\
             \"sender\" : \"server\"\
     }",
-            connection_id, get_version(), logs);
+                        connection_id_data, get_version(), logs);
 
-    LOG_INFO("Sending logs to webserver...");
-    SendJSONPost(host, path, json, get_access_token());
-    free(logs);
-    free(json);
+                LOG_INFO("Sending logs to webserver...");
+                SendJSONPost(host, request_path, json, get_access_token());
+
+                freopen(connection_id_filename, "wb", connection_id_file);
+            }
+
+            fclose(connection_id_file);
+            free(connection_id_data);
+        }
+
+        free(json);
+        free(logs);
+    }
 
     return true;
 }

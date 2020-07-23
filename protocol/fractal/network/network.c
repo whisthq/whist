@@ -279,7 +279,7 @@ int SendTCPPacket(SocketContext *context, FractalPacketType type, void *data, in
     *((int *)encrypted_packet_buffer) = encrypted_len;
 
     // Send the packet
-    LOG_INFO("Sending TCP Packet of length %d\n", encrypted_len);
+    LOG_INFO("Sending TCP Packet of length %d", encrypted_len);
     bool failed = false;
     if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len) < 0) {
         LOG_WARNING("Failed to send packet!");
@@ -381,7 +381,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
         if (sent_size < 0) {
             int error = GetLastNetworkError();
-            mprintf("Unexpected Packet Error: %d\n", error);
+            mprintf("Unexpected Packet Error: %d", error);
             return -1;
         }
 
@@ -396,7 +396,7 @@ int SendUDPPacket(SocketContext *context, FractalPacketType type, void *data, in
 
 int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
     if (len > sizeof(FractalPacket)) {
-        LOG_WARNING("Len too long!\n");
+        LOG_WARNING("Len too long!");
         return -1;
     }
     if (context == NULL) {
@@ -419,7 +419,7 @@ int ReplayPacket(SocketContext *context, FractalPacket *packet, size_t len) {
     SDL_UnlockMutex(context->mutex);
 
     if (sent_size < 0) {
-        mprintf("Could not replay packet!\n");
+        LOG_WARNING("Could not replay packet!");
         return -1;
     }
 
@@ -460,7 +460,7 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
         if (!worked) {
             LOG_WARNING(
                 "Could not connect() over TCP to server: Returned %d, Error "
-                "Code %d\n",
+                "Code %d",
                 ret, GetLastNetworkError());
             closesocket(s);
             return false;
@@ -627,6 +627,7 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     int opt;
 
     // Create TCP socket
+    LOG_INFO("Creating TCP Socket");
     context->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (context->s <= 0) {  // Windows & Unix cases
         LOG_WARNING("Could not create UDP socket %d\n", GetLastNetworkError());
@@ -656,6 +657,7 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     }
 
     // Set listen queue
+    LOG_INFO("Waiting for TCP Connection");
     set_timeout(context->s, stun_timeout_ms);
     if (listen(context->s, 3) < 0) {
         LOG_WARNING("Could not listen(2)! %d\n", GetLastNetworkError());
@@ -673,13 +675,14 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     tv.tv_sec = stun_timeout_ms / MS_IN_SECOND;
     tv.tv_usec = (stun_timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
 
-    if (select(0, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) < 0) {
+    if (select(0, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) <= 0) {
         LOG_WARNING("Could not select!");
         closesocket(context->s);
         return -1;
     }
 
     // Accept connection from client
+    LOG_INFO("Accepting TCP Connection");
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
     if ((new_socket = accept(context->s, (struct sockaddr *)(&context->addr), &slen)) < 0) {
@@ -687,6 +690,8 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
         closesocket(context->s);
         return -1;
     }
+
+    LOG_INFO("PORT: %d", context->addr.sin_port);
 
     closesocket(context->s);
     context->s = new_socket;
@@ -1516,7 +1521,7 @@ bool SendJSONGet(char *host_s, char *path, char *json_res, size_t json_res_size)
     // now that it's sent, let's get the reply
     int len = recv(Socket, json_res, (int)json_res_size - 1, 0);  // get the reply
     if (len < 0) {
-        LOG_WARNING("Response to JSON GET failed!");
+        LOG_WARNING("Response to JSON GET failed! %d %d", len, GetLastNetworkError());
         json_res[0] = '\0';
     } else {
         json_res[len] = '\0';

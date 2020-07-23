@@ -44,7 +44,7 @@ int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
     int err = 0;
 
     if ((err = av_hwdevice_ctx_create(&ctx->hw_device_ctx, type, NULL, NULL, 0)) < 0) {
-        LOG_WARNING("Failed to create specified HW device. Error %d: %s\n", err, av_err2str(err));
+        LOG_WARNING("Failed to create specified HW device. Error %d: %s", err, av_err2str(err));
         return err;
     }
 
@@ -69,13 +69,13 @@ enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* p
 
     for (const enum AVPixelFormat* p = pix_fmts; *p != -1; p++) {
         if (*p == match_pix_fmt) {
-            LOG_WARNING("Hardware format found: %s\n", av_get_pix_fmt_name(*p));
+            LOG_WARNING("Hardware format found: %s", av_get_pix_fmt_name(*p));
             return *p;
         }
     }
 
     if (*pix_fmts != -1) {
-        LOG_WARNING("Hardware format not found, using format %s\n", av_get_pix_fmt_name(*pix_fmts));
+        LOG_WARNING("Hardware format not found, using format %s", av_get_pix_fmt_name(*pix_fmts));
         return *pix_fmts;
     }
 
@@ -224,7 +224,7 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
 
         // get the appropriate hardware device
         if (decoder->device_type == AV_HWDEVICE_TYPE_NONE) {
-            LOG_WARNING("Device type %s is not supported.\n",
+            LOG_WARNING("Device type %s is not supported.",
                         av_hwdevice_get_type_name(decoder->device_type));
             LOG_WARNING("Available device types:");
             while ((decoder->device_type = av_hwdevice_iterate_types(decoder->device_type)) !=
@@ -242,7 +242,7 @@ int try_setup_video_decoder(video_decoder_t* decoder) {
         }
 
         if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
-            LOG_WARNING("alloccontext3 failed w/ error code: %d\n", AVERROR(ENOMEM));
+            LOG_WARNING("alloccontext3 failed w/ error code: %d", AVERROR(ENOMEM));
             return -1;
         }
         decoder->context->opaque = decoder;

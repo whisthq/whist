@@ -67,7 +67,7 @@ bool get_clipboard_picture(ClipboardData* cb) {
             return false;
         }
 
-        LOG_INFO("content size: %d\n", cb->size);
+        LOG_INFO("content size: %d", cb->size);
 
         // WRITE TO FILE
         char* file_buf = malloc(cb->size + 14);
@@ -138,10 +138,10 @@ bool get_clipboard_files(ClipboardData* cb) {
                 strcat(final_filename, GET_CLIPBOARD);
                 strcat(final_filename, "/");
                 strcat(final_filename, basename(file));
-                printf("NAME: %s %s %s\n", final_filename, file, basename(file));
+                LOG_INFO("NAME: %s %s %s", final_filename, file, basename(file));
                 symlink(file + sizeof(file_prefix) - 1, final_filename);
             } else {
-                mprintf("Not a file: %s\n", file);
+                LOG_WARNING("Not a file: %s", file);
             }
             file = strtok(NULL, "\n\r");
         }
