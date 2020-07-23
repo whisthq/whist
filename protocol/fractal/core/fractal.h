@@ -90,7 +90,7 @@ Defines
 #define STAGING_HOST "cube-celery-staging.herokuapp.com"
 
 #define USING_AUDIO_ENCODE_DECODE true
-
+#define USING_FFMPEG_IFRAME_FLAG false
 #ifdef _WIN32
 // possible on windows, so let's do it
 #define USING_SERVERSIDE_SCALE true
