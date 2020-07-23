@@ -1,7 +1,7 @@
 #/bin/bash
-
 # script to get vm ip from vm_name, web_server is optional
-# usage: ./get_vm_ip.sh <vm_name> --web_server <web_server>
+# usage ./get_vm_ip.sh <vm_name> --web_server <web_server>
+
 
 vm_name=$1
 
