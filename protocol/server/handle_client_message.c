@@ -250,7 +250,11 @@ static int handleIFrameRequestMessage(FractalClientMessage *fmsg, int client_id,
     if (fmsg->reinitialize_encoder) {
         update_encoder = true;
     } else {
-        wants_iframe = true;
+        if (USING_FFMPEG_IFRAME_FLAG) {
+            wants_iframe = true;
+        } else {
+            update_encoder = true;
+        }
     }
     return 0;
 }

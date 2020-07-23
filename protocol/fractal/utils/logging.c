@@ -356,18 +356,21 @@ char *escape_string(char *old_string, bool escape_all) {
                     new_string[new_str_len++] = '\"';
                     break;
                 }
+                // fall through
             case '\\':
                 if (escape_all) {
                     new_string[new_str_len++] = '\\';
                     new_string[new_str_len++] = '\\';
                     break;
                 }
+                // fall through
             case '\n':
                 if (escape_all) {
                     new_string[new_str_len++] = '\\';
                     new_string[new_str_len++] = 'n';
                     break;
                 }
+                // fall through
             default:
                 new_string[new_str_len++] = old_string[i];
                 break;
@@ -636,7 +639,7 @@ char *get_version() {
         fseek(f, 0, SEEK_SET);
         static char buf[200];
         version = buf;
-        size_t bytes = fread(version, 1, min(length, (long)sizeof(buf) - 1),
+        int bytes = (int)fread(version, 1, min(length, (long)sizeof(buf) - 1),
                              f);  // cast for compiler warning
         for (int i = 0; i < bytes; i++) {
             if (version[i] == '\n') {
