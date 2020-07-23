@@ -636,9 +636,15 @@ char *get_version() {
         fseek(f, 0, SEEK_SET);
         static char buf[200];
         version = buf;
-        fread(version, 1, min(length, (long)sizeof(buf)),
-              f);  // cast for compiler warning
-        version[length] = '\0';
+        size_t bytes = fread(version, 1, min(length, (long)sizeof(buf) - 1),
+                          f);  // cast for compiler warning
+        for (int i = 0; i < bytes; i++) {
+            if (version[i] == '\n') {
+                version[i] = '\0';
+                break;
+            }
+        }
+        version[bytes] = '\0';
         fclose(f);
     } else {
         version = "NONE";
