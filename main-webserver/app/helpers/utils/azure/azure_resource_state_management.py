@@ -102,8 +102,8 @@ def sendVMStartCommand(
                         )
                         return -1
 
-                    boot_if_necessary(vm_name, True)
-                    winlogon = waitForWinlogon(vm_name, resource_group)
+                    boot_if_necessary(vm_name, True, resource_group=resource_group, s=s)
+                    winlogon = waitForWinlogon(vm_name, resource_group, s=s)
 
                 if s:
                     s.update_state(

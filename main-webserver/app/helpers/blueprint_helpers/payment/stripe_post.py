@@ -228,7 +228,7 @@ def cancelStripeHelper(email):
             pass
         fractalSQLDelete("customers", {"username": email})
         return jsonify({"status": SUCCESS}), SUCCESS
-    return jsonify({"status": NOT_FOUND}), NOT_FOUND
+    return jsonify({"status": PAYMENT_REQUIRED}), PAYMENT_REQUIRED
 
 
 def discountHelper(code):
@@ -526,6 +526,7 @@ def updateHelper(username, new_plan_type):
 
     customer = fractalSQLSelect("customers", {"username": username})["rows"]
     if customer:
+        customer = customer[0]
         old_subscription = customer["subscription"]
         subscription = stripe.Subscription.retrieve(old_subscription)
         if subscription:
