@@ -99,6 +99,7 @@ jobs:
           echo ::set-output name=git_sha::$(git rev-parse HEAD)
           echo ::set-output name=protocol_version::dev-20200722.5
           echo ::set-output name=version_id::0.0.0-test-20200324.0
+          echo ::set-output name=overridden_version_id::testing_release.0
           echo ::set-output name=update_channel::noupdates
           echo ::set-output name=should_release::true
           echo ::set-output name=should_test::false
