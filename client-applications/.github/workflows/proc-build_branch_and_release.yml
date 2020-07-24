@@ -220,8 +220,8 @@ jobs:
         with:
           p12-file-base64: ${{ secrets.MAC_CERTS }}
           p12-password: ${{ secrets.MAC_CERTS_PASSWORD }}
-      # Build the bundle application
 
+      # Build the bundle application
       - name: Build the bundled application
         run: |
           poetry run python ./desktop/build_and_publish.py --set-version ${{ needs.params.outputs.version_id }}  --update-channel ${{ needs.params.outputs.update_channel }} || true
