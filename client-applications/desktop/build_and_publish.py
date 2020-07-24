@@ -143,7 +143,7 @@ def prep_windows(protocol_dir: Path) -> None:
             stream=True,
         ) as r:
             r.raise_for_status()
-            with open(rcedit_path) as f:
+            with open(rcedit_path, 'w') as f:
                 shutil.copyfileobj(r.raw, f)
     rcedit_cmd = [
         str(rcedit_path),
