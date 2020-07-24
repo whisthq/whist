@@ -225,10 +225,8 @@ jobs:
       - name: Build the bundled application
         run: |
           poetry run python ./desktop/build_and_publish.py --set-version ${{ needs.params.outputs.version_id }}  --update-channel ${{ needs.params.outputs.update_channel }} || true
-          ls ${{ github.workspace }}${{ matrix.config.artifact_relpath }} || true
-          ls ${{ github.workspace }}/desktop/release/linux || true
-          ls ${{ github.workspace }}/desktop/release/windows || true
-          ls ${{ github.workspace }}/desktop/release/mac || true
+          ls ${{ github.workspace }}/desktop/ || true
+          ls ${{ github.workspace }}/desktop/release/ || true
 #          find . -not \( -path ./desktop/node_modules -prune \) -not \( -path ./.git -prune \)  # list files, useful for debugging doesn't run on windows.
 
       - name: Upload client application artifact
