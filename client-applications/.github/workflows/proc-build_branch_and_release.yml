@@ -98,7 +98,7 @@ jobs:
 
           echo ::set-output name=git_sha::$(git rev-parse HEAD)
           echo ::set-output name=protocol_version::test-20200323.0
-          echo ::set-output name=version_id::test-20200324.0"
+          echo ::set-output name=version_id::"test-20200324.0"
           echo ::set-output name=update_channel::${{ github.event.inputs.update_channel }}
           echo ::set-output name=should_release::true
           echo ::set-output name=should_test::false
