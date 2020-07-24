@@ -231,6 +231,7 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
     # Get the VM and location of the disk
 
     vm_name = os_disk.managed_by
+
     location = os_disk.location
     vm_attached = True if vm_name else False
 
@@ -351,6 +352,9 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
                 vm_name = os_disk.managed_by
                 location = os_disk.location
                 vm_attached = True if vm_name else False
+
+                if vm_attached:
+                    vm_name = vm_name.split("/")[-1]
 
     if not vm_attached:
         self.update_state(
