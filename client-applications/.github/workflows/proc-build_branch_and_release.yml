@@ -127,7 +127,7 @@ jobs:
         config:
           - os: ubuntu-latest
             artifact_name: "Linux-64bit"
-            artifact_relpath: "/desktop/release/linux/Fractal"
+            artifact_relpath: "/desktop/release/linux/Fractal.deb"
           - os: windows-latest
             artifact_name: "Windows-64bit"
             artifact_relpath: "/desktop/release/windows/Fractal.exe"
@@ -240,13 +240,13 @@ jobs:
     steps:
       - name: Check if all builds succeeded
         # This step was added because the job level if `needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success')`
-        # was resulting in the job skipping even when the value was shown to be true when printed.
+        # was resulting in the job skipping even when the value was shown to be true when printed. TODO: change this logic once tests are added
         run: |
           if ! ${{ needs.params.outputs.should_release }}; then
             echo "Killing release job because should_release=${{ needs.params.outputs.should_release }}"
             exit 1
           fi
-          if ${{ needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success') }}; then # this true/false was derived from a GHA expression
+          if ${{ needs.build.result == 'success' }}; then # this true/false was derived from a GHA expression
             echo "Proceeding with job"
           else
             echo "Killing release job because builds or tests failed"

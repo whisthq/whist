@@ -255,8 +255,9 @@ if __name__ == "__main__":
         heuristic_protocol_dir[0].rmdir()
     # Sanity check that FractalClient is in the unpacked directory so that an early
     # failure can be triggered if the unpacking failed or the release was zipped up
-    # in an unexpected manner
-    if len(list(protocol_dir.glob("FractalClient*"))) != 1:
+    # in an unexpected manner. 1 file for linux and mac, 3 for windows debug builds (which are what we currently build)
+    # : .exe, .ilk .pdb
+    if len(list(protocol_dir.glob("FractalClient*"))) != 1 or len(list(protocol_dir.glob("FractalClient*"))) != 3:
         print(list(protocol_dir.glob("FractalClient*")))
         raise Exception(
             f"The unpacked protocol does not match the expected format in '{protocol_dir}'"
