@@ -202,7 +202,7 @@ jobs:
       # Retrieve the protocol
 
       - name: Retrieve the protocol
-        run: poetry run ./retrieve_protocol_packages.py --release "${{ needs.params.outputs.protocol_version }}"
+        run: poetry run python ./retrieve_protocol_packages.py --release "${{ needs.params.outputs.protocol_version }}"
         env:
           # This can't be secrets.GITHUB_TOKEN because it needs to access another repo and the default token
           # is only scoped to this repo
