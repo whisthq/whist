@@ -185,7 +185,8 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
             },
         )
 
-        attachDiskToVM(disk_name, vm_name, resource_group)
+        if attachDiskToVM(disk_name, vm_name, resource_group) < 1:
+            return -1
 
         fractalVMStart(
             vm_name,

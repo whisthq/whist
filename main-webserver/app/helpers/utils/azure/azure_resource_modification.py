@@ -50,19 +50,18 @@ def attachDiskToVM(disk_name, vm_name, resource_group=os.getenv("VM_GROUP")):
         if output["success"] and output["rows"]:
             username = output["rows"][0]["username"]
 
-        if output["success"] and output["rows"]:
-            fractalSQLUpdate(
-                table_name=resourceGroupToTable(resource_group),
-                conditional_params={"vm_name": vm_name},
-                new_params={"disk_name": disk_name, "username": str(username)},
-            )
+        fractalSQLUpdate(
+            table_name=resourceGroupToTable(resource_group),
+            conditional_params={"vm_name": vm_name},
+            new_params={"disk_name": disk_name, "username": str(username)},
+        )
 
         return 1
     except Exception as e:
         fractalLog(
             function="attachDiskToVM",
             label=getVMUser(vm_name),
-            log="Critical error attaching disk to VM: {error}".format(error=error),
+            logs="Critical error attaching disk to VM: {error}".format(error=str(e)),
             level=logging.CRITICAL,
         )
 
