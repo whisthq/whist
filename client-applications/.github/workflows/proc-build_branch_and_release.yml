@@ -130,7 +130,7 @@ jobs:
             artifact_relpath: "/desktop/release/linux/Fractal.deb"
           - os: windows-latest
             artifact_name: "Windows-64bit"
-            artifact_relpath: "\desktop\release\windows\Fractal.exe"
+            artifact_relpath: "\\desktop\\release\\windows\\Fractal.exe"
           - os: macos-latest
             artifact_name: "macOS-64bit"
             artifact_relpath: "/desktop/release/mac/Fractal.app"
