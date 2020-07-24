@@ -75,6 +75,7 @@ def spinLock(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
     """
 
     # Check if VM is currently locked
+    vm_name = vm_name.split("/")[-1]
 
     output = fractalSQLSelect(
         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
@@ -88,9 +89,10 @@ def spinLock(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
         fractalLog(
             function="spinLock",
             label=str(username) if username else vm_name,
-            logs="spinLock errored with error: {error}.".format(
-                error=str(output["error"])
+            logs="spinLock could not find VM {vm_name} in resource group {resource_group}".format(
+                vm_name=vm_name, resource_group=resource_group
             ),
+            level=logging.ERROR,
         )
         return -1
 
