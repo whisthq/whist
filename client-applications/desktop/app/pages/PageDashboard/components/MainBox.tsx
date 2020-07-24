@@ -70,61 +70,7 @@ class MainBox extends Component {
         this.setState({ restartPopup: open });
     };
 
-    SendLogs = () => {
-        var fs = require("fs");
-        const os = require("os");
-        let component = this;
-
-        try {
-            if (os.platform() === "darwin" || os.platform() === "linux") {
-                // mac & linux
-                // get logs and connection_id from Fractal MacOS/Linux Ubuntu caches
-                // cache is located in /users/USERNAME/.fractal or in /home/USERNAME/.fractal
-                var connection_id = parseInt(
-                    fs
-                        .readFileSync(
-                            process.env.HOME + "/.fractal/connection_id.txt"
-                        )
-                        .toString()
-                );
-
-                fs.readFile(
-                    process.env.HOME + "/.fractal/log.txt",
-                    "utf8",
-                    function (err, data) {
-                        if (err) {
-                            console.log(err);
-                        } else {
-                            component.props.dispatch(
-                                sendLogs(connection_id, data)
-                            );
-                        }
-                    }
-                );
-            } else if (os.platform() === "win32") {
-                // windows
-                // get logs from the executable directory, no cache on Windows
-                var logs = fs
-                    .readFileSync(
-                        process.cwd() + "\\protocol-build\\desktop\\log.txt"
-                    )
-                    .toString();
-                var connection_id = parseInt(
-                    fs
-                        .readFileSync(
-                            process.cwd() +
-                                "\\protocol-build\\desktop\\connection_id.txt"
-                        )
-                        .toString()
-                );
-                this.props.dispatch(sendLogs(connection_id, logs));
-            }
-        } catch (err) {
-            console.log("Log Error: " + err.toString());
-        }
-    };
-
-    ParseLogs = () => {
+    ParseLogs = (upload) => {
         var fs = require("fs");
         const os = require("os");
 
@@ -165,7 +111,7 @@ class MainBox extends Component {
 
             const graceful_exit_detected = line_by_line.length > 0;
 
-            if (graceful_exit_detected) {
+            if (graceful_exit_detected || upload) {
                 this.props.dispatch(sendLogs(connection_id, logs));
             }
             return graceful_exit_detected;
@@ -195,6 +141,7 @@ class MainBox extends Component {
                     var appRootDir = require("electron").remote.app.getAppPath();
                     var executable = "";
                     var path = "";
+                    let component = this;
 
                     const os = require("os");
 
@@ -233,32 +180,42 @@ class MainBox extends Component {
                     var graceful_exit_detected = false;
                     var rapid_reconnect_attempts = 0;
 
-                    while (
-                        !graceful_exit_detected &&
-                        rapid_reconnect_attempts < 3
-                    ) {
-                        // Starts the protocol
-                        const protocol = child(executable, parameters, {
-                            cwd: path,
-                            detached: true,
-                            stdio: "ignore",
-                        });
-                        //Listener for closing the stream window
-                        protocol.on("close", (code) => {
-                            graceful_exit_detected = this.ParseLogs();
-                            if (graceful_exit_detected) {
-                                this.setState({
+                    // Starts the protocol
+                    const protocol1 = child(executable, parameters, {
+                        cwd: path,
+                        detached: true,
+                        stdio: "ignore",
+                    });
+                    //Listener for closing the stream window
+                    protocol1.on("close", (code) => {
+                        graceful_exit_detected = this.ParseLogs(false);
+                        if (graceful_exit_detected) {
+                            this.setState({
+                                launches: 0,
+                                launched: false,
+                                reattached: false,
+                                diskAttaching: false,
+                            });
+                            this.props.dispatch(askFeedback(true));
+                        } else {
+                            const protocol2 = child(executable, parameters, {
+                                cwd: path,
+                                detached: true,
+                                stdio: "ignore",
+                            });
+
+                            protocol2.on("close", (code) => {
+                                this.ParseLogs(true);
+                                component.setState({
                                     launches: 0,
                                     launched: false,
                                     reattached: false,
                                     diskAttaching: false,
                                 });
-                                this.props.dispatch(askFeedback(true));
-                            } else {
-                                rapid_reconnect_attempts += 1;
-                            }
-                        });
-                    }
+                                component.props.dispatch(askFeedback(true));
+                            });
+                        }
+                    });
                 });
             }
         } else {
