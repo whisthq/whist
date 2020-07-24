@@ -149,7 +149,7 @@ def prep_windows(protocol_dir: Path) -> None:
         str(rcedit_path),
         str(protocol_dir / "FractalClient.exe"),
         "--set-icon",
-        "build\\icon.ico",
+        "desktop\\build\\icon.ico",
     ]
     print("Updating FractalClient icon using `%s`" % " ".join(rcedit_cmd))
     subprocess.run(rcedit_cmd, check=True)
