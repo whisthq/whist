@@ -123,125 +123,125 @@ def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
 
     # Check if a VM has winlogon'ed within the last 10 seconds
 
-    # def checkWinlogon(vm_name, resource_group):
-    #     output = fractalSQLSelect(
-    #         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-    #     )
+    def checkWinlogon(vm_name, resource_group):
+        output = fractalSQLSelect(
+            table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
+        )
 
-    #     has_winlogoned = False
-    #     if output["success"] and output["rows"]:
-    #         if not output["rows"][0]["ready_to_connect"]:
-    #             return False
-    #         else:
-    #             has_winlogoned = (
-    #                 dateToUnix(getToday()) - output["rows"][0]["ready_to_connect"] < 10
-    #             )
+        has_winlogoned = False
+        if output["success"] and output["rows"]:
+            if not output["rows"][0]["ready_to_connect"]:
+                return False
+            else:
+                has_winlogoned = (
+                    dateToUnix(getToday()) - output["rows"][0]["ready_to_connect"] < 10
+                )
 
-    #     return has_winlogoned
+        return has_winlogoned
 
-    # # Check if a VM is a dev machine
+    # Check if a VM is a dev machine
 
-    # def checkDev(vm_name, resource_group):
-    #     output = fractalSQLSelect(
-    #         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
-    #     )
+    def checkDev(vm_name, resource_group):
+        output = fractalSQLSelect(
+            table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
+        )
 
-    #     if output["success"] and output["rows"]:
-    #         return output["rows"][0]["dev"]
+        if output["success"] and output["rows"]:
+            return output["rows"][0]["dev"]
 
-    #     return False
+        return False
 
-    # if s:
-    #     s.update_state(
-    #         state="PENDING",
-    #         meta={
-    #             "msg": "Logging you into your cloud PC. This should take less than two minutes."
-    #         },
-    #     )
+    if s:
+        s.update_state(
+            state="PENDING",
+            meta={
+                "msg": "Logging you into your cloud PC. This should take less than two minutes."
+            },
+        )
 
-    # fractalLog(
-    #     function="waitForWinlogon",
-    #     label=getVMUser(vm_name),
-    #     logs="Checking to see if VM {vm_name} has a recent winlogon event".format(
-    #         vm_name=vm_name
-    #     ),
-    # )
+    fractalLog(
+        function="waitForWinlogon",
+        label=getVMUser(vm_name),
+        logs="Checking to see if VM {vm_name} has a recent winlogon event".format(
+            vm_name=vm_name
+        ),
+    )
 
-    # has_winlogoned = checkWinlogon(vm_name, resource_group)
-    # num_tries = 0
+    has_winlogoned = checkWinlogon(vm_name, resource_group)
+    num_tries = 0
 
-    # if has_winlogoned:
-    #     fractalLog(
-    #         function="waitForWinlogon",
-    #         label=getVMUser(vm_name),
-    #         logs="VM {vm_name} winlogoned on the first try!".format(vm_name=vm_name),
-    #     )
-    # else:
-    #     fractalLog(
-    #         function="waitForWinlogon",
-    #         label=getVMUser(vm_name),
-    #         logs="VM {vm_name} has not winlogoned yet. Waiting...".format(
-    #             vm_name=vm_name
-    #         ),
-    #     )
+    if has_winlogoned:
+        fractalLog(
+            function="waitForWinlogon",
+            label=getVMUser(vm_name),
+            logs="VM {vm_name} winlogoned on the first try!".format(vm_name=vm_name),
+        )
+    else:
+        fractalLog(
+            function="waitForWinlogon",
+            label=getVMUser(vm_name),
+            logs="VM {vm_name} has not winlogoned yet. Waiting...".format(
+                vm_name=vm_name
+            ),
+        )
 
-    # # Return success if a winlogon has been detected within the last 10 seconds
+    # Return success if a winlogon has been detected within the last 10 seconds
 
-    # if checkDev(vm_name, resource_group):
-    #     fractalLog(
-    #         function="waitForWinlogon",
-    #         label=getVMUser(vm_name),
-    #         logs="VM {vm_name} is in dev mode. Winlogon will not be detected if protocol is not running.".format(
-    #             vm_name=vm_name
-    #         ),
-    #     )
+    if checkDev(vm_name, resource_group):
+        fractalLog(
+            function="waitForWinlogon",
+            label=getVMUser(vm_name),
+            logs="VM {vm_name} is in dev mode. Winlogon will not be detected if protocol is not running.".format(
+                vm_name=vm_name
+            ),
+        )
 
-    # if has_winlogoned or resource_group != os.getenv("VM_GROUP"):
-    #     if resource_group != os.getenv("VM_GROUP"):
-    #         fractalLog(
-    #             function="waitForWinlogon",
-    #             label=getVMUser(vm_name),
-    #             logs="Resource group {resource_group} is not production resource group. Bypassing winlogon...".format(
-    #                 vm_name=vm_name
-    #             ),
-    #         )
-    #     return 1
-    # else:
-    #     fractalLog(
-    #         function="sendVMStartCommand",
-    #         label="VM {vm_name}".format(vm_name=vm_name),
-    #         logs="Detected that VM {vm_name} has not winlogon'ed. Waiting...".format(
-    #             vm_name=vm_name
-    #         ),
-    #     )
+    if has_winlogoned or resource_group != os.getenv("VM_GROUP"):
+        if resource_group != os.getenv("VM_GROUP"):
+            fractalLog(
+                function="waitForWinlogon",
+                label=getVMUser(vm_name),
+                logs="Resource group {resource_group} is not production resource group. Bypassing winlogon...".format(
+                    vm_name=vm_name
+                ),
+            )
+        return 1
+    else:
+        fractalLog(
+            function="sendVMStartCommand",
+            label="VM {vm_name}".format(vm_name=vm_name),
+            logs="Detected that VM {vm_name} has not winlogon'ed. Waiting...".format(
+                vm_name=vm_name
+            ),
+        )
 
-    # # Loop 30 times at 5 second intervals, waiting for a winlogon to come in
+    # Loop 30 times at 5 second intervals, waiting for a winlogon to come in
 
-    # while not has_winlogoned:
-    #     time.sleep(5)
-    #     has_winlogoned = checkWinlogon(vm_name, resource_group)
-    #     num_tries += 1
+    while not has_winlogoned:
+        time.sleep(5)
+        has_winlogoned = checkWinlogon(vm_name, resource_group)
+        num_tries += 1
 
-    #     # Give up if we've waited too long
+        # Give up if we've waited too long
 
-    #     if num_tries > 30:
-    #         fractalLog(
-    #             function="sendVMStartCommand",
-    #             label="VM {vm_name}".format(vm_name=vm_name),
-    #             logs="VM {vm_name} did not winlogon after 30 tries. Giving up...".format(
-    #                 vm_name=vm_name
-    #             ),
-    #             level=logging.WARNING,
-    #         )
-    #         return False
+        if num_tries > 30:
+            fractalLog(
+                function="sendVMStartCommand",
+                label="VM {vm_name}".format(vm_name=vm_name),
+                logs="VM {vm_name} did not winlogon after 30 tries. Giving up...".format(
+                    vm_name=vm_name
+                ),
+                level=logging.WARNING,
+            )
+            return False
 
-    # fractalLog(
-    #     function="sendVMStartCommand",
-    #     label="VM {vm_name}".format(vm_name=vm_name),
-    #     logs="VM {vm_name} winlogoned successfully after {num_tries} tries".format(
-    #         vm_name=vm_name, num_tries=str(num_tries)
-    #     ),
-    # )
+    fractalLog(
+        function="sendVMStartCommand",
+        label="VM {vm_name}".format(vm_name=vm_name),
+        logs="VM {vm_name} winlogoned successfully after {num_tries} tries".format(
+            vm_name=vm_name, num_tries=str(num_tries)
+        ),
+    )
     return True
 
 
