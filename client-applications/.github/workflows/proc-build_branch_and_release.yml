@@ -3,6 +3,7 @@
 name: "Procedure: Branch Build & Release"
 
 on:
+  push:
   workflow_dispatch:
     inputs:
       ref:
@@ -87,6 +88,21 @@ jobs:
           echo ::set-output name=should_release::${{ github.event.inputs.should_release }}
           echo ::set-output name=should_test::$(if [[ "${{ github.event.inputs.should_test }}" == "false" ]]; then echo ""; else echo "true"; fi)
           export SHOULD_TEST=${{ github.event.inputs.should_test }}
+          echo ::set-output name=should_test_windows::$(if [[ $SHOULD_TEST == *"windows"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=should_test_linux::$(if [[ $SHOULD_TEST == *"linux"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=should_test_macos::$(if [[ $SHOULD_TEST == *"macos"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=overridden_version_id::${{ github.event.inputs.overridden_version_id }}
+
+
+
+
+          echo ::set-output name=git_sha::$(git rev-parse HEAD)
+          echo ::set-output name=protocol_version::test-20200323.0
+          echo ::set-output name=version_id::test-20200324.0"
+          echo ::set-output name=update_channel::${{ github.event.inputs.update_channel }}
+          echo ::set-output name=should_release::true
+          echo ::set-output name=should_test::false
+          export SHOULD_TEST=false
           echo ::set-output name=should_test_windows::$(if [[ $SHOULD_TEST == *"windows"* ]]; then echo "true"; else echo "false"; fi)
           echo ::set-output name=should_test_linux::$(if [[ $SHOULD_TEST == *"linux"* ]]; then echo "true"; else echo "false"; fi)
           echo ::set-output name=should_test_macos::$(if [[ $SHOULD_TEST == *"macos"* ]]; then echo "true"; else echo "false"; fi)
