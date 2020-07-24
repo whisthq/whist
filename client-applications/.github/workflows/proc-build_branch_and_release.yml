@@ -130,7 +130,7 @@ jobs:
             artifact_relpath: "/desktop/release/linux/Fractal.deb"
           - os: windows-latest
             artifact_name: "Windows-64bit"
-            artifact_relpath: "/desktop/release/windows/Fractal.exe"
+            artifact_relpath: "\desktop\release\windows\Fractal.exe"
           - os: macos-latest
             artifact_name: "macOS-64bit"
             artifact_relpath: "/desktop/release/mac/Fractal.app"
@@ -226,7 +226,10 @@ jobs:
         run: |
           poetry run python ./desktop/build_and_publish.py --set-version ${{ needs.params.outputs.version_id }}  --update-channel ${{ needs.params.outputs.update_channel }} || true
 #          find . -not \( -path ./desktop/node_modules -prune \) -not \( -path ./.git -prune \)  # list files, useful for debugging doesn't run on windows.
-
+          ls ${{ github.workspace }}${{ matrix.config.artifact_relpath }} || true
+          ls ${{ github.workspace }}/desktop/release/linux || true
+          ls ${{ github.workspace }}/desktop/release/windows || true
+          ls ${{ github.workspace }}/desktop/release/mac || true
       - name: Upload client application artifact
         if: matrix.config.artifact_name
         uses: actions/upload-artifact@v2
