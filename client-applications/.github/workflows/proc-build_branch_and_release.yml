@@ -220,9 +220,14 @@ jobs:
       - name: Build the bundled application
         run: |
           poetry run ./desktop/build_and_publish.py --set-version ${{ needs.params.outputs.version_id }}  --update-channel ${{ needs.params.outputs.update_channel }} || true
-          find . -not \( -path ./desktop/node_modules -prune \) -not \( -path ./.git -prune \)
+#          find . -not \( -path ./desktop/node_modules -prune \) -not \( -path ./.git -prune \)  # list files, useful for debugging doesn't run on windows.
 
-
+      - name: Upload client application artifact
+        if: matrix.config.artifact_name
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.config.artifact_name }}
+          path: ${{ github.workspace }}${{ matrix.config.artifact_relpath }}
 
   create-release:
     name: Create release
