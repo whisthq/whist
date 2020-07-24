@@ -257,6 +257,7 @@ if __name__ == "__main__":
     # failure can be triggered if the unpacking failed or the release was zipped up
     # in an unexpected manner
     if len(list(protocol_dir.glob("FractalClient*"))) != 1:
+        print(list(protocol_dir.glob("FractalClient*")))
         raise Exception(
             f"The unpacked protocol does not match the expected format in '{protocol_dir}'"
         )
