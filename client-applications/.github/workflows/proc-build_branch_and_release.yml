@@ -214,7 +214,12 @@ jobs:
       # These secrets already exist:
       # mac_certs: ${{ secrets.MAC_CERTS }}
       # mac_certs_password: ${{ secrets.MAC_CERTS_PASSWORD }}
-
+      - name: Import Apple code-signing certs
+        if: runner.os == 'macOS'
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          p12-file-base64: ${{ secrets.MAC_CERTS }}
+          p12-password: ${{ secrets.MAC_CERTS_PASSWORD }}
       # Build the bundle application
 
       - name: Build the bundled application
