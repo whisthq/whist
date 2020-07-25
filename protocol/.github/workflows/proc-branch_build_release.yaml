@@ -43,6 +43,7 @@ jobs:
       ref: ${{ steps.values.outputs.ref }}
       ref_name: ${{ steps.values.outputs.ref_name }}
       git_sha: ${{ steps.values.outputs.git_sha }}
+      should_release: ${{ steps.values.outputs.should_release }}
       should_test: ${{ steps.values.outputs.should_release }}
       should_test: ${{ steps.values.outputs.should_test }}
       should_test_windows: ${{ steps.values.outputs.should_test_windows }}
