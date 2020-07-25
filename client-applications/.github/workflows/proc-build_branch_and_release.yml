@@ -3,7 +3,6 @@
 name: "Procedure: Branch Build & Release"
 
 on:
-  push:
   workflow_dispatch:
     inputs:
       ref:
