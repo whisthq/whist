@@ -640,7 +640,7 @@ char *get_version() {
         static char buf[200];
         version = buf;
         int bytes = (int)fread(version, 1, min(length, (long)sizeof(buf) - 1),
-                             f);  // cast for compiler warning
+                               f);  // cast for compiler warning
         for (int i = 0; i < bytes; i++) {
             if (version[i] == '\n') {
                 version[i] = '\0';
