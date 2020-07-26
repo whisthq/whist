@@ -64,7 +64,6 @@ Includes
 #include "../../include/SDL2/SDL_thread.h"
 #include "../clipboard/clipboard_synchronizer.h"
 #include "../cursor/cursor.h"
-#include "../network/network.h"
 #include "../utils/clock.h"
 #include "../utils/logging.h"
 #include "fractal.v"

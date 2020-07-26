@@ -136,6 +136,7 @@ typedef struct SocketContext {
     char aes_private_key[16];
 } SocketContext;
 
+
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
 // replayed
 // TODO: INC integer that must not be used twice
@@ -358,5 +359,14 @@ bool SendJSONPost(char* host_s, char* path, char* jsonObj, char* access_token);
 bool SendJSONGet(char* host_s, char* path, char* json_res, size_t json_res_size);
 
 int sendp(SocketContext* context, void* buf, int len);
+
+/**
+ * @brief                          Send a FractalMessage from client to server
+ *
+ * @param fmsg                     FractalMessage struct to send as packet
+ *
+ * @returns                        0 if succeeded, else -1
+ */
+int SendFmsg(FractalClientMessage* fmsg);
 
 #endif  // NETWORK_H

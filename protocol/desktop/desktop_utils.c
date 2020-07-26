@@ -19,10 +19,9 @@ TODO
 #include <stdlib.h>
 #include <string.h>
 
+#include "desktop_utils.h"
 #include "../fractal/utils/logging.h"
 #include "fractalgetopt.h"
-#include "main.h"
-#include "desktop_utils.h"
 
 extern volatile char aes_private_key[16];
 extern volatile char *server_ip;
