@@ -13,7 +13,6 @@ TODO
 #include "network.h"
 
 #include "../fractal/core/fractal.h"
-#include "main.h"
 #include "network.h"
 #include "desktop_utils.h"
 

@@ -15,7 +15,6 @@ trigged an SDL event must be triggered in sdl_event_handler.c
 
 #include "../fractal/utils/logging.h"
 #include "../fractal/utils/sdlscreeninfo.h"
-#include "main.h"
 #include "sdl_utils.h"
 #include "desktop_utils.h"
 
