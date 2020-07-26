@@ -188,25 +188,22 @@ def automaticAttachDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
         if attachDiskToVM(disk_name, vm_name, resource_group) < 1:
             return -1
 
-        fractalVMStart(
-            vm_name,
-            needs_restart=True,
-            needs_winlogon=needs_winlogon,
-            resource_group=resource_group,
-            s=s,
-        )
-
-        output = fractalSQLSelect(table_name="disks", params={"disk_name": disk_name})
-
-        if output["rows"] and output["success"]:
-            fractalSQLUpdate(
-                table_name=resourceGroupToTable(resource_group),
-                conditional_params={"vm_name": vm_name},
-                new_params={
-                    "disk_name": disk_name,
-                    "username": output["rows"][0]["username"],
-                },
+        if (
+            fractalVMStart(
+                vm_name,
+                needs_restart=True,
+                needs_winlogon=needs_winlogon,
+                resource_group=resource_group,
+                s=s,
             )
+            < 1
+        ):
+            self.update_state(
+                state="FAILURE",
+                meta={"msg": "Cloud PC could not be started. Please contact support."},
+            )
+
+            return -1
 
         return 1
 

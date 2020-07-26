@@ -90,7 +90,7 @@ def sendVMStartCommand(
 
                 number_of_winlogon_tries = 1
 
-                while winlogon < 0:
+                while not winlogon:
                     if number_of_winlogon_tries > 4:
                         fractalLog(
                             function="sendVMStartCommand",
@@ -100,10 +100,19 @@ def sendVMStartCommand(
                             ),
                             level=logging.CRITICAL,
                         )
-                        return -1
+
+                        if s:
+                            s.update_state(
+                                state="PENDING",
+                                meta={
+                                    "msg": "Could not log you in after 4 attempts. Trying 4 more times before forcefully quitting..."
+                                },
+                            )
+                            return -1
 
                     boot_if_necessary(vm_name, True, resource_group=resource_group, s=s)
                     winlogon = waitForWinlogon(vm_name, resource_group, s=s)
+                    number_of_winlogon_tries += 1
 
                 if s:
                     s.update_state(
@@ -214,12 +223,12 @@ def fractalVMStart(
                 vm_name, needs_restart, needs_winlogon, resource_group, s=s
             )
             < 0
-            and start_command_tries < 4
+            and start_command_tries < 2
         ):
-            time.sleep(10)
+            time.sleep(5)
             start_command_tries += 1
 
-        if start_command_tries >= 4:
+        if start_command_tries >= 2:
             return -1
 
         wake_retries = 0
