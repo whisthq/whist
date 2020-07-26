@@ -1,7 +1,6 @@
 #ifndef DESKTOP_UTILS_H
 #define DESKTOP_UTILS_H
 
-
 #include "../fractal/network/network.h"
 
 #define HOST_PUBLIC_KEY                                           \

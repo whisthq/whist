@@ -15,7 +15,6 @@ its threads.
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -252,7 +251,6 @@ void update() {
     // End Ping
 }
 // END UPDATER CODE
-
 
 int ReceivePackets(void* opaque) {
     LOG_INFO("ReceivePackets running on Thread %p", SDL_GetThreadID(NULL));

@@ -136,7 +136,6 @@ typedef struct SocketContext {
     char aes_private_key[16];
 } SocketContext;
 
-
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
 // replayed
 // TODO: INC integer that must not be used twice
