@@ -1,7 +1,10 @@
 from app import *
 from app.helpers.utils.mail.stripe_mail import *
+from pyzipcode import ZipCodeDatabase
+from app.constants.tax_rates import *
 
 stripe.api_key = os.getenv("STRIPE_SECRET")
+zcdb = ZipCodeDatabase()
 
 
 def chargeHelper(token, email, code, plan):
@@ -44,6 +47,22 @@ def chargeHelper(token, email, code, plan):
         ]
 
         metadata = fractalSQLSelect("users", {"code": code})["rows"]
+
+        zipCode = stripe.Token.retrieve(token)["card"]["address_zip"]
+        purchaseState = None
+        try:
+            purchaseState = zcdb[zipCode].state
+        except IndexError:
+            return (
+                jsonify(
+                    {
+                        "status": "NOT_ACCEPTABLE",
+                        "error": "Zip code does not exist in the US!",
+                    }
+                ),
+                NOT_ACCEPTABLE,
+            )
+
         if metadata:
             credits += 1
 
@@ -55,6 +74,7 @@ def chargeHelper(token, email, code, plan):
                 items=[{"plan": PLAN_ID}],
                 trial_end=trial_end,
                 trial_from_plan=False,
+                default_tax_rates=[STATE_TAX[purchaseState]],
             )
             subscription_id = new_subscription["id"]
         else:
@@ -64,6 +84,7 @@ def chargeHelper(token, email, code, plan):
                 items=[{"plan": PLAN_ID}],
                 trial_end=trial_end,
                 trial_from_plan=False,
+                default_tax_rates=[STATE_TAX[purchaseState]],
             )
             fractalSQLUpdate(
                 table_name="users",
