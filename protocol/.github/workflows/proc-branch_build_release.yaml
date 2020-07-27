@@ -684,6 +684,7 @@ jobs:
           asset_path: ./${{ matrix.config.client_artifact_name }}.zip
           asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.client_artifact_name }}.zip
           asset_content_type: application/zip
+
   trigger-clientapp-builds:
     needs: [params, build, upload-builds, test_client]
     if: always() # See not in first step to understand why this is set to always run (which would seem incorrect since it should only run when builds succeed)
@@ -710,4 +711,4 @@ jobs:
           curl -u "${{ secrets.CI_PAT }}:" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches \
-            -d '{"ref": "wip-ci", "inputs": {"ref": "wip-ci", "protocol_version": "${{steps.release_info.outputs.version_id}}", "should_test": "false", "should_release": "true"}}'
+            -d '{"ref": "wip-ci", "inputs": {"ref": "wip-ci", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "should_test": "false", "should_release": "true"}}'
