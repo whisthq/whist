@@ -711,4 +711,4 @@ jobs:
           curl -u "${{ secrets.CI_PAT }}:" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches \
-            -d '{"ref": "wip-ci", "inputs": {"ref": "wip-ci", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "should_test": "false", "should_release": "true"}}'
+            -d '{"ref": "wip-ci", "inputs": {"ref": "wip-ci", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "${{ needs['create-release'].outputs.version_id }}", "should_test": "false", "should_release": "true"}}'
