@@ -6,7 +6,7 @@ STATE_TAX = [
     {"CA": "txr_1H5yxsIOnFXg3A2j7cs6ZgHB"},
     {"CO": "txr_1H5yy0IOnFXg3A2j9bIaTqxe"},
     {"CT": "txr_1H5yy7IOnFXg3A2jNlOgygZP"},
-    {"DE": "txr_1H5yyEIOnFXg3A2j9lkXFQV0"}
+    {"DE": "txr_1H5yyEIOnFXg3A2j9lkXFQV0"},
     {"DC": "txr_1H5z0eIOnFXg3A2jngfEwgBZ"},
     {"FL": "txr_1H5z0mIOnFXg3A2j3ObOPtES"},
     {"GA": "txr_1H5z0sIOnFXg3A2jyiOiCuGu"},
