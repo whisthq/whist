@@ -11,9 +11,9 @@ jobs:
   trigger-release:
     runs-on: ubuntu-latest
     steps:
-      - trigger_release:
-          # Do not run if latest commit contains "skip-ci" in its message
-        - if: "!contains(github.event.head_commit.message, 'skip-ci')"
+      - name: trigger_release
+        # Do not run if latest commit contains "skip-ci" in its message
+        if: "!contains(github.event.head_commit.message, 'skip-ci')"
           # TODO switch this to GITHUB_TOKEN once workflow_dispatch supports GHA initiated dispatches
           # (currently it requires the dispatcher to be a user, so a personal access token must be used
           # here)
@@ -32,7 +32,7 @@ jobs:
 
           # Pipe secrets.PROC_BRANCH_BUILD_RELEASE_ID to base64 so that the user can see it in the logs
           # since GHA auto redacts secrets.
-        - run: |
+          run: |
             echo "base64 encoded PROC_BRANCH_BUILD_RELEASE_ID (pipe to `base64 -d` to decode): "
             echo "${{ secrets.PROC_BRANCH_BUILD_RELEASE_ID }}" | base64
             curl -u "${{ secrets.CI_PAT }}:" \
