@@ -59,10 +59,10 @@ def genHaiku(n):
 
 def getGoogleTokens(code, clientApp):
     if clientApp:
-        client_secret = "google_client_secret_desktop.json"
+        client_secret = "secrets/google_client_secret_desktop.json"
         redirect_uri = "urn:ietf:wg:oauth:2.0:oob:auto"
     else:
-        client_secret = "google_client_secret.json"
+        client_secret = "secrets/google_client_secret.json"
         redirect_uri = "postmessage"
 
     flow = Flow.from_client_secrets_file(

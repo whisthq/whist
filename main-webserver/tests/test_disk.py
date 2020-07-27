@@ -6,7 +6,7 @@ from .helpers.tests.azure_vm import *
 
 @pytest.mark.disk_serial
 @disabled
-def test_delete_disk_initial(input_token):
+def test_delete_disk_initial(input_token, admin_token):
     if os.getenv("USE_PRODUCTION_DATABASE").upper() == "TRUE":
         fractalLog(
             function="test_delete_disk_initial",
@@ -43,7 +43,7 @@ def test_delete_disk_initial(input_token):
                 )
                 assert False
 
-        all_disks = fetchCurrentDisks()
+        all_disks = fetchCurrentDisks(admin_token)
 
         if all_disks:
             fractalLog(
@@ -78,10 +78,7 @@ def test_delete_disk_initial(input_token):
 
 
 @pytest.mark.disk_serial
-<<<<<<< HEAD
-=======
 @disabled
->>>>>>> isabelle-sha
 def test_disk_clone(input_token):
     regions = ["eastus", "eastus", "eastus"]
 
@@ -121,7 +118,7 @@ def test_disk_clone(input_token):
 
 
 @pytest.mark.disk_serial
-def test_disk_attach(input_token):
+def test_disk_attach(input_token, admin_token):
     regions = ["eastus", "eastus", "eastus"]
 
     def attachDiskHelper(disk):
@@ -187,8 +184,7 @@ def test_disk_attach(input_token):
                     level=logging.ERROR,
                 )
 
-    disks = fetchCurrentDisks()
-    print(disks)
+    disks = fetchCurrentDisks(admin_token)
     fractalJobRunner(attachDiskHelper, disks, multithreading=False)
 
     assert True

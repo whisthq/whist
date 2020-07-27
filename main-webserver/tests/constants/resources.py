@@ -1,15 +1,11 @@
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+from dotenv import *
 
-DATABASE_URL = (
-    os.getenv("DATABASE_URL")
-    if os.getenv("USE_PRODUCTION_DATABASE").upper() == "TRUE"
-    else os.getenv("HEROKU_POSTGRESQL_ORANGE_URL")
-)
+load_dotenv(find_dotenv())
+
 
 RESOURCE_GROUP = "FractalStaging"
 
 # SERVER_URL = "https://main-webserver-staging4.herokuapp.com"
-SERVER_URL = "http://127.0.0.1:7730"
+SERVER_URL = "http://127.0.0.1:7730" if not os.getenv("CI") and not os.getenv("CI") == "true" else "https://main-webserver-pr-" + os.getenv("TEST_HEROKU_PR_NUMBER") + ".herokuapp.com"
