@@ -31,6 +31,9 @@ launch_xvfb() {
 
     # Set defaults if the user did not specify envs.
     export DISPLAY=${XVFB_DISPLAY:-:1}
+    sudo touch /home/fractal/displayenv
+    echo $DISPLAY > /home/fractal/displayenv
+    echo $DISPLAY
     local screen=${XVFB_SCREEN:-0}
     local resolution=${XVFB_RESOLUTION:-1280x960x24}
     local timeout=${XVFB_TIMEOUT:-5}

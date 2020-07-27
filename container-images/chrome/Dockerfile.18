@@ -116,11 +116,14 @@ ADD fractal-display.service /etc/systemd/system
 VOLUME [ "/sys/fs/cgroup" ]
 
 RUN systemctl set-default multi-user.target
-ENV init /lib/systemd/systemd
+ENV init /sbin/init
 RUN systemctl enable fractal-entrypoint
 RUN systemctl enable fractal-display
 RUN sudo apt-get install -y pulseaudio
+# RUN chmod +x /lib/systemd/systemd
+
 
 # USER fractal
-
+#ENTRYPOINT ["/usr/bin/sudo"]
 CMD ["/lib/systemd/systemd"]
+# CMD ["/home/fractal/bootstrap.sh"]
