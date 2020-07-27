@@ -43,6 +43,6 @@ int sendServerQuitMessages(int num_messages);
  *
  * @returns                        0 if succeeded, else -1
  */
-int SendFmsg( FractalClientMessage* fmsg );
+int SendFmsg(FractalClientMessage* fmsg);
 
 #endif  // DESKTOP_NETWORK_H
