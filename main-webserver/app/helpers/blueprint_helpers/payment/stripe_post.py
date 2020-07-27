@@ -1,17 +1,11 @@
 from app import *
 from app.helpers.utils.mail.stripe_mail import *
-<<<<<<< HEAD
 
-stripe.api_key = os.getenv("STRIPE_SECRET")
-customer_id = ""
-subscription_id = ""
-=======
 from pyzipcode import ZipCodeDatabase
 from app.constants.tax_rates import *
 
 stripe.api_key = os.getenv("STRIPE_SECRET")
 zcdb = ZipCodeDatabase()
->>>>>>> isabelle-sha
 
 
 def chargeHelper(token, email, code, plan):
@@ -23,11 +17,8 @@ def chargeHelper(token, email, code, plan):
         ),
     )
 
-<<<<<<< HEAD
-=======
     customer_id = ""
 
->>>>>>> isabelle-sha
     PLAN_ID = os.getenv("MONTHLY_PLAN_ID")
     if plan == "unlimited":
         PLAN_ID = os.getenv("UNLIMITED_PLAN_ID")
@@ -49,10 +40,7 @@ def chargeHelper(token, email, code, plan):
             trial_end = round((dt.now() + timedelta(days=1)).timestamp())
 
     try:
-<<<<<<< HEAD
-=======
         subscription_id = ""
->>>>>>> isabelle-sha
         new_customer = stripe.Customer.create(email=email, source=token)
         customer_id = new_customer["id"]
         credits = fractalSQLSelect("users", {"username": email})["rows"][0][
@@ -60,8 +48,6 @@ def chargeHelper(token, email, code, plan):
         ]
 
         metadata = fractalSQLSelect("users", {"code": code})["rows"]
-<<<<<<< HEAD
-=======
 
         zipCode = stripe.Token.retrieve(token)["card"]["address_zip"]
         purchaseState = None
@@ -78,7 +64,6 @@ def chargeHelper(token, email, code, plan):
                 NOT_ACCEPTABLE,
             )
 
->>>>>>> isabelle-sha
         if metadata:
             credits += 1
 
@@ -90,10 +75,7 @@ def chargeHelper(token, email, code, plan):
                 items=[{"plan": PLAN_ID}],
                 trial_end=trial_end,
                 trial_from_plan=False,
-<<<<<<< HEAD
-=======
                 default_tax_rates=[STATE_TAX[purchaseState]],
->>>>>>> isabelle-sha
             )
             subscription_id = new_subscription["id"]
         else:
@@ -103,10 +85,7 @@ def chargeHelper(token, email, code, plan):
                 items=[{"plan": PLAN_ID}],
                 trial_end=trial_end,
                 trial_from_plan=False,
-<<<<<<< HEAD
-=======
                 default_tax_rates=[STATE_TAX[purchaseState]],
->>>>>>> isabelle-sha
             )
             fractalSQLUpdate(
                 table_name="users",
@@ -271,11 +250,7 @@ def cancelStripeHelper(email):
             pass
         fractalSQLDelete("customers", {"username": email})
         return jsonify({"status": SUCCESS}), SUCCESS
-<<<<<<< HEAD
-    return jsonify({"status": NOT_FOUND}), NOT_FOUND
-=======
     return jsonify({"status": PAYMENT_REQUIRED}), PAYMENT_REQUIRED
->>>>>>> isabelle-sha
 
 
 def discountHelper(code):
@@ -390,8 +365,6 @@ def insertCustomerHelper(email, location):
     return jsonify({"status": SUCCESS}), SUCCESS
 
 
-<<<<<<< HEAD
-=======
 def addProductHelper(email, productName):
     """Adds a product to the customer
 
@@ -506,7 +479,6 @@ def removeProductHelper(email, productName):
     )
 
 
->>>>>>> isabelle-sha
 def webhookHelper(event):
     # Handle the event
     if event.type == "charge.failed":  # https://stripe.com/docs/api/charges
@@ -576,10 +548,7 @@ def updateHelper(username, new_plan_type):
 
     customer = fractalSQLSelect("customers", {"username": username})["rows"]
     if customer:
-<<<<<<< HEAD
-=======
         customer = customer[0]
->>>>>>> isabelle-sha
         old_subscription = customer["subscription"]
         subscription = stripe.Subscription.retrieve(old_subscription)
         if subscription:

@@ -126,11 +126,7 @@ def azure_vm_post(action, **kwargs):
         output = devHelper(vm_name, dev)
 
         return jsonify(output), output["status"]
-<<<<<<< HEAD:app/blueprints/azure/azure_vm_blueprint.py
-    elif action == "ping":
-=======
     elif action == "ping" or action == "connectionStatus":
->>>>>>> isabelle-sha:app/blueprints/azure/azure_vm_blueprint.py
         # Receives pings from active VMs
 
         available, vm_ip = kwargs["body"]["available"], kwargs["received_from"]

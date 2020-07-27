@@ -33,7 +33,7 @@ def protocolInfoHelper(ip_address):
                 "branch": "dev",
                 "status": NOT_FOUND,
                 "using_stun": False,
-                "private_key": None
+                "private_key": None,
                 "access_token": None,
                 "refresh_token": None,
             }
