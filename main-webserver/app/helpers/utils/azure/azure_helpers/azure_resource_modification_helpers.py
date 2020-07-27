@@ -5,6 +5,111 @@ from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_modification import *
 
 
+def attachSecondaryDisk(disk_name, vm_name, resource_group, s=None):
+    fractalLog(
+        function="attachSecondaryDisk",
+        label=getVMUser(vm_name),
+        logs="Attaching secondary disk {disk_name} to {vm_name}".format(
+            disk_name=disk_name, vm_name=vm_name
+        ),
+    )
+
+    _, compute_client, _ = createClients()
+    data_disk = compute_client.disks.get(resource_group, disk_name)
+    virtual_machine = createVMInstance(vm_name, resource_group)
+
+    if data_disk.managed_by:
+        old_vm_name = data_disk.managed_by.split("/")[-1]
+        if old_vm_name != vm_name:
+            detachSecondaryDisk(disk_name, old_vm_name, resource_group, s=s)
+        else:
+            return 1
+
+    lunNum = 1
+    attachedDisk = False
+    while not attachedDisk and lunNum < 15:
+        try:
+            virtual_machine.storage_profile.data_disks.append(
+                {
+                    "lun": lunNum,
+                    "name": data_disk.name,
+                    "create_option": DiskCreateOption.attach,
+                    "managed_disk": {"id": data_disk.id},
+                }
+            )
+
+            async_disk_attach = compute_client.virtual_machines.create_or_update(
+                resource_group, virtual_machine.name, virtual_machine
+            )
+            async_disk_attach.wait()
+
+            attachedDisk = True
+
+            fractalLog(
+                function="attachSecondaryDisk",
+                label=getVMUser(vm_name),
+                logs="Secondary disk {disk_name} successfully attached to {vm_name}".format(
+                    disk_name=disk_name, vm_name=vm_name
+                ),
+            )
+
+        except ClientException as e:
+            fractalLog(
+                function="attachSecondaryDisk",
+                label=getVMUser(vm_name),
+                logs="Incrementing LUN, disk {disk_name} could not be attached to {vm_name} with error: {error}".format(
+                    disk_name=disk_name, vm_name=vm_name, error=str(e)
+                ),
+                level=logging.WARNING,
+            )
+            lunNum += 1
+
+    if lunNum >= 15:
+        fractalLog(
+            function="attachSecondaryDisk",
+            label=getVMUser(vm_name),
+            logs="Disk {disk_name} could not be attached to {vm_name} because there was not an available LUN".format(
+                disk_name=disk_name, vm_name=vm_name
+            ),
+            level=logging.ERROR,
+        )
+        return -1
+
+    fractalLog(
+        function="attachSecondaryDisk",
+        label=getVMUser(vm_name),
+        logs="Running disk partition powershell script on {disk_name}".format(
+            disk_name=disk_name
+        ),
+    )
+
+    command = """
+        Get-Disk | Where partitionstyle -eq 'raw' |
+            Initialize-Disk -PartitionStyle MBR -PassThru |
+            New-Partition -AssignDriveLetter -UseMaximumSize |
+            Format-Volume -FileSystem NTFS -NewFileSystemLabel "{disk_name}" -Confirm:$false
+        """.format(
+        disk_name=disk_name
+    )
+
+    run_command_parameters = {"command_id": "RunPowerShellScript", "script": [command]}
+    poller = compute_client.virtual_machines.run_command(
+        resource_group, vm_name, run_command_parameters
+    )
+
+    result = poller.result()
+
+    fractalLog(
+        function="attachSecondaryDisk",
+        label=getVMUser(vm_name),
+        logs="Disk partition powershell script successfully run on {disk_name}".format(
+            disk_name=disk_name
+        ),
+    )
+
+    return 1
+
+
 def attachSecondaryDisks(username, vm_name, resource_group, s=None):
     fractalLog(
         function="attachSecondaryDisks",
@@ -74,6 +179,23 @@ def claimAvailableVM(
     username, disk_name, location, resource_group, os_type="Windows", s=None
 ):
     session = Session()
+
+    command = text(
+        """
+        SELECT * FROM {table_name}
+        WHERE username=:username
+        """.format(
+            table_name=resourceGroupToTable(resource_group)
+        )
+    )
+    params = {"username": username}
+
+    available_vm = fractalCleanSQLOutput(session.execute(command, params).fetchone())
+
+    if available_vm:
+        session.commit()
+        session.close()
+        return available_vm
 
     state_preference = ["RUNNING_AVAILABLE", "STOPPED", "DEALLOCATED"]
 

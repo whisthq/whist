@@ -1,21 +1,40 @@
 from app import *
-from app.helpers.blueprint_helpers.azure_vm_get import *
-from app.helpers.blueprint_helpers.azure_vm_post import *
+from app.helpers.blueprint_helpers.azure.azure_vm_get import *
+from app.helpers.blueprint_helpers.azure.azure_vm_post import *
+
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_state import *
+from app.celery.azure_resource_modification import *
 
 azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 
 
-@azure_vm_bp.route("/azure_vm/<action>", methods=["POST"])
+@azure_vm_bp.route("/vm/restart", methods=["POST"])
 @fractalPreProcess
 @jwt_required
-def azure_vm_post(action, **kwargs):
-    current_user = get_jwt_identity()
-    if current_user != os.getenv("DASHBOARD_USERNAME") + "@gmail.com":
-        return jsonify({"error": "Not an admin!"}), FORBIDDEN
+@fractalAuth
+def azure_vm_restart(**kwargs):
+    # Restarts an Azure VM
 
+    vm_name = kwargs["body"]["vm_name"]
+    resource_group = os.getenv("VM_GROUP")
+    if "resource_group" in kwargs["body"].keys():
+        resource_group = kwargs["body"]["resource_group"]
+
+    task = restartVM.apply_async([vm_name, resource_group])
+
+    if not task:
+        return jsonify({"ID": None}), BAD_REQUEST
+
+    return jsonify({"ID": task.id}), ACCEPTED
+
+
+@azure_vm_bp.route("/vm/<action>", methods=["POST"])
+@fractalPreProcess
+@jwt_required
+@adminRequired
+def azure_vm_post(action, **kwargs):
     if action == "create":
         # Creates an Azure VM
 
@@ -44,9 +63,13 @@ def azure_vm_post(action, **kwargs):
     elif action == "delete":
         # Deletes an Azure VM
 
-        vm_name, delete_disk = kwargs["body"]["vm_name"], kwargs["body"]["delete_disk"]
+        vm_name, delete_disk, resource_group = (
+            kwargs["body"]["vm_name"],
+            kwargs["body"]["delete_disk"],
+            kwargs["body"]["resource_group"],
+        )
 
-        task = deleteVM.apply_async([vm_name, delete_disk])
+        task = deleteVM.apply_async([vm_name, delete_disk, resource_group])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
@@ -89,22 +112,40 @@ def azure_vm_post(action, **kwargs):
         output = devHelper(vm_name, dev)
 
         return jsonify(output), output["status"]
-    elif action == "connectionStatus":
+    elif action == "ping" or action == "connectionStatus":
         # Receives pings from active VMs
 
         available, vm_ip = kwargs["body"]["available"], kwargs["received_from"]
+
+        if "resource_group" in kwargs["body"].keys():
+            resource_group = kwargs["body"]["resource_group"]
+
         version = None
         if "version" in kwargs["body"].keys():
             version = kwargs["body"]["version"]
 
-        output = connectionStatusHelper(available, vm_ip, version)
+        output = pingHelper(available, vm_ip, version)
 
         return jsonify(output), output["status"]
+    elif action == "command":
+        # Runs a powershell script on a VM
+
+        vm_name, powershell_script, resource_group = (
+            kwargs["body"]["vm_name"],
+            kwargs["body"]["command"],
+            kwargs["body"]["resource_group"],
+        )
+
+        task = runPowershell.apply_async([vm_name, powershell_script, resource_group])
+
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        return jsonify({"ID": task.id}), ACCEPTED
 
 
-@azure_vm_bp.route("/azure_vm/<action>", methods=["GET"])
+@azure_vm_bp.route("/vm/<action>", methods=["GET"])
 @fractalPreProcess
-@jwt_required
 def azure_vm_get(action, **kwargs):
     if action == "ip":
         # Gets the IP address of a VM using Azure SDK
@@ -112,11 +153,14 @@ def azure_vm_get(action, **kwargs):
         vm_name = request.args.get("vm_name")
 
         current_user = get_jwt_identity()
-        if getVMUser(vm_name) != current_user:
-            return jsonify({"error": "Wrong user!"}), FORBIDDEN
 
         resource_group = request.args.get("resource_group")
 
         output = ipHelper(vm_name, resource_group)
+
+        return jsonify(output), output["status"]
+
+    elif action == "protocol_info":
+        output = protocolInfoHelper(kwargs["received_from"])
 
         return jsonify(output), output["status"]

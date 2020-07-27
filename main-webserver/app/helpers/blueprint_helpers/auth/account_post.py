@@ -185,3 +185,39 @@ def deleteHelper(username):
         return {"status": BAD_REQUEST, "error": output["error"]}
 
     return {"status": SUCCESS, "error": None}
+
+
+def resetPasswordHelper(username, password):
+    """Updates the password for a user in the users SQL table
+
+    Args:
+        username (str): The user to update the password for
+        password (str): The new password
+    """
+    pwd_token = jwt.encode({"pwd": password}, os.getenv("SECRET_KEY"))
+    fractalSQLUpdate(
+        table_name="users",
+        conditional_params={"username": username},
+        new_params={"password": pwd_token},
+    )
+
+
+def lookupHelper(username):
+    """Checks if user exists in the users SQL table
+
+    Args:
+        username (str): The user to lookup
+    """
+    params = {
+        "username": username,
+    }
+
+    output = fractalSQLSelect("users", params)
+
+    if output["success"]:
+        if output["rows"]:
+            return {"exists": True, "status": SUCCESS}
+        else:
+            return {"exists": False, "status": SUCCESS}
+    else:
+        return {"status": BAD_REQUEST}

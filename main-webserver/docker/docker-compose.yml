@@ -1,0 +1,50 @@
+version: "3.8"
+services:
+
+  redis:
+    # Matches version being used by staging as of 2020-07-08
+    image: redis:5.0.8 
+    ports:
+      - "7810:6379" # Proxy redis on localhost:7810
+    networks:
+      - primary
+
+  web:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    command: web
+    ports:
+      - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
+    networks:
+      - primary
+    depends_on:
+      - redis
+    env_file: .env
+    environment:
+      PORT: 7730
+
+  celery:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    command: celery
+    networks:
+      - primary
+    depends_on:
+      - redis
+    env_file: .env
+
+# TODO use a local DB (as commented out below) instead of the staging/production DB
+#   db:
+#     image: postgres:9.4
+#     volumes:
+#       - db-data:/var/lib/postgresql/data
+#     networks:
+#       - primary
+#
+# volumes:
+#   db-data:
+
+networks:
+  primary:

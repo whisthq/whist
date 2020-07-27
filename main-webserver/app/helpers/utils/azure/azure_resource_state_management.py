@@ -84,13 +84,13 @@ def sendVMStartCommand(
             # If a Windows VM, wait for a winlogon ping, which indicates that the server-side protocol is running
 
             if needs_winlogon:
-                winlogon = waitForWinlogon(vm_name, resource_group)
+                winlogon = waitForWinlogon(vm_name, resource_group, s=s)
 
                 # If we did not receive a winlogon ping, reboot the VM and keep waiting
 
                 number_of_winlogon_tries = 1
 
-                while winlogon < 0:
+                while not winlogon:
                     if number_of_winlogon_tries > 4:
                         fractalLog(
                             function="sendVMStartCommand",
@@ -100,10 +100,19 @@ def sendVMStartCommand(
                             ),
                             level=logging.CRITICAL,
                         )
-                        return -1
 
-                    boot_if_necessary(vm_name, True)
-                    winlogon = waitForWinlogon(vm_name, resource_group)
+                        if s:
+                            s.update_state(
+                                state="PENDING",
+                                meta={
+                                    "msg": "Could not log you in after 4 attempts. Trying 4 more times before forcefully quitting..."
+                                },
+                            )
+                            return -1
+
+                    boot_if_necessary(vm_name, True, resource_group=resource_group, s=s)
+                    winlogon = waitForWinlogon(vm_name, resource_group, s=s)
+                    number_of_winlogon_tries += 1
 
                 if s:
                     s.update_state(
@@ -170,7 +179,7 @@ def fractalVMStart(
     resource_group=os.getenv("VM_GROUP"),
     s=None,
 ):
-    """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary 
+    """Bullies Azure into actually starting the vm by repeatedly calling sendVMStartCommand if necessary
     (big brain thoughts from Ming)
 
     Args:
@@ -214,12 +223,12 @@ def fractalVMStart(
                 vm_name, needs_restart, needs_winlogon, resource_group, s=s
             )
             < 0
-            and start_command_tries < 4
+            and start_command_tries < 2
         ):
-            time.sleep(10)
+            time.sleep(5)
             start_command_tries += 1
 
-        if start_command_tries >= 4:
+        if start_command_tries >= 2:
             return -1
 
         wake_retries = 0

@@ -48,6 +48,49 @@ def startVM(self, vm_name, resource_group=os.getenv("VM_GROUP")):
 
 
 @celery_instance.task(bind=True)
+def restartVM(self, vm_name, resource_group=os.getenv("VM_GROUP")):
+    """Restarts an Azure VM
+
+    Args:
+        vm_name (str): The name of the VM
+        resource_group (str): The name of the VM's resource group
+
+    Returns:
+        json: Success/failure
+    """
+
+    if spinLock(vm_name, resource_group) < 0:
+        return {"status": REQUEST_TIMEOUT}
+
+    fractalLog(
+        function="restartVM",
+        label=getVMUser(vm_name, resource_group),
+        logs="Restarting VM {vm_name} in resource group {resource_group}.".format(
+            vm_name=vm_name, resource_group=resource_group
+        ),
+    )
+
+    lockVMAndUpdate(vm_name=vm_name, state="RESTARTING", lock=True, temporary_lock=3)
+
+    _, compute_client, _ = createClients()
+
+    fractalVMStart(vm_name, needs_restart=True, resource_group=resource_group, s=self)
+
+    output = fractalSQLSelect(
+        table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
+    )
+
+    fractalLog(
+        function="restartVM",
+        label=getVMUser(vm_name, resource_group),
+        logs="VM {vm_name} successfully restarted.".format(vm_name=vm_name),
+    )
+
+    if output["success"] and output["rows"]:
+        return output["rows"][0]
+
+
+@celery_instance.task(bind=True)
 def deallocateVM(self, vm_name, resource_group=os.getenv("VM_GROUP")):
     """Deallocates an Azure VM
 

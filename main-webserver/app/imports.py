@@ -32,7 +32,7 @@ from dotenv import *
 from flask_sqlalchemy import *
 from flask_migrate import Migrate
 from celery import Celery, uuid, task
-from flask import Flask, request, jsonify, Blueprint, make_response
+from flask import Flask, request, jsonify, Blueprint, make_response, render_template
 from sqlalchemy.sql import text
 from jose import jwt
 from flask_cors import CORS
@@ -46,9 +46,10 @@ from logging.handlers import SysLogHandler
 from functools import wraps
 from botocore.exceptions import NoCredentialsError
 from msrest.exceptions import ClientException
-from .constants.http_codes import *
-
 from google_auth_oauthlib.flow import Flow
 import pandas as pd
+
+from .constants.http_codes import *
+from .constants.config import *
 
 load_dotenv()

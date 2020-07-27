@@ -1,5 +1,5 @@
 from app import *
-from app.helpers.blueprint_helpers.artifact_post import *
+from app.helpers.blueprint_helpers.azure.artifact_post import *
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_modification import *
 from app.celery.azure_resource_state import *

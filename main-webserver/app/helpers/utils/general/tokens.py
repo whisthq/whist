@@ -1,5 +1,15 @@
 from app.imports import *
+from app.helpers.utils.general.sql_commands import *
 
+def generateUniquePromoCode():
+    output = fractalSQLSelect("users", {})
+    old_codes = []
+    if output["rows"]:
+        old_codes = [user["code"] for user in output["rows"]]
+    new_code = generatePromoCode()
+    while new_code in old_codes:
+        new_code = generatePromoCode()
+    return new_code
 
 def getAccessTokens(username):
     # access_token = create_access_token(identity = username, expires_delta = datetime.timedelta(seconds=5))
@@ -42,3 +52,37 @@ def genHaiku(n):
     ]
     haikus = [haiku[0 : np.min([15, len(haiku)])] for haiku in haikus]
     return haikus
+
+
+def getGoogleTokens(code, clientApp):
+    if clientApp:
+        client_secret = "google_client_secret_desktop.json"
+        redirect_uri = "urn:ietf:wg:oauth:2.0:oob:auto"
+    else:
+        client_secret = "google_client_secret.json"
+        redirect_uri = "postmessage"
+
+    flow = Flow.from_client_secrets_file(
+        client_secret,
+        scopes=[
+            "https://www.googleapis.com/auth/userinfo.email",
+            "openid",
+            "https://www.googleapis.com/auth/userinfo.profile",
+        ],
+        redirect_uri=redirect_uri,
+    )
+
+    flow.fetch_token(code=code)
+
+    credentials = flow.credentials
+
+    session = flow.authorized_session()
+    profile = session.get("https://www.googleapis.com/userinfo/v2/me").json()
+
+    return {
+        "access_token": credentials.token,
+        "refresh_token": credentials.refresh_token,
+        "google_id": profile["id"],
+        "email": profile["email"],
+        "name": profile["given_name"],
+    }

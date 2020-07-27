@@ -1,4 +1,7 @@
 from app import *
+from app.helpers.blueprint_helpers.azure.azure_disk_post import *
+from app.helpers.utils.azure.azure_general import *
+
 from app.celery.azure_resource_creation import *
 from app.celery.azure_resource_deletion import *
 from app.celery.azure_resource_modification import *
@@ -9,48 +12,26 @@ azure_disk_bp = Blueprint("azure_disk_bp", __name__)
 @azure_disk_bp.route("/azure_disk/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
+@fractalAuth
 def azure_disk_post(action, **kwargs):
-    current_user = get_jwt_identity()
     if action == "clone":
         # Clone a Fractal disk
-        username = kwargs["body"]["username"]
 
-        resource_group = os.getenv("VM_GROUP")
-        if "resource_group" in kwargs["body"].keys():
-            resource_group = kwargs["body"]["resource_group"]
-
-        if username != current_user:
-            return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
+        branch = "master"
+        if "branch" in kwargs["body"].keys():
+            branch = kwargs["body"]["branch"]
 
         task = cloneDisk.apply_async(
             [
-                username,
+                kwargs["body"]["username"],
                 kwargs["body"]["location"],
                 kwargs["body"]["vm_size"],
                 kwargs["body"]["operating_system"],
+                branch,
                 kwargs["body"]["apps"],
-                resource_group,
+                kwargs["body"]["resource_group"],
             ]
         )
-
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-
-        return jsonify({"ID": task.id}), ACCEPTED
-
-    elif action == "swap":
-        # Swap a disk onto a specified VM
-
-        disk_name, vm_name, resource_group = (
-            kwargs["body"]["disk_name"],
-            kwargs["body"]["vm_name"],
-            kwargs["body"]["resource_group"],
-        )
-
-        if getDiskUser(disk_name) != current_user:
-            return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
-
-        task = swapSpecificDisk.apply_async([vm_name, disk_name, resource_group])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
@@ -67,9 +48,6 @@ def azure_disk_post(action, **kwargs):
         if "username" in kwargs["body"].keys():
             username = kwargs["body"]["username"]
 
-            if username != current_user:
-                return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
-
             output = fractalSQLSelect(table_name="disks", params={"username": username})
 
             if output["success"] and output["rows"]:
@@ -81,9 +59,6 @@ def azure_disk_post(action, **kwargs):
 
         elif "disk_name" in kwargs["body"].keys():
             disk_name = kwargs["body"]["disk_name"]
-
-            if getDiskUser(disk_name) != current_user:
-                return jsonify({"error": "Wrong user!"}), UNAUTHORIZED
 
             task = deleteDisk.apply_async([disk_name, resource_group])
             return jsonify({"ID": task.id}), ACCEPTED
@@ -98,9 +73,56 @@ def azure_disk_post(action, **kwargs):
             kwargs["body"]["resource_group"],
         )
 
-        task = automaticAttachDisk.apply_async([disk_name, resource_group])
+        if not checkResourceGroup(resource_group):
+            return jsonify({"ID": None}), BAD_REQUEST
+
+        attach_to_specific_vm = False
+        task = None
+
+        if "vm_name" in kwargs["body"].keys():
+            vm_name = kwargs["body"]["vm_name"]
+            if vm_name:
+                attach_to_specific_vm = True
+                task = swapSpecificDisk.apply_async(
+                    [vm_name, disk_name, resource_group]
+                )
+
+        if not attach_to_specific_vm:
+            task = automaticAttachDisk.apply_async([disk_name, resource_group])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+
+    elif action == "create":
+        # Create a blank, default disk
+
+        disk_size, username = kwargs["body"]["disk_size"], kwargs["body"]["username"]
+        location, resource_group = (
+            kwargs["body"]["location"],
+            kwargs["body"]["resource_group"],
+        )
+
+        output = createHelper(disk_size, username, location, resource_group)
+
+        return jsonify({"ID": output["ID"]}), output["status"]
+
+    elif action == "stun":
+        # Toggle whether a disk uses the STUN server
+
+        using_stun, disk_name = (
+            kwargs["body"]["using_stun"],
+            kwargs["body"]["disk_name"],
+        )
+
+        output = stunHelper(using_stun, disk_name)
+
+        return jsonify(output), output["status"]
+    elif action == "branch":
+        # Toggle which protocol branch to run on (master, staging, or dev)
+
+        disk_name, branch = (kwargs["body"]["disk_name"], kwargs["body"]["branch"])
+        output = branchHelper(branch, disk_name)
+
+        return jsonify(output), output["status"]

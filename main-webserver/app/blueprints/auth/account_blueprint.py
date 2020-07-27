@@ -1,13 +1,13 @@
 from app import *
-from app.helpers.blueprint_helpers.account_get import *
-from app.helpers.blueprint_helpers.account_post import *
+from app.helpers.blueprint_helpers.auth.account_get import *
+from app.helpers.blueprint_helpers.auth.account_post import *
 
 account_bp = Blueprint("account_bp", __name__)
 
 
 @account_bp.route("/account/<action>", methods=["POST"])
 @fractalPreProcess
-def account_no_auth(action, **kwargs):
+def account_post(action, **kwargs):
     if action == "login":
         # Login endpoint
 
@@ -46,21 +46,22 @@ def account_no_auth(action, **kwargs):
 
         return jsonify(output), output["status"]
 
+    elif action == "resetPassword":
+        # Reset user password
+
+        resetPasswordHelper(kwargs["body"]["username"], kwargs["body"]["password"])
+        return jsonify({"status": SUCCESS}), SUCCESS
+    elif action == "lookup":
+        # Check if user exists
+
+        output = lookupHelper(kwargs["body"]["username"])
+        return jsonify(output), output["status"]
+
 
 @account_bp.route("/account/<action>", methods=["GET"])
 @fractalPreProcess
-@jwt_required
-@fractalAuth
-def account_get(action, **kwargs):
-    if action == "code":
-        # Get the user's promo code
-        username = request.args.get("username")
-
-        output = codeHelper(username)
-
-        return jsonify(output), output["status"]
-
-    elif action == "disks":
+def account_get_no_auth(action, **kwargs):
+    if action == "disks":
         # Get all the user's disks
         username = request.args.get("username")
 
@@ -71,7 +72,6 @@ def account_get(action, **kwargs):
         output = disksHelper(username, main)
 
         return jsonify(output), output["status"]
-
     elif action == "verified":
         # Check if the user's email has been verified
         username = request.args.get("username")
@@ -79,3 +79,12 @@ def account_get(action, **kwargs):
         output = verifiedHelper(username)
 
         return jsonify(output), output["status"]
+
+    elif action == "code":
+        # Get the user's promo code
+        username = request.args.get("username")
+
+        output = codeHelper(username)
+
+        return jsonify(output), output["status"]
+

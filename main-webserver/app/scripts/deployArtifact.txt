@@ -5,11 +5,11 @@ $r = iwr https://api.github.com/repos/fractalcomputers/protocol/actions/runs/RUN
 $artifact_info = ConvertFrom-Json -InputObject $r.content ;
 $windows_build_json = $artifact_info.artifacts | where { $_.name -eq 'ARTIFACT_NAME' } ;
 Invoke-WebRequest $windows_build_json.archive_download_url -Headers @{'Authorization' = 'Basic ' + $creds} -UseBasicParsing -OutFile build.zip ;
-net stop fractalservice ;
+net stop fractal ;
 taskkill /IM "FractalService.exe" /F ;
 taskkill /IM "FractalServer.exe" /F ;
 Expand-Archive .\build.zip -Force ;
 Copy-item -Force -Recurse build\* -Destination 'C:\Program Files\Fractal' ;
 Remove-Item C:\ProgramData\FractalCache\log.txt ;
-net start fractal service ;
-shutdown /r 
+net start fractal ;
+shutdown /r

@@ -2,7 +2,7 @@ from app.imports import *
 from app.helpers.utils.general.logs import *
 
 
-engine = db.create_engine(os.getenv("DATABASE_URL"), echo=False, pool_pre_ping=True)
+engine = db.create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 Session = sessionmaker(bind=engine, autocommit=False)
 
 
@@ -65,7 +65,7 @@ def fractalSQLSelect(table_name, params):
         table_name=table_name
     )
 
-    if not params:
+    if not params or len(params) == 0:
         command = """
             SELECT * FROM \"{table_name}\"""".format(
             table_name=table_name
@@ -91,6 +91,16 @@ def fractalSQLSelect(table_name, params):
 
 
 def fractalSQLUpdate(table_name, conditional_params, new_params):
+    """Updates an entry in the database
+
+    Args:
+        table_name (str): Name of table to update
+        conditional_params (arr[str]): The params that need to be satisfied for the row to update
+        new_params (arr[str]): The new values to update
+
+    Returns:
+        [type]: [description]
+    """
     number_of_new_params = number_of_conditional_params = 1
 
     command = """
