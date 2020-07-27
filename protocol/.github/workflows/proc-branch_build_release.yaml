@@ -710,4 +710,4 @@ jobs:
           curl -u "${{ secrets.CI_PAT }}:" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches \
-            -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{steps.release_info.outputs.version_id}}}, "should_test": "false", "should_release": "true"}'
+            -d '{"ref": "master", "inputs": {"ref": "master", "protocol_version": "${{steps.release_info.outputs.version_id}}, "should_test": "false", "should_release": "true"}}'
