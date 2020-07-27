@@ -104,7 +104,6 @@ function(git_describe _var)
 		return()
 	endif()
 
-	# TODO sanitize
 	#if((${ARGN}" MATCHES "&&") OR
 	#	(ARGN MATCHES "||") OR
 	#	(ARGN MATCHES "\\;"))

@@ -1,12 +1,44 @@
-/*
- * Clipboard thread handling.
- *
+/**
  * Copyright Fractal Computers, Inc. 2020
- **/
+ * @file clipboard_synchronizer.c
+ * @brief This file contains code meant, to be used on the clientside, that will
+ *        assist in synchronizing the client-server clipboard.
+============================
+Usage
+============================
+
+initClipboardSynchronizer("76.106.92.11");
+
+ClipboardData server_clipboard;
+
+// Will set the client clipboard to that data
+ClipboardSynchronizerSetClipboard(&server_clipboard);
+
+// Will likely return true because it's waiting on server_clipboard to be set
+mprintf("Is Synchronizing? %d\n", isClipboardSynchronizing());
+
+// Wait for clipboard to be done synchronizing
+while(isClipboardSynchronizing());
+
+ClipboardData* client_clipboard = ClipboardSynchronizerGetNewClipboard();
+
+if (client_clipboard) {
+  // We have a new clipboard, this should be sent to the server
+  Send(client_clipboard);
+} else {
+  // There is no new clipboard
+}
+
+destroyClipboardSynchronizer();
+*/
+
 #include <stdio.h>
 
 #include "../core/fractal.h"
 #include "clipboard.h"
+
+#define UNUSED(x) (void)(x)
+#define MS_IN_SECOND 1000
 
 int UpdateClipboardThread(void* opaque);
 bool pendingUpdateClipboard();
@@ -42,9 +74,7 @@ void initClipboardSynchronizer(char* server_ip_local) {
     StartTimer((clock*)&last_clipboard_update);
     clipboard_semaphore = SDL_CreateSemaphore(0);
 
-    // thread =
-    //     SDL_CreateThread(UpdateClipboardThread, "UpdateClipboardThread",
-    //     NULL);
+    thread = SDL_CreateThread(UpdateClipboardThread, "UpdateClipboardThread", NULL);
 
     pending_update_clipboard = true;
 }
@@ -70,7 +100,7 @@ bool ClipboardSynchronizerSetClipboard(ClipboardData* cb) {
 }
 
 int UpdateClipboardThread(void* opaque) {
-    opaque;
+    UNUSED(opaque);
 
     while (connected) {
         SDL_SemWait(clipboard_semaphore);
@@ -108,26 +138,7 @@ int UpdateClipboardThread(void* opaque) {
                          \"ssh://%s/%s/get_clipboard/\" \
                          %s \
                          -force \"ssh://%s/%s/get_clipboard/\"",
-                    prefix, exc, username, server_ip, filename, SET_CLIPBOARD,
-                    server_ip, filename);
-
-                /*
-                strcat( cmd, "-follow \"Path *\" -ui text -sshargs \"-o
-                UserKnownHostsFile=ssh_host_ecdsa_key.pub -l " ); strcat( cmd,
-                username ); strcat( cmd, " -i sshkey\" " ); strcat( cmd, "
-                \"ssh://" ); strcat( cmd, (char*)server_ip ); strcat( cmd, "/"
-                ); strcat( cmd, filename ); strcat( cmd, "/get_clipboard/" );
-                strcat( cmd, "\" " );
-                strcat( cmd, SET_CLIPBOARD );
-                strcat( cmd, " -force " );
-                strcat( cmd, " \"ssh://" );
-                strcat( cmd, (char*)server_ip );
-                strcat( cmd, "/" );
-                strcat( cmd, filename );
-                strcat( cmd, "/get_clipboard/" );
-                strcat( cmd, "\" " );
-                strcat( cmd, " -ignorearchives -confirmbigdel=false -batch" );
-                */
+                    prefix, exc, username, server_ip, filename, SET_CLIPBOARD, server_ip, filename);
 
                 LOG_INFO("COMMAND: %s", cmd);
                 runcmd(cmd, NULL);
@@ -161,26 +172,7 @@ int UpdateClipboardThread(void* opaque) {
                          %s \
                          \"ssh://%s/%s/set_clipboard/\" \
                          -force %s",
-                    prefix, exc, username, GET_CLIPBOARD, server_ip, filename,
-                    GET_CLIPBOARD);
-
-                /*
-                strncat(cmd,
-                       "-follow \"Path *\" -ui text -sshargs \"-o "
-                       "UserKnownHostsFile=ssh_host_ecdsa_key.pub -l ",
-                sizeof(cmd)); strncat(cmd, username, sizeof( cmd ) );
-                strncat(cmd, " -i sshkey\" ", sizeof( cmd ) );
-                strncat(cmd, GET_CLIPBOARD, sizeof( cmd ) );
-                strncat(cmd, " \"ssh://", sizeof( cmd ) );
-                strncat(cmd, (char*)server_ip, sizeof( cmd ) );
-                strncat(cmd, "/", sizeof( cmd ) );
-                strncat(cmd, filename, sizeof( cmd ) );
-                strncat(cmd, "/set_clipboard", sizeof( cmd ) );
-                strncat(cmd, "/\" -force ", sizeof( cmd ) );
-                strncat(cmd, GET_CLIPBOARD, sizeof( cmd ) );
-                strncat(cmd, " -ignorearchives -confirmbigdel=false -batch",
-                sizeof( cmd ) );
-                */
+                    prefix, exc, username, GET_CLIPBOARD, server_ip, filename, GET_CLIPBOARD);
 
                 LOG_INFO("COMMAND: %s", cmd);
                 runcmd(cmd, NULL);
@@ -200,9 +192,8 @@ int UpdateClipboardThread(void* opaque) {
             // If it hasn't been 500ms yet, then wait 500ms to prevent too much
             // spam
             const int spam_time_ms = 500;
-            if (GetTimer(clipboard_time) < spam_time_ms / 1000.0) {
-                SDL_Delay(max(
-                    (int)(spam_time_ms - 1000 * GetTimer(clipboard_time)), 1));
+            if (GetTimer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
+                SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * GetTimer(clipboard_time)), 1));
             }
         }
 
@@ -214,8 +205,6 @@ int UpdateClipboardThread(void* opaque) {
 }
 
 ClipboardData* ClipboardSynchronizerGetNewClipboard() {
-    return NULL;
-
     if (pending_clipboard_push) {
         pending_clipboard_push = false;
         return clipboard;

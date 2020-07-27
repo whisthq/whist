@@ -5,18 +5,16 @@
  **/
 #include "input.h"
 
-#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                    \
-    if (ioctl(FD, PARAMS) == -1) {                                           \
-        mprintf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", \
-                strerror(errno));                                            \
-        goto failure;                                                        \
+#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                                      \
+    if (ioctl(FD, PARAMS) == -1) {                                                             \
+        mprintf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", strerror(errno)); \
+        goto failure;                                                                          \
     }
 
-#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                    \
-    if (ioctl(FD, PARAMS) == -1) {                                           \
-        mprintf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", \
-                strerror(errno));                                            \
-        goto failure;                                                        \
+#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                                      \
+    if (ioctl(FD, PARAMS) == -1) {                                                             \
+        mprintf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", strerror(errno)); \
+        goto failure;                                                                          \
     }
 
 // @brief Linux keycodes for replaying SDL user inputs on server
@@ -431,9 +429,8 @@ input_device_t* CreateInputDevice() {
 
     if (input_device->fd_absmouse < 0 || input_device->fd_relmouse < 0 ||
         input_device->fd_keyboard < 0) {
-        LOG_ERROR(
-            "CreateInputDevice: Error opening '/dev/uinput' for writing: %s",
-            strerror(errno));
+        LOG_ERROR("CreateInputDevice: Error opening '/dev/uinput' for writing: %s",
+                  strerror(errno));
         goto failure;
     }
 
@@ -472,8 +469,7 @@ input_device_t* CreateInputDevice() {
     _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_ABSBIT, ABS_X)
     _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_ABSBIT, ABS_Y)
 
-    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_PROPBIT,
-                       INPUT_PROP_POINTER)
+    _FRACTAL_IOCTL_TRY(input_device->fd_absmouse, UI_SET_PROPBIT, INPUT_PROP_POINTER)
 
     // config devices
 
@@ -557,28 +553,22 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
             // event for keyboard action
-            EmitInputEvent(input_device->fd_keyboard, EV_KEY,
-                           GetLinuxKeyCode(fmsg->keyboard.code),
+            EmitInputEvent(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(fmsg->keyboard.code),
                            fmsg->keyboard.pressed);
             break;
         case MESSAGE_MOUSE_MOTION:
             // mouse motion event
             if (fmsg->mouseMotion.relative) {
-                EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_X,
-                               fmsg->mouseMotion.x);
-                EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_Y,
-                               fmsg->mouseMotion.y);
+                EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_X, fmsg->mouseMotion.x);
+                EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_Y, fmsg->mouseMotion.y);
             } else {
                 EmitInputEvent(input_device->fd_absmouse, EV_ABS, ABS_X,
-                               (int)(fmsg->mouseMotion.x *
-                                     (int32_t)get_virtual_screen_width() /
+                               (int)(fmsg->mouseMotion.x * (int32_t)get_virtual_screen_width() /
                                      (int32_t)MOUSE_SCALING_FACTOR));
                 EmitInputEvent(input_device->fd_absmouse, EV_ABS, ABS_Y,
-                               (int)(fmsg->mouseMotion.y *
-                                     (int32_t)get_virtual_screen_height() /
+                               (int)(fmsg->mouseMotion.y * (int32_t)get_virtual_screen_height() /
                                      (int32_t)MOUSE_SCALING_FACTOR));
-                EmitInputEvent(input_device->fd_absmouse, EV_KEY, BTN_TOOL_PEN,
-                               1);
+                EmitInputEvent(input_device->fd_absmouse, EV_KEY, BTN_TOOL_PEN, 1);
             }
             break;
         case MESSAGE_MOUSE_BUTTON:
@@ -589,10 +579,8 @@ bool ReplayUserInput(input_device_t* input_device, FractalClientMessage* fmsg) {
             break;  // outer switch
         case MESSAGE_MOUSE_WHEEL:
             // mouse wheel event
-            EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_HWHEEL,
-                           fmsg->mouseWheel.x);
-            EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_WHEEL,
-                           fmsg->mouseWheel.y);
+            EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_HWHEEL, fmsg->mouseWheel.x);
+            EmitInputEvent(input_device->fd_relmouse, EV_REL, REL_WHEEL, fmsg->mouseWheel.y);
             break;
             // TODO: add clipboard
         default:

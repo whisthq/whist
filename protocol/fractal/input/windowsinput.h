@@ -8,6 +8,13 @@
 ============================
 Usage
 ============================
+
+Use EnterWinString to enter a password to Windows Winlogon screen, to log a user
+into the Windows desktop environment. You can create an input device to receive
+input (keystrokes, mouse clicks, etc.) via CreateInputDevice (defined in
+input.h). You can then send input to the Windows OS via ReplayUserInput, and use
+UpdateKeyboardState to sync keyboard state between local and remote computers
+(say, sync them to both have CapsLock activated).
 */
 
 /*

@@ -33,8 +33,8 @@ FractalPacket: This type represents a packet of information
    - A FractalPacket may be sent twice in the case of packet recovery, but any
      two FractalPackets found that are of the same type and ID will be expected
      to have the same data (To be specific, the Client should never legally send
-two distinct packets with same ID/Type, and neither should the Server, but if
-     the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
+     two distinct packets with same ID/Type, and neither should the Server, but
+if the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
      they can be different)
    - To reconstruct the original datagram from a sequence of FractalPackets,
      concatenated the data[] streams (From 0 to payload_size - 1) for each index
@@ -133,6 +133,7 @@ typedef struct SocketContext {
     struct sockaddr_in addr;
     int ack;
     SDL_mutex* mutex;
+    char aes_private_key[16];
 } SocketContext;
 
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
@@ -164,21 +165,20 @@ typedef struct FractalPacket {
 
     // Metadata
     FractalPacketType type;  // Video, Audio, or Message
-    int id;  // Unique identifier (Two packets with the same type and id, from
-             // the same IP, will be the same)
-    short index;        // Handle separation of large datagrams
-    short num_indices;  // The total datagram consists of data packets with
-                        // indices from 0 to payload_size - 1
-    int payload_size;   // size of data[] that is of interest
-    bool is_a_nack;     // True if this is a replay'ed packet
+    int id;                  // Unique identifier (Two packets with the same type and id, from
+                             // the same IP, will be the same)
+    short index;             // Handle separation of large datagrams
+    short num_indices;       // The total datagram consists of data packets with
+                             // indices from 0 to payload_size - 1
+    int payload_size;        // size of data[] that is of interest
+    bool is_a_nack;          // True if this is a replay'ed packet
 
     // Data
-    uint8_t
-        data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
-                                 // bytes beyond payload_size / cipher_len
-    uint8_t overflow[16];  // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16,
-                           // as the encrypted packet might be slightly larger
-                           // than the unencrypted packet
+    uint8_t data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
+                                     // bytes beyond payload_size / cipher_len
+    uint8_t overflow[16];            // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16,
+                                     // as the encrypted packet might be slightly larger
+                                     // than the unencrypted packet
 } FractalPacket;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
@@ -230,12 +230,10 @@ int GetLastNetworkError();
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int CreateUDPContext(SocketContext* context, char* destination, int port,
-                     int recvfrom_timeout_s, int connection_timeout_ms,
-                     bool using_stun);
-int CreateTCPContext(SocketContext* context, char* destination, int port,
-                     int recvfrom_timeout_s, int connection_timeout_ms,
-                     bool using_stun);
+int CreateUDPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
+                     int connection_timeout_ms, bool using_stun, char* aes_private_key);
+int CreateTCPContext(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
+                     int connection_timeout_ms, bool using_stun, char* aes_private_key);
 
 /**
  * @brief                          This will send a FractalPacket over TCP to
@@ -252,8 +250,7 @@ int CreateTCPContext(SocketContext* context, char* destination, int port,
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data,
-                  int len);
+int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data, int len);
 
 /**
  * @brief                          This will send a FractalPacket over UDP to
@@ -279,9 +276,8 @@ int SendTCPPacket(SocketContext* context, FractalPacketType type, void* data,
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int SendUDPPacket(SocketContext* context, FractalPacketType type, void* data,
-                  int len, int id, int burst_bitrate,
-                  FractalPacket* packet_buffer, int* packet_len_buffer);
+int SendUDPPacket(SocketContext* context, FractalPacketType type, void* data, int len, int id,
+                  int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer);
 
 /**
  * @brief                          Replay the sending of a packet that has
@@ -333,6 +329,7 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  * @param path                     The /path/to/the/endpoint
  * @param jsonObj                  A string consisting of the JSON-complient
  *                                 datastream to send to the webserver
+ * @param access_token             The access token for authentication
  *
  * @returns                        Will return false on failure, will return
  *                                 true on success Failure implies that the
@@ -340,7 +337,7 @@ FractalPacket* ReadUDPPacket(SocketContext* context);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendJSONPost(char* host_s, char* path, char* jsonObj);
+bool SendJSONPost(char* host_s, char* path, char* jsonObj, char* access_token);
 
 /**
  * @brief                          Sends a JSON GET request to the Fractal
@@ -358,8 +355,7 @@ bool SendJSONPost(char* host_s, char* path, char* jsonObj);
  *                                 ended, use GetLastNetworkError() to learn
  *                                 more about the error
  */
-bool SendJSONGet(char* host_s, char* path, char* json_res,
-                 size_t json_res_size);
+bool SendJSONGet(char* host_s, char* path, char* json_res, size_t json_res_size);
 
 int sendp(SocketContext* context, void* buf, int len);
 
