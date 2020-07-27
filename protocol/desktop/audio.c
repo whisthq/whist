@@ -13,6 +13,7 @@ audio format.
 */
 
 #include "audio.h"
+#include "network.h"
 
 extern int audio_frequency;
 extern bool has_rendered_yet;

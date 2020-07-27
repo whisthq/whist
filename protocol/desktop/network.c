@@ -13,7 +13,6 @@ TODO
 #include "network.h"
 
 #include "../fractal/core/fractal.h"
-#include "main.h"
 #include "network.h"
 #include "desktop_utils.h"
 
@@ -176,4 +175,26 @@ int sendServerQuitMessages(int num_messages) {
         }
     }
     return retval;
+}
+
+// Here we send Large fmsg's over TCP. At the moment, this is only CLIPBOARD.
+// Currently, sending FractalClientMessage packets over UDP that require multiple
+// sub-packets to send, it not supported (If low latency large
+// FractalClientMessage packets are needed, then this will have to be
+// implemented)
+int SendFmsg(FractalClientMessage *fmsg) {
+    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_TIME) {
+        return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
+    } else {
+        if (GetFmsgSize(fmsg) > MAX_PACKET_SIZE) {
+            LOG_ERROR(
+                "Attempting to send FMSG that is too large for UDP, and only CLIPBOARD and TIME is "
+                "presumed to be over TCP");
+            return -1;
+        }
+        static int sent_packet_id = 0;
+        sent_packet_id++;
+        return SendUDPPacket(&PacketSendContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg),
+                             sent_packet_id, -1, NULL, NULL);
+    }
 }

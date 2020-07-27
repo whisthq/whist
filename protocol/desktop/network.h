@@ -1,5 +1,8 @@
 #ifndef DESKTOP_NETWORK_H
 #define DESKTOP_NETWORK_H
+
+#include "../fractal/core/fractal.h"
+
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file network.h
@@ -20,8 +23,6 @@ int connectToServer(void);
 
 int closeConnections(void);
 
-int waitForServerInitMessage(int timeout);
-
 /**
  * @brief                          Sends quit messages to the server
  *
@@ -34,5 +35,14 @@ int waitForServerInitMessage(int timeout);
  * @returns                        Returns -1 on failure, 0 on success
  */
 int sendServerQuitMessages(int num_messages);
+
+/**
+ * @brief                          Send a FractalMessage from client to server
+ *
+ * @param fmsg                     FractalMessage struct to send as packet
+ *
+ * @returns                        0 if succeeded, else -1
+ */
+int SendFmsg(FractalClientMessage* fmsg);
 
 #endif  // DESKTOP_NETWORK_H
