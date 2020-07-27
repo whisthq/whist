@@ -75,10 +75,7 @@ def spinLock(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
     """
 
     # Check if VM is currently locked
-<<<<<<< HEAD
-=======
     vm_name = vm_name.split("/")[-1]
->>>>>>> staging
 
     output = fractalSQLSelect(
         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}

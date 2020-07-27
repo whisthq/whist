@@ -71,11 +71,7 @@ def deleteVM(self, vm_name, delete_disk, resource_group=os.getenv("VM_GROUP")):
     # step 2, detach the IP
     try:
         subnet_obj = network_client.subnets.get(
-<<<<<<< HEAD
-            resource_group_name=os.getenv("VM_GROUP"),
-=======
             resource_group_name=resource_group,
->>>>>>> staging
             virtual_network_name=vnet_name,
             subnet_name=subnet_name,
         )
@@ -146,11 +142,7 @@ def deleteVM(self, vm_name, delete_disk, resource_group=os.getenv("VM_GROUP")):
     # step 4, delete the IP
     try:
         async_ip_delete = network_client.public_ip_addresses.delete(
-<<<<<<< HEAD
-            os.getenv("VM_GROUP"), ip_name
-=======
             resource_group, ip_name
->>>>>>> staging
         )
         async_ip_delete.wait()
 
@@ -196,11 +188,7 @@ def deleteVM(self, vm_name, delete_disk, resource_group=os.getenv("VM_GROUP")):
     # step 5, delete the Vnet
     try:
         async_vnet_delete = network_client.virtual_networks.delete(
-<<<<<<< HEAD
-            os.getenv("VM_GROUP"), vnet_name
-=======
             resource_group, vnet_name
->>>>>>> staging
         )
         async_vnet_delete.wait()
 

@@ -230,18 +230,6 @@ def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
             },
         )
 
-<<<<<<< HEAD
-    has_winlogoned = checkWinlogon(vm_name, resource_group)
-    num_tries = 0
-
-    # Return success if a winlogon has been detected within the last 10 seconds
-
-    if (
-        has_winlogoned
-        or checkDev(vm_name, resource_group)
-        or resource_group != os.getenv("VM_GROUP")
-    ):
-=======
     fractalLog(
         function="waitForWinlogon",
         label=getVMUser(vm_name),
@@ -288,7 +276,6 @@ def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
                     resource_group=resource_group
                 ),
             )
->>>>>>> staging
         return 1
     else:
         fractalLog(

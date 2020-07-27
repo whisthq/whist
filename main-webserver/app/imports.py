@@ -49,7 +49,7 @@ from msrest.exceptions import ClientException
 from google_auth_oauthlib.flow import Flow
 import pandas as pd
 
+load_dotenv()
+
 from .constants.http_codes import *
 from .constants.config import *
-
-load_dotenv()
