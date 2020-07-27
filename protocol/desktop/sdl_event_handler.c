@@ -17,6 +17,7 @@ trigged an SDL event must be triggered in sdl_event_handler.c
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "sdl_utils.h"
 #include "desktop_utils.h"
+#include "network.h"
 
 #define UNUSED(x) (void)(x)
 #define WINDOWS_DEFAULT_DPI 96.0
