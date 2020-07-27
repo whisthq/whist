@@ -10,7 +10,27 @@ from app.celery.azure_resource_modification import *
 azure_vm_bp = Blueprint("azure_vm_bp", __name__)
 
 
-@azure_vm_bp.route("/azure_vm/<action>", methods=["POST"])
+@azure_vm_bp.route("/vm/restart", methods=["POST"])
+@fractalPreProcess
+@jwt_required
+@fractalAuth
+def azure_vm_restart(**kwargs):
+    # Restarts an Azure VM
+
+    vm_name = kwargs["body"]["vm_name"]
+    resource_group = os.getenv("VM_GROUP")
+    if "resource_group" in kwargs["body"].keys():
+        resource_group = kwargs["body"]["resource_group"]
+
+    task = restartVM.apply_async([vm_name, resource_group])
+
+    if not task:
+        return jsonify({"ID": None}), BAD_REQUEST
+
+    return jsonify({"ID": task.id}), ACCEPTED
+
+
+@azure_vm_bp.route("/vm/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
 @adminRequired
@@ -106,10 +126,18 @@ def azure_vm_post(action, **kwargs):
         output = devHelper(vm_name, dev)
 
         return jsonify(output), output["status"]
+<<<<<<< HEAD:app/blueprints/azure/azure_vm_blueprint.py
     elif action == "ping":
+=======
+    elif action == "ping" or action == "connectionStatus":
+>>>>>>> isabelle-sha:app/blueprints/azure/azure_vm_blueprint.py
         # Receives pings from active VMs
 
         available, vm_ip = kwargs["body"]["available"], kwargs["received_from"]
+
+        if "resource_group" in kwargs["body"].keys():
+            resource_group = kwargs["body"]["resource_group"]
+
         version = None
         if "version" in kwargs["body"].keys():
             version = kwargs["body"]["version"]
@@ -134,10 +162,8 @@ def azure_vm_post(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
 
-@azure_vm_bp.route("/azure_vm/<action>", methods=["GET"])
+@azure_vm_bp.route("/vm/<action>", methods=["GET"])
 @fractalPreProcess
-@jwt_required
-@fractalAuth
 def azure_vm_get(action, **kwargs):
     if action == "ip":
         # Gets the IP address of a VM using Azure SDK

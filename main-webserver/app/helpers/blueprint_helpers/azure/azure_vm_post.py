@@ -47,11 +47,13 @@ def pingHelper(available, vm_ip, version=None):
     # Retrieve VM data based on VM IP
 
     vm_info = None
+    username = None
 
     output = fractalSQLSelect(table_name="v_ms", params={"ip": vm_ip})
 
     if output["success"] and output["rows"]:
-        vm_info = output["rows"][0]["ip"]
+        vm_info = output["rows"][0]
+        username = vm_info["username"]
     else:
         return {"status": BAD_REQUEST}
 
@@ -112,7 +114,7 @@ def pingHelper(available, vm_ip, version=None):
             params={
                 "username": username,
                 "timestamp": dt.now().strftime("%m-%d-%Y, %H:%M:%S"),
-                "action": "logoff",
+                "action": "logon",
             },
         )
 

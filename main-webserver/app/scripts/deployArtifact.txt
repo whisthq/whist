@@ -12,4 +12,4 @@ Expand-Archive .\build.zip -Force ;
 Copy-item -Force -Recurse build\* -Destination 'C:\Program Files\Fractal' ;
 Remove-Item C:\ProgramData\FractalCache\log.txt ;
 net start fractal ;
-shutdown /r 
+shutdown /r

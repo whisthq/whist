@@ -4,7 +4,7 @@ name: Python Webserver Linting
 
 on:
   pull_request:
-    branches: [ master, staging ]
+    branches: [master, staging]
 
 jobs:
   build:

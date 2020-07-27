@@ -10,11 +10,11 @@ def lockVMAndUpdate(
     Args:
         vm_name (str): Name of VM
         state (str): Desired state of VM
-            [RUNNING_AVAILABLE, RUNNING_UNAVAILABLE, DEALLOCATED, DEALLOCATING, STOPPED, STOPPING, 
+            [RUNNING_AVAILABLE, RUNNING_UNAVAILABLE, DEALLOCATED, DEALLOCATING, STOPPED, STOPPING,
             DELETING, CREATING, RESTARTING, STARTING]
         lock (bool): True if VM is locked, False otherwise
         temporary_lock (int): Number of minutes, starting from now, to lock the VM (max is 10)
-         
+
 
     Returns:
         int: 1 = vm is unlocked, -1 = giving up
@@ -75,6 +75,7 @@ def spinLock(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
     """
 
     # Check if VM is currently locked
+    vm_name = vm_name.split("/")[-1]
 
     output = fractalSQLSelect(
         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
@@ -87,10 +88,11 @@ def spinLock(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
     else:
         fractalLog(
             function="spinLock",
-            label=str(username),
-            logs="spinLock errored with error: {error}.".format(
-                error=str(output["error"])
+            label=str(username) if username else vm_name,
+            logs="spinLock could not find VM {vm_name} in resource group {resource_group}".format(
+                vm_name=vm_name, resource_group=resource_group
             ),
+            level=logging.ERROR,
         )
         return -1
 

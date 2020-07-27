@@ -32,27 +32,31 @@ def fractalPreProcess(f):
         kwargs["body"] = body
         kwargs["received_from"] = received_from
 
-        format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
+        silence = False
+        for endpoint in SILENCED_ENDPOINTS:
+            if endpoint in request.url:
+                silence = True
+                break
 
-        logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logging.DEBUG)
+        if not silence:
+            format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
 
-        logger.info(
-            "{}\n{}\r\n{}\r\n\r\n{}".format(
-                "-----------START-----------",
-                request.method + " " + request.url,
-                "\r\n".join("{}: {}".format(k, v) for k, v in request.headers.items()),
-                str(body),
-            )
-        )
+            logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.DEBUG)
+
+            if body and request.method == "POST":
+                body = {
+                    k: str(v)[0 : min(len(str(v)), 500)] for k, v in dict(body).items()
+                }
+                body = str(body)
+
+            logger.info("{}\n{}\r\n".format(request.method + " " + request.url, body,))
 
         return f(*args, **kwargs)
 
     return wrapper
 
-
-# fractalLog(function="__init__", label="None", logs="Initializating server")
 
 celery_instance = make_celery()
 

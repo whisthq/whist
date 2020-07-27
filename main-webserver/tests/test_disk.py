@@ -5,6 +5,7 @@ from .helpers.tests.azure_vm import *
 
 
 @pytest.mark.disk_serial
+@disabled
 def test_delete_disk_initial(input_token):
     if os.getenv("USE_PRODUCTION_DATABASE").upper() == "TRUE":
         fractalLog(
@@ -77,6 +78,10 @@ def test_delete_disk_initial(input_token):
 
 
 @pytest.mark.disk_serial
+<<<<<<< HEAD
+=======
+@disabled
+>>>>>>> isabelle-sha
 def test_disk_clone(input_token):
     regions = ["eastus", "eastus", "eastus"]
 
@@ -116,7 +121,6 @@ def test_disk_clone(input_token):
 
 
 @pytest.mark.disk_serial
-@disabled
 def test_disk_attach(input_token):
     regions = ["eastus", "eastus", "eastus"]
 
@@ -134,10 +138,11 @@ def test_disk_attach(input_token):
             resp = attachDisk(
                 disk_name=disk_name,
                 resource_group=RESOURCE_GROUP,
+                vm_name="shyriver7582782",
                 input_token=input_token,
             )
 
-            task = queryStatus(resp, timeout=8)
+            task = queryStatus(resp, timeout=20)
 
             if task["status"] < 1:
                 fractalLog(
@@ -146,7 +151,6 @@ def test_disk_attach(input_token):
                     logs=task["output"],
                     level=logging.ERROR,
                 )
-                assert False
 
             fractalLog(
                 function="test_disk_attach",
@@ -156,14 +160,24 @@ def test_disk_attach(input_token):
                 ),
             )
 
+            command = """
+                New-ItemProperty -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Policies\System" -Name EnableLUA -PropertyType DWord -Value 0 -Force ;
+
+                Remove-Item "C:\Program Files\Fractal\FractalServer.exe"  ;
+                cd "C:\Program Files\Fractal"  ;
+                powershell -command "iwr -outf FractalServer.exe https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Windows/FractalServer.exe"  ;
+
+                Restart-Computer
+            """
+
             resp = runPowershell(
-                vm_name="shinymode749971",
-                command="choco install firefox --force",
+                vm_name="shyriver7582782",
+                command=command,
                 resource_group=RESOURCE_GROUP,
                 input_token=input_token,
             )
 
-            task = queryStatus(resp, timeout=4)
+            task = queryStatus(resp, timeout=10)
 
             if task["status"] < 1:
                 fractalLog(
@@ -172,15 +186,16 @@ def test_disk_attach(input_token):
                     logs=task["output"],
                     level=logging.ERROR,
                 )
-                assert False
 
     disks = fetchCurrentDisks()
+    print(disks)
     fractalJobRunner(attachDiskHelper, disks, multithreading=False)
 
     assert True
 
 
 @pytest.mark.disk_serial
+@disabled
 def test_disk_create(input_token):
     region = "eastus"
 

@@ -1,6 +1,7 @@
 from app import *
 from app.helpers.utils.general.sql_commands import *
 from app.helpers.utils.azure.azure_resource_creation import *
+from app.helpers.utils.general.tokens import *
 
 
 output = fractalRunSQL(command="""

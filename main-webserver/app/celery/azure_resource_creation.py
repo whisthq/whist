@@ -3,6 +3,7 @@ from app.helpers.utils.azure.azure_general import *
 from app.helpers.utils.azure.azure_resource_creation import *
 from app.helpers.utils.azure.azure_resource_state_management import *
 from app.helpers.utils.azure.azure_resource_locks import *
+from app.helpers.utils.general.crypto import *
 
 
 @celery_instance.task(bind=True)

@@ -28,6 +28,7 @@ Use `retrieve_config.py`. It provides a `-h` help menu for understanding paramet
 ```
 
 On Windows, run
+
 ```sh
 py retrieve_config.py [NAME OF BRANCH]
 ```

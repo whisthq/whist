@@ -180,6 +180,23 @@ def claimAvailableVM(
 ):
     session = Session()
 
+    command = text(
+        """
+        SELECT * FROM {table_name}
+        WHERE username=:username
+        """.format(
+            table_name=resourceGroupToTable(resource_group)
+        )
+    )
+    params = {"username": username}
+
+    available_vm = fractalCleanSQLOutput(session.execute(command, params).fetchone())
+
+    if available_vm:
+        session.commit()
+        session.close()
+        return available_vm
+
     state_preference = ["RUNNING_AVAILABLE", "STOPPED", "DEALLOCATED"]
 
     for state in state_preference:
