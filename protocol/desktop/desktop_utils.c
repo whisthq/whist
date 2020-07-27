@@ -20,6 +20,7 @@ TODO
 #include <string.h>
 
 #include "desktop_utils.h"
+#include "network.h"
 #include "../fractal/utils/logging.h"
 #include "fractalgetopt.h"
 

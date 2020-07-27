@@ -359,13 +359,4 @@ bool SendJSONGet(char* host_s, char* path, char* json_res, size_t json_res_size)
 
 int sendp(SocketContext* context, void* buf, int len);
 
-/**
- * @brief                          Send a FractalMessage from client to server
- *
- * @param fmsg                     FractalMessage struct to send as packet
- *
- * @returns                        0 if succeeded, else -1
- */
-int SendFmsg(FractalClientMessage* fmsg);
-
 #endif  // NETWORK_H

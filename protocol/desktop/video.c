@@ -20,6 +20,7 @@ packet), before being saved in a proper video frame format.
 #include "../fractal/utils/png.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "SDL2/SDL.h"
+#include "network.h"
 
 #define UNUSED(x) (void)(x)
 
