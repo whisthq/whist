@@ -526,6 +526,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_html_url: ${{ steps.create_release.outputs.html_url }}
       version_id: ${{ steps.release_info.outputs.version_id }}
     steps:
       - name: Check if all builds succeeded
@@ -684,6 +685,13 @@ jobs:
           asset_path: ./${{ matrix.config.client_artifact_name }}.zip
           asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.client_artifact_name }}.zip
           asset_content_type: application/zip
+      - name: comment PR
+          uses: unsplash/comment-on-pr@master
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            msg: "Check out this message! ${{ needs['create-release'].outputs.release_html_url }} "
+            check_for_duplicate_msg: false  # OPTIONAL
 
   trigger-clientapp-builds:
     needs: [params, build, upload-builds, test_client, create-release]
@@ -712,3 +720,8 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches \
             -d '{"ref": "wip-ci", "inputs": {"ref": "wip-ci", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "${{ needs['create-release'].outputs.version_id }}", "should_test": "false", "should_release": "true"}}'
+
+curl -u "$TOKEN:" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/1944203/dispatches \
+  -d '{"ref": "wip-ci", "inputs": {"ref": "wip-ci", "protocol_version": "dev-20200727.8", "version_id": "dev-20200727.8", "should_test": "false", "should_release": "true"}}'
