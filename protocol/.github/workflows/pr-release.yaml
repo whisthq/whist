@@ -41,5 +41,7 @@ jobs:
         with:
           workflow: "Procedure: Branch Build & Release"
           token: ${{ secrets.CI_PAT }}
-          ref: hamish-trigger_clientapps
+          ref: ${{ github.ref }}
           inputs: '{"ref": "${{ github.ref }}", "should_test": "false"}'
+
+
