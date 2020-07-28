@@ -685,13 +685,6 @@ jobs:
           asset_path: ./${{ matrix.config.client_artifact_name }}.zip
           asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.client_artifact_name }}.zip
           asset_content_type: application/zip
-      - name: comment PR
-          uses: unsplash/comment-on-pr@master
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            msg: "Check out this message! ${{ needs['create-release'].outputs.release_html_url }} "
-            check_for_duplicate_msg: false  # OPTIONAL
 
   trigger-clientapp-builds:
     needs: [params, build, upload-builds, test_client, create-release]
