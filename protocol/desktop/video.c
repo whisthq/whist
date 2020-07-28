@@ -854,8 +854,6 @@ int32_t ReceiveVideo(FractalPacket* packet) {
                 "Skipping packet.");
             return 0;
         }
-        LOG_INFO("Receiving packet %d", packet->id);
-        ;
         ctx->id = packet->id;
         ctx->frame_buffer = (char*)&frame_bufs[index];
         ctx->packets_received = 0;
@@ -943,7 +941,6 @@ int32_t ReceiveVideo(FractalPacket* packet) {
         bool is_iframe = ((Frame*)ctx->frame_buffer)->is_iframe;
 
         VideoData.frames_received++;
-        LOG_INFO("frames received: %d", VideoData.frames_received);
 
 #if LOG_VIDEO
         mprintf("Received Video Frame ID %d (Packets: %d) (Size: %d) %s\n", ctx->id,
