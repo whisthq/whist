@@ -28,6 +28,24 @@ def codeHelper(username):
         return {"code": None, "status": BAD_REQUEST}
 
 
+def fetchUserHelper(username):
+    """Returns the user's entire info
+
+    Args:
+        username (str): Email of the user
+
+    Returns:
+        http response
+    """
+    output = fractalSQLSelect(table_name="users", params={"username": username})
+
+    # Return user's promo code
+    if output["success"] and output["rows"]:
+        return jsonify({"user": output["rows"][0], "status":SUCCESS}), SUCCESS
+    else:
+        return jsonify({"user": None, "status":BAD_REQUEST}), BAD_REQUEST
+
+
 def disksHelper(username, main):
     """Fetches all disks associated with a username.
 

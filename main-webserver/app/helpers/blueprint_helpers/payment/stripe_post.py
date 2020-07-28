@@ -1,5 +1,7 @@
 from app import *
 from app.helpers.utils.mail.stripe_mail import *
+from app.helpers.utils.general.logs import *
+import logging
 
 stripe.api_key = os.getenv("STRIPE_SECRET")
 
@@ -146,20 +148,32 @@ def retrieveStripeHelper(email):
         credits = 0
 
     if customer:
-        subscription = customer["subscription"]
         try:
-            payload = stripe.Subscription.retrieve(subscription)
+            payload = stripe.Customer.retrieve(customer["id"])
+            subscription = None
+            for sub in payload["subscriptions"]["data"]:
+                if sub["id"] == customer["subscription"]:
+                    subscription = sub
+            cards = payload["sources"]["data"]
+            # cards = []
+            # for s in sources:
+            #     if s["object"] == "source":
+            #         cards.append(s["card"])
+            #     else:
+            #         cards.append(s)
+
             fractalSQLUpdate(
                 "customers",
-                {"subscription": payload["id"]},
-                {"trial_end": payload["trial_end"]},
+                {"subscription": subscription["id"]},
+                {"trial_end": subscription["trial_end"]},
             )
-            account_locked = not customer["paid"] and not payload["trial_end"]
+            account_locked = not customer["paid"] and not subscription["trial_end"]
             return (
                 jsonify(
                     {
                         "status": SUCCESS,
-                        "subscription": payload,
+                        "subscription": subscription,
+                        "cards": cards,
                         "creditsOutstanding": credits,
                         "account_locked": account_locked,
                         "customer": customer,
@@ -184,6 +198,7 @@ def retrieveStripeHelper(email):
                     {
                         "status": PAYMENT_REQUIRED,
                         "subscription": {},
+                        "cards": [],
                         "creditsOutstanding": credits,
                         "account_locked": account_locked,
                         "customer": customer,
@@ -197,6 +212,7 @@ def retrieveStripeHelper(email):
             {
                 "status": PAYMENT_REQUIRED,
                 "subscription": {},
+                "cards": [],
                 "creditsOutstanding": credits,
                 "account_locked": False,
                 "customer": {},
@@ -453,6 +469,28 @@ def removeProductHelper(email, productName):
 
     return (
         jsonify({"status": "Product removed from subscription successfully"}),
+        SUCCESS,
+    )
+
+
+def addCardHelper(custId, sourceId):
+    stripe.Customer.create_source(
+        custId, source=sourceId,
+    )
+
+    return (
+        jsonify({"status": "Card updated for customer successfully"}),
+        SUCCESS,
+    )
+
+
+def deleteCardHelper(custId, cardId):
+    stripe.Customer.delete_source(
+        custId, cardId,
+    )
+
+    return (
+        jsonify({"status": "Card removed for customer successfully"}),
         SUCCESS,
     )
 
