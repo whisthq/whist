@@ -84,6 +84,8 @@ def boot_if_necessary(
             resource_group, vm_name
         )
 
+        async_vm_restart.wait()
+
         if s:
             s.update_state(
                 state="PENDING",
@@ -129,15 +131,84 @@ def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
         )
 
         has_winlogoned = False
+        last_winlogon_timestamp = 0
+
         if output["success"] and output["rows"]:
             if not output["rows"][0]["ready_to_connect"]:
                 return False
             else:
                 has_winlogoned = (
-                    dateToUnix(getToday()) - output["rows"][0]["ready_to_connect"] < 10
+                    dateToUnix(getToday()) - output["rows"][0]["ready_to_connect"] < 8
                 )
+                last_winlogon_timestamp = output["rows"][0]["ready_to_connect"]
+        else:
+            fractalLog(
+                function="waitForWinlogon",
+                label=getVMUser(vm_name),
+                logs="Could not find VM {vm_name} in resource group {resource_group}".format(
+                    vm_name=vm_name, resource_group=resource_group
+                ),
+                level=logging.ERROR,
+            )
 
-        return has_winlogoned
+            return False
+
+        if has_winlogoned:
+            fractalLog(
+                function="waitForWinlogon",
+                label=getVMUser(vm_name),
+                logs="Detected initial winlogon event within last 8 seconds on VM {vm_name}. Checking for a second winlogon event...".format(
+                    vm_name=vm_name
+                ),
+            )
+
+            time.sleep(4)
+
+            num_queries = 0
+
+            while num_queries < 5:
+                output = fractalSQLSelect(
+                    table_name=resourceGroupToTable(resource_group),
+                    params={"vm_name": vm_name},
+                )
+                if output["success"] and output["rows"]:
+                    if not output["rows"][0]["ready_to_connect"]:
+                        return False
+                    if output["rows"][0]["ready_to_connect"] > last_winlogon_timestamp:
+                        fractalLog(
+                            function="waitForWinlogon",
+                            label=getVMUser(vm_name),
+                            logs="VM {vm_name} had another winlogon event within the last 4 seconds. VM winlogon success!".format(
+                                vm_name=vm_name
+                            ),
+                        )
+                        return True
+                    else:
+                        time.sleep(1)
+                        num_queries += 1
+                else:
+                    fractalLog(
+                        function="waitForWinlogon",
+                        label=getVMUser(vm_name),
+                        logs="Could not find VM {vm_name} in resource group {resource_group} on second winlogon query".format(
+                            vm_name=vm_name, resource_group=resource_group
+                        ),
+                        level=logging.ERROR,
+                    )
+
+                    return False
+
+            fractalLog(
+                function="waitForWinlogon",
+                label=getVMUser(vm_name),
+                logs="VM {vm_name} had a winlogon event 8 seconds ago, but after waiting another 9 seconds, another winlogon event was not detected. Assuming that the protocol died sometime in the last few seconds and returning winlogon False".format(
+                    vm_name=vm_name
+                ),
+                level=logging.WARNING,
+            )
+            return False
+
+        return False
 
     # Check if a VM is a dev machine
 
@@ -202,7 +273,7 @@ def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
                 function="waitForWinlogon",
                 label=getVMUser(vm_name),
                 logs="Resource group {resource_group} is not production resource group. Bypassing winlogon...".format(
-                    vm_name=vm_name
+                    resource_group=resource_group
                 ),
             )
         return 1
@@ -224,25 +295,25 @@ def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
 
         # Give up if we've waited too long
 
-        if num_tries > 30:
+        if num_tries > 25:
             fractalLog(
                 function="sendVMStartCommand",
                 label="VM {vm_name}".format(vm_name=vm_name),
-                logs="VM {vm_name} did not winlogon after 30 tries. Giving up...".format(
+                logs="VM {vm_name} did not winlogon after 25 tries. Giving up...".format(
                     vm_name=vm_name
                 ),
                 level=logging.WARNING,
             )
-            return -1
+            return False
 
     fractalLog(
         function="sendVMStartCommand",
         label="VM {vm_name}".format(vm_name=vm_name),
-        logs="VM {vm_name} winlogoned successfully after {} tries".format(
+        logs="VM {vm_name} winlogoned successfully after {num_tries} tries".format(
             vm_name=vm_name, num_tries=str(num_tries)
         ),
     )
-    return 1
+    return True
 
 
 def installApplications(vm_name, apps):

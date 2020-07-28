@@ -112,7 +112,7 @@ def azure_vm_post(action, **kwargs):
         output = devHelper(vm_name, dev)
 
         return jsonify(output), output["status"]
-    elif action == "ping":
+    elif action == "ping" or action == "connectionStatus":
         # Receives pings from active VMs
 
         available, vm_ip = kwargs["body"]["available"], kwargs["received_from"]
