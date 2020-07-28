@@ -58,26 +58,26 @@ RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 ADD utils.sh /
 
 RUN useradd --create-home fractal \
-    && usermod -aG sudo fractal \ 
+    && usermod -aG sudo fractal \
     && echo 'fractal:password1234567.' | chpasswd
 
 # Install all required components for Fractal to perform well
 # Split into multiple steps for caching
-RUN /bin/bash -c "source utils.sh \ 
+RUN /bin/bash -c "source utils.sh \
     && Update-Linux \
     && Set-Time \
     && Install-VirtualDisplay-NoGnome"
-RUN /bin/bash -c "source utils.sh \ 
+RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \
     && Install-GoogleChrome"
-RUN /bin/bash -c "source utils.sh \ 
+RUN /bin/bash -c "source utils.sh \
     && Install-NvidiaTeslaPublicDrivers \
     && Disable-TCC \
     && Set-OptimalGPUSettings"
-RUN /bin/bash -c "source utils.sh \ 
+RUN /bin/bash -c "source utils.sh \
     && Install-CustomX11Configuration"
-RUN /bin/bash -c "source utils.sh \ 
+RUN /bin/bash -c "source utils.sh \
     && Set-FractalDirectory \
     && Install-FractalServer dev"
 # RUN /bin/bash -c "source utils.sh \ 
@@ -88,7 +88,7 @@ RUN /bin/bash -c "source utils.sh \
     && Install-FractalLinuxInputDriver"
 # RUN /bin/bash -c "source utils.sh \
 #     && Install-FractalWallpaper"
-RUN /bin/bash -c "source utils.sh \ 
+RUN /bin/bash -c "source utils.sh \
     && Install-Unison \
     && Enable-SSHKey"
 # RUN /bin/bash -c " source utils.sh \
@@ -122,6 +122,8 @@ RUN systemctl enable fractal-display
 RUN sudo apt-get install -y pulseaudio
 # RUN chmod +x /lib/systemd/systemd
 
+ADD fractal-setup.sh /
+RUN chmod +x /fractal-setup.sh
 
 # USER fractal
 #ENTRYPOINT ["/usr/bin/sudo"]
