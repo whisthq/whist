@@ -724,10 +724,11 @@ void updateVideo() {
         if (VideoData.most_recent_iframe - 1 > VideoData.last_rendered_id) {
             LOG_INFO("Skipping from %d to i-frame %d!", VideoData.last_rendered_id,
                      VideoData.most_recent_iframe);
-            // If `last_rendered_id` is further back than the first frame received, start from the first frame received
-            for (int i = max(VideoData.last_rendered_id + 1, VideoData.most_recent_iframe - VideoData.frames_received + 1);
-                i < VideoData.most_recent_iframe;
-                i++) {
+            // If `last_rendered_id` is further back than the first frame received, start from the
+            // first frame received
+            for (int i = max(VideoData.last_rendered_id + 1,
+                             VideoData.most_recent_iframe - VideoData.frames_received + 1);
+                 i < VideoData.most_recent_iframe; i++) {
                 int index = i % RECV_FRAMES_BUFFER_SIZE;
                 if (receiving_frames[index].id == i) {
                     LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
@@ -853,7 +854,8 @@ int32_t ReceiveVideo(FractalPacket* packet) {
                 "Skipping packet.");
             return 0;
         }
-        LOG_INFO("Receiving packet %d", packet->id);;
+        LOG_INFO("Receiving packet %d", packet->id);
+        ;
         ctx->id = packet->id;
         ctx->frame_buffer = (char*)&frame_bufs[index];
         ctx->packets_received = 0;
