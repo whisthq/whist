@@ -658,7 +658,6 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
 
     // Set listen queue
     LOG_INFO("Waiting for TCP Connection");
-    set_timeout(context->s, stun_timeout_ms);
     if (listen(context->s, 3) < 0) {
         LOG_WARNING("Could not listen(2)! %d\n", GetLastNetworkError());
         closesocket(context->s);
@@ -673,10 +672,10 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
 
     struct timeval tv;
     tv.tv_sec = stun_timeout_ms / MS_IN_SECOND;
-    tv.tv_usec = (stun_timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
+    tv.tv_usec = (stun_timeout_ms % MS_IN_SECOND) * 1000;
 
-    if (select(0, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) <= 0) {
-        LOG_WARNING("Could not select!");
+    if (select(context->s + 1, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) <= 0) {
+        LOG_WARNING("Could not select! %d", GetLastNetworkError());
         closesocket(context->s);
         return -1;
     }
