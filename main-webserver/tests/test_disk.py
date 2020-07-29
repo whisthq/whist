@@ -6,7 +6,7 @@ from .helpers.tests.azure_vm import *
 
 @pytest.mark.disk_serial
 @disabled
-def test_delete_disk_initial(input_token):
+def test_delete_disk_initial(input_token, admin_token):
     if os.getenv("USE_PRODUCTION_DATABASE").upper() == "TRUE":
         fractalLog(
             function="test_delete_disk_initial",
@@ -43,7 +43,7 @@ def test_delete_disk_initial(input_token):
                 )
                 assert False
 
-        all_disks = fetchCurrentDisks()
+        all_disks = fetchCurrentDisks(admin_token)
 
         if all_disks:
             fractalLog(
@@ -118,7 +118,7 @@ def test_disk_clone(input_token):
 
 
 @pytest.mark.disk_serial
-def test_disk_attach(input_token):
+def test_disk_attach(input_token, admin_token):
     regions = ["eastus", "eastus", "eastus"]
 
     def attachDiskHelper(disk):
@@ -135,11 +135,10 @@ def test_disk_attach(input_token):
             resp = attachDisk(
                 disk_name=disk_name,
                 resource_group=RESOURCE_GROUP,
-                vm_name="shyriver7582782",
                 input_token=input_token,
             )
 
-            task = queryStatus(resp, timeout=20)
+            task = queryStatus(resp, timeout=8)
 
             if task["status"] < 1:
                 fractalLog(
@@ -148,6 +147,7 @@ def test_disk_attach(input_token):
                     logs=task["output"],
                     level=logging.ERROR,
                 )
+                assert False
 
             fractalLog(
                 function="test_disk_attach",
@@ -157,24 +157,14 @@ def test_disk_attach(input_token):
                 ),
             )
 
-            command = """
-                New-ItemProperty -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Policies\System" -Name EnableLUA -PropertyType DWord -Value 0 -Force ;
-
-                Remove-Item "C:\Program Files\Fractal\FractalServer.exe"  ;
-                cd "C:\Program Files\Fractal"  ;
-                powershell -command "iwr -outf FractalServer.exe https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/master/Windows/FractalServer.exe"  ;
-
-                Restart-Computer
-            """
-
             resp = runPowershell(
-                vm_name="shyriver7582782",
-                command=command,
+                vm_name="shinymode749971",
+                command="choco install firefox --force",
                 resource_group=RESOURCE_GROUP,
                 input_token=input_token,
             )
 
-            task = queryStatus(resp, timeout=10)
+            task = queryStatus(resp, timeout=4)
 
             if task["status"] < 1:
                 fractalLog(
@@ -183,10 +173,9 @@ def test_disk_attach(input_token):
                     logs=task["output"],
                     level=logging.ERROR,
                 )
+                assert False
 
-    # disks = fetchCurrentDisks()
-    # print(disks)
-    disks = ["Fractal_Disk_Eastus"]
+    disks = fetchCurrentDisks(admin_token)
     fractalJobRunner(attachDiskHelper, disks, multithreading=False)
 
     assert True

@@ -34,7 +34,7 @@ def queryStatus(resp, timeout=10):
     # Create progress bar
 
     bar = progressbar.ProgressBar(
-        maxval=total_timeout_seconds,
+        maxval=total_timeout_seconds + 60,
         widgets=[progressbar.Bar("=", "[", "]"), " ", progressbar.Percentage()],
     )
     bar.start()
