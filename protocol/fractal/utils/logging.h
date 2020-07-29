@@ -76,7 +76,8 @@ Defines
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
 #else
 #include <android/log.h>
-#define PRINTFUNCTION(format, ...) __android_log_print(ANDROID_LOG_DEBUG, "ANDROID_DEBUG", format, __VA_ARGS__);
+#define PRINTFUNCTION(format, ...) \
+    __android_log_print(ANDROID_LOG_DEBUG, "ANDROID_DEBUG", format, __VA_ARGS__);
 #endif
 
 #define SENTRYBREADCRUMB(tag, format, ...) sentry_send_bread_crumb(tag, format, ##__VA_ARGS__)

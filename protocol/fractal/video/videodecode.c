@@ -135,23 +135,21 @@ enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix
 #if defined(__ANDROID_API__)
 
 static int pfd[2];
-static SDL_Thread * thr;
-static const char *tag = "";
+static SDL_Thread* thr;
+static const char* tag = "";
 
-static void *thread_func(void* opaque)
-{
+static void* thread_func(void* opaque) {
     ssize_t rdsz;
     char buf[128];
-    while((rdsz = read(pfd[0], buf, sizeof buf - 1)) > 0) {
-        if(buf[rdsz - 1] == '\n') --rdsz;
-        buf[rdsz] = 0;  /* add null-terminator */
+    while ((rdsz = read(pfd[0], buf, sizeof buf - 1)) > 0) {
+        if (buf[rdsz - 1] == '\n') --rdsz;
+        buf[rdsz] = 0; /* add null-terminator */
         __android_log_write(ANDROID_LOG_DEBUG, tag, buf);
     }
     return 0;
 }
 
-int redir_stderr(const char *app_name)
-{
+int redir_stderr(const char* app_name) {
     tag = app_name;
 
     /* make stdout line-buffered and stderr unbuffered */
@@ -170,22 +168,19 @@ int redir_stderr(const char *app_name)
 // register the java vm to avcodec in the callback (?)
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* aReserved) {
     LOG_INFO("hello! jni called! vm @ %p", vm);
-//    av_log_set_level(AV_LOG_TRACE);
-//    redir_stderr("fractalapp");
+    //    av_log_set_level(AV_LOG_TRACE);
+    //    redir_stderr("fractalapp");
     av_jni_set_java_vm(vm, NULL);
     return JNI_VERSION_1_6;
 }
-
 
 int extract_extradata(video_decoder_t* decoder, AVPacket* packet) {
     int ret = -1;
     AVBSFContext* bitstream_filter_context;
     AVPacket* filter_packet;
-    const AVBitStreamFilter* extradata_filter =
-        av_bsf_get_by_name("extract_extradata");
+    const AVBitStreamFilter* extradata_filter = av_bsf_get_by_name("extract_extradata");
     if (!extradata_filter) {
-        LOG_WARNING(
-            "Unable to initialize bitstream filter: 'extract_extradata'");
+        LOG_WARNING("Unable to initialize bitstream filter: 'extract_extradata'");
         goto cleanup;
     }
 
@@ -194,8 +189,7 @@ int extract_extradata(video_decoder_t* decoder, AVPacket* packet) {
         goto cleanup;
     }
 
-    if (avcodec_parameters_from_context(bitstream_filter_context->par_in,
-                                        decoder->context) < 0) {
+    if (avcodec_parameters_from_context(bitstream_filter_context->par_in, decoder->context) < 0) {
         LOG_WARNING(
             "Unable to copy parameters from decoder to "
             "bitstream_filter_context.");
@@ -227,26 +221,23 @@ int extract_extradata(video_decoder_t* decoder, AVPacket* packet) {
         if (res < 0) {
             if (res != AVERROR(EAGAIN) && res != AVERROR_EOF) {
                 // bad boy error
-                LOG_WARNING(
-                    "Unable to receive packet from bitstream filter: (%d) %s",
-                    res, av_err2str(res));
+                LOG_WARNING("Unable to receive packet from bitstream filter: (%d) %s", res,
+                            av_err2str(res));
                 goto cleanup;
             }
             // not bad boy error
             continue;
         }
 
-        extradata = av_packet_get_side_data(
-            filter_packet, AV_PKT_DATA_NEW_EXTRADATA, &extradata_size);
+        extradata =
+            av_packet_get_side_data(filter_packet, AV_PKT_DATA_NEW_EXTRADATA, &extradata_size);
 
         if (extradata) {
-            decoder->context->extradata =
-                av_mallocz(extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
+            decoder->context->extradata = av_mallocz(extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
             memcpy(decoder->context->extradata, extradata, extradata_size);
             decoder->context->extradata_size = extradata_size;
             av_packet_unref(filter_packet);
-            LOG_INFO("Success extracting extradata of size %d from packet!",
-                     extradata_size);
+            LOG_INFO("Success extracting extradata of size %d from packet!", extradata_size);
             ret = 0;
             goto cleanup;
         }
@@ -451,8 +442,7 @@ DecodeType decoder_precedence[] = {DECODE_TYPE_MEDIACODEC, DECODE_TYPE_SOFTWARE}
 DecodeType decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
 #endif
 
-#define NUM_DECODER_TYPES \
-    (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
+#define NUM_DECODER_TYPES (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
 
 bool try_next_decoder(VideoDecoder* decoder) {
     if (decoder->can_use_hardware) {
@@ -567,8 +557,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
 
 #if defined(__ANDROID_API__)
     // try to set extradata on android if necessary
-    if (decoder->type == DECODE_TYPE_MEDIACODEC &&
-        !decoder->context->extradata) {
+    if (decoder->type == DECODE_TYPE_MEDIACODEC && !decoder->context->extradata) {
         if (extract_extradata(decoder, &decoder->packet) < 0) {
             LOG_WARNING("Unable to extract and set extradata!");
             if (!try_next_decoder(decoder)) {
@@ -576,12 +565,11 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
                 return false;
             }
         } else {
-//            decoder->context->profile = FF_PROFILE_H264_BASELINE;
+            //            decoder->context->profile = FF_PROFILE_H264_BASELINE;
             LOG_INFO("Successfully set extradata! Opening context...");
             int res = avcodec_open2(decoder->context, decoder->codec, NULL);
             if (res < 0) {
-                LOG_WARNING("Failed to open context for stream (%d): %s", res,
-                            av_err2str(res));
+                LOG_WARNING("Failed to open context for stream (%d): %s", res, av_err2str(res));
                 return -1;
             }
         }

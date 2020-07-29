@@ -190,8 +190,7 @@ int32_t multithreaded_encoder_factory(void* opaque) {
         encoder_factory_client_h, encoder_factory_current_bitrate, encoder_factory_codec_type);
     encoder_finished = true;
 
-    LOG_INFO("EXTRADATA SIZE: %d",
-             encoder_factory_result->context->extradata_size);
+    LOG_INFO("EXTRADATA SIZE: %d", encoder_factory_result->context->extradata_size);
 
     //     FractalServerMessage* msg_extradata =
     //     malloc(sizeof(FractalServerMessage) +
