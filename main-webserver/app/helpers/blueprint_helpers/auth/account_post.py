@@ -2,6 +2,7 @@ from app import *
 from app.helpers.utils.general.logs import *
 from app.helpers.utils.general.sql_commands import *
 from app.helpers.utils.general.tokens import *
+from app.helpers.utils.mail.account_mail import *
 
 
 def loginHelper(username, password):
@@ -118,27 +119,6 @@ def registerHelper(username, password, name, reason_for_signup):
         status = BAD_REQUEST
         user_id = access_token = refresh_token = None
 
-    if status == SUCCESS:
-        # Send email to the user if status is successful
-        title = "Welcome to Fractal"
-        internal_message = SendGridMail(
-            from_email="phil@fractalcomputers.com",
-            to_emails=username,
-            subject=title,
-            html_content=render_template("on_signup.html", code=promo_code),
-        )
-
-        try:
-            sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
-            response = sg.send(internal_message)
-        except Exception as e:
-            fractalLog(
-                function="registerHelper",
-                label="ERROR",
-                logs="Mail send failed: Error code " + e.message,
-                level=logging.ERROR,
-            )
-
     return {
         "status": status,
         "token": user_id,
@@ -171,11 +151,16 @@ def verifyHelper(username, provided_user_id):
     # Check to see if the provided user ID matches the selected user ID
 
     if provided_user_id == user_id:
+        alreadyVerified = output["rows"][0]["verified"]
         fractalSQLUpdate(
             table_name="users",
             conditional_params={"username": username},
             new_params={"verified": True},
         )
+
+        if not alreadyVerified:
+            # Send welcome mail to user after they verify for the first time
+            signupMail(output["rows"][0]["username"], output["rows"][0]["code"])
 
         return {"status": SUCCESS, "verified": True}
     else:
