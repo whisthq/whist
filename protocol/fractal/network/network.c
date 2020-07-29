@@ -195,7 +195,7 @@ int GetLastNetworkError() {
 }
 
 bool handshakePrivateKey(SocketContext *context) {
-    set_timeout( context->s, 1000 );
+    set_timeout(context->s, 1000);
 
     private_key_data_t our_priv_key_data;
     private_key_data_t our_signed_priv_key_data;
@@ -217,9 +217,9 @@ bool handshakePrivateKey(SocketContext *context) {
         (recv_size = recvfrom(context->s, (char *)&their_priv_key_data, sizeof(their_priv_key_data),
                               0, (struct sockaddr *)(&context->addr), &slen)) == 0)
         ;
-    if( recv_size < 0 )
-    {
-        LOG_WARNING( "Did not receive other connection's private key request: %d", GetLastNetworkError() );
+    if (recv_size < 0) {
+        LOG_WARNING("Did not receive other connection's private key request: %d",
+                    GetLastNetworkError());
         return false;
     }
     if (!signPrivateKey(&their_priv_key_data, recv_size, context->aes_private_key)) {
@@ -240,7 +240,7 @@ bool handshakePrivateKey(SocketContext *context) {
         LOG_ERROR("Could not confirmPrivateKey!");
         return false;
     } else {
-        set_timeout( context->s, context->timeout );
+        set_timeout(context->s, context->timeout);
         return true;
     }
 }
@@ -986,27 +986,23 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
         recv_size += single_recv_size;
     }
 
-    if( recv_size != sizeof( entry ) )
-    {
-        LOG_WARNING( "STUN Response of wrong size! %d", recv_size );
-        closesocket( context->s );
+    if (recv_size != sizeof(entry)) {
+        LOG_WARNING("STUN Response of wrong size! %d", recv_size);
+        closesocket(context->s);
         return -1;
-    } else if( entry.ip != stun_request.entry.ip ||
-               entry.public_port != stun_request.entry.public_port )
-    {
-        LOG_WARNING( "STUN Response IP and/or Public Port is incorrect!" );
-        closesocket( context->s );
+    } else if (entry.ip != stun_request.entry.ip ||
+               entry.public_port != stun_request.entry.public_port) {
+        LOG_WARNING("STUN Response IP and/or Public Port is incorrect!");
+        closesocket(context->s);
         return -1;
-    } else if( entry.private_port == 0 )
-    {
-        LOG_WARNING( "STUN reported no such IP Address" );
-        closesocket( context->s );
+    } else if (entry.private_port == 0) {
+        LOG_WARNING("STUN reported no such IP Address");
+        closesocket(context->s);
         return -1;
-    } else
-    {
-        LOG_WARNING( "Received STUN response! Public %d is mapped to private %d\n",
-                     ntohs( (unsigned short)entry.public_port ),
-                     ntohs( (unsigned short)entry.private_port ) );
+    } else {
+        LOG_WARNING("Received STUN response! Public %d is mapped to private %d\n",
+                    ntohs((unsigned short)entry.public_port),
+                    ntohs((unsigned short)entry.private_port));
         context->addr.sin_family = AF_INET;
         context->addr.sin_addr.s_addr = entry.ip;
         context->addr.sin_port = entry.private_port;
@@ -1244,7 +1240,7 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
         closesocket(context->s);
         return -1;
     }
-    set_timeout( context->s, recvfrom_timeout_ms );
+    set_timeout(context->s, recvfrom_timeout_ms);
 
     // Check that confirmation matches STUN's claimed client
     if (context->addr.sin_addr.s_addr != entry.ip || context->addr.sin_port != entry.private_port) {
@@ -1351,18 +1347,17 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
     }
 
     if (recv_size != sizeof(entry)) {
-        LOG_WARNING( "STUN Response of wrong size! %d", recv_size );
+        LOG_WARNING("STUN Response of wrong size! %d", recv_size);
         closesocket(context->s);
         return -1;
-    } else if( entry.ip != stun_request.entry.ip ||
-               entry.public_port != stun_request.entry.public_port )
-    {
-        LOG_WARNING( "STUN Response IP and/or Public Port is incorrect!" );
-        closesocket( context->s );
+    } else if (entry.ip != stun_request.entry.ip ||
+               entry.public_port != stun_request.entry.public_port) {
+        LOG_WARNING("STUN Response IP and/or Public Port is incorrect!");
+        closesocket(context->s);
         return -1;
     } else if (entry.private_port == 0) {
-        LOG_WARNING( "STUN reported no such IP Address" );
-        closesocket( context->s );
+        LOG_WARNING("STUN reported no such IP Address");
+        closesocket(context->s);
         return -1;
     } else {
         LOG_WARNING("Received STUN response! Public %d is mapped to private %d\n",
