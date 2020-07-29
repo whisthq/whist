@@ -37,8 +37,5 @@ const development = {
 
 // TODO: change back when deployed to other vm-webservers
 export const config =
-<<<<<<< HEAD
     process.env.NODE_ENV === "development" ? production : production;
-=======
-    process.env.NODE_ENV === "development" ? staging : production;
->>>>>>> 2c005a73cc9e11b084c1bc57c76362278605a976
+
