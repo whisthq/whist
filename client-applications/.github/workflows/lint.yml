@@ -25,8 +25,8 @@ jobs:
       - name: Format with Prettier
         run: cd desktop && yarn format --write --ignore-file ../.prettierignore
   
-      - name: Commit files
+      - name: Check if files need linting
         run: |
           git config --local user.email "linter@fractalcomputers.com"
           git config --local user.name "Fractal Linter"
-          git diff-index --quiet HEAD
+          if ! git diff-index --quiet HEAD; then echo "To pass this check please lint the code" && false
