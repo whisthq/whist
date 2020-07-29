@@ -184,8 +184,9 @@ def test_disk_attach(input_token):
                     level=logging.ERROR,
                 )
 
-    disks = fetchCurrentDisks()
-    print(disks)
+    # disks = fetchCurrentDisks()
+    # print(disks)
+    disks = ["Fractal_Disk_Eastus"]
     fractalJobRunner(attachDiskHelper, disks, multithreading=False)
 
     assert True
