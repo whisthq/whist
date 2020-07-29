@@ -475,10 +475,14 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     tv.tv_sec = timeout_ms / MS_IN_SECOND;
     tv.tv_usec = (timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
     if ((ret = select((int)s + 1, NULL, &set, NULL, &tv)) <= 0) {
-        LOG_WARNING(
-            "Could not select() over TCP to server: Returned %d, Error Code "
-            "%d\n",
-            ret, GetLastNetworkError());
+        if (ret == 0) {
+            LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
+        } else {
+            LOG_WARNING(
+                "Could not select() over TCP to server: Returned %d, Error Code "
+                "%d\n",
+                ret, GetLastNetworkError());
+        }
         closesocket(s);
         return false;
     }
@@ -674,8 +678,13 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     tv.tv_sec = stun_timeout_ms / MS_IN_SECOND;
     tv.tv_usec = (stun_timeout_ms % MS_IN_SECOND) * 1000;
 
-    if (select(context->s + 1, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL) <= 0) {
-        LOG_WARNING("Could not select! %d", GetLastNetworkError());
+    int ret;
+    if ((ret = select(context->s + 1, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL)) <= 0) {
+        if (ret == 0) {
+            LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
+        } else {
+            LOG_WARNING("Could not select! %d", GetLastNetworkError());
+        }
         closesocket(context->s);
         return -1;
     }
