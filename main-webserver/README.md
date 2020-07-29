@@ -8,43 +8,51 @@ Our webservers are hosted on Heroku:
 
 - [Production](https://cube-celery-vm.herokuapp.com)
 - [Staging](https://cube-celery-staging.herokuapp.com)
-- [Staging2](https://main-webserver-staging2.herokuapp.com)
-- [Staging3](https://main-webserver-staging3.herokuapp.com)
 
 Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?cols=core_host%2Ccore_service&from_ts=1593977274176&index=&live=true&messageDisplay=inline&stream_sort=desc&to_ts=1593978174176).
 
 ## Development
 
-### Local Setup (Windows/MacOS)
+### Local Setup
 
-1. Set up the Heroku CLI on your computer
-2. Check your python version by typing `python -V`.
-   - **If you have python 3.6.X**
-   - Create a virtual environment for yourself by typing `virtualenv env` and then run the python executable listed in the install text, i.e. `source env\Scripts\activate` in Windows, or `source env/bin/activate` on Linux
-   - **If you have Python >3.6 or Python <3.0**
-   - Create a Python 3.6 virtual environment. To do this, first install python 3.6.8 from the Python website.
-   - Find the directory where python 3 is installed. On linux, this can be done by typing into the terminal: `which python3`.
-   - Make sure you are cd'ed into the vm-webserver folder, then type `virtualenv --python=[DIRECTORY PATH] venv` in your terminal. The terminal should output a "created virtual environment CPython3.6.8" message.
-   - Activate it by typing `source venv\Scripts\activate` (Windows) or `source venv/bin/activate` (MacOS/Linux). You will need to type this last command every time to access your virtual environment.
-3. Install everything by typing `pip install -r requirements.txt`. Make sure you're in the virtual environment when doing this.
-4. Tell the local environment what the entry point is to the webserver by typing `set FLASK_APP=run.py`.
-5. Import the environment variables into your computer by typing `heroku config -s --app <APP> >> .env`. App is either `cube-celery-vm` if you are working on the production webserver, or `cube-celery-staging` if you are working on the staging webserver. This command appends to the `.env` file, so make sure to delete/clear the file if you plan to copy new config variables.
-6. Type `flask run` to start the webserver on localhost.
-7. [NOTE: Currently buggy] If you plan on calling endpoints that require celery, you will want to view the celery task queue locally. To do this, open a new terminal, cd into the vm-webserver folder, and type `celery -A app.tasks worker --loglevel=info`.
-8. Then, in a new terminal, attach the staging branch to cube-celery-staging by typing `git checkout staging`, then `heroku git:remote --app cube-celery-staging -r staging`
-9. Also in the new terminal, attach the master branch to cube-celery-vm by typing `git checkout master`, then `heroku git:remote --app cube-celery-vm -r heroku`
+Docker is being leveraged to create a partial-stack (TBD on full) deployment of the `main-webserver` components, `web` and `celery`. To do so, it packages the application into an image with all necessary dependencies and then launches the application with the appropriate configurations, depending on if it's `web` or `celery` using `stem-cell.sh`.
 
-### Build/Run in Docker
+Currently, the full environment is only partially replicated, so `retrieve_config.py` exists for collecting the appropriate environment variables needed to connect to the non-replicated portions of the environment (they are pulled from Heroku).
 
-To build the Docker image, run: `docker build -t vm-webserver`. You will require the Heroku API key as an environment variable, `HEROKU_API_KEY=<heroku-api-key>`. You can store all Docker environment variables in a file such as `.envdocker`, to save yourself time between runs. You can then run Docker with:
+#### 1. Retrieve Environment Variables
 
-`docker run --env-file .envdocker -t vm-webserver:latest`
+Use `retrieve_config.py`. It provides a `-h` help menu for understanding parameters. On Mac/Linux, run
 
-or
+```sh
+./retrieve_config.py [NAME OF BRANCH]
+```
 
-`docker run --env HEROKU_API_KEY=<heroku-api-key> -t vm-webserver:latest`
+On Windows, run
+```sh
+py retrieve_config.py [NAME OF BRANCH]
+```
 
-### Run on Heroku
+To see the possible NAME_OF_BRANCH options, see Lines 34-38 of `retrieve_config.py`. This command will pull the config variables of NAME_OF_BRANCH and write them to `docker/.env`.
+
+You can review `dev-base-config.json` to see which values will be overriden for local development. For example, the `REDIS_URL` will be changed to use the local Docker version.
+
+This command requires the CLI tool `heroku` to be installed and logged in.
+
+#### 2. Spin Up Local Servers
+
+Use `docker-compose` to run the stack locally. First, `cd` into the `docker/` folder. Then, run the `up` command. If you are on Windows, you should run this from a command prompt in Administrator mode.
+
+```sh
+docker-compose up --build
+```
+
+If you encounter a "daemon not running" error, this likely means that Docker is not actually running. To fix this, try restarting your computer and opening the Docker desktop app; if the app opens successfully, then the issue should go away.
+
+Review `docker-compose.yml` to see which ports the various services are hosted on. For example, `"7810:6379"` means that the Redis service, running on port 6379 internally, will be available on `localhost:7810` from the host machine. Line 25 of `docker-compose.yml` will tell you where the web server itself is running.
+
+If you make a change to the webserver, you'll need to restart docker by first killing the server (Ctrl-C) and re-running `docker-compose up --build`.
+
+### Heroku Setup
 
 To push to the Heroku production/staging servers, you’ll first need to set up the Heroku CLI on your computer. Make sure you are added as a collaborator to any of the Heroku apps you plan to use. You can contact Ming, Phil, or Jonathan to be added.
 
