@@ -186,7 +186,7 @@ int SendFmsg(FractalClientMessage *fmsg) {
     if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_TIME) {
         return SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE, fmsg, GetFmsgSize(fmsg));
     } else {
-        if (GetFmsgSize(fmsg) > MAX_PACKET_SIZE) {
+        if ((size_t)GetFmsgSize(fmsg) > MAX_PACKET_SIZE) {
             LOG_ERROR(
                 "Attempting to send FMSG that is too large for UDP, and only CLIPBOARD and TIME is "
                 "presumed to be over TCP");
