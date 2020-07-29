@@ -119,7 +119,7 @@ def test_disk_clone(input_token):
 
 @pytest.mark.disk_serial
 def test_disk_attach(input_token, admin_token):
-    regions = ["eastus", "eastus", "eastus"]
+    regions = ["eastus", "northcentralus", "southcentralus"]
 
     def attachDiskHelper(disk):
         disk_name = disk["disk_name"]
