@@ -679,7 +679,8 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     tv.tv_usec = (stun_timeout_ms % MS_IN_SECOND) * 1000;
 
     int ret;
-    if ((ret = select(context->s + 1, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL)) <= 0) {
+    if ((ret = select(context->s + 1, &fd_read, &fd_write, NULL,
+                      stun_timeout_ms > 0 ? &tv : NULL)) <= 0) {
         if (ret == 0) {
             LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
         } else {
