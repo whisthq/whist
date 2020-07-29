@@ -1,7 +1,9 @@
 {
   "environments": {
     "review": {
-      "addons": ["heroku-redis:hobby-dev"]
+      "addons": [
+        "heroku-redis:hobby-dev"
+      ]
     },
     "test": {
       "scripts": {
