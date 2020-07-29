@@ -709,7 +709,4 @@ jobs:
         run: |
           echo "base64 encoded PROC_BRANCH_BUILD_RELEASE_ID (pipe to `base64 -d` to decode): "
           echo "${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}" | base64
-          curl -u "${{ secrets.CI_PAT }}:" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches \
-            -d '{"ref": "wip-ci", "inputs": {"ref": "wip-ci", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "${{ needs['create-release'].outputs.version_id }}", "should_test": "false", "should_release": "true"}}'
+          curl -H 'authorization: Bearer ${{ secrets.CI_PAT }}' -H "Accept: application/vnd.github.v3+json"  https://api.github.com/repos/fractalcomputers/client-applications/actions/workflows/${{ secrets.PROC_CLIENT_APP_BUILD_AND_RELEASE_ID }}/dispatches  -d '{"ref": "wip-ci", "inputs": {"ref": "wip-ci", "protocol_version": "${{ needs['create-release'].outputs.version_id }}", "version_id": "${{ needs['create-release'].outputs.version_id }}", "should_test": "false", "should_release": "true"}}'
