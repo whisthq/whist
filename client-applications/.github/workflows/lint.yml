@@ -27,6 +27,4 @@ jobs:
   
       - name: Check if files need linting
         run: |
-          git config --local user.email "linter@fractalcomputers.com"
-          git config --local user.name "Fractal Linter"
           git diff-index --quiet HEAD || (echo "To pass this check please lint the code" && false)
