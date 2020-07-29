@@ -195,6 +195,8 @@ int GetLastNetworkError() {
 }
 
 bool handshakePrivateKey(SocketContext *context) {
+    set_timeout( context->s, 1000 );
+
     private_key_data_t our_priv_key_data;
     private_key_data_t our_signed_priv_key_data;
     private_key_data_t their_priv_key_data;
@@ -208,13 +210,18 @@ bool handshakePrivateKey(SocketContext *context) {
                   GetLastNetworkError());
         return false;
     }
-    SDL_Delay(150);
+    SDL_Delay(50);
 
     // Receive, sign, and send back their private key request data
     while (
         (recv_size = recvfrom(context->s, (char *)&their_priv_key_data, sizeof(their_priv_key_data),
                               0, (struct sockaddr *)(&context->addr), &slen)) == 0)
         ;
+    if( recv_size < 0 )
+    {
+        LOG_WARNING( "Did not receive other connection's private key request: %d", GetLastNetworkError() );
+        return false;
+    }
     if (!signPrivateKey(&their_priv_key_data, recv_size, context->aes_private_key)) {
         LOG_ERROR("signPrivateKey failed!");
         return false;
@@ -224,7 +231,7 @@ bool handshakePrivateKey(SocketContext *context) {
                   GetLastNetworkError());
         return false;
     }
-    SDL_Delay(150);
+    SDL_Delay(50);
 
     // Wait for and verify their signed private key request data
     recv_size = recvp(context, &our_signed_priv_key_data, sizeof(our_signed_priv_key_data));
@@ -233,6 +240,7 @@ bool handshakePrivateKey(SocketContext *context) {
         LOG_ERROR("Could not confirmPrivateKey!");
         return false;
     } else {
+        set_timeout( context->s, context->timeout );
         return true;
     }
 }
@@ -679,7 +687,7 @@ int CreateTCPServerContext(SocketContext *context, int port, int recvfrom_timeou
     tv.tv_usec = (stun_timeout_ms % MS_IN_SECOND) * 1000;
 
     int ret;
-    if ((ret = select(context->s + 1, &fd_read, &fd_write, NULL,
+    if ((ret = select((int)context->s + 1, &fd_read, &fd_write, NULL,
                       stun_timeout_ms > 0 ? &tv : NULL)) <= 0) {
         if (ret == 0) {
             LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
@@ -978,10 +986,30 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
         recv_size += single_recv_size;
     }
 
-    if (recv_size != sizeof(entry)) {
-        LOG_WARNING("TCP STUN Response packet of wrong size! %d\n", recv_size);
-        closesocket(context->s);
+    if( recv_size != sizeof( entry ) )
+    {
+        LOG_WARNING( "STUN Response of wrong size! %d", recv_size );
+        closesocket( context->s );
         return -1;
+    } else if( entry.ip != stun_request.entry.ip ||
+               entry.public_port != stun_request.entry.public_port )
+    {
+        LOG_WARNING( "STUN Response IP and/or Public Port is incorrect!" );
+        closesocket( context->s );
+        return -1;
+    } else if( entry.private_port == 0 )
+    {
+        LOG_WARNING( "STUN reported no such IP Address" );
+        closesocket( context->s );
+        return -1;
+    } else
+    {
+        LOG_WARNING( "Received STUN response! Public %d is mapped to private %d\n",
+                     ntohs( (unsigned short)entry.public_port ),
+                     ntohs( (unsigned short)entry.private_port ) );
+        context->addr.sin_family = AF_INET;
+        context->addr.sin_addr.s_addr = entry.ip;
+        context->addr.sin_port = entry.private_port;
     }
 
     // Print STUN response
@@ -1013,10 +1041,6 @@ int CreateTCPClientContextStun(SocketContext *context, char *destination, int po
     }
     set_timeout(context->s, stun_timeout_ms);
 
-    context->addr.sin_family = AF_INET;
-    context->addr.sin_addr.s_addr = entry.ip;
-    context->addr.sin_port = entry.private_port;
-
     LOG_INFO("Connecting to server...");
 
     // Connect to TCP server
@@ -1037,6 +1061,7 @@ int CreateTCPContext(SocketContext *context, char *destination, int port, int re
         LOG_ERROR("Context is NULL");
         return -1;
     }
+    context->timeout = recvfrom_timeout_ms;
     context->mutex = SDL_CreateMutex();
     memcpy(context->aes_private_key, aes_private_key, sizeof(context->aes_private_key));
 
@@ -1219,6 +1244,7 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
         closesocket(context->s);
         return -1;
     }
+    set_timeout( context->s, recvfrom_timeout_ms );
 
     // Check that confirmation matches STUN's claimed client
     if (context->addr.sin_addr.s_addr != entry.ip || context->addr.sin_port != entry.private_port) {
@@ -1236,8 +1262,6 @@ int CreateUDPServerContextStun(SocketContext *context, int port, int recvfrom_ti
 
     LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
-
-    set_timeout(context->s, recvfrom_timeout_ms);
 
     return 0;
 }
@@ -1327,13 +1351,18 @@ int CreateUDPClientContextStun(SocketContext *context, char *destination, int po
     }
 
     if (recv_size != sizeof(entry)) {
-        LOG_WARNING("STUN Response of incorrect size!");
+        LOG_WARNING( "STUN Response of wrong size! %d", recv_size );
         closesocket(context->s);
         return -1;
-    } else if (entry.ip != stun_request.entry.ip ||
-               entry.public_port != stun_request.entry.public_port) {
-        LOG_WARNING("STUN Response IP and/or Public Port is incorrect!");
-        closesocket(context->s);
+    } else if( entry.ip != stun_request.entry.ip ||
+               entry.public_port != stun_request.entry.public_port )
+    {
+        LOG_WARNING( "STUN Response IP and/or Public Port is incorrect!" );
+        closesocket( context->s );
+        return -1;
+    } else if (entry.private_port == 0) {
+        LOG_WARNING( "STUN reported no such IP Address" );
+        closesocket( context->s );
         return -1;
     } else {
         LOG_WARNING("Received STUN response! Public %d is mapped to private %d\n",
@@ -1373,6 +1402,7 @@ int CreateUDPContext(SocketContext *context, char *destination, int port, int re
         return -1;
     }
 
+    context->timeout = recvfrom_timeout_ms;
     context->mutex = SDL_CreateMutex();
     memcpy(context->aes_private_key, aes_private_key, sizeof(context->aes_private_key));
 
