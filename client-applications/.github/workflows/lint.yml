@@ -29,4 +29,4 @@ jobs:
         run: |
           git config --local user.email "linter@fractalcomputers.com"
           git config --local user.name "Fractal Linter"
-          if ! git diff-index --quiet HEAD; then {echo "To pass this check please lint the code" && false}
+          git diff-index --quiet HEAD || {echo "To pass this check please lint the code" && false}
