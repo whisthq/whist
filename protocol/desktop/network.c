@@ -38,8 +38,8 @@ bool using_stun;
 int discoverPorts(void) {
     SocketContext context;
     using_stun = true;
-    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                         using_stun, (char *)aes_private_key) < 0) {
+    if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, using_stun,
+                         (char *)aes_private_key) < 0) {
         using_stun = false;
         if (CreateTCPContext(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
                              using_stun, (char *)aes_private_key) < 0) {
@@ -144,8 +144,8 @@ int connectToServer(void) {
         return -1;
     }
 
-    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, TCP_CONNECTION_WAIT,
-                         using_stun, (char *)aes_private_key) < 0) {
+    if (CreateTCPContext(&PacketTCPContext, server_ip, TCP_port, 1, TCP_CONNECTION_WAIT, using_stun,
+                         (char *)aes_private_key) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         closesocket(PacketSendContext.s);
         return -1;
