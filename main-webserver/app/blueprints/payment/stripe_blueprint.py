@@ -4,6 +4,21 @@ from app.helpers.blueprint_helpers.payment.stripe_post import *
 stripe_bp = Blueprint("stripe_bp", __name__)
 
 
+@stripe_bp.route("/stripe/addCard", methods=["POST"])
+@fractalPreProcess
+@jwt_required
+def addCard(**kwargs):
+    body = kwargs["body"]
+    return addCardHelper(body["custId"], body["sourceId"])
+
+@stripe_bp.route("/stripe/deleteCard", methods=["POST"])
+@fractalPreProcess
+@jwt_required
+def deleteCard(**kwargs):
+    body = kwargs["body"]
+    return deleteCardHelper(body["custId"], body["cardId"])
+
+
 @stripe_bp.route("/stripe/<action>", methods=["POST"])
 @fractalPreProcess
 @jwt_required
