@@ -12,6 +12,7 @@ tags
 *.pyc
 *.cbp
 *.swp
+*.jks
 
 # Visual Studio
 **/Debug/

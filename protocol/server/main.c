@@ -189,43 +189,6 @@ int32_t multithreaded_encoder_factory(void* opaque) {
         encoder_factory_server_w, encoder_factory_server_h, encoder_factory_client_w,
         encoder_factory_client_h, encoder_factory_current_bitrate, encoder_factory_codec_type);
     encoder_finished = true;
-
-    LOG_INFO("EXTRADATA SIZE: %d", encoder_factory_result->context->extradata_size);
-
-    //     FractalServerMessage* msg_extradata =
-    //     malloc(sizeof(FractalServerMessage) +
-    //     encoder_factory_result->context->extradata_size);
-
-    // //             FractalServerMessage* msg_init_whole = malloc(
-    // //             sizeof(FractalServerMessage) +
-    // sizeof(FractalServerMessageInit));
-    // //         msg_init_whole->type = MESSAGE_INIT;
-    // //         FractalServerMessageInit* msg_init =
-    // //             (FractalServerMessageInit*)msg_init_whole->init_msg;
-    // // #ifdef _WIN32
-    // //         msg_init->filename[0] = '\0';
-    // //         strcat(msg_init->filename, "C:\\ProgramData\\FractalCache");
-    // //         char* username = "Fractal";
-    // // #else  // Linux
-    // //         char* cwd = getcwd(NULL, 0);
-    // //         memcpy(msg_init->filename, cwd, strlen(cwd) + 1);
-    // //         free(cwd);
-    // //         char* username = "Fractal";
-    // // #endif
-    // //         msg_init->connection_id = connection_id;
-    // //         memcpy(msg_init->username, username, strlen(username) + 1);
-    // //         LOG_INFO("SIZE: %d", sizeof(FractalServerMessage) +
-    // //                                  sizeof(FractalServerMessageInit));
-    // //         packet_mutex = SDL_CreateMutex();
-
-    // //         if (SendTCPPacket(&PacketTCPContext, PACKET_MESSAGE,
-    // //                           (uint8_t*)msg_init_whole,
-    // //                           sizeof(FractalServerMessage) +
-    // //                               sizeof(FractalServerMessageInit)) < 0) {
-    // //             LOG_ERROR("Could not send server init message!");
-    // //             return -1;
-    // //         }
-    // //         free(msg_init_whole);
     return 0;
 }
 

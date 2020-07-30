@@ -70,20 +70,9 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(LIBS_PATH)/$(SDL_PATH)/include \
                     $(LOCAL_PATH)/../../../../include \
                     $(LOCAL_PATH)/../../..
 
-LOCAL_SRC_FILES := $(LOCAL_PATH)/../../../../desktop/main.c \
-                  $(LOCAL_PATH)/../../../../desktop/video.c \
-                  $(LOCAL_PATH)/../../../../desktop/sdl_utils.c \
-                  $(LOCAL_PATH)/../../../../desktop/audio.c \
-                  $(LOCAL_PATH)/../../../../fractal/audio/audiodecode.c \
-                  $(LOCAL_PATH)/../../../../fractal/core/fractal.c \
-                  $(LOCAL_PATH)/../../../../fractal/utils/aes.c\
-                  $(LOCAL_PATH)/../../../../fractal/utils/clock.c\
-                  $(LOCAL_PATH)/../../../../fractal/network/network.c \
-                  $(LOCAL_PATH)/../../../../fractal/clipboard/clipboard_synchronizer.c \
-                  $(LOCAL_PATH)/../../../../fractal/clipboard/android_clipboard.c \
-                  $(LOCAL_PATH)/../../../../fractal/utils/logging.c \
-                  $(LOCAL_PATH)/../../../../fractal/utils/sdlscreeninfo.c \
-                  $(LOCAL_PATH)/../../../../fractal/video/videodecode.c
+LOCAL_SRC_FILES := $(call all-c-files-under, $(LOCAL_PATH)/../../../../desktop) \
+                   $(call all-c-files-under, $(LOCAL_PATH)/../../../../fractal)
+
 
 LOCAL_STATIC_LIBRARIES := libssl libcrypto
 LOCAL_SHARED_LIBRARIES := SDL2 SDL2_main libavcodec libavdevice libavformat libavfilter libavutil libswscale libswresample

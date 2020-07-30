@@ -660,7 +660,6 @@ void crash_handler(int sig) {
     exit(-1);
 }
 #endif
-#endif
 
 void init_backtrace_handler() {
 <<<<<<< HEAD

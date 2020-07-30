@@ -564,7 +564,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
                 destroy_video_decoder(decoder);
                 return false;
             }
-        } else {
+            // upon extract_extradata success, continue
             //            decoder->context->profile = FF_PROFILE_H264_BASELINE;
             LOG_INFO("Successfully set extradata! Opening context...");
             int res = avcodec_open2(decoder->context, decoder->codec, NULL);
