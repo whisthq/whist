@@ -252,7 +252,7 @@ int runcmd(const char* cmdline, char** response) {
         if (feof(pPipe)) {
             return current_len;
         } else {
-            LOG_WARNING("Error: Failed to read the pipe to the end.\n");
+            LOG_WARNING("Error: Failed to read the pipe to the end.");
             *response = NULL;
             return -1;
         }

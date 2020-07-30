@@ -16,7 +16,7 @@ its threads.
 #endif
 
 #include "main.h"
-
+#include "sentry.h"
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -42,7 +42,8 @@ its threads.
 #include "../fractal/utils/mac_utils.h"
 #endif
 
-#include <sentry.h>
+#include "sentry.h"
+
 int audio_frequency = -1;
 
 // Width and Height
@@ -521,15 +522,8 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    sentry_options_t *options = sentry_options_new();
-    sentry_options_set_debug(options, true);
-    sentry_options_set_dsn(options, "https://74b830088cfa4e35aa48869707b57cfe@o420280.ingest.sentry.io/5338251");
-    sentry_init(options);
-    sentry_capture_event(sentry_value_new_message_event(
-            /*   level */ SENTRY_LEVEL_INFO,
-            /*  logger */ "custom",
-            /* message */ "It works!"
-    ));
+
+
 
     if (initSocketLibrary() != 0) {
         LOG_ERROR("Failed to initialize socket library.");
@@ -661,11 +655,17 @@ int main(int argc, char* argv[]) {
         closeConnections();
     }
 
+    sentry_value_t event = sentry_value_new_message_event(
+            /*   level */ SENTRY_LEVEL_WARNING,
+            /*  logger */ "client-errors",
+            /* message */ "quiting"
+    );
+    sentry_capture_event(event);
+
     LOG_INFO("Closing Client...");
     destroyVideo();
     destroySDL((SDL_Window*)window);
     destroySocketLibrary();
     destroyLogger();
-    sentry_shutdown();
     return (try_amount < 3 && !failed) ? 0 : -1;
 }

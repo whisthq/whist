@@ -204,13 +204,16 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Require MacOS 10.13 or up, to ensure LibObj-C is standard
 endif()
 
+add_subdirectory(sentry-native)
+
 # Tell CMake where to look for includes
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
 include_directories(include/SDL_image)
+include_directories(sentry-native/include)
 
-add_subdirectory(sentry-native)
+
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)

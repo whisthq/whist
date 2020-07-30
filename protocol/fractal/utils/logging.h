@@ -39,7 +39,7 @@ Includes
 */
 
 #include <string.h>
-
+#include "sentry.h"
 #include "../core/fractal.h"
 #include "clock.h"
 
@@ -71,6 +71,8 @@ Defines
 #endif
 
 #define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
+#define SENTRYBREADCRUMB(tag, format, ...) sentry_send_bread_crumb(tag, format, ##__VA_ARGS__)
+#define SENTRYEVENT(format, ...) sentry_send_event(format, ##__VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-15s | %30s:%-5d | "
 #define LOG_ARGS(LOG_TAG) CurrentTimeStr(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
@@ -96,14 +98,16 @@ Defines
 
 #if LOG_LEVEL >= WARNING_LEVEL
 #define LOG_WARNING(message, ...) \
-    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__)
+    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__);  \
+    SENTRYBREADCRUMB(WARNING_TAG, message, ##__VA_ARGS__)
 #else
 #define LOG_WARNING(message, ...)
 #endif
 
 #if LOG_LEVEL >= ERROR_LEVEL
 #define LOG_ERROR(message, ...) \
-    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__)
+    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__); \
+    SENTRYEVENT(message, ##__VA_ARGS__)
 #else
 #define LOG_ERROR(message, ...)
 #endif
@@ -120,6 +124,10 @@ Defines
 Public Functions
 ============================
 */
+
+void sentry_send_bread_crumb(char* tag, const char* fmtStr, ...);
+
+void sentry_send_event(const char* fmtStr, ...);
 
 /**
  * @brief                          Initialize the logger

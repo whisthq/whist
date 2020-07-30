@@ -47,6 +47,7 @@ could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 #include "../core/fractal.h"
 #include "../network/network.h"
 #include "logging.h"
+#include <sentry.h>
 
 #define UNUSED(x) (void)(x)
 #define BYTES_IN_KILOBYTE 1024
@@ -98,9 +99,15 @@ void startConnectionLog();
 // Initializes the logger and starts a connection log
 void initLogger(char *log_dir) {
     initBacktraceHandler();
+    sentry_options_t *options = sentry_options_new();
+//    sentry_options_set_debug(options, true); //if sentry is playing up uncomment this
+    sentry_options_set_dsn(options, "https://74b830088cfa4e35aa48869707b57cfe@o420280.ingest.sentry.io/5338251");
+    // These are used by sentry to classify events and so we can keep track of version specific issues.
+    sentry_options_set_release(options, FRACTAL_GIT_REVISION);
+    sentry_options_set_environment(options, FRACTAL_ENVIRONMENT);
+    sentry_init(options);
 
     logger_history_len = 0;
-
     char f[1000] = "";
     if (log_dir) {
         size_t dir_len = strlen(log_dir);
@@ -158,7 +165,7 @@ void startConnectionLog() {
 void destroyLogger() {
     // Wait for any remaining printfs to execute
     SDL_Delay(50);
-
+    sentry_shutdown();
     run_multithreaded_printf = false;
     SDL_SemPost((SDL_sem *)logger_semaphore);
 
@@ -176,6 +183,37 @@ void destroyLogger() {
         free(log_directory);
     }
 }
+
+void sentry_send_bread_crumb(char* tag, const char* fmtStr, ...){
+    va_list args;
+    va_start(args, fmtStr);
+    char sentry_str[LOGGER_BUF_SIZE];
+    sprintf(sentry_str, fmtStr, args);
+    sentry_value_t crumb = sentry_value_new_breadcrumb("default", sentry_str);
+    sentry_value_set_by_key(crumb, "category", sentry_value_new_string("client-logs"));
+    sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));
+    sentry_add_breadcrumb(crumb);
+    va_end(args);
+
+}
+
+void sentry_send_event(const char* fmtStr, ...){
+    va_list args;
+    va_start(args, fmtStr);
+    char sentry_str[LOGGER_BUF_SIZE]; \
+    sprintf(sentry_str, fmtStr, args); \
+    va_end(args);
+    sentry_value_t event = sentry_value_new_message_event(
+            /*   level */ SENTRY_LEVEL_ERROR,
+            /*  logger */ "client-logs",
+            /* message */ sentry_str
+    );
+    sentry_capture_event(event);
+}
+
+
+
+
 
 int MultiThreadedPrintf(void *opaque) {
     UNUSED(opaque);
