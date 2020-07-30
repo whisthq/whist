@@ -2,6 +2,8 @@ from app import *
 from app.helpers.utils.general.logs import *
 from app.helpers.utils.general.sql_commands import *
 from app.helpers.utils.general.tokens import *
+from app.helpers.blueprint_helpers.mail.mail_post import *
+from app.celery.azure_resource_deletion import *
 
 
 def loginHelper(username, password):
@@ -183,7 +185,7 @@ def verifyHelper(username, provided_user_id):
 
 
 def deleteHelper(username):
-    """Deletes a user's account from the database
+    """Deletes a user's account and their disks from the database
 
     Parameters:
     username (str): The username
@@ -191,11 +193,15 @@ def deleteHelper(username):
     Returns:
     json: Success/failure of deletion
    """
-
     output = fractalSQLDelete("users", {"username": username})
 
     if not output["success"]:
         return {"status": BAD_REQUEST, "error": output["error"]}
+
+    disks = fractalSQLSelect("disks", {"username": username})["rows"]
+    if disks:
+        for disk in disks:
+            deleteDisk.apply_async([disk["disk_name"], os.getenv("VM_GROUP")])
 
     return {"status": SUCCESS, "error": None}
 
@@ -234,3 +240,26 @@ def lookupHelper(username):
             return {"exists": False, "status": SUCCESS}
     else:
         return {"status": BAD_REQUEST}
+
+
+def updateUserHelper(body):
+    if "name" in body:
+        fractalSQLUpdate(
+            table_name="users",
+            conditional_params={"username": body["username"]},
+            new_params={"name": body["name"]},
+        )
+        return jsonify({"msg": "Name updated successfully"}), SUCCESS
+    if "email" in body:
+        fractalSQLUpdate(
+            table_name="users",
+            conditional_params={"username": body["username"]},
+            new_params={"username": body["email"], "verified": False},
+        )
+        token = fractalSQLSelect("users", {"username": body["email"]})["rows"][0]["id"]
+        return verificationHelper(body["email"], token)
+    if "password" in body:
+        resetPasswordHelper(body["username"], body["password"])
+        return jsonify({"msg": "Password updated successfully"}), SUCCESS
+    return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE
+
