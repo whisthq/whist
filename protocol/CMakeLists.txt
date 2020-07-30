@@ -154,6 +154,25 @@ endif ()
 ################## Libraries we supply ##################
 ]]
 # the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
+# For linux we use the system openssl/libcrypto. For mac and windows we bundle our own because is not included with the os
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
+            NO_DEFAULT_PATH
+            NO_CMAKE_ENVIRONMENT PATH
+            NO_CMAKE_PATH
+            NO_SYSTEM_ENVIRONMENT_PATH
+            NO_CMAKE_SYSTEM_PATH
+            NO_CMAKE_FIND_ROOT_PATH)
+
+    if (NOT STATIC_OPENSSL)
+        message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
+    endif()
+else()
+    find_package(OpenSSL REQUIRED)
+endif()
+
+
+
 find_library(STATIC_SDL2 NAMES SDL2 PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT PATH
@@ -165,17 +184,6 @@ if (NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
-find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
-        NO_DEFAULT_PATH
-        NO_CMAKE_ENVIRONMENT PATH
-        NO_CMAKE_PATH
-        NO_SYSTEM_ENVIRONMENT_PATH
-        NO_CMAKE_SYSTEM_PATH
-        NO_CMAKE_FIND_ROOT_PATH)
-
-if (NOT STATIC_OPENSSL)
-    message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
-endif()
 
 find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/
         NO_DEFAULT_PATH

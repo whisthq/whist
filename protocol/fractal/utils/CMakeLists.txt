@@ -9,7 +9,7 @@ add_library(fractalUtils STATIC
         logging.c
         sdlscreeninfo.c
         json.c
-	sysinfo.c
+	    sysinfo.c
         png.c
         mouse.c
         rwlock.c

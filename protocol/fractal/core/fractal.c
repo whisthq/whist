@@ -260,31 +260,6 @@ int runcmd(const char* cmdline, char** response) {
 #endif
 }
 
-char* get_ip() {
-    static char ip[128];
-    static bool already_obtained_ip = false;
-    if (already_obtained_ip) {
-        return ip;
-    }
-
-    char* buf;
-    runcmd("curl ipinfo.io", &buf);
-
-    json_t json;
-    if (!parse_json(buf, &json)) {
-        LOG_WARNING("curl ipinfo.io did not return an IP: %s", buf);
-        return NULL;
-    }
-    kv_pair_t* kv = get_kv(&json, "ip");
-
-    memcpy(ip, kv->str_value, sizeof(ip));
-
-    free_json(json);
-
-    already_obtained_ip = true;
-    return ip;
-}
-
 bool read_hexadecimal_private_key(char* hex_string, char* private_key) {
     for (int i = 0; i < 16; i++) {
         if (!isxdigit(hex_string[2 * i]) || !isxdigit(hex_string[2 * i + 1]) ||

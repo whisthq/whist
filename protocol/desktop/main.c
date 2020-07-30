@@ -168,7 +168,7 @@ void update() {
         ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
         if (clipboard) {
             FractalClientMessage* fmsg_clipboard =
-                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
+                    malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
             fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
             memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
             SendFmsg(fmsg_clipboard);
@@ -188,7 +188,7 @@ void update() {
         fmsg.dimensions.height = (int)output_height;
         fmsg.dimensions.codec_type = (CodecType)output_codec_type;
         fmsg.dimensions.dpi =
-            (int)(WINDOWS_DEFAULT_DPI * output_width / get_virtual_screen_width());
+                (int)(WINDOWS_DEFAULT_DPI * output_width / get_virtual_screen_width());
         SendFmsg(&fmsg);
         UpdateData.tried_to_update_dimension = true;
     }
@@ -404,9 +404,9 @@ int ReceivePackets(void* opaque) {
             // Log if it's been a while since the last packet was received
             if (lastrecv > 50.0 / MS_IN_SECOND) {
                 LOG_INFO(
-                    "Took more than 50ms to receive something!! Took %fms "
-                    "total!",
-                    lastrecv * MS_IN_SECOND);
+                        "Took more than 50ms to receive something!! Took %fms "
+                        "total!",
+                        lastrecv * MS_IN_SECOND);
             }
             lastrecv = 0.0;
         }
@@ -590,7 +590,7 @@ int main(int argc, char* argv[]) {
         // Create thread to receive all packets and handle them as needed
         run_receive_packets = true;
         SDL_Thread* receive_packets_thread =
-            SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
+                SDL_CreateThread(ReceivePackets, "ReceivePackets", &PacketReceiveContext);
 
         StartTimer(&window_resize_timer);
 
