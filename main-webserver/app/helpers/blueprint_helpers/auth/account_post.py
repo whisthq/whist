@@ -119,6 +119,27 @@ def registerHelper(username, password, name, reason_for_signup):
         status = BAD_REQUEST
         user_id = access_token = refresh_token = None
 
+    if status == SUCCESS:
+        internal_message = SendGridMail(
+            from_email="support@fractalcomputers.com",
+            to_emails="support@fractalcomputers.com",
+            subject=username + " just created an account!",
+            html_content="<p>Just letting you know that {0} created an account. Their reason for signup is: {1}. Have a great day.</p>".format(
+                name, reason_for_signup
+            ),
+        )
+
+        try:
+            sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+            response = sg.send(internal_message)
+        except Exception as e:
+            fractalLog(
+                function="registerHelper",
+                label=username,
+                logs="Mail send failed: Error code " + e.message,
+                level=logging.ERROR,
+            )
+
     return {
         "status": status,
         "token": user_id,
