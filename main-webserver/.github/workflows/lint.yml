@@ -1,6 +1,6 @@
 # This workflow will lint with Python Black and commit to the same branch
 
-name: Python Webserver Linting
+name: Python Linting
 
 on:
   pull_request:
