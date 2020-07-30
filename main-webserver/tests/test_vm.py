@@ -9,7 +9,6 @@ pytest.disk_name = None
 
 
 @pytest.mark.vm_serial
-@disabled
 def test_delete_vm_initial(input_token, admin_token):
     newLine()
 
@@ -40,7 +39,6 @@ def test_delete_vm_initial(input_token, admin_token):
             assert False
 
     all_vms = fetchCurrentVMs(admin_token)
-    print(all_vms)
     fractalJobRunner(deleteVMHelper, all_vms)
 
     assert True

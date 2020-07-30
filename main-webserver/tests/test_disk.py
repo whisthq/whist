@@ -31,7 +31,7 @@ def test_delete_disk_initial(input_token, admin_token):
                 input_token=input_token,
             )
 
-            task = queryStatus(resp, timeout=2)
+            task = queryStatus(resp, timeout=5)
 
             if task["status"] < 1:
                 fractalLog(
@@ -96,7 +96,7 @@ def test_disk_clone(input_token):
             input_token=input_token,
         )
 
-        task = queryStatus(resp, timeout=1.2)
+        task = queryStatus(resp, timeout=2)
 
         if task["status"] < 1:
             fractalLog(
