@@ -7,17 +7,23 @@
     },
     "test": {
       "scripts": {
-        "test": "source ci_env_setup.sh; source test_setup.sh; cd tests && source parallelize.sh \"py.test -v -s -o log_cli=true -x -m vm_serial\" \"py.test -v -s -o log_cli=true -x -m disk_serial\";"
+        "test-setup": "source ci_env_setup.sh; source test_setup.sh; cd tests;",
+        "test": "py.test -v -s -o log_cli=true -x -m vm_serial && py.test -v -s -o log_cli=true -x -m disk_serial;"
+      },
+      "formation": {
+        "test": {
+          "quantity": 2
+        }
       }
     },
     "formation": {
       "web": {
-        "quantity": 1,
-        "size": "standard-1x"
+        "quantity": 2,
+        "size": "hobby"
       },
       "celery": {
         "quantity": 1,
-        "size": "standard-1x"
+        "size": "hobby"
       }
     }
   }
