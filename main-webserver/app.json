@@ -1,12 +1,13 @@
 {
   "environments": {
     "review": {
-      "addons": ["heroku-redis:hobby-dev"]
+      "addons": [
+        "heroku-redis:hobby-dev"
+      ]
     },
     "test": {
       "scripts": {
-        "addons": ["heroku-postgresql:in-dyno", "heroku-redis:in-dyno"],
-        "postdeploy": "parallelize.sh 'pytest -o log_cli=true -s -x -m disk_serial' 'pytest -o log_cli=true -s -x vm_serial'"
+        "test": "source ci_env_setup.sh; source test_setup.sh; py.test -v -s -r A"
       }
     }
   }

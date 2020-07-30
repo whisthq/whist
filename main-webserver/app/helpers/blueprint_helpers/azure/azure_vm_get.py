@@ -61,7 +61,7 @@ def protocolInfoHelper(ip_address):
                 function="protocolInfoHelper",
                 label=vm_info["username"],
                 logs="Error fetching disk settings for disk {disk_name}: {error}".format(
-                    disk_name=disk_name, error=output["error"]
+                    disk_name=str(vm_info["disk_name"]), error=output["error"]
                 ),
                 level=logging.ERROR,
             )
