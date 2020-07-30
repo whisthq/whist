@@ -1,12 +1,12 @@
 # Fractal Main Webserver
 
-![Python Webserver CI](https://github.com/fractalcomputers/main-webserver/workflows/Python%20Webserver%20CI/badge.svg)
+[![Heroku CI Status](https://heroku-cibadge.herokuapp.com/last.svg)](https://dashboard.heroku.com/pipelines/22da0c0d-7555-4647-8765-031c14b8398f/tests)
 
 This repository contains the code for the VM and user webserver, which handles interfacing between users, the Fractal cloud computers hosted on Azure (currently), and a variety of website & client applications functionalities. Runs Flask with Celery for asynchronous task handling.
 
 Our webservers are hosted on Heroku:
 
-- [Production](https://cube-celery-vm.herokuapp.com)
+- [Production](https://main-webserver.herokuapp.com)
 - [Staging](https://cube-celery-staging.herokuapp.com)
 
 Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?cols=core_host%2Ccore_service&from_ts=1593977274176&index=&live=true&messageDisplay=inline&stream_sort=desc&to_ts=1593978174176).
