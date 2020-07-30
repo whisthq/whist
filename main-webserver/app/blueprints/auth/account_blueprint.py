@@ -87,4 +87,3 @@ def account_get_no_auth(action, **kwargs):
         output = codeHelper(username)
 
         return jsonify(output), output["status"]
-
