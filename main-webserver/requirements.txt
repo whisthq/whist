@@ -147,6 +147,7 @@ pathspec==0.8.0
 pg8000==1.15.3
 pluggy==0.13.1
 port-for==0.4
+progressbar==2.5
 psutil==5.7.0
 psycopg2-binary==2.8.5
 py==1.8.2
