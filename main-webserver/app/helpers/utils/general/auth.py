@@ -44,7 +44,13 @@ def fractalAuth(f):
             current_user != username
             and not os.getenv("DASHBOARD_USERNAME") in current_user
         ):
-            print(
+            format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
+
+            logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.DEBUG)
+
+            logger.info(
                 "Authorization failed. Provided username {username} does not match username associated with provided Bearer token {bearer}.".format(
                     username=str(username), bearer=str(current_user)
                 )
