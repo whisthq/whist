@@ -7,7 +7,7 @@
     },
     "test": {
       "scripts": {
-        "test": "source ci_env_setup.sh; source test_setup.sh; cd tests && source parallelize.sh \"py.test -v -s -r -o log_cli=true -x -m vm_serial\" \"py.test -v -s -r -o log_cli=true -x -m disk_serial\";"
+        "test": "source ci_env_setup.sh; source test_setup.sh; cd tests && source parallelize.sh \"py.test -v -s -o log_cli=true -x -m vm_serial\" \"py.test -v -s -o log_cli=true -x -m disk_serial\";"
       }
     }
   }
