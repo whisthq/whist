@@ -1,6 +1,7 @@
 from app.imports import *
 from app.helpers.utils.general.sql_commands import *
 
+
 def generateUniquePromoCode():
     output = fractalSQLSelect("users", {})
     old_codes = []
@@ -10,6 +11,7 @@ def generateUniquePromoCode():
     while new_code in old_codes:
         new_code = generatePromoCode()
     return new_code
+
 
 def getAccessTokens(username):
     # access_token = create_access_token(identity = username, expires_delta = datetime.timedelta(seconds=5))
