@@ -101,11 +101,17 @@ void initLogger(char *log_dir) {
     initBacktraceHandler();
     sentry_options_t *options = sentry_options_new();
 //    sentry_options_set_debug(options, true); //if sentry is playing up uncomment this
-    sentry_options_set_dsn(options, "https://74b830088cfa4e35aa48869707b57cfe@o420280.ingest.sentry.io/5338251");
+    sentry_options_set_dsn(options, SENTRY_DSN);
     // These are used by sentry to classify events and so we can keep track of version specific issues.
-    sentry_options_set_release(options, FRACTAL_GIT_REVISION);
+    char release[200];
+    sprintf(release, "fractal-protocol@%s", FRACTAL_GIT_REVISION);
+    sentry_options_set_release(options, release);
     sentry_options_set_environment(options, FRACTAL_ENVIRONMENT);
     sentry_init(options);
+    sentry_value_t user = sentry_value_new_object();
+    // TODO set users properly
+    sentry_value_set_by_key(user, "email", sentry_value_new_string("hamish@fractalcomputers.com"));
+    sentry_set_user(user);
 
     logger_history_len = 0;
     char f[1000] = "";

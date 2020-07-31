@@ -655,12 +655,23 @@ int main(int argc, char* argv[]) {
         closeConnections();
     }
 
-    sentry_value_t event = sentry_value_new_message_event(
-            /*   level */ SENTRY_LEVEL_WARNING,
-            /*  logger */ "client-errors",
-            /* message */ "quiting"
-    );
-    sentry_capture_event(event);
+    if (failed) {
+        sentry_value_t event = sentry_value_new_message_event(
+                /*   level */ SENTRY_LEVEL_ERROR,
+                /*  logger */ "client-errors",
+                /* message */ "Failure in main loop"
+        );
+        sentry_capture_event(event);
+    }
+
+    if (try_amount >= 3){
+        sentry_value_t event = sentry_value_new_message_event(
+                /*   level */ SENTRY_LEVEL_ERROR,
+                /*  logger */ "client-errors",
+                /* message */ "Failed to connect after three attemps"
+        );
+        sentry_capture_event(event);
+    }
 
     LOG_INFO("Closing Client...");
     destroyVideo();
