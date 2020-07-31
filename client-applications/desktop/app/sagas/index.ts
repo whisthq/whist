@@ -281,6 +281,13 @@ function* fetchVM(action) {
     if (json && json.state && json.state === "SUCCESS") {
         if (json.output && json.output.ip) {
             yield put(Action.storeIP(json.output.ip));
+            yield put(
+                Action.storeResources(
+                    json.output.disk_name,
+                    json.output.vm_name,
+                    json.output.location
+                )
+            );
         }
     } else {
         var message =
@@ -307,7 +314,9 @@ function* getVersion() {
 
 function* restartPC(action) {
     const state = yield select();
-    const { json, response } = yield call(
+    console.log(state);
+
+    const { json } = yield call(
         apiPost,
         config.url.PRIMARY_SERVER + "/vm/restart",
         {

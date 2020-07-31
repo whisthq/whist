@@ -83,7 +83,7 @@ class Login extends Component {
             storage.set("credentials", { username: "", password: "" });
         }
         this.props.dispatch(
-            loginUser(this.state.username, this.state.password)
+            loginUser(this.state.username.trim(), this.state.password)
         );
     };
 
