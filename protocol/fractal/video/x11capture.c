@@ -85,6 +85,13 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
         }
     }
 
+    if (CreateNvidiaCaptureDevice(&device->nvidia_capture_device) < 0) {
+	device->using_nvidia = false;
+    } else {
+	device->using_nvidia = true;
+	return 0;
+    }
+
     int damage_event, damage_error;
     XDamageQueryExtension(device->display, &damage_event, &damage_error);
     device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
@@ -128,6 +135,17 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
 }
 
 int CaptureScreen(CaptureDevice* device) {
+    if (device->using_nvidia) {
+        int ret = NvidiaCaptureScreen(&device->nvidia_capture_device);
+	if (ret < 0) {
+	    return ret;
+	} else {
+	    device->frame_data = device->nvidia_capture_device.frame;
+	    device->pitch = device->width * 4;
+	    return ret;
+	}
+    }
+
     static bool first = true;
 
     XLockDisplay(device->display);
@@ -184,8 +202,13 @@ int TransferScreen(CaptureDevice* device) { return 0; }
 void ReleaseScreen(CaptureDevice* device) {}
 
 void DestroyCaptureDevice(CaptureDevice* device) {
-    if (device->image) {
-        XFree(device->image);
+    if (device->using_nvidia) {
+	DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
+    } else {
+	if (device->image) {
+            XFree(device->image);
+        }
     }
     XCloseDisplay(device->display);
 }
+

@@ -6,6 +6,8 @@ add_library(fractalVideo STATIC
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(fractalVideo PRIVATE x11capture.c x11capture.h)
+    target_sources(fractalVideo PRIVATE x11nvidiacapture.c x11nvidiacapture.h)
+    target_sources(fractalVideo PRIVATE nvidia-linux/NvFBCUtils.c nvidia-linux/NvFBCUtils.h nvidia-linux/NvFBC.h)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(fractalVideo PRIVATE dxgicudacapturetransfer.cu dxgicudacapturetransfer.h)
     target_sources(fractalVideo PRIVATE dxgicapture.c dxgicapture.h)
