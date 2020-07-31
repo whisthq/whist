@@ -13,8 +13,6 @@
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
 
 int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
-    int opt, ret;
-    unsigned int i, nFrames = N_FRAMES;
     NVFBC_SIZE frameSize = { 0, 0 };
     NVFBC_BOOL printStatusOnly = NVFBC_FALSE;
 
@@ -24,7 +22,6 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
 
     void *libNVFBC = NULL;
     PNVFBCCREATEINSTANCE NvFBCCreateInstance_ptr = NULL;
-    NVFBC_API_FUNCTION_LIST pFn;
 
     NVFBCSTATUS fbcStatus;
 
@@ -38,12 +35,6 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
     NVFBC_HWENC_CODEC codec = NVFBC_HWENC_CODEC_H264;
 
     NvFBCUtilsPrintVersions(APP_VERSION);
-
-    if (codec == NVFBC_HWENC_CODEC_H264) {
-        sprintf(filename, "NvFBCSample.h264");
-    } else {
-        sprintf(filename, "NvFBCSample.hevc");
-    }
 
     /*
      * Dynamically load the NvFBC library.
@@ -70,11 +61,11 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
      *
      * API function pointers are accessible through pFn.
      */
-    memset(&pFn, 0, sizeof(pFn));
+    memset(&device->pFn, 0, sizeof(device->pFn));
 
-    pFn.dwVersion = NVFBC_VERSION;
+    device->pFn.dwVersion = NVFBC_VERSION;
 
-    fbcStatus = NvFBCCreateInstance_ptr(&pFn);
+    fbcStatus = NvFBCCreateInstance_ptr(&device->pFn);
     if (fbcStatus != NVFBC_SUCCESS) {
         fprintf(stderr, "Unable to create NvFBC instance (status: %d)\n",
                 fbcStatus);
@@ -88,9 +79,9 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
 
     createHandleParams.dwVersion = NVFBC_CREATE_HANDLE_PARAMS_VER;
 
-    fbcStatus = pFn.nvFBCCreateHandle(&device->fbcHandle, &createHandleParams);
+    fbcStatus = device->pFn.nvFBCCreateHandle(&device->fbcHandle, &createHandleParams);
     if (fbcStatus != NVFBC_SUCCESS) {
-        fprintf(stderr, "%s\n", pFn.nvFBCGetLastErrorStr(device->fbcHandle));
+        fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return -1;
     }
 
@@ -104,9 +95,9 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
 
     statusParams.dwVersion = NVFBC_GET_STATUS_PARAMS_VER;
 
-    fbcStatus = pFn.nvFBCGetStatus(device->fbcHandle, &statusParams);
+    fbcStatus = device->pFn.nvFBCGetStatus(device->fbcHandle, &statusParams);
     if (fbcStatus != NVFBC_SUCCESS) {
-        fprintf(stderr, "%s\n", pFn.nvFBCGetLastErrorStr(device->fbcHandle));
+        fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return -1;
     }
 
@@ -140,8 +131,7 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
     /*
      * Create a capture session.
      */
-    printf("Creating a capture session of %u HW compressed frames.\n",
-           nFrames);
+    printf("Creating a capture session of HW compressed frames.\n");
 
     memset(&createCaptureParams, 0, sizeof(createCaptureParams));
 
@@ -156,9 +146,9 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
         createCaptureParams.dwOutputId = outputId;
     }
 
-    fbcStatus = pFn.nvFBCCreateCaptureSession(device->fbcHandle, &createCaptureParams);
+    fbcStatus = device->pFn.nvFBCCreateCaptureSession(device->fbcHandle, &createCaptureParams);
     if (fbcStatus != NVFBC_SUCCESS) {
-        fprintf(stderr, "%s\n", pFn.nvFBCGetLastErrorStr(device->fbcHandle));
+        fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return -1;
     }
 
@@ -206,9 +196,9 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
     setupParams.dwVersion     = NVFBC_TOHWENC_SETUP_PARAMS_VER;
     setupParams.pEncodeConfig = &encoderConfig;
 
-    fbcStatus = pFn.nvFBCToHwEncSetUp(device->fbcHandle, &setupParams);
+    fbcStatus = device->pFn.nvFBCToHwEncSetUp(device->fbcHandle, &setupParams);
     if (fbcStatus != NVFBC_SUCCESS) {
-        fprintf(stderr, "%s\n", pFn.nvFBCGetLastErrorStr(device->fbcHandle));
+        fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return -1;
     }
 
@@ -224,8 +214,9 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
 }
 
 int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
-    size_t nBytes;
     uint64_t t1, t2;
+
+    NVFBCSTATUS fbcStatus;
 
     NVFBC_TOHWENC_GRAB_FRAME_PARAMS grabParams;
 
@@ -276,9 +267,9 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
     /*
      * Capture a new frame.
      */
-    fbcStatus = pFn.nvFBCToHwEncGrabFrame(device->fbcHandle, &grabParams);
+    fbcStatus = device->pFn.nvFBCToHwEncGrabFrame(device->fbcHandle, &grabParams);
     if (fbcStatus != NVFBC_SUCCESS) {
-        fprintf(stderr, "%s\n", pFn.nvFBCGetLastErrorStr(device->fbcHandle));
+        fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return -1;
     }
 
@@ -290,11 +281,7 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
      */
     
     device->size = frameInfo.dwByteSize;
-    nBytes = 1;//fwrite(frame, 1, frameInfo.dwByteSize, fd);
-    if (nBytes == 0) {
-        fprintf(stderr, "Unable to write to '%s'\n", filename);
-        return -1;
-    }
+    //fwrite(frame, 1, frameInfo.dwByteSize, fd);
 
     t2 = NvFBCUtilsGetTimeInMillis();
 
@@ -316,9 +303,9 @@ void DestroyNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
 
     destroyCaptureParams.dwVersion = NVFBC_DESTROY_CAPTURE_SESSION_PARAMS_VER;
 
-    fbcStatus = pFn.nvFBCDestroyCaptureSession(device->fbcHandle, &destroyCaptureParams);
+    fbcStatus = device->pFn.nvFBCDestroyCaptureSession(device->fbcHandle, &destroyCaptureParams);
     if (fbcStatus != NVFBC_SUCCESS) {
-        fprintf(stderr, "%s\n", pFn.nvFBCGetLastErrorStr(device->fbcHandle));
+        fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return;
     }
 
@@ -329,9 +316,9 @@ void DestroyNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
 
     destroyHandleParams.dwVersion = NVFBC_DESTROY_HANDLE_PARAMS_VER;
 
-    fbcStatus = pFn.nvFBCDestroyHandle(device->fbcHandle, &destroyHandleParams);
+    fbcStatus = device->pFn.nvFBCDestroyHandle(device->fbcHandle, &destroyHandleParams);
     if (fbcStatus != NVFBC_SUCCESS) {
-        fprintf(stderr, "%s\n", pFn.nvFBCGetLastErrorStr(device->fbcHandle));
+        fprintf(stderr, "%s\n", device->pFn.nvFBCGetLastErrorStr(device->fbcHandle));
         return;
     }
 }
