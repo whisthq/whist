@@ -15,76 +15,83 @@ First, clone the repo via git:
 
 And then install the dependencies with yarn:
 
-`cd client-applications/desktop && yarn -i`
+`cd client-applications/desktop && yarn`
 
 ## Starting Development
 
-Before starting development, you need to initialize yarn by running `yarn -i`, which will create the `yarn.lock` file and install all of the `node_modules`. If you still experience issues with starting the dev environment, you might need to run `yarn upgrade`, which will upgrade all the dependencies. It's a good idea to do so periodically to keep the application up-to-date. You can automatically clean unnecessary files with `yarn autoclean --init && yarn autoclean --force` as needed.
+Before starting development, you need to install all of the application and development dependencies by running `yarn` (which is a JavaScript package manager).
 
-To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `set PORT={number} && yarn dev`. This will start the Electron application, but will not fetch the Fractal protocol, which means you can only use this to test the application itself, unless you manually cloned and built the protocol yourself. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below. 
+If you still experience issues with starting the dev environment, you might need to run `yarn upgrade`, which will upgrade all the dependencies. It's a good idea to do so periodically to keep the application up-to-date. If further issues persist, you can try reinstalling by running `rm -rf node_modules/` then `yarn` again.
 
-This repository has basic continuous integration through GitHub Actions. For every commit or PR to the master branch, it will attempt to build the Electron application on Windows, Mac and Ubuntu, and format the code with Prettier. You should make sure that all tests pass under the Actions tab. If you need help with the Electron CI, check [here](https://github.com/samuelmeuli/action-electron-builder).
+To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `yarn cross-env PORT={number} yarn dev`. This will start the Electron application, but will not fetch the Fractal protocol, which means you can only use this to test the application itself, unless you manually cloned and built the protocol yourself. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below. 
 
-## Packaging for Production
+This repository has continuous integration through GitHub Actions, which you can learn more about under [CI](#CI)
 
-In order to properly test the application, you need to package the application and the Fractal protocol together into an installer executable for your local platform. There are two scripts, `build.bat` (Windows) and `build.sh` (MacOS/Linux), which automate the process of packaging locally, for internal publishing, and for publishing to production, by calling `setVersion.ps1` and `setVersion.gyp` to update `package.json`, which is where the bucket and version numbers are stored in Electron.
+## Packaging and Publishing
 
-If you package locally, this will **NOT** publish the application to production, but will only build an identical installer which you can install locally and test from the perspective of a user, before publishing live. It can also publish an internal installer executable which can be distributed within the company for more testing, provided you specify the proper AWS S3 bucket. The installer executable will be in `client-applications/desktop/release` as a `.dmg` (MacOS), `.exe` (Windows) or `.deb` (Linux Ubuntu). You need to package for a platform from that platform; for instance you can only package the Windows application from a Windows computer.
+The Fractal application is a combination of this `client-applications` codebase and the Fractal `protocol`. It's possible to run them in isolation for testing, but they must be tested and released as a combined package.
+
+The script `build_and_publish.py` is a single, cross-platform script that coordinates the creation and release of a combined executable.
+
+Poetry is used to manage the dependencies and virtual environment for the build scripts. Follow [these instructions](https://python-poetry.org/docs/#installation) to install it.
+
+Next, run `poetry install` in the repository root to install the necessary dependencies.
+
+Then enable the virtual environment with `poetry shell`.
+
+**To download the latest version of the protocol** run `python retrieve_protocol_packages.py`.
+
+**To build the desktop application** run `python desktop/build_and_publish.py`.
+
+### Retrieving the Protocol
+
+The Fractal protocol is maintained in a separate repository and a release of it must be downloaded before you can proceed with building a final executable. The tool `retrieve_protocol_packages.py` has been created to facilitate the retrieval of pre-compiled releases of the Fractal protocol.
+
+By default `retrieve_protocol_packages.py` will download the latest release on the `dev` branch, though it can be used to download any release. You can see the available functionality by running `python retrieve_protocol_packages.py --help`.
+
+### Building the Installer Executable
+
+To combine the protocol and this wrapper client application into a single installer executable you will use the `build_and_publish.py` tool.
+
+By default `build_and_publish.py` will use the latest version of the protocol retrieved via `retrieve_protocol_packages.py` and will build an executable subscribed to the `testing` branch. You can see additional available functionality by running `python build_and_publish.py --help`.
+
+The installer executable will be in `client-applications/desktop/release` as a `.dmg` (MacOS), `.exe` (Windows) or `.deb` (Linux Ubuntu). No cross-compilation is possible; for instance you can only package the Windows application from a Windows computer.
 
 #### MacOS Notarizing
 
-To package the MacOS application, it needs to be notarized. This means it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developper Certificate in your MacOS Keychain for this to be successful. You can download the certificate from AWS S3 on [this link](https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12) assuming you have access to the Fractal AWS organization, and then install it by double-clicking the `.p12` certificate file. The application will get notarized seamlessly when running the build script. Once you have the certificate in your Keychain, you can proceed to the testing steps below.
+To package the MacOS application it needs to be notarized. This means it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developer Certificate in your MacOS Keychain for this to be successful. You can download the certificate from AWS S3 on [this link](https://fractal-private-dev.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12) assuming you have access to the Fractal AWS organization, and then install it by double-clicking the `.p12` certificate file. The application will get notarized as part of the build script.
 
-### Local Testing
+### Publishing New Versions
 
-To package for local testing, you can run the scripts with a subset of the parameters, where branch represents the protocol branch to package, and is likely either `master`, `dev` or `staging`. This will clone the Fractal protocol, build it locally and package it and the application into a `.dmg` for you to install and test.
+Fractal runs two update channels, `production` and `testing`. The `dev` branch should be published automatically to `testing`, while `production` should match `master`. The build script has a special `noupdates` channel which should be used for any builds that aren't on one of these branches.
 
-```
-# Windows
-build.bat --branch [BRANCH] --publish false
+Any CI generated builds are also stored in GitHub Releases which can be manually downloaded and used.
 
-# MacOS/Linux
-./build.sh --branch [BRANCH] --publish false
-```
+CI should handle releases, however, 
 
-### Internal Publishing
+#### Update Channels
 
-To package to an internal, Fractal-only AWS S3 bucket to distribute and test across the company, you can run the same script while incrementing the internal version number and specifying one of the internal testing S3 buckets:
-- Windows (internal): `fractal-applications-testing`
-- MacOS (internal): `fractal-mac-application-testing`
+*The source of truth for these should be `build_and_publish.py` in the `default_channel_s3_buckets` dictionary.*
 
-```
-# Windows
-build.bat --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish false
+There is a channel for `testing` and `production` on each platform. These channels are backed by AWS S3 buckets ([here](https://s3.console.aws.amazon.com/s3/home?region=us-east-1#)) that follow a file structure and metadata schema specified by [electron-builder's publish system](https://www.electron.build/configuration/publish) (it's basically the executable installer + a well-known YAML file with metadata like file hash, file name, and release date which is used for knowing when an update is available).
 
-# MacOS/Linux
-./build.sh --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish false
-```
+#### Publishing to Production
 
-This will again clone the protocol and package the application, but will also upload its executable to the bucket and auto-update the internal applications within Fractal.
+If you're ready to publish an update to production, as part of our [Release Schedule](https://www.notion.so/fractalcomputers/Release-Schedule-Drafting-c29cbe11c5f94cedb9c01aaa6d0d1ca4), then it is time to publish. You can publish by running `python build_and_publish.py --set-version master-YYYYMMDD.# --update-channel production --push-new-update`.
 
-## Publishing to Production
-
-If you're ready to publish an update to production, as part of our [Release Schedule](https://www.notion.so/fractalcomputers/Release-Schedule-Drafting-c29cbe11c5f94cedb9c01aaa6d0d1ca4), then it is time to publish. You can publish by running the same build script, and specifying the AWS S3 bucket which is associated with the platform you are publishing for:
--   Windows: `fractal-applications-release`
--   MacOS: `fractal-mac-application-release`
--   Linux: `fractal-linux-application-release`
+**TODO: once the following manual fix is removed, CI should fully handle these release operations.**
 
 First, go to `node_modules/builder-util-runtime/out/httpExecutor.js`, and change the timeout on Line 319 from `60 * 1000` to `60 * 1000 * 1000`. This is necessary to avoid timeout errors for connection in the production application.
 
-Then, publish by running the appropriate script with `--publish` flag set to `true` and incrementing the version number from what is currently in production. You need to increment the version number by `0.0.1`, unless it is a major release, in which case increment by `0.1.0` (e.g. 1.4.6 becomes 1.5.0), from what it currently is. Electron will only auto-update if the version number is higher than what is currently deployed to production. This will also notify the team in Slack.
+## CI
 
-```
-# Windows
-build.bat --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish true
+This repository has basic continuous integration through GitHub Actions. For every commit to `dev`, `staging`, or `master`, and for every PR that is opened, CI will attempt to build the bundled application on Windows-64bit, macOS-64bit, and Linux-64bit. It will upload these builds to the GitHub Releases tab with a version identifier corresponding to the current git ref (eg. branch) and the current date.
 
-## MacOS/Linux
-./build.sh --branch [BRANCH] --version [VERSION] --bucket [BUCKET] --publish true
-```
+New builds from the `dev` will also be pushed out on the `testing` channel.
 
-Finally, git commit and git push to this repository so that the most current production version number is kept track of, even if you only updated the version number.
+Moreover, new builds from [fractalcomputers/protocol](https://github.com/fractalcomputers/protocol) will trigger builds in this repository on their corresponding branch (or on `dev` if there is no appropriate corresponding branch). Similarly, new protocol builds on `dev` will also trigger a new build to be sent out on the `testing` channel.
 
-The production executables are hosted [here](https://s3.console.aws.amazon.com/s3/home?region=us-east-1#).
+Additionally, [style](#styling) checks will be run by CI. You should make sure that all tests pass under the Actions tab.
 
 ## Styling
 
