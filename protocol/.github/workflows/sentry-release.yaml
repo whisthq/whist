@@ -1,0 +1,29 @@
+name: Sentry Release
+
+on:
+  release:
+    types: [published]
+
+
+jobs:
+  createSentryRelease:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Set git short sha
+        id: vars
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Set Sentry Environment
+        id: sentry_env
+        run: python sentry_env_from_release.py ${{ github.event.release.tag_name }}
+      - name: Create a Sentry.io release
+        uses: tclindner/sentry-releases-action@v1.2.0
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: Fractal
+          SENTRY_PROJECT: protocol
+        with:
+          tagName: ${{ steps.vars.outputs.sha_short }}
+          releaseNamePrefix: fractal-protocol@
+          environment: ${{ steps.sentry_env.outputs.sentry_env }}
