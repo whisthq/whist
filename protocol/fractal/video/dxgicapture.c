@@ -461,5 +461,6 @@ void DestroyCaptureDevice(CaptureDevice* device) {
 }
 
 void UpdateHardwareEncoder(CaptureDevice* device) {
+    device;
 }
 
