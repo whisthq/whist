@@ -53,7 +53,7 @@ class UpdateScreen extends Component {
             this.setState({ downloadError: error });
         });
 
-        ipc.on("downloaded", (event, downloaded) => { });
+        ipc.on("downloaded", (event, downloaded) => {});
     }
 
     render() {
@@ -76,8 +76,8 @@ class UpdateScreen extends Component {
                                 <Titlebar backgroundColor="#000000" />
                             </div>
                         ) : (
-                                <div style={{ marginTop: 10 }}></div>
-                            )}
+                            <div style={{ marginTop: 10 }}></div>
+                        )}
                         <div className={styles.landingHeader}>
                             <div className={styles.landingHeaderLeft}>
                                 <img src={Logo} width="20" height="20" />
@@ -159,20 +159,20 @@ class UpdateScreen extends Component {
                                         </div>
                                     </div>
                                 ) : (
-                                        <div
-                                            style={{
-                                                marginTop: 10,
-                                                fontSize: 14,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <div style={{ color: "#D6D6D6" }}>
-                                                {this.state.downloadError}
-                                            </div>
+                                    <div
+                                        style={{
+                                            marginTop: 10,
+                                            fontSize: 14,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                        }}
+                                    >
+                                        <div style={{ color: "#D6D6D6" }}>
+                                            {this.state.downloadError}
                                         </div>
-                                    )}
+                                    </div>
+                                )}
                                 <div
                                     style={{
                                         color: "#C9C9C9",
@@ -188,8 +188,8 @@ class UpdateScreen extends Component {
                         </div>
                     </div>
                 ) : (
-                        <div></div>
-                    )}
+                    <div></div>
+                )}
             </div>
         );
     }

@@ -1,3 +1,18 @@
+# Fractal protocol
+protocol-build/
+rcedit-x64.exe
+.unison
+.protocol
+clipboard/
+log.txt
+connection_id.txt
+ssh_host_ecdsa_key.pub
+sshkey.pub
+sshkey
+
+# .env for MacOS notarizing credentials
+*.env
+
 # Logs
 logs
 *.log
@@ -35,8 +50,6 @@ node_modules
 .vs
 
 # Yarn
-yarn.lock
-app/yarn.lock
 .yarnclean
 
 # App packaged
@@ -48,8 +61,6 @@ app/renderer.prod.js
 app/renderer.prod.js.map
 app/style.css
 app/style.css.map
-package-lock.json
-app/package-lock.json
 node_modules
 app/node_modules
 dist
@@ -61,17 +72,3 @@ npm-debug.log.*
 *.css.d.ts
 *.sass.d.ts
 *.scss.d.ts
-
-# .env for MacOS notarizing credentials
-*.env
-
-# Fractal protocol
-.unison
-.protocol
-protocol-build
-clipboard/
-log.txt
-connection_id.txt
-ssh_host_ecdsa_key.pub
-sshkey.pub
-sshkey

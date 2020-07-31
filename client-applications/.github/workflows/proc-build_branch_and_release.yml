@@ -1,0 +1,394 @@
+# NOTE: this name should be kept stable since workflow_dispatch callers may use it to
+# trigger this workflow.
+name: "Procedure: Branch Build & Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: ref to run against (eg. `refs/heads/BRANCH_NAME` or `refs/pull/PR_NUMBER`)
+        required: true
+      protocol_version:
+        description: protocol version to build against (eg. dev-20200720.1)
+        required: true
+      update_channel:
+        description: channel that these builds should be subscribed to for updates
+        default: "noupdates"
+        required: false
+      version_id:
+        description: version identifier to set for this build !! TODO come up with a versioning strategy
+        required: true
+      should_test:
+        # TODO: see the note above "test_predicate" for why this only works with running all tests or
+        # no tests right now, ie. no test selection is supported. This should be updated once matrix builds
+        # support job level ifs.
+        description: should tests be run before releasing (eg. "true", or "false")
+        # NOTE: if a user passes an empty string "" to the parameter then the default value will be used
+        default: "true"
+        required: false
+      overridden_version_id:
+        description: "manually set a version ID (default: false, ie. dynamic from 0.0.0-REFNAME-YYYYMMDD.#)"
+        required: false
+      should_release:
+        description: should the builds be uploaded as a release; allowing this workflow to be used purely for testing ("true" or "false")
+        # NOTE: if a user passes an empty string "" to the parameter then the default value will be used
+        default: "true"
+        required: false
+
+jobs:
+  params:
+    name: Setup dynamic parameters
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.values.outputs.ref }}
+      ref_name: ${{ steps.values.outputs.ref_name }}
+      git_sha: ${{ steps.values.outputs.git_sha }}
+      protocol_version: ${{ steps.values.outputs.protocol_version }}
+      should_release: ${{ steps.values.outputs.should_release }}
+      version_id: ${{ steps.values.outputs.version_id }}
+      update_channel: ${{ steps.values.outputs.update_channel }}
+      should_test: ${{ steps.values.outputs.should_test }}
+      should_test_windows: ${{ steps.values.outputs.should_test_windows }}
+      should_test_linux: ${{ steps.values.outputs.should_test_linux }}
+      should_test_macos: ${{ steps.values.outputs.should_test_macos }}
+      overridden_version_id: ${{ steps.values.outputs.overridden_version_id }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.ref }}
+      - name: Determine parameter values and export to global environment
+        id: values
+        # ref: If this wasn't triggered using workflow_dispatch then a ref won't be specified. Fill in the param using whatever
+        # the workflow is checkout out to.
+        #
+        # ref_name: This supports branches (refs/heads/BRANCH_NAME), PRs (refs/pull/PR_NUMBER/{merge,head,etc.}), and
+        # arbitrary commits
+        #
+        # should_test: Translated from "true"/"false" into "true"/"" to lay the groundwork for per-OS test control
+        #
+        # should_test_*: breakout the should_test into individual predicates for each OS for 
+        run: |
+          export REF="${{ github.event.inputs.ref || '$(git symbolic-ref HEAD)' }}"
+          echo ::set-output name=ref::$REF
+          if git symbolic-ref --short HEAD > /dev/null; then
+            echo ::set-output name=ref_name::$(git symbolic-ref --short HEAD)
+          elif [[ "$REF" == *"/pull/"* ]]; then
+            # $REF should be in the format "refs/pull/225/merge"
+            pr_id=$(echo "$REF" | grep -o -E '[0-9]+') # eg. "225"
+            pr_action=$(basename "$REF") # eg. "merge"
+            echo ::set-output name=ref_name::pr$pr_id$pr_action
+          else
+            echo ::set-output name=ref_name::$(git rev-parse HEAD)
+          fi
+          echo ::set-output name=git_sha::$(git rev-parse HEAD)
+          echo ::set-output name=protocol_version::${{ github.event.inputs.protocol_version }}
+          echo ::set-output name=version_id::${{ github.event.inputs.version_id }}
+          echo ::set-output name=update_channel::${{ github.event.inputs.update_channel }}
+          echo ::set-output name=should_release::${{ github.event.inputs.should_release }}
+          echo ::set-output name=should_test::$(if [[ "${{ github.event.inputs.should_test }}" == "false" ]]; then echo ""; else echo "true"; fi)
+          export SHOULD_TEST=${{ github.event.inputs.should_test }}
+          echo ::set-output name=should_test_windows::$(if [[ $SHOULD_TEST == *"windows"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=should_test_linux::$(if [[ $SHOULD_TEST == *"linux"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=should_test_macos::$(if [[ $SHOULD_TEST == *"macos"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=overridden_version_id::${{ github.event.inputs.overridden_version_id }}
+
+
+
+
+          echo ::set-output name=git_sha::$(git rev-parse HEAD)
+          echo ::set-output name=protocol_version::dev-20200722.5
+          echo ::set-output name=version_id::0.0.0-test-20200324.0
+          echo ::set-output name=overridden_version_id::testing_release.0
+          echo ::set-output name=update_channel::noupdates
+          echo ::set-output name=should_release::true
+          echo ::set-output name=should_test::false
+          export SHOULD_TEST=false
+          echo ::set-output name=should_test_windows::$(if [[ $SHOULD_TEST == *"windows"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=should_test_linux::$(if [[ $SHOULD_TEST == *"linux"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=should_test_macos::$(if [[ $SHOULD_TEST == *"macos"* ]]; then echo "true"; else echo "false"; fi)
+          echo ::set-output name=overridden_version_id::${{ github.event.inputs.overridden_version_id }}
+      - name: Show all env and output vars
+        run: |
+          cat <<JSON
+          Inputs: ${{ toJson(github.event.inputs) }}
+          JSON
+          cat <<JSON
+          Outputs: ${{ toJson(steps.values.outputs) }}
+          JSON
+          echo "Env vars:"
+          printenv
+
+  build:
+    name: Build ${{ matrix.config.artifact_name }}
+    needs: [params]
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+          - os: ubuntu-latest
+            artifact_name: "Linux-64bit"
+            artifact_relpath: "/desktop/release/Fractal.deb"
+          - os: windows-latest
+            artifact_name: "Windows-64bit"
+            artifact_relpath: "\\desktop\\release\\Fractal.exe"
+          - os: macos-latest
+            artifact_name: "macOS-64bit"
+            artifact_relpath: "/desktop/release/Fractal.dmg"
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+        with:
+          ref: ${{ needs.params.outputs.ref }}
+
+      # Install Yarn
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14
+      
+      # Install Yarn dependencies
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - uses: actions/cache@v2
+        id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install Yarn dependencies
+        run: yarn
+        working-directory: desktop/
+      
+      # Install Poetry
+
+      - name: Install Python (for build scripts)
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      
+        # This installs poetry using pip instead of the poetry recommended install script for two reasons:
+        # 1. It's cross platform
+        # 2. The normal installation wasn't registering the `poetry` executable in the shell in later commands (for reasons unknown)
+      - name: Install poetry
+        run: python -m pip install --upgrade pip poetry
+      
+      # Install Poetry dependencies (based on https://github.com/psf/black/actions/runs/816321/workflow)
+
+      - name: Get poetry cache directory path
+        id: poetry-cache-dir-path
+        run: |
+          python -c "print('::set-output name=dir::', end='')"
+          poetry config cache-dir
+
+      - uses: actions/cache@v2
+        id: poetry-cache # use this to check for `cache-hit` (`steps.poetry-cache.outputs.cache-hit != 'true'`)
+        with:
+          path: ${{ steps.poetry-cache-dir-path.outputs.dir }}
+          key:
+            poetry-${{ hashFiles('**/poetry.lock') }}-${{ runner.os }}-${{ matrix.python-version }}
+          restore-keys: |
+            poetry-${{ hashFiles('**/poetry.lock') }}-${{ runner.os }}-${{ matrix.python-version }}
+
+      - name: Install Poetry dependencies
+        run: poetry install
+
+      # Retrieve the protocol
+
+      - name: Retrieve the protocol
+        run: poetry run python ./retrieve_protocol_packages.py --release "${{ needs.params.outputs.protocol_version }}"
+        env:
+          # This can't be secrets.GITHUB_TOKEN because it needs to access another repo and the default token
+          # is only scoped to this repo
+          GITHUB_TOKEN: ${{ secrets.CI_PAT }}
+      
+      # Prepare macOS for notarizing the application
+
+      # TODO set up along the lines of https://github.com/MarshallOfSound/Google-Play-Music-Desktop-Player-UNOFFICIAL-/blob/master/sig/import.sh
+      # These secrets already exist:
+      # mac_certs: ${{ secrets.MAC_CERTS }}
+      # mac_certs_password: ${{ secrets.MAC_CERTS_PASSWORD }}
+      - name: Import Apple code-signing certs
+        if: runner.os == 'macOS'
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          p12-file-base64: ${{ secrets.MAC_CERTS }}
+          p12-password: ${{ secrets.MAC_CERTS_PASSWORD }}
+
+      # Build the bundle application
+      - name: Build the bundled application
+        run: |
+          poetry run python ./desktop/build_and_publish.py --set-version ${{ needs.params.outputs.version_id }}  --update-channel ${{ needs.params.outputs.update_channel }} || true
+          ls ${{ github.workspace }}/desktop/ || true
+          ls ${{ github.workspace }}/desktop/release/ || true
+#          find . -not \( -path ./desktop/node_modules -prune \) -not \( -path ./.git -prune \)  # list files, useful for debugging doesn't run on windows.
+
+      - name: Upload client application artifact
+        if: matrix.config.artifact_name
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.config.artifact_name }}
+          path: ${{ github.workspace }}${{ matrix.config.artifact_relpath }}
+
+  create-release:
+    name: Create release
+    needs: [params, build]
+    if: always() # See not in first step to understand why this is set to always run (which would seem incorrect since it should only run when builds succeed)
+    runs-on: ubuntu-latest
+    outputs:
+      release_upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version_id: ${{ steps.release_info.outputs.version_id }}
+    steps:
+      - name: Check if all builds succeeded
+        # This step was added because the job level if `needs.build.result == 'success' && (needs.test_client.result == 'skipped' || needs.test_client.result == 'success')`
+        # was resulting in the job skipping even when the value was shown to be true when printed. TODO: change this logic once tests are added
+        run: |
+          if ! ${{ needs.params.outputs.should_release }}; then
+            echo "Killing release job because should_release=${{ needs.params.outputs.should_release }}"
+            exit 1
+          fi
+          if ${{ needs.build.result == 'success' }}; then # this true/false was derived from a GHA expression
+            echo "Proceeding with job"
+          else
+            echo "Killing release job because builds or tests failed"
+            exit 1
+          fi
+      # TODO convert this into its own Github Action (ie. not embedded in this workflow but as its own published action)
+      # - https://docs.github.com/en/actions/creating-actions/creating-a-javascript-action
+      # - https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-using-action-in-the-same-repository-as-the-workflow
+      - name: Determine the new release version ID
+        id: release_info
+        uses: actions/github-script@v2
+        with:
+          script: |
+            if ("${{ needs.params.outputs.overridden_version_id }}") {
+              console.log(`::set-output name=version_id::${{ needs.params.outputs.overridden_version_id }}`)
+              return
+            }
+            const cur_ref_name = "${{ needs.params.outputs.ref_name }}"
+            const accumulate_paged_list = async (doReq, start_page = 0) => {
+              let aggregate = []
+              let new_list
+              do {
+                new_list = await doReq(start_page)
+                aggregate = aggregate.concat(new_list)
+                start_page++
+              } while (new_list.length > 0)
+              return aggregate
+            }
+            const releases = await accumulate_paged_list(
+              async (i) => (await github.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+                page: i,
+              })).data,
+              1 // Github's REST API paging is 1-indexed (not 0-indexed)
+            )
+            version_regex = /(\S+)-(\d{8})\.(\d+)/
+            console.log("Found ${releases.length} releases:")
+            const relevant_releases = releases
+              .map(r => { console.log(`  ${r.name}`); return r.name.match(version_regex) })
+              .filter(m => !!m)
+              .filter(([, ref_name]) => ref_name == cur_ref_name)
+            relevant_releases.sort()
+
+            const cur_date = new Date().toISOString().split("T")[0].replace(/-/g, "") // should always be in UTC
+            let cur_date_point = 1
+            console.log(`New release is for the "${cur_ref_name}" ref on ${cur_date}`)
+
+            const latest_release = relevant_releases[relevant_releases.length - 1]
+            if (latest_release) {
+              const [full, ref_name, date, point] = latest_release
+              console.log(`Comparing against latest release relevant release: "${full}".`)
+              if (date == cur_date) {
+                cur_date_point = Number(point) + 1
+              }
+            } else {
+              console.log(`Of ${releases.length} releases found none were for the "${cur_ref_name}" ref (or at least none followed the ref_name-YYYYMMDD.# naming pattern)`)
+            }
+            version_id = `${cur_ref_name}-${cur_date}.${cur_date_point}`
+            console.log(`::set-output name=version_id::${version_id}`)
+          github-token: ${{secrets.GITHUB_TOKEN}}
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ needs.params.outputs.ref }}
+      - name: Tag HEAD as ${{ steps.release_info.outputs.version_id }} and push
+        run: |
+          git tag ${{ steps.release_info.outputs.version_id }}
+          git push origin --tags
+      - name: Create release for ${{ steps.release_info.outputs.version_id }}
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release_info.outputs.version_id }}
+          release_name: ${{ steps.release_info.outputs.version_id }}
+          body: |
+            This was an automated release produced via the *${{ github.workflow }}* workflow in Github Actions which was triggered by *${{ github.event_name }}*.
+
+            **Version ID:** `${{ steps.release_info.outputs.version_id }}`
+
+            **Commit:** `${{ needs.params.outputs.git_sha }}`
+
+            **Release parameters:**
+
+            Inputs:
+            ```json
+            ${{ toJson(github.event.inputs) }}
+            ```
+
+            Derived:
+            ```json
+            ${{ toJson(needs.params.outputs) }}
+            ```
+
+            **Commits since last release:** TODO
+          draft: false
+          prerelease: false
+
+
+  upload-builds:
+      needs: [create-release]
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          config:
+            # These should match the configurations defined in the build job
+            # TODO: figure out how to DRY these configurations
+            - os: ubuntu-latest
+              artifact_name: "Linux-64bit"
+              artifact_relpath: "/desktop/release/linux/Fractal"
+            - os: windows-latest
+              artifact_name: "Windows-64bit"
+              artifact_relpath: "/desktop/release/windows/Fractal.exe"
+            - os: macos-latest
+              artifact_name: "macOS-64bit"
+              artifact_relpath: "/desktop/release/mac/Fractal.app"
+      name: Upload ${{ matrix.config.artifact_name }} to release ${{ needs['create-release'].outputs.version_id }}
+      steps:
+        - name: Retrieve artifact ${{ matrix.config.artifact_name }}
+          uses: actions/download-artifact@v2
+          with:
+            name: ${{ matrix.config.artifact_name }}
+            path: ${{ matrix.config.artifact_name }}
+        - name: Package up artifact as a zip file
+          run: |
+            ls -laR
+            zip -r "${{ matrix.config.artifact_name }}" "${{ matrix.config.artifact_name }}"
+        - name: Upload to release ${{ needs['create-release'].outputs.version_id }}
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs['create-release'].outputs.release_upload_url }}
+            asset_path: ./${{ matrix.config.artifact_name }}.zip
+            asset_name: protocol_${{ needs['create-release'].outputs.version_id }}_${{ matrix.config.artifact_name }}.zip
+            asset_content_type: application/zip

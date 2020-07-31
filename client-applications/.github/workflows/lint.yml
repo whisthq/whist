@@ -25,7 +25,7 @@ jobs:
       - name: Format with Prettier
         run: cd desktop && yarn format --write --ignore-file ../.prettierignore
   
-      - name: Commit files
+      - name: Check if files need linting
         run: |
           git config --local user.email "linter@fractalcomputers.com"
           git config --local user.name "Fractal Linter"
