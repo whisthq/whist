@@ -8,6 +8,7 @@ typedef struct NvidiaCaptureDevice {
     NVFBC_API_FUNCTION_LIST pFn;
     void *frame;
     unsigned int size;
+    bool is_iframe;
 } NvidiaCaptureDevice;
 
 int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device);

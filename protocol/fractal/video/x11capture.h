@@ -114,4 +114,6 @@ void ReleaseScreen(CaptureDevice* device);
  */
 void DestroyCaptureDevice(CaptureDevice* device);
 
+void UpdateHardwareEncoder(CaptureDevice* device); 
+
 #endif  // CAPTURE_X11CAPTURE_H

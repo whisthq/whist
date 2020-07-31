@@ -26,8 +26,6 @@ CaptureScreen again.
 #include <string.h>
 #include <sys/shm.h>
 
-#define USING_SHM true
-
 int handler(Display* d, XErrorEvent* a) {
     LOG_ERROR("X11 Error: %d", a->error_code);
     return 0;
@@ -36,6 +34,8 @@ int handler(Display* d, XErrorEvent* a) {
 void get_wh(CaptureDevice* device, int* w, int* h) {
     XWindowAttributes window_attributes;
     if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
+	*w = 0;
+	*h = 0;
         LOG_ERROR("Error while getting window attributes");
         return;
     }
@@ -65,18 +65,32 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     device->height = height;
 
     if (!is_same_wh(device)) {
-        system("xrandr --delmode default Fractal");
-        system("xrandr --rmmode Fractal");
+	char modename[1024];
+	char cmd[1024];
 
-        char cmd[1000];
-        sprintf(cmd,
-                "xrandr --newmode Fractal $(cvt -r %d %d 60 | sed -n \"2p\" | "
-                "cut -d' ' -f3-)",
-                width, height);
+	snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
+
+	snprintf(cmd, sizeof(cmd), "xrandr --delmode default %s", modename);
+        system(cmd);
+	snprintf(cmd, sizeof(cmd), "xrandr --delmode DVI-D-0 %s", modename);
+        system(cmd);
+        snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
         system(cmd);
 
-        system("xrandr --addmode default Fractal");
-        system("xrandr --output default --mode Fractal");
+        snprintf(cmd, sizeof(cmd),
+                "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
+                "cut -d' ' -f3-)",
+                modename, width, height);
+        system(cmd);
+
+	snprintf(cmd, sizeof(cmd), "xrandr --addmode default %s", modename);
+        system(cmd);
+	snprintf(cmd, sizeof(cmd), "xrandr --output default --mode %s", modename);
+        system(cmd);
+	snprintf(cmd, sizeof(cmd), "xrandr --addmode DVI-D-0 %s", modename);
+        system(cmd);
+	snprintf(cmd, sizeof(cmd), "xrandr --output DVI-D-0 --mode %s", modename);
+        system(cmd);
 
         // If it's still not the correct dimensions
         if (!is_same_wh(device)) {
@@ -85,12 +99,14 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
         }
     }
 
+#if USING_GPU_CAPTURE
     if (CreateNvidiaCaptureDevice(&device->nvidia_capture_device) < 0) {
 	device->using_nvidia = false;
     } else {
 	device->using_nvidia = true;
 	return 0;
     }
+#endif
 
     int damage_event, damage_error;
     XDamageQueryExtension(device->display, &damage_event, &damage_error);
@@ -142,7 +158,7 @@ int CaptureScreen(CaptureDevice* device) {
 	} else {
 	    device->frame_data = device->nvidia_capture_device.frame;
 	    device->pitch = device->width * 4;
-	    return ret;
+	    return 1;
 	}
     }
 
@@ -210,5 +226,12 @@ void DestroyCaptureDevice(CaptureDevice* device) {
         }
     }
     XCloseDisplay(device->display);
+}
+
+void UpdateHardwareEncoder(CaptureDevice* device) {
+    if (device->using_nvidia) {
+	DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
+	CreateNvidiaCaptureDevice(&device->nvidia_capture_device);
+    }
 }
 

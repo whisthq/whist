@@ -98,6 +98,10 @@ Defines
 #else
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
+
+#define USING_GPU_CAPTURE true
+#define USING_SHM true
+
 #endif
 
 #define MAXIMUM_BITRATE 30000000

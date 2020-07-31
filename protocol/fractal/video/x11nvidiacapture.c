@@ -137,7 +137,7 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
 
     createCaptureParams.dwVersion       = NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER;
     createCaptureParams.eCaptureType    = NVFBC_CAPTURE_TO_HW_ENCODER;
-    createCaptureParams.bWithCursor     = NVFBC_TRUE;
+    createCaptureParams.bWithCursor     = NVFBC_FALSE;
     createCaptureParams.frameSize       = frameSize;
     createCaptureParams.bRoundFrameSize = NVFBC_TRUE;
     createCaptureParams.eTrackingType   = trackingType;
@@ -280,13 +280,14 @@ int NvidiaCaptureScreen(NvidiaCaptureDevice* device) {
      * the frameInfo structure.
      */
     
-    device->size = frameInfo.dwByteSize;
+    device->size = encFrameInfo.dwByteSize;
     //fwrite(frame, 1, frameInfo.dwByteSize, fd);
 
     t2 = NvFBCUtilsGetTimeInMillis();
 
-    printf("New frame id %u grabbed and saved in %llu ms\n",
-           frameInfo.dwCurrentFrame, (unsigned long long) (t2 - t1));
+    device->is_iframe = encFrameInfo.bIsIFrame;
+    printf("New %dx%d frame id %u size %u%s%s grabbed and saved in %llu ms\n",
+           frameInfo.dwWidth, frameInfo.dwHeight, frameInfo.dwCurrentFrame, device->size, encFrameInfo.bIsIFrame ? " (i-frame)" : "", frameInfo.bIsNewFrame ? " (new frame)" : "", (unsigned long long) (t2 - t1));
 
     return 0;
 }

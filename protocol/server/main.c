@@ -155,7 +155,6 @@ int32_t SendVideo(void* opaque) {
     StartTimer(&world_timer);
 
     int id = 1;
-    int frames_since_first_iframe = 0;
     update_device = true;
 
     clock last_frame_capture;
@@ -209,6 +208,7 @@ int32_t SendVideo(void* opaque) {
 
         // Update encoder with new parameters
         if (update_encoder) {
+            UpdateHardwareEncoder(device);
             // encoder = NULL;
             if (pending_encoder) {
                 if (encoder_finished) {
@@ -217,7 +217,6 @@ int32_t SendVideo(void* opaque) {
                                          encoder);
                     }
                     encoder = encoder_factory_result;
-                    frames_since_first_iframe = 0;
                     pending_encoder = false;
                     update_encoder = false;
                 }
@@ -236,7 +235,6 @@ int32_t SendVideo(void* opaque) {
                     // Run on this thread bc we have to wait for it anyway
                     MultithreadedEncoderFactory(NULL);
                     encoder = encoder_factory_result;
-                    frames_since_first_iframe = 0;
                     pending_encoder = false;
                     update_encoder = false;
                 } else {
@@ -295,14 +293,11 @@ int32_t SendVideo(void* opaque) {
                 LOG_INFO("Sending current frame!");
             }
 
-            bool is_iframe = false;
-            if (frames_since_first_iframe % encoder->gop_size == 0) {
-                wants_iframe = false;
-                is_iframe = true;
-            } else if (wants_iframe) {
+            if (wants_iframe) {
+		// True I-Frame is WIP
+		LOG_ERROR("NOT GUARANTEED TO BE TRUE IFRAME");
                 video_encoder_set_iframe(encoder);
                 wants_iframe = false;
-                is_iframe = true;
             }
 
             // transfer the screen to a buffer
@@ -337,8 +332,6 @@ int32_t SendVideo(void* opaque) {
                 break;
             }
             // else we have an encoded frame, so handle it!
-
-            frames_since_first_iframe++;
 
             static int frame_stat_number = 0;
             static double total_frame_time = 0.0;
@@ -435,7 +428,7 @@ int32_t SendVideo(void* opaque) {
                     frame->cursor = GetCurrentCursor();
                     // True if this frame does not require previous frames to
                     // render
-                    frame->is_iframe = is_iframe;
+                    frame->is_iframe = encoder->is_iframe;
                     video_encoder_write_buffer(encoder, (void*)frame->compressed_frame);
 
                     // mprintf("Sent video packet %d (Size: %d) %s\n", id,

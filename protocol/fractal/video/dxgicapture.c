@@ -459,3 +459,7 @@ void DestroyCaptureDevice(CaptureDevice* device) {
         device->hardware = NULL;
     }
 }
+
+void UpdateHardwareEncoder(CaptureDevice* device) {
+}
+
