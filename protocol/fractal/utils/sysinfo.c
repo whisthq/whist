@@ -10,6 +10,9 @@ Call the respective functions to log a device's OS, model, CPU, RAM, etc.
 */
 
 #include "sysinfo.h"
+#ifdef __arm__
+#include "cpuinfo_arm.h"
+#endif
 
 void print_os_info() {
 #ifdef _WIN32
@@ -306,10 +309,14 @@ void cpu_id(unsigned i, unsigned regs[4]) {
 #ifdef _WIN32
     __cpuid((int*)regs, (int)i);
 #else
+#if defined(__x86_64__)
     asm volatile("cpuid"
                  : "=a"(regs[0]), "=b"(regs[1]), "=c"(regs[2]), "=d"(regs[3])
                  : "a"(i), "c"(0));
     // ECX is set to zero for CPUID function 4
+#elif defined(__arm__)
+    // TODO: define ARM cpuid equivalent
+#endif
 #endif
 }
 

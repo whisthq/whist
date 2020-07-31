@@ -26,4 +26,10 @@ ndk.dir=D\:\\Android\\Sdk\\ndk\\13b
 7: In the main directory (`protocol`), run `make .` (or whatever the equivalent command is for your system)
 
 
-8: Open the project folder with android studio and compile. The apk will be released in the folder app/build/outputs/apk/release
+8: THIS STEP SHOULD EVENTUALLY BE REMOVED: change the host IP address in `android/src/main/java/org/libsdl/app/SDLActivity.java` in the `getArguments` method.
+
+
+9: In Android Studio, click File > Sync Project with Gradle Files
+
+
+10: Open the project folder with android studio and compile. The apk will be released in the folder app/build/outputs/apk/release

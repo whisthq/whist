@@ -628,6 +628,9 @@ int log_connection_id(int connection_id) {
     char *path;
 #ifdef _WIN32
     path = dupstring("connection_id.txt");
+#elif defined(__ANDROID_API__)
+    path = dupstring("");
+    return 0;
 #else
     path = append_path_to_home(".fractal/connection_id.txt");
 #endif

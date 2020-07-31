@@ -31,6 +31,9 @@ tags
 **/log.txt
 **/log_prev.txt
 
+# android studio
+android/.gradle
+
 # macOS
 .DS_Store
 *.lock
