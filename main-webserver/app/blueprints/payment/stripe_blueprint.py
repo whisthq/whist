@@ -11,11 +11,13 @@ def addCard(**kwargs):
     body = kwargs["body"]
     return addCardHelper(body["custId"], body["sourceId"])
 
+
 @stripe_bp.route("/stripe/deleteCard", methods=["POST"])
 @fractalPreProcess
 @jwt_required
 def deleteCard(**kwargs):
     body = kwargs["body"]
+
     return deleteCardHelper(body["custId"], body["cardId"])
 
 
