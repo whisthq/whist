@@ -4,6 +4,7 @@
         "name": "Fractal Computers, Inc."
     },
     "dependencies": {
+        "qs": "^6.0.4",
         "speedtest.net": "^0.1.0"
     },
     "description": "Fractal Desktop Application",
