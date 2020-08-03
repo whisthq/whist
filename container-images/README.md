@@ -21,4 +21,11 @@ We have basic continuous integration set for each container image through GitHub
 
 ## Publishing
 
-TBD
+For pushing images to the AWS container registry and using ECS, a `container-admin` user exists with the credentials:
+Access Key ID: AKIA24A776SSFXQ6HLAK
+Secret key: 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
+Console login link: https://747391415460.signin.aws.amazon.com/console
+Console password: qxQ!McAhFu0)
+
+
+
