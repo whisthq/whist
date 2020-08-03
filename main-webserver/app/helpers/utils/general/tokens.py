@@ -38,7 +38,7 @@ def generatePromoCode():
     while not allowed:
         c1 = "".join([random.choice(numbers) for _ in range(0, 3)])
         c2 = "".join([random.choice(upperCase) for _ in range(0, 3)]) + "-" + c1
-        if c2 not in BAD_WORDS:
+        if c2.lower() not in BAD_WORDS:
             allowed = True
     return c2
 
