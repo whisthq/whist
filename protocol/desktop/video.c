@@ -553,7 +553,19 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
         //            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
     }
 
-    SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_name);
+    AVPacket pkt;
+    av_init_packet(&pkt);
+
+// TODO: Android assets to get loading screen
+#ifndef __ANDROID_API__
+    png_file_to_bmp(frame_name, &pkt);
+    // LOG_INFO( "Test: %f", get_timer(c) );
+#endif
+
+    SDL_RWops* rw = SDL_RWFromMem(pkt.data, pkt.size);
+
+    // second parameter nonzero means free the rw after reading it, no need to free rw ourselves
+    SDL_Surface* loading_screen = SDL_LoadBMP_RW(rw, 1);
     if (loading_screen == NULL) {
         LOG_WARNING("Loading screen not loaded from %s", frame_name);
         return;

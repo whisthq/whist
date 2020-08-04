@@ -33,6 +33,7 @@ tags
 
 # android studio
 android/.gradle
+android/app/.cxx
 
 # macOS
 .DS_Store

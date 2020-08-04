@@ -609,10 +609,12 @@ int SDL_main(int argc, char* argv[]) {
     srand(rand() * (unsigned int)time(NULL) + rand());
     uid = rand();
 
+#ifndef __ANDROID_API__
     char* log_dir = get_log_dir();
     if (log_dir == NULL) {
         return -1;
     }
+#endif
 
     // cache should be the first thing!
     if (configure_cache() != 0) {
@@ -620,6 +622,8 @@ int SDL_main(int argc, char* argv[]) {
         return -1;
     }
 
+    // TODO: get Android logging to work
+#ifndef __ANDROID_API__
     init_logger(log_dir);
     free(log_dir);
 
@@ -671,6 +675,7 @@ int SDL_main(int argc, char* argv[]) {
     if (running_ci) {
         LOG_INFO("Running in CI mode");
     }
+#endif
 
 // Windows GHA VM cannot render, it just segfaults on creating the renderer
 #if defined(_WIN32)
