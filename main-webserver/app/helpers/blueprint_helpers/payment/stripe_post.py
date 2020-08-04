@@ -100,7 +100,7 @@ def chargeHelper(token, email, code, plan):
             function="chargeHelper",
             label=email,
             logs="Stripe charge encountered a critical error: {error}".format(
-                error=track
+                error=str(e)
             ),
             level=logging.CRITICAL,
         )

@@ -280,9 +280,7 @@ def cloneDisk(
         if operating_system == "Linux":
             original_disk_name = original_disk_name + "_Linux"
 
-        original_disk = compute_client.disks.get(
-            os.getenv("VM_GROUP"), original_disk_name
-        )
+        original_disk = compute_client.disks.get("Fractal", original_disk_name)
 
         fractalLog(
             function="cloneDisk",
@@ -322,6 +320,7 @@ def cloneDisk(
                 "username": username,
                 "location": location,
                 "vm_size": vm_size,
+                "os": operating_system,
             },
         )
 
