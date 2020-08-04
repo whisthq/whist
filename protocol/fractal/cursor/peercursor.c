@@ -42,12 +42,8 @@ static SDL_Surface *duplicate_surface(SDL_Surface *surface) {
     return new_surface;
 }
 
-<<<<<<< HEAD
 int init_peer_cursors(void) {
-=======
-int InitPeerCursors(void) {
 #ifndef __ANDROID_API__
->>>>>>> fix asset bmp loads
     base_cursor_surface = SDL_LoadBMP("../../../fractal/cursor/cursor.bmp");
 #else
     SDL_RWops* rw = SDL_RWFromFile("cursor/cursor.bmp", "rb");
