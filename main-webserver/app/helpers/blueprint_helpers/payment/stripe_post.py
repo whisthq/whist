@@ -95,11 +95,12 @@ def chargeHelper(token, email, code, plan):
             )
             subscription_id = new_subscription["id"]
     except Exception as e:
+        track = traceback.format_exc()
         fractalLog(
             function="chargeHelper",
             label=email,
             logs="Stripe charge encountered a critical error: {error}".format(
-                error=str(e)
+                error=track
             ),
             level=logging.CRITICAL,
         )
