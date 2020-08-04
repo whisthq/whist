@@ -40,6 +40,5 @@ net start fractal ;
 shutdown /r ;
 HEREDOC
 
-
 #Copy-item -Force -Recurse build\* -Destination 'C:\Program Files\Fractal' ;
 #Remove-Item C:\ProgramData\FractalCache\log.txt ;
