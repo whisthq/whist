@@ -1,0 +1,7 @@
+{
+  "allAbis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "validAbis": []
+}

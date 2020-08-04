@@ -33,3 +33,6 @@ ndk.dir=D\:\\Android\\Sdk\\ndk\\13b
 
 
 10: Open the project folder with android studio and compile. The apk will be released in the folder app/build/outputs/apk/release
+
+
+11: If testing on an emulator, make sure to select an x86_64 image for testing.
