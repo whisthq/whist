@@ -76,7 +76,7 @@ def chargeHelper(token, email, code, plan):
                 items=[{"plan": PLAN_ID}],
                 trial_end=trial_end,
                 trial_from_plan=False,
-                default_tax_rates=[STATE_TAX[purchaseState]],
+                # default_tax_rates=[STATE_TAX[purchaseState]],
             )
             subscription_id = new_subscription["id"]
         else:
@@ -86,7 +86,7 @@ def chargeHelper(token, email, code, plan):
                 items=[{"plan": PLAN_ID}],
                 trial_end=trial_end,
                 trial_from_plan=False,
-                default_tax_rates=[STATE_TAX[purchaseState]],
+                # default_tax_rates=[STATE_TAX[purchaseState]],
             )
             fractalSQLUpdate(
                 table_name="users",
