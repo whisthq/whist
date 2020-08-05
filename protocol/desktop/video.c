@@ -544,6 +544,7 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     clock c;
     start_timer(&c);
 
+#ifndef __ANDROID_API__
     char frame_name[24];
     if (gif_frame_index < 10) {
         snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png", gif_frame_index);
@@ -552,6 +553,16 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
         snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png", gif_frame_index);
         //            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
     }
+#else
+    char frame_name[24];
+    if (gif_frame_index < 10) {
+        snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.bmp", gif_frame_index);
+        //            LOG_INFO("Frame loading/frame_0%d.png", gif_frame_index);
+    } else {
+        snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.bmp", gif_frame_index);
+        //            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
+    }
+#endif
 
     AVPacket pkt;
     av_init_packet(&pkt);
@@ -562,7 +573,11 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     // LOG_INFO( "Test: %f", get_timer(c) );
 #endif
 
+#ifndef __ANDROID_API__
     SDL_RWops* rw = SDL_RWFromMem(pkt.data, pkt.size);
+#else
+    SDL_RWops* rw = SDL_RWFromFile(frame_name, "rb");
+#endif
 
     // second parameter nonzero means free the rw after reading it, no need to free rw ourselves
     SDL_Surface* loading_screen = SDL_LoadBMP_RW(rw, 1);
@@ -571,7 +586,10 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
         return;
     }
 
+#ifndef __ANDROID_API__
     // free pkt.data which is initialized by calloc in png_file_to_bmp
+    free(pkt.data);
+#endif
 
     SDL_Texture* loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
 
