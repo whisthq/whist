@@ -46,7 +46,7 @@ int init_peer_cursors(void) {
 #ifndef __ANDROID_API__
     base_cursor_surface = SDL_LoadBMP("../../../fractal/cursor/cursor.bmp");
 #else
-    SDL_RWops* rw = SDL_RWFromFile("cursor/cursor.bmp", "rb");
+    SDL_RWops *rw = SDL_RWFromFile("cursor/cursor.bmp", "rb");
     base_cursor_surface = SDL_LoadBMP_RW(rw, 1);
 #endif
     if (base_cursor_surface == NULL) {
