@@ -3,7 +3,7 @@ from app.helpers.utils.mail.stripe_mail import *
 from app.helpers.utils.general.logs import *
 import logging
 from pyzipcode import ZipCodeDatabase
-from app.constants.tax_rates import *
+from app.constants.states import *
 
 stripe.api_key = os.getenv("STRIPE_SECRET")
 zcdb = ZipCodeDatabase()
@@ -65,6 +65,16 @@ def chargeHelper(token, email, code, plan):
                 NOT_ACCEPTABLE,
             )
 
+        taxRates = stripe.TaxRate.list(limit=100, active=True)["data"]
+        taxRate = []
+        logger = logging.getLogger(__name__)
+        for tax in taxRates:
+            if (
+                tax["jurisdiction"].strip().lower()
+                == STATE_LIST[purchaseState].strip().lower()
+            ):
+                taxRate = [tax["id"]]
+
         if metadata:
             credits += 1
 
@@ -76,7 +86,7 @@ def chargeHelper(token, email, code, plan):
                 items=[{"plan": PLAN_ID}],
                 trial_end=trial_end,
                 trial_from_plan=False,
-                default_tax_rates=[STATE_TAX[purchaseState]],
+                default_tax_rates=taxRate,
             )
             subscription_id = new_subscription["id"]
         else:
@@ -86,7 +96,7 @@ def chargeHelper(token, email, code, plan):
                 items=[{"plan": PLAN_ID}],
                 trial_end=trial_end,
                 trial_from_plan=False,
-                default_tax_rates=[STATE_TAX[purchaseState]],
+                default_tax_rates=taxRate,
             )
             fractalSQLUpdate(
                 table_name="users",
