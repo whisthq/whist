@@ -1,9 +1,7 @@
 {
   "environments": {
     "review": {
-      "addons": [
-        "heroku-redis:hobby-dev"
-      ]
+      "addons": ["heroku-redis:hobby-dev"]
     },
     "test": {
       "scripts": {
@@ -11,19 +9,14 @@
         "test": "py.test -v -s -o log_cli=true -x -m vm_serial && py.test -v -s -o log_cli=true -x -m disk_serial;"
       },
       "formation": {
-        "test": {
-          "quantity": 2
+        "web": {
+          "quantity": 2,
+          "size": "hobby"
+        },
+        "celery": {
+          "quantity": 1,
+          "size": "hobby"
         }
-      }
-    },
-    "formation": {
-      "web": {
-        "quantity": 2,
-        "size": "hobby"
-      },
-      "celery": {
-        "quantity": 1,
-        "size": "hobby"
       }
     }
   }
