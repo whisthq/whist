@@ -5,13 +5,39 @@ from app.helpers.blueprint_helpers.auth.account_post import *
 account_bp = Blueprint("account_bp", __name__)
 
 
+@account_bp.route("/account/delete", methods=["POST"])
+@fractalPreProcess
+@jwt_required
+@fractalAuth
+def account_postDelete(**kwargs):
+    # Account deletion endpoint
+    username = kwargs["body"]["username"]
+
+    print("delete0")
+
+    output = deleteHelper(username)
+
+    return jsonify(output), output["status"]
+
+
+@account_bp.route("/account/update", methods=["POST"])
+@fractalPreProcess
+@jwt_required
+@fractalAuth
+def account_postUpdate(**kwargs):
+    # Change the user's name, email, or password
+    print("update")
+    return updateUserHelper(kwargs["body"])
+
+
 @account_bp.route("/account/<action>", methods=["POST"])
 @fractalPreProcess
 def account_post(action, **kwargs):
+    body = kwargs["body"]
     if action == "login":
         # Login endpoint
 
-        username, password = kwargs["body"]["username"], kwargs["body"]["password"]
+        username, password = body["username"], body["password"]
 
         output = loginHelper(username, password)
 
@@ -20,9 +46,9 @@ def account_post(action, **kwargs):
     elif action == "register":
         # Account creation endpoint
 
-        username, password = kwargs["body"]["username"], kwargs["body"]["password"]
-        name = kwargs["body"]["name"]
-        reason_for_signup = kwargs["body"]["feedback"]
+        username, password = body["username"], body["password"]
+        name = body["name"]
+        reason_for_signup = body["feedback"]
 
         output = registerHelper(username, password, name, reason_for_signup)
 
@@ -31,30 +57,21 @@ def account_post(action, **kwargs):
     elif action == "verify":
         # Email verification endpoint
 
-        username, token = kwargs["body"]["username"], kwargs["body"]["token"]
+        username, token = body["username"], body["token"]
 
         output = verifyHelper(username, token)
-
-        return jsonify(output), output["status"]
-
-    elif action == "delete":
-        # Account deletion endpoint
-
-        username = kwargs["body"]["username"]
-
-        output = deleteHelper(username)
 
         return jsonify(output), output["status"]
 
     elif action == "resetPassword":
         # Reset user password
 
-        resetPasswordHelper(kwargs["body"]["username"], kwargs["body"]["password"])
+        resetPasswordHelper(body["username"], body["password"])
         return jsonify({"status": SUCCESS}), SUCCESS
     elif action == "lookup":
         # Check if user exists
 
-        output = lookupHelper(kwargs["body"]["username"])
+        output = lookupHelper(body["username"])
         return jsonify(output), output["status"]
 
 
@@ -80,6 +97,7 @@ def account_get_no_auth(action, **kwargs):
 
         return jsonify(output), output["status"]
 
+    # TODO: Delete later
     elif action == "code":
         # Get the user's promo code
         username = request.args.get("username")
@@ -87,3 +105,8 @@ def account_get_no_auth(action, **kwargs):
         output = codeHelper(username)
 
         return jsonify(output), output["status"]
+
+    elif action == "fetch":
+        # Get the user's info
+        username = request.args.get("username")
+        return fetchUserHelper(username)
