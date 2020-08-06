@@ -44,7 +44,6 @@ def protocolInfoHelper(ip_address):
             table_name="disk_settings", params={"disk_name": vm_info["disk_name"]}
         )
 
-
         access_token, refresh_token = getAccessTokens(
             os.getenv("DASHBOARD_USERNAME") + "@gmail.com"
         )

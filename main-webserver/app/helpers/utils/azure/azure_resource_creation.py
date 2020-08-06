@@ -2,8 +2,10 @@ from app import *
 from app.helpers.utils.azure.azure_general import *
 import secrets
 
+
 def generatePrivateKey():
     return secrets.token_hex(16)
+
 
 def createNic(vm_name, location, tries, resource_group=None):
     """Creates a network id

@@ -35,7 +35,7 @@ def get_url():
     if os.getenv("USE_PRODUCTION_DATABASE").upper() == "TRUE":
         url = os.getenv("DATABASE_URL")
     else:
-        url =  os.getenv("HEROKU_POSTGRESQL_ORANGE_URL")
+        url = os.getenv("HEROKU_POSTGRESQL_ORANGE_URL")
     print(url)
     return url
 

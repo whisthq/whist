@@ -11,7 +11,6 @@ def fetchCurrentVMs(admin_token):
     ).json()
 
 
-
 def createVM(vm_size, location, operating_system, resource_group, input_token):
     return requests.post(
         (SERVER_URL + "/azure_vm/create"),
