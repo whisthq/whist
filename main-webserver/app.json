@@ -1,13 +1,17 @@
 {
   "environments": {
     "review": {
-      "addons": [
-        "heroku-redis:hobby-dev"
-      ]
+      "addons": ["heroku-redis:hobby-dev"]
     },
     "test": {
+      "addons": ["heroku-redis:in-dyno"],
       "scripts": {
-        "test": "source ci_env_setup.sh; source test_setup.sh; py.test -v -s -r A"
+        "test": "source ci_env_setup.sh; source test_setup.sh; py.test -v -s -o log_cli=true -x"
+      },
+      "formation": {
+        "test": {
+          "quantity": 2
+        }
       }
     }
   }
