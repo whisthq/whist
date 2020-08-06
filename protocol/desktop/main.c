@@ -550,7 +550,6 @@ int main(int argc, char* argv[]) {
         }
 
         connected = true;
-        received_server_init_message = true;
 
         // Initialize audio and variables
         is_timing_latency = false;
