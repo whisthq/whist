@@ -5,7 +5,6 @@ from .helpers.tests.azure_vm import *
 
 
 @pytest.mark.disk_serial
-@disabled
 def test_delete_disk_initial(input_token, admin_token):
     if os.getenv("USE_PRODUCTION_DATABASE").upper() == "TRUE":
         fractalLog(
@@ -32,7 +31,7 @@ def test_delete_disk_initial(input_token, admin_token):
                 input_token=input_token,
             )
 
-            task = queryStatus(resp, timeout=2)
+            task = queryStatus(resp, timeout=5)
 
             if task["status"] < 1:
                 fractalLog(
@@ -78,9 +77,8 @@ def test_delete_disk_initial(input_token, admin_token):
 
 
 @pytest.mark.disk_serial
-@disabled
 def test_disk_clone(input_token):
-    regions = ["eastus", "eastus", "eastus"]
+    regions = ["eastus"]
 
     def cloneDiskHelper(region):
         fractalLog(
@@ -92,13 +90,13 @@ def test_disk_clone(input_token):
         resp = cloneDisk(
             location=region,
             vm_size="NV6",
-            operating_system="Windows",
+            operating_system="Linux",
             apps=[],
             resource_group=RESOURCE_GROUP,
             input_token=input_token,
         )
 
-        task = queryStatus(resp, timeout=1.2)
+        task = queryStatus(resp, timeout=2)
 
         if task["status"] < 1:
             fractalLog(
@@ -118,8 +116,9 @@ def test_disk_clone(input_token):
 
 
 @pytest.mark.disk_serial
+@disabled
 def test_disk_attach(input_token, admin_token):
-    regions = ["eastus", "eastus", "eastus"]
+    regions = ["eastus", "northcentralus", "southcentralus"]
 
     def attachDiskHelper(disk):
         disk_name = disk["disk_name"]

@@ -16,7 +16,7 @@ def test_delete_vm_initial(input_token, admin_token):
 
         fractalLog(
             function="test_delete_vm_initial",
-            label="azure_vm/delete",
+            label="vm/delete",
             logs="Starting to delete VM {vm_name}".format(vm_name=vm["vm_name"]),
         )
 
@@ -39,7 +39,6 @@ def test_delete_vm_initial(input_token, admin_token):
             assert False
 
     all_vms = fetchCurrentVMs(admin_token)
-    print(all_vms)
     fractalJobRunner(deleteVMHelper, all_vms)
 
     assert True
@@ -49,17 +48,17 @@ def test_delete_vm_initial(input_token, admin_token):
 def test_vm_create(input_token):
     newLine()
 
-    regions = ["eastus", "eastus"]
+    regions = ["eastus"]
 
     def createVMInRegion(region):
         fractalLog(
             function="test_vm_create",
-            label="azure_vm/create",
+            label="vm/create",
             logs="Starting to create a VM in {region}".format(region=region),
         )
 
         resp = createVM(
-            "Standard_NV6_Promo", region, "Windows", RESOURCE_GROUP, input_token
+            "Standard_NV6_Promo", region, "Linux", RESOURCE_GROUP, input_token
         )
 
         task = queryStatus(resp, timeout=12.5)
@@ -67,7 +66,7 @@ def test_vm_create(input_token):
         if task["status"] < 1:
             fractalLog(
                 function="test_vm_create",
-                label="azure_vm/create",
+                label="vm/create",
                 logs=task["output"],
                 level=logging.ERROR,
             )

@@ -41,9 +41,9 @@ def fetchUserHelper(username):
 
     # Return user's promo code
     if output["success"] and output["rows"]:
-        return jsonify({"user": output["rows"][0], "status":SUCCESS}), SUCCESS
+        return jsonify({"user": output["rows"][0], "status": SUCCESS}), SUCCESS
     else:
-        return jsonify({"user": None, "status":BAD_REQUEST}), BAD_REQUEST
+        return jsonify({"user": None, "status": BAD_REQUEST}), BAD_REQUEST
 
 
 def disksHelper(username, main):
