@@ -15,7 +15,7 @@ def stripeChargeHourly(username):
 
     # Check to see if user is an hourly plan subscriber
 
-    stripe.api_key = os.getenv("STRIPE_SECRET")
+    stripe.api_key = STRIPE_SECRET
     subscription_id = customer["subscription"]
 
     try:

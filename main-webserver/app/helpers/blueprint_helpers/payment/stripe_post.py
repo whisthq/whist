@@ -5,7 +5,7 @@ import logging
 from pyzipcode import ZipCodeDatabase
 from app.constants.tax_rates import *
 
-stripe.api_key = os.getenv("STRIPE_SECRET")
+stripe.api_key = STRIPE_SECRET
 zcdb = ZipCodeDatabase()
 
 
