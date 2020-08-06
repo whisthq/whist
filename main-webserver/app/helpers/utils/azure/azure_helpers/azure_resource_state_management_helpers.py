@@ -4,7 +4,7 @@ from app.helpers.utils.azure.azure_resource_locks import *
 
 
 def boot_if_necessary(
-    vm_name, needs_restart, resource_group=os.getenv("VM_GROUP"), s=None
+    vm_name, needs_restart, resource_group=VM_GROUP, s=None
 ):
     _, compute_client, _ = createClients()
 
@@ -113,7 +113,7 @@ def changeFirstTime(disk_name, first_time=False):
     )
 
 
-def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
+def waitForWinlogon(vm_name, resource_group=VM_GROUP, s=None):
     """Periodically checks and sleeps until winlogon succeeds
 
     Args:
@@ -267,8 +267,8 @@ def waitForWinlogon(vm_name, resource_group=os.getenv("VM_GROUP"), s=None):
             ),
         )
 
-    if has_winlogoned or resource_group != os.getenv("VM_GROUP"):
-        if resource_group != os.getenv("VM_GROUP"):
+    if has_winlogoned or resource_group != VM_GROUP:
+        if resource_group != VM_GROUP:
             fractalLog(
                 function="waitForWinlogon",
                 label=getVMUser(vm_name),

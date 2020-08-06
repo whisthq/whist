@@ -5,7 +5,7 @@ from app.helpers.utils.azure.azure_resource_locks import *
 
 
 @celery_instance.task(bind=True)
-def deleteVM(self, vm_name, delete_disk, resource_group=os.getenv("VM_GROUP")):
+def deleteVM(self, vm_name, delete_disk, resource_group=VM_GROUP):
     """Deletes an Azure VM
 
     Args:
@@ -241,7 +241,7 @@ def deleteVM(self, vm_name, delete_disk, resource_group=os.getenv("VM_GROUP")):
 
 
 @celery_instance.task(bind=True)
-def deleteDisk(self, disk_name, resource_group=os.getenv("VM_GROUP")):
+def deleteDisk(self, disk_name, resource_group=VM_GROUP):
     """Deletes an Azure disk
 
     Args:

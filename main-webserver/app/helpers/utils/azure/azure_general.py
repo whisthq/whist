@@ -59,7 +59,7 @@ def createDiskName():
     return disk_name
 
 
-def createVMInstance(vm_name, resource_group=os.getenv("VM_GROUP")):
+def createVMInstance(vm_name, resource_group=VM_GROUP):
     """Retrieves information about the model view or the instance view of an Azure virtual machine
 
     Parameters:
@@ -85,7 +85,7 @@ def createVMInstance(vm_name, resource_group=os.getenv("VM_GROUP")):
         return None
 
 
-def getVMIP(vm_name, resource_group=os.getenv("VM_GROUP")):
+def getVMIP(vm_name, resource_group=VM_GROUP):
     """Gets the IP address for a vm
 
     Args:
@@ -136,7 +136,7 @@ def resourceGroupToTable(resource_group):
         return None
 
 
-def getVMUser(vm_name, resource_group=os.getenv("VM_GROUP")):
+def getVMUser(vm_name, resource_group=VM_GROUP):
     output = fractalSQLSelect(
         table_name=resourceGroupToTable(resource_group), params={"vm_name": vm_name}
     )
@@ -160,19 +160,19 @@ def checkResourceGroup(resource_group):
     fractalLog(
         function="checkResourceGroup",
         label="None",
-        logs="Checking to see if {resource_group} is allowed under production database {use_production_database}".format(
+        logs="Checking to see if {resource_group} is allowed under server type {server_type}".format(
             resource_group=resource_group,
-            use_production_database=str(os.getenv("USE_PRODUCTION_DATABASE")),
+            server_type=str(os.getenv("SERVER_TYPE")),
         ),
     )
 
-    if str(os.getenv("USE_PRODUCTION_DATABASE")).upper() == "TRUE":
-        valid_resource_group = resource_group == os.getenv("VM_GROUP")
+    if str(os.getenv("SERVER_TYPE")).upper() == "PRODUCTION":
+        valid_resource_group = resource_group == "Fractal"
         fractalLog(
             function="checkResourceGroup",
             label="None",
             logs="The production resource group is {resource_group}, valid resource group is {valid_resource_group}".format(
-                resource_group=os.getenv("VM_GROUP"),
+                resource_group=VM_GROUP,
                 valid_resource_group=str(valid_resource_group),
             ),
         )

@@ -5,7 +5,7 @@ from app.helpers.utils.azure.azure_resource_locks import *
 
 
 @celery_instance.task(bind=True)
-def startVM(self, vm_name, resource_group=os.getenv("VM_GROUP")):
+def startVM(self, vm_name, resource_group=VM_GROUP):
     """Starts an Azure VM
 
     Args:
@@ -48,7 +48,7 @@ def startVM(self, vm_name, resource_group=os.getenv("VM_GROUP")):
 
 
 @celery_instance.task(bind=True)
-def restartVM(self, vm_name, resource_group=os.getenv("VM_GROUP")):
+def restartVM(self, vm_name, resource_group=VM_GROUP):
     """Restarts an Azure VM
 
     Args:
@@ -91,7 +91,7 @@ def restartVM(self, vm_name, resource_group=os.getenv("VM_GROUP")):
 
 
 @celery_instance.task(bind=True)
-def deallocateVM(self, vm_name, resource_group=os.getenv("VM_GROUP")):
+def deallocateVM(self, vm_name, resource_group=VM_GROUP):
     """Deallocates an Azure VM
 
     Args:

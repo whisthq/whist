@@ -41,7 +41,7 @@ def azure_disk_post(action, **kwargs):
     elif action == "delete":
         # Delete a disk from Azure and database
 
-        resource_group = os.getenv("VM_GROUP")
+        resource_group = VM_GROUP
         if "resource_group" in kwargs["body"].keys():
             resource_group = kwargs["body"]["resource_group"]
 

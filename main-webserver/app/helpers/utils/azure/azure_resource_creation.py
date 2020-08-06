@@ -14,7 +14,7 @@ def createNic(vm_name, location, tries, resource_group=None):
         dict: The network id object
     """
 
-    resource_group = os.getenv("VM_GROUP") if not resource_group else resource_group
+    resource_group = VM_GROUP if not resource_group else resource_group
 
     _, _, network_client = createClients()
     vnet_name, subnet_name, ip_name, nic_name = (

@@ -207,7 +207,7 @@ def deleteHelper(username):
     disks = fractalSQLSelect("disks", {"username": username})["rows"]
     if disks:
         for disk in disks:
-            deleteDisk.apply_async([disk["disk_name"], os.getenv("VM_GROUP")])
+            deleteDisk.apply_async([disk["disk_name"], VM_GROUP])
 
     return {"status": SUCCESS, "error": None}
 
