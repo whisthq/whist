@@ -219,6 +219,29 @@ int runcmd(const char* cmdline, char** response) {
         }
         free(cmd);
 
+// TODO: Android shell commands don't return any content (and likely don't run...)
+ // #else
+ //         int pipefd[2];
+ //         pid_t pid = -1;
+
+ //         pipe(pipefd);
+ //         pid = fork();
+ //         if (pid == 0) { // in child
+ //             close(pipefd[0]);
+ //             dup2(pipefd[1], STDOUT_FILENO);
+ //             dup2(pipefd[1], STDERR_FILENO);
+ //             LOG_INFO("before exec")
+ //             // execl("bash", "bash", "-c", "cat", "/etc/timezone", (char  *) NULL); // make this run the command
+ //             execl("y", "y", (char *) NULL);
+ //             LOG_INFO("exec fail errno %d", errno);
+ //             _exit(0);
+ //         } else { // in parent
+ //             close(pipefd[1]);
+ //             pPipe = fdopen(pipefd[0], "r");
+ //         }
+ //         // free(cmd)
+ // #endif
+
         /* Read pipe until end of file, or an error occurs. */
 
         int current_len = 0;
