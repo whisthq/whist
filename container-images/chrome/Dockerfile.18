@@ -55,18 +55,21 @@ RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 # RUN wget -q -O utils.sh https://fractal-cloud-setup-s3bucket.s3.amazonaws.com/utils.sh >>/dev/null 2>&1
 # Using local setup-scripts repository for development
-ADD utils.sh /
+ADD setup-scripts /setup-scripts
 
 RUN useradd --create-home fractal \
     && usermod -aG sudo fractal \
     && echo 'fractal:password1234567.' | chpasswd
 
+RUN apt-get install lsb-release -y && apt-get clean
+
 # Install all required components for Fractal to perform well
 # Split into multiple steps for caching
+WORKDIR /setup-scripts/linux
 RUN /bin/bash -c "source utils.sh \
     && Update-Linux \
     && Set-Time \
-    && Install-VirtualDisplay-NoGnome"
+    && Install-VirtualDisplay"
 RUN /bin/bash -c "source utils.sh \
     && Install-7Zip \
     && Install-Curl \
@@ -96,6 +99,7 @@ RUN /bin/bash -c "source utils.sh \
 # RUN /bin/bash -c " source utils.sh \
 #     && Add-AutoLogin \
 #     && Disable-AutomaticLockScreen"
+WORKDIR /
 
 #From protocol/server/linux-server-setup.sh
 RUN sudo apt-get install ffmpeg libavcodec-dev libavdevice-dev libx11-dev libxtst-dev libxdamage-dev libasound2-dev xclip x11-xserver-utils -y
@@ -122,7 +126,7 @@ RUN systemctl enable ssh
 RUN systemctl set-default multi-user.target
 ENV init /sbin/init
 RUN systemctl enable fractal-entrypoint
-RUN systemctl enable fractal-display
+# RUN systemctl enable fractal-display
 # RUN chmod +x /lib/systemd/systemd
 
 ADD fractal-setup.sh /
