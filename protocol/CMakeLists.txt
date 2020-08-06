@@ -200,7 +200,6 @@ endif()
 include_directories(fractal)
 include_directories(include)
 include_directories(include/SDL2)
-include_directories(include/SDL_image)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)

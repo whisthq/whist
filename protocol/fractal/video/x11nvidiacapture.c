@@ -12,7 +12,7 @@
 
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
 
-int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
+int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec) {
     NVFBC_SIZE frameSize = { 0, 0 };
     NVFBC_BOOL printStatusOnly = NVFBC_FALSE;
 
@@ -32,7 +32,12 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
     NVFBC_HWENC_CONFIG encoderConfig;
     NVFBC_TOHWENC_SETUP_PARAMS setupParams;
 
-    NVFBC_HWENC_CODEC codec = NVFBC_HWENC_CODEC_H264;
+    NVFBC_HWENC_CODEC codec;
+    if (requested_codec == CODEC_TYPE_H265) {
+        codec = NVFBC_HWENC_CODEC_HEVC;
+    } else {
+        codec = NVFBC_HWENC_CODEC_H264;
+    }
 
     NvFBCUtilsPrintVersions(APP_VERSION);
 
@@ -170,9 +175,9 @@ int CreateNvidiaCaptureDevice(NvidiaCaptureDevice* device) {
     }
     encoderConfig.dwFrameRateNum     = 60;
     encoderConfig.dwFrameRateDen     = 1;
-    encoderConfig.dwAvgBitRate       = 8000000;
+    encoderConfig.dwAvgBitRate       = bitrate;
     encoderConfig.dwPeakBitRate      = encoderConfig.dwAvgBitRate * 1.5;
-    encoderConfig.dwGOPLength        = 100;
+    encoderConfig.dwGOPLength        = 99999;
     encoderConfig.eRateControl       = NVFBC_HWENC_PARAMS_RC_VBR;
     encoderConfig.ePresetConfig      = NVFBC_HWENC_PRESET_LOW_LATENCY_HP;
     encoderConfig.dwQP               = 26;
