@@ -19,4 +19,3 @@ def signupMail(username, promo_code):
             logs="Mail send failed: Error code " + e.message,
             level=logging.ERROR,
         )
-

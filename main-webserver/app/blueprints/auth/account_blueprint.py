@@ -110,4 +110,3 @@ def account_get_no_auth(action, **kwargs):
         # Get the user's info
         username = request.args.get("username")
         return fetchUserHelper(username)
-

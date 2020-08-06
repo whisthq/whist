@@ -268,4 +268,3 @@ def updateUserHelper(body):
         resetPasswordHelper(body["username"], body["password"])
         return jsonify({"msg": "Password updated successfully"}), SUCCESS
     return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE
-
