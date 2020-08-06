@@ -1592,7 +1592,7 @@ void set_timeout(SOCKET s, int timeout_ms) {
 
         if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&read_timeout,
                        sizeof(read_timeout)) < 0) {
-            LOG_WARNING("Failed to set timeout");
+            LOG_WARNING("Failed to set timeout: %d", GetLastNetworkError());
             return;
         }
     }
