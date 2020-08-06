@@ -601,6 +601,33 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
         char_buffer += packets[i].size;
     }
 
+#ifdef __ANDROID_API__
+    // try to set extradata on android if necessary
+    if (!decoder->context->extradata) {
+        for (int i = 0; i < num_packets; i++) {
+            while (extract_extradata(decoder, &packets[i]) < 0) {
+                if (!try_next_decoder(decoder)) {
+                    LOG_WARNING("Unable to extract and set extradata!");
+                    destroy_video_decoder(decoder);
+                    for (int j = 0; j < num_packets; j++) {
+                        av_packet_unref(&packets[j]);
+                    }
+                    free(packets);
+                    return false;
+                }
+            }
+            // upon extract_extradata success, continue
+            //            decoder->context->profile = FF_PROFILE_H264_BASELINE;
+            LOG_INFO("Successfully set extradata! Opening context...");
+            int res = avcodec_open2(decoder->context, decoder->codec, NULL);
+            if (res < 0) {
+                LOG_WARNING("Failed to open context for stream (%d): %s", res, av_err2str(res));
+                return -1;
+            }
+        }
+    }
+#endif
+
     for (int i = 0; i < num_packets; i++) {
         // decode the frame
         while (avcodec_send_packet(decoder->context, &packets[i]) < 0) {

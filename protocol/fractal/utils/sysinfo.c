@@ -129,11 +129,19 @@ void print_model_info() {
     }
 #else
     char* vendor = NULL;
+#ifndef __ANDROID_API__
     runcmd("cat /sys/devices/virtual/dmi/id/sys_vendor", &vendor);
+#else
+    runcmd("getprop 'ro.product.vendor.brand'", &vendor);
+#endif
     if (vendor) {
         vendor[strlen(vendor) - 1] = '\0';
         char* product = NULL;
+#ifndef __ANDROID_API__
         runcmd("cat /sys/devices/virtual/dmi/id/product_name", &product);
+#else
+        runcmd("getprop 'ro.product.vendor.model'", &product);
+#endif
         if (product) {
             product[strlen(product) - 1] = '\0';
             LOG_INFO("  Make and Model: %s %s", vendor, product);
@@ -271,7 +279,9 @@ void print_ram_info() {
     size_t total_ram;
     size_t total_ram_usage;
     struct sysinfo info;
+    LOG_INFO("SYSINFO BEFORE");
     sysinfo(&info);
+    LOG_INFO("SYSINFO AFTER");
 
     total_ram = info.totalram;
     total_ram_usage = info.totalram - (info.freeram + info.bufferram);

@@ -170,7 +170,11 @@ int get_time_data(FractalTimeData* time_data) {
     time_data->dst_flag = get_dst();
 
     char* response = NULL;
+#ifndef __ANDROID_API__
     runcmd("cat /etc/timezone", &response);
+#else
+    runcmd("getprop 'persist.sys.timezone'", &response);
+#endif
     safe_strncpy(time_data->linux_tz_name, response, sizeof(time_data->linux_tz_name));
     free(response);
 

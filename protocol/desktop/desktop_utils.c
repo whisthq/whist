@@ -628,7 +628,7 @@ int log_connection_id(int connection_id) {
     char *path;
 #ifdef _WIN32
     path = dupstring("connection_id.txt");
-#elif defined(__ANDROID_API__)
+#elif __ANDROID_API__
     path = dupstring("");
     return 0;
 #else
@@ -737,7 +737,7 @@ int configure_cache(void) {
             (int): 0 on success
     */
 
-#ifndef _WIN32
+#ifndef _WIN32 || __ANDROID_API__
     runcmd("mkdir -p ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
     runcmd("rm -f ~/.fractal/log.txt", NULL);
