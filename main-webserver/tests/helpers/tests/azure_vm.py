@@ -4,9 +4,11 @@ from tests import *
 # Get all the VMs in the database currently
 
 
-def fetchCurrentVMs():
-    output = fractalSQLSelect(table_name="v_ms", params={})
-    return output["rows"]
+def fetchCurrentVMs(admin_token):
+    return requests.get(
+        (SERVER_URL + "/report/fetchVMs"),
+        headers={"Authorization": "Bearer " + admin_token},
+    ).json()
 
 
 def createVM(vm_size, location, operating_system, resource_group, input_token):

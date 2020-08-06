@@ -3,6 +3,7 @@ from app.helpers.utils.general.sql_commands import *
 from app.constants.bad_words import *
 
 
+
 def generateUniquePromoCode():
     output = fractalSQLSelect("users", {})
     old_codes = []

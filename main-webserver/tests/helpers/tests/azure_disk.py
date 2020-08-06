@@ -1,9 +1,11 @@
 from tests import *
 
 
-def fetchCurrentDisks():
-    output = fractalSQLSelect(table_name="disks", params={})
-    return output["rows"]
+def fetchCurrentDisks(admin_token):
+    return requests.get(
+        (SERVER_URL + "/report/fetchDisks"),
+        headers={"Authorization": "Bearer " + admin_token},
+    ).json()
 
 
 def deleteDisk(disk_name, resource_group, input_token):
