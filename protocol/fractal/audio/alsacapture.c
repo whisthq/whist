@@ -98,7 +98,6 @@ audio_device_t *CreateAudioDevice() {
     int dir = 0;
     res = snd_pcm_hw_params_set_rate_near(audio_device->handle, params,
                                           &audio_device->sample_rate, &dir);
-    LOG_INFO("aUDIO SAMPLE RATE!!!!!!!!!!!!!!! %d", audio_device->sample_rate);
     if (res < 0) {
         LOG_WARNING("PCM cannot set format with sample rate: %d", audio_device->sample_rate);
 	FREE_ALL();
