@@ -499,6 +499,8 @@ int32_t SendVideo(void* opaque) {
     return 0;
 }
 
+static int sample_rate = -1;
+
 int32_t SendAudio(void* opaque) {
     opaque;
     int id = 1;
@@ -514,21 +516,7 @@ int32_t SendAudio(void* opaque) {
     int res;
 
     // Tell the client what audio frequency we're using
-
-    FractalServerMessage fmsg;
-    fmsg.type = MESSAGE_AUDIO_FREQUENCY;
-    fmsg.frequency = audio_device->sample_rate;
-    if (readLock(&is_active_rwlock) != 0) {
-        LOG_ERROR("Failed to read-acquire is active RW lock.");
-    } else {
-        if (broadcastUDPPacket(PACKET_MESSAGE, (uint8_t*)&fmsg, sizeof(fmsg), 1,
-                               STARTING_BURST_BITRATE, NULL, NULL) != 0) {
-            LOG_ERROR("Failed to broadcast audio packet.");
-        }
-        if (readUnlock(&is_active_rwlock) != 0) {
-            LOG_ERROR("Failed to read-release is active RW lock.");
-        }
-    }
+    sample_rate = audio_device->sample_rate;
     LOG_INFO("Audio Frequency: %d", audio_device->sample_rate);
 
     // setup
@@ -750,6 +738,7 @@ int doDiscoveryHandshake(SocketContext* context, int* client_id) {
 
     // Send connection ID to client
     reply_msg->connection_id = connection_id;
+    reply_msg->audio_sample_rate = sample_rate;
     char* server_username = "Fractal";
     memcpy(reply_msg->username, server_username, strlen(server_username) + 1);
 #ifdef _WIN32

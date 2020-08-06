@@ -481,19 +481,14 @@ typedef enum FractalServerMessageType {
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
-typedef struct FractalServerMessageInit {
-    char filename[300];
-    char username[50];
-    int connection_id;
-} FractalServerMessageInit;
-
 typedef struct FractalDiscoveryReplyMessage {
     int client_id;
     int UDP_port;
     int TCP_port;
+    int connection_id;
+    int audio_sample_rate;
     char filename[300];
     char username[50];
-    int connection_id;
 } FractalDiscoveryReplyMessage;
 
 typedef struct PeerUpdateMessage {

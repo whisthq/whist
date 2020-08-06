@@ -40,7 +40,7 @@ its threads.
 #include "../fractal/utils/mac_utils.h"
 #endif
 
-int audio_frequency = -1;
+volatile int audio_frequency = -1;
 
 // Width and Height
 volatile int server_width = -1;
@@ -87,7 +87,6 @@ clock window_resize_timer;
 // Function Declarations
 
 int ReceivePackets(void* opaque);
-bool received_server_init_message;
 
 SocketContext PacketSendContext = {0};
 SocketContext PacketReceiveContext = {0};
@@ -161,16 +160,14 @@ void update() {
 
     // Assuming we have all of the important init information, then update the
     // clipboard
-    if (received_server_init_message) {
-        ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
-        if (clipboard) {
-            FractalClientMessage* fmsg_clipboard =
-                malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
-            fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
-            memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
-            SendFmsg(fmsg_clipboard);
-            free(fmsg_clipboard);
-        }
+    ClipboardData* clipboard = ClipboardSynchronizerGetNewClipboard();
+    if (clipboard) {
+        FractalClientMessage* fmsg_clipboard =
+            malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
+        fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
+        memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
+        SendFmsg(fmsg_clipboard);
+        free(fmsg_clipboard);
     }
 
     // If we haven't yet tried to update the dimension, and the dimensions don't

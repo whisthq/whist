@@ -17,6 +17,7 @@ TODO
 #include "desktop_utils.h"
 
 // Data
+extern volatile int audio_frequency;
 extern volatile char aes_private_key[16];
 extern char filename[300];
 extern char username[50];
@@ -27,7 +28,6 @@ extern SocketContext PacketSendContext;
 extern SocketContext PacketReceiveContext;
 extern SocketContext PacketTCPContext;
 extern char *server_ip;
-extern bool received_server_init_message;
 extern int uid;
 
 #define TCP_CONNECTION_WAIT 1000  // ms
@@ -99,6 +99,7 @@ int discoverPorts(void) {
     }
 
     client_id = reply_msg->client_id;
+    audio_frequency = reply_msg->audio_sample_rate;
     UDP_port = reply_msg->UDP_port;
     TCP_port = reply_msg->TCP_port;
     LOG_INFO("Assigned client ID: %d. UDP Port: %d, TCP Port: %d", client_id, UDP_port, TCP_port);
@@ -112,7 +113,6 @@ int discoverPorts(void) {
         return -1;
     }
 
-    received_server_init_message = true;
     closesocket(context.s);
 
     return 0;
