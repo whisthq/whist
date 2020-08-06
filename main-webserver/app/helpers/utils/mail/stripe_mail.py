@@ -3,7 +3,11 @@ from app.helpers.utils.general.logs import *
 
 
 def chargeFailedMail(username, custId):
-    sendInfo(ID, "Sending charge failed email to {}".format(username))
+    fractalLog(
+        function="chargeFailedMail",
+        label=username,
+        logs="Sending charge failed email to {}".format(username),
+    )
     try:
         message = SendGridMail(
             from_email="noreply@fractalcomputers.com",
@@ -14,7 +18,12 @@ def chargeFailedMail(username, custId):
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
         response = sg.send(message)
     except Exception as e:
-        sendError(ID, "Mail send failed: Error code " + e.message)
+        fractalLog(
+            function="chargeFailedMail",
+            label=username,
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
+        )
 
     message = SendGridMail(
         from_email="noreply@fractalcomputers.com",
@@ -25,9 +34,18 @@ def chargeFailedMail(username, custId):
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
         response = sg.send(message)
-        sendInfo(ID, "Sent charge failed email to support")
+        fractalLog(
+            function="chargeFailedMail",
+            label=username,
+            logs="Sent charge failed email to support",
+        )
     except Exception as e:
-        sendError(ID, "Mail send failed: Error code " + e.message)
+        fractalLog(
+            function="chargeFailedMail",
+            label=username,
+            logs="Mail send failed: Error code " + e.message,
+            level=logging.ERROR,
+        )
 
 
 def chargeSuccessMail(username, custId):

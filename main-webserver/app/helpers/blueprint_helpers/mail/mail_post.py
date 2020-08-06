@@ -74,6 +74,7 @@ def cancelHelper(user, feedback):
 def verificationHelper(user, token):
     title = "[Fractal] Please Verify Your Email"
     url = os.getenv("FRONTEND_URL") + "/verify?" + token
+    # url = "https://localhost:3000/verify?" + token
 
     internal_message = SendGridMail(
         from_email="noreply@fractalcomputers.com",

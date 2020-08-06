@@ -1,5 +1,7 @@
 from app.imports import *
 from app.helpers.utils.general.sql_commands import *
+from app.constants.bad_words import *
+
 
 
 def generateUniquePromoCode():
@@ -33,8 +35,12 @@ def generateToken(username):
 def generatePromoCode():
     upperCase = string.ascii_uppercase
     numbers = "1234567890"
-    c1 = "".join([random.choice(numbers) for _ in range(0, 3)])
-    c2 = "".join([random.choice(upperCase) for _ in range(0, 3)]) + "-" + c1
+    allowed = False
+    while not allowed:
+        c1 = "".join([random.choice(numbers) for _ in range(0, 3)])
+        c2 = "".join([random.choice(upperCase) for _ in range(0, 3)]) + "-" + c1
+        if c2.lower() not in BAD_WORDS:
+            allowed = True
     return c2
 
 
