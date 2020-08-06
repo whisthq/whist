@@ -208,7 +208,7 @@ int32_t SendVideo(void* opaque) {
 
         // Update encoder with new parameters
         if (update_encoder) {
-            UpdateHardwareEncoder(device);
+            UpdateHardwareEncoder(device, current_bitrate, client_codec_type);
             // encoder = NULL;
             if (pending_encoder) {
                 if (encoder_finished) {

@@ -24,6 +24,8 @@ Public Functions
 */
 
 audio_device_t *CreateAudioDevice() {
+    // See http://alsamodular.sourceforge.net/alsa_programming_howto.html
+
     audio_device_t *audio_device = malloc(sizeof(audio_device_t));
     memset(audio_device, 0, sizeof(audio_device_t));
 
@@ -37,76 +39,107 @@ audio_device_t *CreateAudioDevice() {
         return NULL;
     }
 
-    // allocate params context
-    snd_pcm_hw_params_alloca(&audio_device->params);
+    snd_pcm_hw_params_t *params;
 
-    res = snd_pcm_hw_params_any(audio_device->handle, audio_device->params);
+    // allocate params context
+    snd_pcm_hw_params_malloc(&params);
+
+    res = snd_pcm_hw_params_any(audio_device->handle, params);
     if (res < 0) {
         LOG_WARNING("No available PCM hardware configurations.");
+	snd_pcm_close(audio_device->handle);
         free(audio_device);
         return NULL;
     }
 
+#define FREE_ALL() {snd_pcm_close(audio_device->handle); free(audio_device); snd_pcm_hw_params_free(params);};
+
     // set sample format
     // we should do format cascading selection here and similarly below
     audio_device->sample_format = SND_PCM_FORMAT_FLOAT_LE;
-    res = snd_pcm_hw_params_set_format(audio_device->handle, audio_device->params,
+    res = snd_pcm_hw_params_set_format(audio_device->handle, params,
                                        audio_device->sample_format);
 
     if (res < 0) {
         LOG_WARNING("PCM sample format 'enum _snd_pcm_format %d' unavailable.",
                     audio_device->sample_format);
-        free(audio_device);
+	FREE_ALL();
         return NULL;
     }
 
     // number of channels
     audio_device->channels = 2;
-    res = snd_pcm_hw_params_set_channels_near(audio_device->handle, audio_device->params,
+    res = snd_pcm_hw_params_set_channels_near(audio_device->handle, params,
                                               &audio_device->channels);
     if (res < 0) {
         LOG_WARNING("PCM cannot set format with num channels: %d", audio_device->channels);
-        free(audio_device);
+	FREE_ALL();
         return NULL;
     }
 
     // set device to read interleaved samples
-    res = snd_pcm_hw_params_set_access(audio_device->handle, audio_device->params,
+    res = snd_pcm_hw_params_set_access(audio_device->handle, params,
                                        SND_PCM_ACCESS_RW_INTERLEAVED);
     if (res < 0) {
         LOG_WARNING("Unavailable PCM access type.");
-        free(audio_device);
+	FREE_ALL();
+        return NULL;
+    }
+
+    res = snd_pcm_hw_params_set_rate_resample(audio_device->handle, params, 0);
+    if (res < 0) {
+        LOG_WARNING("PCM cannot set resample");
+	FREE_ALL();
         return NULL;
     }
 
     // set stream rate
     audio_device->sample_rate = 44100;  // Hertz
-    res = snd_pcm_hw_params_set_rate_near(audio_device->handle, audio_device->params,
-                                          &audio_device->sample_rate, 0);
+    int dir = 0;
+    res = snd_pcm_hw_params_set_rate_near(audio_device->handle, params,
+                                          &audio_device->sample_rate, &dir);
+    LOG_INFO("aUDIO SAMPLE RATE!!!!!!!!!!!!!!! %d", audio_device->sample_rate);
     if (res < 0) {
         LOG_WARNING("PCM cannot set format with sample rate: %d", audio_device->sample_rate);
-        free(audio_device);
+	FREE_ALL();
         return NULL;
     }
 
     // set frames per period
-    audio_device->num_frames = 120;
-    res = snd_pcm_hw_params_set_period_size_near(audio_device->handle, audio_device->params,
+    audio_device->num_frames = 8;
+    res = snd_pcm_hw_params_set_period_size_near(audio_device->handle, params,
                                                  &audio_device->num_frames, 0);
 
-    // write parameters according to our configuration space to device (can
-    // restrict further if desired)
-    res = snd_pcm_hw_params(audio_device->handle, audio_device->params);
-
     if (res < 0) {
-        LOG_WARNING("Unable to set hw parameters. Error: %s", snd_strerror(res));
-        free(audio_device);
+        LOG_WARNING("PCM cannot set period: %s", snd_strerror(res));
+	FREE_ALL();
         return NULL;
     }
 
     audio_device->frame_size =
         (snd_pcm_format_width(audio_device->sample_format) / 8) * audio_device->channels;
     audio_device->buffer_size = audio_device->num_frames * audio_device->frame_size;
+
+    res = snd_pcm_hw_params_set_buffer_size_near(audio_device->handle, params, &audio_device->buffer_size);
+    if(res < 0)
+    {
+        LOG_WARNING("PCM Error setting buffersize: [%s]\n", snd_strerror(res) );
+	FREE_ALL();
+        return NULL;
+    }
+
+    // write parameters according to our configuration space to device (can
+    // restrict further if desired)
+    res = snd_pcm_hw_params(audio_device->handle, params);
+
+    if (res < 0) {
+        LOG_WARNING("Unable to set hw parameters. Error: %s", snd_strerror(res));
+	FREE_ALL();
+        return NULL;
+    }
+
+    snd_pcm_hw_params_free(params);
+
     audio_device->buffer = (uint8_t *)malloc(audio_device->buffer_size);
 
     return audio_device;

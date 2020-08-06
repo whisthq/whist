@@ -100,7 +100,7 @@ int CreateCaptureDevice(CaptureDevice* device, UINT width, UINT height) {
     }
 
 #if USING_GPU_CAPTURE
-    if (CreateNvidiaCaptureDevice(&device->nvidia_capture_device) < 0) {
+    if (CreateNvidiaCaptureDevice(&device->nvidia_capture_device, 10000000, CODEC_TYPE_UNKNOWN) < 0) {
 	device->using_nvidia = false;
     } else {
 	device->using_nvidia = true;
@@ -228,10 +228,10 @@ void DestroyCaptureDevice(CaptureDevice* device) {
     XCloseDisplay(device->display);
 }
 
-void UpdateHardwareEncoder(CaptureDevice* device) {
+void UpdateHardwareEncoder(CaptureDevice* device, int bitrate, CodecType codec) {
     if (device->using_nvidia) {
 	DestroyNvidiaCaptureDevice(&device->nvidia_capture_device);
-	CreateNvidiaCaptureDevice(&device->nvidia_capture_device);
+	CreateNvidiaCaptureDevice(&device->nvidia_capture_device, bitrate, codec);
     }
 }
 
