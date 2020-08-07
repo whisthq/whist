@@ -42,7 +42,7 @@ def fractalAuth(f):
 
         if (
             current_user != username
-            and not getEnvVar("DASHBOARD_USERNAME") in current_user
+            and not DASHBOARD_USERNAME in current_user
         ):
             return (
                 jsonify(
@@ -81,7 +81,7 @@ def adminRequired(f):
         #     )
 
         current_user = get_jwt_identity()
-        if not getEnvVar("DASHBOARD_USERNAME") in current_user:
+        if not DASHBOARD_USERNAME in current_user:
             return (
                 jsonify(
                     {

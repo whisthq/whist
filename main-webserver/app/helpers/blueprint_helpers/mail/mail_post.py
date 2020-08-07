@@ -22,11 +22,11 @@ def forgotPasswordHelper(username):
             to_emails=[username],
             subject="Reset Your Password",
             html_content=render_template(
-                "on_password_forget.html", url=getEnvVar("FRONTEND_URL"), token=token,
+                "on_password_forget.html", url=FRONTEND_URL, token=token,
             ),
         )
         try:
-            sg = SendGridAPIClient(getEnvVar("SENDGRID_API_KEY"))
+            sg = SendGridAPIClient(SENDGRID_API_KEY)
             response = sg.send(message)
         except Exception as e:
             fractalLog(
@@ -57,7 +57,7 @@ def cancelHelper(user, feedback):
     )
 
     try:
-        sg = SendGridAPIClient(getEnvVar("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
@@ -73,7 +73,7 @@ def cancelHelper(user, feedback):
 
 def verificationHelper(user, token):
     title = "[Fractal] Please Verify Your Email"
-    url = getEnvVar("FRONTEND_URL") + "/verify?" + token
+    url = FRONTEND_URL + "/verify?" + token
     # url = "https://localhost:3000/verify?" + token
 
     internal_message = SendGridMail(
@@ -83,7 +83,7 @@ def verificationHelper(user, token):
         html_content=render_template("on_email_verification.html", url=url),
     )
     try:
-        sg = SendGridAPIClient(getEnvVar("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
@@ -108,7 +108,7 @@ def referralMailHelper(user, recipients, code):
     )
 
     try:
-        sg = SendGridAPIClient(getEnvVar("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
@@ -132,7 +132,7 @@ def feedbackHelper(user, feedback, feedback_type):
         html_content="<div>" + feedback + "</div>",
     )
     try:
-        sg = SendGridAPIClient(getEnvVar("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
     except Exception as e:
         fractalLog(
@@ -154,7 +154,7 @@ def trialStartHelper(user, location, code):
         html_content=render_template("on_purchase.html", location=location, code=code),
     )
     try:
-        sg = SendGridAPIClient(getEnvVar("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
     except Exception as e:
         fractalLog(
@@ -174,7 +174,7 @@ def trialStartHelper(user, location, code):
         html_content="<div>No action needed from our part at this point.</div>",
     )
     try:
-        sg = SendGridAPIClient(getEnvVar("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(
@@ -201,7 +201,7 @@ def computerReadyHelper(user, date, code, location):
     )
 
     try:
-        sg = SendGridAPIClient(getEnvVar("SENDGRID_API_KEY"))
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(internal_message)
     except Exception as e:
         fractalLog(

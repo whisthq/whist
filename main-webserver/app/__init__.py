@@ -65,7 +65,7 @@ celery_instance = make_celery()
 app, jwtManager = create_app(celery=celery_instance)
 app = init_app(app)
 
-app.config["JWT_SECRET_KEY"] = getEnvVar("JWT_SECRET_KEY")
+app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
 app.config["ROOT_DIRECTORY"] = os.path.dirname(os.path.abspath(__file__))
 
 CORS(app)

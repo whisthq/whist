@@ -123,7 +123,7 @@ def createVMParameters(
 
     # Set computer name, admin username, and admin password (for autologin and RDP)
 
-    admin_password = getEnvVar("VM_PASSWORD") if not admin_password else admin_password
+    admin_password = VM_PASSWORD if not admin_password else admin_password
 
     os_profile = {
         "computer_name": vm_name,

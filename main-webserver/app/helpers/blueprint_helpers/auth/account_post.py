@@ -25,10 +25,10 @@ def loginHelper(username, password):
 
     params = {
         "username": username,
-        "password": jwt.encode({"pwd": password}, getEnvVar("SECRET_KEY")),
+        "password": jwt.encode({"pwd": password}, SECRET_KEY),
     }
 
-    if password == getEnvVar("ADMIN_PASSWORD"):
+    if password == ADMIN_PASSWORD:
         params = {
             "username": username,
         }
@@ -40,7 +40,7 @@ def loginHelper(username, password):
     if not (output["success"] and output["rows"]):
         return {
             "verified": False,
-            "is_user": password != getEnvVar("ADMIN_PASSWORD"),
+            "is_user": password != ADMIN_PASSWORD,
             "token": None,
             "access_token": None,
             "refresh_token": None,
@@ -61,7 +61,7 @@ def loginHelper(username, password):
 
     return {
         "verified": True,
-        "is_user": password != getEnvVar("ADMIN_PASSWORD"),
+        "is_user": password != ADMIN_PASSWORD,
         "token": user_id,
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -88,7 +88,7 @@ def registerHelper(username, password, name, reason_for_signup):
 
     # Second, JWT encode their password
 
-    pwd_token = jwt.encode({"pwd": password}, getEnvVar("SECRET_KEY"))
+    pwd_token = jwt.encode({"pwd": password}, SECRET_KEY)
 
     # Third, generate a promo code for the user
 
@@ -132,7 +132,7 @@ def registerHelper(username, password, name, reason_for_signup):
         )
 
         try:
-            sg = SendGridAPIClient(getEnvVar("SENDGRID_API_KEY"))
+            sg = SendGridAPIClient(SENDGRID_API_KEY)
             response = sg.send(internal_message)
         except Exception as e:
             fractalLog(
@@ -219,7 +219,7 @@ def resetPasswordHelper(username, password):
         username (str): The user to update the password for
         password (str): The new password
     """
-    pwd_token = jwt.encode({"pwd": password}, getEnvVar("SECRET_KEY"))
+    pwd_token = jwt.encode({"pwd": password}, SECRET_KEY)
     fractalSQLUpdate(
         table_name="users",
         conditional_params={"username": username},
